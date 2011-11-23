@@ -25,12 +25,12 @@ import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
-import org.rstudio.studio.client.workbench.views.vcs.git.model.VcsState;
+import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 public class BranchToolbarButton extends ToolbarButton
 {
    @Inject
-   public BranchToolbarButton(final VcsState vcsState,
+   public BranchToolbarButton(final GitState vcsState,
                               final GitServerOperations server)
    {
       super("",

@@ -59,6 +59,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionVCS.cpp
    modules/SessionWorkbench.cpp
    modules/SessionWorkspace.cpp
+   modules/vcs/SessionVCSUtils.cpp
    projects/SessionProjects.cpp
    projects/SessionProjectContext.cpp
    ${CMAKE_CURRENT_BINARY_DIR}/SessionAddins.cpp

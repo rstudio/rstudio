@@ -21,7 +21,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.events.StageUnstageE
 import org.rstudio.studio.client.workbench.views.vcs.common.events.StageUnstageHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
-import org.rstudio.studio.client.workbench.views.vcs.git.model.VcsState;
+import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 import java.util.ArrayList;
 
@@ -30,11 +30,11 @@ public class GitChangelistTablePresenter
    @Inject
    public GitChangelistTablePresenter(GitServerOperations server,
                                       GitChangelistTable view,
-                                      VcsState vcsState)
+                                      GitState gitState)
    {
       server_ = server;
       view_ = view;
-      vcsState_ = vcsState;
+      gitState_ = gitState;
 
       view_.addStageUnstageHandler(new StageUnstageHandler()
       {
@@ -58,12 +58,12 @@ public class GitChangelistTablePresenter
          }
       });
 
-      vcsState_.bindRefreshHandler(view_, new VcsRefreshHandler()
+      gitState_.bindRefreshHandler(view_, new VcsRefreshHandler()
       {
          @Override
          public void onVcsRefresh(VcsRefreshEvent event)
          {
-            view_.setItems(vcsState_.getStatus());
+            view_.setItems(gitState_.getStatus());
          }
       });
    }
@@ -80,5 +80,5 @@ public class GitChangelistTablePresenter
 
    private final GitServerOperations server_;
    private final GitChangelistTable view_;
-   private final VcsState vcsState_;
+   private final GitState gitState_;
 }

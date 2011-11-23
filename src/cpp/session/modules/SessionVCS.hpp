@@ -44,11 +44,7 @@ core::FilePath verifiedDefaultSshKeyPath();
 // default directory for reading/writing ssh keys
 core::FilePath defaultSshKeyDir();
 
-// query for what vcs our auto-detection logic indicates for the directory
-std::string detectedVcs(const core::FilePath& workingDir);
-
 void enqueueRefreshEvent();
-void enqueRefreshEventWithDelay(int delay);
 
 core::Error initialize();
 

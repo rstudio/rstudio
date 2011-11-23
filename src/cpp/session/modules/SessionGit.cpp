@@ -50,7 +50,8 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include "SessionConsoleProcess.hpp"
-#include "SessionVCS.hpp"
+
+#include "vcs/SessionVCSUtils.hpp"
 
 #include "config.h"
 
@@ -61,7 +62,7 @@
 using namespace core;
 using namespace core::shell_utils;
 using session::modules::console_process::ConsoleProcess;
-using namespace session::modules::source_control;
+using namespace session::modules::vcs_utils;
 
 namespace session {
 namespace modules {
@@ -309,29 +310,6 @@ protected:
    }
 
 public:
-   static FilePath detectGitDir(const FilePath& workingDir)
-   {
-      core::system::ProcessOptions options = procOptions();
-      options.workingDir = workingDir;
-#ifndef _WIN32
-      options.detachSession = true;
-#endif
-
-      core::system::ProcessResult result;
-      Error error = core::system::runCommand(
-               git() << "rev-parse" << "--show-toplevel",
-               "",
-               options,
-               &result);
-
-      if (error)
-         return FilePath();
-
-      if (result.exitStatus != 0)
-         return FilePath();
-
-      return FilePath(boost::algorithm::trim_copy(result.stdOut));
-   }
 
    Git() : root_(FilePath())
    {
@@ -341,7 +319,6 @@ public:
    {
    }
 
-   VCS id() { return VCSGit; }
    std::string name() { return "Git"; }
 
    FilePath root() const
@@ -1039,6 +1016,30 @@ std::vector<FilePath> resolveAliasedPaths(const json::Array& paths,
    return results;
 }
 
+FilePath detectGitDir(const FilePath& workingDir)
+{
+   core::system::ProcessOptions options = procOptions();
+   options.workingDir = workingDir;
+#ifndef _WIN32
+   options.detachSession = true;
+#endif
+
+   core::system::ProcessResult result;
+   Error error = core::system::runCommand(
+            git() << "rev-parse" << "--show-toplevel",
+            "",
+            options,
+            &result);
+
+   if (error)
+      return FilePath();
+
+   if (result.exitStatus != 0)
+      return FilePath();
+
+   return FilePath(boost::algorithm::trim_copy(result.stdOut));
+}
+
 } // anonymous namespace
 
 
@@ -1073,20 +1074,6 @@ Error fileStatus(const FilePath& filePath, VCSStatus* pStatus)
 }
 
 namespace {
-
-struct RefreshOnExit : public boost::noncopyable
-{
-   ~RefreshOnExit()
-   {
-      try
-      {
-         enqueueRefreshEvent();
-      }
-      catch(...)
-      {
-      }
-   }
-};
 
 Error vcsAdd(const json::JsonRpcRequest& request,
              json::JsonRpcResponse* pResponse)
@@ -1659,7 +1646,7 @@ Error vcsHasRepo(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
    FilePath gitDir =
-        Git::detectGitDir(projects::projectContext().directory());
+        detectGitDir(projects::projectContext().directory());
 
    pResponse->setResult(!gitDir.empty());
 
@@ -2290,26 +2277,14 @@ bool initGitBin()
    return true;
 }
 
-// query for what vcs our auto-detection logic indicates for the directory
-std::string detectedVcs(const FilePath& workingDir)
-{
-   FilePath gitDir = Git::detectGitDir(workingDir);
-   if (!gitDir.empty())
-      return "git";
-   else if (isSvnInstalled() && workingDir.childPath(".svn").isDirectory())
-      return "svn";
-   else
-      return "none";
-}
-
 bool isGitDirectory(const core::FilePath& workingDir)
 {
-   return !Git::detectGitDir(workingDir).empty();
+   return !detectGitDir(workingDir).empty();
 }
 
 core::Error initializeGit(const core::FilePath& workingDir)
 {
-   s_git_.setRoot(Git::detectGitDir(workingDir));
+   s_git_.setRoot(detectGitDir(workingDir));
 
    if (!s_git_.root().empty())
    {

@@ -81,8 +81,6 @@ core::Error statusToJson(const core::FilePath& path,
                          const VCSStatus& status,
                          core::json::Object* pObject);
 
-std::string detectedVcs(const core::FilePath& workingDir);
-
 core::Error initialize();
 
 } // namespace git

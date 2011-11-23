@@ -14,7 +14,6 @@ package org.rstudio.studio.client.workbench.views.vcs.svn;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -27,11 +26,11 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
-import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.vcs.svn.model.SVNState;
 
 import java.util.ArrayList;
 
@@ -51,11 +50,13 @@ public class SVNPresenter extends BasePresenter
    @Inject
    public SVNPresenter(Display view,
                        Commands commands,
-                       SVNServerOperations server)
+                       SVNServerOperations server,
+                       SVNState svnState)
    {
       super(view);
       view_ = view;
       server_ = server;
+      svnState_ = svnState;
 
       GWT.<Binder>create(Binder.class).bind(commands, this);
 
@@ -102,9 +103,10 @@ public class SVNPresenter extends BasePresenter
    @Handler
    void onVcsRefresh()
    {
-      server_.svnStatus(new SimpleRequestCallback<JsArray<StatusAndPathInfo>>());
+      svnState_.refresh(true);
    }
 
    private final Display view_;
    private final SVNServerOperations server_;
+   private final SVNState svnState_;
 }

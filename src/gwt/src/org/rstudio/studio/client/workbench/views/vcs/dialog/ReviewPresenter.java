@@ -58,7 +58,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.events.*;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffChunkActionEvent.Action;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitChangelistTable;
-import org.rstudio.studio.client.workbench.views.vcs.git.model.VcsState;
+import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 import java.util.ArrayList;
 
@@ -188,21 +188,21 @@ public class ReviewPresenter implements IsWidget
    public ReviewPresenter(GitServerOperations server,
                           Display view,
                           final EventBus events,
-                          final VcsState vcsState,
+                          final GitState gitState,
                           final Session session,
                           final GlobalDisplay globalDisplay)
    {
       server_ = server;
       view_ = view;
       globalDisplay_ = globalDisplay;
-      vcsState_ = vcsState;
+      gitState_ = gitState;
 
       new WidgetHandlerRegistration(view.asWidget())
       {
          @Override
          protected HandlerRegistration doRegister()
          {
-            return vcsState_.addVcsRefreshHandler(new VcsRefreshHandler()
+            return gitState_.addVcsRefreshHandler(new VcsRefreshHandler()
             {
                @Override
                public void onVcsRefresh(VcsRefreshEvent event)
@@ -247,7 +247,7 @@ public class ReviewPresenter implements IsWidget
                         event.getFileChange().getFile().getGitStatus());
                   if (paths.get(0).getRawPath().equals(vcsStatus.getRawPath()))
                   {
-                     vcsState.refresh(false);
+                     gitState.refresh(false);
                   }
                }
             });
@@ -653,7 +653,7 @@ public class ReviewPresenter implements IsWidget
    public void onShow()
    {
       // Ensure that we're fresh
-      vcsState_.refresh();
+      gitState_.refresh();
 
       view_.onShow();
    }
@@ -668,7 +668,7 @@ public class ReviewPresenter implements IsWidget
    // Hack to prevent us flipping to unstaged view when a line is unstaged
    // from staged view
    private boolean softModeSwitch_;
-   private VcsState vcsState_;
+   private GitState gitState_;
    private boolean initialized_;
    private static final String MODULE_VCS = "vcs";
    private static final String KEY_CONTEXT_LINES = "context_lines";

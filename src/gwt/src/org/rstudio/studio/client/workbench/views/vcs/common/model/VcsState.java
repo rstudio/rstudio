@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.vcs.git.model;
+package org.rstudio.studio.client.workbench.views.vcs.common.model;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -43,16 +43,12 @@ import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHan
 
 import java.util.ArrayList;
 
-@Singleton
-public class VcsState
+public abstract class VcsState
 {
-   @Inject
-   public VcsState(GitServerOperations server,
-                   EventBus eventBus,
+   public VcsState(EventBus eventBus,
                    GlobalDisplay globalDisplay,
                    final Session session)
    {
-      server_ = server;
       eventBus_ = eventBus;
       globalDisplay_ = globalDisplay;
       final HandlerRegistrations registrations = new HandlerRegistrations();
@@ -108,12 +104,14 @@ public class VcsState
                return;
             }
 
+            Debug.devlog("Got here 1");
             if (status_ != null)
             {
                for (int i = 0; i < status_.size(); i++)
                {
                   if (status.getRawPath().equals(status_.get(i).getRawPath()))
                   {
+                     Debug.devlog("Got here 2");
                      if (StringUtil.notNull(status.getStatus()).trim().length() == 0)
                         status_.remove(i);
                      else
@@ -125,16 +123,25 @@ public class VcsState
 
                if (status.getStatus().trim().length() != 0)
                {
+                  Debug.devlog("Got here 3");
                   status_.add(status);
                   handlers_.fireEvent(new VcsRefreshEvent(Reason.FileChange));
                   return;
                }
+               Debug.devlog("Got here 4");
+
             }
          }
       }));
 
-
-      refresh(false);
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            refresh(false);
+         }
+      });
    }
 
    public void bindRefreshHandler(Widget owner,
@@ -161,7 +168,7 @@ public class VcsState
       HandlerRegistration hreg = handlers_.addHandler(
             VcsRefreshEvent.TYPE, handler);
 
-      if (fireOnAdd && branches_ != null)
+      if (fireOnAdd && isInitialized())
          handler.onVcsRefresh(new VcsRefreshEvent(Reason.VcsOperation));
 
       return hreg;
@@ -172,50 +179,17 @@ public class VcsState
       return status_;
    }
 
-   public BranchesInfo getBranchInfo()
-   {
-      return branches_;
-   }
-
-   public boolean hasRemote()
-   {
-      return hasRemote_;
-   }
-
    public void refresh()
    {
       refresh(true);
    }
 
-   public void refresh(final boolean showError)
-   {
-      server_.gitAllStatus(new ServerRequestCallback<AllStatus>()
-      {
-         @Override
-         public void onResponseReceived(AllStatus response)
-         {
-            status_ = StatusAndPath.fromInfos(response.getStatus());
-            branches_ = response.getBranches();
-            hasRemote_ = response.hasRemote();
-            handlers_.fireEvent(new VcsRefreshEvent(Reason.VcsOperation));
-         }
+   public abstract void refresh(final boolean showError);
 
-         @Override
-         public void onError(ServerError error)
-         {
-            Debug.logError(error);
-            if (showError)
-               globalDisplay_.showErrorMessage("Error",
-                                               error.getUserMessage());
-         }
-      });
-   }
+   protected abstract boolean isInitialized();
 
-   private final HandlerManager handlers_ = new HandlerManager(this);
-   private ArrayList<StatusAndPath> status_;
-   private BranchesInfo branches_;
-   private boolean hasRemote_;
-   private final GitServerOperations server_;
-   private final EventBus eventBus_;
-   private final GlobalDisplay globalDisplay_;
+   protected final HandlerManager handlers_ = new HandlerManager(this);
+   protected ArrayList<StatusAndPath> status_;
+   protected final EventBus eventBus_;
+   protected final GlobalDisplay globalDisplay_;
 }

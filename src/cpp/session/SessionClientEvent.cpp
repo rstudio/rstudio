@@ -170,7 +170,7 @@ std::string ClientEvent::typeName() const
       case client_events::kOpenProjectError:
          return "open_project_error";
       case client_events::kVcsRefresh:
-         return "git_refresh";
+         return "vcs_refresh";
       case client_events::kAskPass:
          return "ask_pass";
       case client_events::kConsoleProcessOutput:

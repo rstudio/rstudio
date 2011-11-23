@@ -37,7 +37,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEve
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
-import org.rstudio.studio.client.workbench.views.vcs.git.model.VcsState;
+import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 public class HistoryPresenter
 {
@@ -80,7 +80,7 @@ public class HistoryPresenter
    public HistoryPresenter(GitServerOperations server,
                            final Display view,
                            HistoryAsyncDataProvider provider,
-                           final VcsState vcsState)
+                           final GitState vcsState)
    {
       server_ = server;
       view_ = view;

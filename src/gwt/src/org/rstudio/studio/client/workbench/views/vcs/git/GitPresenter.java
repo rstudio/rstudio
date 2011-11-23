@@ -42,7 +42,7 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
-import org.rstudio.studio.client.workbench.views.vcs.git.model.VcsState;
+import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 import java.util.ArrayList;
 
@@ -71,7 +71,7 @@ public class GitPresenter extends BasePresenter implements IsWidget
                        GitServerOperations server,
                        final Commands commands,
                        Binder commandBinder,
-                       VcsState vcsState,
+                       GitState gitState,
                        EventBus events,
                        final GlobalDisplay globalDisplay,
                        final FileTypeRegistry fileTypeRegistry,
@@ -82,14 +82,14 @@ public class GitPresenter extends BasePresenter implements IsWidget
       server_ = server;
       commands_ = commands;
       eventBus_ = events;
-      vcsState_ = vcsState;
+      gitState_ = gitState;
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
       satelliteManager_ = satelliteManager;
 
       commandBinder.bind(commands, this);
 
-      vcsState_.addVcsRefreshHandler(new VcsRefreshHandler()
+      gitState_.addVcsRefreshHandler(new VcsRefreshHandler()
       {
          @Override
          public void onVcsRefresh(VcsRefreshEvent event)
@@ -253,13 +253,13 @@ public class GitPresenter extends BasePresenter implements IsWidget
 
    private void refresh()
    {
-      view_.setItems(vcsState_.getStatus());
+      view_.setItems(gitState_.getStatus());
    }
 
    private final Display view_;
    private final GitServerOperations server_;
    private final Commands commands_;
-   private final VcsState vcsState_;
+   private final GitState gitState_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
    private final FileTypeRegistry fileTypeRegistry_;

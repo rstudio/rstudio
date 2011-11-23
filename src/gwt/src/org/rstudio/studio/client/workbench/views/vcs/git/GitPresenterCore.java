@@ -12,6 +12,11 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.git;
 
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Window.ClosingEvent;
+import com.google.gwt.user.client.Window.ClosingHandler;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.MessageDisplay.PasswordResult;
 import org.rstudio.core.client.StringUtil;
@@ -36,13 +41,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialo
 import org.rstudio.studio.client.workbench.views.vcs.common.events.AskPassEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
-import org.rstudio.studio.client.workbench.views.vcs.git.model.VcsState;
-
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.Window.ClosingEvent;
-import com.google.gwt.user.client.Window.ClosingHandler;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 @Singleton
 public class GitPresenterCore
@@ -51,7 +50,7 @@ public class GitPresenterCore
    
    @Inject
    public GitPresenterCore(GitServerOperations server,
-                           VcsState vcsState,
+                           GitState gitState,
                            final Commands commands,
                            Binder commandBinder,
                            EventBus eventBus,
@@ -60,16 +59,16 @@ public class GitPresenterCore
                            final SatelliteManager satelliteManager)
    {
       server_ = server;
-      vcsState_ = vcsState;
+      gitState_ = gitState;
       
       commandBinder.bind(commands, this);
 
-      vcsState_.addVcsRefreshHandler(new VcsRefreshHandler()
+      gitState_.addVcsRefreshHandler(new VcsRefreshHandler()
       {
          @Override
          public void onVcsRefresh(VcsRefreshEvent event)
          {
-            boolean hasRemote = vcsState_.hasRemote();
+            boolean hasRemote = gitState_.hasRemote();
             commands.vcsPull().setEnabled(hasRemote);
             commands.vcsPush().setEnabled(hasRemote);
          }
@@ -185,7 +184,7 @@ public class GitPresenterCore
    @Handler
    void onVcsRefresh()
    {
-      vcsState_.refresh();
+      gitState_.refresh();
    }
 
    
@@ -216,7 +215,7 @@ public class GitPresenterCore
    }
     
    private final GitServerOperations server_;
-   private final VcsState vcsState_;
+   private final GitState gitState_;
    private boolean rememberByDefault_ = true;
    private boolean askpassPending_ = false;
 }

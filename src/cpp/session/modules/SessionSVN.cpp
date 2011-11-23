@@ -25,8 +25,11 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 
+#include "vcs/SessionVCSUtils.hpp"
+
 using namespace core;
 using namespace core::shell_utils;
+using namespace session::modules::vcs_utils;
 
 namespace session {
 namespace modules {
@@ -238,6 +241,8 @@ FilePath resolveAliasedJsonPath(const json::Value& value)
 Error svnAdd(const json::JsonRpcRequest& request,
              json::JsonRpcResponse* pResponse)
 {
+   RefreshOnExit refreshOnExit;
+
    json::Array files;
    Error error = json::readParams(request.params, &files);
    if (error)
@@ -257,6 +262,8 @@ Error svnAdd(const json::JsonRpcRequest& request,
 Error svnDelete(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
+   RefreshOnExit refreshOnExit;
+
    json::Array files;
    Error error = json::readParams(request.params, &files);
    if (error)
@@ -276,6 +283,8 @@ Error svnDelete(const json::JsonRpcRequest& request,
 Error svnRevert(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
+   RefreshOnExit refreshOnExit;
+
    json::Array files;
    Error error = json::readParams(request.params, &files);
    if (error)

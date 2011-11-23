@@ -23,26 +23,12 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
+#include "vcs/SessionVCSUtils.hpp"
 #include "SessionSVN.hpp"
 
 using namespace core;
 
 namespace session {
-namespace module_context {
-
-FilePath verifiedDefaultSshKeyPath()
-{
-   return session::modules::source_control::verifiedDefaultSshKeyPath();
-}
-
-std::string detectedVcs(const FilePath& workingDir)
-{
-   return session::modules::source_control::detectedVcs(workingDir);
-}
-
-} // namespace module_context
-
-
 namespace modules {
 namespace source_control {
 
@@ -188,27 +174,9 @@ FilePath defaultSshKeyDir()
    return getTrueHomeDir().childPath(".ssh");
 }
 
-std::string detectedVcs(const core::FilePath& workingDir)
-{
-   return git::detectedVcs(workingDir);
-}
-
-void enqueRefreshEventWithDelay(int delay)
-{
-   // Sometimes on commit, the subsequent request contains outdated
-   // status (i.e. as if the commit had not happened yet). No idea
-   // right now what is causing this. Add a delay for commits to make
-   // sure the correct state is shown.
-
-   json::Object data;
-   data["delay"] = delay;
-   module_context::enqueClientEvent(ClientEvent(client_events::kVcsRefresh,
-                                                data));
-}
-
 void enqueueRefreshEvent()
 {
-   enqueRefreshEventWithDelay(0);
+   vcs_utils::enqueueRefreshEvent();
 }
 
 core::Error initialize()
@@ -264,5 +232,28 @@ core::Error initialize()
 
 } // namespace source_control
 } // namespace modules
+} // namespace session
 
+namespace session {
+namespace module_context {
+
+FilePath verifiedDefaultSshKeyPath()
+{
+   return session::modules::source_control::verifiedDefaultSshKeyPath();
+}
+
+std::string detectedVcs(const FilePath& workingDir)
+{
+   using namespace session::modules;
+   using namespace session::modules::source_control;
+
+   if (isGitInstalled() && git::isGitDirectory(workingDir))
+      return "git";
+   else if (isSvnInstalled() && svn::isSvnDirectory(workingDir))
+      return "svn";
+   else
+      return "none";
+}
+
+} // namespace module_context
 } // namespace session

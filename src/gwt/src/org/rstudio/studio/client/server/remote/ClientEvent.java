@@ -53,7 +53,7 @@ class ClientEvent extends JavaScriptObject
    public static final String SaveActionChanged = "save_action_changed";
    public static final String ShowWarningBar = "show_warning_bar";
    public static final String OpenProjectError = "open_project_error";
-   public static final String VcsRefresh = "git_refresh";
+   public static final String VcsRefresh = "vcs_refresh";
    public static final String AskPass = "ask_pass";
    public static final String ConsoleProcessOutput = "console_process_output";
    public static final String ConsoleProcessExit = "console_process_exit";
