@@ -18,21 +18,13 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.vcs.AllStatus;
-import org.rstudio.studio.client.common.vcs.BranchesInfo;
-import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
@@ -104,14 +96,12 @@ public abstract class VcsState
                return;
             }
 
-            Debug.devlog("Got here 1");
             if (status_ != null)
             {
                for (int i = 0; i < status_.size(); i++)
                {
                   if (status.getRawPath().equals(status_.get(i).getRawPath()))
                   {
-                     Debug.devlog("Got here 2");
                      if (StringUtil.notNull(status.getStatus()).trim().length() == 0)
                         status_.remove(i);
                      else
@@ -123,13 +113,10 @@ public abstract class VcsState
 
                if (status.getStatus().trim().length() != 0)
                {
-                  Debug.devlog("Got here 3");
                   status_.add(status);
                   handlers_.fireEvent(new VcsRefreshEvent(Reason.FileChange));
                   return;
                }
-               Debug.devlog("Got here 4");
-
             }
          }
       }));
