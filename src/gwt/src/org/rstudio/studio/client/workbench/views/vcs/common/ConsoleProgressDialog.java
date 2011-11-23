@@ -93,6 +93,7 @@ public class ConsoleProgressDialog extends ModalDialogBase
       registrations_.add(consoleProcess.addProcessExitHandler(this));
 
       output_ = new PreWidget();
+      FontSizer.applyNormalFontSize(output_);
       output_.getElement().getStyle().setMargin(4, Unit.PX);
       scrollPanel_ = new BottomScrollPanel(output_);
 
