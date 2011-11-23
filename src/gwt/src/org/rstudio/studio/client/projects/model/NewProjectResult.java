@@ -21,7 +21,6 @@ public class NewProjectResult
       projectFile_ = projectFile;
       newDefaultProjectLocation_ = newDefaultProjectLocation;
       vcsCloneOptions_ = vcsCloneOptions;
-      openInNewWindow_ = false;
    }
    
    public String getProjectFile()
@@ -39,18 +38,7 @@ public class NewProjectResult
       return vcsCloneOptions_;
    }
    
-   public boolean getOpenInNewWindow()
-   {
-      return openInNewWindow_;
-   }
-   
-   public void setOpenInNewWindow(boolean openInNewWindow)
-   {
-      openInNewWindow_ = openInNewWindow;
-   }
-
    private final String projectFile_;
    private final String newDefaultProjectLocation_;
    private final VcsCloneOptions vcsCloneOptions_;
-   private boolean openInNewWindow_;
 }

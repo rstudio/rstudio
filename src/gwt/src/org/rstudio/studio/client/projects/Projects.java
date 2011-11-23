@@ -125,36 +125,32 @@ public class Projects implements OpenProjectFileHandler,
    @Handler
    public void onNewProject()
    {
-      NewProjectWizard wiz = new NewProjectWizard(
-            session_.getSessionInfo(),
-            FileSystemItem.createDir(
-                     pUIPrefs_.get().defaultProjectLocation().getValue()),
-            new ProgressOperationWithInput<NewProjectResult>() {
+      // first resolve the quit context (potentially saving edited documents   
+      // and determining whether to save the R environment on exit)
+      applicationQuit_.prepareForQuit("Save Current Workspace",
+         new ApplicationQuit.QuitContext() {
+           @Override
+           public void onReadyToQuit(final boolean saveChanges)
+           {
+              NewProjectWizard wiz = new NewProjectWizard(
+                 session_.getSessionInfo(),
+                 FileSystemItem.createDir(
+                    pUIPrefs_.get().defaultProjectLocation().getValue()),
+                 new ProgressOperationWithInput<NewProjectResult>() {
 
-             @Override
-             public void execute(final NewProjectResult newProject, 
-                                 final ProgressIndicator indicator)
-             {
-                indicator.onCompleted();
-                
-                if (newProject.getOpenInNewWindow())
-                {
-                   createNewProject(newProject, false);
-                }
-                else
-                {
-                   applicationQuit_.prepareForQuit("Save Current Workspace",
-                      new ApplicationQuit.QuitContext() {
-                        @Override
-                        public void onReadyToQuit(boolean saveChanges)
-                        {
-                           createNewProject(newProject, saveChanges);
-                        }  
-                   });
-                }
-             }
-          });
-          wiz.showModal();
+                  @Override
+                  public void execute(final NewProjectResult newProject, 
+                                      final ProgressIndicator indicator)
+                  {
+                     indicator.onCompleted();
+                     createNewProject(newProject, saveChanges); 
+                  }
+              });
+              wiz.showModal();  
+           }  
+      });
+      
+      
    }
    
 
@@ -285,18 +281,10 @@ public class Projects implements OpenProjectFileHandler,
                      @Override
                      public void onSuccess()
                      {
-                        if (newProject.getOpenInNewWindow())
-                        {
-                           Desktop.getFrame().openProjectInNewWindow(
+                        applicationQuit_.performQuit(
+                                             saveChanges,
                                              newProject.getProjectFile());
-                        }
-                        else
-                        {
-                           applicationQuit_.performQuit(
-                                 saveChanges,
-                                 newProject.getProjectFile());
-                        }
-                        
+
                         continuation.execute();
                      }
                   });
