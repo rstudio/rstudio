@@ -716,6 +716,7 @@ public class CompilerTest extends GWTTestCase {
 
   // CHECKSTYLE_OFF
 
+  @SuppressWarnings("empty")
   public void testEmptyStatements() {
     boolean b = false;
 
