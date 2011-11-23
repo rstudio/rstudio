@@ -257,15 +257,12 @@ public class ReviewPanel extends Composite implements Display
 
       topToolbar_.addRightSeparator();
 
-      topToolbar_.addRightWidget(new ToolbarButton(
-            "Pull", commands.vcsPull().getImageResource(),
-            commands.vcsPull()));
+      
+      topToolbar_.addRightWidget(commands.vcsPull().createToolbarButton());
 
       topToolbar_.addRightSeparator();
 
-      topToolbar_.addRightWidget(new ToolbarButton(
-            "Push", commands.vcsPush().getImageResource(),
-            commands.vcsPush()));
+      topToolbar_.addRightWidget(commands.vcsPush().createToolbarButton());
 
       diffToolbar_.addStyleName(RES.styles().toolbar());
       diffToolbar_.addStyleName(RES.styles().diffToolbar());
