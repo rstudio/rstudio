@@ -346,7 +346,8 @@ Error ChildProcess::run()
    si.cb = sizeof(STARTUPINFO);
    si.dwFlags |= STARTF_USESTDHANDLES;
    si.hStdOutput = hStdOutWrite;
-   si.hStdError = hStdErrWrite;
+   si.hStdError = options_.redirectStdErrToStdOut ? hStdOutWrite
+                                                  : hStdErrWrite;
    si.hStdInput = hStdInRead;
 
    // build command line

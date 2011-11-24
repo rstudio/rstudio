@@ -256,7 +256,8 @@ Error svnAdd(const json::JsonRpcRequest& request,
                   &resolveAliasedJsonPath);
 
    core::system::ProcessResult result;
-   error = runSvn(ShellArgs() << "add" << "--" << paths, &result, true);
+   error = runSvn(ShellArgs() << "add" << "-q" << "--" << paths,
+                  &result, true);
    if (error)
       return error;
 
@@ -280,7 +281,8 @@ Error svnDelete(const json::JsonRpcRequest& request,
                   &resolveAliasedJsonPath);
 
    core::system::ProcessResult result;
-   error = runSvn(ShellArgs() << "delete" << "--" << paths, &result, true);
+   error = runSvn(ShellArgs() << "delete" << "-q" << "--" << paths,
+                  &result, true);
    if (error)
       return error;
 
@@ -304,7 +306,8 @@ Error svnRevert(const json::JsonRpcRequest& request,
                   &resolveAliasedJsonPath);
 
    core::system::ProcessResult result;
-   error = runSvn(ShellArgs() << "revert" << "--" << paths, &result, true);
+   error = runSvn(ShellArgs() << "revert" << "-q" << "--" << paths,
+                  &result, true);
    if (error)
       return error;
 
