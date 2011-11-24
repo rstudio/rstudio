@@ -28,8 +28,6 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations.ProcessResult;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
-import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;

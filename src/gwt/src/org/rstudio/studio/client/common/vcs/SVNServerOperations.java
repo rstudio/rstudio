@@ -17,7 +17,6 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.server.*;
-import org.rstudio.studio.client.server.Void;
 
 public interface SVNServerOperations extends CryptoServerOperations
 {
