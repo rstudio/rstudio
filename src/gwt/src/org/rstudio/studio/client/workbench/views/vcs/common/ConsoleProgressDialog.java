@@ -77,20 +77,27 @@ public class ConsoleProgressDialog extends ModalDialogBase
       this(title, consoleProcess, "", null);
    }
 
+   public ConsoleProgressDialog(String title, String output, int exitCode)
+   {
+      this(title, null, output, exitCode);
+   }
+
    public ConsoleProgressDialog(String title,
                                 ConsoleProcess consoleProcess,
                                 String initialOutput,
                                 Integer exitCode)
    {
+      if (consoleProcess == null && exitCode == null)
+      {
+         throw new IllegalArgumentException(
+               "Invalid combination of arguments to ConsoleProgressDialog");
+      }
+
       addStyleName(resources_.styles().consoleProgressDialog());
 
       consoleProcess_ = consoleProcess;
 
       setText(title);
-
-      registrations_ = new HandlerRegistrations();
-      registrations_.add(consoleProcess.addConsoleOutputHandler(this));
-      registrations_.add(consoleProcess.addProcessExitHandler(this));
 
       output_ = new PreWidget();
       FontSizer.applyNormalFontSize(output_);
@@ -116,23 +123,31 @@ public class ConsoleProgressDialog extends ModalDialogBase
       style.setWidth((int)(skewFactor * 660), Unit.PX);
       style.setFontSize(12 + BrowseCap.getFontSkew(), Unit.PX);
 
-      consoleProcess.start(new SimpleRequestCallback<Void>()
+      registrations_ = new HandlerRegistrations();
+      if (consoleProcess != null)
       {
-         @Override
-         public void onError(ServerError error)
+         registrations_.add(consoleProcess.addConsoleOutputHandler(this));
+         registrations_.add(consoleProcess.addProcessExitHandler(this));
+
+         consoleProcess.start(new SimpleRequestCallback<Void>()
          {
-            // Show error and stop
-            super.onError(error);
-            closeDialog();
-         }
-      });
+            @Override
+            public void onError(ServerError error)
+            {
+               // Show error and stop
+               super.onError(error);
+               closeDialog();
+            }
+         });
+      }
 
       addCloseHandler(new CloseHandler<PopupPanel>()
       {
          @Override
          public void onClose(CloseEvent<PopupPanel> popupPanelCloseEvent)
          {
-            consoleProcess_.reap(new VoidServerRequestCallback());
+            if (consoleProcess_ != null)
+               consoleProcess_.reap(new VoidServerRequestCallback());
          }
       });
 

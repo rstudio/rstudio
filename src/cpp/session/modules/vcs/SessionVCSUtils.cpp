@@ -39,6 +39,15 @@ void enqueueRefreshEvent()
    enqueRefreshEventWithDelay(0);
 }
 
+core::json::Object processResultToJson(
+      const core::system::ProcessResult& result)
+{
+   core::json::Object obj;
+   obj["output"] = result.stdOut;
+   obj["exit_code"] = result.exitStatus;
+   return obj;
+}
+
 } // namespace vcs_utils
 } // namespace modules
 } // namespace session

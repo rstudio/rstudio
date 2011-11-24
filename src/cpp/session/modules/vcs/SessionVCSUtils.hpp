@@ -16,12 +16,18 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <core/json/Json.hpp>
+#include <core/system/Process.hpp>
+
 namespace session {
 namespace modules {
 namespace vcs_utils {
 
 void enqueRefreshEventWithDelay(int delay);
 void enqueueRefreshEvent();
+
+core::json::Object processResultToJson(
+      const core::system::ProcessResult& result);
 
 struct RefreshOnExit : public boost::noncopyable
 {

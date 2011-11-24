@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.common.vcs;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
@@ -20,14 +21,27 @@ import org.rstudio.studio.client.server.Void;
 
 public interface SVNServerOperations extends CryptoServerOperations
 {
+   public static class ProcessResult extends JavaScriptObject
+   {
+      protected ProcessResult() {}
+
+      public final native String getOutput() /*-{
+         return this.output;
+      }-*/;
+
+      public final native int getExitCode() /*-{
+         return this.exit_code;
+      }-*/;
+   }
+
    void svnAdd(JsArrayString paths,
-               ServerRequestCallback<Void> requestCallback);
+               ServerRequestCallback<ProcessResult> requestCallback);
 
    void svnDelete(JsArrayString paths,
-                  ServerRequestCallback<Void> requestCallback);
+                  ServerRequestCallback<ProcessResult> requestCallback);
 
    void svnRevert(JsArrayString paths,
-                  ServerRequestCallback<Void> requestCallback);
+                  ServerRequestCallback<ProcessResult> requestCallback);
 
    void svnStatus(
          ServerRequestCallback<JsArray<StatusAndPathInfo>> requestCallback);

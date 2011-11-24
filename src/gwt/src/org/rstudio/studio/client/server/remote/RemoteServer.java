@@ -2202,7 +2202,7 @@ public class RemoteServer implements Server
 
    @Override
    public void svnAdd(JsArrayString paths,
-                      ServerRequestCallback<Void> requestCallback)
+                      ServerRequestCallback<ProcessResult> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONArray(paths));
@@ -2211,7 +2211,7 @@ public class RemoteServer implements Server
 
    @Override
    public void svnDelete(JsArrayString paths,
-                         ServerRequestCallback<Void> requestCallback)
+                         ServerRequestCallback<ProcessResult> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONArray(paths));
@@ -2220,7 +2220,7 @@ public class RemoteServer implements Server
 
    @Override
    public void svnRevert(JsArrayString paths,
-                         ServerRequestCallback<Void> requestCallback)
+                         ServerRequestCallback<ProcessResult> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONArray(paths));

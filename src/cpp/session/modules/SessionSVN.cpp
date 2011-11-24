@@ -77,28 +77,36 @@ core::system::ProcessOptions procOptions()
 }
 
 Error runSvn(const ShellArgs& args,
-             std::string* pStdOut=NULL,
-             std::string* pStdErr=NULL,
-             int* pExitCode=NULL)
+             core::system::ProcessResult* pResult,
+             bool redirectStdErrToStdOut=false)
 {
    core::system::ProcessOptions options = procOptions();
+   options.redirectStdErrToStdOut = redirectStdErrToStdOut;
 #ifdef _WIN32
    options.detachProcess = true;
 #endif
-
-   core::system::ProcessResult result;
 
 #ifdef _WIN32
    Error error = core::system::runProgram("svn.exe",
                                           args.args(),
                                           std::string(),
                                           options,
-                                          &result);
+                                          pResult);
 #else
    Error error = core::system::runCommand(ShellCommand("svn") << args.args(),
                                           options,
-                                          &result);
+                                          pResult);
 #endif
+   return error;
+}
+
+Error runSvn(const ShellArgs& args,
+             std::string* pStdOut=NULL,
+             std::string* pStdErr=NULL,
+             int* pExitCode=NULL)
+{
+   core::system::ProcessResult result;
+   Error error = runSvn(args, &result);
    if (error)
       return error;
 
@@ -108,11 +116,6 @@ Error runSvn(const ShellArgs& args,
       *pStdErr = result.stdErr;
    if (pExitCode)
       *pExitCode = result.exitStatus;
-
-   if (result.exitStatus != EXIT_SUCCESS)
-   {
-      LOG_DEBUG_MESSAGE(result.stdErr);
-   }
 
    return Success();
 }
@@ -252,9 +255,12 @@ Error svnAdd(const json::JsonRpcRequest& request,
    std::transform(files.begin(), files.end(), std::back_inserter(paths),
                   &resolveAliasedJsonPath);
 
-   error = runSvn(ShellArgs() << "add" << "--" << paths);
+   core::system::ProcessResult result;
+   error = runSvn(ShellArgs() << "add" << "--" << paths, &result, true);
    if (error)
       return error;
+
+   pResponse->setResult(processResultToJson(result));
 
    return Success();
 }
@@ -273,9 +279,12 @@ Error svnDelete(const json::JsonRpcRequest& request,
    std::transform(files.begin(), files.end(), std::back_inserter(paths),
                   &resolveAliasedJsonPath);
 
-   error = runSvn(ShellArgs() << "delete" << "--" << paths);
+   core::system::ProcessResult result;
+   error = runSvn(ShellArgs() << "delete" << "--" << paths, &result, true);
    if (error)
       return error;
+
+   pResponse->setResult(processResultToJson(result));
 
    return Success();
 }
@@ -294,9 +303,12 @@ Error svnRevert(const json::JsonRpcRequest& request,
    std::transform(files.begin(), files.end(), std::back_inserter(paths),
                   &resolveAliasedJsonPath);
 
-   error = runSvn(ShellArgs() << "revert" << "--" << paths);
+   core::system::ProcessResult result;
+   error = runSvn(ShellArgs() << "revert" << "--" << paths, &result, true);
    if (error)
       return error;
+
+   pResponse->setResult(processResultToJson(result));
 
    return Success();
 }

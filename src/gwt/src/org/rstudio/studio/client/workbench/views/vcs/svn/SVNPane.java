@@ -41,6 +41,10 @@ public class SVNPane extends WorkbenchPane implements Display
             "Add",
             commands_.vcsAddFiles().getImageResource(),
             (ClickHandler)null);
+      deleteFilesButton_ = new ToolbarButton(
+            "Delete",
+            commands_.vcsRemoveFiles().getImageResource(),
+            (ClickHandler)null);
       revertFilesButton_ = new ToolbarButton(
             "Revert",
             commands_.vcsRevertFiles().getImageResource(),
@@ -63,6 +67,7 @@ public class SVNPane extends WorkbenchPane implements Display
       Toolbar toolbar = new Toolbar();
 
       toolbar.addLeftWidget(addFilesButton_);
+      toolbar.addLeftWidget(deleteFilesButton_);
       toolbar.addLeftWidget(revertFilesButton_);
 
       toolbar.addRightWidget(commands_.vcsRefresh().createToolbarButton());
@@ -74,6 +79,12 @@ public class SVNPane extends WorkbenchPane implements Display
    public ToolbarButton getAddFilesButton()
    {
       return addFilesButton_;
+   }
+
+   @Override
+   public ToolbarButton getDeleteFilesButton()
+   {
+      return deleteFilesButton_;
    }
 
    @Override
@@ -107,5 +118,6 @@ public class SVNPane extends WorkbenchPane implements Display
    private final SVNChangelistTablePresenter changelistTablePresenter_;
    private final Commands commands_;
    private final ToolbarButton addFilesButton_;
+   private final ToolbarButton deleteFilesButton_;
    private final ToolbarButton revertFilesButton_;
 }

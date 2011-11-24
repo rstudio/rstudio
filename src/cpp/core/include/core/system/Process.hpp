@@ -55,9 +55,13 @@ struct ProcessOptions
 {
    ProcessOptions()
 #ifdef _WIN32
-      : terminateChildren(false), detachProcess(false)
+      : terminateChildren(false),
+        detachProcess(false),
+        redirectStdErrToStdOut(false)
 #else
-      : terminateChildren(false), detachSession(false)
+      : terminateChildren(false),
+        detachSession(false),
+        redirectStdErrToStdOut(false)
 #endif
    {
    }
@@ -89,6 +93,8 @@ struct ProcessOptions
    // Creates the process with DETACHED_PROCESS on Win32 (no effect on POSIX)
    bool detachProcess;
 #endif
+
+   bool redirectStdErrToStdOut;
 
    // function to run within the child process immediately after the fork
    // NOTE: only supported on posix as there is no fork on Win32

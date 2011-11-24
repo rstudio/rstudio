@@ -21,15 +21,19 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
+import org.rstudio.studio.client.common.vcs.SVNServerOperations.ProcessResult;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.svn.model.SVNState;
 
 import java.util.ArrayList;
@@ -43,8 +47,31 @@ public class SVNPresenter extends BasePresenter
    public interface Display extends WorkbenchView, IsWidget
    {
       HasClickHandlers getAddFilesButton();
+      HasClickHandlers getDeleteFilesButton();
       HasClickHandlers getRevertFilesButton();
       ArrayList<StatusAndPath> getSelectedItems();
+   }
+
+   private class ProcessCallback extends SimpleRequestCallback<ProcessResult>
+   {
+      public ProcessCallback(String title)
+      {
+         super(title);
+         title_ = title;
+      }
+
+      @Override
+      public void onResponseReceived(ProcessResult response)
+      {
+         if (!StringUtil.isNullOrEmpty(response.getOutput()))
+         {
+            new ConsoleProgressDialog(title_,
+                                      response.getOutput(),
+                                      response.getExitCode()).showModal();
+         }
+      }
+
+      private final String title_;
    }
 
    @Inject
@@ -68,7 +95,19 @@ public class SVNPresenter extends BasePresenter
             JsArrayString paths = getPathArray();
 
             if (paths.length() > 0)
-               server_.svnAdd(paths, new SimpleRequestCallback<Void>());
+               server_.svnAdd(paths, new ProcessCallback("SVN Add"));
+         }
+      });
+
+      view_.getDeleteFilesButton().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            JsArrayString paths = getPathArray();
+
+            if (paths.length() > 0)
+               server_.svnDelete(paths, new ProcessCallback("SVN Delete"));
          }
       });
 
@@ -80,7 +119,7 @@ public class SVNPresenter extends BasePresenter
             JsArrayString paths = getPathArray();
 
             if (paths.length() > 0)
-               server_.svnRevert(paths, new SimpleRequestCallback<Void>());
+               server_.svnRevert(paths, new ProcessCallback("SVN Revert"));
          }
       });
    }

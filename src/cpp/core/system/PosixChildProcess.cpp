@@ -484,8 +484,12 @@ Error ChildProcess::run()
                             ERROR_LOCATION);
          safePosixCall<int>(boost::bind(::dup2, fdOutput[WRITE], STDOUT_FILENO),
                             ERROR_LOCATION);
-         safePosixCall<int>(boost::bind(::dup2, fdError[WRITE], STDERR_FILENO),
-                            ERROR_LOCATION);
+         safePosixCall<int>(
+               boost::bind(::dup2,
+                           options_.redirectStdErrToStdOut ? fdOutput[WRITE]
+                                                           : fdError[WRITE],
+                           STDERR_FILENO),
+               ERROR_LOCATION);
       }
 
       // close all open file descriptors other than std streams
