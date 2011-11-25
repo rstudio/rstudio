@@ -209,12 +209,10 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="updatePackages"/>
          <separator/>
          <menu label="Version Control">
-            <cmd refid="versionControlHelp"/>
-            <separator/>
             <cmd refid="versionControlProjectSetup"/>
+            <separator/>
+            <cmd refid="showShellDialog"/>
          </menu>
-         <separator/>
-         <cmd refid="showShellDialog"/>
          <separator/>
          <cmd refid="showOptions"/>
       </menu>
