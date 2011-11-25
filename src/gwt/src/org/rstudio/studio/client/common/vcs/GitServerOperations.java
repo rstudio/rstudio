@@ -114,11 +114,7 @@ public interface GitServerOperations extends CryptoServerOperations
    
    void gitSshPublicKey(String privateKeyPath,
                         ServerRequestCallback<String> requestCallback);
-   
-   void gitCreateSshKey(CreateKeyOptions options,
-                        ServerRequestCallback<CreateKeyResult> requestCallback);
-   
-   
+    
    void gitHasRepo(ServerRequestCallback<Boolean> requestCallback);
    
    void gitInitRepo(ServerRequestCallback<Void> requestCallback);

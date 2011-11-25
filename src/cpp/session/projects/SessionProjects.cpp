@@ -91,7 +91,6 @@ json::Object projectVcsOptionsJson()
       LOG_ERROR(error);
    json::Object vcsOptionsJson;
    vcsOptionsJson["active_vcs_override"] = vcsOptions.vcsOverride;
-   vcsOptionsJson["ssh_key_path_override"] = vcsOptions.sshKeyPathOverride;
    return vcsOptionsJson;
 }
 
@@ -105,9 +104,6 @@ Error readProjectOptions(const json::JsonRpcRequest& request,
    json::Object vcsOptionsDefaultJson;
    vcsOptionsDefaultJson["active_vcs"] = module_context::detectedVcs(
                                              s_projectContext.directory());
-   vcsOptionsDefaultJson["ssh_key_path"] =
-     module_context::createAliasedPath(
-                           module_context::verifiedDefaultSshKeyPath());
 
    // create project options json
    json::Object optionsJson;
@@ -133,8 +129,7 @@ Error rProjectVcsOptionsFromJson(const json::Object& optionsJson,
 {
    return json::readObject(
          optionsJson,
-         "active_vcs_override", &(pOptions->vcsOverride),
-         "ssh_key_path_override", &(pOptions->sshKeyPathOverride));
+         "active_vcs_override", &(pOptions->vcsOverride));
 }
 
 Error writeProjectOptions(const json::JsonRpcRequest& request,

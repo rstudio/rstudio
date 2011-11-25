@@ -29,8 +29,6 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.vcs.GitServerOperations;
-import org.rstudio.studio.client.common.vcs.SshKeyChooser;
 import org.rstudio.studio.client.common.vcs.VCSHelpLink;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -43,12 +41,10 @@ public class SourceControlPreferencesPane extends PreferencesPane
    public SourceControlPreferencesPane(PreferencesDialogResources res,
                                        Session session,
                                        final GlobalDisplay globalDisplay,
-                                       GitServerOperations server,
                                        RemoteFileSystemContext fsContext,
                                        FileDialogs fileDialogs)
    {
       res_ = res;
-      server_ = server;
 
       chkVcsEnabled_ = new CheckBox(
             "Enable version control interface for RStudio projects");
@@ -90,28 +86,10 @@ public class SourceControlPreferencesPane extends PreferencesPane
       svnChooser.setText("");
       addTextBoxChooser(new Label("Svn bin directory:"), null, null, svnChooser);
       */
-      
-      // ssh key path
-      String keyDir = session.getSessionInfo().getDefaultSSHKeyDir();
-      sshKeyChooser_ = new SshKeyChooser(server_, keyDir, "250px");                               
-      nudgeRight(sshKeyChooser_);
-      add(sshKeyChooser_);
-     
-      // manipulate visiblity of ssh ui depending on mode/platform
-      if (!SshKeyChooser.isSupportedForCurrentPlatform())
-         sshKeyChooser_.setVisible(false);
-         
-      // if the ssh key chooser is visible then mark it as a new section
-      if (sshKeyChooser_.isVisible())
-         sshKeyChooser_.addStyleName(res_.styles().newSection());
-      
-      
+            
       VCSHelpLink vcsHelpLink = new VCSHelpLink();
-      nudgeRight(vcsHelpLink);
-      if (sshKeyChooser_.isVisible())
-         vcsHelpLink.addStyleName(res_.styles().usingVcsHelp());
-      else
-         vcsHelpLink.addStyleName(res_.styles().usingVcsHelpNoSsh()); 
+      nudgeRight(vcsHelpLink); 
+      vcsHelpLink.addStyleName(res_.styles().newSection()); 
       add(vcsHelpLink);
                                       
       chkVcsEnabled_.setEnabled(false);
@@ -129,8 +107,6 @@ public class SourceControlPreferencesPane extends PreferencesPane
       
       chkVcsEnabled_.setValue(prefs.getVcsEnabled());
       gitBinDirChooser_.setText(prefs.getGitBinDir());
-      sshKeyChooser_.setSshKey(prefs.getSSHKeyPath()); 
-      sshKeyChooser_.setProgressIndicator(getProgressIndicator());
       
       manageControlVisibility();
    }
@@ -160,8 +136,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
       
       SourceControlPrefs prefs = SourceControlPrefs.create(
                                           chkVcsEnabled_.getValue(),
-                                          gitBinDirChooser_.getText(),
-                                          sshKeyChooser_.getSshKey()); 
+                                          gitBinDirChooser_.getText()); 
       
       rPrefs.setSourceControlPrefs(prefs);
    }
@@ -210,20 +185,13 @@ public class SourceControlPreferencesPane extends PreferencesPane
       boolean vcsEnabled = chkVcsEnabled_.getValue();
       gitBinDirLabel_.setVisible(vcsEnabled);
       gitBinDirChooser_.setVisible(vcsEnabled);
-      sshKeyChooser_.setVisible(SshKeyChooser.isSupportedForCurrentPlatform() &&
-                                vcsEnabled);
    }
    
 
    private final PreferencesDialogResources res_;
-   
-   private final GitServerOperations server_;
- 
-   
+    
    private final CheckBox chkVcsEnabled_;
    
    private Label gitBinDirLabel_;
    private TextBoxWithButton gitBinDirChooser_;
-   
-   private SshKeyChooser sshKeyChooser_;
 }

@@ -288,7 +288,6 @@ void syncRSaveAction();
 bool isGoogleDocsIntegrationEnabled();
 void setGoogleDocsIntegrationEnabled(bool enabled);
 
-core::FilePath verifiedDefaultSshKeyPath();
 std::string detectedVcs(const core::FilePath& workingDir);
 
 // persist state accross suspend and resume

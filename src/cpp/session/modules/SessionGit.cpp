@@ -1578,70 +1578,6 @@ Error vcsSshPublicKey(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error vcsCreateSshKey(const json::JsonRpcRequest& request,
-                      json::JsonRpcResponse* pResponse)
-{
-   std::string path, type, passphrase;
-   Error error = json::readObjectParam(request.params, 0,
-                                       "path", &path,
-                                       "type", &type,
-                                       "passphrase", &passphrase);
-   if (error)
-      return error;
-
-#ifdef RSTUDIO_SERVER
-   // In server mode, passphrases are encrypted
-   using namespace core::system::crypto;
-   error = rsaPrivateDecrypt(passphrase, &passphrase);
-   if (error)
-      return error;
-#endif
-
-   // verify that the path doesn't already exist
-   FilePath sshKeyPath = module_context::resolveAliasedPath(path);
-   FilePath sshPublicKeyPath = sshKeyPath.parent().complete(
-                                             sshKeyPath.stem() + ".pub");
-   if (sshKeyPath.exists() || sshPublicKeyPath.exists())
-   {
-      json::Object resultJson;
-      resultJson["failed_key_exists"] = true;
-      pResponse->setResult(resultJson);
-      return Success();
-   }
-
-   // compose a shell command to create the key
-   ShellCommand cmd("ssh-keygen");
-
-   // type
-   cmd << "-t" << type;
-
-   // passphrase (optional)
-   cmd << "-N";
-   if (!passphrase.empty())
-      cmd << passphrase;
-   else
-      cmd << std::string("");
-
-   // path
-   cmd << "-f" << sshKeyPath;
-
-   // run it
-   core::system::ProcessResult result;
-   error = runCommand(shell_utils::sendStdErrToStdOut(cmd),
-                      procOptions(),
-                      &result);
-   if (error)
-      return error;
-
-   // return exit code and output
-   json::Object resultJson;
-   resultJson["failed_key_exists"] = false;
-   resultJson["exit_status"] = result.exitStatus;
-   resultJson["output"] = result.stdOut;
-   pResponse->setResult(resultJson);
-   return Success();
-}
-
 Error vcsHasRepo(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
@@ -2378,7 +2314,6 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_execute_command", vcsExecuteCommand))
       (bind(registerRpcMethod, "git_show", vcsShow))
       (bind(registerRpcMethod, "git_ssh_public_key", vcsSshPublicKey))
-      (bind(registerRpcMethod, "git_create_ssh_key", vcsCreateSshKey))
       (bind(registerRpcMethod, "git_has_repo", vcsHasRepo))
       (bind(registerRpcMethod, "git_init_repo", vcsInitRepo));
    error = initBlock.execute();

@@ -1415,14 +1415,6 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void gitCreateSshKey(
-         CreateKeyOptions options,
-         ServerRequestCallback<CreateKeyResult> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, GIT_CREATE_SSH_KEY, options, requestCallback);
-   }
-
-   @Override
    public void gitHasRepo(ServerRequestCallback<Boolean> requestCallback)
    {
       sendRequest(RPC_SCOPE, GIT_HAS_REPO, requestCallback);
@@ -2396,7 +2388,6 @@ public class RemoteServer implements Server
    private static final String GIT_PULL = "git_pull";
    private static final String ASKPASS_COMPLETED = "askpass_completed";
    private static final String GIT_SSH_PUBLIC_KEY = "git_ssh_public_key";
-   private static final String GIT_CREATE_SSH_KEY = "git_create_ssh_key";
    private static final String GIT_HAS_REPO = "git_has_repo";
    private static final String GIT_INIT_REPO = "git_init_repo";
    private static final String GIT_DIFF_FILE = "git_diff_file";

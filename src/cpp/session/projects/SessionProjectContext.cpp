@@ -437,7 +437,6 @@ Error ProjectContext::readVcsOptions(RProjectVcsOptions* pOptions) const
       return error;
 
    pOptions->vcsOverride = settings.get(kVcsOverride);
-   pOptions->sshKeyPathOverride = settings.get(kSshKeyPathOverride);
 
    return Success();
 }
@@ -451,7 +450,6 @@ Error ProjectContext::writeVcsOptions(const RProjectVcsOptions& options) const
 
    settings.beginUpdate();
    settings.set(kVcsOverride, options.vcsOverride);
-   settings.set(kSshKeyPathOverride, options.sshKeyPathOverride);
    settings.endUpdate();
 
    return Success();

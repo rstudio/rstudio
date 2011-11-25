@@ -53,7 +53,6 @@ struct FileMonitorCallbacks
 struct RProjectVcsOptions
 {
    std::string vcsOverride;
-   std::string sshKeyPathOverride;
 };
 
 class ProjectContext : boost::noncopyable

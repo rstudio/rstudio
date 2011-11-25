@@ -23,8 +23,4 @@ public class RProjectVcsOptionsDefault extends JavaScriptObject
    public native final String getActiveVcs() /*-{
       return this.active_vcs;
    }-*/;
-   
-   public native final String getSshKeyPath() /*-{
-      return this.ssh_key_path;
-   }-*/;
 }

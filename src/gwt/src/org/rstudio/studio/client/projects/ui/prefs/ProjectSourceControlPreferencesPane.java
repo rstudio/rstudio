@@ -21,7 +21,6 @@ import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
-import org.rstudio.studio.client.common.vcs.SshKeyChooser;
 import org.rstudio.studio.client.common.vcs.VCSHelpLink;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
@@ -70,9 +69,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       vcsSelect_.addChangeHandler(new ChangeHandler() {
          @Override
          public void onChange(ChangeEvent event)
-         {
-            manageSshKeyVisibility();
-            
+         {  
             if (vcsSelect_.getValue().equals("git"))
             {
                confirmGitRepo(new Command() {
@@ -85,18 +82,6 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
             }
          }
       });
-      
-      
-      sshKeyChooser_ = new SshKeyChooser(
-            server, 
-            session.getSessionInfo().getDefaultSSHKeyDir(),
-            "250px");
-      nudgeRight(sshKeyChooser_);
-      add(sshKeyChooser_);
-      if (SshKeyChooser.isSupportedForCurrentPlatform())
-         extraSpaced(sshKeyChooser_);
-      else
-         sshKeyChooser_.setVisible(false);
       
       VCSHelpLink vcsHelpLink = new VCSHelpLink();
       nudgeRight(vcsHelpLink);
@@ -127,17 +112,6 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
          setVcsSelection(vcsOptions.getActiveVcsOverride());
       else
          setVcsSelection(defaultVcsOptions_.getActiveVcs());
-      
-      // set override or default
-      if (defaultVcsOptions_.getSshKeyPath().length() > 0)
-         sshKeyChooser_.setDefaultSskKey(defaultVcsOptions_.getSshKeyPath());
-      
-      if (vcsOptions.getSshKeyPathOverride().length() > 0)
-         sshKeyChooser_.setSshKey(vcsOptions.getSshKeyPathOverride());
-      else
-         sshKeyChooser_.setSshKey(defaultVcsOptions_.getSshKeyPath());
-      
-      manageSshKeyVisibility();
    }
 
    @Override
@@ -154,15 +128,6 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
          vcsOptions.setActiveVcsOverride(vcsSelection);
       else
          vcsOptions.setActiveVcsOverride("");
-      
-      if (!sshKeyChooser_.getSshKey().equals(defaultVcsOptions_.getSshKeyPath()))
-      {
-         vcsOptions.setSshKeyPathOverride(sshKeyChooser_.getSshKey());
-      }
-      else
-      {
-         vcsOptions.setSshKeyPathOverride("");
-      }
    }
 
    
@@ -183,8 +148,6 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       {
          vcsSelect_.setValue(NONE);
       }      
-      
-      manageSshKeyVisibility();
    }
    
    private void confirmGitRepo(final Command onConfirmed)
@@ -284,18 +247,12 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
          true);
    }
    
-   private void manageSshKeyVisibility()
-   {
-      sshKeyChooser_.setVisible(!getVcsSelection().equals("none"));
-   }
-   
    private final Session session_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
    private final GitServerOperations server_;
    
    private SelectWidget vcsSelect_;
-   private SshKeyChooser sshKeyChooser_;
   
    private RProjectVcsOptionsDefault defaultVcsOptions_;
    
