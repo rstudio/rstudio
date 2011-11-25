@@ -13,20 +13,14 @@
 package org.rstudio.studio.client.common.vcs;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.SafeHtmlUtil;
-import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.FileChooserTextBox;
-import org.rstudio.core.client.widget.FocusHelper;
-import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.HyperlinkLabel;
-import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.TextBoxWithButton;
-import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -38,17 +32,12 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 
 
 // TODO: Project setup -- auth config (shared with New Proj from VC)
@@ -199,13 +188,8 @@ public class SshKeyChooser extends Composite
          {
             progressIndicator_.onCompleted();
             
-            // transform contents into displayable form
-            SafeHtmlBuilder htmlBuilder = new SafeHtmlBuilder();
-            SafeHtmlUtil.appendDiv(htmlBuilder,
-                                   RES.styles().viewPublicKeyContent(),
-                                   publicKeyContents);
-            
-            new ShowPublicKeyDialog(publicKeyContents).showModal();
+            new ShowPublicKeyDialog("Public Key", 
+                                    publicKeyContents).showModal();
          }
 
          @Override
@@ -219,69 +203,9 @@ public class SshKeyChooser extends Composite
    }
    
    
-   private class ShowPublicKeyDialog extends ModalDialogBase
-   {
-      public ShowPublicKeyDialog(String publicKey)
-      {
-         publicKey_ = publicKey;
-         
-         setText("Public Key");
-         
-         setButtonAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-         
-         ThemedButton closeButton = new ThemedButton("Close",
-                                                     new ClickHandler() {
-            public void onClick(ClickEvent event) {
-               closeDialog();
-            }
-         });
-         addOkButton(closeButton); 
-      }
-      
-      @Override
-      protected Widget createMainWidget()
-      {
-         VerticalPanel panel = new VerticalPanel();
-         
-         int mod = BrowseCap.hasMetaKey() ? KeyboardShortcut.META : 
-                                            KeyboardShortcut.CTRL;
-         String cmdText = new KeyboardShortcut(mod, 'C').toString(true);
-         HTML label = new HTML("Press " + cmdText + 
-                               " to copy the key to the clipboard");
-         label.addStyleName(RES.styles().viewPublicKeyLabel());
-         panel.add(label);
-         
-         textArea_ = new TextArea();
-         textArea_.setText(publicKey_);
-         textArea_.addStyleName(RES.styles().viewPublicKeyContent());
-         textArea_.setSize("400px", "250px");
-         textArea_.getElement().setAttribute("spellcheck", "false");
-         FontSizer.applyNormalFontSize(textArea_.getElement());
-         
-         panel.add(textArea_);
-         
-         return panel;
-      }
-      
-      @Override
-      protected void onLoad()
-      {
-         super.onLoad();
-        
-         textArea_.selectAll();
-         FocusHelper.setFocusDeferred(textArea_);
-      }
-      
-      private final String publicKey_;
-      private TextArea textArea_;
-   }
-
-   
    static interface Styles extends CssResource
    {
       String viewPublicKeyLink();
-      String viewPublicKeyContent();
-      String viewPublicKeyLabel();
       String sshButtonPanel();
    }
   

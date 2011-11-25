@@ -29,8 +29,12 @@ import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
+import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.posixshell.PosixShellDialog;
+import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
 import org.rstudio.studio.client.server.Server;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;
@@ -56,6 +60,7 @@ public class Workbench implements BusyHandler,
                     GlobalDisplay globalDisplay,
                     Commands commands,
                     EventBus eventBus,
+                    Session session,
                     Provider<UIPrefs> pPrefs,
                     Server server,
                     RemoteFileSystemContext fsContext,
@@ -69,6 +74,7 @@ public class Workbench implements BusyHandler,
       globalDisplay_ = globalDisplay;
       commands_ = commands;
       eventBus_ = eventBus;
+      session_ = session;
       pPrefs_ = pPrefs;
       server_ = server;
       fsContext_ = fsContext;
@@ -264,6 +270,38 @@ public class Workbench implements BusyHandler,
             });
    }
    
+   @Handler
+   public void onVersionControlShowRsaKey()
+   {
+      final ProgressIndicator indicator = new GlobalProgressDelayer(
+            globalDisplay_, 500, "Reading public key...").getIndicator();
+     
+      // compute path to public key
+      String sshDir = session_.getSessionInfo().getDefaultSSHKeyDir();
+      final String keyPath = FileSystemItem.createDir(sshDir).completePath(
+                                                               "id_rsa.pub");
+              
+      // read it
+      server_.gitSshPublicKey(keyPath, new ServerRequestCallback<String> () {
+         
+         @Override
+         public void onResponseReceived(String publicKeyContents)
+         {
+            indicator.onCompleted();
+            
+            new ShowPublicKeyDialog("RSA Public Key", 
+                                    publicKeyContents).showModal();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            String msg = "Error attempting to read key '" + keyPath + "' (" +
+                         error.getUserMessage() + ")";
+            indicator.onError(msg);
+         } 
+      }); 
+   }
    
    @Handler
    public void onShowShellDialog()
@@ -273,6 +311,7 @@ public class Workbench implements BusyHandler,
 
    private final Server server_;
    private final EventBus eventBus_;
+   private final Session session_;
    private final Provider<UIPrefs> pPrefs_;
    private final WorkbenchMainView view_;
    private final GlobalDisplay globalDisplay_;

@@ -167,6 +167,7 @@ public abstract class
 
    // Version control
    public abstract AppCommand versionControlHelp();
+   public abstract AppCommand versionControlShowRsaKey();
    public abstract AppCommand versionControlProjectSetup();
    
    // Tools

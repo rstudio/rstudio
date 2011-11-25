@@ -1,21 +1,7 @@
 
-@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
-
-@external fixedWidthFont;
-
 .viewPublicKeyLink {
    font-size: 11px;  
 }
-
-.viewPublicKeyContent {
-   font-family: fixedWidthFont;
-   font-size: 12px;
-}
-
-.viewPublicKeyLabel {
-   margin-bottom: 7px;  
-}
-
 
 .sshButtonPanel {
    margin-top: -3px;
