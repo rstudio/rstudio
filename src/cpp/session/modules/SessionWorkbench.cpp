@@ -289,6 +289,9 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    if (gitBinDir.empty())
       gitBinDir = git::detectedGitBinDir();
    sourceControlPrefs["git_bin_dir"] = gitBinDir.absolutePath();
+   sourceControlPrefs["have_rsa_public_key"] =
+      modules::source_control::defaultSshKeyDir().childPath(
+                                                   "id_rsa.pub").exists();
 
    // initialize and set result object
    json::Object result;

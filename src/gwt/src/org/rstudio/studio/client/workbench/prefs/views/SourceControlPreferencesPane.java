@@ -13,6 +13,8 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
@@ -27,9 +29,11 @@ import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.TextBoxWithButton;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.vcs.VCSHelpLink;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
@@ -41,6 +45,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
    public SourceControlPreferencesPane(PreferencesDialogResources res,
                                        Session session,
                                        final GlobalDisplay globalDisplay,
+                                       final Commands commands,
                                        RemoteFileSystemContext fsContext,
                                        FileDialogs fileDialogs)
    {
@@ -86,7 +91,20 @@ public class SourceControlPreferencesPane extends PreferencesPane
       svnChooser.setText("");
       addTextBoxChooser(new Label("Svn bin directory:"), null, null, svnChooser);
       */
+      
+      // show ssh key button
+      showSshKeyButton_ = new ThemedButton(
+         "View Public Key...", new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event)
+            {
+               commands.versionControlShowRsaKey().execute();
+            }
+         });
+      showSshKeyButton_.addStyleName(res_.styles().viewSshKey());
+      add(showSshKeyButton_);
             
+       
       VCSHelpLink vcsHelpLink = new VCSHelpLink();
       nudgeRight(vcsHelpLink); 
       vcsHelpLink.addStyleName(res_.styles().newSection()); 
@@ -94,6 +112,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
                                       
       chkVcsEnabled_.setEnabled(false);
       gitBinDirChooser_.setEnabled(false);
+      showSshKeyButton_.setEnabled(false);
    }
 
    @Override
@@ -101,9 +120,11 @@ public class SourceControlPreferencesPane extends PreferencesPane
    {
       // source control prefs
       SourceControlPrefs prefs = rPrefs.getSourceControlPrefs();
+      originalPrefs_ = prefs;
       
       chkVcsEnabled_.setEnabled(true);
       gitBinDirChooser_.setEnabled(true);
+      showSshKeyButton_.setEnabled(true);
       
       chkVcsEnabled_.setValue(prefs.getVcsEnabled());
       gitBinDirChooser_.setText(prefs.getGitBinDir());
@@ -185,6 +206,8 @@ public class SourceControlPreferencesPane extends PreferencesPane
       boolean vcsEnabled = chkVcsEnabled_.getValue();
       gitBinDirLabel_.setVisible(vcsEnabled);
       gitBinDirChooser_.setVisible(vcsEnabled);
+      showSshKeyButton_.setVisible(vcsEnabled && 
+                                   originalPrefs_.haveRsaPublicKey());
    }
    
 
@@ -192,6 +215,9 @@ public class SourceControlPreferencesPane extends PreferencesPane
     
    private final CheckBox chkVcsEnabled_;
    
+   private SourceControlPrefs originalPrefs_; 
+   
    private Label gitBinDirLabel_;
    private TextBoxWithButton gitBinDirChooser_;
+   private ThemedButton showSshKeyButton_;
 }

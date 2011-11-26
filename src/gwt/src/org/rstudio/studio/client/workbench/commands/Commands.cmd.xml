@@ -208,13 +208,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="installPackage"/>
          <cmd refid="updatePackages"/>
          <separator/>
-         <menu label="Version Control">
-            <cmd refid="versionControlProjectSetup"/>
-            <separator/>
-            <cmd refid="versionControlShowRsaKey"/>
-            <separator/>
-            <cmd refid="showShellDialog"/>
-         </menu>
+         <cmd refid="showShellDialog"/>
          <separator/>
          <cmd refid="showOptions"/>
       </menu>

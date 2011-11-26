@@ -18,6 +18,8 @@ public class SourceControlPrefs extends JavaScriptObject
 {
    protected SourceControlPrefs() {}
 
+   // create source control prefs -- don't pass the have_rsa_public_key
+   // parameter because that is a read-only rider for the prefs ui
    public static final native SourceControlPrefs create(boolean vcsEnabled,
                                                         String gitBinDir) 
                                                                            /*-{
@@ -33,5 +35,9 @@ public class SourceControlPrefs extends JavaScriptObject
    
    public native final String getGitBinDir() /*-{
       return this.git_bin_dir;
+   }-*/;
+   
+   public native final boolean haveRsaPublicKey() /*-{
+      return this.have_rsa_public_key;
    }-*/;
 }

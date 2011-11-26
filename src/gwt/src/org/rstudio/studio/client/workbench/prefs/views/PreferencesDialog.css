@@ -10,8 +10,9 @@
    margin-top: 30px;
 }
 
-.usingVcsHelpNoSsh {
-   margin-top: 20px;
+.viewSshKey {
+   padding-top: 20px;
+   margin-left: 2px;
 }
 
 .newSection {
