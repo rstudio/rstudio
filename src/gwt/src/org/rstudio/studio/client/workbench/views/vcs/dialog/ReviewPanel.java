@@ -541,8 +541,8 @@ public class ReviewPanel extends Composite implements Display
               }
               
            });
-      stageMenu.setEnabled(stageFilesButton_.isEnabled()); 
-      menu.addItem(stageMenu);
+      if (stageFilesButton_.isEnabled())
+         menu.addItem(stageMenu);
      
     
      MenuItem revertMenu = new MenuItem(
@@ -556,16 +556,19 @@ public class ReviewPanel extends Composite implements Display
               }
               
            });
-        revertMenu.setEnabled(revertFilesButton_.isEnabled()); 
-        menu.addItem(revertMenu);
+      if (revertFilesButton_.isEnabled())
+         menu.addItem(revertMenu);
      
-     menu.setPopupPositionAndShow(new PositionCallback() {
-         @Override
-         public void setPosition(int offsetWidth, int offsetHeight)
-         {
-            menu.setPopupPosition(clientX, clientY);     
-         }
-      });
+     if (menu.getItemCount() > 0)
+     {
+        menu.setPopupPositionAndShow(new PositionCallback() {
+            @Override
+            public void setPosition(int offsetWidth, int offsetHeight)
+            {
+               menu.setPopupPosition(clientX, clientY);     
+            }
+         });
+     }
    }
 
    @Override
