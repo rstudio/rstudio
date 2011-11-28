@@ -25,6 +25,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations.ProcessResult;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
@@ -47,6 +48,8 @@ public class SVNPresenter extends BasePresenter
       HasClickHandlers getAddFilesButton();
       HasClickHandlers getDeleteFilesButton();
       HasClickHandlers getRevertFilesButton();
+      HasClickHandlers getUpdateButton();
+      HasClickHandlers getCommitButton();
       ArrayList<StatusAndPath> getSelectedItems();
    }
 
@@ -118,6 +121,31 @@ public class SVNPresenter extends BasePresenter
 
             if (paths.length() > 0)
                server_.svnRevert(paths, new ProcessCallback("SVN Revert"));
+         }
+      });
+
+      view_.getUpdateButton().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            server_.svnUpdate(new SimpleRequestCallback<ConsoleProcess>()
+            {
+               @Override
+               public void onResponseReceived(ConsoleProcess response)
+               {
+                  new ConsoleProgressDialog("SVN Update", response).showModal();
+               }
+            });
+         }
+      });
+
+      view_.getCommitButton().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            // TODO: implement
          }
       });
    }

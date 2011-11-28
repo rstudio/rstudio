@@ -26,6 +26,7 @@
 #include <session/SessionOptions.hpp>
 
 #include "vcs/SessionVCSUtils.hpp"
+#include "SessionConsoleProcess.hpp"
 
 using namespace core;
 using namespace core::shell_utils;
@@ -39,6 +40,29 @@ namespace {
 
 /** GLOBAL STATE **/
 FilePath s_workingDir;
+
+FilePath resolveAliasedPath(const std::string& path)
+{
+   if (boost::algorithm::starts_with(path, "~/"))
+      return module_context::resolveAliasedPath(path);
+   else
+      return s_workingDir.childPath(path);
+}
+
+
+std::vector<FilePath> resolveAliasedPaths(const json::Array& paths,
+                                          bool includeRenameOld = false,
+                                          bool includeRenameNew = true)
+{
+   std::vector<FilePath> results;
+   for (json::Array::const_iterator it = paths.begin();
+        it != paths.end();
+        it++)
+   {
+      results.push_back(resolveAliasedPath(it->get_str()));
+   }
+   return results;
+}
 
 core::system::ProcessOptions procOptions()
 {
@@ -117,6 +141,43 @@ Error runSvn(const ShellArgs& args,
    if (pExitCode)
       *pExitCode = result.exitStatus;
 
+   return Success();
+}
+
+core::Error createConsoleProc(const ShellArgs& args,
+                              const std::string& caption,
+                              bool dialog,
+                              std::string* pHandle,
+                              const boost::optional<FilePath>& workingDir=boost::optional<FilePath>())
+{
+   using namespace session::modules::console_process;
+
+   core::system::ProcessOptions options = procOptions();
+#ifdef _WIN32
+   options.detachProcess = true;
+#endif
+   if (!workingDir)
+      options.workingDir = s_workingDir;
+   else if (!workingDir.get().empty())
+      options.workingDir = workingDir.get();
+
+#ifdef _WIN32
+   boost::shared_ptr<ConsoleProcess> ptrCP =
+         ConsoleProcess::create("svn.exe",
+                                args.args(),
+                                options,
+                                caption,
+                                dialog,
+                                &enqueueRefreshEvent);
+#else
+   boost::shared_ptr<ConsoleProcess> ptrCP =
+         ConsoleProcess::create(ShellCommand("svn") << args.args(),
+                                options,
+                                caption,
+                                dialog,
+                                &enqueueRefreshEvent);
+#endif
+   *pHandle = ptrCP->handle();
    return Success();
 }
 
@@ -412,6 +473,72 @@ Error svnStatus(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error svnUpdate(const json::JsonRpcRequest& request,
+                json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+   Error error = createConsoleProc(ShellArgs() << "update",
+                                   "SVN Update",
+                                   true,
+                                   &handle);
+   if (error)
+      return error;
+
+   // TODO: Authentication if necessary
+   // TODO: Set askpass handle?? Is that even necessary with SVN?
+
+   pResponse->setResult(handle);
+
+   return Success();
+}
+
+Error svnCommit(const json::JsonRpcRequest& request,
+                json::JsonRpcResponse* pResponse)
+{
+   json::Array paths;
+   std::string message;
+
+   Error error = json::readParams(request.params, &paths, &message);
+   if (error)
+      return error;
+
+   FilePath tempFile = module_context::tempFile("gitmsg", "txt");
+   boost::shared_ptr<std::ostream> pStream;
+
+   error = tempFile.open_w(&pStream);
+   if (error)
+      return error;
+
+   *pStream << message;
+
+   pStream->flush();
+   pStream.reset();  // release file handle
+
+
+   ShellArgs args;
+   args << "commit";
+   args << "-F" << tempFile;
+
+   args << "--";
+   if (!paths.empty())
+      args << resolveAliasedPaths(paths);
+
+   std::string handle;
+   error = createConsoleProc(args,
+                             "SVN Commit",
+                             true,
+                             &handle);
+   if (error)
+      return error;
+
+   // TODO: Authentication if necessary
+   // TODO: Set askpass handle?? Is that even necessary with SVN?
+
+   pResponse->setResult(handle);
+
+   return Success();
+}
+
 Error initialize()
 {
    // install rpc methods
@@ -422,7 +549,9 @@ Error initialize()
       (bind(registerRpcMethod, "svn_add", svnAdd))
       (bind(registerRpcMethod, "svn_delete", svnDelete))
       (bind(registerRpcMethod, "svn_revert", svnRevert))
-      (bind(registerRpcMethod, "svn_status", svnStatus));
+      (bind(registerRpcMethod, "svn_status", svnStatus))
+      (bind(registerRpcMethod, "svn_update", svnUpdate))
+      (bind(registerRpcMethod, "svn_commit", svnCommit));
    Error error = initBlock.execute();
    if (error)
       return error;

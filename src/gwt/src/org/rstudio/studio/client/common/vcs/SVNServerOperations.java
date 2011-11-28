@@ -15,6 +15,7 @@ package org.rstudio.studio.client.common.vcs;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.server.*;
 
@@ -47,4 +48,11 @@ public interface SVNServerOperations extends CryptoServerOperations
 
    void svnDiff(String path,
                 ServerRequestCallback<String> requestCallback);
+
+   void svnUpdate(ServerRequestCallback<ConsoleProcess> requestCallback);
+
+   void svnCommit(
+         JsArrayString paths,
+         String message,
+         ServerRequestCallback<ConsoleProcess> requestCallback);
 }

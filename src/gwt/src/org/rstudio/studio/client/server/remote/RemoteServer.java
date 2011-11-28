@@ -2235,6 +2235,26 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SVN_DIFF, path, requestCallback);
    }
 
+   @Override
+   public void svnUpdate(ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, SVN_UPDATE,
+                  new ConsoleProcessCallbackAdapter(requestCallback));
+   }
+
+   @Override
+   public void svnCommit(JsArrayString paths,
+                         String message,
+                         ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONArray(paths));
+      params.set(1, new JSONString(message));
+
+      sendRequest(RPC_SCOPE, SVN_COMMIT, params,
+                  new ConsoleProcessCallbackAdapter(requestCallback));
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -2405,6 +2425,8 @@ public class RemoteServer implements Server
    private static final String SVN_REVERT = "svn_revert";
    private static final String SVN_STATUS = "svn_status";
    private static final String SVN_DIFF = "svn_diff";
+   private static final String SVN_UPDATE = "svn_update";
+   private static final String SVN_COMMIT = "svn_commit";
 
    private static final String GET_PUBLIC_KEY = "get_public_key";
    

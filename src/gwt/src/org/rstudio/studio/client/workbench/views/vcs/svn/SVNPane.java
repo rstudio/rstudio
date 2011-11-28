@@ -49,6 +49,14 @@ public class SVNPane extends WorkbenchPane implements Display
             "Revert",
             commands_.vcsRevertFiles().getImageResource(),
             (ClickHandler)null);
+      updateButton_ = new ToolbarButton(
+            "Update",
+            commands_.vcsPull().getImageResource(),
+            (ClickHandler)null);
+      commitButton_ = new ToolbarButton(
+            "Commit",
+            commands_.vcsCommit().getImageResource(),
+            (ClickHandler)null);
    }
 
    @Override
@@ -69,6 +77,8 @@ public class SVNPane extends WorkbenchPane implements Display
       toolbar.addLeftWidget(addFilesButton_);
       toolbar.addLeftWidget(deleteFilesButton_);
       toolbar.addLeftWidget(revertFilesButton_);
+      toolbar.addLeftWidget(updateButton_);
+//      toolbar.addLeftWidget(commitButton_);
 
       toolbar.addRightWidget(commands_.vcsRefresh().createToolbarButton());
 
@@ -91,6 +101,18 @@ public class SVNPane extends WorkbenchPane implements Display
    public ToolbarButton getRevertFilesButton()
    {
       return revertFilesButton_;
+   }
+
+   @Override
+   public ToolbarButton getUpdateButton()
+   {
+      return updateButton_;
+   }
+
+   @Override
+   public ToolbarButton getCommitButton()
+   {
+      return commitButton_;
    }
 
    @Override
@@ -120,4 +142,6 @@ public class SVNPane extends WorkbenchPane implements Display
    private final ToolbarButton addFilesButton_;
    private final ToolbarButton deleteFilesButton_;
    private final ToolbarButton revertFilesButton_;
+   private final ToolbarButton updateButton_;
+   private final ToolbarButton commitButton_;
 }
