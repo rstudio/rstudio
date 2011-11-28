@@ -183,6 +183,10 @@ public class MultiSelectCellTable<T> extends CellTable<T>
    // forward the event on to any external listeners
    private void handleContextMenu(ContextMenuEvent cmEvent)
    {
+      // bail if there are no context menu handlers
+      if (handlerManager_.getHandlerCount(ContextMenuEvent.getType()) == 0)
+         return;
+       
       // Get the event target.
       NativeEvent event = cmEvent.getNativeEvent();
       EventTarget eventTarget = event.getEventTarget();
@@ -190,6 +194,10 @@ public class MultiSelectCellTable<T> extends CellTable<T>
         return;
       final Element target = event.getEventTarget().cast();
 
+      // always squelch default handling (when there is a handler)
+      event.stopPropagation();
+      event.preventDefault();
+      
       // find the table cell element then get its parent and cast to row
       TableCellElement tableCell = findNearestParentCell(target);
       if (tableCell == null)
@@ -206,11 +214,7 @@ public class MultiSelectCellTable<T> extends CellTable<T>
         return;
       TableSectionElement section = TableSectionElement.as(sectionElem);
       if (section != getTableBodyElement())
-         return;
-       
-      // we've got a right-click event on a row so nix default handling
-      event.stopPropagation();
-      event.preventDefault();
+         return; 
       
       // determine the row/item target
       int row = tr.getSectionRowIndex();
