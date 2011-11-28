@@ -55,7 +55,7 @@ public class ExistingDirectoryPage extends NewProjectWizardPage
       String dir = existingProjectDir_.getText();
       if (dir.length() > 0)
       {
-         return new NewProjectResult(projFileFromDir(dir), null, null);
+         return new NewProjectResult(projFileFromDir(dir), false, null, null);
       }
       else
       {

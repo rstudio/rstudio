@@ -52,9 +52,10 @@ void onResume(const Settings&) {}
 Error createProject(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
-   // determine project file path
+   // read params
    std::string projectFile;
-   Error error = json::readParam(request.params, 0, &projectFile);
+   bool gitRepo;
+   Error error = json::readParams(request.params, &projectFile, &gitRepo);
    if (error)
       return error;
    FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
@@ -63,6 +64,8 @@ Error createProject(const json::JsonRpcRequest& request,
    error = projectFilePath.parent().ensureDirectory();
    if (error)
       return error;
+
+   // TODO: call git init
 
    // create the project file
    return r_util::writeProjectFile(projectFilePath,

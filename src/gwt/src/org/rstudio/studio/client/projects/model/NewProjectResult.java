@@ -15,10 +15,12 @@ package org.rstudio.studio.client.projects.model;
 public class NewProjectResult
 {
    public NewProjectResult(String projectFile, 
+                           boolean createGitRepo,
                            String newDefaultProjectLocation,
                            VcsCloneOptions vcsCloneOptions)
    {
       projectFile_ = projectFile;
+      createGitRepo_ = createGitRepo;
       newDefaultProjectLocation_ = newDefaultProjectLocation;
       vcsCloneOptions_ = vcsCloneOptions;
    }
@@ -26,6 +28,11 @@ public class NewProjectResult
    public String getProjectFile()
    {
       return projectFile_;
+   }
+   
+   public boolean getCreateGitRepo()
+   {
+      return createGitRepo_;
    }
    
    public String getNewDefaultProjectLocation()
@@ -38,6 +45,7 @@ public class NewProjectResult
       return vcsCloneOptions_;
    }
    
+   private final boolean createGitRepo_;
    private final String projectFile_;
    private final String newDefaultProjectLocation_;
    private final VcsCloneOptions vcsCloneOptions_;

@@ -944,11 +944,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, MANIPULATOR_PLOT_CLICKED, params, requestCallback);
    }
    
-   public void createProject(
-         String projectDirectory,
-         ServerRequestCallback<Void> requestCallback)
+   public void createProject( String projectDirectory,
+                              boolean createGitRepo,
+                              ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, CREATE_PROJECT, projectDirectory, requestCallback);
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(projectDirectory));
+      params.set(1, JSONBoolean.getInstance(createGitRepo));
+      sendRequest(RPC_SCOPE, CREATE_PROJECT, params, requestCallback);
    }
    
    public void readProjectOptions(ServerRequestCallback<RProjectOptions> callback)

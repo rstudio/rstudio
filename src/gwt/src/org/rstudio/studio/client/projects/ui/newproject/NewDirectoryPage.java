@@ -94,7 +94,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
          String newDefaultLocation = null;
          if (!dir.equals(defaultNewProjectLocation_))
             newDefaultLocation = dir;
-         return new NewProjectResult(projFile, newDefaultLocation, null);
+         return new NewProjectResult(projFile, false, newDefaultLocation, null);
       }
       else
       {

@@ -150,6 +150,18 @@ public class SessionInfo extends JavaScriptObject
       return this.vcs;
    }-*/;
    
+   public final boolean isGitAvailable()
+   {
+      String[] availableVcs = getAvailableVCS();
+      for (int i=0; i<availableVcs.length; i++)
+      {
+         if (availableVcs[i].equals("git"))
+            return true;
+      }
+      
+      return false;
+   }
+   
    public native final String getDefaultSSHKeyDir() /*-{
       return this.default_ssh_key_dir;
    }-*/;

@@ -148,7 +148,7 @@ public class VersionControlPage extends NewProjectWizardPage
                                                              checkoutDir, 
                                                              dir);
          
-         return new NewProjectResult(projFile, dir, vcsOptions);
+         return new NewProjectResult(projFile, false, dir, vcsOptions);
       }
       else
       {
