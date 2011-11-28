@@ -523,6 +523,11 @@ public class ReviewPanel extends Composite implements Display
    @Override
    public void showContextMenu(final int clientX, final int clientY)
    {
+      // make sure enabled/disabled states of buttons are correct (note
+      // that this won't be necessary when the Stage/Revert buttons correctly
+      // update their enabled state at startup -- see bug #2102) 
+      setFilesCommandsEnabled(getSelectedPaths().size() > 0);
+      
       final ToolbarPopupMenu menu = new ToolbarPopupMenu();
       
       MenuItem stageMenu = new MenuItem(
