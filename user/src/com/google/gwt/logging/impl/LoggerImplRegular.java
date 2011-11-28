@@ -60,17 +60,11 @@ public class LoggerImplRegular implements LoggerImpl {
   }
 
   public Handler[] getHandlers() {
-    if (handlers.size() > 0) {
-      return handlers.toArray(new Handler[handlers.size()]);
-    }
-    return null;
+    return handlers.toArray(new Handler[handlers.size()]);
   }
 
   public Level getLevel() {
-    if (level != null) {
-      return level;
-    }
-    return getParent().getLevel();
+    return level;
   }
 
   public Logger getLoggerHelper(String name) {
@@ -106,7 +100,7 @@ public class LoggerImplRegular implements LoggerImpl {
   }
 
   public boolean isLoggable(Level messageLevel) {
-    return getLevel().intValue() <= messageLevel.intValue();
+    return getEffectiveLevel().intValue() <= messageLevel.intValue();
   }
 
   public void log(Level level, String msg) {
@@ -124,11 +118,15 @@ public class LoggerImplRegular implements LoggerImpl {
 
   public void log(LogRecord record) {
     if (isLoggable(record.getLevel())) {
-      for (Handler h : handlers) {
-        h.publish(record);
+      for (Handler handler : getHandlers()) {
+        handler.publish(record);
       }
-      if (useParentHandlers && parent != null) {
-        parent.log(record);
+      Logger logger = getUseParentHandlers() ? getParent() : null;
+      while (logger != null) {
+        for (Handler handler : logger.getHandlers()) {
+          handler.publish(record);
+        }
+        logger = logger.getUseParentHandlers() ? logger.getParent() : null;
       }
     }
   }
@@ -163,4 +161,18 @@ public class LoggerImplRegular implements LoggerImpl {
     log(Level.WARNING, msg);
   }
 
+  private Level getEffectiveLevel() {
+    if (level != null) {
+      return level;
+    }
+    Logger logger = getParent();
+    while (logger != null) {
+      Level effectiveLevel = logger.getLevel();
+      if (effectiveLevel != null) {
+        return effectiveLevel;
+      }
+      logger = logger.getParent();
+    }
+    return Level.INFO;
+  }
 }
