@@ -585,13 +585,16 @@ well as menu structures (for main menu and popup menus).
 
    <!-- VCS pane -->
    <cmd id="vcsDiff"
-        label="Diff"
+        buttonLabel="Diff"
+        menuLabel="Diff"
         desc="Diff selected file(s)"/>
    <cmd id="vcsCommit"
-        label="Commit"
+        buttonLabel="Commit"
+        menuLabel="Commit..."
         desc="Commit pending changes"/>
    <cmd id="vcsRevert"
-        label="Revert"
+        buttonLabel="Revert"
+        menuLabel="Revert..."
         desc="Revert selected changes"/>
    <cmd id="vcsShowHistory"
         menuLabel="History"

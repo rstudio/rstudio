@@ -34,8 +34,11 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.WidgetHandlerRegistration;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -515,6 +518,49 @@ public class ReviewPanel extends Composite implements Display
    public void hideSizeWarning()
    {
       diffScroll_.setWidget(lines_);
+   }
+   
+   @Override
+   public void showContextMenu(final int clientX, final int clientY)
+   {
+      final ToolbarPopupMenu menu = new ToolbarPopupMenu();
+      
+      MenuItem stageMenu = new MenuItem(
+           AppCommand.formatMenuLabel(RES.stage(), "Stage", ""),
+           true,
+           new Command() {
+              @Override
+              public void execute()
+              {
+                 stageFilesButton_.click();
+              }
+              
+           });
+      stageMenu.setEnabled(stageFilesButton_.isEnabled()); 
+      menu.addItem(stageMenu);
+     
+    
+     MenuItem revertMenu = new MenuItem(
+           AppCommand.formatMenuLabel(RES.discard(), "Revert...", ""),
+           true,
+           new Command() {
+              @Override
+              public void execute()
+              {
+                 revertFilesButton_.click();
+              }
+              
+           });
+        revertMenu.setEnabled(revertFilesButton_.isEnabled()); 
+        menu.addItem(revertMenu);
+     
+     menu.setPopupPositionAndShow(new PositionCallback() {
+         @Override
+         public void setPosition(int offsetWidth, int offsetHeight)
+         {
+            menu.setPopupPosition(clientX, clientY);     
+         }
+      });
    }
 
    @Override

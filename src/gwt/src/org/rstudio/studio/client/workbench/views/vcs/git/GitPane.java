@@ -16,6 +16,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.gwt.view.client.SelectionChangeEvent.Handler;
 import com.google.inject.Inject;
 import org.rstudio.core.client.widget.Toolbar;
@@ -132,6 +133,24 @@ public class GitPane extends WorkbenchPane implements Display
    public GitChangelistTable getChangelistTable()
    {
       return table_;
+   }
+   
+   public void showContextMenu(final int clientX, final int clientY)
+   {
+      final ToolbarPopupMenu menu = new ToolbarPopupMenu();
+      
+      menu.addItem(commands_.vcsDiff().createMenuItem(false));
+      menu.addSeparator();
+      menu.addItem(commands_.vcsRevert().createMenuItem(false));
+      menu.addItem(commands_.vcsCommit().createMenuItem(false));
+    
+      menu.setPopupPositionAndShow(new PositionCallback() {
+         @Override
+         public void setPosition(int offsetWidth, int offsetHeight)
+         {
+            menu.setPopupPosition(clientX, clientY);     
+         }
+      });
    }
 
    private final Commands commands_;

@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.git;
 
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Window;
@@ -63,6 +64,8 @@ public class GitPresenter extends BasePresenter implements IsWidget
                                           SelectionChangeEvent.Handler handler);
 
       GitChangelistTable getChangelistTable();
+      
+      void showContextMenu(int clientX, int clientY);
    }
 
    @Inject
@@ -135,6 +138,16 @@ public class GitPresenter extends BasePresenter implements IsWidget
 
                openSelectedFile();
             }
+         }
+      });
+      
+      view_.getChangelistTable().addContextMenuHandler(new ContextMenuHandler(){
+         @Override
+         public void onContextMenu(ContextMenuEvent event)
+         {
+            NativeEvent nativeEvent = event.getNativeEvent();
+            view_.showContextMenu(nativeEvent.getClientX(), 
+                                  nativeEvent.getClientY());
          }
       });
 
@@ -234,6 +247,8 @@ public class GitPresenter extends BasePresenter implements IsWidget
                   server_.gitRevert(
                         paths,
                         new SimpleRequestCallback<Void>("Revert Changes"));
+                  
+                  view_.getChangelistTable().focus();
                }
             },
             false);

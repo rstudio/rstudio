@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.HasAttachHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -96,6 +97,8 @@ public class ReviewPresenter implements IsWidget
       void showSizeWarning(long sizeInBytes);
       void hideSizeWarning();
 
+      void showContextMenu(int clientX, int clientY);
+      
       void onShow();
    }
 
@@ -295,6 +298,17 @@ public class ReviewPresenter implements IsWidget
             }
          }
       });
+      
+      view_.getChangelistTable().addContextMenuHandler(new ContextMenuHandler(){
+         @Override
+         public void onContextMenu(ContextMenuEvent event)
+         {
+            NativeEvent nativeEvent = event.getNativeEvent();
+            view_.showContextMenu(nativeEvent.getClientX(), 
+                                  nativeEvent.getClientY());
+            
+         }
+      });
 
       view_.getStageFilesButton().addClickHandler(new ClickHandler()
       {
@@ -305,6 +319,8 @@ public class ReviewPresenter implements IsWidget
             if (paths.size() == 0)
                return;
             server_.gitStage(paths, new SimpleRequestCallback<Void>());
+            
+            view_.getChangelistTable().focus();
          }
       });
 
@@ -332,6 +348,8 @@ public class ReviewPresenter implements IsWidget
                         server_.gitRevert(
                               paths,
                               new SimpleRequestCallback<Void>("Revert Changes"));
+                        
+                        view_.getChangelistTable().focus();
                      }
                   },
                   false);

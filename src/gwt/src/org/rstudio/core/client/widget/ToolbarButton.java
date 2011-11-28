@@ -216,8 +216,7 @@ public class ToolbarButton extends FocusWidget
        * annoying). Doing it this way fixes it.
        */
       
-      final SimpleHasHandlers hasHandlers = new SimpleHasHandlers();
-      hasHandlers.addHandler(ClickEvent.getType(), clickHandler);
+      hasHandlers_.addHandler(ClickEvent.getType(), clickHandler);
 
       final HandlerRegistration mouseDown = addMouseDownHandler(new MouseDownHandler()
       {
@@ -265,7 +264,7 @@ public class ToolbarButton extends FocusWidget
                      event.getNativeEvent().getAltKey(),
                      event.getNativeEvent().getShiftKey(),
                      event.getNativeEvent().getMetaKey());
-               DomEvent.fireNativeEvent(clickEvent, hasHandlers);
+               DomEvent.fireNativeEvent(clickEvent, hasHandlers_);
             }
          }
       });
@@ -279,6 +278,21 @@ public class ToolbarButton extends FocusWidget
             mouseUp.removeHandler();
          }
       }; 
+   }
+   
+   public void click()
+   {
+      NativeEvent clickEvent = Document.get().createClickEvent(
+            1,
+            0,
+            0,
+            0,
+            0,
+            false,
+            false,
+            false,
+            false);
+      DomEvent.fireNativeEvent(clickEvent, hasHandlers_); 
    }
 
    protected Toolbar getParentToolbar()
@@ -320,6 +334,8 @@ public class ToolbarButton extends FocusWidget
    }
 
    private boolean down_;
+   
+   private SimpleHasHandlers hasHandlers_ = new SimpleHasHandlers();
    
    interface Binder extends UiBinder<Element, ToolbarButton> { }
 
