@@ -40,7 +40,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public abstract class ChangelistTable extends Composite
-   implements HasKeyDownHandlers, HasClickHandlers, HasMouseDownHandlers
+   implements HasKeyDownHandlers, HasClickHandlers, HasMouseDownHandlers,
+              HasContextMenuHandlers
 {
    public interface ChangelistTableCellTableResources extends CellTable.Resources
    {
@@ -333,6 +334,12 @@ public abstract class ChangelistTable extends Composite
    public HandlerRegistration addMouseDownHandler(MouseDownHandler handler)
    {
       return table_.addMouseDownHandler(handler);
+   }
+   
+   @Override
+   public HandlerRegistration addContextMenuHandler(ContextMenuHandler handler)
+   {
+      return table_.addContextMenuHandler(handler);
    }
 
    public void focus()

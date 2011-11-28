@@ -13,8 +13,14 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableElement;
+import com.google.gwt.dom.client.TableRowElement;
+import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.client.ui.Widget;
@@ -25,7 +31,8 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
 
 public class MultiSelectCellTable<T> extends CellTable<T>
-      implements HasKeyDownHandlers, HasClickHandlers, HasMouseDownHandlers
+      implements HasKeyDownHandlers, HasClickHandlers, HasMouseDownHandlers,
+                 HasContextMenuHandlers
 {
    public MultiSelectCellTable()
    {
@@ -102,6 +109,14 @@ public class MultiSelectCellTable<T> extends CellTable<T>
             MultiSelectCellTable.this.handleKeyDown(event);
          }
       });
+      
+      addDomHandler(new ContextMenuHandler() {
+         @Override
+         public void onContextMenu(ContextMenuEvent event)
+         {
+            MultiSelectCellTable.this.handleContextMenu(event);
+         }
+      }, ContextMenuEvent.getType());
    }
 
    @Override
@@ -159,6 +174,73 @@ public class MultiSelectCellTable<T> extends CellTable<T>
 
    }
 
+   
+   // handle context-menu clicks. this implementation (specifically the 
+   // detection of table rows from dom events) is based on the code in
+   // AbstractCellTable.onBrowserEvent2. we first determine if the click
+   // applies to a row in the table -- if it does then we squelch the 
+   // standard handling of the event and update the selection and then 
+   // forward the event on to any external listeners
+   private void handleContextMenu(ContextMenuEvent cmEvent)
+   {
+      // Get the event target.
+      NativeEvent event = cmEvent.getNativeEvent();
+      EventTarget eventTarget = event.getEventTarget();
+      if (!Element.is(eventTarget))
+        return;
+      final Element target = event.getEventTarget().cast();
+
+      // find the table cell element then get its parent and cast to row
+      TableCellElement tableCell = findNearestParentCell(target);
+      if (tableCell == null)
+         return;         
+      Element trElem = tableCell.getParentElement();
+      if (trElem == null) 
+        return;
+      TableRowElement tr = TableRowElement.as(trElem);
+      
+      // get the section of the row and confirm it is a tbody (as opposed
+      // to a thead or tfoot)
+      Element sectionElem = tr.getParentElement();
+      if (sectionElem == null)
+        return;
+      TableSectionElement section = TableSectionElement.as(sectionElem);
+      if (section != getTableBodyElement())
+         return;
+       
+      // we've got a right-click event on a row so nix default handling
+      event.stopPropagation();
+      event.preventDefault();
+      
+      // determine the row/item target
+      int row = tr.getSectionRowIndex();
+      T item = getVisibleItem(row);
+      
+      // if this row isn't already selected then clear the existing selection
+      if (!getSelectionModel().isSelected(item))
+         clearSelection();
+     
+      // select the clicked on item
+      getSelectionModel().setSelected(item, true);
+      
+      // forward the event
+      DomEvent.fireNativeEvent(event, handlerManager_);
+   }
+   
+   // forked from private AbstractCellTable.findNearestParentCell
+   private TableCellElement findNearestParentCell(Element elem) {
+      while ((elem != null) && (elem != getElement())) {
+        // TODO: We need is() implementations in all Element subclasses.
+        // This would allow us to use TableCellElement.is() -- much cleaner.
+        String tagName = elem.getTagName();
+        if ("td".equalsIgnoreCase(tagName) || "th".equalsIgnoreCase(tagName)) {
+          return elem.cast();
+        }
+        elem = elem.getParentElement();
+      }
+      return null;
+   }
+  
    @Override
    public HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
    {
@@ -235,4 +317,15 @@ public class MultiSelectCellTable<T> extends CellTable<T>
    {
       return addDomHandler(handler, MouseDownEvent.getType());
    }
+   
+   @Override
+   public HandlerRegistration addContextMenuHandler(ContextMenuHandler handler)
+   {
+      return handlerManager_.addHandler(ContextMenuEvent.getType(), handler);
+   }
+   
+   // we have our own HandlerManager so that we can fire the ContextMenuEvent
+   // to listeners after we have done our own handling of it (specifically
+   // we need to nix the browser context menu and update the selection). 
+   private final HandlerManager handlerManager_ = new HandlerManager(this);
 }
