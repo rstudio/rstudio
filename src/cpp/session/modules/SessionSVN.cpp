@@ -144,6 +144,31 @@ Error runSvn(const ShellArgs& args,
    return Success();
 }
 
+std::vector<std::string> globalArgs(
+      const std::string* const pUsername=NULL,
+      const std::string* const pPassword=NULL,
+      bool cacheCredentials=false)
+{
+   std::vector<std::string> args;
+   args.push_back("--non-interactive");
+   //args.push_back("--trust-server-cert");
+
+   if (pUsername)
+   {
+      args.push_back("--username");
+      args.push_back(*pUsername);
+   }
+   if (pPassword)
+   {
+      args.push_back("--password");
+      args.push_back(*pPassword);
+   }
+
+   if (!cacheCredentials)
+      args.push_back("--no-auth-cache");
+   return args;
+}
+
 core::Error createConsoleProc(const ShellArgs& args,
                               const std::string& caption,
                               bool dialog,
@@ -317,7 +342,7 @@ Error svnAdd(const json::JsonRpcRequest& request,
                   &resolveAliasedJsonPath);
 
    core::system::ProcessResult result;
-   error = runSvn(ShellArgs() << "add" << "-q" << "--" << paths,
+   error = runSvn(ShellArgs() << "add" << globalArgs() << "-q" << "--" << paths,
                   &result, true);
    if (error)
       return error;
@@ -342,7 +367,7 @@ Error svnDelete(const json::JsonRpcRequest& request,
                   &resolveAliasedJsonPath);
 
    core::system::ProcessResult result;
-   error = runSvn(ShellArgs() << "delete" << "-q" << "--" << paths,
+   error = runSvn(ShellArgs() << "delete" << globalArgs() << "-q" << "--" << paths,
                   &result, true);
    if (error)
       return error;
@@ -367,7 +392,7 @@ Error svnRevert(const json::JsonRpcRequest& request,
                   &resolveAliasedJsonPath);
 
    core::system::ProcessResult result;
-   error = runSvn(ShellArgs() << "revert" << "-q" << "--" << paths,
+   error = runSvn(ShellArgs() << "revert" << globalArgs() << "-q" << "--" << paths,
                   &result, true);
    if (error)
       return error;
@@ -383,7 +408,7 @@ Error svnStatus(const json::JsonRpcRequest& request,
    std::string stdOut, stdErr;
    int exitCode;
    Error error = runSvn(
-         ShellArgs() << "status" << "--xml" << "--ignore-externals",
+         ShellArgs() << "status" << globalArgs() << "--xml" << "--ignore-externals",
          &stdOut,
          &stdErr,
          &exitCode);
@@ -477,7 +502,7 @@ Error svnUpdate(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
    std::string handle;
-   Error error = createConsoleProc(ShellArgs() << "update",
+   Error error = createConsoleProc(ShellArgs() << "update" << globalArgs(),
                                    "SVN Update",
                                    true,
                                    &handle);
@@ -516,7 +541,7 @@ Error svnCommit(const json::JsonRpcRequest& request,
 
 
    ShellArgs args;
-   args << "commit";
+   args << "commit" << globalArgs();
    args << "-F" << tempFile;
 
    args << "--";
