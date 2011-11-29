@@ -230,6 +230,7 @@ public abstract class ChangelistTable extends Composite
          layout_.remove(infoBar_);
          layout_.setWidgetTopBottom(scrollPanel_, 0, Unit.PX, 0, Unit.PX);
          layout_.animate(250);
+         infoBar_ = null;
       }
    }
 
