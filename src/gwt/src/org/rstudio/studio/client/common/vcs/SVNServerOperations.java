@@ -14,10 +14,13 @@ package org.rstudio.studio.client.common.vcs;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.server.*;
+import org.rstudio.studio.client.server.Void;
+
+import java.util.ArrayList;
 
 public interface SVNServerOperations extends CryptoServerOperations
 {
@@ -34,25 +37,30 @@ public interface SVNServerOperations extends CryptoServerOperations
       }-*/;
    }
 
-   void svnAdd(JsArrayString paths,
+   void svnAdd(ArrayList<String> paths,
                ServerRequestCallback<ProcessResult> requestCallback);
 
-   void svnDelete(JsArrayString paths,
+   void svnDelete(ArrayList<String> paths,
                   ServerRequestCallback<ProcessResult> requestCallback);
 
-   void svnRevert(JsArrayString paths,
+   void svnRevert(ArrayList<String> paths,
                   ServerRequestCallback<ProcessResult> requestCallback);
 
    void svnStatus(
          ServerRequestCallback<JsArray<StatusAndPathInfo>> requestCallback);
 
-   void svnDiff(String path,
-                ServerRequestCallback<String> requestCallback);
-
    void svnUpdate(ServerRequestCallback<ConsoleProcess> requestCallback);
 
    void svnCommit(
-         JsArrayString paths,
+         ArrayList<String> paths,
          String message,
          ServerRequestCallback<ConsoleProcess> requestCallback);
+
+   void svnDiffFile(String path,
+                    Integer contextLines,
+                    boolean noSizeWarning,
+                    ServerRequestCallback<String> requestCallback);
+
+   void svnApplyPatch(String patch,
+                      ServerRequestCallback<Void> requestCallback);
 }

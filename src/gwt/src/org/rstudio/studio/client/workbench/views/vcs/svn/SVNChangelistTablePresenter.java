@@ -51,6 +51,11 @@ public class SVNChangelistTablePresenter
 
    }
 
+   public void setSelectFirstItemByDefault(boolean selectFirstItemByDefault)
+   {
+      view_.setSelectFirstItemByDefault(selectFirstItemByDefault);
+   }
+
    public SVNChangelistTable getView()
    {
       return view_;

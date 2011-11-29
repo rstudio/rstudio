@@ -106,10 +106,12 @@ import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenterImpl;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitPane;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.git.dialog.GitReviewPanel;
 import org.rstudio.studio.client.workbench.views.vcs.git.dialog.GitReviewPresenter;
-import org.rstudio.studio.client.workbench.views.vcs.git.dialog.ReviewPanel;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPane;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.svn.dialog.SVNReviewPanel;
+import org.rstudio.studio.client.workbench.views.vcs.svn.dialog.SVNReviewPresenter;
 import org.rstudio.studio.client.workbench.views.workspace.Workspace;
 import org.rstudio.studio.client.workbench.views.workspace.WorkspacePane;
 import org.rstudio.studio.client.workbench.views.workspace.WorkspaceTab;
@@ -178,7 +180,8 @@ public class RStudioGinModule extends AbstractGinModule
       bind(HelpSearch.Display.class).to(HelpSearchWidget.class) ;
       bind(CodeSearch.Display.class).to(CodeSearchWidget.class);
 
-      bind(GitReviewPresenter.Display.class).to(ReviewPanel.class);
+      bind(GitReviewPresenter.Display.class).to(GitReviewPanel.class);
+      bind(SVNReviewPresenter.Display.class).to(SVNReviewPanel.class);
       bind(LineTablePresenter.Display.class).to(LineTableView.class);
       bind(HistoryPresenter.Display.class).to(HistoryPanel.class);
       

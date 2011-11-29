@@ -1,5 +1,5 @@
 /*
- * GitReviewPresenter.java
+ * SVNReviewPresenter.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.vcs.git.dialog;
+package org.rstudio.studio.client.workbench.views.vcs.svn.dialog;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -22,30 +22,21 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.gwt.view.client.SelectionChangeEvent.Handler;
 import com.google.inject.Inject;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.WidgetHandlerRegistration;
-import org.rstudio.core.client.jsonrpc.RpcObjectList;
-import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.console.ConsoleProcess;
-import org.rstudio.studio.client.common.console.ProcessExitEvent;
-import org.rstudio.studio.client.common.vcs.GitServerOperations;
-import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
+import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -53,64 +44,48 @@ import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
-import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
+import org.rstudio.studio.client.workbench.views.vcs.common.ProcessCallback;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.*;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.*;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffChunkActionEvent.Action;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
-import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
-import org.rstudio.studio.client.workbench.views.vcs.git.GitChangelistTable;
-import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
+import org.rstudio.studio.client.workbench.views.vcs.svn.model.SVNState;
 
 import java.util.ArrayList;
 
-public class GitReviewPresenter implements ReviewPresenter
+public class SVNReviewPresenter implements ReviewPresenter
 {
    public interface Display extends IsWidget, HasAttachHandlers
    {
       ArrayList<String> getSelectedPaths();
-      ArrayList<String> getSelectedDiscardablePaths();
       void setSelectedStatusAndPaths(ArrayList<StatusAndPath> selectedPaths);
 
-      HasValue<Boolean> getStagedCheckBox();
-      HasValue<Boolean> getUnstagedCheckBox();
       LineTablePresenter.Display getLineTableDisplay();
       ChangelistTable getChangelistTable();
       HasValue<Integer> getContextLines();
 
       HasClickHandlers getSwitchViewButton();
-      HasClickHandlers getStageFilesButton();
       HasClickHandlers getRevertFilesButton();
       void setFilesCommandsEnabled(boolean enabled);
       HasClickHandlers getIgnoreButton();
-      HasClickHandlers getStageAllButton();
       HasClickHandlers getDiscardAllButton();
-      HasClickHandlers getUnstageAllButton();
 
-      HasText getCommitMessage();
-      HasClickHandlers getCommitButton();
-
-      HasValue<Boolean> getCommitIsAmend();
-
-      void setData(ArrayList<ChunkOrLine> lines, PatchMode patchMode);
+      void setData(ArrayList<ChunkOrLine> lines);
 
       HasClickHandlers getOverrideSizeWarningButton();
       void showSizeWarning(long sizeInBytes);
       void hideSizeWarning();
 
       void showContextMenu(int clientX, int clientY);
-      
+
       void onShow();
    }
 
-   private class ApplyPatchClickHandler implements ClickHandler, Command
+   private class DiscardClickHandler implements ClickHandler, Command
    {
-      public ApplyPatchClickHandler(PatchMode patchMode,
-                                    boolean reverse)
+      public DiscardClickHandler()
       {
-         patchMode_ = patchMode;
-         reverse_ = reverse;
       }
 
       @Override
@@ -124,22 +99,11 @@ public class GitReviewPresenter implements ReviewPresenter
       {
          ArrayList<String> paths = view_.getSelectedPaths();
 
-         if (patchMode_ == PatchMode.Stage && !reverse_)
-            server_.gitStage(paths, new SimpleRequestCallback<Void>("Stage"));
-         else if (patchMode_ == PatchMode.Stage && reverse_)
-            server_.gitUnstage(paths,
-                               new SimpleRequestCallback<Void>("Unstage"));
-         else if (patchMode_ == PatchMode.Working && reverse_)
-            server_.gitDiscard(paths,
-                               new SimpleRequestCallback<Void>("Discard"));
-         else
-            throw new RuntimeException("Unknown patchMode and reverse combo");
+         server_.svnRevert(paths,
+                           new ProcessCallback("Revert"));
 
          view_.getChangelistTable().moveSelectionDown();
       }
-
-      private final PatchMode patchMode_;
-      private final boolean reverse_;
    }
 
    private class ApplyPatchHandler implements DiffChunkActionHandler,
@@ -164,50 +128,33 @@ public class GitReviewPresenter implements ReviewPresenter
                            ArrayList<Line> lines,
                            ArrayList<DiffChunk> chunks)
       {
-         boolean reverse;
-         PatchMode patchMode;
-         switch (action)
-         {
-            case Stage:
-               reverse = false;
-               patchMode = GitServerOperations.PatchMode.Stage;
-               break;
-            case Unstage:
-               reverse = true;
-               patchMode = GitServerOperations.PatchMode.Stage;
-               break;
-            case Discard:
-               reverse = true;
-               patchMode = GitServerOperations.PatchMode.Working;
-               break;
-            default:
-               throw new IllegalArgumentException("Unhandled diff chunk action");
-         }
+         if (action != Action.Discard)
+            throw new IllegalArgumentException("Unhandled diff chunk action");
 
-         applyPatch(chunks, lines, reverse, patchMode);
+         applyPatch(chunks, lines, true);
       }
 
    }
 
    @Inject
-   public GitReviewPresenter(GitServerOperations server,
+   public SVNReviewPresenter(SVNServerOperations server,
                              Display view,
                              final EventBus events,
-                             final GitState gitState,
+                             final SVNState svnState,
                              final Session session,
                              final GlobalDisplay globalDisplay)
    {
       server_ = server;
       view_ = view;
       globalDisplay_ = globalDisplay;
-      gitState_ = gitState;
+      svnState_ = svnState;
 
       new WidgetHandlerRegistration(view.asWidget())
       {
          @Override
          protected HandlerRegistration doRegister()
          {
-            return gitState_.addVcsRefreshHandler(new VcsRefreshHandler()
+            return svnState_.addVcsRefreshHandler(new VcsRefreshHandler()
             {
                @Override
                public void onVcsRefresh(VcsRefreshEvent event)
@@ -219,7 +166,7 @@ public class GitReviewPresenter implements ReviewPresenter
                         @Override
                         public void execute()
                         {
-                           updateDiff(true);
+                           updateDiff();
 
                            initialized_ = true;
                         }
@@ -252,14 +199,14 @@ public class GitReviewPresenter implements ReviewPresenter
                         event.getFileChange().getFile().getGitStatus());
                   if (paths.get(0).getRawPath().equals(vcsStatus.getRawPath()))
                   {
-                     gitState.refresh(false);
+                     svnState.refresh(false);
                   }
                }
             });
          }
       };
 
-      view_.getChangelistTable().addSelectionChangeHandler(new Handler()
+      view_.getChangelistTable().addSelectionChangeHandler(new com.google.gwt.view.client.SelectionChangeEvent.Handler()
       {
          @Override
          public void onSelectionChange(SelectionChangeEvent event)
@@ -267,40 +214,10 @@ public class GitReviewPresenter implements ReviewPresenter
             overrideSizeWarning_ = false;
             view_.setFilesCommandsEnabled(view_.getSelectedPaths().size() > 0);
             if (initialized_)
-               updateDiff(true);
+               updateDiff();
          }
       });
-      view_.getChangelistTable().addKeyDownHandler(new KeyDownHandler()
-      {
-         @Override
-         public void onKeyDown(KeyDownEvent event)
-         {
-            // Space toggles the staged/unstaged state of the current selection.
-            // Enter does the same plus moves the selection down.
 
-            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER
-                || event.getNativeKeyCode() == ' ')
-            {
-               getTable().toggleStaged(
-                     event.getNativeKeyCode() == KeyCodes.KEY_ENTER);
-            }
-         }
-      });
-      view_.getChangelistTable().addMouseDownHandler(new MouseDownHandler()
-      {
-         private DoubleClickState dblClick = new DoubleClickState();
-         @Override
-         public void onMouseDown(MouseDownEvent event)
-         {
-            if (dblClick.checkForDoubleClick(event.getNativeEvent()))
-            {
-               event.preventDefault();
-               event.stopPropagation();
-               getTable().toggleStaged(false);
-            }
-         }
-      });
-      
       view_.getChangelistTable().addContextMenuHandler(new ContextMenuHandler()
       {
          @Override
@@ -310,20 +227,6 @@ public class GitReviewPresenter implements ReviewPresenter
             view_.showContextMenu(nativeEvent.getClientX(),
                                   nativeEvent.getClientY());
 
-         }
-      });
-
-      view_.getStageFilesButton().addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            ArrayList<String> paths = view_.getSelectedPaths();
-            if (paths.size() == 0)
-               return;
-            server_.gitStage(paths, new SimpleRequestCallback<Void>());
-            
-            view_.getChangelistTable().focus();
          }
       });
 
@@ -348,10 +251,10 @@ public class GitReviewPresenter implements ReviewPresenter
                      {
                         view_.getChangelistTable().selectNextUnselectedItem();
 
-                        server_.gitRevert(
+                        server_.svnRevert(
                               paths,
-                              new SimpleRequestCallback<Void>("Revert Changes"));
-                        
+                              new ProcessCallback("Revert Changes"));
+
                         view_.getChangelistTable().focus();
                      }
                   },
@@ -359,49 +262,14 @@ public class GitReviewPresenter implements ReviewPresenter
          }
       });
 
-      view_.getCommitIsAmend().addValueChangeHandler(new ValueChangeHandler<Boolean>()
-      {
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> booleanValueChangeEvent)
-         {
-            server_.gitHistory("", 0, 1, null, new ServerRequestCallback<RpcObjectList<CommitInfo>>() {
-               @Override
-               public void onResponseReceived(RpcObjectList<CommitInfo> response)
-               {
-                  if (response.length() == 1)
-                  {
-                     String description = response.get(0).getDescription();
-
-                     if (view_.getCommitIsAmend().getValue())
-                     {
-                        if (view_.getCommitMessage().getText().length() == 0)
-                           view_.getCommitMessage().setText(description);
-                     }
-                     else
-                     {
-                        if (view_.getCommitMessage().getText().equals(description))
-                           view_.getCommitMessage().setText("");
-                     }
-                  }
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  Debug.logError(error);
-               }
-            });
-         }
-      });
-
-      view_.getStageAllButton().addClickHandler(
-            new ApplyPatchClickHandler(PatchMode.Stage, false));
       view_.getDiscardAllButton().addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
          {
-            String which = view_.getLineTableDisplay().getSelectedLines().size() == 0
+            String which = view_.getLineTableDisplay()
+                                 .getSelectedLines()
+                                 .size() == 0
                            ? "All unstaged"
                            : "The selected";
             globalDisplay.showYesNoMessage(
@@ -409,31 +277,21 @@ public class GitReviewPresenter implements ReviewPresenter
                   "Discard All",
                   which + " changes in this file will be " +
                   "lost.\n\nAre you sure you want to continue?",
-                  new Operation() {
+                  new Operation()
+                  {
                      @Override
-                     public void execute() {
-                        new ApplyPatchClickHandler(PatchMode.Working, true).execute();
+                     public void execute()
+                     {
+                        new DiscardClickHandler().execute();
                      }
                   },
                   false);
          }
       });
-      view_.getUnstageAllButton().addClickHandler(
-            new ApplyPatchClickHandler(PatchMode.Stage, true));
-      view_.getStagedCheckBox().addValueChangeHandler(
-            new ValueChangeHandler<Boolean>()
-            {
-               @Override
-               public void onValueChange(ValueChangeEvent<Boolean> event)
-               {
-                  if (initialized_)
-                     updateDiff(false);
-               }
-            });
       view_.getLineTableDisplay().addDiffChunkActionHandler(new ApplyPatchHandler());
       view_.getLineTableDisplay().addDiffLineActionHandler(new ApplyPatchHandler());
 
-      new IntStateValue(MODULE_GIT, KEY_CONTEXT_LINES, ClientState.PERSISTENT,
+      new IntStateValue(MODULE_SVN, KEY_CONTEXT_LINES, ClientState.PERSISTENT,
                         session.getSessionInfo().getClientState())
       {
          @Override
@@ -455,36 +313,7 @@ public class GitReviewPresenter implements ReviewPresenter
          @Override
          public void onValueChange(ValueChangeEvent<Integer> event)
          {
-            updateDiff(false);
-         }
-      });
-
-      view_.getCommitButton().addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            server_.gitCommit(
-                  view_.getCommitMessage().getText(),
-                  view_.getCommitIsAmend().getValue(),
-                  false,
-                  new SimpleRequestCallback<ConsoleProcess>()
-                  {
-                     @Override
-                     public void onResponseReceived(ConsoleProcess proc)
-                     {
-                        proc.addProcessExitHandler(new ProcessExitEvent.Handler()
-                        {
-                           @Override
-                           public void onProcessExit(ProcessExitEvent event)
-                           {
-                              if (event.getExitCode() == 0)
-                                 view_.getCommitMessage().setText("");
-                           }
-                        });
-                        new ConsoleProgressDialog("Commit", proc).showModal();
-                     }
-                  });
+            updateDiff();
          }
       });
 
@@ -494,20 +323,14 @@ public class GitReviewPresenter implements ReviewPresenter
          public void onClick(ClickEvent event)
          {
             overrideSizeWarning_ = true;
-            updateDiff(false);
+            updateDiff();
          }
       });
    }
 
-   private GitChangelistTable getTable()
-   {
-      return (GitChangelistTable) view_.getChangelistTable();
-   }
-
    private void applyPatch(ArrayList<DiffChunk> chunks,
                            ArrayList<Line> lines,
-                           boolean reverse,
-                           PatchMode patchMode)
+                           boolean reverse)
    {
       chunks = new ArrayList<DiffChunk>(chunks);
 
@@ -519,19 +342,21 @@ public class GitReviewPresenter implements ReviewPresenter
       }
 
       String path = view_.getChangelistTable().getSelectedPaths().get(0);
+
+      // TODO: Verify that this is not possible in SVN, and remove
       if (path.indexOf(" -> ") >= 0)
          path = path.substring(path.indexOf(" -> ") + " -> ".length());
+
       UnifiedEmitter emitter = new UnifiedEmitter(path);
       for (DiffChunk chunk : chunks)
          emitter.addContext(chunk);
       emitter.addDiffs(lines);
       String patch = emitter.createPatch();
 
-      softModeSwitch_ = true;
-      server_.gitApplyPatch(patch, patchMode, new SimpleRequestCallback<Void>());
+      server_.svnApplyPatch(patch, new SimpleRequestCallback<Void>());
    }
 
-   private void updateDiff(boolean allowModeSwitch)
+   private void updateDiff()
    {
       view_.hideSizeWarning();
 
@@ -544,39 +369,6 @@ public class GitReviewPresenter implements ReviewPresenter
 
       final StatusAndPath item = paths.get(0);
 
-      if (allowModeSwitch)
-      {
-         if (!softModeSwitch_)
-         {
-            boolean staged = item.getStatus().charAt(0) != ' ' &&
-                             item.getStatus().charAt(1) == ' ';
-            HasValue<Boolean> checkbox = staged ?
-                                         view_.getStagedCheckBox() :
-                                         view_.getUnstagedCheckBox();
-            if (!checkbox.getValue())
-            {
-               clearDiff();
-               checkbox.setValue(true, true);
-            }
-         }
-         else
-         {
-            if (view_.getStagedCheckBox().getValue()
-                && (item.getStatus().charAt(0) == ' ' || item.getStatus().charAt(0) == '?'))
-            {
-               clearDiff();
-               view_.getUnstagedCheckBox().setValue(true, true);
-            }
-            else if (view_.getUnstagedCheckBox().getValue()
-                     && item.getStatus().charAt(1) == ' ')
-            {
-               clearDiff();
-               view_.getStagedCheckBox().setValue(true, true);
-            }
-         }
-      }
-      softModeSwitch_ = false;
-
       if (!item.getPath().equals(currentFilename_))
       {
          clearDiff();
@@ -586,12 +378,8 @@ public class GitReviewPresenter implements ReviewPresenter
       diffInvalidation_.invalidate();
       final Token token = diffInvalidation_.getInvalidationToken();
 
-      final PatchMode patchMode = view_.getStagedCheckBox().getValue()
-                                  ? PatchMode.Stage
-                                  : PatchMode.Working;
-      server_.gitDiffFile(
+      server_.svnDiffFile(
             item.getPath(),
-            patchMode,
             view_.getContextLines().getValue(),
             overrideSizeWarning_,
             new SimpleRequestCallback<String>("Diff Error")
@@ -624,7 +412,7 @@ public class GitReviewPresenter implements ReviewPresenter
 
                   view_.getLineTableDisplay().setShowActions(
                         item.isFineGrainedActionable());
-                  view_.setData(allLines, patchMode);
+                  view_.setData(allLines);
                }
 
                @Override
@@ -641,7 +429,6 @@ public class GitReviewPresenter implements ReviewPresenter
 
    private void clearDiff()
    {
-      softModeSwitch_ = false;
       currentResponse_ = null;
       currentFilename_ = null;
       view_.getLineTableDisplay().clear();
@@ -676,25 +463,23 @@ public class GitReviewPresenter implements ReviewPresenter
    public void onShow()
    {
       // Ensure that we're fresh
-      gitState_.refresh();
+      svnState_.refresh();
 
       view_.onShow();
    }
 
    private final Invalidation diffInvalidation_ = new Invalidation();
-   private final GitServerOperations server_;
+   private final SVNServerOperations server_;
    private final Display view_;
    private final GlobalDisplay globalDisplay_;
    private ArrayList<DiffChunk> activeChunks_ = new ArrayList<DiffChunk>();
    private String currentResponse_;
    private String currentFilename_;
-   // Hack to prevent us flipping to unstaged view when a line is unstaged
-   // from staged view
-   private boolean softModeSwitch_;
-   private GitState gitState_;
+   private SVNState svnState_;
    private boolean initialized_;
-   private static final String MODULE_GIT = "vcs_git";
+   private static final String MODULE_SVN = "vcs_svn";
    private static final String KEY_CONTEXT_LINES = "context_lines";
 
    private boolean overrideSizeWarning_ = false;
+
 }

@@ -37,6 +37,10 @@ public class SVNPane extends WorkbenchPane implements Display
       changelistTablePresenter_ = changelistTablePresenter;
       commands_ = commands;
 
+      diffButton_ = new ToolbarButton(
+            "Diff",
+            commands_.vcsDiff().getImageResource(),
+            (ClickHandler)null);
       addFilesButton_ = new ToolbarButton(
             "Add",
             commands_.vcsAddFiles().getImageResource(),
@@ -74,15 +78,24 @@ public class SVNPane extends WorkbenchPane implements Display
    {
       Toolbar toolbar = new Toolbar();
 
+      toolbar.addLeftWidget(diffButton_);
+      toolbar.addLeftSeparator();
       toolbar.addLeftWidget(addFilesButton_);
       toolbar.addLeftWidget(deleteFilesButton_);
       toolbar.addLeftWidget(revertFilesButton_);
+      toolbar.addLeftSeparator();
       toolbar.addLeftWidget(updateButton_);
 //      toolbar.addLeftWidget(commitButton_);
 
       toolbar.addRightWidget(commands_.vcsRefresh().createToolbarButton());
 
       return toolbar;
+   }
+
+   @Override
+   public ToolbarButton getDiffButton()
+   {
+      return diffButton_;
    }
 
    @Override
@@ -139,6 +152,7 @@ public class SVNPane extends WorkbenchPane implements Display
 
    private final SVNChangelistTablePresenter changelistTablePresenter_;
    private final Commands commands_;
+   private final ToolbarButton diffButton_;
    private final ToolbarButton addFilesButton_;
    private final ToolbarButton deleteFilesButton_;
    private final ToolbarButton revertFilesButton_;

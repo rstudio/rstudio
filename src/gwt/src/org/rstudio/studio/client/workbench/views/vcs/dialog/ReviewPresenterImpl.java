@@ -20,6 +20,7 @@ import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEvent.Handler;
 import org.rstudio.studio.client.workbench.views.vcs.git.dialog.GitReviewPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.svn.dialog.SVNReviewPresenter;
 
 import java.util.ArrayList;
 
@@ -27,10 +28,17 @@ public class ReviewPresenterImpl implements ReviewPresenter
 {
    @Inject
    public ReviewPresenterImpl(Provider<GitReviewPresenter> pGitReviewPresenter,
-                              // Provider<SvnReviewPresenter> pSvnReviewPresenter,
+                              Provider<SVNReviewPresenter> pSvnReviewPresenter,
                               Session session)
    {
-      pres_ = pGitReviewPresenter.get();
+      String vcsName = "git";
+
+      if (vcsName.equalsIgnoreCase("git"))
+         pres_ = pGitReviewPresenter.get();
+      else if (vcsName.equalsIgnoreCase("svn"))
+         pres_ = pSvnReviewPresenter.get();
+      else
+         throw new IllegalStateException("Unknown vcs name");
    }
 
    @Override

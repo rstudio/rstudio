@@ -1,5 +1,5 @@
 /*
- * ReviewPanel.java
+ * GitReviewPanel.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -57,11 +57,11 @@ import org.rstudio.studio.client.workbench.views.vcs.git.GitChangelistTablePrese
 
 import java.util.ArrayList;
 
-public class ReviewPanel extends Composite implements Display
+public class GitReviewPanel extends ResizeComposite implements Display
 {
    interface Resources extends ClientBundle
    {
-      @Source("ReviewPanel.css")
+      @Source("GitReviewPanel.css")
       Styles styles();
 
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
@@ -194,16 +194,16 @@ public class ReviewPanel extends Composite implements Display
    }
 
 
-   interface Binder extends UiBinder<Widget, ReviewPanel>
+   interface Binder extends UiBinder<Widget, GitReviewPanel>
    {
    }
 
    @Inject
-   public ReviewPanel(GitChangelistTablePresenter changelist,
-                      LineTableView diffPane,
-                      final Commands commands,
-                      FileTypeRegistry fileTypeRegistry,
-                      BranchToolbarButton branchToolbarButton)
+   public GitReviewPanel(GitChangelistTablePresenter changelist,
+                         LineTableView diffPane,
+                         final Commands commands,
+                         FileTypeRegistry fileTypeRegistry,
+                         BranchToolbarButton branchToolbarButton)
    {
       fileTypeRegistry_ = fileTypeRegistry;
       splitPanel_ = new SplitLayoutPanel(4);

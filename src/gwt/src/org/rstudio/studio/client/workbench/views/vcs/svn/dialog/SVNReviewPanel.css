@@ -1,0 +1,49 @@
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+@external gwt-SplitLayoutPanel-VDragger, gwt-SplitLayoutPanel-HDragger;
+
+/** BEGIN SHARED BETWEEN HISTORY AND REVIEW PANELS **/
+
+.splitPanel {
+   background-color: #f3f4f4;
+}
+@sprite .splitPanel .gwt-SplitLayoutPanel-VDragger {
+   gwt-image: 'splitterTileV';
+}
+
+.whitebg {
+   background-color: white;
+}
+
+.toolbar {
+   background-image: none !important;
+}
+
+@sprite .toolbarWrapper {
+   position: relative;
+   gwt-image: 'toolbarTile';
+   padding-top: 2px;
+   font-size: 11px;
+}
+
+/** END SHARED BETWEEN HISTORY AND REVIEW PANELS **/
+
+
+.contextLabel {
+   display: inline;
+   margin-right: 8px;
+}
+
+.diffToolbar {
+   float: right;
+   width: auto;
+}
+
+.diffViewOptions {
+   position: absolute;
+   left: 6px;
+   top: 2px;
+   bottom: 2px;
+   width: auto;
+}

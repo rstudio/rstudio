@@ -1237,13 +1237,19 @@ public class RemoteServer implements Server
       params.set(1, new JSONNumber(maxEntries));
       sendRequest(RPC_SCOPE, SEARCH_HISTORY_ARCHIVE_BY_PREFIX, params, requestCallback);
    }
-   
-   public void gitAdd(ArrayList<String> paths,
-                      ServerRequestCallback<Void> requestCallback)
+
+   private JSONArray toJSONStringArray(ArrayList<String> paths)
    {
       JSONArray jsonPaths = new JSONArray();
       for (int i = 0; i < paths.size(); i++)
          jsonPaths.set(i, new JSONString(paths.get(i)));
+      return jsonPaths;
+   }
+
+   public void gitAdd(ArrayList<String> paths,
+                      ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray jsonPaths = toJSONStringArray(paths);
 
       JSONArray params = new JSONArray();
       params.set(0, jsonPaths);
@@ -1253,9 +1259,7 @@ public class RemoteServer implements Server
    public void gitRemove(ArrayList<String> paths,
                          ServerRequestCallback<Void> requestCallback)
    {
-      JSONArray jsonPaths = new JSONArray();
-      for (int i = 0; i < paths.size(); i++)
-         jsonPaths.set(i, new JSONString(paths.get(i)));
+      JSONArray jsonPaths = toJSONStringArray(paths);
 
       JSONArray params = new JSONArray();
       params.set(0, jsonPaths);
@@ -1265,9 +1269,7 @@ public class RemoteServer implements Server
    public void gitDiscard(ArrayList<String> paths,
                           ServerRequestCallback<Void> requestCallback)
    {
-      JSONArray jsonPaths = new JSONArray();
-      for (int i = 0; i < paths.size(); i++)
-         jsonPaths.set(i, new JSONString(paths.get(i)));
+      JSONArray jsonPaths = toJSONStringArray(paths);
 
       JSONArray params = new JSONArray();
       params.set(0, jsonPaths);
@@ -1277,9 +1279,7 @@ public class RemoteServer implements Server
    public void gitRevert(ArrayList<String> paths,
                          ServerRequestCallback<Void> requestCallback)
    {
-      JSONArray jsonPaths = new JSONArray();
-      for (int i = 0; i < paths.size(); i++)
-         jsonPaths.set(i, new JSONString(paths.get(i)));
+      JSONArray jsonPaths = toJSONStringArray(paths);
 
       JSONArray params = new JSONArray();
       params.set(0, jsonPaths);
@@ -1289,9 +1289,7 @@ public class RemoteServer implements Server
    public void gitStage(ArrayList<String> paths,
                         ServerRequestCallback<Void> requestCallback)
    {
-      JSONArray jsonPaths = new JSONArray();
-      for (int i = 0; i < paths.size(); i++)
-         jsonPaths.set(i, new JSONString(paths.get(i)));
+      JSONArray jsonPaths = toJSONStringArray(paths);
 
       JSONArray params = new JSONArray();
       params.set(0, jsonPaths);
@@ -1301,9 +1299,7 @@ public class RemoteServer implements Server
    public void gitUnstage(ArrayList<String> paths,
                           ServerRequestCallback<Void> requestCallback)
    {
-      JSONArray jsonPaths = new JSONArray();
-      for (int i = 0; i < paths.size(); i++)
-         jsonPaths.set(i, new JSONString(paths.get(i)));
+      JSONArray jsonPaths = toJSONStringArray(paths);
 
       JSONArray params = new JSONArray();
       params.set(0, jsonPaths);
@@ -2196,29 +2192,29 @@ public class RemoteServer implements Server
    }-*/;
 
    @Override
-   public void svnAdd(JsArrayString paths,
+   public void svnAdd(ArrayList<String> paths,
                       ServerRequestCallback<ProcessResult> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONArray(paths));
+      params.set(0, toJSONStringArray(paths));
       sendRequest(RPC_SCOPE, SVN_ADD, params, requestCallback);
    }
 
    @Override
-   public void svnDelete(JsArrayString paths,
+   public void svnDelete(ArrayList<String> paths,
                          ServerRequestCallback<ProcessResult> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONArray(paths));
+      params.set(0, toJSONStringArray(paths));
       sendRequest(RPC_SCOPE, SVN_DELETE, params, requestCallback);
    }
 
    @Override
-   public void svnRevert(JsArrayString paths,
+   public void svnRevert(ArrayList<String> paths,
                          ServerRequestCallback<ProcessResult> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONArray(paths));
+      params.set(0, toJSONStringArray(paths));
       sendRequest(RPC_SCOPE, SVN_REVERT, params, requestCallback);
    }
 
@@ -2229,13 +2225,6 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void svnDiff(String path,
-                       ServerRequestCallback<String> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, SVN_DIFF, path, requestCallback);
-   }
-
-   @Override
    public void svnUpdate(ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       sendRequest(RPC_SCOPE, SVN_UPDATE,
@@ -2243,16 +2232,36 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void svnCommit(JsArrayString paths,
+   public void svnCommit(ArrayList<String> paths,
                          String message,
                          ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONArray(paths));
+      params.set(0, toJSONStringArray(paths));
       params.set(1, new JSONString(message));
 
       sendRequest(RPC_SCOPE, SVN_COMMIT, params,
                   new ConsoleProcessCallbackAdapter(requestCallback));
+   }
+
+   @Override
+   public void svnDiffFile(String path,
+                           Integer contextLines,
+                           boolean noSizeWarning,
+                           ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      params.set(1, new JSONNumber(contextLines));
+      params.set(2, JSONBoolean.getInstance(noSizeWarning));
+      sendRequest(RPC_SCOPE, SVN_DIFF_FILE, params, requestCallback);
+   }
+
+   @Override
+   public void svnApplyPatch(String patch,
+                             ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, SVN_APPLY_PATCH, patch, requestCallback);
    }
 
    private String clientId_;
@@ -2424,9 +2433,10 @@ public class RemoteServer implements Server
    private static final String SVN_DELETE = "svn_delete";
    private static final String SVN_REVERT = "svn_revert";
    private static final String SVN_STATUS = "svn_status";
-   private static final String SVN_DIFF = "svn_diff";
    private static final String SVN_UPDATE = "svn_update";
    private static final String SVN_COMMIT = "svn_commit";
+   private static final String SVN_DIFF_FILE = "svn_diff_file";
+   private static final String SVN_APPLY_PATCH = "svn_apply_patch";
 
    private static final String GET_PUBLIC_KEY = "get_public_key";
    

@@ -564,6 +564,21 @@ Error svnCommit(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error svnDiffFile(const json::JsonRpcRequest& request,
+                  json::JsonRpcResponse* pResponse)
+{
+   // TODO: Implement
+   pResponse->setResult("");
+   return Success();
+}
+
+Error svnApplyPatch(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   // TODO: Implement
+   return Success();
+}
+
 Error initialize()
 {
    // install rpc methods
@@ -576,7 +591,10 @@ Error initialize()
       (bind(registerRpcMethod, "svn_revert", svnRevert))
       (bind(registerRpcMethod, "svn_status", svnStatus))
       (bind(registerRpcMethod, "svn_update", svnUpdate))
-      (bind(registerRpcMethod, "svn_commit", svnCommit));
+      (bind(registerRpcMethod, "svn_commit", svnCommit))
+      (bind(registerRpcMethod, "svn_diff_file", svnDiffFile))
+      (bind(registerRpcMethod, "svn_apply_patch", svnApplyPatch))
+      ;
    Error error = initBlock.execute();
    if (error)
       return error;
