@@ -134,6 +134,7 @@ public class Projects implements OpenProjectFileHandler,
            {
               NewProjectWizard wiz = new NewProjectWizard(
                  session_.getSessionInfo(),
+                 pUIPrefs_.get(),
                  FileSystemItem.createDir(
                     pUIPrefs_.get().defaultProjectLocation().getValue()),
                  new ProgressOperationWithInput<NewProjectResult>() {
@@ -182,14 +183,28 @@ public class Projects implements OpenProjectFileHandler,
          @Override
          public void onExecute(final Command continuation)
          {
+            UIPrefs uiPrefs = pUIPrefs_.get();
+            
             // update default project location pref if necessary
-            if (newProject.getNewDefaultProjectLocation() != null)
+            if ((newProject.getNewDefaultProjectLocation() != null) ||
+                (newProject.getCreateGitRepo() != 
+                 uiPrefs.newProjGitInit().getValue()))
             {
-               indicator.onProgress("Saving default project location...");
+               indicator.onProgress("Saving defaults...");
 
-               pUIPrefs_.get().defaultProjectLocation().setGlobalValue(
+               if (newProject.getNewDefaultProjectLocation() != null)
+               {
+                  uiPrefs.defaultProjectLocation().setGlobalValue(
                      newProject.getNewDefaultProjectLocation());
-
+               }
+               
+               if (newProject.getCreateGitRepo() != 
+                   uiPrefs.newProjGitInit().getValue())
+               {
+                  uiPrefs.newProjGitInit().setGlobalValue(
+                                          newProject.getCreateGitRepo());
+               }
+               
                // call the server -- in all cases continue on with
                // creating the project (swallow errors updating the pref)
                server_.setUiPrefs(
@@ -290,6 +305,39 @@ public class Projects implements OpenProjectFileHandler,
                   });
          }
       }, false);
+      
+      // Next, initialize a git repo if requested
+      if (newProject.getCreateGitRepo())
+      {
+         createProjectCmds.addCommand(new SerializedCommand()
+         {
+            @Override
+            public void onExecute(final Command continuation)
+            {
+               indicator.onProgress("Initializing git repository...");
+
+               String projDir = FileSystemItem.createFile(
+                     newProject.getProjectFile()).getParentPathString();
+               
+               server_.gitInitRepo(
+                     projDir,
+                     new VoidServerRequestCallback(indicator)
+                     {
+                        @Override
+                        public void onSuccess()
+                        {
+                           continuation.execute();
+                        }
+                        
+                        @Override
+                        public void onFailure()
+                        {
+                           continuation.execute();
+                        }
+                     });
+            }
+         }, false);
+      }
 
       // If we get here, dismiss the progress indicator
       createProjectCmds.addCommand(new SerializedCommand()

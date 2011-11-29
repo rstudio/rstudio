@@ -123,4 +123,10 @@ public class UIPrefsAccessor extends Prefs
       return object("save_plot_as_pdf_options",
                     SavePlotAsPdfOptions.createDefault());
    }
+   
+   public PrefValue<Boolean> newProjGitInit()
+   {
+      return bool("new_proj_git_init", false);
+   }
+   
 }

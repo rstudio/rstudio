@@ -19,3 +19,11 @@
    margin-top: -2px;
    margin-left: -2px;
 }
+
+@if user.agent gecko1_8 { .wizardCheckbox {
+   margin-left: -3px;   
+   }
+}
+@else { .wizardCheckbox  {
+   }
+}

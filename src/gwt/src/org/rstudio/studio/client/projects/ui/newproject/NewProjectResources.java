@@ -40,6 +40,7 @@ public interface NewProjectResources extends ClientBundle
       String wizardTextEntryLabel();
       String wizardSpacer();
       String vcsSelectorDesktop();
+      String wizardCheckbox();
    }
    
    @Source("NewProjectWizard.css")

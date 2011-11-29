@@ -15,8 +15,12 @@ package org.rstudio.studio.client.projects.ui.newproject;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 
@@ -52,7 +56,22 @@ public class NewDirectoryPage extends NewProjectWizardPage
       newProjectParent_ = new DirectoryChooserTextBox(
             "Create project as subdirectory of:", txtProjectName_);
       addWidget(newProjectParent_);
-
+      
+      // if git is available then add git init
+      SessionInfo sessionInfo = 
+         RStudioGinjector.INSTANCE.getSession().getSessionInfo();
+      chkGitInit_ = new CheckBox("Create a git repository for this project");
+      chkGitInit_.addStyleName(styles.wizardCheckbox());
+      if (sessionInfo.isGitAvailable())
+      {
+         for (int i=0; i<2; i++)
+            addSpacer();
+         
+         UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
+         chkGitInit_.setValue(uiPrefs.newProjGitInit().getValue());
+         
+         addWidget(chkGitInit_);
+      }
    }
    
    @Override 
@@ -94,7 +113,10 @@ public class NewDirectoryPage extends NewProjectWizardPage
          String newDefaultLocation = null;
          if (!dir.equals(defaultNewProjectLocation_))
             newDefaultLocation = dir;
-         return new NewProjectResult(projFile, false, newDefaultLocation, null);
+         return new NewProjectResult(projFile, 
+                                     chkGitInit_.getValue(), 
+                                     newDefaultLocation, 
+                                     null);
       }
       else
       {
@@ -110,6 +132,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
    }
    
    private TextBox txtProjectName_;
+   private CheckBox chkGitInit_;
    
    private DirectoryChooserTextBox newProjectParent_;
 

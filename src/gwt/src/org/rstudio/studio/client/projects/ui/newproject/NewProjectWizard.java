@@ -17,11 +17,13 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 public class NewProjectWizard extends Wizard<FileSystemItem,NewProjectResult>
 {
    public NewProjectWizard(
          SessionInfo sessionInfo,
+         UIPrefs uiPrefs,
          FileSystemItem defaultNewProjectLocation,
          ProgressOperationWithInput<NewProjectResult> operation)
    {
