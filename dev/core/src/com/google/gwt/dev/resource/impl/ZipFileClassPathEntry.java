@@ -79,6 +79,10 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
   private static final Map<String, ZipFileClassPathEntry> entryCache = new ReferenceMap(
       AbstractReferenceMap.HARD, AbstractReferenceMap.SOFT);
 
+  public static void clearCache() {
+    entryCache.clear();
+  }
+
   /**
    * @return the {@link ZipFileClassPathEntry} instance for given jar or zip
    *         file, may be shared with other users.

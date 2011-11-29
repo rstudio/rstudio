@@ -16,6 +16,8 @@
 package com.google.gwt.dev.resource.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.cfg.ResourceLoader;
+import com.google.gwt.dev.cfg.ResourceLoaders;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -33,7 +35,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -153,8 +154,12 @@ public class ResourceOracleImpl implements ResourceOracle {
   }
 
   @SuppressWarnings("unchecked")
-  private static final Map<ClassLoader, List<ClassPathEntry>> classPathCache = new ReferenceMap(
+  private static final Map<ResourceLoader, List<ClassPathEntry>> classPathCache = new ReferenceMap(
       AbstractReferenceMap.WEAK, AbstractReferenceMap.HARD);
+  
+  public static void clearCache() {
+    classPathCache.clear();
+  }
 
   public static ClassPathEntry createEntryForUrl(TreeLogger logger, URL url)
       throws URISyntaxException, IOException {
@@ -197,9 +202,16 @@ public class ResourceOracleImpl implements ResourceOracle {
    * Preinitializes the classpath for a given {@link ClassLoader}.
    */
   public static void preload(TreeLogger logger, ClassLoader classLoader) {
+    preload(logger, ResourceLoaders.wrap(classLoader));
+  }
+
+  /**
+   * Preinitializes the classpath for a given {@link ResourceLoader}.
+   */
+  public static void preload(TreeLogger logger, ResourceLoader resources) {
     Event resourceOracle =
         SpeedTracerLogger.start(CompilerEventType.RESOURCE_ORACLE, "phase", "preload");
-    List<ClassPathEntry> entries = getAllClassPathEntries(logger, classLoader);
+    List<ClassPathEntry> entries = getAllClassPathEntries(logger, resources);
     for (ClassPathEntry entry : entries) {
       // We only handle pre-indexing jars, the file system could change.
       if (entry instanceof ZipFileClassPathEntry) {
@@ -301,58 +313,53 @@ public class ResourceOracleImpl implements ResourceOracle {
     resourceOracle.end();
   }
 
-  private static void addAllClassPathEntries(TreeLogger logger, ClassLoader classLoader,
+  private static void addAllClassPathEntries(TreeLogger logger, ResourceLoader loader,
       List<ClassPathEntry> classPath) {
     // URL is expensive in collections, so we use URI instead
     // See:
     // http://michaelscharf.blogspot.com/2006/11/javaneturlequals-and-hashcode-make.html
     Set<URI> seenEntries = new HashSet<URI>();
-    for (; classLoader != null; classLoader = classLoader.getParent()) {
-      if (classLoader instanceof URLClassLoader) {
-        URLClassLoader urlClassLoader = (URLClassLoader) classLoader;
-        URL[] urls = urlClassLoader.getURLs();
-        for (URL url : urls) {
-          URI uri;
-          try {
-            uri = url.toURI();
-          } catch (URISyntaxException e) {
-            logger.log(TreeLogger.WARN, "Error processing classpath URL '" + url + "'", e);
-            continue;
-          }
-          if (seenEntries.contains(uri)) {
-            continue;
-          }
-          seenEntries.add(uri);
-          Throwable caught;
-          try {
-            ClassPathEntry entry = createEntryForUrl(logger, url);
-            if (entry != null) {
-              classPath.add(entry);
-            }
-            continue;
-          } catch (AccessControlException e) {
-            if (logger.isLoggable(TreeLogger.DEBUG)) {
-              logger.log(TreeLogger.DEBUG, "Skipping URL due to access restrictions: " + url);
-            }
-            continue;
-          } catch (URISyntaxException e) {
-            caught = e;
-          } catch (IOException e) {
-            caught = e;
-          }
-          logger.log(TreeLogger.WARN, "Error processing classpath URL '" + url + "'", caught);
-        }
+
+    for (URL url : loader.getClassPath()) {
+      URI uri;
+      try {
+        uri = url.toURI();
+      } catch (URISyntaxException e) {
+        logger.log(TreeLogger.WARN, "Error processing classpath URL '" + url + "'", e);
+        continue;
       }
+      if (seenEntries.contains(uri)) {
+        continue;
+      }
+      seenEntries.add(uri);
+      Throwable caught;
+      try {
+        ClassPathEntry entry = createEntryForUrl(logger, url);
+        if (entry != null) {
+          classPath.add(entry);
+        }
+        continue;
+      } catch (AccessControlException e) {
+        if (logger.isLoggable(TreeLogger.DEBUG)) {
+          logger.log(TreeLogger.DEBUG, "Skipping URL due to access restrictions: " + url);
+        }
+        continue;
+      } catch (URISyntaxException e) {
+        caught = e;
+      } catch (IOException e) {
+        caught = e;
+      }
+      logger.log(TreeLogger.WARN, "Error processing classpath URL '" + url + "'", caught);
     }
   }
 
   private static synchronized List<ClassPathEntry> getAllClassPathEntries(TreeLogger logger,
-      ClassLoader classLoader) {
-    List<ClassPathEntry> classPath = classPathCache.get(classLoader);
+      ResourceLoader resources) {
+    List<ClassPathEntry> classPath = classPathCache.get(resources);
     if (classPath == null) {
       classPath = new ArrayList<ClassPathEntry>();
-      addAllClassPathEntries(logger, classLoader, classPath);
-      classPathCache.put(classLoader, classPath);
+      addAllClassPathEntries(logger, resources, classPath);
+      classPathCache.put(resources, classPath);
     }
     return classPath;
   }
@@ -387,11 +394,15 @@ public class ResourceOracleImpl implements ResourceOracle {
   /**
    * Constructs a {@link ResourceOracleImpl} from a {@link ClassLoader}. The
    * specified {@link ClassLoader} and all of its parents which are instances of
-   * {@link URLClassLoader} will have their class path entries added to this
+   * {@link java.net.URLClassLoader} will have their class path entries added to this
    * instances underlying class path.
    */
   public ResourceOracleImpl(TreeLogger logger, ClassLoader classLoader) {
-    this(getAllClassPathEntries(logger, classLoader));
+    this(logger, ResourceLoaders.wrap(classLoader));
+  }
+
+  public ResourceOracleImpl(TreeLogger logger, ResourceLoader resources) {
+    this(getAllClassPathEntries(logger, resources));
   }
 
   @Override

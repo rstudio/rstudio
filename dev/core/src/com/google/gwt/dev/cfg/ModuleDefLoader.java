@@ -37,26 +37,10 @@ import java.util.Map;
 /**
  * The top-level API for loading module XML.
  */
-public final class ModuleDefLoader {
+public class ModuleDefLoader {
   /*
    * TODO(scottb,tobyr,zundel): synchronization????
    */
-
-  /**
-   * Interface to provide a load strategy to the load process.
-   */
-  private interface LoadStrategy {
-    /**
-     * Perform loading on the specified module.
-     *
-     * @param logger logs the process
-     * @param moduleName the name of the process
-     * @param moduleDef a module
-     * @throws UnableToCompleteException
-     */
-    void load(TreeLogger logger, String moduleName, ModuleDef moduleDef)
-        throws UnableToCompleteException;
-  }
 
   /**
    * Filename suffix used for GWT Module XML files.
@@ -83,6 +67,10 @@ public final class ModuleDefLoader {
   private static final Map<String, String> moduleEffectiveNameToPhysicalName =
     new HashMap<String, String>();
 
+  public static void clearModuleCache() {
+    getModulesCache().clear();
+  }
+
   /**
    * Creates a module in memory that is not associated with a
    * <code>.gwt.xml</code> file on disk.
@@ -95,14 +83,27 @@ public final class ModuleDefLoader {
    * @throws UnableToCompleteException
    */
   public static ModuleDef createSyntheticModule(TreeLogger logger,
-      String moduleName, String[] inherits, boolean refresh)
+      String moduleName, final String[] inherits, boolean refresh)
       throws UnableToCompleteException {
     ModuleDef moduleDef = tryGetLoadedModule(moduleName, refresh);
     if (moduleDef != null) {
       return moduleDef;
     }
-    ModuleDefLoader loader = new ModuleDefLoader(inherits);
-    ModuleDef module = loader.doLoadModule(logger, moduleName);
+
+    ResourceLoader resources = ResourceLoaders.forClassLoader(Thread.currentThread());
+
+    ModuleDefLoader loader = new ModuleDefLoader(resources) {
+      @Override
+      protected void load(TreeLogger logger, String nameOfModuleToLoad, ModuleDef dest)
+          throws UnableToCompleteException {
+        logger.log(TreeLogger.TRACE, "Loading module '" + nameOfModuleToLoad + "'");
+        for (String inherit : inherits) {
+          nestedLoad(logger, inherit, dest);
+        }
+      }
+    };
+
+    ModuleDef module = doLoadModule(loader, logger, moduleName, resources);
     /*
      * Must reset name override on synthetic modules. Otherwise they'll be
      * incorrectly affected by the last inherits tag, because they have no XML
@@ -137,6 +138,23 @@ public final class ModuleDefLoader {
    */
   public static ModuleDef loadFromClassPath(TreeLogger logger,
       String moduleName, boolean refresh) throws UnableToCompleteException {
+
+    ResourceLoader resources = ResourceLoaders.forClassLoader(Thread.currentThread());
+
+    return loadFromResources(logger, moduleName, resources, refresh);
+  }
+
+  /**
+   * Loads a new module from the given ResourceLoader.
+   * @param moduleName the module to load
+   * @param resources where to look for module.xml and module.gwtar files.
+   * @param refresh whether to refresh the module
+   * @return the loaded module
+   * @throws UnableToCompleteException
+   */
+  public static ModuleDef loadFromResources(TreeLogger logger, String moduleName,
+      ResourceLoader resources, boolean refresh) throws UnableToCompleteException {
+
     Event moduleDefLoadFromClassPathEvent = SpeedTracerLogger.start(
         CompilerEventType.MODULE_DEF, "phase", "loadFromClassPath", "moduleName", moduleName);
     try {
@@ -150,11 +168,46 @@ public final class ModuleDefLoader {
       if (moduleDef != null) {
         return moduleDef;
       }
-      ModuleDefLoader loader = new ModuleDefLoader();
-      return loader.doLoadModule(logger, moduleName);
+      ModuleDefLoader loader = new ModuleDefLoader(resources);
+      return ModuleDefLoader.doLoadModule(loader, logger, moduleName, resources);
     } finally {
       moduleDefLoadFromClassPathEvent.end();
     }
+  }
+
+  /**
+   * This method loads a module.
+   *
+   * @param loader the loader to use
+   * @param logger used to log the loading process
+   * @param moduleName the name of the module
+   * @param resources where to load source code from
+   * @return the module returned -- cannot be null
+   * @throws UnableToCompleteException if module loading failed
+   */
+  private static ModuleDef doLoadModule(ModuleDefLoader loader, TreeLogger logger,
+      String moduleName, ResourceLoader resources)
+      throws UnableToCompleteException {
+
+    ModuleDef moduleDef = new ModuleDef(moduleName, resources);
+    Event moduleLoadEvent = SpeedTracerLogger.start(CompilerEventType.MODULE_DEF,
+        "phase", "strategy.load()");
+    loader.load(logger, moduleName, moduleDef);
+    moduleLoadEvent.end();
+
+    // Do any final setup.
+    //
+    Event moduleNormalizeEvent = SpeedTracerLogger.start(CompilerEventType.MODULE_DEF,
+        "phase", "moduleDef.normalize()");
+    moduleDef.normalize(logger);
+    moduleNormalizeEvent.end();
+
+    // Add the "physical" module name: com.google.Module
+    getModulesCache().put(moduleName, moduleDef);
+
+    // Add a mapping from the module's effective name to its physical name
+    moduleEffectiveNameToPhysicalName.put(moduleDef.getName(), moduleName);
+    return moduleDef;
   }
 
   @SuppressWarnings("unchecked")
@@ -178,45 +231,24 @@ public final class ModuleDefLoader {
     return moduleDef;
   }
 
-  private final ClassLoader classLoader;
+  private final ResourceLoader resourceLoader;
 
-  private final LoadStrategy strategy;
-
-  /**
-   * Constructs a {@link ModuleDefLoader} that loads from the class path.
-   */
-  private ModuleDefLoader() {
-    this.classLoader = Thread.currentThread().getContextClassLoader();
-    this.strategy = new LoadStrategy() {
-      @Override
-      public void load(TreeLogger logger, String moduleName, ModuleDef moduleDef)
-          throws UnableToCompleteException {
-        nestedLoad(logger, moduleName, moduleDef);
-      }
-    };
+  private ModuleDefLoader(ResourceLoader loader) {
+    this.resourceLoader = loader;
   }
 
   /**
-   * Constructs a {@link ModuleDefLoader} that loads a synthetic module.
-   *
-   * @param inherits a set of modules to inherit from
+   * Loads a module and all its included modules, recursively, into the given ModuleDef.
+   * @throws UnableToCompleteException
    */
-  private ModuleDefLoader(final String[] inherits) {
-    this.classLoader = Thread.currentThread().getContextClassLoader();
-    this.strategy = new LoadStrategy() {
-      @Override
-      public void load(TreeLogger logger, String moduleName, ModuleDef moduleDef)
-          throws UnableToCompleteException {
-        logger.log(TreeLogger.TRACE, "Loading module '" + moduleName + "'");
-        for (String inherit : inherits) {
-          nestedLoad(logger, inherit, moduleDef);
-        }
-      }
-    };
+  protected void load(TreeLogger logger, String nameOfModuleToLoad, ModuleDef dest)
+      throws UnableToCompleteException {
+    nestedLoad(logger, nameOfModuleToLoad, dest);
   }
 
   /**
-   * Loads a new module into <code>moduleDef</code> as an included module.
+   * Loads a new module and its descendants into <code>moduleDef</code> as included modules.
+   * (If there are any descendants, this method will be called recursively.)
    *
    * @param parentLogger Logs the process.
    * @param moduleName The module to load.
@@ -245,7 +277,7 @@ public final class ModuleDefLoader {
     //
     String slashedModuleName = moduleName.replace('.', '/');
     String resName = slashedModuleName + ModuleDefLoader.GWT_MODULE_XML_SUFFIX;
-    URL moduleURL = classLoader.getResource(resName);
+    URL moduleURL = resourceLoader.getResource(resName);
 
     if (moduleURL != null) {
       String externalForm = moduleURL.toExternalForm();
@@ -265,7 +297,7 @@ public final class ModuleDefLoader {
         throw new UnableToCompleteException();
       }
       String compilationUnitArchiveName = slashedModuleName + ModuleDefLoader.COMPILATION_UNIT_ARCHIVE_SUFFIX;
-      URL compiledModuleURL = classLoader.getResource(compilationUnitArchiveName);
+      URL compiledModuleURL = resourceLoader.getResource(compilationUnitArchiveName);
       if (compiledModuleURL != null) {
         moduleDef.addCompilationUnitArchiveURL(compiledModuleURL);
       }
@@ -298,37 +330,5 @@ public final class ModuleDefLoader {
     } finally {
       Utility.close(r);
     }
-  }
-
-  /**
-   * This method loads a module.
-   *
-   * @param logger used to log the loading process
-   * @param moduleName the name of the module
-   * @return the module returned -- cannot be null
-   * @throws UnableToCompleteException if module loading failed
-   */
-  private ModuleDef doLoadModule(TreeLogger logger, String moduleName)
-      throws UnableToCompleteException {
-
-    ModuleDef moduleDef = new ModuleDef(moduleName);
-    Event moduleLoadEvent = SpeedTracerLogger.start(CompilerEventType.MODULE_DEF,
-        "phase", "strategy.load()");
-    strategy.load(logger, moduleName, moduleDef);
-    moduleLoadEvent.end();
-
-    // Do any final setup.
-    //
-    Event moduleNormalizeEvent = SpeedTracerLogger.start(CompilerEventType.MODULE_DEF,
-        "phase", "moduleDef.normalize()");
-    moduleDef.normalize(logger);
-    moduleNormalizeEvent.end();
-
-    // Add the "physical" module name: com.google.Module
-    getModulesCache().put(moduleName, moduleDef);
-
-    // Add a mapping from the module's effective name to its physical name
-    moduleEffectiveNameToPhysicalName.put(moduleDef.getName(), moduleName);
-    return moduleDef;
   }
 }

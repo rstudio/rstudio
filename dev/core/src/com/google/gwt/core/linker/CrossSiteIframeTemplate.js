@@ -17,6 +17,9 @@ __BEGIN_TRY_BLOCK__
 function __MODULE_FUNC__() {
   var $wnd = __WINDOW_DEF__;
   var $doc = __DOCUMENT_DEF__;
+
+  __DEV_MODE_REDIRECT_HOOK__
+
   sendStats('bootstrap', 'begin');
 
   /****************************************************************************
@@ -127,8 +130,9 @@ function __MODULE_FUNC__() {
 
   installScript(filename);
 
+  return true; // success
 }
-__MODULE_FUNC__();
+__MODULE_FUNC__.succeeded = __MODULE_FUNC__();
 
 __END_TRY_BLOCK_AND_START_CATCH__
   __MODULE_FUNC_ERROR_CATCH__

@@ -139,6 +139,7 @@ public class ModuleDef {
   private final long moduleDefCreationTime = System.currentTimeMillis();
 
   private final String name;
+  private final ResourceLoader resources;
 
   /**
    * Must use a separate field to track override, because setNameOverride() will
@@ -163,7 +164,12 @@ public class ModuleDef {
   private final Styles styles = new Styles();
 
   public ModuleDef(String name) {
+    this(name, ResourceLoaders.forClassLoader(Thread.currentThread()));
+  }
+
+  public ModuleDef(String name, ResourceLoader resources) {
     this.name = name;
+    this.resources = resources;
     defaultFilters = new DefaultFilters();
   }
 
@@ -401,7 +407,7 @@ public class ModuleDef {
 
   public synchronized ResourceOracle getResourcesOracle() {
     if (lazyResourcesOracle == null) {
-      lazyResourcesOracle = new ResourceOracleImpl(TreeLogger.NULL);
+      lazyResourcesOracle = new ResourceOracleImpl(TreeLogger.NULL, resources);
       PathPrefixSet pathPrefixes = lazySourceOracle.getPathPrefixes();
       PathPrefixSet newPathPrefixes = new PathPrefixSet();
       for (PathPrefix pathPrefix : pathPrefixes.values()) {
@@ -536,12 +542,12 @@ public class ModuleDef {
 
     // Create the public path.
     TreeLogger branch = Messages.PUBLIC_PATH_LOCATIONS.branch(logger, null);
-    lazyPublicOracle = new ResourceOracleImpl(branch);
+    lazyPublicOracle = new ResourceOracleImpl(branch, resources);
     lazyPublicOracle.setPathPrefixes(publicPrefixSet);
 
     // Create the source path.
     branch = Messages.SOURCE_PATH_LOCATIONS.branch(logger, null);
-    lazySourceOracle = new ResourceOracleImpl(branch);
+    lazySourceOracle = new ResourceOracleImpl(branch, resources);
     lazySourceOracle.setPathPrefixes(sourcePrefixSet);
 
     needsRefresh = true;

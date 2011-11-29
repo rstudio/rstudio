@@ -95,6 +95,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     includeJs(ss, logger, getJsComputeUrlForResource(context), "__COMPUTE_URL_FOR_RESOURCE__");
     includeJs(ss, logger, getJsLoadExternalStylesheets(context), "__LOAD_STYLESHEETS__");
     includeJs(ss, logger, getJsRunAsync(context), "__RUN_ASYNC__");
+    includeJs(ss, logger, getJsDevModeRedirectHook(context), "__DEV_MODE_REDIRECT_HOOK__");
 
     // This Linker does not support <script> tags in the gwt.xml
     SortedSet<ScriptReference> scripts = artifacts.find(ScriptReference.class);
@@ -205,6 +206,15 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
    */
   protected String getJsComputeUrlForResource(LinkerContext context) {
     return "com/google/gwt/core/ext/linker/impl/computeUrlForResource.js";
+  }
+
+  /**
+   * Returns a code fragment to check for the new development mode.
+   */
+  protected String getJsDevModeRedirectHook(LinkerContext context) {
+    // Temporarily disabled by default.
+    // return "com/google/gwt/core/linker/DevModeRedirectHook.js";
+    return "";
   }
 
   /**
@@ -513,10 +523,15 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   @Override
   protected String wrapPrimaryFragment(TreeLogger logger, LinkerContext context, String script,
       ArtifactSet artifacts, CompilationResult result) throws UnableToCompleteException {
-    StringBuffer out = new StringBuffer();
+
+    StringBuilder out = new StringBuilder();
+
     if (shouldIncludeBootstrapInPrimaryFragment(context)) {
       out.append(generateSelectionScript(logger, context, artifacts, result));
     }
+
+    out.append("if (" + context.getModuleFunctionName() + ".succeeded) {\n");
+
     if (shouldInstallCode(context)) {
       // Rewrite the code so it can be installed with
       // __MODULE_FUNC__.onScriptDownloaded
@@ -528,10 +543,14 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
         newChunks.add(JsToStringGenerationVisitor.javaScriptString(chunk));
       }
       out.append(Joiner.on(", ").join(newChunks));
-      out.append("])");
+      out.append("]);\n");
     } else {
       out.append(script);
+      out.append("\n");
     }
+
+    out.append("}\n");
+
     return out.toString();
   }
 }

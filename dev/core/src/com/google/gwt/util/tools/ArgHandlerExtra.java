@@ -20,6 +20,10 @@ package com.google.gwt.util.tools;
  */
 public abstract class ArgHandlerExtra extends ArgHandler {
 
+  /**
+   * Processes the given "extra" argument.
+   * @return false to abort the command and print a usage error.
+   */
   public abstract boolean addExtraArg(String arg);
 
   @Override
