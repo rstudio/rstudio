@@ -404,7 +404,7 @@ public abstract class ChangelistTable extends Composite
       {
          super(InfoBar.INFO);
          addStyleName(resources_.styles().infoBar());
-         container_.getElement().getStyle().setBackgroundColor("#ffd");
+         container_.getElement().getStyle().setBackgroundColor("#F3F5F7");
          
       }
    }
