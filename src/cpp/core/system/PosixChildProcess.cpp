@@ -294,6 +294,9 @@ Error ChildProcess::terminate()
    // special code path for pseudoterminal
    if (options_.pseudoterminal)
    {
+      // NOTE: this code DOES NOT successfully kill the terminal child
+      // process on OSX. if we ever extend terminal support to desktop
+      // mode OR support server mode on OSX we'll need to resolve this
       return posixCall<int>(
                   boost::bind(::killpg, ::getpgid(pImpl_->pid), SIGTERM),
                   ERROR_LOCATION);
