@@ -117,5 +117,6 @@ public interface GitServerOperations extends CryptoServerOperations
     
    void gitHasRepo(ServerRequestCallback<Boolean> requestCallback);
    
-   void gitInitRepo(ServerRequestCallback<Void> requestCallback);
+   void gitInitRepo(String directory,
+                    ServerRequestCallback<Void> requestCallback);
 }

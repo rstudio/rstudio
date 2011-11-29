@@ -1420,9 +1420,10 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void gitInitRepo(ServerRequestCallback<Void> requestCallback)
+   public void gitInitRepo(String directory,
+                           ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, GIT_INIT_REPO, requestCallback);
+      sendRequest(RPC_SCOPE, GIT_INIT_REPO, directory, requestCallback);
    }
 
    @Override

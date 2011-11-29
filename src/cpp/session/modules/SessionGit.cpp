@@ -1593,18 +1593,23 @@ Error vcsHasRepo(const json::JsonRpcRequest& request,
 Error vcsInitRepo(const json::JsonRpcRequest& request,
                   json::JsonRpcResponse* pResponse)
 {
+   // get directory
+   std::string directory;
+   Error error = readParam(request.params, 0, &directory);
+   if (error)
+      return error;
+   FilePath dirPath = module_context::resolveAliasedPath(directory);
+
    // TODO: Change to runProgram
 
    // create command
    std::string cmd = shell_utils::join_and(
-         ShellCommand("cd") << projects::projectContext().directory(),
+         ShellCommand("cd") << dirPath,
          git() << "init");
 
    // run it
    core::system::ProcessResult result;
-   Error error = runCommand(cmd,
-                            procOptions(),
-                            &result);
+   error = runCommand(cmd, procOptions(), &result);
    if (error)
       return error;
 
