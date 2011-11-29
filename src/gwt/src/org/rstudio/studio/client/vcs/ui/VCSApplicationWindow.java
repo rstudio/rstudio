@@ -22,9 +22,10 @@ import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.vcs.VCSApplicationView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitPresenterCore;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
-import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.git.dialog.GitReviewPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.frame.VCSPopup;
 
 import com.google.gwt.core.client.JavaScriptObject;

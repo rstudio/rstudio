@@ -22,6 +22,7 @@ import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEvent;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.git.dialog.GitReviewPresenter;
 
 public class VCSPopup
 {

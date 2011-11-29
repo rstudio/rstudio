@@ -16,7 +16,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.CssResource.Shared;
 
 @Shared
-interface SharedStyles extends CssResource
+public interface SharedStyles extends CssResource
 {
    String splitPanel();
    String whitebg();

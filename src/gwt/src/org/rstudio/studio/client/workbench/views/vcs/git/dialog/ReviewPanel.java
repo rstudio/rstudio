@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.vcs.dialog;
+package org.rstudio.studio.client.workbench.views.vcs.git.dialog;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -50,7 +50,9 @@ import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.ChunkOrLine;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
-import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter.Display;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.SharedStyles;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.SizeWarningWidget;
+import org.rstudio.studio.client.workbench.views.vcs.git.dialog.GitReviewPresenter.Display;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitChangelistTablePresenter;
 
 import java.util.ArrayList;
@@ -63,30 +65,30 @@ public class ReviewPanel extends Composite implements Display
       Styles styles();
 
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
-      @Source("images/toolbarTile.png")
+      @Source("../../dialog/images/toolbarTile.png")
       ImageResource toolbarTile();
 
-      @Source("images/stageAllFiles.png")
+      @Source("../../dialog/images/stageAllFiles.png")
       ImageResource stageAllFiles();
 
-      @Source("images/discard.png")
+      @Source("../../dialog/images/discard.png")
       ImageResource discard();
 
-      @Source("images/ignore.png")
+      @Source("../../dialog/images/ignore.png")
       ImageResource ignore();
 
-      @Source("images/stage.png")
+      @Source("../../dialog/images/stage.png")
       ImageResource stage();
 
-      @Source("images/splitterTileV.png")
+      @Source("../../dialog/images/splitterTileV.png")
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
       ImageResource splitterTileV();
 
-      @Source("images/splitterTileH.png")
+      @Source("../../dialog/images/splitterTileH.png")
       @ImageOptions(repeatStyle = RepeatStyle.Vertical)
       ImageResource splitterTileH();
 
-      @Source("images/blankFileIcon.png")
+      @Source("../../dialog/images/blankFileIcon.png")
       ImageResource blankFileIcon();
    }
 

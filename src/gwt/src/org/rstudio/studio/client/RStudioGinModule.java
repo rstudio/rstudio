@@ -16,7 +16,6 @@ import com.google.gwt.inject.client.AbstractGinModule;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
-
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationView;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -98,15 +97,17 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSou
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
-import org.rstudio.studio.client.workbench.views.vcs.*;
+import org.rstudio.studio.client.workbench.views.vcs.VCSTab;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPanel;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
-import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPanel;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenterImpl;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitPane;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.git.dialog.GitReviewPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.git.dialog.ReviewPanel;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPane;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPresenter;
 import org.rstudio.studio.client.workbench.views.workspace.Workspace;
@@ -141,6 +142,7 @@ public class RStudioGinModule extends AbstractGinModule
       
       bind(VCSApplicationView.class).to(VCSApplicationWindow.class)
             .in(Singleton.class);
+      bind(ReviewPresenter.class).to(ReviewPresenterImpl.class);
       
       bind(Server.class).to(RemoteServer.class) ;
       bind(WorkbenchServerOperations.class).to(RemoteServer.class) ;
@@ -176,7 +178,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(HelpSearch.Display.class).to(HelpSearchWidget.class) ;
       bind(CodeSearch.Display.class).to(CodeSearchWidget.class);
 
-      bind(ReviewPresenter.Display.class).to(ReviewPanel.class);
+      bind(GitReviewPresenter.Display.class).to(ReviewPanel.class);
       bind(LineTablePresenter.Display.class).to(LineTableView.class);
       bind(HistoryPresenter.Display.class).to(HistoryPanel.class);
       
