@@ -1,5 +1,5 @@
 /*
- * WarningBar.java
+ * InfoBar.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -21,11 +21,29 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
-public class WarningBar extends Composite
+public class InfoBar extends Composite
 {
-   public WarningBar()
+   public static final int INFO = 0;
+   public static final int WARNING = 1;
+   public static final int ERROR = 2;
+   
+   public InfoBar(int mode)
    {
-      icon_ = new Image(ThemeResources.INSTANCE.warning());
+      switch(mode)
+      {
+      case WARNING:
+         icon_ = new Image(ThemeResources.INSTANCE.warningSmall());
+         break;
+      case ERROR:
+         icon_ = new Image(ThemeResources.INSTANCE.errorSmall());
+         break;
+      case INFO:
+      default:
+         icon_ = new Image(ThemeResources.INSTANCE.infoSmall());
+         break;
+      
+      }
+     
       initWidget(binder.createAndBindUi(this));
    }
 
@@ -49,6 +67,6 @@ public class WarningBar extends Composite
    @UiField
    Label label_;
 
-   interface MyBinder extends UiBinder<Widget, WarningBar>{}
+   interface MyBinder extends UiBinder<Widget, InfoBar>{}
    private static MyBinder binder = GWT.create(MyBinder.class);
 }

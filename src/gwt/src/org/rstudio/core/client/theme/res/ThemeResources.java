@@ -167,7 +167,9 @@ public interface ThemeResources extends ClientBundle
 
    ImageResource help();
    
-   ImageResource warning();
+   ImageResource warningSmall();
+   ImageResource infoSmall();
+   ImageResource errorSmall();
 
    ImageResource codeTransform();
 

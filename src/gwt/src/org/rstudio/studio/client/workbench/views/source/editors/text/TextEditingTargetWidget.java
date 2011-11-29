@@ -29,7 +29,7 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.core.client.widget.WarningBar;
+import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -194,7 +194,7 @@ public class TextEditingTargetWidget
    {
       if (warningBar_ == null)
       {
-         warningBar_ = new WarningBar();
+         warningBar_ = new InfoBar(InfoBar.WARNING);
          panel_.insertNorth(warningBar_, warningBar_.getHeight(), null);
       }
       warningBar_.setText(warning);
@@ -249,7 +249,7 @@ public class TextEditingTargetWidget
    private final DocDisplay editor_;
    private CheckBox sourceOnSave_;
    private PanelWithToolbars panel_;
-   private WarningBar warningBar_;
+   private InfoBar warningBar_;
    private final TextEditingTargetFindReplace findReplace_;
    private ToolbarButton codeTransform_;
    private ToolbarButton sourceButton_;
