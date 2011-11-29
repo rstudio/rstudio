@@ -13,7 +13,6 @@
 package org.rstudio.studio.client.projects.ui.prefs;
 
 
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -156,10 +155,10 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       final ProgressIndicator indicator = getProgressIndicator();
       indicator.onProgress("Checking for git repository...");
       
-      final String projDir = FileSystemItem.createFile(
-        session_.getSessionInfo().getActiveProjectFile()).getParentPathString();
+      final String projDir = 
+               session_.getSessionInfo().getActiveProjectDir().getPath();
       
-      server_.gitHasRepo(new ServerRequestCallback<Boolean>() {
+      server_.gitHasRepo(projDir, new ServerRequestCallback<Boolean>() {
 
          @Override
          public void onResponseReceived(Boolean result)

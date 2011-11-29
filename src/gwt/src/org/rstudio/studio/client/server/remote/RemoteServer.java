@@ -1410,9 +1410,10 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void gitHasRepo(ServerRequestCallback<Boolean> requestCallback)
+   public void gitHasRepo(String directory,
+                          ServerRequestCallback<Boolean> requestCallback)
    {
-      sendRequest(RPC_SCOPE, GIT_HAS_REPO, requestCallback);
+      sendRequest(RPC_SCOPE, GIT_HAS_REPO, directory, requestCallback);
    }
 
    @Override

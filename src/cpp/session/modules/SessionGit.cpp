@@ -1581,8 +1581,14 @@ Error vcsSshPublicKey(const json::JsonRpcRequest& request,
 Error vcsHasRepo(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
-   FilePath gitDir =
-        detectGitDir(projects::projectContext().directory());
+   // get directory
+   std::string directory;
+   Error error = json::readParam(request.params, 0, &directory);
+   if (error)
+      return error;
+   FilePath dirPath = module_context::resolveAliasedPath(directory);
+
+   FilePath gitDir = detectGitDir(dirPath);
 
    pResponse->setResult(!gitDir.empty());
 
