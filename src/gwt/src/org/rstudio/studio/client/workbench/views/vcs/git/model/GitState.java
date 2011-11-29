@@ -20,6 +20,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.vcs.AllStatus;
 import org.rstudio.studio.client.common.vcs.BranchesInfo;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
+import org.rstudio.studio.client.common.vcs.RemoteBranchInfo;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -48,9 +49,14 @@ public class GitState extends VcsState
 
    public boolean hasRemote()
    {
-      return hasRemote_;
+      return getRemoteBranchInfo() != null;
    }
 
+   public RemoteBranchInfo getRemoteBranchInfo()
+   {
+      return remoteBranchInfo_;
+   }
+   
    @Override
    protected boolean isInitialized()
    {
@@ -66,7 +72,7 @@ public class GitState extends VcsState
          {
             status_ = StatusAndPath.fromInfos(response.getStatus());
             branches_ = response.getBranches();
-            hasRemote_ = response.hasRemote();
+            remoteBranchInfo_ = response.getRemoteBranchInfo();
             handlers_.fireEvent(new VcsRefreshEvent(Reason.VcsOperation));
          }
 
@@ -82,7 +88,7 @@ public class GitState extends VcsState
    }
 
    private BranchesInfo branches_;
-   private boolean hasRemote_;
+   private RemoteBranchInfo remoteBranchInfo_;
    private final GitServerOperations server_;
 
 }

@@ -1,5 +1,5 @@
 /*
- * AllStatus.java
+ * RemoteBranchInfo.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -13,21 +13,19 @@
 package org.rstudio.studio.client.common.vcs;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 
-public class AllStatus extends JavaScriptObject
+public class RemoteBranchInfo extends JavaScriptObject
 {
-   protected AllStatus() {}
+   protected RemoteBranchInfo()
+   {
+   }
 
-   public native final JsArray<StatusAndPathInfo> getStatus() /*-{
-      return this.status;
+   public native final String getName() /*-{
+      return this.name;
    }-*/;
-
-   public native final BranchesInfo getBranches() /*-{
-      return this.branches;
+   
+   public native final int getCommitsBehind() /*-{
+      return this.commits_behind;
    }-*/;
-
-   public native final RemoteBranchInfo getRemoteBranchInfo() /*-{
-      return this.remote_branch_info;
-   }-*/;
+   
 }

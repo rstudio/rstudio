@@ -20,6 +20,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.user.cellview.client.CellTable;
@@ -30,6 +31,7 @@ import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.view.client.*;
 import org.rstudio.core.client.theme.RStudioCellTableStyle;
+import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.MultiSelectCellTable;
 import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
@@ -57,12 +59,27 @@ public abstract class ChangelistTable extends Composite
       @Source({RStudioCellTableStyle.RSTUDIO_DEFAULT_CSS,
                "ChangelistTableCellTableStyle.css"})
       ChangelistTableCellTableStyle cellTableStyle();
+      
+      @Source("ChangelistTable.css")
+      Styles styles();
    }
 
    public interface ChangelistTableCellTableStyle extends CellTable.Style
    {
       String status();
    }
+   
+
+   interface Styles extends CssResource
+   {
+      String infoBar();
+   }
+   
+   public static void ensureStylesInjected()
+   {
+      resources_.styles().ensureInjected();
+   }
+
 
    /**
     * The whole point of this subclass is to force CellTable to update its
@@ -134,10 +151,10 @@ public abstract class ChangelistTable extends Composite
       table_.setSize("100%", "auto");
 
       layout_ = new LayoutPanel();
-      ScrollPanel scrollPanel = new ScrollPanel(table_);
-      layout_.add(scrollPanel);
-      layout_.setWidgetTopBottom(scrollPanel, 0, Unit.PX, 0, Unit.PX);
-      layout_.setWidgetLeftRight(scrollPanel, 0, Unit.PX, 0, Unit.PX);
+      scrollPanel_ = new ScrollPanel(table_);
+      layout_.add(scrollPanel_);
+      layout_.setWidgetTopBottom(scrollPanel_, 0, Unit.PX, 0, Unit.PX);
+      layout_.setWidgetLeftRight(scrollPanel_, 0, Unit.PX, 0, Unit.PX);
       progressPanel_ = new ProgressPanel();
       progressPanel_.getElement().getStyle().setBackgroundColor("white");
       layout_.add(progressPanel_);
@@ -180,6 +197,39 @@ public abstract class ChangelistTable extends Composite
       {
          layout_.setWidgetVisible(progressPanel_, false);
          progressPanel_.endProgressOperation();
+      }
+   }
+   
+
+   public void showInfoBar(String message)
+   {
+      if (infoBar_ == null)
+      {
+         infoBar_ = new ChangelistInfoBar();
+         layout_.add(infoBar_);
+         layout_.setWidgetLeftRight(infoBar_, 0, Unit.PX, 0, Unit.PX);
+         layout_.setWidgetBottomHeight(infoBar_, 
+                                       0, Unit.PX, 
+                                       infoBar_.getHeight(), Unit.PX);
+         layout_.setWidgetTopBottom(scrollPanel_, 
+                                    0, Unit.PX,
+                                    infoBar_.getHeight(), Unit.PX);
+         infoBar_.setText(message);
+         layout_.animate(250);
+      }
+      else
+      {
+         infoBar_.setText(message);
+      }
+   }
+
+   public void hideInfoBar()
+   {
+      if (infoBar_ != null)
+      {
+         layout_.remove(infoBar_);
+         layout_.setWidgetTopBottom(scrollPanel_, 0, Unit.PX, 0, Unit.PX);
+         layout_.animate(250);
       }
    }
 
@@ -346,6 +396,17 @@ public abstract class ChangelistTable extends Composite
    {
       table_.setFocus(true);
    }
+   
+   private class ChangelistInfoBar extends InfoBar
+   {
+      public ChangelistInfoBar()
+      {
+         super(InfoBar.INFO);
+         addStyleName(resources_.styles().infoBar());
+         container_.getElement().getStyle().setBackgroundColor("#ffd");
+         
+      }
+   }
 
    protected final MultiSelectCellTable<StatusAndPath> table_;
    protected final MultiSelectionModel<StatusAndPath> selectionModel_;
@@ -353,6 +414,8 @@ public abstract class ChangelistTable extends Composite
    private final ListDataProvider<StatusAndPath> dataProvider_;
    private final ProgressPanel progressPanel_;
    private LayoutPanel layout_;
+   private ScrollPanel scrollPanel_;
+   private ChangelistInfoBar infoBar_;
    private boolean selectFirstItemByDefault_;
    private static final ChangelistTableCellTableResources resources_ = GWT.<ChangelistTableCellTableResources>create(ChangelistTableCellTableResources.class);
 }

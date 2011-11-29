@@ -147,6 +147,36 @@ struct CommitInfo
    std::string graph;
 };
 
+struct RemoteBranchInfo
+{
+   RemoteBranchInfo() : commitsBehind(0) {}
+
+   RemoteBranchInfo(const std::string& name, int commitsBehind)
+      : name(name), commitsBehind(commitsBehind)
+   {
+   }
+
+   bool empty() const { return name.empty(); }
+
+   std::string name;
+   int commitsBehind;
+
+   json::Value toJson() const
+   {
+      if (!empty())
+      {
+         json::Object remoteInfoJson;
+         remoteInfoJson["name"] = name;
+         remoteInfoJson["commits_behind"] = commitsBehind;
+         return remoteInfoJson;
+      }
+      else
+      {
+         return json::Value();
+      }
+   }
+};
+
 class Git;
 
 std::vector<PidType> s_pidsToTerminate_;
@@ -946,21 +976,39 @@ public:
       return runGit(args, pOutput);
    }
 
-   virtual core::Error hasRemote(bool *pHasRemote)
+   virtual core::Error remoteBranchInfo(RemoteBranchInfo* pRemoteBranchInfo)
    {
+      // default to none
+      *pRemoteBranchInfo = RemoteBranchInfo();
+
       std::string branch;
       Error error = currentBranch(&branch);
       if (error)
          return error;
 
       if (branch.empty())
-      {
-         *pHasRemote = false;
          return Success();
-      }
 
       std::string remote, merge;
-      *pHasRemote = remoteMerge(branch, &remote, &merge);
+      if (remoteMerge(branch, &remote, &merge))
+      {
+         // branch name is simple concatenation
+         std::string name = remote + "/" + branch;
+
+         // list the commits between the current upstream and HEAD
+         ShellArgs args = ShellArgs() << "log" << "@{u}..HEAD" << "--oneline";
+         std::string output;
+         Error error = runGit(args, &output);
+         if (error)
+            return error;
+
+         // commits == number of lines (since we used --oneline mode)
+         int commitsBehind = safe_convert::numberTo<int>(
+                        std::count(output.begin(), output.end(), '\n'), 0);
+
+         *pRemoteBranchInfo = RemoteBranchInfo(name, commitsBehind);
+      }
+
       return Success();
    }
 };
@@ -1250,11 +1298,11 @@ Error vcsAllStatus(const json::JsonRpcRequest& request,
       return error;
    result["branches"] = tmp.result();
 
-   bool hasRemote;
-   error = s_git_.hasRemote(&hasRemote);
+   RemoteBranchInfo remoteBranchInfo;
+   error = s_git_.remoteBranchInfo(&remoteBranchInfo);
    if (error)
       return error;
-   result["has_remote"] = hasRemote;
+   result["remote_branch_info"] = remoteBranchInfo.toJson();
 
    pResponse->setResult(result);
 

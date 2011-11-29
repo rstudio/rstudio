@@ -16,6 +16,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -62,10 +63,12 @@ public class InfoBar extends Composite
       return 19;
    }
 
-   @UiField(provided = true)
-   Image icon_;
    @UiField
-   Label label_;
+   protected DockLayoutPanel container_;
+   @UiField(provided = true)
+   protected Image icon_;
+   @UiField
+   protected Label label_;
 
    interface MyBinder extends UiBinder<Widget, InfoBar>{}
    private static MyBinder binder = GWT.create(MyBinder.class);

@@ -62,6 +62,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.Code
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
+import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
 import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportFileSettingsDialog;
@@ -195,6 +196,7 @@ public class RStudio implements EntryPoint
       ChooseMirrorDialog.ensureStylesInjected();
       ResizeGripper.ensureStylesInjected();
       LineTableView.ensureStylesInjected();
+      ChangelistTable.ensureStylesInjected();
       CodeBrowserEditingTargetWidget.ensureStylesInjected();
       ShowPublicKeyDialog.ensureStylesInjected();
       WizardResources.INSTANCE.styles().ensureInjected();

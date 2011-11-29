@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.vcs.git;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
+import org.rstudio.studio.client.common.vcs.RemoteBranchInfo;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.StageUnstageEvent;
@@ -64,6 +65,21 @@ public class GitChangelistTablePresenter
          public void onVcsRefresh(VcsRefreshEvent event)
          {
             view_.setItems(gitState_.getStatus());
+            
+            RemoteBranchInfo remote = gitState_.getRemoteBranchInfo();
+            if (remote != null && remote.getCommitsBehind() > 0)
+            {
+               String message = 
+                  "Your branch is ahead of '" + remote.getName() + "' by " +
+                  remote.getCommitsBehind() + " commit" +
+                  (remote.getCommitsBehind() > 1 ? "s" : "") + ".";
+               
+               view_.showInfoBar(message);
+            }
+            else
+            {
+               view_.hideInfoBar();
+            } 
          }
       });
    }
