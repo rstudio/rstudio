@@ -2256,10 +2256,14 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void svnApplyPatch(String patch,
+   public void svnApplyPatch(String path,
+                             String patch,
                              ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, SVN_APPLY_PATCH, patch, requestCallback);
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      params.set(1, new JSONString(patch));
+      sendRequest(RPC_SCOPE, SVN_APPLY_PATCH, params, requestCallback);
    }
 
    private String clientId_;

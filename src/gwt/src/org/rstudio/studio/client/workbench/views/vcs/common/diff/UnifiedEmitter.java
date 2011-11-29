@@ -59,7 +59,7 @@ public class UnifiedEmitter
       diffLines_.addAll(lines);
    }
 
-   public String createPatch()
+   public String createPatch(boolean includeFileHeader)
    {
       prepareList(contextLines_, Type.Insertion);
       prepareList(diffLines_, Type.Same);
@@ -72,8 +72,11 @@ public class UnifiedEmitter
       StringBuilder p = new StringBuilder();
 
       // Write file header
-      p.append("--- ").append(fileA_).append(EOL);
-      p.append("+++ ").append(fileB_).append(EOL);
+      if (includeFileHeader)
+      {
+         p.append("--- ").append(fileA_).append(EOL);
+         p.append("+++ ").append(fileB_).append(EOL);
+      }
 
       for (DiffChunk chunk : chunks)
       {

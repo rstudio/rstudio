@@ -525,7 +525,7 @@ public class GitReviewPresenter implements ReviewPresenter
       for (DiffChunk chunk : chunks)
          emitter.addContext(chunk);
       emitter.addDiffs(lines);
-      String patch = emitter.createPatch();
+      String patch = emitter.createPatch(true);
 
       softModeSwitch_ = true;
       server_.gitApplyPatch(patch, patchMode, new SimpleRequestCallback<Void>());

@@ -21,6 +21,7 @@ import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.vcs.VCSApplicationView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitPresenterCore;
@@ -46,13 +47,15 @@ public class VCSApplicationWindow extends SatelliteWindow
                                Provider<HistoryPresenter> pHistoryPresenter,
                                Provider<Commands> pCommands,
                                Provider<EventBus> pEventBus,
-                               Provider<FontSizeManager> pFontSizeManager)
+                               Provider<FontSizeManager> pFontSizeManager,
+                               Session session)
    {
       super(pEventBus, pFontSizeManager);
       pVCSCore_ = pVCSCore;
       pReviewPresenter_ = pReviewPresenter;
       pHistoryPresenter_ = pHistoryPresenter;
       pCommands_ = pCommands;
+      session_ = session;
    }
    
    
@@ -64,7 +67,8 @@ public class VCSApplicationWindow extends SatelliteWindow
       Window.setTitle("Review Changes");
       
       // make sure vcs core is initialized
-      pVCSCore_.get();
+      if (session_.getSessionInfo().getVcsName().equalsIgnoreCase("git"))
+         pVCSCore_.get();
       
       // show the vcs ui in our main panel
       VCSApplicationParams vcsParams = params.<VCSApplicationParams>cast();
@@ -112,6 +116,7 @@ public class VCSApplicationWindow extends SatelliteWindow
    private final Provider<ReviewPresenter> pReviewPresenter_;
    private final Provider<HistoryPresenter> pHistoryPresenter_;
    private final Provider<Commands> pCommands_;
+   private final Session session_;
    private VCSPopup.Controller vcsPopupController_ = null;
  
 }

@@ -60,6 +60,7 @@ public interface SVNServerOperations extends CryptoServerOperations
                     boolean noSizeWarning,
                     ServerRequestCallback<String> requestCallback);
 
-   void svnApplyPatch(String patch,
+   void svnApplyPatch(String path,
+                      String patch,
                       ServerRequestCallback<Void> requestCallback);
 }

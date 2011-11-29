@@ -527,7 +527,7 @@ Error svnCommit(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   FilePath tempFile = module_context::tempFile("gitmsg", "txt");
+   FilePath tempFile = module_context::tempFile("svnmsg", "txt");
    boost::shared_ptr<std::ostream> pStream;
 
    error = tempFile.open_w(&pStream);
@@ -567,15 +567,89 @@ Error svnCommit(const json::JsonRpcRequest& request,
 Error svnDiffFile(const json::JsonRpcRequest& request,
                   json::JsonRpcResponse* pResponse)
 {
-   // TODO: Implement
-   pResponse->setResult("");
+   std::string path;
+   int contextLines;
+   bool noSizeWarning;
+   Error error = json::readParams(request.params,
+                                  &path,
+                                  &contextLines,
+                                  &noSizeWarning);
+   if (error)
+      return error;
+
+   FilePath filePath = resolveAliasedPath(path);
+
+   if (contextLines < 0)
+      contextLines = 999999999;
+
+   std::string extArgs = "-U " + boost::lexical_cast<std::string>(contextLines);
+
+   std::string stdOut, stdErr;
+   int exitCode;
+   error = runSvn(ShellArgs() << "diff" <<
+                  "--depth" << "empty" <<
+                  "--diff-cmd" << "diff" <<
+                  "-x" << extArgs <<
+                  "--" << filePath,
+                  &stdOut, &stdErr, &exitCode);
+   if (error)
+      return error;
+
+   if (exitCode != EXIT_SUCCESS)
+   {
+      LOG_ERROR_MESSAGE(stdErr);
+   }
+
+   // TODO: implement size warning
+   pResponse->setResult(stdOut);
+
    return Success();
 }
 
 Error svnApplyPatch(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
-   // TODO: Implement
+   RefreshOnExit refreshOnExit;
+
+   std::string path, patch;
+   Error error = json::readParams(request.params,
+                                  &path,
+                                  &patch);
+   if (error)
+      return error;
+
+   FilePath filePath = resolveAliasedPath(path);
+
+   FilePath tempFile = module_context::tempFile("svnpatch", "txt");
+   boost::shared_ptr<std::ostream> pStream;
+
+   error = tempFile.open_w(&pStream);
+   if (error)
+      return error;
+
+   *pStream << patch;
+
+   pStream->flush();
+   pStream.reset();  // release file handle
+
+   ShellCommand cmd("patch");
+   cmd << "-i" << tempFile;
+   cmd << filePath;
+
+   core::system::ProcessOptions options = procOptions();
+
+   core::system::ProcessResult result;
+   error = core::system::runCommand(cmd,
+                                    options,
+                                    &result);
+   if (error)
+      return error;
+
+   if (result.exitStatus != EXIT_SUCCESS)
+   {
+      LOG_ERROR_MESSAGE(result.stdErr);
+   }
+
    return Success();
 }
 

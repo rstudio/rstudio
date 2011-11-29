@@ -70,6 +70,7 @@ public class SVNReviewPresenter implements ReviewPresenter
       void setFilesCommandsEnabled(boolean enabled);
       HasClickHandlers getIgnoreButton();
       HasClickHandlers getDiscardAllButton();
+      HasClickHandlers getRefreshButton();
 
       void setData(ArrayList<ChunkOrLine> lines);
 
@@ -288,6 +289,17 @@ public class SVNReviewPresenter implements ReviewPresenter
                   false);
          }
       });
+
+      view_.getRefreshButton().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            view_.getChangelistTable().showProgress();
+            svnState_.refresh(true);
+         }
+      });
+
       view_.getLineTableDisplay().addDiffChunkActionHandler(new ApplyPatchHandler());
       view_.getLineTableDisplay().addDiffLineActionHandler(new ApplyPatchHandler());
 
@@ -351,9 +363,9 @@ public class SVNReviewPresenter implements ReviewPresenter
       for (DiffChunk chunk : chunks)
          emitter.addContext(chunk);
       emitter.addDiffs(lines);
-      String patch = emitter.createPatch();
+      String patch = emitter.createPatch(false);
 
-      server_.svnApplyPatch(patch, new SimpleRequestCallback<Void>());
+      server_.svnApplyPatch(path, patch, new SimpleRequestCallback<Void>());
    }
 
    private void updateDiff()

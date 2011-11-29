@@ -39,12 +39,14 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.core.client.widget.*;
+import org.rstudio.core.client.widget.LeftRightToggleButton;
+import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.views.vcs.BranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.ChunkOrLine;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTablePresenter;
@@ -200,8 +202,7 @@ public class SVNReviewPanel extends ResizeComposite implements Display
    public SVNReviewPanel(SVNChangelistTablePresenter changelist,
                          LineTableView diffPane,
                          final Commands commands,
-                         FileTypeRegistry fileTypeRegistry,
-                         BranchToolbarButton branchToolbarButton)
+                         FileTypeRegistry fileTypeRegistry)
    {
       fileTypeRegistry_ = fileTypeRegistry;
       splitPanel_ = new SplitLayoutPanel(4);
@@ -222,8 +223,6 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       switchViewButton_ = new LeftRightToggleButton("Changes", "History", true);
       topToolbar_.addLeftWidget(switchViewButton_);
 
-      topToolbar_.addLeftWidget(branchToolbarButton);
-
       topToolbar_.addLeftSeparator();
 
       revertFilesButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
@@ -238,16 +237,10 @@ public class SVNReviewPanel extends ResizeComposite implements Display
             "Ignore", RES.ignore(), (ClickHandler) null));
 */
 
-      topToolbar_.addRightWidget(new ToolbarButton(
+      refreshButton_ = new ToolbarButton(
             "Refresh", commands.vcsRefresh().getImageResource(),
-            new ClickHandler() {
-               @Override
-               public void onClick(ClickEvent event)
-               {
-                  changelist_.showProgress();
-                  commands.vcsRefresh().execute();
-               }
-            }));
+            (ClickHandler) null);
+      topToolbar_.addRightWidget(refreshButton_);
 
       topToolbar_.addRightSeparator();
 
@@ -368,6 +361,12 @@ public class SVNReviewPanel extends ResizeComposite implements Display
    public HasClickHandlers getDiscardAllButton()
    {
       return discardAllButton_;
+   }
+
+   @Override
+   public ToolbarButton getRefreshButton()
+   {
+      return refreshButton_;
    }
 
    @Override
@@ -505,6 +504,7 @@ public class SVNReviewPanel extends ResizeComposite implements Display
    private LeftRightToggleButton switchViewButton_;
 
    private SizeWarningWidget overrideSizeWarning_;
+   private ToolbarButton refreshButton_;
 
    private static final Resources RES = GWT.create(Resources.class);
    static {
