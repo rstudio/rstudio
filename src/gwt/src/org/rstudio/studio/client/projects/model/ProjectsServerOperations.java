@@ -21,7 +21,6 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
                                                   SourceServerOperations
 {  
    void createProject(String projectDirectory,
-                      boolean createGitRepo,
                       ServerRequestCallback<Void> callback);
     
    void readProjectOptions(ServerRequestCallback<RProjectOptions> callback);

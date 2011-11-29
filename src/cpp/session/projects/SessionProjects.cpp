@@ -54,8 +54,7 @@ Error createProject(const json::JsonRpcRequest& request,
 {
    // read params
    std::string projectFile;
-   bool gitRepo;
-   Error error = json::readParams(request.params, &projectFile, &gitRepo);
+   Error error = json::readParam(request.params, 0, &projectFile);
    if (error)
       return error;
    FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
@@ -64,8 +63,6 @@ Error createProject(const json::JsonRpcRequest& request,
    error = projectFilePath.parent().ensureDirectory();
    if (error)
       return error;
-
-   // TODO: call git init
 
    // create the project file
    return r_util::writeProjectFile(projectFilePath,
