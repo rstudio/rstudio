@@ -1595,7 +1595,7 @@ Error vcsInitRepo(const json::JsonRpcRequest& request,
 {
    // get directory
    std::string directory;
-   Error error = readParam(request.params, 0, &directory);
+   Error error = json::readParam(request.params, 0, &directory);
    if (error)
       return error;
    FilePath dirPath = module_context::resolveAliasedPath(directory);
