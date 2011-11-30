@@ -208,12 +208,12 @@ public abstract class ChangelistTable extends Composite
          infoBar_ = new ChangelistInfoBar();
          layout_.add(infoBar_);
          layout_.setWidgetLeftRight(infoBar_, 0, Unit.PX, 0, Unit.PX);
-         layout_.setWidgetBottomHeight(infoBar_, 
-                                       0, Unit.PX, 
-                                       infoBar_.getHeight(), Unit.PX);
-         layout_.setWidgetTopBottom(scrollPanel_, 
-                                    0, Unit.PX,
+         layout_.setWidgetTopHeight(infoBar_, 
+                                    0, Unit.PX, 
                                     infoBar_.getHeight(), Unit.PX);
+         layout_.setWidgetTopBottom(scrollPanel_, 
+                                    infoBar_.getHeight(), Unit.PX,
+                                    0, Unit.PX);
          infoBar_.setText(message);
          layout_.animate(250);
       }
@@ -409,7 +409,7 @@ public abstract class ChangelistTable extends Composite
       {
          super(InfoBar.INFO);
          addStyleName(resources_.styles().infoBar());
-         container_.getElement().getStyle().setBackgroundColor("#F3F5F7");
+         container_.getElement().getStyle().setBackgroundColor("#EEEFF1");
          
       }
    }
