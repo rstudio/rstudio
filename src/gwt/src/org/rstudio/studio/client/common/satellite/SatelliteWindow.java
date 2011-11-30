@@ -13,13 +13,10 @@
 package org.rstudio.studio.client.common.satellite;
 
 
-import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.FontSizer;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -37,13 +34,11 @@ public abstract class SatelliteWindow extends Composite
                                       ProvidesResize
 {
    public SatelliteWindow(Provider<EventBus> pEventBus,
-                          Provider<FontSizeManager> pFontSizeManager,
-                          Provider<Commands> pCommands)
+                          Provider<FontSizeManager> pFontSizeManager)
    {
       // save references
       pEventBus_ = pEventBus;
       pFontSizeManager_ = pFontSizeManager;
-      pCommands_ = pCommands;
       
       // occupy full client area of the window
       Window.enableScrolling(false);
@@ -60,14 +55,6 @@ public abstract class SatelliteWindow extends Composite
    // rather they should override the abstract onInitialize method)
    public void show(JavaScriptObject params)
    {
-      // allow Ctrl+W to propagate to the browser if close doc is disabled
-      if (!Desktop.isDesktop())
-      {
-         AppCommand closeSourceDoc = pCommands_.get().closeSourceDoc();
-         closeSourceDoc.setEnabled(false);
-         closeSourceDoc.setPreventShortcutWhenDisabled(false);
-      }   
-            
       // react to font size changes
       EventBus eventBus = pEventBus_.get();
       eventBus.addHandler(ChangeFontSizeEvent.TYPE, new ChangeFontSizeHandler()
@@ -101,6 +88,5 @@ public abstract class SatelliteWindow extends Composite
 
    private final Provider<EventBus> pEventBus_;
    private final Provider<FontSizeManager> pFontSizeManager_;
-   private final Provider<Commands> pCommands_;
    private LayoutPanel mainPanel_;
 }
