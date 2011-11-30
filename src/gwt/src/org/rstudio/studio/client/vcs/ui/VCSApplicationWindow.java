@@ -15,6 +15,8 @@ package org.rstudio.studio.client.vcs.ui;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
@@ -50,7 +52,7 @@ public class VCSApplicationWindow extends SatelliteWindow
                                Provider<FontSizeManager> pFontSizeManager,
                                Session session)
    {
-      super(pEventBus, pFontSizeManager, pCommands);
+      super(pEventBus, pFontSizeManager);
       pVCSCore_ = pVCSCore;
       pReviewPresenter_ = pReviewPresenter;
       pHistoryPresenter_ = pHistoryPresenter;
@@ -65,6 +67,15 @@ public class VCSApplicationWindow extends SatelliteWindow
    {
       // set our window title
       Window.setTitle("Review Changes");
+      
+      // inform the shortcut manager of the subset of commands we want
+      // shortcuts active for
+      Commands commands = pCommands_.get();
+      ArrayList<AppCommand> activeCommands = new ArrayList<AppCommand>();
+      activeCommands.add(commands.vcsRefresh());
+      activeCommands.add(commands.vcsPull());
+      activeCommands.add(commands.vcsPush());
+      ShortcutManager.INSTANCE.setActiveCommands(activeCommands);
       
       // make sure vcs core is initialized
       if (session_.getSessionInfo().getVcsName().equalsIgnoreCase("git"))
