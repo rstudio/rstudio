@@ -268,7 +268,7 @@ public class AceEditor implements DocDisplay,
 
    private void indentPastedRange(Range range)
    {
-      if (!fileType_.canAutoIndent())
+      if (fileType_ == null || !fileType_.canAutoIndent())
          return;
 
       String firstLinePrefix = getSession().getTextRange(

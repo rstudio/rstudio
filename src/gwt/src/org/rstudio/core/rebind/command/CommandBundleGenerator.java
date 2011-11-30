@@ -311,6 +311,8 @@ class CommandBundleGeneratorHelper
 
       setPropertyBool(writer, name, props.get(name), "visible");
       setPropertyBool(writer, name, props.get(name), "enabled");
+      setPropertyBool(writer, name, props.get(name),
+                      "preventShortcutWhenDisabled");
 
       if (images.hasImage(name))
       {
@@ -374,7 +376,7 @@ class CommandBundleGeneratorHelper
       String setter = "set" + Character.toUpperCase(propertyName.charAt(0))
             + propertyName.substring(1);
       writer.println(name + "_." + setter
-                     + "(" + Boolean.valueOf(value).toString() + ");");
+                     + "(" + value + ");");
    }
 
    private ImageResourceInfo generateImageBundle()

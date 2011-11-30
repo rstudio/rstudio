@@ -210,14 +210,6 @@ public class Source implements InsertSourceHandler,
       commands.findReplace().setShortcut(new KeyboardShortcut(mod, 'F'));
       commands.goToFunctionDefinition().setShortcut(new KeyboardShortcut(113));
       
-             
-      // allow Ctrl+W to propagate to the browser if close doc is disabled
-      if (!Desktop.isDesktop())
-      {
-         AppCommand closeSourceDoc = commands_.closeSourceDoc();
-         closeSourceDoc.setPreventShortcutWhenDisabled(false);
-      }   
-      
       events.addHandler(ShowContentEvent.TYPE, this);
       events.addHandler(ShowDataEvent.TYPE, this);
 
