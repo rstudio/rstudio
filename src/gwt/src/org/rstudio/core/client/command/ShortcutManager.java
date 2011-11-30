@@ -20,9 +20,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map.Entry;
 
 public class ShortcutManager implements NativePreviewHandler,
                                         NativeKeyDownHandler
@@ -60,22 +58,6 @@ public class ShortcutManager implements NativePreviewHandler,
          }
       };
    }
-   
-   // instruct the shortcut manager to support only a subset of the commands
-   // in the system -- this is here for satellite windows who don't want
-   // keystrokes they aren't concerned with handled (and thus commands with
-   // no handlers executed) but still want some subset of commands to have
-   // active keyboard shortcuts
-   public void setActiveCommands(ArrayList<AppCommand> commands)
-   {
-      activeCommands_ = new HashMap<KeyboardShortcut, AppCommand>();
-      
-      for (Entry<KeyboardShortcut,AppCommand> entry : commands_.entrySet())
-      {
-         if (commands.contains(entry.getValue()))
-            activeCommands_.put(entry.getKey(), entry.getValue());
-      }
-   }
 
    public void register(int modifiers, int keyCode, AppCommand command)
    {
@@ -110,16 +92,11 @@ public class ShortcutManager implements NativePreviewHandler,
 
    private boolean handleKeyDown(NativeEvent e)
    {
-      // determine which group of commands to do the lookup in -- either
-      // the default set or (if specified) a subset of active commands
-      HashMap<KeyboardShortcut, AppCommand> commands = 
-            activeCommands_ != null ? activeCommands_ : commands_;
-      
       int modifiers = KeyboardShortcut.getModifierValue(e);
 
       KeyboardShortcut shortcut = new KeyboardShortcut(modifiers,
                                                        e.getKeyCode());
-      AppCommand command = commands.get(shortcut);
+      AppCommand command = commands_.get(shortcut);
       if (command != null)
       {
          boolean enabled = isEnabled() && command.isEnabled();
@@ -141,6 +118,5 @@ public class ShortcutManager implements NativePreviewHandler,
    private int disableCount_ = 0;
    private final HashMap<KeyboardShortcut, AppCommand> commands_
                                   = new HashMap<KeyboardShortcut, AppCommand>();
-   
-   private HashMap<KeyboardShortcut, AppCommand> activeCommands_ = null;
+
 }
