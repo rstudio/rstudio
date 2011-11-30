@@ -372,7 +372,9 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Save with Encoding..."
         desc="Save the current file with a different encoding"/>
    <cmd id="closeSourceDoc"
-        menuLabel="_Close"/>
+        menuLabel="_Close"
+        enabled="false"
+        preventShortcutWhenDisabled="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
    <cmd id="closeAllSourceDocs"
         menuLabel="Close All"/>
    <cmd id="printSourceDoc"
