@@ -17,6 +17,8 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -28,7 +30,7 @@ import com.google.gwt.view.client.HasData;
 import com.google.inject.Inject;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.views.vcs.BranchToolbarButton;
+import org.rstudio.studio.client.workbench.views.vcs.HistoryBranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitDetailDisplay;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitListDisplay;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.Display;
@@ -112,7 +114,7 @@ public class HistoryPanel extends Composite implements Display
    {}
 
    @Inject
-   public HistoryPanel(BranchToolbarButton branchToolbarButton,
+   public HistoryPanel(HistoryBranchToolbarButton branchToolbarButton,
                        Commands commands)
    {
       Styles styles = GWT.<Resources>create(Resources.class).styles();
@@ -123,6 +125,7 @@ public class HistoryPanel extends Composite implements Display
             GWT.<SimplePagerResources>create(SimplePagerResources.class),
             true, 500, true);
       pager_.getElement().setAttribute("align", "center");
+      branchToolbarButton_ = branchToolbarButton;
 
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
@@ -132,7 +135,7 @@ public class HistoryPanel extends Composite implements Display
 
       switchViewButton_ = new LeftRightToggleButton("Changes", "History", false);
       topToolbar_.addLeftWidget(switchViewButton_);
-      topToolbar_.addLeftWidget(branchToolbarButton);
+      topToolbar_.addLeftWidget(branchToolbarButton_);
 
 
       filterText_ = new SearchWidget(new MultiWordSuggestOracle(),
@@ -200,7 +203,20 @@ public class HistoryPanel extends Composite implements Display
    {
       return filterText_;
    }
-
+   
+   @Override 
+   public void setPageStart(int pageStart)
+   {
+      commitTable_.setPageStart(pageStart);
+   }
+   
+   @Override
+   public HandlerRegistration addBranchChangedHandler(
+                                       ValueChangeHandler<String> handler)
+   {
+      return branchToolbarButton_.addValueChangeHandler(handler);
+   }
+  
    @Override
    public void showSizeWarning(long sizeInBytes)
    {
@@ -249,4 +265,5 @@ public class HistoryPanel extends Composite implements Display
    }
 
    private ToolbarButton refreshButton_;
+   private final HistoryBranchToolbarButton branchToolbarButton_;
 }

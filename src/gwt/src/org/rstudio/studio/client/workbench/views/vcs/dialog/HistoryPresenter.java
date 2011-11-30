@@ -55,6 +55,11 @@ public class HistoryPresenter
 
       HasValue<String> getFilterTextBox();
 
+      void setPageStart(int pageStart);
+      
+      HandlerRegistration addBranchChangedHandler(
+                                       ValueChangeHandler<String> handler);
+      
       void showSizeWarning(long sizeInBytes);
       void hideSizeWarning();
 
@@ -79,13 +84,23 @@ public class HistoryPresenter
    @Inject
    public HistoryPresenter(GitServerOperations server,
                            final Display view,
-                           HistoryAsyncDataProvider provider,
+                           final HistoryAsyncDataProvider provider,
                            final GitState vcsState)
    {
       server_ = server;
       view_ = view;
       provider_ = provider;
-
+   
+      view_.addBranchChangedHandler(new ValueChangeHandler<String>() {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            provider.setRev(event.getValue());
+            refreshHistory();
+            view_.setPageStart(0);
+         }
+      });
+      
       view_.getCommitList().addSelectionChangeHandler(new SelectionChangeEvent.Handler()
       {
          @Override

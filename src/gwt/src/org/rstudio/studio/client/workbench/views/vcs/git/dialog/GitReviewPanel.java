@@ -45,7 +45,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.views.vcs.BranchToolbarButton;
+import org.rstudio.studio.client.workbench.views.vcs.CheckoutBranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.ChunkOrLine;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTablePresenter;
@@ -203,7 +203,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
                          LineTableView diffPane,
                          final Commands commands,
                          FileTypeRegistry fileTypeRegistry,
-                         BranchToolbarButton branchToolbarButton)
+                         CheckoutBranchToolbarButton branchToolbarButton)
    {
       fileTypeRegistry_ = fileTypeRegistry;
       splitPanel_ = new SplitLayoutPanel(4);

@@ -13,25 +13,27 @@
 package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.icons.StandardIcons;
-import org.rstudio.studio.client.common.vcs.GitServerOperations;
-import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 public class BranchToolbarButton extends ToolbarButton
+                                 implements HasValueChangeHandlers<String>
 {
    @Inject
-   public BranchToolbarButton(final GitState vcsState,
-                              final GitServerOperations server)
+   public BranchToolbarButton(final GitState vcsState)
    {
       super("",
             StandardIcons.INSTANCE.empty_command(),
@@ -44,12 +46,6 @@ public class BranchToolbarButton extends ToolbarButton
          @Override
          public void onVcsRefresh(VcsRefreshEvent event)
          {
-            String activeBranch = vcsState.getBranchInfo()
-                  .getActiveBranch();
-            if (activeBranch == null)
-               activeBranch = "(No branch)";
-            setText(activeBranch);
-
             ToolbarPopupMenu menu = getMenu();
             menu.clearItems();
             JsArrayString branches = vcsState.getBranchInfo()
@@ -62,21 +58,28 @@ public class BranchToolbarButton extends ToolbarButton
                   @Override
                   public void execute()
                   {
-                     server.gitCheckout(
-                           branch,
-                           new SimpleRequestCallback<ConsoleProcess>()
-                           {
-                              @Override
-                              public void onResponseReceived(ConsoleProcess proc)
-                              {
-                                 new ConsoleProgressDialog("Checkout " + branch,
-                                                           proc).showModal();
-                              }
-                           });
+                     setBranchCaption(branch);
+                     ValueChangeEvent.fire(BranchToolbarButton.this, branch);
                   }
                }));
             }
          }
       });
    }
+   
+   public void setBranchCaption(String caption)
+   {
+      if (StringUtil.isNullOrEmpty(caption))
+         caption = NO_BRANCH;
+      
+      setText(caption);
+   }
+
+   @Override
+   public HandlerRegistration addValueChangeHandler(ValueChangeHandler<String> handler)
+   {
+      return addHandler(handler, ValueChangeEvent.getType());
+   }
+
+   private static final String NO_BRANCH = "(No branch)";
 }

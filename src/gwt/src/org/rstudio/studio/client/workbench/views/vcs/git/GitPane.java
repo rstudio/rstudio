@@ -27,7 +27,7 @@ import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.vcs.BranchToolbarButton;
+import org.rstudio.studio.client.workbench.views.vcs.CheckoutBranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitPresenter.Display;
 
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ public class GitPane extends WorkbenchPane implements Display
    public GitPane(GitChangelistTablePresenter changelistTablePresenter,
                   Session session,
                   Commands commands,
-                  BranchToolbarButton branchToolbarButton)
+                  CheckoutBranchToolbarButton branchToolbarButton)
    {
       super(session.getSessionInfo().getVcsName());
       commands_ = commands;
@@ -154,6 +154,6 @@ public class GitPane extends WorkbenchPane implements Display
    }
 
    private final Commands commands_;
-   private final BranchToolbarButton branchToolbarButton_;
+   private final CheckoutBranchToolbarButton branchToolbarButton_;
    private GitChangelistTable table_;
 }

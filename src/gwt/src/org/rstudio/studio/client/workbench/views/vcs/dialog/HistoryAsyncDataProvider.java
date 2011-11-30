@@ -31,6 +31,7 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
    public HistoryAsyncDataProvider(GitServerOperations server)
    {
       server_ = server;
+      rev_ = "";
       filterText_ = new Value<String>("");
    }
 
@@ -45,10 +46,15 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
    {
       filterText_ = filter;
    }
+   
+   public void setRev(String rev)
+   {
+      rev_ = rev;
+   }
 
    public void refreshCount()
    {
-      server_.gitHistoryCount("", filterText_.getValue(), new ServerRequestCallback<CommitCount>()
+      server_.gitHistoryCount(rev_, filterText_.getValue(), new ServerRequestCallback<CommitCount>()
       {
          @Override
          public void onResponseReceived(CommitCount response)
@@ -69,7 +75,7 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
    {
       final Range rng = display.getVisibleRange();
       server_.gitHistory(
-            "", rng.getStart(), rng.getLength(), filterText_.getValue(),
+            rev_, rng.getStart(), rng.getLength(), filterText_.getValue(),
             new SimpleRequestCallback<RpcObjectList<CommitInfo>>("Error Fetching History")
             {
                @Override
@@ -82,5 +88,6 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
    }
 
    private final GitServerOperations server_;
+   private String rev_;
    private HasValue<String> filterText_;
 }
