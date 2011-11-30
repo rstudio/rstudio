@@ -393,6 +393,11 @@ public abstract class ChangelistTable extends Composite
       return table_.addContextMenuHandler(handler);
    }
 
+   public HandlerRegistration addRowCountChangeHandler(RowCountChangeEvent.Handler handler)
+   {
+      return table_.addRowCountChangeHandler(handler);
+   }
+
    public void focus()
    {
       table_.setFocus(true);

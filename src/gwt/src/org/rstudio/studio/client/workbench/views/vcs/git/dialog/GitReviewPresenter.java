@@ -26,6 +26,7 @@ import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.RowCountChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent.Handler;
 import com.google.inject.Inject;
@@ -268,6 +269,20 @@ public class GitReviewPresenter implements ReviewPresenter
             view_.setFilesCommandsEnabled(view_.getSelectedPaths().size() > 0);
             if (initialized_)
                updateDiff(true);
+         }
+      });
+      view_.getChangelistTable().addRowCountChangeHandler(new RowCountChangeEvent.Handler()
+      {
+         @Override
+         public void onRowCountChange(RowCountChangeEvent event)
+         {
+            // This is necessary because during initial load, the selection
+            // model has its selection set before any items are loaded into
+            // the table (so therefore view_.getSelectedPaths().size() is always
+            // 0, and the files commands are not enabled until selection changes
+            // again). By updating the files commands' enabled state on row
+            // count change as well, we can make sure they get enabled.
+            view_.setFilesCommandsEnabled(view_.getSelectedPaths().size() > 0);
          }
       });
       view_.getChangelistTable().addKeyDownHandler(new KeyDownHandler()
