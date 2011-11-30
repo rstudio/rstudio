@@ -16,7 +16,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEvent.Handler;
