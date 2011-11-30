@@ -25,6 +25,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.RowCountChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Invalidation;
@@ -218,6 +219,20 @@ public class SVNReviewPresenter implements ReviewPresenter
                updateDiff();
          }
       });
+      view_.getChangelistTable().addRowCountChangeHandler(new RowCountChangeEvent.Handler()
+      {
+         @Override
+         public void onRowCountChange(RowCountChangeEvent event)
+         {
+            // This is necessary because during initial load, the selection
+            // model has its selection set before any items are loaded into
+            // the table (so therefore view_.getSelectedPaths().size() is always
+            // 0, and the files commands are not enabled until selection changes
+            // again). By updating the files commands' enabled state on row
+            // count change as well, we can make sure they get enabled.
+            view_.setFilesCommandsEnabled(view_.getSelectedPaths().size() > 0);
+         }
+      });
 
       view_.getChangelistTable().addContextMenuHandler(new ContextMenuHandler()
       {
@@ -243,8 +258,8 @@ public class SVNReviewPresenter implements ReviewPresenter
             globalDisplay_.showYesNoMessage(
                   GlobalDisplay.MSG_WARNING,
                   "Revert Changes",
-                  "Changes to the selected " + noun + " will be lost, including " +
-                  "staged changes.\n\nAre you sure you want to continue?",
+                  "Changes to the selected " + noun + " will be lost.\n\nAre " +
+                  "you sure you want to continue?",
                   new Operation()
                   {
                      @Override
@@ -271,7 +286,7 @@ public class SVNReviewPresenter implements ReviewPresenter
             String which = view_.getLineTableDisplay()
                                  .getSelectedLines()
                                  .size() == 0
-                           ? "All unstaged"
+                           ? "All "
                            : "The selected";
             globalDisplay.showYesNoMessage(
                   GlobalDisplay.MSG_WARNING,
