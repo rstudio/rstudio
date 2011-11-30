@@ -50,7 +50,7 @@ public class VCSApplicationWindow extends SatelliteWindow
                                Provider<FontSizeManager> pFontSizeManager,
                                Session session)
    {
-      super(pEventBus, pFontSizeManager);
+      super(pEventBus, pFontSizeManager, pCommands);
       pVCSCore_ = pVCSCore;
       pReviewPresenter_ = pReviewPresenter;
       pHistoryPresenter_ = pHistoryPresenter;
