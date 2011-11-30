@@ -528,9 +528,10 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
 
     if (shouldIncludeBootstrapInPrimaryFragment(context)) {
       out.append(generateSelectionScript(logger, context, artifacts, result));
+      // only needed in SSSS, breaks WebWorker linker if done all the time
+      out.append("if (" + context.getModuleFunctionName() + ".succeeded) {\n");
     }
 
-    out.append("if (" + context.getModuleFunctionName() + ".succeeded) {\n");
 
     if (shouldInstallCode(context)) {
       // Rewrite the code so it can be installed with
@@ -548,9 +549,9 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
       out.append(script);
       out.append("\n");
     }
-
-    out.append("}\n");
-
+    if (shouldIncludeBootstrapInPrimaryFragment(context)) {
+      out.append("}\n");
+    }
     return out.toString();
   }
 }
