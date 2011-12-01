@@ -2182,6 +2182,12 @@ FilePath detectedGitBinDir()
 #endif
 }
 
+
+std::string nonPathGitBinDir()
+{
+   return s_gitBinDir;
+}
+
 void onUserSettingsChanged()
 {
    FilePath gitBinDir = userSettings().gitBinDir();

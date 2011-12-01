@@ -75,6 +75,8 @@ core::Error initializeGit(const core::FilePath& workingDir);
 
 core::FilePath detectedGitBinDir();
 
+std::string nonPathGitBinDir();
+
 core::Error status(const core::FilePath& dir, StatusResult* pStatusResult);
 core::Error fileStatus(const core::FilePath& filePath, VCSStatus* pStatus);
 core::Error statusToJson(const core::FilePath& path,

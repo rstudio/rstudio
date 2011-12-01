@@ -31,6 +31,8 @@ bool isSvnEnabled();
 
 core::FilePath detectedSvnBinDir();
 
+std::string nonPathSvnBinDir();
+
 core::Error initialize();
 
 // Initialize SVN with the given working directory

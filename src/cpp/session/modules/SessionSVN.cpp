@@ -329,6 +329,11 @@ FilePath detectedSvnBinDir()
 #endif
 }
 
+std::string nonPathSvnBinDir()
+{
+   return s_svnBinDir;
+}
+
 std::string translateItemStatus(const std::string& status)
 {
    if (status == "added")

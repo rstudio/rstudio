@@ -28,6 +28,9 @@
 #include "SessionCrypto.hpp"
 #include "SessionVCS.hpp"
 
+#include "SessionSVN.hpp"
+#include "SessionGit.hpp"
+
 using namespace core ;
 
 namespace session {
@@ -61,11 +64,26 @@ public:
       // configure environment for shell
       core::system::Options shellEnv;
       core::system::environment(&shellEnv);
+
+      // terminal and prompt
       core::system::setenv(&shellEnv, "TERM", "dumb");
       core::system::setenv(
             &shellEnv,
             "PS1",
              (aliasedCurrentPath().length() > 30) ? "\\W$ " : "\\w$ ");
+
+
+      // add custom git path if necessary
+      std::string gitBinDir = git::nonPathGitBinDir();
+      if (!gitBinDir.empty())
+         core::system::addToPath(&shellEnv, gitBinDir);
+
+      // add custom svn path if necessary
+      std::string svnBinDir = svn::nonPathSvnBinDir();
+      if (!svnBinDir.empty())
+         core::system::addToPath(&shellEnv, svnBinDir);
+
+      // configure bash command
       core::shell_utils::ShellCommand bashCommand("/bin/bash");
       bashCommand << "--norc";
 
