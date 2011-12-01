@@ -69,6 +69,10 @@ public abstract class DateTimeFormatTestBase extends GWTTestCase {
     Date date = new Date(Date.UTC(2006 - 1900, 6, 27, 13, 10, 10));
     String str = dtf.format(date, TEST_TIMEZONE);
     assertEquals("2006-07-27T08:10:10.000-05:00", str);
+
+    date = dtf.parse("2006-07-27T13:10:10.000Z");
+    str = dtf.format(date, TEST_TIMEZONE);
+    assertEquals("2006-07-27T08:10:10.000-05:00", str);
   }
 
   @SuppressWarnings("deprecation")

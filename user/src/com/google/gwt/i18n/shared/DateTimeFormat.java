@@ -1896,8 +1896,15 @@ public class DateTimeFormat {
         cal.setSeconds(value);
         return true;
 
-      case 'z': // time zone offset
       case 'Z': // time zone RFC
+        // ISO-8601 times can have a literal Z to indicate GMT+0
+        if (start < text.length() && text.charAt(start) == 'Z') {
+          pos[0]++;
+          cal.setTzOffset(0);
+          return true;
+        }
+        // $FALL-THROUGH$
+      case 'z': // time zone offset
       case 'v': // time zone generic
         return subParseTimeZoneInGMT(text, start, pos, cal);
       default:
