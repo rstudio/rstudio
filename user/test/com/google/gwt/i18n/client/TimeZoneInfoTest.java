@@ -57,7 +57,7 @@ public class TimeZoneInfoTest extends GWTTestCase {
 
   public void testGetStandardOffset() {
     assertEquals(60, madrid.getStandardOffset());
-    assertEquals(360, mawson.getStandardOffset());
+    assertEquals(300, mawson.getStandardOffset());
     assertEquals(-540, anchorage.getStandardOffset());
   }
 }
