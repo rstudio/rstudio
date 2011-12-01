@@ -55,6 +55,7 @@ import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
+import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.*;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.*;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffChunkActionEvent.Action;
@@ -100,7 +101,9 @@ public class GitReviewPresenter implements ReviewPresenter
       void showSizeWarning(long sizeInBytes);
       void hideSizeWarning();
 
-      void showContextMenu(int clientX, int clientY);
+      void showContextMenu(int clientX, 
+                           int clientY, 
+                           Command openSelectedCommand);
       
       void onShow();
    }
@@ -196,12 +199,14 @@ public class GitReviewPresenter implements ReviewPresenter
                              final EventBus events,
                              final GitState gitState,
                              final Session session,
-                             final GlobalDisplay globalDisplay)
+                             final GlobalDisplay globalDisplay,
+                             VCSFileOpener vcsFileOpener)
    {
       server_ = server;
       view_ = view;
       globalDisplay_ = globalDisplay;
       gitState_ = gitState;
+      vcsFileOpener_ = vcsFileOpener;
 
       new WidgetHandlerRegistration(view.asWidget())
       {
@@ -323,7 +328,14 @@ public class GitReviewPresenter implements ReviewPresenter
          {
             NativeEvent nativeEvent = event.getNativeEvent();
             view_.showContextMenu(nativeEvent.getClientX(),
-                                  nativeEvent.getClientY());
+                                  nativeEvent.getClientY(),
+                                  new Command() {
+                                    @Override
+                                    public void execute()
+                                    {
+                                       openSelectedFiles();                       
+                                    }
+            });
 
          }
       });
@@ -662,6 +674,11 @@ public class GitReviewPresenter implements ReviewPresenter
       view_.getLineTableDisplay().clear();
    }
 
+   private void openSelectedFiles()
+   {
+      vcsFileOpener_.openFiles(view_.getChangelistTable().getSelectedItems());
+   }
+   
    @Override
    public Widget asWidget()
    {
@@ -707,6 +724,7 @@ public class GitReviewPresenter implements ReviewPresenter
    // from staged view
    private boolean softModeSwitch_;
    private GitState gitState_;
+   private final VCSFileOpener vcsFileOpener_;
    private boolean initialized_;
    private static final String MODULE_GIT = "vcs_git";
    private static final String KEY_CONTEXT_LINES = "context_lines";

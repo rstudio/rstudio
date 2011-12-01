@@ -143,6 +143,8 @@ public class GitPane extends WorkbenchPane implements Display
       menu.addSeparator();
       menu.addItem(commands_.vcsRevert().createMenuItem(false));
       menu.addItem(commands_.vcsCommit().createMenuItem(false));
+      menu.addSeparator();
+      menu.addItem(commands_.vcsOpen().createMenuItem(false));
     
       menu.setPopupPositionAndShow(new PositionCallback() {
          @Override

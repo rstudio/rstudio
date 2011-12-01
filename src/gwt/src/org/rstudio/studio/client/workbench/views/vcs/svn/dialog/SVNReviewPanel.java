@@ -431,7 +431,9 @@ public class SVNReviewPanel extends ResizeComposite implements Display
    }
 
    @Override
-   public void showContextMenu(final int clientX, final int clientY)
+   public void showContextMenu(final int clientX, 
+                               final int clientY,
+                               Command openSelectedCommand)
    {
       // make sure enabled/disabled states of buttons are correct (note
       // that this won't be necessary when the Stage/Revert buttons correctly
@@ -454,16 +456,18 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       if (revertFilesButton_.isEnabled())
          menu.addItem(revertMenu);
 
-     if (menu.getItemCount() > 0)
-     {
-        menu.setPopupPositionAndShow(new PositionCallback() {
-            @Override
-            public void setPosition(int offsetWidth, int offsetHeight)
-            {
-               menu.setPopupPosition(clientX, clientY);
-            }
-         });
-     }
+      menu.addSeparator();
+      MenuItem openMenu = new MenuItem("Open", false, openSelectedCommand);
+      menu.addItem(openMenu);
+      
+      menu.setPopupPositionAndShow(new PositionCallback() {
+         @Override
+         public void setPosition(int offsetWidth, int offsetHeight)
+         {
+            menu.setPopupPosition(clientX, clientY);
+         }
+      });
+     
    }
 
    @Override

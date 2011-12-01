@@ -523,7 +523,9 @@ public class GitReviewPanel extends ResizeComposite implements Display
    }
    
    @Override
-   public void showContextMenu(final int clientX, final int clientY)
+   public void showContextMenu(final int clientX, 
+                               final int clientY,
+                               Command openSelectedCommand)
    {
       final ToolbarPopupMenu menu = new ToolbarPopupMenu();
       
@@ -556,16 +558,21 @@ public class GitReviewPanel extends ResizeComposite implements Display
       if (revertFilesButton_.isEnabled())
          menu.addItem(revertMenu);
      
-     if (menu.getItemCount() > 0)
-     {
-        menu.setPopupPositionAndShow(new PositionCallback() {
-            @Override
-            public void setPosition(int offsetWidth, int offsetHeight)
-            {
-               menu.setPopupPosition(clientX, clientY);     
-            }
-         });
-     }
+      menu.addSeparator();
+      MenuItem openMenu = new MenuItem(
+                           AppCommand.formatMenuLabel(null, "Open File", ""),
+                           true, 
+                           openSelectedCommand);
+      menu.addItem(openMenu);
+     
+      menu.setPopupPositionAndShow(new PositionCallback() {
+         @Override
+         public void setPosition(int offsetWidth, int offsetHeight)
+         {
+             menu.setPopupPosition(clientX, clientY);     
+         }
+      });
+     
    }
 
    @Override

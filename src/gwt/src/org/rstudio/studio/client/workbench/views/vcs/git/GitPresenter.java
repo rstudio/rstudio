@@ -25,13 +25,10 @@ import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
@@ -40,7 +37,7 @@ import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
-import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
@@ -70,24 +67,22 @@ public class GitPresenter extends BasePresenter implements IsWidget
 
    @Inject
    public GitPresenter(GitPresenterCore gitCore,
+                       VCSFileOpener vcsFileOpener,
                        Display view,
                        GitServerOperations server,
                        final Commands commands,
                        Binder commandBinder,
                        GitState gitState,
-                       EventBus events,
                        final GlobalDisplay globalDisplay,
-                       final FileTypeRegistry fileTypeRegistry,
                        SatelliteManager satelliteManager)
    {
       super(view);
+      vcsFileOpener_  = vcsFileOpener;
       view_ = view;
       server_ = server;
       commands_ = commands;
-      eventBus_ = events;
       gitState_ = gitState;
       globalDisplay_ = globalDisplay;
-      fileTypeRegistry_ = fileTypeRegistry;
       satelliteManager_ = satelliteManager;
 
       commandBinder.bind(commands, this);
@@ -121,7 +116,7 @@ public class GitPresenter extends BasePresenter implements IsWidget
                event.preventDefault();
                event.stopPropagation();
 
-               openSelectedFile();
+               view_.getChangelistTable().toggleStaged(true);
             }
          }
       });
@@ -136,7 +131,7 @@ public class GitPresenter extends BasePresenter implements IsWidget
                event.preventDefault();
                event.stopPropagation();
 
-               openSelectedFile();
+               view_.getChangelistTable().toggleStaged(false);
             }
          }
       });
@@ -161,26 +156,9 @@ public class GitPresenter extends BasePresenter implements IsWidget
       manageCommands();
    }
 
-   private void openSelectedFile()
+   private void openSelectedFiles()
    {
-      if (view_.getSelectedItemCount() == 0)
-         return;
-
-      ArrayList<StatusAndPath> items = view_.getSelectedItems();
-      for (StatusAndPath item : items)
-      {
-         if (!item.isDirectory())
-         {
-            fileTypeRegistry_.openFile(
-                           FileSystemItem.createFile(item.getRawPath()));
-         }
-         else 
-         { 
-            eventBus_.fireEvent(new DirectoryNavigateEvent(
-                           FileSystemItem.createDir(item.getRawPath())));
-            commands_.activateFiles().execute();
-         }
-      }
+      vcsFileOpener_.openFiles(view_.getSelectedItems());
    }
 
    private void manageCommands()
@@ -253,6 +231,12 @@ public class GitPresenter extends BasePresenter implements IsWidget
             },
             false);
    }
+   
+   @Handler
+   void onVcsOpen()
+   {
+      openSelectedFiles();
+   }
 
    @Handler
    void onVcsCommit()
@@ -276,7 +260,6 @@ public class GitPresenter extends BasePresenter implements IsWidget
    private final Commands commands_;
    private final GitState gitState_;
    private final GlobalDisplay globalDisplay_;
-   private final EventBus eventBus_;
-   private final FileTypeRegistry fileTypeRegistry_;
    private final SatelliteManager satelliteManager_;
+   private final VCSFileOpener vcsFileOpener_;
 }

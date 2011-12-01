@@ -101,6 +101,10 @@ public class Satellite
       return params_;
    }
    
+   public native void focusMainWindow() /*-{
+      $wnd.opener.focus();
+   }-*/;
+   
    // called by main window to initialize sessionInfo
    private void setSessionInfo(JavaScriptObject si)
    {

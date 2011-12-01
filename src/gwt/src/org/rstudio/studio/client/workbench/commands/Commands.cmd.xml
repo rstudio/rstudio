@@ -603,6 +603,9 @@ well as menu structures (for main menu and popup menus).
         desc="View history of previous commits"/>
    <cmd id="vcsRefresh"
         desc="Refresh listing"/>
+   <cmd id="vcsOpen"
+        menuLabel="Open File"
+        desc="Open selected file(s)"/>
    <cmd id="vcsIgnore"
         menuLabel="Ignore..."/>
    <cmd id="vcsPull"

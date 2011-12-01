@@ -79,7 +79,9 @@ public class SVNReviewPresenter implements ReviewPresenter
       void showSizeWarning(long sizeInBytes);
       void hideSizeWarning();
 
-      void showContextMenu(int clientX, int clientY);
+      void showContextMenu(int clientX, 
+                           int clientY, 
+                           Command openSelectedCommand);
 
       void onShow();
    }
@@ -241,8 +243,14 @@ public class SVNReviewPresenter implements ReviewPresenter
          {
             NativeEvent nativeEvent = event.getNativeEvent();
             view_.showContextMenu(nativeEvent.getClientX(),
-                                  nativeEvent.getClientY());
-
+                                  nativeEvent.getClientY(),
+                                  new Command() {
+                                    @Override
+                                    public void execute()
+                                    {
+                                       openSelectedFile();
+                                    }
+            });
          }
       });
 
@@ -459,6 +467,11 @@ public class SVNReviewPresenter implements ReviewPresenter
       currentResponse_ = null;
       currentFilename_ = null;
       view_.getLineTableDisplay().clear();
+   }
+   
+   private void openSelectedFile()
+   {
+      
    }
 
    @Override
