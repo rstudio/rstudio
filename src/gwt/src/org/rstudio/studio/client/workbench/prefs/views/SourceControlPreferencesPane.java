@@ -76,22 +76,17 @@ public class SourceControlPreferencesPane extends PreferencesPane
                                                       fileDialogs, 
                                                       fsContext);  
       gitBinDirLabel_ = new Label("Git bin directory:");
-      addTextBoxChooser(gitBinDirLabel_, 
-                        null, 
-                        null, 
-                        gitBinDirChooser_);
+      addTextBoxChooser(gitBinDirLabel_, null, null, gitBinDirChooser_);
         
-      /*
-      TextBoxWithButton svnChooser = new DirectoryChooserTextBox(
-                                                               null,
-                                                               "(Not Found)",
-                                                               null,
-                                                               fileDialogs, 
-                                                               fsContext);
-      svnChooser.setText("");
-      addTextBoxChooser(new Label("Svn bin directory:"), null, null, svnChooser);
-      */
-      
+      // svn bin dir chooser
+      svnBinDirLabel_ = new Label("Svn bin directory:");
+      svnBinDirChooser_ = new DirectoryChooserTextBox(null,
+                                                      "(Not Found)",
+                                                      null,
+                                                      fileDialogs, 
+                                                      fsContext);
+      addTextBoxChooser(svnBinDirLabel_, null, null, svnBinDirChooser_);
+     
       // show ssh key button
       showSshKeyButton_ = new ThemedButton(
          "View Public Key...", new ClickHandler() {
@@ -112,6 +107,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
                                       
       chkVcsEnabled_.setEnabled(false);
       gitBinDirChooser_.setEnabled(false);
+      svnBinDirChooser_.setEnabled(false);
       showSshKeyButton_.setEnabled(false);
    }
 
@@ -124,10 +120,12 @@ public class SourceControlPreferencesPane extends PreferencesPane
       
       chkVcsEnabled_.setEnabled(true);
       gitBinDirChooser_.setEnabled(true);
+      svnBinDirChooser_.setEnabled(true);
       showSshKeyButton_.setEnabled(true);
       
       chkVcsEnabled_.setValue(prefs.getVcsEnabled());
       gitBinDirChooser_.setText(prefs.getGitBinDir());
+      svnBinDirChooser_.setText(prefs.getSvnBinDir());
       
       manageControlVisibility();
    }
@@ -157,7 +155,8 @@ public class SourceControlPreferencesPane extends PreferencesPane
       
       SourceControlPrefs prefs = SourceControlPrefs.create(
                                           chkVcsEnabled_.getValue(),
-                                          gitBinDirChooser_.getText()); 
+                                          gitBinDirChooser_.getText(),
+                                          svnBinDirChooser_.getText()); 
       
       rPrefs.setSourceControlPrefs(prefs);
    }
@@ -206,6 +205,8 @@ public class SourceControlPreferencesPane extends PreferencesPane
       boolean vcsEnabled = chkVcsEnabled_.getValue();
       gitBinDirLabel_.setVisible(vcsEnabled);
       gitBinDirChooser_.setVisible(vcsEnabled);
+      svnBinDirLabel_.setVisible(vcsEnabled);
+      svnBinDirChooser_.setVisible(vcsEnabled);
       showSshKeyButton_.setVisible(vcsEnabled && 
                                    originalPrefs_.haveRsaPublicKey());
    }
@@ -217,7 +218,9 @@ public class SourceControlPreferencesPane extends PreferencesPane
    
    private SourceControlPrefs originalPrefs_; 
    
+   private Label svnBinDirLabel_;
    private Label gitBinDirLabel_;
    private TextBoxWithButton gitBinDirChooser_;
+   private TextBoxWithButton svnBinDirChooser_;
    private ThemedButton showSshKeyButton_;
 }

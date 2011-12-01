@@ -29,6 +29,8 @@ bool isSvnDirectory(const core::FilePath& workingDir);
 
 bool isSvnEnabled();
 
+core::FilePath detectedSvnBinDir();
+
 core::Error initialize();
 
 // Initialize SVN with the given working directory

@@ -21,11 +21,13 @@ public class SourceControlPrefs extends JavaScriptObject
    // create source control prefs -- don't pass the have_rsa_public_key
    // parameter because that is a read-only rider for the prefs ui
    public static final native SourceControlPrefs create(boolean vcsEnabled,
-                                                        String gitBinDir) 
+                                                        String gitBinDir,
+                                                        String svnBinDir) 
                                                                            /*-{
       var prefs = new Object();
       prefs.vcs_enabled = vcsEnabled;
       prefs.git_bin_dir = gitBinDir;
+      prefs.svn_bin_dir = svnBinDir;
       return prefs ;
    }-*/;
 
@@ -35,6 +37,10 @@ public class SourceControlPrefs extends JavaScriptObject
    
    public native final String getGitBinDir() /*-{
       return this.git_bin_dir;
+   }-*/;
+   
+   public native final String getSvnBinDir() /*-{
+      return this.svn_bin_dir;
    }-*/;
    
    public native final boolean haveRsaPublicKey() /*-{

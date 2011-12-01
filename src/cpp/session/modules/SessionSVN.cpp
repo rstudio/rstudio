@@ -13,6 +13,12 @@
 
 #include "SessionSVN.hpp"
 
+#ifdef _WIN32
+#include <windows.h>
+#include <shlobj.h>
+#include <shlwapi.h>
+#endif
+
 #include <boost/bind.hpp>
 
 #include <core/rapidxml/rapidxml.hpp>
@@ -24,6 +30,9 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
+#include <session/SessionUserSettings.hpp>
+
+#include <r/RExec.hpp>
 
 #include "vcs/SessionVCSUtils.hpp"
 #include "SessionConsoleProcess.hpp"
@@ -37,6 +46,10 @@ namespace modules {
 namespace svn {
 
 namespace {
+
+// svn bin dir which we detect at startup. note that if the svn bin
+// is already in the path then this will be empty
+std::string s_svnBinDir;
 
 /** GLOBAL STATE **/
 FilePath s_workingDir;
@@ -77,7 +90,9 @@ core::system::ProcessOptions procOptions()
    core::system::Options childEnv;
    core::system::environment(&childEnv);
 
-   // TODO: Add Subversion bin dir to path if necessary
+   // add svn bin dir to PATH if necessary
+   if (!s_svnBinDir.empty())
+      core::system::addToPath(&childEnv, s_svnBinDir);
 
    // add postback directory to PATH
    FilePath postbackDir = session::options().rpostbackPath().parent();
@@ -206,6 +221,50 @@ core::Error createConsoleProc(const ShellArgs& args,
    return Success();
 }
 
+#ifdef _WIN32
+bool detectSvnExeDirOnPath(FilePath* pPath)
+{
+   std::vector<wchar_t> path(MAX_PATH+2);
+   wcscpy(&(path[0]), L"svn.exe");
+   if (::PathFindOnPathW(&(path[0]), NULL))
+   {
+      *pPath = FilePath(&(path[0])).parent();
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+#endif
+
+FilePath whichSvnExe()
+{
+   std::string whichSvn;
+   Error error = r::exec::RFunction("Sys.which", "svn").call(&whichSvn);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return FilePath();
+   }
+   else
+   {
+      return FilePath(whichSvn);
+   }
+}
+
+bool initSvnBin()
+{
+   // get the svn bin dir from user settings if it is there
+   s_svnBinDir = userSettings().svnBinDir().absolutePath();
+
+   // if it wasn't provided in settings then make sure we can detect it
+   if (s_svnBinDir.empty())
+      return !svn::detectedSvnBinDir().empty();
+   else
+      return true;
+}
+
 } // namespace
 
 
@@ -247,6 +306,27 @@ bool isSvnDirectory(const core::FilePath& workingDir)
 bool isSvnEnabled()
 {
    return !s_workingDir.empty();
+}
+
+FilePath detectedSvnBinDir()
+{
+#ifdef _WIN32
+   FilePath path;
+   if (detectSvnExeDirOnPath(&path))
+   {
+      return path;
+   }
+   else
+   {
+      return FilePath();
+   }
+#else
+   FilePath svnExeFilePath = whichSvnExe();
+   if (!svnExeFilePath.empty())
+      return FilePath(svnExeFilePath).parent();
+   else
+      return FilePath();
+#endif
 }
 
 std::string translateItemStatus(const std::string& status)
@@ -679,6 +759,10 @@ Error initialize()
 Error initializeSvn(const core::FilePath& workingDir)
 {
    s_workingDir = workingDir;
+
+   // set s_svnBinDir if it is provied in userSettings()
+   initSvnBin();
+
    return Success();
 }
 

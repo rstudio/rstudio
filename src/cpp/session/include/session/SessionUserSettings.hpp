@@ -116,8 +116,8 @@ public:
    core::FilePath gitBinDir() const;
    void setGitBinDir(const core::FilePath& gitBinDir);
 
-   std::string sshKeyPath() const;
-   void setSshKeyPath(const std::string& sshKeyPath);
+   core::FilePath svnBinDir() const;
+   void setSvnBinDir(const core::FilePath& svnBinDir);
 
 private:
 

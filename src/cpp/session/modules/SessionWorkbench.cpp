@@ -38,6 +38,8 @@
 #include <session/SessionUserSettings.hpp>
 
 #include "SessionVCS.hpp"
+#include "SessionGit.hpp"
+#include "SessionSVN.hpp"
 
 #include <R_ext/RStartup.h>
 extern "C" SA_TYPE SaveAction;
@@ -199,10 +201,11 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 
    // read and set source control prefs
    bool vcsEnabled;
-   std::string gitBinDir, sshKeyPath;
+   std::string gitBinDir, svnBinDir;
    error = json::readObject(sourceControlPrefs,
                             "vcs_enabled", &vcsEnabled,
-                            "git_bin_dir", &gitBinDir);
+                            "git_bin_dir", &gitBinDir,
+                            "svn_bin_dir", &svnBinDir);
    if (error)
       return error;
    userSettings().beginUpdate();
@@ -212,7 +215,14 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
       userSettings().setGitBinDir(FilePath());
    else
       userSettings().setGitBinDir(gitBinDirPath);
-   userSettings().setSshKeyPath(sshKeyPath);
+
+   FilePath svnBinDirPath(svnBinDir);
+   if (svnBinDirPath == svn::detectedSvnBinDir())
+      userSettings().setSvnBinDir(FilePath());
+   else
+      userSettings().setSvnBinDir(svnBinDirPath);
+
+
    userSettings().endUpdate();
 
    // set ui prefs
@@ -289,6 +299,11 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    if (gitBinDir.empty())
       gitBinDir = git::detectedGitBinDir();
    sourceControlPrefs["git_bin_dir"] = gitBinDir.absolutePath();
+   FilePath svnBinDir = userSettings().svnBinDir();
+   if (svnBinDir.empty())
+      svnBinDir = svn::detectedSvnBinDir();
+   sourceControlPrefs["svn_bin_dir"] = svnBinDir.absolutePath();
+
    sourceControlPrefs["have_rsa_public_key"] =
       modules::source_control::defaultSshKeyDir().childPath(
                                                    "id_rsa.pub").exists();

@@ -360,15 +360,21 @@ void UserSettings::setGitBinDir(const FilePath& gitBinDir)
    settings_.set("vcsGitBinDir", gitBinDir.absolutePath());
 }
 
-std::string UserSettings::sshKeyPath() const
+FilePath UserSettings::svnBinDir() const
 {
-   return settings_.get("vcsSshKeyPath");
+   std::string dir = settings_.get("vcsSvnBinDir");
+   if (!dir.empty())
+      return FilePath(dir);
+   else
+      return FilePath();
 }
 
-void UserSettings::setSshKeyPath(const std::string& sshKeyPath)
+void UserSettings::setSvnBinDir(const FilePath& svnBinDir)
 {
-   settings_.set("vcsSshKeyPath", sshKeyPath);
+   settings_.set("vcsSvnBinDir", svnBinDir.absolutePath());
 }
+
+
 
 bool UserSettings::alwaysSaveHistory() const
 {
