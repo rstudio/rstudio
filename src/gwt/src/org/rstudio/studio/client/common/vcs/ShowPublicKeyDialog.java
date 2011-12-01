@@ -64,6 +64,7 @@ public class ShowPublicKeyDialog extends ModalDialogBase
       panel.add(label);
       
       textArea_ = new TextArea();
+      textArea_.setReadOnly(true);
       textArea_.setText(publicKey_);
       textArea_.addStyleName(RES.styles().viewPublicKeyContent());
       textArea_.setSize("400px", "250px");
