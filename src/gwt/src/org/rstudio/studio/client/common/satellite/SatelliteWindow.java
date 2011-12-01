@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.common.satellite;
 
 
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
@@ -67,6 +68,9 @@ public abstract class SatelliteWindow extends Composite
       FontSizeManager fontSizeManager = pFontSizeManager_.get();
       FontSizer.setNormalFontSize(Document.get(), fontSizeManager.getSize());
 
+      // disable no handler assertions
+      AppCommand.disableNoHandlerAssertions();
+      
       // allow subclasses to initialize
       onInitialize(mainPanel_, params);
       

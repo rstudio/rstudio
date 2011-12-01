@@ -92,8 +92,12 @@ public class AppCommand implements Command, ClickHandler
       assert visible_ : "AppCommand executed when it was not visible";
       if (!visible_)
          return;
-      assert handlers_.getHandlerCount(CommandEvent.TYPE) > 0
-            : "AppCommand executed but nobody was listening";
+      
+      if (enableNoHandlerAssertions_)
+      {
+         assert handlers_.getHandlerCount(CommandEvent.TYPE) > 0
+                  : "AppCommand executed but nobody was listening";
+      }
 
       handlers_.fireEvent(new CommandEvent(this));
    }
@@ -300,6 +304,11 @@ public class AppCommand implements Command, ClickHandler
    {
       return shortcut_ != null ? shortcut_.toString(true) : null;
    }
+   
+   public static void disableNoHandlerAssertions()
+   {
+      enableNoHandlerAssertions_ = false;
+   }
 
    private boolean enabled_ = true;
    private boolean visible_ = true;
@@ -313,4 +322,6 @@ public class AppCommand implements Command, ClickHandler
    private String desc_;
    private ImageResource imageResource_;
    private KeyboardShortcut shortcut_;
+   
+   private static boolean enableNoHandlerAssertions_ = true;
 }
