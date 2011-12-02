@@ -225,7 +225,7 @@ core::Error createConsoleProc(const ShellArgs& args,
 
 #ifdef _WIN32
    boost::shared_ptr<ConsoleProcess> ptrCP =
-         ConsoleProcess::create("svn.exe",
+         ConsoleProcess::create(svnBin(),
                                 args.args(),
                                 options,
                                 caption,
@@ -233,7 +233,7 @@ core::Error createConsoleProc(const ShellArgs& args,
                                 &enqueueRefreshEvent);
 #else
    boost::shared_ptr<ConsoleProcess> ptrCP =
-         ConsoleProcess::create(ShellCommand("svn") << args.args(),
+         ConsoleProcess::create(svn() << args.args(),
                                 options,
                                 caption,
                                 dialog,
