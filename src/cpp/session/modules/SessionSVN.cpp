@@ -90,10 +90,6 @@ core::system::ProcessOptions procOptions()
    core::system::Options childEnv;
    core::system::environment(&childEnv);
 
-   // add svn bin dir to PATH if necessary
-   if (!s_svnBinDir.empty())
-      core::system::addToPath(&childEnv, s_svnBinDir);
-
    // add postback directory to PATH
    FilePath postbackDir = session::options().rpostbackPath().parent();
    core::system::addToPath(&childEnv, postbackDir.absolutePath());
@@ -115,6 +111,32 @@ core::system::ProcessOptions procOptions()
    return options;
 }
 
+ShellCommand svn()
+{
+   if (!s_svnBinDir.empty())
+   {
+      FilePath fullPath = FilePath(s_svnBinDir).childPath("svn");
+      return ShellCommand(fullPath);
+   }
+   else
+      return ShellCommand("svn");
+}
+
+
+#ifdef _WIN32
+std::string svnBin()
+{
+   if (!s_svnBinDir.empty())
+   {
+      std::string exe("svn.exe");
+      return FilePath(s_svnBinDir).childPath(exe).absolutePathNative();
+   }
+   else
+      return "svn.exe";
+}
+#endif
+
+
 Error runSvn(const ShellArgs& args,
              core::system::ProcessResult* pResult,
              bool redirectStdErrToStdOut=false)
@@ -126,13 +148,13 @@ Error runSvn(const ShellArgs& args,
 #endif
 
 #ifdef _WIN32
-   Error error = core::system::runProgram("svn.exe",
+   Error error = core::system::runProgram(svnBin(),
                                           args.args(),
                                           std::string(),
                                           options,
                                           pResult);
 #else
-   Error error = core::system::runCommand(ShellCommand("svn") << args.args(),
+   Error error = core::system::runCommand(svn() << args.args(),
                                           options,
                                           pResult);
 #endif
