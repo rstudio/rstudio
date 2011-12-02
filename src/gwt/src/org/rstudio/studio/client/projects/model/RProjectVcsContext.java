@@ -1,5 +1,5 @@
 /*
- * RProjectVcsOptionsDefault.java
+ * RProjectVcsContext.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -13,14 +13,19 @@
 package org.rstudio.studio.client.projects.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
-public class RProjectVcsOptionsDefault extends JavaScriptObject
+public class RProjectVcsContext extends JavaScriptObject
 {
-   protected RProjectVcsOptionsDefault()
+   protected RProjectVcsContext()
    {
    }
 
    public native final String getActiveVcs() /*-{
       return this.active_vcs;
+   }-*/;
+   
+   public native final JsArrayString getApplicableVcs() /*-{
+      return this.applicable_vcs;
    }-*/;
 }

@@ -94,22 +94,35 @@ json::Object projectVcsOptionsJson()
    return vcsOptionsJson;
 }
 
+json::Object projectVcsContextJson()
+{
+   json::Object contextJson;
+   contextJson["active_vcs"] = module_context::detectedVcs(
+                                             s_projectContext.directory());
+
+   std::vector<std::string> applicable = module_context::applicableVcs(
+                                             s_projectContext.directory());
+   json::Array applicableJson;
+   BOOST_FOREACH(const std::string& vcs, applicable)
+   {
+      applicableJson.push_back(vcs);
+   }
+   contextJson["applicable_vcs"] = applicableJson;
+
+   return contextJson;
+}
+
 Error readProjectOptions(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
    // get project config json
    json::Object configJson = projectConfigJson(s_projectContext.config());
 
-   // get vcs options default json
-   json::Object vcsOptionsDefaultJson;
-   vcsOptionsDefaultJson["active_vcs"] = module_context::detectedVcs(
-                                             s_projectContext.directory());
-
    // create project options json
    json::Object optionsJson;
    optionsJson["config"] = configJson;
    optionsJson["vcs_options"] = projectVcsOptionsJson();
-   optionsJson["vcs_options_default"] = vcsOptionsDefaultJson;
+   optionsJson["vcs_context"] = projectVcsContextJson();
 
    pResponse->setResult(optionsJson);
    return Success();

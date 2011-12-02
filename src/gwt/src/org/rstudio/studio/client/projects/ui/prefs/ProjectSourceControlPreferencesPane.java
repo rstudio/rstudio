@@ -25,13 +25,13 @@ import org.rstudio.studio.client.common.vcs.VCSHelpLink;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
-import org.rstudio.studio.client.projects.model.RProjectVcsOptionsDefault;
+import org.rstudio.studio.client.projects.model.RProjectVcsContext;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
@@ -51,19 +51,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       eventBus_ = eventBus;
       server_ = server;
       
-      // populate the vcs selections list
-      String[] vcsSelections = new String[] { NONE };
-      SessionInfo sessionInfo = session.getSessionInfo();
-      if (sessionInfo.isVcsAvailable())
-      {
-         String[] availableVcs = sessionInfo.getAvailableVCS();
-         vcsSelections = new String[availableVcs.length + 1];
-         vcsSelections[0] = NONE;
-         for (int i=0; i<availableVcs.length; i++)
-            vcsSelections[i+1] = availableVcs[i];
-      }
-      
-      vcsSelect_ = new SelectWidget("Version control system:", vcsSelections); 
+      vcsSelect_ = new SelectWidget("Version control system:", new String[]{}); 
       extraSpaced(vcsSelect_);
       add(vcsSelect_);
       vcsSelect_.addChangeHandler(new ChangeHandler() {
@@ -79,6 +67,10 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
                      promptToRestart(); 
                   }       
                });
+            }
+            else
+            {
+               promptToRestart();
             }
          }
       });
@@ -104,14 +96,27 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    @Override
    protected void initialize(RProjectOptions options)
    {
-      defaultVcsOptions_ = options.getVcsOptionsDefault();
-      RProjectVcsOptions vcsOptions = options.getVcsOptions();
+      // save the context
+      vcsContext_ = options.getVcsContext();
       
+      // populate the vcs selections list
+      String[] vcsSelections = new String[] { NONE };
+      JsArrayString applicableVcs = vcsContext_.getApplicableVcs();
+      if (applicableVcs.length() > 0)
+      {
+         vcsSelections = new String[applicableVcs.length() + 1];
+         vcsSelections[0] = NONE;
+         for (int i=0; i<applicableVcs.length(); i++)
+            vcsSelections[i+1] = applicableVcs.get(i);
+      }
+      vcsSelect_.setChoices(vcsSelections);
+    
       // set override or default
+      RProjectVcsOptions vcsOptions = options.getVcsOptions();
       if (vcsOptions.getActiveVcsOverride().length() > 0)
          setVcsSelection(vcsOptions.getActiveVcsOverride());
       else
-         setVcsSelection(defaultVcsOptions_.getActiveVcs());
+         setVcsSelection(vcsContext_.getActiveVcs());
    }
 
    @Override
@@ -124,7 +129,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    private void setVcsOptions(RProjectVcsOptions vcsOptions)
    {
       String vcsSelection = getVcsSelection();
-      if (!vcsSelection.equals(defaultVcsOptions_.getActiveVcs()))
+      if (!vcsSelection.equals(vcsContext_.getActiveVcs()))
          vcsOptions.setActiveVcsOverride(vcsSelection);
       else
          vcsOptions.setActiveVcsOverride("");
@@ -227,8 +232,8 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       globalDisplay_.showYesNoMessage(
          MessageDialog.QUESTION,
          "Confirm Restart RStudio", 
-         "You need to restart RStudio in order to start working with " +
-         "the specified version control system. Do you want to do this now?",
+         "You need to restart RStudio in order for this change to take " +
+         "effect. Do you want to do this now?",
          new Operation()
          {
             @Override
@@ -258,7 +263,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    
    private SelectWidget vcsSelect_;
   
-   private RProjectVcsOptionsDefault defaultVcsOptions_;
+   private RProjectVcsContext vcsContext_;
    
    private static final String NONE = "(None)";
 }

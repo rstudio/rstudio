@@ -149,5 +149,21 @@ std::string detectedVcs(const FilePath& workingDir)
       return "none";
 }
 
+std::vector<std::string> applicableVcs(const FilePath& workingDir)
+{
+   using namespace session::modules;
+   using namespace session::modules::source_control;
+
+   std::vector<std::string> applicable;
+
+   if (isGitInstalled())
+      applicable.push_back("git");
+
+   if (svn::isSvnDirectory(workingDir))
+      applicable.push_back("svn");
+
+   return applicable;
+}
+
 } // namespace module_context
 } // namespace session

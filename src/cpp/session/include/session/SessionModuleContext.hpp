@@ -289,6 +289,7 @@ bool isGoogleDocsIntegrationEnabled();
 void setGoogleDocsIntegrationEnabled(bool enabled);
 
 std::string detectedVcs(const core::FilePath& workingDir);
+std::vector<std::string> applicableVcs(const core::FilePath& workingDir);
 
 // persist state accross suspend and resume
    

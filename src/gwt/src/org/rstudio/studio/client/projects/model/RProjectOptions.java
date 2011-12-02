@@ -44,7 +44,7 @@ public class RProjectOptions extends JavaScriptObject
       return this.vcs_options;
    }-*/;
 
-   public native final RProjectVcsOptionsDefault getVcsOptionsDefault() /*-{
-      return this.vcs_options_default;
+   public native final RProjectVcsContext getVcsContext() /*-{
+      return this.vcs_context;
    }-*/;
 }
