@@ -27,6 +27,8 @@ bool isSvnInstalled();
 // Returns true if the working directory is in a Subversion tree
 bool isSvnDirectory(const core::FilePath& workingDir);
 
+std::string repositoryRoot(const core::FilePath& workingDir);
+
 bool isSvnEnabled();
 
 core::FilePath detectedSvnBinDir();

@@ -71,6 +71,9 @@ bool isGitInstalled();
 bool isGitEnabled();
 
 bool isGitDirectory(const core::FilePath& workingDir);
+
+std::string remoteOriginUrl(const core::FilePath& workingDir);
+
 core::Error initializeGit(const core::FilePath& workingDir);
 
 core::FilePath detectedGitBinDir();

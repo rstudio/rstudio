@@ -136,33 +136,40 @@ core::Error initialize()
 namespace session {
 namespace module_context {
 
-std::string detectedVcs(const FilePath& workingDir)
+VcsContext vcsContext(const FilePath& workingDir)
 {
    using namespace session::modules;
    using namespace session::modules::source_control;
 
-   if (isGitInstalled() && git::isGitDirectory(workingDir))
-      return "git";
-   else if (isSvnInstalled() && svn::isSvnDirectory(workingDir))
-      return "svn";
+   // inspect current vcs state (underlying functions execute child
+   // processes so we want to be sure to only call them once)
+   bool gitInstalled = isGitInstalled();
+   bool isGitDirectory = gitInstalled && git::isGitDirectory(workingDir);
+   bool svnInstalled = isSvnInstalled();
+   bool isSvnDirectory = svnInstalled && svn::isSvnDirectory(workingDir);
+
+   // detected vcs
+   VcsContext context;
+   if (isGitDirectory)
+      context.detectedVcs = "git";
+   else if (isSvnDirectory)
+      context.detectedVcs = "svn";
    else
-      return "none";
-}
+      context.detectedVcs = "none";
 
-std::vector<std::string> applicableVcs(const FilePath& workingDir)
-{
-   using namespace session::modules;
-   using namespace session::modules::source_control;
+   // applicable vcs
+   if (gitInstalled)
+      context.applicableVcs.push_back("git");
+   if (isSvnDirectory)
+      context.applicableVcs.push_back("svn");
 
-   std::vector<std::string> applicable;
+   // remote urls
+   if (isGitDirectory)
+      context.gitRemoteOriginUrl = git::remoteOriginUrl(workingDir);
+   if (isSvnDirectory)
+      context.svnRepositoryRoot = svn::repositoryRoot(workingDir);
 
-   if (isGitInstalled())
-      applicable.push_back("git");
-
-   if (svn::isSvnDirectory(workingDir))
-      applicable.push_back("svn");
-
-   return applicable;
+   return context;
 }
 
 } // namespace module_context

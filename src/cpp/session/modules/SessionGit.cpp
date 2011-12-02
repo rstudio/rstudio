@@ -206,6 +206,31 @@ std::string gitBin()
 }
 #endif
 
+Error gitExec(const ShellArgs& args,
+              const core::FilePath& workingDir,
+              core::system::ProcessResult* pResult)
+{
+   core::system::ProcessOptions options = procOptions();
+   options.workingDir = workingDir;
+   // Important to ensure SSH_ASKPASS works
+#ifdef _WIN32
+   options.detachProcess = true;
+#endif
+
+#ifdef _WIN32
+      return runProgram(gitBin(),
+                        args.args(),
+                        "",
+                        options,
+                        pResult);
+#else
+      return runCommand(git() << args.args(),
+                        "",
+                        options,
+                        pResult);
+#endif
+}
+
 void afterCommit(const FilePath& tempFile)
 {
    Error removeError = tempFile.remove();
@@ -254,28 +279,9 @@ protected:
                       int* pExitCode=NULL)
    {
       using namespace core::system;
-      ProcessOptions options = procOptions();
-      options.workingDir = root_;
-      // Important to ensure SSH_ASKPASS works
-#ifdef _WIN32
-      options.detachProcess = true;
-#endif
 
       ProcessResult result;
-
-#ifdef _WIN32
-      Error error = runProgram(gitBin(),
-                               args.args(),
-                               "",
-                               options,
-                               &result);
-#else
-      Error error = runCommand(git() << args.args(),
-                               "",
-                               options,
-                               &result);
-#endif
-
+      Error error = gitExec(args, root_, &result);
       if (error)
          return error;
 
@@ -2281,6 +2287,30 @@ bool initGitBin()
 bool isGitDirectory(const core::FilePath& workingDir)
 {
    return !detectGitDir(workingDir).empty();
+}
+
+std::string remoteOriginUrl(const FilePath& workingDir)
+{
+   // default to none
+   std::string remoteOriginUrl;
+
+   core::system::ProcessResult result;
+   Error error = gitExec(ShellArgs() <<
+                           "config" << "--get" << "remote.origin.url",
+                         workingDir,
+                         &result);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+   else if (result.exitStatus == 0)
+   {
+      remoteOriginUrl = boost::algorithm::trim_copy(result.stdOut);
+   }
+
+   // return any url we discovered
+   return remoteOriginUrl;
 }
 
 core::Error initializeGit(const core::FilePath& workingDir)

@@ -36,3 +36,24 @@
    margin-left: 10px;
    margin-bottom: 15px;
 }
+
+.vcsSelectExtraSpaced {
+  margin-bottom: 20px;
+}
+
+.vcsOriginLabel {
+   margin-left: 5px;	
+}
+
+.vcsOriginUrl {
+   margin-top: -3px;
+   margin-left: 5px;
+   border: 1px solid #BBB;
+   padding: 2px;
+}
+
+.vcsNoOriginUrl {
+   width: 150px;
+   color: #494949;
+}
+

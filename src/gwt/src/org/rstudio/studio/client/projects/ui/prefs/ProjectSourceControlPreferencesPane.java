@@ -36,6 +36,9 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
@@ -52,12 +55,14 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       server_ = server;
       
       vcsSelect_ = new SelectWidget("Version control system:", new String[]{}); 
-      extraSpaced(vcsSelect_);
+      spaced(vcsSelect_);
       add(vcsSelect_);
       vcsSelect_.addChangeHandler(new ChangeHandler() {
          @Override
          public void onChange(ChangeEvent event)
          {  
+            updateOriginLabel();
+            
             if (vcsSelect_.getValue().equals("git"))
             {
                confirmGitRepo(new Command() {
@@ -74,6 +79,11 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
             }
          }
       });
+      
+      lblOrigin_ = new OriginLabel();
+      lblOrigin_.addStyleName(RES.styles().vcsOriginLabel());
+      extraSpaced(lblOrigin_);
+      add(lblOrigin_);
       
       VCSHelpLink vcsHelpLink = new VCSHelpLink();
       nudgeRight(vcsHelpLink);
@@ -116,7 +126,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       if (vcsOptions.getActiveVcsOverride().length() > 0)
          setVcsSelection(vcsOptions.getActiveVcsOverride());
       else
-         setVcsSelection(vcsContext_.getActiveVcs());
+         setVcsSelection(vcsContext_.getDetectedVcs());
    }
 
    @Override
@@ -129,7 +139,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    private void setVcsOptions(RProjectVcsOptions vcsOptions)
    {
       String vcsSelection = getVcsSelection();
-      if (!vcsSelection.equals(vcsContext_.getActiveVcs()))
+      if (!vcsSelection.equals(vcsContext_.getDetectedVcs()))
          vcsOptions.setActiveVcsOverride(vcsSelection);
       else
          vcsOptions.setActiveVcsOverride("");
@@ -147,13 +157,49 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    
    private void setVcsSelection(String vcs)
    {
+      // set value
       if (vcs.equals("none"))
          vcsSelect_.setValue(NONE);
       else if (!vcsSelect_.setValue(vcs))
       {
          vcsSelect_.setValue(NONE);
       }      
+      
+      updateOriginLabel();
+      
+      
    }
+   
+   private void updateOriginLabel()
+   {
+      String vcs = getVcsSelection();
+      if (vcs.equals("git"))
+      {
+         StringBuilder label = new StringBuilder();
+         label.append("Origin: ");
+         String originUrl = vcsContext_.getGitRemoteOriginUrl();
+         if (originUrl.length() == 0)
+            originUrl = NO_REMOTE_ORIGIN;
+         lblOrigin_.setOrigin("Origin:", originUrl);
+         lblOrigin_.setVisible(true);
+         vcsSelect_.removeStyleName(RES.styles().vcsSelectExtraSpaced());
+         
+      }
+      else if (vcs.equals("svn"))
+      {
+         lblOrigin_.setOrigin("Repo:", 
+                              vcsContext_.getSvnRepositoryRoot());
+         lblOrigin_.setVisible(true);
+         vcsSelect_.removeStyleName(RES.styles().vcsSelectExtraSpaced());
+      }
+      else // vcs.equals("none")
+      {
+         lblOrigin_.setOrigin("", "");
+         lblOrigin_.setVisible(false);
+         vcsSelect_.addStyleName(RES.styles().vcsSelectExtraSpaced());
+      }
+   }
+   
    
    private void confirmGitRepo(final Command onConfirmed)
    {
@@ -256,14 +302,51 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
          true);
    }
    
+   private class OriginLabel extends Composite
+   {
+      public OriginLabel()
+      {
+         HorizontalPanel panel = new HorizontalPanel();
+         lblCaption_ = new Label();
+         panel.add(lblCaption_);
+         
+         lblOrigin_ = new Label();
+         lblOrigin_.addStyleName(RES.styles().vcsOriginUrl());
+         panel.add(lblOrigin_);
+         
+         initWidget(panel);
+         
+         
+      }
+      
+      public void setOrigin(String caption, String origin)
+      {
+         lblCaption_.setText(caption);
+         lblOrigin_.setText(origin);
+         
+         if (origin.equals(NO_REMOTE_ORIGIN))
+            lblOrigin_.addStyleName(RES.styles().vcsNoOriginUrl());
+         else
+            lblOrigin_.removeStyleName(RES.styles().vcsNoOriginUrl());
+      }
+        
+      private Label lblCaption_;
+      private Label lblOrigin_;
+   }
+   
    private final Session session_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
    private final GitServerOperations server_;
    
    private SelectWidget vcsSelect_;
-  
+   private OriginLabel lblOrigin_;
    private RProjectVcsContext vcsContext_;
    
    private static final String NONE = "(None)";
+   
+   private static final String NO_REMOTE_ORIGIN  ="None";
+   
+   private static final ProjectPreferencesDialogResources RES = 
+                                    ProjectPreferencesDialogResources.INSTANCE;
 }

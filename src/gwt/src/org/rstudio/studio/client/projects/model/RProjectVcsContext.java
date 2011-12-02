@@ -21,11 +21,19 @@ public class RProjectVcsContext extends JavaScriptObject
    {
    }
 
-   public native final String getActiveVcs() /*-{
-      return this.active_vcs;
+   public native final String getDetectedVcs() /*-{
+      return this.detected_vcs;
    }-*/;
    
    public native final JsArrayString getApplicableVcs() /*-{
       return this.applicable_vcs;
+   }-*/;
+   
+   public native final String getSvnRepositoryRoot() /*-{
+      return this.svn_repository_root;
+   }-*/;
+   
+   public native final String getGitRemoteOriginUrl() /*-{
+      return this.git_remote_origin_url;
    }-*/;
 }

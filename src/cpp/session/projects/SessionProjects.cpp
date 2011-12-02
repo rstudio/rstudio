@@ -96,18 +96,20 @@ json::Object projectVcsOptionsJson()
 
 json::Object projectVcsContextJson()
 {
-   json::Object contextJson;
-   contextJson["active_vcs"] = module_context::detectedVcs(
+   module_context::VcsContext vcsContext = module_context::vcsContext(
                                              s_projectContext.directory());
 
-   std::vector<std::string> applicable = module_context::applicableVcs(
-                                             s_projectContext.directory());
+   json::Object contextJson;
+   contextJson["detected_vcs"] = vcsContext.detectedVcs;
    json::Array applicableJson;
-   BOOST_FOREACH(const std::string& vcs, applicable)
+   BOOST_FOREACH(const std::string& vcs, vcsContext.applicableVcs)
    {
       applicableJson.push_back(vcs);
    }
    contextJson["applicable_vcs"] = applicableJson;
+
+   contextJson["svn_repository_root"] = vcsContext.svnRepositoryRoot;
+   contextJson["git_remote_origin_url"] = vcsContext.gitRemoteOriginUrl;
 
    return contextJson;
 }

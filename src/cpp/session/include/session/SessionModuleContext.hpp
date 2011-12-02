@@ -288,8 +288,14 @@ void syncRSaveAction();
 bool isGoogleDocsIntegrationEnabled();
 void setGoogleDocsIntegrationEnabled(bool enabled);
 
-std::string detectedVcs(const core::FilePath& workingDir);
-std::vector<std::string> applicableVcs(const core::FilePath& workingDir);
+struct VcsContext
+{
+   std::string detectedVcs;
+   std::vector<std::string> applicableVcs;
+   std::string svnRepositoryRoot;
+   std::string gitRemoteOriginUrl;
+};
+VcsContext vcsContext(const core::FilePath& workingDir);
 
 // persist state accross suspend and resume
    

@@ -20,12 +20,14 @@
 #endif
 
 #include <boost/bind.hpp>
+#include <boost/regex.hpp>
 
 #include <core/rapidxml/rapidxml.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/Exec.hpp>
+#include <core/http/Header.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -304,25 +306,79 @@ bool isSvnInstalled()
    return exitCode == EXIT_SUCCESS;
 }
 
-bool isSvnDirectory(const core::FilePath& workingDir)
+struct SvnInfo
+{
+   bool empty() const { return repositoryRoot.empty(); }
+
+   std::string repositoryRoot;
+};
+
+// NOTE: this is a separate run code path than run svn above because
+// want to specify the working directory explicitly
+Error runSvnInfo(const core::FilePath& workingDir, SvnInfo* pSvnInfo)
 {
    if (workingDir.empty())
-      return false;
+      return Success();
 
    core::system::ProcessOptions options = procOptions();
    options.workingDir = workingDir;
-
    core::system::ProcessResult result;
-
-   Error error = core::system::runCommand("svn info",
+#ifdef _WIN32
+   Error error = core::system::runProgram(svnBin(),
+                                          ShellArgs() << "info",
                                           "",
                                           options,
                                           &result);
-
+#else
+   Error error = core::system::runCommand(svn() << "info",
+                                          "",
+                                          options,
+                                          &result);
+#endif
    if (error)
-      return false;
+      return error;
 
-   return result.exitStatus == EXIT_SUCCESS;
+   if (result.exitStatus == EXIT_SUCCESS)
+   {
+      // break the output into lines
+      boost::char_separator<char> lineSep("\n");
+      boost::tokenizer<boost::char_separator<char> > lines(result.stdOut,
+                                                           lineSep);
+      for (boost::tokenizer<boost::char_separator<char> >::iterator
+           lineIter = lines.begin();
+           lineIter != lines.end();
+           ++lineIter)
+      {
+         std::string line = *lineIter;
+         if (boost::algorithm::starts_with(line, "Repository Root:"))
+         {
+            http::Header header;
+            http::parseHeader(line, &header);
+            pSvnInfo->repositoryRoot = header.value;
+            break;
+         }
+      }
+   }
+
+   return Success();
+}
+
+bool isSvnDirectory(const core::FilePath& workingDir)
+{
+   return !repositoryRoot(workingDir).empty();
+}
+
+std::string repositoryRoot(const FilePath& workingDir)
+{
+   SvnInfo svnInfo;
+   Error error = runSvnInfo(workingDir, &svnInfo);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   return svnInfo.repositoryRoot;
 }
 
 bool isSvnEnabled()
