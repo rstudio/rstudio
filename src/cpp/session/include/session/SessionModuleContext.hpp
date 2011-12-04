@@ -241,6 +241,10 @@ core::Error readAndDecodeFile(const core::FilePath& filePath,
                               bool allowSubstChars,
                               std::string* pContents);
 
+core::Error convertToUtf8(const std::string& encodedContent,
+                          const std::string& encoding,
+                          bool allowSubstChars,
+                          std::string* pDecodedContent);
 
 // source R files
 core::Error sourceModuleRFile(const std::string& rSourceFile);   

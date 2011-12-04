@@ -582,6 +582,19 @@ Error readAndDecodeFile(const FilePath& filePath,
    if (error)
       return error ;
 
+   // convert to UTF-8
+   return convertToUtf8(encodedContents,
+                        encoding,
+                        allowSubstChars,
+                        pContents);
+}
+
+Error convertToUtf8(const std::string& encodedContents,
+                    const std::string& encoding,
+                    bool allowSubstChars,
+                    std::string* pContents)
+{
+   Error error;
    error = r::util::iconvstr(encodedContents, encoding, "UTF-8",
                              allowSubstChars, pContents);
    if (error)

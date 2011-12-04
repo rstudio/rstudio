@@ -16,8 +16,6 @@ import com.google.inject.Inject;
 
 // TODO: lack of ace styles (line numbers or syntax highlight)
 
-// TODO: what is the encoding of git show output?
-
 // TODO: are filenames with spaces supported?
 
 // TODO: don't try to show binary files

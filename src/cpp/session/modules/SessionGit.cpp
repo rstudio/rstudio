@@ -1141,6 +1141,25 @@ Error fileStatus(const FilePath& filePath, VCSStatus* pStatus)
 
 namespace {
 
+std::string convertToUtf8(const std::string& content)
+{
+   std::string output;
+   Error error = module_context::convertToUtf8(
+                        content,
+                        projects::projectContext().defaultEncoding(),
+                        true,
+                        &output);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return content;
+   }
+   else
+   {
+      return output;
+   }
+}
+
 Error vcsAdd(const json::JsonRpcRequest& request,
              json::JsonRpcResponse* pResponse)
 {
@@ -1627,6 +1646,10 @@ Error vcsShowFile(const json::JsonRpcRequest& request,
 
    std::string output;
    s_git_.showFile(rev, filename, &output);
+
+   // convert to utf8
+   output = convertToUtf8(output);
+
    output = string_utils::filterControlChars(output);
 
    pResponse->setResult(output);
