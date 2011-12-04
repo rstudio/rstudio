@@ -1493,6 +1493,17 @@ public class RemoteServer implements Server
 
       sendRequest(RPC_SCOPE, GIT_SHOW, params, requestCallback);
    }
+   
+   @Override
+   public void gitShowFile(String rev, 
+                           String filename,
+                           ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(rev));
+      params.set(1, new JSONString(filename));
+      sendRequest(RPC_SCOPE, GIT_SHOW_FILE, params, requestCallback);
+   }
 
    @Override
    public void getPublicKey(ServerRequestCallback<PublicKeyInfo> requestCallback)
@@ -2430,6 +2441,7 @@ public class RemoteServer implements Server
    private static final String GIT_HISTORY = "git_history";
    private static final String GIT_EXECUTE_COMMAND = "git_execute_command";
    private static final String GIT_SHOW = "git_show";
+   private static final String GIT_SHOW_FILE = "git_show_file";
 
    private static final String SVN_ADD = "svn_add";
    private static final String SVN_DELETE = "svn_delete";

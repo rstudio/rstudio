@@ -101,6 +101,10 @@ public interface GitServerOperations extends CryptoServerOperations
    void gitShow(String rev,
                 boolean noSizeWarning,
                 ServerRequestCallback<String> requestCallback);
+   
+   void gitShowFile(String rev, 
+                    String filename,
+                    ServerRequestCallback<String> requestCallback);
 
    void gitClone(VcsCloneOptions options,
                  ServerRequestCallback<ConsoleProcess> requestCallback);

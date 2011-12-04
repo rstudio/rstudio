@@ -25,6 +25,7 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
+#include <boost/format.hpp>
 #include <boost/function.hpp>
 #include <boost/lambda/lambda.hpp>
 #include <boost/lexical_cast.hpp>
@@ -982,6 +983,17 @@ public:
       return runGit(args, pOutput);
    }
 
+   virtual core::Error showFile(const std::string& rev,
+                                const std::string& filename,
+                                std::string* pOutput)
+   {
+      boost::format fmt("%1%:%2%");
+      ShellArgs args =
+            ShellArgs() << "show" << boost::str(fmt % rev % filename);
+
+      return runGit(args, pOutput);
+   }
+
    virtual core::Error remoteBranchInfo(RemoteBranchInfo* pRemoteBranchInfo)
    {
       // default to none
@@ -1601,6 +1613,24 @@ Error vcsShow(const json::JsonRpcRequest& request,
    {
       pResponse->setResult(output);
    }
+   return Success();
+}
+
+
+Error vcsShowFile(const json::JsonRpcRequest& request,
+                  json::JsonRpcResponse* pResponse)
+{
+   std::string rev,filename;
+   Error error = json::readParams(request.params, &rev, &filename);
+   if (error)
+      return error;
+
+   std::string output;
+   s_git_.showFile(rev, filename, &output);
+   output = string_utils::filterControlChars(output);
+
+   pResponse->setResult(output);
+
    return Success();
 }
 
@@ -2408,6 +2438,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_history", vcsHistory))
       (bind(registerRpcMethod, "git_execute_command", vcsExecuteCommand))
       (bind(registerRpcMethod, "git_show", vcsShow))
+      (bind(registerRpcMethod, "git_show_file", vcsShowFile))
       (bind(registerRpcMethod, "git_ssh_public_key", vcsSshPublicKey))
       (bind(registerRpcMethod, "git_has_repo", vcsHasRepo))
       (bind(registerRpcMethod, "git_init_repo", vcsInitRepo));

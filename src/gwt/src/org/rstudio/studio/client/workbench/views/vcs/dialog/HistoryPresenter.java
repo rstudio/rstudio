@@ -34,10 +34,13 @@ import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.UnifiedParser;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEvent;
@@ -159,14 +162,38 @@ public class HistoryPresenter
          @Override
          public void onViewFileRevision(final ViewFileRevisionEvent event)
          {
+            final ProgressIndicator indicator = 
+                  new GlobalProgressDelayer(globalDisplay, 
+                                            500,
+                                            "Reading file...").getIndicator();
+            
             AceEditor.load(new Command()
             {
                public void execute()
                {
-                  pViewFilePresenter.get().showFile(
-                        FileSystemItem.createFile(event.getFilename()),
-                        event.getRevision(), 
-                        "");
+                  server_.gitShowFile(
+                    event.getRevision(), 
+                    event.getFilename(), 
+                    new ServerRequestCallback<String>() {
+
+                     @Override
+                     public void onResponseReceived(String contents)
+                     {
+                        indicator.onCompleted();
+                        
+                        pViewFilePresenter.get().showFile(
+                              FileSystemItem.createFile(event.getFilename()),
+                              event.getRevision(), 
+                              contents);
+                     }
+                     
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        indicator.onError(error.getUserMessage());
+                     }
+                  
+                  });
                }
             });            
          }

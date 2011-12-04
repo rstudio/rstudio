@@ -14,6 +14,14 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 
+// TODO: lack of ace styles (line numbers or syntax highlight)
+
+// TODO: what is the encoding of git show output?
+
+// TODO: are filenames with spaces supported?
+
+// TODO: don't try to show binary files
+
 public class ViewFilePresenter
 {
    public interface Display extends TextDisplay
