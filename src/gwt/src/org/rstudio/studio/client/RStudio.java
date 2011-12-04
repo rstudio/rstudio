@@ -65,6 +65,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishP
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.DiffFrame;
 import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportFileSettingsDialog;
 import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportGoogleSpreadsheetDialog;
 
@@ -197,6 +198,7 @@ public class RStudio implements EntryPoint
       ResizeGripper.ensureStylesInjected();
       LineTableView.ensureStylesInjected();
       ChangelistTable.ensureStylesInjected();
+      DiffFrame.ensureStylesInjected();
       CodeBrowserEditingTargetWidget.ensureStylesInjected();
       ShowPublicKeyDialog.ensureStylesInjected();
       WizardResources.INSTANCE.styles().ensureInjected();

@@ -18,3 +18,18 @@
    top: 6px;
    left: 28px;
 }
+
+.viewFilePanel {
+   position: absolute;
+   right: 6px;
+}
+
+.viewFileSeparator {
+   margin-top: 3px;
+   margin-right: 5px;
+}
+
+.viewFileHyperlink {
+   font-size: 11px;
+   margin-top: 6px;
+}

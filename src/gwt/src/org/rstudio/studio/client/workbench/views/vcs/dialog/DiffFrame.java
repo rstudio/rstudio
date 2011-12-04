@@ -21,6 +21,8 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
 
@@ -41,6 +43,9 @@ public class DiffFrame extends Composite
       String header();
       String fileIcon();
       String headerLabel();
+      String viewFilePanel();
+      String viewFileSeparator();
+      String viewFileHyperlink();
    }
 
    interface Binder extends UiBinder<Widget, DiffFrame>
@@ -49,6 +54,7 @@ public class DiffFrame extends Composite
    public DiffFrame(ImageResource icon,
                     String filename1,
                     String filename2,
+                    String commitId,
                     LineTableView diff)
    {
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
@@ -58,12 +64,20 @@ public class DiffFrame extends Composite
                   FileSystemItem.createFile(filename2 == null ? filename1 : filename2)));
 
       headerLabel_.setText(filename1);
+      
+      separatorImage_.setResource(ThemeResources.INSTANCE.toolbarSeparator());
+      separatorImage_.addStyleName(RES.styles().viewFileSeparator());
+      
+      viewFileHyperlink_.setAlwaysUnderline(false);
+      viewFileHyperlink_.setText("View file @ " + commitId);
+      viewFileHyperlink_.addStyleName(RES.styles().viewFileHyperlink());
+      
       container_.add(diff);
    }
 
-   static
+   public static void ensureStylesInjected()
    {
-      GWT.<Resources>create(Resources.class).styles().ensureInjected();
+      RES.styles().ensureInjected();
    }
 
    @UiField
@@ -72,4 +86,10 @@ public class DiffFrame extends Composite
    Label headerLabel_;
    @UiField
    Image fileIcon_;
+   @UiField
+   Image separatorImage_;
+   @UiField
+   HyperlinkLabel viewFileHyperlink_;
+   
+   private static final Resources RES = GWT.<Resources>create(Resources.class);
 }

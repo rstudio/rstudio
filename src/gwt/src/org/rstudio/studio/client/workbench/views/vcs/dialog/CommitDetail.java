@@ -99,7 +99,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
             view.setWidth("100%");
 
             final DiffFrame diffFrame = new DiffFrame(
-                  null, fileHeader.getDescription(), null, view);
+               null, fileHeader.getDescription(), null, commit_.getId(), view);
             diffFrame.setWidth("100%");
             detailPanel_.add(diffFrame);
 

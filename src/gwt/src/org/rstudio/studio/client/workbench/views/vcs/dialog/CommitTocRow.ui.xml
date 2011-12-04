@@ -11,6 +11,7 @@
       }
       .outer a {
          text-decoration: none;
+         color: #0000AA;
       }
       .outer a:hover {
          text-decoration: underline;

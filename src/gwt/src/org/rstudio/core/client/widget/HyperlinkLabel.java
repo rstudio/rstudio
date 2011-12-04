@@ -18,6 +18,12 @@ import org.rstudio.core.client.HandlerRegistrations;
 
 public class HyperlinkLabel extends Label 
 {
+   public HyperlinkLabel()
+   {
+      super();
+      this.setStyleName("rstudio-HyperlinkLabel");
+   }
+   
    public HyperlinkLabel(String caption, ClickHandler clickHandler)
    {
       super(caption); 
