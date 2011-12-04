@@ -18,11 +18,13 @@ import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
+
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.Point;
@@ -30,6 +32,8 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitDetailDisplay;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.*;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.ViewFileRevisionEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.ViewFileRevisionHandler;
 
 import java.util.ArrayList;
 
@@ -80,7 +84,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
             if (token.isInvalid())
                return false;
 
-            DiffFileHeader fileHeader = unifiedParser.nextFilePair();
+            final DiffFileHeader fileHeader = unifiedParser.nextFilePair();
             if (fileHeader == null)
                return false;
 
@@ -97,9 +101,23 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
             view.setShowActions(false);
             view.setData(lines, PatchMode.Stage);
             view.setWidth("100%");
-
+            
             final DiffFrame diffFrame = new DiffFrame(
-               null, fileHeader.getDescription(), null, commit_.getId(), view);
+                           null, 
+                           fileHeader.getDescription(), 
+                           null, 
+                           commit_.getId(), 
+                           view,
+                           new ClickHandler() {
+                              @Override
+                              public void onClick(ClickEvent event)
+                              { 
+                                 fireEvent(new ViewFileRevisionEvent(
+                                                commit_.getId(), 
+                                                fileHeader.getDescription()));
+                                 
+                              }
+                           });
             diffFrame.setWidth("100%");
             detailPanel_.add(diffFrame);
 
@@ -120,6 +138,13 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
             return true;
          }
       });
+   }
+   
+   @Override
+   public HandlerRegistration addViewFileRevisionHandler(
+                                             ViewFileRevisionHandler handler)
+   {
+      return addHandler(handler, ViewFileRevisionEvent.TYPE);
    }
 
    private void updateInfo()
@@ -174,4 +199,5 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    @UiField(provided = true)
    SizeWarningWidget sizeWarning_;
    private ScrollPanel container_;
+   
 }

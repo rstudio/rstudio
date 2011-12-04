@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
@@ -55,7 +56,8 @@ public class DiffFrame extends Composite
                     String filename1,
                     String filename2,
                     String commitId,
-                    LineTableView diff)
+                    LineTableView diff,
+                    ClickHandler viewFileClickHandler)
    {
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
@@ -68,6 +70,7 @@ public class DiffFrame extends Composite
       separatorImage_.setResource(ThemeResources.INSTANCE.toolbarSeparator());
       separatorImage_.addStyleName(RES.styles().viewFileSeparator());
       
+      viewFileHyperlink_.setClickHandler(viewFileClickHandler);
       viewFileHyperlink_.setAlwaysUnderline(false);
       viewFileHyperlink_.setText("View file @ " + commitId);
       viewFileHyperlink_.addStyleName(RES.styles().viewFileHyperlink());

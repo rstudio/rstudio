@@ -35,6 +35,12 @@ public class HyperlinkLabel extends Label
    {
       this(caption, null);
    }
+   
+   // must call this before the element is loaded
+   public void setClickHandler(ClickHandler clickHandler)
+   {
+      clickHandler_ = clickHandler; 
+   }
 
    private class MouseHandlers implements MouseOverHandler,
                                           MouseOutHandler
@@ -84,7 +90,6 @@ public class HyperlinkLabel extends Label
             
          }));
    }
-  
   
    private MouseHandlers mouseHandlers_ = new MouseHandlers();
    private ClickHandler clickHandler_ ;

@@ -1,7 +1,6 @@
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import org.rstudio.core.client.widget.FullscreenPopupPanel;
-import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
@@ -51,7 +50,7 @@ public class ViewFilePanel extends Composite
             false); // don't show replace UI
       
       panel_ = new PanelWithToolbars(createToolbar(),
-                                     createSecondaryToolbar(),
+                                     null,
                                      docDisplay_.asWidget(),
                                      null);
       panel_.setSize("100%", "100%");
@@ -68,13 +67,7 @@ public class ViewFilePanel extends Composite
    private Toolbar createToolbar()
    {
       return new Toolbar();
-   }
-   
-   private Toolbar createSecondaryToolbar()
-   {
-      return new SecondaryToolbar();
-   }
-   
+   }  
    
    @Override
    public void onActivate()

@@ -18,25 +18,34 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.json.client.JSONNumber;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
+
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.WidgetHandlerRegistration;
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.UnifiedParser;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.ViewFileRevisionEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.ViewFileRevisionHandler;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 public class HistoryPresenter
@@ -74,15 +83,21 @@ public class HistoryPresenter
       CommitInfo getSelectedCommit();
    }
 
-   public interface CommitDetailDisplay
+   public interface CommitDetailDisplay extends HasHandlers
    {
       void setSelectedCommit(CommitInfo commit);
       void clearDetails();
       void setDetails(UnifiedParser unifiedParser);
+      
+      HandlerRegistration addViewFileRevisionHandler(
+                                          ViewFileRevisionHandler handler);
+      
    }
 
    @Inject
    public HistoryPresenter(GitServerOperations server,
+                           final GlobalDisplay globalDisplay,
+                           final Provider<ViewFilePresenter> pViewFilePresenter,
                            final Display view,
                            final HistoryAsyncDataProvider provider,
                            final GitState vcsState)
@@ -137,6 +152,25 @@ public class HistoryPresenter
          {
             refreshHistoryCommand_.nudge();
          }
+      });
+      
+      view_.getCommitDetail().addViewFileRevisionHandler(
+                                          new ViewFileRevisionHandler() {
+         @Override
+         public void onViewFileRevision(final ViewFileRevisionEvent event)
+         {
+            AceEditor.load(new Command()
+            {
+               public void execute()
+               {
+                  pViewFilePresenter.get().showFile(
+                        FileSystemItem.createFile(event.getFilename()),
+                        event.getRevision(), 
+                        "");
+               }
+            });            
+         }
+         
       });
 
       new WidgetHandlerRegistration(view_.asWidget())
