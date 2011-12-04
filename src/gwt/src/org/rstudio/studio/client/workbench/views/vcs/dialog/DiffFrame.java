@@ -25,6 +25,9 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.filetypes.FileType;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
 
 public class DiffFrame extends Composite
@@ -61,19 +64,29 @@ public class DiffFrame extends Composite
    {
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
-      fileIcon_.setResource(
-            RStudioGinjector.INSTANCE.getFileTypeRegistry().getIconForFile(
-                  FileSystemItem.createFile(filename2 == null ? filename1 : filename2)));
-
+      FileTypeRegistry fileTypeRegistry = 
+                        RStudioGinjector.INSTANCE.getFileTypeRegistry();
+      
+      FileSystemItem fsItem = FileSystemItem.createFile(filename2 == null ? 
+                                                      filename1 : filename2);
+      
+      fileIcon_.setResource(fileTypeRegistry.getIconForFile(fsItem));
+     
       headerLabel_.setText(filename1);
-      
-      separatorImage_.setResource(ThemeResources.INSTANCE.toolbarSeparator());
-      separatorImage_.addStyleName(RES.styles().viewFileSeparator());
-      
-      viewFileHyperlink_.setClickHandler(viewFileClickHandler);
-      viewFileHyperlink_.setAlwaysUnderline(false);
-      viewFileHyperlink_.setText("View file @ " + commitId);
-      viewFileHyperlink_.addStyleName(RES.styles().viewFileHyperlink());
+     
+      // if the file is text file then show a view link for it
+      FileType fileType = fileTypeRegistry.getTypeForFile(fsItem, false);
+      boolean showLink = fileType != null && fileType instanceof TextFileType;
+      if (showLink)
+      {
+         separatorImage_.setResource(ThemeResources.INSTANCE.toolbarSeparator());
+         separatorImage_.addStyleName(RES.styles().viewFileSeparator());
+         
+         viewFileHyperlink_.setClickHandler(viewFileClickHandler);
+         viewFileHyperlink_.setAlwaysUnderline(false);
+         viewFileHyperlink_.setText("View file @ " + commitId);
+         viewFileHyperlink_.addStyleName(RES.styles().viewFileHyperlink());
+      }
       
       container_.add(diff);
    }
