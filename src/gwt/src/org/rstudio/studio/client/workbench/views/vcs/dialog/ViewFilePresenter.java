@@ -46,8 +46,8 @@ public class ViewFilePresenter
    
    public void showFile(FileSystemItem file, String commitId, String contents)
    {
-      view_.adaptToFileType(fileTypeRegistry_.getTextTypeForFile(file));
       view_.getDocDisplay().setCode(contents, false);  
+      view_.adaptToFileType(fileTypeRegistry_.getTextTypeForFile(file));
       view_.show();
    }
    
