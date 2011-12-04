@@ -11,7 +11,11 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetFindReplace;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -68,7 +72,10 @@ public class ViewFilePanel extends Composite
       
       adaptToFileType(fileTypeRegistry_.getTextTypeForFile(file));
       
-      new FullscreenPopupPanel(asWidget()).center();
+      Label lblCaption = new Label(file.getPath() + " @ " + commitId);
+      lblCaption.addStyleName(RES.styles().captionLabel());
+      
+      new FullscreenPopupPanel(lblCaption,asWidget()).center();
    }
     
    private Toolbar createToolbar()
@@ -106,6 +113,22 @@ public class ViewFilePanel extends Composite
    {
       return docDisplay_;
    }
+   
+   public interface Resources extends ClientBundle
+   {
+      @Source("ViewFilePanel.css")
+      Styles styles();
+   }
+   
+   public interface Styles extends CssResource
+   {
+      String captionLabel();
+   }
+   
+   public static void ensureStylesInjected()
+   {
+      RES.styles().ensureInjected();
+   }
   
    private final FileTypeRegistry fileTypeRegistry_;
    private final DocDisplay docDisplay_;
@@ -113,4 +136,6 @@ public class ViewFilePanel extends Composite
    private final PanelWithToolbars panel_;
    @SuppressWarnings("unused")
    private final TextEditingTargetFindReplace findReplace_;
+   
+   private static final Resources RES = GWT.<Resources>create(Resources.class);
 }

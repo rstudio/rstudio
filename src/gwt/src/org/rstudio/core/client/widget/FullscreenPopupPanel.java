@@ -31,9 +31,16 @@ public class FullscreenPopupPanel extends ModalPopupPanel
 {
    public FullscreenPopupPanel(Widget mainWidget)
    {
+      this(null, mainWidget);
+   }
+   
+   public FullscreenPopupPanel(Widget titleWidget, Widget mainWidget)
+   {
       super(false, false, true);
       
       NineUpBorder border = new NineUpBorder(RES, 32, 20, 17, 20);
+      if (titleWidget != null)
+         addTitleWidget(border, titleWidget);
       addCloseButton(border);
       border.setSize("100%", "100%");
       border.setFillColor("white");
@@ -53,6 +60,18 @@ public class FullscreenPopupPanel extends ModalPopupPanel
             ((Element) getElement().getFirstChild()).getStyle();
       contentStyle.setWidth(100, Unit.PCT);
       contentStyle.setHeight(100, Unit.PCT);
+   }
+   
+   private void addTitleWidget(NineUpBorder border, Widget titleWidget)
+   {
+      LayoutPanel layoutPanel = border.getLayoutPanel();
+      layoutPanel.add(titleWidget);
+      layoutPanel.setWidgetTopHeight(titleWidget,
+                                     13, Unit.PX,
+                                     RES.top().getHeight(), Unit.PX);
+      layoutPanel.setWidgetLeftRight(titleWidget,
+                                     27, Unit.PX,
+                                     27+RES.close().getWidth() + 15, Unit.PX);
    }
    
    private void addCloseButton(NineUpBorder border)
