@@ -1,7 +1,9 @@
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.FullscreenPopupPanel;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -17,9 +19,10 @@ public class ViewFilePanel extends Composite
                            implements ViewFilePresenter.Display
 {
    @Inject
-   public ViewFilePanel(DocDisplay docDisplay)
+   public ViewFilePanel(DocDisplay docDisplay,
+                        FileTypeRegistry fileTypeRegistry)
    {
-     
+      fileTypeRegistry_ = fileTypeRegistry;
       docDisplay_ = docDisplay; 
       docDisplay_.setReadOnly(true);
       
@@ -59,8 +62,12 @@ public class ViewFilePanel extends Composite
    }
    
    @Override
-   public void show()
+   public void showFile(FileSystemItem file, String commitId, String contents)
    {
+      docDisplay_.setCode(contents, false);  
+      
+      adaptToFileType(fileTypeRegistry_.getTextTypeForFile(file));
+      
       new FullscreenPopupPanel(asWidget()).center();
    }
     
@@ -100,6 +107,7 @@ public class ViewFilePanel extends Composite
       return docDisplay_;
    }
   
+   private final FileTypeRegistry fileTypeRegistry_;
    private final DocDisplay docDisplay_;
    
    private final PanelWithToolbars panel_;

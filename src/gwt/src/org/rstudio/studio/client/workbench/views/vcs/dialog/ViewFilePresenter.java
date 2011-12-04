@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -22,18 +21,16 @@ public class ViewFilePresenter
    {
       DocDisplay getDocDisplay();
      
-      void show();
+      void showFile(FileSystemItem file, String commitId, String contents);
    }
    
    @Inject
    public ViewFilePresenter(Display view,
-                            FileTypeRegistry fileTypeRegistry,
                             FontSizeManager fontSizeManager,
                             EventBus events,
                             UIPrefs uiPrefs)
    {
       view_ = view;
-      fileTypeRegistry_ = fileTypeRegistry;
       
       TextEditingTarget.registerPrefs(releaseOnDismiss_, 
                                       uiPrefs, 
@@ -48,13 +45,10 @@ public class ViewFilePresenter
    
    public void showFile(FileSystemItem file, String commitId, String contents)
    {
-      view_.getDocDisplay().setCode(contents, false);  
-      view_.adaptToFileType(fileTypeRegistry_.getTextTypeForFile(file));
-      view_.show();
+      view_.showFile(file, commitId, contents);
    }
    
    private final Display view_;
-   private final FileTypeRegistry fileTypeRegistry_;
    
    private final ArrayList<HandlerRegistration> releaseOnDismiss_ =
                                  new ArrayList<HandlerRegistration>();
