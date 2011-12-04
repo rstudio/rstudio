@@ -16,8 +16,6 @@ import com.google.inject.Inject;
 
 // TODO: lack of ace styles (line numbers or syntax highlight)
 
-// TODO: are filenames with spaces supported?
-
 // TODO: don't try to show binary files
 
 public class ViewFilePresenter

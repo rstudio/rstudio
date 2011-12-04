@@ -113,8 +113,8 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
                               public void onClick(ClickEvent event)
                               { 
                                  fireEvent(new ViewFileRevisionEvent(
-                                                commit_.getId(), 
-                                                fileHeader.getDescription()));
+                                          commit_.getId(), 
+                                          fileHeader.getDescription().trim()));
                                  
                               }
                            });
