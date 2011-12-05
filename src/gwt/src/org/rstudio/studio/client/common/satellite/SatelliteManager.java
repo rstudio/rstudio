@@ -184,9 +184,14 @@ public class SatelliteManager implements CloseHandler<Window>
    // called by satellites to connect themselves with the main window
    private void registerAsSatellite(String name, JavaScriptObject wnd)
    {
-      // get the satellite and add it to our list
+      // get the satellite and add it to our list. in some cases (such as
+      // the Ctrl+R reload of an existing satellite window) we actually
+      // already have a reference to this satellite in our list so in that
+      // case we make sure not to add a duplicate
       WindowEx satelliteWnd = wnd.<WindowEx>cast();
-      satellites_.add(new ActiveSatellite(name, satelliteWnd));
+      ActiveSatellite satellite = new ActiveSatellite(name, satelliteWnd);
+      if (!satellites_.contains(satellite))
+         satellites_.add(satellite);
       
       // call setSessionInfo
       callSetSessionInfo(satelliteWnd, session_.getSessionInfo());
@@ -261,6 +266,18 @@ public class SatelliteManager implements CloseHandler<Window>
       public WindowEx getWindow()
       {
          return window_;
+      }
+      
+      @Override 
+      public boolean equals(Object other)
+      {
+         if (other == null)
+            return false;
+         
+         ActiveSatellite otherSatellite = (ActiveSatellite)other;
+         
+         return getName().equals(otherSatellite.getName()) &&
+                getWindow().equals(otherSatellite.getWindow());
       }
       
       private final String name_;
