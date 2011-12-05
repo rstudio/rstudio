@@ -375,7 +375,7 @@ std::string repositoryRoot(const FilePath& workingDir)
    if (error)
    {
       LOG_ERROR(error);
-      return false;
+      return std::string();
    }
 
    return svnInfo.repositoryRoot;
