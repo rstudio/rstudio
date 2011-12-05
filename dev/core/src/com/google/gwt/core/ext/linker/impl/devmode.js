@@ -197,11 +197,19 @@ function doBrowserSpecificFixes() {
     window.Object.prototype.hasOwnProperty = function(prop) {
       return prop != "__gwt_ObjectId" && hop.call(this, prop);
     };
+    var hop2 = window.Object.prototype.propertyIsEnumerable;
+    window.Object.prototype.propertyIsEnumerable = function(prop) {
+      return prop != "__gwt_ObjectId" && hop2.call(this, prop);
+    };
     // do the same in the main window if it is different from our window
     if ($wnd != window) {
-      var hop2 = $wnd.Object.prototype.hasOwnProperty;
+      var hop3 = $wnd.Object.prototype.hasOwnProperty;
       $wnd.Object.prototype.hasOwnProperty = function(prop) {
-        return prop != "__gwt_ObjectId" && hop2.call(this, prop);
+        return prop != "__gwt_ObjectId" && hop3.call(this, prop);
+      };
+      var hop4 = $wnd.Object.prototype.propertyIsEnumerable;
+      $wnd.Object.prototype.propertyIsEnumerable = function(prop) {
+        return prop != "__gwt_ObjectId" && hop4.call(this, prop);
       };
     }
   }
