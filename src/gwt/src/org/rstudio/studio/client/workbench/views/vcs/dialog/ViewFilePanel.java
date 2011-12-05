@@ -3,8 +3,10 @@ package org.rstudio.studio.client.workbench.views.vcs.dialog;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.FullscreenPopupPanel;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -12,6 +14,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
@@ -26,9 +30,11 @@ public class ViewFilePanel extends Composite
 {
    @Inject
    public ViewFilePanel(DocDisplay docDisplay,
-                        FileTypeRegistry fileTypeRegistry)
+                        FileTypeRegistry fileTypeRegistry,
+                        Commands commands)
    {
       fileTypeRegistry_ = fileTypeRegistry;
+      commands_ = commands;
       docDisplay_ = docDisplay; 
       docDisplay_.setReadOnly(true);
       
@@ -90,7 +96,39 @@ public class ViewFilePanel extends Composite
     
    private Toolbar createToolbar()
    {
-      return new Toolbar();
+      Toolbar toolbar = new Toolbar();
+      
+      toolbar.addLeftWidget(new ToolbarButton(
+         "Save As...", 
+         commands_.saveSourceDoc().getImageResource(),
+         new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event)
+            {
+              
+               
+            }
+            
+         }));
+      toolbar.addLeftSeparator();
+      
+      toolbar.addLeftWidget(new ToolbarButton(
+         null,
+         commands_.printSourceDoc().getImageResource(),
+         new ClickHandler() {
+
+            @Override
+            public void onClick(ClickEvent event)
+            {
+               docDisplay_.print();
+            }
+            
+         }));
+      toolbar.addLeftSeparator();
+      
+      toolbar.addLeftWidget(findReplace_.createFindReplaceButton());
+      
+      return toolbar;
    }  
    
    @Override
@@ -142,10 +180,10 @@ public class ViewFilePanel extends Composite
    }
   
    private final FileTypeRegistry fileTypeRegistry_;
+   private final Commands commands_;
    private final DocDisplay docDisplay_;
    
    private final PanelWithToolbars panel_;
-   @SuppressWarnings("unused")
    private final TextEditingTargetFindReplace findReplace_;
    
    private static final Resources RES = GWT.<Resources>create(Resources.class);
