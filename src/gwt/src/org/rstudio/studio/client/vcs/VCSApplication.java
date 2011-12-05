@@ -16,6 +16,7 @@ package org.rstudio.studio.client.vcs;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
 import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Style;
@@ -23,6 +24,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
@@ -31,10 +33,12 @@ public class VCSApplication
    @Inject
    public VCSApplication(VCSApplicationView view,
                          Satellite satellite,
+                         Provider<AceThemes> pAceThemes,
                          ApplicationUncaughtExceptionHandler uncaughtExHandler)
    {
       view_ = view;
       satellite_ = satellite;
+      pAceThemes_ = pAceThemes;
       uncaughtExHandler_ = uncaughtExHandler;
    }
    
@@ -50,6 +54,9 @@ public class VCSApplication
                                   view_.reactivate(params);                
                                }
                             });
+      
+      // inject ace themes
+      pAceThemes_.get();
       
       // register for uncaught exceptions (do this after calling 
       // initSatelliteWindow b/c it depends on Server)
@@ -71,6 +78,7 @@ public class VCSApplication
    
    private final VCSApplicationView view_;
    private final Satellite satellite_;
+   private final Provider<AceThemes> pAceThemes_;
    private final ApplicationUncaughtExceptionHandler uncaughtExHandler_;
 
 }
