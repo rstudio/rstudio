@@ -155,6 +155,12 @@ public class ViewFilePanel extends Composite implements TextDisplay
                         public void execute(FileSystemItem input,
                                             ProgressIndicator indicator)
                         {
+                           if (input == null)
+                           {
+                              indicator.onCompleted();
+                              return;
+                           }
+                           
                            indicator.onProgress("Saving file...");
                            
                            server_.gitExportFile(
