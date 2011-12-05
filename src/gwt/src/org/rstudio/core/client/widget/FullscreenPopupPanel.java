@@ -68,7 +68,7 @@ public class FullscreenPopupPanel extends ModalPopupPanel
       layoutPanel.add(titleWidget);
       layoutPanel.setWidgetTopHeight(titleWidget,
                                      13, Unit.PX,
-                                     RES.top().getHeight(), Unit.PX);
+                                     21, Unit.PX);
       layoutPanel.setWidgetLeftRight(titleWidget,
                                      27, Unit.PX,
                                      27+RES.close().getWidth() + 15, Unit.PX);
