@@ -15,6 +15,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -72,10 +74,18 @@ public class ViewFilePanel extends Composite
       
       adaptToFileType(fileTypeRegistry_.getTextTypeForFile(file));
       
+      // header widget has icon + label
+      HorizontalPanel panel = new HorizontalPanel();
+     
+      Image imgFile = new Image(fileTypeRegistry_.getIconForFile(file));
+      imgFile.addStyleName(RES.styles().captionIcon());
+      panel.add(imgFile);
+      
       Label lblCaption = new Label(file.getPath() + " @ " + commitId);
       lblCaption.addStyleName(RES.styles().captionLabel());
+      panel.add(lblCaption);
       
-      new FullscreenPopupPanel(lblCaption,asWidget()).center();
+      new FullscreenPopupPanel(panel,asWidget()).center();
    }
     
    private Toolbar createToolbar()
@@ -122,6 +132,7 @@ public class ViewFilePanel extends Composite
    
    public interface Styles extends CssResource
    {
+      String captionIcon();
       String captionLabel();
    }
    
