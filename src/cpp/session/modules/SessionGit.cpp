@@ -1694,6 +1694,33 @@ Error vcsShowFile(const json::JsonRpcRequest& request,
    return Success();
 }
 
+
+Error vcsExportFile(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   // read parameters
+   std::string rev, filename, targetPath;
+   Error error = json::readParams(request.params,
+                                  &rev,
+                                  &filename,
+                                  &targetPath);
+   if (error)
+      return error;
+
+   // get the contents of the file
+   std::string output;
+   error = s_git_.showFile(rev, filename, &output);
+   if (error)
+      return error;
+
+   // write it
+   return core::writeStringToFile(
+                  module_context::resolveAliasedPath(targetPath),
+                  output);
+}
+
+
+
 Error vcsSshPublicKey(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
@@ -2499,6 +2526,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_execute_command", vcsExecuteCommand))
       (bind(registerRpcMethod, "git_show", vcsShow))
       (bind(registerRpcMethod, "git_show_file", vcsShowFile))
+      (bind(registerRpcMethod, "git_export_file", vcsExportFile))
       (bind(registerRpcMethod, "git_ssh_public_key", vcsSshPublicKey))
       (bind(registerRpcMethod, "git_has_repo", vcsHasRepo))
       (bind(registerRpcMethod, "git_init_repo", vcsInitRepo));

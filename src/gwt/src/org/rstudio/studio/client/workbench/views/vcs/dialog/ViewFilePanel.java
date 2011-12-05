@@ -1,21 +1,36 @@
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.FullscreenPopupPanel;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.vcs.GitServerOperations;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetFindReplace;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
@@ -25,18 +40,37 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-public class ViewFilePanel extends Composite 
-                           implements ViewFilePresenter.Display
+public class ViewFilePanel extends Composite implements TextDisplay
 {
    @Inject
    public ViewFilePanel(DocDisplay docDisplay,
                         FileTypeRegistry fileTypeRegistry,
-                        Commands commands)
+                        UIPrefs uiPrefs,
+                        EventBus events,
+                        Commands commands,
+                        FontSizeManager fontSizeManager,
+                        FileDialogs fileDialogs,
+                        RemoteFileSystemContext fileContext,
+                        Session session,
+                        GitServerOperations server)
    {
       fileTypeRegistry_ = fileTypeRegistry;
       commands_ = commands;
+      fileDialogs_ = fileDialogs;
+      fileContext_ = fileContext;
+      session_ = session;
+      server_ = server;
       docDisplay_ = docDisplay; 
       docDisplay_.setReadOnly(true);
+      
+      TextEditingTarget.registerPrefs(releaseOnDismiss_, 
+            uiPrefs, 
+            docDisplay_);
+
+      TextEditingTarget.syncFontSize(releaseOnDismiss_, 
+           events, 
+           this, 
+           fontSizeManager); 
       
       findReplace_ = new TextEditingTargetFindReplace(
             new TextEditingTargetFindReplace.Container() {
@@ -73,9 +107,11 @@ public class ViewFilePanel extends Composite
       initWidget(panel_);
    }
    
-   @Override
    public void showFile(FileSystemItem file, String commitId, String contents)
    {
+      commitId_ = commitId;
+      targetFile_ = file;
+      
       docDisplay_.setCode(contents, false);  
       
       adaptToFileType(fileTypeRegistry_.getTextTypeForFile(file));
@@ -99,13 +135,37 @@ public class ViewFilePanel extends Composite
       Toolbar toolbar = new Toolbar();
       
       toolbar.addLeftWidget(new ToolbarButton(
-         "Save As...", 
+         "Save As", 
          commands_.saveSourceDoc().getImageResource(),
          new ClickHandler() {
             @Override
             public void onClick(ClickEvent event)
             {
-              
+               fileDialogs_.saveFile(
+                     "Save File - " + targetFile_.getName(), 
+                     fileContext_, 
+                     FileSystemItem.createFile(
+                         session_.getSessionInfo().getActiveProjectDir()
+                                  .completePath(targetFile_.getName())), 
+                     targetFile_.getExtension(), 
+                     false, 
+                     new ProgressOperationWithInput<FileSystemItem> () {
+
+                        @Override
+                        public void execute(FileSystemItem input,
+                                            ProgressIndicator indicator)
+                        {
+                           indicator.onProgress("Saving file...");
+                           
+                           server_.gitExportFile(
+                                 commitId_,
+                                 targetFile_.getPath(),
+                                 input.getPath(),
+                                 new VoidServerRequestCallback(indicator));
+  
+                        }
+                        
+                     });
                
             }
             
@@ -155,12 +215,6 @@ public class ViewFilePanel extends Composite
    {
       return this;
    }
-
-   @Override
-   public DocDisplay getDocDisplay()
-   {
-      return docDisplay_;
-   }
    
    public interface Resources extends ClientBundle
    {
@@ -180,11 +234,21 @@ public class ViewFilePanel extends Composite
    }
   
    private final FileTypeRegistry fileTypeRegistry_;
+   private final RemoteFileSystemContext fileContext_;
+   private final FileDialogs fileDialogs_;
    private final Commands commands_;
+   private final Session session_;
+   private final GitServerOperations server_;
    private final DocDisplay docDisplay_;
    
    private final PanelWithToolbars panel_;
    private final TextEditingTargetFindReplace findReplace_;
    
+   private String commitId_ = null;
+   private FileSystemItem targetFile_ = null;
+   
    private static final Resources RES = GWT.<Resources>create(Resources.class);
+   
+   private final ArrayList<HandlerRegistration> releaseOnDismiss_ =
+         new ArrayList<HandlerRegistration>();
 }

@@ -104,8 +104,6 @@ import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPanel;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenterImpl;
-import org.rstudio.studio.client.workbench.views.vcs.dialog.ViewFilePanel;
-import org.rstudio.studio.client.workbench.views.vcs.dialog.ViewFilePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitPane;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.git.dialog.GitReviewPanel;
@@ -186,7 +184,6 @@ public class RStudioGinModule extends AbstractGinModule
       bind(SVNReviewPresenter.Display.class).to(SVNReviewPanel.class);
       bind(LineTablePresenter.Display.class).to(LineTableView.class);
       bind(HistoryPresenter.Display.class).to(HistoryPanel.class);
-      bind(ViewFilePresenter.Display.class).to(ViewFilePanel.class);
       
       bind(GlobalDisplay.class)
             .to(DefaultGlobalDisplay.class)

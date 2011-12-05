@@ -100,7 +100,7 @@ public class HistoryPresenter
    @Inject
    public HistoryPresenter(GitServerOperations server,
                            final GlobalDisplay globalDisplay,
-                           final Provider<ViewFilePresenter> pViewFilePresenter,
+                           final Provider<ViewFilePanel> pViewFilePanel,
                            final Display view,
                            final HistoryAsyncDataProvider provider,
                            final GitState vcsState)
@@ -181,7 +181,7 @@ public class HistoryPresenter
                      {
                         indicator.onCompleted();
                         
-                        pViewFilePresenter.get().showFile(
+                        pViewFilePanel.get().showFile(
                               FileSystemItem.createFile(event.getFilename()),
                               event.getRevision(), 
                               contents);
