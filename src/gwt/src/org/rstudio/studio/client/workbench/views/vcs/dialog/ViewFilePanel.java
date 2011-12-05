@@ -33,6 +33,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
@@ -128,6 +129,14 @@ public class ViewFilePanel extends Composite implements TextDisplay
       panel.add(lblCaption);
       
       new FullscreenPopupPanel(panel,asWidget()).center();
+      
+      // set focus to the doc display after 100ms
+      Timer timer = new Timer() {
+         public void run() {
+            docDisplay_.focus();
+         }
+      };
+      timer.schedule(100); 
    }
     
    private Toolbar createToolbar()
@@ -201,7 +210,6 @@ public class ViewFilePanel extends Composite implements TextDisplay
    public void onActivate()
    {
       docDisplay_.onActivate();
-      
    }
 
    @Override
