@@ -2,6 +2,8 @@ package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.FullscreenPopupPanel;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -28,8 +30,12 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
@@ -105,6 +111,41 @@ public class ViewFilePanel extends Composite implements TextDisplay
                                      null);
       panel_.setSize("100%", "100%");
       
+      releaseOnDismiss_.add(docDisplay_.addKeyDownHandler(new KeyDownHandler()
+      {
+         public void onKeyDown(KeyDownEvent event)
+         {
+            NativeEvent ne = event.getNativeEvent();
+            int mod = KeyboardShortcut.getModifierValue(ne);
+            if ((mod == KeyboardShortcut.META || 
+                (mod == KeyboardShortcut.CTRL && !BrowseCap.hasMetaKey())))
+            {
+               if (ne.getKeyCode() == 'F')
+               {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  findReplace_.showFindReplace();
+               }
+               else if (ne.getKeyCode() == 'S')
+               {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  saveFileAs();
+               }
+            }
+            else if (mod == KeyboardShortcut.NONE &&
+                     ne.getKeyCode() == KeyCodes.KEY_ESCAPE)
+            {
+               if (findReplace_.isShowing())
+                  findReplace_.hideFindReplace();
+               else
+                  popupPanel_.close();
+            }
+            
+         }
+      }));
+      
+      
       initWidget(panel_);
    }
    
@@ -128,7 +169,8 @@ public class ViewFilePanel extends Composite implements TextDisplay
       lblCaption.addStyleName(RES.styles().captionLabel());
       panel.add(lblCaption);
       
-      new FullscreenPopupPanel(panel,asWidget()).center();
+      popupPanel_ = new FullscreenPopupPanel(panel,asWidget(), false);
+      popupPanel_.center();
       
       // set focus to the doc display after 100ms
       Timer timer = new Timer() {
@@ -150,38 +192,7 @@ public class ViewFilePanel extends Composite implements TextDisplay
             @Override
             public void onClick(ClickEvent event)
             {
-               fileDialogs_.saveFile(
-                     "Save File - " + targetFile_.getName(), 
-                     fileContext_, 
-                     FileSystemItem.createFile(
-                         session_.getSessionInfo().getActiveProjectDir()
-                                  .completePath(targetFile_.getName())), 
-                     targetFile_.getExtension(), 
-                     false, 
-                     new ProgressOperationWithInput<FileSystemItem> () {
-
-                        @Override
-                        public void execute(FileSystemItem input,
-                                            ProgressIndicator indicator)
-                        {
-                           if (input == null)
-                           {
-                              indicator.onCompleted();
-                              return;
-                           }
-                           
-                           indicator.onProgress("Saving file...");
-                           
-                           server_.gitExportFile(
-                                 commitId_,
-                                 targetFile_.getPath(),
-                                 input.getPath(),
-                                 new VoidServerRequestCallback(indicator));
-  
-                        }
-                        
-                     });
-               
+               saveFileAs();
             }
             
          }));
@@ -230,6 +241,50 @@ public class ViewFilePanel extends Composite implements TextDisplay
       return this;
    }
    
+   @Override
+   public void onUnload()
+   {
+      super.onUnload();
+      
+      while (releaseOnDismiss_.size() > 0)
+         releaseOnDismiss_.remove(0).removeHandler();
+   }
+   
+   private void saveFileAs()
+   {
+      fileDialogs_.saveFile(
+            "Save File - " + targetFile_.getName(), 
+            fileContext_, 
+            FileSystemItem.createFile(
+                session_.getSessionInfo().getActiveProjectDir()
+                         .completePath(targetFile_.getName())), 
+            targetFile_.getExtension(), 
+            false, 
+            new ProgressOperationWithInput<FileSystemItem> () {
+
+               @Override
+               public void execute(FileSystemItem input,
+                                   ProgressIndicator indicator)
+               {
+                  if (input == null)
+                  {
+                     indicator.onCompleted();
+                     return;
+                  }
+                  
+                  indicator.onProgress("Saving file...");
+                  
+                  server_.gitExportFile(
+                        commitId_,
+                        targetFile_.getPath(),
+                        input.getPath(),
+                        new VoidServerRequestCallback(indicator));
+
+               }
+               
+            });
+   }
+   
    public interface Resources extends ClientBundle
    {
       @Source("ViewFilePanel.css")
@@ -256,6 +311,7 @@ public class ViewFilePanel extends Composite implements TextDisplay
    private final DocDisplay docDisplay_;
    
    private final PanelWithToolbars panel_;
+   private FullscreenPopupPanel popupPanel_;
    private final TextEditingTargetFindReplace findReplace_;
    
    private String commitId_ = null;

@@ -84,8 +84,13 @@ public class TextEditingTargetFindReplace
       }
       findReplaceBar_.focusFindField(true);
    }
+   
+   public boolean isShowing()
+   {
+      return findReplaceBar_ != null;
+   }
 
-   private void hideFindReplace()
+   public void hideFindReplace()
    {
       if (findReplaceBar_ != null)
       {

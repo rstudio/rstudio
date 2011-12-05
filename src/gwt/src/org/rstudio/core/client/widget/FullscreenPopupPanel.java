@@ -29,14 +29,11 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class FullscreenPopupPanel extends ModalPopupPanel
 {
-   public FullscreenPopupPanel(Widget mainWidget)
+   public FullscreenPopupPanel(Widget titleWidget, 
+                               Widget mainWidget,
+                               boolean closeOnEscape)
    {
-      this(null, mainWidget);
-   }
-   
-   public FullscreenPopupPanel(Widget titleWidget, Widget mainWidget)
-   {
-      super(false, false, true);
+      super(false, false, closeOnEscape);
       
       NineUpBorder border = new NineUpBorder(RES, 32, 20, 17, 20);
       if (titleWidget != null)
