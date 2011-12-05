@@ -225,13 +225,18 @@ public class HistoryPresenter
    {
       view_.hideSizeWarning();
 
-      CommitInfo commitInfo = view_.getCommitList().getSelectedCommit();
+      final CommitInfo commitInfo = view_.getCommitList().getSelectedCommit();
       view_.getCommitDetail().setSelectedCommit(commitInfo);
       view_.getCommitDetail().clearDetails();
       invalidation_.invalidate();
 
       if (commitInfo == null)
          return;
+
+      if (commitInfo.getId().equals(commitShowing_))
+         return;
+
+      commitShowing_ = null;
 
       final Token token = invalidation_.getInvalidationToken();
 
@@ -250,6 +255,7 @@ public class HistoryPresenter
                   UnifiedParser parser = new UnifiedParser(
                         response);
                   view_.getCommitDetail().setDetails(parser);
+                  commitShowing_ = commitInfo.getId();
                }
 
                @Override
@@ -314,4 +320,5 @@ public class HistoryPresenter
    private final HistoryAsyncDataProvider provider_;
    private final Invalidation invalidation_ = new Invalidation();
    private boolean initialized_;
+   private String commitShowing_;
 }
