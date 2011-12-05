@@ -332,6 +332,11 @@ public class ToolbarButton extends FocusWidget
          addStyleName(styles_.noLabel());
       }
    }
+   
+   public String getText()
+   {
+      return StringUtil.notNull(label_.getInnerText());
+   }
 
    private boolean down_;
    
