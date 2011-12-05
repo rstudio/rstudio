@@ -20,7 +20,6 @@ import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapConsumerFactory;
 import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapConsumerV3;
 import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapping;
 import com.google.gwt.thirdparty.debugging.sourcemap.proto.Mapping;
-import com.google.gwt.core.client.impl.StackTraceCreator;
 
 import org.json.JSONObject;
 
@@ -73,8 +72,6 @@ public class StackTraceDeobfuscator {
   private Map<String, SourceMapping> sourceMaps =
       new HashMap<String, SourceMapping>();
 
-  private Map<String, Integer> sourceMapPrefixes = new HashMap<String, Integer>();
-
   private Map<String, SymbolMap> symbolMaps =
       new HashMap<String, SymbolMap>();
 
@@ -95,7 +92,7 @@ public class StackTraceDeobfuscator {
    *
    * @param lr         the log record to resymbolize
    * @param strongName the GWT permutation strong name
-   * @return the best effort resymbolized log record                                   JJSO
+   * @return the best effort resymbolized log record
    */
   public LogRecord deobfuscateLogRecord(LogRecord lr, String strongName) {
     if (lr.getThrown() != null && strongName != null) {
@@ -175,6 +172,19 @@ public class StackTraceDeobfuscator {
       }
     }
 
+    int column = 1;
+    // column information is encoded in filename after '@'
+    if (steFilename != null) {
+      int columnMarkerIndex = steFilename.indexOf("@");
+      if (columnMarkerIndex != -1) {
+        try {
+          column = Integer.parseInt(steFilename.substring(columnMarkerIndex + 1));
+        } catch (NumberFormatException nfe) {
+        }
+        steFilename = steFilename.substring(0, columnMarkerIndex);
+      }
+    }
+
     // anonymous function, try to use <fragmentNum>.js:line:col to lookup function
     if (fragmentId == -1 && steFilename != null) {
       // fragment identifier encoded in filename
@@ -191,16 +201,13 @@ public class StackTraceDeobfuscator {
       }
     }
 
+
+    int jsLineNumber = ste.getLineNumber();
+
     // try to refine location via sourcemap
     if (fragmentId != -1) {
       SourceMapping sourceMapping = loadSourceMap(strongName, fragmentId);
       if (sourceMapping != null && ste.getLineNumber() > -1) {
-        int column = 1;
-        int jsLineNumber = ste.getLineNumber();
-        if (jsLineNumber > StackTraceCreator.MAX_LINE_NUMBER) {
-          column = jsLineNumber / StackTraceCreator.MAX_LINE_NUMBER;
-          jsLineNumber = jsLineNumber % StackTraceCreator.MAX_LINE_NUMBER;
-        }
         Mapping.OriginalMapping mappingForLine = sourceMapping
             .getMappingForLine(jsLineNumber, column);
         if (mappingForLine != null) {

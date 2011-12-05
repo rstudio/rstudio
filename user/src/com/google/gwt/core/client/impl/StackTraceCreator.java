@@ -33,13 +33,6 @@ public class StackTraceCreator {
   public static final int LINE_NUMBER_UNKNOWN = -1;
 
   /**
-   * Used to encode a (column, line) pair into a line number (since LogRecord only stores line
-   * numbers). We store line, col as line + col * max_line, and use division and modulus to
-   * recover on the server side.
-   */
-  public static final int MAX_LINE_NUMBER = 100000;
-
-  /**
    * This class acts as a deferred-binding hook point to allow more optimal
    * versions to be substituted. This base version simply crawls
    * <code>arguments.callee.caller</code>.
@@ -379,8 +372,8 @@ public class StackTraceCreator {
               col = parseInt(location.substring(lastColon + 1));
           }
         }
-        stackTrace[i] = new StackTraceElement("Unknown", stackElements[0], fileName,
-            line < 0 ? -1 : col * MAX_LINE_NUMBER + line);
+        stackTrace[i] = new StackTraceElement("Unknown", stackElements[0], fileName + "@" + col,
+            line < 0 ? -1 : line);
       }
       e.setStackTrace(stackTrace);
     }
