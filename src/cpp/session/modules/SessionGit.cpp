@@ -209,7 +209,6 @@ std::string gitBin()
 
 Error gitExec(const ShellArgs& args,
               const core::FilePath& workingDir,
-              bool escapeArgs,
               core::system::ProcessResult* pResult)
 {
    core::system::ProcessOptions options = procOptions();
@@ -226,33 +225,11 @@ Error gitExec(const ShellArgs& args,
                         options,
                         pResult);
 #else
-   std::string command;
-   if (escapeArgs)
-   {
-      command = git() << args.args();
-   }
-   else
-   {
-      command = git().string();
-      BOOST_FOREACH(const std::string& arg, args.args())
-      {
-         command.push_back(' ');
-         command.append(arg);
-      }
-   }
-
-   return runCommand(command,
-                     "",
-                     options,
-                     pResult);
+      return runCommand(git() << args.args(),
+                        "",
+                        options,
+                        pResult);
 #endif
-}
-
-Error gitExec(const ShellArgs& args,
-              const core::FilePath& workingDir,
-              core::system::ProcessResult* pResult)
-{
-   return gitExec(args, workingDir, true, pResult);
 }
 
 void afterCommit(const FilePath& tempFile)
@@ -302,19 +279,10 @@ protected:
                       std::string* pStdErr=NULL,
                       int* pExitCode=NULL)
    {
-      return runGit(args, true, pStdOut, pStdErr, pExitCode);
-   }
-
-   core::Error runGit(const ShellArgs& args,
-                      bool escapeArgs,
-                      std::string* pStdOut=NULL,
-                      std::string* pStdErr=NULL,
-                      int* pExitCode=NULL)
-   {
       using namespace core::system;
 
       ProcessResult result;
-      Error error = gitExec(args, root_, escapeArgs, &result);
+      Error error = gitExec(args, root_, &result);
       if (error)
          return error;
 
@@ -504,7 +472,7 @@ public:
    core::Error unstage(const std::vector<FilePath>& filePaths)
    {
       return runGit(ShellArgs() << "reset" << "HEAD" << "--" << filePaths,
-                    true, NULL, NULL, NULL);
+                    NULL, NULL, NULL);
    }
 
    core::Error listBranches(std::vector<std::string>* pBranches,
@@ -1019,14 +987,11 @@ public:
                                 const std::string& filename,
                                 std::string* pOutput)
    {
-      ShellArgs args = ShellArgs() << "show";
+      boost::format fmt("%1%:%2%");
+      ShellArgs args =
+            ShellArgs() << "show" << boost::str(fmt % rev % filename);
 
-      boost::format fmt("%1%:\"%2%\"");
-      args << boost::str(fmt % rev % filename);
-
-      // run git but don't escape args since that fouls up the syntax
-      // for git show (git show <revision>:"path with spaces")
-      return runGit(args, false, pOutput);
+      return runGit(args, pOutput);
    }
 
    virtual core::Error remoteBranchInfo(RemoteBranchInfo* pRemoteBranchInfo)
