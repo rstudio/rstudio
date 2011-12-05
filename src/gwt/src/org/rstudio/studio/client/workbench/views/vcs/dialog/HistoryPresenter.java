@@ -223,20 +223,25 @@ public class HistoryPresenter
 
    private void showCommitDetail(boolean noSizeWarning)
    {
+      final CommitInfo commitInfo = view_.getCommitList().getSelectedCommit();
+
+      if (!noSizeWarning
+          && commitInfo != null
+          && commitInfo.getId().equals(commitShowing_))
+      {
+         return;
+      }
+
+      commitShowing_ = null;
+
       view_.hideSizeWarning();
 
-      final CommitInfo commitInfo = view_.getCommitList().getSelectedCommit();
       view_.getCommitDetail().setSelectedCommit(commitInfo);
       view_.getCommitDetail().clearDetails();
       invalidation_.invalidate();
 
       if (commitInfo == null)
          return;
-
-      if (commitInfo.getId().equals(commitShowing_))
-         return;
-
-      commitShowing_ = null;
 
       final Token token = invalidation_.getInvalidationToken();
 
@@ -261,6 +266,8 @@ public class HistoryPresenter
                @Override
                public void onError(ServerError error)
                {
+                  commitShowing_ = null;
+
                   JSONNumber size = error.getClientInfo().isNumber();
                   if (size != null)
                      view_.showSizeWarning((long) size.doubleValue());
