@@ -1680,7 +1680,9 @@ Error vcsShowFile(const json::JsonRpcRequest& request,
       return error;
 
    std::string output;
-   s_git_.showFile(rev, filename, &output);
+   error = s_git_.showFile(rev, filename, &output);
+   if (error)
+      return error;
 
    // convert to utf8
    output = convertToUtf8(output);
