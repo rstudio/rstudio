@@ -1450,17 +1450,21 @@ public class RemoteServer implements Server
    }
 
    public void gitHistoryCount(String spec,
+                               FileSystemItem fileFilter,
                                String searchText,
                                ServerRequestCallback<CommitCount> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(spec));
-      params.set(1, new JSONString(searchText));
+      params.set(1, fileFilter != null ? 
+                          new JSONObject(fileFilter) : JSONNull.getInstance());
+      params.set(2, new JSONString(searchText));
       sendRequest(RPC_SCOPE, GIT_HISTORY_COUNT, params, requestCallback);
    }
 
    @Override
    public void gitHistory(String spec,
+                          FileSystemItem fileFilter,
                           int skip,
                           int maxentries,
                           String searchText,
@@ -1468,9 +1472,11 @@ public class RemoteServer implements Server
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(spec));
-      params.set(1, new JSONNumber(skip));
-      params.set(2, new JSONNumber(maxentries));
-      params.set(3, new JSONString(StringUtil.notNull(searchText)));
+      params.set(1, fileFilter != null ? 
+                     new JSONObject(fileFilter) : JSONNull.getInstance());
+      params.set(2, new JSONNumber(skip));
+      params.set(3, new JSONNumber(maxentries));
+      params.set(4, new JSONString(StringUtil.notNull(searchText)));
       sendRequest(RPC_SCOPE, GIT_HISTORY, params, requestCallback);
    }
 

@@ -18,6 +18,7 @@ import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.Value;
@@ -33,6 +34,7 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
       server_ = server;
       rev_ = "";
       searchText_ = new Value<String>("");
+      fileFilter_ = new Value<FileSystemItem>(null);
    }
 
    @Override
@@ -47,14 +49,25 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
       searchText_ = searchText;
    }
    
+   public void setFileFilter(HasValue<FileSystemItem> fileFilter)
+   {
+      fileFilter_ = fileFilter;
+   }
+   
    public void setRev(String rev)
    {
       rev_ = rev;
    }
+   
+   
 
    public void refreshCount()
    {
-      server_.gitHistoryCount(rev_, searchText_.getValue(), new ServerRequestCallback<CommitCount>()
+      server_.gitHistoryCount(
+            rev_, 
+            fileFilter_.getValue(), 
+            searchText_.getValue(), 
+            new ServerRequestCallback<CommitCount>()
       {
          @Override
          public void onResponseReceived(CommitCount response)
@@ -75,7 +88,7 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
    {
       final Range rng = display.getVisibleRange();
       server_.gitHistory(
-            rev_, rng.getStart(), rng.getLength(), searchText_.getValue(),
+            rev_, fileFilter_.getValue(), rng.getStart(), rng.getLength(), searchText_.getValue(),
             new SimpleRequestCallback<RpcObjectList<CommitInfo>>("Error Fetching History")
             {
                @Override
@@ -90,4 +103,5 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
    private final GitServerOperations server_;
    private String rev_;
    private HasValue<String> searchText_;
+   private HasValue<FileSystemItem> fileFilter_;
 }

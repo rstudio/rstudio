@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.common.vcs;
 
 import com.google.gwt.core.client.JsArray;
+
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
@@ -82,13 +84,16 @@ public interface GitServerOperations extends CryptoServerOperations
    void gitApplyPatch(String patch, PatchMode mode,
                       ServerRequestCallback<Void> requestCallback);
 
-   void gitHistoryCount(String spec, String searchText,
+   void gitHistoryCount(String spec, 
+                        FileSystemItem fileFilter,
+                        String searchText,
                         ServerRequestCallback<CommitCount> requestCallback);
    /**
     * @param spec Revision list or description. "" for default.
     * @param maxentries Limit the number of entries returned. -1 for no limit.
     */
    void gitHistory(String spec,
+                   FileSystemItem fileFilter,
                    int skip,
                    int maxentries,
                    String searchText,

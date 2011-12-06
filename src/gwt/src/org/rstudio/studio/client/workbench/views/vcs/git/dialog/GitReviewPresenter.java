@@ -391,7 +391,7 @@ public class GitReviewPresenter implements ReviewPresenter
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> booleanValueChangeEvent)
          {
-            server_.gitHistory("", 0, 1, null, new ServerRequestCallback<RpcObjectList<CommitInfo>>() {
+            server_.gitHistory("", null, 0, 1, null, new ServerRequestCallback<RpcObjectList<CommitInfo>>() {
                @Override
                public void onResponseReceived(RpcObjectList<CommitInfo> response)
                {

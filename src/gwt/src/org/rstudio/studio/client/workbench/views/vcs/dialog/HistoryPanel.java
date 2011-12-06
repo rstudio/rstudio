@@ -204,7 +204,7 @@ public class HistoryPanel extends Composite implements Display
    }
    
    @Override
-   public HasValue<FileSystemItem> getCommitFilter()
+   public HasValue<FileSystemItem> getFileFilter()
    {
       return commitFilterToolbarButton_;
    }

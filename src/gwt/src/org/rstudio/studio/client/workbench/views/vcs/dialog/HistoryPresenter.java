@@ -72,7 +72,7 @@ public class HistoryPresenter
       HandlerRegistration addBranchChangedHandler(
                                        ValueChangeHandler<String> handler);
       
-      HasValue<FileSystemItem> getCommitFilter();
+      HasValue<FileSystemItem> getFileFilter();
       
       void showSizeWarning(long sizeInBytes);
       void hideSizeWarning();
@@ -156,6 +156,16 @@ public class HistoryPresenter
          public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent)
          {
             refreshHistoryCommand_.nudge();
+         }
+      });
+      
+      provider_.setFileFilter(view_.getFileFilter());
+      view_.getFileFilter().addValueChangeHandler(new ValueChangeHandler<FileSystemItem>() {
+
+         @Override
+         public void onValueChange(ValueChangeEvent<FileSystemItem> event)
+         {
+            refreshHistory();
          }
       });
       

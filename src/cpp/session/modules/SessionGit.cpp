@@ -1500,10 +1500,14 @@ Error vcsApplyPatch(const json::JsonRpcRequest& request,
 }
 
 Error vcsHistoryCount(const json::JsonRpcRequest& request,
-                 json::JsonRpcResponse* pResponse)
+                      json::JsonRpcResponse* pResponse)
 {
    std::string rev, searchText;
-   Error error = json::readParams(request.params, &rev, &searchText);
+   json::Value fileFilter;
+   Error error = json::readParams(request.params,
+                                  &rev,
+                                  &fileFilter,
+                                  &searchText);
    if (error)
       return error;
 
@@ -1525,8 +1529,13 @@ Error vcsHistory(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
    std::string rev, searchText;
+   json::Value fileFilter;
    int skip, maxentries;
-   Error error = json::readParams(request.params, &rev, &skip, &maxentries,
+   Error error = json::readParams(request.params,
+                                  &rev,
+                                  &fileFilter,
+                                  &skip,
+                                  &maxentries,
                                   &searchText);
    if (error)
       return error;
