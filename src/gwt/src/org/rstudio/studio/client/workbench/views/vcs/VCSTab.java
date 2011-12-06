@@ -18,13 +18,17 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsDiffEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsHistoryEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRevertFileEvent;
 
 public class VCSTab extends DelayLoadWorkbenchTab<VCSPresenter>
                             
 {
    public abstract static class VCSShim extends DelayLoadTabShim<VCSPresenter, VCSTab>
-                                        implements ShowVcsHistoryEvent.Handler
+                                        implements ShowVcsHistoryEvent.Handler,
+                                                   ShowVcsDiffEvent.Handler,
+                                                   VcsRevertFileEvent.Handler
    {
    }
 
@@ -34,6 +38,8 @@ public class VCSTab extends DelayLoadWorkbenchTab<VCSPresenter>
       super(session.getSessionInfo().getVcsName(), shim);
       session_ = session;
       eventBus.addHandler(ShowVcsHistoryEvent.TYPE, shim);
+      eventBus.addHandler(ShowVcsDiffEvent.TYPE, shim);
+      eventBus.addHandler(VcsRevertFileEvent.TYPE, shim);
    }
 
    @Override

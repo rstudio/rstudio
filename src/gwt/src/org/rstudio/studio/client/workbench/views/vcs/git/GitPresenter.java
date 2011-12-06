@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.vcs.git;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
@@ -27,6 +28,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DoubleClickState;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -177,22 +179,23 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
    @Handler
    void onVcsDiff()
    {
-      showChanges();
+      showChanges(view_.getSelectedItems());
    }
    
-   private void showChanges()
+   private void showChanges(ArrayList<StatusAndPath> items)
    {
-      showReviewPane(false, null);
+      showReviewPane(false, null, items);
    }
    
    private void showReviewPane(boolean showHistory, 
-                               FileSystemItem historyFileFilter)
+                               FileSystemItem historyFileFilter,
+                               ArrayList<StatusAndPath> items)
    {
       // setup params
       VCSApplicationParams params = VCSApplicationParams.create(
                                           showHistory, 
                                           historyFileFilter,
-                                          view_.getSelectedItems());
+                                          items);
       
       // open the window 
       satelliteManager_.openSatellite("review_changes",     
@@ -216,27 +219,15 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
       if (paths.size() == 0)
          return;
 
-      String noun = paths.size() == 1 ? "file" : "files";
-      globalDisplay_.showYesNoMessage(
-            GlobalDisplay.MSG_WARNING,
-            "Revert Changes",
-            "Changes to the selected " + noun + " will be lost, including " +
-            "staged changes.\n\nAre you sure you want to continue?",
-            new Operation()
-            {
-               @Override
-               public void execute()
-               {
-                  view_.getChangelistTable().selectNextUnselectedItem();
-
-                  server_.gitRevert(
-                        paths,
-                        new SimpleRequestCallback<Void>("Revert Changes"));
-                  
-                  view_.getChangelistTable().focus();
-               }
-            },
-            false);
+      doRevert(paths, new Command() {
+         @Override
+         public void execute()
+         {
+            view_.getChangelistTable().selectNextUnselectedItem();
+            view_.getChangelistTable().focus();
+         }
+         
+      });
    }
    
    @Handler
@@ -248,7 +239,7 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
    @Handler
    void onVcsCommit()
    {
-      showChanges();
+      showChanges(view_.getSelectedItems());
    }
 
    @Handler
@@ -260,8 +251,93 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
    @Override
    public void showHistory(FileSystemItem fileFilter)
    {
-      showReviewPane(true, fileFilter);
+      showReviewPane(true, fileFilter, new ArrayList<StatusAndPath>());
    }
+   
+   @Override
+   public void showDiff(FileSystemItem file)
+   {
+      // build an ArrayList<StatusAndPath> so we can call the core helper
+      ArrayList<StatusAndPath> diffList = new ArrayList<StatusAndPath>();
+      for (StatusAndPath item :  gitState_.getStatus())
+      {
+         if (item.getRawPath().equals(file.getPath()))
+         {
+            diffList.add(item);
+            break;
+         }
+      }
+      
+      if (diffList.size() > 0)
+      {
+         showChanges(diffList);
+      }
+      else
+      {
+         globalDisplay_.showMessage(MessageDialog.INFO,
+                                    "No Changes to File", 
+                                    "There are no changes to the file \"" + 
+                                    file.getName() + "\" to diff.");
+      }
+      
+   }
+   
+   @Override
+   public void revertFile(FileSystemItem file)
+   {
+      // build an ArrayList<String> so we can call the core helper
+      ArrayList<String> revertList = new ArrayList<String>();
+      for (StatusAndPath item :  gitState_.getStatus())
+      {
+         if (item.getRawPath().equals(file.getPath()))
+         {
+            revertList.add(item.getPath());
+            break;
+         }
+      }
+      
+      if (revertList.size() > 0)
+      {
+         doRevert(revertList, null);
+      }
+      else
+      {
+         globalDisplay_.showMessage(MessageDialog.INFO,
+                                    "No Changes to Revert", 
+                                    "There are no changes to the file \"" + 
+                                    file.getName() + "\" to revert.");
+      }
+      
+      
+   }
+   
+  
+   private void doRevert(final ArrayList<String> revertList, 
+                         final Command onRevertConfirmed)
+   {
+      String noun = revertList.size() == 1 ? "file" : "files";
+      globalDisplay_.showYesNoMessage(
+            GlobalDisplay.MSG_WARNING,
+            "Revert Changes",
+            "Changes to the selected " + noun + " will be lost, including " +
+            "staged changes.\n\nAre you sure you want to continue?",
+            new Operation()
+            {
+               @Override
+               public void execute()
+               {
+                  if (onRevertConfirmed != null)
+                     onRevertConfirmed.execute();
+                  
+                  server_.gitRevert(
+                        revertList,
+                        new SimpleRequestCallback<Void>("Revert Changes"));
+                  
+               }
+            },
+            false);
+   }
+   
 
    private void refresh()
    {
@@ -275,5 +351,6 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
    private final GlobalDisplay globalDisplay_;
    private final SatelliteManager satelliteManager_;
    private final VCSFileOpener vcsFileOpener_;
+  
   
 }

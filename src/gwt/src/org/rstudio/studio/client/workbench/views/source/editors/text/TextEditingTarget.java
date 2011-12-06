@@ -73,7 +73,9 @@ import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationP
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.*;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsDiffEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsHistoryEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRevertFileEvent;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -1114,10 +1116,24 @@ public class TextEditingTarget implements EditingTarget
    }
    
    @Handler
+   void onVcsFileDiff()
+   {
+      events_.fireEvent(new ShowVcsDiffEvent(
+            FileSystemItem.createFile(docUpdateSentinel_.getPath())));
+   }
+   
+   @Handler
    void onVcsFileLog()
    {
       events_.fireEvent(new ShowVcsHistoryEvent(
                FileSystemItem.createFile(docUpdateSentinel_.getPath())));
+   }
+   
+   @Handler
+   void onVcsFileRevert()
+   {
+      events_.fireEvent(new VcsRevertFileEvent(
+            FileSystemItem.createFile(docUpdateSentinel_.getPath())));
    }
 
    @Handler

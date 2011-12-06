@@ -12,4 +12,8 @@ public abstract class BaseVcsPresenter extends BasePresenter
    }
    
    public abstract void showHistory(FileSystemItem fileFilter);
+   
+   public abstract void showDiff(FileSystemItem file);
+   
+   public abstract void revertFile(FileSystemItem file);
 }

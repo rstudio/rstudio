@@ -177,6 +177,8 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.saveSourceDocWithEncoding());
       dynamicCommands_.add(commands.printSourceDoc());
       dynamicCommands_.add(commands.vcsFileLog());
+      dynamicCommands_.add(commands.vcsFileDiff());
+      dynamicCommands_.add(commands.vcsFileRevert());
       dynamicCommands_.add(commands.executeCode());
       dynamicCommands_.add(commands.executeAllCode());
       dynamicCommands_.add(commands.executeToCurrentLine());
@@ -210,14 +212,7 @@ public class Source implements InsertSourceHandler,
       commands.find().setShortcut(new KeyboardShortcut(mod, 'F'));
       commands.findReplace().setShortcut(new KeyboardShortcut(mod, 'F'));
       commands.goToFunctionDefinition().setShortcut(new KeyboardShortcut(113));
-      
-      // update vcs command based on current vcs
-      if (session_.getSessionInfo().isVcsEnabled())
-      {
-         String vcs = session_.getSessionInfo().getVcsName();
-         commands.vcsFileLog().setMenuLabel(vcs + " History");
-      }
-       
+             
       events.addHandler(ShowContentEvent.TYPE, this);
       events.addHandler(ShowDataEvent.TYPE, this);
 
@@ -1275,12 +1270,8 @@ public class Source implements InsertSourceHandler,
       commands_.printSourceDoc().setVisible(true);
       commands_.setWorkingDirToActiveDoc().setVisible(true);
       
-      // manage vcs log
-      boolean vcsLogEnabled = session_.getSessionInfo().isVcsEnabled() &&
-                              activeEditor_ != null &&
-                              activeEditor_.getPath() != null ;
-      commands_.vcsFileLog().setVisible(vcsLogEnabled);
-      commands_.vcsFileLog().setEnabled(vcsLogEnabled);
+      // manage vcs commands
+      manageVcsCommands();
       
       // manage save and save all
       manageSaveCommands();
@@ -1292,6 +1283,29 @@ public class Source implements InsertSourceHandler,
 
       assert verifyNoUnsupportedCommands(newCommands)
             : "Unsupported commands detected (please add to Source.dynamicCommands_)";
+   }
+   
+   private void manageVcsCommands()
+   {
+      // manage vcs log
+      boolean vcsCommandsEnabled = session_.getSessionInfo().isVcsEnabled() &&
+                                   activeEditor_ != null &&
+                                   activeEditor_.getPath() != null ;
+      
+      commands_.vcsFileLog().setVisible(vcsCommandsEnabled);
+      commands_.vcsFileLog().setEnabled(vcsCommandsEnabled);
+      commands_.vcsFileDiff().setVisible(vcsCommandsEnabled);
+      commands_.vcsFileDiff().setEnabled(vcsCommandsEnabled);
+      commands_.vcsFileRevert().setVisible(vcsCommandsEnabled);
+      commands_.vcsFileRevert().setEnabled(vcsCommandsEnabled);
+      
+      if (vcsCommandsEnabled)
+      {
+         String name = FileSystemItem.getNameFromPath(activeEditor_.getPath());
+         commands_.vcsFileDiff().setMenuLabel("_Diff \"" + name + "\"");
+         commands_.vcsFileLog().setMenuLabel("_Log of \"" + name +"\"");
+         commands_.vcsFileRevert().setMenuLabel("_Revert \"" + name + "\"...");
+      }
    }
    
    private void manageSaveCommands()

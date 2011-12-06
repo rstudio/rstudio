@@ -55,8 +55,6 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="saveSourceDocWithEncoding"/>
          <cmd refid="saveAllSourceDocs"/>
          <separator/>
-         <cmd refid="vcsFileLog"/>
-         <separator/>
          <cmd refid="printSourceDoc"/>
          <separator/>
          <cmd refid="closeSourceDoc"/>
@@ -209,6 +207,21 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="installPackage"/>
          <cmd refid="updatePackages"/>
+         <separator/>
+         <menu label="Version Control">
+            <cmd refid="vcsFileDiff"/>
+            <cmd refid="vcsFileLog"/>
+            <cmd refid="vcsFileRevert"/>
+            <separator/>
+            <cmd refid="vcsCommit"/>
+            <separator/>
+            <cmd refid="vcsShowHistory"/>
+            <separator/>
+            <cmd refid="vcsPull"/>
+            <cmd refid="vcsPush"/>
+            <separator/>
+            <cmd refid="versionControlProjectSetup"/>
+         </menu>
          <separator/>
          <cmd refid="showShellDialog"/>
          <separator/>
@@ -379,9 +392,15 @@ well as menu structures (for main menu and popup menus).
         preventShortcutWhenDisabled="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
    <cmd id="closeAllSourceDocs"
         menuLabel="Close All"/>
+   <cmd id="vcsFileDiff"
+        menuLabel="_Diff of"
+        desc="Show differences for the file"/>
    <cmd id="vcsFileLog"
-        menuLabel="Vcs History"
-        desc="History of changes to the current file"/>
+        menuLabel="_Log of"
+        desc="Show log of changes to the file"/>
+   <cmd id="vcsFileRevert"
+        menuLabel="_Revert"
+        desc="Revert changes to the file"/>
    <cmd id="printSourceDoc"
         menuLabel="_Print..."
         buttonLabel=""

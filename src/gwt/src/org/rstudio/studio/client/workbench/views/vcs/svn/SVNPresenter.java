@@ -186,6 +186,20 @@ public class SVNPresenter extends BaseVcsPresenter
       
       
    }
+   
+   @Override
+   public void showDiff(FileSystemItem file)
+   {
+     
+      
+   }
+   
+   @Override
+   public void revertFile(FileSystemItem file)
+   {
+      
+   }
+   
 
    @Handler
    void onVcsRefresh()
@@ -197,4 +211,5 @@ public class SVNPresenter extends BaseVcsPresenter
    private final SVNServerOperations server_;
    private final SVNState svnState_;
    private final SatelliteManager satelliteManager_;
+   
 }
