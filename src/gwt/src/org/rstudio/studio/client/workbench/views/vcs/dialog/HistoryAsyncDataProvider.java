@@ -32,7 +32,7 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
    {
       server_ = server;
       rev_ = "";
-      filterText_ = new Value<String>("");
+      searchText_ = new Value<String>("");
    }
 
    @Override
@@ -42,9 +42,9 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
       refreshCount();
    }
 
-   public void setFilter(HasValue<String> filter)
+   public void setSearchText(HasValue<String> searchText)
    {
-      filterText_ = filter;
+      searchText_ = searchText;
    }
    
    public void setRev(String rev)
@@ -54,7 +54,7 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
 
    public void refreshCount()
    {
-      server_.gitHistoryCount(rev_, filterText_.getValue(), new ServerRequestCallback<CommitCount>()
+      server_.gitHistoryCount(rev_, searchText_.getValue(), new ServerRequestCallback<CommitCount>()
       {
          @Override
          public void onResponseReceived(CommitCount response)
@@ -75,7 +75,7 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
    {
       final Range rng = display.getVisibleRange();
       server_.gitHistory(
-            rev_, rng.getStart(), rng.getLength(), filterText_.getValue(),
+            rev_, rng.getStart(), rng.getLength(), searchText_.getValue(),
             new SimpleRequestCallback<RpcObjectList<CommitInfo>>("Error Fetching History")
             {
                @Override
@@ -89,5 +89,5 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
 
    private final GitServerOperations server_;
    private String rev_;
-   private HasValue<String> filterText_;
+   private HasValue<String> searchText_;
 }

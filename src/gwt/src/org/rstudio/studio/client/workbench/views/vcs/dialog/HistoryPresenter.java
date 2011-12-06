@@ -149,7 +149,7 @@ public class HistoryPresenter
          }
       });
 
-      provider_.setFilter(view_.getSearchTextBox());
+      provider_.setSearchText(view_.getSearchTextBox());
       view_.getSearchTextBox().addValueChangeHandler(new ValueChangeHandler<String>()
       {
          @Override
