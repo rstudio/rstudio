@@ -65,7 +65,7 @@ public class HistoryPresenter
 
       HasData<CommitInfo> getDataDisplay();
 
-      HasValue<String> getFilterTextBox();
+      HasValue<String> getSearchTextBox();
 
       void setPageStart(int pageStart);
       
@@ -147,8 +147,8 @@ public class HistoryPresenter
          }
       });
 
-      provider_.setFilter(view_.getFilterTextBox());
-      view_.getFilterTextBox().addValueChangeHandler(new ValueChangeHandler<String>()
+      provider_.setFilter(view_.getSearchTextBox());
+      view_.getSearchTextBox().addValueChangeHandler(new ValueChangeHandler<String>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent)

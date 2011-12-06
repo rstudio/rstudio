@@ -138,10 +138,10 @@ public class HistoryPanel extends Composite implements Display
       topToolbar_.addLeftWidget(branchToolbarButton_);
 
 
-      filterText_ = new SearchWidget(new MultiWordSuggestOracle(),
+      searchText_ = new SearchWidget(new MultiWordSuggestOracle(),
                                      new TextBoxWithCue("Search"),
                                      null);
-      topToolbar_.addRightWidget(filterText_);
+      topToolbar_.addRightWidget(searchText_);
       topToolbar_.addRightSeparator();
 
       refreshButton_ = new ToolbarButton(
@@ -199,9 +199,9 @@ public class HistoryPanel extends Composite implements Display
    }
 
    @Override
-   public HasValue<String> getFilterTextBox()
+   public HasValue<String> getSearchTextBox()
    {
-      return filterText_;
+      return searchText_;
    }
    
    @Override 
@@ -255,7 +255,7 @@ public class HistoryPanel extends Composite implements Display
    @UiField(provided = true)
    SimplePager pager_;
 
-   SearchWidget filterText_;
+   SearchWidget searchText_;
 
    private LeftRightToggleButton switchViewButton_;
 
