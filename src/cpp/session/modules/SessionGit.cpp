@@ -766,6 +766,7 @@ public:
    }
 
    core::Error logLength(const std::string &rev,
+                         const FilePath& fileFilter,
                          const std::string &searchText,
                          int *pLength)
    {
@@ -787,7 +788,7 @@ public:
       else
       {
          std::vector<CommitInfo> output;
-         Error error = log(rev, 0, -1, searchText, &output);
+         Error error = log(rev, fileFilter, 0, -1, searchText, &output);
          if (error)
             return error;
          *pLength = output.size();
@@ -796,6 +797,7 @@ public:
    }
 
    core::Error log(const std::string& rev,
+                   const FilePath& fileFilter,
                    int skip,
                    int maxentries,
                    const std::string& searchText,
@@ -807,7 +809,13 @@ public:
       ShellArgs revListArgs = ShellArgs() << "rev-list" << "--date-order" << "--parents";
       int revListSkip = skip;
 
-      if (searchText.empty())
+      if (!fileFilter.empty())
+      {
+         args << "--" << fileFilter;
+         revListArgs << "--" << fileFilter;
+      }
+
+      if (searchText.empty() && fileFilter.empty())
       {
          // This is a way more efficient way to implement skip and maxentries
          // if we know that all commits are included.
@@ -848,7 +856,7 @@ public:
       output.clear();
 
       std::vector<std::string> graphLines;
-      if (searchText.empty())
+      if (searchText.empty() && fileFilter.empty())
       {
          std::vector<std::string> revOutLines;
          std::string revOutput;
@@ -1499,22 +1507,38 @@ Error vcsApplyPatch(const json::JsonRpcRequest& request,
    return Success();
 }
 
+FilePath fileFilterPath(const json::Value& fileFilterJson)
+{
+   if (json::isType<std::string>(fileFilterJson))
+   {
+      // get the underlying file path
+      std::string aliasedPath= fileFilterJson.get_str();
+      return module_context::resolveAliasedPath(aliasedPath);
+   }
+   else
+   {
+      return FilePath();
+   }
+}
+
 Error vcsHistoryCount(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
    std::string rev, searchText;
-   json::Value fileFilter;
+   json::Value fileFilterJson;
    Error error = json::readParams(request.params,
                                   &rev,
-                                  &fileFilter,
+                                  &fileFilterJson,
                                   &searchText);
    if (error)
       return error;
 
+   FilePath fileFilter = fileFilterPath(fileFilterJson);
+
    boost::algorithm::trim(searchText);
 
    int count;
-   error = s_git_.logLength(rev, searchText, &count);
+   error = s_git_.logLength(rev, fileFilter, searchText, &count);
    if (error)
       return error;
 
@@ -1529,21 +1553,23 @@ Error vcsHistory(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
    std::string rev, searchText;
-   json::Value fileFilter;
+   json::Value fileFilterJson;
    int skip, maxentries;
    Error error = json::readParams(request.params,
                                   &rev,
-                                  &fileFilter,
+                                  &fileFilterJson,
                                   &skip,
                                   &maxentries,
                                   &searchText);
    if (error)
       return error;
 
+   FilePath fileFilter = fileFilterPath(fileFilterJson);
+
    boost::algorithm::trim(searchText);
 
    std::vector<CommitInfo> commits;
-   error = s_git_.log(rev, skip, maxentries, searchText, &commits);
+   error = s_git_.log(rev, fileFilter, skip, maxentries, searchText, &commits);
    if (error)
       return error;
 

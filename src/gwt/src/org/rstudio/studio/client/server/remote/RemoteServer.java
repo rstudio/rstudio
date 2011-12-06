@@ -1457,7 +1457,7 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(spec));
       params.set(1, fileFilter != null ? 
-                          new JSONObject(fileFilter) : JSONNull.getInstance());
+                new JSONString(fileFilter.getPath()) : JSONNull.getInstance());
       params.set(2, new JSONString(searchText));
       sendRequest(RPC_SCOPE, GIT_HISTORY_COUNT, params, requestCallback);
    }
@@ -1473,7 +1473,7 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(spec));
       params.set(1, fileFilter != null ? 
-                     new JSONObject(fileFilter) : JSONNull.getInstance());
+            new JSONString(fileFilter.getPath()) : JSONNull.getInstance());
       params.set(2, new JSONNumber(skip));
       params.set(3, new JSONNumber(maxentries));
       params.set(4, new JSONString(StringUtil.notNull(searchText)));
