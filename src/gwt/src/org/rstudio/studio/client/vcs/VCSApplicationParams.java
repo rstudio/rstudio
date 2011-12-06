@@ -14,6 +14,7 @@ package org.rstudio.studio.client.vcs;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -28,6 +29,7 @@ public class VCSApplicationParams extends JavaScriptObject
    
    public final static VCSApplicationParams create(
                                           boolean showHistory,
+                                          FileSystemItem historyFileFilter,
                                           ArrayList<StatusAndPath> selected)
    {
       JsArray<StatusAndPathInfo> jsSelected =
@@ -38,14 +40,16 @@ public class VCSApplicationParams extends JavaScriptObject
       for (int i=0; i<selected.size(); i++)
          jsSelected.set(i, selected.get(i).toInfo());
       
-      return createNative(showHistory, jsSelected);
+      return createNative(showHistory, historyFileFilter, jsSelected);
    }
    
    private final static native VCSApplicationParams createNative(
                                        boolean showHistory,
+                                       FileSystemItem historyFileFilter,
                                        JsArray<StatusAndPathInfo> selected) /*-{
       var params = new Object();
       params.show_history = showHistory;
+      params.history_file_filter = historyFileFilter;
       params.selected = selected;
       return params;
    }-*/; 
@@ -56,6 +60,10 @@ public class VCSApplicationParams extends JavaScriptObject
       return this.show_history;
    }-*/;
 
+   public final native FileSystemItem getHistoryFileFilter() /*-{
+      return this.history_file_filter;
+   }-*/;
+   
    public final ArrayList<StatusAndPath> getSelected()
    {
       return StatusAndPath.fromInfos(getSelectedNative());

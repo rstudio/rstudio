@@ -165,7 +165,10 @@ public class HistoryPresenter
          @Override
          public void onValueChange(ValueChangeEvent<FileSystemItem> event)
          {
+            view_.getCommitDetail().clearDetails();
+            view_.getCommitDetail().setSelectedCommit(null);
             refreshHistory();
+            view_.setPageStart(0);
          }
       });
       
@@ -312,6 +315,12 @@ public class HistoryPresenter
    public Widget asWidget()
    {
       return view_.asWidget();
+   }
+   
+   public void setFileFilter(FileSystemItem fileFilter)
+   {
+      if (fileFilter != null)
+         view_.getFileFilter().setValue(fileFilter);
    }
 
    public void onShow()

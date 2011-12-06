@@ -51,6 +51,7 @@ public abstract class
    public abstract AppCommand publishPDF();
    public abstract AppCommand activateSource();
    public abstract AppCommand printSourceDoc();
+   public abstract AppCommand vcsFileLog();
    public abstract AppCommand popoutDoc();
    public abstract AppCommand find();
    public abstract AppCommand findReplace();

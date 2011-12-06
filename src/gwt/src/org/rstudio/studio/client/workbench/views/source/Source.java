@@ -160,6 +160,7 @@ public class Source implements InsertSourceHandler,
       fileDialogs_ = fileDialogs;
       fileContext_ = fileContext;
       events_ = events;
+      session_ = session;
       workbenchContext_ = workbenchContext;
       pMruList_ = pMruList;
       uiPrefs_ = uiPrefs;
@@ -175,6 +176,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.saveSourceDocAs());
       dynamicCommands_.add(commands.saveSourceDocWithEncoding());
       dynamicCommands_.add(commands.printSourceDoc());
+      dynamicCommands_.add(commands.vcsFileLog());
       dynamicCommands_.add(commands.executeCode());
       dynamicCommands_.add(commands.executeAllCode());
       dynamicCommands_.add(commands.executeToCurrentLine());
@@ -209,6 +211,13 @@ public class Source implements InsertSourceHandler,
       commands.findReplace().setShortcut(new KeyboardShortcut(mod, 'F'));
       commands.goToFunctionDefinition().setShortcut(new KeyboardShortcut(113));
       
+      // update vcs command based on current vcs
+      if (session_.getSessionInfo().isVcsEnabled())
+      {
+         String vcs = session_.getSessionInfo().getVcsName();
+         commands.vcsFileLog().setMenuLabel(vcs + " History");
+      }
+       
       events.addHandler(ShowContentEvent.TYPE, this);
       events.addHandler(ShowDataEvent.TYPE, this);
 
@@ -1266,6 +1275,13 @@ public class Source implements InsertSourceHandler,
       commands_.printSourceDoc().setVisible(true);
       commands_.setWorkingDirToActiveDoc().setVisible(true);
       
+      // manage vcs log
+      boolean vcsLogEnabled = session_.getSessionInfo().isVcsEnabled() &&
+                              activeEditor_ != null &&
+                              activeEditor_.getPath() != null ;
+      commands_.vcsFileLog().setVisible(vcsLogEnabled);
+      commands_.vcsFileLog().setEnabled(vcsLogEnabled);
+      
       // manage save and save all
       manageSaveCommands();
       
@@ -1542,6 +1558,7 @@ public class Source implements InsertSourceHandler,
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fileContext_;
    private final EventBus events_;
+   private final Session session_;
    private final Provider<FileMRUList> pMruList_;
    private final UIPrefs uiPrefs_;
    private HashSet<AppCommand> activeCommands_ = new HashSet<AppCommand>();

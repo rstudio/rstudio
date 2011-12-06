@@ -55,6 +55,8 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="saveSourceDocWithEncoding"/>
          <cmd refid="saveAllSourceDocs"/>
          <separator/>
+         <cmd refid="vcsFileLog"/>
+         <separator/>
          <cmd refid="printSourceDoc"/>
          <separator/>
          <cmd refid="closeSourceDoc"/>
@@ -377,6 +379,9 @@ well as menu structures (for main menu and popup menus).
         preventShortcutWhenDisabled="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
    <cmd id="closeAllSourceDocs"
         menuLabel="Close All"/>
+   <cmd id="vcsFileLog"
+        menuLabel="Vcs History"
+        desc="History of changes to the current file"/>
    <cmd id="printSourceDoc"
         menuLabel="_Print..."
         buttonLabel=""

@@ -85,7 +85,7 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
 
    @Override
    protected void onRangeChanged(final HasData<CommitInfo> display)
-   {
+   {      
       final Range rng = display.getVisibleRange();
       server_.gitHistory(
             rev_, fileFilter_.getValue(), rng.getStart(), rng.getLength(), searchText_.getValue(),
@@ -95,7 +95,15 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
                public void onResponseReceived(RpcObjectList<CommitInfo> response)
                {
                   super.onResponseReceived(response);
-                  updateRowData(rng.getStart(), response.toArrayList());
+                  
+                  // if this was a request for the beginning of a range
+                  // and there was no response then update the row count to 0
+                  if (response.length() == 0 && rng.getStart() == 0)
+                     updateRowCount(0, true);
+                  
+                  // otherwise update the data
+                  else
+                     updateRowData(rng.getStart(), response.toArrayList());  
                }
             });
    }

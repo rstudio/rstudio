@@ -23,6 +23,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
@@ -31,14 +32,14 @@ import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.vcs.BaseVcsPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.ProcessCallback;
 import org.rstudio.studio.client.workbench.views.vcs.svn.model.SVNState;
 
 import java.util.ArrayList;
 
-public class SVNPresenter extends BasePresenter
+public class SVNPresenter extends BaseVcsPresenter
 {
    interface Binder extends CommandBinder<Commands, SVNPresenter>
    {
@@ -146,6 +147,7 @@ public class SVNPresenter extends BasePresenter
       // setup params
       VCSApplicationParams params = VCSApplicationParams.create(
                                           showHistory,
+                                          null,
                                           view_.getSelectedItems());
 
       // open the window
@@ -176,6 +178,13 @@ public class SVNPresenter extends BasePresenter
    public Widget asWidget()
    {
       return view_.asWidget();
+   }
+   
+   @Override
+   public void showHistory(FileSystemItem fileFilter)
+   {
+      
+      
    }
 
    @Handler

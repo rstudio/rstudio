@@ -73,6 +73,7 @@ import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationP
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.*;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsHistoryEvent;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -1110,6 +1111,13 @@ public class TextEditingTarget implements EditingTarget
             docDisplay_.print();
          }
       });
+   }
+   
+   @Handler
+   void onVcsFileLog()
+   {
+      events_.fireEvent(new ShowVcsHistoryEvent(
+               FileSystemItem.createFile(docUpdateSentinel_.getPath())));
    }
 
    @Handler

@@ -25,6 +25,7 @@ import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -36,7 +37,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.vcs.BaseVcsPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
@@ -44,7 +45,7 @@ import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 import java.util.ArrayList;
 
-public class GitPresenter extends BasePresenter implements IsWidget
+public class GitPresenter extends BaseVcsPresenter implements IsWidget
 {
    public interface Binder extends CommandBinder<Commands, GitPresenter> {}
 
@@ -176,15 +177,21 @@ public class GitPresenter extends BasePresenter implements IsWidget
    @Handler
    void onVcsDiff()
    {
-      showReviewPane(false);
+      showChanges();
    }
    
-  
-   private void showReviewPane(boolean showHistory)
+   private void showChanges()
+   {
+      showReviewPane(false, null);
+   }
+   
+   private void showReviewPane(boolean showHistory, 
+                               FileSystemItem historyFileFilter)
    {
       // setup params
       VCSApplicationParams params = VCSApplicationParams.create(
                                           showHistory, 
+                                          historyFileFilter,
                                           view_.getSelectedItems());
       
       // open the window 
@@ -241,13 +248,19 @@ public class GitPresenter extends BasePresenter implements IsWidget
    @Handler
    void onVcsCommit()
    {
-      showReviewPane(false);
+      showChanges();
    }
 
    @Handler
    void onVcsShowHistory()
    {
-      showReviewPane(true);
+      showHistory(null);
+   }
+   
+   @Override
+   public void showHistory(FileSystemItem fileFilter)
+   {
+      showReviewPane(true, fileFilter);
    }
 
    private void refresh()
@@ -262,4 +275,5 @@ public class GitPresenter extends BasePresenter implements IsWidget
    private final GlobalDisplay globalDisplay_;
    private final SatelliteManager satelliteManager_;
    private final VCSFileOpener vcsFileOpener_;
+  
 }

@@ -17,11 +17,11 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsHistoryEvent;
 
-public class VCSPresenter implements IsWidget
+public class VCSPresenter implements IsWidget, ShowVcsHistoryEvent.Handler
 {
    @Inject
    public VCSPresenter(Session session,
@@ -66,5 +66,11 @@ public class VCSPresenter implements IsWidget
    private final Session session_;
    private final Provider<GitPresenter> pGitPresenter_;
    private final Provider<SVNPresenter> pSVNPresenter_;
-   private BasePresenter presenter_;
+   private BaseVcsPresenter presenter_;
+   
+
+   public void onShowVcsHistory(ShowVcsHistoryEvent event)
+   {
+      presenter_.showHistory(event.getFileFilter());
+   }
 }

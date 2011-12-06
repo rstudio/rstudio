@@ -18,6 +18,7 @@ import com.google.gwt.dom.client.Style.Unit;
 
 import com.google.gwt.user.client.ui.*;
 
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEvent;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
@@ -27,7 +28,7 @@ public class VCSPopup
 {
    public interface Controller
    {
-      void switchToHistory();
+      void switchToHistory(FileSystemItem fileFilter);
       void switchToReview(ArrayList<StatusAndPath> selected);
    }
    
@@ -64,8 +65,11 @@ public class VCSPopup
       // create a controller used to implement switch view and to return 
       final Controller controller = new Controller() {
          @Override
-         public void switchToHistory()
+         public void switchToHistory(FileSystemItem fileFilter)
          {
+            if (fileFilter != null)
+               hpres.setFileFilter(fileFilter);
+            
             hpres.onShow();
             swapContainer.setWidgetVisible(history, true);
             swapContainer.setWidgetVisible(review, false);    
@@ -88,7 +92,7 @@ public class VCSPopup
          @Override
          public void onSwitchView(SwitchViewEvent event)
          {
-            controller.switchToHistory();
+            controller.switchToHistory(null);
          }
       });
       hpres.addSwitchViewHandler(new SwitchViewEvent.Handler() {

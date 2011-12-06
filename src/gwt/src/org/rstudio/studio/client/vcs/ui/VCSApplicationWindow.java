@@ -76,9 +76,13 @@ public class VCSApplicationWindow extends SatelliteWindow
       ArrayList<StatusAndPath> selected = vcsParams.getSelected();
       if (selected.size() > 0)
          rpres.setSelectedPaths(selected);
+      HistoryPresenter hpres = pHistoryPresenter_.get();
+      if (vcsParams.getHistoryFileFilter() != null)
+         hpres.setFileFilter(vcsParams.getHistoryFileFilter());
+           
       vcsPopupController_ = VCSPopup.show(mainPanel,
                                           rpres,
-                                          pHistoryPresenter_.get(), 
+                                          hpres, 
                                           vcsParams.getShowHistory());  
    }
    
@@ -91,7 +95,8 @@ public class VCSApplicationWindow extends SatelliteWindow
          VCSApplicationParams vcsParams = params.<VCSApplicationParams>cast();
          if (vcsParams.getShowHistory())
          {
-            vcsPopupController_.switchToHistory();
+            vcsPopupController_.switchToHistory(
+                                       vcsParams.getHistoryFileFilter());
          }
          else
          {

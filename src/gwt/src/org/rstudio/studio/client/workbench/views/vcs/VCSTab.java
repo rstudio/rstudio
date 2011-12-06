@@ -13,21 +13,27 @@
 package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.inject.Inject;
+
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsHistoryEvent;
 
 public class VCSTab extends DelayLoadWorkbenchTab<VCSPresenter>
+                            
 {
    public abstract static class VCSShim extends DelayLoadTabShim<VCSPresenter, VCSTab>
+                                        implements ShowVcsHistoryEvent.Handler
    {
    }
 
    @Inject
-   protected VCSTab(VCSShim shim, Session session)
+   protected VCSTab(VCSShim shim, EventBus eventBus, Session session)
    {
       super(session.getSessionInfo().getVcsName(), shim);
       session_ = session;
+      eventBus.addHandler(ShowVcsHistoryEvent.TYPE, shim);
    }
 
    @Override
