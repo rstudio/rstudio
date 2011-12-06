@@ -91,7 +91,7 @@ public interface GitServerOperations extends CryptoServerOperations
    void gitHistory(String spec,
                    int skip,
                    int maxentries,
-                   String filter,
+                   String searchText,
                    ServerRequestCallback<RpcObjectList<CommitInfo>> requestCallback);
 
    void gitExecuteCommand(

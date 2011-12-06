@@ -256,14 +256,14 @@ bool commitIsMatch(const std::vector<std::string>& patterns,
    return true;
 }
 
-boost::function<bool(CommitInfo)> createFilterPredicate(
-      const std::string& filter)
+boost::function<bool(CommitInfo)> createSearchTextPredicate(
+      const std::string& searchText)
 {
-   if (filter.empty())
+   if (searchText.empty())
       return boost::lambda::constant(true);
 
    std::vector<std::string> results;
-   boost::algorithm::split(results, filter,
+   boost::algorithm::split(results, searchText,
                            boost::algorithm::is_any_of(" \t\r\n"));
    return boost::bind(commitIsMatch, results, _1);
 }
@@ -766,10 +766,10 @@ public:
    }
 
    core::Error logLength(const std::string &rev,
-                         const std::string &filterText,
+                         const std::string &searchText,
                          int *pLength)
    {
-      if (filterText.empty())
+      if (searchText.empty())
       {
          ShellArgs args = ShellArgs() << "log";
          args << "--pretty=oneline";
@@ -787,7 +787,7 @@ public:
       else
       {
          std::vector<CommitInfo> output;
-         Error error = log(rev, 0, -1, filterText, &output);
+         Error error = log(rev, 0, -1, searchText, &output);
          if (error)
             return error;
          *pLength = output.size();
@@ -798,7 +798,7 @@ public:
    core::Error log(const std::string& rev,
                    int skip,
                    int maxentries,
-                   const std::string& filterText,
+                   const std::string& searchText,
                    std::vector<CommitInfo>* pOutput)
    {
       ShellArgs args = ShellArgs() << "log";
@@ -807,7 +807,7 @@ public:
       ShellArgs revListArgs = ShellArgs() << "rev-list" << "--date-order" << "--parents";
       int revListSkip = skip;
 
-      if (filterText.empty())
+      if (searchText.empty())
       {
          // This is a way more efficient way to implement skip and maxentries
          // if we know that all commits are included.
@@ -848,7 +848,7 @@ public:
       output.clear();
 
       std::vector<std::string> graphLines;
-      if (filterText.empty())
+      if (searchText.empty())
       {
          std::vector<std::string> revOutLines;
          std::string revOutput;
@@ -877,7 +877,7 @@ public:
          }
       }
 
-      boost::function<bool(CommitInfo)> filter = createFilterPredicate(filterText);
+      boost::function<bool(CommitInfo)> filter = createSearchTextPredicate(searchText);
 
       boost::regex kvregex("^(\\w+) (.*)$");
       boost::regex authTimeRegex("^(.*?) (\\d+) ([+\\-]?\\d+)$");
@@ -1502,15 +1502,15 @@ Error vcsApplyPatch(const json::JsonRpcRequest& request,
 Error vcsHistoryCount(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
-   std::string rev, filterText;
-   Error error = json::readParams(request.params, &rev, &filterText);
+   std::string rev, searchText;
+   Error error = json::readParams(request.params, &rev, &searchText);
    if (error)
       return error;
 
-   boost::algorithm::trim(filterText);
+   boost::algorithm::trim(searchText);
 
    int count;
-   error = s_git_.logLength(rev, filterText, &count);
+   error = s_git_.logLength(rev, searchText, &count);
    if (error)
       return error;
 
@@ -1524,17 +1524,17 @@ Error vcsHistoryCount(const json::JsonRpcRequest& request,
 Error vcsHistory(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
-   std::string rev, filterText;
+   std::string rev, searchText;
    int skip, maxentries;
    Error error = json::readParams(request.params, &rev, &skip, &maxentries,
-                                  &filterText);
+                                  &searchText);
    if (error)
       return error;
 
-   boost::algorithm::trim(filterText);
+   boost::algorithm::trim(searchText);
 
    std::vector<CommitInfo> commits;
-   error = s_git_.log(rev, skip, maxentries, filterText, &commits);
+   error = s_git_.log(rev, skip, maxentries, searchText, &commits);
    if (error)
       return error;
 
