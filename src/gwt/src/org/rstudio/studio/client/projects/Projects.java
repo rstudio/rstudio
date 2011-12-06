@@ -110,6 +110,15 @@ public class Projects implements OpenProjectFileHandler,
             commands.closeProject().setEnabled(hasProject);
             commands.projectOptions().setEnabled(hasProject);
             
+            // remove version control commands if necessary
+            if (!sessionInfo.isVcsEnabled())
+            {
+               commands.vcsCommit().remove();
+               commands.vcsShowHistory().remove();
+               commands.vcsPull().remove();
+               commands.vcsPush().remove();
+            }
+            
             // disable the open project in new window command in web mode
             if (!Desktop.isDesktop())
                commands.openProjectInNewWindow().remove();
