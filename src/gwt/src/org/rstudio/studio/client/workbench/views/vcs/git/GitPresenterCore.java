@@ -188,8 +188,7 @@ public class GitPresenterCore
    }
 
    
-   @Handler
-   void onVcsPull()
+   public void onVcsPull()
    {
       server_.gitPull(new SimpleRequestCallback<ConsoleProcess>()
       {
@@ -201,8 +200,7 @@ public class GitPresenterCore
       });
    }
 
-   @Handler
-   void onVcsPush()
+   public void onVcsPush()
    {
       server_.gitPush(new SimpleRequestCallback<ConsoleProcess>()
       {

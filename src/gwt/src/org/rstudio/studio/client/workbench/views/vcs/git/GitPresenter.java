@@ -80,6 +80,7 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
                        SatelliteManager satelliteManager)
    {
       super(view);
+      gitPresenterCore_ = gitCore;
       vcsFileOpener_  = vcsFileOpener;
       view_ = view;
       server_ = server;
@@ -236,16 +237,29 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
       openSelectedFiles();
    }
 
-   @Handler
-   void onVcsCommit()
+ 
+   @Override
+   public void onVcsCommit()
    {
       showChanges(view_.getSelectedItems());
    }
 
-   @Handler
-   void onVcsShowHistory()
+   @Override
+   public void onVcsShowHistory()
    {
       showHistory(null);
+   }
+   
+   @Override
+   public void onVcsPull()
+   {
+      gitPresenterCore_.onVcsPull();
+   }
+
+   @Override
+   public void onVcsPush()
+   {
+      gitPresenterCore_.onVcsPush();
    }
    
    @Override
@@ -345,12 +359,13 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
    }
 
    private final Display view_;
+   private final GitPresenterCore gitPresenterCore_;
    private final GitServerOperations server_;
    private final Commands commands_;
    private final GitState gitState_;
    private final GlobalDisplay globalDisplay_;
    private final SatelliteManager satelliteManager_;
    private final VCSFileOpener vcsFileOpener_;
-  
+   
   
 }

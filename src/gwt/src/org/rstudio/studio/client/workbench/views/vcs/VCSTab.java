@@ -14,7 +14,10 @@ package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
@@ -25,17 +28,32 @@ import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRevertFile
 public class VCSTab extends DelayLoadWorkbenchTab<VCSPresenter>
                             
 {
+   public interface Binder extends CommandBinder<Commands, VCSTab.VCSShim> {}
+   
    public abstract static class VCSShim extends DelayLoadTabShim<VCSPresenter, VCSTab>
                                         implements ShowVcsHistoryEvent.Handler,
                                                    ShowVcsDiffEvent.Handler,
                                                    VcsRevertFileEvent.Handler
    {
+      @Handler
+      public abstract void onVcsCommit();
+      @Handler
+      public abstract void onVcsShowHistory();
+      @Handler
+      public abstract void onVcsPull();
+      @Handler
+      public abstract void onVcsPush();
    }
 
    @Inject
-   protected VCSTab(VCSShim shim, EventBus eventBus, Session session)
+   protected VCSTab(VCSShim shim, 
+                    Commands commands,
+                    Binder binder,
+                    EventBus eventBus, 
+                    Session session)
    {
       super(session.getSessionInfo().getVcsName(), shim);
+      binder.bind(commands, shim);
       session_ = session;
       eventBus.addHandler(ShowVcsHistoryEvent.TYPE, shim);
       eventBus.addHandler(ShowVcsDiffEvent.TYPE, shim);

@@ -181,6 +181,33 @@ public class SVNPresenter extends BaseVcsPresenter
    }
    
    @Override
+   public void onVcsCommit()
+   {
+      
+      
+   }
+
+   @Override
+   public void onVcsShowHistory()
+   {
+      
+      
+   }
+
+   @Override
+   public void onVcsPull()
+   {
+      // git specific,  not supported by svn
+   }
+
+   @Override
+   public void onVcsPush()
+   {
+      // git specific,  not supported by svn
+   }
+   
+   
+   @Override
    public void showHistory(FileSystemItem fileFilter)
    {
       
@@ -211,5 +238,6 @@ public class SVNPresenter extends BaseVcsPresenter
    private final SVNServerOperations server_;
    private final SVNState svnState_;
    private final SatelliteManager satelliteManager_;
+   
    
 }

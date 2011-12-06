@@ -16,6 +16,7 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPresenter;
@@ -68,10 +69,26 @@ public class VCSPresenter implements IsWidget,
       presenter_.onSelected();
    }
 
-   private final Session session_;
-   private final Provider<GitPresenter> pGitPresenter_;
-   private final Provider<SVNPresenter> pSVNPresenter_;
-   private BaseVcsPresenter presenter_;
+
+   void onVcsCommit()
+   {
+      presenter_.onVcsCommit();
+   }
+
+   void onVcsShowHistory()
+   {
+      presenter_.onVcsShowHistory();
+   }
+
+   void onVcsPull()
+   {
+      presenter_.onVcsPull();
+   }
+  
+   void onVcsPush()
+   {
+      presenter_.onVcsPush();
+   }
    
    @Override
    public void onShowVcsHistory(ShowVcsHistoryEvent event)
@@ -90,4 +107,10 @@ public class VCSPresenter implements IsWidget,
    {
       presenter_.revertFile(event.getFile());
    }
+   
+   private final Session session_;
+   private final Provider<GitPresenter> pGitPresenter_;
+   private final Provider<SVNPresenter> pSVNPresenter_;
+   private BaseVcsPresenter presenter_;
+   
 }

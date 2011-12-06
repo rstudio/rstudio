@@ -11,6 +11,14 @@ public abstract class BaseVcsPresenter extends BasePresenter
       super(view);
    }
    
+   public abstract void onVcsCommit();
+
+   public abstract void onVcsShowHistory();
+
+   public abstract void onVcsPull();
+
+   public abstract void onVcsPush();
+   
    public abstract void showHistory(FileSystemItem fileFilter);
    
    public abstract void showDiff(FileSystemItem file);
