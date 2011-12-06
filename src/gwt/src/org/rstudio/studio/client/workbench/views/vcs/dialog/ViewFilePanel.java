@@ -28,6 +28,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextDisplay
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetFindReplace;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsHistoryEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
@@ -149,6 +150,12 @@ public class ViewFilePanel extends Composite implements TextDisplay
       initWidget(panel_);
    }
    
+   HandlerRegistration addShowVcsHistoryHandler(
+                                 ShowVcsHistoryEvent.Handler handler)
+   {
+      return addHandler(handler, ShowVcsHistoryEvent.TYPE);
+   }
+   
    public void showFile(FileSystemItem file, String commitId, String contents)
    {
       commitId_ = commitId;
@@ -213,6 +220,21 @@ public class ViewFilePanel extends Composite implements TextDisplay
       toolbar.addLeftSeparator();
       
       toolbar.addLeftWidget(findReplace_.createFindReplaceButton());
+      
+      
+      toolbar.addRightWidget(new ToolbarButton(
+           "Show History",
+           commands_.goToWorkingDir().getImageResource(),
+           new ClickHandler() {
+
+            @Override
+            public void onClick(ClickEvent event)
+            {
+               fireEvent(new ShowVcsHistoryEvent(targetFile_));
+               popupPanel_.close();
+            }
+              
+           }));
       
       return toolbar;
    }  

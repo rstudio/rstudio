@@ -46,6 +46,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.diff.UnifiedParser;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsHistoryEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ViewFileRevisionEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ViewFileRevisionHandler;
@@ -196,7 +197,21 @@ public class HistoryPresenter
                      {
                         indicator.onCompleted();
                         
-                        pViewFilePanel.get().showFile(
+                        ViewFilePanel viewFilePanel = pViewFilePanel.get();
+                        viewFilePanel.addShowVcsHistoryHandler(
+                           new ShowVcsHistoryEvent.Handler() {
+                              @Override
+                              public void onShowVcsHistory(
+                                                ShowVcsHistoryEvent event)
+                              {
+                                  view_.getFileFilter().setValue(
+                                              event.getFileFilter()); 
+                                    
+                              }
+   
+                           });
+                        
+                        viewFilePanel.showFile(
                               FileSystemItem.createFile(event.getFilename()),
                               event.getRevision(), 
                               contents);
