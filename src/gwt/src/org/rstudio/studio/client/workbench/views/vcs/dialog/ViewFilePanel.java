@@ -183,7 +183,7 @@ public class ViewFilePanel extends Composite implements TextDisplay
     
    private Toolbar createToolbar()
    {
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new ViewFileToolbar();
       
       toolbar.addLeftWidget(new ToolbarButton(
          "Save As", 
@@ -300,6 +300,15 @@ public class ViewFilePanel extends Composite implements TextDisplay
    public static void ensureStylesInjected()
    {
       RES.styles().ensureInjected();
+   }
+   
+   private class ViewFileToolbar extends Toolbar
+   {
+      @Override
+      public int getHeight()
+      {
+         return 23;
+      }
    }
   
    private final FileTypeRegistry fileTypeRegistry_;
