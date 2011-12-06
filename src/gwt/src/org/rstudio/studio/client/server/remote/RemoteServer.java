@@ -1450,12 +1450,12 @@ public class RemoteServer implements Server
    }
 
    public void gitHistoryCount(String spec,
-                               String filterText,
+                               String searchText,
                                ServerRequestCallback<CommitCount> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(spec));
-      params.set(1, new JSONString(filterText));
+      params.set(1, new JSONString(searchText));
       sendRequest(RPC_SCOPE, GIT_HISTORY_COUNT, params, requestCallback);
    }
 

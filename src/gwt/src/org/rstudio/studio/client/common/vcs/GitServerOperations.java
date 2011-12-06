@@ -82,7 +82,7 @@ public interface GitServerOperations extends CryptoServerOperations
    void gitApplyPatch(String patch, PatchMode mode,
                       ServerRequestCallback<Void> requestCallback);
 
-   void gitHistoryCount(String spec, String filter,
+   void gitHistoryCount(String spec, String searchText,
                         ServerRequestCallback<CommitCount> requestCallback);
    /**
     * @param spec Revision list or description. "" for default.
