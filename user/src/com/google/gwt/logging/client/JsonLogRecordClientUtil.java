@@ -68,6 +68,7 @@ public class JsonLogRecordClientUtil {
   private static JSONObject throwableAsJsonObject(Throwable t) {
     JSONObject obj = new JSONObject();
     if (t != null) {
+      obj.put("type", getJsonString(t.getClass().getName()));
       obj.put("message", getJsonString(t.getMessage()));
       obj.put("cause", throwableAsJsonObject(t.getCause()));
       StackTraceElement[] stackTrace = t.getStackTrace();

@@ -16,6 +16,8 @@
 
 package com.google.gwt.logging.impl;
 
+import com.google.gwt.core.client.impl.SerializableThrowable;
+
 import java.util.Date;
 import java.util.HashSet;
 import java.util.logging.Formatter;
@@ -63,7 +65,11 @@ public abstract class FormatterImpl extends Formatter {
       seenCauses.add(currentCause);
       s.append(causedBy);
       causedBy = newline + "Caused by: "; // after 1st, all say "caused by"
-      s.append(currentCause.getClass().getName());
+      if (currentCause instanceof SerializableThrowable.ThrowableWithClassName) {
+        s.append(((SerializableThrowable.ThrowableWithClassName) currentCause).getExceptionClass());
+      } else {
+        s.append(currentCause.getClass().getName());
+      }
       s.append(": " + currentCause.getMessage());
       StackTraceElement[] stackElems = currentCause.getStackTrace();
       if (stackElems != null) {

@@ -29,7 +29,30 @@ public class SerializableThrowable implements Serializable {
   private SerializableThrowable cause = null;
   private String message = null;
   private StackTraceElement[] stackTrace = null;
-  
+  private String typeName = null;
+
+  /**
+   * A subclass of Throwable that contains the serialized exception class type.
+   */
+  public static class ThrowableWithClassName extends Throwable {
+
+    private String typeName;
+
+    public ThrowableWithClassName(String message, Throwable cause, String typeName) {
+      super(message, cause);
+      this.typeName = typeName;
+    }
+
+    public ThrowableWithClassName(String message, String typeName) {
+      super(message);
+      this.typeName = typeName;
+    }
+
+    public String getExceptionClass() {
+      return typeName;
+    }
+  }
+
   /**
    * Create a new SerializableThrowable from a Throwable.
    */
@@ -39,6 +62,7 @@ public class SerializableThrowable implements Serializable {
       cause = new SerializableThrowable(t.getCause());
     }
     stackTrace = t.getStackTrace();
+    typeName = t.getClass().getName();
   }
   
   protected SerializableThrowable() {
@@ -63,9 +87,9 @@ public class SerializableThrowable implements Serializable {
   public Throwable getThrowable() {
     Throwable t;
     if (cause != null) {
-      t = new Throwable(message, cause.getThrowable());
+      t = new ThrowableWithClassName(message, cause.getThrowable(), typeName);
     } else {
-      t = new Throwable(message);
+      t = new ThrowableWithClassName(message, typeName);
     }
     t.setStackTrace(stackTrace);
     return t;
