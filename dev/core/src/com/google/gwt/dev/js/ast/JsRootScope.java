@@ -1,16 +1,14 @@
 /*
  * Copyright 2007 Google Inc.
  * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
  * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
 package com.google.gwt.dev.js.ast;
@@ -25,8 +23,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The root scope is the parent of every scope, it contains a list of browser
- * built-in identifiers that we should recognize and never obfuscate into.
+ * The root scope is the parent of every scope, it contains a list of browser built-in identifiers
+ * that we should recognize and never obfuscate into.
  */
 public final class JsRootScope extends JsScope {
   /*
@@ -41,7 +39,7 @@ public final class JsRootScope extends JsScope {
 
   public static final JsRootScope INSTANCE;
 
-  private static final String[] COMMON_BUILTINS = new String[]{
+  private static final String[] COMMON_BUILTINS = new String[] {
       // 15.1.1 Value Properties of the Global Object
       "NaN",
       "Infinity",
@@ -241,7 +239,7 @@ public final class JsRootScope extends JsScope {
       "oncanplaythrough",
       "onended",
       "onprogress",
-      
+
       // extra window methods
       "uneval",
 
@@ -314,29 +312,24 @@ public final class JsRootScope extends JsScope {
       // that don't ensure GWT's window != $wnd, document != $doc, etc.
       // Taken from the Rhino book, pg 715
       "Anchor", "Applet", "Attr", "Canvas", "CanvasGradient", "CanvasPattern",
-      "CanvasRenderingContext2D", "CDATASection", "CharacterData", "Comment",
-      "CSS2Properties", "CSSRule", "CSSStyleSheet", "Document",
-      "DocumentFragment", "DocumentType", "DOMException", "DOMImplementation",
-      "DOMParser", "Element", "Event", "ExternalInterface", "FlashPlayer",
-      "Form", "Frame", "History", "HTMLCollection", "HTMLDocument",
-      "HTMLElement", "IFrame", "Image", "Input", "JSObject", "KeyEvent",
-      "Link", "Location", "MimeType", "MouseEvent", "Navigator", "Node",
-      "NodeList", "Option", "Plugin", "ProcessingInstruction", "Range",
-      "RangeException", "Screen", "Select", "Table", "TableCell", "TableRow",
-      "TableSelection", "Text", "TextArea", "UIEvent", "Window",
-      "XMLHttpRequest", "XMLSerializer", "XPathException", "XPathResult",
-      "XSLTProcessor",
+      "CanvasRenderingContext2D", "CDATASection", "CharacterData", "Comment", "CSS2Properties",
+      "CSSRule", "CSSStyleSheet", "Document", "DocumentFragment", "DocumentType", "DOMException",
+      "DOMImplementation", "DOMParser", "Element", "Event", "ExternalInterface", "FlashPlayer",
+      "Form", "Frame", "History", "HTMLCollection", "HTMLDocument", "HTMLElement", "IFrame",
+      "Image", "Input", "JSObject", "KeyEvent", "Link", "Location", "MimeType", "MouseEvent",
+      "Navigator", "Node", "NodeList", "Option", "Plugin", "ProcessingInstruction", "Range",
+      "RangeException", "Screen", "Select", "Table", "TableCell", "TableRow", "TableSelection",
+      "Text", "TextArea", "UIEvent", "Window", "XMLHttpRequest", "XMLSerializer", "XPathException",
+      "XPathResult", "XSLTProcessor",
 
       /*
-       * These keywords trigger the loading of the java-plugin. For the
-       * next-generation plugin, this results in starting a new Java process.
+       * These keywords trigger the loading of the java-plugin. For the next-generation plugin, this
+       * results in starting a new Java process.
        */
-      "java", "Packages", "netscape", "sun", "JavaObject", "JavaClass",
-      "JavaArray", "JavaMember",
+      "java", "Packages", "netscape", "sun", "JavaObject", "JavaClass", "JavaArray", "JavaMember",
 
       // GWT-defined identifiers
-      "$wnd", "$doc", "$moduleName", "$moduleBase", "$gwt_version",
-      "$sessionId",
+      "$wnd", "$doc", "$moduleName", "$moduleBase", "$gwt_version", "$sessionId",
 
       // Identifiers used by JsStackEmulator; later set to obfuscatable
       "$stack", "$stackDepth", "$location",
@@ -387,8 +380,7 @@ public final class JsRootScope extends JsScope {
 
   @Override
   protected JsName doCreateName(String ident, String shortIdent) {
-    throw new UnsupportedOperationException(
-        "Cannot create new names in the root scope");
+    throw new UnsupportedOperationException("Cannot create new names in the root scope");
   }
 
   @Override

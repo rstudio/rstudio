@@ -1,16 +1,14 @@
 /*
  * Copyright 2008 Google Inc.
  * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
  * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
 package com.google.gwt.dev.js.ast;
@@ -32,8 +30,8 @@ public final class JsConditional extends JsExpression {
     super(sourceInfo);
   }
 
-  public JsConditional(SourceInfo sourceInfo, JsExpression testExpr,
-      JsExpression thenExpr, JsExpression elseExpr) {
+  public JsConditional(SourceInfo sourceInfo, JsExpression testExpr, JsExpression thenExpr,
+      JsExpression elseExpr) {
     super(sourceInfo);
     this.testExpr = testExpr;
     this.thenExpr = thenExpr;
@@ -42,6 +40,11 @@ public final class JsConditional extends JsExpression {
 
   public JsExpression getElseExpression() {
     return elseExpr;
+  }
+
+  @Override
+  public NodeKind getKind() {
+    return NodeKind.CONDITIONAL;
   }
 
   public JsExpression getTestExpression() {
@@ -54,8 +57,7 @@ public final class JsConditional extends JsExpression {
 
   @Override
   public boolean hasSideEffects() {
-    return testExpr.hasSideEffects() || thenExpr.hasSideEffects()
-        || elseExpr.hasSideEffects();
+    return testExpr.hasSideEffects() || thenExpr.hasSideEffects() || elseExpr.hasSideEffects();
   }
 
   @Override
@@ -80,6 +82,7 @@ public final class JsConditional extends JsExpression {
     this.thenExpr = thenExpr;
   }
 
+  @Override
   public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       testExpr = v.accept(testExpr);

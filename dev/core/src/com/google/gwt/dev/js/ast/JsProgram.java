@@ -1,16 +1,14 @@
 /*
  * Copyright 2008 Google Inc.
  * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
  * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
 package com.google.gwt.dev.js.ast;
@@ -44,15 +42,9 @@ public final class JsProgram extends JsNode {
 
   /**
    * Constructs a JavaScript program object.
-   * 
-   * @param soycEnabled Controls whether or not SourceInfo nodes created via the
-   *          JsProgram will record descendant information. Enabling this
-   *          feature will collect extra data during the compilation cycle, but
-   *          at a cost of memory and object allocations.
    */
   public JsProgram(CorrelationFactory correlator) {
-    super(correlator.makeSourceInfo(SourceOrigin.create(0,
-        JsProgram.class.getName())));
+    super(correlator.makeSourceInfo(SourceOrigin.create(0, JsProgram.class.getName())));
 
     this.correlator = correlator;
 
@@ -61,10 +53,8 @@ public final class JsProgram extends JsNode {
     setFragmentCount(1);
   }
 
-  public SourceInfo createSourceInfo(int startPos, int endPos, int startLine,
-      String fileName) {
-    return correlator.makeSourceInfo(SourceOrigin.create(startPos, endPos,
-        startLine, fileName));
+  public SourceInfo createSourceInfo(int startPos, int endPos, int startLine, String fileName) {
+    return correlator.makeSourceInfo(SourceOrigin.create(startPos, endPos, startLine, fileName));
   }
 
   public SourceInfo createSourceInfo(int lineNumber, String location) {
@@ -73,6 +63,13 @@ public final class JsProgram extends JsNode {
 
   public SourceInfo createSourceInfoSynthetic(Class<?> caller) {
     return createSourceInfo(0, caller.getName());
+  }
+
+  public JsProgramFragment getFragment(int fragment) {
+    if (fragment < 0 || fragment >= fragments.length) {
+      throw new IllegalArgumentException("Invalid fragment: " + fragment);
+    }
+    return fragments[fragment];
   }
 
   public JsBlock getFragmentBlock(int fragment) {
@@ -97,13 +94,17 @@ public final class JsProgram extends JsNode {
     return indexedFunctions.get(name);
   }
 
+  @Override
+  public NodeKind getKind() {
+    return NodeKind.PROGRAM;
+  }
+
   public JsScope getObjectScope() {
     return objectScope;
   }
 
   /**
-   * Gets the top level scope. This is the scope of all the statements in the
-   * main program.
+   * Gets the top level scope. This is the scope of all the statements in the main program.
    */
   public JsScope getScope() {
     return topScope;
@@ -112,8 +113,7 @@ public final class JsProgram extends JsNode {
   public void setFragmentCount(int fragments) {
     this.fragments = new JsProgramFragment[fragments];
     for (int i = 0; i < fragments; i++) {
-      this.fragments[i] = new JsProgramFragment(
-          createSourceInfoSynthetic(JsProgram.class));
+      this.fragments[i] = new JsProgramFragment(createSourceInfoSynthetic(JsProgram.class));
     }
   }
 
@@ -122,6 +122,7 @@ public final class JsProgram extends JsNode {
     this.indexedFunctions.putAll(indexedFunctions);
   }
 
+  @Override
   public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       for (JsProgramFragment fragment : fragments) {

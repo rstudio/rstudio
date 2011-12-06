@@ -1,16 +1,14 @@
 /*
  * Copyright 2008 Google Inc.
  * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
  * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
 package com.google.gwt.dev.js.ast;
@@ -21,8 +19,7 @@ import com.google.gwt.dev.util.StringInterner;
 /**
  * Represents a JavaScript expression that references a name.
  */
-public final class JsNameRef extends JsExpression implements CanBooleanEval,
-    HasName {
+public final class JsNameRef extends JsExpression implements CanBooleanEval, HasName {
 
   private String ident;
   private JsName name;
@@ -42,6 +39,12 @@ public final class JsNameRef extends JsExpression implements CanBooleanEval,
     return (name == null) ? ident : name.getIdent();
   }
 
+  @Override
+  public NodeKind getKind() {
+    return NodeKind.NAME_REF;
+  }
+
+  @Override
   public JsName getName() {
     return name;
   }
@@ -66,10 +69,12 @@ public final class JsNameRef extends JsExpression implements CanBooleanEval,
     return qualifier.hasSideEffects();
   }
 
+  @Override
   public boolean isBooleanFalse() {
     return isDefinitelyNull();
   }
 
+  @Override
   public boolean isBooleanTrue() {
     return false;
   }
@@ -107,6 +112,7 @@ public final class JsNameRef extends JsExpression implements CanBooleanEval,
     this.qualifier = qualifier;
   }
 
+  @Override
   public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       if (qualifier != null) {

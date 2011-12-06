@@ -1,16 +1,14 @@
 /*
  * Copyright 2008 Google Inc.
  * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
  * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
 package com.google.gwt.dev.js.ast;
@@ -31,36 +29,43 @@ public class JsModVisitor extends JsVisitor {
     private boolean removed;
     private boolean replaced;
 
+    @Override
     public boolean canInsert() {
       return true;
     }
 
+    @Override
     public boolean canRemove() {
       return true;
     }
 
+    @Override
     public void insertAfter(JsVisitable node) {
       checkRemoved();
       collection.add(index + 1, (T) node);
       didChange = true;
     }
 
+    @Override
     public void insertBefore(JsVisitable node) {
       checkRemoved();
       collection.add(index++, (T) node);
       didChange = true;
     }
 
+    @Override
     public boolean isLvalue() {
       return false;
     }
 
+    @Override
     public void removeMe() {
       checkState();
       collection.remove(index--);
       didChange = removed = true;
     }
 
+    @Override
     public void replaceMe(JsVisitable node) {
       checkState();
       checkReplacement(collection.get(index), node);
@@ -102,30 +107,37 @@ public class JsModVisitor extends JsVisitor {
     private T node;
     private boolean replaced;
 
+    @Override
     public boolean canInsert() {
       return false;
     }
 
+    @Override
     public boolean canRemove() {
       return false;
     }
 
+    @Override
     public void insertAfter(JsVisitable node) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void insertBefore(JsVisitable node) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean isLvalue() {
       return false;
     }
 
+    @Override
     public void removeMe() {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void replaceMe(JsVisitable node) {
       if (replaced) {
         throw new InternalCompilerException("Node was already replaced");
@@ -143,14 +155,12 @@ public class JsModVisitor extends JsVisitor {
     }
   }
 
-  protected static void checkReplacement(JsVisitable origNode,
-      JsVisitable newNode) {
+  protected static void checkReplacement(JsVisitable origNode, JsVisitable newNode) {
     if (newNode == null) {
       throw new InternalCompilerException("Cannot replace with null");
     }
     if (newNode == origNode) {
-      throw new InternalCompilerException(
-          "The replacement is the same as the original");
+      throw new InternalCompilerException("The replacement is the same as the original");
     }
   }
 
@@ -183,8 +193,7 @@ public class JsModVisitor extends JsVisitor {
   }
 
   @Override
-  protected <T extends JsVisitable> void doAcceptWithInsertRemove(
-      List<T> collection) {
+  protected <T extends JsVisitable> void doAcceptWithInsertRemove(List<T> collection) {
     new ListContext<T>().traverse(collection);
   }
 

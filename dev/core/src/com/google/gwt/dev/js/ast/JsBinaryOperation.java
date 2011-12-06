@@ -1,16 +1,14 @@
 /*
  * Copyright 2008 Google Inc.
  * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
  * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
 package com.google.gwt.dev.js.ast;
@@ -32,8 +30,8 @@ public final class JsBinaryOperation extends JsExpression {
     this(sourceInfo, op, null, null);
   }
 
-  public JsBinaryOperation(SourceInfo sourceInfo, JsBinaryOperator op,
-      JsExpression arg1, JsExpression arg2) {
+  public JsBinaryOperation(SourceInfo sourceInfo, JsBinaryOperator op, JsExpression arg1,
+      JsExpression arg2) {
     super(sourceInfo);
     this.op = op;
     this.arg1 = arg1;
@@ -46,6 +44,11 @@ public final class JsBinaryOperation extends JsExpression {
 
   public JsExpression getArg2() {
     return arg2;
+  }
+
+  @Override
+  public NodeKind getKind() {
+    return NodeKind.BINARY_OP;
   }
 
   public JsBinaryOperator getOperator() {
@@ -104,6 +107,7 @@ public final class JsBinaryOperation extends JsExpression {
     this.arg2 = arg2;
   }
 
+  @Override
   public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       if (op.isAssignment()) {

@@ -1,16 +1,14 @@
 /*
  * Copyright 2008 Google Inc.
  * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
  * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
 package com.google.gwt.dev.js.ast;
@@ -60,8 +58,7 @@ public final class JsFunction extends JsLiteral implements HasName {
   /**
    * Creates a named function, possibly derived from Java source.
    */
-  public JsFunction(SourceInfo sourceInfo, JsScope parent, JsName name,
-      boolean fromJava) {
+  public JsFunction(SourceInfo sourceInfo, JsScope parent, JsName name, boolean fromJava) {
     super(sourceInfo);
     assert (parent != null);
     this.fromJava = fromJava;
@@ -76,9 +73,8 @@ public final class JsFunction extends JsLiteral implements HasName {
   }
 
   /**
-   * If true, this indicates that only the first invocation of the function will
-   * have any effects. Subsequent invocations may be considered to be no-op
-   * calls whose return value is ignored.
+   * If true, this indicates that only the first invocation of the function will have any effects.
+   * Subsequent invocations may be considered to be no-op calls whose return value is ignored.
    */
   public boolean getExecuteOnce() {
     return executeOnce;
@@ -88,6 +84,12 @@ public final class JsFunction extends JsLiteral implements HasName {
     return impliedExecute;
   }
 
+  @Override
+  public NodeKind getKind() {
+    return NodeKind.FUNCTION;
+  }
+
+  @Override
   public JsName getName() {
     return name;
   }
@@ -110,10 +112,12 @@ public final class JsFunction extends JsLiteral implements HasName {
     return artificiallyRescued;
   }
 
+  @Override
   public boolean isBooleanFalse() {
     return false;
   }
 
+  @Override
   public boolean isBooleanTrue() {
     return true;
   }
@@ -165,6 +169,7 @@ public final class JsFunction extends JsLiteral implements HasName {
     this.trace = true;
   }
 
+  @Override
   public void traverse(JsVisitor v, JsContext ctx) {
     String before = null;
     if (trace && v instanceof JsModVisitor) {

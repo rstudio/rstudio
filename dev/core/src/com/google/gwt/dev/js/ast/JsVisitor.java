@@ -1,16 +1,14 @@
 /*
  * Copyright 2008 Google Inc.
  * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
  * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
 package com.google.gwt.dev.js.ast;
@@ -30,30 +28,37 @@ public class JsVisitor {
 
   protected static final JsContext LVALUE_CONTEXT = new JsContext() {
 
+    @Override
     public boolean canInsert() {
       return false;
     }
 
+    @Override
     public boolean canRemove() {
       return false;
     }
 
+    @Override
     public void insertAfter(JsVisitable node) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void insertBefore(JsVisitable node) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean isLvalue() {
       return true;
     }
 
+    @Override
     public void removeMe() {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void replaceMe(JsVisitable node) {
       throw new UnsupportedOperationException();
     }
@@ -61,30 +66,37 @@ public class JsVisitor {
 
   protected static final JsContext UNMODIFIABLE_CONTEXT = new JsContext() {
 
+    @Override
     public boolean canInsert() {
       return false;
     }
 
+    @Override
     public boolean canRemove() {
       return false;
     }
 
+    @Override
     public void insertAfter(JsVisitable node) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void insertBefore(JsVisitable node) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean isLvalue() {
       return false;
     }
 
+    @Override
     public void removeMe() {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void replaceMe(JsVisitable node) {
       throw new UnsupportedOperationException();
     }
@@ -105,8 +117,7 @@ public class JsVisitor {
     return doAcceptLvalue(expr);
   }
 
-  public final <T extends JsVisitable> void acceptWithInsertRemove(
-      List<T> collection) {
+  public final <T extends JsVisitable> void acceptWithInsertRemove(List<T> collection) {
     doAcceptWithInsertRemove(collection);
   }
 
@@ -439,8 +450,7 @@ public class JsVisitor {
     return expr;
   }
 
-  protected <T extends JsVisitable> void doAcceptWithInsertRemove(
-      List<T> collection) {
+  protected <T extends JsVisitable> void doAcceptWithInsertRemove(List<T> collection) {
     for (Iterator<T> it = collection.iterator(); it.hasNext();) {
       doTraverse(it.next(), UNMODIFIABLE_CONTEXT);
     }
@@ -454,8 +464,7 @@ public class JsVisitor {
     }
   }
 
-  private InternalCompilerException translateException(JsVisitable node,
-      Throwable e) {
+  private InternalCompilerException translateException(JsVisitable node, Throwable e) {
     if (e instanceof VirtualMachineError) {
       // Always rethrow VM errors (an attempt to wrap may fail).
       throw (VirtualMachineError) e;

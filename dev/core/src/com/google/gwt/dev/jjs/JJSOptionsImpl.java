@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -37,6 +37,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean soycExtra = false;
   private boolean soycHtmlDisabled = false;
   private boolean strict = false;
+  private boolean closureCompilerEnabled;
 
   public JJSOptionsImpl() {
   }
@@ -58,6 +59,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setSoycExtra(other.isSoycExtra());
     setSoycHtmlDisabled(other.isSoycHtmlDisabled());
     setStrict(other.isStrict());
+    setClosureCompilerEnabled(other.isClosureCompilerEnabled());
   }
 
   @Override
@@ -83,6 +85,11 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   @Override
   public boolean isClassMetadataDisabled() {
     return disableClassMetadata;
+  }
+
+  @Override
+  public boolean isClosureCompilerEnabled() {
+    return this.closureCompilerEnabled;
   }
 
   @Override
@@ -118,7 +125,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   public boolean isSoycExtra() {
     return soycExtra;
   }
-  
+
   @Override
   public boolean isSoycHtmlDisabled() {
     return soycHtmlDisabled;
@@ -142,6 +149,11 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   @Override
   public void setClassMetadataDisabled(boolean disabled) {
     disableClassMetadata = disabled;
+  }
+
+  @Override
+  public void setClosureCompilerEnabled(boolean enabled) {
+    this.closureCompilerEnabled = enabled;
   }
 
   @Override
@@ -183,7 +195,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   public void setSoycExtra(boolean enabled) {
     soycExtra = enabled;
   }
-  
+
   @Override
   public void setSoycHtmlDisabled(boolean disabled) {
     soycHtmlDisabled = disabled;
