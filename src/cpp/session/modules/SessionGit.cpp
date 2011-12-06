@@ -777,6 +777,9 @@ public:
          if (!rev.empty())
             args << rev;
 
+         if (!fileFilter.empty())
+            args << "--" << fileFilter;
+
          std::string output;
          Error error = runGit(args, &output);
          if (error)
