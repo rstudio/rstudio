@@ -140,9 +140,7 @@ public class GitPane extends WorkbenchPane implements Display
       final ToolbarPopupMenu menu = new ToolbarPopupMenu();
       
       menu.addItem(commands_.vcsDiff().createMenuItem(false));
-      menu.addSeparator();
       menu.addItem(commands_.vcsRevert().createMenuItem(false));
-      menu.addItem(commands_.vcsCommit().createMenuItem(false));
       menu.addSeparator();
       menu.addItem(commands_.vcsOpen().createMenuItem(false));
     
