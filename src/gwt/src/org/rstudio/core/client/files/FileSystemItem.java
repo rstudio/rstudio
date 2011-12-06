@@ -226,6 +226,18 @@ public class FileSystemItem extends JavaScriptObject
       }    
    }
    
+   public final static boolean areEqual(FileSystemItem a, FileSystemItem b)
+   {
+      if (a == null && b == null)
+         return true;
+      else if (a == null && b != null)
+         return false;
+      else if (a != null && b == null)
+         return false;
+      else 
+         return a.equalTo(b);
+   }
+   
    public final boolean equalTo(FileSystemItem other)
    {
       if (other==null)

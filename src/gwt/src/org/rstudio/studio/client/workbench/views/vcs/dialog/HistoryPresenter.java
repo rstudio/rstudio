@@ -72,6 +72,8 @@ public class HistoryPresenter
       HandlerRegistration addBranchChangedHandler(
                                        ValueChangeHandler<String> handler);
       
+      HasValue<FileSystemItem> getCommitFilter();
+      
       void showSizeWarning(long sizeInBytes);
       void hideSizeWarning();
 

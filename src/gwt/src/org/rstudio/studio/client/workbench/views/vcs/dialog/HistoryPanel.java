@@ -28,6 +28,8 @@ import com.google.gwt.user.cellview.client.SimplePager.TextLocation;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.HasData;
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.HistoryBranchToolbarButton;
@@ -115,6 +117,7 @@ public class HistoryPanel extends Composite implements Display
 
    @Inject
    public HistoryPanel(HistoryBranchToolbarButton branchToolbarButton,
+                       CommitFilterToolbarButton commitFilterToolbarButton,
                        Commands commands)
    {
       Styles styles = GWT.<Resources>create(Resources.class).styles();
@@ -126,6 +129,7 @@ public class HistoryPanel extends Composite implements Display
             true, 500, true);
       pager_.getElement().setAttribute("align", "center");
       branchToolbarButton_ = branchToolbarButton;
+      commitFilterToolbarButton_ = commitFilterToolbarButton;
 
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
@@ -137,7 +141,8 @@ public class HistoryPanel extends Composite implements Display
       topToolbar_.addLeftWidget(switchViewButton_);
       topToolbar_.addLeftWidget(branchToolbarButton_);
 
-
+      topToolbar_.addLeftWidget(commitFilterToolbarButton_);
+      
       searchText_ = new SearchWidget(new MultiWordSuggestOracle(),
                                      new TextBoxWithCue("Search"),
                                      null);
@@ -196,6 +201,12 @@ public class HistoryPanel extends Composite implements Display
    public HasData<CommitInfo> getDataDisplay()
    {
       return commitTable_;
+   }
+   
+   @Override
+   public HasValue<FileSystemItem> getCommitFilter()
+   {
+      return commitFilterToolbarButton_;
    }
 
    @Override
@@ -266,4 +277,5 @@ public class HistoryPanel extends Composite implements Display
 
    private ToolbarButton refreshButton_;
    private final HistoryBranchToolbarButton branchToolbarButton_;
+   private final CommitFilterToolbarButton commitFilterToolbarButton_;
 }
