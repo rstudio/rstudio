@@ -95,15 +95,7 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
                public void onResponseReceived(RpcObjectList<CommitInfo> response)
                {
                   super.onResponseReceived(response);
-                  
-                  // if this was a request for the beginning of a range
-                  // and there was no response then update the row count to 0
-                  if (response.length() == 0 && rng.getStart() == 0)
-                     updateRowCount(0, true);
-                  
-                  // otherwise update the data
-                  else
-                     updateRowData(rng.getStart(), response.toArrayList());  
+                  updateRowData(rng.getStart(), response.toArrayList());  
                }
             });
    }
