@@ -16,7 +16,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
@@ -109,12 +108,6 @@ public class Workbench implements BusyHandler,
                                         new VoidServerRequestCallback());
          }
       };
-      
-      if (Desktop.isDesktop())
-      {   
-         if (BrowseCap.isWindows())
-            commands_.showShellDialog().remove(); 
-      }
    }
 
    public WorkbenchMainView getMainView()
