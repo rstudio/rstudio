@@ -652,6 +652,36 @@ public:
                             bool createRemote,
                             std::string* pHandle)
    {
+      // NOTE: there are several problems with the current createBranch
+      // implementation and as a result the feature is currently disabled:
+      //
+      // (1) We need to chain multiple git commands together and run
+      //     them under a ConsoleProcess -- currently the only way to
+      //     do this is to do shell_utils::join_and.
+      //
+      // (2) On Server, the shell_utils::join_and results in two auth
+      //     prompts (because multiple auth-requring commands run in
+      //     a single shell).
+      //
+      // (3) On Windows Desktop, the shell_utils::join_and results in
+      //     a cmd.exe window displaying (and no console process output
+      //     is displayed).
+      //
+      // The solution to the above is to make the ConsoleProcess class
+      // accept a list of commands or programs to run. This wouldn't be
+      // too difficult but we're not doing it now because in its current
+      // form this feature has limited flexibilty/utility so isn't worth
+      // pulling out all of the stops for. We've left all of the code in
+      // the product but simply disabled the command in the menus.
+      //
+      // Final note: the commands below are based on the --explain output
+      // of grb. As of git 1.7 simpler ways to accomplish branch creation
+      // and remote publishing are:
+      //
+      //    git checkout -b new_branch master
+      //    git push origin -u new_branch
+      //
+
       // build the appropriate shell command depending upon whether
       // we are creating remote or not
       std::string caption;

@@ -220,8 +220,6 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="vcsPull"/>
             <cmd refid="vcsPush"/>
             <separator/>
-            <cmd refid="vcsCreateBranch"/>
-            <separator/>
             <cmd refid="showShellDialog"/>
             <separator/>
             <cmd refid="versionControlProjectSetup"/>
