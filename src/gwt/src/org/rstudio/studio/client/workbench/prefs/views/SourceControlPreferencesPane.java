@@ -24,12 +24,15 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
+import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.vcs.VCSHelpLink;
@@ -77,6 +80,15 @@ public class SourceControlPreferencesPane extends PreferencesPane
                                                       fsContext);  
       gitBinDirLabel_ = new Label("Git bin directory:");
       addTextBoxChooser(gitBinDirLabel_, null, null, gitBinDirChooser_);
+      
+      // use git bash
+      chkUseGitBash_ = new CheckBox("Use Git Bash as shell for Git projects");
+      if (haveGitBashPref())
+      {
+         extraSpaced(chkUseGitBash_);
+         add(chkUseGitBash_);
+      }
+      
         
       // svn bin dir chooser
       svnBinDirLabel_ = new Label("Svn bin directory:");
@@ -86,6 +98,16 @@ public class SourceControlPreferencesPane extends PreferencesPane
                                                       fileDialogs, 
                                                       fsContext);
       addTextBoxChooser(svnBinDirLabel_, null, null, svnBinDirChooser_);
+      
+      
+      // terminal path
+      terminalPathLabel_ = new Label("Terminal application:");
+      terminalPathChooser_ = new FileChooserTextBox("", 
+                                                    "(Not Found)", 
+                                                    null, 
+                                                    null);
+      if (haveTerminalPathPref())
+         addTextBoxChooser(terminalPathLabel_, null, null, terminalPathChooser_);
      
       // show ssh key button
       showSshKeyButton_ = new ThemedButton(
@@ -108,6 +130,8 @@ public class SourceControlPreferencesPane extends PreferencesPane
       chkVcsEnabled_.setEnabled(false);
       gitBinDirChooser_.setEnabled(false);
       svnBinDirChooser_.setEnabled(false);
+      terminalPathChooser_.setEnabled(false);
+      chkUseGitBash_.setEnabled(false);
       showSshKeyButton_.setEnabled(false);
    }
 
@@ -117,16 +141,20 @@ public class SourceControlPreferencesPane extends PreferencesPane
       // source control prefs
       SourceControlPrefs prefs = rPrefs.getSourceControlPrefs();
       originalPrefs_ = prefs;
-      
+
       chkVcsEnabled_.setEnabled(true);
       gitBinDirChooser_.setEnabled(true);
       svnBinDirChooser_.setEnabled(true);
+      terminalPathChooser_.setEnabled(true);
+      chkUseGitBash_.setEnabled(true);
       showSshKeyButton_.setEnabled(true);
-      
+
       chkVcsEnabled_.setValue(prefs.getVcsEnabled());
       gitBinDirChooser_.setText(prefs.getGitBinDir());
       svnBinDirChooser_.setText(prefs.getSvnBinDir());
-      
+      terminalPathChooser_.setText(prefs.getTerminalPath());
+      chkUseGitBash_.setValue(prefs.getUseGitBash());
+
       manageControlVisibility();
    }
 
@@ -152,54 +180,58 @@ public class SourceControlPreferencesPane extends PreferencesPane
    public void onApply(RPrefs rPrefs)
    {
       super.onApply(rPrefs);
-      
+
       SourceControlPrefs prefs = SourceControlPrefs.create(
-                                          chkVcsEnabled_.getValue(),
-                                          gitBinDirChooser_.getText(),
-                                          svnBinDirChooser_.getText()); 
-      
+            chkVcsEnabled_.getValue(), gitBinDirChooser_.getText(),
+            svnBinDirChooser_.getText(), terminalPathChooser_.getText(),
+            chkUseGitBash_.getValue());
+
       rPrefs.setSourceControlPrefs(prefs);
    }
    
-  
+   private boolean haveTerminalPathPref()
+   {
+      return Desktop.isDesktop() && BrowseCap.isLinux();
+   }
    
-   private void addTextBoxChooser(Label captionLabel, 
-                                  HyperlinkLabel link,
-                                  String captionPanelStyle,
-                                  TextBoxWithButton chooser)
+   private boolean haveGitBashPref()
+   {
+      return Desktop.isDesktop() && BrowseCap.isWindows();
+   }
+
+   private void addTextBoxChooser(Label captionLabel, HyperlinkLabel link,
+         String captionPanelStyle, TextBoxWithButton chooser)
    {
       String textWidth = "250px";
-      
+
       HorizontalPanel captionPanel = new HorizontalPanel();
       captionPanel.setWidth(textWidth);
       nudgeRight(captionPanel);
       if (captionPanelStyle != null)
          captionPanel.addStyleName(captionPanelStyle);
-      
+
       captionPanel.add(captionLabel);
-      captionPanel.setCellHorizontalAlignment(
-                                          captionLabel,
-                                          HasHorizontalAlignment.ALIGN_LEFT);
-      
+      captionPanel.setCellHorizontalAlignment(captionLabel,
+            HasHorizontalAlignment.ALIGN_LEFT);
+
       if (link != null)
       {
          HorizontalPanel linkPanel = new HorizontalPanel();
          linkPanel.add(link);
          captionPanel.add(linkPanel);
-         captionPanel.setCellHorizontalAlignment(
-                                           linkPanel, 
-                                           HasHorizontalAlignment.ALIGN_RIGHT);
-       
+         captionPanel.setCellHorizontalAlignment(linkPanel,
+               HasHorizontalAlignment.ALIGN_RIGHT);
+
       }
-      
+
       add(tight(captionPanel));
-      
+
       chooser.setTextWidth(textWidth);
       nudgeRight(chooser);
       textBoxWithChooser(chooser);
-      add(chooser);    
+      add(chooser);
    }
-   
+
    private void manageControlVisibility()
    {
       boolean vcsEnabled = chkVcsEnabled_.getValue();
@@ -207,20 +239,25 @@ public class SourceControlPreferencesPane extends PreferencesPane
       gitBinDirChooser_.setVisible(vcsEnabled);
       svnBinDirLabel_.setVisible(vcsEnabled);
       svnBinDirChooser_.setVisible(vcsEnabled);
-      showSshKeyButton_.setVisible(vcsEnabled && 
-                                   originalPrefs_.haveRsaPublicKey());
+      terminalPathLabel_.setVisible(vcsEnabled);
+      terminalPathChooser_.setVisible(vcsEnabled && haveTerminalPathPref());
+      chkUseGitBash_.setVisible(vcsEnabled && haveGitBashPref());
+      showSshKeyButton_.setVisible(vcsEnabled
+            && originalPrefs_.haveRsaPublicKey());
    }
-   
 
    private final PreferencesDialogResources res_;
-    
+
    private final CheckBox chkVcsEnabled_;
-   
-   private SourceControlPrefs originalPrefs_; 
-   
+
+   private SourceControlPrefs originalPrefs_;
+
    private Label svnBinDirLabel_;
    private Label gitBinDirLabel_;
    private TextBoxWithButton gitBinDirChooser_;
    private TextBoxWithButton svnBinDirChooser_;
+   private Label terminalPathLabel_;
+   private TextBoxWithButton terminalPathChooser_;
+   private CheckBox chkUseGitBash_;
    private ThemedButton showSshKeyButton_;
 }

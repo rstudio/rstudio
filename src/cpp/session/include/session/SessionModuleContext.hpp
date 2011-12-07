@@ -301,6 +301,9 @@ struct VcsContext
 };
 VcsContext vcsContext(const core::FilePath& workingDir);
 
+core::FilePath shellWorkingDirectory();
+
+
 // persist state accross suspend and resume
    
 typedef boost::function<void (core::Settings*)> SuspendFunction;

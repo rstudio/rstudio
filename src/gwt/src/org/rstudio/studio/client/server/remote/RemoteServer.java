@@ -48,6 +48,7 @@ import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDe
 import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.model.TerminalOptions;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
@@ -271,6 +272,12 @@ public class RemoteServer implements Server
                                   ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, USER_PROMPT_COMPLETED, response, requestCallback);
+   }
+   
+   public void getTerminalOptions(
+                     ServerRequestCallback<TerminalOptions> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_TERMINAL_OPTIONS, requestCallback);
    }
    
    public void searchCode(
@@ -2352,6 +2359,7 @@ public class RemoteServer implements Server
    private static final String GET_R_PREFS = "get_r_prefs";
    private static final String SET_CLIENT_STATE = "set_client_state";
    private static final String USER_PROMPT_COMPLETED = "user_prompt_completed";
+   private static final String GET_TERMINAL_OPTIONS = "get_terminal_options";
    private static final String SEARCH_CODE = "search_code";
    private static final String GET_SEARCH_PATH_FUNCTION_DEFINITION = "get_search_path_function_definition";
    private static final String GET_METHOD_DEFINITION = "get_method_definition";

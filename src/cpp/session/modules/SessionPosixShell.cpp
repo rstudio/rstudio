@@ -89,6 +89,7 @@ public:
 
       // set options and run process
       core::system::ProcessOptions options;
+      options.workingDir = module_context::shellWorkingDirectory();
       options.pseudoterminal = core::system::Pseudoterminal(width, 1);
       options.environment = shellEnv;
       Error error = module_context::processSupervisor().runCommand(bashCommand,

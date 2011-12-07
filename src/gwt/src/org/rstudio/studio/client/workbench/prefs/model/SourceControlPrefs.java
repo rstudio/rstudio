@@ -22,12 +22,16 @@ public class SourceControlPrefs extends JavaScriptObject
    // parameter because that is a read-only rider for the prefs ui
    public static final native SourceControlPrefs create(boolean vcsEnabled,
                                                         String gitBinDir,
-                                                        String svnBinDir) 
+                                                        String svnBinDir,
+                                                        String terminalPath,
+                                                        boolean useGitBash) 
                                                                            /*-{
       var prefs = new Object();
       prefs.vcs_enabled = vcsEnabled;
       prefs.git_bin_dir = gitBinDir;
       prefs.svn_bin_dir = svnBinDir;
+      prefs.terminal_path = terminalPath;
+      prefs.use_git_bash = useGitBash;
       return prefs ;
    }-*/;
 
@@ -41,6 +45,14 @@ public class SourceControlPrefs extends JavaScriptObject
    
    public native final String getSvnBinDir() /*-{
       return this.svn_bin_dir;
+   }-*/;
+   
+   public native final String getTerminalPath() /*-{
+      return this.terminal_path;
+   }-*/;
+   
+   public native final boolean getUseGitBash() /*-{
+      return this.use_git_bash;
    }-*/;
    
    public native final boolean haveRsaPublicKey() /*-{

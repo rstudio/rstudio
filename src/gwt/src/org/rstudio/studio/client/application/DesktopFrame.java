@@ -80,5 +80,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void openProjectInNewWindow(String projectFilePath);
    
-   void launchSystemShell(String workingDirectory);
+   void openTerminal(String terminalPath,
+                     String workingDirectory);
 }

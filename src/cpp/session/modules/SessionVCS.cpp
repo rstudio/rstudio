@@ -73,6 +73,35 @@ FilePath defaultSshKeyDir()
    return getTrueHomeDir().childPath(".ssh");
 }
 
+// try to detect a terminal on linux desktop
+FilePath detectedTerminalPath()
+{
+#if defined(_WIN32) || defined(__APPLE__)
+   return FilePath();
+#else
+   if (session::options().programMode() == kSessionProgramModeDesktop)
+   {
+      std::vector<FilePath> terminalPaths;
+      terminalPaths.push_back(FilePath("/usr/bin/gnome-terminal"));
+      terminalPaths.push_back(FilePath("/usr/bin/konsole"));
+      terminalPaths.push_back(FilePath("/usr/bin/xfce4-terminal"));
+      terminalPaths.push_back(FilePath("/usr/bin/xterm"));
+
+      BOOST_FOREACH(const FilePath& terminalPath, terminalPaths)
+      {
+         if (terminalPath.exists())
+            return terminalPath;
+      }
+
+      return FilePath();
+   }
+   else
+   {
+      return FilePath();
+   }
+#endif
+}
+
 void enqueueRefreshEvent()
 {
    vcs_utils::enqueueRefreshEvent();

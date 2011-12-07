@@ -374,6 +374,30 @@ void UserSettings::setSvnBinDir(const FilePath& svnBinDir)
    settings_.set("vcsSvnBinDir", svnBinDir.absolutePath());
 }
 
+FilePath UserSettings::vcsTerminalPath() const
+{
+   std::string dir = settings_.get("vcsTerminalPath");
+   if (!dir.empty())
+      return FilePath(dir);
+   else
+      return FilePath();
+}
+
+void UserSettings::setVcsTerminalPath(const FilePath& terminalPath)
+{
+   settings_.set("vcsTerminalPath", terminalPath.absolutePath());
+}
+
+bool UserSettings::vcsUseGitBash() const
+{
+   return settings_.getBool("vcsUseGitBash", true);
+}
+
+void UserSettings::setVcsUseGitBash(bool useGitBash)
+{
+   settings_.set("vcsUseGitBash", useGitBash);
+}
+
 
 
 bool UserSettings::alwaysSaveHistory() const

@@ -903,6 +903,14 @@ void setGoogleDocsIntegrationEnabled(bool enabled)
 }
 
 
+FilePath shellWorkingDirectory()
+{
+   if (projects::projectContext().hasProject())
+      return projects::projectContext().directory();
+   else
+      return module_context::safeCurrentPath();
+}
+
 
 Events& events()
 {

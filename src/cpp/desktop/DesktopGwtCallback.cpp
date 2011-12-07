@@ -705,30 +705,13 @@ void GwtCallback::openProjectInNewWindow(QString projectFilePath)
    launchProjectInNewInstance(resolveAliasedPath(projectFilePath));
 }
 
-namespace {
-
-QString scanForLinuxTerminal()
+void GwtCallback::openTerminal(QString terminalPath,
+                               QString workingDirectory)
 {
-   std::vector<FilePath> terminalPaths;
-   terminalPaths.push_back(FilePath("/usr/bin/gnome-terminal"));
-   terminalPaths.push_back(FilePath("/usr/bin/konsole"));
-   terminalPaths.push_back(FilePath("/usr/bin/xfce4-terminal"));
-   terminalPaths.push_back(FilePath("/usr/bin/xterm"));
+#if defined(Q_WS_MACX)
 
-   BOOST_FOREACH(const FilePath& terminalPath, terminalPaths)
-   {
-      if (terminalPath.exists())
-         return QString::fromUtf8(terminalPath.absolutePath().c_str());
-   }
-
-   return QString::fromAscii("");
-}
-
-} // anonymouys namespace
-
-void GwtCallback::launchSystemShell(QString workingDirectory)
-{
-#if defined(Q_WS_MAC)
+   // call Terminal.app with an applescript that navigates it
+   // to the specified directory
    FilePath macTermScriptFilePath =
       desktop::options().scriptsPath().complete("mac-terminal");
    QString macTermScriptPath = QString::fromUtf8(
@@ -736,14 +719,20 @@ void GwtCallback::launchSystemShell(QString workingDirectory)
    QStringList args;
    args.append(resolveAliasedPath(workingDirectory));
    QProcess::startDetached(macTermScriptPath, args);
+
+#elif defined(Q_WS_WIN)
+
+
+
 #elif defined(Q_WS_X11)
-   QString terminalPath = scanForLinuxTerminal();
+
+   // start the auto-detected terminal (or user-specified override)
    if (!terminalPath.length() == 0)
    {
       QStringList args;
-      args.append(QString::fromAscii("--working-directory"));
-      args.append(resolveAliasedPath(workingDirectory));
-      QProcess::startDetached(terminalPath, args);
+      QProcess::startDetached(terminalPath,
+                              args,
+                              resolveAliasedPath(workingDirectory));
    }
    else
    {
@@ -753,6 +742,7 @@ void GwtCallback::launchSystemShell(QString workingDirectory)
          QString::fromAscii(
                   "Unable to find a compatible terminal program to launch"));
    }
+
 #endif
 }
 

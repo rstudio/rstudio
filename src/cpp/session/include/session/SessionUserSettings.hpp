@@ -119,6 +119,12 @@ public:
    core::FilePath svnBinDir() const;
    void setSvnBinDir(const core::FilePath& svnBinDir);
 
+   core::FilePath vcsTerminalPath() const;
+   void setVcsTerminalPath(const core::FilePath& terminalPath);
+
+   bool vcsUseGitBash() const;
+   void setVcsUseGitBash(bool useGitBash);
+
 private:
 
    void onSettingsFileChanged(

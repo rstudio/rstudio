@@ -32,6 +32,7 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.posixshell.PosixShellDialog;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
 import org.rstudio.studio.client.server.Server;
@@ -313,8 +314,15 @@ public class Workbench implements BusyHandler,
    {
       if (Desktop.isDesktop())
       {
-         Desktop.getFrame().launchSystemShell(
-                  workbenchContext_.getCurrentWorkingDir().getPath());
+         server_.getTerminalOptions(new SimpleRequestCallback<TerminalOptions>()
+         {
+            @Override
+            public void onResponseReceived(TerminalOptions options)
+            {
+               Desktop.getFrame().openTerminal(options.getTerminalPath(),
+                                               options.getWorkingDirectory());
+            }
+         });
       }
       else
       {

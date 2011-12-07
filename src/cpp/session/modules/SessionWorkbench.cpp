@@ -34,6 +34,8 @@
 #include <r/session/RClientState.hpp> 
 #include <r/RFunctionHook.hpp>
 
+#include <session/projects/SessionProjects.hpp>
+
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 
@@ -200,16 +202,19 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().endUpdate();
 
    // read and set source control prefs
-   bool vcsEnabled;
-   std::string gitBinDir, svnBinDir;
+   bool vcsEnabled, useGitBash;
+   std::string gitBinDir, svnBinDir, terminalPath;
    error = json::readObject(sourceControlPrefs,
                             "vcs_enabled", &vcsEnabled,
                             "git_bin_dir", &gitBinDir,
-                            "svn_bin_dir", &svnBinDir);
+                            "svn_bin_dir", &svnBinDir,
+                            "terminal_path", &terminalPath,
+                            "use_git_bash", &useGitBash);
    if (error)
       return error;
    userSettings().beginUpdate();
    userSettings().setVcsEnabled(vcsEnabled);
+
    FilePath gitBinDirPath(gitBinDir);
    if (gitBinDirPath == git::detectedGitBinDir())
       userSettings().setGitBinDir(FilePath());
@@ -222,6 +227,13 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    else
       userSettings().setSvnBinDir(svnBinDirPath);
 
+   FilePath terminalFilePath(terminalPath);
+   if (terminalFilePath == source_control::detectedTerminalPath())
+      userSettings().setVcsTerminalPath(FilePath());
+   else
+      userSettings().setVcsTerminalPath(terminalFilePath);
+
+   userSettings().setVcsUseGitBash(useGitBash);
 
    userSettings().endUpdate();
 
@@ -299,10 +311,18 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    if (gitBinDir.empty())
       gitBinDir = git::detectedGitBinDir();
    sourceControlPrefs["git_bin_dir"] = gitBinDir.absolutePath();
+
    FilePath svnBinDir = userSettings().svnBinDir();
    if (svnBinDir.empty())
       svnBinDir = svn::detectedSvnBinDir();
    sourceControlPrefs["svn_bin_dir"] = svnBinDir.absolutePath();
+
+   FilePath terminalPath = userSettings().vcsTerminalPath();
+   if (terminalPath.empty())
+      terminalPath = source_control::detectedTerminalPath();
+   sourceControlPrefs["terminal_path"] = terminalPath.absolutePath();
+
+   sourceControlPrefs["use_git_bash"] = userSettings().vcsUseGitBash();
 
    sourceControlPrefs["have_rsa_public_key"] =
       modules::source_control::defaultSshKeyDir().childPath(
@@ -317,6 +337,44 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    result["source_control_prefs"] = sourceControlPrefs;
 
    pResponse->setResult(result);
+
+   return Success();
+}
+
+Error getTerminalOptions(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
+{
+   json::Object optionsJson;
+
+   FilePath terminalPath;
+
+#if defined(_WIN32)
+
+   // if we are using git bash then return its path
+   if (git::isGitEnabled() && userSettings().vcsUseGitBash())
+   {
+      FilePath gitBinDir = git::detectedGitBinDir();
+      if (!gitBinDir.empty())
+         terminalPath = gitBinDir.childPath("sh.exe");
+   }
+
+#elif defined(__APPLE__)
+
+   // do nothing (we always launch Terminal.app)
+
+#else
+
+   // auto-detection (+ overridable by a setting)
+   terminalPath = userSettings().vcsTerminalPath();
+   if (terminalPath.empty())
+      terminalPath = source_control::detectedTerminalPath();
+
+#endif
+
+   optionsJson["terminal_path"] = terminalPath.absolutePath();
+   optionsJson["working_directory"] =
+                  module_context::shellWorkingDirectory().absolutePath();
+   pResponse->setResult(optionsJson);
 
    return Success();
 }
@@ -421,7 +479,8 @@ Error initialize()
       (bind(registerRpcMethod, "set_prefs", setPrefs))
       (bind(registerRpcMethod, "set_ui_prefs", setUiPrefs))
       (bind(registerRpcMethod, "get_r_prefs", getRPrefs))
-      (bind(registerRpcMethod, "set_cran_mirror", setCRANMirror));
+      (bind(registerRpcMethod, "set_cran_mirror", setCRANMirror))
+      (bind(registerRpcMethod, "get_terminal_options", getTerminalOptions));
    return initBlock.execute();
 }
 
