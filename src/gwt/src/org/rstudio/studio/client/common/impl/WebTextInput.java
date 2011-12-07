@@ -84,7 +84,7 @@ public class WebTextInput implements TextInput
                {
                   PasswordResult result = new PasswordResult();
                   result.password = input;
-                  result.remember = pDialog.getValue().remember();
+                  result.remember = pDialog.getValue().getExtraOption();
                   okOperation.execute(result, indicator);
                }
             },
