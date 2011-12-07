@@ -711,7 +711,9 @@ void GwtCallback::openTerminal(QString terminalPath,
 #if defined(Q_WS_MACX)
 
    // call Terminal.app with an applescript that navigates it
-   // to the specified directory
+   // to the specified directory. note we don't reference the
+   // passed terminalPath because this setting isn't respected
+   // on the Mac (we always use Terminal.app)
    FilePath macTermScriptFilePath =
       desktop::options().scriptsPath().complete("mac-terminal");
    QString macTermScriptPath = QString::fromUtf8(
