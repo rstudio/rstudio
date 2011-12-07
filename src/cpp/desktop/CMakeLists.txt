@@ -315,6 +315,14 @@ if (UNIX AND NOT APPLE)
                     DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()
 
+# install mac-terminal script on apple
+if(APPLE)
+   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mac-terminal.in
+                  ${CMAKE_CURRENT_BINARY_DIR}/mac-terminal)
+   install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/mac-terminal
+                    DESTINATION ${RSTUDIO_INSTALL_BIN})
+endif()
+
 
 # install desktop integration files on linux
 if(RSTUDIO_INSTALL_FREEDESKTOP)

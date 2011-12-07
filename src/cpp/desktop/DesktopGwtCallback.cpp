@@ -703,5 +703,18 @@ void GwtCallback::openProjectInNewWindow(QString projectFilePath)
    launchProjectInNewInstance(resolveAliasedPath(projectFilePath));
 }
 
+void GwtCallback::launchSystemShell(QString workingDirectory)
+{
+#ifdef Q_WS_MAC
+   FilePath macTermScriptFilePath =
+      desktop::options().scriptsPath().complete("mac-terminal");
+   QString macTermScriptPath = QString::fromUtf8(
+         macTermScriptFilePath.absolutePath().c_str());
+   QStringList args;
+   args.append(resolveAliasedPath(workingDirectory));
+   QProcess::startDetached(macTermScriptPath, args);
+#endif
+}
+
 
 } // namespace desktop

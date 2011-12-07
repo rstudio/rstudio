@@ -106,6 +106,8 @@ public slots:
 
    void openProjectInNewWindow(QString projectFilePath);
 
+   void launchSystemShell(QString workingDirectory);
+
 private:
    void doAction(QKeySequence::StandardKey key);
    QWebView* webView();

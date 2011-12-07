@@ -53,6 +53,9 @@ public:
    void setPreferR64(bool preferR64);
 #endif
 
+   core::FilePath scriptsPath() const;
+   void setScriptsPath(const core::FilePath& scriptsPath);
+
    core::FilePath executablePath() const;
    core::FilePath supportingFilePath() const;
 
@@ -73,6 +76,7 @@ private:
    friend Options& options();
 
    QSettings settings_;
+   core::FilePath scriptsPath_;
    mutable core::FilePath executablePath_;
    mutable core::FilePath supportingFilePath_;
    mutable QString portNumber_;

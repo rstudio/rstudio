@@ -1,0 +1,9 @@
+#!/usr/bin/osascript
+on run argv
+  set dir to quoted form of (first item of argv)
+  tell app "Terminal"
+     activate
+     do script "cd " & dir
+  end tell
+end run
+

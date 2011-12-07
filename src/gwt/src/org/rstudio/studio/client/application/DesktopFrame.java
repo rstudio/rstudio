@@ -79,4 +79,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void setSwitchToProjectPending(boolean switchPending);
    
    void openProjectInNewWindow(String projectFilePath);
+   
+   void launchSystemShell(String workingDirectory);
 }

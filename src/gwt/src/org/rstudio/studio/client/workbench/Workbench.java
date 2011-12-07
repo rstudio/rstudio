@@ -15,6 +15,8 @@ package org.rstudio.studio.client.workbench;
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
@@ -108,7 +110,13 @@ public class Workbench implements BusyHandler,
       };
       
       if (Desktop.isDesktop())
-         commands_.showShellDialog().remove();
+      {
+         if (BrowseCap.isMacintosh())
+            commands_.showShellDialog().setMenuLabel("Open Terminal");
+         
+         if (!BrowseCap.isMacintosh())
+            commands_.showShellDialog().remove(); 
+      }
    }
 
    public WorkbenchMainView getMainView()
@@ -306,7 +314,15 @@ public class Workbench implements BusyHandler,
    @Handler
    public void onShowShellDialog()
    {
-      pPosixShellDialog_.get().showModal();
+      if (Desktop.isDesktop())
+      {
+         Desktop.getFrame().launchSystemShell(
+                  workbenchContext_.getCurrentWorkingDir().getPath());
+      }
+      else
+      {
+         pPosixShellDialog_.get().showModal();
+      }
    }
 
    private final Server server_;

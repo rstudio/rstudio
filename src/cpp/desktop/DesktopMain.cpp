@@ -276,8 +276,8 @@ int main(int argc, char* argv[])
       RVersion version = detectRVersion(false);
 #endif
 
-      // calculate paths to config file and rsession
-      FilePath confPath, sessionPath;
+      // calculate paths to config file, rsession, and desktop scripts
+      FilePath confPath, sessionPath, scriptsPath;
 
       // check for debug configuration
 #ifndef NDEBUG
@@ -286,6 +286,7 @@ int main(int argc, char* argv[])
       {
          confPath = currentPath.complete("conf/rdesktop-dev.conf");
          sessionPath = currentPath.complete("session/rsession");
+         scriptsPath = currentPath.complete("desktop");
 #ifdef _WIN32
          if (version.architecture() == ArchX64)
             sessionPath = installPath.complete("x64/rsession");
@@ -296,8 +297,9 @@ int main(int argc, char* argv[])
       // if there is no conf path then release mode
       if (confPath.empty())
       {
-         // default session path (then tweak)
+         // default paths (then tweak)
          sessionPath = installPath.complete("bin/rsession");
+         scriptsPath = installPath.complete("bin");
 
          // check for win64 binary on windows
 #ifdef _WIN32
@@ -308,10 +310,16 @@ int main(int argc, char* argv[])
          // check for running in a bundle on OSX
 #ifdef __APPLE__
          if (installPath.complete("Info.plist").exists())
+         {
             sessionPath = installPath.complete("MacOS/rsession");
+            scriptsPath = installPath.complete("MacOS");
+         }
 #endif
       }
       core::system::fixupExecutablePath(&sessionPath);
+
+      // set the scripts path in options
+      desktop::options().setScriptsPath(scriptsPath);
 
       // launch session
       SessionLauncher sessionLauncher(sessionPath, confPath);

@@ -191,6 +191,17 @@ void Options::setPreferR64(bool preferR64)
 }
 #endif
 
+FilePath Options::scriptsPath() const
+{
+   return scriptsPath_;
+}
+
+
+void Options::setScriptsPath(const FilePath& scriptsPath)
+{
+   scriptsPath_ = scriptsPath;
+}
+
 FilePath Options::executablePath() const
 {
    if (executablePath_.empty())
