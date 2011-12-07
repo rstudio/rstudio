@@ -111,10 +111,10 @@ public class Workbench implements BusyHandler,
       
       if (Desktop.isDesktop())
       {
-         if (BrowseCap.isMacintosh())
+         if (!BrowseCap.isWindows())
             commands_.showShellDialog().setMenuLabel("Open Terminal");
          
-         if (!BrowseCap.isMacintosh())
+         if (BrowseCap.isWindows())
             commands_.showShellDialog().remove(); 
       }
    }

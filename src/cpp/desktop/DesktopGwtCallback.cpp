@@ -19,6 +19,8 @@
 #include <shlobj.h>
 #endif
 
+#include <boost/foreach.hpp>
+
 #include <QtGui/QFileDialog>
 #include <QFileDialog>
 #include <QDesktopServices>
@@ -703,9 +705,30 @@ void GwtCallback::openProjectInNewWindow(QString projectFilePath)
    launchProjectInNewInstance(resolveAliasedPath(projectFilePath));
 }
 
+namespace {
+
+QString scanForLinuxTerminal()
+{
+   std::vector<FilePath> terminalPaths;
+   terminalPaths.push_back(FilePath("/usr/bin/gnome-terminal"));
+   terminalPaths.push_back(FilePath("/usr/bin/konsole"));
+   terminalPaths.push_back(FilePath("/usr/bin/xfce4-terminal"));
+   terminalPaths.push_back(FilePath("/usr/bin/xterm"));
+
+   BOOST_FOREACH(const FilePath& terminalPath, terminalPaths)
+   {
+      if (terminalPath.exists())
+         return QString::fromUtf8(terminalPath.absolutePath().c_str());
+   }
+
+   return QString::fromAscii("");
+}
+
+} // anonymouys namespace
+
 void GwtCallback::launchSystemShell(QString workingDirectory)
 {
-#ifdef Q_WS_MAC
+#if defined(Q_WS_MAC)
    FilePath macTermScriptFilePath =
       desktop::options().scriptsPath().complete("mac-terminal");
    QString macTermScriptPath = QString::fromUtf8(
@@ -713,6 +736,23 @@ void GwtCallback::launchSystemShell(QString workingDirectory)
    QStringList args;
    args.append(resolveAliasedPath(workingDirectory));
    QProcess::startDetached(macTermScriptPath, args);
+#elif defined(Q_WS_X11)
+   QString terminalPath = scanForLinuxTerminal();
+   if (!terminalPath.length() == 0)
+   {
+      QStringList args;
+      args.append(QString::fromAscii("--working-directory"));
+      args.append(resolveAliasedPath(workingDirectory));
+      QProcess::startDetached(terminalPath, args);
+   }
+   else
+   {
+      desktop::showWarning(
+         NULL,
+         QString::fromAscii("Terminal Not Found"),
+         QString::fromAscii(
+                  "Unable to find a compatible terminal program to launch"));
+   }
 #endif
 }
 
