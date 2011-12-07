@@ -724,6 +724,23 @@ void GwtCallback::openTerminal(QString terminalPath,
 
 #elif defined(Q_WS_WIN)
 
+   // git bash
+   if (terminalPath.length() > 0)
+   {
+      QStringList args;
+      args.append(QString::fromAscii("--login"));
+      args.append(QString::fromAscii("-i"));
+      QProcess::startDetached(terminalPath,
+                              args,
+                              resolveAliasedPath(workingDirectory));
+   }
+   else
+   {
+      QProcess::startDetached(QString::fromAscii("cmd.exe"),
+                              QStringList(),
+                              resolveAliasedPath(workingDirectory));
+
+   }
 
 
 #elif defined(Q_WS_X11)
