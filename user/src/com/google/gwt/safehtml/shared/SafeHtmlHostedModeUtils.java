@@ -45,16 +45,16 @@ public class SafeHtmlHostedModeUtils {
   }
 
   /**
-   * Checks if the provided HTML string is complete (ends in "inner HTML"
+   * Returns whether the provided HTML string is complete (ends in "inner HTML"
    * context).
    *
    * <p>
    * This method parses the provided string as HTML and determines the HTML
-   * context at the end of the string. If the context is not "inner HTML text",
-   * an {@link IllegalArgumentException} or {@link AssertionError} is thrown.
+   * context at the end of the string. This method returns true if and only if
+   * the context is "inner HTML text".
    *
    * <p>
-   * For example, this check will pass for the following strings:
+   * For example, this method returns true for the following strings:
    *
    * <pre>{@code
    *   <foo>blah
@@ -62,7 +62,7 @@ public class SafeHtmlHostedModeUtils {
    * }</pre>
    *
    * <p>
-   * The check will fail for the following strings:
+   * This method returns false for the following strings:
    *
    * <pre>{@code
    *   baz<em>foo</em> <x
@@ -71,13 +71,32 @@ public class SafeHtmlHostedModeUtils {
    * }</pre>
    *
    * <p>
-   * Note that the parser is lenient and this check will pass for HTML that is
-   * not well-formed, or contains invalid tags, as long as the parser can
-   * determine the HTML context at the end of the string.
+   * Note that the parser is lenient and this method will return true for HTML
+   * that is not well-formed, or contains invalid tags, as long as the parser
+   * can determine the HTML context at the end of the string.
+   *
+   * @param html the HTML to check.
+   * @return true if the provided HTML string is complete.
+   */
+  public static boolean isCompleteHtml(String html) {
+    HtmlParser htmlParser = HtmlParserFactory.createParser();
+    try {
+      htmlParser.parse(html);
+    } catch (ParseException e) {
+      return false;
+    }
+    return htmlParser.getState() == HtmlParser.STATE_TEXT;
+  }
+
+  /**
+   * Conditionally checks if the provided HTML string is complete (ends in "inner HTML"
+   * context).
    *
    * <p>
    * This check is intended to assert a convention-of-use constraint of {@link
-   * com.google.gwt.safehtml.shared.SafeHtmlBuilder#appendHtmlConstant(String)}.
+   * com.google.gwt.safehtml.shared.SafeHtmlBuilder#appendHtmlConstant(String)}
+   * and {@link
+   * com.google.gwt.safehtml.shared.SafeHtmlUtils#fromSafeConstant(String)}.
    * Since the check is somewhat expensive, it is intended to run only in the
    * context of unit-tests or test environments, and not in production
    * environments. Hence this check will only execute under the following
@@ -93,6 +112,7 @@ public class SafeHtmlHostedModeUtils {
    * </ul>
    *
    * @param html the HTML to check
+   * @see #isCompleteHtml(String)
    */
   public static void maybeCheckCompleteHtml(String html) {
     if (GWT.isClient() || forceCheckCompleteHtml) {
@@ -132,15 +152,5 @@ public class SafeHtmlHostedModeUtils {
   public static void setForceCheckCompleteHtmlFromProperty() {
     forceCheckCompleteHtml =
         System.getProperty(FORCE_CHECK_COMPLETE_HTML) != null;
-  }
-
-  private static boolean isCompleteHtml(String html) {
-    HtmlParser htmlParser = HtmlParserFactory.createParser();
-    try {
-      htmlParser.parse(html);
-    } catch (ParseException e) {
-      return false;
-    }
-    return htmlParser.getState() == HtmlParser.STATE_TEXT;
   }
 }
