@@ -110,8 +110,8 @@ public abstract class Timer {
    *          milliseconds
    */
   public void schedule(int delayMillis) {
-    if (delayMillis <= 0) {
-      throw new IllegalArgumentException("must be positive");
+    if (delayMillis < 0) {
+      throw new IllegalArgumentException("must be non-negative");
     }
     cancel();
     isRepeating = false;
