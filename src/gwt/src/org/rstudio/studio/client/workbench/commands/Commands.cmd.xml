@@ -222,10 +222,10 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="vcsCreateBranch"/>
             <separator/>
+            <cmd refid="showShellDialog"/>
+            <separator/>
             <cmd refid="versionControlProjectSetup"/>
          </menu>
-         <separator/>
-         <cmd refid="showShellDialog"/>
          <separator/>
          <cmd refid="showOptions"/>
       </menu>
