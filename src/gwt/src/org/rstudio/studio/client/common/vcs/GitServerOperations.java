@@ -134,4 +134,9 @@ public interface GitServerOperations extends CryptoServerOperations
    
    void gitInitRepo(String directory,
                     ServerRequestCallback<Void> requestCallback);
+   
+   void gitCreateBranch(String fromRev,
+                        String name, 
+                        boolean remote,
+                        ServerRequestCallback<ConsoleProcess> requestCallback);
 }

@@ -117,6 +117,7 @@ public class Projects implements OpenProjectFileHandler,
                commands.vcsShowHistory().remove();
                commands.vcsPull().remove();
                commands.vcsPush().remove();
+               commands.vcsCreateBranch().remove();
             }
             
             // disable the open project in new window command in web mode

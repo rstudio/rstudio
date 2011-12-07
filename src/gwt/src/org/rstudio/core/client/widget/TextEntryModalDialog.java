@@ -12,6 +12,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.StringUtil;
 
@@ -81,6 +82,8 @@ public class TextEntryModalDialog extends ModalDialog<String>
       verticalPanel.add(captionLabel_);
       verticalPanel.add(textBox_);
       verticalPanel.add(extraOption_);
+      if (extraOption_.isVisible())
+         verticalPanel.getElement().getStyle().setMarginBottom(10, Unit.PX);
       return verticalPanel;
    }
   

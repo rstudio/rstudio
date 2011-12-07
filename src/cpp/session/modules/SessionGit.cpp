@@ -647,6 +647,73 @@ public:
                                "Git Pull", true, pHandle);
    }
 
+   core::Error createBranch(const std::string& fromRev,
+                            const std::string& name,
+                            bool createRemote,
+                            std::string* pHandle)
+   {
+      // build the appropriate shell command depending upon whether
+      // we are creating remote or not
+      std::string caption;
+      std::string command;
+
+      if (createRemote)
+      {
+         /*
+         git push origin <fromRev>:refs/heads/<name>
+         git fetch origin
+         git branch --track <name> origin/<name>
+         git checkout <name>
+         */
+
+         caption = "Create Remote Branch";
+
+         boost::format fmt("%1%:refs/heads/%2%");
+         boost::format fmt2("origin/%1%");
+
+         command = shell_utils::join_and( shell_utils::join_and(
+            git() << "push" << "origin" << boost::str(fmt % fromRev % name),
+            git() << "fetch" << "origin"),
+         shell_utils::join_and(
+            git() << "branch" << "--track" << name << boost::str(fmt2 % name),
+            git() << "checkout" << name));
+      }
+      else
+      {
+         /*
+         git branch <name> <fromRev>
+         git checkout <name>
+         */
+
+         caption = "Create Branch";
+
+         command = shell_utils::join_and(
+               git() << "branch" << name << fromRev,
+               git() << "checkout" << name);
+      }
+
+      std::cerr << command << std::endl;
+
+      // run the command
+      core::system::ProcessOptions options = procOptions();
+#ifdef _WIN32
+      options.detachProcess = true;
+#endif
+      options.workingDir = root_;
+
+      boost::shared_ptr<ConsoleProcess> ptrCP =
+            ConsoleProcess::create(command,
+                                   options,
+                                   caption,
+                                   true,
+                                   &enqueueRefreshEvent);
+
+      *pHandle = ptrCP->handle();
+
+      return Success();
+
+   }
+
    core::Error doDiffFile(const FilePath& filePath,
                           const FilePath* pCompareTo,
                           PatchMode mode,
@@ -1806,6 +1873,30 @@ Error vcsInitRepo(const json::JsonRpcRequest& request,
    }
 }
 
+Error vcsCreateBranch(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   std::string fromRev, name;
+   bool createRemote;
+   Error error = json::readParams(request.params,
+                                  &fromRev,
+                                  &name,
+                                  &createRemote);
+   if (error)
+      return error;
+
+   std::string handle;
+   error = s_git_.createBranch(fromRev, name, createRemote, &handle);
+   if (error)
+      return error;
+
+   setAskPassWindow(request);
+
+   pResponse->setResult(handle);
+
+   return Success();
+}
+
 std::string toBashPath(const std::string& path)
 {
 #ifdef _WIN32
@@ -2532,7 +2623,8 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_export_file", vcsExportFile))
       (bind(registerRpcMethod, "git_ssh_public_key", vcsSshPublicKey))
       (bind(registerRpcMethod, "git_has_repo", vcsHasRepo))
-      (bind(registerRpcMethod, "git_init_repo", vcsInitRepo));
+      (bind(registerRpcMethod, "git_init_repo", vcsInitRepo))
+      (bind(registerRpcMethod, "git_create_branch", vcsCreateBranch));
    error = initBlock.execute();
    if (error)
       return error;

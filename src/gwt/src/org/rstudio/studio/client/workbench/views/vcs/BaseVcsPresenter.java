@@ -19,6 +19,8 @@ public abstract class BaseVcsPresenter extends BasePresenter
 
    public abstract void onVcsPush();
    
+   public abstract void onVcsCreateBranch();
+   
    public abstract void showHistory(FileSystemItem fileFilter);
    
    public abstract void showDiff(FileSystemItem file);

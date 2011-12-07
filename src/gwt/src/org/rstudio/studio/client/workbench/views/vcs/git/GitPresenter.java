@@ -23,6 +23,7 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -30,16 +31,24 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.core.client.widget.TextEntryModalDialog;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.Value;
+import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.BaseVcsPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
@@ -248,6 +257,107 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
    public void onVcsShowHistory()
    {
       showHistory(null);
+   }
+   
+   @Override
+   public void onVcsCreateBranch()
+   {
+      // validate that we have an active branch
+      String activeBranch = gitState_.getBranchInfo().getActiveBranch();
+      if (StringUtil.isNullOrEmpty(activeBranch))
+      {
+         globalDisplay_.showErrorMessage(
+               "No Active Branch", 
+               "You cannote create a new branch because no branch is " +
+               "currently active.");
+         
+         return;
+      }
+      
+      // if the user has an active changelist we ask for one more
+      // level of confirmation (so they can remember to commit 
+      // those changes before branching)
+      if (!gitState_.getStatus().isEmpty())
+      {
+         globalDisplay_.showYesNoMessage(
+               MessageDialog.QUESTION, 
+               "Uncommited Changes", 
+               "The current branch '" + activeBranch + "' has uncommited " +
+               "changes. Are you sure you want to create a new branch from '" +
+               activeBranch + "' before committing your changes?",
+               new Operation() {
+
+                  @Override
+                  public void execute()
+                  {
+                     showCreateBranchDialog();
+                  }    
+               }, 
+               false);
+      }
+      else
+      {
+         showCreateBranchDialog();
+      }
+   }
+   
+   private void showCreateBranchDialog()
+   {
+      String activeBranch = gitState_.getBranchInfo().getActiveBranch();
+      
+      final Value<TextEntryModalDialog> pDialog =
+            new Value<TextEntryModalDialog>(null);
+      final TextEntryModalDialog dialog = new TextEntryModalDialog(
+            "Create Branch from '" + activeBranch + "'",
+            "New branch to be created from '" + activeBranch + "':",
+            "",
+            false,
+            gitState_.hasRemote() ? 
+                  "Also create branch on remote origin" : null,
+                  false,
+                  false,
+                  0,
+                  0,
+                  null,
+                  300,
+                  new ProgressOperationWithInput<String>()
+                  {
+               @Override
+               public void execute(String name, 
+                     final ProgressIndicator indicator)
+               {
+
+                  indicator.onProgress("Creating branch...");
+
+                  boolean createRemote = pDialog.getValue().getExtraOption();
+                  server_.gitCreateBranch(
+                        gitState_.getBranchInfo().getActiveBranch(),
+                        name, 
+                        createRemote, 
+                        new ServerRequestCallback<ConsoleProcess>() {
+                           @Override
+                           public void onResponseReceived(ConsoleProcess proc)
+                           {
+                              indicator.onCompleted();
+                              new ConsoleProgressDialog("Create Branch", 
+                                    proc).showModal();
+
+                           }
+
+                           @Override
+                           public void onError(ServerError error)
+                           {
+                              indicator.onError(error.getUserMessage());  
+                           }  
+                        }); 
+               }
+                  },
+                  null);
+
+      pDialog.setValue(dialog, false);
+
+      dialog.showModal();
+
    }
    
    @Override

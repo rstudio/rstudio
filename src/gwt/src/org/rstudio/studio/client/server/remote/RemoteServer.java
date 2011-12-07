@@ -1422,6 +1422,23 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, GIT_INIT_REPO, directory, requestCallback);
    }
+   
+   @Override
+   public void gitCreateBranch(
+                     String fromRev,
+                     String name, 
+                     boolean remote,
+                     ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(fromRev));
+      params.set(1, new JSONString(name));
+      params.set(2, JSONBoolean.getInstance(remote));
+      sendRequest(RPC_SCOPE, 
+                  GIT_CREATE_BRANCH, 
+                  params, 
+                  new ConsoleProcessCallbackAdapter(requestCallback));
+   }
 
    @Override
    public void gitDiffFile(String path,
@@ -2455,6 +2472,7 @@ public class RemoteServer implements Server
    private static final String GIT_SSH_PUBLIC_KEY = "git_ssh_public_key";
    private static final String GIT_HAS_REPO = "git_has_repo";
    private static final String GIT_INIT_REPO = "git_init_repo";
+   private static final String GIT_CREATE_BRANCH = "git_create_branch";
    private static final String GIT_DIFF_FILE = "git_diff_file";
    private static final String GIT_APPLY_PATCH = "git_apply_patch";
    private static final String GIT_HISTORY_COUNT = "git_history_count";

@@ -206,6 +206,11 @@ public class SVNPresenter extends BaseVcsPresenter
       // git specific,  not supported by svn
    }
    
+    @Override
+   public void onVcsCreateBranch()
+   {
+       // git specific,  not supported by svn
+   }
    
    @Override
    public void showHistory(FileSystemItem fileFilter)
