@@ -291,6 +291,8 @@ public class WorkbenchScreen extends Composite
    void onActivatePackages() { paneManager_.activateTab(Tab.Packages); }
    @Handler
    void onActivateHelp() { paneManager_.activateTab(Tab.Help); }
+   @Handler
+   void onActivateVcs() { paneManager_.activateTab(Tab.VCS); }
 
    @Handler
    void onShowOptions()
