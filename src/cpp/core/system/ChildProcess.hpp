@@ -183,6 +183,9 @@ public:
    // has it exited?
    bool exited();
 
+   // override of terminate (allow special handling for unix pty termination)
+   virtual Error terminate();
+
 private:
 
    void reportError(const Error& error)

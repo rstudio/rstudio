@@ -170,9 +170,15 @@ struct ChildProcess::Impl
       this->fdMaster = fdMaster;
    }
 
-   void closeAll(const ErrorLocation& location)
+   void closeAll(const ErrorLocation &location)
    {
-      pid = -1;
+      closeAll(true, location);
+   }
+
+   void closeAll(bool clearPid, const ErrorLocation& location)
+   {
+      if (clearPid)
+         pid = -1;
 
       if (fdMaster != -1)
       {
@@ -294,12 +300,16 @@ Error ChildProcess::terminate()
    // special code path for pseudoterminal
    if (options_.pseudoterminal)
    {
-      // NOTE: this code DOES NOT successfully kill the terminal child
-      // process on OSX. if we ever extend terminal support to desktop
-      // mode OR support server mode on OSX we'll need to resolve this
+      // on OSX you can only kill the child process by closing the
+      // terminal handles
+#ifdef __APPLE__
+      pImpl_->closeAll(false, ERROR_LOCATION);
+      return Success();
+#else
       return posixCall<int>(
                   boost::bind(::killpg, ::getpgid(pImpl_->pid), SIGTERM),
                   ERROR_LOCATION);
+#endif
    }
    else
    {
@@ -648,6 +658,20 @@ AsyncChildProcess::AsyncChildProcess(const std::string& command,
 AsyncChildProcess::~AsyncChildProcess()
 {
 }
+
+Error AsyncChildProcess::terminate()
+{
+#ifdef __APPLE__
+   if (options().pseudoterminal)
+   {
+      pAsyncImpl_->finishedStderr_ = true;
+      pAsyncImpl_->finishedStdout_ = true;
+   }
+#endif
+
+   return ChildProcess::terminate();
+}
+
 
 void AsyncChildProcess::poll()
 {

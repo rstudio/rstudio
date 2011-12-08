@@ -506,6 +506,13 @@ AsyncChildProcess::~AsyncChildProcess()
 {
 }
 
+
+Error AsyncChildProcess::terminate()
+{
+   return ChildProcess::terminate();
+}
+
+
 void AsyncChildProcess::poll()
 {
    // call onStarted if we haven't yet
