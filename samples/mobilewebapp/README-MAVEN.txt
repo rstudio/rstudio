@@ -13,7 +13,8 @@ In Eclipse, go to the File menu and choose:
 
 You can now browse the project in Eclipse.
 
-To launch your web app in GWT development mode
+To launch your web app in GWT development mode (see note below if you
+have gae.home set in settings.xml):
 
   Go to the Run menu item and select Run -> Run as -> Web Application.
 
@@ -47,7 +48,7 @@ build your project (http://maven.apache.org/). You will also need Java
 1.6 JDK. Maven uses the supplied 'pom.xml' file which describes
 exactly how to build your project. This file has been tested to work
 against Maven 2.2.1. The following assumes 'mvn' is on your command
-line path.
+line path. Also, see note below if you have gae.home set in settings.xml.
 
 To run development mode use the Maven GWT Plugin.
 
@@ -57,3 +58,17 @@ To compile your project for deployment, just type 'mvn package'.
 
 For a full listing of other goals, visit:
 http://mojo.codehaus.org/gwt-maven-plugin/plugin-info.html
+
+-- Important Note:
+
+The gae-maven-plugin requires a locally extracted copy of the App
+Engine SDK in order to run. The gae:unpack goal can do this for you
+automatically, by downloading and extracting the contents of
+com.google.appengine:appengine-java-sdk:zip into your local maven
+repository. The mobilewebapp POM should take care of this, as it
+includes the gae:unpack goal. However, if you have gae.home set in
+your settings.xml, it won't work properly. The gae:unpack goal will
+only work correctly if sdkDir / gae.home are not set. For more info,
+see this bug report
+(https://github.com/maven-gae-plugin/maven-gae-plugin/issues/8)
+against the maven-gae-plugin.
