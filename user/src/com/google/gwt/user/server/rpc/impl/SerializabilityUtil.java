@@ -38,9 +38,9 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.CRC32;
 
 /**
@@ -63,58 +63,41 @@ public class SerializabilityUtil {
   /**
    * A permanent cache of all computed CRCs on classes. This is safe to do
    * because a Class is guaranteed not to change within the lifetime of a
-   * ClassLoader (and thus, this Map). Access must be synchronized.
-   * 
-   * NOTE: after synchronizing on this field, it's possible to additionally
-   * synchronize on {@link #classCustomSerializerCache},
-   * {@link #classSerializableFieldsCache} or
-   * {@link #classServerCustomSerializerCache}, so be aware deadlock potential
-   * when changing this code.
+   * ClassLoader (and thus, this Map).
    */
   private static final Map<Class<?>, String> classCRC32Cache =
-      new IdentityHashMap<Class<?>, String>();
+      new ConcurrentHashMap<Class<?>, String>();
 
   /**
    * A permanent cache of all serializable fields on classes. This is safe to do
    * because a Class is guaranteed not to change within the lifetime of a
-   * ClassLoader (and thus, this Map). Access must be synchronized.
-   * 
-   * NOTE: to prevent deadlock, you may NOT synchronize {@link #classCRC32Cache}
-   * after synchronizing on this field.
+   * ClassLoader (and thus, this Map).
    */
   private static final Map<Class<?>, Field[]> classSerializableFieldsCache =
-      new IdentityHashMap<Class<?>, Field[]>();
+      new ConcurrentHashMap<Class<?>, Field[]>();
 
   /**
    * A permanent cache of all which classes onto custom field serializers. This
    * is safe to do because a Class is guaranteed not to change within the
-   * lifetime of a ClassLoader (and thus, this Map). Access must be
-   * synchronized.
-   * 
-   * NOTE: to prevent deadlock, you may NOT synchronize {@link #classCRC32Cache}
-   * after synchronizing on this field.
+   * lifetime of a ClassLoader (and thus, this Map).
    */
   private static final Map<Class<?>, Class<?>> classCustomSerializerCache =
-      new IdentityHashMap<Class<?>, Class<?>>();
+      new ConcurrentHashMap<Class<?>, Class<?>>();
 
   /**
    * A permanent cache of all which classes onto server-side custom field
    * serializers. This is safe to do because a Class is guaranteed not to change
-   * within the lifetime of a ClassLoader (and thus, this Map). Access must be
-   * synchronized.
-   * 
-   * NOTE: to prevent deadlock, you may NOT synchronize {@link #classCRC32Cache}
-   * after synchronizing on this field.
+   * within the lifetime of a ClassLoader (and thus, this Map).
    */
   private static final Map<Class<?>, Class<?>> classServerCustomSerializerCache =
-      new IdentityHashMap<Class<?>, Class<?>>();
+      new ConcurrentHashMap<Class<?>, Class<?>>();
 
   /**
    * Map of {@link Class} objects to singleton instances of that
    * {@link CustomFieldSerializer}.
    */
   private static final Map<Class<?>, CustomFieldSerializer<?>> CLASS_TO_SERIALIZER_INSTANCE =
-      new IdentityHashMap<Class<?>, CustomFieldSerializer<?>>();
+      new ConcurrentHashMap<Class<?>, CustomFieldSerializer<?>>();
 
   private static final String JRE_SERVER_SERIALIZER_PACKAGE = "com.google.gwt.user.server.rpc.core";
   private static final String JRE_SERIALIZER_PACKAGE = "com.google.gwt.user.client.rpc.core";
@@ -194,23 +177,21 @@ public class SerializabilityUtil {
    */
   public static Field[] applyFieldSerializationPolicy(Class<?> clazz) {
     Field[] serializableFields;
-    synchronized (classSerializableFieldsCache) {
-      serializableFields = classSerializableFieldsCache.get(clazz);
-      if (serializableFields == null) {
-        ArrayList<Field> fieldList = new ArrayList<Field>();
-        Field[] fields = clazz.getDeclaredFields();
-        for (Field field : fields) {
-          if (fieldQualifiesForSerialization(field)) {
-            fieldList.add(field);
-          }
+    serializableFields = classSerializableFieldsCache.get(clazz);
+    if (serializableFields == null) {
+      ArrayList<Field> fieldList = new ArrayList<Field>();
+      Field[] fields = clazz.getDeclaredFields();
+      for (Field field : fields) {
+        if (fieldQualifiesForSerialization(field)) {
+          fieldList.add(field);
         }
-        serializableFields = fieldList.toArray(new Field[fieldList.size()]);
-
-        // sort the fields by name
-        Arrays.sort(serializableFields, 0, serializableFields.length, FIELD_COMPARATOR);
-
-        classSerializableFieldsCache.put(clazz, serializableFields);
       }
+      serializableFields = fieldList.toArray(new Field[fieldList.size()]);
+
+      // sort the fields by name
+      Arrays.sort(serializableFields, 0, serializableFields.length, FIELD_COMPARATOR);
+
+      classSerializableFieldsCache.put(clazz, serializableFields);
     }
     return serializableFields;
   }
@@ -347,18 +328,16 @@ public class SerializabilityUtil {
   public static String getSerializationSignature(Class<?> instanceType,
       SerializationPolicy policy) {
     String result;
-    synchronized (classCRC32Cache) {
-      result = classCRC32Cache.get(instanceType);
-      if (result == null) {
-        CRC32 crc = new CRC32();
-        try {
-          generateSerializationSignature(instanceType, crc, policy);
-        } catch (UnsupportedEncodingException e) {
-          throw new RuntimeException("Could not compute the serialization signature", e);
-        }
-        result = Long.toString(crc.getValue());
-        classCRC32Cache.put(instanceType, result);
+    result = classCRC32Cache.get(instanceType);
+    if (result == null) {
+      CRC32 crc = new CRC32();
+      try {
+        generateSerializationSignature(instanceType, crc, policy);
+      } catch (UnsupportedEncodingException e) {
+        throw new RuntimeException("Could not compute the serialization signature", e);
       }
+      result = Long.toString(crc.getValue());
+      classCRC32Cache.put(instanceType, result);
     }
     return result;
   }
@@ -384,21 +363,19 @@ public class SerializabilityUtil {
     }
 
     Class<?> result;
-    synchronized (classCustomSerializerCache) {
-      result = classCustomSerializerCache.get(instanceType);
+    result = classCustomSerializerCache.get(instanceType);
+    if (result == null) {
+      result = computeHasCustomFieldSerializer(instanceType, false);
       if (result == null) {
-        result = computeHasCustomFieldSerializer(instanceType, false);
-        if (result == null) {
-          /*
-           * Use (result == instanceType) as a sentinel value when the class has
-           * no custom field serializer. We avoid using null as the sentinel
-           * value, because that would necessitate an additional containsKey()
-           * check in the most common case, inside the synchronized block.
-           */
-          result = instanceType;
-        }
-        classCustomSerializerCache.put(instanceType, result);
+        /*
+         * Use (result == instanceType) as a sentinel value when the class has
+         * no custom field serializer. We avoid using null as the sentinel
+         * value, because that would necessitate an additional containsKey()
+         * check in the most common case.
+         */
+        result = instanceType;
       }
+      classCustomSerializerCache.put(instanceType, result);
     }
     return (result == instanceType) ? null : result;
   }
@@ -417,21 +394,19 @@ public class SerializabilityUtil {
     }
 
     Class<?> result;
-    synchronized (classServerCustomSerializerCache) {
-      result = classServerCustomSerializerCache.get(instanceType);
+    result = classServerCustomSerializerCache.get(instanceType);
+    if (result == null) {
+      result = computeHasCustomFieldSerializer(instanceType, true);
       if (result == null) {
-        result = computeHasCustomFieldSerializer(instanceType, true);
-        if (result == null) {
-          /*
-           * Use (result == instanceType) as a sentinel value when the class has
-           * no custom field serializer. We avoid using null as the sentinel
-           * value, because that would necessitate an additional containsKey()
-           * check in the most common case, inside the synchronized block.
-           */
-          result = instanceType;
-        }
-        classServerCustomSerializerCache.put(instanceType, result);
+        /*
+         * Use (result == instanceType) as a sentinel value when the class has
+         * no custom field serializer. We avoid using null as the sentinel
+         * value, because that would necessitate an additional containsKey()
+         * check in the most common case.
+         */
+        result = instanceType;
       }
+      classServerCustomSerializerCache.put(instanceType, result);
     }
     return (result == instanceType) ? null : result;
   }
@@ -500,13 +475,6 @@ public class SerializabilityUtil {
    */
   static CustomFieldSerializer<?> loadCustomFieldSerializer(final Class<?> customSerializerClass)
       throws SerializationException {
-    /**
-     * Note that neither reading or writing to the CLASS_TO_SERIALIZER_INSTANCE
-     * is synchronized for performance reasons. This could cause get misses, put
-     * misses and the same CustomFieldSerializer to be instantiated more than
-     * once, but none of these are critical operations as
-     * CLASS_TO_SERIALIZER_INSTANCE is only a performance improving cache.
-     */
     CustomFieldSerializer<?> customFieldSerializer =
         CLASS_TO_SERIALIZER_INSTANCE.get(customSerializerClass);
     if (customFieldSerializer == null) {
