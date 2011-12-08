@@ -54,9 +54,14 @@ public:
                        int maxLines,
                        boost::shared_ptr<PosixShell>* ppPosixShell)
    {
+      // compute the prompt
+      std::string prompt = (aliasedCurrentPath().length() > 30) ? "\\W$ " :
+                                                                  "\\w$ ";
+
       // create posix shell and bind callbacks
       boost::shared_ptr<PosixShell> pShell(new PosixShell(maxLines));
       core::system::ProcessCallbacks cb;
+      cb.onStarted = boost::bind(&PosixShell::onStarted, pShell, _1, prompt);
       cb.onContinue = boost::bind(&PosixShell::onContinue, pShell, _1);
       cb.onStdout = boost::bind(&PosixShell::onStdout, pShell, _2);
       cb.onExit = boost::bind(&PosixShell::onExit, pShell, _1);
@@ -67,11 +72,7 @@ public:
 
       // terminal and prompt
       core::system::setenv(&shellEnv, "TERM", "dumb");
-      core::system::setenv(
-            &shellEnv,
-            "PS1",
-             (aliasedCurrentPath().length() > 30) ? "\\W$ " : "\\w$ ");
-
+      core::system::setenv(&shellEnv, "PS1", prompt);
 
       // add custom git path if necessary
       std::string gitBinDir = git::nonPathGitBinDir();
@@ -133,6 +134,16 @@ public:
 
 
 private:
+   void onStarted(core::system::ProcessOperations& ops,
+                  const std::string& prompt)
+   {
+      // on OSX the PS1 variable is getting reset at some point so
+      // we play it back on startup
+#ifdef __APPLE__
+      ops.writeToStdin("export PS1=\"" + prompt + "\"\n", false);
+#endif
+   }
+
    bool onContinue(core::system::ProcessOperations& ops)
    {
       if (terminate_)
