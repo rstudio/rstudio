@@ -241,6 +241,11 @@ int main(int argc, char * const argv[])
       // initialize log
       initializeSystemLog("rserver-pam", core::system::kLogLevelWarning);
 
+      // ignore SIGPIPE
+      Error error = core::system::ignoreSignal(core::system::SigPipe);
+      if (error)
+         LOG_ERROR(error);
+
       // ensure that we aren't being called inappropriately
       if (::isatty(STDIN_FILENO))
          return inappropriateUsage(ERROR_LOCATION);

@@ -211,6 +211,10 @@ int main(int argc, char* argv[])
                                   core::system::kLogLevelWarning,
                                   logPath);
 
+      // ignore SIGPIPE
+      Error error = core::system::ignoreSignal(core::system::SigPipe);
+      if (error)
+         LOG_ERROR(error);
 
       boost::scoped_ptr<QApplication> pApp;
       boost::scoped_ptr<ApplicationLaunch> pAppLaunch;
@@ -265,7 +269,7 @@ int main(int argc, char* argv[])
 
       // get install path
       FilePath installPath;
-      Error error = core::system::installPath("..", argc, argv, &installPath);
+      error = core::system::installPath("..", argc, argv, &installPath);
       if (error)
       {
          LOG_ERROR(error);
