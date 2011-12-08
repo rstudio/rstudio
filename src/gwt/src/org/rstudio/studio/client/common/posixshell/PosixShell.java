@@ -18,7 +18,6 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -90,14 +89,10 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
       return display_.getShellWidget();
    }
    
-   public void start(int width, 
-                     final Observer observer, 
-                     final ProgressIndicator progressIndicator)
+   public void start(int width, final Observer observer)
    {
       observer_ = observer;
-      
-      progressIndicator.onProgress("Starting shell...");
-      
+           
       server_.startPosixShell(
             width,
             display_.getMaxOutputLines(), 
@@ -107,14 +102,11 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
                public void onResponseReceived(PublicKeyInfo publicKeyInfo)
                {
                   publicKeyInfo_ = publicKeyInfo;
-                  progressIndicator.onCompleted();
                }
 
                @Override
                public void onError(ServerError error)
-               {
-                  progressIndicator.onCompleted();
-                  
+               {   
                   globalDisplay_.showErrorMessage(
                         "Error Starting Shell",
                         error.getUserMessage(),
