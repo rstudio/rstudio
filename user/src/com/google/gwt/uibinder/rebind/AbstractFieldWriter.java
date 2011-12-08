@@ -255,6 +255,9 @@ abstract class AbstractFieldWriter implements FieldWriter {
     } else {
       w.write("final %s %s = %s;", getQualifiedSourceName(), name, initializer);
     }
+    if (ownerField != null && ownerField.isProvided() && !designTime.isDesignTime()) {
+      w.write("assert %1$s != null : \"UiField %1$s with 'provided = true' was null\";", name);
+    }
 
     w.write("// Setup section.");
     for (String s : statements) {

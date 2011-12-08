@@ -22,6 +22,7 @@ import com.google.gwt.uibinder.test.client.LazyPanelParserIntegrationTest;
 import com.google.gwt.uibinder.test.client.LazyWidgetBuilderSafeUriIntegrationTest;
 import com.google.gwt.uibinder.test.client.SafeHtmlAsComponentsTest;
 import com.google.gwt.uibinder.test.client.UiBinderParserUiWithAttributesTest;
+import com.google.gwt.uibinder.test.client.UiProvidedNullTest;
 import com.google.gwt.uibinder.test.client.UiRendererEventsTest;
 import com.google.gwt.uibinder.test.client.UiRendererTest;
 
@@ -41,6 +42,7 @@ public class LazyWidgetBuilderSuite {
     suite.addTestSuite(LazyWidgetBuilderSafeUriIntegrationTest.class);
     suite.addTestSuite(SafeHtmlAsComponentsTest.class);
     suite.addTestSuite(UiBinderParserUiWithAttributesTest.class);
+    suite.addTestSuite(UiProvidedNullTest.class);
     suite.addTestSuite(UiRendererTest.class);
     suite.addTestSuite(UiRendererEventsTest.class);
 
