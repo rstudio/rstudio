@@ -112,12 +112,15 @@ public:
          return error;
 
       // write input
-      error = writeToStdin(input, true);
-      if (error)
+      if (!input.empty())
       {
-         Error terminateError = terminate();
-         if (terminateError)
-            LOG_ERROR(terminateError);
+         error = writeToStdin(input, true);
+         if (error)
+         {
+            Error terminateError = terminate();
+            if (terminateError)
+               LOG_ERROR(terminateError);
+         }
       }
 
       // read standard out if we didn't have a previous problem
