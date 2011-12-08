@@ -45,6 +45,11 @@ int main(int argc, char * const argv[])
       // initialize log
       initializeSystemLog("rpostback", core::system::kLogLevelWarning);
 
+      // ignore SIGPIPE
+      Error error = core::system::ignoreSignal(core::system::SigPipe);
+      if (error)
+         LOG_ERROR(error);
+
       // read program options 
       Options& options = session::postback::options();
       ProgramStatus status = options.read(argc, argv); 
@@ -69,7 +74,7 @@ int main(int argc, char * const argv[])
 
       // send it
       http::Response response;
-      Error error = http::sendRequest(streamPath, request,  &response);
+      error = sendRequest(streamPath, request, &response);
       if (error)
          return exitFailure(error);
       else

@@ -1905,6 +1905,11 @@ int main (int argc, char * const argv[])
       initializeSystemLog("rsession-" + core::system::username(),
                           core::system::kLogLevelWarning);
 
+      // ignore SIGPIPE
+      Error error = core::system::ignoreSignal(core::system::SigPipe);
+      if (error)
+         LOG_ERROR(error);
+
       // get main thread id (used to distinguish forks which occur
       // from the main thread vs. child threads)
       s_mainThreadId = boost::this_thread::get_id();
@@ -1958,7 +1963,7 @@ int main (int argc, char * const argv[])
 
       // ensure that the user scratch path exists
       FilePath userScratchPath = options.userScratchPath();
-      Error error = userScratchPath.ensureDirectory();
+      error = userScratchPath.ensureDirectory();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
 

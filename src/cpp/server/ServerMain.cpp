@@ -203,6 +203,11 @@ int main(int argc, char * const argv[])
       // initialize log
       initializeSystemLog("rserver", core::system::kLogLevelWarning);
 
+      // ignore SIGPIPE
+      Error error = core::system::ignoreSignal(core::system::SigPipe);
+      if (error)
+         LOG_ERROR(error);
+
       // read program options 
       Options& options = server::options();
       ProgramStatus status = options.read(argc, argv); 
@@ -244,7 +249,7 @@ int main(int argc, char * const argv[])
       }
 
       // automatically reap children
-      Error error = core::system::reapChildren();
+      error = core::system::reapChildren();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
