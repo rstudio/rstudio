@@ -20,7 +20,6 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.json.client.JSONNumber;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
@@ -41,7 +40,6 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.UnifiedParser;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
@@ -183,48 +181,42 @@ public class HistoryPresenter
                                             500,
                                             "Reading file...").getIndicator();
             
-            AceEditor.load(new Command()
-            {
-               public void execute()
-               {
-                  server_.gitShowFile(
-                    event.getRevision(), 
-                    event.getFilename(), 
-                    new ServerRequestCallback<String>() {
+            server_.gitShowFile(
+              event.getRevision(), 
+              event.getFilename(), 
+              new ServerRequestCallback<String>() {
 
-                     @Override
-                     public void onResponseReceived(String contents)
-                     {
-                        indicator.onCompleted();
-                        
-                        ViewFilePanel viewFilePanel = pViewFilePanel.get();
-                        viewFilePanel.addShowVcsHistoryHandler(
-                           new ShowVcsHistoryEvent.Handler() {
-                              @Override
-                              public void onShowVcsHistory(
-                                                ShowVcsHistoryEvent event)
-                              {
-                                  view_.getFileFilter().setValue(
-                                              event.getFileFilter()); 
-                                    
-                              }
-   
-                           });
-                        
-                        viewFilePanel.showFile(
-                              FileSystemItem.createFile(event.getFilename()),
-                              event.getRevision(), 
-                              contents);
-                     }
-                     
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        indicator.onError(error.getUserMessage());
-                     }
+               @Override
+               public void onResponseReceived(String contents)
+               {
+                  indicator.onCompleted();
                   
-                  });
+                  ViewFilePanel viewFilePanel = pViewFilePanel.get();
+                  viewFilePanel.addShowVcsHistoryHandler(
+                     new ShowVcsHistoryEvent.Handler() {
+                        @Override
+                        public void onShowVcsHistory(
+                                          ShowVcsHistoryEvent event)
+                        {
+                            view_.getFileFilter().setValue(
+                                        event.getFileFilter()); 
+                              
+                        }
+
+                     });
+                  
+                  viewFilePanel.showFile(
+                        FileSystemItem.createFile(event.getFilename()),
+                        event.getRevision(), 
+                        contents);
                }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  indicator.onError(error.getUserMessage());
+               }
+            
             });            
          }
          

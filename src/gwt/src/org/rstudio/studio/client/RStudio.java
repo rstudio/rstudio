@@ -84,11 +84,7 @@ public class RStudio implements EntryPoint
          public void execute()
          {
             Command dismissProgressAnimation = showProgress();
-            
-            if ("review_changes".equals(Window.Location.getParameter("view")))
-               delayLoadVCSApplication(dismissProgressAnimation);
-            else
-               delayLoadApplication(dismissProgressAnimation);
+            delayLoadApplication(dismissProgressAnimation);
          }
       });
    }
@@ -131,36 +127,25 @@ public class RStudio implements EntryPoint
                {
                   ensureStylesInjected();
                   
-                  RStudioGinjector.INSTANCE.getApplication().go(
+                  String view = Window.Location.getParameter("view");
+                  if ("review_changes".equals(view))
+                  {
+                     RStudioGinjector.INSTANCE.getVCSApplication().go(
+                           RootLayoutPanel.get(),
+                           dismissProgressAnimation);
+                  }
+                  else
+                  {
+                     RStudioGinjector.INSTANCE.getApplication().go(
                         RootLayoutPanel.get(),
                         dismissProgressAnimation);
+                  }
                }
             });
          }
       });
    }
    
-   private void delayLoadVCSApplication(final Command dismissProgressAnimation)
-   {
-      GWT.runAsync(new RunAsyncCallback()
-      {
-         public void onFailure(Throwable reason)
-         {
-            dismissProgressAnimation.execute();
-            Window.alert("Error: " + reason.getMessage());
-         }
-
-         public void onSuccess()
-         {
-            ensureStylesInjected();
-            
-            RStudioGinjector.INSTANCE.getVCSApplication().go(
-                        RootLayoutPanel.get(),
-                        dismissProgressAnimation);
-         }
-      });
-   }
-
    private void ensureStylesInjected()
    {
       ThemeResources.INSTANCE.themeStyles().ensureInjected();
