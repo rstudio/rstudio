@@ -32,7 +32,6 @@ import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -61,7 +60,7 @@ public class ConsoleProgressDialog extends ModalDialogBase
       String labelCell();
       String progressCell();
       String buttonCell();
-      String scrollPanel();
+      String shellDisplay();
    }
 
    interface Binder extends UiBinder<Widget, ConsoleProgressDialog>
@@ -99,10 +98,9 @@ public class ConsoleProgressDialog extends ModalDialogBase
 
       setText(title);
 
-      output_ = new PreWidget();
-      FontSizer.applyNormalFontSize(output_);
-      output_.getElement().getStyle().setMargin(4, Unit.PX);
-      scrollPanel_ = new BottomScrollPanel(output_);
+      display_ = new ConsoleProgressWidget();
+      display_.setReadOnly(true);
+     
 
       progressAnim_ = new Image(resources_.progress().getSafeUri());
 
@@ -114,14 +112,12 @@ public class ConsoleProgressDialog extends ModalDialogBase
 
       if (!StringUtil.isNullOrEmpty(initialOutput))
       {
-         console_.submit(initialOutput);
-         output_.setText(console_.toString());
+         display_.consoleWriteOutput(initialOutput);
       }
 
-      Style style = scrollPanel_.getElement().getStyle();
+      Style style = display_.getElement().getStyle();
       double skewFactor = (12 + BrowseCap.getFontSkew()) / 12.0;
       style.setWidth((int)(skewFactor * 660), Unit.PX);
-      style.setFontSize(12 + BrowseCap.getFontSkew(), Unit.PX);
 
       registrations_ = new HandlerRegistrations();
       if (consoleProcess != null)
@@ -197,16 +193,7 @@ public class ConsoleProgressDialog extends ModalDialogBase
    @Override
    public void onConsoleOutput(ConsoleOutputEvent event)
    {
-      boolean scrolledToBottom = scrollPanel_.isScrolledToBottom();
-      appendOutput(event);
-      if (scrolledToBottom)
-         scrollPanel_.scrollToBottom();
-   }
-
-   private void appendOutput(ConsoleOutputEvent event)
-   {
-      console_.submit(event.getOutput());
-      output_.setText(console_.toString());
+      display_.consoleWriteOutput(event.getOutput());
    }
 
    @Override
@@ -257,12 +244,11 @@ public class ConsoleProgressDialog extends ModalDialogBase
 
    private boolean running_ = true;
    private final ConsoleProcess consoleProcess_;
-   private final PreWidget output_;
    private HandlerRegistrations registrations_;
-   private VirtualConsole console_ = new VirtualConsole();
 
    @UiField(provided = true)
-   BottomScrollPanel scrollPanel_;
+   ConsoleProgressWidget display_;
+   
    @UiField(provided = true)
    Image progressAnim_;
    @UiField
