@@ -325,6 +325,7 @@ protected:
                                    options,
                                    caption,
                                    dialog,
+                                   false,
                                    &enqueueRefreshEvent);
 #else
       boost::shared_ptr<ConsoleProcess> ptrCP =
@@ -332,6 +333,7 @@ protected:
                                    options,
                                    caption,
                                    dialog,
+                                   false,
                                    &enqueueRefreshEvent);
 #endif
       *pHandle = ptrCP->handle();
@@ -736,6 +738,7 @@ public:
                                    options,
                                    caption,
                                    true,
+                                   false,
                                    &enqueueRefreshEvent);
 
       *pHandle = ptrCP->handle();
@@ -1736,6 +1739,7 @@ Error vcsExecuteCommand(const json::JsonRpcRequest& request,
          console_process::ConsoleProcess::create(command,
                                                  procOptions(),
                                                  command,
+                                                 false,
                                                  false,
                                                  &enqueueRefreshEvent);
 

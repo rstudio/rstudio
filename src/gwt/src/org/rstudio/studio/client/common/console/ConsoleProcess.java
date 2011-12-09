@@ -108,9 +108,10 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
             String command,
             String caption,
             boolean dialog,
+            boolean interactive,
             final ServerRequestCallback<ConsoleProcess> requestCallback)
       {
-         server_.processInit(command, caption, dialog,
+         server_.processInit(command, caption, dialog, interactive,
                              new ServerRequestCallback<String>()
          {
             @Override

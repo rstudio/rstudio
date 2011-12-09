@@ -42,6 +42,7 @@ private:
          const core::system::ProcessOptions& options,
          const std::string& caption,
          bool dialog,
+         bool interactive,
          const boost::function<void()>& onExit);
 
    ConsoleProcess(
@@ -50,6 +51,7 @@ private:
          const core::system::ProcessOptions& options,
          const std::string& caption,
          bool dialog,
+         bool interactive,
          const boost::function<void()>& onExit);
 
    void commonInit();
@@ -60,6 +62,7 @@ public:
          core::system::ProcessOptions options,
          const std::string& caption,
          bool dialog,
+         bool interactive,
          const boost::function<void()>& onExit=boost::function<void()>());
 
    static boost::shared_ptr<ConsoleProcess> create(
@@ -68,11 +71,13 @@ public:
          core::system::ProcessOptions options,
          const std::string& caption,
          bool dialog,
+         bool interactive,
          const boost::function<void()>& onExit=boost::function<void()>());
 
    virtual ~ConsoleProcess() {}
 
    std::string handle() const { return handle_; }
+   bool interactive() const { return interactive_; }
    std::string bufferedOutput() const;
 
    core::Error start();
@@ -102,6 +107,7 @@ private:
 
    std::string caption_;
    bool dialog_;
+   bool interactive_;
 
    // The handle that the client can use to refer to this process
    std::string handle_;

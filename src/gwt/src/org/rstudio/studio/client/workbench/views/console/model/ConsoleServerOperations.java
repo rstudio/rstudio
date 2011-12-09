@@ -32,6 +32,7 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
    void processInit(String command,
                     String caption,
                     boolean dialog,
+                    boolean interactive,
                     ServerRequestCallback<String> requestCallback);
 
    void processStart(String handle,

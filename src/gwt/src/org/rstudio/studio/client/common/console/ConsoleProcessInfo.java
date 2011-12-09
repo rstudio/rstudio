@@ -30,6 +30,10 @@ public class ConsoleProcessInfo extends JavaScriptObject
    public final native boolean isDialog() /*-{
       return this.dialog;
    }-*/;
+   
+   public final native boolean isInteractive()  /*-{
+      return this.interactive;
+   }-*/;
 
    public final native String getBufferedOutput() /*-{
       return this.buffered_output;

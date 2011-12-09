@@ -359,12 +359,14 @@ public class RemoteServer implements Server
    public void processInit(String command,
                            String caption,
                            boolean dialog,
+                           boolean interactive,
                            ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(command));
       params.set(1, new JSONString(caption));
       params.set(2, JSONBoolean.getInstance(dialog));
+      params.set(3, JSONBoolean.getInstance(interactive));
       sendRequest(RPC_SCOPE, PROCESS_INIT, params, requestCallback);
    }
 
