@@ -15,27 +15,21 @@ package org.rstudio.studio.client.common.posixshell;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
-import org.rstudio.studio.client.common.crypto.RSAEncrypt;
 import org.rstudio.studio.client.common.posixshell.events.PosixShellExitEvent;
 import org.rstudio.studio.client.common.posixshell.events.PosixShellOutputEvent;
 import org.rstudio.studio.client.common.posixshell.model.PosixShellServerOperations;
 import org.rstudio.studio.client.common.shell.ShellDisplay;
+import org.rstudio.studio.client.common.shell.ShellInteractionManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -58,24 +52,22 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
    public PosixShell(Display display,
                      GlobalDisplay globalDisplay,
                      EventBus eventBus,
-                     PosixShellServerOperations server)
+                     PosixShellServerOperations server,
+                     CryptoServerOperations cryptoServer)
    {
       // save references
       display_ = display;
       globalDisplay_ = globalDisplay;
       server_ = server;
       
+      manager_ = new ShellInteractionManager(display_, 
+                                             cryptoServer,
+                                             inputHandler_);
+           
       // set max lines
       int maxLines = 1000;
       display_.setMaxOutputLines(maxLines);
    
-      // subscribe to display events
-      display_.addCapturingKeyDownHandler(new InputKeyDownHandler());
-      
-      // hookup input editor display and command line history
-      input_ = display_.getInputEditorDisplay();
-      historyManager_ = new CommandLineHistory(input_);
-      
       // subscribe to server events
       eventBusHandlers_.add(
             eventBus.addHandler(PosixShellOutputEvent.TYPE, this));
@@ -101,7 +93,7 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
                @Override 
                public void onResponseReceived(PublicKeyInfo publicKeyInfo)
                {
-                  publicKeyInfo_ = publicKeyInfo;
+                  manager_.setPublicKeyInfo(publicKeyInfo);
                }
 
                @Override
@@ -120,7 +112,6 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
                            
                         });
                }
-
             });
    }
    
@@ -136,28 +127,7 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
    @Override
    public void onPosixShellOutput(PosixShellOutputEvent event)
    {
-      // if the output ends with a newline then just send it all
-      // in a big batch
-      String output = event.getOutput();
-      if (output.endsWith("\n"))
-      {
-         display_.consoleWriteOutput(output);
-      }
-      else
-      {
-         // look for the last newline and take the content after
-         // that as the prompt
-         int lastLoc = output.lastIndexOf('\n');
-         if (lastLoc != -1)
-         {
-            display_.consoleWriteOutput(output.substring(0, lastLoc));
-            maybeConsolePrompt(output.substring(lastLoc + 1));
-         }
-         else
-         {
-            maybeConsolePrompt(output);
-         }
-      }
+      manager_.processOutput(event.getOutput());
    }
    
    @Override
@@ -176,176 +146,38 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
       eventBusHandlers_.clear();
    }
    
-   // prompt as long as there are no special control characters
-   // (otherwise treat it as output)
-   private void maybeConsolePrompt(String output)
+ 
+   private CommandWithArg<String> inputHandler_ = new CommandWithArg<String>() 
    {
-      if (CONTROL_SPECIAL.match(output, 0) == null)
+      @Override
+      public void execute(String input)
       {
-         // determine whether we should add this to the history
-         boolean addToHistory = false;
-        
-         // figure out what the suffix of the default prompt is by inspecting
-         // the first prompt which comes our way
-         if (defaultPromptSuffix_ == null)
+         if (input != null)
          {
-            if (output.length() > 1)
-               defaultPromptSuffix_ = output.substring(output.length()-2);
-            else if (output.length() > 0)
-               defaultPromptSuffix_ = output;
-            
-            addToHistory = true;
-         }
-         else if (output.endsWith(defaultPromptSuffix_))
-         {
-            addToHistory = true;
-         }
-         
-         consolePrompt(output, addToHistory);
-      }
-      else
-      {
-         display_.consoleWriteOutput(output);
-      }
-   }
-    
-   private void consolePrompt(String prompt, boolean addToHistory)
-   {
-      boolean showInput = showInputForPrompt(prompt);
-      display_.consolePrompt(prompt, showInput) ;
-
-      addToHistory_ = addToHistory && showInput;
-      historyManager_.resetPosition();
-      lastPromptText_ = prompt ;
-   }
-   
-   private boolean showInputForPrompt(String prompt)
-   {
-      return !prompt.contains("password") && !prompt.contains("passphrase");
-   }
-   
-   private void navigateHistory(int offset)
-   {
-      historyManager_.navigateHistory(offset);
-      display_.ensureInputVisible();
-   }
-   
-   private final class InputKeyDownHandler implements KeyDownHandler
-   {
-      public void onKeyDown(KeyDownEvent event)
-      {
-         int keyCode = event.getNativeKeyCode();
-         int modifiers = KeyboardShortcut.getModifierValue(
-                                                event.getNativeEvent());
-         
-         if (event.isUpArrow() && modifiers == 0)
-         {
-            if (input_.getCurrentLineNum() == 0)
-            {
-               event.preventDefault();
-               event.stopPropagation();
-
-               navigateHistory(-1);
-            }
-         }
-         else if (event.isDownArrow() && modifiers == 0)
-         {
-            if (input_.getCurrentLineNum() == input_.getCurrentLineCount() - 1)
-            {
-               event.preventDefault();
-               event.stopPropagation();
-
-               navigateHistory(1);
-            }
-         }
-         else if (keyCode == KeyCodes.KEY_ENTER && modifiers == 0)
-         {
-            event.preventDefault();
-            event.stopPropagation();
-
-            processCommandEntry();
-         }
-         else if (modifiers == KeyboardShortcut.CTRL && keyCode == 'C')
-         {
-            event.preventDefault();
-            event.stopPropagation();
-         
-            if (display_.isPromptEmpty())
-               display_.consoleWriteOutput("^C");
-            
-            server_.interruptPosixShell(new VoidServerRequestCallback());
-         }
-         else if (modifiers == KeyboardShortcut.CTRL && keyCode == 'L')
-         {
-            event.preventDefault();
-            event.stopPropagation();
-           
-            display_.clearOutput();
-         }
-      }
-   }
-   
-   private void processCommandEntry()
-   {
-      // get the current prompt text
-      String promptText = display_.getPromptText();
-      
-      // process command entry 
-      String commandEntry = display_.processCommandEntry();
-      if (addToHistory_)
-         historyManager_.addToHistory(commandEntry);
-      
-      // input is entry + newline
-      String input = commandEntry + "\n";
-      
-      // update console with prompt and input
-      display_.consoleWritePrompt(promptText);
-      if (showInputForPrompt(promptText))
-         display_.consoleWriteInput(input);
-      else
-         display_.consoleWriteInput("\n");
-      
-      // encrypt input and send it to the to server
-      RSAEncrypt.encrypt_ServerOnly(
-         publicKeyInfo_, 
-         input, 
-         new CommandWithArg<String>() {
-            @Override
-            public void execute(String encryptedInput)
-            {
-               server_.sendInputToPosixShell(
-                  encryptedInput, 
+            server_.sendInputToPosixShell(
+                  input, 
                   new ServerRequestCallback<Void>() {
                      @Override
                      public void onError(ServerError error)
                      {
-                        // show the error in the console then re-prompt
-                        display_.consoleWriteError(
-                              "Error: " + error.getUserMessage() + "\n");
-                        if (lastPromptText_ != null)
-                           consolePrompt(lastPromptText_, false);
+                        manager_.displayError(error.getUserMessage());
                      }
                   });
-            }
-       });
-   }
+         }
+         else
+         {
+            server_.interruptPosixShell(new VoidServerRequestCallback());
+         }
+      }
+   };
+
+   private final ShellInteractionManager manager_;
    
    private final Display display_;
    private final GlobalDisplay globalDisplay_;
    private Observer observer_ = null;
    private final PosixShellServerOperations server_;
-   private PublicKeyInfo publicKeyInfo_;
- 
-   // indicates whether the next command should be added to history
-   private boolean addToHistory_ ;
-   private String lastPromptText_ ;
-   private String defaultPromptSuffix_ = null;
-
-   private final InputEditorDisplay input_ ;
-   private final CommandLineHistory historyManager_;
    
    private ArrayList<HandlerRegistration> eventBusHandlers_ = 
                                     new ArrayList<HandlerRegistration>();
-   
-   private static final Pattern CONTROL_SPECIAL = Pattern.create("[\r\b]");
 }

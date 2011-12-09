@@ -26,6 +26,7 @@ import org.rstudio.studio.client.common.DefaultGlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
+import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
@@ -210,7 +211,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(CodeSearchServerOperations.class).to(RemoteServer.class);
       bind(WorkbenchListsServerOperations.class).to(RemoteServer.class);
       bind(PosixShellServerOperations.class).to(RemoteServer.class);
-
+      bind(CryptoServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 
