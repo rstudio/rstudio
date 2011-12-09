@@ -41,5 +41,6 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/protobuf/protobuf-2.2.0/protobuf-java-rebased-2.2.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-r06/guava-r06-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/sourcemap-rebased.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/r1649/compiler-rebased.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
