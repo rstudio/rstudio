@@ -232,7 +232,7 @@ core::Error createConsoleProc(const ShellArgs& args,
                                 options,
                                 caption,
                                 dialog,
-                                false,
+                                true,
                                 &enqueueRefreshEvent);
 #else
    boost::shared_ptr<ConsoleProcess> ptrCP =
@@ -240,7 +240,7 @@ core::Error createConsoleProc(const ShellArgs& args,
                                 options,
                                 caption,
                                 dialog,
-                                false,
+                                true,
                                 &enqueueRefreshEvent);
 #endif
    *pHandle = ptrCP->handle();
