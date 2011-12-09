@@ -18,7 +18,15 @@
 #include <core/SafeConvert.hpp>
 #include <core/Settings.hpp>
 
+#include <core/system/Environment.hpp>
+
 #include <session/SessionModuleContext.hpp>
+
+#include "config.h"
+
+#ifdef RSTUDIO_SERVER
+#include <core/system/Crypto.hpp>
+#endif
 
 using namespace core;
 
@@ -83,6 +91,26 @@ void ConsoleProcess::commonInit()
 {
    handle_ = core::system::generateUuid(false);
 
+   // request a pseudoterminal if this is an interactive console process
+#ifndef _WIN32
+   if (interactive())
+   {
+      options_.pseudoterminal = core::system::Pseudoterminal(80, 1);
+
+      // define TERM to dumb (but first make sure we have an environment
+      // block to modify)
+      if (!options_.environment)
+      {
+         core::system::Options childEnv;
+         core::system::environment(&childEnv);
+         options_.environment = childEnv;
+      }
+      core::system::setenv(&(options_.environment.get()), "TERM", "dumb");
+
+   }
+#endif
+
+
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
    outputBuffer_.push_back('\n');
@@ -132,6 +160,11 @@ void ConsoleProcess::interrupt()
    interrupt_ = true;
 }
 
+void ConsoleProcess::ptyInterrupt()
+{
+   ptyInterrupt_ = true;
+}
+
 bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
 {
    if (!inputQueue_.empty())
@@ -141,6 +174,19 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
          LOG_ERROR(error);
 
       inputQueue_.clear();
+
+      // add a newline to the output buffer (we don't echo back the
+      // actual input because it is very likely to be a password
+      // or passphrase)
+      outputBuffer_.push_back('\n');
+   }
+
+   if (ptyInterrupt_)
+   {
+      ptyInterrupt_ = false;
+      Error error = ops.ptyInterrupt();
+      if (error)
+         LOG_ERROR(error);
    }
 
    return !interrupt_;
@@ -296,6 +342,26 @@ Error procInterrupt(const json::JsonRpcRequest& request,
    }
 }
 
+Error procPtyInterrupt(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+   Error error = json::readParams(request.params, &handle);
+   if (error)
+      return error;
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   if (pos != s_procs.end())
+   {
+      pos->second->ptyInterrupt();
+      return Success();
+   }
+   else
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         ERROR_LOCATION);
+   }
+}
+
 Error procReap(const json::JsonRpcRequest& request,
                json::JsonRpcResponse* pResponse)
 {
@@ -312,6 +378,34 @@ Error procReap(const json::JsonRpcRequest& request,
    else
    {
       return Success();
+   }
+}
+
+Error procWriteStdin(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string handle, input;
+   Error error = json::readParams(request.params, &handle, &input);
+   if (error)
+      return error;
+
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   if (pos != s_procs.end())
+   {
+#ifdef RSTUDIO_SERVER
+      error = core::system::crypto::rsaPrivateDecrypt(input, &input);
+      if (error)
+         return error;
+#endif
+
+      pos->second->enqueueInput(input);
+
+      return Success();
+   }
+   else
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         ERROR_LOCATION);
    }
 }
 
@@ -408,7 +502,9 @@ Error initialize()
       (bind(registerRpcMethod, "process_prepare", procInit))
       (bind(registerRpcMethod, "process_start", procStart))
       (bind(registerRpcMethod, "process_interrupt", procInterrupt))
-      (bind(registerRpcMethod, "process_reap", procReap));
+      (bind(registerRpcMethod, "process_pty_interrupt", procInterrupt))
+      (bind(registerRpcMethod, "process_reap", procReap))
+      (bind(registerRpcMethod, "process_write_stdin", procWriteStdin));
 
    return initBlock.execute();
 }

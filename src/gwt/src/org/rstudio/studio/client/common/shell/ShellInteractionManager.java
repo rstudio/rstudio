@@ -38,7 +38,12 @@ public class ShellInteractionManager
       publicKeyInfo_ = publicKeyInfo;
    }
    
-   public void processOutput(String output)
+   public void setHistoryEnabled(boolean enabled)
+   {
+      historyEnabled_ = enabled;
+   }
+   
+   public void displayOutput(String output)
    {
       // if the output ends with a newline then just send it all
       // in a big batch
@@ -63,7 +68,16 @@ public class ShellInteractionManager
       }
    }
    
-   public void processInput(CommandWithArg<String> onInputReady)
+   public void displayError(String error)
+   {
+      // show the error in the console then re-prompt
+      display_.consoleWriteError(
+            "Error: " + error + "\n");
+      if (lastPromptText_ != null)
+         consolePrompt(lastPromptText_, false);
+   }
+   
+   private void processInput(CommandWithArg<String> onInputReady)
    {
       // get the current prompt text
       String promptText = display_.getPromptText();
@@ -87,18 +101,7 @@ public class ShellInteractionManager
       encryptInput(input, onInputReady);
    }
  
-   
-   public void displayError(String error)
-   {
-      // show the error in the console then re-prompt
-      display_.consoleWriteError(
-            "Error: " + error + "\n");
-      if (lastPromptText_ != null)
-         consolePrompt(lastPromptText_, false);
-   }
-   
-   
-   public void navigateHistory(int offset)
+   private void navigateHistory(int offset)
    {
       historyManager_.navigateHistory(offset);
       display_.ensureInputVisible();
@@ -113,20 +116,23 @@ public class ShellInteractionManager
          // determine whether we should add this to the history
          boolean addToHistory = false;
         
-         // figure out what the suffix of the default prompt is by inspecting
-         // the first prompt which comes our way
-         if (defaultPromptSuffix_ == null)
+         if (historyEnabled_)
          {
-            if (output.length() > 1)
-               defaultPromptSuffix_ = output.substring(output.length()-2);
-            else if (output.length() > 0)
-               defaultPromptSuffix_ = output;
-            
-            addToHistory = true;
-         }
-         else if (output.endsWith(defaultPromptSuffix_))
-         {
-            addToHistory = true;
+            // figure out what the suffix of the default prompt is by inspecting
+            // the first prompt which comes our way
+            if (defaultPromptSuffix_ == null)
+            {
+               if (output.length() > 1)
+                  defaultPromptSuffix_ = output.substring(output.length()-2);
+               else if (output.length() > 0)
+                  defaultPromptSuffix_ = output;
+               
+               addToHistory = true;
+            }
+            else if (output.endsWith(defaultPromptSuffix_))
+            {
+               addToHistory = true;
+            }
          }
          
          consolePrompt(output, addToHistory);
@@ -160,7 +166,7 @@ public class ShellInteractionManager
          int modifiers = KeyboardShortcut.getModifierValue(
                                                 event.getNativeEvent());
          
-         if (event.isUpArrow() && modifiers == 0)
+         if (historyEnabled_ && event.isUpArrow() && modifiers == 0)
          {
             InputEditorDisplay input = display_.getInputEditorDisplay();
             if (input.getCurrentLineNum() == 0)
@@ -171,7 +177,7 @@ public class ShellInteractionManager
                navigateHistory(-1);
             }
          }
-         else if (event.isDownArrow() && modifiers == 0)
+         else if (historyEnabled_ && event.isDownArrow() && modifiers == 0)
          {
             InputEditorDisplay input = display_.getInputEditorDisplay();
             if (input.getCurrentLineNum() == input.getCurrentLineCount() - 1)
@@ -248,6 +254,7 @@ public class ShellInteractionManager
    private final ShellDisplay display_;
    
    private boolean addToHistory_ ;
+   private boolean historyEnabled_ = true;
    private String lastPromptText_ ;
    private String defaultPromptSuffix_ = null;
 

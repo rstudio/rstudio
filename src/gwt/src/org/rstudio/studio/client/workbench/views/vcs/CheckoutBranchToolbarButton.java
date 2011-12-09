@@ -43,7 +43,8 @@ public class CheckoutBranchToolbarButton extends BranchToolbarButton
                      public void onResponseReceived(ConsoleProcess proc)
                      {
                         new ConsoleProgressDialog("Checkout " + branch,
-                                                  proc).showModal();
+                                                  proc,
+                                                  server).showModal();
                      }
                   });
             

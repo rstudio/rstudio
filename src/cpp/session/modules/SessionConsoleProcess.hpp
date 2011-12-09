@@ -82,6 +82,9 @@ public:
 
    core::Error start();
    void enqueueInput(const std::string& input);
+
+   void ptyInterrupt();
+
    void interrupt();
 
    core::system::ProcessCallbacks createProcessCallbacks();
@@ -114,6 +117,8 @@ private:
 
    // Whether the process has been successfully started
    bool started_;
+   // Whether the process should issue a pty interrupt
+   bool ptyInterrupt_;
    // Whether the process should be stopped
    bool interrupt_;
 

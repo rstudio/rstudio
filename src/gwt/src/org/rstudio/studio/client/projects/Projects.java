@@ -265,7 +265,8 @@ public class Projects implements OpenProjectFileHandler,
                         {
                            final ConsoleProgressDialog consoleProgressDialog = new ConsoleProgressDialog(
                                  "Clone Repository",
-                                 proc);
+                                 proc,
+                                 server_);
                            consoleProgressDialog.showModal();
            
                            proc.addProcessExitHandler(new ProcessExitEvent.Handler()

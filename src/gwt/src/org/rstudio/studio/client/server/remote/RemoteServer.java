@@ -382,6 +382,13 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, PROCESS_INTERRUPT, handle, requestCallback);
    }
+   
+   @Override
+   public void processPtyInterrupt(String handle,
+                                   ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, PROCESS_PTY_INTERRUPT, handle, requestCallback);
+   }
 
    @Override
    public void processReap(String handle,
@@ -2379,6 +2386,7 @@ public class RemoteServer implements Server
    private static final String PROCESS_INIT = "process_init";
    private static final String PROCESS_START = "process_start";
    private static final String PROCESS_INTERRUPT = "process_interrupt";
+   private static final String PROCESS_PTY_INTERRUPT = "process_pty_interrupt";
    private static final String PROCESS_REAP = "process_reap";
    private static final String PROCESS_WRITE_STDIN = "process_write_stdin";
 

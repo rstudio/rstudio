@@ -29,7 +29,9 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.*;
+
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -39,6 +41,8 @@ import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent.Handler;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
+import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
+import org.rstudio.studio.client.common.shell.ShellInteractionManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -71,20 +75,34 @@ public class ConsoleProgressDialog extends ModalDialogBase
       resources_.styles().ensureInjected();
    }
 
-   public ConsoleProgressDialog(String title, ConsoleProcess consoleProcess)
+   public ConsoleProgressDialog(String title, 
+                                ConsoleProcess consoleProcess,
+                                CryptoServerOperations server)
    {
-      this(title, consoleProcess, "", null);
+      this(title, false, consoleProcess, server);
+   }
+   
+   public ConsoleProgressDialog(String title,
+                                boolean interactive,
+                                ConsoleProcess consoleProcess,
+                                CryptoServerOperations server)
+   {
+      this(title, consoleProcess, interactive, "", null, server);
    }
 
-   public ConsoleProgressDialog(String title, String output, int exitCode)
+   public ConsoleProgressDialog(String title, 
+                                String output, 
+                                int exitCode)
    {
-      this(title, null, output, exitCode);
+      this(title, null, false, output, exitCode, null);
    }
 
    public ConsoleProgressDialog(String title,
                                 ConsoleProcess consoleProcess,
+                                boolean interactive,
                                 String initialOutput,
-                                Integer exitCode)
+                                Integer exitCode,
+                                CryptoServerOperations server)
    {
       if (consoleProcess == null && exitCode == null)
       {
@@ -95,12 +113,24 @@ public class ConsoleProgressDialog extends ModalDialogBase
       addStyleName(resources_.styles().consoleProgressDialog());
 
       consoleProcess_ = consoleProcess;
+      interactive_ = interactive;
 
       setText(title);
 
       display_ = new ConsoleProgressWidget();
-      display_.setReadOnly(true);
      
+      if (interactive_)
+      {
+         shellManager_ = new ShellInteractionManager(display_,
+                                                     server,
+                                                     inputHandler_);
+         shellManager_.setHistoryEnabled(false);
+      }
+      else
+      {
+         display_.setReadOnly(true);
+         shellManager_ = null;
+      }
 
       progressAnim_ = new Image(resources_.progress().getSafeUri());
 
@@ -112,7 +142,7 @@ public class ConsoleProgressDialog extends ModalDialogBase
 
       if (!StringUtil.isNullOrEmpty(initialOutput))
       {
-         display_.consoleWriteOutput(initialOutput);
+         writeOutput(initialOutput);
       }
 
       Style style = display_.getElement().getStyle();
@@ -156,6 +186,15 @@ public class ConsoleProgressDialog extends ModalDialogBase
    {
       return centralWidget_;
    }
+   
+   @Override
+   protected void onDialogShown()
+   {
+      super.onDialogShown();
+      
+      if (interactive_)
+         display_.getInputEditorDisplay().setFocus(true);
+   }
 
    @Override
    protected void onUnload()
@@ -177,7 +216,7 @@ public class ConsoleProgressDialog extends ModalDialogBase
             return;
          }
          else if (event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ENTER)
-         {
+         {   
             if (!running_)
             {
                stopButton_.click();
@@ -193,13 +232,22 @@ public class ConsoleProgressDialog extends ModalDialogBase
    @Override
    public void onConsoleOutput(ConsoleOutputEvent event)
    {
-      display_.consoleWriteOutput(event.getOutput());
+      writeOutput(event.getOutput());
    }
 
    @Override
    public void onProcessExit(ProcessExitEvent event)
    {
       setExitCode(event.getExitCode());
+      display_.setReadOnly(true);
+   }
+   
+   private void writeOutput(String output)
+   {
+      if (interactive_)
+         shellManager_.displayOutput(output);
+      else
+         display_.consoleWriteOutput(output);
    }
 
    private void setExitCode(int exitCode)
@@ -241,13 +289,47 @@ public class ConsoleProgressDialog extends ModalDialogBase
       // Whether success or failure, we don't want to interrupt again
       running_ = false;
    }
+   
+   private CommandWithArg<String> inputHandler_ = new CommandWithArg<String>() 
+   {
+      @Override
+      public void execute(String input)
+      {         
+         if (input != null)
+         {
+            consoleProcess_.writeStandardInput(
+                  input, 
+                  new VoidServerRequestCallback() {
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        shellManager_.displayError(error.getUserMessage());
+                     }
+                  });
+         }
+         else
+         {
+            consoleProcess_.ptyInterrupt(new VoidServerRequestCallback() {
+               @Override
+               public void onError(ServerError error)
+               {
+                  shellManager_.displayError(error.getUserMessage());
+               }
+            });
+         }
+      }
+
+   };
 
    private boolean running_ = true;
    private final ConsoleProcess consoleProcess_;
+   private final boolean interactive_;
    private HandlerRegistrations registrations_;
 
    @UiField(provided = true)
    ConsoleProgressWidget display_;
+   
+   private final ShellInteractionManager shellManager_;
    
    @UiField(provided = true)
    Image progressAnim_;
