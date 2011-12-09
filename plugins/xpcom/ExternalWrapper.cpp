@@ -24,7 +24,9 @@
 #include "nsServiceManagerUtils.h"
 #include "nsIPromptService.h"
 #include "nsIDOMWindow.h"
+#if GECKO_VERSION <= 7000
 #include "nsIDOMWindowInternal.h"
+#endif //GECKO_VERSION
 #include "nsIDOMLocation.h"
 #include "nsXPCOMStrings.h"
 #include "nsICategoryManager.h"
