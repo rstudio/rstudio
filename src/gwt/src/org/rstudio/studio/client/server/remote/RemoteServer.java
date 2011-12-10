@@ -355,21 +355,6 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, RESET_CONSOLE_ACTIONS, requestCallback);
    }
 
-   @Override
-   public void processInit(String command,
-                           String caption,
-                           boolean dialog,
-                           boolean interactive,
-                           ServerRequestCallback<String> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(command));
-      params.set(1, new JSONString(caption));
-      params.set(2, JSONBoolean.getInstance(dialog));
-      params.set(3, JSONBoolean.getInstance(interactive));
-      sendRequest(RPC_SCOPE, PROCESS_INIT, params, requestCallback);
-   }
-
    public void processStart(String handle,
                             ServerRequestCallback<Void> requestCallback)
    {
@@ -2383,7 +2368,6 @@ public class RemoteServer implements Server
    private static final String GET_COMPLETIONS = "get_completions";
    private static final String GET_HELP_AT_CURSOR = "get_help_at_cursor";
 
-   private static final String PROCESS_INIT = "process_init";
    private static final String PROCESS_START = "process_start";
    private static final String PROCESS_INTERRUPT = "process_interrupt";
    private static final String PROCESS_PTY_INTERRUPT = "process_pty_interrupt";

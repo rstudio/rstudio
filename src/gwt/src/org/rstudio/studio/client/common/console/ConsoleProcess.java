@@ -101,38 +101,6 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
          });
       }
 
-      /**
-       * Creates a new ConsoleProcess object for the given command but
-       * doesn't actually start the process on the server. Instead, the
-       * process must be started manually later using the ConsoleProcess.start
-       * method. This allows client code to attach event handlers before
-       * execution begins.
-       */
-      public void allocNewProcess(
-            String command,
-            String caption,
-            boolean dialog,
-            boolean interactive,
-            final ServerRequestCallback<ConsoleProcess> requestCallback)
-      {
-         server_.processInit(command, caption, dialog, interactive,
-                             new ServerRequestCallback<String>()
-         {
-            @Override
-            public void onResponseReceived(String response)
-            {
-               requestCallback.onResponseReceived(
-                     new ConsoleProcess(server_, eventBus_, response));
-            }
-
-            @Override
-            public void onError(ServerError error)
-            {
-               requestCallback.onError(error);
-            }
-         });
-      }
-
       public void connectToProcess(
             String handle,
             ServerRequestCallback<ConsoleProcess> requestCallback)
