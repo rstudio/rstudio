@@ -50,7 +50,8 @@ namespace {
 } // anonymous namespace
 
 ConsoleProcess::ConsoleProcess()
-   : dialog_(false), interactive_(false), started_(true), interrupt_(false),
+   : dialog_(false), interactive_(false), started_(true),
+     ptyInterrupt_(false), interrupt_(false),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    // When we retrieve from outputBuffer, we only want complete lines. Add a
@@ -66,7 +67,8 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
                                const boost::function<void()>& onExit)
    : command_(command), options_(options), caption_(caption), dialog_(dialog),
      interactive_(interactive),
-     started_(false), interrupt_(false), outputBuffer_(OUTPUT_BUFFER_SIZE),
+     started_(false),  ptyInterrupt_(false), interrupt_(false),
+     outputBuffer_(OUTPUT_BUFFER_SIZE),
      onExit_(onExit)
 {
    commonInit();
@@ -81,7 +83,8 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
                                const boost::function<void()>& onExit)
    : program_(program), args_(args), options_(options), caption_(caption), dialog_(dialog),
      interactive_(interactive),
-     started_(false), interrupt_(false), outputBuffer_(OUTPUT_BUFFER_SIZE),
+     started_(false),  ptyInterrupt_(false), interrupt_(false),
+     outputBuffer_(OUTPUT_BUFFER_SIZE),
      onExit_(onExit)
 {
    commonInit();
