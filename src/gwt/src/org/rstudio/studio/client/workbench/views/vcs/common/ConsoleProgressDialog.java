@@ -182,13 +182,6 @@ public class ConsoleProgressDialog extends ModalDialogBase
    {
       return centralWidget_;
    }
-   
-   @Override
-   protected void onDialogShown()
-   {
-      super.onDialogShown();
-      display_.getInputEditorDisplay().setFocus(true);
-   }
 
    @Override
    protected void onUnload()
@@ -234,6 +227,7 @@ public class ConsoleProgressDialog extends ModalDialogBase
    {
       setExitCode(event.getExitCode());
       display_.setReadOnly(true);
+      stopButton_.setFocus(true);
    }
    
    private void setExitCode(int exitCode)
