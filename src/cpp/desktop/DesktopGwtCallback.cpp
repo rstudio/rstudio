@@ -487,7 +487,7 @@ QVariant GwtCallback::promptForText(QString title,
       // console progress dialogs which are at the top of the screen)
       QRect parentGeom = pOwnerWindow_->geometry();
       int x = parentGeom.left() + (parentGeom.width() / 2) - (dialog.width() / 2);
-      dialog.move(x, pOwnerWindow_->geometry().top() + 50);
+      dialog.move(x, pOwnerWindow_->geometry().top() + 75);
    }
    if (numbersOnly)
       dialog.setNumbersOnly(true);
