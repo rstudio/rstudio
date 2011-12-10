@@ -1634,7 +1634,7 @@ Error vcsHistoryCount(const json::JsonRpcRequest& request,
 
    boost::algorithm::trim(searchText);
 
-   int count;
+   int count = 0;
    error = s_git_.logLength(rev, fileFilter, searchText, &count);
    if (error)
       return error;
