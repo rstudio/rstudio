@@ -18,6 +18,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
@@ -144,24 +145,29 @@ public abstract class ModalDialogBase extends DialogBox
          originallyActiveElement_.blur();
 
       // position the dialog
-      positionAndShowDialog();
-
-      // defer shown notification to allow all elements to render
-      // before attempting to interact w/ them programatically (e.g. setFocus)
-      Timer timer = new Timer() {
-         public void run() {
-            onDialogShown();
+      positionAndShowDialog(new Command() {
+         @Override
+         public void execute()
+         {
+            // defer shown notification to allow all elements to render
+            // before attempting to interact w/ them programatically (e.g. setFocus)
+            Timer timer = new Timer() {
+               public void run() {
+                  onDialogShown();
+               }
+            };
+            timer.schedule(100); 
          }
-      };
-      timer.schedule(100); 
+      });
    }
 
 
    protected abstract Widget createMainWidget() ;
    
-   protected void positionAndShowDialog()
+   protected void positionAndShowDialog(Command onCompleted)
    {
       super.center();
+      onCompleted.execute();
    }
    
    protected void onDialogShown()

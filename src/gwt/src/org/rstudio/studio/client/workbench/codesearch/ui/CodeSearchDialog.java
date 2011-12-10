@@ -18,6 +18,7 @@ import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -52,7 +53,7 @@ public class CodeSearchDialog extends ModalDialogBase
    }
    
    @Override
-   protected void positionAndShowDialog()
+   protected void positionAndShowDialog(final Command onCompleted)
    {
       setPopupPositionAndShow(new PositionCallback() {
          @Override
@@ -60,6 +61,7 @@ public class CodeSearchDialog extends ModalDialogBase
          {
             int left = (Window.getClientWidth()/2) - (offsetWidth/2);
             setPopupPosition(left, 15);
+            onCompleted.execute();
             
          }
          

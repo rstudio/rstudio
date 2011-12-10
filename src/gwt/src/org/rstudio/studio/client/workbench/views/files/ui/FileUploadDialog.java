@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.views.files.ui;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -49,7 +50,7 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
    }
    
    @Override
-   protected void positionAndShowDialog()
+   protected void positionAndShowDialog(final Command onCompleted)
    {
       final PopupPanel thisPanel = this; 
       setPopupPositionAndShow(new PopupPanel.PositionCallback() {
@@ -62,6 +63,8 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
             top = Math.min(top, 200);
             
             thisPanel.setPopupPosition(left, top);
+            
+            onCompleted.execute();
          }
       });
    }
