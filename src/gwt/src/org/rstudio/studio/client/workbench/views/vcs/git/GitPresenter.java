@@ -314,14 +314,14 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
             false,
             gitState_.hasRemote() ? 
                   "Also create branch on remote origin" : null,
-                  false,
-                  false,
-                  0,
-                  0,
-                  null,
-                  300,
-                  new ProgressOperationWithInput<String>()
-                  {
+            false,
+            false,
+            0,
+            0,
+            null,
+            300,
+            new ProgressOperationWithInput<String>()
+            {
                @Override
                public void execute(String name, 
                      final ProgressIndicator indicator)
@@ -351,8 +351,8 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
                            }  
                         }); 
                }
-                  },
-                  null);
+            },
+            null);
 
       pDialog.setValue(dialog, false);
 
