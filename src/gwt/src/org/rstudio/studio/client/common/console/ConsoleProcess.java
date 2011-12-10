@@ -60,7 +60,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                   final ConsoleProcessInfo proc = procs.get(i);
 
                   connectToProcess(
-                        proc.getHandle(),
+                        proc,
                         new ServerRequestCallback<ConsoleProcess>()
                         {
                            @Override
@@ -72,7 +72,6 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                                  new ConsoleProgressDialog(
                                        proc.getCaption(),
                                        cproc,
-                                       proc.isInteractive(),
                                        proc.getBufferedOutput(),
                                        proc.getExitCode(),
                                        cryptoServer).showModal();
@@ -102,14 +101,12 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
       }
 
       public void connectToProcess(
-            String handle,
+            ConsoleProcessInfo procInfo,
             ServerRequestCallback<ConsoleProcess> requestCallback)
       {
-         // NOTE: We could roundtrip to the server to validate the handle, but
-         //   right now there are no codepaths that would warrant that
          requestCallback.onResponseReceived(new ConsoleProcess(server_,
                                                                eventBus_,
-                                                               handle));
+                                                               procInfo));
       }
 
       private final ConsoleServerOperations server_;
@@ -118,10 +115,10 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
 
    private ConsoleProcess(ConsoleServerOperations server,
                           EventBus eventBus,
-                          final String handle)
+                          final ConsoleProcessInfo procInfo)
    {
       server_ = server;
-      handle_ = handle;
+      procInfo_ = procInfo;
       registrations_.add(eventBus.addHandler(
             ServerConsoleOutputEvent.TYPE,
             new ServerConsoleOutputEvent.Handler()
@@ -129,7 +126,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                @Override
                public void onServerConsoleProcess(ServerConsoleOutputEvent event)
                {
-                  if (event.getProcessHandle().equals(handle))
+                  if (event.getProcessHandle().equals(procInfo.getHandle()))
                      fireEvent(new ConsoleOutputEvent(event.getOutput(),
                                                       event.getError()));
                }
@@ -144,37 +141,42 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                   // no more events are coming
                   registrations_.removeHandler();
 
-                  if (event.getProcessHandle().equals(handle))
+                  if (event.getProcessHandle().equals(procInfo.getHandle()))
                      fireEvent(new ProcessExitEvent(event.getExitCode()));
                }
             }
       ));
    }
+   
+   public ConsoleProcessInfo getProcessInfo()
+   {
+      return procInfo_;
+   }
 
    public void start(ServerRequestCallback<Void> requestCallback)
    {
-      server_.processStart(handle_, requestCallback);
+      server_.processStart(procInfo_.getHandle(), requestCallback);
    }
 
    public void writeStandardInput(String input,
                                   ServerRequestCallback<Void> requestCallback)
    {
-      server_.processWriteStdin(handle_, input, requestCallback);
+      server_.processWriteStdin(procInfo_.getHandle(), input, requestCallback);
    }
 
    public void interrupt(ServerRequestCallback<Void> requestCallback)
    {
-      server_.processInterrupt(handle_, requestCallback);
+      server_.processInterrupt(procInfo_.getHandle(), requestCallback);
    }
 
    public void ptyInterrupt(ServerRequestCallback<Void> requestCallback)
    {
-      server_.processPtyInterrupt(handle_, requestCallback);
+      server_.processPtyInterrupt(procInfo_.getHandle(), requestCallback);
    }
    
    public void reap(ServerRequestCallback<Void> requestCallback)
    {
-      server_.processReap(handle_, requestCallback);
+      server_.processReap(procInfo_.getHandle(), requestCallback);
    }
 
    @Override
@@ -200,5 +202,5 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final ConsoleServerOperations server_;
-   private final String handle_;
+   private final ConsoleProcessInfo procInfo_;
 }

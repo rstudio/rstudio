@@ -509,7 +509,7 @@ public class GitReviewPresenter implements ReviewPresenter
                                  view_.getCommitMessage().setText("");
                            }
                         });
-                        new ConsoleProgressDialog("Commit", proc, server_).showModal();
+                        new ConsoleProgressDialog(proc, server_).showModal();
                      }
                   });
          }

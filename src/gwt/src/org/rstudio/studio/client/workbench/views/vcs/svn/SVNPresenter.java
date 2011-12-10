@@ -126,7 +126,7 @@ public class SVNPresenter extends BaseVcsPresenter
                @Override
                public void onResponseReceived(ConsoleProcess response)
                {
-                  new ConsoleProgressDialog("SVN Update", true, response, server_).showModal();
+                  new ConsoleProgressDialog(response, server_).showModal();
                }
             });
          }

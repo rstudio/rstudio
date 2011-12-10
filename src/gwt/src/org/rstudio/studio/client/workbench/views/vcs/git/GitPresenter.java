@@ -339,9 +339,8 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
                            public void onResponseReceived(ConsoleProcess proc)
                            {
                               indicator.onCompleted();
-                              new ConsoleProgressDialog("Create Branch", 
-                                    proc,
-                                    server_).showModal();
+                              new ConsoleProgressDialog(proc,
+                                                        server_).showModal();
 
                            }
 

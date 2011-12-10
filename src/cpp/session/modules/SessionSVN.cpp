@@ -42,6 +42,7 @@
 using namespace core;
 using namespace core::shell_utils;
 using namespace session::modules::vcs_utils;
+using namespace session::modules::console_process;
 
 namespace session {
 namespace modules {
@@ -211,11 +212,9 @@ std::vector<std::string> globalArgs(
 core::Error createConsoleProc(const ShellArgs& args,
                               const std::string& caption,
                               bool dialog,
-                              std::string* pHandle,
+                              boost::shared_ptr<ConsoleProcess>* ppCP,
                               const boost::optional<FilePath>& workingDir=boost::optional<FilePath>())
 {
-   using namespace session::modules::console_process;
-
    core::system::ProcessOptions options = procOptions();
 #ifdef _WIN32
    options.detachProcess = true;
@@ -226,24 +225,21 @@ core::Error createConsoleProc(const ShellArgs& args,
       options.workingDir = workingDir.get();
 
 #ifdef _WIN32
-   boost::shared_ptr<ConsoleProcess> ptrCP =
-         ConsoleProcess::create(svnBin(),
-                                args.args(),
-                                options,
-                                caption,
-                                dialog,
-                                true,
-                                &enqueueRefreshEvent);
+   *ppCP = ConsoleProcess::create(svnBin(),
+                                  args.args(),
+                                  options,
+                                  caption,
+                                  dialog,
+                                  true,
+                                  &enqueueRefreshEvent);
 #else
-   boost::shared_ptr<ConsoleProcess> ptrCP =
-         ConsoleProcess::create(svn() << args.args(),
-                                options,
-                                caption,
-                                dialog,
-                                true,
-                                &enqueueRefreshEvent);
+   *ppCP = ConsoleProcess::create(svn() << args.args(),
+                                  options,
+                                  caption,
+                                  dialog,
+                                  true,
+                                  &enqueueRefreshEvent);
 #endif
-   *pHandle = ptrCP->handle();
    return Success();
 }
 
@@ -666,18 +662,18 @@ Error svnStatus(const json::JsonRpcRequest& request,
 Error svnUpdate(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
-   std::string handle;
+   boost::shared_ptr<ConsoleProcess> pCP;
    Error error = createConsoleProc(ShellArgs() << "update" << globalArgs(),
                                    "SVN Update",
                                    true,
-                                   &handle);
+                                   &pCP);
    if (error)
       return error;
 
    // TODO: Authentication if necessary
    // TODO: Set askpass handle?? Is that even necessary with SVN?
 
-   pResponse->setResult(handle);
+   pResponse->setResult(pCP->toJson());
 
    return Success();
 }
@@ -713,18 +709,18 @@ Error svnCommit(const json::JsonRpcRequest& request,
    if (!paths.empty())
       args << resolveAliasedPaths(paths);
 
-   std::string handle;
+   boost::shared_ptr<ConsoleProcess> pCP;
    error = createConsoleProc(args,
                              "SVN Commit",
                              true,
-                             &handle);
+                             &pCP);
    if (error)
       return error;
 
    // TODO: Authentication if necessary
    // TODO: Set askpass handle?? Is that even necessary with SVN?
 
-   pResponse->setResult(handle);
+   pResponse->setResult(pCP->toJson());
 
    return Success();
 }

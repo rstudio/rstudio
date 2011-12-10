@@ -263,10 +263,8 @@ public class Projects implements OpenProjectFileHandler,
                         @Override
                         public void onResponseReceived(ConsoleProcess proc)
                         {
-                           final ConsoleProgressDialog consoleProgressDialog = new ConsoleProgressDialog(
-                                 "Clone Repository",
-                                 proc,
-                                 server_);
+                           final ConsoleProgressDialog consoleProgressDialog = 
+                                 new ConsoleProgressDialog(proc, server_);
                            consoleProgressDialog.showModal();
            
                            proc.addProcessExitHandler(new ProcessExitEvent.Handler()

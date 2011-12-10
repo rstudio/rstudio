@@ -195,7 +195,7 @@ public class GitPresenterCore
          @Override
          public void onResponseReceived(ConsoleProcess proc)
          {
-            new ConsoleProgressDialog("Git Pull", proc, server_).showModal();
+            new ConsoleProgressDialog(proc, server_).showModal();
          }
       });
    }
@@ -207,7 +207,7 @@ public class GitPresenterCore
          @Override
          public void onResponseReceived(ConsoleProcess proc)
          {
-            new ConsoleProgressDialog("Git Push", proc, server_).showModal();
+            new ConsoleProgressDialog(proc, server_).showModal();
          }
       });
    }

@@ -76,31 +76,25 @@ public class ConsoleProgressDialog extends ModalDialogBase
       resources_.styles().ensureInjected();
    }
 
-   public ConsoleProgressDialog(String title, 
-                                ConsoleProcess consoleProcess,
+   public ConsoleProgressDialog(ConsoleProcess consoleProcess,
                                 CryptoServerOperations server)
    {
-      this(title, false, consoleProcess, server);
-   }
-   
-   public ConsoleProgressDialog(String title,
-                                boolean interactive,
-                                ConsoleProcess consoleProcess,
-                                CryptoServerOperations server)
-   {
-      this(title, consoleProcess, interactive, "", null, server);
+      this(consoleProcess.getProcessInfo().getCaption(), 
+           consoleProcess, 
+           "", 
+           null, 
+           server);
    }
 
    public ConsoleProgressDialog(String title, 
                                 String output, 
                                 int exitCode)
    {
-      this(title, null, false, output, exitCode, null);
+      this(title, null, output, exitCode, null);
    }
 
    public ConsoleProgressDialog(String title,
                                 ConsoleProcess consoleProcess,
-                                boolean interactive,
                                 String initialOutput,
                                 Integer exitCode,
                                 CryptoServerOperations server)
@@ -114,7 +108,6 @@ public class ConsoleProgressDialog extends ModalDialogBase
       addStyleName(resources_.styles().consoleProgressDialog());
 
       consoleProcess_ = consoleProcess;
-      interactive_ = interactive;
 
       setText(title);
 
@@ -125,7 +118,7 @@ public class ConsoleProgressDialog extends ModalDialogBase
       
       display_.setMaxOutputLines(140);
      
-      if (interactive_)
+      if (consoleProcess_.getProcessInfo().isInteractive())
       {
          ShellInteractionManager shellInteractionManager = 
                new ShellInteractionManager(display_, server, inputHandler_);
@@ -316,7 +309,6 @@ public class ConsoleProgressDialog extends ModalDialogBase
 
    private boolean running_ = true;
    private final ConsoleProcess consoleProcess_;
-   private final boolean interactive_;
    private HandlerRegistrations registrations_;
 
    private final ShellOutputWriter outputWriter_;

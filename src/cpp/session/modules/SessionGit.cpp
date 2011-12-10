@@ -304,7 +304,7 @@ protected:
    core::Error createConsoleProc(const ShellArgs& args,
                                  const std::string& caption,
                                  bool dialog,
-                                 std::string* pHandle,
+                                 boost::shared_ptr<ConsoleProcess>* ppCP,
                                  const boost::optional<FilePath>& workingDir=boost::optional<FilePath>())
    {
       using namespace session::modules::console_process;
@@ -319,24 +319,21 @@ protected:
          options.workingDir = workingDir.get();
 
 #ifdef _WIN32
-      boost::shared_ptr<ConsoleProcess> ptrCP =
-            ConsoleProcess::create(gitBin(),
-                                   args.args(),
-                                   options,
-                                   caption,
-                                   dialog,
-                                   false,
-                                   &enqueueRefreshEvent);
+      *ppCP = ConsoleProcess::create(gitBin(),
+                                     args.args(),
+                                     options,
+                                     caption,
+                                     dialog,
+                                     false,
+                                     &enqueueRefreshEvent);
 #else
-      boost::shared_ptr<ConsoleProcess> ptrCP =
-            ConsoleProcess::create(git() << args.args(),
-                                   options,
-                                   caption,
-                                   dialog,
-                                   false,
-                                   &enqueueRefreshEvent);
+      *ppCP = ConsoleProcess::create(git() << args.args(),
+                                     options,
+                                     caption,
+                                     dialog,
+                                     false,
+                                     &enqueueRefreshEvent);
 #endif
-      *pHandle = ptrCP->handle();
       return Success();
    }
 
@@ -503,16 +500,16 @@ public:
    }
 
    core::Error checkout(const std::string& id,
-                        std::string* pHandle)
+                        boost::shared_ptr<ConsoleProcess>* ppCP)
    {
       return createConsoleProc(ShellArgs() << "checkout" << id << "--",
-                               "Git Checkout",
+                               "Git Checkout " + id,
                                true,
-                               pHandle);
+                               ppCP);
    }
 
    core::Error commit(const std::string& message, bool amend, bool signOff,
-                      std::string* pHandle)
+                      boost::shared_ptr<ConsoleProcess>* ppCP)
    {
       FilePath tempFile = module_context::tempFile("gitmsg", "txt");
       boost::shared_ptr<std::ostream> pStream;
@@ -552,21 +549,21 @@ public:
       return createConsoleProc(args,
                                "Git Commit",
                                true,
-                               pHandle);
+                               ppCP);
    }
 
    core::Error clone(const std::string& url,
                      const std::string dirName,
                      const FilePath& parentPath,
-                     std::string* pHandle)
+                     boost::shared_ptr<ConsoleProcess>* ppCP)
    {
       // SPECIAL: happens in different working directory than usual
 
       return
             createConsoleProc(ShellArgs() << "clone" << "--progress" << url << dirName,
-                              "Git Clone",
+                              "Clone Repository",
                               true,
-                              pHandle,
+                              ppCP,
                               boost::optional<FilePath>(parentPath));
    }
 
@@ -625,7 +622,7 @@ public:
       return true;
    }
 
-   core::Error push(std::string* pHandle)
+   core::Error push(boost::shared_ptr<ConsoleProcess>* ppCP)
    {
       std::string branch;
       Error error = currentBranch(&branch);
@@ -640,19 +637,19 @@ public:
          args << remote << merge;
       }
 
-      return createConsoleProc(args, "Git Push", true, pHandle);
+      return createConsoleProc(args, "Git Push", true, ppCP);
    }
 
-   core::Error pull(std::string* pHandle)
+   core::Error pull(boost::shared_ptr<ConsoleProcess>* ppCP)
    {
       return createConsoleProc(ShellArgs() << "pull",
-                               "Git Pull", true, pHandle);
+                               "Git Pull", true, ppCP);
    }
 
    core::Error createBranch(const std::string& fromRev,
                             const std::string& name,
                             bool createRemote,
-                            std::string* pHandle)
+                            boost::shared_ptr<ConsoleProcess>* ppCP)
    {
       // NOTE: there are several problems with the current createBranch
       // implementation and as a result the feature is currently disabled:
@@ -733,15 +730,12 @@ public:
 #endif
       options.workingDir = root_;
 
-      boost::shared_ptr<ConsoleProcess> ptrCP =
-            ConsoleProcess::create(command,
-                                   options,
-                                   caption,
-                                   true,
-                                   false,
-                                   &enqueueRefreshEvent);
-
-      *pHandle = ptrCP->handle();
+      *ppCP = ConsoleProcess::create(command,
+                                     options,
+                                     caption,
+                                     true,
+                                     false,
+                                     &enqueueRefreshEvent);
 
       return Success();
 
@@ -1392,12 +1386,12 @@ Error vcsCheckout(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   std::string handle;
-   error = s_git_.checkout(id, &handle);
+   boost::shared_ptr<ConsoleProcess> pCP;
+   error = s_git_.checkout(id, &pCP);
    if (error)
       return error;
 
-   pResponse->setResult(handle);
+   pResponse->setResult(pCP->toJson());
 
    return Success();
 }
@@ -1468,12 +1462,12 @@ Error vcsCommit(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   std::string handle;
-   error = s_git_.commit(commitMsg, amend, signOff, &handle);
+   boost::shared_ptr<ConsoleProcess> pCP;
+   error = s_git_.commit(commitMsg, amend, signOff, &pCP);
    if (error)
       return error;
 
-   pResponse->setResult(handle);
+   pResponse->setResult(pCP->toJson());
 
    return Success();
 }
@@ -1495,14 +1489,14 @@ Error vcsClone(const json::JsonRpcRequest& request,
 
    FilePath parentPath = module_context::resolveAliasedPath(parentDir);
 
-   std::string handle;
-   error = git.clone(url, dirName, parentPath, &handle);
+   boost::shared_ptr<ConsoleProcess> pCP;
+   error = git.clone(url, dirName, parentPath, &pCP);
    if (error)
       return error;
 
    setAskPassWindow(request);
 
-   pResponse->setResult(handle);
+   pResponse->setResult(pCP->toJson());
 
    return Success();
 }
@@ -1510,14 +1504,14 @@ Error vcsClone(const json::JsonRpcRequest& request,
 Error vcsPush(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
-   std::string handle;
-   Error error = s_git_.push(&handle);
+   boost::shared_ptr<ConsoleProcess> pCP;
+   Error error = s_git_.push(&pCP);
    if (error)
       return error;
 
    setAskPassWindow(request);
 
-   pResponse->setResult(handle);
+   pResponse->setResult(pCP->toJson());
 
    return Success();
 }
@@ -1525,14 +1519,14 @@ Error vcsPush(const json::JsonRpcRequest& request,
 Error vcsPull(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
-   std::string handle;
-   Error error = s_git_.pull(&handle);
+    boost::shared_ptr<ConsoleProcess> pCP;
+   Error error = s_git_.pull(&pCP);
    if (error)
       return error;
 
    setAskPassWindow(request);
 
-   pResponse->setResult(handle);
+   pResponse->setResult(pCP->toJson());
 
    return Success();
 }
@@ -1919,14 +1913,14 @@ Error vcsCreateBranch(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   std::string handle;
-   error = s_git_.createBranch(fromRev, name, createRemote, &handle);
+   boost::shared_ptr<ConsoleProcess> pCP;
+   error = s_git_.createBranch(fromRev, name, createRemote, &pCP);
    if (error)
       return error;
 
    setAskPassWindow(request);
 
-   pResponse->setResult(handle);
+   pResponse->setResult(pCP->toJson());
 
    return Success();
 }

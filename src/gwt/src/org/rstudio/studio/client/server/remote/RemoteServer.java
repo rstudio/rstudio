@@ -32,6 +32,7 @@ import org.rstudio.studio.client.application.model.HttpLogEntry;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
+import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.satellite.Satellite;
@@ -1343,7 +1344,7 @@ public class RemoteServer implements Server
    }
 
    private class ConsoleProcessCallbackAdapter
-         extends ServerRequestCallback<String>
+         extends ServerRequestCallback<ConsoleProcessInfo>
    {
       private ConsoleProcessCallbackAdapter(
             ServerRequestCallback<ConsoleProcess> callback)
@@ -1352,7 +1353,7 @@ public class RemoteServer implements Server
       }
 
       @Override
-      public void onResponseReceived(String response)
+      public void onResponseReceived(ConsoleProcessInfo response)
       {
          pConsoleProcessFactory_.get().connectToProcess(response,
                                                         callback_);
