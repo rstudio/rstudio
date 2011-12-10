@@ -51,7 +51,7 @@ namespace {
 
 ConsoleProcess::ConsoleProcess()
    : dialog_(false), interactive_(false), started_(true),
-     ptyInterrupt_(false), interrupt_(false),
+     interrupt_(false),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    // When we retrieve from outputBuffer, we only want complete lines. Add a
@@ -67,7 +67,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
                                const boost::function<void()>& onExit)
    : command_(command), options_(options), caption_(caption), dialog_(dialog),
      interactive_(interactive),
-     started_(false),  ptyInterrupt_(false), interrupt_(false),
+     started_(false), interrupt_(false),
      outputBuffer_(OUTPUT_BUFFER_SIZE),
      onExit_(onExit)
 {
@@ -83,7 +83,7 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
                                const boost::function<void()>& onExit)
    : program_(program), args_(args), options_(options), caption_(caption), dialog_(dialog),
      interactive_(interactive),
-     started_(false),  ptyInterrupt_(false), interrupt_(false),
+     started_(false),  interrupt_(false),
      outputBuffer_(OUTPUT_BUFFER_SIZE),
      onExit_(onExit)
 {
@@ -155,7 +155,7 @@ Error ConsoleProcess::start()
 
 void ConsoleProcess::enqueueInput(const std::string &input)
 {
-   inputQueue_.append(input);
+   inputQueue_.push(Input(input));
 }
 
 void ConsoleProcess::interrupt()
@@ -163,36 +163,48 @@ void ConsoleProcess::interrupt()
    interrupt_ = true;
 }
 
-void ConsoleProcess::ptyInterrupt()
+void ConsoleProcess::enquePtyInterrupt()
 {
-   ptyInterrupt_ = true;
+   inputQueue_.push(Input());
 }
 
 bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
 {
-   if (!inputQueue_.empty())
+   // full stop interrupt if requested
+   if (interrupt_)
+      return false;
+
+   // process input queue
+   while (!inputQueue_.empty())
    {
-      Error error = ops.writeToStdin(inputQueue_, false);
-      if (error)
-         LOG_ERROR(error);
+      // pop input
+      Input input = inputQueue_.front();
+      inputQueue_.pop();
 
-      inputQueue_.clear();
+      // pty interrupt
+      if (input.interrupt)
+      {
+         Error error = ops.ptyInterrupt();
+         if (error)
+            LOG_ERROR(error);
+      }
 
-      // add a newline to the output buffer (we don't echo back the
-      // actual input because it is very likely to be a password
-      // or passphrase)
-      outputBuffer_.push_back('\n');
+      // text input
+      else
+      {
+         Error error = ops.writeToStdin(input.text, false);
+         if (error)
+            LOG_ERROR(error);
+
+         // add a newline to the output buffer (we don't echo back the
+         // actual input because it is very likely to be a password
+         // or passphrase)
+         outputBuffer_.push_back('\n');
+      }
    }
 
-   if (ptyInterrupt_)
-   {
-      ptyInterrupt_ = false;
-      Error error = ops.ptyInterrupt();
-      if (error)
-         LOG_ERROR(error);
-   }
-
-   return !interrupt_;
+   // continue
+   return true;
 }
 
 void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
@@ -355,7 +367,7 @@ Error procPtyInterrupt(const json::JsonRpcRequest& request,
    ProcTable::const_iterator pos = s_procs.find(handle);
    if (pos != s_procs.end())
    {
-      pos->second->ptyInterrupt();
+      pos->second->enquePtyInterrupt();
       return Success();
    }
    else

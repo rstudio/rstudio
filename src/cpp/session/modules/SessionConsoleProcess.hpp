@@ -13,6 +13,8 @@
 #ifndef SESSION_CONSOLE_PROCESS_HPP
 #define SESSION_CONSOLE_PROCESS_HPP
 
+#include <queue>
+
 #include <boost/circular_buffer.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
@@ -81,9 +83,9 @@ public:
    std::string bufferedOutput() const;
 
    core::Error start();
-   void enqueueInput(const std::string& input);
 
-   void ptyInterrupt();
+   void enqueueInput(const std::string& input);
+   void enquePtyInterrupt();
 
    void interrupt();
 
@@ -117,13 +119,19 @@ private:
 
    // Whether the process has been successfully started
    bool started_;
-   // Whether the process should issue a pty interrupt
-   bool ptyInterrupt_;
+
    // Whether the process should be stopped
    bool interrupt_;
 
-   // Pending writes to stdin
-   std::string inputQueue_;
+   // Pending input (writes or ptyInterrupts)
+   struct Input
+   {
+      Input() : interrupt(true) {}
+      Input(const std::string& text) : interrupt(false), text(text) {}
+      bool interrupt ;
+      std::string text;
+   };
+   std::queue<Input> inputQueue_;
 
    // Buffer output in case client disconnects/reconnects and needs
    // to recover some history
