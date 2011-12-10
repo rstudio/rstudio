@@ -18,7 +18,7 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 
 
-public class ShellInteractionManager
+public class ShellInteractionManager implements ShellOutputWriter
 {
    public ShellInteractionManager(ShellDisplay display,
                                   CryptoServerOperations server,
@@ -42,8 +42,9 @@ public class ShellInteractionManager
    {
       historyEnabled_ = enabled;
    }
-   
-   public void displayOutput(String output)
+  
+   @Override
+   public void consoleWriteOutput(String output)
    {
       // if the output ends with a newline then just send it all
       // in a big batch
@@ -67,8 +68,9 @@ public class ShellInteractionManager
          }
       }
    }
-   
-   public void displayError(String error)
+      
+   @Override
+   public void consoleWriteError(String error)
    {
       // show the error in the console then re-prompt
       display_.consoleWriteError(
@@ -242,7 +244,7 @@ public class ShellInteractionManager
             @Override
             public void onError(ServerError error)
             {
-               displayError(error.getUserMessage());
+               consoleWriteError(error.getUserMessage());
             }
             
          });

@@ -127,7 +127,7 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
    @Override
    public void onPosixShellOutput(PosixShellOutputEvent event)
    {
-      manager_.displayOutput(event.getOutput());
+      manager_.consoleWriteOutput(event.getOutput());
    }
    
    @Override
@@ -160,7 +160,7 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
                      @Override
                      public void onError(ServerError error)
                      {
-                        manager_.displayError(error.getUserMessage());
+                        manager_.consoleWriteError(error.getUserMessage());
                      }
                   });
          }

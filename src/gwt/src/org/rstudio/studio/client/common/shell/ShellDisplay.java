@@ -22,10 +22,10 @@ import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
 
-public interface ShellDisplay extends CanFocus, HasKeyPressHandlers
+public interface ShellDisplay extends ShellOutputWriter, 
+                                      CanFocus, 
+                                      HasKeyPressHandlers
 {
-   void consoleWriteError(String string) ;
-   void consoleWriteOutput(String output) ;
    void consoleWriteInput(String input);
    void consoleWritePrompt(String prompt);
    void consolePrompt(String prompt, boolean showInput) ;

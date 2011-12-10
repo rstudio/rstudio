@@ -43,6 +43,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.shell.ShellInteractionManager;
+import org.rstudio.studio.client.common.shell.ShellOutputWriter;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -118,18 +119,23 @@ public class ConsoleProgressDialog extends ModalDialogBase
       setText(title);
 
       display_ = new ConsoleProgressWidget();
+      Style style = display_.getElement().getStyle();
+      double skewFactor = (12 + BrowseCap.getFontSkew()) / 12.0;
+      style.setWidth((int)(skewFactor * 660), Unit.PX);
+      
+      display_.setMaxOutputLines(140);
      
       if (interactive_)
       {
-         shellManager_ = new ShellInteractionManager(display_,
-                                                     server,
-                                                     inputHandler_);
-         shellManager_.setHistoryEnabled(false);
+         ShellInteractionManager shellInteractionManager = 
+               new ShellInteractionManager(display_, server, inputHandler_);
+         shellInteractionManager.setHistoryEnabled(false);
+         outputWriter_ = shellInteractionManager;
       }
       else
       {
          display_.setReadOnly(true);
-         shellManager_ = null;
+         outputWriter_ = display_;
       }
 
       progressAnim_ = new Image(resources_.progress().getSafeUri());
@@ -142,12 +148,9 @@ public class ConsoleProgressDialog extends ModalDialogBase
 
       if (!StringUtil.isNullOrEmpty(initialOutput))
       {
-         writeOutput(initialOutput);
+         outputWriter_.consoleWriteOutput(initialOutput);
       }
 
-      Style style = display_.getElement().getStyle();
-      double skewFactor = (12 + BrowseCap.getFontSkew()) / 12.0;
-      style.setWidth((int)(skewFactor * 660), Unit.PX);
 
       registrations_ = new HandlerRegistrations();
       if (consoleProcess != null)
@@ -191,9 +194,7 @@ public class ConsoleProgressDialog extends ModalDialogBase
    protected void onDialogShown()
    {
       super.onDialogShown();
-      
-      if (interactive_)
-         display_.getInputEditorDisplay().setFocus(true);
+      display_.getInputEditorDisplay().setFocus(true);
    }
 
    @Override
@@ -232,7 +233,7 @@ public class ConsoleProgressDialog extends ModalDialogBase
    @Override
    public void onConsoleOutput(ConsoleOutputEvent event)
    {
-      writeOutput(event.getOutput());
+      outputWriter_.consoleWriteOutput(event.getOutput());
    }
 
    @Override
@@ -242,14 +243,6 @@ public class ConsoleProgressDialog extends ModalDialogBase
       display_.setReadOnly(true);
    }
    
-   private void writeOutput(String output)
-   {
-      if (interactive_)
-         shellManager_.displayOutput(output);
-      else
-         display_.consoleWriteOutput(output);
-   }
-
    private void setExitCode(int exitCode)
    {
       running_ = false;
@@ -303,7 +296,7 @@ public class ConsoleProgressDialog extends ModalDialogBase
                      @Override
                      public void onError(ServerError error)
                      {
-                        shellManager_.displayError(error.getUserMessage());
+                        outputWriter_.consoleWriteError(error.getUserMessage());
                      }
                   });
          }
@@ -313,7 +306,7 @@ public class ConsoleProgressDialog extends ModalDialogBase
                @Override
                public void onError(ServerError error)
                {
-                  shellManager_.displayError(error.getUserMessage());
+                  outputWriter_.consoleWriteError(error.getUserMessage());
                }
             });
          }
@@ -326,10 +319,10 @@ public class ConsoleProgressDialog extends ModalDialogBase
    private final boolean interactive_;
    private HandlerRegistrations registrations_;
 
+   private final ShellOutputWriter outputWriter_;
+   
    @UiField(provided = true)
    ConsoleProgressWidget display_;
-   
-   private final ShellInteractionManager shellManager_;
    
    @UiField(provided = true)
    Image progressAnim_;
