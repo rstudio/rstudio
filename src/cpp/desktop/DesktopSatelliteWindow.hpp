@@ -18,6 +18,8 @@
 #include <QtWebKit>
 #include "DesktopGwtWindow.hpp"
 
+#include "DesktopGwtCallback.hpp"
+
 namespace desktop {
 
 class MainWindow;

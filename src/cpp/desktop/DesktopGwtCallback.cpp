@@ -482,6 +482,12 @@ QVariant GwtCallback::promptForText(QString title,
    {
       dialog.setRememberPasswordPrompt(rememberPasswordPrompt);
       dialog.setRemember(rememberByDefault);
+
+      // password prompts are shown higher up (because they relate to
+      // console progress dialogs which are at the top of the screen)
+      QRect parentGeom = pOwnerWindow_->geometry();
+      int x = parentGeom.left() + (parentGeom.width() / 2) - (dialog.width() / 2);
+      dialog.move(x, pOwnerWindow_->geometry().top() + 50);
    }
    if (numbersOnly)
       dialog.setNumbersOnly(true);

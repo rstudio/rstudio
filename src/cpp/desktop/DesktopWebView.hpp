@@ -18,7 +18,6 @@
 #include <QWebView>
 
 #include "DesktopWebPage.hpp"
-#include "DesktopGwtCallback.hpp"
 
 namespace desktop {
 
