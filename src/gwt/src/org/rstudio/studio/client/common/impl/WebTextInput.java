@@ -20,6 +20,9 @@ import org.rstudio.core.client.widget.TextEntryModalDialog;
 import org.rstudio.studio.client.common.TextInput;
 import org.rstudio.studio.client.common.Value;
 
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Window;
+
 public class WebTextInput implements TextInput
 {
    public void promptForText(String title,
@@ -88,7 +91,28 @@ public class WebTextInput implements TextInput
                   okOperation.execute(result, indicator);
                }
             },
-            cancelOperation);
+            cancelOperation)  {
+         
+            @Override
+            protected void positionAndShowDialog(final Command onCompleted)
+            {
+               setPopupPositionAndShow(new PositionCallback() {
+   
+                  @Override
+                  public void setPosition(int offsetWidth, int offsetHeight)
+                  {
+                     int left = (Window.getClientWidth()/2) - (offsetWidth/2);
+                     int top = 50;
+                     
+                     setPopupPosition(left, top);
+                     
+                     onCompleted.execute();
+                  }
+                  
+               });
+            }
+         
+      };
 
       pDialog.setValue(dialog, false);
 
