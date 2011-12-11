@@ -291,33 +291,6 @@ core::system::ProcessCallbacks ConsoleProcess::createProcessCallbacks()
    return cb;
 }
 
-// Creates the ConsoleProcess object and returns the handle, but doesn't
-// actually launch the process. This is so that the client gets a chance
-// to hook up any necessary event listeners before the process starts
-// causing events to be fired.
-Error procInit(const json::JsonRpcRequest& request,
-               json::JsonRpcResponse* pResponse)
-{
-   std::string command, caption;
-   bool dialog, interactive;
-   Error error = json::readParams(request.params,
-                                  &command,
-                                  &caption,
-                                  &dialog,
-                                  &interactive);
-   if (error)
-      return error;
-
-   boost::shared_ptr<ConsoleProcess> ptrProc = ConsoleProcess::create(
-                                                       command,
-                                                       procOptions(),
-                                                       caption,
-                                                       dialog,
-                                                       interactive);
-   pResponse->setResult(ptrProc->handle());
-   return Success();
-}
-
 Error procStart(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
@@ -514,7 +487,6 @@ Error initialize()
    // install rpc methods
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "process_prepare", procInit))
       (bind(registerRpcMethod, "process_start", procStart))
       (bind(registerRpcMethod, "process_interrupt", procInterrupt))
       (bind(registerRpcMethod, "process_pty_interrupt", procInterrupt))
