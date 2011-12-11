@@ -174,6 +174,8 @@ if(WIN32)
    set(SESSION_SOURCE_FILES
       ${SESSION_SOURCE_FILES}
       "${CMAKE_CURRENT_BINARY_DIR}/res.o")
+
+   add_subdirectory(consoleio)
 endif()
 
 # define executable
