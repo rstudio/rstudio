@@ -216,6 +216,10 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
 
 void ConsoleProcess::enqueOutputEvent(const std::string &output, bool error)
 {
+   // copy to output buffer
+   std::copy(output.begin(), output.end(),
+             std::back_inserter(outputBuffer_));
+
    // If there's more output than the client can even show, then
    // truncate it to the amount that the client can show. Too much
    // output can overwhelm the client, making it unresponsive.
@@ -233,9 +237,6 @@ void ConsoleProcess::enqueOutputEvent(const std::string &output, bool error)
 void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
                               const std::string& output)
 {
-   std::copy(output.begin(), output.end(),
-             std::back_inserter(outputBuffer_));
-
    enqueOutputEvent(output, false);
 }
 
