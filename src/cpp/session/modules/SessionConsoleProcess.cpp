@@ -35,6 +35,7 @@ namespace modules {
 namespace console_process {
 
 namespace {
+   const size_t OUTPUT_BUFFER_SIZE = 8192;
    typedef std::map<std::string, boost::shared_ptr<ConsoleProcess> > ProcTable;
    ProcTable s_procs;
 
@@ -57,7 +58,7 @@ const int kDefaultMaxOutputLines = 500;
 ConsoleProcess::ConsoleProcess()
    : dialog_(false), interactionMode_(InteractionNever),
      maxOutputLines_(kDefaultMaxOutputLines), started_(true),
-     interrupt_(false), outputBuffer_(maxOutputLines_)
+     interrupt_(false), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
@@ -74,7 +75,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
    : command_(command), options_(options), caption_(caption), dialog_(dialog),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false), interrupt_(false),
-     outputBuffer_(maxOutputLines_),
+     outputBuffer_(OUTPUT_BUFFER_SIZE),
      onExit_(onExit)
 {
    commonInit();
@@ -91,7 +92,7 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
    : program_(program), args_(args), options_(options), caption_(caption), dialog_(dialog),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false),  interrupt_(false),
-     outputBuffer_(maxOutputLines_),
+     outputBuffer_(OUTPUT_BUFFER_SIZE),
      onExit_(onExit)
 {
    commonInit();
