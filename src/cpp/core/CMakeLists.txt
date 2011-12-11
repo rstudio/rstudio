@@ -164,6 +164,7 @@ else()
       system/Win32Environment.cpp
       system/Win32ParentProcessMonitor.cpp
       system/Win32OutputCapture.cpp
+      system/Win32RequestResponsePipe.cpp
       system/Win32ShellUtils.cpp
       system/Win32System.cpp
       system/Win32ChildProcess.cpp
