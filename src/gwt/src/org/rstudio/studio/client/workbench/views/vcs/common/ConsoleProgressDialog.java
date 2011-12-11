@@ -245,6 +245,10 @@ public class ConsoleProgressDialog extends ModalDialogBase
       setExitCode(event.getExitCode());
       display_.setReadOnly(true);
       stopButton_.setFocus(true);
+      
+      // when a shell exits we close the dialog
+      if (getInteractionMode() == ConsoleProcessInfo.INTERACTION_ALWAYS)
+         stopButton_.click();
    }
    
    private void setExitCode(int exitCode)
