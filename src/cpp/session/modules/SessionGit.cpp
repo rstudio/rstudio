@@ -1717,30 +1717,6 @@ Error vcsHistory(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error vcsExecuteCommand(const json::JsonRpcRequest& request,
-                        json::JsonRpcResponse* pResponse)
-{
-   std::string command;
-   Error error = json::readParams(request.params, &command);
-   if (error)
-      return error;
-
-   command = shell_utils::sendStdErrToStdOut(shell_utils::join(
-         ShellCommand("cd") << s_git_.root(),
-         command));
-
-   boost::shared_ptr<ConsoleProcess> ptrProc =
-         console_process::ConsoleProcess::create(command,
-                                                 procOptions(),
-                                                 command,
-                                                 false,
-                                                 false,
-                                                 &enqueueRefreshEvent);
-
-   pResponse->setResult(ptrProc->handle());
-   return Success();
-}
-
 Error vcsShow(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
@@ -2645,7 +2621,6 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_apply_patch", vcsApplyPatch))
       (bind(registerRpcMethod, "git_history_count", vcsHistoryCount))
       (bind(registerRpcMethod, "git_history", vcsHistory))
-      (bind(registerRpcMethod, "git_execute_command", vcsExecuteCommand))
       (bind(registerRpcMethod, "git_show", vcsShow))
       (bind(registerRpcMethod, "git_show_file", vcsShowFile))
       (bind(registerRpcMethod, "git_export_file", vcsExportFile))

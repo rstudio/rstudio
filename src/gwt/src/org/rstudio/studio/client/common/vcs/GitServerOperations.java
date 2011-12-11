@@ -99,10 +99,6 @@ public interface GitServerOperations extends CryptoServerOperations
                    String searchText,
                    ServerRequestCallback<RpcObjectList<CommitInfo>> requestCallback);
 
-   void gitExecuteCommand(
-         String command,
-         ServerRequestCallback<ConsoleProcess> requestCallback);
-
    void gitShow(String rev,
                 boolean noSizeWarning,
                 ServerRequestCallback<String> requestCallback);

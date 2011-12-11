@@ -1500,14 +1500,6 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void gitExecuteCommand(String command,
-                                 ServerRequestCallback<ConsoleProcess> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, GIT_EXECUTE_COMMAND, command,
-                  new ConsoleProcessCallbackAdapter(requestCallback));
-   }
-
-   @Override
    public void gitShow(String rev,
                        boolean noSizeWarning,
                        ServerRequestCallback<String> requestCallback)
@@ -2480,7 +2472,6 @@ public class RemoteServer implements Server
    private static final String GIT_APPLY_PATCH = "git_apply_patch";
    private static final String GIT_HISTORY_COUNT = "git_history_count";
    private static final String GIT_HISTORY = "git_history";
-   private static final String GIT_EXECUTE_COMMAND = "git_execute_command";
    private static final String GIT_SHOW = "git_show";
    private static final String GIT_SHOW_FILE = "git_show_file";
    private static final String GIT_EXPORT_FILE = "git_export_file";
