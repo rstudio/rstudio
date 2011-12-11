@@ -281,6 +281,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_TERMINAL_OPTIONS, requestCallback);
    }
    
+   public void startShellDialog(
+                    ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+                  START_SHELL_DIALOG,  
+                  new ConsoleProcessCallbackAdapter(requestCallback));
+   }
+   
    public void searchCode(
          String term, 
          int maxResults,
@@ -2347,6 +2355,7 @@ public class RemoteServer implements Server
    private static final String SET_CLIENT_STATE = "set_client_state";
    private static final String USER_PROMPT_COMPLETED = "user_prompt_completed";
    private static final String GET_TERMINAL_OPTIONS = "get_terminal_options";
+   private static final String START_SHELL_DIALOG = "start_shell_dialog";
    private static final String SEARCH_CODE = "search_code";
    private static final String GET_SEARCH_PATH_FUNCTION_DEFINITION = "get_search_path_function_definition";
    private static final String GET_METHOD_DEFINITION = "get_method_definition";

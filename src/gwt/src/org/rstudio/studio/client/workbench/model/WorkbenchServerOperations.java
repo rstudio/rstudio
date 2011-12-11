@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
+import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.common.posixshell.model.PosixShellServerOperations;
@@ -76,4 +77,7 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
    
    void getTerminalOptions(
                      ServerRequestCallback<TerminalOptions> requestCallback);
+   
+   
+   void startShellDialog(ServerRequestCallback<ConsoleProcess> requestCallback);
 }

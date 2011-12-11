@@ -29,6 +29,9 @@
 
 #include <core/json/JsonRpc.hpp>
 
+#include <core/system/Environment.hpp>
+#include <core/system/ShellUtils.hpp>
+
 #include <r/ROptions.hpp>
 #include <r/session/RSession.hpp>
 #include <r/session/RClientState.hpp> 
@@ -42,6 +45,8 @@
 #include "SessionVCS.hpp"
 #include "SessionGit.hpp"
 #include "SessionSVN.hpp"
+
+#include "SessionConsoleProcess.hpp"
 
 #include <R_ext/RStartup.h>
 extern "C" SA_TYPE SaveAction;
@@ -379,6 +384,58 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error startShellDialog(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   using namespace session::module_context;
+   using namespace session::modules::console_process;
+
+   // configure environment for shell
+   core::system::Options shellEnv;
+   core::system::environment(&shellEnv);
+
+   // set dumb terminal and prompt
+   core::system::setenv(&shellEnv, "TERM", "dumb");
+   std::string path = module_context::createAliasedPath(
+                                 module_context::safeCurrentPath());
+   std::string prompt = (path.length() > 30) ? "\\W$ " : "\\w$ ";
+   core::system::setenv(&shellEnv, "PS1", prompt);
+
+   // add custom git path if necessary
+   std::string gitBinDir = git::nonPathGitBinDir();
+   if (!gitBinDir.empty())
+      core::system::addToPath(&shellEnv, gitBinDir);
+
+   // add custom svn path if necessary
+   std::string svnBinDir = svn::nonPathSvnBinDir();
+   if (!svnBinDir.empty())
+      core::system::addToPath(&shellEnv, svnBinDir);
+
+   // set options
+   core::system::ProcessOptions options;
+   options.workingDir = module_context::shellWorkingDirectory();
+   options.environment = shellEnv;
+
+   // configure bash command
+   core::shell_utils::ShellCommand bashCommand("/bin/bash");
+   bashCommand << "--norc";
+
+   // run process
+   boost::shared_ptr<ConsoleProcess> ptrProc =
+               ConsoleProcess::create(bashCommand,
+                                      options,
+                                      "Shell",
+                                      true,
+                                      InteractionAlways,
+                                      console_process::kDefaultMaxOutputLines,
+                                      &source_control::enqueueRefreshEvent);
+
+
+   pResponse->setResult(ptrProc->toJson());
+
+   return Success();
+}
+
 Error setCRANMirror(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
@@ -480,7 +537,8 @@ Error initialize()
       (bind(registerRpcMethod, "set_ui_prefs", setUiPrefs))
       (bind(registerRpcMethod, "get_r_prefs", getRPrefs))
       (bind(registerRpcMethod, "set_cran_mirror", setCRANMirror))
-      (bind(registerRpcMethod, "get_terminal_options", getTerminalOptions));
+      (bind(registerRpcMethod, "get_terminal_options", getTerminalOptions))
+      (bind(registerRpcMethod, "start_shell_dialog", startShellDialog));
    return initBlock.execute();
 }
 
