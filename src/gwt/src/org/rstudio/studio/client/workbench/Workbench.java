@@ -32,7 +32,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.posixshell.PosixShellDialog;
+import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
@@ -44,6 +44,7 @@ import org.rstudio.studio.client.workbench.model.*;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 public class Workbench implements BusyHandler,
                                   ShowErrorMessageHandler,
@@ -67,7 +68,6 @@ public class Workbench implements BusyHandler,
                     Server server,
                     RemoteFileSystemContext fsContext,
                     FileDialogs fileDialogs,
-                    Provider<PosixShellDialog> pPosixShellDialog,
                     ConsoleDispatcher consoleDispatcher,
                     ChooseFile chooseFile)  // required to force gin to create
    {
@@ -81,7 +81,6 @@ public class Workbench implements BusyHandler,
       server_ = server;
       fsContext_ = fsContext;
       fileDialogs_ = fileDialogs;
-      pPosixShellDialog_ = pPosixShellDialog;
       consoleDispatcher_ = consoleDispatcher;
       
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
@@ -319,7 +318,24 @@ public class Workbench implements BusyHandler,
       }
       else
       {
-         pPosixShellDialog_.get().showModal();
+         final ProgressIndicator indicator = new GlobalProgressDelayer(
+               globalDisplay_, 500, "Starting shell...").getIndicator();
+         
+         server_.startShellDialog(new ServerRequestCallback<ConsoleProcess>() {
+
+            @Override
+            public void onResponseReceived(ConsoleProcess proc)
+            {
+               indicator.onCompleted();
+               new ConsoleProgressDialog(proc, server_).showModal();
+            }
+            
+            @Override
+            public void onError(ServerError error)
+            {
+               indicator.onError(error.getUserMessage());
+            }
+         });
       }
    }
 
@@ -332,7 +348,6 @@ public class Workbench implements BusyHandler,
    private final Commands commands_;
    private final RemoteFileSystemContext fsContext_;
    private final FileDialogs fileDialogs_;
-   private final Provider<PosixShellDialog> pPosixShellDialog_;
    private final WorkbenchContext workbenchContext_;
    private final ConsoleDispatcher consoleDispatcher_;
    private final TimeBufferedCommand metricsChangedCommand_;

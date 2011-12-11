@@ -73,7 +73,6 @@ if(UNIX)
    if(RSTUDIO_SERVER)
       set(SESSION_SOURCE_FILES ${SESSION_SOURCE_FILES}
          modules/SessionCrypto.cpp
-         modules/SessionPosixShell.cpp
       )
    endif()
 else()

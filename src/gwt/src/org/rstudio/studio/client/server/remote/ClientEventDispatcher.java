@@ -25,8 +25,6 @@ import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.console.ServerConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ServerProcessExitEvent;
-import org.rstudio.studio.client.common.posixshell.events.PosixShellExitEvent;
-import org.rstudio.studio.client.common.posixshell.events.PosixShellOutputEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
 import org.rstudio.studio.client.server.Bool;
@@ -305,16 +303,6 @@ public class ClientEventDispatcher
          else if (type.equals(ClientEvent.HandleUnsavedChanges))
          {
             eventBus_.fireEvent(new HandleUnsavedChangesEvent());
-         }
-         else if (type.equals(ClientEvent.PosixShellOutput))
-         {
-            String output = event.getData();
-            eventBus_.fireEvent(new PosixShellOutputEvent(output));
-         }
-         else if (type.equals(ClientEvent.PosixShellExit))
-         {
-            int exitCode = ((JsObject)event.getData()).getInteger("exit_code");
-            eventBus_.fireEvent(new PosixShellExitEvent(exitCode));
          }
          else if (type.equals(ClientEvent.Quit))
          {

@@ -41,7 +41,6 @@ import org.rstudio.studio.client.application.ui.serializationprogress.Applicatio
 import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
 import org.rstudio.studio.client.common.StudioResources;
 import org.rstudio.studio.client.common.mirrors.ChooseMirrorDialog;
-import org.rstudio.studio.client.common.posixshell.PosixShellResources;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
 import org.rstudio.studio.client.impl.BrowserFence;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
@@ -190,7 +189,6 @@ public class RStudio implements EntryPoint
       ShowPublicKeyDialog.ensureStylesInjected();
       WizardResources.INSTANCE.styles().ensureInjected();
       NewProjectResources.INSTANCE.styles().ensureInjected();
-      PosixShellResources.INSTANCE.styles().ensureInjected();
      
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");

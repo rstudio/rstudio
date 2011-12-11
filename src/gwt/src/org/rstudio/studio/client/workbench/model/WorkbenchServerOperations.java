@@ -17,7 +17,6 @@ import com.google.gwt.core.client.JavaScriptObject;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
-import org.rstudio.studio.client.common.posixshell.model.PosixShellServerOperations;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
@@ -56,8 +55,7 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    ProjectsServerOperations,
                                                    CodeSearchServerOperations,
                                                    CryptoServerOperations,
-                                                   WorkbenchListsServerOperations,
-                                                   PosixShellServerOperations
+                                                   WorkbenchListsServerOperations
 {   
    void initializeForMainWorkbench();
    

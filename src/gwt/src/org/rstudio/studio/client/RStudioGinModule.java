@@ -30,9 +30,6 @@ import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
-import org.rstudio.studio.client.common.posixshell.PosixShell;
-import org.rstudio.studio.client.common.posixshell.PosixShellWidget;
-import org.rstudio.studio.client.common.posixshell.model.PosixShellServerOperations;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
@@ -175,9 +172,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("VCS", VCSTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class) ;
-      
-      bind(PosixShell.Display.class).to(PosixShellWidget.class);
-      
+           
       bind(HelpSearch.Display.class).to(HelpSearchWidget.class) ;
       bind(CodeSearch.Display.class).to(CodeSearchWidget.class);
 
@@ -210,7 +205,6 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ProjectsServerOperations.class).to(RemoteServer.class);
       bind(CodeSearchServerOperations.class).to(RemoteServer.class);
       bind(WorkbenchListsServerOperations.class).to(RemoteServer.class);
-      bind(PosixShellServerOperations.class).to(RemoteServer.class);
       bind(CryptoServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
