@@ -40,6 +40,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent.Handler;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.shell.ShellInteractionManager;
@@ -116,9 +117,9 @@ public class ConsoleProgressDialog extends ModalDialogBase
       double skewFactor = (12 + BrowseCap.getFontSkew()) / 12.0;
       style.setWidth((int)(skewFactor * 660), Unit.PX);
       
-      display_.setMaxOutputLines(140);
+      display_.setMaxOutputLines(getMaxOutputLines());
      
-      if (consoleProcess_.getProcessInfo().isInteractive())
+      if (getInteractionMode() != ConsoleProcessInfo.INTERACTION_NEVER)
       {
          ShellInteractionManager shellInteractionManager = 
                new ShellInteractionManager(display_, server, inputHandler_);
@@ -300,6 +301,22 @@ public class ConsoleProgressDialog extends ModalDialogBase
       }
 
    };
+   
+   private int getInteractionMode()
+   {
+      if (consoleProcess_ != null)
+         return consoleProcess_.getProcessInfo().getInteractionMode();
+      else
+         return ConsoleProcessInfo.INTERACTION_NEVER;
+   }
+   
+   private int getMaxOutputLines()
+   {
+      if (consoleProcess_ != null)
+         return consoleProcess_.getProcessInfo().getMaxOutputLines();
+      else
+         return 1000;
+   }
 
    private boolean running_ = true;
    private final ConsoleProcess consoleProcess_;

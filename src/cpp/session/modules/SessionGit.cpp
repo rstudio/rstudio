@@ -324,14 +324,16 @@ protected:
                                      options,
                                      caption,
                                      dialog,
-                                     false,
+                                     console_process::InteractionNever,
+                                     console_process::kDefaultMaxOutputLines,
                                      &enqueueRefreshEvent);
 #else
       *ppCP = ConsoleProcess::create(git() << args.args(),
                                      options,
                                      caption,
                                      dialog,
-                                     false,
+                                     console_process::InteractionNever,
+                                     console_process::kDefaultMaxOutputLines,
                                      &enqueueRefreshEvent);
 #endif
       return Success();
@@ -734,7 +736,8 @@ public:
                                      options,
                                      caption,
                                      true,
-                                     false,
+                                     console_process::InteractionNever,
+                                     console_process::kDefaultMaxOutputLines,
                                      &enqueueRefreshEvent);
 
       return Success();

@@ -31,6 +31,15 @@ namespace session {
 namespace modules {
 namespace console_process {
 
+enum InteractionMode
+{
+   InteractionNever = 0,
+   InteractionPossible = 1,
+   InteractionAlways = 2
+};
+
+extern const int kDefaultMaxOutputLines;
+
 class ConsoleProcess : boost::noncopyable,
                        public boost::enable_shared_from_this<ConsoleProcess>
 {
@@ -44,7 +53,8 @@ private:
          const core::system::ProcessOptions& options,
          const std::string& caption,
          bool dialog,
-         bool interactive,
+         InteractionMode mode,
+         int maxOutputLines,
          const boost::function<void()>& onExit);
 
    ConsoleProcess(
@@ -53,7 +63,8 @@ private:
          const core::system::ProcessOptions& options,
          const std::string& caption,
          bool dialog,
-         bool interactive,
+         InteractionMode mode,
+         int maxOutputLines,
          const boost::function<void()>& onExit);
 
    void commonInit();
@@ -64,7 +75,8 @@ public:
          core::system::ProcessOptions options,
          const std::string& caption,
          bool dialog,
-         bool interactive,
+         InteractionMode mode,
+         int maxOutputLines = kDefaultMaxOutputLines,
          const boost::function<void()>& onExit=boost::function<void()>());
 
    static boost::shared_ptr<ConsoleProcess> create(
@@ -73,13 +85,14 @@ public:
          core::system::ProcessOptions options,
          const std::string& caption,
          bool dialog,
-         bool interactive,
+         InteractionMode mode,
+         int maxOutputLines = kDefaultMaxOutputLines,
          const boost::function<void()>& onExit=boost::function<void()>());
 
    virtual ~ConsoleProcess() {}
 
    std::string handle() const { return handle_; }
-   bool interactive() const { return interactive_; }
+   InteractionMode interactionMode() const { return interactionMode_; }
    std::string bufferedOutput() const;
 
    core::Error start();
@@ -112,7 +125,8 @@ private:
 
    std::string caption_;
    bool dialog_;
-   bool interactive_;
+   InteractionMode interactionMode_;
+   int maxOutputLines_;
 
    // The handle that the client can use to refer to this process
    std::string handle_;

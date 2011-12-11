@@ -49,10 +49,16 @@ namespace {
    }
 } // anonymous namespace
 
+#ifdef _WIN32
+const int kDefaultMaxOutputLines = 140;
+#else
+const int kDefaultMaxOutputLines = 500;
+#endif
+
 ConsoleProcess::ConsoleProcess()
-   : dialog_(false), interactive_(false), started_(true),
-     interrupt_(false),
-     outputBuffer_(OUTPUT_BUFFER_SIZE)
+   : dialog_(false), interactionMode_(InteractionNever),
+     maxOutputLines_(kDefaultMaxOutputLines), started_(true),
+     interrupt_(false), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
@@ -63,10 +69,11 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
                                const core::system::ProcessOptions& options,
                                const std::string& caption,
                                bool dialog,
-                               bool interactive,
+                               InteractionMode interactionMode,
+                               int maxOutputLines,
                                const boost::function<void()>& onExit)
    : command_(command), options_(options), caption_(caption), dialog_(dialog),
-     interactive_(interactive),
+     interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false), interrupt_(false),
      outputBuffer_(OUTPUT_BUFFER_SIZE),
      onExit_(onExit)
@@ -79,10 +86,11 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
                                const core::system::ProcessOptions& options,
                                const std::string& caption,
                                bool dialog,
-                               bool interactive,
+                               InteractionMode interactionMode,
+                               int maxOutputLines,
                                const boost::function<void()>& onExit)
    : program_(program), args_(args), options_(options), caption_(caption), dialog_(dialog),
-     interactive_(interactive),
+     interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false),  interrupt_(false),
      outputBuffer_(OUTPUT_BUFFER_SIZE),
      onExit_(onExit)
@@ -96,7 +104,7 @@ void ConsoleProcess::commonInit()
 
    // request a pseudoterminal if this is an interactive console process
 #ifndef _WIN32
-   if (interactive())
+   if (interactionMode() != InteractionNever)
    {
       options_.pseudoterminal = core::system::Pseudoterminal(80, 1);
 
@@ -252,7 +260,8 @@ core::json::Object ConsoleProcess::toJson() const
    result["handle"] = handle_;
    result["caption"] = caption_;
    result["dialog"] = dialog_;
-   result["interactive"] = interactive_;
+   result["interaction_mode"] = static_cast<int>(interactionMode_);
+   result["max_output_lines"] = maxOutputLines_;
    result["buffered_output"] = bufferedOutput();
    if (exitCode_)
       result["exit_code"] = *exitCode_;
@@ -268,7 +277,19 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
    pProc->handle_ = obj["handle"].get_str();
    pProc->caption_ = obj["caption"].get_str();
    pProc->dialog_ = obj["dialog"].get_bool();
-   pProc->dialog_ = obj["interactive"].get_bool();
+
+   json::Value mode = obj["interaction_mode"];
+   if (!mode.is_null())
+      pProc->interactionMode_ = static_cast<InteractionMode>(mode.get_int());
+   else
+      pProc->interactionMode_ = InteractionNever;
+
+   json::Value maxLines = obj["max_output_lines"];
+   if (!maxLines.is_null())
+      pProc->maxOutputLines_ = maxLines.get_int();
+   else
+      pProc->maxOutputLines_ = kDefaultMaxOutputLines;
+
    std::string bufferedOutput = obj["buffered_output"].get_str();
    std::copy(bufferedOutput.begin(), bufferedOutput.end(),
              std::back_inserter(pProc->outputBuffer_));
@@ -402,12 +423,19 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       core::system::ProcessOptions options,
       const std::string& caption,
       bool dialog,
-      bool interactive,
+      InteractionMode interactionMode,
+      int maxOutputLines,
       const boost::function<void()>& onExit)
 {
    options.terminateChildren = true;
    boost::shared_ptr<ConsoleProcess> ptrProc(
-         new ConsoleProcess(command, options, caption, dialog, interactive, onExit));
+         new ConsoleProcess(command,
+                            options,
+                            caption,
+                            dialog,
+                            interactionMode,
+                            maxOutputLines,
+                            onExit));
    s_procs[ptrProc->handle()] = ptrProc;
    return ptrProc;
 }
@@ -418,12 +446,20 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       core::system::ProcessOptions options,
       const std::string& caption,
       bool dialog,
-      bool interactive,
+      InteractionMode interactionMode,
+      int maxOutputLines,
       const boost::function<void()>& onExit)
 {
    options.terminateChildren = true;
    boost::shared_ptr<ConsoleProcess> ptrProc(
-         new ConsoleProcess(program, args, options, caption, dialog, interactive, onExit));
+         new ConsoleProcess(program,
+                            args,
+                            options,
+                            caption,
+                            dialog,
+                            interactionMode,
+                            maxOutputLines,
+                            onExit));
    s_procs[ptrProc->handle()] = ptrProc;
    return ptrProc;
 }

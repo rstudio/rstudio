@@ -230,14 +230,16 @@ core::Error createConsoleProc(const ShellArgs& args,
                                   options,
                                   caption,
                                   dialog,
-                                  true,
+                                  console_process::IteractionPossible,
+                                  console_process::kDefaultMaxOutputLines,
                                   &enqueueRefreshEvent);
 #else
    *ppCP = ConsoleProcess::create(svn() << args.args(),
                                   options,
                                   caption,
                                   dialog,
-                                  true,
+                                  console_process::InteractionPossible,
+                                  console_process::kDefaultMaxOutputLines,
                                   &enqueueRefreshEvent);
 #endif
    return Success();

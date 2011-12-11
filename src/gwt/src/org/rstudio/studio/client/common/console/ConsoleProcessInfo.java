@@ -17,6 +17,10 @@ import org.rstudio.core.client.js.JsObject;
 
 public class ConsoleProcessInfo extends JavaScriptObject
 {
+   public static final int INTERACTION_NEVER = 0;
+   public static final int INTERACTION_POSSIBLE = 1;
+   public static final int INTERACTION_ALWAYS = 2;
+   
    protected ConsoleProcessInfo() {}
 
    public final native String getHandle() /*-{
@@ -31,10 +35,14 @@ public class ConsoleProcessInfo extends JavaScriptObject
       return this.dialog;
    }-*/;
    
-   public final native boolean isInteractive()  /*-{
-      return this.interactive;
+   public final native int getInteractionMode()  /*-{
+      return this.interaction_mode;
    }-*/;
 
+   public final native int getMaxOutputLines()  /*-{
+      return this.max_output_lines;
+   }-*/;
+   
    public final native String getBufferedOutput() /*-{
       return this.buffered_output;
    }-*/;
