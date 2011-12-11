@@ -28,6 +28,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
@@ -123,7 +124,10 @@ public class ConsoleProgressDialog extends ModalDialogBase
       {
          ShellInteractionManager shellInteractionManager = 
                new ShellInteractionManager(display_, server, inputHandler_);
-         shellInteractionManager.setHistoryEnabled(false);
+         
+         if (getInteractionMode() != ConsoleProcessInfo.INTERACTION_ALWAYS)
+            shellInteractionManager.setHistoryEnabled(false);
+         
          outputWriter_ = shellInteractionManager;
       }
       else
@@ -176,6 +180,18 @@ public class ConsoleProgressDialog extends ModalDialogBase
 
       if (exitCode != null)
          setExitCode(exitCode);
+     
+      // interaction-always mode is a shell -- customize ui accordingly
+      if (getInteractionMode() == ConsoleProcessInfo.INTERACTION_ALWAYS)
+      {
+         stopButton_.setText("Close");
+         
+         hideProgress();
+         
+         int height = Window.getClientHeight() - 150;
+         display_.getElement().getStyle().setHeight(height, Unit.PX);
+      }
+
    }
 
    @Override
@@ -236,8 +252,8 @@ public class ConsoleProgressDialog extends ModalDialogBase
       running_ = false;
       stopButton_.setText("Close");
       stopButton_.setDefault(true);
-      progressAnim_.getElement().getStyle().setVisibility(Visibility.HIDDEN);
-
+      hideProgress();
+     
       // TODO: Show warning if exitCode != 0
    }
 
@@ -301,6 +317,11 @@ public class ConsoleProgressDialog extends ModalDialogBase
       }
 
    };
+   
+   private void hideProgress()
+   {
+      progressAnim_.getElement().getStyle().setVisibility(Visibility.HIDDEN);
+   }
    
    private int getInteractionMode()
    {
