@@ -35,7 +35,6 @@ namespace modules {
 namespace console_process {
 
 namespace {
-   const size_t OUTPUT_BUFFER_SIZE = 8192;
    typedef std::map<std::string, boost::shared_ptr<ConsoleProcess> > ProcTable;
    ProcTable s_procs;
 
@@ -58,7 +57,7 @@ const int kDefaultMaxOutputLines = 500;
 ConsoleProcess::ConsoleProcess()
    : dialog_(false), interactionMode_(InteractionNever),
      maxOutputLines_(kDefaultMaxOutputLines), started_(true),
-     interrupt_(false), outputBuffer_(OUTPUT_BUFFER_SIZE)
+     interrupt_(false), outputBuffer_(maxOutputLines_)
 {
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
@@ -75,7 +74,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
    : command_(command), options_(options), caption_(caption), dialog_(dialog),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false), interrupt_(false),
-     outputBuffer_(OUTPUT_BUFFER_SIZE),
+     outputBuffer_(maxOutputLines_),
      onExit_(onExit)
 {
    commonInit();
@@ -92,7 +91,7 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
    : program_(program), args_(args), options_(options), caption_(caption), dialog_(dialog),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false),  interrupt_(false),
-     outputBuffer_(OUTPUT_BUFFER_SIZE),
+     outputBuffer_(maxOutputLines_),
      onExit_(onExit)
 {
    commonInit();
@@ -215,29 +214,35 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
    return true;
 }
 
+void ConsoleProcess::enqueOutputEvent(const std::string &output, bool error)
+{
+   // If there's more output than the client can even show, then
+   // truncate it to the amount that the client can show. Too much
+   // output can overwhelm the client, making it unresponsive.
+   std::string trimmedOutput = output;
+   string_utils::trimLeadingLines(maxOutputLines_, &trimmedOutput);
+
+   json::Object data;
+   data["handle"] = handle_;
+   data["error"] = error;
+   data["output"] = trimmedOutput;
+   module_context::enqueClientEvent(
+         ClientEvent(client_events::kConsoleProcessOutput, data));
+}
+
 void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
                               const std::string& output)
 {
    std::copy(output.begin(), output.end(),
              std::back_inserter(outputBuffer_));
 
-   json::Object data;
-   data["handle"] = handle_;
-   data["error"] = false;
-   data["output"] = output;
-   module_context::enqueClientEvent(
-         ClientEvent(client_events::kConsoleProcessOutput, data));
+   enqueOutputEvent(output, false);
 }
 
 void ConsoleProcess::onStderr(core::system::ProcessOperations& ops,
                                      const std::string& output)
 {
-   json::Object data;
-   data["handle"] = handle_;
-   data["error"] = true;
-   data["output"] = output;
-   module_context::enqueClientEvent(
-         ClientEvent(client_events::kConsoleProcessOutput, data));
+   enqueOutputEvent(output, true);
 }
 
 void ConsoleProcess::onExit(int exitCode)

@@ -117,6 +117,9 @@ public:
                                               core::json::Object& obj);
 
 private:
+   void enqueOutputEvent(const std::string& output, bool error);
+
+private:
    // Command and options that will be used when start() is called
    std::string command_;
    std::string program_;
