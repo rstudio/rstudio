@@ -26,11 +26,28 @@ set(CONSOLEIO_SOURCE_FILES
   ConsoleIOMain.cpp
 )
 
-add_definitions(-DWINVER=0x501
-                -D_WIN32_WINNT=0x0501
-                -D_WIN32_IE=0x600
-                -DWIN32_LEAN_AND_MEAN)
-set(LINK_FLAGS -Wl,-subsystem,console -lversion)
+
+# configure consoleio.rc
+configure_file (${CMAKE_CURRENT_SOURCE_DIR}/consoleio.rc.in
+                ${CMAKE_CURRENT_BINARY_DIR}/consoleio.rc)
+
+
+configure_file (${CMAKE_CURRENT_SOURCE_DIR}/consoleio.exe.manifest
+                ${CMAKE_CURRENT_BINARY_DIR}/consoleio.exe.manifest COPYONLY)
+
+add_custom_command(
+   OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/res.o"
+   COMMAND windres.exe
+      -I "."
+      -i "consoleio.rc"
+      -o "${CMAKE_CURRENT_BINARY_DIR}/res.o"
+      -Ocoff
+   DEPENDS
+      "${CMAKE_CURRENT_BINARY_DIR}/consoleio.rc"
+      "${CMAKE_CURRENT_SOURCE_DIR}/consoleio.exe.manifest")
+set(CONSOLEIO_SOURCE_FILES
+   ${CONSOLEIO_SOURCE_FILES}
+   "${CMAKE_CURRENT_BINARY_DIR}/res.o")
 
 add_executable(consoleio
   ${CONSOLEIO_SOURCE_FILES}

@@ -177,6 +177,11 @@ public:
    {
       return core::FilePath(rpostbackPath_.c_str());
    }
+
+   core::FilePath consoleIoPath() const
+   {
+      return core::FilePath(consoleIoPath_.c_str());
+   }
    
    // user info
    std::string userIdentity() const 
@@ -290,7 +295,8 @@ private:
    
    // external
    std::string rpostbackPath_;
-   
+   std::string consoleIoPath_;
+
    // user info
    std::string userIdentity_;
    std::string userHomePath_;

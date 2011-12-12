@@ -155,6 +155,12 @@ struct ChildCallbacks
       stdErr.append(output);
    }
 
+   void onConsoleOutputSnapshot(ProcessOperations&,
+                                const std::vector<char>& output)
+   {
+      consoleOutputSnapshot = output;
+   }
+
    void onExit(int exitStatus)
    {
       ProcessResult result;
@@ -167,6 +173,7 @@ struct ChildCallbacks
    std::string input;
    std::string stdOut;
    std::string stdErr;
+   std::vector<char> consoleOutputSnapshot;
    boost::function<void(const ProcessResult&)> onCompleted;
 };
 
@@ -185,6 +192,8 @@ ProcessCallbacks createProcessCallbacks(
    cb.onStarted = bind(&ChildCallbacks::onStarted, pCC, _1);
    cb.onStdout = bind(&ChildCallbacks::onStdout, pCC, _1, _2);
    cb.onStderr = bind(&ChildCallbacks::onStderr, pCC, _1, _2);
+   cb.onConsoleOutputSnapshot =
+         bind(&ChildCallbacks::onConsoleOutputSnapshot, pCC, _1, _2);
    cb.onExit = bind(&ChildCallbacks::onExit, pCC, _1);
 
    // return it

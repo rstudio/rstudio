@@ -178,7 +178,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    external.add_options()
       ("external-rpostback-path", 
        value<std::string>(&rpostbackPath_)->default_value("bin/postback/rpostback"),
-       "Path to rpostback executable");
+       "Path to rpostback executable")
+      ("external-consoleio-path",
+       value<std::string>(&consoleIoPath_)->default_value("bin/consoleio"),
+       "Path to consoleio executable");
    
    // user options (default user identity to current username)
    std::string currentUsername = core::system::username();
@@ -280,6 +283,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(resourcePath, &modulesRSourcePath_);
    resolvePath(resourcePath, &sessionPackagesPath_);
    resolvePath(resourcePath, &rpostbackPath_);
+   resolvePath(resourcePath, &consoleIoPath_);
 
    // shared secret with parent
    secret_ = core::system::getenv("RS_SHARED_SECRET");

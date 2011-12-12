@@ -57,6 +57,7 @@ struct ProcessOptions
 #ifdef _WIN32
       : terminateChildren(false),
         detachProcess(false),
+        createNewConsole(false),
         redirectStdErrToStdOut(false)
 #else
       : terminateChildren(false),
@@ -90,8 +91,11 @@ struct ProcessOptions
 #endif
 
 #ifdef _WIN32
-   // Creates the process with DETACHED_PROCESS on Win32 (no effect on POSIX)
+   // Creates the process with DETACHED_PROCESS
    bool detachProcess;
+
+   // Creates the process with CREATE_NEW_CONSOLE but with the console hidden
+   bool createNewConsole;
 #endif
 
    bool redirectStdErrToStdOut;
@@ -210,6 +214,9 @@ struct ProcessCallbacks
 
    // Streaming callback for standard error
    boost::function<void(ProcessOperations&, const std::string&)> onStderr;
+
+   boost::function<void(ProcessOperations&, const std::vector<char>&)>
+                                                  onConsoleOutputSnapshot;
 
    // Called if an IO error occurs while reading from standard streams. The
    // default behavior if no callback is specified is to log and then terminate

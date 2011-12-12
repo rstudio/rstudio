@@ -302,6 +302,8 @@ Error ChildProcess::terminate()
 
 Error ChildProcess::run()
 {   
+   Error error;
+
    // NOTE: if the run method is called from multiple threads in single app
    // concurrently then a race condition can cause handles to get incorrectly
    // directed. the workaround suggested by microsoft is to wrap the process
@@ -341,9 +343,7 @@ Error ChildProcess::run()
       return systemError(::GetLastError(), ERROR_LOCATION);
 
    // populate startup info
-   STARTUPINFO si;
-   ZeroMemory(&si,sizeof(STARTUPINFO));
-   si.cb = sizeof(STARTUPINFO);
+   STARTUPINFO si = { sizeof(STARTUPINFO) };
    si.dwFlags |= STARTF_USESTDHANDLES;
    si.hStdOutput = hStdOutWrite;
    si.hStdError = options_.redirectStdErrToStdOut ? hStdOutWrite
@@ -391,7 +391,13 @@ Error ChildProcess::run()
       lpEnv = &envBlock[0];
    }
 
-   if (options_.detachProcess)
+   if (options_.createNewConsole)
+   {
+      dwFlags |= CREATE_NEW_CONSOLE;
+      si.dwFlags |= STARTF_USESHOWWINDOW;
+      si.wShowWindow = SW_HIDE;
+   }
+   else if (options_.detachProcess)
    {
       dwFlags |= DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP;
       si.dwFlags |= STARTF_USESHOWWINDOW;
@@ -523,7 +529,6 @@ void AsyncChildProcess::poll()
       pAsyncImpl_->calledOnStarted_ = true;
    }
 
-
    // call onContinue
    if (callbacks_.onContinue)
    {
@@ -535,7 +540,6 @@ void AsyncChildProcess::poll()
             LOG_ERROR(error);
       }
    }
-
 
    // check stdout
    std::string stdOut;
