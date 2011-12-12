@@ -37,6 +37,7 @@ import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.shell.ShellInput;
 import org.rstudio.studio.client.common.vcs.*;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
@@ -378,13 +379,6 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void processPtyInterrupt(String handle,
-                                   ServerRequestCallback<Void> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, PROCESS_PTY_INTERRUPT, handle, requestCallback);
-   }
-
-   @Override
    public void processReap(String handle,
                            ServerRequestCallback<Void> requestCallback)
    {
@@ -393,12 +387,12 @@ public class RemoteServer implements Server
 
    @Override
    public void processWriteStdin(String handle,
-                                 String input,
+                                 ShellInput input,
                                  ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(handle));
-      params.set(1, new JSONString(input));
+      params.set(1, new JSONObject(input));
       sendRequest(RPC_SCOPE, PROCESS_WRITE_STDIN, params, requestCallback);
    }
 
@@ -2340,7 +2334,6 @@ public class RemoteServer implements Server
 
    private static final String PROCESS_START = "process_start";
    private static final String PROCESS_INTERRUPT = "process_interrupt";
-   private static final String PROCESS_PTY_INTERRUPT = "process_pty_interrupt";
    private static final String PROCESS_REAP = "process_reap";
    private static final String PROCESS_WRITE_STDIN = "process_write_stdin";
 

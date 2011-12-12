@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.console.model;
 
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
+import org.rstudio.studio.client.common.shell.ShellInput;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
@@ -35,13 +36,10 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
    void processInterrupt(String handle,
                          ServerRequestCallback<Void> requestCallback);
    
-   void processPtyInterrupt(String handle,
-                            ServerRequestCallback<Void> requestCallback);
-
    void processReap(String handle,
                     ServerRequestCallback<Void> requestCallback);
 
    void processWriteStdin(String handle,
-                          String input,
+                          ShellInput input,
                           ServerRequestCallback<Void> requestCallback);
 }

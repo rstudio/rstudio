@@ -22,7 +22,7 @@ public class ShellInteractionManager implements ShellOutputWriter
 {
    public ShellInteractionManager(ShellDisplay display,
                                   CryptoServerOperations server,
-                                  CommandWithArg<String> inputHandler)
+                                  CommandWithArg<ShellInput> inputHandler)
    {
       display_ = display;
       server_ = server;
@@ -79,7 +79,7 @@ public class ShellInteractionManager implements ShellOutputWriter
          consolePrompt(lastPromptText_, false);
    }
    
-   private void processInput(CommandWithArg<String> onInputReady)
+   private void processInput(final CommandWithArg<ShellInput> onInputReady)
    {
       // get the current prompt text
       String promptText = display_.getPromptText();
@@ -94,13 +94,21 @@ public class ShellInteractionManager implements ShellOutputWriter
       
       // update console with prompt and input
       display_.consoleWritePrompt(promptText);
-      if (showInputForPrompt(promptText))
+      final boolean echoInput = showInputForPrompt(promptText);
+      if (echoInput)
          display_.consoleWriteInput(input);
       else
          display_.consoleWriteInput("\n");
       
       // encrypt the input and return it
-      encryptInput(input, onInputReady);
+      encryptInput(input, new CommandWithArg<String>() {
+
+         @Override
+         public void execute(String arg)
+         {
+            onInputReady.execute(ShellInput.create(arg, echoInput));
+         }
+      });
    }
  
    private void navigateHistory(int offset)
@@ -212,7 +220,7 @@ public class ShellInteractionManager implements ShellOutputWriter
             if (display_.isPromptEmpty())
                display_.consoleWriteOutput("^C");
             
-            inputHandler_.execute(null);
+            inputHandler_.execute(ShellInput.createInterrupt());
          }
          else if (modifiers == KeyboardShortcut.CTRL && keyCode == 'L')
          {
@@ -272,7 +280,7 @@ public class ShellInteractionManager implements ShellOutputWriter
    private final InputEditorDisplay input_ ;
    private final CommandLineHistory historyManager_;
    
-   private final CommandWithArg<String> inputHandler_;
+   private final CommandWithArg<ShellInput> inputHandler_;
    
    private final CryptoServerOperations server_;
    private PublicKeyInfo publicKeyInfo_ = null;

@@ -44,6 +44,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
+import org.rstudio.studio.client.common.shell.ShellInput;
 import org.rstudio.studio.client.common.shell.ShellInteractionManager;
 import org.rstudio.studio.client.common.shell.ShellOutputWriter;
 import org.rstudio.studio.client.server.ServerError;
@@ -291,33 +292,21 @@ public class ConsoleProgressDialog extends ModalDialogBase
       running_ = false;
    }
    
-   private CommandWithArg<String> inputHandler_ = new CommandWithArg<String>() 
+   private CommandWithArg<ShellInput> inputHandler_ = 
+                                          new CommandWithArg<ShellInput>() 
    {
       @Override
-      public void execute(String input)
+      public void execute(ShellInput input)
       {         
-         if (input != null)
-         {
-            consoleProcess_.writeStandardInput(
-                  input, 
-                  new VoidServerRequestCallback() {
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        outputWriter_.consoleWriteError(error.getUserMessage());
-                     }
-                  });
-         }
-         else
-         {
-            consoleProcess_.ptyInterrupt(new VoidServerRequestCallback() {
+         consoleProcess_.writeStandardInput(
+            input, 
+            new VoidServerRequestCallback() {
                @Override
                public void onError(ServerError error)
                {
                   outputWriter_.consoleWriteError(error.getUserMessage());
                }
             });
-         }
       }
 
    };
