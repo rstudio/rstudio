@@ -26,10 +26,6 @@ set(CONSOLEIO_SOURCE_FILES
   ConsoleIOMain.cpp
 )
 
-add_definitions(-DWINVER=0x501
-                -D_WIN32_WINNT=0x0501
-                -D_WIN32_IE=0x600
-                -DWIN32_LEAN_AND_MEAN)
 set(LINK_FLAGS -Wl,-subsystem,console -lversion)
 
 
