@@ -358,9 +358,9 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
    // if we are using git bash then return its path
    if (git::isGitEnabled() && userSettings().vcsUseGitBash())
    {
-      FilePath gitBinDir = git::detectedGitBinDir();
-      if (!gitBinDir.empty())
-         terminalPath = gitBinDir.childPath("sh.exe");
+      FilePath gitExePath = git::detectedGitExePath();
+      if (!gitExePath.empty())
+         terminalPath = gitExePath.parent().childPath("sh.exe");
    }
 
 #elif defined(__APPLE__)
