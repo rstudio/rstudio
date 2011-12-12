@@ -115,8 +115,6 @@ public:
    bool onContinue(core::system::ProcessOperations& ops);
    void onStdout(core::system::ProcessOperations& ops,
                  const std::string& output);
-   void onStderr(core::system::ProcessOperations& ops,
-                 const std::string& output);
    void onExit(int exitCode);
 
    core::json::Object toJson() const;

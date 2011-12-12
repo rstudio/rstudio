@@ -102,6 +102,9 @@ void ConsoleProcess::commonInit()
 {
    handle_ = core::system::generateUuid(false);
 
+   // always redirect stderr to stdout so output is interleaved
+   options_.redirectStdErrToStdOut = true;
+
    // request a pseudoterminal if this is an interactive console process
 #ifndef _WIN32
    if (interactionMode() != InteractionNever)
@@ -243,12 +246,6 @@ void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
    enqueOutputEvent(output, false);
 }
 
-void ConsoleProcess::onStderr(core::system::ProcessOperations& ops,
-                                     const std::string& output)
-{
-   enqueOutputEvent(output, true);
-}
-
 void ConsoleProcess::onExit(int exitCode)
 {
    exitCode_.reset(exitCode);
@@ -316,7 +313,6 @@ core::system::ProcessCallbacks ConsoleProcess::createProcessCallbacks()
    core::system::ProcessCallbacks cb;
    cb.onContinue = boost::bind(&ConsoleProcess::onContinue, ConsoleProcess::shared_from_this(), _1);
    cb.onStdout = boost::bind(&ConsoleProcess::onStdout, ConsoleProcess::shared_from_this(), _1, _2);
-   cb.onStderr = boost::bind(&ConsoleProcess::onStderr, ConsoleProcess::shared_from_this(), _1, _2);
    cb.onExit = boost::bind(&ConsoleProcess::onExit, ConsoleProcess::shared_from_this(), _1);
    return cb;
 }
