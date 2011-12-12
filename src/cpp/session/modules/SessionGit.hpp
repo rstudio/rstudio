@@ -76,7 +76,7 @@ std::string remoteOriginUrl(const core::FilePath& workingDir);
 
 core::Error initializeGit(const core::FilePath& workingDir);
 
-core::FilePath detectedGitBinDir();
+core::FilePath detectedGitExePath();
 
 std::string nonPathGitBinDir();
 

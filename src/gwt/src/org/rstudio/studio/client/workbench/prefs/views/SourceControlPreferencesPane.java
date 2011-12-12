@@ -26,7 +26,6 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
-import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -72,14 +71,13 @@ public class SourceControlPreferencesPane extends PreferencesPane
       });
       
       
-      // git bin dir chooser  
-      gitBinDirChooser_ = new DirectoryChooserTextBox(null,
-                                                      "(Not Found)",
-                                                      null,
-                                                      fileDialogs, 
-                                                      fsContext);  
-      gitBinDirLabel_ = new Label("Git bin directory:");
-      addTextBoxChooser(gitBinDirLabel_, null, null, gitBinDirChooser_);
+      // git exe path chooser  
+      gitExePathChooser_ = new FileChooserTextBox("",
+                                                  "(Not Found)",
+                                                  null,
+                                                  null);
+      gitExePathLabel_ = new Label("Git executable:");
+      addTextBoxChooser(gitExePathLabel_, null, null, gitExePathChooser_);
       
       // use git bash
       chkUseGitBash_ = new CheckBox("Use Git Bash as shell for Git projects");
@@ -90,18 +88,17 @@ public class SourceControlPreferencesPane extends PreferencesPane
       }
       
         
-      // svn bin dir chooser
-      svnBinDirLabel_ = new Label("Svn bin directory:");
-      svnBinDirChooser_ = new DirectoryChooserTextBox(null,
-                                                      "(Not Found)",
-                                                      null,
-                                                      fileDialogs, 
-                                                      fsContext);
-      addTextBoxChooser(svnBinDirLabel_, null, null, svnBinDirChooser_);
+      // svn exe path chooser
+      svnExePathLabel_ = new Label("Svn executable:");
+      svnExePathChooser_ = new FileChooserTextBox("",
+                                                  "(Not Found)",
+                                                  null,
+                                                  null);
+      addTextBoxChooser(svnExePathLabel_, null, null, svnExePathChooser_);
       
       
       // terminal path
-      terminalPathLabel_ = new Label("Terminal application:");
+      terminalPathLabel_ = new Label("Terminal executable:");
       terminalPathChooser_ = new FileChooserTextBox("", 
                                                     "(Not Found)", 
                                                     null, 
@@ -128,8 +125,8 @@ public class SourceControlPreferencesPane extends PreferencesPane
       add(vcsHelpLink);
                                       
       chkVcsEnabled_.setEnabled(false);
-      gitBinDirChooser_.setEnabled(false);
-      svnBinDirChooser_.setEnabled(false);
+      gitExePathChooser_.setEnabled(false);
+      svnExePathChooser_.setEnabled(false);
       terminalPathChooser_.setEnabled(false);
       chkUseGitBash_.setEnabled(false);
       showSshKeyButton_.setEnabled(false);
@@ -143,15 +140,15 @@ public class SourceControlPreferencesPane extends PreferencesPane
       originalPrefs_ = prefs;
 
       chkVcsEnabled_.setEnabled(true);
-      gitBinDirChooser_.setEnabled(true);
-      svnBinDirChooser_.setEnabled(true);
+      gitExePathChooser_.setEnabled(true);
+      svnExePathChooser_.setEnabled(true);
       terminalPathChooser_.setEnabled(true);
       chkUseGitBash_.setEnabled(true);
       showSshKeyButton_.setEnabled(true);
 
       chkVcsEnabled_.setValue(prefs.getVcsEnabled());
-      gitBinDirChooser_.setText(prefs.getGitBinDir());
-      svnBinDirChooser_.setText(prefs.getSvnBinDir());
+      gitExePathChooser_.setText(prefs.getGitExePath());
+      svnExePathChooser_.setText(prefs.getSvnExePath());
       terminalPathChooser_.setText(prefs.getTerminalPath());
       chkUseGitBash_.setValue(prefs.getUseGitBash());
 
@@ -182,8 +179,8 @@ public class SourceControlPreferencesPane extends PreferencesPane
       super.onApply(rPrefs);
 
       SourceControlPrefs prefs = SourceControlPrefs.create(
-            chkVcsEnabled_.getValue(), gitBinDirChooser_.getText(),
-            svnBinDirChooser_.getText(), terminalPathChooser_.getText(),
+            chkVcsEnabled_.getValue(), gitExePathChooser_.getText(),
+            svnExePathChooser_.getText(), terminalPathChooser_.getText(),
             chkUseGitBash_.getValue());
 
       rPrefs.setSourceControlPrefs(prefs);
@@ -235,10 +232,10 @@ public class SourceControlPreferencesPane extends PreferencesPane
    private void manageControlVisibility()
    {
       boolean vcsEnabled = chkVcsEnabled_.getValue();
-      gitBinDirLabel_.setVisible(vcsEnabled);
-      gitBinDirChooser_.setVisible(vcsEnabled);
-      svnBinDirLabel_.setVisible(vcsEnabled);
-      svnBinDirChooser_.setVisible(vcsEnabled);
+      gitExePathLabel_.setVisible(vcsEnabled);
+      gitExePathChooser_.setVisible(vcsEnabled);
+      svnExePathLabel_.setVisible(vcsEnabled);
+      svnExePathChooser_.setVisible(vcsEnabled);
       terminalPathLabel_.setVisible(vcsEnabled);
       terminalPathChooser_.setVisible(vcsEnabled && haveTerminalPathPref());
       chkUseGitBash_.setVisible(vcsEnabled && haveGitBashPref());
@@ -252,10 +249,10 @@ public class SourceControlPreferencesPane extends PreferencesPane
 
    private SourceControlPrefs originalPrefs_;
 
-   private Label svnBinDirLabel_;
-   private Label gitBinDirLabel_;
-   private TextBoxWithButton gitBinDirChooser_;
-   private TextBoxWithButton svnBinDirChooser_;
+   private Label svnExePathLabel_;
+   private Label gitExePathLabel_;
+   private TextBoxWithButton gitExePathChooser_;
+   private TextBoxWithButton svnExePathChooser_;
    private Label terminalPathLabel_;
    private TextBoxWithButton terminalPathChooser_;
    private CheckBox chkUseGitBash_;

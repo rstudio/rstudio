@@ -31,7 +31,7 @@ std::string repositoryRoot(const core::FilePath& workingDir);
 
 bool isSvnEnabled();
 
-core::FilePath detectedSvnBinDir();
+core::FilePath detectedSvnExePath();
 
 std::string nonPathSvnBinDir();
 

@@ -346,32 +346,32 @@ void UserSettings::setVcsEnabled(bool enabled)
    settings_.set("vcsEnabled", enabled);
 }
 
-FilePath UserSettings::gitBinDir() const
+FilePath UserSettings::gitExePath() const
 {
-   std::string dir = settings_.get("vcsGitBinDir");
+   std::string dir = settings_.get("vcsGitExePath");
    if (!dir.empty())
       return FilePath(dir);
    else
       return FilePath();
 }
 
-void UserSettings::setGitBinDir(const FilePath& gitBinDir)
+void UserSettings::setGitExePath(const FilePath& gitExePath)
 {
-   settings_.set("vcsGitBinDir", gitBinDir.absolutePath());
+   settings_.set("vcsGitExePath", gitExePath.absolutePath());
 }
 
-FilePath UserSettings::svnBinDir() const
+FilePath UserSettings::svnExePath() const
 {
-   std::string dir = settings_.get("vcsSvnBinDir");
+   std::string dir = settings_.get("vcsSvnExePath");
    if (!dir.empty())
       return FilePath(dir);
    else
       return FilePath();
 }
 
-void UserSettings::setSvnBinDir(const FilePath& svnBinDir)
+void UserSettings::setSvnExePath(const FilePath& svnExePath)
 {
-   settings_.set("vcsSvnBinDir", svnBinDir.absolutePath());
+   settings_.set("vcsSvnExePath", svnExePath.absolutePath());
 }
 
 FilePath UserSettings::vcsTerminalPath() const

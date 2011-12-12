@@ -75,7 +75,7 @@ const size_t WARN_SIZE = 200 * 1024;
 
 // git bin dir which we detect at startup. note that if the git bin
 // is already in the path then this will be empty
-std::string s_gitBinDir;
+std::string s_gitExePath;
 uint64_t s_gitVersion;
 const uint64_t GIT_1_7_2 = ((uint64_t)1 << 48) |
                            ((uint64_t)7 << 32) |
@@ -108,8 +108,9 @@ core::system::ProcessOptions procOptions()
    core::system::environment(&childEnv);
 
    // add git bin dir to PATH if necessary
-   if (!s_gitBinDir.empty())
-      core::system::addToPath(&childEnv, s_gitBinDir);
+   std::string nonPathGitBinDir = git::nonPathGitBinDir();
+   if (!nonPathGitBinDir.empty())
+      core::system::addToPath(&childEnv, nonPathGitBinDir);
 
    // add postback directory to PATH
    FilePath postbackDir = session::options().rpostbackPath().parent();
@@ -184,9 +185,9 @@ std::vector<PidType> s_pidsToTerminate_;
 
 ShellCommand git()
 {
-   if (!s_gitBinDir.empty())
+   if (!s_gitExePath.empty())
    {
-      FilePath fullPath = FilePath(s_gitBinDir).childPath("git");
+      FilePath fullPath(s_gitExePath);
       return ShellCommand(fullPath);
    }
    else
@@ -197,10 +198,9 @@ ShellCommand git()
 #ifdef _WIN32
 std::string gitBin()
 {
-   if (!s_gitBinDir.empty())
+   if (!s_gitExePath.empty())
    {
-      std::string exe("git.exe");
-      return FilePath(s_gitBinDir).childPath(exe).absolutePathNative();
+      return FilePath(s_gitExePath).absolutePathNative();
    }
    else
       return "git.exe";
@@ -2250,7 +2250,7 @@ Error discoverGitBinDir(FilePath* pPath)
                       ERROR_LOCATION);
 }
 
-Error detectAndSaveGitBinDir()
+Error detectAndSaveGitExePath()
 {
    if (isGitExeOnPath())
       return Success();
@@ -2261,7 +2261,7 @@ Error detectAndSaveGitBinDir()
       return error;
 
    // save it
-   s_gitBinDir = path.absolutePath();
+   s_gitExePath = path.complete("git.exe").absolutePath();
 
    return Success();
 }
@@ -2376,20 +2376,20 @@ bool isGitEnabled()
    return !s_git_.root().empty();
 }
 
-FilePath detectedGitBinDir()
+FilePath detectedGitExePath()
 {
 #ifdef _WIN32
    FilePath path;
    if (detectGitExeDirOnPath(&path))
    {
-      return path;
+      return path.complete("git.exe");
    }
    else
    {
       Error error = discoverGitBinDir(&path);
       if (!error)
       {
-         return path;
+         return path.complete("git.exe");
       }
       else
       {
@@ -2400,7 +2400,7 @@ FilePath detectedGitBinDir()
 #else
    FilePath gitExeFilePath = whichGitExe();
    if (!gitExeFilePath.empty())
-      return FilePath(gitExeFilePath).parent();
+      return FilePath(gitExeFilePath);
    else
       return FilePath();
 #endif
@@ -2409,27 +2409,30 @@ FilePath detectedGitBinDir()
 
 std::string nonPathGitBinDir()
 {
-   return s_gitBinDir;
+   if (!s_gitExePath.empty())
+      return FilePath(s_gitExePath).parent().absolutePath();
+   else
+      return std::string();
 }
 
 void onUserSettingsChanged()
 {
-   FilePath gitBinDir = userSettings().gitBinDir();
-   if (!gitBinDir.empty())
+   FilePath gitExePath = userSettings().gitExePath();
+   if (!gitExePath.empty())
    {
       // if there is an explicit value then set it
-      s_gitBinDir = gitBinDir.absolutePath();
+      s_gitExePath = gitExePath.absolutePath();
    }
    else
    {
       // if we are relying on an auto-detected value then scan on windows
       // and reset to empty on posix
 #ifdef _WIN32
-      Error error = detectAndSaveGitBinDir();
+      Error error = detectAndSaveGitExePath();
       if (error)
          LOG_ERROR(error);
 #else
-      s_gitBinDir = "";
+      s_gitExePath = "";
 #endif
    }
 }
@@ -2461,13 +2464,13 @@ bool initGitBin()
    Error error;
 
    // get the git bin dir from settings if it is there
-   s_gitBinDir = userSettings().gitBinDir().absolutePath();
+   s_gitExePath = userSettings().gitExePath().absolutePath();
 
    // if it wasn't provided in settings then make sure we can detect it
-   if (s_gitBinDir.empty())
+   if (s_gitExePath.empty())
    {
 #ifdef _WIN32
-      error = detectAndSaveGitBinDir();
+      error = detectAndSaveGitExePath();
       if (error)
          return false; // no Git install detected
 #else

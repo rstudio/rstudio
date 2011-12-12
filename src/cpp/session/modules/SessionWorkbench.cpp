@@ -208,11 +208,11 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 
    // read and set source control prefs
    bool vcsEnabled, useGitBash;
-   std::string gitBinDir, svnBinDir, terminalPath;
+   std::string gitExe, svnExe, terminalPath;
    error = json::readObject(sourceControlPrefs,
                             "vcs_enabled", &vcsEnabled,
-                            "git_bin_dir", &gitBinDir,
-                            "svn_bin_dir", &svnBinDir,
+                            "git_exe_path", &gitExe,
+                            "svn_exe_path", &svnExe,
                             "terminal_path", &terminalPath,
                             "use_git_bash", &useGitBash);
    if (error)
@@ -220,17 +220,17 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().beginUpdate();
    userSettings().setVcsEnabled(vcsEnabled);
 
-   FilePath gitBinDirPath(gitBinDir);
-   if (gitBinDirPath == git::detectedGitBinDir())
-      userSettings().setGitBinDir(FilePath());
+   FilePath gitExePath(gitExe);
+   if (gitExePath == git::detectedGitExePath())
+      userSettings().setGitExePath(FilePath());
    else
-      userSettings().setGitBinDir(gitBinDirPath);
+      userSettings().setGitExePath(gitExePath);
 
-   FilePath svnBinDirPath(svnBinDir);
-   if (svnBinDirPath == svn::detectedSvnBinDir())
-      userSettings().setSvnBinDir(FilePath());
+   FilePath svnExePath(svnExe);
+   if (svnExePath == svn::detectedSvnExePath())
+      userSettings().setSvnExePath(FilePath());
    else
-      userSettings().setSvnBinDir(svnBinDirPath);
+      userSettings().setSvnExePath(svnExePath);
 
    FilePath terminalFilePath(terminalPath);
    if (terminalFilePath == source_control::detectedTerminalPath())
@@ -312,15 +312,15 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    // get source control prefs
    json::Object sourceControlPrefs;
    sourceControlPrefs["vcs_enabled"] = userSettings().vcsEnabled();
-   FilePath gitBinDir = userSettings().gitBinDir();
-   if (gitBinDir.empty())
-      gitBinDir = git::detectedGitBinDir();
-   sourceControlPrefs["git_bin_dir"] = gitBinDir.absolutePath();
+   FilePath gitExePath = userSettings().gitExePath();
+   if (gitExePath.empty())
+      gitExePath = git::detectedGitExePath();
+   sourceControlPrefs["git_exe_path"] = gitExePath.absolutePath();
 
-   FilePath svnBinDir = userSettings().svnBinDir();
-   if (svnBinDir.empty())
-      svnBinDir = svn::detectedSvnBinDir();
-   sourceControlPrefs["svn_bin_dir"] = svnBinDir.absolutePath();
+   FilePath svnExePath = userSettings().svnExePath();
+   if (svnExePath.empty())
+      svnExePath = svn::detectedSvnExePath();
+   sourceControlPrefs["svn_exe_path"] = svnExePath.absolutePath();
 
    FilePath terminalPath = userSettings().vcsTerminalPath();
    if (terminalPath.empty())

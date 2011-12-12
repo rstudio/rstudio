@@ -113,11 +113,11 @@ public:
    bool vcsEnabled() const;
    void setVcsEnabled(bool enabled);
 
-   core::FilePath gitBinDir() const;
-   void setGitBinDir(const core::FilePath& gitBinDir);
+   core::FilePath gitExePath() const;
+   void setGitExePath(const core::FilePath& gitExePath);
 
-   core::FilePath svnBinDir() const;
-   void setSvnBinDir(const core::FilePath& svnBinDir);
+   core::FilePath svnExePath() const;
+   void setSvnExePath(const core::FilePath& svnExePath);
 
    core::FilePath vcsTerminalPath() const;
    void setVcsTerminalPath(const core::FilePath& terminalPath);
