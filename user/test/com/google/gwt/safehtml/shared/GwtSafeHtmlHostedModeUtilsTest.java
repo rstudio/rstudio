@@ -47,6 +47,9 @@ public class GwtSafeHtmlHostedModeUtilsTest extends GWTTestCase {
       assertCheckCompleteHtmlFails("baz<em>foo</em> <x a=\"b\"");
       assertCheckCompleteHtmlFails("baz<em>foo</em> <x a=\"b\" ");
 
+      assertCheckCompleteHtmlFails("<script>");
+      assertCheckCompleteHtmlFails("<style>");
+
       SafeHtmlHostedModeUtils.maybeCheckCompleteHtml("baz<em>foo</em> <x a=\"b\"> ");
       SafeHtmlHostedModeUtils.maybeCheckCompleteHtml("baz<em>foo</em> <x a=\"b\">sadf");
       SafeHtmlHostedModeUtils.maybeCheckCompleteHtml("baz<em>foo</em> <x a=\"b\">");

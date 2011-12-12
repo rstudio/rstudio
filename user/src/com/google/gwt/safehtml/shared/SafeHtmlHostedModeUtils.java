@@ -85,7 +85,8 @@ public class SafeHtmlHostedModeUtils {
     } catch (ParseException e) {
       return false;
     }
-    return htmlParser.getState() == HtmlParser.STATE_TEXT;
+    return htmlParser.getState() == HtmlParser.STATE_TEXT
+        && !htmlParser.inJavascript() && !htmlParser.inCss();
   }
 
   /**
