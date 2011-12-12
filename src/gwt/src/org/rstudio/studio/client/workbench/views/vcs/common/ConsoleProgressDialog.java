@@ -115,9 +115,13 @@ public class ConsoleProgressDialog extends ModalDialogBase
       setText(title);
 
       display_ = new ConsoleProgressWidget();
+      int baseWidth = 660;
+      if (getInteractionMode() == ConsoleProcessInfo.INTERACTION_ALWAYS)
+         baseWidth = 800;
+      baseWidth = Math.min(baseWidth, Window.getClientWidth() - 100);
       Style style = display_.getElement().getStyle();
       double skewFactor = (12 + BrowseCap.getFontSkew()) / 12.0;
-      style.setWidth((int)(skewFactor * 660), Unit.PX);
+      style.setWidth((int)(skewFactor * baseWidth), Unit.PX);
       
       display_.setMaxOutputLines(getMaxOutputLines());
      
