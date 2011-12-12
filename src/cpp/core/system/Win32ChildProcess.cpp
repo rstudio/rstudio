@@ -546,8 +546,6 @@ Error AsyncChildProcess::terminate()
 
 void AsyncChildProcess::poll()
 {
-   Error error;
-
    // call onStarted if we haven't yet
    if (!(pAsyncImpl_->calledOnStarted_))
    {
@@ -562,7 +560,7 @@ void AsyncChildProcess::poll()
       if (!callbacks_.onContinue(*this))
       {
          // terminate the proces
-         error = terminate();
+         Error error = terminate();
          if (error)
             LOG_ERROR(error);
       }
@@ -571,7 +569,7 @@ void AsyncChildProcess::poll()
    if (options_.lowLevelConsoleIO)
    {
       std::vector<char> response;
-      error = rrPipe_.makeRequest("o", &response);
+      Error error = rrPipe_.makeRequest("o", &response);
       if (error)
       {
          LOG_ERROR(error);
@@ -585,7 +583,7 @@ void AsyncChildProcess::poll()
    {
       // check stdout
       std::string stdOut;
-      error = readPipeAvailableBytes(pImpl_->hStdOutRead, &stdOut);
+      Error error = readPipeAvailableBytes(pImpl_->hStdOutRead, &stdOut);
       if (error)
          reportError(error);
       if (!stdOut.empty() && callbacks_.onStdout)
@@ -622,6 +620,7 @@ void AsyncChildProcess::poll()
       // error state, return -1 and try to log a meaningful error
       else
       {
+         Error error;
          if (result == WAIT_FAILED)
          {
             error = systemError(::GetLastError(), ERROR_LOCATION);
@@ -636,7 +635,7 @@ void AsyncChildProcess::poll()
       }
 
       // close the process handle
-      error = closeHandle(&pImpl_->hProcess, ERROR_LOCATION);
+      Error error = closeHandle(&pImpl_->hProcess, ERROR_LOCATION);
       if (error)
          LOG_ERROR(error);
 
