@@ -532,7 +532,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "process_start", procStart))
       (bind(registerRpcMethod, "process_interrupt", procInterrupt))
-      (bind(registerRpcMethod, "process_pty_interrupt", procInterrupt))
+      (bind(registerRpcMethod, "process_pty_interrupt", procPtyInterrupt))
       (bind(registerRpcMethod, "process_reap", procReap))
       (bind(registerRpcMethod, "process_write_stdin", procWriteStdin));
 
