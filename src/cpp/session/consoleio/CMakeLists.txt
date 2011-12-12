@@ -26,8 +26,6 @@ set(CONSOLEIO_SOURCE_FILES
   ConsoleIOMain.cpp
 )
 
-set(LINK_FLAGS -Wl,-subsystem,console -lversion)
-
 
 # configure consoleio.rc
 configure_file (${CMAKE_CURRENT_SOURCE_DIR}/consoleio.rc.in
