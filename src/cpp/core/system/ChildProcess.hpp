@@ -15,7 +15,6 @@
 #define CORE_SYSTEM_CHILD_PROCESS_HPP
 
 #include <core/system/Process.hpp>
-#include <core/system/Win32RequestResponsePipe.hpp>
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
@@ -68,14 +67,12 @@ protected:
    // platform specific impl
    struct Impl;
    boost::scoped_ptr<Impl> pImpl_;
-   ProcessOptions options_;
-   // For low-level console I/O only
-   core::system::Win32RequestResponsePipe rrPipe_;
 
 private:
    // command and args
    std::string exe_;
    std::vector<std::string> args_;
+   ProcessOptions options_;
 };
 
 

@@ -260,32 +260,24 @@ ChildProcess::~ChildProcess()
 
 Error ChildProcess::writeToStdin(const std::string& input, bool eof)
 {
-   if (options_.lowLevelConsoleIO)
+   // write synchronously to the pipe
+   if (!input.empty())
    {
-      std::vector<char> response;
-      return rrPipe_.makeRequest("i" + input, &response);
+      DWORD dwWritten;
+      BOOL bSuccess = ::WriteFile(pImpl_->hStdInWrite,
+                                  input.data(),
+                                  input.length(),
+                                  &dwWritten,
+                                  NULL);
+      if (!bSuccess)
+         return systemError(::GetLastError(), ERROR_LOCATION);
    }
-   else
-   {
-      // write synchronously to the pipe
-      if (!input.empty())
-      {
-         DWORD dwWritten;
-         BOOL bSuccess = ::WriteFile(pImpl_->hStdInWrite,
-                                     input.data(),
-                                     input.length(),
-                                     &dwWritten,
-                                     NULL);
-         if (!bSuccess)
-            return systemError(::GetLastError(), ERROR_LOCATION);
-      }
 
-      // close pipe if requested
-      if (eof)
-         return closeHandle(&pImpl_->hStdInWrite, ERROR_LOCATION);
-      else
-         return Success();
-   }
+   // close pipe if requested
+   if (eof)
+      return closeHandle(&pImpl_->hStdInWrite, ERROR_LOCATION);
+   else
+      return Success();
 }
 
 Error ChildProcess::ptySetSize(int cols, int rows)
@@ -399,21 +391,11 @@ Error ChildProcess::run()
       lpEnv = &envBlock[0];
    }
 
-   if (options_.lowLevelConsoleIO)
+   if (options_.createNewConsole)
    {
       dwFlags |= CREATE_NEW_CONSOLE;
-      si.dwFlags &= ~STARTF_USESTDHANDLES;
       si.dwFlags |= STARTF_USESHOWWINDOW;
       si.wShowWindow = SW_HIDE;
-
-      error = rrPipe_.parentInit();
-      if (error)
-         return error;
-
-      std::string consoleIO("consoleio.exe ");
-      cmdLine.insert(cmdLine.begin(),
-                     consoleIO.begin(),
-                     consoleIO.end());
    }
    else if (options_.detachProcess)
    {
@@ -447,13 +429,6 @@ Error ChildProcess::run()
 
    if (!success)
       return systemError(::GetLastError(), ERROR_LOCATION);
-
-   if (options_.lowLevelConsoleIO)
-   {
-      error = rrPipe_.onChildCreated();
-      if (error)
-         return error;
-   }
 
    // close thread handle on exit
    CloseHandleOnExitScope closeThread(&pi.hThread, ERROR_LOCATION);
@@ -566,37 +541,21 @@ void AsyncChildProcess::poll()
       }
    }
 
-   if (options_.lowLevelConsoleIO)
-   {
-      std::vector<char> response;
-      Error error = rrPipe_.makeRequest("o", &response);
-      if (error)
-      {
-         LOG_ERROR(error);
-      }
-      else
-      {
-         callbacks_.onConsoleOutputSnapshot(*this, response);
-      }
-   }
-   else
-   {
-      // check stdout
-      std::string stdOut;
-      Error error = readPipeAvailableBytes(pImpl_->hStdOutRead, &stdOut);
-      if (error)
-         reportError(error);
-      if (!stdOut.empty() && callbacks_.onStdout)
-         callbacks_.onStdout(*this, stdOut);
+   // check stdout
+   std::string stdOut;
+   Error error = readPipeAvailableBytes(pImpl_->hStdOutRead, &stdOut);
+   if (error)
+      reportError(error);
+   if (!stdOut.empty() && callbacks_.onStdout)
+      callbacks_.onStdout(*this, stdOut);
 
-      // check stderr
-      std::string stdErr;
-      error = readPipeAvailableBytes(pImpl_->hStdErrRead, &stdErr);
-      if (error)
-         reportError(error);
-      if (!stdErr.empty() && callbacks_.onStderr)
-         callbacks_.onStderr(*this, stdErr);
-   }
+   // check stderr
+   std::string stdErr;
+   error = readPipeAvailableBytes(pImpl_->hStdErrRead, &stdErr);
+   if (error)
+      reportError(error);
+   if (!stdErr.empty() && callbacks_.onStderr)
+      callbacks_.onStderr(*this, stdErr);
 
    // check for process exit
    DWORD result = ::WaitForSingleObject(pImpl_->hProcess, 0);

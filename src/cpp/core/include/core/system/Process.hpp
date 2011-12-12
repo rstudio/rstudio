@@ -57,7 +57,7 @@ struct ProcessOptions
 #ifdef _WIN32
       : terminateChildren(false),
         detachProcess(false),
-        lowLevelConsoleIO(false),
+        createNewConsole(false),
         redirectStdErrToStdOut(false)
 #else
       : terminateChildren(false),
@@ -91,16 +91,11 @@ struct ProcessOptions
 #endif
 
 #ifdef _WIN32
-   // Creates the process with DETACHED_PROCESS on Win32 (no effect on POSIX)
+   // Creates the process with DETACHED_PROCESS
    bool detachProcess;
 
-   // If true, uses ConsoleIO.exe to capture low-level console input and output
-   // (that cannot be accessed by redirecting stdin/stdout). This is not
-   // recommended unless absolutely necessary as it introduces a lot of
-   // complexity.
-   //
-   // If true, detachProcess and redirectStdErrToStdOut are ignored.
-   bool lowLevelConsoleIO;
+   // Creates the process with CREATE_NEW_CONSOLE but with the console hidden
+   bool createNewConsole;
 #endif
 
    bool redirectStdErrToStdOut;
