@@ -57,6 +57,7 @@ struct ProcessOptions
 #ifdef _WIN32
       : terminateChildren(false),
         detachProcess(false),
+        lowLevelConsoleIO(false),
         redirectStdErrToStdOut(false)
 #else
       : terminateChildren(false),
