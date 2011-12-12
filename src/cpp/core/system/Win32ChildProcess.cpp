@@ -260,24 +260,32 @@ ChildProcess::~ChildProcess()
 
 Error ChildProcess::writeToStdin(const std::string& input, bool eof)
 {
-   // write synchronously to the pipe
-   if (!input.empty())
+   if (options_.lowLevelConsoleIO)
    {
-      DWORD dwWritten;
-      BOOL bSuccess = ::WriteFile(pImpl_->hStdInWrite,
-                                  input.data(),
-                                  input.length(),
-                                  &dwWritten,
-                                  NULL);
-      if (!bSuccess)
-         return systemError(::GetLastError(), ERROR_LOCATION);
+      std::vector<char> response;
+      return rrPipe_.makeRequest("i" + input, &response);
    }
-
-   // close pipe if requested
-   if (eof)
-      return closeHandle(&pImpl_->hStdInWrite, ERROR_LOCATION);
    else
-      return Success();
+   {
+      // write synchronously to the pipe
+      if (!input.empty())
+      {
+         DWORD dwWritten;
+         BOOL bSuccess = ::WriteFile(pImpl_->hStdInWrite,
+                                     input.data(),
+                                     input.length(),
+                                     &dwWritten,
+                                     NULL);
+         if (!bSuccess)
+            return systemError(::GetLastError(), ERROR_LOCATION);
+      }
+
+      // close pipe if requested
+      if (eof)
+         return closeHandle(&pImpl_->hStdInWrite, ERROR_LOCATION);
+      else
+         return Success();
+   }
 }
 
 Error ChildProcess::ptySetSize(int cols, int rows)
@@ -302,6 +310,8 @@ Error ChildProcess::terminate()
 
 Error ChildProcess::run()
 {   
+   Error error;
+
    // NOTE: if the run method is called from multiple threads in single app
    // concurrently then a race condition can cause handles to get incorrectly
    // directed. the workaround suggested by microsoft is to wrap the process
@@ -341,9 +351,7 @@ Error ChildProcess::run()
       return systemError(::GetLastError(), ERROR_LOCATION);
 
    // populate startup info
-   STARTUPINFO si;
-   ZeroMemory(&si,sizeof(STARTUPINFO));
-   si.cb = sizeof(STARTUPINFO);
+   STARTUPINFO si = { sizeof(STARTUPINFO) };
    si.dwFlags |= STARTF_USESTDHANDLES;
    si.hStdOutput = hStdOutWrite;
    si.hStdError = options_.redirectStdErrToStdOut ? hStdOutWrite
@@ -391,7 +399,23 @@ Error ChildProcess::run()
       lpEnv = &envBlock[0];
    }
 
-   if (options_.detachProcess)
+   if (options_.lowLevelConsoleIO)
+   {
+      dwFlags |= CREATE_NEW_CONSOLE;
+      si.dwFlags &= ~STARTF_USESTDHANDLES;
+      si.dwFlags |= STARTF_USESHOWWINDOW;
+      si.wShowWindow = SW_HIDE;
+
+      error = rrPipe_.parentInit();
+      if (error)
+         return error;
+
+      std::string consoleIO("consoleio.exe ");
+      cmdLine.insert(cmdLine.begin(),
+                     consoleIO.begin(),
+                     consoleIO.end());
+   }
+   else if (options_.detachProcess)
    {
       dwFlags |= DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP;
       si.dwFlags |= STARTF_USESHOWWINDOW;
@@ -423,6 +447,13 @@ Error ChildProcess::run()
 
    if (!success)
       return systemError(::GetLastError(), ERROR_LOCATION);
+
+   if (options_.lowLevelConsoleIO)
+   {
+      error = rrPipe_.onChildCreated();
+      if (error)
+         return error;
+   }
 
    // close thread handle on exit
    CloseHandleOnExitScope closeThread(&pi.hThread, ERROR_LOCATION);
@@ -515,6 +546,8 @@ Error AsyncChildProcess::terminate()
 
 void AsyncChildProcess::poll()
 {
+   Error error;
+
    // call onStarted if we haven't yet
    if (!(pAsyncImpl_->calledOnStarted_))
    {
@@ -523,35 +556,49 @@ void AsyncChildProcess::poll()
       pAsyncImpl_->calledOnStarted_ = true;
    }
 
-
    // call onContinue
    if (callbacks_.onContinue)
    {
       if (!callbacks_.onContinue(*this))
       {
          // terminate the proces
-         Error error = terminate();
+         error = terminate();
          if (error)
             LOG_ERROR(error);
       }
    }
 
+   if (options_.lowLevelConsoleIO)
+   {
+      std::vector<char> response;
+      error = rrPipe_.makeRequest("o", &response);
+      if (error)
+      {
+         LOG_ERROR(error);
+      }
+      else
+      {
+         callbacks_.onConsoleOutputSnapshot(*this, response);
+      }
+   }
+   else
+   {
+      // check stdout
+      std::string stdOut;
+      error = readPipeAvailableBytes(pImpl_->hStdOutRead, &stdOut);
+      if (error)
+         reportError(error);
+      if (!stdOut.empty() && callbacks_.onStdout)
+         callbacks_.onStdout(*this, stdOut);
 
-   // check stdout
-   std::string stdOut;
-   Error error = readPipeAvailableBytes(pImpl_->hStdOutRead, &stdOut);
-   if (error)
-      reportError(error);
-   if (!stdOut.empty() && callbacks_.onStdout)
-      callbacks_.onStdout(*this, stdOut);
-
-   // check stderr
-   std::string stdErr;
-   error = readPipeAvailableBytes(pImpl_->hStdErrRead, &stdErr);
-   if (error)
-      reportError(error);
-   if (!stdErr.empty() && callbacks_.onStderr)
-      callbacks_.onStderr(*this, stdErr);
+      // check stderr
+      std::string stdErr;
+      error = readPipeAvailableBytes(pImpl_->hStdErrRead, &stdErr);
+      if (error)
+         reportError(error);
+      if (!stdErr.empty() && callbacks_.onStderr)
+         callbacks_.onStderr(*this, stdErr);
+   }
 
    // check for process exit
    DWORD result = ::WaitForSingleObject(pImpl_->hProcess, 0);
@@ -575,7 +622,6 @@ void AsyncChildProcess::poll()
       // error state, return -1 and try to log a meaningful error
       else
       {
-         Error error;
          if (result == WAIT_FAILED)
          {
             error = systemError(::GetLastError(), ERROR_LOCATION);
@@ -590,7 +636,7 @@ void AsyncChildProcess::poll()
       }
 
       // close the process handle
-      Error error = closeHandle(&pImpl_->hProcess, ERROR_LOCATION);
+      error = closeHandle(&pImpl_->hProcess, ERROR_LOCATION);
       if (error)
          LOG_ERROR(error);
 

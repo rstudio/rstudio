@@ -92,6 +92,14 @@ struct ProcessOptions
 #ifdef _WIN32
    // Creates the process with DETACHED_PROCESS on Win32 (no effect on POSIX)
    bool detachProcess;
+
+   // If true, uses ConsoleIO.exe to capture low-level console input and output
+   // (that cannot be accessed by redirecting stdin/stdout). This is not
+   // recommended unless absolutely necessary as it introduces a lot of
+   // complexity.
+   //
+   // If true, detachProcess and redirectStdErrToStdOut are ignored.
+   bool lowLevelConsoleIO;
 #endif
 
    bool redirectStdErrToStdOut;
@@ -210,6 +218,9 @@ struct ProcessCallbacks
 
    // Streaming callback for standard error
    boost::function<void(ProcessOperations&, const std::string&)> onStderr;
+
+   boost::function<void(ProcessOperations&, const std::vector<char>&)>
+                                                  onConsoleOutputSnapshot;
 
    // Called if an IO error occurs while reading from standard streams. The
    // default behavior if no callback is specified is to log and then terminate
