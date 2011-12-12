@@ -1806,21 +1806,32 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
       headerParent = isHeader ? headerParent : footerParent;
       Element columnParent = isHeader ? headerColumnParent : footerColumnParent;
 
+      boolean shouldSortColumn = true;
       // Fire the event to the header.
       if (headerParent != null) {
         Header<?> header =
             isHeader ? headerBuilder.getHeader(headerParent) : footerBuilder
                 .getHeader(footerParent);
-        if (header != null && cellConsumesEventType(header.getCell(), eventType)) {
+
+        if (header != null) {
           int headerIndex = isHeader ? headerBuilder.getRowIndex(targetTableRow) :
               footerBuilder.getRowIndex(targetTableRow);
           Context context = new Context(headerIndex, col, header.getKey());
-          header.onBrowserEvent(context, headerParent, event);
+
+          if (cellConsumesEventType(header.getCell(), eventType)) {          
+            header.onBrowserEvent(context, headerParent, event);
+          }
+
+          if (isClick) {
+            // Preview the event, and possibily disable the column sort event. The event preview is
+            // forced even if the header cell does not consume click event
+            shouldSortColumn = header.onPreviewColumnSortEvent(context, headerParent, event);
+          }
         }
       }
 
       // Sort the header.
-      if (isClick && columnParent != null) {
+      if (isClick && shouldSortColumn && columnParent != null) {
         Column<T, ?> column =
             isHeader ? headerBuilder.getColumn(columnParent) : footerBuilder
                 .getColumn(columnParent);

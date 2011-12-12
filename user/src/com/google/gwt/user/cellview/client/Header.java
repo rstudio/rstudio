@@ -93,6 +93,25 @@ public abstract class Header<H> {
   }
 
   /**
+   * Preview a browser event that may trigger a column sort event. Return true if the
+   * {@link CellTable} should proceed with sorting the column. Subclasses can override this method
+   * to disable column sort for some click events, or particular header/footer sections.
+   * <p>
+   * This method will be invoked even if the header's cell does not consume a click event.
+   * </p>
+   * 
+   * @param context the context of the header
+   * @param elem the parent Element
+   * @param event the native browser event
+   * @return true if the {@link CellTable} should continue respond to the event (i.e., if this is
+   *         a click event on a sortable column's header, fire {@link ColumnSortEvent}). False if
+   *         the {@link CellTable} should stop respond to the event. 
+   */
+  public boolean onPreviewColumnSortEvent(Context context, Element elem, NativeEvent event) {
+    return true;
+  }
+
+  /**
    * Render the header.
    * 
    * @param context the context of the header
