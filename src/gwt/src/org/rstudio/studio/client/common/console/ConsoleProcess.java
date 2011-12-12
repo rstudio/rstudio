@@ -22,6 +22,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
+import org.rstudio.studio.client.common.shell.ShellInput;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -158,7 +159,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
       server_.processStart(procInfo_.getHandle(), requestCallback);
    }
 
-   public void writeStandardInput(String input,
+   public void writeStandardInput(ShellInput input,
                                   ServerRequestCallback<Void> requestCallback)
    {
       server_.processWriteStdin(procInfo_.getHandle(), input, requestCallback);
@@ -168,12 +169,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
    {
       server_.processInterrupt(procInfo_.getHandle(), requestCallback);
    }
-
-   public void ptyInterrupt(ServerRequestCallback<Void> requestCallback)
-   {
-      server_.processPtyInterrupt(procInfo_.getHandle(), requestCallback);
-   }
-   
+  
    public void reap(ServerRequestCallback<Void> requestCallback)
    {
       server_.processReap(procInfo_.getHandle(), requestCallback);

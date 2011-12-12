@@ -230,7 +230,7 @@ core::Error createConsoleProc(const ShellArgs& args,
                                   options,
                                   caption,
                                   dialog,
-                                  console_process::IteractionPossible,
+                                  console_process::InteractionPossible,
                                   console_process::kDefaultMaxOutputLines,
                                   &enqueueRefreshEvent);
 #else

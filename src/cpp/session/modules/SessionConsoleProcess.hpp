@@ -70,6 +70,15 @@ private:
    void commonInit();
 
 public:
+   struct Input
+   {
+      Input() : interrupt(false), echoInput(false) {}
+      bool interrupt ;
+      std::string text;
+      bool echoInput;
+   };
+
+public:
    static boost::shared_ptr<ConsoleProcess> create(
          const std::string& command,
          core::system::ProcessOptions options,
@@ -97,8 +106,7 @@ public:
 
    core::Error start();
 
-   void enqueueInput(const std::string& input);
-   void enquePtyInterrupt();
+   void enqueInput(const Input& input);
 
    void interrupt();
 
@@ -106,8 +114,6 @@ public:
 
    bool onContinue(core::system::ProcessOperations& ops);
    void onStdout(core::system::ProcessOperations& ops,
-                 const std::string& output);
-   void onStderr(core::system::ProcessOperations& ops,
                  const std::string& output);
    void onExit(int exitCode);
 
@@ -117,6 +123,7 @@ public:
                                               core::json::Object& obj);
 
 private:
+   void appendToOutputBuffer(const std::string& str);
    void enqueOutputEvent(const std::string& output, bool error);
 
 private:
@@ -141,13 +148,6 @@ private:
    bool interrupt_;
 
    // Pending input (writes or ptyInterrupts)
-   struct Input
-   {
-      Input() : interrupt(true) {}
-      Input(const std::string& text) : interrupt(false), text(text) {}
-      bool interrupt ;
-      std::string text;
-   };
    std::queue<Input> inputQueue_;
 
    // Buffer output in case client disconnects/reconnects and needs

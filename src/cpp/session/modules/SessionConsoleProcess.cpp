@@ -50,7 +50,7 @@ namespace {
 } // anonymous namespace
 
 #ifdef _WIN32
-const int kDefaultMaxOutputLines = 140;
+const int kDefaultMaxOutputLines = 160;
 #else
 const int kDefaultMaxOutputLines = 500;
 #endif
@@ -101,6 +101,9 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
 void ConsoleProcess::commonInit()
 {
    handle_ = core::system::generateUuid(false);
+
+   // always redirect stderr to stdout so output is interleaved
+   options_.redirectStdErrToStdOut = true;
 
    // request a pseudoterminal if this is an interactive console process
 #ifndef _WIN32
@@ -161,19 +164,14 @@ Error ConsoleProcess::start()
    return error;
 }
 
-void ConsoleProcess::enqueueInput(const std::string &input)
+void ConsoleProcess::enqueInput(const Input& input)
 {
-   inputQueue_.push(Input(input));
+   inputQueue_.push(input);
 }
 
 void ConsoleProcess::interrupt()
 {
    interrupt_ = true;
-}
-
-void ConsoleProcess::enquePtyInterrupt()
-{
-   inputQueue_.push(Input());
 }
 
 bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
@@ -195,6 +193,9 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
          Error error = ops.ptyInterrupt();
          if (error)
             LOG_ERROR(error);
+
+         if (input.echoInput)
+            appendToOutputBuffer("^C");
       }
 
       // text input
@@ -204,10 +205,10 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
          if (error)
             LOG_ERROR(error);
 
-         // add a newline to the output buffer (we don't echo back the
-         // actual input because it is very likely to be a password
-         // or passphrase)
-         outputBuffer_.push_back('\n');
+         if (input.echoInput)
+            appendToOutputBuffer(input.text);
+         else
+            appendToOutputBuffer("\n");
       }
    }
 
@@ -215,11 +216,15 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
    return true;
 }
 
+void ConsoleProcess::appendToOutputBuffer(const std::string &str)
+{
+   std::copy(str.begin(), str.end(), std::back_inserter(outputBuffer_));
+}
+
 void ConsoleProcess::enqueOutputEvent(const std::string &output, bool error)
 {
    // copy to output buffer
-   std::copy(output.begin(), output.end(),
-             std::back_inserter(outputBuffer_));
+   appendToOutputBuffer(output);
 
    // If there's more output than the client can even show, then
    // truncate it to the amount that the client can show. Too much
@@ -239,12 +244,6 @@ void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
                               const std::string& output)
 {
    enqueOutputEvent(output, false);
-}
-
-void ConsoleProcess::onStderr(core::system::ProcessOperations& ops,
-                                     const std::string& output)
-{
-   enqueOutputEvent(output, true);
 }
 
 void ConsoleProcess::onExit(int exitCode)
@@ -314,7 +313,6 @@ core::system::ProcessCallbacks ConsoleProcess::createProcessCallbacks()
    core::system::ProcessCallbacks cb;
    cb.onContinue = boost::bind(&ConsoleProcess::onContinue, ConsoleProcess::shared_from_this(), _1);
    cb.onStdout = boost::bind(&ConsoleProcess::onStdout, ConsoleProcess::shared_from_this(), _1, _2);
-   cb.onStderr = boost::bind(&ConsoleProcess::onStderr, ConsoleProcess::shared_from_this(), _1, _2);
    cb.onExit = boost::bind(&ConsoleProcess::onExit, ConsoleProcess::shared_from_this(), _1);
    return cb;
 }
@@ -358,26 +356,6 @@ Error procInterrupt(const json::JsonRpcRequest& request,
    }
 }
 
-Error procPtyInterrupt(const json::JsonRpcRequest& request,
-                       json::JsonRpcResponse* pResponse)
-{
-   std::string handle;
-   Error error = json::readParams(request.params, &handle);
-   if (error)
-      return error;
-   ProcTable::const_iterator pos = s_procs.find(handle);
-   if (pos != s_procs.end())
-   {
-      pos->second->enquePtyInterrupt();
-      return Success();
-   }
-   else
-   {
-      return systemError(boost::system::errc::invalid_argument,
-                         ERROR_LOCATION);
-   }
-}
-
 Error procReap(const json::JsonRpcRequest& request,
                json::JsonRpcResponse* pResponse)
 {
@@ -400,8 +378,16 @@ Error procReap(const json::JsonRpcRequest& request,
 Error procWriteStdin(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   std::string handle, input;
-   Error error = json::readParams(request.params, &handle, &input);
+   std::string handle;
+   Error error = json::readParam(request.params, 0, &handle);
+   if (error)
+      return error;
+
+   ConsoleProcess::Input input;
+   error = json::readObjectParam(request.params, 1,
+                                 "interrupt", &input.interrupt,
+                                 "text", &input.text,
+                                 "echo_input", &input.echoInput);
    if (error)
       return error;
 
@@ -409,12 +395,16 @@ Error procWriteStdin(const json::JsonRpcRequest& request,
    if (pos != s_procs.end())
    {
 #ifdef RSTUDIO_SERVER
-      error = core::system::crypto::rsaPrivateDecrypt(input, &input);
-      if (error)
-         return error;
+      if (!input.interrupt)
+      {
+         error = core::system::crypto::rsaPrivateDecrypt(input.text,
+                                                         &input.text);
+         if (error)
+            return error;
+      }
 #endif
 
-      pos->second->enqueueInput(input);
+      pos->second->enqueInput(input);
 
       return Success();
    }
@@ -532,7 +522,6 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "process_start", procStart))
       (bind(registerRpcMethod, "process_interrupt", procInterrupt))
-      (bind(registerRpcMethod, "process_pty_interrupt", procInterrupt))
       (bind(registerRpcMethod, "process_reap", procReap))
       (bind(registerRpcMethod, "process_write_stdin", procWriteStdin));
 
