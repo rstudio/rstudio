@@ -141,11 +141,17 @@ Win32RequestResponsePipe::Win32RequestResponsePipe()
 
 Win32RequestResponsePipe::~Win32RequestResponsePipe()
 {
-   closeHandle(&hRequestReadPipe_);
-   closeHandle(&hRequestWritePipe_);
-   closeHandle(&hResponseReadPipe_);
-   closeHandle(&hResponseWritePipe_);
-   closeHandle(&hManualResetEvent_);
+   try
+   {
+      closeHandle(&hRequestReadPipe_);
+      closeHandle(&hRequestWritePipe_);
+      closeHandle(&hResponseReadPipe_);
+      closeHandle(&hResponseWritePipe_);
+      closeHandle(&hManualResetEvent_);
+   }
+   catch(...)
+   {
+   }
 }
 
 Error Win32RequestResponsePipe::childInit()
