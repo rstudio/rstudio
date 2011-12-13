@@ -394,12 +394,28 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    core::system::Options shellEnv;
    core::system::environment(&shellEnv);
 
-   // set dumb terminal and prompt
+   // set dumb terminal
    core::system::setenv(&shellEnv, "TERM", "dumb");
+
+   // set prompt
    std::string path = module_context::createAliasedPath(
                                  module_context::safeCurrentPath());
    std::string prompt = (path.length() > 30) ? "\\W$ " : "\\w$ ";
    core::system::setenv(&shellEnv, "PS1", prompt);
+
+   // disable screen oriented facillites
+   core::system::unsetenv(&shellEnv, "EDITOR");
+   core::system::unsetenv(&shellEnv, "VISUAL");
+   core::system::setenv(&shellEnv, "PAGER", "/bin/cat");
+
+   // normally git will error out in a dumb terminal if EDITOR is not
+   // defined, however if the user defines the core.editor git configuration
+   // variable git will still try to invoke this editor. we define the
+   // editor to /bin/true so that commands which have a default commit
+   // message (like git revert) will still work and commands which have
+   // no default commit message (like git commit) will fail with an
+   // appropriate message ("Aborting commit due to empty commit message")
+   core::system::setenv(&shellEnv, "GIT_EDITOR", "/bin/true");
 
    // add custom git path if necessary
    std::string gitBinDir = git::nonPathGitBinDir();
