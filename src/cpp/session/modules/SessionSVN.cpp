@@ -220,11 +220,12 @@ std::vector<std::string> globalArgs(
    return args;
 }
 
+
 core::Error createConsoleProc(const ShellArgs& args,
+                              const boost::optional<FilePath>& workingDir,
                               const std::string& caption,
                               bool dialog,
-                              boost::shared_ptr<ConsoleProcess>* ppCP,
-                              const boost::optional<FilePath>& workingDir=boost::optional<FilePath>())
+                              boost::shared_ptr<ConsoleProcess>* ppCP)
 {
    core::system::ProcessOptions options = procOptions();
 #ifdef _WIN32
@@ -254,6 +255,18 @@ core::Error createConsoleProc(const ShellArgs& args,
                                   &enqueueRefreshEvent);
 #endif
    return Success();
+}
+
+core::Error createConsoleProc(const ShellArgs& args,
+                              const std::string& caption,
+                              bool dialog,
+                              boost::shared_ptr<ConsoleProcess>* ppCP)
+{
+   return createConsoleProc(args,
+                            boost::optional<FilePath>(),
+                            caption,
+                            dialog,
+                            ppCP);
 }
 
 #ifdef _WIN32
@@ -824,6 +837,18 @@ Error svnApplyPatch(const json::JsonRpcRequest& request,
    }
 
    return Success();
+}
+
+Error checkout(const std::string& url,
+               const std::string dirName,
+               const core::FilePath& parentPath,
+               boost::shared_ptr<console_process::ConsoleProcess>* ppCP)
+{
+   return createConsoleProc(ShellArgs() << "checkout" << url << dirName,
+                            parentPath,
+                            "SVN Checkout",
+                            true,
+                            ppCP);
 }
 
 Error initialize()

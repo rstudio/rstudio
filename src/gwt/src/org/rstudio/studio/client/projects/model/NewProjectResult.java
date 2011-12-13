@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.projects.model;
 
+import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
+
 public class NewProjectResult
 {
    public NewProjectResult(String projectFile, 

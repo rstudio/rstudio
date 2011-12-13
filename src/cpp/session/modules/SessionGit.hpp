@@ -22,6 +22,12 @@
 
 namespace session {
 namespace modules {
+namespace console_process {
+
+class ConsoleProcess;
+
+} // namespace console_process
+
 namespace git {
 
 // Must stay in sync with VCSStatus enum in VCSStatus.java
@@ -85,6 +91,12 @@ core::Error fileStatus(const core::FilePath& filePath, VCSStatus* pStatus);
 core::Error statusToJson(const core::FilePath& path,
                          const VCSStatus& status,
                          core::json::Object* pObject);
+
+core::Error clone(const std::string& sourceWindow,
+                  const std::string& url,
+                  const std::string dirName,
+                  const core::FilePath& parentPath,
+                  boost::shared_ptr<console_process::ConsoleProcess>* ppCP);
 
 core::Error initialize();
 

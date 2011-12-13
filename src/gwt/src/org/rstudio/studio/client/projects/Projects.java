@@ -30,6 +30,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
+import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.projects.events.OpenProjectFileEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectFileHandler;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
@@ -74,6 +75,7 @@ public class Projects implements OpenProjectFileHandler,
                    RemoteFileSystemContext fsContext,
                    ApplicationQuit applicationQuit,
                    ProjectsServerOperations server,
+                   GitServerOperations gitServer,
                    EventBus eventBus,
                    Binder binder,
                    final Commands commands,
@@ -84,6 +86,7 @@ public class Projects implements OpenProjectFileHandler,
       pMRUList_ = pMRUList;
       applicationQuit_ = applicationQuit;
       server_ = server;
+      gitServer_ = gitServer;
       fileDialogs_ = fileDialogs;
       fsContext_ = fsContext;
       session_ = session;
@@ -257,14 +260,14 @@ public class Projects implements OpenProjectFileHandler,
             {
                indicator.onProgress("Cloning git repoistory...");
                
-               server_.gitClone(
+               gitServer_.vcsClone(
                      newProject.getVcsCloneOptions(),
                      new ServerRequestCallback<ConsoleProcess>() {
                         @Override
                         public void onResponseReceived(ConsoleProcess proc)
                         {
                            final ConsoleProgressDialog consoleProgressDialog = 
-                                 new ConsoleProgressDialog(proc, server_);
+                                 new ConsoleProgressDialog(proc, gitServer_);
                            consoleProgressDialog.showModal();
            
                            proc.addProcessExitHandler(new ProcessExitEvent.Handler()
@@ -334,7 +337,7 @@ public class Projects implements OpenProjectFileHandler,
                String projDir = FileSystemItem.createFile(
                      newProject.getProjectFile()).getParentPathString();
                
-               server_.gitInitRepo(
+               gitServer_.gitInitRepo(
                      projDir,
                      new VoidServerRequestCallback(indicator)
                      {
@@ -565,6 +568,7 @@ public class Projects implements OpenProjectFileHandler,
    private final Provider<ProjectMRUList> pMRUList_;
    private final ApplicationQuit applicationQuit_;
    private final ProjectsServerOperations server_;
+   private final GitServerOperations gitServer_;
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fsContext_;
    private final GlobalDisplay globalDisplay_;

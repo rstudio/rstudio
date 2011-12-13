@@ -15,6 +15,7 @@
 
 #include <boost/foreach.hpp>
 
+#include <core/Exec.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
@@ -24,13 +25,66 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include "vcs/SessionVCSUtils.hpp"
+
 #include "SessionSVN.hpp"
+#include "SessionGit.hpp"
+
+#include "SessionConsoleProcess.hpp"
+
 
 using namespace core;
 
 namespace session {
 namespace modules {
 namespace source_control {
+
+namespace {
+
+Error vcsClone(const json::JsonRpcRequest& request,
+               json::JsonRpcResponse* pResponse)
+{
+   std::string vcsName;
+   std::string url;
+   std::string dirName;
+   std::string parentDir;
+   Error error = json::readObjectParam(request.params, 0,
+                                       "vcs_name", &vcsName,
+                                       "repo_url", &url,
+                                       "directory_name", &dirName,
+                                       "parent_path", &parentDir);
+   if (error)
+      return error;
+
+   FilePath parentPath = module_context::resolveAliasedPath(parentDir);
+
+   boost::shared_ptr<console_process::ConsoleProcess> pCP;
+   if (vcsName == "git")
+   {
+      Error error = git::clone(request.sourceWindow,
+                               url,
+                               dirName,
+                               parentPath,
+                               &pCP);
+      if (error)
+         return error;
+   }
+   else if (vcsName == "svn")
+   {
+      Error error = svn::checkout(url, dirName, parentPath, &pCP);
+      if (error)
+         return error;
+   }
+   else
+   {
+      return systemError(json::errc::ParamInvalid, ERROR_LOCATION);
+   }
+
+   pResponse->setResult(pCP->toJson());
+
+   return Success();
+}
+
+} // anonymous namespace
 
 VCS activeVCS()
 {
@@ -111,6 +165,17 @@ core::Error initialize()
 {
    git::initialize();
    svn::initialize();
+
+
+   // http endpoints
+   using boost::bind;
+   using namespace module_context;
+   ExecBlock initBlock ;
+   initBlock.addFunctions()
+      (bind(registerRpcMethod, "vcs_clone", vcsClone));
+   Error error = initBlock.execute();
+   if (error)
+      return error;
 
    // If VCS is disabled, or we're not in a project, do nothing
    const projects::ProjectContext& projContext = projects::projectContext();

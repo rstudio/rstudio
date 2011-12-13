@@ -19,6 +19,12 @@
 
 namespace session {
 namespace modules {
+namespace console_process {
+
+class ConsoleProcess;
+
+} // namespace console_process
+
 namespace svn {
 
 // Returns true if Subversion install is detected
@@ -34,6 +40,11 @@ bool isSvnEnabled();
 core::FilePath detectedSvnExePath();
 
 std::string nonPathSvnBinDir();
+
+core::Error checkout(const std::string& url,
+                     const std::string dirName,
+                     const core::FilePath& parentPath,
+                     boost::shared_ptr<console_process::ConsoleProcess>* ppCP);
 
 core::Error initialize();
 

@@ -41,7 +41,6 @@ import org.rstudio.studio.client.common.shell.ShellInput;
 import org.rstudio.studio.client.common.vcs.*;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
-import org.rstudio.studio.client.projects.model.VcsCloneOptions;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
@@ -1377,11 +1376,11 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void gitClone(VcsCloneOptions options,
+   public void vcsClone(VcsCloneOptions options,
                         ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       sendRequest(RPC_SCOPE,
-                  GIT_CLONE,
+                  VCS_CLONE,
                   options,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
@@ -2419,6 +2418,8 @@ public class RemoteServer implements Server
    private static final String SEARCH_HISTORY_ARCHIVE = "search_history_archive";
    private static final String SEARCH_HISTORY_ARCHIVE_BY_PREFIX = "search_history_archive_by_prefix";
 
+   private static final String VCS_CLONE = "vcs_clone";
+   
    private static final String GIT_ADD = "git_add";
    private static final String GIT_REMOVE = "git_remove";
    private static final String GIT_DISCARD = "git_discard";
@@ -2430,7 +2431,6 @@ public class RemoteServer implements Server
    private static final String GIT_LIST_BRANCHES = "git_list_branches";
    private static final String GIT_CHECKOUT = "git_checkout";
    private static final String GIT_COMMIT = "git_commit";
-   private static final String GIT_CLONE = "git_clone";
    private static final String GIT_PUSH = "git_push";
    private static final String GIT_PULL = "git_pull";
    private static final String ASKPASS_COMPLETED = "askpass_completed";

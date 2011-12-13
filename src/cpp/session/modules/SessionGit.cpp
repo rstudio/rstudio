@@ -84,9 +84,15 @@ const uint64_t GIT_1_7_2 = ((uint64_t)1 << 48) |
 // window to direct the next ask_pass to (empty string for main window)
 std::string s_askPassWindow;
 
+void setAskPassWindow(const std::string& window)
+{
+   s_askPassWindow = window;
+}
+
+
 void setAskPassWindow(const json::JsonRpcRequest& request)
 {
-   s_askPassWindow = request.sourceWindow;
+   setAskPassWindow(request.sourceWindow);
 }
 
 void onClientInit()
@@ -1475,35 +1481,6 @@ Error vcsCommit(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error vcsClone(const json::JsonRpcRequest& request,
-               json::JsonRpcResponse* pResponse)
-{
-   Git git(options().userHomePath());
-
-   std::string vcsName;   // ignored for now
-   std::string url;
-   std::string dirName;   // ignored for now
-   std::string parentDir;
-   Error error = json::readObjectParam(request.params, 0,
-                                       "vcs_name", &vcsName,
-                                       "repo_url", &url,
-                                       "directory_name", &dirName,
-                                       "parent_path", &parentDir);
-
-   FilePath parentPath = module_context::resolveAliasedPath(parentDir);
-
-   boost::shared_ptr<ConsoleProcess> pCP;
-   error = git.clone(url, dirName, parentPath, &pCP);
-   if (error)
-      return error;
-
-   setAskPassWindow(request);
-
-   pResponse->setResult(pCP->toJson());
-
-   return Success();
-}
-
 Error vcsPush(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
@@ -2550,6 +2527,22 @@ core::Error initializeGit(const core::FilePath& workingDir)
 }
 
 
+Error clone(const std::string& sourceWindow,
+            const std::string& url,
+            const std::string dirName,
+            const FilePath& parentPath,
+            boost::shared_ptr<console_process::ConsoleProcess>* ppCP)
+{
+   Git git(options().userHomePath());
+   Error error = git.clone(url, dirName, parentPath, ppCP);
+   if (error)
+      return error;
+
+   setAskPassWindow(sourceWindow);
+
+   return Success();
+}
+
 core::Error initialize()
 {
    using namespace session::module_context;
@@ -2620,7 +2613,6 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_full_status", vcsFullStatus))
       (bind(registerRpcMethod, "git_all_status", vcsAllStatus))
       (bind(registerRpcMethod, "git_commit", vcsCommit))
-      (bind(registerRpcMethod, "git_clone", vcsClone))
       (bind(registerRpcMethod, "git_push", vcsPush))
       (bind(registerRpcMethod, "git_pull", vcsPull))
       (bind(registerRpcMethod, "git_diff_file", vcsDiffFile))

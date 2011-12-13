@@ -17,8 +17,6 @@ import com.google.gwt.core.client.JsArray;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
-import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
-import org.rstudio.studio.client.projects.model.VcsCloneOptions;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitCount;
@@ -26,7 +24,7 @@ import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
 
 import java.util.ArrayList;
 
-public interface GitServerOperations extends CryptoServerOperations
+public interface GitServerOperations extends VCSServerOperations
 {
    public enum PatchMode
    {
@@ -111,9 +109,6 @@ public interface GitServerOperations extends CryptoServerOperations
                       String filename,
                       String targetPath,
                       ServerRequestCallback<Void> requestCallback);
-
-   void gitClone(VcsCloneOptions options,
-                 ServerRequestCallback<ConsoleProcess> requestCallback);
 
    void gitPush(ServerRequestCallback<ConsoleProcess> requestCallback);
 

@@ -16,8 +16,8 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
-import org.rstudio.studio.client.projects.model.VcsCloneOptions;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -135,6 +135,7 @@ public class VersionControlPage extends NewProjectWizardPage
       if (txtDirName_.getText().trim().length() == 0)
          autoFillCheckoutDir(); 
       
+      String vcs = vcsSelector_.getValue(vcsSelector_.getSelectedIndex());
       String url = txtRepoUrl_.getText().trim();
       String checkoutDir = txtDirName_.getText().trim();
       String dir = existingRepoDestDir_.getText().trim();
@@ -143,7 +144,7 @@ public class VersionControlPage extends NewProjectWizardPage
          String projFile = projFileFromDir(
                FileSystemItem.createDir(dir).completePath(checkoutDir));
          
-         VcsCloneOptions vcsOptions = VcsCloneOptions.create("git", 
+         VcsCloneOptions vcsOptions = VcsCloneOptions.create(vcs, 
                                                              url, 
                                                              checkoutDir, 
                                                              dir);
