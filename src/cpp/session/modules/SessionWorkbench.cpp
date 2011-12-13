@@ -417,6 +417,13 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    // appropriate message ("Aborting commit due to empty commit message")
    core::system::setenv(&shellEnv, "GIT_EDITOR", "/bin/true");
 
+   // for svn if we use /bin/true then svn commit proceeds with a prompt
+   // which can actually lead the user back into an editor. for this reason
+   // we show a more explicit error message and return false
+   core::system::setenv(&shellEnv,
+                        "SVN_EDITOR",
+                        "echo \"Error: No commit message\" && false");
+
    // add custom git path if necessary
    std::string gitBinDir = git::nonPathGitBinDir();
    if (!gitBinDir.empty())
