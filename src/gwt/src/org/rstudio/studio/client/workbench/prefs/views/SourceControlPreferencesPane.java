@@ -89,7 +89,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
       
         
       // svn exe path chooser
-      svnExePathLabel_ = new Label("Svn executable:");
+      svnExePathLabel_ = new Label("SVN executable:");
       svnExePathChooser_ = new FileChooserTextBox("",
                                                   "(Not Found)",
                                                   null,
