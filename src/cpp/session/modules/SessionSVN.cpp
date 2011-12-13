@@ -142,10 +142,13 @@ std::string svnBin()
 
 
 Error runSvn(const ShellArgs& args,
-             core::system::ProcessResult* pResult,
-             bool redirectStdErrToStdOut=false)
+             const FilePath& workingDir,
+             bool redirectStdErrToStdOut,
+             core::system::ProcessResult* pResult)
 {
    core::system::ProcessOptions options = procOptions();
+   if (!workingDir.empty())
+      options.workingDir = workingDir;
    options.redirectStdErrToStdOut = redirectStdErrToStdOut;
 #ifdef _WIN32
    options.detachProcess = true;
@@ -166,12 +169,19 @@ Error runSvn(const ShellArgs& args,
 }
 
 Error runSvn(const ShellArgs& args,
+             bool redirectStdErrToStdOut,
+             core::system::ProcessResult* pResult)
+{
+   return runSvn(args, FilePath(), redirectStdErrToStdOut, pResult);
+}
+
+Error runSvn(const ShellArgs& args,
              std::string* pStdOut=NULL,
              std::string* pStdErr=NULL,
              int* pExitCode=NULL)
 {
    core::system::ProcessResult result;
-   Error error = runSvn(args, &result);
+   Error error = runSvn(args, false, &result);
    if (error)
       return error;
 
@@ -314,28 +324,17 @@ struct SvnInfo
    std::string repositoryRoot;
 };
 
-// NOTE: this is a separate run code path than run svn above because
-// want to specify the working directory explicitly
+
 Error runSvnInfo(const core::FilePath& workingDir, SvnInfo* pSvnInfo)
 {
    if (workingDir.empty())
       return Success();
 
-   core::system::ProcessOptions options = procOptions();
-   options.workingDir = workingDir;
    core::system::ProcessResult result;
-#ifdef _WIN32
-   Error error = core::system::runProgram(svnBin(),
-                                          ShellArgs() << "info",
-                                          "",
-                                          options,
-                                          &result);
-#else
-   Error error = core::system::runCommand(svn() << "info",
-                                          "",
-                                          options,
-                                          &result);
-#endif
+   Error error = runSvn(ShellArgs() << "info",
+                        workingDir,
+                        true,
+                        &result);
    if (error)
       return error;
 
@@ -515,7 +514,7 @@ Error svnAdd(const json::JsonRpcRequest& request,
 
    core::system::ProcessResult result;
    error = runSvn(ShellArgs() << "add" << globalArgs() << "-q" << "--" << paths,
-                  &result, true);
+                  true, &result);
    if (error)
       return error;
 
@@ -540,7 +539,7 @@ Error svnDelete(const json::JsonRpcRequest& request,
 
    core::system::ProcessResult result;
    error = runSvn(ShellArgs() << "delete" << globalArgs() << "-q" << "--" << paths,
-                  &result, true);
+                  true, &result);
    if (error)
       return error;
 
@@ -567,7 +566,7 @@ Error svnRevert(const json::JsonRpcRequest& request,
    error = runSvn(ShellArgs() << "revert" << globalArgs() << "-q" <<
                   "--depth" << "infinity" <<
                   "--" << paths,
-                  &result, true);
+                  true, &result);
    if (error)
       return error;
 
