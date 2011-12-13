@@ -172,7 +172,24 @@ public class ShellInteractionManager implements ShellOutputWriter
    
    private boolean showInputForPrompt(String prompt)
    {
-      return !prompt.contains("password") && !prompt.contains("passphrase");
+      String promptLower = prompt.trim().toLowerCase();
+      boolean hasPassword = promptLower.contains("password") || 
+                            promptLower.contains("passphrase");
+      
+      
+      // if there is no password or passphrase then show input
+      if (!hasPassword)
+      {
+         return true;
+      }
+      else
+      {
+         // detect yes/no prompt and make that an exception (subversion
+         // does a yes/no for asking whether to store the password unencrypted)
+         boolean hasYesNo = promptLower.endsWith("(yes/no)?") ||
+                            promptLower.endsWith("(y/n)?");
+         return hasYesNo;
+      }
    }
    
    private final class InputKeyDownHandler implements KeyDownHandler
