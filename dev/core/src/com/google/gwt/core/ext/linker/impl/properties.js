@@ -46,5 +46,15 @@
   // property providers.
   __gwt_isKnownPropertyValue = function(propName, propValue) {
     return propValue in values[propName];
-  }
+  };
+
+  // Gets a map of the non-constant, non-derived binding properties
+  __MODULE_FUNC__.__getPropMap = function() {
+    var result = {};
+    for (var key in values) {
+      result[key] = computePropValue(key);
+    }
+    return result;
+  };
+
   __MODULE_FUNC__.__computePropValue = computePropValue;

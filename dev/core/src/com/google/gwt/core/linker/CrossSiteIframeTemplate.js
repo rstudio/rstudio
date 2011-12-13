@@ -66,6 +66,8 @@ function __MODULE_FUNC__() {
 
   // Exposed for devmode.js
   __MODULE_FUNC__.__computePropValue = null;
+  // Exposed for super dev mode
+  __MODULE_FUNC__.__getPropMap = null;
   
   // Exposed for runAsync
   __MODULE_FUNC__.__gwtInstallCode = function() {};
@@ -104,9 +106,12 @@ function __MODULE_FUNC__() {
   // Provides the computeUrlForResource() function
   __COMPUTE_URL_FOR_RESOURCE__
 
-  // Provides the getCompiledCodeFilename() function which sets the
-  // __gwt_isKnownPropertyValue, MODULE_FUNC__.__computePropValue and
-  // __MODULE_FUNC__.__softPermutationId variables if needed
+  // Provides the getCompiledCodeFilename() function which sets the following
+  // variables if needed:
+  //   __gwt_isKnownPropertyValue
+  //   __MODULE_FUNC__.__computePropValue
+  //   __MODULE_FUNC__.__getPropMap
+  //   __MODULE_FUNC__.__softPermutationId
   __PERMUTATIONS__
 
   // Provides the loadExternalStylesheets() function
