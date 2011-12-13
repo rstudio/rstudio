@@ -564,7 +564,9 @@ Error svnRevert(const json::JsonRpcRequest& request,
                   &resolveAliasedJsonPath);
 
    core::system::ProcessResult result;
-   error = runSvn(ShellArgs() << "revert" << globalArgs() << "-q" << "--" << paths,
+   error = runSvn(ShellArgs() << "revert" << globalArgs() << "-q" <<
+                  "--depth" << "infinity" <<
+                  "--" << paths,
                   &result, true);
    if (error)
       return error;
