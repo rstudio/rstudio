@@ -52,6 +52,7 @@ std::string removeCommandFromCommandLine(const std::string& cmd,
    size_t pos = cmdLine.find(cmd);
    if (pos != 0 && pos != 1)
       return "";
+   pos += cmd.size();
 
    for ( ; cmdLine[pos] != ' ' && pos < cmdLine.size(); pos++)
    {
@@ -138,15 +139,11 @@ int main(int argc, char** argv)
 
    std::string cmd = removeCommandFromCommandLine(argv[0],
                                                   ::GetCommandLine());
-   std::vector<char> cmdBuf;
 
    // Use cmd.exe to allow shell commands like "dir" to work properly
-   std::string cmdExeC = "cmd.exe /c ";
-   cmdBuf.assign(cmdExeC.begin(), cmdExeC.end());
-
-   std::copy(cmd.begin(), cmd.end(), std::back_inserter(cmdBuf));
-   cmdBuf.assign(cmd.begin(), cmd.end());
-   cmdBuf.push_back('\0');
+   cmd = "cmd.exe /c " + cmd;
+   std::vector<char> cmdBuf(cmd.size() + 1, '\0');
+   cmd.copy(&(cmdBuf[0]), cmd.size());
 
    SECURITY_ATTRIBUTES sa = { sizeof(SECURITY_ATTRIBUTES) };
    sa.bInheritHandle = true;

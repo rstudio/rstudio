@@ -178,10 +178,12 @@ public:
       return core::FilePath(rpostbackPath_.c_str());
    }
 
+#ifdef _WIN32
    core::FilePath consoleIoPath() const
    {
       return core::FilePath(consoleIoPath_.c_str());
    }
+#endif
    
    // user info
    std::string userIdentity() const 
@@ -295,7 +297,9 @@ private:
    
    // external
    std::string rpostbackPath_;
+#ifdef _WIN32
    std::string consoleIoPath_;
+#endif
 
    // user info
    std::string userIdentity_;

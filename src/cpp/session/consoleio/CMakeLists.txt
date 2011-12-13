@@ -57,3 +57,5 @@ add_executable(consoleio
 target_link_libraries(consoleio
    rstudio-core
 )
+
+install(TARGETS consoleio DESTINATION ${RSTUDIO_INSTALL_BIN})

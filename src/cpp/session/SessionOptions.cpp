@@ -179,9 +179,12 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("external-rpostback-path", 
        value<std::string>(&rpostbackPath_)->default_value("bin/postback/rpostback"),
        "Path to rpostback executable")
+#ifdef _WIN32
       ("external-consoleio-path",
-       value<std::string>(&consoleIoPath_)->default_value("bin/consoleio"),
-       "Path to consoleio executable");
+       value<std::string>(&consoleIoPath_)->default_value("bin/consoleio.exe"),
+       "Path to consoleio executable")
+#endif
+      ;
    
    // user options (default user identity to current username)
    std::string currentUsername = core::system::username();
@@ -283,7 +286,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(resourcePath, &modulesRSourcePath_);
    resolvePath(resourcePath, &sessionPackagesPath_);
    resolvePath(resourcePath, &rpostbackPath_);
+#ifdef _WIN32
    resolvePath(resourcePath, &consoleIoPath_);
+#endif
 
    // shared secret with parent
    secret_ = core::system::getenv("RS_SHARED_SECRET");
