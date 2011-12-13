@@ -69,6 +69,8 @@ namespace session {
 namespace modules {
 namespace git {
 
+const char * const kVcsId = "Git";
+
 namespace {
 
 const size_t WARN_SIZE = 200 * 1024;
@@ -363,7 +365,7 @@ public:
    {
    }
 
-   std::string name() { return "Git"; }
+   std::string name() { return kVcsId; }
 
    FilePath root() const
    {

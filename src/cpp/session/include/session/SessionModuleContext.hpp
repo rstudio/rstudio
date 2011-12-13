@@ -301,6 +301,8 @@ struct VcsContext
 };
 VcsContext vcsContext(const core::FilePath& workingDir);
 
+std::string normalizeVcsOverride(const std::string& vcsOverride);
+
 core::FilePath shellWorkingDirectory();
 
 

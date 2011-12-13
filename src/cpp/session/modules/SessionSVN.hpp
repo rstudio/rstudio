@@ -27,6 +27,8 @@ class ConsoleProcess;
 
 namespace svn {
 
+extern const char * const kVcsId;
+
 // Returns true if Subversion install is detected
 bool isSvnInstalled();
 

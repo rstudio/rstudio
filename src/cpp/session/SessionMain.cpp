@@ -104,6 +104,9 @@
 #include "modules/SessionLists.hpp"
 #include "modules/SessionContentUrls.hpp"
 
+#include "modules/SessionGit.hpp"
+#include "modules/SessionSVN.hpp"
+
 #include <session/projects/SessionProjects.hpp>
 #include "projects/SessionProjectsInternal.hpp"
 
@@ -429,9 +432,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    std::vector<std::string> vcsAvailable;
    if (modules::source_control::isGitInstalled())
-      vcsAvailable.push_back("git");
+      vcsAvailable.push_back(modules::git::kVcsId);
    if (modules::source_control::isSvnInstalled())
-      vcsAvailable.push_back("svn");
+      vcsAvailable.push_back(modules::svn::kVcsId);
    sessionInfo["vcs_available"] = boost::algorithm::join(vcsAvailable, ",");
    sessionInfo["vcs"] = modules::source_control::activeVCSName();
    sessionInfo["default_ssh_key_dir"] =module_context::createAliasedPath(

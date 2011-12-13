@@ -30,6 +30,8 @@ class ConsoleProcess;
 
 namespace git {
 
+extern const char * const kVcsId;
+
 // Must stay in sync with VCSStatus enum in VCSStatus.java
 class VCSStatus
 {

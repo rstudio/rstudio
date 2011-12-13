@@ -20,6 +20,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.vcs.VCSApplicationView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -76,7 +77,8 @@ public class VCSApplicationWindow extends SatelliteWindow
       pBinder_.get().bind(pCommands_.get(), this);
       
       // make sure vcs core is initialized
-      if (session_.getSessionInfo().getVcsName().equalsIgnoreCase("git"))
+      if (session_.getSessionInfo().getVcsName().equalsIgnoreCase(
+                                                         VCSConstants.GIT_ID))
          pVCSCore_.get();
       
       // show the vcs ui in our main panel

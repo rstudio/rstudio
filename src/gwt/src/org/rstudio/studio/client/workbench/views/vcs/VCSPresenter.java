@@ -17,6 +17,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPresenter;
@@ -52,9 +53,9 @@ public class VCSPresenter implements IsWidget,
       if (presenter_ == null)
       {
          String vcsName = session_.getSessionInfo().getVcsName();
-         if ("git".equalsIgnoreCase(vcsName))
+         if (VCSConstants.GIT_ID.equalsIgnoreCase(vcsName))
             presenter_ = pGitPresenter_.get();
-         else if ("subversion".equalsIgnoreCase(vcsName))
+         else if (VCSConstants.SVN_ID.equalsIgnoreCase(vcsName))
             presenter_ = pSVNPresenter_.get();
       }
    }

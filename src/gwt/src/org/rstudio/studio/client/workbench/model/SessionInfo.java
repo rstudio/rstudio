@@ -21,6 +21,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
+import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 public class SessionInfo extends JavaScriptObject
@@ -155,7 +156,7 @@ public class SessionInfo extends JavaScriptObject
       String[] availableVcs = getAvailableVCS();
       for (int i=0; i<availableVcs.length; i++)
       {
-         if (availableVcs[i].equals("git"))
+         if (availableVcs[i].equals(VCSConstants.GIT_ID))
             return true;
       }
       

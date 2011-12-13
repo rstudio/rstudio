@@ -419,7 +419,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
 
 namespace {
 
-const char * const kVcsOverride = "vcsOverride";
+const char * const kVcsOverride = "activeVcsOverride";
 const char * const kSshKeyPathOverride = "sshKeyPathOverride";
 
 } // anonymous namespace
@@ -436,7 +436,9 @@ Error ProjectContext::readVcsOptions(RProjectVcsOptions* pOptions) const
    if (error)
       return error;
 
-   pOptions->vcsOverride = settings.get(kVcsOverride);
+   std::string vcsOverride = settings.get(kVcsOverride);
+
+   pOptions->vcsOverride = module_context::normalizeVcsOverride(vcsOverride);
 
    return Success();
 }

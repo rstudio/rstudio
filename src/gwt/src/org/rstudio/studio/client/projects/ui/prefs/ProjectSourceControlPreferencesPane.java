@@ -21,6 +21,7 @@ import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
+import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.common.vcs.VCSHelpLink;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
@@ -63,7 +64,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
          {  
             updateOriginLabel();
             
-            if (vcsSelect_.getValue().equals("git"))
+            if (vcsSelect_.getValue().equals(VCSConstants.GIT_ID))
             {
                confirmGitRepo(new Command() {
                   @Override
@@ -150,7 +151,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    {
       String value = vcsSelect_.getValue();
       if (value.equals(NONE))
-         return "none";
+         return VCSConstants.NO_ID;
       else
          return value;
    }
@@ -158,7 +159,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    private void setVcsSelection(String vcs)
    {
       // set value
-      if (vcs.equals("none"))
+      if (vcs.equals(VCSConstants.NO_ID))
          vcsSelect_.setValue(NONE);
       else if (!vcsSelect_.setValue(vcs))
       {
@@ -173,7 +174,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    private void updateOriginLabel()
    {
       String vcs = getVcsSelection();
-      if (vcs.equals("git"))
+      if (vcs.equals(VCSConstants.GIT_ID))
       {
          StringBuilder label = new StringBuilder();
          label.append("Origin: ");
@@ -185,14 +186,14 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
          vcsSelect_.removeStyleName(RES.styles().vcsSelectExtraSpaced());
          
       }
-      else if (vcs.equals("svn"))
+      else if (vcs.equals(VCSConstants.SVN_ID))
       {
          lblOrigin_.setOrigin("Repo:", 
                               vcsContext_.getSvnRepositoryRoot());
          lblOrigin_.setVisible(true);
          vcsSelect_.removeStyleName(RES.styles().vcsSelectExtraSpaced());
       }
-      else // vcs.equals("none")
+      else // vcs.equals(VCSConstants.NO_ID)
       {
          lblOrigin_.setOrigin("", "");
          lblOrigin_.setVisible(false);
@@ -243,7 +244,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
                              @Override 
                              public void onFailure()
                              {
-                                setVcsSelection("none");
+                                setVcsSelection(VCSConstants.NO_ID);
                              }
                           });
                         
@@ -253,7 +254,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
                      @Override
                      public void execute()
                      {
-                        setVcsSelection("none");
+                        setVcsSelection(VCSConstants.NO_ID);
                         indicator.onCompleted();
                      }
                      
@@ -265,7 +266,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
          @Override
          public void onError(ServerError error)
          {
-            setVcsSelection("none");
+            setVcsSelection(VCSConstants.NO_ID);
             indicator.onError(error.getUserMessage());  
          }
          

@@ -48,6 +48,8 @@ namespace session {
 namespace modules {
 namespace svn {
 
+const char * const kVcsId = "SVN";
+
 namespace {
 
 // svn exe which we detect at startup. note that if the svn exe

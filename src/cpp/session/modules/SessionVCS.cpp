@@ -35,7 +35,32 @@
 using namespace core;
 
 namespace session {
-namespace modules {
+
+namespace {
+   const char * const kVcsIdNone = "none";
+} // anonymous namespace
+
+namespace module_context {
+
+// if we change the name of one of the VCS systems then there will
+// be persisted versions of the name on disk we need to deal with
+// migrating. This function can do that migration -- note the initial
+// default implementation is to return "none" for unrecognized options
+std::string normalizeVcsOverride(const std::string& vcsOverride)
+{
+   if (vcsOverride == modules::git::kVcsId)
+      return vcsOverride;
+   else if (vcsOverride == modules::svn::kVcsId)
+      return vcsOverride;
+   else if (vcsOverride == kVcsIdNone)
+      return vcsOverride;
+   else
+      return "";
+}
+
+} // namespace module_context
+
+namespace modules {   
 namespace source_control {
 
 namespace {
@@ -58,7 +83,7 @@ Error vcsClone(const json::JsonRpcRequest& request,
    FilePath parentPath = module_context::resolveAliasedPath(parentDir);
 
    boost::shared_ptr<console_process::ConsoleProcess> pCP;
-   if (vcsName == "git")
+   if (vcsName == git::kVcsId)
    {
       Error error = git::clone(request.sourceWindow,
                                url,
@@ -68,7 +93,7 @@ Error vcsClone(const json::JsonRpcRequest& request,
       if (error)
          return error;
    }
-   else if (vcsName == "svn")
+   else if (vcsName == svn::kVcsId)
    {
       Error error = svn::checkout(url, dirName, parentPath, &pCP);
       if (error)
@@ -94,9 +119,9 @@ VCS activeVCS()
 std::string activeVCSName()
 {
    if (git::isGitEnabled())
-      return "Git";
+      return git::kVcsId;
    else if (svn::isSvnEnabled())
-      return "Subversion";
+      return svn::kVcsId;
    else
       return std::string();
 }
@@ -194,18 +219,18 @@ core::Error initialize()
          LOG_ERROR(vcsError);
    }
 
-   if (vcsOptions.vcsOverride == "none")
+   if (vcsOptions.vcsOverride == kVcsIdNone)
    {
       return Success();
    }
-   else if (vcsOptions.vcsOverride == "git")
+   else if (vcsOptions.vcsOverride == git::kVcsId)
    {
       if (git::isGitInstalled() && git::isGitDirectory(workingDir))
          return git::initializeGit(workingDir);
       return Success();
    }
 #ifdef SUBVERSION
-   else if (vcsOptions.vcsOverride == "svn")
+   else if (vcsOptions.vcsOverride == svn::kVcsId)
    {
       if (svn::isSvnInstalled() && svn::isSvnDirectory(workingDir))
          return svn::initializeSvn(workingDir);
@@ -245,17 +270,17 @@ VcsContext vcsContext(const FilePath& workingDir)
    // detected vcs
    VcsContext context;
    if (isGitDirectory)
-      context.detectedVcs = "git";
+      context.detectedVcs = git::kVcsId;
    else if (isSvnDirectory)
-      context.detectedVcs = "svn";
+      context.detectedVcs = svn::kVcsId;
    else
-      context.detectedVcs = "none";
+      context.detectedVcs = kVcsIdNone;
 
    // applicable vcs
    if (gitInstalled)
-      context.applicableVcs.push_back("git");
+      context.applicableVcs.push_back(git::kVcsId);
    if (isSvnDirectory)
-      context.applicableVcs.push_back("svn");
+      context.applicableVcs.push_back(svn::kVcsId);
 
    // remote urls
    if (isGitDirectory)
