@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <windows.h>
 
+#define BOOST_THREAD_USE_LIB
 #include <core/BoostThread.hpp>
 #include <core/Error.hpp>
 
