@@ -110,27 +110,23 @@ public:
 
    std::string handle() const { return handle_; }
    InteractionMode interactionMode() const { return interactionMode_; }
-   std::string bufferedOutput() const;
 
    core::Error start();
-
    void enqueInput(const Input& input);
-
    void interrupt();
 
-   core::system::ProcessCallbacks createProcessCallbacks();
+   core::json::Object toJson() const;
+   static boost::shared_ptr<ConsoleProcess> fromJson(
+                                              core::json::Object& obj);
 
+private:
+   core::system::ProcessCallbacks createProcessCallbacks();
    bool onContinue(core::system::ProcessOperations& ops);
    void onStdout(core::system::ProcessOperations& ops,
                  const std::string& output);
    void onExit(int exitCode);
 
-   core::json::Object toJson() const;
-
-   static boost::shared_ptr<ConsoleProcess> fromJson(
-                                              core::json::Object& obj);
-
-private:
+   std::string bufferedOutput() const;
    void appendToOutputBuffer(const std::string& str);
    void enqueOutputEvent(const std::string& output, bool error);
 
