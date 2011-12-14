@@ -1,5 +1,5 @@
 /*
- * ServerConsoleOutputEvent.java
+ * ServerConsolePromptEvent.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -16,12 +16,12 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ServerConsoleOutputEvent
-      extends GwtEvent<ServerConsoleOutputEvent.Handler>
+public class ServerConsolePromptEvent
+      extends GwtEvent<ServerConsolePromptEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onServerConsoleOutput(ServerConsoleOutputEvent event);
+      void onServerConsolePrompt(ServerConsolePromptEvent event);
    }
 
    public static class Data extends JavaScriptObject
@@ -29,19 +29,15 @@ public class ServerConsoleOutputEvent
       protected Data() {}
 
       public native final String getHandle() /*-{ return this.handle; }-*/;
-      public native final String getOutput() /*-{ return this.output; }-*/;
-      public native final boolean isError() /*-{ return this.error; }-*/;
+      public native final String getPrompt() /*-{ return this.prompt; }-*/;
    }
 
 
-   public ServerConsoleOutputEvent(String procHandle,
-                                   String output,
-                                   boolean error)
+   public ServerConsolePromptEvent(String procHandle, String prompt)
    {
 
       procHandle_ = procHandle;
-      output_ = output;
-      error_ = error;
+      prompt_ = prompt;
    }
 
    public String getProcessHandle()
@@ -49,14 +45,9 @@ public class ServerConsoleOutputEvent
       return procHandle_;
    }
 
-   public String getOutput()
+   public String getPrompt()
    {
-      return output_;
-   }
-
-   public boolean getError()
-   {
-      return error_;
+      return prompt_;
    }
 
    @Override
@@ -68,12 +59,11 @@ public class ServerConsoleOutputEvent
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onServerConsoleOutput(this);
+      handler.onServerConsolePrompt(this);
    }
 
    private final String procHandle_;
-   private final String output_;
-   private final boolean error_;
+   private final String prompt_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

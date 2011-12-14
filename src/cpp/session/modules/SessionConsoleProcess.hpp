@@ -129,6 +129,8 @@ private:
    std::string bufferedOutput() const;
    void appendToOutputBuffer(const std::string& str);
    void enqueOutputEvent(const std::string& output, bool error);
+   void handleConsolePrompt(const std::string& prompt);
+   void maybeConsolePrompt(const std::string& output);
 
 private:
    // Command and options that will be used when start() is called

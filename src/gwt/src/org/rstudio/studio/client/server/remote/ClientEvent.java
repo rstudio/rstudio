@@ -62,6 +62,7 @@ class ClientEvent extends JavaScriptObject
    public static final String HandleUnsavedChanges = "handle_unsaved_changes";
    public static final String PosixShellOutput = "posix_shell_output";
    public static final String PosixShellExit = "posix_shell_exit";
+   public static final String ConsoleProcessPrompt = "console_process_prompt";
 
    protected ClientEvent()
    {

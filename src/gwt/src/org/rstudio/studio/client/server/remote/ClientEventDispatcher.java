@@ -24,6 +24,7 @@ import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.console.ServerConsoleOutputEvent;
+import org.rstudio.studio.client.common.console.ServerConsolePromptEvent;
 import org.rstudio.studio.client.common.console.ServerProcessExitEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
@@ -284,6 +285,12 @@ public class ClientEventDispatcher
             eventBus_.fireEvent(new ServerConsoleOutputEvent(data.getHandle(),
                                                             data.getOutput(),
                                                             data.isError()));
+         }
+         else if (type.equals(ClientEvent.ConsoleProcessPrompt))
+         {
+            ServerConsolePromptEvent.Data data = event.getData();
+            eventBus_.fireEvent(new ServerConsolePromptEvent(data.getHandle(),
+                                                             data.getPrompt()));
          }
          else if (type.equals(ClientEvent.ConsoleProcessExit))
          {

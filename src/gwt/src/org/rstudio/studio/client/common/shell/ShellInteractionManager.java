@@ -3,7 +3,6 @@ package org.rstudio.studio.client.common.shell;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
@@ -46,27 +45,7 @@ public class ShellInteractionManager implements ShellOutputWriter
    @Override
    public void consoleWriteOutput(String output)
    {
-      // if the output ends with a newline then just send it all
-      // in a big batch
-      if (output.endsWith("\n"))
-      {
-         display_.consoleWriteOutput(output);
-      }
-      else
-      {
-         // look for the last newline and take the content after
-         // that as the prompt
-         int lastLoc = output.lastIndexOf('\n');
-         if (lastLoc != -1)
-         {
-            display_.consoleWriteOutput(output.substring(0, lastLoc));
-            maybeConsolePrompt(output.substring(lastLoc + 1));
-         }
-         else
-         {
-            maybeConsolePrompt(output);
-         }
-      }
+      display_.consoleWriteOutput(output); 
    }
       
    @Override
@@ -77,6 +56,12 @@ public class ShellInteractionManager implements ShellOutputWriter
             "Error: " + error + "\n");
       if (lastPromptText_ != null)
          consolePrompt(lastPromptText_, false);
+   }
+   
+   @Override
+   public void consoleWritePrompt(String prompt)
+   {
+      consolePrompt(prompt);
    }
    
    private void processInput(final CommandWithArg<ShellInput> onInputReady)
@@ -116,41 +101,32 @@ public class ShellInteractionManager implements ShellOutputWriter
       historyManager_.navigateHistory(offset);
       display_.ensureInputVisible();
    }
-   
-   // prompt as long as there are no special control characters
-   // (otherwise treat it as output)
-   private void maybeConsolePrompt(String output)
+    
+   private void consolePrompt(String prompt)
    {
-      if (CONTROL_SPECIAL.match(output, 0) == null)
+      // determine whether we should add this to the history
+      boolean addToHistory = false;
+     
+      if (historyEnabled_)
       {
-         // determine whether we should add this to the history
-         boolean addToHistory = false;
-        
-         if (historyEnabled_)
+         // figure out what the suffix of the default prompt is by inspecting
+         // the first prompt which comes our way
+         if (defaultPromptSuffix_ == null)
          {
-            // figure out what the suffix of the default prompt is by inspecting
-            // the first prompt which comes our way
-            if (defaultPromptSuffix_ == null)
-            {
-               if (output.length() > 1)
-                  defaultPromptSuffix_ = output.substring(output.length()-2);
-               else if (output.length() > 0)
-                  defaultPromptSuffix_ = output;
-               
-               addToHistory = true;
-            }
-            else if (output.endsWith(defaultPromptSuffix_))
-            {
-               addToHistory = true;
-            }
+            if (prompt.length() > 1)
+               defaultPromptSuffix_ = prompt.substring(prompt.length()-2);
+            else if (prompt.length() > 0)
+               defaultPromptSuffix_ = prompt;
+            
+            addToHistory = true;
          }
-         
-         consolePrompt(output, addToHistory);
+         else if (prompt.endsWith(defaultPromptSuffix_))
+         {
+            addToHistory = true;
+         }
       }
-      else
-      {
-         display_.consoleWriteOutput(output);
-      }
+      
+      consolePrompt(prompt, addToHistory);
    }
     
    private void consolePrompt(String prompt, boolean addToHistory)
@@ -301,6 +277,4 @@ public class ShellInteractionManager implements ShellOutputWriter
    
    private final CryptoServerOperations server_;
    private PublicKeyInfo publicKeyInfo_ = null;
-   
-   private static final Pattern CONTROL_SPECIAL = Pattern.create("[\r\b]");
 }

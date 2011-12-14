@@ -12,6 +12,9 @@
  */
 #include "SessionConsoleProcess.hpp"
 
+#include <boost/regex.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <core/json/JsonRpc.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/ShellUtils.hpp>
@@ -235,18 +238,13 @@ void ConsoleProcess::appendToOutputBuffer(const std::string &str)
 
 void ConsoleProcess::enqueOutputEvent(const std::string &output, bool error)
 {
-   // convert line endings to posix
-   std::string convertedOutput = output;
-   string_utils::convertLineEndings(&convertedOutput,
-                                    string_utils::LineEndingPosix);
-
    // copy to output buffer
-   appendToOutputBuffer(convertedOutput);
+   appendToOutputBuffer(output);
 
    // If there's more output than the client can even show, then
    // truncate it to the amount that the client can show. Too much
    // output can overwhelm the client, making it unresponsive.
-   std::string trimmedOutput = convertedOutput;
+   std::string trimmedOutput = output;
    string_utils::trimLeadingLines(maxOutputLines_, &trimmedOutput);
 
    json::Object data;
@@ -260,7 +258,50 @@ void ConsoleProcess::enqueOutputEvent(const std::string &output, bool error)
 void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
                               const std::string& output)
 {
-   enqueOutputEvent(output, false);
+   // convert line endings to posix
+   std::string posixOutput = output;
+   string_utils::convertLineEndings(&posixOutput,
+                                    string_utils::LineEndingPosix);
+
+   // process as normal output or detect a prompt if there is one
+   if (boost::algorithm::ends_with(posixOutput, "\n"))
+   {
+      enqueOutputEvent(posixOutput, false);
+   }
+   else
+   {
+      // look for the last newline and take the content after
+      // that as the prompt
+      std::size_t lastLoc = posixOutput.find_last_of('\n');
+      if (lastLoc != std::string::npos)
+      {
+         enqueOutputEvent(posixOutput.substr(0, lastLoc), false);
+         maybeConsolePrompt(posixOutput.substr(lastLoc + 1));
+      }
+      else
+      {
+         maybeConsolePrompt(posixOutput);
+      }
+   }
+}
+
+void ConsoleProcess::maybeConsolePrompt(const std::string& output)
+{
+   // treat special control characters as output rather than a prompt
+   boost::smatch smatch;
+   if (boost::regex_search(output, smatch, boost::regex("[\\r\\b]")))
+      enqueOutputEvent(output, false);
+   else
+      handleConsolePrompt(output);
+}
+
+void ConsoleProcess::handleConsolePrompt(const std::string& prompt)
+{
+   json::Object data;
+   data["handle"] = handle_;
+   data["prompt"] = prompt;
+   module_context::enqueClientEvent(
+         ClientEvent(client_events::kConsoleProcessPrompt, data));
 }
 
 void ConsoleProcess::onExit(int exitCode)

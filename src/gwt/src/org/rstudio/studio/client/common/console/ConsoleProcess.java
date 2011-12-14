@@ -34,6 +34,7 @@ import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOper
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
+                                       ConsolePromptEvent.HasHandlers,
                                        ProcessExitEvent.HasHandlers
 {
    @Singleton
@@ -125,11 +126,24 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
             new ServerConsoleOutputEvent.Handler()
             {
                @Override
-               public void onServerConsoleProcess(ServerConsoleOutputEvent event)
+               public void onServerConsoleOutput(
+                                             ServerConsoleOutputEvent event)
                {
                   if (event.getProcessHandle().equals(procInfo.getHandle()))
                      fireEvent(new ConsoleOutputEvent(event.getOutput(),
                                                       event.getError()));
+               }
+            }));
+      registrations_.add(eventBus.addHandler(
+            ServerConsolePromptEvent.TYPE,
+            new ServerConsolePromptEvent.Handler()
+            {
+               @Override
+               public void onServerConsolePrompt(
+                                             ServerConsolePromptEvent event)
+               {
+                  if (event.getProcessHandle().equals(procInfo.getHandle()))
+                     fireEvent(new ConsolePromptEvent(event.getPrompt()));
                }
             }));
       registrations_.add(eventBus.addHandler(
@@ -180,6 +194,13 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                                              ConsoleOutputEvent.Handler handler)
    {
       return handlers_.addHandler(ConsoleOutputEvent.TYPE, handler);
+   }
+   
+   @Override
+   public HandlerRegistration addConsolePromptHandler(
+                                          ConsolePromptEvent.Handler handler)
+   {
+      return handlers_.addHandler(ConsolePromptEvent.TYPE, handler);
    }
 
    @Override

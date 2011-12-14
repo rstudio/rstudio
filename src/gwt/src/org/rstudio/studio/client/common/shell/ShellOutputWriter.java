@@ -4,4 +4,5 @@ public interface ShellOutputWriter
 {
    void consoleWriteError(String string) ;
    void consoleWriteOutput(String output) ;
+   void consoleWritePrompt(String prompt);
 }

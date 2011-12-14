@@ -39,7 +39,7 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
-import org.rstudio.studio.client.common.console.ConsoleOutputEvent.Handler;
+import org.rstudio.studio.client.common.console.ConsolePromptEvent;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
@@ -52,7 +52,10 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 
 public class ConsoleProgressDialog extends ModalDialogBase
-      implements Handler, ClickHandler, ProcessExitEvent.Handler
+                                   implements ConsoleOutputEvent.Handler, 
+                                              ConsolePromptEvent.Handler,
+                                              ProcessExitEvent.Handler,
+                                              ClickHandler
 {
    interface Resources extends ClientBundle
    {
@@ -156,6 +159,7 @@ public class ConsoleProgressDialog extends ModalDialogBase
       registrations_ = new HandlerRegistrations();
       if (consoleProcess != null)
       {
+         registrations_.add(consoleProcess.addConsolePromptHandler(this));
          registrations_.add(consoleProcess.addConsoleOutputHandler(this));
          registrations_.add(consoleProcess.addProcessExitHandler(this));
 
@@ -240,6 +244,12 @@ public class ConsoleProgressDialog extends ModalDialogBase
    public void onConsoleOutput(ConsoleOutputEvent event)
    {
       outputWriter_.consoleWriteOutput(event.getOutput());
+   }
+   
+   @Override
+   public void onConsolePrompt(ConsolePromptEvent event)
+   {
+      outputWriter_.consoleWritePrompt(event.getPrompt());
    }
 
    @Override
