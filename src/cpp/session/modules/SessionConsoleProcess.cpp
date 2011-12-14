@@ -235,13 +235,18 @@ void ConsoleProcess::appendToOutputBuffer(const std::string &str)
 
 void ConsoleProcess::enqueOutputEvent(const std::string &output, bool error)
 {
+   // convert line endings to posix
+   std::string convertedOutput = output;
+   string_utils::convertLineEndings(&convertedOutput,
+                                    string_utils::LineEndingPosix);
+
    // copy to output buffer
-   appendToOutputBuffer(output);
+   appendToOutputBuffer(convertedOutput);
 
    // If there's more output than the client can even show, then
    // truncate it to the amount that the client can show. Too much
    // output can overwhelm the client, making it unresponsive.
-   std::string trimmedOutput = output;
+   std::string trimmedOutput = convertedOutput;
    string_utils::trimLeadingLines(maxOutputLines_, &trimmedOutput);
 
    json::Object data;
