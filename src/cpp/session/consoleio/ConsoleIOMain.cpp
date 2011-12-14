@@ -189,14 +189,13 @@ int main(int argc, char** argv)
    si.hStdOutput = ::GetStdHandle(STD_OUTPUT_HANDLE);
    si.hStdError = ::GetStdHandle(STD_ERROR_HANDLE);
 
-
    PROCESS_INFORMATION pi = {0};
 
    if (!::CreateProcess(NULL,
                         &(cmdBuf[0]),
                         NULL,
                         NULL,
-                        FALSE,
+                        TRUE,
                         0,
                         NULL,
                         NULL,
