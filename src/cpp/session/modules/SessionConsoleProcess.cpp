@@ -14,6 +14,7 @@
 
 #include <core/json/JsonRpc.hpp>
 #include <core/system/Process.hpp>
+#include <core/system/ShellUtils.hpp>
 #include <core/Exec.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/Settings.hpp>
@@ -61,6 +62,7 @@ ConsoleProcess::ConsoleProcess()
    outputBuffer_.push_back('\n');
 }
 
+#ifndef _WIN32
 ConsoleProcess::ConsoleProcess(const std::string& command,
                                const core::system::ProcessOptions& options,
                                const std::string& caption,
@@ -76,6 +78,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
 {
    commonInit();
 }
+#endif
 
 ConsoleProcess::ConsoleProcess(const std::string& program,
                                const std::vector<std::string>& args,
@@ -101,10 +104,24 @@ void ConsoleProcess::commonInit()
    // always redirect stderr to stdout so output is interleaved
    options_.redirectStdErrToStdOut = true;
 
-   // request a pseudoterminal if this is an interactive console process
-#ifndef _WIN32
    if (interactionMode() != InteractionNever)
    {
+#ifdef _WIN32
+      // NOTE: We use consoleio.exe here in order to make sure svn.exe password
+      // prompting works properly
+      options_.createNewConsole = true;
+
+      // build new args
+      shell_utils::ShellArgs args;
+      args << program_;
+      args << args_;
+
+      // fixup program_ and args_ so we run the consoleio.exe proxy
+      FilePath consoleIoPath = session::options().consoleIoPath();
+      program_ = consoleIoPath.absolutePathNative();
+      args_ = args;
+#else
+      // request a pseudoterminal if this is an interactive console process
       options_.pseudoterminal = core::system::Pseudoterminal(80, 1);
 
       // define TERM to dumb (but first make sure we have an environment
@@ -116,9 +133,8 @@ void ConsoleProcess::commonInit()
          options_.environment = childEnv;
       }
       core::system::setenv(&(options_.environment.get()), "TERM", "dumb");
-
-   }
 #endif
+   }
 
 
    // When we retrieve from outputBuffer, we only want complete lines. Add a
@@ -411,6 +427,7 @@ Error procWriteStdin(const json::JsonRpcRequest& request,
    }
 }
 
+#ifndef _WIN32
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& command,
       core::system::ProcessOptions options,
@@ -432,6 +449,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
    s_procs[ptrProc->handle()] = ptrProc;
    return ptrProc;
 }
+#endif
 
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& program,

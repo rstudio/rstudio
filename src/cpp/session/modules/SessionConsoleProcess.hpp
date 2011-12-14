@@ -48,6 +48,7 @@ private:
    // suspend/resume scenarios)
    ConsoleProcess();
 
+#ifndef _WIN32
    ConsoleProcess(
          const std::string& command,
          const core::system::ProcessOptions& options,
@@ -56,6 +57,7 @@ private:
          InteractionMode mode,
          int maxOutputLines,
          const boost::function<void()>& onExit);
+#endif
 
    ConsoleProcess(
          const std::string& program,
@@ -79,6 +81,11 @@ public:
    };
 
 public:
+   // creating console processes with a command string is not supported on
+   // Win32 because in order to implement the InteractionPossible/Always
+   // modes we use the consoleio.exe proxy, which can only be invoked from
+   // the runProgram codepath
+#ifndef _WIN32
    static boost::shared_ptr<ConsoleProcess> create(
          const std::string& command,
          core::system::ProcessOptions options,
@@ -87,6 +94,7 @@ public:
          InteractionMode mode,
          int maxOutputLines = kDefaultMaxOutputLines,
          const boost::function<void()>& onExit=boost::function<void()>());
+#endif
 
    static boost::shared_ptr<ConsoleProcess> create(
          const std::string& program,

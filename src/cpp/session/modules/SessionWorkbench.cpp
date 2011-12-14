@@ -387,6 +387,7 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
 Error startShellDialog(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
+#ifndef _WIN32
    using namespace session::module_context;
    using namespace session::modules::console_process;
 
@@ -457,6 +458,9 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    pResponse->setResult(ptrProc->toJson());
 
    return Success();
+#else // not supported on Win32
+   return Error(json::errc::InvalidRequest, ERROR_LOCATION);
+#endif
 }
 
 Error setCRANMirror(const json::JsonRpcRequest& request,
