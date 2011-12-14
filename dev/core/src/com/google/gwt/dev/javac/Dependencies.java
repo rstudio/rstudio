@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -39,7 +39,7 @@ class Dependencies implements Serializable {
     private final String hash;
 
     private Ref(CompiledClass cc) {
-      this(cc.getInternalName(), cc.getSignatureHash()); 
+      this(cc.getInternalName(), cc.getSignatureHash());
     }
 
     private Ref(String internalName, String hash) {
@@ -56,8 +56,8 @@ class Dependencies implements Serializable {
     }
   }
 
-  Map<String, Ref> qualified = new HashMap<String, Ref>();
-  Map<String, Ref> simple = new HashMap<String, Ref>();
+  Map<String, Ref> qualified = new HashMap<String, Ref>(true);
+  Map<String, Ref> simple = new HashMap<String, Ref>(true);
   private final List<String> apiRefs;
   private final String myPackage;
 
@@ -122,11 +122,11 @@ class Dependencies implements Serializable {
       }
     }
   }
-  
+
   /**
    * Validate that all of my existing dependencies can be found in the global
    * set of valid classes, and resolve to structurally identical APIs.
-   * 
+   *
    * @return <code>true</code> if all of my dependencies are valid
    */
   boolean validate(TreeLogger logger, Map<String, CompiledClass> allValidClasses) {

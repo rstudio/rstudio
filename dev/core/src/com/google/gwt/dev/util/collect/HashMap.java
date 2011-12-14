@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,7 +21,9 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.Map;
@@ -30,7 +32,7 @@ import java.util.Set;
 
 /**
  * A memory-efficient hash map.
- * 
+ *
  * @param <K> the key type
  * @param <V> the value type
  */
@@ -49,6 +51,7 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
     private int index = 0;
     private int last = -1;
 
+    @Override
     public boolean hasNext() {
       if (coModCheckKeys != keys) {
         throw new ConcurrentModificationException();
@@ -57,6 +60,7 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
       return index < keys.length;
     }
 
+    @Override
     public E next() {
       if (!hasNext()) {
         throw new NoSuchElementException();
@@ -65,6 +69,7 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
       return iteratorItem(index++);
     }
 
+    @Override
     public void remove() {
       if (last < 0) {
         throw new IllegalStateException();
@@ -186,11 +191,13 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
           && valueEquals(getValue(), entry.getValue());
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public K getKey() {
       return (K) unmaskNullKey(keys[index]);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public V getValue() {
       return (V) values[index];
@@ -201,6 +208,7 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
       return keyHashCode(getKey()) ^ valueHashCode(getValue());
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public V setValue(V value) {
       V previous = (V) values[index];
@@ -377,11 +385,24 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
    */
   transient Object[] values;
 
+  /**
+   * Whether the map should be sorted when being serialized. If true, the
+   * key must a Comparable.
+   */
+  final boolean stableWriteObject;
+
+
   public HashMap() {
+    this(false);
+  }
+
+  public HashMap(boolean stableWriteObject) {
+    this.stableWriteObject = stableWriteObject;
     initTable(INITIAL_TABLE_SIZE);
   }
 
   public HashMap(Map<? extends K, ? extends V> m) {
+    this.stableWriteObject = false;
     int newCapacity = INITIAL_TABLE_SIZE;
     int expectedSize = m.size();
     while (newCapacity * 3 < expectedSize * 4) {
@@ -392,15 +413,18 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
     putAll(m);
   }
 
+  @Override
   public void clear() {
     initTable(INITIAL_TABLE_SIZE);
     size = 0;
   }
 
+  @Override
   public boolean containsKey(Object key) {
     return findKey(key) >= 0;
   }
 
+  @Override
   public boolean containsValue(Object value) {
     if (value == null) {
       for (int i = 0; i < keys.length; ++i) {
@@ -418,6 +442,7 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
     return false;
   }
 
+  @Override
   public Set<Entry<K, V>> entrySet() {
     return new EntrySet();
   }
@@ -432,6 +457,7 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
     return entrySet().equals(other.entrySet());
   }
 
+  @Override
   @SuppressWarnings("unchecked")
   public V get(Object key) {
     int index = findKey(key);
@@ -450,14 +476,17 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
     return result;
   }
 
+  @Override
   public boolean isEmpty() {
     return size == 0;
   }
 
+  @Override
   public Set<K> keySet() {
     return new KeySet();
   }
 
+  @Override
   @SuppressWarnings("unchecked")
   public V put(K key, V value) {
     int index = findKeyOrEmpty(key);
@@ -478,6 +507,7 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
     }
   }
 
+  @Override
   public void putAll(Map<? extends K, ? extends V> m) {
     resizeForJoin(m.size());
     for (Entry<? extends K, ? extends V> entry : m.entrySet()) {
@@ -485,6 +515,7 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
     }
   }
 
+  @Override
   @SuppressWarnings("unchecked")
   public V remove(Object key) {
     int index = findKey(key);
@@ -496,6 +527,7 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
     return (V) previousValue;
   }
 
+  @Override
   public int size() {
     return size;
   }
@@ -526,6 +558,7 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
     return buf.toString();
   }
 
+  @Override
   public Collection<V> values() {
     return new Values();
   }
@@ -552,11 +585,43 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
   protected void doWriteObject(ObjectOutputStream out) throws IOException {
     out.writeInt(keys.length);
     out.writeInt(size);
-    for (int i = 0; i < keys.length; ++i) {
-      Object key = keys[i];
-      if (key != null) {
-        out.writeObject(unmaskNullKey(key));
-        out.writeObject(values[i]);
+
+    if (stableWriteObject) {
+      final Integer[] idx = new Integer[keys.length];
+      for (int i = 0; i < keys.length; i++) {
+        idx[i] = i;
+      }
+      Arrays.sort(idx, new Comparator<Integer>() {
+          @SuppressWarnings({"rawtypes", "unchecked"})
+          @Override public int compare(final Integer o1, final Integer o2) {
+              Comparable c1 = (Comparable)(keys[o1]);
+              Comparable c2 = (Comparable)(keys[o2]);
+              if (c1 == null) {
+                // null < anything else
+                return (c2 == null) ? 0 : 1;
+              }
+              if (c2 == null) {
+                return -1;
+              }
+              return c1.compareTo(c2);
+          }
+      });
+
+      for (int i = 0; i < keys.length; ++i) {
+        int current = idx[i];
+        Object key = keys[current];
+        if (key != null) {
+          out.writeObject(unmaskNullKey(key));
+          out.writeObject(values[current]);
+        }
+      }
+    } else {
+      for (int i = 0; i < keys.length; ++i) {
+        Object key = keys[i];
+        if (key != null) {
+          out.writeObject(unmaskNullKey(key));
+          out.writeObject(values[i]);
+        }
       }
     }
   }
