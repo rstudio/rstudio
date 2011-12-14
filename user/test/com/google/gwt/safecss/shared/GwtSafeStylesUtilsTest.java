@@ -92,7 +92,7 @@ public class GwtSafeStylesUtilsTest extends GWTTestCase {
   }
 
   public void testForZIndex() {
-    assertEquals("zIndex: 5;", SafeStylesUtils.forZIndex(5).asString());
+    assertEquals("z-index: 5;", SafeStylesUtils.forZIndex(5).asString());
   }
 
   public void testFromTrustedNameAndValue() {

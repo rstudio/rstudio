@@ -488,7 +488,7 @@ public final class SafeStylesUtils {
    * Set the z-index css property.
    */
   public static SafeStyles forZIndex(int value) {
-    return new SafeStylesString("zIndex: " + value + ";");
+    return new SafeStylesString("z-index: " + value + ";");
   }
 
   /**
