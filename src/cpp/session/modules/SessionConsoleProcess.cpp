@@ -71,13 +71,11 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
                                const std::string& caption,
                                bool dialog,
                                InteractionMode interactionMode,
-                               int maxOutputLines,
-                               const boost::function<void()>& onExit)
+                               int maxOutputLines)
    : command_(command), options_(options), caption_(caption), dialog_(dialog),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false), interrupt_(false),
-     outputBuffer_(OUTPUT_BUFFER_SIZE),
-     onExit_(onExit)
+     outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
 }
@@ -89,13 +87,11 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
                                const std::string& caption,
                                bool dialog,
                                InteractionMode interactionMode,
-                               int maxOutputLines,
-                               const boost::function<void()>& onExit)
+                               int maxOutputLines)
    : program_(program), args_(args), options_(options), caption_(caption), dialog_(dialog),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false),  interrupt_(false),
-     outputBuffer_(OUTPUT_BUFFER_SIZE),
-     onExit_(onExit)
+     outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
 }
@@ -156,6 +152,17 @@ std::string ConsoleProcess::bufferedOutput() const
    std::copy(pos, outputBuffer_.end(), std::back_inserter(result));
    // Will be empty if the buffer was overflowed by a single line
    return result;
+}
+
+void ConsoleProcess::setPromptHandler(
+      const boost::function<Input(const std::string&)>& onPrompt)
+{
+   onPrompt_ = onPrompt;
+}
+
+void ConsoleProcess::setExitHandler(const boost::function<void(int)>& onExit)
+{
+   onExit_ = onExit;
 }
 
 Error ConsoleProcess::start()
@@ -301,6 +308,19 @@ void ConsoleProcess::maybeConsolePrompt(const std::string& output)
 
 void ConsoleProcess::handleConsolePrompt(const std::string& prompt)
 {
+   // if there is a custom prmopt handler then give it a chance to
+   // handle the prompt first
+   if (onPrompt_)
+   {
+      Input input = onPrompt_(prompt);
+      if (!input.empty())
+      {
+         enqueInput(input);
+         return;
+      }
+   }
+
+   // enque a prompt event
    json::Object data;
    data["handle"] = handle_;
    data["prompt"] = prompt;
@@ -319,7 +339,7 @@ void ConsoleProcess::onExit(int exitCode)
          ClientEvent(client_events::kConsoleProcessExit, data));
 
    if (onExit_)
-      onExit_();
+      onExit_(exitCode);
 }
 
 core::json::Object ConsoleProcess::toJson() const
@@ -487,8 +507,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& caption,
       bool dialog,
       InteractionMode interactionMode,
-      int maxOutputLines,
-      const boost::function<void()>& onExit)
+      int maxOutputLines)
 {
    options.terminateChildren = true;
    boost::shared_ptr<ConsoleProcess> ptrProc(
@@ -497,8 +516,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
                             caption,
                             dialog,
                             interactionMode,
-                            maxOutputLines,
-                            onExit));
+                            maxOutputLines));
    s_procs[ptrProc->handle()] = ptrProc;
    return ptrProc;
 }
@@ -511,8 +529,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& caption,
       bool dialog,
       InteractionMode interactionMode,
-      int maxOutputLines,
-      const boost::function<void()>& onExit)
+      int maxOutputLines)
 {
    options.terminateChildren = true;
    boost::shared_ptr<ConsoleProcess> ptrProc(
@@ -522,8 +539,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
                             caption,
                             dialog,
                             interactionMode,
-                            maxOutputLines,
-                            onExit));
+                            maxOutputLines));
    s_procs[ptrProc->handle()] = ptrProc;
    return ptrProc;
 }

@@ -55,8 +55,7 @@ private:
          const std::string& caption,
          bool dialog,
          InteractionMode mode,
-         int maxOutputLines,
-         const boost::function<void()>& onExit);
+         int maxOutputLines);
 #endif
 
    ConsoleProcess(
@@ -66,8 +65,7 @@ private:
          const std::string& caption,
          bool dialog,
          InteractionMode mode,
-         int maxOutputLines,
-         const boost::function<void()>& onExit);
+         int maxOutputLines);
 
    void commonInit();
 
@@ -75,6 +73,9 @@ public:
    struct Input
    {
       Input() : interrupt(false), echoInput(false) {}
+
+      bool empty() { return !interrupt && text.empty(); }
+
       bool interrupt ;
       std::string text;
       bool echoInput;
@@ -92,8 +93,7 @@ public:
          const std::string& caption,
          bool dialog,
          InteractionMode mode,
-         int maxOutputLines = kDefaultMaxOutputLines,
-         const boost::function<void()>& onExit=boost::function<void()>());
+         int maxOutputLines = kDefaultMaxOutputLines);
 #endif
 
    static boost::shared_ptr<ConsoleProcess> create(
@@ -103,10 +103,14 @@ public:
          const std::string& caption,
          bool dialog,
          InteractionMode mode,
-         int maxOutputLines = kDefaultMaxOutputLines,
-         const boost::function<void()>& onExit=boost::function<void()>());
+         int maxOutputLines = kDefaultMaxOutputLines);
 
    virtual ~ConsoleProcess() {}
+
+   void setPromptHandler(
+         const boost::function<Input(const std::string&)>& onPrompt);
+
+   void setExitHandler(const boost::function<void(int)>& onExit);
 
    std::string handle() const { return handle_; }
    InteractionMode interactionMode() const { return interactionMode_; }
@@ -162,7 +166,8 @@ private:
 
    boost::optional<int> exitCode_;
 
-   boost::function<void()> onExit_;
+   boost::function<Input(const std::string&)> onPrompt_;
+   boost::function<void(int)> onExit_;
 };
 
 core::json::Array processesAsJson();

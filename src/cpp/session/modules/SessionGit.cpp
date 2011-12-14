@@ -333,17 +333,18 @@ protected:
                                      caption,
                                      dialog,
                                      console_process::InteractionNever,
-                                     console_process::kDefaultMaxOutputLines,
-                                     &enqueueRefreshEvent);
+                                     console_process::kDefaultMaxOutputLines);
 #else
       *ppCP = ConsoleProcess::create(git() << args.args(),
                                      options,
                                      caption,
                                      dialog,
                                      console_process::InteractionNever,
-                                     console_process::kDefaultMaxOutputLines,
-                                     &enqueueRefreshEvent);
+                                     console_process::kDefaultMaxOutputLines);
 #endif
+
+      (*ppCP)->setExitHandler(boost::bind(&enqueueRefreshEvent));
+
       return Success();
    }
 

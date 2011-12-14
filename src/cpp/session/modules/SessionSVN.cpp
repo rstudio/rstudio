@@ -250,17 +250,18 @@ core::Error createConsoleProc(const ShellArgs& args,
                                   caption,
                                   dialog,
                                   console_process::InteractionPossible,
-                                  console_process::kDefaultMaxOutputLines,
-                                  &enqueueRefreshEvent);
+                                  console_process::kDefaultMaxOutputLines);
 #else
    *ppCP = ConsoleProcess::create(svn() << args.args(),
                                   options,
                                   caption,
                                   dialog,
                                   console_process::InteractionPossible,
-                                  console_process::kDefaultMaxOutputLines,
-                                  &enqueueRefreshEvent);
+                                  console_process::kDefaultMaxOutputLines);
 #endif
+
+   (*ppCP)->setExitHandler(boost::bind(&enqueueRefreshEvent));
+
    return Success();
 }
 
