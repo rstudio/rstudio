@@ -530,7 +530,7 @@ public abstract class UIObject implements HasVisibility {
 
   /**
    * Gets the object's offset height in pixels. This is the total height of the
-   * object, including decorations such as border, margin, and padding.
+   * object, including decorations such as border and padding, but not margin.
    * 
    * @return the object's offset height
    */
@@ -540,7 +540,7 @@ public abstract class UIObject implements HasVisibility {
 
   /**
    * Gets the object's offset width in pixels. This is the total width of the
-   * object, including decorations such as border, margin, and padding.
+   * object, including decorations such as border and padding, but not margin.
    * 
    * @return the object's offset width
    */
