@@ -407,12 +407,15 @@ Error procWriteStdin(const json::JsonRpcRequest& request,
    if (pos != s_procs.end())
    {
 #ifdef RSTUDIO_SERVER
-      if (!input.interrupt)
+      if (session::options().programMode() == kSessionProgramModeServer)
       {
-         error = core::system::crypto::rsaPrivateDecrypt(input.text,
-                                                         &input.text);
-         if (error)
-            return error;
+         if (!input.interrupt)
+         {
+            error = core::system::crypto::rsaPrivateDecrypt(input.text,
+                                                            &input.text);
+            if (error)
+               return error;
+         }
       }
 #endif
 
