@@ -173,8 +173,9 @@ if(WIN32)
    set(SESSION_SOURCE_FILES
       ${SESSION_SOURCE_FILES}
       "${CMAKE_CURRENT_BINARY_DIR}/res.o")
-
-   add_subdirectory(consoleio)
+   if(NOT RSTUDIO_SESSION_WIN64)
+      add_subdirectory(consoleio)
+   endif()
 endif()
 
 # define executable
