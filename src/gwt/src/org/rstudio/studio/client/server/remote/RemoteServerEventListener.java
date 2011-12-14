@@ -148,8 +148,8 @@ class RemoteServerEventListener
       if (isListening_)
          return;
       
-      // exit if we have already quit
-      if (sessionWasQuit_)
+      // exit if we have already quit or been disconnected
+      if (sessionWasQuit_ || server_.isDisconnected())
          return;
       
       // attempt to start the service

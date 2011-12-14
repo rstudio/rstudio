@@ -180,7 +180,7 @@ public class Application implements ApplicationEventHandlers
    
    public void onServerOffline(ServerOfflineEvent event)
    {
-      satelliteManager_.closeAllSatellites();
+      cleanupWorkbench();
       view_.showApplicationOffline();
    }
     
@@ -458,10 +458,10 @@ public class Application implements ApplicationEventHandlers
       }
    }
    
-   
    private void navigateWindowTo(String relativeUrl)
    {
-      satelliteManager_.closeAllSatellites();
+      cleanupWorkbench();
+    
       String url = GWT.getHostPageBaseURL() + relativeUrl;
       Window.Location.replace(url);
    }
@@ -531,6 +531,8 @@ public class Application implements ApplicationEventHandlers
       
    private void cleanupWorkbench()
    {
+      server_.disconnect();
+      
       satelliteManager_.closeAllSatellites();
       
       if (clientStateUpdaterInstance_ != null)

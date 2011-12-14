@@ -133,6 +133,12 @@ public class RemoteServer implements Server
       // register satallite callback
       registerSatelliteCallback();
    }
+   
+   public void disconnect()
+   {
+      disconnected_ = true;
+      serverEventListener_.stop();
+   }
      
    public void log(int logEntryType, 
                    String logEntry, 
@@ -1580,6 +1586,11 @@ public class RemoteServer implements Server
    // RemoveServerEventListener
 
 
+   boolean isDisconnected()
+   {
+      return disconnected_;
+   }
+   
    EventBus getEventBus()
    {
       return eventBus_;
@@ -1831,13 +1842,21 @@ public class RemoteServer implements Server
                                              sourceWindow,
                                              clientId_,
                                              clientVersion_);
+      
+      if (isDisconnected())
+      {
+         RpcError error = RpcError.create(RpcError.CONNECTION_ERROR, 
+                                          "Server disconnected");
+         responseHandler.onResponseReceived(RpcResponse.create(error));
+         return rpcRequest;
+      }
 
       // send the request
       rpcRequest.send(new RpcRequestCallback() {
          public void onError(RpcRequest request, RpcError error)
          {
             // ignore errors if we are disconnected
-            if ( disconnected_)           
+            if (isDisconnected())           
                return;
             
             // if we have a retry handler then see if we can resolve the
@@ -1858,7 +1877,7 @@ public class RemoteServer implements Server
          {
             // ignore response if we are disconnected
             //   - handler was cancelled
-            if (disconnected_) 
+            if (isDisconnected()) 
                  return;
                    
             // check for error
@@ -1905,6 +1924,10 @@ public class RemoteServer implements Server
    
    private void ensureListeningForEvents()
    {
+      // don't do this if we are disconnected
+      if (isDisconnected())
+         return;
+      
       // if we are in a mode where we are listening for events (running
       // as the main workbench) then ensure we are listening
       
@@ -2031,11 +2054,6 @@ public class RemoteServer implements Server
       }
    }
 
-   private void disconnect()
-   {
-      disconnected_ = true;
-      serverEventListener_.stop();
-   }
    
    // the following sequence of calls enables marsahlling of remote server
    // requests from satellite windows back into the main workbench window

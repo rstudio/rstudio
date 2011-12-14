@@ -58,6 +58,7 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    WorkbenchListsServerOperations
 {   
    void initializeForMainWorkbench();
+   void disconnect();
    
    void setWorkbenchMetrics(WorkbenchMetrics clientMetrics,
                             ServerRequestCallback<Void> requestCallback);
