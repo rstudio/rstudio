@@ -113,7 +113,6 @@ public abstract class
    public abstract AppCommand vcsIgnore();
    public abstract AppCommand vcsPull();
    public abstract AppCommand vcsPush();
-   public abstract AppCommand vcsCreateBranch();
    public abstract AppCommand activateVcs();
 
    // View

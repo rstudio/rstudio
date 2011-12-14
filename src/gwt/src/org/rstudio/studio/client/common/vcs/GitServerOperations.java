@@ -125,9 +125,4 @@ public interface GitServerOperations extends VCSServerOperations
    
    void gitInitRepo(String directory,
                     ServerRequestCallback<Void> requestCallback);
-   
-   void gitCreateBranch(String fromRev,
-                        String name, 
-                        boolean remote,
-                        ServerRequestCallback<ConsoleProcess> requestCallback);
 }

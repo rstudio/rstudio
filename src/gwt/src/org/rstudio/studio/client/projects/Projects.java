@@ -121,7 +121,6 @@ public class Projects implements OpenProjectFileHandler,
                commands.vcsShowHistory().remove();
                commands.vcsPull().remove();
                commands.vcsPush().remove();
-               commands.vcsCreateBranch().remove();
             }
             else
             {

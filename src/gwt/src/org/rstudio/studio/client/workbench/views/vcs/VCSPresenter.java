@@ -91,11 +91,6 @@ public class VCSPresenter implements IsWidget,
       presenter_.onVcsPush();
    }
    
-   void onVcsCreateBranch()
-   {
-      presenter_.onVcsCreateBranch();
-   }
-   
    @Override
    public void onShowVcsHistory(ShowVcsHistoryEvent event)
    {
