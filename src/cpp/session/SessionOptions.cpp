@@ -179,11 +179,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("external-rpostback-path", 
        value<std::string>(&rpostbackPath_)->default_value("bin/postback/rpostback"),
        "Path to rpostback executable")
-#ifdef _WIN32
       ("external-consoleio-path",
        value<std::string>(&consoleIoPath_)->default_value("bin/consoleio.exe"),
        "Path to consoleio executable")
-#endif
       ;
    
    // user options (default user identity to current username)
