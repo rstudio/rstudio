@@ -13,6 +13,8 @@
 
 #include "ChildProcess.hpp"
 
+#include <iostream>
+
 #include <windows.h>
 #include <Shlwapi.h>
 
@@ -352,6 +354,15 @@ Error ChildProcess::run()
 
    // build command line
    std::vector<TCHAR> cmdLine;
+
+   bool exeQuot = std::string::npos != exe_.find(' ')
+         && std::string::npos == exe_.find('"');
+   if (exeQuot)
+      cmdLine.push_back('"');
+   std::copy(exe_.begin(), exe_.end(), std::back_inserter(cmdLine));
+   if (exeQuot)
+      cmdLine.push_back('"');
+
    BOOST_FOREACH(std::string& arg, args_)
    {
       cmdLine.push_back(' ');

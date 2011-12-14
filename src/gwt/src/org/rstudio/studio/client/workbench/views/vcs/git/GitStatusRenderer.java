@@ -26,13 +26,21 @@ public class GitStatusRenderer implements SafeHtmlRenderer<String>
 {
    interface StatusResources extends ClientBundle
    {
+      @Source("images/statusAdded.png")
       ImageResource statusAdded();
+      @Source("images/statusDeleted.png")
       ImageResource statusDeleted();
+      @Source("images/statusModified.png")
       ImageResource statusModified();
+      @Source("images/statusNone.png")
       ImageResource statusNone();
+      @Source("images/statusCopied.png")
       ImageResource statusCopied();
+      @Source("images/statusUntracked.png")
       ImageResource statusUntracked();
+      @Source("images/statusUnmerged.png")
       ImageResource statusUnmerged();
+      @Source("images/statusRenamed.png")
       ImageResource statusRenamed();
    }
 
