@@ -26,7 +26,6 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.text.shared.AbstractSafeHtmlRenderer;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
@@ -100,10 +99,10 @@ public class ImageLoadingCell extends AbstractCell<String> {
       if (LOADING_RENDERER == null) {
         Resources resources = GWT.create(Resources.class);
         ImageResource res = resources.loading();
-        final String loadingHtml = AbstractImagePrototype.create(res).getHTML();
+        final SafeHtml loadingHtml = AbstractImagePrototype.create(res).getSafeHtml();
         LOADING_RENDERER = new AbstractSafeHtmlRenderer<String>() {
           public SafeHtml render(String object) {
-            return SafeHtmlUtils.fromSafeConstant(loadingHtml);
+            return loadingHtml;
           }
         };
       }
