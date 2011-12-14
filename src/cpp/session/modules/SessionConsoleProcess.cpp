@@ -49,11 +49,7 @@ namespace {
    }
 } // anonymous namespace
 
-#ifdef _WIN32
-const int kDefaultMaxOutputLines = 160;
-#else
 const int kDefaultMaxOutputLines = 500;
-#endif
 
 ConsoleProcess::ConsoleProcess()
    : dialog_(false), interactionMode_(InteractionNever),
