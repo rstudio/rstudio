@@ -216,12 +216,16 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
       // text input
       else
       {
-         Error error = ops.writeToStdin(input.text, false);
+         std::string inputText = input.text;
+#ifdef _WIN32
+         string_utils::convertLineEndings(&inputText, string_utils::LineEndingWindows);
+#endif
+         Error error = ops.writeToStdin(inputText, false);
          if (error)
             LOG_ERROR(error);
 
          if (input.echoInput)
-            appendToOutputBuffer(input.text);
+            appendToOutputBuffer(inputText);
          else
             appendToOutputBuffer("\n");
       }
