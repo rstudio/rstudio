@@ -423,7 +423,7 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    // we show a more explicit error message and return false
    core::system::setenv(&shellEnv,
                         "SVN_EDITOR",
-                        "echo \"Error: No commit message\" && false");
+                        "echo \"Error: No editor available\" && false");
 
    // add custom git path if necessary
    std::string gitBinDir = git::nonPathGitBinDir();
