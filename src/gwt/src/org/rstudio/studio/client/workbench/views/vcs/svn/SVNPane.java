@@ -51,7 +51,7 @@ public class SVNPane extends WorkbenchPane implements Display
             (ClickHandler)null);
       revertFilesButton_ = new ToolbarButton(
             "Revert",
-            commands_.vcsRevertFiles().getImageResource(),
+            commands_.vcsRevert().getImageResource(),
             (ClickHandler)null);
       updateButton_ = new ToolbarButton(
             "Update",
