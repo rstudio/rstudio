@@ -52,13 +52,11 @@
 
 #include "SessionConsoleProcess.hpp"
 
+#include "SessionVcs.hpp"
+
 #include "vcs/SessionVCSUtils.hpp"
 
 #include "config.h"
-
-#ifdef RSTUDIO_SERVER
-#include <sys/stat.h>
-#endif
 
 using namespace core;
 using namespace core::shell_utils;
@@ -82,25 +80,6 @@ uint64_t s_gitVersion;
 const uint64_t GIT_1_7_2 = ((uint64_t)1 << 48) |
                            ((uint64_t)7 << 32) |
                            ((uint64_t)2 << 16);
-
-// window to direct the next ask_pass to (empty string for main window)
-std::string s_askPassWindow;
-
-void setAskPassWindow(const std::string& window)
-{
-   s_askPassWindow = window;
-}
-
-
-void setAskPassWindow(const json::JsonRpcRequest& request)
-{
-   setAskPassWindow(request.sourceWindow);
-}
-
-void onClientInit()
-{
-   s_askPassWindow = "";
-}
 
 core::system::ProcessOptions procOptions()
 {
@@ -343,7 +322,7 @@ protected:
                                      console_process::kDefaultMaxOutputLines);
 #endif
 
-      (*ppCP)->setExitHandler(boost::bind(&enqueueRefreshEvent));
+      (*ppCP)->onExit().connect(boost::bind(&enqueueRefreshEvent));
 
       return Success();
    }
@@ -1396,7 +1375,7 @@ Error vcsPush(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   setAskPassWindow(request);
+   source_control::setAskPassWindow(request.sourceWindow);
 
    pResponse->setResult(pCP->toJson());
 
@@ -1411,7 +1390,7 @@ Error vcsPull(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   setAskPassWindow(request);
+   source_control::setAskPassWindow(request.sourceWindow);
 
    pResponse->setResult(pCP->toJson());
 
@@ -1912,54 +1891,24 @@ void postbackSSHAskPass(const std::string& prompt,
 
    promptToRemember = promptToRemember && keyFile.exists();
 
-   json::Object payload;
-   payload["prompt"] = !prompt.empty() ? prompt
-                                       : std::string("Enter passphrase:");
-   payload["remember_prompt"] = promptToRemember ? std::string("Remember passphrase for this session")
-                                                 : std::string();
-   payload["window"] = s_askPassWindow;
-   ClientEvent askPassEvent(client_events::kAskPass, payload);
+   std::string rememberPrompt;
+   if (promptToRemember)
+      rememberPrompt = "Remember passphrase for this session";
 
-   // wait for method
-   core::json::JsonRpcRequest request;
-   if (s_waitForAskPass(&request, askPassEvent))
+   std::string askPrompt = !prompt.empty() ? prompt :
+                                             std::string("Enter passphrase:");
+
+   // prompt
+   source_control::PasswordInput input;
+   if (source_control::askForPassword(askPrompt, rememberPrompt, &input))
    {
-      json::Value value;
-      bool remember;
-      Error error = json::readParams(request.params, &value, &remember);
-      if (!error)
+      retcode = EXIT_SUCCESS;
+      passphrase = input.password;
+
+      if (input.remember)
       {
-         if (json::isType<std::string>(value))
-         {
-            passphrase = value.get_value<std::string>();
-            retcode = EXIT_SUCCESS;
-
-#ifdef RSTUDIO_SERVER
-            if (options().programMode() == kSessionProgramModeServer)
-            {
-               // In server mode, passphrases are encrypted
-
-               error = core::system::crypto::rsaPrivateDecrypt(passphrase,
-                                                               &passphrase);
-               if (error)
-               {
-                  passphrase.clear();
-                  retcode = EXIT_FAILURE;
-                  LOG_ERROR(error);
-               }
-            }
-#endif
-
-            if (remember)
-            {
-               ensureSSHAgentIsRunning();
-               addKeyToSSHAgent(keyFile, passphrase);
-            }
-         }
-      }
-      else
-      {
-         LOG_ERROR(error);
+         ensureSSHAgentIsRunning();
+         addKeyToSSHAgent(keyFile, passphrase);
       }
    }
 
@@ -2410,8 +2359,7 @@ core::Error initializeGit(const core::FilePath& workingDir)
 }
 
 
-Error clone(const std::string& sourceWindow,
-            const std::string& url,
+Error clone(const std::string& url,
             const std::string dirName,
             const FilePath& parentPath,
             boost::shared_ptr<console_process::ConsoleProcess>* ppCP)
@@ -2420,8 +2368,6 @@ Error clone(const std::string& sourceWindow,
    Error error = git.clone(url, dirName, parentPath, ppCP);
    if (error)
       return error;
-
-   setAskPassWindow(sourceWindow);
 
    return Success();
 }
@@ -2433,7 +2379,6 @@ core::Error initialize()
    Error error;
 
    module_context::events().onShutdown.connect(onShutdown);
-   module_context::events().onClientInit.connect(onClientInit);
 
    initGitBin();
 

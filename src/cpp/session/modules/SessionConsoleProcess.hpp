@@ -15,6 +15,7 @@
 
 #include <queue>
 
+#include <boost/signals.hpp>
 #include <boost/circular_buffer.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
@@ -110,7 +111,7 @@ public:
    void setPromptHandler(
          const boost::function<Input(const std::string&)>& onPrompt);
 
-   void setExitHandler(const boost::function<void(int)>& onExit);
+   boost::signal<void(int)>& onExit() { return onExit_; }
 
    std::string handle() const { return handle_; }
    InteractionMode interactionMode() const { return interactionMode_; }
@@ -167,7 +168,37 @@ private:
    boost::optional<int> exitCode_;
 
    boost::function<Input(const std::string&)> onPrompt_;
-   boost::function<void(int)> onExit_;
+   boost::signal<void(int)> onExit_;
+};
+
+
+class PasswordManager : boost::noncopyable
+{
+public:
+   PasswordManager() {}
+   virtual ~PasswordManager() {}
+
+   // COPYING: boost::noncopyable
+
+public:
+   void attach(boost::shared_ptr<ConsoleProcess> pCP);
+
+
+private:
+   ConsoleProcess::Input handlePrompt(const std::string& cpHandle,
+                                      const std::string& prompt);
+
+   void onExit(const std::string& cpHandle, int exitCode);
+
+private:
+   struct CachedPassword
+   {
+      std::string cpHandle;
+      std::string prompt;
+      std::string password;
+   };
+
+   std::vector<CachedPassword> passwords_;
 };
 
 core::json::Array processesAsJson();

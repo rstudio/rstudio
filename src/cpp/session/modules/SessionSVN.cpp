@@ -52,6 +52,9 @@ const char * const kVcsId = "SVN";
 
 namespace {
 
+// password manager for caching svn+ssh credentials
+PasswordManager s_passwordManager;
+
 // svn exe which we detect at startup. note that if the svn exe
 // is already in the path then this will be empty
 std::string s_svnExePath;
@@ -259,7 +262,9 @@ core::Error createConsoleProc(const ShellArgs& args,
                                   console_process::kDefaultMaxOutputLines);
 #endif
 
-   (*ppCP)->setExitHandler(boost::bind(&enqueueRefreshEvent));
+   (*ppCP)->onExit().connect(boost::bind(&enqueueRefreshEvent));
+
+   s_passwordManager.attach(*ppCP);
 
    return Success();
 }

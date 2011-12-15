@@ -45,6 +45,19 @@ core::FilePath detectedTerminalPath();
 
 void enqueueRefreshEvent();
 
+void setAskPassWindow(const std::string& windowName);
+
+struct PasswordInput
+{
+   PasswordInput() : remember(false) {}
+   std::string password;
+   bool remember;
+};
+
+bool askForPassword(const std::string& prompt,
+                    const std::string& rememberPrompt,
+                    PasswordInput* pInput);
+
 core::Error initialize();
 
 } // namespace source_control

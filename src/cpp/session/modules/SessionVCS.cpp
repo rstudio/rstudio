@@ -31,6 +31,11 @@
 
 #include "SessionConsoleProcess.hpp"
 
+#include "config.h"
+
+#ifdef RSTUDIO_SERVER
+#include <core/system/Crypto.hpp>
+#endif
 
 using namespace core;
 
@@ -80,13 +85,14 @@ Error vcsClone(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   setAskPassWindow(request.sourceWindow);
+
    FilePath parentPath = module_context::resolveAliasedPath(parentDir);
 
    boost::shared_ptr<console_process::ConsoleProcess> pCP;
    if (vcsName == git::kVcsId)
    {
-      Error error = git::clone(request.sourceWindow,
-                               url,
+      Error error = git::clone(url,
                                dirName,
                                parentPath,
                                &pCP);
@@ -95,7 +101,10 @@ Error vcsClone(const json::JsonRpcRequest& request,
    }
    else if (vcsName == svn::kVcsId)
    {
-      Error error = svn::checkout(url, dirName, parentPath, &pCP);
+      Error error = svn::checkout(url,
+                                  dirName,
+                                  parentPath,
+                                  &pCP);
       if (error)
          return error;
    }
@@ -186,10 +195,93 @@ void enqueueRefreshEvent()
    vcs_utils::enqueueRefreshEvent();
 }
 
+namespace {
+
+std::string s_askPassWindow;
+module_context::WaitForMethodFunction s_waitForAskPass;
+
+void onClientInit()
+{
+   s_askPassWindow = "";
+}
+
+} // anonymous namespace
+
+void setAskPassWindow(const std::string& window)
+{
+   s_askPassWindow = window;
+}
+
+void setAskPassWindow(const json::JsonRpcRequest& request)
+{
+   setAskPassWindow(request.sourceWindow);
+}
+
+bool askForPassword(const std::string& prompt,
+                    const std::string& rememberPrompt,
+                    PasswordInput* pInput)
+{
+   json::Object payload;
+   payload["prompt"] = prompt;
+   payload["remember_prompt"] = rememberPrompt;
+   payload["window"] = s_askPassWindow;
+   ClientEvent askPassEvent(client_events::kAskPass, payload);
+
+   // wait for method
+   core::json::JsonRpcRequest request;
+   if (!s_waitForAskPass(&request, askPassEvent))
+      return false;
+
+   // read params
+   json::Value value;
+   bool remember;
+   Error error = json::readParams(request.params, &value, &remember);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   // null passphrase means dialog was cancelled
+   if (!json::isType<std::string>(value))
+      return false;
+
+   // read inputs
+   pInput->remember = remember;
+   pInput->password = value.get_value<std::string>();
+
+   // decrypt if necessary
+#ifdef RSTUDIO_SERVER
+   if (options().programMode() == kSessionProgramModeServer)
+   {
+      // In server mode, passphrases are encrypted
+      error = core::system::crypto::rsaPrivateDecrypt(
+                                             pInput->password,
+                                             &pInput->password);
+      if (error)
+      {
+         pInput->password.clear();
+         LOG_ERROR(error);
+         return false;
+      }
+   }
+#endif
+
+   return true;
+}
+
+
+
 core::Error initialize()
 {
    git::initialize();
    svn::initialize();
+
+   module_context::events().onClientInit.connect(onClientInit);
+
+   // register waitForMethod handler
+   s_waitForAskPass = module_context::registerWaitForMethod(
+                                                "askpass_completed");
 
 
    // http endpoints

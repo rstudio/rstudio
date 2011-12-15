@@ -160,11 +160,6 @@ void ConsoleProcess::setPromptHandler(
    onPrompt_ = onPrompt;
 }
 
-void ConsoleProcess::setExitHandler(const boost::function<void(int)>& onExit)
-{
-   onExit_ = onExit;
-}
-
 Error ConsoleProcess::start()
 {
    if (started_)
@@ -338,8 +333,7 @@ void ConsoleProcess::onExit(int exitCode)
    module_context::enqueClientEvent(
          ClientEvent(client_events::kConsoleProcessExit, data));
 
-   if (onExit_)
-      onExit_(exitCode);
+   onExit_(exitCode);
 }
 
 core::json::Object ConsoleProcess::toJson() const
@@ -543,6 +537,37 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
    s_procs[ptrProc->handle()] = ptrProc;
    return ptrProc;
 }
+
+void PasswordManager::attach(
+                  boost::shared_ptr<console_process::ConsoleProcess> pCP)
+{
+   pCP->setPromptHandler(boost::bind(&PasswordManager::handlePrompt,
+                                       this,
+                                       pCP->handle(),
+                                       _1));
+
+   pCP->onExit().connect(boost::bind(&PasswordManager::onExit,
+                                       this,
+                                       pCP->handle(),
+                                       _1));
+}
+
+ConsoleProcess::Input PasswordManager::handlePrompt(
+                                          const std::string& cpHandle,
+                                          const std::string& prompt)
+{
+
+
+   return ConsoleProcess::Input();
+}
+
+void PasswordManager::onExit(const std::string& cpHandle,
+                             int exitCode)
+{
+
+
+}
+
 
 core::json::Array processesAsJson()
 {

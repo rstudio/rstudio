@@ -94,8 +94,7 @@ core::Error statusToJson(const core::FilePath& path,
                          const VCSStatus& status,
                          core::json::Object* pObject);
 
-core::Error clone(const std::string& sourceWindow,
-                  const std::string& url,
+core::Error clone(const std::string& url,
                   const std::string dirName,
                   const core::FilePath& parentPath,
                   boost::shared_ptr<console_process::ConsoleProcess>* ppCP);

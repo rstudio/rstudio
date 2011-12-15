@@ -453,7 +453,8 @@ Error startShellDialog(const json::JsonRpcRequest& request,
                                       InteractionAlways,
                                       console_process::kDefaultMaxOutputLines);
 
-   ptrProc->setExitHandler(boost::bind(&source_control::enqueueRefreshEvent));
+   ptrProc->onExit().connect(boost::bind(
+                              &source_control::enqueueRefreshEvent));
 
    pResponse->setResult(ptrProc->toJson());
 
