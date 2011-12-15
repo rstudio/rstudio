@@ -1900,16 +1900,26 @@ void postbackSSHAskPass(const std::string& prompt,
 
    // prompt
    source_control::PasswordInput input;
-   if (source_control::askForPassword(askPrompt, rememberPrompt, &input))
+   Error error = source_control::askForPassword(askPrompt,
+                                                rememberPrompt,
+                                                &input);
+   if (!error)
    {
-      retcode = EXIT_SUCCESS;
-      passphrase = input.password;
-
-      if (input.remember)
+      if (!input.cancelled)
       {
-         ensureSSHAgentIsRunning();
-         addKeyToSSHAgent(keyFile, passphrase);
+         retcode = EXIT_SUCCESS;
+         passphrase = input.password;
+
+         if (input.remember)
+         {
+            ensureSSHAgentIsRunning();
+            addKeyToSSHAgent(keyFile, passphrase);
+         }
       }
+   }
+   else
+   {
+      LOG_ERROR(error);
    }
 
    // satisfy continuation

@@ -114,8 +114,12 @@ public:
 
    virtual ~ConsoleProcess() {}
 
+   // set a custom prompt handler -- return true to indicate the prompt
+   // was handled and false to let it pass. return empty input to
+   // indicate the user cancelled out of the prompt (in this case the
+   // process will be terminated)
    void setPromptHandler(
-         const boost::function<Input(const std::string&)>& onPrompt);
+         const boost::function<bool(const std::string&, Input*)>& onPrompt);
 
    boost::signal<void(int)>& onExit() { return onExit_; }
 
@@ -140,8 +144,10 @@ private:
    std::string bufferedOutput() const;
    void appendToOutputBuffer(const std::string& str);
    void enqueOutputEvent(const std::string& output, bool error);
-   void handleConsolePrompt(const std::string& prompt);
-   void maybeConsolePrompt(const std::string& output);
+   void handleConsolePrompt(core::system::ProcessOperations& ops,
+                            const std::string& prompt);
+   void maybeConsolePrompt(core::system::ProcessOperations& ops,
+                           const std::string& output);
 
 private:
    // Command and options that will be used when start() is called
@@ -173,7 +179,7 @@ private:
 
    boost::optional<int> exitCode_;
 
-   boost::function<Input(const std::string&)> onPrompt_;
+   boost::function<bool(const std::string&, Input*)> onPrompt_;
    boost::signal<void(int)> onExit_;
 };
 
@@ -198,8 +204,9 @@ public:
 
 
 private:
-   ConsoleProcess::Input handlePrompt(const std::string& cpHandle,
-                                      const std::string& prompt);
+   bool handlePrompt(const std::string& cpHandle,
+                     const std::string& prompt,
+                     ConsoleProcess::Input* pInput);
 
    void onExit(const std::string& cpHandle, int exitCode);
 

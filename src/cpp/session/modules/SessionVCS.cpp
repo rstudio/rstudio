@@ -217,9 +217,9 @@ void setAskPassWindow(const json::JsonRpcRequest& request)
    setAskPassWindow(request.sourceWindow);
 }
 
-bool askForPassword(const std::string& prompt,
-                    const std::string& rememberPrompt,
-                    PasswordInput* pInput)
+Error askForPassword(const std::string& prompt,
+                     const std::string& rememberPrompt,
+                     PasswordInput* pInput)
 {
    json::Object payload;
    payload["prompt"] = prompt;
@@ -230,21 +230,24 @@ bool askForPassword(const std::string& prompt,
    // wait for method
    core::json::JsonRpcRequest request;
    if (!s_waitForAskPass(&request, askPassEvent))
-      return false;
+   {
+      return systemError(boost::system::errc::operation_canceled,
+                         ERROR_LOCATION);
+   }
 
    // read params
    json::Value value;
    bool remember;
    Error error = json::readParams(request.params, &value, &remember);
    if (error)
-   {
-      LOG_ERROR(error);
-      return false;
-   }
+      return error;
 
    // null passphrase means dialog was cancelled
    if (!json::isType<std::string>(value))
-      return false;
+   {
+      pInput->cancelled = true;
+      return Success();
+   }
 
    // read inputs
    pInput->remember = remember;
@@ -259,18 +262,12 @@ bool askForPassword(const std::string& prompt,
                                              pInput->password,
                                              &pInput->password);
       if (error)
-      {
-         pInput->password.clear();
-         LOG_ERROR(error);
-         return false;
-      }
+         return error;
    }
 #endif
 
-   return true;
+   return Success();
 }
-
-
 
 core::Error initialize()
 {

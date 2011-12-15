@@ -156,7 +156,7 @@ std::string ConsoleProcess::bufferedOutput() const
 }
 
 void ConsoleProcess::setPromptHandler(
-      const boost::function<Input(const std::string&)>& onPrompt)
+      const boost::function<bool(const std::string&, Input*)>& onPrompt)
 {
    onPrompt_ = onPrompt;
 }
@@ -283,37 +283,50 @@ void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
       if (lastLoc != std::string::npos)
       {
          enqueOutputEvent(posixOutput.substr(0, lastLoc), false);
-         maybeConsolePrompt(posixOutput.substr(lastLoc + 1));
+         maybeConsolePrompt(ops, posixOutput.substr(lastLoc + 1));
       }
       else
       {
-         maybeConsolePrompt(posixOutput);
+         maybeConsolePrompt(ops, posixOutput);
       }
    }
 }
 
-void ConsoleProcess::maybeConsolePrompt(const std::string& output)
+void ConsoleProcess::maybeConsolePrompt(core::system::ProcessOperations& ops,
+                                        const std::string& output)
 {
    // treat special control characters as output rather than a prompt
    boost::smatch smatch;
    if (boost::regex_search(output, smatch, boost::regex("[\\r\\b]")))
       enqueOutputEvent(output, false);
    else
-      handleConsolePrompt(output);
+      handleConsolePrompt(ops, output);
 }
 
-void ConsoleProcess::handleConsolePrompt(const std::string& prompt)
+void ConsoleProcess::handleConsolePrompt(core::system::ProcessOperations& ops,
+                                         const std::string& prompt)
 {
    // if there is a custom prmopt handler then give it a chance to
    // handle the prompt first
    if (onPrompt_)
    {
-      Input input = onPrompt_(prompt);
-      if (!input.empty())
+      Input input;
+      if (onPrompt_(prompt, &input))
       {
-         enqueInput(input);
+         if (!input.empty())
+         {
+            enqueInput(input);
+         }
+         else
+         {
+            Error error = ops.terminate();
+            if (error)
+              LOG_ERROR(error);
+         }
+
          return;
       }
+
    }
 
    // enque a prompt event
@@ -545,7 +558,8 @@ void PasswordManager::attach(
    pCP->setPromptHandler(boost::bind(&PasswordManager::handlePrompt,
                                        this,
                                        pCP->handle(),
-                                       _1));
+                                       _1,
+                                       _2));
 
    pCP->onExit().connect(boost::bind(&PasswordManager::onExit,
                                        this,
@@ -553,9 +567,9 @@ void PasswordManager::attach(
                                        _1));
 }
 
-ConsoleProcess::Input PasswordManager::handlePrompt(
-                                          const std::string& cpHandle,
-                                          const std::string& prompt)
+bool PasswordManager::handlePrompt(const std::string& cpHandle,
+                                   const std::string& prompt,
+                                   ConsoleProcess::Input* pInput)
 {
    // is this a password prompt?
    boost::smatch match;
@@ -567,34 +581,42 @@ ConsoleProcess::Input PasswordManager::handlePrompt(
                                passwords_.end(),
                                boost::bind(&hasPrompt, _1, prompt));
       if (it != passwords_.end())
-         return ConsoleProcess::Input(it->password + "\n", false);
-
-      // prompt for password
-      std::string password;
-      bool remember;
-      if (promptHandler_(prompt, &password, &remember))
       {
-         if (remember)
-         {
-            CachedPassword cachedPassword;
-            cachedPassword.cpHandle = cpHandle;
-            cachedPassword.prompt = prompt;
-            cachedPassword.password = password;
-            passwords_.push_back(cachedPassword);
-         }
-
-         return ConsoleProcess::Input(password + "\n", false);
+         // cached password
+         *pInput = ConsoleProcess::Input(it->password + "\n", false);
       }
       else
       {
-         return ConsoleProcess::Input("\n", false);
+         // prompt for password
+         std::string password;
+         bool remember;
+         if (promptHandler_(prompt, &password, &remember))
+         {
+            if (remember)
+            {
+               CachedPassword cachedPassword;
+               cachedPassword.cpHandle = cpHandle;
+               cachedPassword.prompt = prompt;
+               cachedPassword.password = password;
+               passwords_.push_back(cachedPassword);
+            }
+
+            // interactively entered password
+            *pInput = ConsoleProcess::Input(password + "\n", false);
+         }
+         else
+         {
+            // user cancelled
+            *pInput = ConsoleProcess::Input();
+         }
       }
 
+      return true;
    }
    // not a password prompt so ignore
    else
    {
-      return ConsoleProcess::Input();
+      return false;
    }
 }
 

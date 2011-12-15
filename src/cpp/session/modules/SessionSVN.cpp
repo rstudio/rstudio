@@ -40,12 +40,6 @@
 #include "vcs/SessionVCSUtils.hpp"
 #include "SessionConsoleProcess.hpp"
 
-// TODO: improve bad password diagnostic message (now is ssh conn error)
-
-// TODO: Cancelling the pasword dialog should exit the process
-
-// TODO: What about secure in-memory storage
-
 using namespace core;
 using namespace core::shell_utils;
 using namespace session::modules::vcs_utils;
@@ -890,14 +884,25 @@ bool promptForPassword(const std::string& prompt,
 {
    std::string rememberPrompt = "Remember password for this session";
    source_control::PasswordInput input;
-   if (source_control::askForPassword(prompt, rememberPrompt, &input))
+   Error error = source_control::askForPassword(prompt,
+                                                rememberPrompt,
+                                                &input);
+   if (!error)
    {
-      *pPassword = input.password;
-      *pRemember = input.remember;
-      return true;
+      if (!input.cancelled)
+      {
+         *pPassword = input.password;
+         *pRemember = input.remember;
+         return true;
+      }
+      else
+      {
+         return false;
+      }
    }
    else
    {
+      LOG_ERROR(error);
       return false;
    }
 }

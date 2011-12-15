@@ -49,14 +49,15 @@ void setAskPassWindow(const std::string& windowName);
 
 struct PasswordInput
 {
-   PasswordInput() : remember(false) {}
+   PasswordInput() : cancelled(false), remember(false) {}
+   bool cancelled;
    std::string password;
    bool remember;
 };
 
-bool askForPassword(const std::string& prompt,
-                    const std::string& rememberPrompt,
-                    PasswordInput* pInput);
+core::Error askForPassword(const std::string& prompt,
+                           const std::string& rememberPrompt,
+                           PasswordInput* pInput);
 
 core::Error initialize();
 
