@@ -300,16 +300,22 @@ Error ChildProcess::terminate()
    // special code path for pseudoterminal
    if (options_.pseudoterminal)
    {
-      // on OSX you can only kill the child process by closing the
-      // terminal handles
+      // on OSX you need to close all of the terminal handles to get
+      // bash to quit, however some other processes (like svn+ssh
+      // require the signal)
 #ifdef __APPLE__
       pImpl_->closeAll(false, ERROR_LOCATION);
-      return Success();
-#else
-      return posixCall<int>(
-                  boost::bind(::killpg, ::getpgid(pImpl_->pid), SIGTERM),
-                  ERROR_LOCATION);
 #endif
+
+      if (::killpg(::getpgid(pImpl_->pid), SIGTERM) == -1)
+      {
+         if (errno == EPERM) // see note below on carve out for EPERM
+            return Success();
+         else
+            return systemError(errno, ERROR_LOCATION);
+      }
+      else
+         return Success();
    }
    else
    {
