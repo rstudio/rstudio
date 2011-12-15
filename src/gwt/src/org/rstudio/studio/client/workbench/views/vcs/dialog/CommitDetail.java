@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.vcs.dialog;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -28,6 +29,7 @@ import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.Point;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitDetailDisplay;
@@ -157,6 +159,11 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
             DateTimeFormat.getFormat(PredefinedFormat.TIME_SHORT).format(commit_.getDate())
       );
       labelSubject_.setText(commit_.getSubject());
+
+      parentTableRow_.getStyle().setProperty(
+            "display",
+            StringUtil.isNullOrEmpty(commit_.getParent()) ? "none"
+                                                          : "table-row");
       labelParent_.setText(commit_.getParent());
    }
 
@@ -198,6 +205,8 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    VerticalPanel tocPanel_;
    @UiField(provided = true)
    SizeWarningWidget sizeWarning_;
+   @UiField
+   TableRowElement parentTableRow_;
    private ScrollPanel container_;
    
 }

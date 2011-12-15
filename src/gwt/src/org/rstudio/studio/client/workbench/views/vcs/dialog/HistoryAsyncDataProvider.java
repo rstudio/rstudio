@@ -26,12 +26,11 @@ import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
-public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
+public abstract class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
 {
    @Inject
-   public HistoryAsyncDataProvider(GitServerOperations server)
+   public HistoryAsyncDataProvider()
    {
-      server_ = server;
       rev_ = "";
       searchText_ = new Value<String>("");
       fileFilter_ = new Value<FileSystemItem>(null);
@@ -63,7 +62,7 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
 
    public void refreshCount()
    {
-      server_.gitHistoryCount(
+      getHistoryCount(
             rev_, 
             fileFilter_.getValue(), 
             searchText_.getValue(), 
@@ -84,10 +83,10 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
    }
 
    @Override
-   protected void onRangeChanged(final HasData<CommitInfo> display)
+   public void onRangeChanged(final HasData<CommitInfo> display)
    {      
       final Range rng = display.getVisibleRange();
-      server_.gitHistory(
+      getHistory(
             rev_, fileFilter_.getValue(), rng.getStart(), rng.getLength(), searchText_.getValue(),
             new SimpleRequestCallback<RpcObjectList<CommitInfo>>("Error Fetching History")
             {
@@ -100,7 +99,20 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
             });
    }
 
-   private final GitServerOperations server_;
+   protected abstract void getHistoryCount(
+         String revision,
+         FileSystemItem fileFilter,
+         String searchText,
+         ServerRequestCallback<CommitCount> requestCallback);
+
+   protected abstract void getHistory(
+         String revision,
+         FileSystemItem fileFilter,
+         int skip,
+         int maxEntries,
+         String searchText,
+         ServerRequestCallback<RpcObjectList<CommitInfo>> requestCallback);
+
    private String rev_;
    private HasValue<String> searchText_;
    private HasValue<FileSystemItem> fileFilter_;

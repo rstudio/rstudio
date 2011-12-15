@@ -29,6 +29,8 @@ void enqueueRefreshEvent();
 core::json::Object processResultToJson(
       const core::system::ProcessResult& result);
 
+core::FilePath fileFilterPath(const core::json::Value& fileFilterJson);
+
 struct RefreshOnExit : public boost::noncopyable
 {
    ~RefreshOnExit()

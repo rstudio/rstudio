@@ -48,6 +48,20 @@ core::json::Object processResultToJson(
    return obj;
 }
 
+FilePath fileFilterPath(const json::Value& fileFilterJson)
+{
+   if (json::isType<std::string>(fileFilterJson))
+   {
+      // get the underlying file path
+      std::string aliasedPath= fileFilterJson.get_str();
+      return module_context::resolveAliasedPath(aliasedPath);
+   }
+   else
+   {
+      return FilePath();
+   }
+}
+
 } // namespace vcs_utils
 } // namespace modules
 } // namespace session

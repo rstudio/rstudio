@@ -46,7 +46,7 @@
             <td>Subject</td>
             <td class="{style.subject}"><g:Label ui:field="labelSubject_" /></td>
          </tr>
-         <tr>
+         <tr ui:field="parentTableRow_">
             <td>Parent</td>
             <td><g:Label ui:field="labelParent_" /></td>
          </tr>

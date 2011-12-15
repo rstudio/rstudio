@@ -14,9 +14,13 @@ package org.rstudio.studio.client.common.vcs;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitCount;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
 
 import java.util.ArrayList;
 
@@ -62,4 +66,39 @@ public interface SVNServerOperations extends VCSServerOperations
    void svnApplyPatch(String path,
                       String patch,
                       ServerRequestCallback<Void> requestCallback);
+
+   /**
+    *
+    * @param revision Revision number to start at (-1 for latest)
+    * @param path The path to show revisions for (null for .)
+    * @param searchText
+    * @param requestCallback
+    */
+   void svnHistoryCount(int revision,
+                        FileSystemItem path,
+                        String searchText,
+                        ServerRequestCallback<CommitCount> requestCallback);
+
+   /**
+    *
+    * @param revision Revision number to start at (-1 for latest)
+    * @param path The path to show revisions for (null for .)
+    * @param maxentries -1 for no limit
+    * @param searchText
+    * @param requestCallback
+    */
+   void svnHistory(int revision,
+                   FileSystemItem path,
+                   int skip,
+                   int maxentries,
+                   String searchText,
+                   ServerRequestCallback<RpcObjectList<CommitInfo>> requestCallback);
+
+   void svnShow(int revision,
+                boolean noSizeWarning,
+                ServerRequestCallback<String> requestCallback);
+
+   void svnShowFile(int revision,
+                    String filename,
+                    ServerRequestCallback<String> requestCallback);
 }

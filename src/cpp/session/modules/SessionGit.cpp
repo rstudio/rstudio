@@ -1470,20 +1470,6 @@ Error vcsApplyPatch(const json::JsonRpcRequest& request,
    return Success();
 }
 
-FilePath fileFilterPath(const json::Value& fileFilterJson)
-{
-   if (json::isType<std::string>(fileFilterJson))
-   {
-      // get the underlying file path
-      std::string aliasedPath= fileFilterJson.get_str();
-      return module_context::resolveAliasedPath(aliasedPath);
-   }
-   else
-   {
-      return FilePath();
-   }
-}
-
 Error vcsHistoryCount(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {

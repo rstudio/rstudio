@@ -27,6 +27,18 @@ import org.rstudio.core.client.regex.Pattern;
 
 public class StringUtil
 {
+   public static int parseInt(String value, int defaultValue)
+   {
+      try
+      {
+         return Integer.parseInt(value);
+      }
+      catch (NumberFormatException nfe)
+      {
+         return defaultValue;
+      }
+   }
+
    public static String formatDate(Date date)
    {
       if (date == null)

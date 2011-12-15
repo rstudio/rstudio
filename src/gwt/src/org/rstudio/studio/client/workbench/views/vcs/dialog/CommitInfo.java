@@ -30,7 +30,7 @@ public class CommitInfo extends JavaScriptObject
    }-*/;
 
    public native final String getParent() /*-{
-      return this.parent;
+      return this.parent || "";
    }-*/;
 
    public native final String getSubject() /*-{
@@ -38,11 +38,11 @@ public class CommitInfo extends JavaScriptObject
    }-*/;
 
    public native final String getDescription() /*-{
-      return this.description;
+      return this.description || "";
    }-*/;
 
    public native final String getGraph() /*-{
-      return this.graph;
+      return this.graph || "";
    }-*/;
 
    public final Date getDate()

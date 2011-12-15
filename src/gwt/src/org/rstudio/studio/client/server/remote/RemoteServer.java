@@ -2278,6 +2278,63 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SVN_APPLY_PATCH, params, requestCallback);
    }
 
+   @Override
+   public void svnHistoryCount(int revision,
+                               FileSystemItem path,
+                               String searchText,
+                               ServerRequestCallback<CommitCount> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONNumber(revision));
+      params.set(1, path == null ? JSONNull.getInstance()
+                                 : new JSONString(path.getPath()));
+      params.set(2, new JSONString(StringUtil.notNull(searchText)));
+
+      sendRequest(RPC_SCOPE, SVN_HISTORY_COUNT, params, requestCallback);
+   }
+
+   @Override
+   public void svnHistory(int revision,
+                          FileSystemItem path,
+                          int skip,
+                          int maxentries,
+                          String searchText,
+                          ServerRequestCallback<RpcObjectList<CommitInfo>> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONNumber(revision));
+      params.set(1, path == null ? JSONNull.getInstance()
+                                 : new JSONString(path.getPath()));
+      params.set(2, new JSONNumber(skip));
+      params.set(3, new JSONNumber(maxentries));
+      params.set(4, new JSONString(StringUtil.notNull(searchText)));
+
+      sendRequest(RPC_SCOPE, SVN_HISTORY, params, requestCallback);
+   }
+
+   @Override
+   public void svnShow(int rev,
+                       boolean noSizeWarning,
+                       ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONNumber(rev));
+      params.set(1, JSONBoolean.getInstance(noSizeWarning));
+
+      sendRequest(RPC_SCOPE, SVN_SHOW, params, requestCallback);
+   }
+
+   @Override
+   public void svnShowFile(int rev,
+                           String filename,
+                           ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONNumber(rev));
+      params.set(1, new JSONString(filename));
+      sendRequest(RPC_SCOPE, SVN_SHOW_FILE, params, requestCallback);
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -2454,6 +2511,10 @@ public class RemoteServer implements Server
    private static final String SVN_COMMIT = "svn_commit";
    private static final String SVN_DIFF_FILE = "svn_diff_file";
    private static final String SVN_APPLY_PATCH = "svn_apply_patch";
+   private static final String SVN_HISTORY_COUNT = "svn_history_count";
+   private static final String SVN_HISTORY = "svn_history";
+   private static final String SVN_SHOW = "svn_show";
+   private static final String SVN_SHOW_FILE = "svn_show_file";
 
    private static final String GET_PUBLIC_KEY = "get_public_key";
    

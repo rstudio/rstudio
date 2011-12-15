@@ -253,6 +253,12 @@ public class HistoryPanel extends Composite implements Display
       });
    }
 
+   @Override
+   public void setShowBranch(boolean showBranch)
+   {
+      branchToolbarButton_.setVisible(showBranch);
+   }
+
    @UiField(provided = true)
    SplitLayoutPanel splitPanel_;
    @UiField

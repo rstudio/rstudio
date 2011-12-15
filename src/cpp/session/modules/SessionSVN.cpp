@@ -20,6 +20,7 @@
 #endif
 
 #include <boost/bind.hpp>
+#include <boost/date_time.hpp>
 #include <boost/regex.hpp>
 
 #include <core/rapidxml/rapidxml.hpp>
@@ -324,6 +325,30 @@ bool initSvnBin()
       return true;
 }
 
+Error parseXml(const std::string strData,
+              std::vector<char>* pDataBuffer,
+              rapidxml::xml_document<>* pDoc)
+{
+   pDataBuffer->reserve(strData.size() + 1);
+   std::copy(strData.begin(),
+             strData.end(),
+             std::back_inserter(*pDataBuffer));
+   pDataBuffer->push_back('\0'); // null terminator
+
+   try
+   {
+      pDoc->parse<0>(&((*pDataBuffer)[0]));
+      return Success();
+   }
+   catch (rapidxml::parse_error)
+   {
+      return systemError(boost::system::errc::protocol_error,
+                         "Could not parse XML",
+                         ERROR_LOCATION);
+   }
+}
+
+
 } // namespace
 
 
@@ -504,7 +529,7 @@ std::string topStatus(const std::string& a, const std::string& b)
 
 #define FOREACH_NODE(parent, varname, name) \
    for (rapidxml::xml_node<>* varname = parent->first_node(name); \
-        varname; \
+        parent && varname; \
         varname = varname->next_sibling(name))
 
 std::string attr_value(rapidxml::xml_node<>* pNode, const std::string& attrName)
@@ -515,6 +540,17 @@ std::string attr_value(rapidxml::xml_node<>* pNode, const std::string& attrName)
    if (!pAttr)
       return std::string();
    return std::string(pAttr->value());
+}
+
+std::string node_value(rapidxml::xml_node<>* pNode, const std::string& nodeName)
+{
+   using namespace rapidxml;
+
+   xml_node<>* pChild = pNode->first_node(nodeName.c_str());
+   if (!pChild)
+      return std::string();
+
+   return pChild->value();
 }
 
 FilePath resolveAliasedJsonPath(const json::Value& value)
@@ -619,15 +655,11 @@ Error svnStatus(const json::JsonRpcRequest& request,
    }
 
    std::vector<char> xmlData;
-   xmlData.reserve(stdOut.size() + 1);
-   std::copy(stdOut.begin(),
-             stdOut.end(),
-             std::back_inserter(xmlData));
-   xmlData.push_back('\0'); // null terminator
-
    using namespace rapidxml;
    xml_document<> doc;
-   doc.parse<0>(&(xmlData[0]));
+   error = parseXml(stdOut, &xmlData, &doc);
+   if (error)
+      return error;
 
    const std::string CHANGELIST_NAME("changelist");
 
@@ -857,6 +889,168 @@ Error svnApplyPatch(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error history(int rev,
+              const std::string& searchText,
+              FilePath fileFilter,
+              ShellArgs options,
+              std::string* pOutput)
+{
+   ShellArgs args;
+   args << "log";
+   args << "--xml";
+
+   args << options.args();
+
+   if (rev > 0)
+      args << "-r" << boost::lexical_cast<std::string>(rev) + ":1";
+
+   if (!fileFilter.empty())
+      args << fileFilter;
+
+   return runSvn(args, pOutput);
+}
+
+Error svnHistoryCount(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   using namespace rapidxml;
+
+   int rev;
+   json::Value fileFilterJson;
+   std::string searchText;
+   Error error = json::readParams(request.params,
+                                  &rev,
+                                  &fileFilterJson,
+                                  &searchText);
+   if (error)
+      return error;
+
+   ShellArgs options;
+   options << "-q";
+   FilePath fileFilter = fileFilterPath(fileFilterJson);
+   std::string output;
+   error = history(rev, searchText, fileFilter, options, &output);
+   if (error)
+      return error;
+
+   std::vector<char> buffer;
+   xml_document<> doc;
+   error = parseXml(output, &buffer, &doc);
+   if (error)
+      return error;
+
+   int count = 0;
+
+   xml_node<>* pLog = doc.first_node("log");
+   if (pLog)
+   {
+      FOREACH_NODE(pLog, pEntry, "logentry")
+      {
+         count++;
+      }
+   }
+
+   json::Object result;
+   result["count"] = count;
+   pResponse->setResult(result);
+
+   return Success();
+}
+
+Error svnHistory(const json::JsonRpcRequest& request,
+                 json::JsonRpcResponse* pResponse)
+{
+   using namespace boost::posix_time;
+   using namespace rapidxml;
+
+   int rev;
+   json::Value fileFilterJson;
+   std::string searchText;
+   int skip, maxentries;
+   Error error = json::readParams(request.params,
+                                  &rev,
+                                  &fileFilterJson,
+                                  &skip,
+                                  &maxentries,
+                                  &searchText);
+   if (error)
+      return error;
+
+   int limit = skip + maxentries;
+   ShellArgs options;
+   options << "--limit" << boost::lexical_cast<std::string>(limit);
+
+   FilePath fileFilter = fileFilterPath(fileFilterJson);
+   std::string output;
+   error = history(rev, searchText, fileFilter, options, &output);
+   if (error)
+      return error;
+
+   std::vector<char> buffer;
+   xml_document<> doc;
+   error = parseXml(output, &buffer, &doc);
+   if (error)
+      return error;
+   xml_node<>* pLog = doc.first_node("log");
+
+   const std::string NAME_REVISION = "revision";
+   const std::string NAME_AUTHOR = "author";
+   const std::string NAME_MSG = "msg";
+   const std::string NAME_DATE = "date";
+   const ptime epoch(boost::gregorian::date(1970,1,1));
+
+   json::Array ids;
+   json::Array authors;
+   json::Array subjects;
+   json::Array dates;
+
+   int count = 0;
+   FOREACH_NODE(pLog, pEntry, "logentry")
+   {
+      if (count > skip + maxentries)
+         break;
+      if (count++ < skip)
+         continue;
+
+      ids.push_back(attr_value(pEntry, NAME_REVISION));
+      authors.push_back(string_utils::filterControlChars(node_value(pEntry, NAME_AUTHOR)));
+      subjects.push_back(string_utils::filterControlChars(node_value(pEntry, NAME_MSG)));
+
+      ptime date = boost::date_time::parse_delimited_time<ptime>(
+            node_value(pEntry, NAME_DATE), 'T');
+      time_duration::sec_type t = (date - epoch).total_seconds();
+      dates.push_back(t);
+   }
+
+   json::Object result;
+   result["id"] = ids;
+   result["author"] = authors;
+   result["subject"] = subjects;
+   result["date"] = dates;
+
+   pResponse->setResult(result);
+
+   return Success();
+}
+
+Error svnShow(const json::JsonRpcRequest& request,
+              json::JsonRpcResponse* pResponse)
+{
+   // TODO: Implement
+
+   pResponse->setResult("");
+   return Success();
+}
+
+Error svnShowFile(const json::JsonRpcRequest& request,
+                  json::JsonRpcResponse* pResponse)
+{
+   // TODO: Implement
+
+   pResponse->setResult("");
+   return Success();
+}
+
 Error checkout(const std::string& url,
                const std::string dirName,
                const core::FilePath& parentPath,
@@ -927,6 +1121,10 @@ Error initialize()
       (bind(registerRpcMethod, "svn_commit", svnCommit))
       (bind(registerRpcMethod, "svn_diff_file", svnDiffFile))
       (bind(registerRpcMethod, "svn_apply_patch", svnApplyPatch))
+      (bind(registerRpcMethod, "svn_history_count", svnHistoryCount))
+      (bind(registerRpcMethod, "svn_history", svnHistory))
+      (bind(registerRpcMethod, "svn_show", svnShow))
+      (bind(registerRpcMethod, "svn_show_file", svnShowFile))
       ;
    Error error = initBlock.execute();
    if (error)

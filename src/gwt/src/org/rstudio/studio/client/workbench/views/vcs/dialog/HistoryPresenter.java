@@ -37,9 +37,9 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.UnifiedParser;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
@@ -48,7 +48,8 @@ import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsHistor
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ViewFileRevisionEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ViewFileRevisionHandler;
-import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
+import org.rstudio.studio.client.workbench.views.vcs.git.dialog.GitHistoryStrategy;
+import org.rstudio.studio.client.workbench.views.vcs.svn.dialog.SVNHistoryStrategy;
 
 public class HistoryPresenter
 {
@@ -77,6 +78,8 @@ public class HistoryPresenter
       void hideSizeWarning();
 
       void onShow();
+
+      void setShowBranch(boolean showBranch);
    }
 
    public interface CommitListDisplay
@@ -99,26 +102,39 @@ public class HistoryPresenter
    }
 
    @Inject
-   public HistoryPresenter(GitServerOperations server,
-                           final GlobalDisplay globalDisplay,
+   public HistoryPresenter(final GlobalDisplay globalDisplay,
                            final Provider<ViewFilePanel> pViewFilePanel,
                            final Display view,
-                           final HistoryAsyncDataProvider provider,
-                           final GitState vcsState)
+                           final Session session,
+                           final GitHistoryStrategy gitStrategy,
+                           final SVNHistoryStrategy svnStrategy)
    {
-      server_ = server;
       view_ = view;
-      provider_ = provider;
-   
-      view_.addBranchChangedHandler(new ValueChangeHandler<String>() {
-         @Override
-         public void onValueChange(ValueChangeEvent<String> event)
-         {
-            provider.setRev(event.getValue());
-            refreshHistory();
-            view_.setPageStart(0);
-         }
-      });
+
+      String vcsName = session.getSessionInfo().getVcsName();
+      if (vcsName.equalsIgnoreCase("git"))
+         strategy_ = gitStrategy;
+      else if (vcsName.equalsIgnoreCase("svn"))
+         strategy_ = svnStrategy;
+      else
+         throw new IllegalStateException("Unknown vcs name: " + vcsName);
+
+      if (strategy_.isBranchingSupported())
+      {
+         view_.addBranchChangedHandler(new ValueChangeHandler<String>() {
+            @Override
+            public void onValueChange(ValueChangeEvent<String> event)
+            {
+               strategy_.setRev(event.getValue());
+               refreshHistory();
+               view_.setPageStart(0);
+            }
+         });
+      }
+      else
+      {
+         view_.setShowBranch(false);
+      }
       
       view_.getCommitList().addSelectionChangeHandler(new SelectionChangeEvent.Handler()
       {
@@ -148,7 +164,7 @@ public class HistoryPresenter
          }
       });
 
-      provider_.setSearchText(view_.getSearchTextBox());
+      strategy_.setSearchText(view_.getSearchTextBox());
       view_.getSearchTextBox().addValueChangeHandler(new ValueChangeHandler<String>()
       {
          @Override
@@ -158,7 +174,7 @@ public class HistoryPresenter
          }
       });
       
-      provider_.setFileFilter(view_.getFileFilter());
+      strategy_.setFileFilter(view_.getFileFilter());
       view_.getFileFilter().addValueChangeHandler(new ValueChangeHandler<FileSystemItem>() {
 
          @Override
@@ -181,43 +197,45 @@ public class HistoryPresenter
                                             500,
                                             "Reading file...").getIndicator();
             
-            server_.gitShowFile(
-              event.getRevision(), 
-              event.getFilename(), 
-              new ServerRequestCallback<String>() {
+            strategy_.showFile(
+                  event.getRevision(),
+                  event.getFilename(),
+                  new ServerRequestCallback<String>()
+                  {
 
-               @Override
-               public void onResponseReceived(String contents)
-               {
-                  indicator.onCompleted();
-                  
-                  ViewFilePanel viewFilePanel = pViewFilePanel.get();
-                  viewFilePanel.addShowVcsHistoryHandler(
-                     new ShowVcsHistoryEvent.Handler() {
-                        @Override
-                        public void onShowVcsHistory(
-                                          ShowVcsHistoryEvent event)
-                        {
-                            view_.getFileFilter().setValue(
-                                        event.getFileFilter()); 
-                              
-                        }
+                     @Override
+                     public void onResponseReceived(String contents)
+                     {
+                        indicator.onCompleted();
 
-                     });
-                  
-                  viewFilePanel.showFile(
-                        FileSystemItem.createFile(event.getFilename()),
-                        event.getRevision(), 
-                        contents);
-               }
-               
-               @Override
-               public void onError(ServerError error)
-               {
-                  indicator.onError(error.getUserMessage());
-               }
-            
-            });            
+                        ViewFilePanel viewFilePanel = pViewFilePanel.get();
+                        viewFilePanel.addShowVcsHistoryHandler(
+                              new ShowVcsHistoryEvent.Handler()
+                              {
+                                 @Override
+                                 public void onShowVcsHistory(
+                                       ShowVcsHistoryEvent event)
+                                 {
+                                    view_.getFileFilter().setValue(
+                                          event.getFileFilter());
+
+                                 }
+
+                              });
+
+                        viewFilePanel.showFile(
+                              FileSystemItem.createFile(event.getFilename()),
+                              event.getRevision(),
+                              contents);
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        indicator.onError(error.getUserMessage());
+                     }
+
+                  });
          }
          
       });
@@ -227,7 +245,7 @@ public class HistoryPresenter
          @Override
          protected HandlerRegistration doRegister()
          {
-            return vcsState.addVcsRefreshHandler(new VcsRefreshHandler()
+            return strategy_.addVcsRefreshHandler(new VcsRefreshHandler()
             {
                @Override
                public void onVcsRefresh(VcsRefreshEvent event)
@@ -238,7 +256,7 @@ public class HistoryPresenter
                         refreshHistory();
                   }
                }
-            }, false);
+            });
          }
       };
    }
@@ -267,7 +285,7 @@ public class HistoryPresenter
 
       final Token token = invalidation_.getInvalidationToken();
 
-      server_.gitShow(
+      strategy_.showCommit(
             commitInfo.getId(),
             noSizeWarning,
             new SimpleRequestCallback<String>()
@@ -301,8 +319,8 @@ public class HistoryPresenter
 
    private void refreshHistory()
    {
-      provider_.refreshCount();
-      provider_.onRangeChanged(view_.getDataDisplay());
+      strategy_.refreshCount();
+      strategy_.onRangeChanged(view_.getDataDisplay());
    }
 
    public HandlerRegistration addSwitchViewHandler(
@@ -335,8 +353,8 @@ public class HistoryPresenter
       if (!initialized_)
       {
          initialized_ = true;
-         provider_.addDataDisplay(view_.getDataDisplay());
-         provider_.refreshCount();
+         strategy_.addDataDisplay(view_.getDataDisplay());
+         strategy_.refreshCount();
       }
       view_.onShow();
    }
@@ -350,9 +368,8 @@ public class HistoryPresenter
       }
    };
 
-   private final GitServerOperations server_;
    private final Display view_;
-   private final HistoryAsyncDataProvider provider_;
+   private final HistoryStrategy strategy_;
    private final Invalidation invalidation_ = new Invalidation();
    private boolean initialized_;
    private String commitShowing_;
