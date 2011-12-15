@@ -35,10 +35,10 @@ public class ReviewPresenterImpl implements ReviewPresenter
 
       if (vcsName.equalsIgnoreCase("git"))
          pres_ = pGitReviewPresenter.get();
-      else if (vcsName.equalsIgnoreCase("subversion"))
+      else if (vcsName.equalsIgnoreCase("svn"))
          pres_ = pSvnReviewPresenter.get();
       else
-         throw new IllegalStateException("Unknown vcs name");
+         throw new IllegalStateException("Unknown vcs name: " + vcsName);
    }
 
    @Override
