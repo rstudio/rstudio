@@ -17,10 +17,17 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.util.DiskCacheToken;
+import com.google.gwt.dev.util.Util;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -29,13 +36,13 @@ import java.util.List;
 public class CachedCompilationUnit extends CompilationUnit {
   private final DiskCacheToken astToken;
   private final long astVersion;
-  private final Collection<CompiledClass> compiledClasses;
+  private transient Collection<CompiledClass> compiledClasses;
   private final ContentId contentId;
   private final Dependencies dependencies;
   private final boolean isError;
   private final boolean isGenerated;
   private final boolean isSuperSource;
-  private final List<JsniMethod> jsniMethods;
+  private transient List<JsniMethod> jsniMethods;
   private final long lastModified;
   private final MethodArgNamesLookup methodArgNamesLookup;
   private final CategorizedProblem[] problems;
@@ -57,6 +64,7 @@ public class CachedCompilationUnit extends CompilationUnit {
     this.contentId = unit.getContentId();
     this.dependencies = unit.getDependencies();
     this.resourcePath = unit.getResourcePath();
+    this.resourceLocation = Util.stripJarPathPrefix(resourceLocation);
     this.jsniMethods = unit.getJsniMethods();
     this.methodArgNamesLookup = unit.getMethodArgs();
     this.typeName = unit.getTypeName();
@@ -69,7 +77,6 @@ public class CachedCompilationUnit extends CompilationUnit {
 
     // Override these fields
     this.lastModified = lastModified;
-    this.resourceLocation = resourceLocation;
   }
 
   /**
@@ -88,8 +95,8 @@ public class CachedCompilationUnit extends CompilationUnit {
     this.compiledClasses = CompiledClass.copyForUnit(unit.getCompiledClasses(), this);
     this.contentId = unit.getContentId();
     this.dependencies = unit.getDependencies();
-    this.resourceLocation = unit.getResourceLocation();
     this.resourcePath = unit.getResourcePath();
+    this.resourceLocation = Util.stripJarPathPrefix(unit.getResourceLocation());
     this.jsniMethods = unit.getJsniMethods();
     this.lastModified = unit.getLastModified();
     this.methodArgNamesLookup = unit.getMethodArgs();
@@ -189,5 +196,40 @@ public class CachedCompilationUnit extends CompilationUnit {
 
   long getTypesSerializedVersion() {
     return astVersion;
+  }
+
+  @SuppressWarnings("unchecked")
+  private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+    ois.defaultReadObject();
+    this.compiledClasses = (Collection<CompiledClass>) ois.readObject();
+    this.jsniMethods = (List<JsniMethod>) ois.readObject();
+  }
+
+  private <T> Collection<T> sort(Collection<T> collection, Comparator<T> comparator) {
+    if (collection == null) {
+      return null;
+    }
+
+    // copy because the source may be unmodifiable or singleton
+    ArrayList<T> copy = new ArrayList<T>(collection);
+
+    Collections.sort(copy, comparator);
+    return copy;
+  }
+  
+  private void writeObject(ObjectOutputStream oos) throws IOException {
+    oos.defaultWriteObject();
+    oos.writeObject(sort(this.compiledClasses, new Comparator<CompiledClass>() {
+      @Override
+      public int compare(CompiledClass o1, CompiledClass o2) {
+        return o1.getSourceName().compareTo(o2.getSourceName());
+      }
+    }));
+    oos.writeObject(sort(this.jsniMethods, new Comparator<JsniMethod>() {
+      @Override
+      public int compare(JsniMethod o1, JsniMethod o2) {
+         return o1.name().compareTo(o2.name());
+      }
+    }));
   }
 }

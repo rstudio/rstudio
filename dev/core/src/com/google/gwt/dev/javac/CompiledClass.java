@@ -68,7 +68,6 @@ public final class CompiledClass implements Serializable {
       }
       copyCc.enclosingClass = newRef;
     }
-
     return Collections.unmodifiableCollection(copy);
   }
 
