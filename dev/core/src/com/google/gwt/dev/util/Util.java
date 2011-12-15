@@ -910,21 +910,6 @@ public final class Util {
   }
 
   /**
-   * Remove leading file:jar:...!/ prefix from source paths for source located in jars.
-   * @param absolutePath an absolute JAR file URL path
-   * @return the location of the file within the JAR
-   */
-  public static String stripJarPathPrefix(String absolutePath) {
-    if (absolutePath != null) {
-      int bang = absolutePath.lastIndexOf('!');
-      if (bang != -1) {
-        return absolutePath.substring(bang + 2);
-      }
-    }
-    return absolutePath;
-  }
-
-  /**
    * Get a large byte buffer local to this thread. Currently this is set to a
    * 16k buffer, which is small enough to fit into the L2 cache on modern
    * processors. The contents of the returned buffer are undefined. Calling
@@ -1495,4 +1480,5 @@ public final class Util {
    */
   private Util() {
   }
+
 }

@@ -30,7 +30,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,13 +68,7 @@ public final class CompiledClass implements Serializable {
       }
       copyCc.enclosingClass = newRef;
     }
-    // sort classes to maintain stability in compilation unit archives
-    Collections.sort(copy, new Comparator<CompiledClass>() {
-      @Override
-      public int compare(CompiledClass o1, CompiledClass o2) {
-        return o1.getSourceName().compareTo(o2.getSourceName());
-      }
-    });
+
     return Collections.unmodifiableCollection(copy);
   }
 

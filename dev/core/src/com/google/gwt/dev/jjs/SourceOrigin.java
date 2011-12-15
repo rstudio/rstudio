@@ -18,7 +18,6 @@ package com.google.gwt.dev.jjs;
 import com.google.gwt.dev.jjs.Correlation.Axis;
 import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
 import com.google.gwt.dev.util.StringInterner;
-import com.google.gwt.dev.util.Util;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -118,7 +117,7 @@ public class SourceOrigin implements SourceInfo {
   private final int startLine;
 
   private SourceOrigin(String location, int startLine) {
-    this.fileName = StringInterner.get().intern(Util.stripJarPathPrefix(location));
+    this.fileName = StringInterner.get().intern(location);
     this.startLine = startLine;
   }
 

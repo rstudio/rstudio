@@ -182,7 +182,7 @@ public class StandardGeneratorContext implements GeneratorContext {
 
     @Override
     public String optionalFileLocation() {
-      return file.exists() ? Util.stripJarPathPrefix(file.getAbsolutePath()) : null;
+      return file.exists() ? file.getAbsolutePath() : null;
     }
   }
 

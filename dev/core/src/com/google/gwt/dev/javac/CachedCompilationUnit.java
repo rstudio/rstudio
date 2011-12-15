@@ -17,14 +17,10 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.util.DiskCacheToken;
-import com.google.gwt.dev.util.Util;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -61,8 +57,7 @@ public class CachedCompilationUnit extends CompilationUnit {
     this.contentId = unit.getContentId();
     this.dependencies = unit.getDependencies();
     this.resourcePath = unit.getResourcePath();
-    this.resourceLocation = Util.stripJarPathPrefix(resourceLocation);
-    this.jsniMethods = sortJsniMethods(unit.getJsniMethods());
+    this.jsniMethods = unit.getJsniMethods();
     this.methodArgNamesLookup = unit.getMethodArgs();
     this.typeName = unit.getTypeName();
     this.isError = unit.isError();
@@ -74,6 +69,7 @@ public class CachedCompilationUnit extends CompilationUnit {
 
     // Override these fields
     this.lastModified = lastModified;
+    this.resourceLocation = resourceLocation;
   }
 
   /**
@@ -92,9 +88,9 @@ public class CachedCompilationUnit extends CompilationUnit {
     this.compiledClasses = CompiledClass.copyForUnit(unit.getCompiledClasses(), this);
     this.contentId = unit.getContentId();
     this.dependencies = unit.getDependencies();
+    this.resourceLocation = unit.getResourceLocation();
     this.resourcePath = unit.getResourcePath();
-    this.resourceLocation = Util.stripJarPathPrefix(unit.getResourceLocation());
-    this.jsniMethods = sortJsniMethods(unit.getJsniMethods());
+    this.jsniMethods = unit.getJsniMethods();
     this.lastModified = unit.getLastModified();
     this.methodArgNamesLookup = unit.getMethodArgs();
     this.typeName = unit.getTypeName();
@@ -193,22 +189,5 @@ public class CachedCompilationUnit extends CompilationUnit {
 
   long getTypesSerializedVersion() {
     return astVersion;
-  }
-
-  private List<JsniMethod> sortJsniMethods(List<JsniMethod> jsniMethods) {
-    if (jsniMethods == null) {
-      return null;
-    }
-    
-    // copy because the source may be unmodifiable or singleton
-    ArrayList<JsniMethod> copy = new ArrayList<JsniMethod>(jsniMethods);
-
-    Collections.sort(copy, new Comparator<JsniMethod>() {
-      @Override
-      public int compare(JsniMethod o1, JsniMethod o2) {
-        return o1.name().compareTo(o2.name());
-      }
-    });
-    return copy;
   }
 }
