@@ -208,7 +208,6 @@ std::vector<std::string> globalArgs(
       bool cacheCredentials=false)
 {
    std::vector<std::string> args;
-   args.push_back("--non-interactive");
    //args.push_back("--trust-server-cert");
 
    if (pUsername)

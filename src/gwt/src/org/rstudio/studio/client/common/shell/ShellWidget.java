@@ -197,22 +197,29 @@ public class ShellWidget extends Composite implements ShellDisplay,
    
    public void consoleWriteError(String error)
    {
+      clearPendingInput();
       output(error, styles_.error(), false);
       scrollToBottomAsync();
    }
 
    public void consoleWriteOutput(String output)
    {
+      clearPendingInput();
       output(output, styles_.output(), false);
       scrollToBottomAsync();
    }
 
    public void consoleWriteInput(String input)
    {
-      pendingInput_.setText("");
-      pendingInput_.setVisible(false);
+      clearPendingInput();
       output(input, styles_.command() + KEYWORD_CLASS_NAME, false);
       scrollToBottomAsync();
+   }
+
+   private void clearPendingInput()
+   {
+      pendingInput_.setText("");
+      pendingInput_.setVisible(false);
    }
 
    public void consoleWritePrompt(String prompt)
@@ -534,12 +541,15 @@ public class ShellWidget extends Composite implements ShellDisplay,
       pendingPrompt.setInnerText(promptText);
       pendingPrompt.setClassName(styles_.prompt() + " " + KEYWORD_CLASS_NAME);
 
-      SpanElement pendingInput = Document.get().createSpanElement();
-      pendingInput.setInnerText(StringUtil.notNull(commandText).split("\n")[0] + "\n");
-      pendingInput.setClassName(styles_.command() + " " + KEYWORD_CLASS_NAME);
-      pendingInput_.getElement().appendChild(pendingPrompt);
-      pendingInput_.getElement().appendChild(pendingInput);
-      pendingInput_.setVisible(true);
+      if (!input_.isPasswordMode())
+      {
+         SpanElement pendingInput = Document.get().createSpanElement();
+         pendingInput.setInnerText(StringUtil.notNull(commandText).split("\n")[0] + "\n");
+         pendingInput.setClassName(styles_.command() + " " + KEYWORD_CLASS_NAME);
+         pendingInput_.getElement().appendChild(pendingPrompt);
+         pendingInput_.getElement().appendChild(pendingInput);
+         pendingInput_.setVisible(true);
+      }
 
       ensureInputVisible();
 

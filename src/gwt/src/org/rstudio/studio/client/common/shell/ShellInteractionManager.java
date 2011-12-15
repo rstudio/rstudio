@@ -1,6 +1,7 @@
 package org.rstudio.studio.client.common.shell;
 
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.studio.client.application.Desktop;
@@ -82,7 +83,7 @@ public class ShellInteractionManager implements ShellOutputWriter
       final boolean echoInput = showInputForPrompt(promptText);
       if (echoInput)
          display_.consoleWriteInput(input);
-      else
+      else if (!Desktop.isDesktop() || !BrowseCap.isWindows())
          display_.consoleWriteInput("\n");
       
       // encrypt the input and return it

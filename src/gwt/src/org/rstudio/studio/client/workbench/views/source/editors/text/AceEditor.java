@@ -1144,8 +1144,14 @@ public class AceEditor implements DocDisplay,
       getSession().setNewLineMode(mode.getType());
    }
 
+   public boolean isPasswordMode()
+   {
+      return passwordMode_;
+   }
+
    public void setPasswordMode(boolean passwordMode)
    {
+      passwordMode_ = passwordMode;
       widget_.getEditor().getRenderer().setPasswordMode(passwordMode);
    }
 
@@ -1154,6 +1160,7 @@ public class AceEditor implements DocDisplay,
    private CompletionManager completionManager_;
    private CodeToolsServerOperations server_;
    private TextFileType fileType_;
+   private boolean passwordMode_;
 
    private static final ExternalJavaScriptLoader aceLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());
