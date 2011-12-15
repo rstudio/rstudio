@@ -15,6 +15,7 @@
 
 #include <queue>
 
+#include <boost/regex.hpp>
 #include <boost/signals.hpp>
 #include <boost/circular_buffer.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -73,6 +74,11 @@ private:
 public:
    struct Input
    {
+      explicit Input(const std::string& text, bool echoInput = true)
+         : interrupt(false), text(text), echoInput(echoInput)
+      {
+      }
+
       Input() : interrupt(false), echoInput(false) {}
 
       bool empty() { return !interrupt && text.empty(); }
@@ -175,7 +181,14 @@ private:
 class PasswordManager : boost::noncopyable
 {
 public:
-   PasswordManager() {}
+   typedef boost::function<bool(const std::string&, std::string*, bool*)>
+                                                               PromptHandler;
+
+   explicit PasswordManager(const boost::regex& promptPattern,
+                            const PromptHandler& promptHandler)
+      : promptPattern_(promptPattern), promptHandler_(promptHandler)
+   {
+   }
    virtual ~PasswordManager() {}
 
    // COPYING: boost::noncopyable
@@ -190,7 +203,6 @@ private:
 
    void onExit(const std::string& cpHandle, int exitCode);
 
-private:
    struct CachedPassword
    {
       std::string cpHandle;
@@ -198,6 +210,15 @@ private:
       std::string password;
    };
 
+   static bool hasPrompt(const CachedPassword& cachedPassword,
+                         const std::string& prompt);
+
+   static bool hasHandle(const CachedPassword& cachedPassword,
+                         const std::string& cpHandle);
+
+private:
+   boost::regex promptPattern_;
+   PromptHandler promptHandler_;
    std::vector<CachedPassword> passwords_;
 };
 

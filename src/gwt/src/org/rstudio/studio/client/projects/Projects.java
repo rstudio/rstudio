@@ -31,6 +31,8 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
+import org.rstudio.studio.client.common.vcs.VCSConstants;
+import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
 import org.rstudio.studio.client.projects.events.OpenProjectFileEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectFileHandler;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
@@ -257,10 +259,15 @@ public class Projects implements OpenProjectFileHandler,
             @Override
             public void onExecute(final Command continuation)
             {
-               indicator.onProgress("Cloning git repoistory...");
+               VcsCloneOptions cloneOptions = newProject.getVcsCloneOptions();
+               
+               if (cloneOptions.getVcsName().equals((VCSConstants.GIT_ID)))
+                  indicator.onProgress("Cloning Git repoistory...");
+               else
+                  indicator.onProgress("Checking out SVN repository...");
                
                gitServer_.vcsClone(
-                     newProject.getVcsCloneOptions(),
+                     cloneOptions,
                      new ServerRequestCallback<ConsoleProcess>() {
                         @Override
                         public void onResponseReceived(ConsoleProcess proc)

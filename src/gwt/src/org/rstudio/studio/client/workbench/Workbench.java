@@ -33,6 +33,7 @@ import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.vcs.AskPassManager;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
@@ -69,7 +70,8 @@ public class Workbench implements BusyHandler,
                     RemoteFileSystemContext fsContext,
                     FileDialogs fileDialogs,
                     ConsoleDispatcher consoleDispatcher,
-                    ChooseFile chooseFile)  // required to force gin to create
+                    ChooseFile chooseFile,   // require to force gin to create
+                    AskPassManager askPass)  // required to force gin to create
    {
       view_ = view;
       workbenchContext_ = workbenchContext;

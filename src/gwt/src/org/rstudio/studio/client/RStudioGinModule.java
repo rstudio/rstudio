@@ -32,8 +32,10 @@ import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.vcs.AskPassManager;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
+import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.server.Server;
@@ -125,6 +127,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Projects.class).in(Singleton.class);
       bind(Satellite.class).in(Singleton.class);
       bind(SatelliteManager.class).in(Singleton.class);
+      bind(AskPassManager.class).in(Singleton.class);
       bind(WorkbenchContext.class).asEagerSingleton();
       bind(WorkbenchListManager.class).asEagerSingleton();
       bind(ApplicationQuit.class).asEagerSingleton();
@@ -199,6 +202,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(HelpServerOperations.class).to(RemoteServer.class) ;
       bind(EditServerOperations.class).to(RemoteServer.class) ;
       bind(MirrorsServerOperations.class).to(RemoteServer.class);
+      bind(VCSServerOperations.class).to(RemoteServer.class);
       bind(GitServerOperations.class).to(RemoteServer.class);
       bind(SVNServerOperations.class).to(RemoteServer.class);
       bind(PrefsServerOperations.class).to(RemoteServer.class);

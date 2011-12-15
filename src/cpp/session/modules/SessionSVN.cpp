@@ -36,8 +36,15 @@
 
 #include <r/RExec.hpp>
 
+#include "SessionVCS.hpp"
 #include "vcs/SessionVCSUtils.hpp"
 #include "SessionConsoleProcess.hpp"
+
+// TODO: improve bad password diagnostic message (now is ssh conn error)
+
+// TODO: Cancelling the pasword dialog should exit the process
+
+// TODO: What about secure in-memory storage
 
 using namespace core;
 using namespace core::shell_utils;
@@ -53,7 +60,7 @@ const char * const kVcsId = "SVN";
 namespace {
 
 // password manager for caching svn+ssh credentials
-PasswordManager s_passwordManager;
+boost::scoped_ptr<PasswordManager> s_pPasswordManager;
 
 // svn exe which we detect at startup. note that if the svn exe
 // is already in the path then this will be empty
@@ -263,8 +270,6 @@ core::Error createConsoleProc(const ShellArgs& args,
 #endif
 
    (*ppCP)->onExit().connect(boost::bind(&enqueueRefreshEvent));
-
-   s_passwordManager.attach(*ppCP);
 
    return Success();
 }
@@ -696,6 +701,14 @@ Error svnStatus(const json::JsonRpcRequest& request,
    return Success();
 }
 
+void maybeAttachPasswordManager(boost::shared_ptr<ConsoleProcess> pCP)
+{
+   std::string repoURL = repositoryRoot(s_workingDir);
+   if (boost::algorithm::starts_with(repoURL, "svn+ssh"))
+      s_pPasswordManager->attach(pCP);
+}
+
+
 Error svnUpdate(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
@@ -707,8 +720,8 @@ Error svnUpdate(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // TODO: Authentication if necessary
-   // TODO: Set askpass handle?? Is that even necessary with SVN?
+
+   maybeAttachPasswordManager(pCP);
 
    pResponse->setResult(pCP->toJson());
 
@@ -754,8 +767,7 @@ Error svnCommit(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // TODO: Authentication if necessary
-   // TODO: Set askpass handle?? Is that even necessary with SVN?
+   maybeAttachPasswordManager(pCP);
 
    pResponse->setResult(pCP->toJson());
 
@@ -856,15 +868,47 @@ Error checkout(const std::string& url,
                const core::FilePath& parentPath,
                boost::shared_ptr<console_process::ConsoleProcess>* ppCP)
 {
-   return createConsoleProc(ShellArgs() << "checkout" << url << dirName,
-                            parentPath,
-                            "SVN Checkout",
-                            true,
-                            ppCP);
+   Error error = createConsoleProc(ShellArgs() << "checkout" << url << dirName,
+                                   parentPath,
+                                   "SVN Checkout",
+                                   true,
+                                   ppCP);
+
+   if (error)
+      return error;
+
+   // attach the password manager if this is an svn+ssh url
+   if (boost::algorithm::starts_with(url, "svn+ssh"))
+      s_pPasswordManager->attach(*ppCP);
+
+   return Success();
+}
+
+bool promptForPassword(const std::string& prompt,
+                       std::string* pPassword,
+                       bool* pRemember)
+{
+   std::string rememberPrompt = "Remember password for this session";
+   source_control::PasswordInput input;
+   if (source_control::askForPassword(prompt, rememberPrompt, &input))
+   {
+      *pPassword = input.password;
+      *pRemember = input.remember;
+      return true;
+   }
+   else
+   {
+      return false;
+   }
 }
 
 Error initialize()
 {
+   // initialize password manager
+   s_pPasswordManager.reset(new PasswordManager(
+                               boost::regex("^(.+)password: $"),
+                               boost::bind(promptForPassword, _1, _2, _3)));
+
    // install rpc methods
    using boost::bind;
    using namespace module_context;

@@ -13,6 +13,7 @@
 #include "SessionConsoleProcess.hpp"
 
 #include <boost/regex.hpp>
+#include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/json/JsonRpc.hpp>
@@ -556,18 +557,73 @@ ConsoleProcess::Input PasswordManager::handlePrompt(
                                           const std::string& cpHandle,
                                           const std::string& prompt)
 {
+   // is this a password prompt?
+   boost::smatch match;
+   if (boost::regex_match(prompt, match, promptPattern_))
+   {
+      // see if it matches any of our existing cached passwords
+      std::vector<CachedPassword>::const_iterator it =
+                  std::find_if(passwords_.begin(),
+                               passwords_.end(),
+                               boost::bind(&hasPrompt, _1, prompt));
+      if (it != passwords_.end())
+         return ConsoleProcess::Input(it->password + "\n", false);
 
+      // prompt for password
+      std::string password;
+      bool remember;
+      if (promptHandler_(prompt, &password, &remember))
+      {
+         if (remember)
+         {
+            CachedPassword cachedPassword;
+            cachedPassword.cpHandle = cpHandle;
+            cachedPassword.prompt = prompt;
+            cachedPassword.password = password;
+            passwords_.push_back(cachedPassword);
+         }
 
-   return ConsoleProcess::Input();
+         return ConsoleProcess::Input(password + "\n", false);
+      }
+      else
+      {
+         return ConsoleProcess::Input("\n", false);
+      }
+
+   }
+   // not a password prompt so ignore
+   else
+   {
+      return ConsoleProcess::Input();
+   }
 }
 
 void PasswordManager::onExit(const std::string& cpHandle,
                              int exitCode)
 {
-
-
+   // if a process exits with an error then remove any cached
+   // passwords which originated from that process
+   if (exitCode != EXIT_SUCCESS)
+   {
+      passwords_.erase(std::remove_if(passwords_.begin(),
+                                      passwords_.end(),
+                                      boost::bind(&hasHandle, _1, cpHandle)),
+                       passwords_.end());
+   }
 }
 
+
+bool PasswordManager::hasPrompt(const CachedPassword& cachedPassword,
+                                const std::string& prompt)
+{
+   return cachedPassword.prompt == prompt;
+}
+
+bool PasswordManager::hasHandle(const CachedPassword& cachedPassword,
+                                const std::string& cpHandle)
+{
+   return cachedPassword.cpHandle == cpHandle;
+}
 
 core::json::Array processesAsJson()
 {

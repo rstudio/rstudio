@@ -16,6 +16,7 @@ package org.rstudio.studio.client.vcs;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
 import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.common.vcs.AskPassManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -34,7 +35,8 @@ public class VCSApplication
    public VCSApplication(VCSApplicationView view,
                          Satellite satellite,
                          Provider<AceThemes> pAceThemes,
-                         ApplicationUncaughtExceptionHandler uncaughtExHandler)
+                         ApplicationUncaughtExceptionHandler uncaughtExHandler,
+                         AskPassManager askPassManager) // force gin to create
    {
       view_ = view;
       satellite_ = satellite;
