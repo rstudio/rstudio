@@ -18,6 +18,8 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.IFrameElement;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiConstructor;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
@@ -33,6 +35,12 @@ import com.google.gwt.user.client.Element;
  * </ul>
  */
 public class NamedFrame extends Frame {
+  interface IFrameTemplate extends SafeHtmlTemplates {
+    static final IFrameTemplate INSTANCE = GWT.create(IFrameTemplate.class);
+
+    @Template("<iframe src='{0}' name='{1}'>")
+    SafeHtml get(String src, String name);
+  }
 
   // Used inside JSNI, so please don't delete this field just because
   // your compiler or IDE says it's unused.
@@ -56,7 +64,6 @@ public class NamedFrame extends Frame {
    * @throws IllegalArgumentException if the supplied name is not allowed 
    */
   private static IFrameElement createIFrame(String src, String name) {
-    // TODO(pdr): add SafeHtml support here to prevent XSS
     if (name == null || !isValidName(name.trim())) {
       throw new IllegalArgumentException(
           "expecting one or more non-whitespace chars with no '<', '>', or '&'");
@@ -65,7 +72,7 @@ public class NamedFrame extends Frame {
     // Use innerHTML to implicitly create the <iframe>. This is necessary
     // because most browsers will not respect a dynamically-set iframe name.
     Element div = DOM.createDiv();
-    div.setInnerHTML("<iframe src=\"" + src + "\" name='" + name + "'>");
+    div.setInnerSafeHtml(IFrameTemplate.INSTANCE.get(src, name));
     return div.getFirstChild().cast();
   }
 

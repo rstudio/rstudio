@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
@@ -435,8 +436,11 @@ public final class VerticalSplitPanel extends SplitPanel {
      * The style name is placed on the table rather than splitElem to allow the
      * splitter to be styled without interfering with layout.
      */
-    DOM.setInnerHTML(splitDiv, "<div class='vsplitter' "
-        + "style='text-align:center;'>" + thumb.getHTML() + "</div>");
+    SafeHtmlBuilder sb = new SafeHtmlBuilder();
+    sb.appendHtmlConstant("<div class='vsplitter' style='text-align:center;'>");
+    sb.append(thumb.getSafeHtml());
+    sb.appendHtmlConstant("</div>");
+    splitDiv.setInnerSafeHtml(sb.toSafeHtml());
 
     addScrolling(topDiv);
     addScrolling(bottomDiv);

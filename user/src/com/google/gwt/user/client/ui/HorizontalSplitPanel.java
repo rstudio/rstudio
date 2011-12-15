@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
@@ -617,10 +618,11 @@ public final class HorizontalSplitPanel extends SplitPanel {
      * case. The usually CSS hacks (display: table-cell, vertical-align: middle)
      * don't work in an absolute positioned DIV.
      */
-    DOM.setInnerHTML(splitDiv,
-        "<table class='hsplitter' height='100%' cellpadding='0' "
-            + "cellspacing='0'><tr><td align='center' valign='middle'>"
-            + thumbImage.getHTML());
+    SafeHtmlBuilder sb = new SafeHtmlBuilder();
+    sb.appendHtmlConstant("<table class='hsplitter' height='100%' cellpadding='0' "
+        + "cellspacing='0'><tr><td align='center' valign='middle'>");
+    sb.append(thumbImage.getSafeHtml());
+    splitDiv.setInnerSafeHtml(sb.toSafeHtml());
 
     addScrolling(leftDiv);
     addScrolling(rightDiv);

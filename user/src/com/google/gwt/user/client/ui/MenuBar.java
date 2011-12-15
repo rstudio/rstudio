@@ -1007,7 +1007,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
       setItemColSpan(item, 1);
       Element td = DOM.createTD();
       DOM.setElementProperty(td, "vAlign", "middle");
-      DOM.setInnerHTML(td, subMenuIcon.getHTML());
+      td.setInnerSafeHtml(subMenuIcon.getSafeHtml());
       setStyleName(td, "subMenuIcon");
       DOM.appendChild(tr, td);
     }

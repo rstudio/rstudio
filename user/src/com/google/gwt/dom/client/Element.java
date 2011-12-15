@@ -16,6 +16,7 @@
 package com.google.gwt.dom.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.safehtml.shared.SafeHtml;
 
 /**
  * All HTML element interfaces derive from this class.
@@ -656,6 +657,13 @@ public class Element extends Node {
   public final native void setInnerHTML(String html) /*-{
      this.innerHTML = html || '';
    }-*/;
+
+  /**
+   * All of the markup and content within a given element.
+   */
+  public final void setInnerSafeHtml(SafeHtml html) {
+    setInnerHTML(html.asString());
+  }
 
   /**
    * The text between the start and end tags of the object.

@@ -22,6 +22,8 @@ import com.google.gwt.dom.client.FormElement;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
@@ -206,6 +208,14 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
      * @param event the event
      */
     void onSubmit(FormPanel.SubmitEvent event);
+  }
+
+  interface IFrameTemplate extends SafeHtmlTemplates {
+    static final IFrameTemplate INSTANCE = GWT.create(IFrameTemplate.class);
+
+    @Template("<iframe src=\"javascript:''\" name='{0}' "
+        + "style='position:absolute;width:0;height:0;border:0'>")
+    SafeHtml get(String name);
   }
 
   /**
@@ -602,8 +612,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
     // because setting an iframe's 'name' property dynamically doesn't work on
     // most browsers.
     Element dummy = Document.get().createDivElement();
-    dummy.setInnerHTML("<iframe src=\"javascript:''\" name='" + frameName
-        + "' style='position:absolute;width:0;height:0;border:0'>");
+    dummy.setInnerSafeHtml(IFrameTemplate.INSTANCE.get(frameName));
 
     synthesizedFrame = dummy.getFirstChildElement();
   }
