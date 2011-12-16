@@ -52,7 +52,7 @@
 
 #include "SessionConsoleProcess.hpp"
 
-#include "SessionVcs.hpp"
+#include "SessionVCS.hpp"
 
 #include "vcs/SessionVCSUtils.hpp"
 
