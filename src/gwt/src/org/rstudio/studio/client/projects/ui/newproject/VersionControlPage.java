@@ -12,8 +12,10 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.vcs.VCSHelpLink;
 
 import com.google.gwt.resources.client.ImageResource;
@@ -39,32 +41,49 @@ public abstract class VersionControlPage extends NewProjectWizardPage
    protected boolean acceptNavigation()
    {
       if (!vcsIsAvailable_)
-      {
+      {         
          NewProjectResources.Styles styles = 
                                  NewProjectResources.INSTANCE.styles();   
          
          VerticalPanel verticalPanel = new VerticalPanel();
          verticalPanel.addStyleName(styles.vcsNotInstalledWidget());
          
-         HTML msg = new HTML(
-            "<p>An installation of " + getTitle() + " was not detected " +
-            "on your system.</p>" +
-            "<p>To create projects from " + getTitle() + " " + 
-            "repositories you should install it " +
-            "and then restart RStudio. For more information on installing " +
-            getTitle() + " please see the link below.</p>");
-         msg.setWidth("100%");
-         
-         verticalPanel.add(msg);
-         
-         VCSHelpLink vcsHelpLink = new VCSHelpLink();
-         vcsHelpLink.setCaption("Using " + getTitle() + " with RStudio");
-         vcsHelpLink.addStyleName(styles.vcsHelpLink());
-         verticalPanel.add(vcsHelpLink);
-        
+         if (Desktop.isDesktop())
+         {
+            HTML msg = new HTML(
+               "<p>" + getTitle() + " was not detected " +
+               "on the system path.</p>" +
+               "<p>To create projects from " + getTitle() + " " + 
+               "repositories you should install " + getTitle() + " " +
+               "and then restart RStudio.</p>" +
+               "<p>Note that if " + getTitle() + " is installed " +
+               "and not on the path, then you can specify its location using " +
+               "the " + (BrowseCap.isMacintosh() ? "Preferences" : "Options") +
+               " dialog.</p>");
+            msg.setWidth("100%");
+            
+            verticalPanel.add(msg);
+            
+            VCSHelpLink vcsHelpLink = new VCSHelpLink();
+            vcsHelpLink.setCaption("Using " + getTitle() + " with RStudio");
+            vcsHelpLink.addStyleName(styles.vcsHelpLink());
+            verticalPanel.add(vcsHelpLink);
+         }
+         else
+         {
+            HTML msg = new HTML(
+                  "<p>An installation of " + getTitle() + " was not detected " +
+                  "on this system.</p>" +
+                  "<p>To create projects from " + getTitle() + " " + 
+                  "repositories you should request that your server " +
+                  "administrator install the " + getTitle() + " package.</p>");
+               msg.setWidth("100%");
+               
+               verticalPanel.add(msg);
+         }
          
          MessageDialog dlg = new MessageDialog(MessageDialog.INFO,
-                                               getTitle() + " Not Installed",
+                                               getTitle() + " Not Found",
                                                verticalPanel);
          
          
