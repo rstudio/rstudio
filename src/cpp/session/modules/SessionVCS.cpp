@@ -11,7 +11,6 @@
  *
  */
 
-#define SUBVERSION
 #include "SessionVCS.hpp"
 
 #include <boost/foreach.hpp>
