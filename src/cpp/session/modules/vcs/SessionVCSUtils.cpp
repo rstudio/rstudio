@@ -12,6 +12,8 @@
  */
 #include "SessionVCSUtils.hpp"
 
+#include <boost/regex.hpp>
+
 #include <core/json/Json.hpp>
 #include <session/SessionModuleContext.hpp>
 
@@ -59,6 +61,25 @@ FilePath fileFilterPath(const json::Value& fileFilterJson)
    else
    {
       return FilePath();
+   }
+}
+
+void splitMessage(const std::string message,
+                  std::string* pSubject,
+                  std::string* pDescription)
+{
+   boost::smatch match;
+   if (!boost::regex_match(message,
+                           match,
+                           boost::regex("(.*?)(\r?\n)+(.*)")))
+   {
+      *pSubject = message;
+      *pDescription = std::string();
+   }
+   else
+   {
+      *pSubject = match[1];
+      *pDescription = match[3];
    }
 }
 

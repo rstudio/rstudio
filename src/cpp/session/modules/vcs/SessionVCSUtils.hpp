@@ -31,6 +31,10 @@ core::json::Object processResultToJson(
 
 core::FilePath fileFilterPath(const core::json::Value& fileFilterJson);
 
+void splitMessage(const std::string message,
+                  std::string* pSubject,
+                  std::string* pDescription);
+
 struct RefreshOnExit : public boost::noncopyable
 {
    ~RefreshOnExit()

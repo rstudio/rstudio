@@ -1002,6 +1002,7 @@ Error svnHistory(const json::JsonRpcRequest& request,
    json::Array ids;
    json::Array authors;
    json::Array subjects;
+   json::Array descriptions;
    json::Array dates;
 
    int count = 0;
@@ -1014,7 +1015,13 @@ Error svnHistory(const json::JsonRpcRequest& request,
 
       ids.push_back(attr_value(pEntry, NAME_REVISION));
       authors.push_back(string_utils::filterControlChars(node_value(pEntry, NAME_AUTHOR)));
-      subjects.push_back(string_utils::filterControlChars(node_value(pEntry, NAME_MSG)));
+
+      std::string message = string_utils::filterControlChars(node_value(pEntry, NAME_MSG));
+      std::string subject, desc;
+      splitMessage(message, &subject, &desc);
+
+      subjects.push_back(subject);
+      descriptions.push_back(desc);
 
       ptime date = boost::date_time::parse_delimited_time<ptime>(
             node_value(pEntry, NAME_DATE), 'T');
@@ -1026,6 +1033,7 @@ Error svnHistory(const json::JsonRpcRequest& request,
    result["id"] = ids;
    result["author"] = authors;
    result["subject"] = subjects;
+   result["description"] = descriptions;
    result["date"] = dates;
 
    pResponse->setResult(result);
