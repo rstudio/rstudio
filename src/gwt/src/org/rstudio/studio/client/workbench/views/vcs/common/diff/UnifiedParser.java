@@ -33,7 +33,7 @@ public class UnifiedParser
       String line;
       while (null != (line = nextLine()) && !line.startsWith("--- "))
       {
-         if (line.startsWith("diff "))
+         if (isNewFileLine(line))
             inDiff = true;
 
          if (inDiff)
@@ -54,7 +54,7 @@ public class UnifiedParser
    public DiffChunk nextChunk()
    {
       String nextLine = peekLine();
-      if (nextLine != null && nextLine.startsWith("diff "))
+      if (nextLine != null && isNewFileLine(nextLine))
          return null;
 
       String line;
@@ -168,6 +168,11 @@ public class UnifiedParser
          throw new DiffFormatException("Diff didn't match header ranges");
 
       return new DiffChunk(ranges, chunkHeaderInfo.extraInfo, lines, chunkDiffIndex);
+   }
+
+   private boolean isNewFileLine(String nextLine)
+   {
+      return nextLine.startsWith("diff ") || nextLine.startsWith("Index: ");
    }
 
    private boolean[] complement(boolean[] array)

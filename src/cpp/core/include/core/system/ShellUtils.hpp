@@ -60,6 +60,7 @@ public:
    }
 
    ShellCommand& operator<<(const std::string& arg);
+   ShellCommand& operator<<(int arg);
    ShellCommand& operator<<(const FilePath& path);
    ShellCommand& operator<<(const std::vector<std::string> args);
    ShellCommand& operator<<(const std::vector<FilePath> args);
@@ -82,6 +83,7 @@ class ShellArgs
 {
 public:
    ShellArgs& operator<<(const std::string& arg);
+   ShellArgs& operator<<(int arg);
    ShellArgs& operator<<(const FilePath& path);
    ShellArgs& operator<<(const std::vector<std::string> args);
    ShellArgs& operator<<(const std::vector<FilePath> args);

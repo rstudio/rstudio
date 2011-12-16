@@ -14,6 +14,7 @@
 #include <core/system/ShellUtils.hpp>
 
 #include <core/FilePath.hpp>
+#include <core/SafeConvert.hpp>
 
 namespace core {
 namespace shell_utils {
@@ -27,6 +28,13 @@ ShellCommand& ShellCommand::operator<<(const std::string& arg)
 {
    output_.push_back(' ');
    output_.append(escape(arg));
+   return *this;
+}
+
+ShellCommand& ShellCommand::operator<<(int arg)
+{
+   output_.push_back(' ');
+   output_.append(boost::lexical_cast<std::string>(arg));
    return *this;
 }
 
@@ -63,6 +71,12 @@ ShellCommand& ShellCommand::operator<<(const std::vector<FilePath> args)
 ShellArgs& ShellArgs::operator<<(const std::string& arg)
 {
    args_.push_back(arg);
+   return *this;
+}
+
+ShellArgs& ShellArgs::operator<<(int arg)
+{
+   args_.push_back(boost::lexical_cast<std::string>(arg));
    return *this;
 }
 

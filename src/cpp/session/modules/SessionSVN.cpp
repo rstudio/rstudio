@@ -1036,9 +1036,21 @@ Error svnHistory(const json::JsonRpcRequest& request,
 Error svnShow(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
-   // TODO: Implement
+   int revision;
+   bool noSizeWarning;
+   Error error = json::readParams(request.params, &revision, &noSizeWarning);
+   if (error)
+      return error;
 
-   pResponse->setResult("");
+   ShellArgs args;
+   args << "diff" << "-c" << revision;
+
+   std::string output;
+   error = runSvn(args, &output);
+   if (error)
+      return error;
+
+   pResponse->setResult(output);
    return Success();
 }
 
