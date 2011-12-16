@@ -125,6 +125,8 @@ public:
    bool vcsUseGitBash() const;
    void setVcsUseGitBash(bool useGitBash);
 
+   bool svnEnabled() const;
+
 private:
 
    void onSettingsFileChanged(

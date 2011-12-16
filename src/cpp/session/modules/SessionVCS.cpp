@@ -145,15 +145,6 @@ bool isSvnInstalled()
    return svn::isSvnInstalled();
 }
 
-bool isSvnFeatureEnabled()
-{
-#ifdef SUBVERSION
-   return true;
-#else
-   return false;
-#endif
-}
-
 FilePath getTrueHomeDir()
 {
 #if _WIN32
@@ -327,23 +318,28 @@ core::Error initialize()
          return git::initializeGit(workingDir);
       return Success();
    }
-#ifdef SUBVERSION
-   else if (vcsOptions.vcsOverride == svn::kVcsId)
+   else if (userSettings().svnEnabled() &&
+            (vcsOptions.vcsOverride == svn::kVcsId))
    {
       if (svn::isSvnInstalled() && svn::isSvnDirectory(workingDir))
          return svn::initializeSvn(workingDir);
       return Success();
    }
-#endif
 
    if (git::isGitInstalled() && git::isGitDirectory(workingDir))
+   {
       return git::initializeGit(workingDir);
-#ifdef SUBVERSION
-   else if (svn::isSvnInstalled() && svn::isSvnDirectory(workingDir))
+   }
+   else if (userSettings().svnEnabled() &&
+            svn::isSvnInstalled()
+            && svn::isSvnDirectory(workingDir))
+   {
       return svn::initializeSvn(workingDir);
-#endif
+   }
    else
+   {
       return Success();  // none specified or detected
+   }
 }
 
 } // namespace source_control
