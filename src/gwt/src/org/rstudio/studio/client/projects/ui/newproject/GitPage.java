@@ -21,8 +21,8 @@ import org.rstudio.studio.client.projects.model.NewProjectResult;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.event.dom.client.KeyPressEvent;
-import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.Label;
@@ -53,23 +53,13 @@ public class GitPage extends VersionControlPage
       urlLabel.addStyleName(styles.wizardTextEntryLabel());
       urlPanel.add(urlLabel);
       txtRepoUrl_ = new TextBox();
-      txtRepoUrl_.addKeyPressHandler(new KeyPressHandler() {
-         @Override
-         public void onKeyPress(KeyPressEvent event)
+      txtRepoUrl_.addDomHandler(new KeyDownHandler() {
+         public void onKeyDown(KeyDownEvent event)
          {
-            if (suppressDirNameDetection_)
-               return;
-            
-            // delay so the text has a chance to populate
-            Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-               @Override
-               public void execute()
-               {
-                  autoFillCheckoutDir();
-               }
-            }); 
-         } 
-      });
+            handleAutoFillCheckoutDir();
+         }
+      }, KeyDownEvent.getType());
+        
       txtRepoUrl_.setWidth("100%");
       urlPanel.add(txtRepoUrl_);
      
@@ -78,7 +68,7 @@ public class GitPage extends VersionControlPage
       addSpacer();
       
       
-      Label dirNameLabel = new Label("Checkout directory:");
+      Label dirNameLabel = new Label("Directory name:");
       dirNameLabel.addStyleName(styles.wizardTextEntryLabel());
       addWidget(dirNameLabel);
       txtDirName_ = new TextBox();
@@ -164,6 +154,21 @@ public class GitPage extends VersionControlPage
    {
       txtRepoUrl_.setFocus(true);
       
+   }
+   
+   private void handleAutoFillCheckoutDir()
+   {
+      if (suppressDirNameDetection_)
+         return;
+      
+      // delay so the text has a chance to populate
+      Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+         @Override
+         public void execute()
+         {
+            autoFillCheckoutDir();
+         }
+      }); 
    }
    
    private void autoFillCheckoutDir()
