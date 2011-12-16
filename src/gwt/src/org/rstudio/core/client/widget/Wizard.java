@@ -129,7 +129,15 @@ public class Wizard<I,T> extends ModalDialog<T>
       pageSelectorPanel_.setSize("100%", "100%");
       for (int i=0; i<pages_.size(); i++)
       {
-         PageSelectorItem pageSelector = new PageSelectorItem(pages_.get(i));
+         final WizardPage<I,T> page = pages_.get(i);
+         PageSelectorItem pageSelector = 
+           new PageSelectorItem(page, new ClickHandler() {
+              @Override
+              public void onClick(ClickEvent event)
+              {
+                 showPage(page);  
+              }
+           });
          
          if (i==0)
             pageSelector.addStyleName(styles.wizardPageSelectorItemFirst());
@@ -311,7 +319,7 @@ public class Wizard<I,T> extends ModalDialog<T>
    
    private class PageSelectorItem extends Composite
    {
-      PageSelectorItem(final WizardPage<I,T> page)
+      PageSelectorItem(final WizardPageInfo pageInfo, ClickHandler clickHandler)
       {
          WizardResources res = WizardResources.INSTANCE;
          WizardResources.Styles styles = res.styles();
@@ -319,7 +327,7 @@ public class Wizard<I,T> extends ModalDialog<T>
          LayoutPanel layoutPanel = new LayoutPanel();
          layoutPanel.addStyleName(styles.wizardPageSelectorItem());
          
-         Image image = new Image(page.getImage());
+         Image image = new Image(pageInfo.getImage());
          layoutPanel.add(image);
          layoutPanel.setWidgetLeftWidth(image, 
                                         10, Unit.PX, 
@@ -330,10 +338,10 @@ public class Wizard<I,T> extends ModalDialog<T>
          
         
          FlowPanel captionPanel = new FlowPanel();
-         Label titleLabel = new Label(page.getTitle());
+         Label titleLabel = new Label(pageInfo.getTitle());
          titleLabel.addStyleName(styles.headerLabel());
          captionPanel.add(titleLabel);
-         Label subTitleLabel = new Label(page.getSubTitle());
+         Label subTitleLabel = new Label(pageInfo.getSubTitle());
          subTitleLabel.addStyleName(styles.subcaptionLabel());
          captionPanel.add(subTitleLabel);
          layoutPanel.add(captionPanel);
@@ -356,14 +364,7 @@ public class Wizard<I,T> extends ModalDialog<T>
                                         arrowImage.getHeight(), Unit.PX);
          
          
-         layoutPanel.addDomHandler(new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event)
-            {
-               showPage(page);
-                
-            }
-         }, ClickEvent.getType());
+         layoutPanel.addDomHandler(clickHandler, ClickEvent.getType());
        
          
          initWidget(layoutPanel);

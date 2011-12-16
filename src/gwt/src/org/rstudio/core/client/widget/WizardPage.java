@@ -19,7 +19,8 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public abstract class WizardPage<I,T> extends Composite implements CanFocus
+public abstract class WizardPage<I,T> extends Composite
+                                      implements WizardPageInfo, CanFocus
 {
    public WizardPage(String title, 
                      String subTitle, 
