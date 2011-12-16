@@ -22,7 +22,6 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.Value;
-import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
