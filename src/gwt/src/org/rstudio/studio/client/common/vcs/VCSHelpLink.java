@@ -33,17 +33,23 @@ public class VCSHelpLink extends Composite
       Image helpImage = new Image(ThemeResources.INSTANCE.help());
       helpImage.getElement().getStyle().setMarginRight(4, Unit.PX);
       helpPanel.add(helpImage);
-      HyperlinkLabel helpLink = new HyperlinkLabel(
-                                       "Using Version Control with RStudio");
-      helpLink.addClickHandler(new ClickHandler() {
+      helpLink_ = new HyperlinkLabel("Using Version Control with RStudio");
+      helpLink_.addClickHandler(new ClickHandler() {
          public void onClick(ClickEvent event)
          {
             RStudioGinjector.INSTANCE.getGlobalDisplay().openRStudioLink(
                                                       "using_version_control");
          }  
       });
-      helpPanel.add(helpLink);
+      helpPanel.add(helpLink_);
 
       initWidget(helpPanel);
    }
+   
+   public void setCaption(String caption)
+   {
+      helpLink_.setText(caption);
+   }
+   
+   private HyperlinkLabel helpLink_;
 }

@@ -46,6 +46,8 @@ public interface NewProjectResources extends ClientBundle
       String wizardSpacer();
       String vcsSelectorDesktop();
       String wizardCheckbox();
+      String vcsNotInstalledWidget();
+      String vcsHelpLink();
    }
    
    @Source("NewProjectWizard.css")

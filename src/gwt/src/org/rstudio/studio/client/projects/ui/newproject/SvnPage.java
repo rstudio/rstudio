@@ -33,9 +33,9 @@ public class SvnPage extends VersionControlPage
 {
    public SvnPage(boolean isSvnAvailable)
    {
-      super("Subversion", 
-            "Checkout a project from a Subversion repository",
-            "Checkout Subversion Repository",
+      super("SVN", 
+            "Checkout a project from an SVN repository",
+            "Checkout SVN Repository",
             NewProjectResources.INSTANCE.svnIcon(),
             NewProjectResources.INSTANCE.svnIconLarge(),
             isSvnAvailable);

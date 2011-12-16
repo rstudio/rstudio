@@ -13,8 +13,12 @@
 package org.rstudio.studio.client.projects.ui.newproject;
 
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.common.vcs.VCSHelpLink;
 
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 public abstract class VersionControlPage extends NewProjectWizardPage
 {
@@ -36,12 +40,36 @@ public abstract class VersionControlPage extends NewProjectWizardPage
    {
       if (!vcsIsAvailable_)
       {
-         globalDisplay_.showMessage(
-               MessageDialog.INFO, 
-               getTitle() + " Not Installed", 
-               "An installation of " + getTitle() + " was not detected " +
-               "on your system. To create projects from " + getTitle() + " " + 
-               "repositories you should install it and then restart RStudio");
+         NewProjectResources.Styles styles = 
+                                 NewProjectResources.INSTANCE.styles();   
+         
+         VerticalPanel verticalPanel = new VerticalPanel();
+         verticalPanel.addStyleName(styles.vcsNotInstalledWidget());
+         
+         HTML msg = new HTML(
+            "<p>An installation of " + getTitle() + " was not detected " +
+            "on your system.</p>" +
+            "<p>To create projects from " + getTitle() + " " + 
+            "repositories you should install it " +
+            "and then restart RStudio. For more information on installing " +
+            getTitle() + " please see the link below.</p>");
+         msg.setWidth("100%");
+         
+         verticalPanel.add(msg);
+         
+         VCSHelpLink vcsHelpLink = new VCSHelpLink();
+         vcsHelpLink.setCaption("Using " + getTitle() + " with RStudio");
+         vcsHelpLink.addStyleName(styles.vcsHelpLink());
+         verticalPanel.add(vcsHelpLink);
+        
+         
+         MessageDialog dlg = new MessageDialog(MessageDialog.INFO,
+                                               getTitle() + " Not Installed",
+                                               verticalPanel);
+         
+         
+         dlg.addButton("OK", (Operation)null, true, false);
+         dlg.showModal();
          
          return false;
       }
