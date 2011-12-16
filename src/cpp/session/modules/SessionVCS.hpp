@@ -37,6 +37,8 @@ std::string activeVCSName();
 bool isGitInstalled();
 bool isSvnInstalled();
 
+bool isSvnFeatureEnabled();
+
 // default directory for reading/writing ssh keys
 core::FilePath defaultSshKeyDir();
 

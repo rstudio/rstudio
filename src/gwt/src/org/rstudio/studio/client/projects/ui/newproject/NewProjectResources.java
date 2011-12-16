@@ -33,6 +33,11 @@ public interface NewProjectResources extends ClientBundle
    ImageResource projectFromRepositoryIcon();
    ImageResource projectFromRepositoryIconLarge();
    
+   ImageResource gitIcon();
+   ImageResource gitIconLarge();
+   ImageResource svnIcon();
+   ImageResource svnIconLarge();
+   
    static interface Styles extends CssResource
    {
       String wizardWidget();

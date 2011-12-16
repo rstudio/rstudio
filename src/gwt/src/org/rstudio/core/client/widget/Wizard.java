@@ -48,9 +48,20 @@ public class Wizard<I,T> extends ModalDialog<T>
    protected void addPage(WizardPage<I,T> page)
    {
       pages_.add(page);
+      
+      if (page instanceof WizardNavigationPage<?,?>)
+      {
+         ((WizardNavigationPage<I,T>) page).setSelectionHandler(
+                                    new CommandWithArg<WizardPage<I,T>>() {
+            @Override
+            public void execute(WizardPage<I, T> page)
+            {
+               showPage(page);
+            }      
+         });
+      }
    }
    
-
    @Override
    protected Widget createMainWidget()
    {
@@ -97,7 +108,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       {
          public void onClick(ClickEvent event)
          {
-            backToSelector();
+            goBack();
          }
       });
       
@@ -123,7 +134,9 @@ public class Wizard<I,T> extends ModalDialog<T>
       mainWidget.add(bodyPanel_);
      
       // page selection panel
-      pageSelector_ = new WizardPageSelector<I,T>(pages_, new CommandWithArg<WizardPage<I,T>>() {
+      pageSelector_ = new WizardPageSelector<I,T>(
+            pages_, 
+            new CommandWithArg<WizardPage<I,T>>() {
          @Override
          public void execute(WizardPage<I, T> page)
          {
@@ -139,14 +152,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       for (int i=0; i<pages_.size(); i++)
       {
          WizardPage<I,T> page = pages_.get(i);
-         page.setSize("100%", "100%");
-         
-         bodyPanel_.add(page);
-         bodyPanel_.setWidgetTopBottom(page, 0, Unit.PX, 0, Unit.PX);
-         bodyPanel_.setWidgetLeftRight(page, 0, Unit.PX, 0, Unit.PX);
-         bodyPanel_.setWidgetVisible(page, false);
-         
-         page.initialize(initialData_);
+         addAndInitializePage(page);
       }
       
      
@@ -154,16 +160,36 @@ public class Wizard<I,T> extends ModalDialog<T>
       return mainWidget;
    }
    
+   
+   private void addAndInitializePage(WizardPage<I,T> page)
+   {
+      page.setSize("100%", "100%");
+      
+      bodyPanel_.add(page);
+      bodyPanel_.setWidgetTopBottom(page, 0, Unit.PX, 0, Unit.PX);
+      bodyPanel_.setWidgetLeftRight(page, 0, Unit.PX, 0, Unit.PX);
+      bodyPanel_.setWidgetVisible(page, false);
+      
+      page.initialize(initialData_);
+      
+      // recursively initialize child pages
+      if (page instanceof WizardNavigationPage<?,?>)
+      {
+         WizardNavigationPage<I,T> navPage = (WizardNavigationPage<I,T>)page;
+         ArrayList<WizardPage<I,T>> pages = navPage.getPages();
+         for (int i=0; i<pages.size(); i++)
+            addAndInitializePage(pages.get(i));
+      }
+   }
+   
    @Override
    protected T collectInput()
    {
-      if (activePage_ != null)
+      WizardPage<I,T> inputPage = activeInputPage();
+      if (inputPage != null)
       {
-         T input = activePage_.collectInput();
-         if (input != null)
-            return ammendInput(input);
-         else
-            return null;
+         T input = inputPage.collectInput();
+         return input;
       }
       else
          return null;
@@ -172,27 +198,25 @@ public class Wizard<I,T> extends ModalDialog<T>
    @Override
    protected boolean validate(T input)
    {
-      if (activePage_ != null)
-         return activePage_.validate(input);
+      WizardPage<I,T> inputPage = activeInputPage();
+      if (inputPage != null)
+         return inputPage.validate(input);
       else
          return false;
    }
    
-   protected void onPageActivated(WizardPage<I,T> page)
+   private WizardPage<I,T> activeInputPage()
    {
-      
+      if (activePage_ != null && 
+          !(activePage_ instanceof WizardNavigationPage<?,?>))
+      {
+         return activePage_;
+      }
+      else
+      {
+         return null;
+      }
    }
-   
-   protected void onSelectorActivated()
-   {
-      
-   }
-   
-   protected T ammendInput(T input)
-   {
-      return input;
-   }
- 
    
    private void animate(final Widget from, 
                         final Widget to, 
@@ -248,7 +272,32 @@ public class Wizard<I,T> extends ModalDialog<T>
    
    private void showPage(final WizardPage<I,T> page)
    {
-      animate(pageSelector_, page, true, new Command() {
+      // ask whether the page will accept the navigation
+      if (!page.acceptNavigation())
+         return;
+      
+      // determine behavior based on whether this is standard page or 
+      // a navigation page
+      Widget fromWidget;
+      final boolean okButtonVisible;
+      
+      // are we navigating from the main selector?
+      if (activePage_ == null)
+      {
+         fromWidget = pageSelector_;
+         okButtonVisible = !(page instanceof WizardNavigationPage<?,?>);
+         activeParentNavigationPage_ = null;   
+      }
+      // otherwise we must be navigating from a navigation page
+      else 
+      {
+         fromWidget = activePage_;
+         okButtonVisible = true;
+         activeParentNavigationPage_ = activePage_;
+      }
+     
+      
+      animate(fromWidget, page, true, new Command() {
          @Override
          public void execute()
          {
@@ -262,10 +311,7 @@ public class Wizard<I,T> extends ModalDialog<T>
             pageCaptionLabel_.setVisible(true);
             
             // make ok button visible
-            setOkButtonVisible(true);
-            
-            // call subclass
-            onPageActivated(page);
+            setOkButtonVisible(okButtonVisible);
             
             // set focus
             FocusHelper.setFocusDeferred(page);
@@ -273,29 +319,51 @@ public class Wizard<I,T> extends ModalDialog<T>
       });
    }
    
-   private void backToSelector()
+  
+   private void goBack()
    {
+      final boolean isNavigationPage = activeParentNavigationPage_ != null;
       
-      animate(activePage_, pageSelector_, false, new Command() {
+      // determine behavior based on whether we are going back to a
+      // navigation page or a selector page
+      Widget toWidget;
+      if (activeParentNavigationPage_ != null)
+      {
+         toWidget = activeParentNavigationPage_;
+      }
+      else
+      {
+         toWidget = pageSelector_;
+      }
+      
+      final String pageCaptionLabel = isNavigationPage ? 
+                        activeParentNavigationPage_.getPageCaption() : "";
+      
+      final WizardPage<I,T> newActivePage =
+         isNavigationPage ? activeParentNavigationPage_ : null;
+      
+      final CanFocus focusWidget = (CanFocus)toWidget;
+      
+      activeParentNavigationPage_ = null;
+      
+      animate(activePage_, toWidget, false, new Command() {
          @Override
          public void execute()
          {
             // update active page
-            activePage_ = null;
+            activePage_ = newActivePage;
             
             // update header
-            subCaptionLabel_.setVisible(true);
-            backButton_.setVisible(false);
-            pageCaptionLabel_.setVisible(false);
-            
+            subCaptionLabel_.setVisible(!isNavigationPage);
+            backButton_.setVisible(isNavigationPage);
+            pageCaptionLabel_.setVisible(isNavigationPage);
+            pageCaptionLabel_.setText(pageCaptionLabel);
+           
             // make ok button invisible
             setOkButtonVisible(false);
             
-            // call subclass
-            onSelectorActivated();
-            
             // set focus
-            pageSelector_.getElement().focus();
+            focusWidget.focus();
          }
       });
    }
@@ -315,5 +383,6 @@ public class Wizard<I,T> extends ModalDialog<T>
    private WizardPageSelector<I,T> pageSelector_;
    private ArrayList<WizardPage<I,T>> pages_ = new ArrayList<WizardPage<I,T>>();
    private WizardPage<I,T> activePage_ = null;
+   private WizardPage<I,T> activeParentNavigationPage_ = null;
    private boolean isAnimating_ = false;
 }

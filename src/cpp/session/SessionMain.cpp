@@ -439,6 +439,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["vcs"] = modules::source_control::activeVCSName();
    sessionInfo["default_ssh_key_dir"] =module_context::createAliasedPath(
                               modules::source_control::defaultSshKeyDir());
+   sessionInfo["svn_feature_enabled"] =
+         modules::source_control::isSvnFeatureEnabled();
 
    // contents of all lists
    sessionInfo["lists"] = modules::lists::allListsAsJson();

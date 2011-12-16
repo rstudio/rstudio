@@ -21,7 +21,6 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
-import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 public class SessionInfo extends JavaScriptObject
@@ -151,17 +150,22 @@ public class SessionInfo extends JavaScriptObject
       return this.vcs;
    }-*/;
    
-   public final boolean isGitAvailable()
+   public final boolean isVcsAvailable(String id)
    {
       String[] availableVcs = getAvailableVCS();
       for (int i=0; i<availableVcs.length; i++)
       {
-         if (availableVcs[i].equals(VCSConstants.GIT_ID))
+         if (availableVcs[i].equals(id))
             return true;
       }
       
       return false;
    }
+   
+   public native final boolean isSvnFeatureEnabled()  /*-{
+      return this.svn_feature_enabled;
+   }-*/;
+   
    
    public native final String getDefaultSSHKeyDir() /*-{
       return this.default_ssh_key_dir;

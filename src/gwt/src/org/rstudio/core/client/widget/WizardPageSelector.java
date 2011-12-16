@@ -27,10 +27,18 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 
 public class WizardPageSelector<I,T> extends Composite
+                                     implements CanFocus
 {
+   public WizardPageSelector(ArrayList<WizardPage<I,T>> pages)
+   {
+      this(pages, null);
+   }
+   
    public WizardPageSelector(ArrayList<WizardPage<I,T>> pages,
                              final CommandWithArg<WizardPage<I,T>> onSelected)
    {
+      onSelected_ = onSelected;
+      
       WizardResources res = WizardResources.INSTANCE;
       WizardResources.Styles styles = res.styles();
       
@@ -45,7 +53,7 @@ public class WizardPageSelector<I,T> extends Composite
               @Override
               public void onClick(ClickEvent event)
               {
-                onSelected.execute(page);  
+                onSelected_.execute(page);  
               }
            });
          
@@ -59,6 +67,11 @@ public class WizardPageSelector<I,T> extends Composite
       }
       
       initWidget(pageSelectorPanel);
+   }
+   
+   public void setSelectionHandler(CommandWithArg<WizardPage<I,T>> onSelected)
+   {
+      onSelected_ = onSelected;
    }
    
    private class PageSelectorItem extends Composite
@@ -114,4 +127,13 @@ public class WizardPageSelector<I,T> extends Composite
          initWidget(layoutPanel);
       }
    }
+
+   @Override
+   public void focus()
+   {
+      getElement().focus();
+      
+   }
+   
+   private CommandWithArg<WizardPage<I,T>> onSelected_;
 }

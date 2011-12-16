@@ -28,39 +28,57 @@ public abstract class WizardPage<I,T> extends Composite
                      ImageResource image,
                      ImageResource largeImage)
    {
+      this(title, subTitle, pageCaption, image, largeImage, null);
+   }
+   
+   public WizardPage(String title, 
+                     String subTitle, 
+                     String pageCaption, 
+                     ImageResource image,
+                     ImageResource largeImage,
+                     Widget widget)
+   {
       title_ = title;
       subTitle_ = subTitle;
       pageCaption_ = pageCaption;
       image_ = image;
       largeImage_ = largeImage;
       
-      WizardResources.Styles styles = WizardResources.INSTANCE.styles();
-      
-      LayoutPanel layoutPanel = new LayoutPanel();
-      
-      Image pageImage = new Image(largeImage_);
-      layoutPanel.add(pageImage);
-      layoutPanel.setWidgetLeftWidth(pageImage,
-                                     8, Unit.PX, 
-                                     pageImage.getWidth(), Unit.PX);
-      layoutPanel.setWidgetTopHeight(pageImage,
-                                     10, Unit.PX, 
-                                     pageImage.getHeight(), Unit.PX);
-      
-      
-      Widget pageWidget = createWidget();
-  
-      layoutPanel.add(pageWidget);
-      layoutPanel.setWidgetLeftRight(pageWidget,
-                                     133, Unit.PX, 
-                                     15, Unit.PX);
-      layoutPanel.setWidgetTopBottom(pageWidget, 
-                                     10, Unit.PX, 
-                                     0, Unit.PX);
-      
-      
-      initWidget(layoutPanel);
-      addStyleName(styles.wizardPageBackground());      
+      if (widget != null)
+      {
+         initWidget(widget);
+      }
+      else
+      {
+         WizardResources.Styles styles = WizardResources.INSTANCE.styles();
+         
+         LayoutPanel layoutPanel = new LayoutPanel();
+         
+         Image pageImage = new Image(largeImage_);
+         layoutPanel.add(pageImage);
+         layoutPanel.setWidgetLeftWidth(pageImage,
+                                        8, Unit.PX, 
+                                        pageImage.getWidth(), Unit.PX);
+         layoutPanel.setWidgetTopHeight(pageImage,
+                                        10, Unit.PX, 
+                                        pageImage.getHeight(), Unit.PX);
+         
+         
+         
+         Widget pageWidget = createWidget();
+     
+         layoutPanel.add(pageWidget);
+         layoutPanel.setWidgetLeftRight(pageWidget,
+                                        133, Unit.PX, 
+                                        15, Unit.PX);
+         layoutPanel.setWidgetTopBottom(pageWidget, 
+                                        10, Unit.PX, 
+                                        0, Unit.PX);
+         
+         
+         initWidget(layoutPanel);
+         addStyleName(styles.wizardPageBackground());  
+      }
    }
    
    public String getTitle()
@@ -96,6 +114,11 @@ public abstract class WizardPage<I,T> extends Composite
    
    abstract protected boolean validate(T input);
   
+   protected boolean acceptNavigation()
+   {
+      return true;
+   }
+   
    private final String title_;
    private final String subTitle_;
    private final String pageCaption_;

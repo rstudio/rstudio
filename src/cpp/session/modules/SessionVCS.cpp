@@ -145,6 +145,15 @@ bool isSvnInstalled()
    return svn::isSvnInstalled();
 }
 
+bool isSvnFeatureEnabled()
+{
+#ifdef SUBVERSION
+   return true;
+#else
+   return false;
+#endif
+}
+
 FilePath getTrueHomeDir()
 {
 #if _WIN32

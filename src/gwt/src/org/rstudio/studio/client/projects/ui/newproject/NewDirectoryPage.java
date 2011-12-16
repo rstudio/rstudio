@@ -16,6 +16,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -62,7 +63,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
          RStudioGinjector.INSTANCE.getSession().getSessionInfo();
       chkGitInit_ = new CheckBox("Create a git repository for this project");
       chkGitInit_.addStyleName(styles.wizardCheckbox());
-      if (sessionInfo.isGitAvailable())
+      if (sessionInfo.isVcsAvailable(VCSConstants.GIT_ID))
       {
          for (int i=0; i<2; i++)
             addSpacer();
