@@ -17,6 +17,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEvent.Handler;
 import org.rstudio.studio.client.workbench.views.vcs.git.dialog.GitReviewPresenter;
@@ -33,9 +34,9 @@ public class ReviewPresenterImpl implements ReviewPresenter
    {
       String vcsName = session.getSessionInfo().getVcsName();
 
-      if (vcsName.equalsIgnoreCase("git"))
+      if (vcsName.equalsIgnoreCase(VCSConstants.GIT_ID))
          pres_ = pGitReviewPresenter.get();
-      else if (vcsName.equalsIgnoreCase("svn"))
+      else if (vcsName.equalsIgnoreCase(VCSConstants.SVN_ID))
          pres_ = pSvnReviewPresenter.get();
       else
          throw new IllegalStateException("Unknown vcs name: " + vcsName);
