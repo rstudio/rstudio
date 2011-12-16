@@ -15,6 +15,8 @@ package org.rstudio.core.client.widget;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.CommandWithArg;
+
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -22,9 +24,6 @@ import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -124,33 +123,17 @@ public class Wizard<I,T> extends ModalDialog<T>
       mainWidget.add(bodyPanel_);
      
       // page selection panel
-      pageSelectorPanel_ = new FlowPanel();
-      pageSelectorPanel_.addStyleName(styles.wizardPageSelector());
-      pageSelectorPanel_.setSize("100%", "100%");
-      for (int i=0; i<pages_.size(); i++)
-      {
-         final WizardPage<I,T> page = pages_.get(i);
-         PageSelectorItem pageSelector = 
-           new PageSelectorItem(page, new ClickHandler() {
-              @Override
-              public void onClick(ClickEvent event)
-              {
-                 showPage(page);  
-              }
-           });
-         
-         if (i==0)
-            pageSelector.addStyleName(styles.wizardPageSelectorItemFirst());
-         
-         if (i == (pages_.size() -1))
-            pageSelector.addStyleName(styles.wizardPageSelectorItemLast());
-         
-         pageSelectorPanel_.add(pageSelector);
-      }
-      bodyPanel_.add(pageSelectorPanel_);
-      bodyPanel_.setWidgetTopBottom(pageSelectorPanel_, 0, Unit.PX, 0, Unit.PX);
-      bodyPanel_.setWidgetLeftRight(pageSelectorPanel_, 0, Unit.PX, 0, Unit.PX);
-      bodyPanel_.setWidgetVisible(pageSelectorPanel_, true);
+      pageSelector_ = new WizardPageSelector<I,T>(pages_, new CommandWithArg<WizardPage<I,T>>() {
+         @Override
+         public void execute(WizardPage<I, T> page)
+         {
+            showPage(page);
+         }
+      });
+      bodyPanel_.add(pageSelector_);
+      bodyPanel_.setWidgetTopBottom(pageSelector_, 0, Unit.PX, 0, Unit.PX);
+      bodyPanel_.setWidgetLeftRight(pageSelector_, 0, Unit.PX, 0, Unit.PX);
+      bodyPanel_.setWidgetVisible(pageSelector_, true);
     
       // add pages and make them invisible
       for (int i=0; i<pages_.size(); i++)
@@ -265,7 +248,7 @@ public class Wizard<I,T> extends ModalDialog<T>
    
    private void showPage(final WizardPage<I,T> page)
    {
-      animate(pageSelectorPanel_, page, true, new Command() {
+      animate(pageSelector_, page, true, new Command() {
          @Override
          public void execute()
          {
@@ -293,7 +276,7 @@ public class Wizard<I,T> extends ModalDialog<T>
    private void backToSelector()
    {
       
-      animate(activePage_, pageSelectorPanel_, false, new Command() {
+      animate(activePage_, pageSelector_, false, new Command() {
          @Override
          public void execute()
          {
@@ -312,63 +295,9 @@ public class Wizard<I,T> extends ModalDialog<T>
             onSelectorActivated();
             
             // set focus
-            pageSelectorPanel_.getElement().focus();
+            pageSelector_.getElement().focus();
          }
       });
-   }
-   
-   private class PageSelectorItem extends Composite
-   {
-      PageSelectorItem(final WizardPageInfo pageInfo, ClickHandler clickHandler)
-      {
-         WizardResources res = WizardResources.INSTANCE;
-         WizardResources.Styles styles = res.styles();
-         
-         LayoutPanel layoutPanel = new LayoutPanel();
-         layoutPanel.addStyleName(styles.wizardPageSelectorItem());
-         
-         Image image = new Image(pageInfo.getImage());
-         layoutPanel.add(image);
-         layoutPanel.setWidgetLeftWidth(image, 
-                                        10, Unit.PX, 
-                                        image.getWidth(), Unit.PX);
-         layoutPanel.setWidgetTopHeight(image, 
-                                        40-(image.getHeight()/2), Unit.PX, 
-                                        image.getHeight(), Unit.PX);
-         
-        
-         FlowPanel captionPanel = new FlowPanel();
-         Label titleLabel = new Label(pageInfo.getTitle());
-         titleLabel.addStyleName(styles.headerLabel());
-         captionPanel.add(titleLabel);
-         Label subTitleLabel = new Label(pageInfo.getSubTitle());
-         subTitleLabel.addStyleName(styles.subcaptionLabel());
-         captionPanel.add(subTitleLabel);
-         layoutPanel.add(captionPanel);
-         layoutPanel.setWidgetLeftWidth(captionPanel,
-                                        10 + image.getWidth() + 12, Unit.PX,
-                                        450, Unit.PX);
-         layoutPanel.setWidgetTopHeight(captionPanel,
-                                        19, Unit.PX, 
-                                        55, Unit.PX);
-         
-         
-         Image arrowImage = new Image(res.wizardDisclosureArrow());
-         layoutPanel.add(arrowImage);
-         layoutPanel.setWidgetRightWidth(arrowImage, 
-                                         20, Unit.PX, 
-                                         arrowImage.getWidth(), 
-                                         Unit.PX);
-         layoutPanel.setWidgetTopHeight(arrowImage,
-                                        40-(arrowImage.getHeight()/2), Unit.PX,
-                                        arrowImage.getHeight(), Unit.PX);
-         
-         
-         layoutPanel.addDomHandler(clickHandler, ClickEvent.getType());
-       
-         
-         initWidget(layoutPanel);
-      }
    }
    
    private final I initialData_; 
@@ -383,7 +312,7 @@ public class Wizard<I,T> extends ModalDialog<T>
    
    
    private LayoutPanel bodyPanel_;
-   private FlowPanel pageSelectorPanel_;
+   private WizardPageSelector<I,T> pageSelector_;
    private ArrayList<WizardPage<I,T>> pages_ = new ArrayList<WizardPage<I,T>>();
    private WizardPage<I,T> activePage_ = null;
    private boolean isAnimating_ = false;
