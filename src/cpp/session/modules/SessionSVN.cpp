@@ -207,6 +207,49 @@ Error runSvn(const ShellArgs& args,
    return Success();
 }
 
+typedef boost::function<void(const core::Error&,
+                             const core::system::ProcessResult&)>
+                                                            ProcResultCallback;
+
+void runSvnAsync(const ShellArgs& args,
+                 bool redirectStdErrToStdOut,
+                 ProcResultCallback completionCallback)
+{
+   system::ProcessCallbacks callbacks = system::createProcessCallbacks(
+            "",
+            boost::bind(completionCallback, Success(), _1),
+            boost::bind(completionCallback, _1, core::system::ProcessResult()));
+
+   core::system::ProcessOptions options = procOptions();
+   options.redirectStdErrToStdOut = redirectStdErrToStdOut;
+#ifdef _WIN32
+   // NOTE: We use consoleio.exe here in order to make sure svn.exe password
+   // prompting works properly
+   options.createNewConsole = true;
+
+   FilePath consoleIoPath = session::options().consoleIoPath();
+
+   ShellArgs winArgs;
+   winArgs << svnBin();
+   winArgs << args.args();
+   Error error =
+         module_context::processSupervisor().runProgram(
+            consoleIoPath.absolutePathNative(),
+            winArgs.args(),
+            std::string(),
+            options,
+            callbacks);
+#else
+   Error error =
+         module_context::processSupervisor().runCommand(
+            svn() << args.args(),
+            options,
+            callbacks);
+#endif
+   if (error)
+      completionCallback(error, core::system::ProcessResult());
+}
+
 std::vector<std::string> globalArgs(
       const std::string* const pUsername=NULL,
       const std::string* const pPassword=NULL,
@@ -889,11 +932,21 @@ Error svnApplyPatch(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error history(int rev,
-              const std::string& searchText,
-              FilePath fileFilter,
-              ShellArgs options,
-              std::string* pOutput)
+void historyEnd(boost::function<void(Error, const std::string&)> callback,
+                const Error& error,
+                const core::system::ProcessResult& result)
+{
+   if (!error && result.exitStatus != EXIT_SUCCESS && !result.stdErr.empty())
+      LOG_ERROR_MESSAGE(result.stdErr);
+
+   callback(error, result.stdOut);
+}
+
+void history(int rev,
+             const std::string& searchText,
+             FilePath fileFilter,
+             ShellArgs options,
+             boost::function<void(Error, const std::string&)> callback)
 {
    ShellArgs args;
    args << "log";
@@ -904,40 +957,34 @@ Error history(int rev,
    if (rev > 0)
       args << "-r" << boost::lexical_cast<std::string>(rev) + ":1";
 
+   // TODO: implement searchText
+
    if (!fileFilter.empty())
       args << fileFilter;
 
-   return runSvn(args, pOutput);
+   runSvnAsync(args, false, boost::bind(historyEnd, callback, _1, _2));
 }
 
-Error svnHistoryCount(const json::JsonRpcRequest& request,
-                      json::JsonRpcResponse* pResponse)
+void svnHistoryCountEnd(const json::JsonRpcFunctionContinuation& cont,
+                        Error error, const std::string& output)
 {
    using namespace rapidxml;
 
-   int rev;
-   json::Value fileFilterJson;
-   std::string searchText;
-   Error error = json::readParams(request.params,
-                                  &rev,
-                                  &fileFilterJson,
-                                  &searchText);
+   json::JsonRpcResponse response;
    if (error)
-      return error;
-
-   ShellArgs options;
-   options << "-q";
-   FilePath fileFilter = fileFilterPath(fileFilterJson);
-   std::string output;
-   error = history(rev, searchText, fileFilter, options, &output);
-   if (error)
-      return error;
+   {
+      cont(error, &response);
+      return;
+   }
 
    std::vector<char> buffer;
    xml_document<> doc;
    error = parseXml(output, &buffer, &doc);
    if (error)
-      return error;
+   {
+      cont(error, &response);
+      return;
+   }
 
    int count = 0;
 
@@ -952,45 +999,53 @@ Error svnHistoryCount(const json::JsonRpcRequest& request,
 
    json::Object result;
    result["count"] = count;
-   pResponse->setResult(result);
+   response.setResult(result);
 
-   return Success();
+   cont(Success(), &response);
 }
 
-Error svnHistory(const json::JsonRpcRequest& request,
-                 json::JsonRpcResponse* pResponse)
+void svnHistoryCount(const json::JsonRpcRequest& request,
+                     const json::JsonRpcFunctionContinuation& cont)
+{
+   int rev;
+   json::Value fileFilterJson;
+   std::string searchText;
+   Error error = json::readParams(request.params,
+                                  &rev,
+                                  &fileFilterJson,
+                                  &searchText);
+   if (error)
+   {
+      json::JsonRpcResponse response;
+      cont(error, &response);
+      return;
+   }
+
+   ShellArgs options;
+   options << "-q";
+   FilePath fileFilter = fileFilterPath(fileFilterJson);
+   history(rev, searchText, fileFilter, options,
+           boost::bind(svnHistoryCountEnd, cont, _1, _2));
+}
+
+void svnHistoryEnd(int skip,
+                   int maxentries,
+                   const json::JsonRpcFunctionContinuation& cont,
+                   Error error,
+                   const std::string& output)
 {
    using namespace boost::posix_time;
    using namespace rapidxml;
 
-   int rev;
-   json::Value fileFilterJson;
-   std::string searchText;
-   int skip, maxentries;
-   Error error = json::readParams(request.params,
-                                  &rev,
-                                  &fileFilterJson,
-                                  &skip,
-                                  &maxentries,
-                                  &searchText);
-   if (error)
-      return error;
-
-   int limit = skip + maxentries;
-   ShellArgs options;
-   options << "--limit" << boost::lexical_cast<std::string>(limit);
-
-   FilePath fileFilter = fileFilterPath(fileFilterJson);
-   std::string output;
-   error = history(rev, searchText, fileFilter, options, &output);
-   if (error)
-      return error;
+   json::JsonRpcResponse response;
 
    std::vector<char> buffer;
    xml_document<> doc;
    error = parseXml(output, &buffer, &doc);
    if (error)
-      return error;
+   {
+      cont(error, &response);
+   }
    xml_node<>* pLog = doc.first_node("log");
 
    const std::string NAME_REVISION = "revision";
@@ -1036,30 +1091,65 @@ Error svnHistory(const json::JsonRpcRequest& request,
    result["description"] = descriptions;
    result["date"] = dates;
 
-   pResponse->setResult(result);
-
-   return Success();
+   response.setResult(result);
+   cont(Success(), &response);
 }
 
-Error svnShow(const json::JsonRpcRequest& request,
-              json::JsonRpcResponse* pResponse)
+void svnHistory(const json::JsonRpcRequest& request,
+                const json::JsonRpcFunctionContinuation& cont)
+{
+   int rev;
+   json::Value fileFilterJson;
+   std::string searchText;
+   int skip, maxentries;
+   Error error = json::readParams(request.params,
+                                  &rev,
+                                  &fileFilterJson,
+                                  &skip,
+                                  &maxentries,
+                                  &searchText);
+   if (error)
+   {
+      cont(error, NULL);
+      return;
+   }
+
+   int limit = skip + maxentries;
+   ShellArgs options;
+   options << "--limit" << boost::lexical_cast<std::string>(limit);
+
+   FilePath fileFilter = fileFilterPath(fileFilterJson);
+   history(rev, searchText, fileFilter, options,
+           boost::bind(svnHistoryEnd, skip, maxentries, cont, _1, _2));
+}
+
+void svnShowEnd(const json::JsonRpcFunctionContinuation& cont,
+                const Error& error,
+                const core::system::ProcessResult& result)
+{
+   json::JsonRpcResponse response;
+   if (!error)
+      response.setResult(result.stdOut);
+   cont(error, &response);
+}
+
+void svnShow(const json::JsonRpcRequest& request,
+             const json::JsonRpcFunctionContinuation& cont)
 {
    int revision;
    bool noSizeWarning;
    Error error = json::readParams(request.params, &revision, &noSizeWarning);
    if (error)
-      return error;
+   {
+      json::JsonRpcResponse response;
+      cont(error, &response);
+   }
 
    ShellArgs args;
    args << "diff" << "-c" << revision;
 
-   std::string output;
-   error = runSvn(args, &output);
-   if (error)
-      return error;
-
-   pResponse->setResult(output);
-   return Success();
+   runSvnAsync(args, false,
+               boost::bind(svnShowEnd, cont, _1, _2));
 }
 
 Error svnShowFile(const json::JsonRpcRequest& request,
@@ -1141,9 +1231,9 @@ Error initialize()
       (bind(registerRpcMethod, "svn_commit", svnCommit))
       (bind(registerRpcMethod, "svn_diff_file", svnDiffFile))
       (bind(registerRpcMethod, "svn_apply_patch", svnApplyPatch))
-      (bind(registerRpcMethod, "svn_history_count", svnHistoryCount))
-      (bind(registerRpcMethod, "svn_history", svnHistory))
-      (bind(registerRpcMethod, "svn_show", svnShow))
+      (bind(registerAsyncRpcMethod, "svn_history_count", svnHistoryCount))
+      (bind(registerAsyncRpcMethod, "svn_history", svnHistory))
+      (bind(registerAsyncRpcMethod, "svn_show", svnShow))
       (bind(registerRpcMethod, "svn_show_file", svnShowFile))
       ;
    Error error = initBlock.execute();

@@ -228,6 +228,11 @@ struct ProcessCallbacks
    boost::function<void(int)> onExit;
 };
 
+ProcessCallbacks createProcessCallbacks(
+               const std::string& input,
+               const boost::function<void(const ProcessResult&)>& onCompleted,
+               const boost::function<void(const Error&)>& onError=
+                                  boost::function<void(const core::Error&)>());
 
 // Process supervisor
 class ProcessSupervisor : boost::noncopyable

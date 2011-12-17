@@ -124,8 +124,9 @@ namespace {
 struct ChildCallbacks
 {
    ChildCallbacks(const std::string& input,
-                  const boost::function<void(const ProcessResult&)>& onCompleted)
-      : input(input), onCompleted(onCompleted)
+                  const boost::function<void(const ProcessResult&)>& onCompleted,
+                  const boost::function<void(const Error&)>& onErrored)
+      : input(input), onCompleted(onCompleted), onErrored(onErrored)
    {
    }
 
@@ -155,6 +156,11 @@ struct ChildCallbacks
       stdErr.append(output);
    }
 
+   void onError(ProcessOperations&, const Error& error)
+   {
+      onErrored(error);
+   }
+
    void onConsoleOutputSnapshot(ProcessOperations&,
                                 const std::vector<char>& output)
    {
@@ -175,16 +181,22 @@ struct ChildCallbacks
    std::string stdErr;
    std::vector<char> consoleOutputSnapshot;
    boost::function<void(const ProcessResult&)> onCompleted;
+   boost::function<void(const Error&)> onErrored;
 };
+
+} // anonymous namespace
+
 
 ProcessCallbacks createProcessCallbacks(
                const std::string& input,
-               const boost::function<void(const ProcessResult&)>& onCompleted)
+               const boost::function<void(const ProcessResult&)>& onCompleted,
+               const boost::function<void(const Error&)>& onError)
 {
    // create a shared_ptr to the ChildCallbacks. it will stay alive
    // as long as one of its members is referenced in a bind context
    boost::shared_ptr<ChildCallbacks> pCC(new ChildCallbacks(input,
-                                                            onCompleted));
+                                                            onCompleted,
+                                                            onError));
 
    // bind in the callbacks
    using boost::bind;
@@ -195,13 +207,11 @@ ProcessCallbacks createProcessCallbacks(
    cb.onConsoleOutputSnapshot =
          bind(&ChildCallbacks::onConsoleOutputSnapshot, pCC, _1, _2);
    cb.onExit = bind(&ChildCallbacks::onExit, pCC, _1);
+   cb.onError = bind(&ChildCallbacks::onError, pCC, _1, _2);
 
    // return it
    return cb;
 }
-
-
-} // anonymous namespace
 
 
 Error ProcessSupervisor::runProgram(
@@ -212,7 +222,8 @@ Error ProcessSupervisor::runProgram(
             const boost::function<void(const ProcessResult&)>& onCompleted)
 {
    // create proces callbacks
-   ProcessCallbacks cb = createProcessCallbacks(input, onCompleted);
+   ProcessCallbacks cb = createProcessCallbacks(
+            input, onCompleted, boost::function<void(const Error&)>());
 
    // run the child
    return runProgram(executable, args, options, cb);
