@@ -31,14 +31,14 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class SvnPage extends VersionControlPage
 {
-   public SvnPage(boolean isSvnAvailable)
+   public SvnPage()
    {
-      super("Subversion", 
+      super(VCSConstants.SVN_ID,
+            "Subversion", 
             "Checkout a project from a Subversion repository",
             "Checkout Subversion Repository",
             NewProjectResources.INSTANCE.svnIcon(),
-            NewProjectResources.INSTANCE.svnIconLarge(),
-            isSvnAvailable);
+            NewProjectResources.INSTANCE.svnIconLarge());
    }
 
 

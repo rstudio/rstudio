@@ -31,14 +31,14 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class GitPage extends VersionControlPage
 {
-   public GitPage(boolean isGitAvailable)
+   public GitPage()
    {
-      super("Git", 
+      super(VCSConstants.GIT_ID,
+            "Git", 
             "Clone a project from a Git repository",
             "Clone Git Repository",
             NewProjectResources.INSTANCE.gitIcon(),
-            NewProjectResources.INSTANCE.gitIconLarge(),
-            isGitAvailable);
+            NewProjectResources.INSTANCE.gitIconLarge());
    }
 
 

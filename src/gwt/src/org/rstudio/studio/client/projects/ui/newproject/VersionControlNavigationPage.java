@@ -18,7 +18,6 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
@@ -45,9 +44,12 @@ public class VersionControlNavigationPage
       
       ArrayList<WizardPage<FileSystemItem, NewProjectResult>> pages = 
             new  ArrayList<WizardPage<FileSystemItem, NewProjectResult>>();
-      pages.add(new GitPage(sessionInfo.isVcsAvailable(VCSConstants.GIT_ID)));
+      
+      pages.add(new GitPage());
+      
       if (sessionInfo.isSvnFeatureEnabled())
-         pages.add(new SvnPage(sessionInfo.isVcsAvailable(VCSConstants.SVN_ID)));
+         pages.add(new SvnPage());
+      
       return pages;
    }
    

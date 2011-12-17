@@ -15,8 +15,10 @@ package org.rstudio.studio.client.projects.ui.newproject;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.vcs.VCSHelpLink;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.HTML;
@@ -25,22 +27,26 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 public abstract class VersionControlPage extends NewProjectWizardPage
 {
 
-   public VersionControlPage(String title, 
-                            String subTitle, 
-                            String pageCaption, 
-                            ImageResource image,
-                            ImageResource largeImage,
-                            boolean vcsIsAvailable)
+   public VersionControlPage(String vcsId,
+                             String title, 
+                             String subTitle, 
+                             String pageCaption, 
+                             ImageResource image,
+                             ImageResource largeImage)
    {
-      super(title, subTitle, pageCaption, image, largeImage);
-      vcsIsAvailable_ = vcsIsAvailable;
-      
+      super(title, subTitle, pageCaption, image, largeImage);  
+      vcsId_ = vcsId;
    }
+   
+   
+   
    
    @Override
    protected boolean acceptNavigation()
    {
-      if (!vcsIsAvailable_)
+      SessionInfo sessionInfo = 
+                     RStudioGinjector.INSTANCE.getSession().getSessionInfo();
+      if (!sessionInfo.isVcsAvailable(vcsId_))
       {         
          NewProjectResources.Styles styles = 
                                  NewProjectResources.INSTANCE.styles();   
@@ -98,6 +104,5 @@ public abstract class VersionControlPage extends NewProjectWizardPage
       }
    }
    
-   
-   private final boolean vcsIsAvailable_;
+   private final String vcsId_;
 }
