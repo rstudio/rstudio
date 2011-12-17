@@ -19,14 +19,27 @@ public class SvnPage extends VersionControlPage
 {
    public SvnPage()
    {
-      super(VCSConstants.SVN_ID,
-            "Subversion", 
+      super("Subversion", 
             "Checkout a project from a Subversion repository",
             "Checkout Subversion Repository",
             NewProjectResources.INSTANCE.svnIcon(),
             NewProjectResources.INSTANCE.svnIconLarge());
    }
+   
 
+   @Override
+   protected String getVcsId()
+   {
+      return VCSConstants.SVN_ID;
+   }
+
+   @Override
+   protected boolean includeCredentials()
+   {
+      return true;
+   }
+   
+   
    @Override 
    protected String guessRepoDir(String url)
    {

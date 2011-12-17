@@ -75,11 +75,13 @@ Error vcsClone(const json::JsonRpcRequest& request,
 {
    std::string vcsName;
    std::string url;
+   std::string username;
    std::string dirName;
    std::string parentDir;
    Error error = json::readObjectParam(request.params, 0,
                                        "vcs_name", &vcsName,
                                        "repo_url", &url,
+                                       "username", &username,
                                        "directory_name", &dirName,
                                        "parent_path", &parentDir);
    if (error)
@@ -102,6 +104,7 @@ Error vcsClone(const json::JsonRpcRequest& request,
    else if (vcsName == svn::kVcsId)
    {
       Error error = svn::checkout(url,
+                                  username,
                                   dirName,
                                   parentPath,
                                   &pCP);

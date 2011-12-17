@@ -39,18 +39,14 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 public abstract class VersionControlPage extends NewProjectWizardPage
 {
 
-   public VersionControlPage(String vcsId,
-                             String title, 
+   public VersionControlPage(String title, 
                              String subTitle, 
                              String pageCaption, 
                              ImageResource image,
                              ImageResource largeImage)
    {
       super(title, subTitle, pageCaption, image, largeImage);  
-      vcsId_ = vcsId;
    }
-   
-   
    
    
    @Override
@@ -58,7 +54,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
    {
       SessionInfo sessionInfo = 
                      RStudioGinjector.INSTANCE.getSession().getSessionInfo();
-      if (!sessionInfo.isVcsAvailable(vcsId_))
+      if (!sessionInfo.isVcsAvailable(getVcsId()))
       {         
          NewProjectResources.Styles styles = 
                                  NewProjectResources.INSTANCE.styles();   
@@ -142,8 +138,23 @@ public abstract class VersionControlPage extends NewProjectWizardPage
       
       addSpacer();
       
+      txtUsername_ = new TextBox();
+      txtUsername_.setWidth("100%");
       
-      Label dirNameLabel = new Label("Directory name:");
+      if (includeCredentials())
+      {  
+         VerticalPanel usernamePanel = new VerticalPanel();
+         usernamePanel.addStyleName(styles.wizardTextEntry());
+         Label usernameLabel = new Label("Username (if required for this repository URL):");
+         usernameLabel.addStyleName(styles.wizardTextEntryLabel());
+         usernamePanel.add(usernameLabel);
+         usernamePanel.add(txtUsername_);
+         addWidget(usernamePanel);
+         
+         addSpacer();
+      }
+      
+      Label dirNameLabel = new Label("Project directory name:");
       dirNameLabel.addStyleName(styles.wizardTextEntryLabel());
       addWidget(dirNameLabel);
       txtDirName_ = new TextBox();
@@ -181,6 +192,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
          autoFillCheckoutDir(); 
      
       String url = txtRepoUrl_.getText().trim();
+      String username = txtUsername_.getText().trim();
       String checkoutDir = txtDirName_.getText().trim();
       String dir = existingRepoDestDir_.getText().trim();
       if (url.length() > 0 && checkoutDir.length() > 0 && dir.length() > 0)
@@ -188,8 +200,9 @@ public abstract class VersionControlPage extends NewProjectWizardPage
          String projFile = projFileFromDir(
                FileSystemItem.createDir(dir).completePath(checkoutDir));
          
-         VcsCloneOptions options = VcsCloneOptions.create(vcsId_, 
+         VcsCloneOptions options = VcsCloneOptions.create(getVcsId(), 
                                                           url, 
+                                                          username,
                                                           checkoutDir, 
                                                           dir);
          
@@ -256,11 +269,17 @@ public abstract class VersionControlPage extends NewProjectWizardPage
       return guessRepoDir(txtRepoUrl_.getText().trim());
    }
    
+   protected abstract String getVcsId();
+   
+   protected boolean includeCredentials()
+   {
+      return false;
+   }
+   
    protected abstract String guessRepoDir(String url);
    
-   private final String vcsId_;
-  
    private TextBox txtRepoUrl_;
+   private TextBox txtUsername_;
    private TextBox txtDirName_;
    private DirectoryChooserTextBox existingRepoDestDir_;
    private boolean suppressDirNameDetection_ = false;

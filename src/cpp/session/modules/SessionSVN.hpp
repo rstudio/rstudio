@@ -44,6 +44,7 @@ core::FilePath detectedSvnExePath();
 std::string nonPathSvnBinDir();
 
 core::Error checkout(const std::string& url,
+                     const std::string& username,
                      const std::string dirName,
                      const core::FilePath& parentPath,
                      boost::shared_ptr<console_process::ConsoleProcess>* ppCP);

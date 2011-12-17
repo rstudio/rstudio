@@ -1162,11 +1162,24 @@ Error svnShowFile(const json::JsonRpcRequest& request,
 }
 
 Error checkout(const std::string& url,
+               const std::string& username,
                const std::string dirName,
                const core::FilePath& parentPath,
                boost::shared_ptr<console_process::ConsoleProcess>* ppCP)
 {
-   Error error = createConsoleProc(ShellArgs() << "checkout" << url << dirName,
+   // optional username arg
+   ShellArgs args;
+   if (!username.empty())
+      args << "--username" << username;
+
+   // checkout command
+   args << "checkout" << url;
+
+   // optional target directory arg
+   if (!dirName.empty())
+      args << dirName;
+
+   Error error = createConsoleProc(args,
                                    parentPath,
                                    "SVN Checkout",
                                    true,

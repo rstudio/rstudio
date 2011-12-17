@@ -36,6 +36,6 @@ public class NewProjectWizard extends Wizard<FileSystemItem,NewProjectResult>
       
       addPage(new NewDirectoryPage());
       addPage(new ExistingDirectoryPage());
-      addPage(new VersionControlNavigationPage());
+      addPage(new VersionControlNavigationPage(sessionInfo));
    }
 }

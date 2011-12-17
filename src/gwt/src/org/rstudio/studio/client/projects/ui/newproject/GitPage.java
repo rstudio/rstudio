@@ -18,12 +18,17 @@ public class GitPage extends VersionControlPage
 {
    public GitPage()
    {
-      super(VCSConstants.GIT_ID,
-            "Git", 
+      super("Git", 
             "Clone a project from a Git repository",
             "Clone Git Repository",
             NewProjectResources.INSTANCE.gitIcon(),
             NewProjectResources.INSTANCE.gitIconLarge());
+   }
+   
+   @Override
+   protected String getVcsId()
+   {
+      return VCSConstants.GIT_ID;
    }
 
    @Override

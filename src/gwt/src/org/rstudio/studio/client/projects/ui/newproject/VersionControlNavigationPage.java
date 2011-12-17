@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
@@ -25,23 +24,20 @@ public class VersionControlNavigationPage
             extends WizardNavigationPage<FileSystemItem,NewProjectResult>
 {
 
-   public VersionControlNavigationPage()
+   public VersionControlNavigationPage(SessionInfo sessionInfo)
    {
       super("Version Control", 
             "Checkout a project from a version control repository",
             "Create Project from Version Control",
             NewProjectResources.INSTANCE.projectFromRepositoryIcon(),
             NewProjectResources.INSTANCE.projectFromRepositoryIconLarge(),
-            createPages());
+            createPages(sessionInfo));
    }
 
   
    private static ArrayList<WizardPage<FileSystemItem, NewProjectResult>>
-                                                                  createPages()
-   {
-      SessionInfo sessionInfo = 
-                     RStudioGinjector.INSTANCE.getSession().getSessionInfo();
-      
+                                         createPages(SessionInfo sessionInfo)
+   {   
       ArrayList<WizardPage<FileSystemItem, NewProjectResult>> pages = 
             new  ArrayList<WizardPage<FileSystemItem, NewProjectResult>>();
       

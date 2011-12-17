@@ -22,12 +22,14 @@ public class VcsCloneOptions extends JavaScriptObject
    
    public native static final VcsCloneOptions create(String vcsName,
                                                      String repoUrl,
+                                                     String username,
                                                      String directoryName,
                                                      String parentPath)
                                                                           /*-{
       var options = new Object();
       options.vcs_name = vcsName;
       options.repo_url = repoUrl;
+      options.username = username;
       options.directory_name = directoryName;
       options.parent_path = parentPath;
       return options;
@@ -42,6 +44,10 @@ public class VcsCloneOptions extends JavaScriptObject
       return this.repo_url;
    }-*/;
    
+   public native final String getUsername() /*-{
+      return this.username;
+   }-*/;
+
    public native final String getDirectoryName() /*-{
       return this.directory_name;
    }-*/;
