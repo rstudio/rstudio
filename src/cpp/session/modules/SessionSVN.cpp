@@ -215,7 +215,7 @@ void runSvnAsync(const ShellArgs& args,
                  bool redirectStdErrToStdOut,
                  ProcResultCallback completionCallback)
 {
-   system::ProcessCallbacks callbacks = system::createProcessCallbacks(
+   core::system::ProcessCallbacks callbacks = core::system::createProcessCallbacks(
             "",
             boost::bind(completionCallback, Success(), _1),
             boost::bind(completionCallback, _1, core::system::ProcessResult()));
