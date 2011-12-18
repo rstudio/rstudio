@@ -69,6 +69,7 @@ private:
          InteractionMode mode,
          int maxOutputLines);
 
+   void regexInit();
    void commonInit();
 
 public:
@@ -181,6 +182,11 @@ private:
 
    boost::function<bool(const std::string&, Input*)> onPrompt_;
    boost::signal<void(int)> onExit_;
+
+
+   // regex for prompt detection
+   boost::regex controlCharsPattern_;
+   boost::regex promptPattern_;
 };
 
 

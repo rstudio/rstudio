@@ -61,6 +61,8 @@ ConsoleProcess::ConsoleProcess()
      maxOutputLines_(kDefaultMaxOutputLines), started_(true),
      interrupt_(false), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
+   regexInit();
+
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
    outputBuffer_.push_back('\n');
@@ -97,8 +99,16 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
    commonInit();
 }
 
+void ConsoleProcess::regexInit()
+{
+   controlCharsPattern_ = boost::regex("[\\r\\b]");
+   promptPattern_ = boost::regex("^(.+)[\\$:?] $");
+}
+
 void ConsoleProcess::commonInit()
 {
+   regexInit();
+
    handle_ = core::system::generateUuid(false);
 
    // always redirect stderr to stdout so output is interleaved
@@ -295,10 +305,17 @@ void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
 void ConsoleProcess::maybeConsolePrompt(core::system::ProcessOperations& ops,
                                         const std::string& output)
 {
-   // treat special control characters as output rather than a prompt
    boost::smatch smatch;
-   if (boost::regex_search(output, smatch, boost::regex("[\\r\\b]")))
+
+   // treat special control characters as output rather than a prompt
+   if (boost::regex_search(output, smatch, controlCharsPattern_))
       enqueOutputEvent(output, false);
+
+   // make sure the output matches our prompt pattern
+   if (!boost::regex_match(output, smatch, promptPattern_))
+      enqueOutputEvent(output, false);
+
+   // it is a prompt
    else
       handleConsolePrompt(ops, output);
 }
