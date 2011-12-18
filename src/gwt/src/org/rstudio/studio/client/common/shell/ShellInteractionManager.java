@@ -45,11 +45,6 @@ public class ShellInteractionManager implements ShellOutputWriter
       display_.addCapturingKeyDownHandler(new InputKeyDownHandler());
    }
    
-   public void setPublicKeyInfo(PublicKeyInfo publicKeyInfo)
-   {
-      publicKeyInfo_ = publicKeyInfo;
-   }
-   
    public void setHistoryEnabled(boolean enabled)
    {
       historyEnabled_ = enabled;
