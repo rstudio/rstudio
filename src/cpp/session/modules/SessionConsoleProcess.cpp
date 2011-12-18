@@ -102,7 +102,7 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
 void ConsoleProcess::regexInit()
 {
    controlCharsPattern_ = boost::regex("[\\r\\b]");
-   promptPattern_ = boost::regex("^(.+)[\\$:?] $");
+   promptPattern_ = boost::regex("^(.+)[\\W_]( +)$");
 }
 
 void ConsoleProcess::commonInit()
