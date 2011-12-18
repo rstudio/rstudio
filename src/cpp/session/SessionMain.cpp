@@ -1004,6 +1004,11 @@ bool waitForMethod(const std::string& method,
          }
       }
 
+      // if we have at least one async process running then this counts
+      // as "activity" and resets the timeout timer
+      if(module_context::processSupervisor().hasRunningChildren())
+         timeoutTime = timeoutTimeFromNow();
+
       // look for a connection (waiting for the specified interval)
       boost::shared_ptr<HttpConnection> ptrConnection =
           httpConnectionListener().mainConnectionQueue().dequeConnection(
