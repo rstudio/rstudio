@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 
 public class SvnPage extends VersionControlPage
@@ -43,10 +42,16 @@ public class SvnPage extends VersionControlPage
    @Override 
    protected String guessRepoDir(String url)
    {
-      String guess = FileSystemItem.createFile(url).getStem();
-      if (guess.length() > 1)
-         return guess;
-      else
-         return null;
+      // Strip trailing spaces and slashes
+      while (url.endsWith("/") || url.endsWith(" ") || url.endsWith("\t"))
+         url = url.substring(0, url.length() - 1);
+      
+      // Find last component
+      url = url.replaceFirst(".*[/]", ""); // greedy
+
+      url = url.replaceAll("[\u0000-\u0020]+", " ");
+      url = url.trim();
+      return url;
+     
    }
 }
