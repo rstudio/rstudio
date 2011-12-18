@@ -1190,16 +1190,18 @@ Error checkout(const std::string& url,
 
    // attach the password manager if this is an svn+ssh url
    if (boost::algorithm::starts_with(url, "svn+ssh"))
-      s_pPasswordManager->attach(*ppCP);
+      s_pPasswordManager->attach(*ppCP, false);
 
    return Success();
 }
 
 bool promptForPassword(const std::string& prompt,
+                       bool showRememberOption,
                        std::string* pPassword,
                        bool* pRemember)
 {
-   std::string rememberPrompt = "Remember password for this session";
+   std::string rememberPrompt = showRememberOption ?
+                                "Remember password for this session" : "";
    source_control::PasswordInput input;
    Error error = source_control::askForPassword(prompt,
                                                 rememberPrompt,
@@ -1228,8 +1230,8 @@ Error initialize()
 {
    // initialize password manager
    s_pPasswordManager.reset(new PasswordManager(
-                               boost::regex("^(.+)password: $"),
-                               boost::bind(promptForPassword, _1, _2, _3)));
+                         boost::regex("^(.+)password: $"),
+                         boost::bind(promptForPassword, _1, _2, _3, _4)));
 
    // install rpc methods
    using boost::bind;

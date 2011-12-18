@@ -570,12 +570,14 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
 }
 
 void PasswordManager::attach(
-                  boost::shared_ptr<console_process::ConsoleProcess> pCP)
+                  boost::shared_ptr<console_process::ConsoleProcess> pCP,
+                  bool showRememberOption)
 {
    pCP->setPromptHandler(boost::bind(&PasswordManager::handlePrompt,
                                        this,
                                        pCP->handle(),
                                        _1,
+                                       showRememberOption,
                                        _2));
 
    pCP->onExit().connect(boost::bind(&PasswordManager::onExit,
@@ -586,6 +588,7 @@ void PasswordManager::attach(
 
 bool PasswordManager::handlePrompt(const std::string& cpHandle,
                                    const std::string& prompt,
+                                   bool showRememberOption,
                                    ConsoleProcess::Input* pInput)
 {
    // is this a password prompt?
@@ -607,16 +610,18 @@ bool PasswordManager::handlePrompt(const std::string& cpHandle,
          // prompt for password
          std::string password;
          bool remember;
-         if (promptHandler_(prompt, &password, &remember))
+         if (promptHandler_(prompt, showRememberOption, &password, &remember))
          {
-            if (remember)
-            {
-               CachedPassword cachedPassword;
-               cachedPassword.cpHandle = cpHandle;
-               cachedPassword.prompt = prompt;
-               cachedPassword.password = password;
-               passwords_.push_back(cachedPassword);
-            }
+
+            // cache the password (but also set the remember flag so it
+            // will be removed from the cache when the console process
+            // exits if the user chose not to remember).
+            CachedPassword cachedPassword;
+            cachedPassword.cpHandle = cpHandle;
+            cachedPassword.prompt = prompt;
+            cachedPassword.password = password;
+            cachedPassword.remember = remember;
+            passwords_.push_back(cachedPassword);
 
             // interactively entered password
             *pInput = ConsoleProcess::Input(password + "\n", false);
@@ -649,6 +654,16 @@ void PasswordManager::onExit(const std::string& cpHandle,
                                       boost::bind(&hasHandle, _1, cpHandle)),
                        passwords_.end());
    }
+
+   // otherwise remove any cached password for this process which doesn't
+   // have its remember flag set
+   else
+   {
+      passwords_.erase(std::remove_if(passwords_.begin(),
+                                      passwords_.end(),
+                                      boost::bind(&forgetOnExit, _1, cpHandle)),
+                       passwords_.end());
+   }
 }
 
 
@@ -662,6 +677,12 @@ bool PasswordManager::hasHandle(const CachedPassword& cachedPassword,
                                 const std::string& cpHandle)
 {
    return cachedPassword.cpHandle == cpHandle;
+}
+
+bool PasswordManager::forgetOnExit(const CachedPassword& cachedPassword,
+                                   const std::string& cpHandle)
+{
+   return hasHandle(cachedPassword, cpHandle) && !cachedPassword.remember;
 }
 
 core::json::Array processesAsJson()

@@ -193,7 +193,7 @@ private:
 class PasswordManager : boost::noncopyable
 {
 public:
-   typedef boost::function<bool(const std::string&, std::string*, bool*)>
+   typedef boost::function<bool(const std::string&, bool, std::string*, bool*)>
                                                                PromptHandler;
 
    explicit PasswordManager(const boost::regex& promptPattern,
@@ -206,21 +206,28 @@ public:
    // COPYING: boost::noncopyable
 
 public:
-   void attach(boost::shared_ptr<ConsoleProcess> pCP);
+   // NOTE: if you don't showRememberOption then passwords from that
+   // interaction will NOT be remembered after the parent console
+   // process exits
+   void attach(boost::shared_ptr<ConsoleProcess> pCP,
+               bool showRememberOption = true);
 
 
 private:
    bool handlePrompt(const std::string& cpHandle,
                      const std::string& prompt,
+                     bool showRememberOption,
                      ConsoleProcess::Input* pInput);
 
    void onExit(const std::string& cpHandle, int exitCode);
 
    struct CachedPassword
    {
+      CachedPassword() : remember(false) {}
       std::string cpHandle;
       std::string prompt;
       std::string password;
+      bool remember;
    };
 
    static bool hasPrompt(const CachedPassword& cachedPassword,
@@ -228,6 +235,9 @@ private:
 
    static bool hasHandle(const CachedPassword& cachedPassword,
                          const std::string& cpHandle);
+
+   static bool forgetOnExit(const CachedPassword& cachedPassword,
+                            const std::string& cpHandle);
 
 private:
    boost::regex promptPattern_;
