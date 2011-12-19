@@ -1288,8 +1288,6 @@ Error vcsCheckout(const json::JsonRpcRequest& request,
 
    pResponse->setResult(pCP->toJson());
 
-   source_control::setAskPassWindow(request.sourceWindow);
-
    return Success();
 }
 
