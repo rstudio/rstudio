@@ -1045,6 +1045,7 @@ void svnHistoryEnd(int skip,
    if (error)
    {
       cont(error, &response);
+      return;
    }
    xml_node<>* pLog = doc.first_node("log");
 
@@ -1143,6 +1144,7 @@ void svnShow(const json::JsonRpcRequest& request,
    {
       json::JsonRpcResponse response;
       cont(error, &response);
+      return;
    }
 
    ShellArgs args;
