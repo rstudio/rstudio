@@ -16,10 +16,14 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.view.client.HasData;
 import com.google.inject.Inject;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
+import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitCount;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryStrategy;
 import org.rstudio.studio.client.workbench.views.vcs.svn.model.SVNState;
@@ -100,6 +104,35 @@ public class SVNHistoryStrategy implements HistoryStrategy
    public void refreshCount()
    {
       dataProvider_.refreshCount();
+   }
+
+   @Override
+   public void initializeHistory(final HasData<CommitInfo> dataDisplay)
+   {
+      // Run a very short svnHistory call before allowing initialization to
+      // proceed. We do this to force authentication to happen in a predictable
+      // way, whereas without this mechanism, three different auth prompts
+      // happen at the same time.
+
+      server_.svnHistory(
+            -1, null, 0, 1, "",
+            new ServerRequestCallback<RpcObjectList<CommitInfo>>()
+            {
+               @Override
+               public void onResponseReceived(RpcObjectList<CommitInfo> infos)
+               {
+                  addDataDisplay(dataDisplay);
+                  refreshCount();
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  /* TODO: This may need to do a retry or something, depending
+                     on how it goes with JJ's refactor of SVN auth */
+                  Debug.logError(error);
+               }
+            });
    }
 
    private int parseRevision(String revision)

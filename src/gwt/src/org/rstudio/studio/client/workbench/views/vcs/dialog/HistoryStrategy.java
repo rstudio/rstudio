@@ -43,4 +43,6 @@ public interface HistoryStrategy
    void onRangeChanged(HasData<CommitInfo> display);
 
    void refreshCount();
+
+   void initializeHistory(HasData<CommitInfo> dataDisplay);
 }
