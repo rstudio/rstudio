@@ -236,7 +236,6 @@ void runSvnAsync(const ShellArgs& args,
          module_context::processSupervisor().runProgram(
             consoleIoPath.absolutePathNative(),
             winArgs.args(),
-            std::string(),
             options,
             callbacks);
 #else
