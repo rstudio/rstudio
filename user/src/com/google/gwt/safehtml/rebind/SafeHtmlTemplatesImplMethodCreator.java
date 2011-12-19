@@ -363,10 +363,11 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
          */
         if (!isSafeUri(parameterType)) {
           // Warn against using unsafe parameters in a URL attribute context.
-          logger.log(TreeLogger.WARN,
-              "Template with variable in URL attribute context: The template code generator cannot"
-                  + " guarantee HTML-safety of the template -- please inspect manually or use "
-                  + SAFE_URI_CN + " to specify arguments in a URL attribute context");
+          logger.log(TreeLogger.INFO,
+              "Template with variable in URL attribute context: The template code generator will"
+                  + " sanitize the URL.  Use " + SAFE_URI_CN
+                  + " to specify arguments in a URL attribute context that should not be"
+                  + " sanitized.");
         }
         emitAttributeContextParameterExpression(logger, htmlContext, formalParameterName,
             parameterType);
