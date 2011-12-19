@@ -96,7 +96,7 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
          @Override
          public void onVcsRefresh(VcsRefreshEvent event)
          {
-            refresh();
+            view_.setItems(gitState_.getStatus());
          }
       });
 
@@ -350,12 +350,6 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
                }
             },
             false);
-   }
-   
-
-   private void refresh()
-   {
-      view_.setItems(gitState_.getStatus());
    }
 
    private final Display view_;
