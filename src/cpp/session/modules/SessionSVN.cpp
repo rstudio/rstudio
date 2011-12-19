@@ -771,6 +771,7 @@ Error svnUpdate(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   source_control::setAskPassWindow(request.sourceWindow);
 
    maybeAttachPasswordManager(pCP);
 
@@ -788,6 +789,8 @@ Error svnCommit(const json::JsonRpcRequest& request,
    Error error = json::readParams(request.params, &paths, &message);
    if (error)
       return error;
+
+   source_control::setAskPassWindow(request.sourceWindow);
 
    FilePath tempFile = module_context::tempFile("svnmsg", "txt");
    boost::shared_ptr<std::ostream> pStream;
@@ -1003,6 +1006,8 @@ void svnHistoryCount(const json::JsonRpcRequest& request,
       return;
    }
 
+   source_control::setAskPassWindow(request.sourceWindow);
+
    ShellArgs options;
    options << "-q";
    FilePath fileFilter = fileFilterPath(fileFilterJson);
@@ -1096,6 +1101,8 @@ void svnHistory(const json::JsonRpcRequest& request,
       cont(error, NULL);
       return;
    }
+
+   source_control::setAskPassWindow(request.sourceWindow);
 
    int limit = skip + maxentries;
    ShellArgs options;
