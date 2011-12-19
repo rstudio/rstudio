@@ -20,6 +20,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.json.client.JSONNumber;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
@@ -353,8 +354,7 @@ public class HistoryPresenter
       if (!initialized_)
       {
          initialized_ = true;
-         strategy_.addDataDisplay(view_.getDataDisplay());
-         strategy_.refreshCount();
+         strategy_.initializeHistory(view_.getDataDisplay());
       }
       view_.onShow();
    }

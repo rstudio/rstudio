@@ -100,6 +100,13 @@ public class GitHistoryStrategy implements HistoryStrategy
       dataProvider_.refreshCount();
    }
 
+   @Override
+   public void initializeHistory(HasData<CommitInfo> dataDisplay)
+   {
+      addDataDisplay(dataDisplay);
+      refreshCount();
+   }
+
    private final GitServerOperations server_;
    private final GitHistoryAsyncDataProvider dataProvider_;
    private final GitState vcsState_;
