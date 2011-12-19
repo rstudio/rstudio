@@ -128,6 +128,14 @@ public class Projects implements OpenProjectFileHandler,
             {
                commands.activateVcs().setMenuLabel(
                                     "Show _" + sessionInfo.getVcsName());
+               
+               // customize for svn if necessary
+               if (sessionInfo.getVcsName().equals(VCSConstants.SVN_ID))
+               {
+                  commands.vcsPush().remove();
+                  commands.vcsPull().setButtonLabel("Update");
+                  commands.vcsPull().setMenuLabel("Update");
+               }       
             }
             
             // disable the open project in new window command in web mode
