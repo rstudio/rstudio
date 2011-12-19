@@ -1191,7 +1191,7 @@ bool promptForPassword(const std::string& prompt,
                        bool* pRemember)
 {
    std::string rememberPrompt = showRememberOption ?
-                                "Remember password for this session" : "";
+                                "Remember for this session" : "";
    source_control::PasswordInput input;
    Error error = source_control::askForPassword(prompt,
                                                 rememberPrompt,
@@ -1220,7 +1220,7 @@ Error initialize()
 {
    // initialize password manager
    s_pPasswordManager.reset(new PasswordManager(
-                         boost::regex("^(.+)password: $"),
+                         boost::regex("^(.+): $"),
                          boost::bind(promptForPassword, _1, _2, _3, _4)));
 
    // install rpc methods

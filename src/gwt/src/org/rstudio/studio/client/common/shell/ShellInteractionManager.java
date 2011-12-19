@@ -49,6 +49,11 @@ public class ShellInteractionManager implements ShellOutputWriter
    {
       historyEnabled_ = enabled;
    }
+   
+   public void setNoEchoForColonPrompts(boolean noEchoForColonPrompts)
+   {
+      noEchoForColonPrompts_ = noEchoForColonPrompts;
+   }
   
    @Override
    public void consoleWriteOutput(String output)
@@ -155,6 +160,20 @@ public class ShellInteractionManager implements ShellOutputWriter
    }
    
    private boolean showInputForPrompt(String prompt)
+   {
+      // always filter out english password prompts
+      if (!isNotEnglishPasswordPrompt(prompt))
+         return false;
+      
+      // optionally implement further restrictions
+      else if (noEchoForColonPrompts_ && prompt.endsWith(": "))
+         return false;
+      
+      else
+         return true;
+   }
+   
+   private boolean isNotEnglishPasswordPrompt(String prompt)
    {
       String promptLower = prompt.trim().toLowerCase();
       boolean hasPassword = promptLower.contains("password") || 
@@ -273,6 +292,7 @@ public class ShellInteractionManager implements ShellOutputWriter
    
    private boolean addToHistory_ ;
    private boolean historyEnabled_ = true;
+   private boolean noEchoForColonPrompts_ = false;
    private String lastPromptText_ ;
    private String defaultPromptSuffix_ = null;
    
