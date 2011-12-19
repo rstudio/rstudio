@@ -250,27 +250,9 @@ void runSvnAsync(const ShellArgs& args,
       completionCallback(error, core::system::ProcessResult());
 }
 
-std::vector<std::string> globalArgs(
-      const std::string* const pUsername=NULL,
-      const std::string* const pPassword=NULL,
-      bool cacheCredentials=false)
+std::vector<std::string> globalArgs()
 {
    std::vector<std::string> args;
-   //args.push_back("--trust-server-cert");
-
-   if (pUsername)
-   {
-      args.push_back("--username");
-      args.push_back(*pUsername);
-   }
-   if (pPassword)
-   {
-      args.push_back("--password");
-      args.push_back(*pPassword);
-   }
-
-   if (!cacheCredentials)
-      args.push_back("--no-auth-cache");
    return args;
 }
 
