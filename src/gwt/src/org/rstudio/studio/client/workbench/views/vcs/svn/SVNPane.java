@@ -128,6 +128,12 @@ public class SVNPane extends WorkbenchPane implements Display
    {
       return commitButton_;
    }
+   
+   @Override
+   public void setItems(ArrayList<StatusAndPath> items)
+   {
+      getChangelistTable().setItems(items);
+   }
 
    @Override
    public ArrayList<StatusAndPath> getSelectedItems()

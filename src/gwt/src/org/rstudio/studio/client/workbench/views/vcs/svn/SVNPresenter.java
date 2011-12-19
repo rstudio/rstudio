@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.svn;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -41,6 +40,8 @@ import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.ProcessCallback;
 import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.svn.model.SVNState;
 
 import java.util.ArrayList;
@@ -59,6 +60,9 @@ public class SVNPresenter extends BaseVcsPresenter
       HasClickHandlers getRevertFilesButton();
       HasClickHandlers getUpdateButton();
       HasClickHandlers getCommitButton();
+      
+      void setItems(ArrayList<StatusAndPath> items);
+      
       ArrayList<StatusAndPath> getSelectedItems();
       ChangelistTable getChangelistTable();
    }
@@ -82,6 +86,16 @@ public class SVNPresenter extends BaseVcsPresenter
       vcsFileOpener_ = vcsFileOpener;
       
       binder.bind(commands, this);
+      
+      svnState_.addVcsRefreshHandler(new VcsRefreshHandler()
+      {
+         @Override
+         public void onVcsRefresh(VcsRefreshEvent event)
+         {
+            view_.setItems(svnState_.getStatus());
+         }
+      });
+
 
       view_.getDiffButton().addClickHandler(new ClickHandler()
       {
