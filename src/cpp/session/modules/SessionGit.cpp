@@ -1835,7 +1835,6 @@ void addKeyToSSHAgent(const FilePath& keyFile,
          &addKeyToSSHAgent_onCompleted);
 }
 
-module_context::WaitForMethodFunction s_waitForAskPass;
 
 std::string transformKeyPath(const std::string& path)
 {
@@ -2404,10 +2403,6 @@ core::Error initialize()
                                                       &sshAskCmd);
       if (error)
          return error;
-
-      // register waitForMethod handler
-      s_waitForAskPass = module_context::registerWaitForMethod(
-                                                   "askpass_completed");
 
       // setup environment
       BOOST_ASSERT(boost::algorithm::ends_with(sshAskCmd, "rpostback-askpass"));
