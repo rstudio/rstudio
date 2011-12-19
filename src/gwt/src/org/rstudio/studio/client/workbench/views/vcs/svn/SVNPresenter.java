@@ -12,9 +12,9 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.svn;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.ContextMenuEvent;
+import com.google.gwt.event.dom.client.ContextMenuHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -53,18 +53,13 @@ public class SVNPresenter extends BaseVcsPresenter
    }
 
    public interface Display extends WorkbenchView, IsWidget
-   {
-      HasClickHandlers getDiffButton();
-      HasClickHandlers getAddFilesButton();
-      HasClickHandlers getDeleteFilesButton();
-      HasClickHandlers getRevertFilesButton();
-      HasClickHandlers getUpdateButton();
-      HasClickHandlers getCommitButton();
-      
+   {   
       void setItems(ArrayList<StatusAndPath> items);
       
       ArrayList<StatusAndPath> getSelectedItems();
       ChangelistTable getChangelistTable();
+      
+      void showContextMenu(int clientX, int clientY);
    }
 
    @Inject
@@ -94,66 +89,15 @@ public class SVNPresenter extends BaseVcsPresenter
          {
             view_.setItems(svnState_.getStatus());
          }
-      });
-
-
-      view_.getDiffButton().addClickHandler(new ClickHandler()
-      {
+      });      
+      
+      view_.getChangelistTable().addContextMenuHandler(new ContextMenuHandler(){
          @Override
-         public void onClick(ClickEvent event)
+         public void onContextMenu(ContextMenuEvent event)
          {
-            onVcsDiff();
-         }
-      });
-
-      view_.getAddFilesButton().addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            ArrayList<String> paths = getPathArray();
-
-            if (paths.size() > 0)
-               server_.svnAdd(paths, new ProcessCallback("SVN Add"));
-         }
-      });
-
-      view_.getDeleteFilesButton().addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            ArrayList<String> paths = getPathArray();
-
-            if (paths.size() > 0)
-               server_.svnDelete(paths, new ProcessCallback("SVN Delete"));
-         }
-      });
-
-      view_.getRevertFilesButton().addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            onVcsRevert();
-         }
-      });
-
-      view_.getUpdateButton().addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            onVcsPull();
-         }
-      });
-
-      view_.getCommitButton().addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            onVcsCommit();
+            NativeEvent nativeEvent = event.getNativeEvent();
+            view_.showContextMenu(nativeEvent.getClientX(), 
+                                  nativeEvent.getClientY());
          }
       });
    }
@@ -209,6 +153,25 @@ public class SVNPresenter extends BaseVcsPresenter
    }
    
    @Handler
+   void onVcsAddFiles()
+   {
+      ArrayList<String> paths = getPathArray();
+
+      if (paths.size() > 0)
+         server_.svnAdd(paths, new ProcessCallback("SVN Add"));
+   }
+   
+   @Handler
+   void onVcsRemoveFiles()
+   {
+      ArrayList<String> paths = getPathArray();
+
+      if (paths.size() > 0)
+         server_.svnDelete(paths, new ProcessCallback("SVN Delete"));
+   }
+   
+   
+   @Handler
    void onVcsDiff()
    {
       showChanges(view_.getSelectedItems());
@@ -237,6 +200,18 @@ public class SVNPresenter extends BaseVcsPresenter
    {
       openSelectedFiles();
    }
+   
+   
+   @Handler
+   void onVcsRefresh()
+   {
+      svnState_.refresh(true);
+   }
+   
+  
+   // the following commands are BaseVcsPresenter overrides rather than
+   // direct handlers (they are handled within the base class and then
+   // dispatched to via these overrides)
    
    @Override
    public void onVcsCommit()
@@ -333,8 +308,8 @@ public class SVNPresenter extends BaseVcsPresenter
       globalDisplay_.showYesNoMessage(
             GlobalDisplay.MSG_WARNING,
             "Revert Changes",
-            "Changes to the selected " + noun + " will be lost, including " +
-                  "staged changes.\n\nAre you sure you want to continue?",
+            "Changes to the selected " + noun + " will be reverted.\n\n" +
+                  "Are you sure you want to continue?",
                   new Operation()
             {
                @Override
@@ -351,12 +326,6 @@ public class SVNPresenter extends BaseVcsPresenter
             false);
    }
 
-   @Handler
-   void onVcsRefresh()
-   {
-      svnState_.refresh(true);
-   }
-   
    @Override
    public void onVcsPush()
    {

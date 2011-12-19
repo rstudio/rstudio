@@ -12,11 +12,11 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.svn;
 
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.inject.Inject;
 import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -37,31 +37,6 @@ public class SVNPane extends WorkbenchPane implements Display
 
       changelistTablePresenter_ = changelistTablePresenter;
       commands_ = commands;
-
-      diffButton_ = new ToolbarButton(
-            "Diff",
-            commands_.vcsDiff().getImageResource(),
-            (ClickHandler)null);
-      addFilesButton_ = new ToolbarButton(
-            "Add",
-            commands_.vcsAddFiles().getImageResource(),
-            (ClickHandler)null);
-      deleteFilesButton_ = new ToolbarButton(
-            "Delete",
-            commands_.vcsRemoveFiles().getImageResource(),
-            (ClickHandler)null);
-      revertFilesButton_ = new ToolbarButton(
-            "Revert",
-            commands_.vcsRevert().getImageResource(),
-            (ClickHandler)null);
-      updateButton_ = new ToolbarButton(
-            "Update",
-            commands_.vcsPull().getImageResource(),
-            (ClickHandler)null);
-      commitButton_ = new ToolbarButton(
-            "Commit",
-            commands_.vcsCommit().getImageResource(),
-            (ClickHandler)null);
    }
 
    @Override
@@ -79,54 +54,20 @@ public class SVNPane extends WorkbenchPane implements Display
    {
       Toolbar toolbar = new Toolbar();
 
-      toolbar.addLeftWidget(diffButton_);
+      toolbar.addLeftWidget(commands_.vcsDiff().createToolbarButton());
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(addFilesButton_);
-      toolbar.addLeftWidget(deleteFilesButton_);
-      toolbar.addLeftWidget(revertFilesButton_);
+      toolbar.addLeftWidget(commands_.vcsAddFiles().createToolbarButton());
+      toolbar.addLeftWidget(commands_.vcsRemoveFiles().createToolbarButton());
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(updateButton_);
-//      toolbar.addLeftWidget(commitButton_);
+      toolbar.addLeftWidget(commands_.vcsRevert().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.vcsPull().createToolbarButton());
+//      toolbar.addLeftWidget(commands_.vcsCommit().createToolbarButton());
 
+      toolbar.addLeftSeparator();
       toolbar.addRightWidget(commands_.vcsRefresh().createToolbarButton());
 
       return toolbar;
-   }
-
-   @Override
-   public ToolbarButton getDiffButton()
-   {
-      return diffButton_;
-   }
-
-   @Override
-   public ToolbarButton getAddFilesButton()
-   {
-      return addFilesButton_;
-   }
-
-   @Override
-   public ToolbarButton getDeleteFilesButton()
-   {
-      return deleteFilesButton_;
-   }
-
-   @Override
-   public ToolbarButton getRevertFilesButton()
-   {
-      return revertFilesButton_;
-   }
-
-   @Override
-   public ToolbarButton getUpdateButton()
-   {
-      return updateButton_;
-   }
-
-   @Override
-   public ToolbarButton getCommitButton()
-   {
-      return commitButton_;
    }
    
    @Override
@@ -145,6 +86,29 @@ public class SVNPane extends WorkbenchPane implements Display
    public ChangelistTable getChangelistTable()
    {
       return changelistTablePresenter_.getView();
+   }
+   
+   @Override
+   public void showContextMenu(final int clientX, final int clientY)
+   {
+      final ToolbarPopupMenu menu = new ToolbarPopupMenu();
+      
+      menu.addItem(commands_.vcsDiff().createMenuItem(false));
+      menu.addSeparator();
+      menu.addItem(commands_.vcsAddFiles().createMenuItem(false));
+      menu.addItem(commands_.vcsRemoveFiles().createMenuItem(false));
+      menu.addSeparator();
+      menu.addItem(commands_.vcsRevert().createMenuItem(false));
+      menu.addSeparator();
+      menu.addItem(commands_.vcsOpen().createMenuItem(false));
+    
+      menu.setPopupPositionAndShow(new PositionCallback() {
+         @Override
+         public void setPosition(int offsetWidth, int offsetHeight)
+         {
+            menu.setPopupPosition(clientX, clientY);     
+         }
+      });
    }
 
    @Override
@@ -165,10 +129,4 @@ public class SVNPane extends WorkbenchPane implements Display
 
    private final SVNChangelistTablePresenter changelistTablePresenter_;
    private final Commands commands_;
-   private final ToolbarButton diffButton_;
-   private final ToolbarButton addFilesButton_;
-   private final ToolbarButton deleteFilesButton_;
-   private final ToolbarButton revertFilesButton_;
-   private final ToolbarButton updateButton_;
-   private final ToolbarButton commitButton_;
 }

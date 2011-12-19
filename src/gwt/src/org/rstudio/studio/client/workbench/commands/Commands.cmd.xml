@@ -607,13 +607,16 @@ well as menu structures (for main menu and popup menus).
         visible="false"/>
    <cmd id="vcsRevertFiles"
         menuLabel="Revert..."
+        buttonLabel="Revert"
         desc="Revert the selected files or folders"/>
    <cmd id="vcsAddFiles"
-        menuLabel="Add..."
+        menuLabel="Add"
+        buttonLabel="Add"
         desc="Add the selected files or folders"/>
    <cmd id="vcsRemoveFiles"
-        menuLabel="Remove..."
-        desc="Remove the selected files or folders"/>
+        menuLabel="Delete"
+        buttonLabel="Delete"
+        desc="Delete the selected files or folders"/>
 
    <!-- VCS pane -->
    <cmd id="vcsDiff"

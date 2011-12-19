@@ -135,6 +135,7 @@ public class GitPane extends WorkbenchPane implements Display
       return table_;
    }
    
+   @Override
    public void showContextMenu(final int clientX, final int clientY)
    {
       final ToolbarPopupMenu menu = new ToolbarPopupMenu();
