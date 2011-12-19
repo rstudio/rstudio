@@ -404,7 +404,7 @@ Error runSvnInfo(const core::FilePath& workingDir, SvnInfo* pSvnInfo)
       return Success();
 
    core::system::ProcessResult result;
-   Error error = runSvn(ShellArgs() << "info",
+   Error error = runSvn(ShellArgs() << "info" << "--xml",
                         workingDir,
                         true,
                         &result);
@@ -413,24 +413,30 @@ Error runSvnInfo(const core::FilePath& workingDir, SvnInfo* pSvnInfo)
 
    if (result.exitStatus == EXIT_SUCCESS)
    {
-      // break the output into lines
-      boost::char_separator<char> lineSep("\n");
-      boost::tokenizer<boost::char_separator<char> > lines(result.stdOut,
-                                                           lineSep);
-      for (boost::tokenizer<boost::char_separator<char> >::iterator
-           lineIter = lines.begin();
-           lineIter != lines.end();
-           ++lineIter)
-      {
-         std::string line = *lineIter;
-         if (boost::algorithm::starts_with(line, "Repository Root:"))
-         {
-            http::Header header;
-            http::parseHeader(line, &header);
-            pSvnInfo->repositoryRoot = header.value;
-            break;
-         }
-      }
+      // parse the xml
+      std::vector<char> xmlData;
+      using namespace rapidxml;
+      xml_document<> doc;
+      Error error = parseXml(result.stdOut, &xmlData, &doc);
+      if (error)
+         return error;
+
+      // traverse to repository root
+      xml_node<>* pInfo = doc.first_node("info");
+      if (!pInfo)
+         return systemError(boost::system::errc::invalid_seek, ERROR_LOCATION);
+      xml_node<>* pEntry = pInfo->first_node("entry");
+      if (!pEntry)
+         return systemError(boost::system::errc::invalid_seek, ERROR_LOCATION);
+      xml_node<>* pRepository = pEntry->first_node("repository");
+      if (!pRepository)
+         return systemError(boost::system::errc::invalid_seek, ERROR_LOCATION);
+      xml_node<>* pRoot = pRepository->first_node("root");
+      if (!pRoot)
+         return systemError(boost::system::errc::invalid_seek, ERROR_LOCATION);
+
+      // get the value
+      pSvnInfo->repositoryRoot = pRoot->value();
    }
 
    return Success();
