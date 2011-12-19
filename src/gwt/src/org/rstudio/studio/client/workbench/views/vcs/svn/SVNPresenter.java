@@ -83,8 +83,6 @@ public class SVNPresenter extends BaseVcsPresenter
       
       binder.bind(commands, this);
 
-      GWT.<Binder>create(Binder.class).bind(commands, this);
-
       view_.getDiffButton().addClickHandler(new ClickHandler()
       {
          @Override
