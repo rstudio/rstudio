@@ -165,6 +165,7 @@ public class SVNPresenter extends BaseVcsPresenter
    
    private void manageCommands()
    {
+      @SuppressWarnings("unused")
       boolean anySelected = view_.getSelectedItemCount() > 0;
       
       
@@ -359,6 +360,7 @@ public class SVNPresenter extends BaseVcsPresenter
    
 
    private final Display view_;
+   @SuppressWarnings("unused")
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
    private final SVNServerOperations server_;
