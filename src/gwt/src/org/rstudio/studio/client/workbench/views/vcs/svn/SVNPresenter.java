@@ -81,7 +81,6 @@ public class SVNPresenter extends BaseVcsPresenter
    {
       super(view);
       view_ = view;
-      commands_ = commands;
       globalDisplay_ = globalDisplay;
       server_ = server;
       svnState_ = svnState;
@@ -165,11 +164,8 @@ public class SVNPresenter extends BaseVcsPresenter
    
    private void manageCommands()
    {
-      @SuppressWarnings("unused")
-      boolean anySelected = view_.getSelectedItemCount() > 0;
-      
-      
-      
+      // too tricky/complicated to manage these correctly, pretty harmless
+      // for us to keep them all enabled for all selection states
    }
 
    @Override
@@ -369,8 +365,6 @@ public class SVNPresenter extends BaseVcsPresenter
    
 
    private final Display view_;
-   @SuppressWarnings("unused")
-   private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
    private final SVNServerOperations server_;
    private final SVNState svnState_;
