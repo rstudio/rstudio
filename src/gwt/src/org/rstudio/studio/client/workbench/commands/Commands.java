@@ -99,9 +99,7 @@ public abstract class
    public abstract AppCommand setAsWorkingDir();
    public abstract AppCommand setWorkingDirToFilesPane();
    public abstract AppCommand showFolder();
-   public abstract AppCommand vcsAddFiles();
-   public abstract AppCommand vcsRemoveFiles();
-
+ 
    // VCS
    public abstract AppCommand vcsDiff();
    public abstract AppCommand vcsCommit();
@@ -113,8 +111,10 @@ public abstract class
    public abstract AppCommand vcsPull();
    public abstract AppCommand vcsPush();
    public abstract AppCommand vcsCleanup();
+   public abstract AppCommand vcsAddFiles();
+   public abstract AppCommand vcsRemoveFiles();
    public abstract AppCommand activateVcs();
-
+   
    // View
    public abstract AppCommand showToolbar();
    public abstract AppCommand hideToolbar();

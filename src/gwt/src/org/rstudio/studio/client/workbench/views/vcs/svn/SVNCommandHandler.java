@@ -60,6 +60,7 @@ public class SVNCommandHandler
       commands_.vcsAddFiles().setEnabled(enabled);
       commands_.vcsRemoveFiles().setEnabled(enabled);
       commands_.vcsRevert().setEnabled(enabled);
+      commands_.vcsIgnore().setEnabled(enabled);
    }
    
    // onVcsPull and onVcsCommit and not direct  command handlers because they 
@@ -81,6 +82,17 @@ public class SVNCommandHandler
    public void onVcsCommit()
    {
       globalDisplay_.showErrorMessage("SVN Commit", "Not Yet Implemented");
+   }
+   
+   @Handler
+   void onVcsIgnore()
+   {
+      ArrayList<String> paths = getPathArray();
+
+      if (paths.size() > 0)
+      {
+         globalDisplay_.showErrorMessage("SVN Ignore", "Not Yet Implemented");
+      }
    }
    
    @Handler

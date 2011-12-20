@@ -60,7 +60,6 @@ public class SVNPane extends WorkbenchPane implements Display
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.vcsAddFiles().createToolbarButton());
       toolbar.addLeftWidget(commands_.vcsRemoveFiles().createToolbarButton());
-      toolbar.addLeftWidget(commands_.vcsRevert().createToolbarButton());
       toolbar.addLeftSeparator();
       
       toolbar.addLeftWidget(commands_.vcsCommit().createToolbarButton());
@@ -69,10 +68,13 @@ public class SVNPane extends WorkbenchPane implements Display
       
       ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
 
-      moreMenu.addItem(commands_.vcsShowHistory().createMenuItem(false));
+      moreMenu.addItem(commands_.vcsRevert().createMenuItem(false));
+      moreMenu.addItem(commands_.vcsIgnore().createMenuItem(false));
       moreMenu.addSeparator();
       moreMenu.addItem(commands_.vcsPull().createMenuItem(false));
       moreMenu.addItem(commands_.vcsCleanup().createMenuItem(false));
+      moreMenu.addSeparator();
+      moreMenu.addItem(commands_.vcsShowHistory().createMenuItem(false));
       moreMenu.addSeparator();
       moreMenu.addItem(commands_.showShellDialog().createMenuItem(false));
 
@@ -114,7 +116,9 @@ public class SVNPane extends WorkbenchPane implements Display
       menu.addSeparator();
       menu.addItem(commands_.vcsAddFiles().createMenuItem(false));
       menu.addItem(commands_.vcsRemoveFiles().createMenuItem(false));
+      menu.addSeparator();
       menu.addItem(commands_.vcsRevert().createMenuItem(false));
+      menu.addItem(commands_.vcsIgnore().createMenuItem(false));
       menu.addSeparator();
       menu.addItem(commands_.vcsOpen().createMenuItem(false));
     

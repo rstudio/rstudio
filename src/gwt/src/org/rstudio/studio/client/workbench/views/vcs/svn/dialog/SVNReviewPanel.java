@@ -74,9 +74,6 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       @Source("../../dialog/images/discard.png")
       ImageResource discard();
 
-      @Source("../../dialog/images/ignore.png")
-      ImageResource ignore();
-
       @Source("../../dialog/images/stage.png")
       ImageResource stage();
 
@@ -224,24 +221,15 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       
       topToolbar_.addLeftWidget(commands.vcsAddFiles().createToolbarButton());
       topToolbar_.addLeftWidget(commands.vcsRemoveFiles().createToolbarButton());
-      topToolbar_.addLeftWidget(commands.vcsRevert().createToolbarButton());
-
       topToolbar_.addLeftSeparator();
-      
+      topToolbar_.addLeftWidget(commands.vcsRevert().createToolbarButton());
+      topToolbar_.addLeftWidget(commands.vcsIgnore().createToolbarButton());
+      topToolbar_.addLeftSeparator();
       topToolbar_.addLeftWidget(commands.vcsCommit().createToolbarButton());
       
-/*
-      topToolbar_.addLeftSeparator();
-
-      ignoreButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
-            "Ignore", RES.ignore(), (ClickHandler) null));
-*/
-
-    
+      
       topToolbar_.addRightWidget(commands.vcsRefresh().createToolbarButton());
-
       topToolbar_.addRightSeparator();
-
       commands.vcsPull().setButtonLabel("Update");
       commands.vcsPull().setMenuLabel("Update");
       topToolbar_.addRightWidget(commands.vcsPull().createToolbarButton());
@@ -416,7 +404,9 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       
       menu.addItem(commands_.vcsAddFiles().createMenuItem(false));
       menu.addItem(commands_.vcsRemoveFiles().createMenuItem(false));
+      menu.addSeparator();
       menu.addItem(commands_.vcsRevert().createMenuItem(false));
+      menu.addItem(commands_.vcsIgnore().createMenuItem(false));
       menu.addSeparator();
       menu.addItem(commands_.vcsOpen().createMenuItem(false));
     
