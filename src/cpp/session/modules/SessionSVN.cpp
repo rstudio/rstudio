@@ -785,6 +785,24 @@ Error svnUpdate(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error svnCleanup(const json::JsonRpcRequest& request,
+                json::JsonRpcResponse* pResponse)
+{
+   RefreshOnExit refreshOnExit;
+
+   core::system::ProcessResult result;
+   Error error = runSvn(ShellArgs() << "cleanup" << globalArgs(),
+                        true,
+                        &result);
+   if (error)
+      return error;
+
+   pResponse->setResult(processResultToJson(result));
+
+   return Success();
+}
+
+
 Error svnCommit(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
@@ -1239,6 +1257,7 @@ Error initialize()
       (bind(registerRpcMethod, "svn_revert", svnRevert))
       (bind(registerRpcMethod, "svn_status", svnStatus))
       (bind(registerRpcMethod, "svn_update", svnUpdate))
+      (bind(registerRpcMethod, "svn_cleanup", svnCleanup))
       (bind(registerRpcMethod, "svn_commit", svnCommit))
       (bind(registerRpcMethod, "svn_diff_file", svnDiffFile))
       (bind(registerRpcMethod, "svn_apply_patch", svnApplyPatch))

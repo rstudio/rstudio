@@ -123,6 +123,7 @@ public class Projects implements OpenProjectFileHandler,
                commands.vcsShowHistory().remove();
                commands.vcsPull().remove();
                commands.vcsPush().remove();
+               commands.vcsCleanup().remove();
             }
             else
             {
@@ -135,7 +136,13 @@ public class Projects implements OpenProjectFileHandler,
                   commands.vcsPush().remove();
                   commands.vcsPull().setButtonLabel("Update");
                   commands.vcsPull().setMenuLabel("Update");
-               }       
+               }    
+               
+               // customize for git if necessary
+               if (sessionInfo.getVcsName().equals(VCSConstants.GIT_ID))
+               {
+                  commands.vcsCleanup().remove();
+               }
             }
             
             // disable the open project in new window command in web mode

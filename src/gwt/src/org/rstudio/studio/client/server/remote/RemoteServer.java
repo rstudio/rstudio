@@ -2242,6 +2242,13 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void svnCleanup( ServerRequestCallback<ProcessResult> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, SVN_CLEANUP, requestCallback);
+   }
+
+   
+   @Override
    public void svnCommit(ArrayList<String> paths,
                          String message,
                          ServerRequestCallback<ConsoleProcess> requestCallback)
@@ -2508,6 +2515,7 @@ public class RemoteServer implements Server
    private static final String SVN_REVERT = "svn_revert";
    private static final String SVN_STATUS = "svn_status";
    private static final String SVN_UPDATE = "svn_update";
+   private static final String SVN_CLEANUP = "svn_cleanup";
    private static final String SVN_COMMIT = "svn_commit";
    private static final String SVN_DIFF_FILE = "svn_diff_file";
    private static final String SVN_APPLY_PATCH = "svn_apply_patch";

@@ -74,6 +74,7 @@ public class SVNPane extends WorkbenchPane implements Display
       moreMenu.addItem(commands_.vcsShowHistory().createMenuItem(false));
       moreMenu.addSeparator();
       moreMenu.addItem(commands_.vcsPull().createMenuItem(false));
+      moreMenu.addItem(commands_.vcsCleanup().createMenuItem(false));
       moreMenu.addSeparator();
       moreMenu.addItem(commands_.showShellDialog().createMenuItem(false));
 

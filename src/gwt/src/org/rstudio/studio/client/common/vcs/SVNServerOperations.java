@@ -53,6 +53,8 @@ public interface SVNServerOperations extends VCSServerOperations
 
    void svnUpdate(ServerRequestCallback<ConsoleProcess> requestCallback);
 
+   void svnCleanup(ServerRequestCallback<ProcessResult> requestCallback);
+   
    void svnCommit(
          ArrayList<String> paths,
          String message,

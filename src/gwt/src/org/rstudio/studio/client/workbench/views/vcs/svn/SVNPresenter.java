@@ -266,6 +266,15 @@ public class SVNPresenter extends BaseVcsPresenter
    }
    
    @Override
+   public void onVcsCleanup()
+   {
+      server_.svnCleanup(new ProcessCallback(
+                                         "SVN Cleanup", 
+                                         "Cleaning up working directory...", 
+                                         750)); // pad progress for feedback
+   }
+   
+   @Override
    public void showHistory(FileSystemItem fileFilter)
    {
       showReviewPane(true, fileFilter, new ArrayList<StatusAndPath>());  

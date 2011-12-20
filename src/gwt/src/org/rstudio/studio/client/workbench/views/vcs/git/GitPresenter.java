@@ -351,6 +351,14 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
             },
             false);
    }
+   
+   @Override
+   public void onVcsCleanup()
+   {
+      // svn specific, not supported by git
+      
+   }
+   
 
    private final Display view_;
    private final GitPresenterCore gitPresenterCore_;

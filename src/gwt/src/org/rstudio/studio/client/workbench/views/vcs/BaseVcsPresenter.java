@@ -30,6 +30,8 @@ public abstract class BaseVcsPresenter extends BasePresenter
    public abstract void onVcsPull();
 
    public abstract void onVcsPush();
+   
+   public abstract void onVcsCleanup();
       
    public abstract void showHistory(FileSystemItem fileFilter);
    
