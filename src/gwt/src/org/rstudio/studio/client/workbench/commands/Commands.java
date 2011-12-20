@@ -99,7 +99,6 @@ public abstract class
    public abstract AppCommand setAsWorkingDir();
    public abstract AppCommand setWorkingDirToFilesPane();
    public abstract AppCommand showFolder();
-   public abstract AppCommand vcsRevertFiles();
    public abstract AppCommand vcsAddFiles();
    public abstract AppCommand vcsRemoveFiles();
 
