@@ -48,10 +48,18 @@ public class SVNCommandHandler
    {
       display_ = display;
       globalDisplay_ = globalDisplay;
+      commands_ = commands;
       server_ = server;
       svnState_ = svnState;
       vcsFileOpener_ = vcsFileOpener;
       GWT.<Binder>create(Binder.class).bind(commands, this);
+   }
+   
+   public void setFilesCommandsEnabled(boolean enabled)
+   {
+      commands_.vcsAddFiles().setEnabled(enabled);
+      commands_.vcsRemoveFiles().setEnabled(enabled);
+      commands_.vcsRevert().setEnabled(enabled);
    }
    
    // onVcsPull and onVcsCommit and not direct  command handlers because they 
@@ -188,6 +196,7 @@ public class SVNCommandHandler
    
    private final SVNPresenterDisplay display_;
    private final GlobalDisplay globalDisplay_;
+   private final Commands commands_;
    private final SVNServerOperations server_;
    private final SVNState svnState_;
    private final VCSFileOpener vcsFileOpener_;

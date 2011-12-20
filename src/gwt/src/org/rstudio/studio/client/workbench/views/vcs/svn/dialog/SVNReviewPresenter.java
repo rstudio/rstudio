@@ -31,6 +31,8 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.WidgetHandlerRegistration;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -39,6 +41,7 @@ import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
@@ -46,11 +49,13 @@ import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.ProcessCallback;
+import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.*;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.*;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffChunkActionEvent.Action;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPresenterDisplay;
 import org.rstudio.studio.client.workbench.views.vcs.svn.model.SVNState;
 
@@ -58,6 +63,8 @@ import java.util.ArrayList;
 
 public class SVNReviewPresenter implements ReviewPresenter
 {
+   public interface Binder extends CommandBinder<Commands, SVNReviewPresenter> {}
+   
    public interface Display extends IsWidget, HasAttachHandlers, SVNPresenterDisplay
    {
       ArrayList<String> getSelectedPaths();
@@ -68,11 +75,8 @@ public class SVNReviewPresenter implements ReviewPresenter
       HasValue<Integer> getContextLines();
 
       HasClickHandlers getSwitchViewButton();
-      HasClickHandlers getRevertFilesButton();
-      void setFilesCommandsEnabled(boolean enabled);
-      HasClickHandlers getIgnoreButton();
+
       HasClickHandlers getDiscardAllButton();
-      HasClickHandlers getRefreshButton();
 
       void setData(ArrayList<ChunkOrLine> lines);
 
@@ -80,9 +84,7 @@ public class SVNReviewPresenter implements ReviewPresenter
       void showSizeWarning(long sizeInBytes);
       void hideSizeWarning();
 
-      void showContextMenu(int clientX, 
-                           int clientY, 
-                           Command openSelectedCommand);
+      void showContextMenu(int clientX, int clientY);
 
       void onShow();
    }
@@ -144,16 +146,27 @@ public class SVNReviewPresenter implements ReviewPresenter
    @Inject
    public SVNReviewPresenter(SVNServerOperations server,
                              Display view,
+                             Binder binder,
+                             Commands commands,
                              final EventBus events,
                              final SVNState svnState,
                              final Session session,
-                             final GlobalDisplay globalDisplay)
+                             final GlobalDisplay globalDisplay,
+                             VCSFileOpener vcsFileOpener)
    {
       server_ = server;
       view_ = view;
-      globalDisplay_ = globalDisplay;
       svnState_ = svnState;
-
+      
+      binder.bind(commands, this);
+      
+      commandHandler_ = new SVNCommandHandler(view, 
+                                              globalDisplay, 
+                                              commands, 
+                                              server, 
+                                              svnState, 
+                                              vcsFileOpener);
+      
       new WidgetHandlerRegistration(view.asWidget())
       {
          @Override
@@ -217,7 +230,7 @@ public class SVNReviewPresenter implements ReviewPresenter
          public void onSelectionChange(SelectionChangeEvent event)
          {
             overrideSizeWarning_ = false;
-            view_.setFilesCommandsEnabled(view_.getSelectedPaths().size() > 0);
+            commandHandler_.setFilesCommandsEnabled(view_.getSelectedPaths().size() > 0);
             if (initialized_)
                updateDiff();
          }
@@ -233,7 +246,7 @@ public class SVNReviewPresenter implements ReviewPresenter
             // 0, and the files commands are not enabled until selection changes
             // again). By updating the files commands' enabled state on row
             // count change as well, we can make sure they get enabled.
-            view_.setFilesCommandsEnabled(view_.getSelectedPaths().size() > 0);
+            commandHandler_.setFilesCommandsEnabled(view_.getSelectedPaths().size() > 0);
          }
       });
 
@@ -244,46 +257,7 @@ public class SVNReviewPresenter implements ReviewPresenter
          {
             NativeEvent nativeEvent = event.getNativeEvent();
             view_.showContextMenu(nativeEvent.getClientX(),
-                                  nativeEvent.getClientY(),
-                                  new Command() {
-                                    @Override
-                                    public void execute()
-                                    {
-                                       openSelectedFile();
-                                    }
-            });
-         }
-      });
-
-      view_.getRevertFilesButton().addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            final ArrayList<String> paths = view_.getSelectedPaths();
-            if (paths.size() == 0)
-               return;
-            String noun = paths.size() == 1 ? "file" : "files";
-            globalDisplay_.showYesNoMessage(
-                  GlobalDisplay.MSG_WARNING,
-                  "Revert Changes",
-                  "Changes to the selected " + noun + " will be lost.\n\nAre " +
-                  "you sure you want to continue?",
-                  new Operation()
-                  {
-                     @Override
-                     public void execute()
-                     {
-                        view_.getChangelistTable().selectNextUnselectedItem();
-
-                        server_.svnRevert(
-                              paths,
-                              new ProcessCallback("Revert Changes"));
-
-                        view_.getChangelistTable().focus();
-                     }
-                  },
-                  false);
+                                  nativeEvent.getClientY());
          }
       });
 
@@ -311,16 +285,6 @@ public class SVNReviewPresenter implements ReviewPresenter
                      }
                   },
                   false);
-         }
-      });
-
-      view_.getRefreshButton().addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            view_.getChangelistTable().showProgress();
-            svnState_.refresh(true);
          }
       });
 
@@ -469,11 +433,6 @@ public class SVNReviewPresenter implements ReviewPresenter
       currentFilename_ = null;
       view_.getLineTableDisplay().clear();
    }
-   
-   private void openSelectedFile()
-   {
-      
-   }
 
    @Override
    public Widget asWidget()
@@ -508,11 +467,17 @@ public class SVNReviewPresenter implements ReviewPresenter
 
       view_.onShow();
    }
+   
+   @Handler
+   public void onVcsPull()
+   {
+      commandHandler_.onVcsPull();
+   }
 
    private final Invalidation diffInvalidation_ = new Invalidation();
    private final SVNServerOperations server_;
+   private final SVNCommandHandler commandHandler_;
    private final Display view_;
-   private final GlobalDisplay globalDisplay_;
    private ArrayList<DiffChunk> activeChunks_ = new ArrayList<DiffChunk>();
    private String currentResponse_;
    private String currentFilename_;

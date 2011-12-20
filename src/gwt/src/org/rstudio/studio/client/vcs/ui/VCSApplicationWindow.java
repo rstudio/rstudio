@@ -15,19 +15,14 @@ package org.rstudio.studio.client.vcs.ui;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.command.CommandBinder;
-import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
-import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.vcs.VCSApplicationView;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
-import org.rstudio.studio.client.workbench.views.vcs.git.GitPresenterCore;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.frame.VCSPopup;
 
@@ -43,26 +38,18 @@ import com.google.inject.Singleton;
 @Singleton
 public class VCSApplicationWindow extends SatelliteWindow
                                   implements VCSApplicationView
-{
-   public interface Binder extends CommandBinder<Commands, VCSApplicationWindow> {}
-   
+{  
    @Inject
-   public VCSApplicationWindow(Provider<GitPresenterCore> pVCSCore,
-                               Provider<ReviewPresenter> pReviewPresenter,
+   public VCSApplicationWindow(Provider<ReviewPresenter> pReviewPresenter,
                                Provider<HistoryPresenter> pHistoryPresenter,
                                Provider<Commands> pCommands,
-                               Provider<Binder> pBinder,
                                Provider<EventBus> pEventBus,
-                               Provider<FontSizeManager> pFontSizeManager,
-                               Session session)
+                               Provider<FontSizeManager> pFontSizeManager)
    {
       super(pEventBus, pFontSizeManager);
-      pVCSCore_ = pVCSCore;
       pReviewPresenter_ = pReviewPresenter;
       pHistoryPresenter_ = pHistoryPresenter;
       pCommands_ = pCommands;
-      pBinder_ = pBinder;
-      session_ = session;
    }
    
    
@@ -72,15 +59,7 @@ public class VCSApplicationWindow extends SatelliteWindow
    {
       // set our window title
       Window.setTitle("Review Changes");
-      
-      // bind commands to this instance
-      pBinder_.get().bind(pCommands_.get(), this);
-      
-      // make sure vcs core is initialized
-      if (session_.getSessionInfo().getVcsName().equalsIgnoreCase(
-                                                         VCSConstants.GIT_ID))
-         pVCSCore_.get();
-      
+            
       // show the vcs ui in our main panel
       VCSApplicationParams vcsParams = params.<VCSApplicationParams>cast();
       ReviewPresenter rpres = pReviewPresenter_.get();
@@ -127,25 +106,9 @@ public class VCSApplicationWindow extends SatelliteWindow
       return this;
    }
 
-   @Handler
-   public void onVcsPull()
-   {
-      pVCSCore_.get().onVcsPull();
-   }
-   
-   
-   @Handler
-   public void onVcsPush()
-   {
-      pVCSCore_.get().onVcsPush();
-   }
-
-   private final Provider<GitPresenterCore> pVCSCore_;
    private final Provider<ReviewPresenter> pReviewPresenter_;
    private final Provider<HistoryPresenter> pHistoryPresenter_;
    private final Provider<Commands> pCommands_;
-   private final Provider<Binder> pBinder_;
-   private final Session session_;
    private VCSPopup.Controller vcsPopupController_ = null;
  
 }

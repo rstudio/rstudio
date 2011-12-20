@@ -28,12 +28,13 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.RowCountChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.gwt.view.client.SelectionChangeEvent.Handler;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.WidgetHandlerRegistration;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.Operation;
@@ -48,6 +49,7 @@ import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
@@ -63,12 +65,15 @@ import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEve
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitChangelistTable;
+import org.rstudio.studio.client.workbench.views.vcs.git.GitPresenterCore;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 import java.util.ArrayList;
 
 public class GitReviewPresenter implements ReviewPresenter
 {
+   public interface Binder extends CommandBinder<Commands, GitReviewPresenter> {}
+   
    public interface Display extends IsWidget, HasAttachHandlers
    {
       ArrayList<String> getSelectedPaths();
@@ -194,19 +199,25 @@ public class GitReviewPresenter implements ReviewPresenter
    }
 
    @Inject
-   public GitReviewPresenter(GitServerOperations server,
+   public GitReviewPresenter(GitPresenterCore gitPresenterCore,
+                             GitServerOperations server,
                              Display view,
+                             Binder binder,
+                             Commands commands,
                              final EventBus events,
                              final GitState gitState,
                              final Session session,
                              final GlobalDisplay globalDisplay,
                              VCSFileOpener vcsFileOpener)
    {
+      gitPresenterCore_ = gitPresenterCore;
       server_ = server;
       view_ = view;
       globalDisplay_ = globalDisplay;
       gitState_ = gitState;
       vcsFileOpener_ = vcsFileOpener;
+      
+      binder.bind(commands, this);
 
       new WidgetHandlerRegistration(view.asWidget())
       {
@@ -265,7 +276,7 @@ public class GitReviewPresenter implements ReviewPresenter
          }
       };
 
-      view_.getChangelistTable().addSelectionChangeHandler(new Handler()
+      view_.getChangelistTable().addSelectionChangeHandler(new SelectionChangeEvent.Handler()
       {
          @Override
          public void onSelectionChange(SelectionChangeEvent event)
@@ -712,9 +723,22 @@ public class GitReviewPresenter implements ReviewPresenter
 
       view_.onShow();
    }
+   
+   @Handler
+   public void onVcsPull()
+   {
+      gitPresenterCore_.onVcsPull();
+   }
+
+   @Handler
+   public void onVcsPush()
+   {
+      gitPresenterCore_.onVcsPush();
+   }
 
    private final Invalidation diffInvalidation_ = new Invalidation();
    private final GitServerOperations server_;
+   private final GitPresenterCore gitPresenterCore_;
    private final Display view_;
    private final GlobalDisplay globalDisplay_;
    private ArrayList<DiffChunk> activeChunks_ = new ArrayList<DiffChunk>();
