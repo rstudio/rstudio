@@ -26,11 +26,13 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 public class EditDialog extends ModalDialogBase
 {
    public EditDialog(String text,
-                      final ProgressOperationWithInput<String> operation)
+                     boolean isRCode,
+                     final ProgressOperationWithInput<String> operation)
    {
       editor_ = new AceEditor();
       setText("Edit");
       sourceText_ = text;
+      isRCode_ = isRCode;
 
       setEscapeDisabled(true);
 
@@ -78,8 +80,15 @@ public class EditDialog extends ModalDialogBase
       editWidget.setSize(editorSize.width + "px", editorSize.height + "px");
 
       editor_.setCode(sourceText_, false);
-      editor_.setFileType(FileTypeRegistry.R);
-
+      if (isRCode_)
+      {
+         editor_.setFileType(FileTypeRegistry.R);
+      }
+      else
+      {
+         editor_.setShowLineNumbers(false);
+      }
+     
       // return the editor
       SimplePanel panel = new SimplePanel();
       panel.addStyleName("EditDialog");
@@ -95,5 +104,6 @@ public class EditDialog extends ModalDialogBase
    }
 
    private final String sourceText_ ;
+   private final boolean isRCode_;
    private AceEditor editor_ ;
 }

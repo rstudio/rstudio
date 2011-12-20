@@ -191,6 +191,14 @@ std::string ClientEvent::typeName() const
    }
 }
 
+ClientEvent showEditorEvent(const std::string& content, bool isRCode)
+{
+   json::Object data;
+   data["content"] = content;
+   data["is_r_code"] = isRCode;
+   return ClientEvent(client_events::kShowEditor, data);
+}
+
 ClientEvent browseUrlEvent(const std::string& url, const std::string& window)
 {
    json::Object browseURLInfo;

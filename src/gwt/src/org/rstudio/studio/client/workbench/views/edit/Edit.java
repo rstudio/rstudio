@@ -33,6 +33,7 @@ public class Edit implements ShowEditorHandler
    public static interface Display
    {
       void show(String text,
+                boolean isRCode,
                 ProgressOperationWithInput<String> operation);
    }
 
@@ -47,6 +48,7 @@ public class Edit implements ShowEditorHandler
    public void onShowEditor(ShowEditorEvent event)
    {
       view_.show(event.getContent(),
+                 event.isRCode(),
                  new ProgressOperationWithInput<String>() {
 
          public void execute(final String input,

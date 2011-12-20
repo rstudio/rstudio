@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.views.console.model.ConsoleResetHisto
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.model.DataView;
 import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
+import org.rstudio.studio.client.workbench.views.edit.model.ShowEditorData;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
@@ -139,8 +140,8 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.ShowEditor))
          {
-            String content = event.getData();
-            eventBus_.fireEvent(new ShowEditorEvent(content));
+            ShowEditorData data = event.getData();
+            eventBus_.fireEvent(new ShowEditorEvent(data));
          }
          else if (type.equals(ClientEvent.FileChanged))
          {

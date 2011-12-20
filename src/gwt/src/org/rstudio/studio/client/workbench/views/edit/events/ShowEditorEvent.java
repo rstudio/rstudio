@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.views.edit.events;
 
+import org.rstudio.studio.client.workbench.views.edit.model.ShowEditorData;
+
 import com.google.gwt.event.shared.GwtEvent;
 
 public class ShowEditorEvent extends GwtEvent<ShowEditorHandler>
@@ -19,14 +21,20 @@ public class ShowEditorEvent extends GwtEvent<ShowEditorHandler>
    public static final GwtEvent.Type<ShowEditorHandler> TYPE =
       new GwtEvent.Type<ShowEditorHandler>();
    
-   public ShowEditorEvent(String content)
+   public ShowEditorEvent(ShowEditorData data)
    {
-      content_ = content;
+      content_ = data.getContent();
+      isRCode_ = data.isRCode();
    }
    
    public String getContent()
    {
       return content_;
+   }
+   
+   public boolean isRCode()
+   {
+      return isRCode_;
    }
    
    @Override
@@ -41,5 +49,6 @@ public class ShowEditorEvent extends GwtEvent<ShowEditorHandler>
       return TYPE;
    }
    
-   private String content_;
+   private final String content_;
+   private final boolean isRCode_;
 }

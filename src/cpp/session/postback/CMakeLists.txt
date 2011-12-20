@@ -40,6 +40,7 @@ target_link_libraries(rpostback
 # configure postback scripts for development mode
 set(POSTBACK_SCRIPT_DIR ${CMAKE_CURRENT_BINARY_DIR}/postback)
 file(MAKE_DIRECTORY ${POSTBACK_SCRIPT_DIR})
+configure_file(rpostback-editfile ${POSTBACK_SCRIPT_DIR}/rpostback-editfile)
 configure_file(rpostback-pdfviewer ${POSTBACK_SCRIPT_DIR}/rpostback-pdfviewer)
 configure_file(rpostback-gitssh ${POSTBACK_SCRIPT_DIR}/rpostback-gitssh)
 configure_file(rpostback-askpass ${POSTBACK_SCRIPT_DIR}/rpostback-askpass)

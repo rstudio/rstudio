@@ -384,6 +384,64 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
    return Success();
 }
 
+// path edit file postback script (provided as GIT_EDITOR and SVN_EDITOR)
+std::string s_editFileCommand;
+
+// function we can call to wait for edit_completed
+module_context::WaitForMethodFunction s_waitForEditCompleted;
+
+// edit file postback handler
+void editFilePostback(const std::string& file,
+                      const module_context::PostbackHandlerContinuation& cont)
+{
+   // read file contents
+   FilePath filePath(file);
+   std::string fileContents;
+   Error error = core::readStringFromFile(filePath, &fileContents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      cont(EXIT_FAILURE, "");
+      return;
+   }
+
+   // prepare edit event
+   ClientEvent editEvent = session::showEditorEvent(fileContents, false);
+
+   // wait for edit_completed
+   json::JsonRpcRequest request ;
+   bool succeeded = s_waitForEditCompleted(&request, editEvent);
+
+   // cancelled or otherwise didn't succeed
+   if (!succeeded || request.params[0].is_null())
+   {
+      cont(EXIT_FAILURE, "");
+      return;
+   }
+
+   // extract the content
+   std::string editedFileContents;
+   error = json::readParam(request.params, 0, &editedFileContents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      cont(EXIT_FAILURE, "");
+      return;
+   }
+
+   // write the content back to the file
+   error = core::writeStringToFile(filePath, editedFileContents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      cont(EXIT_FAILURE, "");
+      return;
+   }
+
+   // success
+   cont(EXIT_SUCCESS, "");
+}
+
 Error startShellDialog(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
@@ -416,14 +474,8 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    // message (like git revert) will still work and commands which have
    // no default commit message (like git commit) will fail with an
    // appropriate message ("Aborting commit due to empty commit message")
-   core::system::setenv(&shellEnv, "GIT_EDITOR", "/bin/true");
-
-   // for svn if we use /bin/true then svn commit proceeds with a prompt
-   // which can actually lead the user back into an editor. for this reason
-   // we show a more explicit error message and return false
-   core::system::setenv(&shellEnv,
-                        "SVN_EDITOR",
-                        "echo \"Error: No editor available\" && false");
+   core::system::setenv(&shellEnv, "GIT_EDITOR", s_editFileCommand);
+   core::system::setenv(&shellEnv, "SVN_EDITOR", s_editFileCommand);
 
    // add custom git path if necessary
    std::string gitBinDir = git::nonPathGitBinDir();
@@ -544,6 +596,18 @@ Error initialize()
       error = r::options::setOption("pdfviewer", pdfShellCommand);
       if (error)
          return error ;
+
+
+      // register editfile handler and save its path
+      error = module_context::registerPostbackHandler("editfile",
+                                                      editFilePostback,
+                                                      &s_editFileCommand);
+      if (error)
+         return error;
+
+      // register edit_completed waitForMethod handler
+      s_waitForEditCompleted = module_context::registerWaitForMethod(
+                                                         "edit_completed");
 
       // ensure that capabilitiesX11 always returns false
       error = r::function_hook::registerReplaceHook("capabilitiesX11",

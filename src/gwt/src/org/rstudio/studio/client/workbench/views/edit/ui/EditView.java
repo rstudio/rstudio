@@ -20,13 +20,14 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 public class EditView implements Display
 {
    public void show(final String text,
+                    final boolean isRCode,
                     final ProgressOperationWithInput<String> operation)
    {
       AceEditor.load(new Command()
       {
          public void execute()
          {
-            new EditDialog(text, operation).showModal();
+            new EditDialog(text, isRCode, operation).showModal();
          }
       });
    }
