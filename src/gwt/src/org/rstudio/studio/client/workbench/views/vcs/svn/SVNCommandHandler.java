@@ -80,7 +80,7 @@ public class SVNCommandHandler
    
    public void onVcsCommit()
    {
-      // TODO: implement
+      globalDisplay_.showErrorMessage("SVN Commit", "Not Yet Implemented");
    }
    
    @Handler

@@ -469,6 +469,12 @@ public class SVNReviewPresenter implements ReviewPresenter
    }
    
    @Handler
+   public void onVcsCommit()
+   {
+      commandHandler_.onVcsCommit();
+   }
+   
+   @Handler
    public void onVcsPull()
    {
       commandHandler_.onVcsPull();
