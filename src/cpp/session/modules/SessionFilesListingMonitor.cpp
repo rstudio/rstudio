@@ -136,11 +136,8 @@ Error FilesListingMonitor::listFiles(const FilePath& rootPath,
    if (error)
       return error;
 
-   // get source control status (merely log errors doing this)
-   git::StatusResult vcsStatus;
-   error = git::status(rootPath, &vcsStatus);
-   if (error)
-      LOG_ERROR(error);
+   source_control::FileDecorationContext* pCtx =
+         source_control::allocFileDecorationContext(rootPath);
 
    // sort the files by name
    std::sort(pFiles->begin(), pFiles->end(), core::compareAbsolutePathNoCase);
@@ -152,16 +149,13 @@ Error FilesListingMonitor::listFiles(const FilePath& rootPath,
       // are not end-user visible
       if (filePath.exists() && module_context::fileListingFilter(core::FileInfo(filePath)))
       {
-         git::VCSStatus status = vcsStatus.getStatus(filePath);
          core::json::Object fileObject = module_context::createFileSystemItem(filePath);
-         json::Object vcsObj;
-         error = modules::git::statusToJson(filePath, status, &vcsObj);
-         if (error)
-            LOG_ERROR(error);
-         fileObject["git_status"] = vcsObj;
+         pCtx->decorateFile(filePath, &fileObject);
          pJsonFiles->push_back(fileObject) ;
       }
    }
+
+   delete pCtx;
 
    return Success();
 }

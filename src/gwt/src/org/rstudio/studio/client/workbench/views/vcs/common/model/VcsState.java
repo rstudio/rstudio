@@ -25,6 +25,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
@@ -89,9 +90,11 @@ public abstract class VcsState
 
             FileChange fileChange = event.getFileChange();
             FileSystemItem file = fileChange.getFile();
-            StatusAndPath status = StatusAndPath.fromInfo(file.getGitStatus());
 
-            if (file.getName().equalsIgnoreCase(".gitignore"))
+            StatusAndPath status = StatusAndPath.fromInfo(
+                  getStatusFromFile(file));
+
+            if (needsFullRefresh(file))
             {
                refresh(false);
                return;
@@ -172,6 +175,10 @@ public abstract class VcsState
       if (session_.getSessionInfo().isVcsEnabled())
          refresh(true);
    }
+
+   protected abstract StatusAndPathInfo getStatusFromFile(FileSystemItem file);
+
+   protected abstract boolean needsFullRefresh(FileSystemItem file);
 
    public abstract void refresh(final boolean showError);
 

@@ -54,6 +54,7 @@
 
 #include "SessionVCS.hpp"
 
+#include "vcs/SessionVCSCore.hpp"
 #include "vcs/SessionVCSUtils.hpp"
 
 #include "config.h"
@@ -62,6 +63,9 @@ using namespace core;
 using namespace core::shell_utils;
 using session::modules::console_process::ConsoleProcess;
 using namespace session::modules::vcs_utils;
+using session::modules::source_control::FileWithStatus;
+using session::modules::source_control::VCSStatus;
+using session::modules::source_control::StatusResult;
 
 namespace session {
 namespace modules {
@@ -357,7 +361,8 @@ public:
       root_ = path;
    }
 
-   core::Error status(const FilePath& dir, StatusResult* pStatusResult)
+   core::Error status(const FilePath& dir,
+                      StatusResult* pStatusResult)
    {
       using namespace boost;
 
@@ -667,7 +672,7 @@ public:
       {
          // detect add case
          VCSStatus status;
-         error = fileStatus(filePath, &status);
+         error = git::fileStatus(filePath, &status);
          if (error)
             return error;
          if (status.status() == "??" && mode == PatchModeWorking)
@@ -1108,15 +1113,27 @@ FilePath detectGitDir(const FilePath& workingDir)
 
 } // anonymous namespace
 
-
-VCSStatus StatusResult::getStatus(const FilePath& fileOrDirectory) const
+GitFileDecorationContext::GitFileDecorationContext(const FilePath& rootDir)
 {
-   std::map<std::string, VCSStatus>::const_iterator found =
-         this->filesByPath_.find(fileOrDirectory.absolutePath());
-   if (found != this->filesByPath_.end())
-      return found->second;
+   // get source control status (merely log errors doing this)
+   Error error = git::status(rootDir, &vcsStatus_);
+   if (error)
+      LOG_ERROR(error);
+}
 
-   return VCSStatus();
+GitFileDecorationContext::~GitFileDecorationContext()
+{
+}
+
+void GitFileDecorationContext::decorateFile(const FilePath &filePath,
+                                            json::Object *pFileObject) const
+{
+   VCSStatus status = vcsStatus_.getStatus(filePath);
+   json::Object vcsObj;
+   Error error = statusToJson(filePath, status, &vcsObj);
+   if (error)
+      LOG_ERROR(error);
+   (*pFileObject)["git_status"] = vcsObj;
 }
 
 core::Error status(const FilePath& dir, StatusResult* pStatusResult)

@@ -17,6 +17,8 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 
+#include "vcs/SessionVCSCore.hpp"
+
 namespace session {
 namespace modules {
 namespace console_process {
@@ -28,6 +30,17 @@ class ConsoleProcess;
 namespace svn {
 
 extern const char * const kVcsId;
+
+class SvnFileDecorationContext : public source_control::FileDecorationContext
+{
+public:
+   SvnFileDecorationContext(const core::FilePath& rootDir);
+   virtual ~SvnFileDecorationContext();
+   void decorateFile(const core::FilePath& filePath,
+                     core::json::Object* pFileObject) const;
+private:
+   source_control::StatusResult vcsResult_;
+};
 
 // Returns true if Subversion install is detected
 bool isSvnInstalled();

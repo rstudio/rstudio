@@ -214,7 +214,7 @@ public class SVNReviewPresenter implements ReviewPresenter
                   }
 
                   StatusAndPath vcsStatus = StatusAndPath.fromInfo(
-                        event.getFileChange().getFile().getGitStatus());
+                        event.getFileChange().getFile().getSVNStatus());
                   if (paths.get(0).getRawPath().equals(vcsStatus.getRawPath()))
                   {
                      svnState.refresh(false);

@@ -665,13 +665,34 @@ Error svnRevert(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error svnStatus(const json::JsonRpcRequest& request,
-                json::JsonRpcResponse* pResponse)
+Error statusToJson(const core::FilePath &path,
+                   const source_control::VCSStatus &status,
+                   core::json::Object *pObject)
 {
+   json::Object& obj = *pObject;
+   obj["status"] = status.status();
+   obj["path"] = path.relativePath(s_workingDir);
+   obj["raw_path"] = module_context::createAliasedPath(path);
+   obj["is_directory"] = path.isDirectory();
+   if (!status.changelist().empty())
+      obj["changelist"] = status.changelist();
+   return Success();
+}
+
+Error status(const FilePath& filePath,
+             std::vector<source_control::FileWithStatus>* pFiles)
+{
+   using namespace source_control;
+
+   ShellArgs args;
+   args << "status" << globalArgs() << "--xml" << "--ignore-externals";
+   if (!filePath.empty())
+      args << "--" << filePath;
+
    std::string stdOut, stdErr;
    int exitCode;
    Error error = runSvn(
-         ShellArgs() << "status" << globalArgs() << "--xml" << "--ignore-externals",
+         args,
          &stdOut,
          &stdErr,
          &exitCode);
@@ -740,17 +761,46 @@ Error svnStatus(const json::JsonRpcRequest& request,
 
             std::string status = topStatus(item, props);
 
-            json::Object info;
-            info["status"] = status;
-            // TODO: escape path relative to <target>
-            info["path"] = path;
-            info["raw_path"] = module_context::createAliasedPath(
-                  projects::projectContext().directory().childPath(path));
-            info["changelist"] = changelist;
-            results.push_back(info);
+            VCSStatus vcsStatus(status);
+            vcsStatus.changelist() = changelist;
+            FileWithStatus fileWithStatus;
+            fileWithStatus.status = status;
+            fileWithStatus.path = s_workingDir.complete(path);
+
+            pFiles->push_back(fileWithStatus);
          }
       }
    }
+
+   return Success();
+}
+
+Error status(const FilePath& filePath,
+             json::Array* pResults)
+{
+   std::vector<source_control::FileWithStatus> files;
+   Error error = status(filePath, &files);
+   if (error)
+      return error;
+
+   BOOST_FOREACH(source_control::FileWithStatus file, files)
+   {
+      json::Object fileObj;
+      error = statusToJson(file.path, file.status, &fileObj);
+      if (error)
+         return error;
+      pResults->push_back(fileObj);
+   }
+   return Success();
+}
+
+Error svnStatus(const json::JsonRpcRequest& request,
+                json::JsonRpcResponse* pResponse)
+{
+   json::Array results;
+   Error error = status(FilePath(), &results);
+   if (error)
+      return error;
 
    pResponse->setResult(results);
 
@@ -1239,6 +1289,42 @@ bool promptForPassword(const std::string& prompt,
       return false;
    }
 }
+
+SvnFileDecorationContext::SvnFileDecorationContext(
+                                                 const core::FilePath& rootDir)
+{
+   using namespace source_control;
+
+   std::vector<FileWithStatus> results;
+   Error error = status(rootDir, &results);
+   if (error)
+      return;
+
+   vcsResult_ = StatusResult(results);
+}
+
+SvnFileDecorationContext::~SvnFileDecorationContext()
+{
+}
+
+void SvnFileDecorationContext::decorateFile(const core::FilePath& filePath,
+                                            core::json::Object* pFileObject) const
+{
+   using namespace source_control;
+
+   VCSStatus status = vcsResult_.getStatus(filePath);
+
+   json::Object jsonStatus;
+   Error error = statusToJson(filePath, status, &jsonStatus);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   (*pFileObject)["svn_status"] = jsonStatus;
+}
+
 
 Error initialize()
 {

@@ -59,6 +59,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionVCS.cpp
    modules/SessionWorkbench.cpp
    modules/SessionWorkspace.cpp
+   modules/vcs/SessionVCSCore.cpp
    modules/vcs/SessionVCSUtils.cpp
    projects/SessionProjects.cpp
    projects/SessionProjectContext.cpp

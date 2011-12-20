@@ -14,10 +14,13 @@
 #ifndef SESSION_VCS_HPP
 #define SESSION_VCS_HPP
 
+#include <core/json/Json.hpp>
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 
 #include <session/SessionUserSettings.hpp>
+
+#include "vcs/SessionVCSCore.hpp"
 
 #include "SessionGit.hpp"
 
@@ -31,6 +34,9 @@ enum VCS
    VCSGit,
    VCSSubversion
 };
+
+FileDecorationContext* allocFileDecorationContext(
+                                                const core::FilePath& rootDir);
 
 VCS activeVCS();
 std::string activeVCSName();
@@ -58,6 +64,9 @@ struct PasswordInput
 core::Error askForPassword(const std::string& prompt,
                            const std::string& rememberPrompt,
                            PasswordInput* pInput);
+
+core::Error fileStatus(const core::FilePath& filePath,
+                       source_control::VCSStatus* pStatus);
 
 core::Error initialize();
 

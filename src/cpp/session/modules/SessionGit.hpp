@@ -20,6 +20,8 @@
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
 
+#include "vcs/SessionVCSCore.hpp"
+
 namespace session {
 namespace modules {
 namespace console_process {
@@ -32,47 +34,16 @@ namespace git {
 
 extern const char * const kVcsId;
 
-// Must stay in sync with VCSStatus enum in VCSStatus.java
-class VCSStatus
+class GitFileDecorationContext : public source_control::FileDecorationContext
 {
 public:
-   VCSStatus(const std::string& status=std::string())
-   {
-      status_ = status;
-   }
-
-   std::string status() const { return status_; }
-private:
-   std::string status_;
-};
-
-struct FileWithStatus
-{
-   VCSStatus status;
-   core::FilePath path;
-};
-
-class StatusResult
-{
-public:
-   StatusResult(const std::vector<FileWithStatus>& files =
-                std::vector<FileWithStatus>())
-   {
-      files_ = files;
-      for (std::vector<FileWithStatus>::iterator it = files_.begin();
-           it != files_.end();
-           it++)
-      {
-         filesByPath_[it->path.absolutePath()] = it->status;
-      }
-   }
-
-   VCSStatus getStatus(const core::FilePath& fileOrDirectory) const;
-   std::vector<FileWithStatus> files() const { return files_; }
+   GitFileDecorationContext(const core::FilePath& rootDir);
+   virtual ~GitFileDecorationContext();
+   virtual void decorateFile(const core::FilePath &filePath,
+                             core::json::Object *pFileObject) const;
 
 private:
-   std::vector<FileWithStatus> files_;
-   std::map<std::string, VCSStatus> filesByPath_;
+   source_control::StatusResult vcsStatus_;
 };
 
 bool isGitInstalled();
@@ -88,10 +59,12 @@ core::FilePath detectedGitExePath();
 
 std::string nonPathGitBinDir();
 
-core::Error status(const core::FilePath& dir, StatusResult* pStatusResult);
-core::Error fileStatus(const core::FilePath& filePath, VCSStatus* pStatus);
+core::Error status(const core::FilePath& dir,
+                   source_control::StatusResult* pStatusResult);
+core::Error fileStatus(const core::FilePath& filePath,
+                       source_control::VCSStatus* pStatus);
 core::Error statusToJson(const core::FilePath& path,
-                         const VCSStatus& status,
+                         const source_control::VCSStatus& status,
                          core::json::Object* pObject);
 
 core::Error clone(const std::string& url,

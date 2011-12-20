@@ -15,13 +15,10 @@ package org.rstudio.studio.client.workbench.views.vcs.git.model;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.vcs.AllStatus;
-import org.rstudio.studio.client.common.vcs.BranchesInfo;
-import org.rstudio.studio.client.common.vcs.GitServerOperations;
-import org.rstudio.studio.client.common.vcs.RemoteBranchInfo;
-import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.common.vcs.*;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -61,6 +58,18 @@ public class GitState extends VcsState
    protected boolean isInitialized()
    {
       return branches_ != null;
+   }
+
+   @Override
+   protected StatusAndPathInfo getStatusFromFile(FileSystemItem file)
+   {
+      return file.getGitStatus();
+   }
+
+   @Override
+   protected boolean needsFullRefresh(FileSystemItem file)
+   {
+      return file.getName().equalsIgnoreCase(".gitignore");
    }
 
    public void refresh(final boolean showError)

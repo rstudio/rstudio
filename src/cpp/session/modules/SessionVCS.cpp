@@ -121,7 +121,29 @@ Error vcsClone(const json::JsonRpcRequest& request,
    return Success();
 }
 
+class NullFileDecorationContext : public FileDecorationContext
+{
+   void decorateFile(const FilePath&, json::Object*) const
+   {
+   }
+};
+
 } // anonymous namespace
+
+FileDecorationContext* allocFileDecorationContext(
+                                                 const core::FilePath& rootDir)
+{
+   if (git::isGitEnabled())
+   {
+      return new git::GitFileDecorationContext(rootDir);
+   }
+   else if (svn::isSvnEnabled())
+   {
+      return new svn::SvnFileDecorationContext(rootDir);
+   }
+
+   return new NullFileDecorationContext();
+}
 
 VCS activeVCS()
 {

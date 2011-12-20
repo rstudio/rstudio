@@ -16,6 +16,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
@@ -39,6 +40,18 @@ public class SVNState extends VcsState
    {
       super(eventBus, globalDisplay, session);
       server_ = server;
+   }
+
+   @Override
+   protected StatusAndPathInfo getStatusFromFile(FileSystemItem file)
+   {
+      return file.getSVNStatus();
+   }
+
+   @Override
+   protected boolean needsFullRefresh(FileSystemItem file)
+   {
+      return false;
    }
 
    @Override
