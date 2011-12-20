@@ -18,7 +18,9 @@ import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.gwt.view.client.SelectionChangeEvent.Handler;
 import com.google.inject.Inject;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -60,11 +62,25 @@ public class SVNPane extends WorkbenchPane implements Display
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.vcsAddFiles().createToolbarButton());
       toolbar.addLeftWidget(commands_.vcsRemoveFiles().createToolbarButton());
-      toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.vcsRevert().createToolbarButton());
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.vcsPull().createToolbarButton());
-//      toolbar.addLeftWidget(commands_.vcsCommit().createToolbarButton());
+      
+      toolbar.addLeftWidget(commands_.vcsCommit().createToolbarButton());
+      
+      toolbar.addLeftSeparator();
+      
+      ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
+
+      moreMenu.addItem(commands_.vcsShowHistory().createMenuItem(false));
+      moreMenu.addSeparator();
+      moreMenu.addItem(commands_.vcsPull().createMenuItem(false));
+      moreMenu.addSeparator();
+      moreMenu.addItem(commands_.showShellDialog().createMenuItem(false));
+
+      toolbar.addLeftWidget(new ToolbarButton(
+          "More",
+          StandardIcons.INSTANCE.more_actions(),
+          moreMenu));
 
       toolbar.addLeftSeparator();
       toolbar.addRightWidget(commands_.vcsRefresh().createToolbarButton());
@@ -112,7 +128,6 @@ public class SVNPane extends WorkbenchPane implements Display
       menu.addSeparator();
       menu.addItem(commands_.vcsAddFiles().createMenuItem(false));
       menu.addItem(commands_.vcsRemoveFiles().createMenuItem(false));
-      menu.addSeparator();
       menu.addItem(commands_.vcsRevert().createMenuItem(false));
       menu.addSeparator();
       menu.addItem(commands_.vcsOpen().createMenuItem(false));
