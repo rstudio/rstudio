@@ -51,13 +51,14 @@ import org.rstudio.studio.client.workbench.views.vcs.common.events.*;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffChunkActionEvent.Action;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPresenterDisplay;
 import org.rstudio.studio.client.workbench.views.vcs.svn.model.SVNState;
 
 import java.util.ArrayList;
 
 public class SVNReviewPresenter implements ReviewPresenter
 {
-   public interface Display extends IsWidget, HasAttachHandlers
+   public interface Display extends IsWidget, HasAttachHandlers, SVNPresenterDisplay
    {
       ArrayList<String> getSelectedPaths();
       void setSelectedStatusAndPaths(ArrayList<StatusAndPath> selectedPaths);

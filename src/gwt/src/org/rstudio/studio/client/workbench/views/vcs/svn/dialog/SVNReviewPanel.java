@@ -386,6 +386,12 @@ public class SVNReviewPanel extends ResizeComposite implements Display
    {
       return changelist_.getSelectedPaths();
    }
+   
+   @Override
+   public ArrayList<StatusAndPath> getSelectedItems()
+   {
+      return changelist_.getSelectedItems();
+   }
 
    @Override
    public void setSelectedStatusAndPaths(ArrayList<StatusAndPath> selectedPaths)
