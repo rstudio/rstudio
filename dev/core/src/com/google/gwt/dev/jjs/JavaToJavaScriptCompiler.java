@@ -424,8 +424,8 @@ public class JavaToJavaScriptCompiler {
           options.isSoycEnabled() || options.isCompilerMetricsEnabled()
               ? new SizeBreakdown[js.length] : null;
       List<Map<Range, SourceInfo>> sourceInfoMaps = new ArrayList<Map<Range, SourceInfo>>();
-      generateJavaScriptCode(options, jsProgram, jjsmap, js, ranges, sizeBreakdowns,
-          sourceInfoMaps, splitBlocks, isSourceMapsEnabled);
+      generateJavaScriptCode(options, jprogram, jsProgram, jjsmap, js, ranges,
+          sizeBreakdowns, sourceInfoMaps, splitBlocks, isSourceMapsEnabled);
 
       PermutationResult toReturn =
           new PermutationResultImpl(js, permutation, makeSymbolMap(symbolTable, jsProgram), ranges);
@@ -971,6 +971,7 @@ public class JavaToJavaScriptCompiler {
    * information about that transformation.
    *
    * @param options The options this compiler instance is running with
+   * @param jprogram The original Java program AST
    * @param jsProgram The AST to convert to source code
    * @param jjsMap A map between the JavaScript AST and the Java AST it came
 *          from
@@ -984,7 +985,7 @@ public class JavaToJavaScriptCompiler {
    * @param sourceMapsEnabled
    */
   private static void generateJavaScriptCode(JJSOptions options,
-      JsProgram jsProgram,
+      JProgram jprogram, JsProgram jsProgram,
       JavaToJavaScriptMap jjsMap, String[] js, StatementRanges[] ranges,
       SizeBreakdown[] sizeBreakdowns,
       List<Map<Range, SourceInfo>> sourceInfoMaps,
@@ -993,7 +994,7 @@ public class JavaToJavaScriptCompiler {
     boolean useClosureCompiler = options.isClosureCompilerEnabled();
     if (useClosureCompiler) {
       ClosureJsRunner runner = new ClosureJsRunner();
-      runner.compile(jsProgram, js, options.getOutput());
+      runner.compile(jprogram, jsProgram, js, options.getOutput());
       return;
     }
 

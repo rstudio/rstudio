@@ -1,11 +1,11 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -15,6 +15,7 @@
 package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.jjs.JsOutputOption;
+import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsProgramFragment;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
@@ -56,7 +57,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /**
- * A wrapper to simplify the interactions to the Closure Compiler
+ * A class that represents an single invocation of the Closure Compiler.
  */
 public class ClosureJsRunner {
   // The externs expected in externs.zip, in sorted order.
@@ -130,18 +131,47 @@ public class ClosureJsRunner {
     return externs;
   }
 
+  /**
+   * The instance of the Closure Compiler used for the compile.
+   */
   private Compiler compiler = null;
+
+  /**
+   * The set of external properties discovered in the provided AST.
+   */
   private Set<String> externalProps = Sets.newHashSet();
+
+  /** 
+   * The set of external global variables discovered in the provided AST. 
+   */
   private Set<String> externalVars = Sets.newHashSet();
 
+  /**
+   * The set of internal global variables discovered in the provided AST.
+   */
   private Set<String> globalVars = Sets.newHashSet();
 
+  /**
+   * Whether AST validation should be performed on the the generated
+   * Closure Compiler AST.
+   */
   private final boolean validate = true;
+
+  /** 
+   * A map of GWT fragment numbers to Closure module indexes.
+   */
+  private int[] closureModuleSequenceMap;
+
+  /** 
+   * The number of non-exclusive fragments that are part of the load sequence
+   * (including the main and leftovers).
+   */
+  private int loadModulesCount;
 
   public ClosureJsRunner() {
   }
 
-  public void compile(JsProgram program, String[] js, JsOutputOption jsOutputOption) {
+  public void compile(JProgram jprogram, JsProgram program, String[] js, JsOutputOption jsOutputOption) {
     CompilerOptions options = getClosureCompilerOptions(jsOutputOption);
     // Turn off Closure Compiler logging
     Logger.getLogger("com.google.gwt.thirdparty.javascript.jscomp").setLevel(Level.OFF);
@@ -150,6 +180,7 @@ public class ClosureJsRunner {
     compiler = new Compiler();
 
     // Translate the ASTs and build the modules
+    computeFragmentMap(jprogram, program);
     List<JSModule> modules = createClosureModules(program);
 
     // Build the externs based on what we discovered building the modules.
@@ -159,7 +190,7 @@ public class ClosureJsRunner {
     if (result.success) {
       int fragments = program.getFragmentCount();
       for (int i = 0; i < fragments; i++) {
-        int module = mapFragmentIndexToModuleIndex(fragments, i);
+        int module = mapFragmentIndexToModuleIndex(i);
         js[i] = compiler.toSource(modules.get(module));
       }
     } else {
@@ -179,6 +210,47 @@ public class ClosureJsRunner {
       Throwables.propagate(e);
       return null;
     }
+  }
+
+  private void computeFragmentMap(JProgram jprogram, JsProgram jsProgram) {
+    int fragments = jsProgram.getFragmentCount();
+    List<Integer> initSeq = jprogram.getSplitPointInitialSequence();
+
+    //
+    // The fragments are expected in a specific order:
+    // init, split-1, split-2, ...,
+    // where the leftovers are dependent on the init module
+    // and the split modules are dependent on the leftovers
+    //
+    // However, Closure Compiler modules must be in dependency order
+    //
+
+    assert closureModuleSequenceMap == null;
+    closureModuleSequenceMap = new int[fragments];
+    for (int i = 0; i < fragments; i++) {
+      closureModuleSequenceMap[i] = -1;
+    }
+
+    int module = 0;
+    // The initial fragments is always first.
+    closureModuleSequenceMap[0] = module++;
+
+    // Then come the specified load order sequence
+    for (int i = 0; i < initSeq.size(); i++) {
+      closureModuleSequenceMap[initSeq.get(i)] = module++;
+    }
+
+    // Then the leftovers fragments:
+    closureModuleSequenceMap[fragments - 1] = module++;
+
+    // Finally, the exclusive fragments.
+    // The order of the remaining fragments doesn't matter.
+    for (int i = 0; i < fragments; i++) {
+      if (closureModuleSequenceMap[i] == -1) {
+        closureModuleSequenceMap[i] = module++;
+      }
+    }
+    loadModulesCount = 1 + initSeq.size() + 1; // main + init sequence + leftovers
   }
 
   private CompilerInput createClosureJsAst(JsProgram program, JsProgramFragment fragment,
@@ -206,7 +278,7 @@ public class ClosureJsRunner {
     JSModule[] modules = new JSModule[fragments];
 
     for (int i = 0; i < fragments; i++) {
-      modules[mapFragmentIndexToModuleIndex(fragments, i)] =
+      modules[mapFragmentIndexToModuleIndex(i)] =
           createClosureModule(program, program.getFragment(i), "module" + i);
     }
     if (fragments > 1) {
@@ -215,10 +287,12 @@ public class ClosureJsRunner {
       // init, split-1, split-2, ...,
       // where the leftovers are dependent on the init module
       // and the split modules are dependent on the leftovers
-      JSModule init = modules[0];
-      JSModule leftovers = modules[1];
-      leftovers.addDependency(init);
-      for (int i = 2; i < modules.length; i++) {
+      for (int i = 1; i < loadModulesCount; i++) {
+        modules[i].addDependency(modules[i - 1]);
+      }
+
+      JSModule leftovers = modules[loadModulesCount - 1];
+      for (int i = loadModulesCount; i < modules.length; i++) {
         Preconditions.checkNotNull(modules[i], "Module: ", i);
         modules[i].addDependency(leftovers);
       }
@@ -232,14 +306,26 @@ public class ClosureJsRunner {
     List<JSSourceFile> externs = getDefaultExternsList();
     externs.add(JSSourceFile.fromCode("gwt_externs",
 
-    "var gwtOnLoad;\n" + "var $entry;\n" + "    var $gwt_version;\n" + "    var $wnd;\n"
-        + "    var $doc;\n" + "    var $moduleName\n" + "    var $moduleBase;\n"
-        + "    var $strongName;\n" + "    var $stats;\n" + "    var $sessionId;\n"
-        + "    window.prototype.__gwtStatsEvent;\n" + "    window.prototype.__gwtStatsSessionId;\n"
-        + "    window.prototype.moduleName;\n" + "    window.prototype.sessionId;\n"
-        + "    window.prototype.subSystem;\n" + "    window.prototype.evtGroup;\n"
-        + "    window.prototype.millis;\n" + "    window.prototype.type;\n"
-        + "    window.prototype.$h;\n" + "\n"));
+    "var gwtOnLoad;\n"
+        + "var $entry;\n"
+        + "    var $gwt_version;\n"
+        + "    var $wnd;\n"
+        + "    var $doc;\n"
+        + "    var $moduleName\n"
+        + "    var $moduleBase;\n"
+        + "    var $strongName;\n"
+        + "    var $stats;\n"
+        + "    var $sessionId;\n"
+        + "    window.prototype.__gwtStatsEvent;\n"
+        + "    window.prototype.__gwtStatsSessionId;\n"
+        + "    window.prototype.moduleName;\n"
+        + "    window.prototype.sessionId;\n"
+        + "    window.prototype.subSystem;\n"
+        + "    window.prototype.evtGroup;\n"
+        + "    window.prototype.millis;\n"
+        + "    window.prototype.type;\n"
+        + "    window.prototype.$h;\n"
+        + "\n"));
 
     // Generate externs
     String generatedExterns = "var gwt_externs;\n";
@@ -330,21 +416,8 @@ public class ClosureJsRunner {
     return options;
   }
 
-  private int mapFragmentIndexToModuleIndex(int fragments, int index) {
-    //
-    // The fragments are expected in a specific order:
-    // init, split-1, split-2, ...,
-    // where the leftovers are dependent on the init module
-    // and the split modules are dependent on the leftovers
-    //
-    // However, Closure Compiler modules must be in dependency order
-    //
-    if (index == 0) {
-      return 0;
-    } else if (index == fragments - 1) {
-      return 1;
-    } else {
-      return index + 1;
-    }
+  private int mapFragmentIndexToModuleIndex(int index) {
+    assert closureModuleSequenceMap.length > index;
+    return closureModuleSequenceMap[index];
   }
 }
