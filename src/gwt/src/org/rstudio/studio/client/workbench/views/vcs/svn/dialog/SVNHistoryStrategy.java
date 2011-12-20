@@ -90,13 +90,15 @@ public class SVNHistoryStrategy implements HistoryStrategy
    @Override
    public void addDataDisplay(HasData<CommitInfo> display)
    {
-      dataProvider_.addDataDisplay(display);
+      if (initialized_)
+         dataProvider_.addDataDisplay(display);
    }
 
    @Override
    public void onRangeChanged(HasData<CommitInfo> display)
    {
-      dataProvider_.onRangeChanged(display);
+      if (initialized_)
+         dataProvider_.onRangeChanged(display);
    }
 
    @Override
@@ -120,8 +122,9 @@ public class SVNHistoryStrategy implements HistoryStrategy
                @Override
                public void onResponseReceived(RpcObjectList<CommitInfo> infos)
                {
+                  initialized_ = true;
+
                   addDataDisplay(dataDisplay);
-                  refreshCount();
                }
 
                @Override
@@ -148,6 +151,7 @@ public class SVNHistoryStrategy implements HistoryStrategy
       return rev;
    }
 
+   private boolean initialized_;
    private final SVNServerOperations server_;
    private final SVNHistoryAsyncDataProvider dataProvider_;
    private final SVNState vcsState_;
