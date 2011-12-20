@@ -12,10 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.svn;
 
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
-import com.google.gwt.view.client.SelectionChangeEvent.Handler;
 import com.google.inject.Inject;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -99,19 +97,6 @@ public class SVNPane extends WorkbenchPane implements Display
    public ArrayList<StatusAndPath> getSelectedItems()
    {
       return changelistTablePresenter_.getSelectedItems();
-   }
-   
-   @Override
-   public int getSelectedItemCount()
-   {
-      return changelistTablePresenter_.getSelectedItems().size();
-   }
-
-   @Override
-   public HandlerRegistration addSelectionChangeHandler(Handler handler)
-   {
-      return changelistTablePresenter_.getView().addSelectionChangeHandler(
-                                                                     handler);
    }
    
    @Override

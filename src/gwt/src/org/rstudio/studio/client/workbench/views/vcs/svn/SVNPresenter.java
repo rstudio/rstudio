@@ -15,12 +15,10 @@ package org.rstudio.studio.client.workbench.views.vcs.svn;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ContextMenuEvent;
 import com.google.gwt.event.dom.client.ContextMenuHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.CommandBinder;
@@ -59,11 +57,7 @@ public class SVNPresenter extends BaseVcsPresenter
       void setItems(ArrayList<StatusAndPath> items);
       
       ArrayList<StatusAndPath> getSelectedItems();
-      int getSelectedItemCount();
-      
-      HandlerRegistration addSelectionChangeHandler(
-                                    SelectionChangeEvent.Handler handler);
-      
+           
       ChangelistTable getChangelistTable();
       
       void showContextMenu(int clientX, int clientY);
@@ -107,15 +101,6 @@ public class SVNPresenter extends BaseVcsPresenter
                                   nativeEvent.getClientY());
          }
       });
-      
-      view_.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-         @Override
-         public void onSelectionChange(SelectionChangeEvent event)
-         {
-            manageCommands();
-         }
-      });
-      manageCommands();
    }
 
    private void showChanges(ArrayList<StatusAndPath> items)
@@ -160,12 +145,6 @@ public class SVNPresenter extends BaseVcsPresenter
    private void openSelectedFiles()
    {
       vcsFileOpener_.openFiles(view_.getSelectedItems());
-   }
-   
-   private void manageCommands()
-   {
-      // too tricky/complicated to manage these correctly, pretty harmless
-      // for us to keep them all enabled for all selection states
    }
 
    @Override
