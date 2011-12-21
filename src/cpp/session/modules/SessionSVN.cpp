@@ -218,9 +218,8 @@ typedef boost::function<void(const core::Error&,
                              const core::system::ProcessResult&)>
                                                             ProcResultCallback;
 
-void runSvnAsync(const ShellArgs& args,
-                 bool redirectStdErrToStdOut,
-                 ProcResultCallback completionCallback)
+void runSvnRemoteXmlRequest(const ShellArgs& args,
+                            ProcResultCallback completionCallback)
 {
    core::system::ProcessCallbacks callbacks = core::system::createProcessCallbacks(
             "",
@@ -228,7 +227,7 @@ void runSvnAsync(const ShellArgs& args,
             boost::bind(completionCallback, _1, core::system::ProcessResult()));
 
    core::system::ProcessOptions options = procOptions();
-   options.redirectStdErrToStdOut = redirectStdErrToStdOut;
+   options.redirectStdErrToStdOut = false;
 #ifdef _WIN32
    // NOTE: We use consoleio.exe here in order to make sure svn.exe password
    // prompting works properly
@@ -1060,7 +1059,7 @@ void history(int rev,
    if (!fileFilter.empty())
       args << fileFilter;
 
-   runSvnAsync(args, false, boost::bind(historyEnd, callback, _1, _2));
+   runSvnRemoteXmlRequest(args, boost::bind(historyEnd, callback, _1, _2));
 }
 
 void svnHistoryCountEnd(const json::JsonRpcFunctionContinuation& cont,
@@ -1252,8 +1251,7 @@ void svnShow(const json::JsonRpcRequest& request,
    ShellArgs args;
    args << "diff" << "-c" << revision;
 
-   runSvnAsync(args, false,
-               boost::bind(svnShowEnd, cont, _1, _2));
+   runSvnRemoteXmlRequest(args, boost::bind(svnShowEnd, cont, _1, _2));
 }
 
 Error svnShowFile(const json::JsonRpcRequest& request,
