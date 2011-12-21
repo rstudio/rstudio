@@ -253,6 +253,7 @@ core::Error createConsoleProc(const ShellArgs& args,
                               const boost::optional<FilePath>& workingDir,
                               const std::string& caption,
                               bool dialog,
+                              bool enqueueRefreshOnExit,
                               boost::shared_ptr<ConsoleProcess>* ppCP)
 {
    core::system::ProcessOptions options = procOptions();
@@ -283,7 +284,8 @@ core::Error createConsoleProc(const ShellArgs& args,
                                   console_process::kDefaultMaxOutputLines);
 #endif
 
-   (*ppCP)->onExit().connect(boost::bind(&enqueueRefreshEvent));
+   if (enqueueRefreshOnExit)
+      (*ppCP)->onExit().connect(boost::bind(&enqueueRefreshEvent));
 
    return Success();
 }
@@ -293,6 +295,7 @@ core::Error createConsoleProc(const ShellArgs& args,
                               const FilePath& outputFile,
                               const std::string& caption,
                               bool dialog,
+                              bool enqueueRefreshOnExit,
                               boost::shared_ptr<ConsoleProcess>* ppCP)
 {
    return createConsoleProc(args,
@@ -300,15 +303,22 @@ core::Error createConsoleProc(const ShellArgs& args,
                             boost::optional<FilePath>(),
                             caption,
                             dialog,
+                            enqueueRefreshOnExit,
                             ppCP);
 }
 
 core::Error createConsoleProc(const ShellArgs& args,
                               const std::string& caption,
                               bool dialog,
+                              bool enqueueRefreshOnExit,
                               boost::shared_ptr<ConsoleProcess>* ppCP)
 {
-   return createConsoleProc(args, FilePath(), caption, dialog, ppCP);
+   return createConsoleProc(args,
+                            FilePath(),
+                            caption,
+                            dialog,
+                            enqueueRefreshOnExit,
+                            ppCP);
 }
 
 
@@ -347,6 +357,7 @@ void onAsyncSvnExit(int exitCode,
 
 void runSvnAsync(const ShellArgs& args,
                  const std::string& caption,
+                 bool enqueueRefreshOnExit,
                  ProcResultCallback completionCallback)
 {
    // allocate a temporary file for holding the output
@@ -355,7 +366,12 @@ void runSvnAsync(const ShellArgs& args,
    // create a console process so that we can either do terminal based
    // auth prompting or do PasswordManager based prompting if necessary
    boost::shared_ptr<ConsoleProcess> pCP;
-   Error error = createConsoleProc(args, outputFile, caption, true, &pCP);
+   Error error = createConsoleProc(args,
+                                   outputFile,
+                                   caption,
+                                   true,
+                                   enqueueRefreshOnExit,
+                                   &pCP);
    if (error)
       completionCallback(error, core::system::ProcessResult());
 
@@ -918,6 +934,7 @@ Error svnUpdate(const json::JsonRpcRequest& request,
    Error error = createConsoleProc(ShellArgs() << "update" << globalArgs(),
                                    "SVN Update",
                                    true,
+                                   true,
                                    &pCP);
    if (error)
       return error;
@@ -987,6 +1004,7 @@ Error svnCommit(const json::JsonRpcRequest& request,
    boost::shared_ptr<ConsoleProcess> pCP;
    error = createConsoleProc(args,
                              "SVN Commit",
+                             true,
                              true,
                              &pCP);
    if (error)
@@ -1120,6 +1138,7 @@ void history(int rev,
 
    runSvnAsync(args,
                "SVN History",
+               false,
                boost::bind(historyEnd, callback, _1, _2));
 }
 
@@ -1321,6 +1340,7 @@ void svnShow(const json::JsonRpcRequest& request,
 
    runSvnAsync(args,
                "SVN History",
+               false,
                boost::bind(svnShowEnd, cont, _1, _2));
 }
 
@@ -1354,6 +1374,7 @@ Error checkout(const std::string& url,
    Error error = createConsoleProc(args,
                                    parentPath,
                                    "SVN Checkout",
+                                   true,
                                    true,
                                    ppCP);
 
