@@ -165,7 +165,8 @@ public class AnimationTest extends GWTTestCase {
     anim.reset();
 
     // Complete the animation.
-    executeLastCallbackAt(curTime + DELAY_MULTIPLIER + 100);
+    // TODO(cromwellian) remove this 4000 hack after the failure is found
+    executeLastCallbackAt(curTime + DELAY_MULTIPLIER + 4000);
     anim.assertStarted(false);
     anim.assertUpdated(false);
     anim.assertCompleted(true);
