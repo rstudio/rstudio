@@ -1,5 +1,5 @@
 <!--                                                                        -->
-<!-- Copyright 2008 Google Inc.                                             -->
+<!-- Copyright 2011 Google Inc.                                             -->
 <!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
 <!-- may not use this file except in compliance with the License. You may   -->
 <!-- may obtain a copy of the License at                                    -->
@@ -12,10 +12,23 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<!-- Adds debug ID support for UIObjects.                                   -->
+<!-- Base module for Debug code.                                            -->
 <module>
-  <inherits name="com.google.gwt.debug.DebugBase" />
+  <inherits name="com.google.gwt.core.Core" />
   
-  <!-- Enable debug IDs -->
-  <set-property name="gwt.enableDebugId" value="true"/> 
+  <!-- Enable or disable the UIObject.ensureDebugID method -->
+  <define-property name="gwt.enableDebugId" values="true, false"/>
+  <set-property name="gwt.enableDebugId" value="false"/> 
+
+  <!-- Replace the DebugIdImpl -->
+  <replace-with class="com.google.gwt.user.client.ui.UIObject.DebugIdImplEnabled">
+    <when-type-is class="com.google.gwt.user.client.ui.UIObject.DebugIdImpl"/>
+    <when-property-is name="gwt.enableDebugId" value="true"/>
+  </replace-with>
+
+  <!-- Replace the DebugInfoImpl -->
+  <replace-with class="com.google.gwt.debug.client.DebugInfo.DebugInfoImplEnabled">
+    <when-type-is class="com.google.gwt.debug.client.DebugInfo.DebugInfoImpl"/>
+    <when-property-is name="gwt.enableDebugId" value="true"/>
+  </replace-with>
 </module>

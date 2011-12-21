@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.debug.client.DebugInfo;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -179,6 +180,36 @@ public class UIObjectTest extends GWTTestCase {
     o.ensureDebugId("test3");
     assertDebugId("test3", oElem);
     assertDebugId("test3-subElem", o.subElement);
+  }
+
+  public void testDebugIdAsAttribute() {
+    String oldAttribute = DebugInfo.getDebugIdAttribute();
+    boolean asProperty = DebugInfo.isDebugIdAsProperty();
+    DebugInfo.setDebugIdAttribute("debugid", false);
+
+    MyObject o = new MyObject();
+    Element oElem = o.getElement();
+    o.ensureDebugId("test");
+    assertEquals(DebugInfo.DEFAULT_DEBUG_ID_PREFIX + "test", oElem.getAttribute("debugid"));
+    assertEquals(DebugInfo.DEFAULT_DEBUG_ID_PREFIX + "test-subElem", o.subElement
+        .getAttribute("debugid"));
+
+    // Reset the old attribute.
+    DebugInfo.setDebugIdAttribute(oldAttribute, asProperty);
+  }
+
+  public void testDebugIdWithoutPrefix() {
+    String oldPrefix = DebugInfo.getDebugIdPrefix();
+    DebugInfo.setDebugIdPrefix("");
+
+    MyObject o = new MyObject();
+    Element oElem = o.getElement();
+    o.ensureDebugId("test");
+    assertEquals("test", oElem.getPropertyString("id"));
+    assertEquals("test-subElem", o.subElement.getPropertyString("id"));
+
+    // Reset the prefix.
+    DebugInfo.setDebugIdPrefix(oldPrefix);
   }
 
   public void testNormal() {
