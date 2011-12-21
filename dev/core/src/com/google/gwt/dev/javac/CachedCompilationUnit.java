@@ -34,6 +34,9 @@ import java.util.List;
  * A convenient way to serialize a {@CompilationUnit}.
  */
 public class CachedCompilationUnit extends CompilationUnit {
+  private static final boolean normalizeTimestamps = Boolean.parseBoolean(
+      System.getProperty("gwt.normalizeTimestamps", "false"));
+
   private final DiskCacheToken astToken;
   private final long astVersion;
   private transient Collection<CompiledClass> compiledClasses;
@@ -76,7 +79,7 @@ public class CachedCompilationUnit extends CompilationUnit {
     this.astVersion = unit.astVersion;
 
     // Override these fields
-    this.lastModified = lastModified;
+    this.lastModified = normalizeTimestamps ? 0 : lastModified;
   }
 
   /**
@@ -98,7 +101,7 @@ public class CachedCompilationUnit extends CompilationUnit {
     this.resourcePath = unit.getResourcePath();
     this.resourceLocation = Util.stripJarPathPrefix(unit.getResourceLocation());
     this.jsniMethods = unit.getJsniMethods();
-    this.lastModified = unit.getLastModified();
+    this.lastModified = normalizeTimestamps ? 0 : unit.getLastModified();
     this.methodArgNamesLookup = unit.getMethodArgs();
     this.typeName = unit.getTypeName();
     this.isError = unit.isError();
