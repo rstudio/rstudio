@@ -208,6 +208,12 @@ Error runSvn(const ShellArgs& args,
    return Success();
 }
 
+bool isSvnSshRepository()
+{
+   std::string repoURL = repositoryRoot(s_workingDir);
+   return boost::algorithm::starts_with(repoURL, "svn+ssh");
+}
+
 typedef boost::function<void(const core::Error&,
                              const core::system::ProcessResult&)>
                                                             ProcResultCallback;
@@ -842,8 +848,7 @@ Error svnStatus(const json::JsonRpcRequest& request,
 
 void maybeAttachPasswordManager(boost::shared_ptr<ConsoleProcess> pCP)
 {
-   std::string repoURL = repositoryRoot(s_workingDir);
-   if (boost::algorithm::starts_with(repoURL, "svn+ssh"))
+   if (isSvnSshRepository())
       s_pPasswordManager->attach(pCP);
 }
 
