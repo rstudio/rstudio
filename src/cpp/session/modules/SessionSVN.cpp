@@ -23,6 +23,7 @@
 #include <boost/date_time.hpp>
 #include <boost/regex.hpp>
 
+#include <core/FileSerializer.hpp>
 #include <core/rapidxml/rapidxml.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
@@ -41,6 +42,26 @@
 #include "vcs/SessionVCSUtils.hpp"
 #include "SessionConsoleProcess.hpp"
 #include "SessionAskPass.hpp"
+
+// TODO: if showOnOutput dialog is never shown does onClose get called
+// again (are there two reaps?)
+
+// TODO: after history is shown (even for local case with no auth) we
+// get a massive number of calls back to history -- this didn't happen
+// before we put our stuff in
+
+// TODO: try out various failure and reload scenarios -- does the dialog
+// do as is expected?
+
+// TODO: if history fails due to auth error or cancel of auth then
+// history progress keeps running
+
+// TODO: see what is coming back in the serialized files -- is this causing
+// a problem for the showDiff calls
+
+// TODO: invoke using a command with redirection on windows as well
+// (otherwise the file redirection thing won't work)
+
 
 using namespace core;
 using namespace core::shell_utils;
@@ -120,6 +141,18 @@ core::system::ProcessOptions procOptions()
    options.environment = childEnv;
 
    return options;
+}
+
+bool isSvnSshRepository()
+{
+   std::string repoURL = repositoryRoot(s_workingDir);
+   return boost::algorithm::starts_with(repoURL, "svn+ssh");
+}
+
+void maybeAttachPasswordManager(boost::shared_ptr<ConsoleProcess> pCP)
+{
+   if (isSvnSshRepository())
+      s_pPasswordManager->attach(pCP);
 }
 
 #ifndef _WIN32
@@ -208,53 +241,6 @@ Error runSvn(const ShellArgs& args,
    return Success();
 }
 
-bool isSvnSshRepository()
-{
-   std::string repoURL = repositoryRoot(s_workingDir);
-   return boost::algorithm::starts_with(repoURL, "svn+ssh");
-}
-
-typedef boost::function<void(const core::Error&,
-                             const core::system::ProcessResult&)>
-                                                            ProcResultCallback;
-
-void runSvnRemoteXmlRequest(const ShellArgs& args,
-                            ProcResultCallback completionCallback)
-{
-   core::system::ProcessCallbacks callbacks = core::system::createProcessCallbacks(
-            "",
-            boost::bind(completionCallback, Success(), _1),
-            boost::bind(completionCallback, _1, core::system::ProcessResult()));
-
-   core::system::ProcessOptions options = procOptions();
-   options.redirectStdErrToStdOut = false;
-#ifdef _WIN32
-   // NOTE: We use consoleio.exe here in order to make sure svn.exe password
-   // prompting works properly
-   options.createNewConsole = true;
-
-   FilePath consoleIoPath = session::options().consoleIoPath();
-
-   ShellArgs winArgs;
-   winArgs << svnBin();
-   winArgs << args.args();
-   Error error =
-         module_context::processSupervisor().runProgram(
-            consoleIoPath.absolutePathNative(),
-            winArgs.args(),
-            options,
-            callbacks);
-#else
-   Error error =
-         module_context::processSupervisor().runCommand(
-            svn() << args.args(),
-            options,
-            callbacks);
-#endif
-   if (error)
-      completionCallback(error, core::system::ProcessResult());
-}
-
 std::vector<std::string> globalArgs()
 {
    std::vector<std::string> args;
@@ -263,6 +249,7 @@ std::vector<std::string> globalArgs()
 
 
 core::Error createConsoleProc(const ShellArgs& args,
+                              const FilePath& outputFile,
                               const boost::optional<FilePath>& workingDir,
                               const std::string& caption,
                               bool dialog,
@@ -283,7 +270,12 @@ core::Error createConsoleProc(const ShellArgs& args,
                                   console_process::InteractionPossible,
                                   console_process::kDefaultMaxOutputLines);
 #else
-   *ppCP = ConsoleProcess::create(svn() << args.args(),
+
+   std::string command = svn() << args.args();
+   if (!outputFile.empty())
+      command = "(" + command + ")" + " > " + shell_utils::escape(outputFile);
+
+   *ppCP = ConsoleProcess::create(command,
                                   options,
                                   caption,
                                   dialog,
@@ -296,16 +288,93 @@ core::Error createConsoleProc(const ShellArgs& args,
    return Success();
 }
 
+
 core::Error createConsoleProc(const ShellArgs& args,
+                              const FilePath& outputFile,
                               const std::string& caption,
                               bool dialog,
                               boost::shared_ptr<ConsoleProcess>* ppCP)
 {
    return createConsoleProc(args,
+                            outputFile,
                             boost::optional<FilePath>(),
                             caption,
                             dialog,
                             ppCP);
+}
+
+core::Error createConsoleProc(const ShellArgs& args,
+                              const std::string& caption,
+                              bool dialog,
+                              boost::shared_ptr<ConsoleProcess>* ppCP)
+{
+   return createConsoleProc(args, FilePath(), caption, dialog, ppCP);
+}
+
+
+typedef boost::function<void(const core::Error&,
+                             const core::system::ProcessResult&)>
+                                                            ProcResultCallback;
+
+void onAsyncSvnExit(int exitCode,
+                            const FilePath& outputFile,
+                            ProcResultCallback completionCallback)
+{
+   if (exitCode == EXIT_SUCCESS)
+   {
+      // read the file
+      std::string contents;
+      Error error = core::readStringFromFile(outputFile, &contents);
+      if (error)
+      {
+         completionCallback(error, core::system::ProcessResult());
+         return;
+      }
+
+      core::system::ProcessResult result;
+      result.exitStatus = exitCode;
+      result.stdOut = contents;
+      completionCallback(Success(), result);
+   }
+   else
+   {
+      completionCallback(
+        systemError(boost::system::errc::operation_canceled,
+                    ERROR_LOCATION),
+        core::system::ProcessResult());
+   }
+}
+
+void runSvnAsync(const ShellArgs& args,
+                 const std::string& caption,
+                 ProcResultCallback completionCallback)
+{
+   // allocate a temporary file for holding the output
+   FilePath outputFile = module_context::tempFile("svn", "out");
+
+   // create a console process so that we can either do terminal based
+   // auth prompting or do PasswordManager based prompting if necessary
+   boost::shared_ptr<ConsoleProcess> pCP;
+   Error error = createConsoleProc(args, outputFile, caption, true, &pCP);
+   if (error)
+      completionCallback(error, core::system::ProcessResult());
+
+   // set showOnOutput
+   pCP->setShowOnOutput(true);
+
+   // attach a password manager if this is svn+ssh
+   maybeAttachPasswordManager(pCP);
+
+   // add an exitHandler for returning the file contents to the completion
+   pCP->onExit().connect(
+     boost::bind(onAsyncSvnExit, _1, outputFile, completionCallback));
+
+   // notify the client about the console process
+   json::Object data;
+   data["process_info"] = pCP->toJson();
+   data["target_window"] = ask_pass::activeWindow();
+   ClientEvent event(client_events::kConsoleProcessCreated, data);
+   module_context::enqueClientEvent(event);
 }
 
 #ifdef _WIN32
@@ -842,13 +911,6 @@ Error svnStatus(const json::JsonRpcRequest& request,
    return Success();
 }
 
-void maybeAttachPasswordManager(boost::shared_ptr<ConsoleProcess> pCP)
-{
-   if (isSvnSshRepository())
-      s_pPasswordManager->attach(pCP);
-}
-
-
 Error svnUpdate(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
@@ -1056,7 +1118,9 @@ void history(int rev,
    if (!fileFilter.empty())
       args << fileFilter;
 
-   runSvnRemoteXmlRequest(args, boost::bind(historyEnd, callback, _1, _2));
+   runSvnAsync(args,
+               "SVN History",
+               boost::bind(historyEnd, callback, _1, _2));
 }
 
 void svnHistoryCountEnd(const json::JsonRpcFunctionContinuation& cont,
@@ -1134,6 +1198,13 @@ void svnHistoryEnd(int skip,
    using namespace rapidxml;
 
    json::JsonRpcResponse response;
+
+   if (error)
+   {
+      cont(error, &response);
+      return;
+   }
+
 
    std::vector<char> buffer;
    xml_document<> doc;
@@ -1248,7 +1319,9 @@ void svnShow(const json::JsonRpcRequest& request,
    ShellArgs args;
    args << "diff" << "-c" << revision;
 
-   runSvnRemoteXmlRequest(args, boost::bind(svnShowEnd, cont, _1, _2));
+   runSvnAsync(args,
+               "SVN History",
+               boost::bind(svnShowEnd, cont, _1, _2));
 }
 
 Error svnShowFile(const json::JsonRpcRequest& request,

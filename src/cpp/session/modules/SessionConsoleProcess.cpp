@@ -57,7 +57,7 @@ namespace {
 const int kDefaultMaxOutputLines = 500;
 
 ConsoleProcess::ConsoleProcess()
-   : dialog_(false), interactionMode_(InteractionNever),
+   : dialog_(false), showOnOutput_(false), interactionMode_(InteractionNever),
      maxOutputLines_(kDefaultMaxOutputLines), started_(true),
      interrupt_(false), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
@@ -76,6 +76,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
                                InteractionMode interactionMode,
                                int maxOutputLines)
    : command_(command), options_(options), caption_(caption), dialog_(dialog),
+     showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false), interrupt_(false),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
@@ -92,6 +93,7 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
                                InteractionMode interactionMode,
                                int maxOutputLines)
    : program_(program), args_(args), options_(options), caption_(caption), dialog_(dialog),
+     showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false),  interrupt_(false),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
@@ -373,6 +375,7 @@ core::json::Object ConsoleProcess::toJson() const
    result["handle"] = handle_;
    result["caption"] = caption_;
    result["dialog"] = dialog_;
+   result["show_on_output"] = showOnOutput_;
    result["interaction_mode"] = static_cast<int>(interactionMode_);
    result["max_output_lines"] = maxOutputLines_;
    result["buffered_output"] = bufferedOutput();
@@ -390,6 +393,12 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
    pProc->handle_ = obj["handle"].get_str();
    pProc->caption_ = obj["caption"].get_str();
    pProc->dialog_ = obj["dialog"].get_bool();
+
+   json::Value showOnOutput = obj["show_on_output"];
+   if (!showOnOutput.is_null())
+      pProc->showOnOutput_ = showOnOutput.get_bool();
+   else
+      pProc->showOnOutput_ = false;
 
    json::Value mode = obj["interaction_mode"];
    if (!mode.is_null())

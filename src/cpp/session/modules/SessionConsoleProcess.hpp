@@ -131,6 +131,8 @@ public:
    void enqueInput(const Input& input);
    void interrupt();
 
+   void setShowOnOutput(bool showOnOutput) { showOnOutput_ = showOnOutput; }
+
    core::json::Object toJson() const;
    static boost::shared_ptr<ConsoleProcess> fromJson(
                                               core::json::Object& obj);
@@ -159,6 +161,7 @@ private:
 
    std::string caption_;
    bool dialog_;
+   bool showOnOutput_;
    InteractionMode interactionMode_;
    int maxOutputLines_;
 

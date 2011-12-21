@@ -24,6 +24,8 @@ namespace session {
 namespace modules {      
 namespace ask_pass {
 
+
+std::string activeWindow();
 void setActiveWindow(const std::string& windowName);
 
 struct PasswordInput
