@@ -12,8 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.svn;
 
-import com.google.gwt.cell.client.FieldUpdater;
-import com.google.gwt.cell.client.HasCell;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.MultiSelectionModel;
 import org.rstudio.core.client.cellview.TriStateCheckboxCell;
