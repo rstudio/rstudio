@@ -131,6 +131,14 @@ public class SVNSelectChangelistTable extends SVNChangelistTable
       super.configureTable();
    }
 
+   public void clearSelection()
+   {
+      selected_.clear();
+      List<StatusAndPath> list = dataProvider_.getList();
+      for (int i = 0; i < list.size(); i++)
+         list.set(i, list.get(i));
+   }
+
    private final HashMap<String, Boolean> selected_ =
                                                  new HashMap<String, Boolean>();
    private final HashSet<String> uncommitableStatuses = new HashSet<String>();

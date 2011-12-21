@@ -29,6 +29,7 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.HasData;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -207,6 +208,12 @@ public class HistoryPanel extends Composite implements Display
    public HasValue<FileSystemItem> getFileFilter()
    {
       return commitFilterToolbarButton_;
+   }
+
+   @Override
+   public void removeBranchToolbarButton()
+   {
+      topToolbar_.removeLeftWidget(branchToolbarButton_);
    }
 
    @Override

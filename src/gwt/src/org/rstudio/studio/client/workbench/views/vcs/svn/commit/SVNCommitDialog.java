@@ -13,14 +13,22 @@
 package org.rstudio.studio.client.workbench.views.vcs.svn.commit;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
@@ -39,7 +47,7 @@ public class SVNCommitDialog extends ModalDialog<Void>
 
    @Inject
    public SVNCommitDialog(SVNServerOperations server,
-                          SVNSelectChangelistTablePresenter changelistPresenter,
+                          final SVNSelectChangelistTablePresenter changelistPresenter,
                           GlobalDisplay globalDisplay)
    {
       super("Commit", new OperationWithInput<Void>()
@@ -55,6 +63,48 @@ public class SVNCommitDialog extends ModalDialog<Void>
       changelist_ = changelistPresenter.getView();
       widget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       widget_.setSize("400px", "300px");
+
+      topHPanel_.setCellWidth(selectLabel_, "99%");
+      topHPanel_.setCellVerticalAlignment(selectLabel_,
+                                          HorizontalPanel.ALIGN_BOTTOM);
+
+      topHPanel_.setCellWidth(btnClearSelection_, "1%");
+      topHPanel_.setCellVerticalAlignment(btnClearSelection_,
+                                          HorizontalPanel.ALIGN_TOP);
+      topHPanel_.setCellHorizontalAlignment(btnClearSelection_,
+                                            HorizontalPanel.ALIGN_RIGHT);
+
+      btnClearSelection_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            changelistPresenter.clearSelection();
+         }
+      });
+
+      if (!StringUtil.isNullOrEmpty(commitDraft_))
+         message_.setText(commitDraft_);
+   }
+
+   @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            message_.setFocus(true);
+         }
+      });
+   }
+
+   @Override
+   protected void onUnload()
+   {
+      commitDraft_ = message_.getText();
    }
 
    @Override
@@ -82,7 +132,13 @@ public class SVNCommitDialog extends ModalDialog<Void>
                         public void onProcessExit(ProcessExitEvent event)
                         {
                            if (event.getExitCode() == 0)
+                           {
+                              // We'll set the commitDraft_ on unload, so clear
+                              // out the text box now
+                              message_.setText("");
+
                               executeOnSuccess.execute();
+                           }
                         }
                      });
 
@@ -132,8 +188,16 @@ public class SVNCommitDialog extends ModalDialog<Void>
    ChangelistTable changelist_;
    @UiField
    TextArea message_;
+   @UiField
+   HorizontalPanel topHPanel_;
+   @UiField
+   SmallButton btnClearSelection_;
+   @UiField
+   Label selectLabel_;
 
    private Widget widget_;
    private final SVNServerOperations server_;
    private final GlobalDisplay globalDisplay_;
+
+   private static String commitDraft_;
 }

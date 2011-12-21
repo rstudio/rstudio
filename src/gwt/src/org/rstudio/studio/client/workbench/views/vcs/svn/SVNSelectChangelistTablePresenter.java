@@ -33,6 +33,7 @@ public class SVNSelectChangelistTablePresenter extends SVNChangelistTablePresent
                                             final GlobalDisplay globalDisplay)
    {
       super(view, svnState);
+      view_ = view;
 
       view.getCommitColumn().setFieldUpdater(new FieldUpdater<StatusAndPath, Boolean>()
       {
@@ -115,4 +116,11 @@ public class SVNSelectChangelistTablePresenter extends SVNChangelistTablePresent
          }
       });
    }
+
+   public void clearSelection()
+   {
+      view_.clearSelection();
+   }
+
+   private final SVNSelectChangelistTable view_;
 }

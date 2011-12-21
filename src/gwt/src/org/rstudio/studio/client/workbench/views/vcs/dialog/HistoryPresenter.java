@@ -73,6 +73,8 @@ public class HistoryPresenter
                                        ValueChangeHandler<String> handler);
       
       HasValue<FileSystemItem> getFileFilter();
+
+      void removeBranchToolbarButton();
       
       void showSizeWarning(long sizeInBytes);
       void hideSizeWarning();
@@ -133,7 +135,7 @@ public class HistoryPresenter
       }
       else
       {
-         view_.setShowBranch(false);
+         view_.removeBranchToolbarButton();
       }
       
       view_.getCommitList().addSelectionChangeHandler(new SelectionChangeEvent.Handler()

@@ -21,7 +21,9 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
+import com.google.inject.Provider;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -30,41 +32,28 @@ import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHan
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 public class BranchToolbarButton extends ToolbarButton
-                                 implements HasValueChangeHandlers<String>
+                                 implements HasValueChangeHandlers<String>,
+                                            VcsRefreshHandler
 {
    @Inject
-   public BranchToolbarButton(final GitState vcsState)
+   public BranchToolbarButton(final Provider<GitState> pVcsState)
    {
       super("",
             StandardIcons.INSTANCE.empty_command(),
             new ToolbarPopupMenu());
+      pVcsState_ = pVcsState;
 
       setTitle("Switch branch");
 
-      vcsState.bindRefreshHandler(this, new VcsRefreshHandler()
+      new WidgetHandlerRegistration(this)
       {
          @Override
-         public void onVcsRefresh(VcsRefreshEvent event)
+         protected HandlerRegistration doRegister()
          {
-            ToolbarPopupMenu menu = getMenu();
-            menu.clearItems();
-            JsArrayString branches = vcsState.getBranchInfo()
-                  .getBranches();
-            for (int i = 0; i < branches.length(); i++)
-            {
-               final String branch = branches.get(i);
-               menu.addItem(new MenuItem(branch, new Command()
-               {
-                  @Override
-                  public void execute()
-                  {
-                     setBranchCaption(branch);
-                     ValueChangeEvent.fire(BranchToolbarButton.this, branch);
-                  }
-               }));
-            }
+            return pVcsState.get().addVcsRefreshHandler(
+                                                BranchToolbarButton.this, true);
          }
-      });
+      };
    }
    
    public void setBranchCaption(String caption)
@@ -80,6 +69,31 @@ public class BranchToolbarButton extends ToolbarButton
    {
       return addHandler(handler, ValueChangeEvent.getType());
    }
+
+   @Override
+   public void onVcsRefresh(VcsRefreshEvent event)
+   {
+      ToolbarPopupMenu menu = getMenu();
+      menu.clearItems();
+      JsArrayString branches = pVcsState_.get().getBranchInfo()
+            .getBranches();
+      for (int i = 0; i < branches.length(); i++)
+      {
+         final String branch = branches.get(i);
+         menu.addItem(new MenuItem(branch, new Command()
+         {
+            @Override
+            public void execute()
+            {
+               setBranchCaption(branch);
+               ValueChangeEvent.fire(BranchToolbarButton.this, branch);
+            }
+         }));
+      }
+
+   }
+
+   protected final Provider<GitState> pVcsState_;
 
    private static final String NO_BRANCH = "(No branch)";
 }

@@ -48,7 +48,7 @@ public class SVNHistoryStrategy implements HistoryStrategy
    @Override
    public boolean isBranchingSupported()
    {
-      return true;
+      return false;
    }
 
    @Override
