@@ -29,6 +29,7 @@
 #include "SessionSVN.hpp"
 #include "SessionGit.hpp"
 
+#include "SessionAskPass.hpp"
 #include "SessionConsoleProcess.hpp"
 
 #include "config.h"
@@ -87,7 +88,7 @@ Error vcsClone(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   setAskPassWindow(request.sourceWindow);
+   ask_pass::setActiveWindow(request.sourceWindow);
 
    FilePath parentPath = module_context::resolveAliasedPath(parentDir);
 
@@ -196,91 +197,12 @@ void enqueueRefreshEvent()
    vcs_utils::enqueueRefreshEvent();
 }
 
-namespace {
 
-std::string s_askPassWindow;
-module_context::WaitForMethodFunction s_waitForAskPass;
-
-void onClientInit()
-{
-   s_askPassWindow = "";
-}
-
-} // anonymous namespace
-
-void setAskPassWindow(const std::string& window)
-{
-   s_askPassWindow = window;
-}
-
-void setAskPassWindow(const json::JsonRpcRequest& request)
-{
-   setAskPassWindow(request.sourceWindow);
-}
-
-Error askForPassword(const std::string& prompt,
-                     const std::string& rememberPrompt,
-                     PasswordInput* pInput)
-{
-   json::Object payload;
-   payload["prompt"] = prompt;
-   payload["remember_prompt"] = rememberPrompt;
-   payload["window"] = s_askPassWindow;
-   ClientEvent askPassEvent(client_events::kAskPass, payload);
-
-   // wait for method
-   core::json::JsonRpcRequest request;
-   if (!s_waitForAskPass(&request, askPassEvent))
-   {
-      return systemError(boost::system::errc::operation_canceled,
-                         ERROR_LOCATION);
-   }
-
-   // read params
-   json::Value value;
-   bool remember;
-   Error error = json::readParams(request.params, &value, &remember);
-   if (error)
-      return error;
-
-   // null passphrase means dialog was cancelled
-   if (!json::isType<std::string>(value))
-   {
-      pInput->cancelled = true;
-      return Success();
-   }
-
-   // read inputs
-   pInput->remember = remember;
-   pInput->password = value.get_value<std::string>();
-
-   // decrypt if necessary
-#ifdef RSTUDIO_SERVER
-   if (options().programMode() == kSessionProgramModeServer)
-   {
-      // In server mode, passphrases are encrypted
-      error = core::system::crypto::rsaPrivateDecrypt(
-                                             pInput->password,
-                                             &pInput->password);
-      if (error)
-         return error;
-   }
-#endif
-
-   return Success();
-}
 
 core::Error initialize()
 {
    git::initialize();
    svn::initialize();
-
-   module_context::events().onClientInit.connect(onClientInit);
-
-   // register waitForMethod handler
-   s_waitForAskPass = module_context::registerWaitForMethod(
-                                                "askpass_completed");
-
 
    // http endpoints
    using boost::bind;

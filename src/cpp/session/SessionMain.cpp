@@ -83,6 +83,7 @@
 #include "SessionClientEventService.hpp"
 
 #include "modules/SessionAgreement.hpp"
+#include "modules/SessionAskPass.hpp"
 #include "modules/SessionCodeSearch.hpp"
 #include "modules/SessionConsole.hpp"
 #include "modules/SessionConsoleProcess.hpp"
@@ -1286,6 +1287,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::path::initialize)
       (modules::content_urls::initialize)
       (modules::limits::initialize)
+      (modules::ask_pass::initialize)
       (modules::agreement::initialize)
       (modules::console::initialize)
       (modules::console_process::initialize)

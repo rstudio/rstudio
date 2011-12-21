@@ -51,6 +51,7 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include "SessionConsoleProcess.hpp"
+#include "SessionAskPass.hpp"
 
 #include "SessionVCS.hpp"
 
@@ -1392,7 +1393,7 @@ Error vcsPush(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   source_control::setAskPassWindow(request.sourceWindow);
+   ask_pass::setActiveWindow(request.sourceWindow);
 
    pResponse->setResult(pCP->toJson());
 
@@ -1407,7 +1408,7 @@ Error vcsPull(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   source_control::setAskPassWindow(request.sourceWindow);
+   ask_pass::setActiveWindow(request.sourceWindow);
 
    pResponse->setResult(pCP->toJson());
 
@@ -1901,10 +1902,10 @@ void postbackSSHAskPass(const std::string& prompt,
                                              std::string("Enter passphrase:");
 
    // prompt
-   source_control::PasswordInput input;
-   Error error = source_control::askForPassword(askPrompt,
-                                                rememberPrompt,
-                                                &input);
+   ask_pass::PasswordInput input;
+   Error error = ask_pass::askForPassword(askPrompt,
+                                          rememberPrompt,
+                                          &input);
    if (!error)
    {
       if (!input.cancelled)

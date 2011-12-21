@@ -40,6 +40,7 @@
 #include "SessionVCS.hpp"
 #include "vcs/SessionVCSUtils.hpp"
 #include "SessionConsoleProcess.hpp"
+#include "SessionAskPass.hpp"
 
 using namespace core;
 using namespace core::shell_utils;
@@ -858,7 +859,7 @@ Error svnUpdate(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   source_control::setAskPassWindow(request.sourceWindow);
+   ask_pass::setActiveWindow(request.sourceWindow);
 
    maybeAttachPasswordManager(pCP);
 
@@ -895,7 +896,7 @@ Error svnCommit(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   source_control::setAskPassWindow(request.sourceWindow);
+   ask_pass::setActiveWindow(request.sourceWindow);
 
    FilePath tempFile = module_context::tempFile("svnmsg", "txt");
    boost::shared_ptr<std::ostream> pStream;
@@ -1113,7 +1114,7 @@ void svnHistoryCount(const json::JsonRpcRequest& request,
       return;
    }
 
-   source_control::setAskPassWindow(request.sourceWindow);
+   ask_pass::setActiveWindow(request.sourceWindow);
 
    ShellArgs options;
    options << "-q";
@@ -1209,7 +1210,7 @@ void svnHistory(const json::JsonRpcRequest& request,
       return;
    }
 
-   source_control::setAskPassWindow(request.sourceWindow);
+   ask_pass::setActiveWindow(request.sourceWindow);
 
    int limit = skip + maxentries;
    ShellArgs options;
@@ -1300,10 +1301,10 @@ bool promptForPassword(const std::string& prompt,
 {
    std::string rememberPrompt = showRememberOption ?
                                 "Remember for this session" : "";
-   source_control::PasswordInput input;
-   Error error = source_control::askForPassword(prompt,
-                                                rememberPrompt,
-                                                &input);
+   ask_pass::PasswordInput input;
+   Error error = ask_pass::askForPassword(prompt,
+                                          rememberPrompt,
+                                          &input);
    if (!error)
    {
       if (!input.cancelled)

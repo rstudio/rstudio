@@ -50,20 +50,6 @@ core::FilePath defaultSshKeyDir();
 
 void enqueueRefreshEvent();
 
-void setAskPassWindow(const std::string& windowName);
-
-struct PasswordInput
-{
-   PasswordInput() : cancelled(false), remember(false) {}
-   bool cancelled;
-   std::string password;
-   bool remember;
-};
-
-core::Error askForPassword(const std::string& prompt,
-                           const std::string& rememberPrompt,
-                           PasswordInput* pInput);
-
 core::Error fileStatus(const core::FilePath& filePath,
                        source_control::VCSStatus* pStatus);
 
