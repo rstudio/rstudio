@@ -104,7 +104,8 @@ public class SVNHistoryStrategy implements HistoryStrategy
    @Override
    public void refreshCount()
    {
-      dataProvider_.refreshCount();
+      if (initialized_)
+         dataProvider_.refreshCount();
    }
 
    @Override
