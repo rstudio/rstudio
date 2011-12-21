@@ -411,7 +411,7 @@ public class SVNReviewPresenter implements ReviewPresenter
                   }
 
                   view_.getLineTableDisplay().setShowActions(
-                        item.isFineGrainedActionable());
+                        !"?".equals(item.getStatus()));
                   view_.setData(allLines);
                }
 

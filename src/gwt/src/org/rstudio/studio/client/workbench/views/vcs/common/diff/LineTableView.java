@@ -77,6 +77,7 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
 
       String stageMode();
       String workingMode();
+      String noStageMode();
    }
 
    public class LineContentCell extends AbstractCell<ChunkOrLine>
@@ -398,6 +399,11 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
    {
       showActions_ = showActions;
       selectionModel_.setEnabled(showActions);
+   }
+
+   public void hideStageCommands()
+   {
+      addStyleName(RES.cellTableStyle().noStageMode());
    }
 
    @Override

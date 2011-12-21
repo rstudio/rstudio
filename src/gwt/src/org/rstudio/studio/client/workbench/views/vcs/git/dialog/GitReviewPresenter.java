@@ -661,7 +661,7 @@ public class GitReviewPresenter implements ReviewPresenter
                   }
 
                   view_.getLineTableDisplay().setShowActions(
-                        item.isFineGrainedActionable());
+                        !"??".equals(item.getStatus()));
                   view_.setData(allLines, patchMode);
                }
 

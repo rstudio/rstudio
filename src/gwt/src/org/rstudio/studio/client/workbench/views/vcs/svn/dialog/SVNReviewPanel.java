@@ -205,6 +205,7 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       changelist_ = changelist.getView();
       lines_ = diffPane;
       lines_.getElement().setTabIndex(-1);
+      lines_.hideStageCommands();
 
       overrideSizeWarning_ = new SizeWarningWidget("diff");
 

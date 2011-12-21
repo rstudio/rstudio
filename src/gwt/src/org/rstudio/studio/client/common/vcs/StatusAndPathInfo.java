@@ -43,11 +43,6 @@ public class StatusAndPathInfo extends JavaScriptObject
       return !!this.is_directory;
    }-*/;
 
-   public final boolean isFineGrainedActionable()
-   {
-      return !"??".equals(getStatus());
-   }
-
    public native static StatusAndPathInfo create(String status,
                                           String path,
                                           String rawPath,

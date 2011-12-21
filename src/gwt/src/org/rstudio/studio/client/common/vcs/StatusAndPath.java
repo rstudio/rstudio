@@ -104,11 +104,6 @@ public class StatusAndPath
       return directory_;
    }
 
-   public boolean isFineGrainedActionable()
-   {
-      return !"??".equals(getStatus());
-   }
-
    @Override
    public boolean equals(Object o)
    {

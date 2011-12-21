@@ -105,6 +105,11 @@
    display: none;
 }
 
+.noStageMode .actions div[data-action='Stage'],
+.noStageMode .actions div[data-action='Unstage'] {
+   display: none;
+}
+
 .chunkActions {
 }
 
