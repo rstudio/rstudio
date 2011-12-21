@@ -13,8 +13,14 @@
 
 #include "SessionAskPass.hpp"
 
+#include <boost/bind.hpp>
+
 #include <core/Exec.hpp>
+#include <core/Log.hpp>
 #include <core/json/Json.hpp>
+
+#include <r/RSexp.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -40,6 +46,36 @@ module_context::WaitForMethodFunction s_waitForAskPass;
 void onClientInit()
 {
    s_askPassWindow = "";
+}
+
+
+// show error message from R
+SEXP rs_askForPassword(SEXP promptSEXP)
+{
+   try
+   {
+      std::string prompt = r::sexp::asString(promptSEXP);
+
+      PasswordInput input;
+      Error error = askForPassword(prompt, "", &input);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return R_NilValue;
+      }
+      else if (input.cancelled || input.password.empty())
+      {
+         return R_NilValue;
+      }
+      else
+      {
+         r::sexp::Protect rProtect;
+         return r::sexp::create(input.password, &rProtect);
+      }
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   return R_NilValue;
 }
 
 } // anonymous namespace
@@ -110,7 +146,19 @@ Error initialize()
    s_waitForAskPass = module_context::registerWaitForMethod(
                                                 "askpass_completed");
 
-   return Success();
+   // register rs_askForPassword with R
+   R_CallMethodDef methodDefAskPass ;
+   methodDefAskPass.name = "rs_askForPassword" ;
+   methodDefAskPass.fun = (DL_FUNC) rs_askForPassword ;
+   methodDefAskPass.numArgs = 1;
+   r::routines::addCallMethod(methodDefAskPass);
+
+   // complete initialization
+   ExecBlock initBlock ;
+   initBlock.addFunctions()
+      (boost::bind(module_context::sourceModuleRFile, "SessionAskPass.R"));
+   return initBlock.execute();
+
 }
    
    
