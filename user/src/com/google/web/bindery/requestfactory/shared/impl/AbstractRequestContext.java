@@ -1,16 +1,14 @@
 /*
  * Copyright 2010 Google Inc.
  * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
  * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
 package com.google.web.bindery.requestfactory.shared.impl;
@@ -75,9 +73,8 @@ import javax.validation.metadata.ConstraintDescriptor;
  */
 public abstract class AbstractRequestContext implements RequestContext, EntityCodex.EntitySource {
   /**
-   * Allows the payload dialect to be injected into the AbstractRequestContext
-   * without the caller needing to be concerned with how the implementation
-   * object is instantiated.
+   * Allows the payload dialect to be injected into the AbstractRequestContext without the caller
+   * needing to be concerned with how the implementation object is instantiated.
    */
   public enum Dialect {
     STANDARD {
@@ -100,32 +97,30 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
    */
   protected static class State {
     /**
-     * Supports the case where chained contexts are used and a response comes
-     * back from the server with a proxy type not reachable from the canonical
-     * context.
+     * Supports the case where chained contexts are used and a response comes back from the server
+     * with a proxy type not reachable from the canonical context.
      */
     public Set<AbstractRequestContext> appendedContexts;
     public final AbstractRequestContext canonical;
     public final DialectImpl dialect;
     public FanoutReceiver<Void> fanout;
     /**
-     * When {@code true} the {@link AbstractRequestContext#fire()} method will
-     * be a no-op.
+     * When {@code true} the {@link AbstractRequestContext#fire()} method will be a no-op.
      */
     public boolean fireDisabled;
     public final List<AbstractRequest<?>> invocations = new ArrayList<AbstractRequest<?>>();
 
     public boolean locked;
     /**
-     * A map of all EntityProxies that the RequestContext has interacted with.
-     * Objects are placed into this map by being returned from {@link #create},
-     * passed into {@link #edit}, or used as an invocation argument.
+     * A map of all EntityProxies that the RequestContext has interacted with. Objects are placed
+     * into this map by being returned from {@link #create}, passed into {@link #edit}, or used as
+     * an invocation argument.
      */
     public final Map<SimpleProxyId<?>, AutoBean<? extends BaseProxy>> editedProxies =
         new LinkedHashMap<SimpleProxyId<?>, AutoBean<? extends BaseProxy>>();
     /**
-     * A map that contains the canonical instance of an entity to return in the
-     * return graph, since this is built from scratch.
+     * A map that contains the canonical instance of an entity to return in the return graph, since
+     * this is built from scratch.
      */
     public final Map<SimpleProxyId<?>, AutoBean<?>> returnedProxies =
         new HashMap<SimpleProxyId<?>, AutoBean<?>>();
@@ -133,10 +128,9 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     public final AbstractRequestFactory requestFactory;
 
     /**
-     * A map that allows us to handle the case where the server has sent back an
-     * unpersisted entity. Because we assume that the server is stateless, the
-     * client will need to swap out the request-local ids with a regular
-     * client-allocated id.
+     * A map that allows us to handle the case where the server has sent back an unpersisted entity.
+     * Because we assume that the server is stateless, the client will need to swap out the
+     * request-local ids with a regular client-allocated id.
      */
     public final Map<Integer, SimpleProxyId<?>> syntheticIds =
         new HashMap<Integer, SimpleProxyId<?>>();
@@ -190,9 +184,9 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
      */
     public void addInvocation(AbstractRequest<?> request) {
       /*
-       * TODO(bobv): Support for multiple invocations per request needs to be
-       * ironed out. Once this is done, addInvocation() can be removed from the
-       * DialectImpl interface and restored to to AbstractRequestContext.
+       * TODO(bobv): Support for multiple invocations per request needs to be ironed out. Once this
+       * is done, addInvocation() can be removed from the DialectImpl interface and restored to to
+       * AbstractRequestContext.
        */
       if (!state.invocations.isEmpty()) {
         throw new RuntimeException("Only one invocation per request, pending backend support");
@@ -263,10 +257,41 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     }
 
     Splittable encode(Object obj) {
-      Splittable value;
       if (obj == null) {
         return Splittable.NULL;
-      } else if (obj.getClass().isEnum() && getAutoBeanFactory() instanceof EnumMap) {
+      } else if (obj instanceof Collection) {
+        return collectionEncode((Collection<?>) obj);
+      }
+      return nonCollectionEncode(obj);
+    }
+
+    private Splittable collectionEncode(Collection<?> collection) {
+      StringBuffer sb = new StringBuffer();
+      Iterator<?> it = collection.iterator();
+      sb.append("[");
+      if (it.hasNext()) {
+        // TODO: Allow for the encoding of nested collections. See issue 5974.
+        sb.append(nonCollectionEncode(it.next()));
+        while (it.hasNext()) {
+          sb.append(",");
+          // TODO: Allow for the encoding of nested collections. See issue 5974.
+          sb.append(nonCollectionEncode(it.next()));
+        }
+      }
+      sb.append("]");
+
+      return StringQuoter.split(sb.toString());
+    }
+
+    private Splittable nonCollectionEncode(Object obj) {
+      if (obj instanceof Collection) {
+        // TODO: Allow for the encoding of nested collections. See issue 5974.
+        // Once we do this, this can turn into an assert.
+        throw new RuntimeException(
+            "Unable to encode request as JSON payload; Request methods must have parameters of the form List<T> or Set<T>, where T is a scalar (non-collection) type.");
+      }
+      Splittable value;
+      if (obj instanceof Enum && getAutoBeanFactory() instanceof EnumMap) {
         value = ValueCodex.encode(((EnumMap) getAutoBeanFactory()).getToken((Enum<?>) obj));
       } else if (ValueCodex.canDecode(obj.getClass())) {
         value = ValueCodex.encode(obj);
@@ -291,12 +316,10 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     }
 
     /**
-     * Assemble all of the state that has been accumulated in this context. This
-     * includes:
+     * Assemble all of the state that has been accumulated in this context. This includes:
      * <ul>
      * <li>Diffs accumulated on objects passed to {@link #edit}.
-     * <li>Invocations accumulated as Request subtypes passed to
-     * {@link #addInvocation}.
+     * <li>Invocations accumulated as Request subtypes passed to {@link #addInvocation}.
      * </ul>
      */
     public String makePayload() {
@@ -514,9 +537,9 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
         (AutoBean<T>) state.editedProxies.get(BaseProxyCategory.stableId(bean));
     if (previouslySeen != null && !previouslySeen.isFrozen()) {
       /*
-       * If we've seen the object before, it might be because it was passed in
-       * as a method argument. This does not guarantee its mutability, so check
-       * that here before returning the cached object.
+       * If we've seen the object before, it might be because it was passed in as a method argument.
+       * This does not guarantee its mutability, so check that here before returning the cached
+       * object.
        */
       return previouslySeen.as();
     }
@@ -545,9 +568,9 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
   }
 
   /**
-   * Make sure there's a default receiver so errors don't get dropped. This
-   * behavior should be revisited when chaining is supported, depending on
-   * whether or not chained invocations can fail independently.
+   * Make sure there's a default receiver so errors don't get dropped. This behavior should be
+   * revisited when chaining is supported, depending on whether or not chained invocations can fail
+   * independently.
    */
   public void fire() {
     boolean needsReceiver = true;
@@ -614,9 +637,8 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     /*
      * NB: Don't use the presence of ephemeral objects for this test.
      * 
-     * Diff the objects until one is found to be different. It's not just a
-     * simple flag-check because of the possibility of "unmaking" a change, per
-     * the JavaDoc.
+     * Diff the objects until one is found to be different. It's not just a simple flag-check
+     * because of the possibility of "unmaking" a change, per the JavaDoc.
      */
     for (AutoBean<? extends BaseProxy> bean : state.editedProxies.values()) {
       AutoBean<?> previous = bean.getTag(Constants.PARENT_OBJECT);
@@ -666,13 +688,11 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
    * 
    * @param clazz The proxy type
    * @param id The id to be assigned to the new proxy
-   * @param useAppendedContexts if {@code true} use the AutoBeanFactory types
-   *          associated with any contexts that have been passed into
-   *          {@link #append(RequestContext)}. If {@code false}, this method
-   *          will only create proxy types reachable from the implemented
-   *          RequestContext interface.
-   * @throws IllegalArgumentException if the requested proxy type cannot be
-   *           created
+   * @param useAppendedContexts if {@code true} use the AutoBeanFactory types associated with any
+   *          contexts that have been passed into {@link #append(RequestContext)}. If {@code false},
+   *          this method will only create proxy types reachable from the implemented RequestContext
+   *          interface.
+   * @throws IllegalArgumentException if the requested proxy type cannot be created
    */
   protected <T extends BaseProxy> AutoBean<T> createProxy(Class<T> clazz, SimpleProxyId<T> id,
       boolean useAppendedContexts) {
@@ -729,8 +749,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
   }
 
   /**
-   * Returns an AutoBeanFactory that can produce the types reachable only from
-   * this RequestContext.
+   * Returns an AutoBeanFactory that can produce the types reachable only from this RequestContext.
    */
   protected abstract AutoBeanFactory getAutoBeanFactory();
 
@@ -778,8 +797,8 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
   }
 
   /**
-   * Creates or retrieves a new canonical AutoBean to represent the given id in
-   * the returned payload.
+   * Creates or retrieves a new canonical AutoBean to represent the given id in the returned
+   * payload.
    */
   <Q extends BaseProxy> AutoBean<Q> getProxyForReturnPayloadGraph(SimpleProxyId<Q> id) {
     @SuppressWarnings("unchecked")
@@ -794,8 +813,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
   }
 
   /**
-   * Create a single OperationMessage that encapsulates the state of a proxy
-   * AutoBean.
+   * Create a single OperationMessage that encapsulates the state of a proxy AutoBean.
    */
   AutoBean<OperationMessage> makeOperationMessage(SimpleProxyId<BaseProxy> stableId,
       AutoBean<?> proxyBean, boolean useDelta) {
@@ -901,8 +919,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
               Splittable raw = properties.get(propertyName);
               Object decoded = ValueCodex.decode(ctx.getType(), raw);
               /*
-               * Hack for Date subtypes, consider generalizing for
-               * "custom serializers"
+               * Hack for Date subtypes, consider generalizing for "custom serializers"
                */
               if (decoded != null && Date.class.equals(ctx.getType())) {
                 decoded = new DatePoser((Date) decoded);
@@ -920,8 +937,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     Q proxy = toMutate.as();
 
     /*
-     * Notify subscribers if the object differs from when it first came into the
-     * RequestContext.
+     * Notify subscribers if the object differs from when it first came into the RequestContext.
      */
     if (operations != null && state.requestFactory.isEntityType(id.getProxyClass())) {
       for (WriteOperation writeOperation : operations) {
@@ -962,8 +978,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
   }
 
   /**
-   * This method checks that a proxy object is either immutable, or already
-   * edited by this context.
+   * This method checks that a proxy object is either immutable, or already edited by this context.
    */
   private <T> AutoBean<T> checkStreamsNotCrossed(T object) {
     AutoBean<T> bean = AutoBeanUtils.getAutoBean(object);
@@ -975,14 +990,13 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     State otherState = bean.getTag(REQUEST_CONTEXT_STATE);
     if (!bean.isFrozen() && otherState != this.state) {
       /*
-       * This means something is way off in the weeds. If a bean is editable,
-       * it's supposed to be associated with a RequestContext.
+       * This means something is way off in the weeds. If a bean is editable, it's supposed to be
+       * associated with a RequestContext.
        */
       assert otherState != null : "Unfrozen bean with null RequestContext";
 
       /*
-       * Already editing the object in another context or it would have been in
-       * the editing map.
+       * Already editing the object in another context or it would have been in the editing map.
        */
       throw new IllegalArgumentException("Attempting to edit an EntityProxy"
           + " previously edited by another RequestContext");
@@ -991,16 +1005,15 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
   }
 
   /**
-   * Shallow-clones an autobean and makes duplicates of the collection types. A
-   * regular {@link AutoBean#clone} won't duplicate reference properties.
+   * Shallow-clones an autobean and makes duplicates of the collection types. A regular
+   * {@link AutoBean#clone} won't duplicate reference properties.
    */
   private <T extends BaseProxy> AutoBean<T> cloneBeanAndCollections(final AutoBean<T> toClone) {
     AutoBean<T> clone = toClone.getFactory().create(toClone.getType());
     clone.setTag(STABLE_ID, toClone.getTag(STABLE_ID));
     clone.setTag(Constants.VERSION_PROPERTY_B64, toClone.getTag(Constants.VERSION_PROPERTY_B64));
     /*
-     * Take ownership here to prevent cycles in value objects from overflowing
-     * the stack.
+     * Take ownership here to prevent cycles in value objects from overflowing the stack.
      */
     takeOwnership(clone);
     clone.accept(new AutoBeanVisitor() {
@@ -1026,8 +1039,8 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
 
           if (isValueType(ctx.getElementType()) || isEntityType(ctx.getElementType())) {
             /*
-             * Proxies must be edited up-front so that the elements in the
-             * collection have stable identity.
+             * Proxies must be edited up-front so that the elements in the collection have stable
+             * identity.
              */
             for (Object o : value.as()) {
               if (o == null) {
@@ -1053,8 +1066,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
         if (value != null) {
           if (isValueType(ctx.getType()) || isEntityType(ctx.getType())) {
             /*
-             * Value proxies must be cloned upfront, since the value is replaced
-             * outright.
+             * Value proxies must be cloned upfront, since the value is replaced outright.
              */
             @SuppressWarnings("unchecked")
             AutoBean<BaseProxy> valueBean = (AutoBean<BaseProxy>) value;
@@ -1131,8 +1143,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
   }
 
   /**
-   * Create an InvocationMessage for each remote method call being made by the
-   * context.
+   * Create an InvocationMessage for each remote method call being made by the context.
    */
   private List<InvocationMessage> makePayloadInvocations() {
     MessageFactory f = MessageFactoryHolder.FACTORY;
@@ -1217,8 +1228,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
   }
 
   /**
-   * Ensures that any method arguments are retained in the context's sphere of
-   * influence.
+   * Ensures that any method arguments are retained in the context's sphere of influence.
    */
   private void retainArg(Object arg) {
     if (arg instanceof Iterable<?>) {
