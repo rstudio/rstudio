@@ -1487,7 +1487,7 @@ int rEditFile(const std::string& file)
    }
    
    // fire edit event
-   ClientEvent editEvent = session::showEditorEvent(fileContents, true);
+   ClientEvent editEvent = session::showEditorEvent(fileContents, true, false);
    session::clientEventQueue().add(editEvent);
 
    // wait for edit_completed 

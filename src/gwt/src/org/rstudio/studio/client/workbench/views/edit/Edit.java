@@ -34,6 +34,7 @@ public class Edit implements ShowEditorHandler
    {
       void show(String text,
                 boolean isRCode,
+                boolean lineWrapping,
                 ProgressOperationWithInput<String> operation);
    }
 
@@ -49,6 +50,7 @@ public class Edit implements ShowEditorHandler
    {
       view_.show(event.getContent(),
                  event.isRCode(),
+                 event.getLineWrapping(),
                  new ProgressOperationWithInput<String>() {
 
          public void execute(final String input,

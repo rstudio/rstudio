@@ -27,12 +27,14 @@ public class EditDialog extends ModalDialogBase
 {
    public EditDialog(String text,
                      boolean isRCode,
+                     boolean lineWrapping,
                      final ProgressOperationWithInput<String> operation)
    {
       editor_ = new AceEditor();
       setText("Edit");
       sourceText_ = text;
       isRCode_ = isRCode;
+      lineWrapping_ = lineWrapping;
 
       setEscapeDisabled(true);
 
@@ -82,13 +84,17 @@ public class EditDialog extends ModalDialogBase
       editor_.setCode(sourceText_, false);
       if (isRCode_)
       {
+         // NOTE: line wrapping is ignored for R code since it has its
+         // own localized setting for enabled/disable of line wrapping
+         
          editor_.setFileType(FileTypeRegistry.R);
       }
       else
       {
+         editor_.setUseWrapMode(lineWrapping_);
          editor_.setShowLineNumbers(false);
       }
-     
+      
       // return the editor
       SimplePanel panel = new SimplePanel();
       panel.addStyleName("EditDialog");
@@ -105,5 +111,6 @@ public class EditDialog extends ModalDialogBase
 
    private final String sourceText_ ;
    private final boolean isRCode_;
+   private final boolean lineWrapping_;
    private AceEditor editor_ ;
 }

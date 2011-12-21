@@ -20,11 +20,15 @@ public class ShowEditorData extends JavaScriptObject
    {
    }
 
+   public final native String getContent() /*-{
+      return this.content;
+   }-*/;
+   
    public final native boolean isRCode() /*-{
       return this.is_r_code;
    }-*/;
-
-   public final native String getContent() /*-{
-      return this.content;
+   
+   public final native boolean getLineWrapping() /*-{
+      return this.line_wrapping;
    }-*/;
 }

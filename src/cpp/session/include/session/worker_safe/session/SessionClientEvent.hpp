@@ -123,7 +123,9 @@ private:
    std::string id_;
 };
 
-ClientEvent showEditorEvent(const std::string& content, bool isRCode);
+ClientEvent showEditorEvent(const std::string& content,
+                            bool isRCode,
+                            bool lineWrapping);
 
 ClientEvent browseUrlEvent(const std::string& url,
                            const std::string& window = "_blank");

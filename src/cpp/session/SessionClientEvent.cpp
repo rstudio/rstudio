@@ -191,11 +191,14 @@ std::string ClientEvent::typeName() const
    }
 }
 
-ClientEvent showEditorEvent(const std::string& content, bool isRCode)
+ClientEvent showEditorEvent(const std::string& content,
+                            bool isRCode,
+                            bool lineWrapping)
 {
    json::Object data;
    data["content"] = content;
    data["is_r_code"] = isRCode;
+   data["line_wrapping"] = lineWrapping;
    return ClientEvent(client_events::kShowEditor, data);
 }
 

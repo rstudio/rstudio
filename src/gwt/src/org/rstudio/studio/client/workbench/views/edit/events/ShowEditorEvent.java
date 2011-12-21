@@ -25,6 +25,7 @@ public class ShowEditorEvent extends GwtEvent<ShowEditorHandler>
    {
       content_ = data.getContent();
       isRCode_ = data.isRCode();
+      lineWrapping_ = data.getLineWrapping();
    }
    
    public String getContent()
@@ -35,6 +36,11 @@ public class ShowEditorEvent extends GwtEvent<ShowEditorHandler>
    public boolean isRCode()
    {
       return isRCode_;
+   }
+   
+   public boolean getLineWrapping()
+   {
+      return lineWrapping_;
    }
    
    @Override
@@ -51,4 +57,5 @@ public class ShowEditorEvent extends GwtEvent<ShowEditorHandler>
    
    private final String content_;
    private final boolean isRCode_;
+   private final boolean lineWrapping_;
 }

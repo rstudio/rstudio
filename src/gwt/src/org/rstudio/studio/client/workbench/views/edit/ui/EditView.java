@@ -21,13 +21,14 @@ public class EditView implements Display
 {
    public void show(final String text,
                     final boolean isRCode,
+                    final boolean lineWrapping,
                     final ProgressOperationWithInput<String> operation)
    {
       AceEditor.load(new Command()
       {
          public void execute()
          {
-            new EditDialog(text, isRCode, operation).showModal();
+            new EditDialog(text, isRCode, lineWrapping, operation).showModal();
          }
       });
    }

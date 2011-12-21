@@ -435,7 +435,7 @@ void editFilePostback(const std::string& file,
    }
 
    // prepare edit event
-   ClientEvent editEvent = session::showEditorEvent(fileContents, false);
+   ClientEvent editEvent = session::showEditorEvent(fileContents, false, true);
 
    // wait for edit_completed
    json::JsonRpcRequest request ;
