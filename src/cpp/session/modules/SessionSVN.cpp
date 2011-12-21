@@ -269,9 +269,6 @@ core::Error createConsoleProc(const ShellArgs& args,
                               boost::shared_ptr<ConsoleProcess>* ppCP)
 {
    core::system::ProcessOptions options = procOptions();
-#ifdef _WIN32
-   options.detachProcess = true;
-#endif
    if (!workingDir)
       options.workingDir = s_workingDir;
    else if (!workingDir.get().empty())
