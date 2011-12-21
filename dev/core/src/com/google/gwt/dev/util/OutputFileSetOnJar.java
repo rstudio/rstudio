@@ -53,6 +53,9 @@ public class OutputFileSetOnJar extends OutputFileSet {
     }
   }
 
+  public static final boolean normalizeTimestamps = Boolean.parseBoolean(
+      System.getProperty("gwt.normalizeTimestamps", "false"));
+
   /**
    * Returns the parent path of forward-slash based partial path. Assumes the
    * given path does not end with a trailing slash.
@@ -94,7 +97,9 @@ public class OutputFileSetOnJar extends OutputFileSet {
     mkzipDirs(getParentPath(fullPath));
 
     ZipEntry zipEntry = new ZipEntry(fullPath);
-    if (lastModifiedTime >= 0) {
+    if (normalizeTimestamps) {
+      zipEntry.setTime(0);
+    } else if (lastModifiedTime >= 0) {
       zipEntry.setTime(lastModifiedTime);
     }
     jar.putNextEntry(zipEntry);
@@ -121,6 +126,9 @@ public class OutputFileSetOnJar extends OutputFileSet {
     entry.setCompressedSize(0);
     entry.setCrc(0);
     entry.setMethod(ZipOutputStream.STORED);
+    if (normalizeTimestamps) {
+      entry.setTime(0);
+    }
     jar.putNextEntry(entry);
     createdDirs.add(path);
   }

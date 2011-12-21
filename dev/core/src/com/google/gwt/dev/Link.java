@@ -255,7 +255,7 @@ public class Link {
           jarEntryPath += prefixArtifactPath(art, linkerContext);
         }
         ZipEntry ze = new ZipEntry(jarEntryPath);
-        ze.setTime(art.getLastModified());
+        ze.setTime(OutputFileSetOnJar.normalizeTimestamps ? 0 : art.getLastModified());
         jar.putNextEntry(ze);
         art.writeTo(logger, jar);
         jar.closeEntry();
@@ -268,7 +268,11 @@ public class Link {
       for (Artifact art : linkedArtifacts) {
         if (art.isTransferableFromShards() && !(art instanceof EmittedArtifact)) {
           String jarEntryPath = "arts/" + numSerializedArtifacts++;
-          jar.putNextEntry(new ZipEntry(jarEntryPath));
+          ZipEntry ze = new ZipEntry(jarEntryPath);
+          if (OutputFileSetOnJar.normalizeTimestamps) {
+            ze.setTime(0);
+          }
+          jar.putNextEntry(ze);
           Util.writeObjectToStream(jar, art);
           jar.closeEntry();
         }
