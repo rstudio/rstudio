@@ -132,10 +132,7 @@ public class ConsoleProgressDialog extends ModalDialogBase
                new ShellInteractionManager(display_, server, inputHandler_);
          
          if (getInteractionMode() != ConsoleProcessInfo.INTERACTION_ALWAYS)
-         {
-            shellInteractionManager.setNoEchoForColonPrompts(true);
             shellInteractionManager.setHistoryEnabled(false);
-         }
          
          outputWriter_ = shellInteractionManager;
       }
