@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs;
 
+import com.google.inject.Provider;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
@@ -27,20 +28,11 @@ import com.google.inject.Inject;
 public class CheckoutBranchToolbarButton extends BranchToolbarButton
 {
    @Inject
-   public CheckoutBranchToolbarButton(final GitState vcsState,
+   public CheckoutBranchToolbarButton(final Provider<GitState> pVcsState,
                                       final GitServerOperations server)
    {
-      super(vcsState);
-      
-      vcsState.bindRefreshHandler(this, new VcsRefreshHandler()
-      {
-         @Override
-         public void onVcsRefresh(VcsRefreshEvent event)
-         {
-            setBranchCaption(vcsState.getBranchInfo().getActiveBranch());
-         }
-      });
-      
+      super(pVcsState);
+
       addValueChangeHandler(new ValueChangeHandler<String>() {
 
          @Override
@@ -65,4 +57,11 @@ public class CheckoutBranchToolbarButton extends BranchToolbarButton
       
    }
 
+   @Override
+   public void onVcsRefresh(VcsRefreshEvent event)
+   {
+      super.onVcsRefresh(event);
+
+      setBranchCaption(pVcsState_.get().getBranchInfo().getActiveBranch());
+   }
 }

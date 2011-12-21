@@ -16,6 +16,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.view.client.HasData;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -29,11 +30,11 @@ public class GitHistoryStrategy implements HistoryStrategy
    @Inject
    public GitHistoryStrategy(GitServerOperations server,
                              GitHistoryAsyncDataProvider dataProvider,
-                             GitState vcsState)
+                             Provider<GitState> pVcsState)
    {
       server_ = server;
       dataProvider_ = dataProvider;
-      vcsState_ = vcsState;
+      pVcsState_ = pVcsState;
    }
 
    @Override
@@ -71,7 +72,7 @@ public class GitHistoryStrategy implements HistoryStrategy
    @Override
    public HandlerRegistration addVcsRefreshHandler(VcsRefreshHandler handler)
    {
-      return vcsState_.addVcsRefreshHandler(handler, false);
+      return pVcsState_.get().addVcsRefreshHandler(handler, false);
    }
 
    @Override
@@ -109,5 +110,5 @@ public class GitHistoryStrategy implements HistoryStrategy
 
    private final GitServerOperations server_;
    private final GitHistoryAsyncDataProvider dataProvider_;
-   private final GitState vcsState_;
+   private final Provider<GitState> pVcsState_;
 }
