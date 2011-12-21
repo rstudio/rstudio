@@ -51,6 +51,11 @@ public class SvnPage extends VersionControlPage
 
       url = url.replaceAll("[\u0000-\u0020]+", " ");
       url = url.trim();
+      
+      // Suppress if it is "trunk"
+      if (url.equals("trunk"))
+         url = "";
+      
       return url;
      
    }
