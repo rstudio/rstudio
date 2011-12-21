@@ -32,6 +32,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.DocsMenu;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
 
 @GinModules(RStudioGinModule.class)
 public interface RStudioGinjector extends Ginjector
@@ -43,6 +44,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(AceEditor aceEditor);
    void injectMembers(DesktopFileDialogs desktopFileDialogs);
    void injectMembers(RCompletionManager rCompletionManager);
+   void injectMembers(SVNCommandHandler svnCommandHandler);
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

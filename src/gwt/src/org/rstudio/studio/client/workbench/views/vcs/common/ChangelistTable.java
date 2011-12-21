@@ -134,15 +134,7 @@ public abstract class ChangelistTable extends Composite
             dataProvider_.getList());
       table_.addColumnSortHandler(sortHandler_);
 
-      selectionModel_ = new MultiSelectionModel<StatusAndPath>(
-            new ProvidesKey<StatusAndPath>()
-            {
-               @Override
-               public Object getKey(StatusAndPath item)
-               {
-                  return item.getPath();
-               }
-            });
+      selectionModel_ = createSelectionModel();
       table_.setSelectionModel(selectionModel_);
       dataProvider_.addDataDisplay(table_);
 
@@ -164,6 +156,19 @@ public abstract class ChangelistTable extends Composite
       setProgress(true);
 
       initWidget(layout_);
+   }
+
+   protected MultiSelectionModel<StatusAndPath> createSelectionModel()
+   {
+      return new MultiSelectionModel<StatusAndPath>(
+            new ProvidesKey<StatusAndPath>()
+            {
+               @Override
+               public Object getKey(StatusAndPath item)
+               {
+                  return item.getPath();
+               }
+            });
    }
 
    protected abstract SafeHtmlRenderer<String> getStatusRenderer();
@@ -417,7 +422,7 @@ public abstract class ChangelistTable extends Composite
    protected final MultiSelectCellTable<StatusAndPath> table_;
    protected final MultiSelectionModel<StatusAndPath> selectionModel_;
    protected final ColumnSortEvent.ListHandler<StatusAndPath> sortHandler_;
-   private final ListDataProvider<StatusAndPath> dataProvider_;
+   protected final ListDataProvider<StatusAndPath> dataProvider_;
    private final ProgressPanel progressPanel_;
    private LayoutPanel layout_;
    private ScrollPanel scrollPanel_;

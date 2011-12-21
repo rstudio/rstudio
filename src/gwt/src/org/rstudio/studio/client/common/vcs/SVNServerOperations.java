@@ -16,6 +16,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
@@ -47,6 +48,10 @@ public interface SVNServerOperations extends VCSServerOperations
 
    void svnRevert(ArrayList<String> paths,
                   ServerRequestCallback<ProcessResult> requestCallback);
+
+   void svnResolve(String accept,
+                   ArrayList<String> paths,
+                   ServerRequestCallback<ProcessResult> requestCallback);
 
    void svnStatus(
          ServerRequestCallback<JsArray<StatusAndPathInfo>> requestCallback);

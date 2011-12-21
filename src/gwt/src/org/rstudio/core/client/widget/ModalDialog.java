@@ -14,6 +14,7 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Command;
 
 
 public abstract class ModalDialog<T> extends ModalDialogBase
@@ -32,14 +33,18 @@ public abstract class ModalDialog<T> extends ModalDialogBase
     
       ThemedButton okButton = new ThemedButton("OK", new ClickHandler() {
          public void onClick(ClickEvent event) {
-            T input = collectInput();
-            if (validate(input))
+            final T input = collectInput();
+            validateAndGo(input, new Command()
             {
-               closeDialog();
-               if (operation != null)
-                  operation.execute(input);
-               onSuccess();
-            }      
+               @Override
+               public void execute()
+               {
+                  closeDialog();
+                  if (operation != null)
+                     operation.execute(input);
+                  onSuccess();
+               }
+            });
          }
       });
       
@@ -67,12 +72,16 @@ public abstract class ModalDialog<T> extends ModalDialogBase
       
       ThemedButton okButton = new ThemedButton("OK", new ClickHandler() {
          public void onClick(ClickEvent event) {
-            T input = collectInput();
-            if (validate(input))
+            final T input = collectInput();
+            validateAndGo(input, new Command()
             {
-               operation.execute(input, progressIndicator);
-               onSuccess();
-            }      
+               @Override
+               public void execute()
+               {
+                  operation.execute(input, progressIndicator);
+                  onSuccess();
+               }
+            });
          }
       });
       
@@ -100,7 +109,13 @@ public abstract class ModalDialog<T> extends ModalDialogBase
    }
    
    protected abstract T collectInput();
-   
+
+   protected void validateAndGo(T input, Command executeOnSuccess)
+   {
+      if (validate(input))
+         executeOnSuccess.execute();
+   }
+
    protected abstract boolean validate(T input);
   
 }

@@ -2229,6 +2229,17 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void svnResolve(String accept,
+                          ArrayList<String> paths,
+                          ServerRequestCallback<ProcessResult> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(accept));
+      params.set(1, toJSONStringArray(paths));
+      sendRequest(RPC_SCOPE, SVN_RESOLVE, params, requestCallback);
+   }
+
+   @Override
    public void svnStatus(ServerRequestCallback<JsArray<StatusAndPathInfo>> requestCallback)
    {
       sendRequest(RPC_SCOPE, SVN_STATUS, requestCallback);
@@ -2513,6 +2524,7 @@ public class RemoteServer implements Server
    private static final String SVN_ADD = "svn_add";
    private static final String SVN_DELETE = "svn_delete";
    private static final String SVN_REVERT = "svn_revert";
+   private static final String SVN_RESOLVE = "svn_resolve";
    private static final String SVN_STATUS = "svn_status";
    private static final String SVN_UPDATE = "svn_update";
    private static final String SVN_CLEANUP = "svn_cleanup";

@@ -14,11 +14,14 @@ package org.rstudio.studio.client.workbench.views.vcs.svn;
 
 import java.util.ArrayList;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
@@ -28,6 +31,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.ProcessCallback;
 import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
+import org.rstudio.studio.client.workbench.views.vcs.svn.commit.SVNCommitDialog;
 import org.rstudio.studio.client.workbench.views.vcs.svn.model.SVNState;
 
 import com.google.gwt.core.client.GWT;
@@ -53,6 +57,14 @@ public class SVNCommandHandler
       svnState_ = svnState;
       vcsFileOpener_ = vcsFileOpener;
       GWT.<Binder>create(Binder.class).bind(commands, this);
+
+      RStudioGinjector.INSTANCE.injectMembers(this);
+   }
+
+   @Inject
+   void initialize(Provider<SVNCommitDialog> pCommitDialog)
+   {
+      pCommitDialog_ = pCommitDialog;
    }
    
    public void setFilesCommandsEnabled(boolean enabled)
@@ -81,7 +93,7 @@ public class SVNCommandHandler
    
    public void onVcsCommit()
    {
-      globalDisplay_.showErrorMessage("SVN Commit", "Not Yet Implemented");
+      pCommitDialog_.get().showModal();
    }
    
    @Handler
@@ -212,4 +224,5 @@ public class SVNCommandHandler
    private final SVNServerOperations server_;
    private final SVNState svnState_;
    private final VCSFileOpener vcsFileOpener_;
+   private Provider<SVNCommitDialog> pCommitDialog_;
 }

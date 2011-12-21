@@ -665,6 +665,34 @@ Error svnRevert(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error svnResolve(const json::JsonRpcRequest& request,
+                 json::JsonRpcResponse* pResponse)
+ {
+    RefreshOnExit refreshOnExit;
+
+    std::string accept;
+    json::Array files;
+    Error error = json::readParams(request.params, &accept, &files);
+    if (error)
+       return error;
+
+    std::vector<FilePath> paths;
+    std::transform(files.begin(), files.end(), std::back_inserter(paths),
+                   &resolveAliasedJsonPath);
+
+    core::system::ProcessResult result;
+    error = runSvn(ShellArgs() << "resolve" << globalArgs() << "-q" <<
+                   "--accept" << accept <<
+                   "--" << paths,
+                   true, &result);
+    if (error)
+       return error;
+
+    pResponse->setResult(processResultToJson(result));
+
+    return Success();
+ }
+
 Error statusToJson(const core::FilePath &path,
                    const source_control::VCSStatus &status,
                    core::json::Object *pObject)
@@ -758,6 +786,10 @@ Error status(const FilePath& filePath,
                continue;
             }
             props = translateItemStatus(props);
+
+            std::string treeConf = attr_value(pStatus, "tree-conflicted");
+            if (treeConf == "true")
+               item = topStatus(item, "C");
 
             std::string status = topStatus(item, props);
 
@@ -885,6 +917,8 @@ Error svnCommit(const json::JsonRpcRequest& request,
    args << "--";
    if (!paths.empty())
       args << resolveAliasedPaths(paths);
+
+   // TODO: ensure tempFile is deleted when the commit process exits
 
    boost::shared_ptr<ConsoleProcess> pCP;
    error = createConsoleProc(args,
@@ -1341,6 +1375,7 @@ Error initialize()
       (bind(registerRpcMethod, "svn_add", svnAdd))
       (bind(registerRpcMethod, "svn_delete", svnDelete))
       (bind(registerRpcMethod, "svn_revert", svnRevert))
+      (bind(registerRpcMethod, "svn_resolve", svnResolve))
       (bind(registerRpcMethod, "svn_status", svnStatus))
       (bind(registerRpcMethod, "svn_update", svnUpdate))
       (bind(registerRpcMethod, "svn_cleanup", svnCleanup))
