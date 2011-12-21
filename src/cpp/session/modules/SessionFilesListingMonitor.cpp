@@ -136,8 +136,9 @@ Error FilesListingMonitor::listFiles(const FilePath& rootPath,
    if (error)
       return error;
 
-   source_control::FileDecorationContext* pCtx =
-         source_control::allocFileDecorationContext(rootPath);
+   using namespace source_control;
+   boost::shared_ptr<FileDecorationContext> pCtx =
+                  source_control::fileDecorationContext(rootPath);
 
    // sort the files by name
    std::sort(pFiles->begin(), pFiles->end(), core::compareAbsolutePathNoCase);
@@ -154,8 +155,6 @@ Error FilesListingMonitor::listFiles(const FilePath& rootPath,
          pJsonFiles->push_back(fileObject) ;
       }
    }
-
-   delete pCtx;
 
    return Success();
 }

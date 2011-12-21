@@ -732,8 +732,9 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
 
 namespace {
 // enque file changed event
-void enqueFileChangedEvent(const core::system::FileChangeEvent& event,
-                          modules::source_control::FileDecorationContext* pCtx)
+void enqueFileChangedEvent(
+      const core::system::FileChangeEvent& event,
+      boost::shared_ptr<modules::source_control::FileDecorationContext> pCtx)
 {
    // create file change object
    json::Object fileChange ;
@@ -755,12 +756,11 @@ void enqueFileChangedEvent(const core::system::FileChangeEvent &event)
 {
    FilePath filePath = FilePath(event.fileInfo().absolutePath());
 
-   modules::source_control::FileDecorationContext* pCtx =
-         modules::source_control::allocFileDecorationContext(filePath);
+   using namespace session::modules::source_control;
+   boost::shared_ptr<FileDecorationContext> pCtx =
+                                       fileDecorationContext(filePath);
 
    enqueFileChangedEvent(event, pCtx);
-
-   delete pCtx;
 }
 
 void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
@@ -783,16 +783,15 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
       }
    }
 
-   modules::source_control::FileDecorationContext* pCtx =
-         modules::source_control::allocFileDecorationContext(commonParentPath);
+   using namespace session::modules::source_control;
+   boost::shared_ptr<FileDecorationContext> pCtx =
+                                  fileDecorationContext(commonParentPath);
 
    // fire client events as necessary
    BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
    {
       enqueFileChangedEvent(event, pCtx);
    }
-
-   delete pCtx;
 }
 
 

@@ -14,6 +14,8 @@
 #ifndef SESSION_VCS_HPP
 #define SESSION_VCS_HPP
 
+#include <boost/shared_ptr.hpp>
+
 #include <core/json/Json.hpp>
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -35,8 +37,8 @@ enum VCS
    VCSSubversion
 };
 
-FileDecorationContext* allocFileDecorationContext(
-                                                const core::FilePath& rootDir);
+boost::shared_ptr<FileDecorationContext> fileDecorationContext(
+                                            const core::FilePath& rootDir);
 
 VCS activeVCS();
 std::string activeVCSName();

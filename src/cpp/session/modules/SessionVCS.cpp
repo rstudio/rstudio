@@ -130,19 +130,24 @@ class NullFileDecorationContext : public FileDecorationContext
 
 } // anonymous namespace
 
-FileDecorationContext* allocFileDecorationContext(
-                                                 const core::FilePath& rootDir)
+boost::shared_ptr<FileDecorationContext> fileDecorationContext(
+                                            const core::FilePath& rootDir)
 {
    if (git::isGitEnabled())
    {
-      return new git::GitFileDecorationContext(rootDir);
+      return boost::shared_ptr<FileDecorationContext>(
+                           new git::GitFileDecorationContext(rootDir));
    }
    else if (svn::isSvnEnabled())
    {
-      return new svn::SvnFileDecorationContext(rootDir);
+      return boost::shared_ptr<FileDecorationContext>(
+                           new svn::SvnFileDecorationContext(rootDir));
    }
-
-   return new NullFileDecorationContext();
+   else
+   {
+      return boost::shared_ptr<FileDecorationContext>(
+                           new NullFileDecorationContext());
+   }
 }
 
 VCS activeVCS()
