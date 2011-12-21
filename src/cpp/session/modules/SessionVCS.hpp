@@ -48,9 +48,6 @@ bool isSvnInstalled();
 // default directory for reading/writing ssh keys
 core::FilePath defaultSshKeyDir();
 
-// detected terminal path
-core::FilePath detectedTerminalPath();
-
 void enqueueRefreshEvent();
 
 void setAskPassWindow(const std::string& windowName);

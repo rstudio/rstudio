@@ -123,6 +123,35 @@ BioconductorMirror toBioconductorMirror(const json::Object& mirrorJson)
    return mirror;
 }
 
+// try to detect a terminal on linux desktop
+FilePath detectedTerminalPath()
+{
+#if defined(_WIN32) || defined(__APPLE__)
+   return FilePath();
+#else
+   if (session::options().programMode() == kSessionProgramModeDesktop)
+   {
+      std::vector<FilePath> terminalPaths;
+      terminalPaths.push_back(FilePath("/usr/bin/gnome-terminal"));
+      terminalPaths.push_back(FilePath("/usr/bin/konsole"));
+      terminalPaths.push_back(FilePath("/usr/bin/xfce4-terminal"));
+      terminalPaths.push_back(FilePath("/usr/bin/xterm"));
+
+      BOOST_FOREACH(const FilePath& terminalPath, terminalPaths)
+      {
+         if (terminalPath.exists())
+            return terminalPath;
+      }
+
+      return FilePath();
+   }
+   else
+   {
+      return FilePath();
+   }
+#endif
+}
+
 Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 {
    // read params
@@ -233,7 +262,7 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
       userSettings().setSvnExePath(svnExePath);
 
    FilePath terminalFilePath(terminalPath);
-   if (terminalFilePath == source_control::detectedTerminalPath())
+   if (terminalFilePath == detectedTerminalPath())
       userSettings().setVcsTerminalPath(FilePath());
    else
       userSettings().setVcsTerminalPath(terminalFilePath);
@@ -324,7 +353,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
 
    FilePath terminalPath = userSettings().vcsTerminalPath();
    if (terminalPath.empty())
-      terminalPath = source_control::detectedTerminalPath();
+      terminalPath = detectedTerminalPath();
    sourceControlPrefs["terminal_path"] = terminalPath.absolutePath();
 
    sourceControlPrefs["use_git_bash"] = userSettings().vcsUseGitBash();
@@ -372,7 +401,7 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
    // auto-detection (+ overridable by a setting)
    terminalPath = userSettings().vcsTerminalPath();
    if (terminalPath.empty())
-      terminalPath = source_control::detectedTerminalPath();
+      terminalPath = detectedTerminalPath();
 
 #endif
 
