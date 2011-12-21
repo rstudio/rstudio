@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.workbench.views.vcs.svn.commit;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -23,6 +25,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SmallButton;
@@ -79,6 +82,29 @@ public class SVNCommitDialog extends ModalDialog<Void>
             changelistPresenter.clearSelection();
          }
       });
+
+      if (!StringUtil.isNullOrEmpty(commitDraft_))
+         message_.setText(commitDraft_);
+   }
+
+   @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            message_.setFocus(true);
+         }
+      });
+   }
+
+   @Override
+   protected void onUnload()
+   {
+      commitDraft_ = message_.getText();
    }
 
    @Override
@@ -106,7 +132,13 @@ public class SVNCommitDialog extends ModalDialog<Void>
                         public void onProcessExit(ProcessExitEvent event)
                         {
                            if (event.getExitCode() == 0)
+                           {
+                              // We'll set the commitDraft_ on unload, so clear
+                              // out the text box now
+                              message_.setText("");
+
                               executeOnSuccess.execute();
+                           }
                         }
                      });
 
@@ -166,4 +198,6 @@ public class SVNCommitDialog extends ModalDialog<Void>
    private Widget widget_;
    private final SVNServerOperations server_;
    private final GlobalDisplay globalDisplay_;
+
+   private static String commitDraft_;
 }
