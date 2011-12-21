@@ -74,7 +74,7 @@ public class WindowTest extends GWTTestCase {
     // Use History to get the #hash part of the url into a known state (if the
     // url has somehow been set to http://host/#, location.hash returns the
     // empty string, but location.href includes the trailing hash).
-    History.newItem("foo");
+    History.newItem("foo bar");
 
     // As we have no control over these values we cannot assert much about them.
     String hash = Window.Location.getHash();

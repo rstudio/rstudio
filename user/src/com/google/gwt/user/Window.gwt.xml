@@ -20,6 +20,10 @@
   <inherits name="com.google.gwt.core.Core"/>
   <inherits name="com.google.gwt.user.UserAgent"/>
 
+  <replace-with class="com.google.gwt.user.client.impl.WindowImplMozilla">
+    <when-type-is class="com.google.gwt.user.client.impl.WindowImpl"/>
+    <when-property-is name="user.agent" value="gecko1_8"/>
+  </replace-with>
    <replace-with class="com.google.gwt.user.client.impl.WindowImplIE">
       <when-type-is class="com.google.gwt.user.client.impl.WindowImpl"/>
       <any>
