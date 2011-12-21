@@ -96,7 +96,7 @@ public class HistoryPresenter
    {
       void setSelectedCommit(CommitInfo commit);
       void clearDetails();
-      void setDetails(UnifiedParser unifiedParser);
+      void setDetails(UnifiedParser unifiedParser, boolean suppressViewLink);
       
       HandlerRegistration addViewFileRevisionHandler(
                                           ViewFileRevisionHandler handler);
@@ -301,7 +301,8 @@ public class HistoryPresenter
 
                   UnifiedParser parser = new UnifiedParser(
                         response);
-                  view_.getCommitDetail().setDetails(parser);
+                  view_.getCommitDetail().setDetails(
+                                      parser, !strategy_.isShowFileSupported());
                   commitShowing_ = commitInfo.getId();
                }
 

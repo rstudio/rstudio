@@ -60,7 +60,8 @@ public class DiffFrame extends Composite
                     String filename2,
                     String commitId,
                     LineTableView diff,
-                    ClickHandler viewFileClickHandler)
+                    ClickHandler viewFileClickHandler,
+                    boolean suppressViewLink)
    {
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
@@ -76,7 +77,9 @@ public class DiffFrame extends Composite
      
       // if the file is text file then show a view link for it
       FileType fileType = fileTypeRegistry.getTypeForFile(fsItem, false);
-      boolean showLink = fileType != null && fileType instanceof TextFileType;
+      boolean showLink = !suppressViewLink
+                         && fileType != null
+                         && fileType instanceof TextFileType;
       if (showLink)
       {
          separatorImage_.setResource(ThemeResources.INSTANCE.toolbarSeparator());

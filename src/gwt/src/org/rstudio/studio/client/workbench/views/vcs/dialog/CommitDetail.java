@@ -74,7 +74,8 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    }
 
    @Override
-   public void setDetails(final UnifiedParser unifiedParser)
+   public void setDetails(final UnifiedParser unifiedParser,
+                          final boolean suppressViewLink)
    {
       invalidation_.invalidate();
       final Token token = invalidation_.getInvalidationToken();
@@ -119,7 +120,8 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
                                           fileHeader.getDescription().trim()));
                                  
                               }
-                           });
+                           },
+                           suppressViewLink);
             diffFrame.setWidth("100%");
             detailPanel_.add(diffFrame);
 

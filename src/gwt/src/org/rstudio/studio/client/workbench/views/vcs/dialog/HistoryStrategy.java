@@ -24,6 +24,7 @@ public interface HistoryStrategy
    void setRev(String rev);
 
    boolean isBranchingSupported();
+   boolean isShowFileSupported();
 
    void setSearchText(HasValue<String> searchText);
 
