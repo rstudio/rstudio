@@ -267,23 +267,6 @@ core::Error createConsoleProc(const ShellArgs& args,
    return Success();
 }
 
-
-core::Error createConsoleProc(const ShellArgs& args,
-                              const FilePath& outputFile,
-                              const std::string& caption,
-                              bool dialog,
-                              bool enqueueRefreshOnExit,
-                              boost::shared_ptr<ConsoleProcess>* ppCP)
-{
-   return createConsoleProc(args,
-                            outputFile,
-                            boost::optional<FilePath>(),
-                            caption,
-                            dialog,
-                            enqueueRefreshOnExit,
-                            ppCP);
-}
-
 core::Error createConsoleProc(const ShellArgs& args,
                               const std::string& caption,
                               bool dialog,
@@ -292,6 +275,7 @@ core::Error createConsoleProc(const ShellArgs& args,
 {
    return createConsoleProc(args,
                             FilePath(),
+                            boost::optional<FilePath>(),
                             caption,
                             dialog,
                             enqueueRefreshOnExit,
@@ -345,6 +329,7 @@ void runSvnAsync(const ShellArgs& args,
    boost::shared_ptr<ConsoleProcess> pCP;
    Error error = createConsoleProc(args,
                                    outputFile,
+                                   boost::optional<FilePath>(),
                                    caption,
                                    true,
                                    enqueueRefreshOnExit,
@@ -1479,6 +1464,7 @@ Error checkout(const std::string& url,
       args << dirName;
 
    Error error = createConsoleProc(args,
+                                   FilePath(),
                                    parentPath,
                                    "SVN Checkout",
                                    true,
