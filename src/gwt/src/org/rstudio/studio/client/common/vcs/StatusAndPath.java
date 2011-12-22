@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.common.vcs;
 
 import com.google.gwt.core.client.JsArray;
+import org.rstudio.core.client.StringUtil;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -66,7 +67,7 @@ public class StatusAndPath
 
    private StatusAndPath(StatusAndPathInfo info)
    {
-      status_ = info.getStatus();
+      status_ = StringUtil.notNull(info.getStatus());
       path_ = info.getPath();
       rawPath_ = info.getRawPath();
       changelist_ = info.getChangelist();
