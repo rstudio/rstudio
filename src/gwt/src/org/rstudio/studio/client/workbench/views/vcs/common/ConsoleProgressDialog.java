@@ -170,6 +170,12 @@ public class ConsoleProgressDialog extends ModalDialogBase
             {
                // Show error and stop
                super.onError(error);
+               
+               // if this is showOnOutput_ then we will never get
+               // a ProcessExitEvent or an onUnload so we should unsubscribe 
+               // from events here
+               registrations_.removeHandler();
+               
                closeDialog();
             }
          });
