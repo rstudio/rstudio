@@ -19,7 +19,6 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
@@ -45,10 +44,6 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
 {
    interface Resources extends CellTable.Resources
    {
-      @Override
-      @Source("../../../../../../core/client/resources/progress.gif")
-      ImageResource cellTableLoading();
-
       @Override
       @Source({RStudioCellTableStyle.RSTUDIO_DEFAULT_CSS, "CommitListTableCellTableStyle.css"})
       Style cellTableStyle();
