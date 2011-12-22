@@ -66,6 +66,19 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                {
                   final ConsoleProcessInfo proc = procs.get(i);
 
+                  // Note on reaping of console processes -- when isDialog
+                  // is false it is the responsibility of the calling code
+                  // to reap the console process (no automatic reaping is
+                  // done). the isDialog == false codepath below handles 
+                  // the case where a client_init happens and the original
+                  // callling code is no longer hooked up. There is still
+                  // some leakiness here though if a console process with
+                  // isDialog == false exits when no client is connected (in
+                  // that case it will never be reaped). 
+                  
+                  // TODO: clean this up and/or eliminate isDialog falg (since
+                  // all known instances currently use isDialog == true)
+                  
                   connectToProcess(
                         proc,
                         new ServerRequestCallback<ConsoleProcess>()
