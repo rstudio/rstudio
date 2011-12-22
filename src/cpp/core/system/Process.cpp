@@ -18,6 +18,7 @@
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 
+#include <core/Scope.hpp>
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/BoostThread.hpp>
@@ -59,6 +60,8 @@ Error runCommand(const std::string& command,
 
 struct ProcessSupervisor::Impl
 {
+   Impl() : isPolling(false) {}
+   bool isPolling;
    std::vector<boost::shared_ptr<AsyncChildProcess> > children;
 };
 
@@ -262,6 +265,16 @@ bool ProcessSupervisor::poll()
    // bail immediately if we have no children
    if (!hasRunningChildren())
       return false;
+
+   // never allow re-entrancy (could occur if one of the output
+   // handlers called from poll executes a waitForMethod which
+   // results in additional polling during idle/wait time)
+   if (pImpl_->isPolling)
+      return true;
+
+   // set isPolling then clear it on exit
+   pImpl_->isPolling = true;
+   scope::SetOnExit<bool> setOnExit(&pImpl_->isPolling, false);
 
    // call poll on all of our children
    std::for_each(pImpl_->children.begin(),
