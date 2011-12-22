@@ -19,8 +19,10 @@
 #include <shlwapi.h>
 #endif
 
+#include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
 #include <boost/date_time.hpp>
+#include <boost/lambda/lambda.hpp>
 #include <boost/regex.hpp>
 
 #include <core/FileSerializer.hpp>
@@ -1100,6 +1102,119 @@ Error svnApplyPatch(const json::JsonRpcRequest& request,
    return Success();
 }
 
+struct CommitInfo
+{
+   std::string id;
+   std::string author;
+   std::string subject;
+   std::string description;
+   boost::posix_time::time_duration::sec_type date;
+};
+
+bool commitIsMatch(const std::vector<std::string>& patterns,
+                   const CommitInfo& commit)
+{
+   BOOST_FOREACH(std::string pattern, patterns)
+   {
+      if (!boost::algorithm::ifind_first(commit.author, pattern)
+          && !boost::algorithm::ifind_first(commit.description, pattern)
+          && !boost::algorithm::ifind_first(commit.id, pattern)
+          && !boost::algorithm::ifind_first(commit.subject, pattern))
+      {
+         return false;
+      }
+   }
+
+   return true;
+}
+
+boost::function<bool(const CommitInfo&)> createSearchTextPredicate(
+      const std::string& searchText)
+{
+   if (searchText.empty())
+      return boost::lambda::constant(true);
+
+   std::vector<std::string> results;
+   boost::algorithm::split(results, searchText,
+                           boost::algorithm::is_any_of(" \t\r\n"));
+   return boost::bind(commitIsMatch, results, _1);
+}
+
+Error parseHistoryXml(int skip,
+                      int maxentries,
+                      const std::string& searchText,
+                      const std::string& output,
+                      const boost::function<Error(const CommitInfo&)>& callback)
+{
+   using namespace rapidxml;
+   using namespace boost::posix_time;
+
+   std::vector<char> buffer;
+   xml_document<> doc;
+   Error error = parseXml(output, &buffer, &doc);
+   if (error)
+      return error;
+
+   xml_node<>* pLog = doc.first_node("log");
+
+   boost::function<bool(const CommitInfo&)> filter =
+         createSearchTextPredicate(searchText);
+
+   const std::string NAME_REVISION = "revision";
+   const std::string NAME_AUTHOR = "author";
+   const std::string NAME_MSG = "msg";
+   const std::string NAME_DATE = "date";
+   const ptime epoch(boost::gregorian::date(1970,1,1));
+
+   CommitInfo commit;
+
+   int count = 0;
+   FOREACH_NODE(pLog, pEntry, "logentry")
+   {
+      if (count > maxentries)
+         break;
+
+      // This is not strictly necessary as "skip > 0" below would catch
+      // this case. But this saves us from doing some work for the common
+      // case of not searching.
+      if (searchText.empty() && skip > 0)
+      {
+         skip--;
+         continue;
+      }
+
+      commit.id = attr_value(pEntry, NAME_REVISION);
+      commit.author = string_utils::filterControlChars(node_value(pEntry, NAME_AUTHOR));
+      std::string message = string_utils::filterControlChars(node_value(pEntry, NAME_MSG));
+      splitMessage(message, &commit.subject, &commit.description);
+
+      ptime date = boost::date_time::parse_delimited_time<ptime>(
+            node_value(pEntry, NAME_DATE), 'T');
+      commit.date = (date - epoch).total_seconds();
+
+      // If we're searching and this doesn't match, skip it and don't decrement
+      // the skip--it's as if this one doesn't count
+      if (!filter(commit))
+      {
+         continue;
+      }
+
+      if (skip > 0)
+      {
+         skip--;
+         continue;
+      }
+
+      error = callback(commit);
+      if (error)
+         return error;
+
+      count++;
+   }
+
+   return Success();
+}
+
 void historyEnd(boost::function<void(Error, const std::string&)> callback,
                 const Error& error,
                 const core::system::ProcessResult& result)
@@ -1111,7 +1226,6 @@ void historyEnd(boost::function<void(Error, const std::string&)> callback,
 }
 
 void history(int rev,
-             const std::string& searchText,
              FilePath fileFilter,
              ShellArgs options,
              boost::function<void(Error, const std::string&)> callback)
@@ -1125,8 +1239,6 @@ void history(int rev,
    if (rev > 0)
       args << "-r" << boost::lexical_cast<std::string>(rev) + ":1";
 
-   // TODO: implement searchText
-
    if (!fileFilter.empty())
       args << fileFilter;
 
@@ -1136,7 +1248,14 @@ void history(int rev,
                boost::bind(historyEnd, callback, _1, _2));
 }
 
-void svnHistoryCountEnd(const json::JsonRpcFunctionContinuation& cont,
+Error svnHistoryCountEnd_CommitCallback(int* pCount, const CommitInfo&)
+{
+   (*pCount)++;
+   return Success();
+}
+
+void svnHistoryCountEnd(const std::string& searchText,
+                        const json::JsonRpcFunctionContinuation& cont,
                         Error error, const std::string& output)
 {
    using namespace rapidxml;
@@ -1148,23 +1267,38 @@ void svnHistoryCountEnd(const json::JsonRpcFunctionContinuation& cont,
       return;
    }
 
-   std::vector<char> buffer;
-   xml_document<> doc;
-   error = parseXml(output, &buffer, &doc);
-   if (error)
-   {
-      cont(error, &response);
-      return;
-   }
-
    int count = 0;
 
-   xml_node<>* pLog = doc.first_node("log");
-   if (pLog)
+   if (searchText.empty())
    {
-      FOREACH_NODE(pLog, pEntry, "logentry")
+      std::vector<char> buffer;
+      xml_document<> doc;
+      error = parseXml(output, &buffer, &doc);
+      if (error)
       {
-         count++;
+         cont(error, &response);
+         return;
+      }
+
+      xml_node<>* pLog = doc.first_node("log");
+      if (pLog)
+      {
+         FOREACH_NODE(pLog, pEntry, "logentry")
+         {
+            count++;
+         }
+      }
+   }
+   else
+   {
+      error = parseHistoryXml(0, 999999999, searchText, output,
+                              boost::bind(svnHistoryCountEnd_CommitCallback,
+                                          &count,
+                                          _1));
+      if (error)
+      {
+         cont(error, &response);
+         return;
       }
    }
 
@@ -1197,12 +1331,28 @@ void svnHistoryCount(const json::JsonRpcRequest& request,
    ShellArgs options;
    options << "-q";
    FilePath fileFilter = fileFilterPath(fileFilterJson);
-   history(rev, searchText, fileFilter, options,
-           boost::bind(svnHistoryCountEnd, cont, _1, _2));
+   history(rev, fileFilter, options,
+           boost::bind(svnHistoryCountEnd, searchText, cont, _1, _2));
+}
+
+Error svnHistoryEnd_CommitCallback(json::Array *pIds,
+                                   json::Array *pAuthors,
+                                   json::Array *pSubjects,
+                                   json::Array *pDescriptions,
+                                   json::Array *pDates,
+                                   const CommitInfo& commit)
+{
+   pIds->push_back(commit.id);
+   pAuthors->push_back(commit.author);
+   pSubjects->push_back(commit.subject);
+   pDescriptions->push_back(commit.description);
+   pDates->push_back(commit.date);
+   return Success();
 }
 
 void svnHistoryEnd(int skip,
                    int maxentries,
+                   const std::string& searchText,
                    const json::JsonRpcFunctionContinuation& cont,
                    Error error,
                    const std::string& output)
@@ -1218,51 +1368,24 @@ void svnHistoryEnd(int skip,
       return;
    }
 
-
-   std::vector<char> buffer;
-   xml_document<> doc;
-   error = parseXml(output, &buffer, &doc);
-   if (error)
-   {
-      cont(error, &response);
-      return;
-   }
-   xml_node<>* pLog = doc.first_node("log");
-
-   const std::string NAME_REVISION = "revision";
-   const std::string NAME_AUTHOR = "author";
-   const std::string NAME_MSG = "msg";
-   const std::string NAME_DATE = "date";
-   const ptime epoch(boost::gregorian::date(1970,1,1));
-
    json::Array ids;
    json::Array authors;
    json::Array subjects;
    json::Array descriptions;
    json::Array dates;
 
-   int count = 0;
-   FOREACH_NODE(pLog, pEntry, "logentry")
+   error = parseHistoryXml(skip, maxentries, searchText, output,
+                           boost::bind(svnHistoryEnd_CommitCallback,
+                                       &ids,
+                                       &authors,
+                                       &subjects,
+                                       &descriptions,
+                                       &dates,
+                                       _1));
+   if (error)
    {
-      if (count > skip + maxentries)
-         break;
-      if (count++ < skip)
-         continue;
-
-      ids.push_back(attr_value(pEntry, NAME_REVISION));
-      authors.push_back(string_utils::filterControlChars(node_value(pEntry, NAME_AUTHOR)));
-
-      std::string message = string_utils::filterControlChars(node_value(pEntry, NAME_MSG));
-      std::string subject, desc;
-      splitMessage(message, &subject, &desc);
-
-      subjects.push_back(subject);
-      descriptions.push_back(desc);
-
-      ptime date = boost::date_time::parse_delimited_time<ptime>(
-            node_value(pEntry, NAME_DATE), 'T');
-      time_duration::sec_type t = (date - epoch).total_seconds();
-      dates.push_back(t);
+      cont(error, &response);
+      return;
    }
 
    json::Object result;
@@ -1297,13 +1420,22 @@ void svnHistory(const json::JsonRpcRequest& request,
 
    ask_pass::setActiveWindow(request.sourceWindow);
 
-   int limit = skip + maxentries;
    ShellArgs options;
-   options << "--limit" << boost::lexical_cast<std::string>(limit);
+   if (searchText.empty())
+   {
+      int limit = skip + maxentries;
+      options << "--limit" << boost::lexical_cast<std::string>(limit);
+   }
 
    FilePath fileFilter = fileFilterPath(fileFilterJson);
-   history(rev, searchText, fileFilter, options,
-           boost::bind(svnHistoryEnd, skip, maxentries, cont, _1, _2));
+   history(rev, fileFilter, options,
+           boost::bind(svnHistoryEnd,
+                       skip,
+                       maxentries,
+                       searchText,
+                       cont,
+                       _1,
+                       _2));
 }
 
 void svnShowEnd(const json::JsonRpcFunctionContinuation& cont,
