@@ -45,9 +45,6 @@
 #include "SessionConsoleProcess.hpp"
 #include "SessionAskPass.hpp"
 
-// TODO: invoke using a command with redirection on windows as well
-// (otherwise the file redirection thing won't work)
-
 using namespace core;
 using namespace core::shell_utils;
 using namespace session::modules::vcs_utils;
@@ -140,7 +137,6 @@ void maybeAttachPasswordManager(boost::shared_ptr<ConsoleProcess> pCP)
       s_pPasswordManager->attach(pCP);
 }
 
-#ifndef _WIN32
 ShellCommand svn()
 {
    if (!s_svnExePath.empty())
@@ -151,7 +147,6 @@ ShellCommand svn()
    else
       return ShellCommand("svn");
 }
-#endif
 
 
 #ifdef _WIN32
@@ -247,27 +242,24 @@ core::Error createConsoleProc(const ShellArgs& args,
    else if (!workingDir.get().empty())
       options.workingDir = workingDir.get();
 
-#ifdef _WIN32
-   *ppCP = ConsoleProcess::create(svnBin(),
-                                  args.args(),
-                                  options,
-                                  caption,
-                                  dialog,
-                                  console_process::InteractionPossible,
-                                  console_process::kDefaultMaxOutputLines);
-#else
+   // NOTE: we use runCommand style process creation on both windows and posix
+   // so that we can redirect standard output to a file -- this works on
+   // windows because we are not specifying options.detachProcess (not
+   // necessary because ConsoleProcess specifies options.createNewConsole
+   // which overrides options.detachProcess)
 
+   // build command (redirect stdout to a file)
    std::string command = svn() << args.args();
    if (!outputFile.empty())
       command = "(" + command + ")" + " > " + shell_utils::escape(outputFile);
 
+   // create the process
    *ppCP = ConsoleProcess::create(command,
                                   options,
                                   caption,
                                   dialog,
                                   console_process::InteractionPossible,
                                   console_process::kDefaultMaxOutputLines);
-#endif
 
    if (enqueueRefreshOnExit)
       (*ppCP)->onExit().connect(boost::bind(&enqueueRefreshEvent));
