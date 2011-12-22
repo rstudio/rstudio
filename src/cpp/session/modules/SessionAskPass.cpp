@@ -80,6 +80,11 @@ SEXP rs_askForPassword(SEXP promptSEXP)
 
 } // anonymous namespace
 
+std::string activeWindow()
+{
+   return s_askPassWindow;
+}
+
 void setActiveWindow(const std::string& window)
 {
    s_askPassWindow = window;

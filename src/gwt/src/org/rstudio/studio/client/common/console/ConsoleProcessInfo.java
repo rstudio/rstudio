@@ -35,6 +35,10 @@ public class ConsoleProcessInfo extends JavaScriptObject
       return this.dialog;
    }-*/;
    
+   public final native boolean getShowOnOutput() /*-{
+      return this.show_on_output;
+   }-*/;
+   
    public final native int getInteractionMode()  /*-{
       return this.interaction_mode;
    }-*/;

@@ -20,8 +20,11 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
+import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.shell.ShellInput;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -44,7 +47,9 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
       public ConsoleProcessFactory(ConsoleServerOperations server,
                                    final CryptoServerOperations cryptoServer,
                                    EventBus eventBus,
-                                   final Session session)
+                                   final Session session,
+                                   final Satellite satellite,
+                                   final SatelliteManager satelliteManager)
       {
          server_ = server;
          eventBus_ = eventBus;
@@ -71,12 +76,22 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                            {
                               if (proc.isDialog())
                               {
-                                 new ConsoleProgressDialog(
+                                 ConsoleProgressDialog dlg =  new ConsoleProgressDialog(
                                        proc.getCaption(),
                                        cproc,
                                        proc.getBufferedOutput(),
                                        proc.getExitCode(),
-                                       cryptoServer).showModal();
+                                       cryptoServer);
+                                 
+                                 if (!proc.getShowOnOutput() ||
+                                     proc.getBufferedOutput().trim().length() > 0)
+                                 {
+                                    dlg.showModal();
+                                 }
+                                 else
+                                 {
+                                    dlg.showOnOutput();
+                                 }
                               }
                               else
                               {
@@ -100,6 +115,58 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                }
             }
          });
+         
+         eventBus_.addHandler(
+               ConsoleProcessCreatedEvent.TYPE,
+               new ConsoleProcessCreatedEvent.Handler()
+               {
+                  private boolean handleEvent(String targetWindow)
+                  {
+                     // calculate the current window name
+                     String window = StringUtil.notNull(
+                                          satellite.getSatelliteName());
+                     
+                     // handle it if the target is us
+                     if (window.equals(targetWindow))
+                        return true;
+                     
+                     // also handle if we are the main window and the specified
+                     // satellite doesn't exist
+                     if (!satellite.isCurrentWindowSatellite() &&
+                         !satelliteManager.satelliteWindowExists(targetWindow))
+                        return true;
+                     
+                     // othewise don't handle
+                     else
+                        return false;
+                  }
+                  
+                  
+                  @Override
+                  public void onConsoleProcessCreated(
+                                    ConsoleProcessCreatedEvent event)
+                  {
+                     if (!handleEvent(event.getTargetWindow()))
+                        return;
+                     
+                     ConsoleProcessInfo procInfo = event.getProcessInfo();
+                     ConsoleProcess proc = new ConsoleProcess(server_, 
+                                                              eventBus_, 
+                                                              procInfo);
+                     
+                     ConsoleProgressDialog dlg = new ConsoleProgressDialog(
+                                               procInfo.getCaption(),
+                                               proc,
+                                               procInfo.getBufferedOutput(),
+                                               procInfo.getExitCode(),
+                                               cryptoServer);
+                     
+                     if (procInfo.getShowOnOutput())
+                        dlg.showOnOutput();
+                     else
+                        dlg.showModal();
+                  }
+               });
       }
 
       public void connectToProcess(

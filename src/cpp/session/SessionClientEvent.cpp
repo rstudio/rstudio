@@ -73,6 +73,7 @@ const int kConsoleProcessCreated = 46;
 const int kUiPrefsChanged = 47;
 const int kHandleUnsavedChanges = 48;
 const int kConsoleProcessPrompt = 49;
+const int kShowConsoleProcessDialog = 50;
 }   
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -184,6 +185,8 @@ std::string ClientEvent::typeName() const
          return "handle_unsaved_changes";
       case client_events::kConsoleProcessPrompt:
          return "console_process_prompt";
+      case client_events::kConsoleProcessCreated:
+         return "console_process_created";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              boost::lexical_cast<std::string>(type_));

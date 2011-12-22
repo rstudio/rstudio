@@ -201,6 +201,12 @@ public class ConsoleProgressDialog extends ModalDialogBase
 
    }
 
+   public void showOnOutput()
+   {
+      showOnOutput_ = true;
+   }
+   
+   
    @Override
    protected Widget createMainWidget()
    {
@@ -243,25 +249,47 @@ public class ConsoleProgressDialog extends ModalDialogBase
    @Override
    public void onConsoleOutput(ConsoleOutputEvent event)
    {
+      maybeShowOnOutput(event.getOutput());
       outputWriter_.consoleWriteOutput(event.getOutput());
    }
    
    @Override
    public void onConsolePrompt(ConsolePromptEvent event)
    {
+      maybeShowOnOutput(event.getPrompt());
       outputWriter_.consoleWritePrompt(event.getPrompt());
    }
 
    @Override
    public void onProcessExit(ProcessExitEvent event)
-   {
+   {    
       setExitCode(event.getExitCode());
-      display_.setReadOnly(true);
-      stopButton_.setFocus(true);
       
-      // when a shell exits we close the dialog
-      if (getInteractionMode() == ConsoleProcessInfo.INTERACTION_ALWAYS)
-         stopButton_.click();
+      if (isShowing())
+      {
+         display_.setReadOnly(true);
+         stopButton_.setFocus(true);
+      
+         // when a shell exits we close the dialog
+         if (getInteractionMode() == ConsoleProcessInfo.INTERACTION_ALWAYS)
+            stopButton_.click();
+         
+         // when we were showOnOutput and the process succeeded then
+         // we also auto-close
+         else if (showOnOutput_ && (event.getExitCode() == 0))
+            stopButton_.click();
+      }
+      
+      // the dialog was showOnOutput_ but was never shown so just tear
+      // down registrations and reap the process
+      else if (showOnOutput_)
+      {
+         registrations_.removeHandler();
+         
+         if (consoleProcess_ != null)
+            consoleProcess_.reap(new VoidServerRequestCallback());
+      }
+      
    }
    
    private void setExitCode(int exitCode)
@@ -343,8 +371,17 @@ public class ConsoleProgressDialog extends ModalDialogBase
       else
          return 1000;
    }
+   
+   private void maybeShowOnOutput(String output)
+   {     
+      if (!isShowing() && showOnOutput_ && (output.trim().length() > 0))
+         showModal();
+   }
 
    private boolean running_ = true;
+   
+   private boolean showOnOutput_ = false;
+   
    private final ConsoleProcess consoleProcess_;
    private HandlerRegistrations registrations_;
 
