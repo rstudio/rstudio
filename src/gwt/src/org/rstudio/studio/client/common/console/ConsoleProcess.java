@@ -265,12 +265,14 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
             {
                @Override
                public void onServerProcessExit(ServerProcessExitEvent event)
-               {
-                  // no more events are coming
-                  registrations_.removeHandler();
-
+               {   
                   if (event.getProcessHandle().equals(procInfo.getHandle()))
+                  {
+                     // no more events are coming
+                     registrations_.removeHandler();
+                     
                      fireEvent(new ProcessExitEvent(event.getExitCode()));
+                  }
                }
             }
       ));
