@@ -45,19 +45,13 @@
 #include "SessionConsoleProcess.hpp"
 #include "SessionAskPass.hpp"
 
-// TODO: if showOnOutput dialog is never shown does onClose get called
-// again (are there two reaps?)
+// TODO: Extra start of console process during r-forge history that is NOT reaped
 
 // TODO: try out various failure and reload scenarios -- does the dialog
 // do as is expected?
 
-// TODO: if history fails due to auth error or cancel of auth then
-// history progress keeps running
-
 // TODO: invoke using a command with redirection on windows as well
 // (otherwise the file redirection thing won't work)
-
-// TODO: overall code review
 
 // TODO: why do we need to do the trim on the client?
 
