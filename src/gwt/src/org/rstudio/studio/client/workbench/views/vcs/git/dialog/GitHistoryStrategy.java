@@ -44,6 +44,12 @@ public class GitHistoryStrategy implements HistoryStrategy
    }
 
    @Override
+   public String idColumnName()
+   {
+      return "SHA";
+   }
+
+   @Override
    public boolean isBranchingSupported()
    {
       return true;

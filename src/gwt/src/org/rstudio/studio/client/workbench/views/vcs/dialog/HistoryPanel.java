@@ -29,7 +29,6 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.HasData;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -37,6 +36,7 @@ import org.rstudio.studio.client.workbench.views.vcs.HistoryBranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitDetailDisplay;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitListDisplay;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.Display;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.DisplayBuilder;
 
 public class HistoryPanel extends Composite implements Display
 {
@@ -116,13 +116,38 @@ public class HistoryPanel extends Composite implements Display
    interface Binder extends UiBinder<Widget, HistoryPanel>
    {}
 
-   @Inject
-   public HistoryPanel(HistoryBranchToolbarButton branchToolbarButton,
-                       CommitFilterToolbarButton commitFilterToolbarButton,
-                       Commands commands)
+   public static class Builder implements DisplayBuilder
+   {
+      @Inject
+      public Builder(HistoryBranchToolbarButton branchToolbarButton,
+                     CommitFilterToolbarButton commitFilterToolbarButton,
+                     Commands commands)
+      {
+         branchToolbarButton_ = branchToolbarButton;
+         commitFilterToolbarButton_ = commitFilterToolbarButton;
+         commands_ = commands;
+      }
+
+      public HistoryPanel build(HistoryStrategy strategy)
+      {
+         return new HistoryPanel(branchToolbarButton_,
+                                 commitFilterToolbarButton_,
+                                 commands_,
+                                 strategy);
+      }
+
+      private final HistoryBranchToolbarButton branchToolbarButton_;
+      private final CommitFilterToolbarButton commitFilterToolbarButton_;
+      private final Commands commands_;
+   }
+
+   protected HistoryPanel(HistoryBranchToolbarButton branchToolbarButton,
+                          CommitFilterToolbarButton commitFilterToolbarButton,
+                          Commands commands,
+                          HistoryStrategy strategy)
    {
       Styles styles = GWT.<Resources>create(Resources.class).styles();
-      commitTable_ = new CommitListTable(styles);
+      commitTable_ = new CommitListTable(styles, strategy.idColumnName());
       splitPanel_ = new SplitLayoutPanel(4);
       pager_ = new SimplePager(
             TextLocation.CENTER,

@@ -53,6 +53,11 @@ import org.rstudio.studio.client.workbench.views.vcs.svn.dialog.SVNHistoryStrate
 
 public class HistoryPresenter
 {
+   public interface DisplayBuilder
+   {
+      Display build(HistoryStrategy strategy);
+   }
+
    public interface Display extends IsWidget
    {
       HasClickHandlers getSwitchViewButton();
@@ -106,13 +111,11 @@ public class HistoryPresenter
    @Inject
    public HistoryPresenter(final GlobalDisplay globalDisplay,
                            final Provider<ViewFilePanel> pViewFilePanel,
-                           final Display view,
+                           final DisplayBuilder viewBuilder,
                            final Session session,
                            final GitHistoryStrategy gitStrategy,
                            final SVNHistoryStrategy svnStrategy)
    {
-      view_ = view;
-
       String vcsName = session.getSessionInfo().getVcsName();
       if (vcsName.equalsIgnoreCase("git"))
          strategy_ = gitStrategy;
@@ -120,6 +123,8 @@ public class HistoryPresenter
          strategy_ = svnStrategy;
       else
          throw new IllegalStateException("Unknown vcs name: " + vcsName);
+
+      view_ = viewBuilder.build(strategy_);
 
       if (strategy_.isBranchingSupported())
       {

@@ -182,7 +182,8 @@ public class RStudioGinModule extends AbstractGinModule
       bind(GitReviewPresenter.Display.class).to(GitReviewPanel.class);
       bind(SVNReviewPresenter.Display.class).to(SVNReviewPanel.class);
       bind(LineTablePresenter.Display.class).to(LineTableView.class);
-      bind(HistoryPresenter.Display.class).to(HistoryPanel.class);
+      bind(HistoryPresenter.DisplayBuilder.class).to(
+                                                    HistoryPanel.Builder.class);
       
       bind(GlobalDisplay.class)
             .to(DefaultGlobalDisplay.class)

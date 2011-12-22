@@ -23,6 +23,7 @@ public interface HistoryStrategy
 {
    void setRev(String rev);
 
+   String idColumnName();
    boolean isBranchingSupported();
    boolean isShowFileSupported();
 

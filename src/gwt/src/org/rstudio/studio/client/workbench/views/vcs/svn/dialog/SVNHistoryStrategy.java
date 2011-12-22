@@ -46,6 +46,12 @@ public class SVNHistoryStrategy implements HistoryStrategy
    }
 
    @Override
+   public String idColumnName()
+   {
+      return "Revision";
+   }
+
+   @Override
    public boolean isBranchingSupported()
    {
       return false;

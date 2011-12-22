@@ -185,7 +185,7 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
       }
    }
 
-   public CommitListTable(HistoryPanel.Styles styles)
+   public CommitListTable(Styles styles, String idColName)
    {
       super(100,
             GWT.<Resources>create(Resources.class));
@@ -228,7 +228,7 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
             return object.getId();
          }
       };
-      addColumn(idCol, "SHA");
+      addColumn(idCol, idColName);
       setColumnWidth(graphCol_, "0");
       setColumnWidth(idCol, "100px");
       setColumnWidth(subjectCol, "67%");
