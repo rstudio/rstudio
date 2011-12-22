@@ -379,7 +379,10 @@ public class ConsoleProgressDialog extends ModalDialogBase
    }
    
    private void maybeShowOnOutput(String output)
-   {     
+   {    
+      // NOTE: we have to trim the output because when the password
+      // manager provides a password non-interactively the back-end
+      // process sometimes echos a newline back to us
       if (!isShowing() && showOnOutput_ && (output.trim().length() > 0))
          showModal();
    }

@@ -103,6 +103,12 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                                  
                                  // showOnOutput dialog that already has 
                                  // output -- make sure the user sees it
+                                 //
+                                 // NOTE: we have to trim the  buffered output
+                                 // for the comparison because when the password
+                                 // manager provides a password the back-end
+                                 // process sometimes echos a newline back to us
+                                 //
                                  else if (proc.getBufferedOutput().trim().length() > 0)
                                  {
                                     createDialog = true;

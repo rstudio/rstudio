@@ -45,15 +45,8 @@
 #include "SessionConsoleProcess.hpp"
 #include "SessionAskPass.hpp"
 
-// TODO: Extra start of console process during r-forge history that is NOT reaped
-
-// TODO: try out various failure and reload scenarios -- does the dialog
-// do as is expected?
-
 // TODO: invoke using a command with redirection on windows as well
 // (otherwise the file redirection thing won't work)
-
-// TODO: why do we need to do the trim on the client?
 
 using namespace core;
 using namespace core::shell_utils;
