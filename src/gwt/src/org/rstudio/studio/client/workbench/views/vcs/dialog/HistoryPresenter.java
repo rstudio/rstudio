@@ -101,11 +101,11 @@ public class HistoryPresenter
    {
       void setSelectedCommit(CommitInfo commit);
       void clearDetails();
+      void showDetailProgress();
       void setDetails(UnifiedParser unifiedParser, boolean suppressViewLink);
       
       HandlerRegistration addViewFileRevisionHandler(
                                           ViewFileRevisionHandler handler);
-      
    }
 
    @Inject
@@ -284,7 +284,7 @@ public class HistoryPresenter
       view_.hideSizeWarning();
 
       view_.getCommitDetail().setSelectedCommit(commitInfo);
-      view_.getCommitDetail().clearDetails();
+      view_.getCommitDetail().showDetailProgress();
       invalidation_.invalidate();
 
       if (commitInfo == null)

@@ -25,17 +25,18 @@ import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
-
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.widget.ProgressPanel;
+import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
-import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitDetailDisplay;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.*;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ViewFileRevisionEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ViewFileRevisionHandler;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitDetailDisplay;
 
 import java.util.ArrayList;
 
@@ -48,6 +49,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    {
       sizeWarning_ = new SizeWarningWidget("commit");
       sizeWarning_.setVisible(false);
+      progressPanel_ = new ProgressPanel(ProgressImages.createLargeGray());
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
    }
 
@@ -71,12 +73,27 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
       invalidation_.invalidate();
       tocPanel_.clear();
       detailPanel_.clear();
+
+      progressPanel_.setVisible(false);
+      progressPanel_.endProgressOperation();
+   }
+
+   @Override
+   public void showDetailProgress()
+   {
+      clearDetails();
+
+      progressPanel_.setVisible(true);
+      progressPanel_.beginProgressOperation(100);
    }
 
    @Override
    public void setDetails(final UnifiedParser unifiedParser,
                           final boolean suppressViewLink)
    {
+      progressPanel_.setVisible(false);
+      progressPanel_.endProgressOperation();
+
       invalidation_.invalidate();
       final Token token = invalidation_.getInvalidationToken();
 
@@ -202,9 +219,11 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    @UiField
    Label labelParent_;
    @UiField
-   VerticalPanel detailPanel_;
-   @UiField
    VerticalPanel tocPanel_;
+   @UiField(provided = true)
+   ProgressPanel progressPanel_;
+   @UiField
+   VerticalPanel detailPanel_;
    @UiField(provided = true)
    SizeWarningWidget sizeWarning_;
    @UiField
