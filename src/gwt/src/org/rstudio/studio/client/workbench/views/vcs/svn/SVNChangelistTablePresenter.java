@@ -34,21 +34,30 @@ public class SVNChangelistTablePresenter
          @Override
          public void onVcsRefresh(VcsRefreshEvent event)
          {
-            ArrayList<StatusAndPath> items = svnState.getStatus();
+            ArrayList<StatusAndPath> items =
+                  new ArrayList<StatusAndPath>(svnState.getStatus());
+
             boolean usesChangelists = false;
-            for (StatusAndPath item : items)
+            for (int i = items.size()-1; i >= 0; i--)
             {
+               StatusAndPath item = items.get(i);
+
                if (!StringUtil.isNullOrEmpty(item.getChangelist()))
-               {
                   usesChangelists = true;
-                  break;
-               }
+
+               if (rejectItem(item))
+                  items.remove(i);
             }
             view.setItems(items);
             view.setChangelistColumnVisible(usesChangelists);
          }
       });
 
+   }
+
+   protected boolean rejectItem(StatusAndPath item)
+   {
+      return false;
    }
 
    public void setSelectFirstItemByDefault(boolean selectFirstItemByDefault)

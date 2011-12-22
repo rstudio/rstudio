@@ -117,6 +117,12 @@ public class SVNSelectChangelistTablePresenter extends SVNChangelistTablePresent
       });
    }
 
+   @Override
+   protected boolean rejectItem(StatusAndPath item)
+   {
+      return super.rejectItem(item) || "X".equals(item.getStatus());
+   }
+
    public void clearSelection()
    {
       view_.clearSelection();
