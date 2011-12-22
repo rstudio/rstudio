@@ -64,6 +64,12 @@ public class SVNHistoryStrategy implements HistoryStrategy
    }
 
    @Override
+   public boolean isSearchSupported()
+   {
+      return false;
+   }
+
+   @Override
    public void setSearchText(HasValue<String> searchText)
    {
       dataProvider_.setSearchText(searchText);

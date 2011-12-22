@@ -26,6 +26,7 @@ public interface HistoryStrategy
    String idColumnName();
    boolean isBranchingSupported();
    boolean isShowFileSupported();
+   boolean isSearchSupported();
 
    void setSearchText(HasValue<String> searchText);
 

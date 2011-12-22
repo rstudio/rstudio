@@ -242,6 +242,12 @@ public class HistoryPanel extends Composite implements Display
    }
 
    @Override
+   public void removeSearchTextBox()
+   {
+      searchText_.removeFromParent();
+   }
+
+   @Override
    public HasValue<String> getSearchTextBox()
    {
       return searchText_;

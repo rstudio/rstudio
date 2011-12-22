@@ -62,6 +62,12 @@ public class GitHistoryStrategy implements HistoryStrategy
    }
 
    @Override
+   public boolean isSearchSupported()
+   {
+      return true;
+   }
+
+   @Override
    public void setSearchText(HasValue<String> searchText)
    {
       dataProvider_.setSearchText(searchText);

@@ -80,6 +80,7 @@ public class HistoryPresenter
       HasValue<FileSystemItem> getFileFilter();
 
       void removeBranchToolbarButton();
+      void removeSearchTextBox();
       
       void showSizeWarning(long sizeInBytes);
       void hideSizeWarning();
@@ -150,7 +151,6 @@ public class HistoryPresenter
          {
             showCommitDetail(false);
          }
-
       });
 
       view_.getRefreshButton().addClickHandler(new ClickHandler()
@@ -171,15 +171,22 @@ public class HistoryPresenter
          }
       });
 
-      strategy_.setSearchText(view_.getSearchTextBox());
-      view_.getSearchTextBox().addValueChangeHandler(new ValueChangeHandler<String>()
+      if (strategy_.isSearchSupported())
       {
-         @Override
-         public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent)
+         strategy_.setSearchText(view_.getSearchTextBox());
+         view_.getSearchTextBox().addValueChangeHandler(new ValueChangeHandler<String>()
          {
-            refreshHistoryCommand_.nudge();
-         }
-      });
+            @Override
+            public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent)
+            {
+               refreshHistoryCommand_.nudge();
+            }
+         });
+      }
+      else
+      {
+         view_.removeSearchTextBox();
+      }
       
       strategy_.setFileFilter(view_.getFileFilter());
       view_.getFileFilter().addValueChangeHandler(new ValueChangeHandler<FileSystemItem>() {
