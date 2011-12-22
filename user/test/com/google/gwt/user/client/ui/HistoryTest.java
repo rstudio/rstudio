@@ -20,31 +20,27 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.HistoryListener;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.impl.HistoryImpl;
 
 import java.util.ArrayList;
 
 /**
  * Tests for the history system.
- * 
- * TODO: find a way to test unescaping of the initial hash value.
  */
 public class HistoryTest extends GWTTestCase {
 
-  private static native String getCurrentLocationHash() /*-{
-    var href = $wnd.location.href;
-
-    splitted = href.split("#");
-    if (splitted.length != 2) {
-      return null;
+  private static String getCurrentLocationHash() {
+    String hash = Window.Location.getHash();
+    if ((hash != null) && !hash.isEmpty()) {
+      return hash.substring(1);
     }
-
-    hashPortion = splitted[1];
-
-    return hashPortion;
-  }-*/;
+    return null;
+  }
 
   /*
    * Copied from UserAgentPropertyGenerator and HistoryImplSafari.
@@ -358,5 +354,31 @@ public class HistoryTest extends GWTTestCase {
   private void addHistoryListenerImpl(HistoryListener historyListener) {
     this.historyListener = historyListener;
     History.addHistoryListener(historyListener);
-  }  
+  }
+
+  public void testInitialHashDecodedExactlyOnce() {
+    String originalHash = getCurrentLocationHash();
+    String testHash = "%2525";
+    String undecodedHistoryToken = testHash;
+    String correctHistoryToken = "%25";
+    String doubleDecodedHistoryToken = "%";
+    setHash(testHash);
+    try {
+      assertEquals(testHash, getCurrentLocationHash());
+      HistoryImpl history = GWT.create(HistoryImpl.class);
+      assertTrue(history.init());
+      String historyToken = History.getToken();
+      assertFalse("Failed to decode the initial hash", 
+          undecodedHistoryToken.equals(historyToken));
+      assertFalse("Doubly decoded the initial hash", 
+          doubleDecodedHistoryToken.equals(historyToken));
+      assertEquals(correctHistoryToken, historyToken);
+    } finally {
+      setHash(originalHash);
+    }
+  }
+
+  private static native void setHash(String hash) /*-{
+    $wnd.location.hash = hash;
+  }-*/;
 }
