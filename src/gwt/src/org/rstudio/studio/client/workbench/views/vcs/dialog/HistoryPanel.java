@@ -178,7 +178,7 @@ public class HistoryPanel extends Composite implements Display
       topToolbar_.addRightSeparator();
 
       refreshButton_ = new ToolbarButton(
-                                 "", 
+                                 "Refresh", 
                                  commands.vcsRefresh().getImageResource(),
                                  (ClickHandler) null);
       topToolbar_.addRightWidget(refreshButton_);

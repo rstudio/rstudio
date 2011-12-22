@@ -229,8 +229,17 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       topToolbar_.addLeftWidget(commands.vcsCommit().createToolbarButton());
       
       
-      topToolbar_.addRightWidget(commands.vcsRefresh().createToolbarButton());
-      topToolbar_.addRightSeparator();
+      topToolbar_.addRightWidget(new ToolbarButton(
+            "Refresh", commands.vcsRefresh().getImageResource(),
+            new ClickHandler() {
+               @Override
+               public void onClick(ClickEvent event)
+               {
+                  changelist_.showProgress();
+                  commands_.vcsRefresh().execute();
+               }
+            }));
+      
       commands.vcsPull().setButtonLabel("Update");
       commands.vcsPull().setMenuLabel("Update");
       topToolbar_.addRightWidget(commands.vcsPull().createToolbarButton());
