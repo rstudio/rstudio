@@ -14,7 +14,6 @@ package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.inject.Provider;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 import com.google.inject.Inject;
