@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.vcs.dialog;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -237,6 +238,8 @@ public class HistoryPanel extends Composite implements Display
    public void removeBranchToolbarButton()
    {
       topToolbar_.removeLeftWidget(branchToolbarButton_);
+      commitFilterToolbarButton_.getElement().getStyle().setMarginLeft(10, 
+                                                                       Unit.PX);
    }
 
    @Override
@@ -287,12 +290,6 @@ public class HistoryPanel extends Composite implements Display
             commitTable_.setFocus(true);
          }
       });
-   }
-
-   @Override
-   public void setShowBranch(boolean showBranch)
-   {
-      branchToolbarButton_.setVisible(showBranch);
    }
 
    @UiField(provided = true)

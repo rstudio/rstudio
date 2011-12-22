@@ -86,8 +86,6 @@ public class HistoryPresenter
       void hideSizeWarning();
 
       void onShow();
-
-      void setShowBranch(boolean showBranch);
    }
 
    public interface CommitListDisplay
