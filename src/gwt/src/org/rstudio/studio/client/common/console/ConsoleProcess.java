@@ -76,7 +76,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                   // isDialog == false exits when no client is connected (in
                   // that case it will never be reaped). 
                   
-                  // TODO: clean this up and/or eliminate isDialog falg (since
+                  // TODO: clean this up and/or eliminate isDialog flag (since
                   // all known instances currently use isDialog == true)
                   
                   connectToProcess(
@@ -89,21 +89,54 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                            {
                               if (proc.isDialog())
                               {
-                                 ConsoleProgressDialog dlg =  new ConsoleProgressDialog(
+                                 // first determine whether to create and/or
+                                 // show the dialog immdiately
+                                 boolean createDialog = false;
+                                 boolean showDialog = false;
+                                 
+                                 // standard dialog -- always show it
+                                 if (!proc.getShowOnOutput())
+                                 {
+                                    createDialog = true;
+                                    showDialog = true;
+                                 }
+                                 
+                                 // showOnOutput dialog that already has 
+                                 // output -- make sure the user sees it
+                                 else if (proc.getBufferedOutput().trim().length() > 0)
+                                 {
+                                    createDialog = true;
+                                    showDialog = true;
+                                 }
+                                 
+                                 // showOnOutput dialog that has exited
+                                 // and has no output -- reap it
+                                 else if (proc.getExitCode() != null)
+                                 {
+                                    cproc.reap(new VoidServerRequestCallback());
+                                 }
+                                 
+                                 // showOnOutput dialog with no output that is
+                                 // still running -- crate but don't show yet
+                                 else
+                                 {
+                                    createDialog = true;
+                                 }
+                                  
+                                 // take indicated actions
+                                 if (createDialog)
+                                 {
+                                    ConsoleProgressDialog dlg = new ConsoleProgressDialog(
                                        proc.getCaption(),
                                        cproc,
                                        proc.getBufferedOutput(),
                                        proc.getExitCode(),
                                        cryptoServer);
-                                 
-                                 if (!proc.getShowOnOutput() ||
-                                     proc.getBufferedOutput().trim().length() > 0)
-                                 {
-                                    dlg.showModal();
-                                 }
-                                 else
-                                 {
-                                    dlg.showOnOutput();
+                                    
+                                    if (showDialog)
+                                       dlg.showModal();
+                                    else
+                                       dlg.showOnOutput();
                                  }
                               }
                               else
