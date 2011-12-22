@@ -60,6 +60,7 @@ import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPresenterDisplay;
 import org.rstudio.studio.client.workbench.views.vcs.svn.model.SVNState;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 public class SVNReviewPresenter implements ReviewPresenter
 {
@@ -159,6 +160,10 @@ public class SVNReviewPresenter implements ReviewPresenter
       svnState_ = svnState;
       
       binder.bind(commands, this);
+      
+      undiffableStatuses_.add("?");
+      undiffableStatuses_.add("!");
+      undiffableStatuses_.add("X");
       
       commandHandler_ = new SVNCommandHandler(view, 
                                               globalDisplay, 
@@ -374,6 +379,10 @@ public class SVNReviewPresenter implements ReviewPresenter
          clearDiff();
          currentFilename_ = item.getPath();
       }
+      
+      // bail if this is an undiffable status
+      if (undiffableStatuses_.contains(item.getStatus()))
+         return;
 
       diffInvalidation_.invalidate();
       final Token token = diffInvalidation_.getInvalidationToken();
@@ -491,6 +500,8 @@ public class SVNReviewPresenter implements ReviewPresenter
    private boolean initialized_;
    private static final String MODULE_SVN = "vcs_svn";
    private static final String KEY_CONTEXT_LINES = "context_lines";
+   
+   private final HashSet<String> undiffableStatuses_ = new HashSet<String>();
 
    private boolean overrideSizeWarning_ = false;
 
