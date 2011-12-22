@@ -159,6 +159,7 @@ public class HistoryPanel extends Composite implements Display
 
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
+      commitDetail_.setIdDesc(strategy.idColumnName());
       commitDetail_.setScrollPanel(detailScrollPanel_);
 
       topToolbar_.addStyleName(styles.toolbar());

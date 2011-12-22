@@ -37,7 +37,7 @@
    <g:HTMLPanel visible="false">
       <table class="{style.summary}" cellspacing="0" cellpadding="0">
          <tr>
-            <td>SHA</td>
+            <td><g:Label ui:field="labelIdDesc_" /></td>
             <td><g:Label ui:field="labelId_" /></td>
          </tr>
          <tr>

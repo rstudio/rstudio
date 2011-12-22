@@ -52,6 +52,11 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
       progressPanel_ = new ProgressPanel(ProgressImages.createLargeGray());
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
    }
+   
+   public void setIdDesc(String idDesc)
+   {
+      labelIdDesc_.setText(idDesc);
+   }
 
    public void setScrollPanel(ScrollPanel container)
    {
@@ -208,6 +213,8 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
 
    private final Invalidation invalidation_ = new Invalidation();
    private CommitInfo commit_;
+   @UiField
+   Label labelIdDesc_;
    @UiField
    Label labelId_;
    @UiField
