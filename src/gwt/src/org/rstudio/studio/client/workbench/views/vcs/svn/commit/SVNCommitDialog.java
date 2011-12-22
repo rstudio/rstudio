@@ -62,7 +62,7 @@ public class SVNCommitDialog extends ModalDialog<Void>
 
       changelist_ = changelistPresenter.getView();
       widget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
-      widget_.setSize("400px", "300px");
+      widget_.setSize("500px", "400px");
 
       topHPanel_.setCellWidth(selectLabel_, "99%");
       topHPanel_.setCellVerticalAlignment(selectLabel_,
