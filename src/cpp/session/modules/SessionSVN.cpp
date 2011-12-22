@@ -59,6 +59,8 @@
 
 // TODO: overall code review
 
+// TODO: why do we need to do the trim on the client?
+
 using namespace core;
 using namespace core::shell_utils;
 using namespace session::modules::vcs_utils;
