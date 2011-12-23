@@ -76,8 +76,6 @@ const char * const kVcsId = "Git";
 
 namespace {
 
-const size_t WARN_SIZE = 200 * 1024;
-
 // git bin dir which we detect at startup. note that if the git bin
 // is already in the path then this will be empty
 std::string s_gitExePath;
@@ -1446,7 +1444,7 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   if (!noSizeWarning && output.size() > WARN_SIZE)
+   if (!noSizeWarning && output.size() > source_control::WARN_SIZE)
    {
       error = systemError(boost::system::errc::file_too_large,
                           ERROR_LOCATION);
@@ -1600,7 +1598,7 @@ Error vcsShow(const json::JsonRpcRequest& request,
    s_git_.show(rev, &output);
    output = string_utils::filterControlChars(output);
 
-   if (!noSizeWarning && output.size() > WARN_SIZE)
+   if (!noSizeWarning && output.size() > source_control::WARN_SIZE)
    {
       error = systemError(boost::system::errc::file_too_large,
                           ERROR_LOCATION);

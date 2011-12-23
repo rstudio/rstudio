@@ -1015,8 +1015,17 @@ Error svnDiffFile(const json::JsonRpcRequest& request,
       LOG_ERROR_MESSAGE(stdErr);
    }
 
-   // TODO: implement size warning
-   pResponse->setResult(stdOut);
+   if (!noSizeWarning && stdOut.size() > source_control::WARN_SIZE)
+   {
+      error = systemError(boost::system::errc::file_too_large,
+                          ERROR_LOCATION);
+      pResponse->setError(error,
+                          json::Value(static_cast<uint64_t>(stdOut.size())));
+   }
+   else
+   {
+      pResponse->setResult(stdOut);
+   }
 
    return Success();
 }
@@ -1404,13 +1413,30 @@ void svnHistory(const json::JsonRpcRequest& request,
                        _2));
 }
 
-void svnShowEnd(const json::JsonRpcFunctionContinuation& cont,
-                const Error& error,
+void svnShowEnd(bool noSizeWarning,
+                const json::JsonRpcFunctionContinuation& cont,
+                Error error,
                 const core::system::ProcessResult& result)
 {
    json::JsonRpcResponse response;
-   if (!error)
+
+   if (error)
+   {
+      cont(error, &response);
+      return;
+   }
+
+   if (!noSizeWarning && result.stdOut.size() > source_control::WARN_SIZE)
+   {
+      response.setError(
+            systemError(boost::system::errc::file_too_large, ERROR_LOCATION),
+            json::Value(static_cast<uint64_t>(result.stdOut.size())));
+   }
+   else
+   {
       response.setResult(result.stdOut);
+   }
+
    cont(error, &response);
 }
 
@@ -1433,7 +1459,7 @@ void svnShow(const json::JsonRpcRequest& request,
    runSvnAsync(args,
                "SVN History",
                false,
-               boost::bind(svnShowEnd, cont, _1, _2));
+               boost::bind(svnShowEnd, noSizeWarning, cont, _1, _2));
 }
 
 Error svnShowFile(const json::JsonRpcRequest& request,

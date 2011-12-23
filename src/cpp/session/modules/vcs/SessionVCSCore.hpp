@@ -26,6 +26,10 @@ namespace session {
 namespace modules {
 namespace source_control {
 
+// The size threshold at which we warn the user that the thing they are
+// requesting might slow down the app and are they sure they want to proceed?
+const size_t WARN_SIZE = 200 * 1024;
+
 class VCSStatus
 {
 public:

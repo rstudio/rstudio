@@ -79,8 +79,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
       tocPanel_.clear();
       detailPanel_.clear();
 
-      progressPanel_.setVisible(false);
-      progressPanel_.endProgressOperation();
+      setProgressVisible(false);
    }
 
    @Override
@@ -88,16 +87,14 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    {
       clearDetails();
 
-      progressPanel_.setVisible(true);
-      progressPanel_.beginProgressOperation(100);
+      setProgressVisible(true);
    }
 
    @Override
    public void setDetails(final UnifiedParser unifiedParser,
                           final boolean suppressViewLink)
    {
-      progressPanel_.setVisible(false);
-      progressPanel_.endProgressOperation();
+      setProgressVisible(false);
 
       invalidation_.invalidate();
       final Token token = invalidation_.getInvalidationToken();
@@ -195,8 +192,23 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    {
       tocPanel_.setVisible(false);
       detailPanel_.setVisible(false);
+      setProgressVisible(false);
       sizeWarning_.setSize(sizeInBytes);
       sizeWarning_.setVisible(true);
+   }
+
+   private void setProgressVisible(boolean visible)
+   {
+      if (visible)
+      {
+         progressPanel_.setVisible(true);
+         progressPanel_.beginProgressOperation(100);
+      }
+      else
+      {
+         progressPanel_.setVisible(false);
+         progressPanel_.endProgressOperation();
+      }
    }
 
    public void hideSizeWarning()
