@@ -496,13 +496,6 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    core::system::unsetenv(&shellEnv, "VISUAL");
    core::system::setenv(&shellEnv, "PAGER", "/bin/cat");
 
-   // normally git will error out in a dumb terminal if EDITOR is not
-   // defined, however if the user defines the core.editor git configuration
-   // variable git will still try to invoke this editor. we define the
-   // editor to /bin/true so that commands which have a default commit
-   // message (like git revert) will still work and commands which have
-   // no default commit message (like git commit) will fail with an
-   // appropriate message ("Aborting commit due to empty commit message")
    core::system::setenv(&shellEnv, "GIT_EDITOR", s_editFileCommand);
    core::system::setenv(&shellEnv, "SVN_EDITOR", s_editFileCommand);
 
