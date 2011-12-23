@@ -45,9 +45,6 @@
 #include "SessionConsoleProcess.hpp"
 #include "SessionAskPass.hpp"
 
-// TODO: invoke using a command with redirection on windows as well
-// (otherwise the file redirection thing won't work)
-
 using namespace core;
 using namespace core::shell_utils;
 using namespace session::modules::vcs_utils;
