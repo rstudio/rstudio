@@ -100,7 +100,7 @@ public abstract class VcsState
                return;
             }
 
-            if (status_ != null)
+            if (status_ != null && status != null)
             {
                for (int i = 0; i < status_.size(); i++)
                {
