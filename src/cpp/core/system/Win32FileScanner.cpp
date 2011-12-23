@@ -14,6 +14,7 @@
 #include <core/system/FileScanner.hpp>
 
 #include <boost/foreach.hpp>
+#include <boost/system/windows_error.hpp>
 
 #include <core/Error.hpp>
 #include <core/FileInfo.hpp>
@@ -122,7 +123,8 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
          if (options.recursive && !childFileInfo.isSymlink())
          {
             Error error = scanFiles(child, options, pTree);
-            if (error)
+            if (error &&
+               (error.code() != boost::system::windows_error::path_not_found))
                LOG_ERROR(error);
          }
       }
