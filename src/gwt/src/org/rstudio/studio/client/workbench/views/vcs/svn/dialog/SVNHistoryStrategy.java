@@ -14,15 +14,11 @@ package org.rstudio.studio.client.workbench.views.vcs.svn.dialog;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.AbstractPager;
-import com.google.gwt.user.cellview.client.PageSizePager;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.view.client.HasData;
 import com.google.inject.Inject;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
-import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.vcs.common.Pager;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
