@@ -1502,6 +1502,74 @@ void svnShowFile(const json::JsonRpcRequest& request,
                boost::bind(svnShowFileEnd, cont, _1, _2));
 }
 
+Error svnGetIgnores(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   std::string path;
+   Error error = json::readParam(request.params, 0, &path);
+   if (error)
+      return error;
+
+   // resolve path from root of project
+   FilePath filePath = projects::projectContext().directory().complete(path);
+
+   core::system::ProcessResult result;
+   error = runSvn(ShellArgs() << "propget" << "svn:ignore"
+                              << filePath << globalArgs(),
+                  true,
+                  &result);
+   if (error)
+      return error;
+
+   // success
+   pResponse->setResult(processResultToJson(result));
+   return Success();
+}
+
+Error svnSetIgnores(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   RefreshOnExit refreshOnExit;
+
+   // get the params
+   std::string path, ignores;
+   Error error = json::readParams(request.params, &path, &ignores);
+   if (error)
+      return error;
+
+   // resolve path from root of project
+   FilePath filePath = projects::projectContext().directory().complete(path);
+
+   // write the ignores to a temporary file
+   FilePath ignoresFile = module_context::tempFile("svn-ignore", "txt");
+   error = core::writeStringToFile(ignoresFile, ignores);
+   if (error)
+      return error;
+
+   // set them
+   core::system::ProcessResult result;
+   error = runSvn(ShellArgs() << "propset" << "svn:ignore"
+                              << filePath << "-F" << ignoresFile
+                              << globalArgs(),
+                  true,
+                  &result);
+
+   // always remove the temporary file
+   Error removeError = ignoresFile.remove();
+   if (removeError)
+      LOG_ERROR(error);
+
+   // check for error running svn
+   if (error)
+      return error;
+
+   // succeess
+   pResponse->setResult(processResultToJson(result));
+   return Success();
+}
+
+
+
 Error checkout(const std::string& url,
                const std::string& username,
                const std::string dirName,
@@ -1631,6 +1699,8 @@ Error initialize()
       (bind(registerAsyncRpcMethod, "svn_history", svnHistory))
       (bind(registerAsyncRpcMethod, "svn_show", svnShow))
       (bind(registerAsyncRpcMethod, "svn_show_file", svnShowFile))
+      (bind(registerRpcMethod, "svn_get_ignores", svnGetIgnores))
+      (bind(registerRpcMethod, "svn_set_ignores", svnSetIgnores))
       ;
    Error error = initBlock.execute();
    if (error)

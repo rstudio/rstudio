@@ -2352,6 +2352,23 @@ public class RemoteServer implements Server
       params.set(1, new JSONString(filename));
       sendRequest(RPC_SCOPE, SVN_SHOW_FILE, params, requestCallback);
    }
+   
+   public void svnGetIgnores(
+         String path, 
+         ServerRequestCallback<ProcessResult> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, SVN_GET_IGNORES, path, requestCallback);
+   }
+
+   public void svnSetIgnores(String path,
+                             String ignores,
+                             ServerRequestCallback<ProcessResult> requestCallback)
+   {  
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      params.set(1, new JSONString(ignores));
+      sendRequest(RPC_SCOPE, SVN_SET_IGNORES, params, requestCallback);
+   }
 
    private String clientId_;
    private double clientVersion_ = 0;
@@ -2535,6 +2552,8 @@ public class RemoteServer implements Server
    private static final String SVN_HISTORY = "svn_history";
    private static final String SVN_SHOW = "svn_show";
    private static final String SVN_SHOW_FILE = "svn_show_file";
+   private static final String SVN_GET_IGNORES = "svn_get_ignores";
+   private static final String SVN_SET_IGNORES = "svn_set_ignores";
 
    private static final String GET_PUBLIC_KEY = "get_public_key";
    

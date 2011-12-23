@@ -107,4 +107,12 @@ public interface SVNServerOperations extends VCSServerOperations
    void svnShowFile(int revision,
                     String filename,
                     ServerRequestCallback<String> requestCallback);
+   
+   
+   void svnGetIgnores(String path, 
+                      ServerRequestCallback<ProcessResult> requestCallback);
+   
+   void svnSetIgnores(String path,
+                      String ignores,
+                      ServerRequestCallback<ProcessResult> requestCallback);
 }

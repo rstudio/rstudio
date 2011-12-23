@@ -25,8 +25,12 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.vcs.IgnoreDialog;
+import org.rstudio.studio.client.common.vcs.IgnoreStrategy;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
+import org.rstudio.studio.client.common.vcs.SVNServerOperations.ProcessResult;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.ProcessCallback;
@@ -103,7 +107,29 @@ public class SVNCommandHandler
 
       if (paths.size() > 0)
       {
-         globalDisplay_.showErrorMessage("SVN Ignore", "Not Yet Implemented");
+         IgnoreDialog.show(paths, new IgnoreStrategy() {
+
+            @Override
+            public String getCaption()
+            {
+               return "SVN Ignore";
+            }
+
+            @Override
+            public void getIgnores(String path,
+                  ServerRequestCallback<ProcessResult> requestCallback)
+            {
+               server_.svnGetIgnores(path, requestCallback);
+            }
+
+            @Override
+            public void setIgnores(String path, String ignores,
+                  ServerRequestCallback<ProcessResult> requestCallback)
+            {
+               server_.svnSetIgnores(path, ignores, requestCallback);
+            }
+            
+         });
       }
    }
    
