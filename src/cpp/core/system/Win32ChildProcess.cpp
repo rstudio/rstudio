@@ -22,6 +22,7 @@
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <core/system/ShellUtils.hpp>
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 
@@ -128,6 +129,9 @@ public:
    {
       try
       {
+         if (!pHandle_ || *pHandle_ == INVALID_HANDLE_VALUE)
+            return;
+
          Error error = closeHandle(pHandle_, location_);
          if (error)
             LOG_ERROR(error);
@@ -245,6 +249,12 @@ void ChildProcess::init(const std::string& exe,
    args_ = args;
    options_ = options;
    resolveCommand(&exe_, &args_);
+
+   if (!options.stdOutFile.empty() || !options.stdErrFile.empty())
+   {
+      LOG_ERROR_MESSAGE(
+               "stdOutFile/stdErrFile options cannot be used with runProgram");
+   }
 }
 
 void ChildProcess::init(const std::string& command,
@@ -302,6 +312,39 @@ Error ChildProcess::terminate()
       return Success();
 }
 
+namespace {
+
+Error openFile(const FilePath& file, bool inheritable, HANDLE* phFile)
+{
+   HANDLE hFile = ::CreateFileW(file.absolutePathW().c_str(),
+                                GENERIC_WRITE,
+                                0,
+                                NULL,
+                                CREATE_ALWAYS,
+                                FILE_ATTRIBUTE_NORMAL,
+                                NULL);
+   if (hFile == INVALID_HANDLE_VALUE)
+      return systemError(::GetLastError(), ERROR_LOCATION);
+
+   if (inheritable)
+   {
+      if (!::SetHandleInformation(hFile,
+                                  HANDLE_FLAG_INHERIT,
+                                  HANDLE_FLAG_INHERIT))
+      {
+         Error err = systemError(::GetLastError(), ERROR_LOCATION);
+         ::CloseHandle(hFile);
+         return err;
+      }
+   }
+
+   *phFile = hFile;
+
+   return Success();
+}
+
+} // namespace
+
 Error ChildProcess::run()
 {   
    Error error;
@@ -351,6 +394,26 @@ Error ChildProcess::run()
    si.hStdError = options_.redirectStdErrToStdOut ? hStdOutWrite
                                                   : hStdErrWrite;
    si.hStdInput = hStdInRead;
+
+   HANDLE hStdOutWriteFile = INVALID_HANDLE_VALUE;
+   if (!options_.stdOutFile.empty())
+   {
+      error = openFile(options_.stdOutFile, true, &hStdOutWriteFile);
+      if (error)
+         return error;
+      si.hStdOutput = hStdOutWriteFile;
+   }
+   CloseHandleOnExitScope closeStdOutFile(&hStdOutWriteFile, ERROR_LOCATION);
+
+   HANDLE hStdErrWriteFile = INVALID_HANDLE_VALUE;
+   if (!options_.stdErrFile.empty())
+   {
+      error = openFile(options_.stdErrFile, true, &hStdErrWriteFile);
+      if (error)
+         return error;
+      si.hStdOutput = hStdErrWriteFile;
+   }
+   CloseHandleOnExitScope closeStdErrFile(&hStdErrWriteFile, ERROR_LOCATION);
 
    // build command line
    std::vector<TCHAR> cmdLine;

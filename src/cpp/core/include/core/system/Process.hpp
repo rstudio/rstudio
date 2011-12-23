@@ -100,6 +100,13 @@ struct ProcessOptions
 
    bool redirectStdErrToStdOut;
 
+   // If not empty, these two provide paths that stdout and stderr
+   // (respectively) should be redirected to. Note that this ONLY works
+   // if you use runCommand, not runProgram, as we use the shell to do
+   // the redirection.
+   core::FilePath stdOutFile;
+   core::FilePath stdErrFile;
+
    // function to run within the child process immediately after the fork
    // NOTE: only supported on posix as there is no fork on Win32
    boost::function<void()> onAfterFork;

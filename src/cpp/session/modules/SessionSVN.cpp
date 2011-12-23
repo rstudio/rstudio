@@ -260,10 +260,12 @@ core::Error createConsoleProc(const ShellArgs& args,
    // necessary because ConsoleProcess specifies options.createNewConsole
    // which overrides options.detachProcess)
 
-   // build command (redirect stdout to a file)
+   // build command
    std::string command = svn() << args.args();
+
+   // redirect stdout to a file
    if (!outputFile.empty())
-      command = "(" + command + ")" + " > " + shell_utils::escape(outputFile);
+      options.stdOutFile = outputFile;
 
    // create the process
    *ppCP = ConsoleProcess::create(command,
