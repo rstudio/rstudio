@@ -1462,13 +1462,42 @@ void svnShow(const json::JsonRpcRequest& request,
                boost::bind(svnShowEnd, noSizeWarning, cont, _1, _2));
 }
 
-Error svnShowFile(const json::JsonRpcRequest& request,
-                  json::JsonRpcResponse* pResponse)
+void svnShowFileEnd(const json::JsonRpcFunctionContinuation& cont,
+                    Error error,
+                    const core::system::ProcessResult& result)
 {
-   // TODO: Implement
+   json::JsonRpcResponse response;
 
-   pResponse->setResult("");
-   return Success();
+   if (error)
+   {
+      cont(error, &response);
+      return;
+   }
+
+   response.setResult(result.stdOut);
+   cont(error, &response);
+}
+
+void svnShowFile(const json::JsonRpcRequest& request,
+                 const json::JsonRpcFunctionContinuation& cont)
+{
+   int rev;
+   std::string filename;
+   Error error = json::readParams(request.params, &rev, &filename);
+   if (error)
+   {
+      json::JsonRpcResponse response;
+      cont(error, &response);
+      return;
+   }
+
+   ShellArgs args;
+   args << "cat" << "-r" << boost::lexical_cast<std::string>(rev)
+        << "--" << filename;
+   runSvnAsync(args,
+               "SVN Show File",
+               false,
+               boost::bind(svnShowFileEnd, cont, _1, _2));
 }
 
 Error checkout(const std::string& url,
@@ -1599,7 +1628,7 @@ Error initialize()
       (bind(registerAsyncRpcMethod, "svn_history_count", svnHistoryCount))
       (bind(registerAsyncRpcMethod, "svn_history", svnHistory))
       (bind(registerAsyncRpcMethod, "svn_show", svnShow))
-      (bind(registerRpcMethod, "svn_show_file", svnShowFile))
+      (bind(registerAsyncRpcMethod, "svn_show_file", svnShowFile))
       ;
    Error error = initBlock.execute();
    if (error)

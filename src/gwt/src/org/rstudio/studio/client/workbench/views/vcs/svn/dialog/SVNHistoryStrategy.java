@@ -63,7 +63,7 @@ public class SVNHistoryStrategy implements HistoryStrategy
    @Override
    public boolean isShowFileSupported()
    {
-      return false;
+      return true;
    }
 
    @Override

@@ -21,8 +21,8 @@ public class DiffFileHeader
                          String newFile)
    {
       headerLines_ = headerLines;
-      oldFile_ = oldFile.replaceFirst("^a/", "");
-      newFile_ = newFile.replaceFirst("^b/", "");
+      oldFile_ = oldFile.replaceFirst("^a/", "").replaceFirst("\\s\\(revision [0-9]+\\)", "");
+      newFile_ = newFile.replaceFirst("^b/", "").replaceFirst("\\s\\(revision [0-9]+\\)", "");
    }
 
    public String getDescription()
