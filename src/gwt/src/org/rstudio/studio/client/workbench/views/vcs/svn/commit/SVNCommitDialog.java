@@ -19,16 +19,15 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.widget.ModalDialog;
-import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.SmallButton;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
@@ -39,7 +38,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNSelectChangelistTablePresenter;
 
-public class SVNCommitDialog extends ModalDialog<Void>
+public class SVNCommitDialog extends ModalDialogBase
 {
    interface Binder extends UiBinder<Widget, SVNCommitDialog>
    {
@@ -50,16 +49,22 @@ public class SVNCommitDialog extends ModalDialog<Void>
                           final SVNSelectChangelistTablePresenter changelistPresenter,
                           GlobalDisplay globalDisplay)
    {
-      super("Commit", new OperationWithInput<Void>()
-      {
-         @Override
-         public void execute(Void input)
-         {
-         }
-      });
       server_ = server;
       globalDisplay_ = globalDisplay;
-
+      
+      setText("Commit");
+      
+      ThemedButton commitButton = new ThemedButton("Commit", 
+                                                    new ClickHandler() {
+         public void onClick(ClickEvent event) 
+         {
+            attemptCommit();
+         }
+      });
+      addButton(commitButton);
+      addCancelButton();
+      
+     
       changelist_ = changelistPresenter.getView();
       widget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       widget_.setSize("500px", "400px");
@@ -107,16 +112,11 @@ public class SVNCommitDialog extends ModalDialog<Void>
       commitDraft_ = message_.getText();
    }
 
-   @Override
-   protected Void collectInput()
-   {
-      return null;
-   }
 
-   @Override
-   protected void validateAndGo(Void input, final Command executeOnSuccess)
+ 
+   private void attemptCommit()
    {
-      if (validate(input))
+      if (validateInput())
       {
          server_.svnCommit(
                changelist_.getSelectedPaths(),
@@ -137,7 +137,7 @@ public class SVNCommitDialog extends ModalDialog<Void>
                               // out the text box now
                               message_.setText("");
 
-                              executeOnSuccess.execute();
+                              closeDialog();
                            }
                         }
                      });
@@ -151,8 +151,7 @@ public class SVNCommitDialog extends ModalDialog<Void>
       }
    }
 
-   @Override
-   protected boolean validate(Void input)
+   private boolean validateInput()
    {
       if (changelist_.getSelectedPaths().size() == 0)
       {
