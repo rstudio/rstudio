@@ -216,11 +216,11 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="vcsCommit"/>
             <separator/>
-            <cmd refid="vcsShowHistory"/>
-            <separator/>
             <cmd refid="vcsPull"/>
             <cmd refid="vcsCleanup"/>
             <cmd refid="vcsPush"/>
+            <separator/>
+            <cmd refid="vcsShowHistory"/>
             <separator/>
             <cmd refid="versionControlProjectSetup"/>
          </menu>
