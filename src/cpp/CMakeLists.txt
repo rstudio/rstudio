@@ -135,7 +135,6 @@ if(UNIX)
 # WIN32 BOOST
 else()
      # hard-code to our own prebuilt boost libs
-     set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../dependencies/windows")
      if(RSTUDIO_SESSION_WIN64)
         set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-win/boost64")
      else()

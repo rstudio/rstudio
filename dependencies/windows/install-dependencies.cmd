@@ -13,6 +13,7 @@ set MINGW_FILE=mingw64-2010-10-03.zip
 set GIN_FILE=gin-1.5.zip
 set GWT_FILE=gwt-2.4.0.zip
 set JUNIT_FILE=junit-4.9b3.jar
+set GNUDIFF_FILE=gnudiff.zip
 
 if not exist boost-win (
   wget %WGET_ARGS% "%BASEURL%%BOOST_FILE%"
@@ -26,6 +27,14 @@ if not exist mingw64 (
   echo Unzipping %MINGW_FILE%
   unzip %UNZIP_ARGS% "%MINGW_FILE%"
   del "%MINGW_FILE%"
+)
+
+if not exist gnudiff (
+  wget %WGET_ARGS% "%BASEURL%%GNUDIFF_FILE%"
+  mkdir gnudiff
+  echo Unzipping %GNUDIFF_FILE%
+  unzip %UNZIP_ARGS% "%GNUDIFF_FILE%" -d gnudiff
+  del "%GNUDIFF_FILE%"
 )
 
 mkdir ..\..\src\gwt\lib

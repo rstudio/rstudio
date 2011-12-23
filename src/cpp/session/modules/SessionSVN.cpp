@@ -108,6 +108,12 @@ core::system::ProcessOptions procOptions()
    FilePath postbackDir = session::options().rpostbackPath().parent();
    core::system::addToPath(&childEnv, postbackDir.absolutePath());
 
+   // on windows add gnudiff directory to the path
+#ifdef _WIN32
+   core::system::addToPath(&childEnv,
+                           session::options().gnudiffPath().absolutePath());
+#endif
+
    if (!s_workingDir.empty())
       options.workingDir = s_workingDir;
    else

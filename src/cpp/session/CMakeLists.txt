@@ -226,6 +226,13 @@ if (NOT RSTUDIO_SESSION_WIN64)
                  DESTINATION  ${RSTUDIO_INSTALL_BIN})
       endif()
    endif()
+
+   # install gnudiff tools on windows
+   if(WIN32)
+      install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/gnudiff"
+              USE_SOURCE_PERMISSIONS
+              DESTINATION  ${RSTUDIO_INSTALL_BIN})
+   endif()
 endif()
 
 # add gpl for desktop

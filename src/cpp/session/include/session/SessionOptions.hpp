@@ -182,6 +182,11 @@ public:
    {
       return core::FilePath(consoleIoPath_.c_str());
    }
+
+   core::FilePath gnudiffPath() const
+   {
+      return core::FilePath(gnudiffPath_.c_str());
+   }
    
    // user info
    std::string userIdentity() const 
@@ -296,6 +301,7 @@ private:
    // external
    std::string rpostbackPath_;
    std::string consoleIoPath_;
+   std::string gnudiffPath_;
 
    // user info
    std::string userIdentity_;
