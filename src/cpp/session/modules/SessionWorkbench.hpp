@@ -14,6 +14,8 @@
 #ifndef SESSION_SESSION_WORKBENCH_HPP
 #define SESSION_SESSION_WORKBENCH_HPP
 
+#include <string>
+
 namespace core {
    class Error;
 }
@@ -22,6 +24,8 @@ namespace session {
 namespace modules { 
 namespace workbench {
    
+std::string editFileCommand();
+
 core::Error initialize();
                        
 } // namespace workbench

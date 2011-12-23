@@ -599,6 +599,12 @@ void onUserSettingsChanged()
 
 } // anonymous namespace
    
+std::string editFileCommand()
+{
+   // NOTE: only registered for server mode
+   return s_editFileCommand;
+}
+
 Error initialize()
 {
    // register for change notifications on user settings

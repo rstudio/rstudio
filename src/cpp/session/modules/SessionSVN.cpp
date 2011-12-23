@@ -44,6 +44,7 @@
 #include "vcs/SessionVCSUtils.hpp"
 #include "SessionConsoleProcess.hpp"
 #include "SessionAskPass.hpp"
+#include "SessionWorkbench.hpp"
 
 using namespace core;
 using namespace core::shell_utils;
@@ -124,6 +125,11 @@ core::system::ProcessOptions procOptions()
    std::string userProfile = core::system::getenv(childEnv, "USERPROFILE");
    core::system::setenv(&childEnv, "HOME", userProfile);
 #endif
+
+   // set the SVN_EDITOR if it is available
+   std::string editFileCommand = workbench::editFileCommand();
+   if (!editFileCommand.empty())
+      core::system::setenv(&childEnv, "SVN_EDITOR", editFileCommand);
 
    // set custom environment
    options.environment = childEnv;
