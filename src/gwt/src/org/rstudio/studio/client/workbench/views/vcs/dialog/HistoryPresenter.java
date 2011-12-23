@@ -24,6 +24,9 @@ import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.HasData;
+import com.google.gwt.view.client.Range;
+import com.google.gwt.view.client.RangeChangeEvent;
+import com.google.gwt.view.client.RangeChangeEvent.Handler;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -93,7 +96,14 @@ public class HistoryPresenter
       HandlerRegistration addSelectionChangeHandler(
             SelectionChangeEvent.Handler handler);
 
+      HandlerRegistration addRangeChangeHandler(
+            RangeChangeEvent.Handler handler);
+
       CommitInfo getSelectedCommit();
+
+      void clearSelection();
+
+      void setAutoSelectFirstRow(boolean autoSelect);
    }
 
    public interface CommitDetailDisplay extends HasHandlers
@@ -125,6 +135,9 @@ public class HistoryPresenter
 
       view_ = viewBuilder.build(strategy_);
 
+      view_.getCommitList().setAutoSelectFirstRow(
+                                             strategy_.getAutoSelectFirstRow());
+
       if (strategy_.isBranchingSupported())
       {
          view_.addBranchChangedHandler(new ValueChangeHandler<String>() {
@@ -148,6 +161,14 @@ public class HistoryPresenter
          public void onSelectionChange(SelectionChangeEvent event)
          {
             showCommitDetail(false);
+         }
+      });
+      view_.getCommitList().addRangeChangeHandler(new Handler()
+      {
+         @Override
+         public void onRangeChange(RangeChangeEvent event)
+         {
+            view_.getCommitList().clearSelection();
          }
       });
 
@@ -251,26 +272,6 @@ public class HistoryPresenter
          }
          
       });
-
-      new WidgetHandlerRegistration(view_.asWidget())
-      {
-         @Override
-         protected HandlerRegistration doRegister()
-         {
-            return strategy_.addVcsRefreshHandler(new VcsRefreshHandler()
-            {
-               @Override
-               public void onVcsRefresh(VcsRefreshEvent event)
-               {
-                  if (event.getReason() == Reason.VcsOperation)
-                  {
-                     if (view_.asWidget().isVisible())
-                        refreshHistory();
-                  }
-               }
-            });
-         }
-      };
    }
 
    private void showCommitDetail(boolean noSizeWarning)
@@ -333,7 +334,7 @@ public class HistoryPresenter
    private void refreshHistory()
    {
       strategy_.refreshCount();
-      strategy_.onRangeChanged(view_.getDataDisplay());
+      view_.getDataDisplay().setVisibleRangeAndClearData(new Range(0, 100), true);
    }
 
    public HandlerRegistration addSwitchViewHandler(

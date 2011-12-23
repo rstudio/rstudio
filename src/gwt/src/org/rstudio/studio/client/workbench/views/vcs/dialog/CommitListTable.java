@@ -274,6 +274,9 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
 
    private void maybePreselectFirstRow()
    {
+      if (!autoSelectFirstRow_)
+         return;
+
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          @Override
@@ -300,8 +303,23 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
       return selectionModel_.getSelectedObject();
    }
 
+   @Override
+   public void clearSelection()
+   {
+      if (selectionModel_.getSelectedObject() != null)
+         selectionModel_.setSelected(selectionModel_.getSelectedObject(),
+                                     false);
+   }
+
+   @Override
+   public void setAutoSelectFirstRow(boolean autoSelect)
+   {
+      autoSelectFirstRow_ = autoSelect;
+   }
+
    private final SingleSelectionModel<CommitInfo> selectionModel_;
    private final Styles styles_;
    private CommitColumn graphCol_;
    private GraphTheme graphTheme_;
+   private boolean autoSelectFirstRow_ = true;
 }

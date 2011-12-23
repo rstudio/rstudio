@@ -24,10 +24,13 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.cellview.client.AbstractPager;
 import com.google.gwt.user.cellview.client.SimplePager;
 import com.google.gwt.user.cellview.client.SimplePager.TextLocation;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.HasData;
+import com.google.gwt.view.client.RangeChangeEvent;
+import com.google.gwt.view.client.RangeChangeEvent.Handler;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.files.FileSystemItem;
@@ -45,59 +48,6 @@ public class HistoryPanel extends Composite implements Display
    {
       @Source("HistoryPanel.css")
       Styles styles();
-   }
-
-   interface SimplePagerResources extends SimplePager.Resources
-   {
-      @Override
-      @Source("images/PageForwardButton.png")
-      ImageResource simplePagerFastForward();
-
-      @Override
-      @Source("images/PageForwardButtonDisabled.png")
-      ImageResource simplePagerFastForwardDisabled();
-
-      @Override
-      @Source("images/PageFirstButton.png")
-      ImageResource simplePagerFirstPage();
-
-      @Override
-      @Source("images/PageFirstButtonDisabled.png")
-      ImageResource simplePagerFirstPageDisabled();
-
-      @Override
-      @Source("images/PageLastButton.png")
-      ImageResource simplePagerLastPage();
-
-      @Override
-      @Source("images/PageLastButtonDisabled.png")
-      ImageResource simplePagerLastPageDisabled();
-
-      @Override
-      @Source("images/PageNextButton.png")
-      ImageResource simplePagerNextPage();
-
-      @Override
-      @Source("images/PageNextButtonDisabled.png")
-      ImageResource simplePagerNextPageDisabled();
-
-      @Override
-      @Source("images/PagePreviousButton.png")
-      ImageResource simplePagerPreviousPage();
-
-      @Override
-      @Source("images/PagePreviousButtonDisabled.png")
-      ImageResource simplePagerPreviousPageDisabled();
-
-      @Override
-      @Source({"com/google/gwt/user/cellview/client/SimplePager.css",
-              "SimplePagerStyle.css"})
-      SimplePagerStyle simplePagerStyle();
-   }
-
-   interface SimplePagerStyle extends SimplePager.Style
-   {
-
    }
 
    public interface Styles extends SharedStyles
@@ -150,11 +100,7 @@ public class HistoryPanel extends Composite implements Display
       Styles styles = GWT.<Resources>create(Resources.class).styles();
       commitTable_ = new CommitListTable(styles, strategy.idColumnName());
       splitPanel_ = new SplitLayoutPanel(4);
-      pager_ = new SimplePager(
-            TextLocation.CENTER,
-            GWT.<SimplePagerResources>create(SimplePagerResources.class),
-            true, 500, true);
-      pager_.getElement().setAttribute("align", "center");
+      pager_ = strategy.getPager();
       branchToolbarButton_ = branchToolbarButton;
       commitFilterToolbarButton_ = commitFilterToolbarButton;
 
@@ -187,9 +133,7 @@ public class HistoryPanel extends Composite implements Display
 
       topToolbar_.addRightWidget(commands.vcsPull().createToolbarButton());
      
-      pager_.setPageSize(100);
       pager_.setDisplay(commitTable_);
-
    }
 
    @Override
@@ -238,7 +182,7 @@ public class HistoryPanel extends Composite implements Display
    public void removeBranchToolbarButton()
    {
       topToolbar_.removeLeftWidget(branchToolbarButton_);
-      commitFilterToolbarButton_.getElement().getStyle().setMarginLeft(10, 
+      commitFilterToolbarButton_.getElement().getStyle().setMarginLeft(10,
                                                                        Unit.PX);
    }
 
@@ -303,7 +247,7 @@ public class HistoryPanel extends Composite implements Display
    @UiField
    ScrollPanel detailScrollPanel_;
    @UiField(provided = true)
-   SimplePager pager_;
+   AbstractPager pager_;
 
    SearchWidget searchText_;
 

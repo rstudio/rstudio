@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.workbench.views.vcs.svn.dialog;
 
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.cellview.client.AbstractPager;
+import com.google.gwt.user.cellview.client.PageSizePager;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.view.client.HasData;
 import com.google.inject.Inject;
@@ -22,6 +24,7 @@ import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.vcs.common.Pager;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryStrategy;
@@ -108,22 +111,18 @@ public class SVNHistoryStrategy implements HistoryStrategy
    @Override
    public void addDataDisplay(HasData<CommitInfo> display)
    {
-      if (initialized_)
-         dataProvider_.addDataDisplay(display);
+      dataProvider_.addDataDisplay(display);
    }
 
    @Override
    public void onRangeChanged(HasData<CommitInfo> display)
    {
-      if (initialized_)
-         dataProvider_.onRangeChanged(display);
+      dataProvider_.onRangeChanged(display);
    }
 
    @Override
    public void refreshCount()
    {
-      if (initialized_)
-         dataProvider_.refreshCount();
    }
 
    @Override
@@ -134,26 +133,19 @@ public class SVNHistoryStrategy implements HistoryStrategy
       // way, whereas without this mechanism, three different auth prompts
       // happen at the same time.
 
-      server_.svnHistory(
-            -1, null, 0, 1, "",
-            new ServerRequestCallback<RpcObjectList<CommitInfo>>()
-            {
-               @Override
-               public void onResponseReceived(RpcObjectList<CommitInfo> infos)
-               {
-                  initialized_ = true;
+      addDataDisplay(dataDisplay);
+   }
 
-                  addDataDisplay(dataDisplay);
-               }
+   @Override
+   public AbstractPager getPager()
+   {
+      return new Pager(100, -1);
+   }
 
-               @Override
-               public void onError(ServerError error)
-               {
-                  /* TODO: This may need to do a retry or something, depending
-                     on how it goes with JJ's refactor of SVN auth */
-                  Debug.logError(error);
-               }
-            });
+   @Override
+   public boolean getAutoSelectFirstRow()
+   {
+      return false;
    }
 
    private int parseRevision(String revision)
@@ -170,7 +162,6 @@ public class SVNHistoryStrategy implements HistoryStrategy
       return rev;
    }
 
-   private boolean initialized_;
    private final SVNServerOperations server_;
    private final SVNHistoryAsyncDataProvider dataProvider_;
    private final SVNState vcsState_;

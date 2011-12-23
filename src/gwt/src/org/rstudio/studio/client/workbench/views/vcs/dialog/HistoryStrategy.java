@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.cellview.client.AbstractPager;
+import com.google.gwt.user.cellview.client.SimplePager;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.view.client.HasData;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -48,4 +50,8 @@ public interface HistoryStrategy
    void refreshCount();
 
    void initializeHistory(HasData<CommitInfo> dataDisplay);
+
+   AbstractPager getPager();
+
+   boolean getAutoSelectFirstRow();
 }

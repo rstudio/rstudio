@@ -12,7 +12,12 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.git.dialog;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.cellview.client.AbstractPager;
+import com.google.gwt.user.cellview.client.SimplePager;
+import com.google.gwt.user.cellview.client.SimplePager.TextLocation;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.view.client.HasData;
 import com.google.inject.Inject;
@@ -20,6 +25,7 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.vcs.common.Pager;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryStrategy;
@@ -124,6 +130,18 @@ public class GitHistoryStrategy implements HistoryStrategy
    {
       addDataDisplay(dataDisplay);
       refreshCount();
+   }
+
+   @Override
+   public AbstractPager getPager()
+   {
+      return new Pager(100, 500);
+   }
+
+   @Override
+   public boolean getAutoSelectFirstRow()
+   {
+      return true;
    }
 
    private final GitServerOperations server_;

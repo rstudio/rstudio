@@ -21,7 +21,7 @@
             </g:center>
             <g:south size="28">
                <g:FlowPanel>
-                  <v:SimplePager ui:field="pager_"/>
+                  <v:AbstractPager ui:field="pager_"/>
                </g:FlowPanel>
             </g:south>
          </g:DockLayoutPanel>

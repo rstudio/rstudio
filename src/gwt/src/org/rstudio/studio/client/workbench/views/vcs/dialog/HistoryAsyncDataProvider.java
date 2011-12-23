@@ -39,7 +39,6 @@ public abstract class HistoryAsyncDataProvider extends AsyncDataProvider<CommitI
    public void addDataDisplay(HasData<CommitInfo> display)
    {
       super.addDataDisplay(display);
-      refreshCount();
    }
 
    public void setSearchText(HasValue<String> searchText)
@@ -85,15 +84,20 @@ public abstract class HistoryAsyncDataProvider extends AsyncDataProvider<CommitI
    public void onRangeChanged(final HasData<CommitInfo> display)
    {      
       final Range rng = display.getVisibleRange();
+      final int start = rng.getStart();
+      final int length = rng.getLength();
       getHistory(
-            rev_, fileFilter_.getValue(), rng.getStart(), rng.getLength(), searchText_.getValue(),
+            rev_, fileFilter_.getValue(),
+            start, length, searchText_.getValue(),
             new SimpleRequestCallback<RpcObjectList<CommitInfo>>("Error Fetching History")
             {
                @Override
                public void onResponseReceived(RpcObjectList<CommitInfo> response)
                {
                   super.onResponseReceived(response);
-                  updateRowData(rng.getStart(), response.toArrayList());  
+                  if (response.length() < length)
+                     updateRowCount(start + response.length(), true);
+                  updateRowData(start, response.toArrayList());
                }
             });
    }
