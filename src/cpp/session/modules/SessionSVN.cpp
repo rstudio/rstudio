@@ -250,18 +250,15 @@ core::Error createConsoleProc(const ShellArgs& args,
 #ifdef _WIN32
    *ppCP = ConsoleProcess::create(svnBin(),
                                   args.args(),
+                                  outputFile,
                                   options,
                                   caption,
                                   dialog,
                                   console_process::InteractionPossible,
                                   console_process::kDefaultMaxOutputLines);
 #else
-
-   std::string command = svn() << args.args();
-   if (!outputFile.empty())
-      command = "(" + command + ")" + " > " + shell_utils::escape(outputFile);
-
-   *ppCP = ConsoleProcess::create(command,
+   *ppCP = ConsoleProcess::create(svn() << args.args(),
+                                  outputFile,
                                   options,
                                   caption,
                                   dialog,

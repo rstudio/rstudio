@@ -22,6 +22,7 @@
 #include <core/Exec.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/Settings.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <core/system/Environment.hpp>
 
@@ -70,6 +71,7 @@ ConsoleProcess::ConsoleProcess()
 
 #ifndef _WIN32
 ConsoleProcess::ConsoleProcess(const std::string& command,
+                               const core::FilePath& outputFile,
                                const core::system::ProcessOptions& options,
                                const std::string& caption,
                                bool dialog,
@@ -81,18 +83,27 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
      started_(false), interrupt_(false),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
+   // redirect to output file if requested. we capture stdout this way
+   // on posix because forkpty creates a terminal whose file descriptor
+   // points to both stdout and stderr so we can't distinguish them
+   // as we do normally. on win32 we implement the outputFile codepath
+   // differently (since consoleio.exe is able to distinguish)
+   if (!outputFile.empty())
+      command_ = "(" + command_ + ") > " + shell_utils::escape(outputFile);
+
    commonInit();
 }
 #endif
 
 ConsoleProcess::ConsoleProcess(const std::string& program,
                                const std::vector<std::string>& args,
+                               const FilePath& outputFile,
                                const core::system::ProcessOptions& options,
                                const std::string& caption,
                                bool dialog,
                                InteractionMode interactionMode,
                                int maxOutputLines)
-   : program_(program), args_(args), options_(options), caption_(caption), dialog_(dialog),
+   : program_(program), args_(args), outputFile_(outputFile), options_(options), caption_(caption), dialog_(dialog),
      showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false),  interrupt_(false),
@@ -113,8 +124,10 @@ void ConsoleProcess::commonInit()
 
    handle_ = core::system::generateUuid(false);
 
-   // always redirect stderr to stdout so output is interleaved
-   options_.redirectStdErrToStdOut = true;
+   // if there is no outputFile_ defined then redirect stderr to stdout
+   // so that output is interleaved
+   if (outputFile_.empty())
+      options_.redirectStdErrToStdOut = true;
 
    if (interactionMode() != InteractionNever)
    {
@@ -274,8 +287,8 @@ void ConsoleProcess::enqueOutputEvent(const std::string &output, bool error)
          ClientEvent(client_events::kConsoleProcessOutput, data));
 }
 
-void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
-                              const std::string& output)
+void ConsoleProcess::handleOutput(core::system::ProcessOperations& ops,
+                                  const std::string& output)
 {
    // convert line endings to posix
    std::string posixOutput = output;
@@ -302,6 +315,27 @@ void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
          maybeConsolePrompt(ops, posixOutput);
       }
    }
+}
+
+void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
+                              const std::string& output)
+{
+   if (!outputFile_.empty())
+   {
+      Error error = core::appendToFile(outputFile_, output);
+      if (error)
+         LOG_ERROR(error);
+   }
+   else
+   {
+      handleOutput(ops, output);
+   }
+}
+
+void ConsoleProcess::onStderr(core::system::ProcessOperations& ops,
+                              const std::string& output)
+{
+   handleOutput(ops, output);
 }
 
 void ConsoleProcess::maybeConsolePrompt(core::system::ProcessOperations& ops,
@@ -429,6 +463,7 @@ core::system::ProcessCallbacks ConsoleProcess::createProcessCallbacks()
    core::system::ProcessCallbacks cb;
    cb.onContinue = boost::bind(&ConsoleProcess::onContinue, ConsoleProcess::shared_from_this(), _1);
    cb.onStdout = boost::bind(&ConsoleProcess::onStdout, ConsoleProcess::shared_from_this(), _1, _2);
+   cb.onStderr = boost::bind(&ConsoleProcess::onStderr, ConsoleProcess::shared_from_this(), _1, _2);
    cb.onExit = boost::bind(&ConsoleProcess::onExit, ConsoleProcess::shared_from_this(), _1);
    return cb;
 }
@@ -543,9 +578,28 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       InteractionMode interactionMode,
       int maxOutputLines)
 {
+   return create(command,
+                 FilePath(),
+                 options,
+                 caption,
+                 dialog,
+                 interactionMode,
+                 maxOutputLines);
+}
+
+boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
+      const std::string& command,
+      const FilePath& outputFile,
+      core::system::ProcessOptions options,
+      const std::string& caption,
+      bool dialog,
+      InteractionMode interactionMode,
+      int maxOutputLines)
+{
    options.terminateChildren = true;
    boost::shared_ptr<ConsoleProcess> ptrProc(
          new ConsoleProcess(command,
+                            outputFile,
                             options,
                             caption,
                             dialog,
@@ -569,6 +623,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
    boost::shared_ptr<ConsoleProcess> ptrProc(
          new ConsoleProcess(program,
                             args,
+                            FilePath(),
                             options,
                             caption,
                             dialog,
@@ -577,6 +632,34 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
    s_procs[ptrProc->handle()] = ptrProc;
    return ptrProc;
 }
+
+#ifdef _WIN32
+
+boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
+      const std::string& program,
+      const std::vector<std::string>& args,
+      const core::FilePath& outputFile,
+      core::system::ProcessOptions options,
+      const std::string& caption,
+      bool dialog,
+      InteractionMode interactionMode,
+      int maxOutputLines)
+{
+   options.terminateChildren = true;
+   boost::shared_ptr<ConsoleProcess> ptrProc(
+         new ConsoleProcess(program,
+                            args,
+                            outputFile,
+                            options,
+                            caption,
+                            dialog,
+                            interactionMode,
+                            maxOutputLines));
+   s_procs[ptrProc->handle()] = ptrProc;
+   return ptrProc;
+}
+
+#endif
 
 void PasswordManager::attach(
                   boost::shared_ptr<console_process::ConsoleProcess> pCP,
