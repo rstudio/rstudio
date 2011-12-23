@@ -17,10 +17,13 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -123,28 +126,51 @@ public class SVNCommitDialog extends ModalDialogBase
                message_.getText(),
                new SimpleRequestCallback<ConsoleProcess>("SVN Commit")
                {
+                  private int exitCode_ = 0;
+                  
                   @Override
                   public void onResponseReceived(ConsoleProcess cp)
                   {
+                     // hide the dialog -- we'll re-show it if the commit fails
+                     SVNCommitDialog.this.setVisible(false);
+                     
+                     // subscribe to process exit so we can record the
+                     // exit code and manage the commit draft persistence
                      cp.addProcessExitHandler(new Handler()
                      {
                         @Override
                         public void onProcessExit(ProcessExitEvent event)
                         {
-                           if (event.getExitCode() == 0)
-                           {
-                              // We'll set the commitDraft_ on unload, so clear
-                              // out the text box now
+                           // save the exit code so we can use it to decide
+                           // whether to become visible or close the dialog
+                           // once the console process dialog exits
+                           exitCode_ = event.getExitCode();
+                           
+                           // We'll set the commitDraft_ on unload, so clear
+                           // out the text box now
+                           if (exitCode_  == 0)
                               message_.setText("");
-
-                              closeDialog();
-                           }
                         }
                      });
 
+                     // create the console progress dialog and then subscribe
+                     // to its onClose event to figure out whether we need
+                     // to re-appear or fully close
                      ConsoleProgressDialog dialog = new ConsoleProgressDialog(
                            cp,
                            server_);
+                     dialog.addCloseHandler(new CloseHandler<PopupPanel>() {
+                        @Override
+                        public void onClose(CloseEvent<PopupPanel> event)
+                        {
+                           if (exitCode_== 0)
+                              closeDialog();
+                           else
+                              SVNCommitDialog.this.setVisible(true);
+                        }
+                     });
+                 
+                     // show the dialog
                      dialog.showModal();
                   }
                });
