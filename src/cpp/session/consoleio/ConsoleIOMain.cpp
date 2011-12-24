@@ -24,6 +24,9 @@
 using namespace core;
 
 HANDLE hSnapshotOutput;
+// Use this event to ensure that the transferConsoleOutToStdErr thread gets a
+// chance to dump the console one last time before exiting
+HANDLE hReadyForExitEvent;
 
 /*
  * ConsoleIO is an Win32 program that allows a console program that uses
@@ -247,6 +250,11 @@ void transferConsoleOutToStdErr(HANDLE hConOut)
    DWORD bytesWritten;
    while (true)
    {
+      if (!::SetEvent(hReadyForExitEvent))
+      {
+         print_error("SetEvent");
+      }
+
       ::Sleep(500);
 
       output.clear();
@@ -360,6 +368,13 @@ int main(int argc, char** argv)
       return 1;
    }
 
+   hReadyForExitEvent = ::CreateEvent(NULL, true, true, NULL);
+   if (hReadyForExitEvent == INVALID_HANDLE_VALUE)
+   {
+      print_error("CreateEvent");
+      return 1;
+   }
+
    boost::thread(&transferStdInToConsole, hConIn);
    boost::thread(&transferConsoleOutToStdErr, hConOut);
 
@@ -373,6 +388,11 @@ int main(int argc, char** argv)
          DWORD exitCode;
          if (::GetExitCodeProcess(pi.hProcess, &exitCode))
          {
+            if (::ResetEvent(hReadyForExitEvent))
+            {
+               ::WaitForSingleObject(hReadyForExitEvent, 2000);
+            }
+
             return exitCode;
          }
          else
