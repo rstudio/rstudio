@@ -23,6 +23,8 @@
 
 using namespace core;
 
+HANDLE hSnapshotOutput;
+
 /*
  * ConsoleIO is an Win32 program that allows a console program that uses
  * low-level console input (_getch()) to be fed via stdin redirection.
@@ -239,8 +241,6 @@ void transferStdInToConsole(HANDLE hConIn)
 
 void transferConsoleOutToStdErr(HANDLE hConOut)
 {
-   HANDLE hStdErr = ::GetStdHandle(STD_ERROR_HANDLE);
-
    char ff = '\f'; // form feed instructs client to clear screen
    std::string lastKnownConsoleContents;
    std::string output;
@@ -261,13 +261,13 @@ void transferConsoleOutToStdErr(HANDLE hConOut)
 
       lastKnownConsoleContents = output;
 
-      if (!::WriteFile(hStdErr, &ff, 1, &bytesWritten, NULL))
+      if (!::WriteFile(hSnapshotOutput, &ff, 1, &bytesWritten, NULL))
       {
          print_error("transferConsoleOutToStdErr, WriteFile");
          continue;
       }
 
-      if (!dump_console_output(hConOut, hStdErr))
+      if (!dump_console_output(hConOut, hSnapshotOutput))
       {
          print_error("dump_console_output");
          continue;
@@ -288,7 +288,7 @@ int main(int argc, char** argv)
                                                   ::GetCommandLine());
 
    // Use cmd.exe to allow shell commands like "dir" to work properly
-   cmd = "cmd.exe /c " + cmd;
+   cmd = "cmd.exe /c (" + cmd + ")";
    std::vector<char> cmdBuf(cmd.size() + 1, '\0');
    cmd.copy(&(cmdBuf[0]), cmd.size());
 
@@ -311,13 +311,20 @@ int main(int argc, char** argv)
    HANDLE hConOut = ::CreateFile("CONOUT$",
                                  GENERIC_READ|GENERIC_WRITE,
                                  FILE_SHARE_READ|FILE_SHARE_WRITE,
-                                 NULL,
+                                 &sa,
                                  OPEN_EXISTING,
                                  0,
                                  NULL);
    if (hConOut == INVALID_HANDLE_VALUE)
    {
       print_error("CreateFile");
+      return 1;
+   }
+
+   hSnapshotOutput = ::GetStdHandle(STD_ERROR_HANDLE);
+   if (!::SetStdHandle(STD_ERROR_HANDLE, hConOut))
+   {
+      print_error("SetStdHandle");
       return 1;
    }
 
