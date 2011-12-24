@@ -73,9 +73,14 @@ bool send_console_input_char(HANDLE hConsoleIn, char c)
    switch (c)
    {
    case '\r':
-   case '\n':
       keyCode = VK_RETURN;
       break;
+   case '\n':
+      // Skip newlines because Enters come in as \r\n, even though we need to
+      // send them to the console as \r lest we get two returns.
+      // Note that this introduces a bug if Enter is ever sent as \n, so,
+      // don't do that.
+      return true;
    }
 
    INPUT_RECORD inputRecords[2];
@@ -113,6 +118,110 @@ bool send_console_input(HANDLE hConsoleIn,
    return true;
 }
 
+// Grab one row of console output, with up to the specified number of columns
+// (or exactly that number of columns if padToColumnWidth is set). The output
+// will be appended to pOutput.
+BOOL capture_console_output_row(HANDLE hConsoleOut,
+                                SHORT row,
+                                SHORT columns,
+                                bool padToColumnWidth,
+                                std::string* pOutput)
+{
+   static std::vector<CHAR_INFO> buffer;
+
+   if (columns == 0)
+      return true;
+
+   COORD targetSize = {columns, 1};
+   buffer.resize(targetSize.X * targetSize.Y);
+
+   COORD from = {};
+
+   // left, top, right, bottom
+   SMALL_RECT rect = {0, row, columns-1, row};
+
+   if (!::ReadConsoleOutput(hConsoleOut,
+                            &(buffer[0]),
+                            targetSize,
+                            from,
+                            &rect))
+   {
+      return false;
+   }
+
+   for (SHORT col = 0; col <= rect.Right; col++)
+   {
+      CHAR c = buffer[col].Char.AsciiChar;
+      pOutput->push_back(c);
+   }
+   if (padToColumnWidth)
+   {
+      SHORT extraPadding = columns - rect.Right - 1;
+      for (SHORT i = 0; i < extraPadding; i++)
+         pOutput->push_back(' ');
+   }
+   return true;
+}
+
+BOOL capture_console_output(HANDLE hConsoleOut, std::string* pOutput)
+{
+   static std::vector<CHAR_INFO> buffer;
+
+   CONSOLE_SCREEN_BUFFER_INFO csbInfo;
+   if (!::GetConsoleScreenBufferInfo(hConsoleOut, &csbInfo))
+      return false;
+
+   COORD& cursor = csbInfo.dwCursorPosition;
+   COORD& consoleSize = csbInfo.dwSize;
+
+   if (cursor.X == 0 && cursor.Y == 0)
+      return true;
+
+   for (SHORT row = 0; row < cursor.Y; row++)
+   {
+      if (!capture_console_output_row(hConsoleOut, row, consoleSize.Y,
+                                      false, pOutput))
+      {
+         return false;
+      }
+      pOutput->push_back('\r');
+      pOutput->push_back('\n');
+   }
+
+   // Now grab the line that contains the cursor
+   if (!capture_console_output_row(hConsoleOut, cursor.Y, cursor.X, true, pOutput))
+      return false;
+
+   return true;
+}
+
+// Dump the entire console buffer (up to the cursor) of hConsole
+// and write it to hOutput
+BOOL dump_console_output(HANDLE hConsole, HANDLE hOutput)
+{
+   std::string output;
+   if (!capture_console_output(hConsole, &output))
+      return false;
+
+   const CHAR* pData = output.c_str();
+   DWORD bytesToWrite = output.size();
+   while (bytesToWrite > 0)
+   {
+      DWORD bytesWritten;
+      if (!::WriteFile(hOutput,
+                       pData,
+                       bytesToWrite,
+                       &bytesWritten,
+                       NULL))
+      {
+         return false;
+      }
+      bytesToWrite -= bytesWritten;
+      pData += bytesWritten;
+   }
+   return true;
+}
+
 void transferStdInToConsole(HANDLE hConIn)
 {
    HANDLE hStdIn = ::GetStdHandle(STD_INPUT_HANDLE);
@@ -125,6 +234,44 @@ void transferStdInToConsole(HANDLE hConIn)
          break;
 
       send_console_input(hConIn, buf.begin(), buf.begin() + bytesRead);
+   }
+}
+
+void transferConsoleOutToStdErr(HANDLE hConOut)
+{
+   HANDLE hStdErr = ::GetStdHandle(STD_ERROR_HANDLE);
+
+   char ff = '\f'; // form feed instructs client to clear screen
+   std::string lastKnownConsoleContents;
+   std::string output;
+   DWORD bytesWritten;
+   while (true)
+   {
+      ::Sleep(500);
+
+      output.clear();
+      if (!capture_console_output(hConOut, &output))
+      {
+         print_error("capture_console_output");
+         continue;
+      }
+
+      if (lastKnownConsoleContents == output)
+         continue;
+
+      lastKnownConsoleContents = output;
+
+      if (!::WriteFile(hStdErr, &ff, 1, &bytesWritten, NULL))
+      {
+         print_error("transferConsoleOutToStdErr, WriteFile");
+         continue;
+      }
+
+      if (!dump_console_output(hConOut, hStdErr))
+      {
+         print_error("dump_console_output");
+         continue;
+      }
    }
 }
 
@@ -207,6 +354,7 @@ int main(int argc, char** argv)
    }
 
    boost::thread(&transferStdInToConsole, hConIn);
+   boost::thread(&transferConsoleOutToStdErr, hConOut);
 
    while (true)
    {

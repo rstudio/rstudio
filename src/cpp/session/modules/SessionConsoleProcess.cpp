@@ -304,7 +304,7 @@ void ConsoleProcess::handleOutput(core::system::ProcessOperations& ops,
    {
       // look for the last newline and take the content after
       // that as the prompt
-      std::size_t lastLoc = posixOutput.find_last_of('\n');
+      std::size_t lastLoc = posixOutput.find_last_of("\n\f");
       if (lastLoc != std::string::npos)
       {
          enqueOutputEvent(posixOutput.substr(0, lastLoc), false);

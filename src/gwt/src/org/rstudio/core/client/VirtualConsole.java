@@ -59,6 +59,9 @@ public class VirtualConsole
             case '\n':
                newline();
                break;
+            case '\f':
+               formfeed();
+               break;
             default:
                assert false : "Unknown control char, please check regex";
                text(data.charAt(pos) + "");
@@ -96,6 +99,11 @@ public class VirtualConsole
       text("\n");
    }
 
+   private void formfeed()
+   {
+      o.setLength(0);
+   }
+
    private void text(String text)
    {
       assert text.indexOf('\r') < 0 && text.indexOf('\b') < 0;
@@ -119,6 +127,6 @@ public class VirtualConsole
 
    private final StringBuilder o = new StringBuilder();
    private int pos = 0;
-   private static final Pattern CONTROL = Pattern.create("[\r\b\n]");
-   private static final Pattern CONTROL_SPECIAL = Pattern.create("[\r\b]");
+   private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
+   private static final Pattern CONTROL_SPECIAL = Pattern.create("[\r\b\f]");
 }

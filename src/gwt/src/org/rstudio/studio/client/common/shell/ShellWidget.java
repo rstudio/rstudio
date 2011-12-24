@@ -254,6 +254,9 @@ public class ShellWidget extends Composite implements ShellDisplay,
                           String className,
                           boolean addToTop)
    {
+      if (text.indexOf('\f') >= 0)
+         clearOutput();
+
       Node node;
       boolean isOutput = StringUtil.isNullOrEmpty(className)
                          || className.equals(styles_.output());
@@ -519,6 +522,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
       output_.setText("") ;
       lines_ = 0;
       cleared_ = true;
+      trailingOutput_ = null;
+      trailingOutputConsole_ = null;
    }
 
    public InputEditorDisplay getInputEditorDisplay()
