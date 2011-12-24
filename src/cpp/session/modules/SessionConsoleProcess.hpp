@@ -53,7 +53,6 @@ private:
 #ifndef _WIN32
    ConsoleProcess(
          const std::string& command,
-         const core::FilePath& outputFile,
          const core::system::ProcessOptions& options,
          const std::string& caption,
          bool dialog,
@@ -64,7 +63,6 @@ private:
    ConsoleProcess(
          const std::string& program,
          const std::vector<std::string>& args,
-         const core::FilePath& outputFile,
          const core::system::ProcessOptions& options,
          const std::string& caption,
          bool dialog,
@@ -104,15 +102,6 @@ public:
          bool dialog,
          InteractionMode mode,
          int maxOutputLines = kDefaultMaxOutputLines);
-
-   static boost::shared_ptr<ConsoleProcess> create(
-         const std::string& command,
-         const core::FilePath& outputFile,
-         core::system::ProcessOptions options,
-         const std::string& caption,
-         bool dialog,
-         InteractionMode mode,
-         int maxOutputLines = kDefaultMaxOutputLines);
 #endif
 
    static boost::shared_ptr<ConsoleProcess> create(
@@ -123,21 +112,6 @@ public:
          bool dialog,
          InteractionMode mode,
          int maxOutputLines = kDefaultMaxOutputLines);
-
-
-#ifdef _WIN32
-
-   static boost::shared_ptr<ConsoleProcess> create(
-         const std::string& program,
-         const std::vector<std::string>& args,
-         const core::FilePath& outputFile,
-         core::system::ProcessOptions options,
-         const std::string& caption,
-         bool dialog,
-         InteractionMode mode,
-         int maxOutputLines = kDefaultMaxOutputLines);
-
-#endif
 
    virtual ~ConsoleProcess() {}
 
@@ -168,10 +142,6 @@ private:
    bool onContinue(core::system::ProcessOperations& ops);
    void onStdout(core::system::ProcessOperations& ops,
                  const std::string& output);
-   void onStderr(core::system::ProcessOperations& ops,
-                 const std::string& output);
-   void handleOutput(core::system::ProcessOperations& ops,
-                     const std::string& output);
    void onExit(int exitCode);
 
    std::string bufferedOutput() const;
@@ -187,7 +157,6 @@ private:
    std::string command_;
    std::string program_;
    std::vector<std::string> args_;
-   core::FilePath outputFile_;
    core::system::ProcessOptions options_;
 
    std::string caption_;
