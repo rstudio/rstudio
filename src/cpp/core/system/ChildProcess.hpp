@@ -86,6 +86,11 @@ public:
       : ChildProcess()
    {
       init(exe, args, options);
+      if (!options.stdOutFile.empty() || !options.stdErrFile.empty())
+      {
+         LOG_ERROR_MESSAGE(
+                  "stdOutFile/stdErrFile options cannot be used with runProgram");
+      }
    }
 
    SyncChildProcess(const std::string& command,

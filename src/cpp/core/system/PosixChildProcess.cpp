@@ -218,12 +218,6 @@ void ChildProcess::init(const std::string& exe,
    exe_ = exe;
    args_ = args;
    options_ = options;
-
-   if (!options.stdOutFile.empty() || !options.stdErrFile.empty())
-   {
-      LOG_ERROR_MESSAGE(
-               "stdOutFile/stdErrFile options cannot be used with runProgram");
-   }
 }
 
 void ChildProcess::init(const std::string& command,
@@ -666,6 +660,11 @@ AsyncChildProcess::AsyncChildProcess(const std::string& exe,
    : ChildProcess(), pAsyncImpl_(new AsyncImpl())
 {
    init(exe, args, options);
+   if (!options.stdOutFile.empty() || !options.stdErrFile.empty())
+   {
+      LOG_ERROR_MESSAGE(
+               "stdOutFile/stdErrFile options cannot be used with runProgram");
+   }
 }
 
 AsyncChildProcess::AsyncChildProcess(const std::string& command,
