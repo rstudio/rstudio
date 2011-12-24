@@ -35,6 +35,7 @@
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 #include <core/system/ProcessArgs.hpp>
+#include <core/system/ShellUtils.hpp>
 
 #include <core/PerformanceTimer.hpp>
 
@@ -217,6 +218,12 @@ void ChildProcess::init(const std::string& exe,
    exe_ = exe;
    args_ = args;
    options_ = options;
+
+   if (!options.stdOutFile.empty() || !options.stdErrFile.empty())
+   {
+      LOG_ERROR_MESSAGE(
+               "stdOutFile/stdErrFile options cannot be used with runProgram");
+   }
 }
 
 void ChildProcess::init(const std::string& command,
@@ -224,7 +231,14 @@ void ChildProcess::init(const std::string& command,
 {
    std::vector<std::string> args;
    args.push_back("-c");
-   args.push_back(command);
+
+   std::string realCommand = command;
+   if (!options.stdOutFile.empty())
+      realCommand += " > " + shell_utils::escape(options.stdOutFile);
+   if (!options.stdErrFile.empty())
+      realCommand += " 2> " + shell_utils::escape(options.stdErrFile);
+   args.push_back(realCommand);
+
    init("/bin/sh", args, options);
 }
 
