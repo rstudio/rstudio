@@ -68,7 +68,6 @@ ConsoleProcess::ConsoleProcess()
    outputBuffer_.push_back('\n');
 }
 
-#ifndef _WIN32
 ConsoleProcess::ConsoleProcess(const std::string& command,
                                const core::system::ProcessOptions& options,
                                const std::string& caption,
@@ -83,7 +82,6 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
 {
    commonInit();
 }
-#endif
 
 ConsoleProcess::ConsoleProcess(const std::string& program,
                                const std::vector<std::string>& args,
@@ -123,15 +121,25 @@ void ConsoleProcess::commonInit()
       // prompting works properly
       options_.createNewConsole = true;
 
-      // build new args
-      shell_utils::ShellArgs args;
-      args << program_;
-      args << args_;
-
-      // fixup program_ and args_ so we run the consoleio.exe proxy
       FilePath consoleIoPath = session::options().consoleIoPath();
-      program_ = consoleIoPath.absolutePathNative();
-      args_ = args;
+
+      // if this is as runProgram then fixup the program and args
+      if (!program_.empty())
+      {
+         // build new args
+         shell_utils::ShellArgs args;
+         args << program_;
+         args << args_;
+
+         // fixup program_ and args_ so we run the consoleio.exe proxy
+         program_ = consoleIoPath.absolutePathNative();
+         args_ = args;
+      }
+      // if this is a runCommand then prepend consoleio.exe to the command
+      else
+      {
+         command_ = shell_utils::escape(consoleIoPath) + " " + command_;
+      }
 #else
       // request a pseudoterminal if this is an interactive console process
       options_.pseudoterminal = core::system::Pseudoterminal(80, 1);
@@ -534,7 +542,6 @@ Error procWriteStdin(const json::JsonRpcRequest& request,
    }
 }
 
-#ifndef _WIN32
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& command,
       core::system::ProcessOptions options,
@@ -554,7 +561,6 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
    s_procs[ptrProc->handle()] = ptrProc;
    return ptrProc;
 }
-#endif
 
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& program,
