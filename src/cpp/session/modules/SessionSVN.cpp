@@ -169,25 +169,15 @@ void maybeAttachPasswordManager(boost::shared_ptr<ConsoleProcess> pCP)
 
 ShellCommand svn()
 {
-   if (!s_svnExePath.empty())
-   {
-      FilePath exePath(s_svnExePath);
-      return ShellCommand(exePath);
-   }
-   else
-      return ShellCommand("svn");
+   FilePath exePath(s_svnExePath);
+   return ShellCommand(exePath);
 }
 
 
 #ifdef _WIN32
 std::string svnBin()
 {
-   if (!s_svnExePath.empty())
-   {
-      return FilePath(s_svnExePath).absolutePathNative();
-   }
-   else
-      return "svn.exe";
+   return FilePath(s_svnExePath).absolutePathNative();
 }
 #endif
 
@@ -418,16 +408,14 @@ FilePath whichSvnExe()
    }
 }
 
-bool initSvnBin()
+void initSvnBin()
 {
-   // get the svn bin dir from user settings if it is there
+   // get the svn exe from user settings if it is there
    s_svnExePath = userSettings().svnExePath().absolutePath();
 
-   // if it wasn't provided in settings then make sure we can detect it
+   // if it wasn't provided in settings try to detect it
    if (s_svnExePath.empty())
-      return !svn::detectedSvnExePath().empty();
-   else
-      return true;
+      s_svnExePath = svn::detectedSvnExePath().absolutePath();
 }
 
 Error parseXml(const std::string strData,
@@ -569,7 +557,7 @@ FilePath detectedSvnExePath()
 
 std::string nonPathSvnBinDir()
 {
-   if (!s_svnExePath.empty())
+   if (s_svnExePath != svn::detectedSvnExePath().absolutePath())
       return FilePath(s_svnExePath).parent().absolutePath();
    else
       return std::string();
@@ -1709,6 +1697,8 @@ void SvnFileDecorationContext::decorateFile(const core::FilePath& filePath,
 
 Error initialize()
 {
+   initSvnBin();
+
    // initialize password manager
    s_pPasswordManager.reset(new PasswordManager(
                          boost::regex("^(.+): $"),
@@ -1746,8 +1736,6 @@ Error initialize()
 Error initializeSvn(const core::FilePath& workingDir)
 {
    s_workingDir = workingDir;
-
-   initSvnBin();
 
    std::string repoURL = repositoryRoot(s_workingDir);
    s_isSvnSshRepository = boost::algorithm::starts_with(repoURL, "svn+ssh");
