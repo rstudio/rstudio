@@ -201,9 +201,22 @@ Error runSvn(const ShellArgs& args,
    if (!workingDir.empty())
       options.workingDir = workingDir;
    options.redirectStdErrToStdOut = redirectStdErrToStdOut;
+
+#ifdef _WIN32
+   options.detachProcess = true;
+#endif
+
+#ifdef _WIN32
+   Error error = core::system::runProgram(svnBin(),
+                                          args.args(),
+                                          std::string(),
+                                          options,
+                                          pResult);
+#else
    Error error = core::system::runCommand(svn() << args.args(),
                                           options,
                                           pResult);
+#endif
    return error;
 }
 
