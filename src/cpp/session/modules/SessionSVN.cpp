@@ -201,26 +201,9 @@ Error runSvn(const ShellArgs& args,
    if (!workingDir.empty())
       options.workingDir = workingDir;
    options.redirectStdErrToStdOut = redirectStdErrToStdOut;
-#ifdef _WIN32
-   // NOTE: We use consoleio.exe here in order to make sure svn.exe password
-   // prompting works properly
-   options.createNewConsole = true;
-
-   FilePath consoleIoPath = session::options().consoleIoPath();
-
-   ShellArgs winArgs;
-   winArgs << svnBin();
-   winArgs << args.args();
-   Error error = core::system::runProgram(consoleIoPath.absolutePathNative(),
-                                          winArgs.args(),
-                                          std::string(),
-                                          options,
-                                          pResult);
-#else
    Error error = core::system::runCommand(svn() << args.args(),
                                           options,
                                           pResult);
-#endif
    return error;
 }
 
