@@ -476,19 +476,25 @@ QVariant GwtCallback::promptForText(QString title,
    InputDialog dialog(pOwnerWindow_);
    dialog.setWindowTitle(title);
    dialog.setCaption(caption);
+
    if (usePasswordMask)
       dialog.setEchoMode(QLineEdit::Password);
+
    if (!rememberPasswordPrompt.isEmpty())
    {
       dialog.setRememberPasswordPrompt(rememberPasswordPrompt);
       dialog.setRemember(rememberByDefault);
+   }
 
+   if (usePasswordMask)
+   {
       // password prompts are shown higher up (because they relate to
       // console progress dialogs which are at the top of the screen)
       QRect parentGeom = pOwnerWindow_->geometry();
       int x = parentGeom.left() + (parentGeom.width() / 2) - (dialog.width() / 2);
       dialog.move(x, pOwnerWindow_->geometry().top() + 75);
    }
+
    if (numbersOnly)
       dialog.setNumbersOnly(true);
    if (!defaultValue.isEmpty())
