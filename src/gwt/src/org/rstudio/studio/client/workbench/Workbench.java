@@ -274,7 +274,7 @@ public class Workbench implements BusyHandler,
    public void onVersionControlShowRsaKey()
    {
       final ProgressIndicator indicator = new GlobalProgressDelayer(
-            globalDisplay_, 500, "Reading public key...").getIndicator();
+            globalDisplay_, 500, "Reading RSA public key...").getIndicator();
      
       // compute path to public key
       String sshDir = session_.getSessionInfo().getDefaultSSHKeyDir();

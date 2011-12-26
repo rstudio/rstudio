@@ -108,7 +108,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
      
       // show ssh key button
       showSshKeyButton_ = new ThemedButton(
-         "View Public Key...", new ClickHandler() {
+         "View RSA Public Key...", new ClickHandler() {
             @Override
             public void onClick(ClickEvent event)
             {
