@@ -45,6 +45,7 @@
 #include "SessionConsoleProcess.hpp"
 #include "SessionAskPass.hpp"
 #include "SessionWorkbench.hpp"
+#include "SessionGit.hpp"
 
 using namespace core;
 using namespace core::shell_utils;
@@ -65,6 +66,11 @@ boost::scoped_ptr<PasswordManager> s_pPasswordManager;
 // svn exe which we detect at startup. note that if the svn exe
 // is already in the path then this will be empty
 std::string s_svnExePath;
+
+// is the current repository svn+ssh
+bool s_isSvnSshRepository = false;
+
+
 
 /** GLOBAL STATE **/
 FilePath s_workingDir;
@@ -92,7 +98,14 @@ std::vector<FilePath> resolveAliasedPaths(const json::Array& paths,
    return results;
 }
 
-core::system::ProcessOptions procOptions()
+void addGitBinDirToPath(core::system::Options* pEnv)
+{
+   FilePath gitExePath = git::detectedGitExePath();
+   if (!gitExePath.empty())
+      core::system::addToPath(pEnv, gitExePath.parent().absolutePath());
+}
+
+core::system::ProcessOptions procOptions(bool requiresSsh)
 {
    core::system::ProcessOptions options;
 
@@ -113,6 +126,12 @@ core::system::ProcessOptions procOptions()
 #ifdef _WIN32
    core::system::addToPath(&childEnv,
                            session::options().gnudiffPath().absolutePath());
+#endif
+
+   // on windows add git bin dir to path (for ssh.exe) if this is an ssh repo
+#ifdef _WIN32
+   if (requiresSsh)
+      addGitBinDirToPath(&childEnv);
 #endif
 
    if (!s_workingDir.empty())
@@ -137,15 +156,14 @@ core::system::ProcessOptions procOptions()
    return options;
 }
 
-bool isSvnSshRepository()
+core::system::ProcessOptions procOptions()
 {
-   std::string repoURL = repositoryRoot(s_workingDir);
-   return boost::algorithm::starts_with(repoURL, "svn+ssh");
+   return procOptions(s_isSvnSshRepository);
 }
 
 void maybeAttachPasswordManager(boost::shared_ptr<ConsoleProcess> pCP)
 {
-   if (isSvnSshRepository())
+   if (s_isSvnSshRepository)
       s_pPasswordManager->attach(pCP);
 }
 
@@ -244,11 +262,12 @@ core::Error createConsoleProc(const ShellArgs& args,
                               const FilePath& outputFile,
                               const boost::optional<FilePath>& workingDir,
                               const std::string& caption,
+                              bool requiresSsh,
                               bool dialog,
                               bool enqueueRefreshOnExit,
                               boost::shared_ptr<ConsoleProcess>* ppCP)
 {
-   core::system::ProcessOptions options = procOptions();
+   core::system::ProcessOptions options = procOptions(requiresSsh);
    if (!workingDir)
       options.workingDir = s_workingDir;
    else if (!workingDir.get().empty())
@@ -283,6 +302,7 @@ core::Error createConsoleProc(const ShellArgs& args,
 
 core::Error createConsoleProc(const ShellArgs& args,
                               const std::string& caption,
+                              bool requiresSsh,
                               bool dialog,
                               bool enqueueRefreshOnExit,
                               boost::shared_ptr<ConsoleProcess>* ppCP)
@@ -291,11 +311,11 @@ core::Error createConsoleProc(const ShellArgs& args,
                             FilePath(),
                             boost::optional<FilePath>(),
                             caption,
+                            requiresSsh,
                             dialog,
                             enqueueRefreshOnExit,
                             ppCP);
 }
-
 
 typedef boost::function<void(const core::Error&,
                              const core::system::ProcessResult&)>
@@ -345,6 +365,7 @@ void runSvnAsync(const ShellArgs& args,
                                    outputFile,
                                    boost::optional<FilePath>(),
                                    caption,
+                                   s_isSvnSshRepository,
                                    true,
                                    enqueueRefreshOnExit,
                                    &pCP);
@@ -909,6 +930,7 @@ Error svnUpdate(const json::JsonRpcRequest& request,
    boost::shared_ptr<ConsoleProcess> pCP;
    Error error = createConsoleProc(ShellArgs() << "update" << globalArgs(),
                                    "SVN Update",
+                                   s_isSvnSshRepository,
                                    true,
                                    true,
                                    &pCP);
@@ -980,6 +1002,7 @@ Error svnCommit(const json::JsonRpcRequest& request,
    boost::shared_ptr<ConsoleProcess> pCP;
    error = createConsoleProc(args,
                              "SVN Commit",
+                             s_isSvnSshRepository,
                              true,
                              true,
                              &pCP);
@@ -1600,10 +1623,13 @@ Error checkout(const std::string& url,
    if (!dirName.empty())
       args << dirName;
 
+   bool requiresSsh = boost::algorithm::starts_with(url, "svn+ssh");
+
    Error error = createConsoleProc(args,
                                    FilePath(),
                                    parentPath,
                                    "SVN Checkout",
+                                   requiresSsh,
                                    true,
                                    true,
                                    ppCP);
@@ -1612,7 +1638,7 @@ Error checkout(const std::string& url,
       return error;
 
    // attach the password manager if this is an svn+ssh url
-   if (boost::algorithm::starts_with(url, "svn+ssh"))
+   if (requiresSsh)
       s_pPasswordManager->attach(*ppCP, false);
 
    return Success();
@@ -1725,8 +1751,10 @@ Error initializeSvn(const core::FilePath& workingDir)
 {
    s_workingDir = workingDir;
 
-   // set s_svnExePath if it is provied in userSettings()
    initSvnBin();
+
+   std::string repoURL = repositoryRoot(s_workingDir);
+   s_isSvnSshRepository = boost::algorithm::starts_with(repoURL, "svn+ssh");
 
    userSettings().onChanged.connect(onUserSettingsChanged);
 
