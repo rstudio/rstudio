@@ -862,6 +862,9 @@ Error status(const FilePath& filePath,
 
             std::string status = topStatus(item, props);
 
+            if (status.empty() || status == " ")
+               continue;
+
             VCSStatus vcsStatus(status);
             vcsStatus.changelist() = changelist;
             FileWithStatus fileWithStatus;
