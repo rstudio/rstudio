@@ -22,15 +22,12 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
-import org.rstudio.studio.client.common.vcs.SVNServerOperations.ProcessResult;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 // TODO: test ignore on windows (CR/LF)
-
-// TODO: implement ignore for git
 
 // TODO: add explanatory text and link at top
 
@@ -50,7 +47,8 @@ public class IgnoreDialog
                        "Getting ignored files for path...").getIndicator();
       
       // derive an ignore list
-      final IgnoreList ignoreList = createIgnoreList(paths);
+      final IgnoreList ignoreList = createIgnoreList(paths, 
+                                                     strategy.getFilter());
       if (ignoreList == null)
       {
          globalIndicator.onCompleted();
@@ -140,7 +138,8 @@ public class IgnoreDialog
    
    // compute the new list of ignores based on the initial/existing
    // set of paths and path(s) the user wants to add
-   private static IgnoreList createIgnoreList(ArrayList<String> paths)   
+   private static IgnoreList createIgnoreList(ArrayList<String> paths,
+                                              IgnoreStrategy.Filter filter)   
    {
       if (paths.size() == 0)
          return null;
@@ -168,6 +167,14 @@ public class IgnoreDialog
                   "they are located within the same directory).");
                 
             return null;
+         }
+         
+         // apply a filter if we have one
+         if (filter != null)
+         {
+            FileSystemItem file = FileSystemItem.createFile(path);
+            if (!filter.includeFile(file))
+               continue;
          }
          
          // compute the parent relative directory

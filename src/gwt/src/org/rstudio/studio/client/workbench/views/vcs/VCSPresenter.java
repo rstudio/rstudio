@@ -96,6 +96,11 @@ public class VCSPresenter implements IsWidget,
       presenter_.onVcsCleanup();
    }
    
+   void onVcsIgnore()
+   {
+      presenter_.onVcsIgnore();
+   }
+   
    @Override
    public void onShowVcsHistory(ShowVcsHistoryEvent event)
    {

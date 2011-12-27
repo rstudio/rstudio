@@ -263,6 +263,12 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
    }
    
    @Override
+   public void onVcsIgnore()
+   {
+      gitPresenterCore_.onVcsIgnore(view_.getSelectedItems());
+   }
+   
+   @Override
    public void showHistory(FileSystemItem fileFilter)
    {
       showReviewPane(true, fileFilter, new ArrayList<StatusAndPath>());
@@ -358,7 +364,6 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
       // svn specific, not supported by git
       
    }
-   
 
    private final Display view_;
    private final GitPresenterCore gitPresenterCore_;
@@ -367,7 +372,5 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
    private final GitState gitState_;
    private final GlobalDisplay globalDisplay_;
    private final SatelliteManager satelliteManager_;
-   private final VCSFileOpener vcsFileOpener_;
-   
-  
+   private final VCSFileOpener vcsFileOpener_; 
 }

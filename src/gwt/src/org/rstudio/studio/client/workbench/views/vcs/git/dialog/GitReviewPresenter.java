@@ -396,6 +396,16 @@ public class GitReviewPresenter implements ReviewPresenter
                   false);
          }
       });
+      
+      view_.getIgnoreButton().addClickHandler(new ClickHandler() {
+
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            gitPresenterCore_.onVcsIgnore(
+                              view_.getChangelistTable().getSelectedItems());
+         }
+      });
 
       view_.getCommitIsAmend().addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
@@ -734,6 +744,13 @@ public class GitReviewPresenter implements ReviewPresenter
    public void onVcsPush()
    {
       gitPresenterCore_.onVcsPush();
+   }
+   
+   @Handler
+   public void onVcsIgnore()
+   {
+      gitPresenterCore_.onVcsIgnore(
+                            view_.getChangelistTable().getSelectedItems());
    }
 
    private final Invalidation diffInvalidation_ = new Invalidation();

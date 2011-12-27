@@ -1486,6 +1486,64 @@ Error vcsApplyPatch(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error vcsGetIgnores(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   std::string path;
+   Error error = json::readParam(request.params, 0, &path);
+   if (error)
+      return error;
+
+   // resolve path to .gitignore
+   FilePath filePath = projects::projectContext().directory().childPath(path);
+   FilePath gitIgnorePath = filePath.complete(".gitignore");
+
+   // setup result (default to empty)
+   core::system::ProcessResult result;
+   result.exitStatus = EXIT_SUCCESS;
+   result.stdOut = "";
+
+   // read the file if it exists
+   if (gitIgnorePath.exists())
+   {
+      Error error = core::readStringFromFile(gitIgnorePath, &result.stdOut);
+      if (error)
+         return error;
+   }
+
+   // return contents
+   pResponse->setResult(processResultToJson(result));
+   return Success();
+}
+
+Error vcsSetIgnores(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   RefreshOnExit refreshOnExit;
+
+   // get the params
+   std::string path, ignores;
+   Error error = json::readParams(request.params, &path, &ignores);
+   if (error)
+      return error;
+
+   // resolve path to gitignore
+   FilePath filePath = projects::projectContext().directory().childPath(path);
+   FilePath gitIgnorePath = filePath.complete(".gitignore");
+
+   // write the .gitignore file
+   error = core::writeStringToFile(gitIgnorePath, ignores);
+   if (error)
+      return error;
+
+   // always return an empty (successful) ProcessResult
+   core::system::ProcessResult result;
+   result.exitStatus = EXIT_SUCCESS;
+   pResponse->setResult(processResultToJson(result));
+   return Success();
+}
+
+
 Error vcsHistoryCount(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
@@ -2459,7 +2517,9 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_export_file", vcsExportFile))
       (bind(registerRpcMethod, "git_ssh_public_key", vcsSshPublicKey))
       (bind(registerRpcMethod, "git_has_repo", vcsHasRepo))
-      (bind(registerRpcMethod, "git_init_repo", vcsInitRepo));
+      (bind(registerRpcMethod, "git_init_repo", vcsInitRepo))
+      (bind(registerRpcMethod, "git_get_ignores", vcsGetIgnores))
+      (bind(registerRpcMethod, "git_set_ignores", vcsSetIgnores));
    error = initBlock.execute();
    if (error)
       return error;

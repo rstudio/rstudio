@@ -45,6 +45,8 @@ public class VCSTab extends DelayLoadWorkbenchTab<VCSPresenter>
       public abstract void onVcsPush();
       @Handler
       public abstract void onVcsCleanup();
+      @Handler
+      public abstract void onVcsIgnore();
    }
 
    @Inject

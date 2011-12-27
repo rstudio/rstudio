@@ -13,10 +13,13 @@
 package org.rstudio.studio.client.workbench.views.vcs.git;
 
 
+import java.util.ArrayList;
+
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -24,6 +27,11 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
+import org.rstudio.studio.client.common.vcs.IgnoreDialog;
+import org.rstudio.studio.client.common.vcs.IgnoreStrategy;
+import org.rstudio.studio.client.common.vcs.ProcessResult;
+import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
@@ -91,6 +99,56 @@ public class GitPresenterCore
             new ConsoleProgressDialog(proc, server_).showModal();
          }
       });
+   }
+   
+   public void onVcsIgnore(ArrayList<StatusAndPath> items)
+   {
+      ArrayList<String> paths = getPathArray(items);
+      if (paths.size() > 0)
+      {
+         IgnoreDialog.show(paths, new IgnoreStrategy() {
+
+            @Override
+            public String getCaption()
+            {
+               return "Git Ignore";
+            }
+            
+            @Override
+            public Filter getFilter()
+            {
+               return new Filter() {
+                  @Override
+                  public boolean includeFile(FileSystemItem file)
+                  {
+                     return !file.getName().equals(".gitignore");
+                  }
+               };
+            }
+
+            @Override
+            public void getIgnores(String path,
+                  ServerRequestCallback<ProcessResult> requestCallback)
+            {
+               server_.gitGetIgnores(path, requestCallback);
+            }
+
+            @Override
+            public void setIgnores(String path, String ignores,
+                  ServerRequestCallback<ProcessResult> requestCallback)
+            {
+               server_.gitSetIgnores(path, ignores, requestCallback);
+            }
+         });
+      }
+   }
+   
+   private ArrayList<String> getPathArray(ArrayList<StatusAndPath> items)
+   {
+      ArrayList<String> paths = new ArrayList<String>();
+      for (StatusAndPath item : items)
+         paths.add(item.getPath());
+      return paths;
    }
     
    private final GitServerOperations server_;

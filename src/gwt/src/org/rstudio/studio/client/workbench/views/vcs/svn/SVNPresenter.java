@@ -175,6 +175,12 @@ public class SVNPresenter extends BaseVcsPresenter
    }
    
    @Override
+   public void onVcsIgnore()
+   {
+      commandHandler_.onVcsIgnore();
+   }
+   
+   @Override
    public void showHistory(FileSystemItem fileFilter)
    {
       showReviewPane(true, fileFilter, new ArrayList<StatusAndPath>());  

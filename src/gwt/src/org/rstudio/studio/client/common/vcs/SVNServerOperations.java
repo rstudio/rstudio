@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.common.vcs;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
@@ -26,19 +25,6 @@ import java.util.ArrayList;
 
 public interface SVNServerOperations extends VCSServerOperations
 {
-   public static class ProcessResult extends JavaScriptObject
-   {
-      protected ProcessResult() {}
-
-      public final native String getOutput() /*-{
-         return this.output;
-      }-*/;
-
-      public final native int getExitCode() /*-{
-         return this.exit_code;
-      }-*/;
-   }
-
    void svnAdd(ArrayList<String> paths,
                ServerRequestCallback<ProcessResult> requestCallback);
 

@@ -27,8 +27,8 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.vcs.IgnoreDialog;
 import org.rstudio.studio.client.common.vcs.IgnoreStrategy;
+import org.rstudio.studio.client.common.vcs.ProcessResult;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
-import org.rstudio.studio.client.common.vcs.SVNServerOperations.ProcessResult;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -100,8 +100,7 @@ public class SVNCommandHandler
       pCommitDialog_.get().showModal();
    }
    
-   @Handler
-   void onVcsIgnore()
+   public void onVcsIgnore()
    {
       ArrayList<String> paths = getPathArray();
 
@@ -115,6 +114,13 @@ public class SVNCommandHandler
                return "SVN Ignore";
             }
 
+            @Override
+            public Filter getFilter()
+            {
+               return null;
+            }
+
+            
             @Override
             public void getIgnores(String path,
                   ServerRequestCallback<ProcessResult> requestCallback)

@@ -17,8 +17,8 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.vcs.ProcessResult;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
-import org.rstudio.studio.client.common.vcs.SVNServerOperations.ProcessResult;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.views.vcs.svn.model.SVNState;
 

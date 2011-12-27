@@ -1433,6 +1433,24 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void gitGetIgnores(String path, 
+                             ServerRequestCallback<ProcessResult> callback)
+   {
+      sendRequest(RPC_SCOPE, GIT_GET_IGNORES, path, callback);
+   }
+
+   @Override
+   public void gitSetIgnores(String path,
+                             String ignores,
+                             ServerRequestCallback<ProcessResult> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      params.set(1, new JSONString(ignores));
+      sendRequest(RPC_SCOPE, GIT_SET_IGNORES, params, callback);
+   }
+   
+   @Override
    public void gitDiffFile(String path,
                            PatchMode mode,
                            int contextLines,
@@ -2530,6 +2548,8 @@ public class RemoteServer implements Server
    private static final String GIT_SSH_PUBLIC_KEY = "git_ssh_public_key";
    private static final String GIT_HAS_REPO = "git_has_repo";
    private static final String GIT_INIT_REPO = "git_init_repo";
+   private static final String GIT_GET_IGNORES = "git_get_ignores";
+   private static final String GIT_SET_IGNORES = "git_set_ignores";
    private static final String GIT_DIFF_FILE = "git_diff_file";
    private static final String GIT_APPLY_PATCH = "git_apply_patch";
    private static final String GIT_HISTORY_COUNT = "git_history_count";

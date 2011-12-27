@@ -242,12 +242,8 @@ public class GitReviewPanel extends ResizeComposite implements Display
             commands.vcsRevert().getImageResource(),
             (ClickHandler) null));
 
-/*
-      topToolbar_.addLeftSeparator();
-
       ignoreButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
             "Ignore", RES.ignore(), (ClickHandler) null));
-*/
 
       topToolbar_.addRightWidget(new ToolbarButton(
             "Refresh", commands.vcsRefresh().getImageResource(),
@@ -393,12 +389,14 @@ public class GitReviewPanel extends ResizeComposite implements Display
    {
       return revertFilesButton_;
    }
-
+   
    @Override
    public void setFilesCommandsEnabled(boolean enabled)
    {
       stageFilesButton_.setEnabled(enabled);
       revertFilesButton_.setEnabled(enabled);
+      ignoreButton_.setEnabled(enabled);
+      
    }
 
    @Override
@@ -541,9 +539,13 @@ public class GitReviewPanel extends ResizeComposite implements Display
               
            });
       if (stageFilesButton_.isEnabled())
+      {
          menu.addItem(stageMenu);
+         menu.addSeparator();
+      }
      
     
+      
      MenuItem revertMenu = new MenuItem(
            AppCommand.formatMenuLabel(RES.discard(), "Revert...", ""),
            true,
@@ -557,6 +559,20 @@ public class GitReviewPanel extends ResizeComposite implements Display
            });
       if (revertFilesButton_.isEnabled())
          menu.addItem(revertMenu);
+      
+      MenuItem ignoreMenu = new MenuItem(
+            AppCommand.formatMenuLabel(RES.ignore(), "Ignore...", ""),
+            true,
+            new Command() {
+               @Override
+               public void execute()
+               {
+                  ignoreButton_.click();
+               }
+               
+            });
+       if (ignoreButton_.isEnabled())
+          menu.addItem(ignoreMenu);
      
       menu.addSeparator();
       MenuItem openMenu = new MenuItem(

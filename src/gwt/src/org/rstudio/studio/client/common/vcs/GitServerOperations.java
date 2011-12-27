@@ -122,4 +122,11 @@ public interface GitServerOperations extends VCSServerOperations
    
    void gitInitRepo(String directory,
                     ServerRequestCallback<Void> requestCallback);
+   
+   void gitGetIgnores(String path, 
+                      ServerRequestCallback<ProcessResult> requestCallback);
+
+   void gitSetIgnores(String path,
+                      String ignores,
+                      ServerRequestCallback<ProcessResult> requestCallback);
 }

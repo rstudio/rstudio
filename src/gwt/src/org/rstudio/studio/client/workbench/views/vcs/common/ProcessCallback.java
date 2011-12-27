@@ -16,7 +16,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.vcs.SVNServerOperations.ProcessResult;
+import org.rstudio.studio.client.common.vcs.ProcessResult;
 import org.rstudio.studio.client.server.ServerError;
 
 import com.google.gwt.user.client.Command;

@@ -12,13 +12,20 @@
  */
 package org.rstudio.studio.client.common.vcs;
 
-import org.rstudio.studio.client.common.vcs.SVNServerOperations.ProcessResult;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public interface IgnoreStrategy
 {
+   public interface Filter
+   {
+      boolean includeFile(FileSystemItem file);
+   }
+   
    String getCaption();
 
+   Filter getFilter();
+   
    void getIgnores(String path, 
                    ServerRequestCallback<ProcessResult> requestCallback);
 

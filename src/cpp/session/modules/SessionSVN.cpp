@@ -1530,7 +1530,7 @@ Error svnGetIgnores(const json::JsonRpcRequest& request,
       return error;
 
    // resolve path from root of project
-   FilePath filePath = projects::projectContext().directory().complete(path);
+   FilePath filePath = projects::projectContext().directory().childPath(path);
 
    core::system::ProcessResult result;
    error = runSvn(ShellArgs() << "propget" << "svn:ignore"
@@ -1557,7 +1557,7 @@ Error svnSetIgnores(const json::JsonRpcRequest& request,
       return error;
 
    // resolve path from root of project
-   FilePath filePath = projects::projectContext().directory().complete(path);
+   FilePath filePath = projects::projectContext().directory().childPath(path);
 
    // write the ignores to a temporary file
    FilePath ignoresFile = module_context::tempFile("svn-ignore", "txt");
