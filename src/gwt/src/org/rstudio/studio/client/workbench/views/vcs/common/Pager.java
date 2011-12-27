@@ -80,14 +80,11 @@ public class Pager extends SimplePager
       String text = super.createText();
 
       if (display.isRowCountExact())
-         return text;
+         return "Commits " + text;
       else
       {
          int pos = text.indexOf(" of ");
-         if (pos >= 0)
-            return text.substring(0, pos);
-         else
-            return text;
+         return "Commits " + (pos >= 0 ? text.substring(0, pos) : text);
       }
    }
 
