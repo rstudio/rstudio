@@ -81,11 +81,15 @@ public final class Storage {
     }
 
     private native boolean detectLocalStorageSupport() /*-{
-      return typeof $wnd.localStorage != "undefined";
+      // This was changed from "typeof $wnd.localStorage != "undefined";" to
+      // support the case when localStorage is disabled.
+      return $wnd.localStorage != null;
     }-*/;
 
     private native boolean detectSessionStorageSupport() /*-{
-      return typeof $wnd.sessionStorage != "undefined";
+      // This was changed from "typeof $wnd.sessionStorage != "undefined";" to
+      // support the case when sessionStorage is disabled.
+      return $wnd.sessionStorage != null;
     }-*/;
   }
 
