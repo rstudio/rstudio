@@ -1,0 +1,112 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+
+   <ui:style>
+      .resolvePanel {
+         padding: 12px;
+      }
+      .resolvePanel label {
+         font-weight: bold;
+      }
+      .resolvePanel td {
+         padding: 0;
+      }
+      .description {
+         padding-bottom: 12px !important;
+         width: 240px;
+         color: #888;
+      }
+      .prompt {
+         display: block;
+         font-weight: bold;
+         margin-bottom: 16px;
+      }
+   </ui:style>
+
+   <g:HTMLPanel styleName="{style.resolvePanel}">
+      <div class="{style.prompt}">
+         Resolve the selected <span ui:field="spanTargetNoun_"></span> using:
+      </div>
+      <table>
+         <tr>
+            <td><input type="radio"
+                       name="svnResolve"
+                       ui:field="radioWorking_"
+                       value="working"/>
+            </td>
+            <td><label ui:field="labelWorking_">Working</label></td>
+         </tr>
+         <tr>
+            <td />
+            <td class="{style.description}">
+               Mark the working copy as resolved
+            </td>
+         </tr>
+         <tr>
+            <td><input type="radio"
+                       name="svnResolve"
+                       ui:field="radioMineConflict_"
+                       value="mine-conflict"/>
+            </td>
+            <td>
+               <label ui:field="labelMineConflict_">Mine-Conflict</label>
+            </td>
+         </tr>
+         <tr>
+            <td />
+            <td class="{style.description}">
+               Accept my version for all conflicts
+            </td>
+         </tr>
+         <tr>
+            <td><input type="radio"
+                       name="svnResolve"
+                       ui:field="radioTheirsConflict_"
+                       value="theirs-conflict"/>
+            </td>
+            <td>
+               <label ui:field="labelTheirsConflict_">Theirs-Conflict</label>
+            </td>
+         </tr>
+         <tr>
+            <td />
+            <td class="{style.description}">
+               Accept their version for all conflicts
+            </td>
+         </tr>
+         <tr>
+            <td><input type="radio"
+                       name="svnResolve"
+                       ui:field="radioMineAll_"
+                       value="mine-all"/>
+            </td>
+            <td>
+               <label ui:field="labelMineAll_">Mine-All</label>
+            </td>
+         </tr>
+         <tr>
+            <td />
+            <td class="{style.description}">
+               Accept my version of the entire file, even non-conflicts
+            </td>
+         </tr>
+         <tr>
+            <td><input type="radio"
+                       name="svnResolve"
+                       ui:field="radioTheirsAll_"
+                       value="theirs-all"/>
+            </td>
+            <td>
+               <label ui:field="labelTheirsAll_">Theirs-All</label>
+            </td>
+         </tr>
+         <tr>
+            <td />
+            <td class="{style.description}">
+               Accept their version of the entire file, even non-conflicts
+            </td>
+         </tr>
+      </table>
+   </g:HTMLPanel>
+
+</ui:UiBinder>

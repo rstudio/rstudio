@@ -70,6 +70,7 @@ public class SVNPane extends WorkbenchPane implements Display
 
       moreMenu.addItem(commands_.vcsRevert().createMenuItem(false));
       moreMenu.addItem(commands_.vcsIgnore().createMenuItem(false));
+      moreMenu.addItem(commands_.vcsResolve().createMenuItem(false));
       moreMenu.addSeparator();
       moreMenu.addItem(commands_.vcsPull().createMenuItem(false));
       moreMenu.addItem(commands_.vcsCleanup().createMenuItem(false));
@@ -119,6 +120,7 @@ public class SVNPane extends WorkbenchPane implements Display
       menu.addSeparator();
       menu.addItem(commands_.vcsRevert().createMenuItem(false));
       menu.addItem(commands_.vcsIgnore().createMenuItem(false));
+      menu.addItem(commands_.vcsResolve().createMenuItem(false));
       menu.addSeparator();
       menu.addItem(commands_.vcsOpen().createMenuItem(false));
     

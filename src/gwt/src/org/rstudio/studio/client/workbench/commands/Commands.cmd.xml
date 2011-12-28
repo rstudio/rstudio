@@ -654,6 +654,10 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Clear Con_sole"/>
    <cmd id="interruptR"
         menuLabel="_Interrupt R"/>
+   <cmd id="vcsResolve"
+        menuLabel="Resolve..."
+        buttonLabel="Resolve"
+        desc="Resolve conflicts in the selected files or folders"/>
 
    <cmd id="historySendToSource"
         menuLabel="Insert into _Source"

@@ -114,6 +114,7 @@ public abstract class
    public abstract AppCommand vcsAddFiles();
    public abstract AppCommand vcsRemoveFiles();
    public abstract AppCommand activateVcs();
+   public abstract AppCommand vcsResolve();
    
    // View
    public abstract AppCommand showToolbar();

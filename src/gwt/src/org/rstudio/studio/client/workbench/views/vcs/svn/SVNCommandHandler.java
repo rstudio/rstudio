@@ -21,6 +21,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -77,6 +78,7 @@ public class SVNCommandHandler
       commands_.vcsRemoveFiles().setEnabled(enabled);
       commands_.vcsRevert().setEnabled(enabled);
       commands_.vcsIgnore().setEnabled(enabled);
+      commands_.vcsResolve().setEnabled(enabled);
    }
    
    // onVcsPull and onVcsCommit and not direct  command handlers because they 
@@ -186,6 +188,67 @@ public class SVNCommandHandler
          }
          
       });
+   }
+
+   @Handler
+   void onVcsResolve()
+   {
+      ArrayList<StatusAndPath> items = display_.getSelectedItems();
+
+      if (items.size() == 0)
+         return;
+
+      final ArrayList<String> paths = new ArrayList<String>();
+
+      boolean conflict = false;
+      for (StatusAndPath item : items)
+      {
+         paths.add(item.getPath());
+         if ("C".equals(item.getStatus()))
+            conflict = true;
+         else if (item.isDirectory())
+            conflict = true;
+      }
+
+      Operation resolveOperation = new Operation()
+      {
+         @Override
+         public void execute()
+         {
+            new SVNResolveDialog(
+                  paths.size(),
+                  "Resolve",
+                  new OperationWithInput<String>()
+                  {
+                     @Override
+                     public void execute(String input)
+                     {
+                        server_.svnResolve(
+                              input, paths,
+                              new ProcessCallback("SVN Resolve"));
+                     }
+                  }).showModal();
+         }
+      };
+
+      if (conflict)
+      {
+         resolveOperation.execute();
+      }
+      else
+      {
+         String message =
+               (paths.size() > 1 ?
+               "None of the selected paths appear to have conflicts." :
+               "The selected path does not appear to have conflicts.") +
+               "\n\nDo you want to resolve anyway?";
+
+         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_WARNING,
+                                         "No Conflicts Detected",
+                                         message,
+                                         resolveOperation,
+                                         true);
+      }
    }
    
    public void revertFile(FileSystemItem file)
