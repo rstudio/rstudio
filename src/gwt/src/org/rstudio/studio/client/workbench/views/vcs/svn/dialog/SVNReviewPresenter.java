@@ -56,6 +56,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffChunkActi
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
+import org.rstudio.studio.client.workbench.views.vcs.svn.SVNDiffParser;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPresenterDisplay;
 import org.rstudio.studio.client.workbench.views.vcs.svn.model.SVNState;
 
@@ -404,7 +405,7 @@ public class SVNReviewPresenter implements ReviewPresenter
                      return;
                   currentResponse_ = response;
 
-                  UnifiedParser parser = new UnifiedParser(response);
+                  SVNDiffParser parser = new SVNDiffParser(response);
                   parser.nextFilePair();
 
                   ArrayList<ChunkOrLine> allLines = new ArrayList<ChunkOrLine>();
@@ -413,8 +414,12 @@ public class SVNReviewPresenter implements ReviewPresenter
                   for (DiffChunk chunk;
                        null != (chunk = parser.nextChunk());)
                   {
-                     activeChunks_.add(chunk);
-                     allLines.add(new ChunkOrLine(chunk));
+                     if (!chunk.shouldIgnore())
+                     {
+                        activeChunks_.add(chunk);
+                        allLines.add(new ChunkOrLine(chunk));
+                     }
+
                      for (Line line : chunk.getLines())
                         allLines.add(new ChunkOrLine(line));
                   }

@@ -16,14 +16,25 @@ import org.rstudio.studio.client.workbench.views.vcs.common.diff.Line.Type;
 
 import java.util.ArrayList;
 
-public class UnifiedParser
+public class UnifiedParser implements DiffParser
 {
    public UnifiedParser(String data)
    {
-      data_ = data;
-      diffIndex_ = 0;
+      this(data, 0);
    }
 
+   public UnifiedParser(String data, int startDiffIndex)
+   {
+      data_ = data;
+      diffIndex_ = startDiffIndex;
+   }
+
+   public int getDiffIndex()
+   {
+      return diffIndex_;
+   }
+
+   @Override
    public DiffFileHeader nextFilePair()
    {
       ArrayList<String> headerLines = new ArrayList<String>();
@@ -51,6 +62,7 @@ public class UnifiedParser
       return new DiffFileHeader(headerLines, fileA, fileB);
    }
 
+   @Override
    public DiffChunk nextChunk()
    {
       String nextLine = peekLine();

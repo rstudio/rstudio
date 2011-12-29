@@ -19,7 +19,8 @@ public class ChunkOrLine
    public static ArrayList<ChunkOrLine> fromChunk(DiffChunk chunk)
    {
       ArrayList<ChunkOrLine> list = new ArrayList<ChunkOrLine>();
-      list.add(new ChunkOrLine(chunk));
+      if (!chunk.shouldIgnore())
+         list.add(new ChunkOrLine(chunk));
       for (Line line : chunk.getLines())
          list.add(new ChunkOrLine(line));
       return list;

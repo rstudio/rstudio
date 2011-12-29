@@ -62,6 +62,16 @@ public class DiffChunk
       return diffIndex_;
    }
 
+   /**
+    * Returns true if this is a chunk that can't be rendered. Needed for SVN
+    * property chunks (these don't have a header but the DiffParser interface
+    * requires lines to be returned in chunks).
+    */
+   public boolean shouldIgnore()
+   {
+      return ranges_ == null;
+   }
+
    private final String lineText_;
    private final ArrayList<Line> diffLines_;
    private final int diffIndex_;

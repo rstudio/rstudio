@@ -22,6 +22,8 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.vcs.common.Pager;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.DiffParser;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.UnifiedParser;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryStrategy;
@@ -138,6 +140,12 @@ public class GitHistoryStrategy implements HistoryStrategy
    public boolean getAutoSelectFirstRow()
    {
       return true;
+   }
+
+   @Override
+   public DiffParser createParserForCommit(String commitDiff)
+   {
+      return new UnifiedParser(commitDiff);
    }
 
    private final GitServerOperations server_;

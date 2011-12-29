@@ -64,6 +64,7 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
       String insertion();
       String deletion();
       String comment();
+      String info();
 
       String lineNumber();
       String lastLineNumber();
@@ -140,6 +141,7 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
             sb.appendEscaped(value.getLine().getText());
             if (showActions_
                 && value.getLine().getType() != Line.Type.Same
+                && value.getLine().getType() != Line.Type.Info
                 && value == firstSelectedLine_)
             {
                renderActionButtons(
@@ -256,10 +258,10 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
             {
                Line line = object.getLine();
                if (line == null)
-                  return "";
+                  return "\u00A0";
 
                if (!line.getAppliesTo()[index])
-                  return "";
+                  return "\u00A0";
 
                return intToString(line.getLines()[index]);
             }
@@ -314,6 +316,8 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
                      return prefix + res.cellTableStyle().deletion();
                   case Comment:
                      return prefix + res.cellTableStyle().comment();
+                  case Info:
+                     return prefix + res.cellTableStyle().info();
                   default:
                      return "";
                }
@@ -336,8 +340,12 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
          @Override
          public void setSelected(ChunkOrLine object, boolean selected)
          {
-            if (object.getLine() != null && object.getLine().getType() != Line.Type.Same)
+            if (object.getLine() != null &&
+                object.getLine().getType() != Line.Type.Same &&
+                object.getLine().getType() != Line.Type.Info)
+            {
                super.setSelected(object, selected);
+            }
          }
       };
       selectionModel_.addSelectionChangeHandler(new Handler()
@@ -406,6 +414,16 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
       addStyleName(RES.cellTableStyle().noStageMode());
    }
 
+   public void setUseStartBorder(boolean useStartBorder)
+   {
+      useStartBorder_ = useStartBorder;
+   }
+
+   public void setUseEndBorder(boolean useEndBorder)
+   {
+      useEndBorder_ = useEndBorder;
+   }
+
    @Override
    public void setData(ArrayList<ChunkOrLine> diffData, PatchMode patchMode)
    {
@@ -439,8 +457,11 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
          boolean isChunk = line == null;
          Line.Type newState = isChunk ? Line.Type.Same : line.getType();
 
+         if (useStartBorder_ && i == 0)
+            startRows_.add(i);
+
          // Edge case: last line is a diff line
-         if (newState != Line.Type.Same && i == lines_.size() - 1)
+         if (useEndBorder_ && i == lines_.size() - 1)
             endRows_.add(i);
 
          if (newState != state)
@@ -448,7 +469,7 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
             // Note: endRows_ doesn't include the borders between insertions and
             // deletions, or vice versa. This is to avoid 2px borders between
             // these regions when just about everything else is 1px.
-            if (state != Line.Type.Same && newState == Line.Type.Same)
+            if (state != Line.Type.Same && newState == Line.Type.Same && !isChunk)
                endRows_.add(i-1);
             if (!suppressNextStart && newState != Line.Type.Same)
                startRows_.add(i);
@@ -525,6 +546,8 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
    private SwitchableSelectionModel<ChunkOrLine> selectionModel_;
    private HashSet<Integer> startRows_ = new HashSet<Integer>();
    private HashSet<Integer> endRows_ = new HashSet<Integer>();
+   private boolean useStartBorder_ = false;
+   private boolean useEndBorder_ = true;
    // Keep explicit track of the first selected line so we can render it differently
    private ChunkOrLine firstSelectedLine_;
    private static final LineTableViewCellTableResources RES = GWT.create(LineTableViewCellTableResources.class);

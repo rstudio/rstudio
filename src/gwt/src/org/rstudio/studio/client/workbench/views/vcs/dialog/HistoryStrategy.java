@@ -18,6 +18,7 @@ import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.view.client.HasData;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.DiffParser;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 
 public interface HistoryStrategy
@@ -53,4 +54,6 @@ public interface HistoryStrategy
    AbstractPager getPager();
 
    boolean getAutoSelectFirstRow();
+
+   DiffParser createParserForCommit(String commitDiff);
 }

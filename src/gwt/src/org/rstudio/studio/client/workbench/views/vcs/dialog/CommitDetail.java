@@ -91,7 +91,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    }
 
    @Override
-   public void setDetails(final UnifiedParser unifiedParser,
+   public void setDetails(final DiffParser unifiedParser,
                           final boolean suppressViewLink)
    {
       setProgressVisible(false);
@@ -115,11 +115,14 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
             DiffChunk chunk;
             while (null != (chunk = unifiedParser.nextChunk()))
             {
-               filesCompared = chunk.getRanges().length;
+               if (!chunk.shouldIgnore())
+                  filesCompared = chunk.getRanges().length;
                lines.addAll(ChunkOrLine.fromChunk(chunk));
             }
 
             LineTableView view = new LineTableView(filesCompared);
+            view.setUseStartBorder(true);
+            view.setUseEndBorder(false);
             view.setShowActions(false);
             view.setData(lines, PatchMode.Stage);
             view.setWidth("100%");

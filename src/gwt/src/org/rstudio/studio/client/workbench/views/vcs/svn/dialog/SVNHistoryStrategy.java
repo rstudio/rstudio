@@ -21,9 +21,11 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.vcs.common.Pager;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.DiffParser;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryStrategy;
+import org.rstudio.studio.client.workbench.views.vcs.svn.SVNDiffParser;
 import org.rstudio.studio.client.workbench.views.vcs.svn.model.SVNState;
 
 public class SVNHistoryStrategy implements HistoryStrategy
@@ -142,6 +144,12 @@ public class SVNHistoryStrategy implements HistoryStrategy
    public boolean getAutoSelectFirstRow()
    {
       return false;
+   }
+
+   @Override
+   public DiffParser createParserForCommit(String commitDiff)
+   {
+      return new SVNDiffParser(commitDiff);
    }
 
    private int parseRevision(String revision)

@@ -21,7 +21,8 @@ public class Line implements Comparable<Line>
       Same(' '),
       Insertion('+'),
       Deletion('-'),
-      Comment('\\');
+      Comment('\\'),
+      Info('_');
 
       Type(char value)
       {
@@ -45,6 +46,8 @@ public class Line implements Comparable<Line>
                return Insertion;
             case Comment:
                return Comment;
+            case Info:
+               return Info;
             default:
                assert false : "Couldn't getInverse on Type value";
                throw new IllegalStateException("Couldn't getInverse on Type value");

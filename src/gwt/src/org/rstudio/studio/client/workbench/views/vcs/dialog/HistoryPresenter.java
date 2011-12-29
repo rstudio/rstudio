@@ -30,7 +30,6 @@ import com.google.gwt.view.client.RangeChangeEvent.Handler;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.TimeBufferedCommand;
@@ -42,9 +41,10 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.DiffParser;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.UnifiedParser;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsHistoryEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ViewFileRevisionEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ViewFileRevisionHandler;
 import org.rstudio.studio.client.workbench.views.vcs.git.dialog.GitHistoryStrategy;
@@ -107,7 +107,7 @@ public class HistoryPresenter
       void setSelectedCommit(CommitInfo commit);
       void clearDetails();
       void showDetailProgress();
-      void setDetails(UnifiedParser unifiedParser, boolean suppressViewLink);
+      void setDetails(DiffParser unifiedParser, boolean suppressViewLink);
       
       HandlerRegistration addViewFileRevisionHandler(
                                           ViewFileRevisionHandler handler);
@@ -306,8 +306,7 @@ public class HistoryPresenter
                   if (token.isInvalid())
                      return;
 
-                  UnifiedParser parser = new UnifiedParser(
-                        response);
+                  DiffParser parser = strategy_.createParserForCommit(response);
                   view_.getCommitDetail().setDetails(
                                       parser, !strategy_.isShowFileSupported());
                   commitShowing_ = commitInfo.getId();

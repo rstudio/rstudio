@@ -300,6 +300,17 @@ public class StringUtil
       };
    }
 
+   /**
+    * Removes empty or whitespace-only lines from the beginning and end of the
+    * string.
+    */
+   public static String trimBlankLines(String data)
+   {
+      data = Pattern.create("^[\\r\\n\\t ]*\\n", "g").replaceAll(data, "");
+      data = Pattern.create("\\r?\\n[\\r\\n\\t ]*$", "g").replaceAll(data, "");
+      return data;
+   }
+
    private static final long[] SIZES = {
          1024L, // kilobyte
          1024L * 1024L, // megabyte
