@@ -261,8 +261,9 @@ void ChildProcess::init(const std::string& command,
                         const ProcessOptions& options)
 {
    exe_ = findOnPath("cmd.exe");
+   args_.push_back("/S");
    args_.push_back("/C");
-   args_.push_back("(" + command + ")");
+   args_.push_back("\"" + command + "\"");
    options_ = options;
 }
 

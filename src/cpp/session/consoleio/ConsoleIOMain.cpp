@@ -296,7 +296,7 @@ int main(int argc, char** argv)
                                                   ::GetCommandLine());
 
    // Use cmd.exe to allow shell commands like "dir" to work properly
-   cmd = "cmd.exe /c (" + cmd + ")";
+   cmd = "cmd.exe /s /c \"" + cmd + "\"";
    std::vector<char> cmdBuf(cmd.size() + 1, '\0');
    cmd.copy(&(cmdBuf[0]), cmd.size());
 
