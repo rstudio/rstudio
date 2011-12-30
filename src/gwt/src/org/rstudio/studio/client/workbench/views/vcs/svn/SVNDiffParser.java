@@ -118,29 +118,50 @@ public class SVNDiffParser implements DiffParser
          }
       });
 
+      Section lastSection = null;
       for (Section section : sectionsToUse)
       {
          if (section.isProperty)
          {
-            int chunkDiffIndex = diffIndex_++;
-
-            ArrayList<Line> lines = new ArrayList<Line>();
             String trimmed = StringUtil.trimBlankLines(section.data);
-            for (String line : StringUtil.getLineIterator(trimmed))
-            {
-               lines.add(new Line(Type.Info,
-                                  new boolean[] {false, false},
-                                  new int[] {-1, -1},
-                                  StringUtil.isNullOrEmpty(line) ? "\n" : line,
-                                  diffIndex_++));
-            }
-            pendingDiffChunks_.add(new DiffChunk(null, null, lines,
-                                                 chunkDiffIndex));
+            pendingDiffChunks_.add(
+                  createInfoChunk(StringUtil.getLineIterator(trimmed)));
          }
          else
          {
             UnifiedParser parser = new UnifiedParser(section.data, diffIndex_);
-            parser.nextFilePair();
+            DiffFileHeader filePair = parser.nextFilePair();
+
+            if (filePair == null)
+            {
+               // Although "Index: <filename>" appeared, no diff was actually
+               // generated (e.g. binary file)
+               Pattern hrule = Pattern.create("^=+$");
+               Match m = hrule.match(section.data, 0);
+               int startAt = (m != null) ? m.getIndex() + m.getValue().length()
+                                         : 0;
+               Iterable<String> lines = StringUtil.getLineIterator(
+                     StringUtil.trimBlankLines(section.data.substring(startAt)));
+               DiffChunk chunk = createInfoChunk(lines);
+               if (lastSection != null && lastSection.isProperty)
+               {
+                  // This is to work around special case where a binary file is
+                  // initially checked in. If we do nothing, in the history it
+                  // will appear as the property changes, then without a break,
+                  // the message that this file can't be displayed. That's the
+                  // correct content, but we want it in the order of the message
+                  // that the file can't be displayed, then a blank line, then
+                  // the property changes.
+                  pendingDiffChunks_.add(0, chunk);
+                  pendingDiffChunks_.add(
+                        1, createInfoChunk(StringUtil.getLineIterator("\n")));
+               }
+               else
+               {
+                  pendingDiffChunks_.add(chunk);
+               }
+            }
+
             DiffChunk chunk;
             while (null != (chunk = parser.nextChunk()))
             {
@@ -149,9 +170,26 @@ public class SVNDiffParser implements DiffParser
 
             diffIndex_ = parser.getDiffIndex();
          }
+
+         lastSection = section;
       }
 
       return new DiffFileHeader(new ArrayList<String>(), filename, filename);
+   }
+
+   private DiffChunk createInfoChunk(Iterable<String> lines)
+   {
+      ArrayList<Line> outLines = new ArrayList<Line>();
+      int chunkDiffIndex = diffIndex_++;
+      for (String line : lines)
+      {
+         outLines.add(new Line(Type.Info,
+                               new boolean[] {false, false},
+                               new int[] {-1, -1},
+                               StringUtil.isNullOrEmpty(line) ? "\n": line,
+                               diffIndex_++));
+      }
+      return new DiffChunk(null, null, outLines, chunkDiffIndex);
    }
 
    @Override
