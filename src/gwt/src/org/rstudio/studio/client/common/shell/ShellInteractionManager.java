@@ -88,11 +88,14 @@ public class ShellInteractionManager implements ShellOutputWriter
       // update console with prompt and input
       display_.consoleWritePrompt(promptText);
       final boolean echoInput = showInputForPrompt(promptText);
-      if (echoInput)
-         display_.consoleWriteInput(input);
-      else if (!Desktop.isDesktop() || !BrowseCap.isWindows())
-         display_.consoleWriteInput("\n");
-      
+      if (!Desktop.isDesktop() || !BrowseCap.isWindows())
+      {
+         if (echoInput)
+            display_.consoleWriteInput(input);
+         else
+            display_.consoleWriteInput("\n");
+      }
+
       // encrypt the input and return it
       encryptInput(input, new CommandWithArg<String>() {
 

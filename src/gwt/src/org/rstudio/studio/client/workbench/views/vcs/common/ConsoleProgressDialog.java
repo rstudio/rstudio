@@ -37,6 +37,7 @@ import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.widget.*;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ConsolePromptEvent;
@@ -125,6 +126,8 @@ public class ConsoleProgressDialog extends ModalDialogBase
       style.setWidth(width, Unit.PX);
       
       display_.setMaxOutputLines(getMaxOutputLines());
+      if (Desktop.isDesktop() && BrowseCap.isWindows())
+         display_.setSuppressPendingInput(true);
      
       if (getInteractionMode() != ConsoleProcessInfo.INTERACTION_NEVER)
       {

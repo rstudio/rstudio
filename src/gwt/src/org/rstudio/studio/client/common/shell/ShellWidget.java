@@ -194,6 +194,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
          }
       });
    }
+
+   public void setSuppressPendingInput(boolean suppressPendingInput)
+   {
+      suppressPendingInput_ = suppressPendingInput;
+   }
    
    public void consoleWriteError(String error)
    {
@@ -546,7 +551,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       pendingPrompt.setInnerText(promptText);
       pendingPrompt.setClassName(styles_.prompt() + " " + KEYWORD_CLASS_NAME);
 
-      if (!input_.isPasswordMode())
+      if (!suppressPendingInput_ && !input_.isPasswordMode())
       {
          SpanElement pendingInput = Document.get().createSpanElement();
          pendingInput.setInnerText(StringUtil.notNull(commandText).split("\n")[0] + "\n");
@@ -664,6 +669,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private final ClickableScrollPanel scrollPanel_ ;
    private ConsoleResources.ConsoleStyles styles_;
    private final TimeBufferedCommand scrollToBottomCommand_;
+   private boolean suppressPendingInput_;
 
    private static final String KEYWORD_CLASS_NAME = " ace_keyword";
 }
