@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
+import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
@@ -24,6 +25,8 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+
+import java.util.ArrayList;
 
 public abstract class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
 {
@@ -86,6 +89,10 @@ public abstract class HistoryAsyncDataProvider extends AsyncDataProvider<CommitI
       final Range rng = display.getVisibleRange();
       final int start = rng.getStart();
       final int length = rng.getLength();
+
+      if (length == 0)
+         return;
+
       getHistory(
             rev_, fileFilter_.getValue(),
             start, length, searchText_.getValue(),
@@ -98,6 +105,16 @@ public abstract class HistoryAsyncDataProvider extends AsyncDataProvider<CommitI
                   if (response.length() < length)
                      updateRowCount(start + response.length(), true);
                   updateRowData(start, response.toArrayList());
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  if (display instanceof AbstractHasData)
+                  {
+                     display.setVisibleRangeAndClearData(new Range(start, 0), true);
+                  }
+                  super.onError(error);
                }
             });
    }
