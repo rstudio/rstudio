@@ -17,6 +17,8 @@
 #include <stdio.h>
 #include <windows.h>
 
+#include <boost/algorithm/string.hpp>
+
 #define BOOST_THREAD_USE_LIB
 #include <core/BoostThread.hpp>
 #include <core/Error.hpp>
@@ -202,12 +204,8 @@ BOOL capture_console_output(HANDLE hConsoleOut, std::string* pOutput)
 
 // Dump the entire console buffer (up to the cursor) of hConsole
 // and write it to hOutput
-BOOL dump_console_output(HANDLE hConsole, HANDLE hOutput)
+BOOL write_to_handle(const std::string& output, HANDLE hOutput)
 {
-   std::string output;
-   if (!capture_console_output(hConsole, &output))
-      return false;
-
    const CHAR* pData = output.c_str();
    DWORD bytesToWrite = output.size();
    while (bytesToWrite > 0)
@@ -244,10 +242,9 @@ void transferStdInToConsole(HANDLE hConIn)
 
 void transferConsoleOutToStdErr(HANDLE hConOut)
 {
-   char ff = '\f'; // form feed instructs client to clear screen
+   std::string ff("\f"); // form feed instructs client to clear screen
    std::string lastKnownConsoleContents;
    std::string output;
-   DWORD bytesWritten;
    while (true)
    {
       if (!::SetEvent(hReadyForExitEvent))
@@ -264,18 +261,17 @@ void transferConsoleOutToStdErr(HANDLE hConOut)
          continue;
       }
 
-      if (lastKnownConsoleContents == output)
+      std::string valueToWrite =
+            boost::algorithm::starts_with(output, lastKnownConsoleContents) ?
+               output.substr(lastKnownConsoleContents.size()) :
+               ff + output;
+
+      if (valueToWrite.empty())
          continue;
 
       lastKnownConsoleContents = output;
 
-      if (!::WriteFile(hSnapshotOutput, &ff, 1, &bytesWritten, NULL))
-      {
-         print_error("transferConsoleOutToStdErr, WriteFile");
-         continue;
-      }
-
-      if (!dump_console_output(hConOut, hSnapshotOutput))
+      if (!write_to_handle(valueToWrite, hSnapshotOutput))
       {
          print_error("dump_console_output");
          continue;
