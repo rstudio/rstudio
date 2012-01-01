@@ -26,8 +26,6 @@ import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
-import java.util.ArrayList;
-
 public abstract class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
 {
    @Inject
