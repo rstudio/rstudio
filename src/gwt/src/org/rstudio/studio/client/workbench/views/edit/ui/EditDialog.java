@@ -71,24 +71,10 @@ public class EditDialog extends ModalDialogBase
    @Override
    protected Widget createMainWidget()
    {
-      // line numbers
-      final int LINE_NUMBERS_WIDTH = 100;
-
-      // calculate the size of the text the adjust for line numbers
-      Size textSize = DomMetrics.measureCode(sourceText_);
-      textSize = new Size(textSize.width + LINE_NUMBERS_WIDTH,
-                          textSize.height);
-
-      // compute the editor size
-      Size minimumSize = new Size(300, 200);
-      Size editorSize = DomMetrics.adjustedElementSize(textSize,
-                                                       minimumSize,
-                                                       25,   // pad
-                                                       100); // client margin
-
-      // set size
+      // create widget and set size
       Widget editWidget = editor_.getWidget();
-      editWidget.setSize(editorSize.width + "px", editorSize.height + "px");
+      Size size = DomMetrics.adjustedCodeElementSize(sourceText_, 25, 100);
+      editWidget.setSize(size.width + "px", size.height + "px");
 
       editor_.setCode(sourceText_, false);
       if (isRCode_)
@@ -109,7 +95,7 @@ public class EditDialog extends ModalDialogBase
       // return the widget
       SimplePanel panel = new SimplePanel();
       panel.addStyleName("EditDialog");
-      panel.setSize(editorSize.width + "px", editorSize.height + "px");
+      panel.setSize(size.width + "px", size.height + "px");
       panel.setWidget(editWidget);
       
       if (headerWidget_ != null)

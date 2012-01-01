@@ -72,4 +72,25 @@ public class DomMetrics
       int height = Math.min(contentSize.height, maximumSize.height);
       return new Size(width, height);
    }
+   
+   public static Size adjustedCodeElementSize(String code,
+                                              int contentPad,
+                                              int clientMargin)
+   {
+      // line numbers
+      final int LINE_NUMBERS_WIDTH = 100;
+
+      // calculate the size of the text the adjust for line numbers
+      Size textSize = DomMetrics.measureCode(code);
+      textSize = new Size(textSize.width + LINE_NUMBERS_WIDTH,
+                          textSize.height);
+
+      // compute the editor size
+      Size minimumSize = new Size(300, 200);
+      Size editorSize = DomMetrics.adjustedElementSize(textSize,
+                                                       minimumSize,
+                                                       contentPad,
+                                                       clientMargin);
+      return editorSize;
+   }
 }
