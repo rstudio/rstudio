@@ -16,7 +16,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
@@ -31,17 +30,7 @@ public class EditDialog extends ModalDialogBase
                      boolean lineWrapping,
                      final ProgressOperationWithInput<String> operation)
    {
-      this(text, null, isRCode, lineWrapping, operation);
-   }
-   
-   public EditDialog(String text,
-                     Widget headerWidget,
-                     boolean isRCode,
-                     boolean lineWrapping,
-                     final ProgressOperationWithInput<String> operation)
-   {
       editor_ = new AceEditor();
-      headerWidget_ = headerWidget;
       setText("Edit");
       sourceText_ = text;
       isRCode_ = isRCode;
@@ -97,19 +86,7 @@ public class EditDialog extends ModalDialogBase
       panel.addStyleName("EditDialog");
       panel.setSize(size.width + "px", size.height + "px");
       panel.setWidget(editWidget);
-      
-      if (headerWidget_ != null)
-      {
-         VerticalPanel verticalPanel = new VerticalPanel();
-         headerWidget_.setWidth("100%");
-         verticalPanel.add(headerWidget_);
-         verticalPanel.add(panel);
-         return verticalPanel;
-      }
-      else
-      {
-         return panel;
-      }
+      return panel;
    }
    
    @Override
@@ -122,5 +99,4 @@ public class EditDialog extends ModalDialogBase
    private final boolean isRCode_;
    private final boolean lineWrapping_;
    private final AceEditor editor_ ;
-   private final Widget headerWidget_;
 }
