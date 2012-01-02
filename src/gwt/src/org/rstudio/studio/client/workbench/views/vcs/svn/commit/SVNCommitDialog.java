@@ -37,6 +37,9 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.console.ProcessExitEvent.Handler;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
+import org.rstudio.studio.client.workbench.model.ClientState;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNSelectChangelistTablePresenter;
@@ -50,14 +53,38 @@ public class SVNCommitDialog extends ModalDialogBase
    @Inject
    public SVNCommitDialog(SVNServerOperations server,
                           final SVNSelectChangelistTablePresenter changelistPresenter,
-                          GlobalDisplay globalDisplay)
+                          GlobalDisplay globalDisplay,
+                          Session session)
    {
       server_ = server;
       globalDisplay_ = globalDisplay;
-      
+      session_ = session;
+
       setText("Commit");
-      
-      ThemedButton commitButton = new ThemedButton("Commit", 
+
+      if (commitDraftStateValue_ == null)
+      {
+         commitDraftStateValue_ = new StringStateValue(
+               MODULE_SVN,
+               KEY_COMMIT_MESSAGE,
+               ClientState.PROJECT_PERSISTENT,
+               session.getSessionInfo().getClientState())
+         {
+            @Override
+            protected void onInit(String value)
+            {
+               commitDraft_ = value;
+            }
+
+            @Override
+            protected String getValue()
+            {
+               return commitDraft_;
+            }
+         };
+      }
+
+      ThemedButton commitButton = new ThemedButton("Commit",
                                                     new ClickHandler() {
          public void onClick(ClickEvent event) 
          {
@@ -113,6 +140,7 @@ public class SVNCommitDialog extends ModalDialogBase
    protected void onUnload()
    {
       commitDraft_ = message_.getText();
+      session_.persistClientState();
    }
 
 
@@ -223,6 +251,11 @@ public class SVNCommitDialog extends ModalDialogBase
    private Widget widget_;
    private final SVNServerOperations server_;
    private final GlobalDisplay globalDisplay_;
+   private final Session session_;
 
    private static String commitDraft_;
+   private static StringStateValue commitDraftStateValue_;
+
+   private static final String MODULE_SVN = "svn";
+   private static final String KEY_COMMIT_MESSAGE = "commitMessage";
 }
