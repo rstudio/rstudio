@@ -1,0 +1,95 @@
+/*
+ * CaptionWithHelp.java
+ *
+ * Copyright (C) 2009-11 by RStudio, Inc.
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+package org.rstudio.core.client.widget;
+
+
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.GlobalDisplay;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
+import com.google.inject.Inject;
+
+public class CaptionWithHelp extends Composite
+{
+   public CaptionWithHelp(String caption, 
+                          String helpCaption,
+                          final String rstudioLinkName)
+   {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      
+      HorizontalPanel panel = new HorizontalPanel();
+      panel.setWidth("100%");
+      panel.add(new Label(caption));
+      helpPanel_ = new HorizontalPanel();
+      Image helpImage = new Image(ThemeResources.INSTANCE.help());
+      helpImage.setStylePrimaryName(styles.helpImage());
+      helpPanel_.add(helpImage);
+      HyperlinkLabel link = new HyperlinkLabel(helpCaption);
+      link.addStyleName(styles.helpLink());
+      link.addClickHandler(new ClickHandler() {
+         public void onClick(ClickEvent event)
+         {
+            globalDisplay_.openRStudioLink(rstudioLinkName);
+         }  
+      });
+      helpPanel_.add(link);
+      panel.add(helpPanel_);
+      panel.setCellHorizontalAlignment(helpPanel_, 
+                                       HasHorizontalAlignment.ALIGN_RIGHT);
+          
+      initWidget(panel);
+   }
+   
+   public void setHelpVisible(boolean visible)
+   {
+      helpPanel_.setVisible(visible);
+   }
+   
+   @Inject
+   void initialize(GlobalDisplay globalDisplay)
+   {
+      globalDisplay_ = globalDisplay;
+   }
+   
+   static interface Resources extends ClientBundle
+   {
+      @Source("CaptionWithHelp.css")
+      Styles styles();
+   }
+
+   static interface Styles extends CssResource
+   {
+      String helpImage();
+      String helpLink();
+   }
+
+   private static Styles styles = GWT.<Resources>create(Resources.class).styles();
+
+   public static void ensureStylesInjected()
+   {
+      styles.ensureInjected();
+   }
+   
+   private HorizontalPanel helpPanel_;
+   private GlobalDisplay globalDisplay_;
+}

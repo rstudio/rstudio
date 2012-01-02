@@ -15,6 +15,8 @@ package org.rstudio.studio.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;
+
+import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.studio.client.application.Application;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader;
@@ -45,6 +47,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(DesktopFileDialogs desktopFileDialogs);
    void injectMembers(RCompletionManager rCompletionManager);
    void injectMembers(SVNCommandHandler svnCommandHandler);
+   void injectMembers(CaptionWithHelp captionWithHelp);
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

@@ -16,9 +16,8 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.FocusHelper;
-import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.MultipleItemSuggestTextBox;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -47,9 +46,7 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focusable;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
@@ -132,30 +129,12 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       mainPanel.setStylePrimaryName(RESOURCES.styles().mainWidget());
       
       // source type
-      HorizontalPanel installFromPanel = new HorizontalPanel();
-      installFromPanel.setWidth("100%");
-      installFromPanel.add(new Label("Install from:"));
-      reposHelpPanel_ = new HorizontalPanel();
-      Image helpImage = new Image(ThemeResources.INSTANCE.help());
-      helpImage.setStylePrimaryName(RESOURCES.styles().configureRepositoriesImage());
-      reposHelpPanel_.add(helpImage);
-      HyperlinkLabel configureReposLink = new HyperlinkLabel(
-                                                   "Configuring Repositories");
-      configureReposLink.addStyleName(
-                           RESOURCES.styles().configureRepositoriesLink());
-      configureReposLink.addClickHandler(new ClickHandler() {
-         public void onClick(ClickEvent event)
-         {
-            globalDisplay_.openRStudioLink("configuring_repositories");
-         }  
-      });
-      reposHelpPanel_.add(configureReposLink);
-      installFromPanel.add(reposHelpPanel_);
-      installFromPanel.setCellHorizontalAlignment(
-                                        reposHelpPanel_, 
-                                        HasHorizontalAlignment.ALIGN_RIGHT);
+      reposCaption_ = new CaptionWithHelp("Install from:",
+                                          "Configuring Repositories",
+                                          "configuring_repositories");                               
+      reposCaption_.setWidth("100%");
+      mainPanel.add(reposCaption_);
       
-      mainPanel.add(installFromPanel);
       packageSourceListBox_ = new ListBox();
       packageSourceListBox_.setStylePrimaryName(
                            RESOURCES.styles().packageSourceListBox());
@@ -286,13 +265,13 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
    {
       if (installFromRepository())
       {
-         reposHelpPanel_.setVisible(true);
+         reposCaption_.setHelpVisible(true);
          sourcePanel_.setWidget(reposSourcePanel_);
          FocusHelper.setFocusDeferred(packagesSuggestBox_);
       }
       else
       {
-         reposHelpPanel_.setVisible(false);
+         reposCaption_.setHelpVisible(false);
          sourcePanel_.setWidget(archiveSourcePanel_);
          FocusHelper.setFocusDeferred(packageArchiveTextBox_);
       }
@@ -404,7 +383,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
    private final PackagesServerOperations server_;
    private final GlobalDisplay globalDisplay_;
    
-   private HorizontalPanel reposHelpPanel_;
+   private CaptionWithHelp reposCaption_;
    private ListBox packageSourceListBox_;
    
    private SimplePanel sourcePanel_;

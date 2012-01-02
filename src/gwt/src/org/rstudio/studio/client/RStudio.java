@@ -29,6 +29,7 @@ import org.rstudio.core.client.files.filedialog.FileDialogResources;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.ResizeGripper;
 import org.rstudio.core.client.widget.SlideLabel;
@@ -178,6 +179,7 @@ public class RStudio implements EntryPoint
       PreferencesDialog.ensureStylesInjected();
       ProjectPreferencesDialogResources.INSTANCE.styles().ensureInjected();
       LinkColumn.ensureStylesInjected();
+      CaptionWithHelp.ensureStylesInjected();
       CheckForUpdatesDialog.ensureStylesInjected();
       UnsavedChangesDialog.ensureStylesInjected();
       ChooseMirrorDialog.ensureStylesInjected();
