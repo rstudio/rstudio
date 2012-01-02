@@ -1511,6 +1511,15 @@ void svnShowFile(const json::JsonRpcRequest& request,
                boost::bind(svnShowFileEnd, cont, _1, _2));
 }
 
+Error getIgnores(const FilePath& filePath,
+                    core::system::ProcessResult* pResult)
+{
+   return runSvn(ShellArgs() << "propget" << "svn:ignore"
+                              << filePath << globalArgs(),
+                 true,
+                 pResult);
+}
+
 Error svnGetIgnores(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
@@ -1523,16 +1532,39 @@ Error svnGetIgnores(const json::JsonRpcRequest& request,
    FilePath filePath = module_context::resolveAliasedPath(path);
 
    core::system::ProcessResult result;
-   error = runSvn(ShellArgs() << "propget" << "svn:ignore"
-                              << filePath << globalArgs(),
-                  true,
-                  &result);
+   error = getIgnores(filePath, &result);
    if (error)
       return error;
 
   // success
    pResponse->setResult(processResultToJson(result));
    return Success();
+}
+
+Error setIgnores(const FilePath& filePath,
+                    const std::string& ignores,
+                    core::system::ProcessResult* pResult)
+{
+   // write the ignores to a temporary file
+   FilePath ignoresFile = module_context::tempFile("svn-ignore", "txt");
+   Error error = core::writeStringToFile(ignoresFile, ignores);
+   if (error)
+      return error;
+
+   // set them
+   error = runSvn(ShellArgs() << "propset" << "svn:ignore"
+                              << filePath << "-F" << ignoresFile
+                              << globalArgs(),
+                  true,
+                  pResult);
+
+   // always remove the temporary file
+   Error removeError = ignoresFile.remove();
+   if (removeError)
+      LOG_ERROR(error);
+
+   // return svn error status
+   return error;
 }
 
 Error svnSetIgnores(const json::JsonRpcRequest& request,
@@ -1549,35 +1581,15 @@ Error svnSetIgnores(const json::JsonRpcRequest& request,
    // resolve path
    FilePath filePath = module_context::resolveAliasedPath(path);
 
-   // write the ignores to a temporary file
-   FilePath ignoresFile = module_context::tempFile("svn-ignore", "txt");
-   error = core::writeStringToFile(ignoresFile, ignores);
-   if (error)
-      return error;
-
-   // set them
    core::system::ProcessResult result;
-   error = runSvn(ShellArgs() << "propset" << "svn:ignore"
-                              << filePath << "-F" << ignoresFile
-                              << globalArgs(),
-                  true,
-                  &result);
-
-   // always remove the temporary file
-   Error removeError = ignoresFile.remove();
-   if (removeError)
-      LOG_ERROR(error);
-
-   // check for error running svn
+   error = setIgnores(filePath, ignores, &result);
    if (error)
       return error;
 
-   // succeess
+   // success
    pResponse->setResult(processResultToJson(result));
    return Success();
 }
-
-
 
 Error checkout(const std::string& url,
                const std::string& username,
@@ -1683,7 +1695,6 @@ void SvnFileDecorationContext::decorateFile(const core::FilePath& filePath,
 
    (*pFileObject)["svn_status"] = jsonStatus;
 }
-
 
 Error initialize()
 {
