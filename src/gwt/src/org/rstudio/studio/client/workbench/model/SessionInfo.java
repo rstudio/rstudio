@@ -161,12 +161,7 @@ public class SessionInfo extends JavaScriptObject
       
       return false;
    }
-   
-   public native final boolean isSvnFeatureEnabled()  /*-{
-      return this.svn_feature_enabled;
-   }-*/;
-   
-   
+      
    public native final String getDefaultSSHKeyDir() /*-{
       return this.default_ssh_key_dir;
    }-*/;

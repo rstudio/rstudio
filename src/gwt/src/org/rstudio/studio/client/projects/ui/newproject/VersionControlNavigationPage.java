@@ -42,9 +42,7 @@ public class VersionControlNavigationPage
             new  ArrayList<WizardPage<FileSystemItem, NewProjectResult>>();
       
       pages.add(new GitPage());
-      
-      if (sessionInfo.isSvnFeatureEnabled())
-         pages.add(new SvnPage());
+      pages.add(new SvnPage());
       
       return pages;
    }

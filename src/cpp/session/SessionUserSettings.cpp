@@ -398,11 +398,6 @@ void UserSettings::setVcsUseGitBash(bool useGitBash)
    settings_.set("vcsUseGitBash", useGitBash);
 }
 
-bool UserSettings::svnEnabled() const
-{
-   return settings_.getBool("svnEnabled", false);
-}
-
 bool UserSettings::alwaysSaveHistory() const
 {
    return settings_.getBool(kAlwaysSaveHistory, true);

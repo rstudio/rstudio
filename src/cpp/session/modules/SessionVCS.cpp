@@ -241,8 +241,7 @@ core::Error initialize()
          return git::initializeGit(workingDir);
       return Success();
    }
-   else if (userSettings().svnEnabled() &&
-            (vcsOptions.vcsOverride == svn::kVcsId))
+   else if (vcsOptions.vcsOverride == svn::kVcsId)
    {
       if (svn::isSvnInstalled() && svn::isSvnDirectory(workingDir))
          return svn::initializeSvn(workingDir);
@@ -253,9 +252,7 @@ core::Error initialize()
    {
       return git::initializeGit(workingDir);
    }
-   else if (userSettings().svnEnabled() &&
-            svn::isSvnInstalled()
-            && svn::isSvnDirectory(workingDir))
+   else if (svn::isSvnInstalled() && svn::isSvnDirectory(workingDir))
    {
       return svn::initializeSvn(workingDir);
    }
