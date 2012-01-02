@@ -126,8 +126,7 @@ public class ConsoleProgressDialog extends ModalDialogBase
       style.setWidth(width, Unit.PX);
       
       display_.setMaxOutputLines(getMaxOutputLines());
-      if (Desktop.isDesktop() && BrowseCap.isWindows())
-         display_.setSuppressPendingInput(true);
+      display_.setSuppressPendingInput(true);
      
       if (getInteractionMode() != ConsoleProcessInfo.INTERACTION_NEVER)
       {
