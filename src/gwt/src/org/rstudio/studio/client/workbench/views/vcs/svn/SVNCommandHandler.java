@@ -26,11 +26,11 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
-import org.rstudio.studio.client.common.vcs.IgnoreDialog;
-import org.rstudio.studio.client.common.vcs.IgnoreStrategy;
 import org.rstudio.studio.client.common.vcs.ProcessResult;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.common.vcs.ignore.Ignore;
+import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
@@ -108,7 +108,7 @@ public class SVNCommandHandler
 
       if (paths.size() > 0)
       {
-         IgnoreDialog.show(paths, new IgnoreStrategy() {
+         IgnoreDialog.show(paths, new Ignore.Strategy() {
 
             @Override
             public String getCaption()

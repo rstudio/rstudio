@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.vcs;
+package org.rstudio.studio.client.common.vcs.ignore;
 
 import java.util.ArrayList;
 
@@ -22,10 +22,13 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
+import org.rstudio.studio.client.common.vcs.ProcessResult;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
+
+// TODO: ignore on directory should bring up ignores for THAT directory
 
 // TODO: test ignore on windows (CR/LF)
 
@@ -38,7 +41,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialo
 public class IgnoreDialog 
 {    
    public static void show(final ArrayList<String> paths,
-                           final IgnoreStrategy strategy)
+                           final Ignore.Strategy strategy)
    {
       // show progress
       final ProgressIndicator globalIndicator = new GlobalProgressDelayer(
@@ -139,7 +142,7 @@ public class IgnoreDialog
    // compute the new list of ignores based on the initial/existing
    // set of paths and path(s) the user wants to add
    private static IgnoreList createIgnoreList(ArrayList<String> paths,
-                                              IgnoreStrategy.Filter filter)   
+                                              Ignore.Strategy.Filter filter)   
    {
       if (paths.size() == 0)
          return null;

@@ -27,10 +27,10 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
-import org.rstudio.studio.client.common.vcs.IgnoreDialog;
-import org.rstudio.studio.client.common.vcs.IgnoreStrategy;
 import org.rstudio.studio.client.common.vcs.ProcessResult;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.common.vcs.ignore.Ignore;
+import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
@@ -106,7 +106,7 @@ public class GitPresenterCore
       ArrayList<String> paths = getPathArray(items);
       if (paths.size() > 0)
       {
-         IgnoreDialog.show(paths, new IgnoreStrategy() {
+         IgnoreDialog.show(paths, new Ignore.Strategy() {
 
             @Override
             public String getCaption()
@@ -115,9 +115,9 @@ public class GitPresenterCore
             }
             
             @Override
-            public Filter getFilter()
+            public Ignore.Strategy.Filter getFilter()
             {
-               return new Filter() {
+               return new Ignore.Strategy.Filter() {
                   @Override
                   public boolean includeFile(FileSystemItem file)
                   {
