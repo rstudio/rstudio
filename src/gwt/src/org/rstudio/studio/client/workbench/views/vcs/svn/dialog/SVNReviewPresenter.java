@@ -493,6 +493,12 @@ public class SVNReviewPresenter implements ReviewPresenter
    {
       commandHandler_.onVcsPull();
    }
+   
+   @Handler
+   public void onVcsIgnore()
+   {
+      commandHandler_.onVcsIgnore();
+   }
 
    private final Invalidation diffInvalidation_ = new Invalidation();
    private final SVNServerOperations server_;
