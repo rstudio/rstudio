@@ -24,8 +24,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-//TODO: SVN equivilant of augment gitignore
-
 //TODO: ignore on nothing should bring up ignore on root
 
 //TODO: ignore on directory should bring up ignores for THAT directory

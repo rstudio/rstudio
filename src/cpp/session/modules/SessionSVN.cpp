@@ -1696,6 +1696,54 @@ void SvnFileDecorationContext::decorateFile(const core::FilePath& filePath,
    (*pFileObject)["svn_status"] = jsonStatus;
 }
 
+Error augmentSvnIgnore()
+{
+   // check for existing svn:ignore
+   core::system::ProcessResult result;
+   Error error = getIgnores(s_workingDir, &result);
+   if (error)
+      return error;
+   if (result.exitStatus != EXIT_SUCCESS)
+   {
+      LOG_ERROR_MESSAGE(result.stdErr);
+      return Success();
+   }
+   std::string svnIgnore = boost::algorithm::trim_copy(result.stdOut);
+
+   // if it's empty then set our default
+   if (svnIgnore.empty())
+   {
+      // If no svn:ignore exists, add this stuff
+      svnIgnore += ".Rproj.user\n";
+      svnIgnore += ".Rhistory\n";
+      svnIgnore += ".RData\n";
+   }
+   else
+   {
+      // If svn:ignore exists, add .Rproj.user unless it's already there
+      if (boost::regex_search(svnIgnore, boost::regex("^\\.Rproj\\.user$")))
+         return Success();
+
+      bool addExtraNewline = svnIgnore.size() > 0
+                             && svnIgnore[svnIgnore.size() - 1] != '\n';
+      if (addExtraNewline)
+         svnIgnore += "\n";
+
+      svnIgnore += ".Rproj.user\n";
+   }
+
+   // write back svn:ignore
+   core::system::ProcessResult setResult;
+   error = setIgnores(s_workingDir, svnIgnore, &setResult);
+   if (error)
+      return error;
+
+   if (result.exitStatus != EXIT_SUCCESS)
+      LOG_ERROR_MESSAGE(result.stdErr);
+
+   return Success();
+}
+
 Error initialize()
 {
    initSvnBin();
@@ -1737,6 +1785,10 @@ Error initialize()
 Error initializeSvn(const core::FilePath& workingDir)
 {
    s_workingDir = workingDir;
+
+   Error error = augmentSvnIgnore();
+   if (error)
+      LOG_ERROR(error);
 
    std::string repoURL = repositoryRoot(s_workingDir);
    s_isSvnSshRepository = boost::algorithm::starts_with(repoURL, "svn+ssh");
