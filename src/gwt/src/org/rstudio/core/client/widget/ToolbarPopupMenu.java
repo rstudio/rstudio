@@ -112,7 +112,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       }
       public void execute()
       {
-         Scheduler.get().scheduleDeferred(coreCommand_);
+         Scheduler.get().scheduleFinally(coreCommand_);
          hide();
       }
    
