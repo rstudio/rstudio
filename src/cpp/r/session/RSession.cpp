@@ -579,32 +579,8 @@ int RReadConsole (const char *prompt,
          }
          else
          {
-            // determine the actual input to return to R (default to input
-            // recieved but can be distinct if we perform a shell escape)
+            // determine the input to return to R
             std::string rInput = consoleInput.text;
-
-            if (s_options.shellEscape)
-            {
-               if (rInput.length() > 1 && rInput[0] == '!')
-               {
-                     // extract, trim, and escape command
-                     std::string command = rInput.substr(1);
-                     boost::algorithm::trim(command);
-                     boost::algorithm::replace_all(command, "\\", "\\\\");
-                     boost::algorithm::replace_all(command, "\"", "\\\"");
-                     boost::algorithm::replace_all(command, "\n", "\\n");
-
-                     // warn if this is a !cd
-                     if (boost::algorithm::starts_with(command, "cd"))
-                     {
-                        r::exec::warning(
-                              "!cd does not change the R working directory");
-                     }
-
-                     // form revised input
-                     rInput = "system(\"" + command + "\")";
-               }
-            }
 
             // refresh source if necessary (no-op in production)
             r::sourceManager().reloadIfNecessary();

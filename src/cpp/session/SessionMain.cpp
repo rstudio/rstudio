@@ -2514,7 +2514,6 @@ int main (int argc, char * const argv[])
                               options.rCompatibleGraphicsEngineVersion();
       rOptions.serverMode = serverMode;
       rOptions.autoReloadSource = options.autoReloadSource();
-      rOptions.shellEscape = options.rShellEscape();
       rOptions.restoreWorkspace = restoreWorkspaceOption();
       rOptions.saveWorkspace = saveWorkspaceOption();
       

@@ -124,6 +124,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          "automatically create public folder");
 
    // r options
+   bool rShellEscape; // no longer works but don't want to break any
+                      // config files which formerly used it
+                      // TODO: eliminate this option entirely
    options_description r("r") ;
    r.add_options()
       ("r-core-source",
@@ -151,8 +154,8 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          value<std::string>(&rHelpCssFilePath_)->default_value("resources/R.css"),
          "Custom R.css file")
       ("r-shell-escape",
-         value<bool>(&rShellEscape_)->default_value(false),
-         "Support shell escape")
+         value<bool>(&rShellEscape)->default_value(false),
+         "Support shell escape (deprecated, no longer works)")
       ("r-home-dir-override",
          value<std::string>(&rHomeDirOverride_)->default_value(""),
          "Override for R_HOME (used for debug configurations)")

@@ -48,7 +48,6 @@ struct ROptions
          rCompatibleGraphicsEngineVersion(8),
          serverMode(false),
          autoReloadSource(false),
-         shellEscape(false),
          restoreWorkspace(true),
          saveWorkspace(SA_SAVEASK)
    {
@@ -68,7 +67,6 @@ struct ROptions
    int rCompatibleGraphicsEngineVersion;
    bool serverMode;
    bool autoReloadSource ;
-   bool shellEscape;
    bool restoreWorkspace;
    SA_TYPE saveWorkspace;
 };

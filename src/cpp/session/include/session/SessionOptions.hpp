@@ -147,11 +147,6 @@ public:
       return core::FilePath(rHelpCssFilePath_.c_str());
    }
 
-   bool rShellEscape() const
-   {
-      return rShellEscape_;
-   }
-
    std::string rHomeDirOverride()
    {
       return std::string(rHomeDirOverride_.c_str());
@@ -288,7 +283,6 @@ private:
    bool autoReloadSource_ ;
    int rCompatibleGraphicsEngineVersion_;
    std::string rHelpCssFilePath_;
-   bool rShellEscape_;
    std::string rHomeDirOverride_;
    std::string rDocDirOverride_;
    
