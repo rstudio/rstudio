@@ -493,30 +493,6 @@ Error initialize()
    }
 }
 
-std::string historyInputFilter(const std::string& input)
-{
-   // we added this late in the feature parity cycle so want to make sure
-   // there is no chance that it will result in an unexpected exception
-   try
-   {
-      // filter password command line parameters (e.g for svn)
-
-      if (input.find("--password") != std::string::npos)
-      {
-         const boost::regex pattern("--password[ =]+[\\\"A-Za-z0-9_]+");
-         return boost::regex_replace(input, pattern, "--password XXXXXXXX");
-      }
-      else
-      {
-         return input;
-      }
-   }
-   catch(...)
-   {
-      return input;
-   }
-}
-
 int RReadConsole (const char *prompt,
                   CONSOLE_BUFFER_CHAR* buf,
                   int buflen,
@@ -592,15 +568,12 @@ int RReadConsole (const char *prompt,
                rInput.resize(maxLen);
             std::string::size_type inputLen = rInput.length();
             
-            // see if we need to filter the input (e.g. to remove passwords)
-            std::string filteredInput = historyInputFilter(consoleInput.text);
-
             // add to console actions and history (if requested). note that
             // we add the user's input rather than any tranformed input we
             // created as a result of a shell escape
-            consoleActions().add(kConsoleActionInput, filteredInput);
+            consoleActions().add(kConsoleActionInput, consoleInput.text);
             if (addToHistory)
-               consoleHistory().add(filteredInput);
+               consoleHistory().add(consoleInput.text);
 
             // copy to buffer and add terminators
             rInput.copy( (char*)buf, maxLen);
