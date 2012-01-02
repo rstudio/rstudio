@@ -28,8 +28,6 @@ import com.google.inject.Provider;
 
 //TODO: ignore on directory should bring up ignores for THAT directory
 
-//TODO: test ignore on windows (CR/LF)
-
 public class Ignore
 {
    public interface Strategy
