@@ -36,6 +36,8 @@ import org.rstudio.studio.client.common.vcs.AskPassManager;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
+import org.rstudio.studio.client.common.vcs.ignore.Ignore;
+import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.server.Server;
@@ -165,6 +167,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Edit.Display.class).to(EditView.class);
       bind(GitPresenter.Display.class).to(GitPane.class);
       bind(SVNPresenter.Display.class).to(SVNPane.class);
+      bind(Ignore.Display.class).to(IgnoreDialog.class);
       bindTab("Workspace", WorkspaceTab.class);
       bindTab("History", HistoryTab.class);
       bindTab("Data", DataTab.class);

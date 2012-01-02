@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.vcs.git;
 import java.util.ArrayList;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -30,7 +31,6 @@ import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.ProcessResult;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.ignore.Ignore;
-import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
@@ -46,6 +46,7 @@ public class GitPresenterCore
    @Inject
    public GitPresenterCore(GitServerOperations server,
                            GitState gitState,
+                           Provider<Ignore> pIgnore,
                            final Commands commands,
                            Binder commandBinder,
                            EventBus eventBus,
@@ -55,6 +56,7 @@ public class GitPresenterCore
    {
       server_ = server;
       gitState_ = gitState;
+      pIgnore_ = pIgnore;
       
       commandBinder.bind(commands, this);
 
@@ -106,7 +108,7 @@ public class GitPresenterCore
       ArrayList<String> paths = getPathArray(items);
       if (paths.size() > 0)
       {
-         IgnoreDialog.show(paths, new Ignore.Strategy() {
+         pIgnore_.get().showDialog(paths, new Ignore.Strategy() {
 
             @Override
             public String getCaption()
@@ -153,4 +155,5 @@ public class GitPresenterCore
     
    private final GitServerOperations server_;
    private final GitState gitState_;
+   private final Provider<Ignore> pIgnore_;
 }

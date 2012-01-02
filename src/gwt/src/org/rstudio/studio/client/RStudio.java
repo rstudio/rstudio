@@ -42,6 +42,7 @@ import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
 import org.rstudio.studio.client.common.StudioResources;
 import org.rstudio.studio.client.common.mirrors.ChooseMirrorDialog;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
+import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
 import org.rstudio.studio.client.impl.BrowserFence;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
@@ -187,9 +188,10 @@ public class RStudio implements EntryPoint
       ViewFilePanel.ensureStylesInjected();
       CodeBrowserEditingTargetWidget.ensureStylesInjected();
       ShowPublicKeyDialog.ensureStylesInjected();
+      IgnoreDialog.ensureStylesInjected();
       WizardResources.INSTANCE.styles().ensureInjected();
       NewProjectResources.INSTANCE.styles().ensureInjected();
-     
+      
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");
    }

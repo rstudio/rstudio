@@ -30,7 +30,6 @@ import org.rstudio.studio.client.common.vcs.ProcessResult;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.ignore.Ignore;
-import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
@@ -67,9 +66,11 @@ public class SVNCommandHandler
    }
 
    @Inject
-   void initialize(Provider<SVNCommitDialog> pCommitDialog)
+   void initialize(Provider<SVNCommitDialog> pCommitDialog,
+                   Provider<Ignore> pIgnore)
    {
       pCommitDialog_ = pCommitDialog;
+      pIgnore_ = pIgnore;
    }
    
    public void setFilesCommandsEnabled(boolean enabled)
@@ -108,7 +109,7 @@ public class SVNCommandHandler
 
       if (paths.size() > 0)
       {
-         IgnoreDialog.show(paths, new Ignore.Strategy() {
+         pIgnore_.get().showDialog(paths, new Ignore.Strategy() {
 
             @Override
             public String getCaption()
@@ -320,4 +321,5 @@ public class SVNCommandHandler
    private final SVNState svnState_;
    private final VCSFileOpener vcsFileOpener_;
    private Provider<SVNCommitDialog> pCommitDialog_;
+   private Provider<Ignore> pIgnore_;
 }
