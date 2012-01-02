@@ -42,7 +42,6 @@ set (SESSION_SOURCE_FILES
    modules/SessionConsoleProcess.cpp
    modules/SessionContentUrls.cpp
    modules/SessionData.cpp
-   modules/SessionDiff.cpp
    modules/SessionFiles.cpp
    modules/SessionFilesListingMonitor.cpp
    modules/SessionFilesQuotas.cpp

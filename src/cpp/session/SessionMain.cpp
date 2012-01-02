@@ -88,7 +88,6 @@
 #include "modules/SessionConsole.hpp"
 #include "modules/SessionConsoleProcess.hpp"
 #include "modules/SessionCrypto.hpp"
-#include "modules/SessionDiff.hpp"
 #include "modules/SessionFiles.hpp"
 #include "modules/SessionWorkspace.hpp"
 #include "modules/SessionWorkbench.hpp"
@@ -1294,7 +1293,6 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
 #ifdef RSTUDIO_SERVER
       (modules::crypto::initialize)
 #endif
-      (modules::diff::initialize)
       (modules::files::initialize)
       (modules::workspace::initialize)
       (modules::workbench::initialize)
