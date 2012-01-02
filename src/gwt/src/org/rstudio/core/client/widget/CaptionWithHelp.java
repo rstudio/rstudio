@@ -31,15 +31,23 @@ import com.google.inject.Inject;
 
 public class CaptionWithHelp extends Composite
 {
+   public CaptionWithHelp(String caption, String helpCaption)
+   {
+      this(caption, helpCaption, null);
+   }
+   
    public CaptionWithHelp(String caption, 
                           String helpCaption,
                           final String rstudioLinkName)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
+      rstudioLinkName_ = rstudioLinkName;
+      
       HorizontalPanel panel = new HorizontalPanel();
       panel.setWidth("100%");
-      panel.add(new Label(caption));
+      captionLabel_ = new Label(caption);
+      panel.add(captionLabel_);
       helpPanel_ = new HorizontalPanel();
       Image helpImage = new Image(ThemeResources.INSTANCE.help());
       helpImage.setStylePrimaryName(styles.helpImage());
@@ -49,7 +57,9 @@ public class CaptionWithHelp extends Composite
       link.addClickHandler(new ClickHandler() {
          public void onClick(ClickEvent event)
          {
-            globalDisplay_.openRStudioLink(rstudioLinkName);
+            if (rstudioLinkName_ != null)
+               globalDisplay_.openRStudioLink(rstudioLinkName_,
+                                              includeVersionInfo_);
          }  
       });
       helpPanel_.add(link);
@@ -58,6 +68,21 @@ public class CaptionWithHelp extends Composite
                                        HasHorizontalAlignment.ALIGN_RIGHT);
           
       initWidget(panel);
+   }
+   
+   public void setCaption(String caption)
+   {
+      captionLabel_.setText(caption);
+   }
+   
+   public void setRStudioLinkName(String linkName)
+   {
+      rstudioLinkName_ = linkName;
+   }
+   
+   public void setIncludeVersionInfo(boolean include)
+   {
+      includeVersionInfo_ = include;
    }
    
    public void setHelpVisible(boolean visible)
@@ -90,6 +115,9 @@ public class CaptionWithHelp extends Composite
       styles.ensureInjected();
    }
    
+   private Label captionLabel_;
+   private String rstudioLinkName_;
+   private boolean includeVersionInfo_ = true;
    private HorizontalPanel helpPanel_;
    private GlobalDisplay globalDisplay_;
 }

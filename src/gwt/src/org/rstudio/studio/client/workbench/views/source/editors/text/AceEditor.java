@@ -908,6 +908,12 @@ public class AceEditor implements DocDisplay,
       int screenRow = getSession().documentToScreenRow(getCursorPosition());
       widget_.getEditor().scrollToRow(Math.max(0, screenRow - 4));
    }
+   
+   public void scrollToBottom()
+   { 
+      SourcePosition pos = SourcePosition.create(getCurrentLineCount()-1, 0);
+      navigate(pos, false);
+   }
 
    public JsArray<FunctionStart> getFunctionTree()
    {

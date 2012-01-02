@@ -131,7 +131,8 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       // source type
       reposCaption_ = new CaptionWithHelp("Install from:",
                                           "Configuring Repositories",
-                                          "configuring_repositories");                               
+                                          "configuring_repositories");  
+      reposCaption_.setIncludeVersionInfo(false);
       reposCaption_.setWidth("100%");
       mainPanel.add(reposCaption_);
       

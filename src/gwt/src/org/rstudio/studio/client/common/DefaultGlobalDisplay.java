@@ -314,14 +314,17 @@ public class DefaultGlobalDisplay extends GlobalDisplay
    }
    
    @Override
-   public void openRStudioLink(String linkName)
+   public void openRStudioLink(String linkName, boolean includeVersionInfo)
    {
       // build url
       final SessionInfo sessionInfo = session_.getSessionInfo();
       String url = "http://www.rstudio.org/links/" ;
       url += URL.encodePathSegment(linkName) ;
-      url += "?version=" + URL.encodeQueryString(sessionInfo.getRstudioVersion());
-      url += "&mode=" + URL.encodeQueryString(sessionInfo.getMode());
+      if (includeVersionInfo)
+      {
+         url += "?version=" + URL.encodeQueryString(sessionInfo.getRstudioVersion());
+         url += "&mode=" + URL.encodeQueryString(sessionInfo.getMode());
+      }
       
       // open window
       openWindow(url);

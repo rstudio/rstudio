@@ -12,26 +12,25 @@ import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.vcs.ProcessResult;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
+//TODO: SVN equivilant of augment gitignore
 
 //TODO: ignore on nothing should bring up ignore on root
 
 //TODO: ignore on directory should bring up ignores for THAT directory
 
 //TODO: test ignore on windows (CR/LF)
-
-//TODO: add explanatory text and link at top
-
-//TODO: add directory label at top; OR
-//TODO: add directory chooser at top (only way to edit existing)
-
-
 
 public class Ignore
 {
@@ -42,8 +41,12 @@ public class Ignore
          boolean includeFile(FileSystemItem file);
       }
       
-      String getCaption();
+      String getDialogCaption();
+      
+      String getIgnoresCaption();
 
+      String getHelpLinkName();
+      
       Filter getFilter();
       
       void getIgnores(String path, 
@@ -56,19 +59,34 @@ public class Ignore
    
    public interface Display
    {
-      void showDialog(String caption, String ignores);
-    
+      void setDialogCaption(String caption);
+      void setIgnoresCaption(String caption);
+      void setHelpLinkName(String helpLinkName);
       ProgressIndicator progressIndicator();
       HasClickHandlers saveButton();
-     
+      
+      void setCurrentPath(String path);
+      String getCurrentPath();
+      HandlerRegistration addPathChangedHandler(
+                                    ValueChangeHandler<String> handler);
+      
+      void setIgnored(String ignored);
       String getIgnored();
+      
+      void focusIgnored();
+      
+      void scrollToBottom();
+      
+      void showModal();
    }
    
    @Inject
    public Ignore(GlobalDisplay globalDisplay,
+                 Session session,
                  Provider<Display> pDisplay)
    {
       globalDisplay_ = globalDisplay;
+      session_ = session;
       pDisplay_ = pDisplay;
    }
    
@@ -91,7 +109,8 @@ public class Ignore
       }
         
       // get existing ignores
-      strategy.getIgnores(ignoreList.getPath(), 
+      final String fullPath = projPathToFullPath(ignoreList.getPath());
+      strategy.getIgnores(fullPath, 
                           new ServerRequestCallback<ProcessResult>() {
  
          @Override
@@ -99,12 +118,12 @@ public class Ignore
          {
             globalIndicator.onCompleted();
             
-            if (checkForProcessError(strategy.getCaption(), result))
+            if (checkForProcessError(strategy.getDialogCaption(), result))
                return;
                 
             // show the ignore dialog
             String ignored = getIgnored(ignoreList, result.getOutput());
-            showDialog(ignoreList.getPath(), ignored, strategy);
+            showDialog(fullPath, ignored, strategy);
          }
          
          @Override
@@ -121,6 +140,45 @@ public class Ignore
    {
       final Display display = pDisplay_.get();
       final ProgressIndicator indicator = display.progressIndicator();
+      
+      display.setDialogCaption(strategy.getDialogCaption());
+      display.setIgnoresCaption(strategy.getIgnoresCaption());
+      display.setHelpLinkName(strategy.getHelpLinkName());
+      display.setCurrentPath(initialPath);
+      display.setIgnored(ignores);
+      display.scrollToBottom();
+      
+      display.addPathChangedHandler(new ValueChangeHandler<String>() {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {  
+            display.setIgnored("");
+            
+            indicator.onProgress("Getting ignored files for path...");
+            
+            strategy.getIgnores(display.getCurrentPath(),
+                  new ServerRequestCallback<ProcessResult>() {
+
+               @Override
+               public void onResponseReceived(final ProcessResult result)
+               {
+                  indicator.clearProgress();
+
+                  if (checkForProcessError(strategy.getDialogCaption(), result))
+                     return;
+
+                  display.setIgnored(result.getOutput());
+                  display.focusIgnored();
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  indicator.onError(error.getUserMessage());
+               }});
+            }
+      });
+      
       display.saveButton().addClickHandler(new ClickHandler() {
 
          @Override
@@ -129,7 +187,7 @@ public class Ignore
             indicator.onProgress("Setting ignored files for path...");
             
             strategy.setIgnores(
-                  initialPath, 
+                  display.getCurrentPath(), 
                   display.getIgnored(), 
                   new ServerRequestCallback<ProcessResult>() {
 
@@ -137,7 +195,7 @@ public class Ignore
                public void onResponseReceived(ProcessResult result)
                {
                   indicator.onCompleted();
-                  checkForProcessError(strategy.getCaption(), result);
+                  checkForProcessError(strategy.getDialogCaption(), result);
                }
                      
                @Override
@@ -150,7 +208,14 @@ public class Ignore
          }   
       });
       
-      display.showDialog(strategy.getCaption(), ignores);
+      display.showModal();
+   }
+   
+   private String projPathToFullPath(String projPath)
+   {
+      FileSystemItem projDir = session_.getSessionInfo().getActiveProjectDir();
+      return projPath.length() > 0 ? projDir.completePath(projPath) :
+                                     projDir.getPath();
    }
    
    // compute the new list of ignores based on the initial/existing
@@ -200,7 +265,7 @@ public class Ignore
          else
             ignored.add(path.substring(thisParent.length() + 1));
       }
-      
+            
       return new IgnoreList(parentPath, ignored);
    }
    
@@ -260,6 +325,7 @@ public class Ignore
    }
    
    private final GlobalDisplay globalDisplay_;
+   private final Session session_;
    private final Provider<Display> pDisplay_;
    
 }

@@ -96,7 +96,13 @@ public abstract class GlobalDisplay extends MessageDisplay
 
    public abstract void openEmailComposeWindow(String to, String subject);
    
-   public abstract void openRStudioLink(String linkName);
+   public void openRStudioLink(String linkName)
+   {
+      openRStudioLink(linkName, true);
+   }
+   
+   public abstract void openRStudioLink(String linkName, 
+                                        boolean includeVersionInfo);
 
    /**
     * Shows a non-modal progress message. Execute the returned command

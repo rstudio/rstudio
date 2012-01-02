@@ -13,13 +13,16 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.theme.res.ThemeResources;
 
-public class TextBoxWithButton extends Composite 
+public class TextBoxWithButton extends Composite
+                               implements HasValueChangeHandlers<String>
 {
    public TextBoxWithButton(String label, String action, ClickHandler handler)
    {
@@ -64,8 +67,9 @@ public class TextBoxWithButton extends Composite
    public HandlerRegistration addValueChangeHandler(
                                     ValueChangeHandler<String> handler)
    {
-      return textBox_.addValueChangeHandler(handler);
+      return addHandler(handler, ValueChangeEvent.getType());
    }
+  
    
    public void focusButton()
    {
@@ -89,6 +93,8 @@ public class TextBoxWithButton extends Composite
          textBox_.setText(text);
       else
          textBox_.setText(emptyLabel_);
+      
+      ValueChangeEvent.fire(this, getText());
    }
 
    public String getText()

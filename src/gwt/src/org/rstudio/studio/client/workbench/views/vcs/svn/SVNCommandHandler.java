@@ -112,9 +112,21 @@ public class SVNCommandHandler
          pIgnore_.get().showDialog(paths, new Ignore.Strategy() {
 
             @Override
-            public String getCaption()
+            public String getDialogCaption()
             {
                return "SVN Ignore";
+            }
+            
+            @Override
+            public String getIgnoresCaption()
+            {
+               return "svn:ignore";
+            }
+            
+            @Override
+            public String getHelpLinkName()
+            {
+               return "svn_ignore_help";
             }
 
             @Override

@@ -111,9 +111,21 @@ public class GitPresenterCore
          pIgnore_.get().showDialog(paths, new Ignore.Strategy() {
 
             @Override
-            public String getCaption()
+            public String getDialogCaption()
             {
                return "Git Ignore";
+            }
+            
+            @Override
+            public String getIgnoresCaption()
+            {
+               return ".gitignore";
+            }
+            
+            @Override
+            public String getHelpLinkName()
+            {
+               return "git_ignore_help";
             }
             
             @Override

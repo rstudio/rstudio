@@ -1494,8 +1494,8 @@ Error vcsGetIgnores(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // resolve path to .gitignore
-   FilePath filePath = projects::projectContext().directory().childPath(path);
+   // resolve path
+   FilePath filePath = module_context::resolveAliasedPath(path);
    FilePath gitIgnorePath = filePath.complete(".gitignore");
 
    // setup result (default to empty)
@@ -1527,8 +1527,8 @@ Error vcsSetIgnores(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // resolve path to gitignore
-   FilePath filePath = projects::projectContext().directory().childPath(path);
+   // resolve path
+   FilePath filePath = module_context::resolveAliasedPath(path);
    FilePath gitIgnorePath = filePath.complete(".gitignore");
 
    // write the .gitignore file
