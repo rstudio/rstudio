@@ -191,6 +191,17 @@ BOOL capture_console_output(HANDLE hConsoleOut, std::string* pOutput)
       {
          return false;
       }
+
+      // Remove trailing spaces
+      std::string::iterator trimPos = pOutput->end();
+      while (trimPos != pOutput->begin())
+      {
+         if (*(trimPos-1) != ' ')
+            break;
+         trimPos--;
+      }
+      pOutput->erase(trimPos, pOutput->end());
+
       pOutput->push_back('\r');
       pOutput->push_back('\n');
    }
