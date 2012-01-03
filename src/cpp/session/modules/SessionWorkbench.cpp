@@ -375,6 +375,18 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    return Success();
 }
 
+template <typename T>
+void ammendShellPaths(T* pTarget)
+{
+   std::string gitBinDir = git::nonPathGitBinDir();
+   if (!gitBinDir.empty())
+      core::system::addToPath(pTarget, gitBinDir);
+
+   std::string svnBinDir = svn::nonPathSvnBinDir();
+   if (!svnBinDir.empty())
+      core::system::addToPath(pTarget, svnBinDir);
+}
+
 Error getTerminalOptions(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
@@ -405,9 +417,14 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
 
 #endif
 
+   // append shell paths as appropriate
+   std::string extraPathEntries;
+   ammendShellPaths(&extraPathEntries);
+
    optionsJson["terminal_path"] = terminalPath.absolutePath();
    optionsJson["working_directory"] =
                   module_context::shellWorkingDirectory().absolutePath();
+   optionsJson["extra_path_entries"] = extraPathEntries;
    pResponse->setResult(optionsJson);
 
    return Success();
@@ -499,15 +516,8 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    core::system::setenv(&shellEnv, "GIT_EDITOR", s_editFileCommand);
    core::system::setenv(&shellEnv, "SVN_EDITOR", s_editFileCommand);
 
-   // add custom git path if necessary
-   std::string gitBinDir = git::nonPathGitBinDir();
-   if (!gitBinDir.empty())
-      core::system::addToPath(&shellEnv, gitBinDir);
-
-   // add custom svn path if necessary
-   std::string svnBinDir = svn::nonPathSvnBinDir();
-   if (!svnBinDir.empty())
-      core::system::addToPath(&shellEnv, svnBinDir);
+   // ammend shell paths as appropriate
+   ammendShellPaths(&shellEnv);
 
    // set options
    core::system::ProcessOptions options;

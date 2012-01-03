@@ -28,6 +28,7 @@
 
 #include <core/FilePath.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 
 #include "DesktopAboutDialog.hpp"
 #include "DesktopOptions.hpp"
@@ -718,8 +719,15 @@ void GwtCallback::openProjectInNewWindow(QString projectFilePath)
 }
 
 void GwtCallback::openTerminal(QString terminalPath,
-                               QString workingDirectory)
+                               QString workingDirectory,
+                               QString extraPathEntries)
 {
+   // append extra path entries to our path before launching
+   std::string path = core::system::getenv("PATH");
+   std::string previousPath = path;
+   core::system::addToPath(&path, extraPathEntries.toStdString());
+   core::system::setenv("PATH", path);
+
 #if defined(Q_WS_MACX)
 
    // call Terminal.app with an applescript that navigates it
@@ -775,6 +783,9 @@ void GwtCallback::openTerminal(QString terminalPath,
    }
 
 #endif
+
+   // restore previous path
+   core::system::setenv("PATH", previousPath);
 }
 
 

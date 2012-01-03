@@ -107,7 +107,8 @@ public slots:
    void openProjectInNewWindow(QString projectFilePath);
 
    void openTerminal(QString terminalPath,
-                     QString workingDirectory);
+                     QString workingDirectory,
+                     QString extraPathEntries);
 
 private:
    void doAction(QKeySequence::StandardKey key);

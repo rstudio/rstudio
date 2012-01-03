@@ -60,6 +60,10 @@ void setenv(Options* pEnvironment,
 void unsetenv(Options* pEnvironment,
               const std::string& name);
 
+// add to the PATH within a string
+void addToPath(std::string* pPath,
+               const std::string& filePath);
+
 // add to the PATH within an Options struture
 void addToPath(Options* pEnvironment,
                const std::string& filePath);
