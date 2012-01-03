@@ -10,4 +10,7 @@ You can obtain the source code for the latest version of RStudio at:
 
   https://github.com/rstudio/rstudio/
 
+RStudio for Windows includes a binary copy of GNU DiffUtils. You can
+obtain the source code for GNU DiffUtils at:
 
+    http://ftp.gnu.org/gnu/diffutils/

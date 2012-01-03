@@ -18,7 +18,7 @@ used by these components are included below):
 - CPackRPM.cmake 
 - tree.hh
 - Solarized for TextMate
-- GNU Diffutils
+- GNU DiffUtils
 
 
 GNU GPL Version 3
