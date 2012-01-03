@@ -1199,6 +1199,9 @@ void historyEnd(boost::function<void(Error, const std::string&)> callback,
    if (!error && result.exitStatus != EXIT_SUCCESS && !result.stdErr.empty())
       LOG_ERROR_MESSAGE(result.stdErr);
 
+   if (error)
+      LOG_ERROR(error);
+
    callback(error, result.stdOut);
 }
 
@@ -1424,6 +1427,7 @@ void svnShowEnd(bool noSizeWarning,
 
    if (error)
    {
+      LOG_ERROR(error);
       cont(error, &response);
       return;
    }
@@ -1472,6 +1476,7 @@ void svnShowFileEnd(const json::JsonRpcFunctionContinuation& cont,
 
    if (error)
    {
+      LOG_ERROR(error);
       cont(error, &response);
       return;
    }

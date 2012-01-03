@@ -37,6 +37,7 @@ public class SVNHistoryStrategy implements HistoryStrategy
    {
       server_ = server;
       dataProvider_ = dataProvider;
+      dataProvider_.setHistoryStrategy(this);
       vcsState_ = vcsState;
    }
 
@@ -150,6 +151,12 @@ public class SVNHistoryStrategy implements HistoryStrategy
    public DiffParser createParserForCommit(String commitDiff)
    {
       return new SVNDiffParser(commitDiff);
+   }
+   
+   @Override
+   public boolean getShowHistoryErrors()
+   { 
+      return false;
    }
 
    private int parseRevision(String revision)

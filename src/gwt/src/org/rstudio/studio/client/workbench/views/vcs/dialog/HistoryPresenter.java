@@ -32,6 +32,8 @@ import com.google.gwt.view.client.RangeChangeEvent.Handler;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.TimeBufferedCommand;
@@ -275,7 +277,15 @@ public class HistoryPresenter
                      @Override
                      public void onError(ServerError error)
                      {
-                        indicator.onError(error.getUserMessage());
+                        if (strategy_.getShowHistoryErrors())
+                        {
+                           indicator.onError(error.getUserMessage());
+                        }
+                        else
+                        {
+                           indicator.onCompleted();
+                           Debug.logError(error);
+                        }
                      }
 
                   });
@@ -334,8 +344,10 @@ public class HistoryPresenter
                   JSONNumber size = error.getClientInfo().isNumber();
                   if (size != null)
                      view_.showSizeWarning((long) size.doubleValue());
-                  else
+                  else if (strategy_.getShowHistoryErrors())
                      super.onError(error);
+                  else
+                     Debug.logError(error);
                }
             });
    }

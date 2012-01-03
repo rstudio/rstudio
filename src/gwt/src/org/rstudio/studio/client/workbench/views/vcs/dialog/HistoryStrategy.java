@@ -56,4 +56,6 @@ public interface HistoryStrategy
    boolean getAutoSelectFirstRow();
 
    DiffParser createParserForCommit(String commitDiff);
+   
+   boolean getShowHistoryErrors();
 }

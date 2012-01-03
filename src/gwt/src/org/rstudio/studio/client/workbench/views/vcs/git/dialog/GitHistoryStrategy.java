@@ -38,6 +38,7 @@ public class GitHistoryStrategy implements HistoryStrategy
    {
       server_ = server;
       dataProvider_ = dataProvider;
+      dataProvider_.setHistoryStrategy(this);
       pVcsState_ = pVcsState;
    }
 
@@ -146,6 +147,12 @@ public class GitHistoryStrategy implements HistoryStrategy
    public DiffParser createParserForCommit(String commitDiff)
    {
       return new UnifiedParser(commitDiff);
+   }
+   
+   @Override
+   public boolean getShowHistoryErrors()
+   {
+      return true;
    }
 
    private final GitServerOperations server_;

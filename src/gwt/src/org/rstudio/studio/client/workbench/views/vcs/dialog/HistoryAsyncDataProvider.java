@@ -35,6 +35,11 @@ public abstract class HistoryAsyncDataProvider extends AsyncDataProvider<CommitI
       searchText_ = new Value<String>("");
       fileFilter_ = new Value<FileSystemItem>(null);
    }
+   
+   public void setHistoryStrategy(HistoryStrategy strategy)
+   {
+      strategy_ = strategy;
+   }
 
    @Override
    public void addDataDisplay(HasData<CommitInfo> display)
@@ -112,7 +117,10 @@ public abstract class HistoryAsyncDataProvider extends AsyncDataProvider<CommitI
                   {
                      display.setVisibleRangeAndClearData(new Range(start, 0), true);
                   }
-                  super.onError(error);
+                  if (strategy_.getShowHistoryErrors())
+                     super.onError(error);
+                  else
+                     Debug.logError(error);
                }
             });
    }
@@ -134,4 +142,5 @@ public abstract class HistoryAsyncDataProvider extends AsyncDataProvider<CommitI
    private String rev_;
    private HasValue<String> searchText_;
    private HasValue<FileSystemItem> fileFilter_;
+   private HistoryStrategy strategy_;
 }
