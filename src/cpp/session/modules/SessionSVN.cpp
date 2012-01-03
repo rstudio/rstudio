@@ -173,15 +173,6 @@ ShellCommand svn()
    return ShellCommand(exePath);
 }
 
-
-#ifdef _WIN32
-std::string svnBin()
-{
-   return FilePath(s_svnExePath).absolutePathNative();
-}
-#endif
-
-
 Error runSvn(const ShellArgs& args,
              const FilePath& workingDir,
              bool redirectStdErrToStdOut,
