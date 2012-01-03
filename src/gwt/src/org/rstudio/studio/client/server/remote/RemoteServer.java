@@ -1407,6 +1407,14 @@ public class RemoteServer implements Server
       params.set(1, JSONBoolean.getInstance(remember));
       sendRequest(RPC_SCOPE, ASKPASS_COMPLETED, params, true, requestCallback);
    }
+   
+   @Override
+   public void createSshKey(CreateKeyOptions options,
+                            ServerRequestCallback<CreateKeyResult> request)
+   {
+      sendRequest(RPC_SCOPE, CREATE_SSH_KEY, options, request);
+   }
+   
 
    @Override
    public void gitSshPublicKey(String privateKeyPath,
@@ -2545,6 +2553,7 @@ public class RemoteServer implements Server
    private static final String GIT_PUSH = "git_push";
    private static final String GIT_PULL = "git_pull";
    private static final String ASKPASS_COMPLETED = "askpass_completed";
+   private static final String CREATE_SSH_KEY = "create_ssh_key";
    private static final String GIT_SSH_PUBLIC_KEY = "git_ssh_public_key";
    private static final String GIT_HAS_REPO = "git_has_repo";
    private static final String GIT_INIT_REPO = "git_init_repo";

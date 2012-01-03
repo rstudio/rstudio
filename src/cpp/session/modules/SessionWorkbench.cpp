@@ -51,6 +51,12 @@
 #include <R_ext/RStartup.h>
 extern "C" SA_TYPE SaveAction;
 
+#include "config.h"
+#ifdef RSTUDIO_SERVER
+#include <core/system/Crypto.hpp>
+#endif
+
+
 using namespace core;
 
 namespace session {
@@ -436,6 +442,96 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error createSshKey(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   std::string path, type, passphrase;
+   Error error = json::readObjectParam(request.params, 0,
+                                       "path", &path,
+                                       "type", &type,
+                                       "passphrase", &passphrase);
+   if (error)
+      return error;
+
+#ifdef RSTUDIO_SERVER
+   // In server mode, passphrases are encrypted
+   using namespace core::system::crypto;
+   error = rsaPrivateDecrypt(passphrase, &passphrase);
+   if (error)
+      return error;
+#endif
+
+   // verify that the path doesn't already exist
+   FilePath sshKeyPath = module_context::resolveAliasedPath(path);
+   FilePath sshPublicKeyPath = sshKeyPath.parent().complete(
+                                             sshKeyPath.stem() + ".pub");
+   if (sshKeyPath.exists() || sshPublicKeyPath.exists())
+   {
+      json::Object resultJson;
+      resultJson["failed_key_exists"] = true;
+      pResponse->setResult(resultJson);
+      return Success();
+   }
+
+   // compose a shell command to create the key
+   shell_utils::ShellCommand cmd("ssh-keygen");
+
+   // type
+   cmd << "-t" << type;
+
+   // passphrase (optional)
+   cmd << "-N";
+   if (!passphrase.empty())
+      cmd << passphrase;
+   else
+      cmd << std::string("");
+
+   // path
+   cmd << "-f" << sshKeyPath;
+
+   // process options
+   core::system::ProcessOptions options;
+
+   // detach the session so there is no terminal
+#ifndef _WIN32
+   options.detachSession = true;
+#endif
+
+   // customize the environment on Win32
+#ifdef _WIN32
+   core::system::Options childEnv;
+   core::system::environment(&childEnv);
+
+   // set HOME to USERPROFILE
+   std::string userProfile = core::system::getenv(childEnv, "USERPROFILE");
+   core::system::setenv(&childEnv, "HOME", userProfile);
+
+   // add msys_ssh to path
+   core::system::addToPath(&childEnv,
+                           session::options().msysSshPath().absolutePath());
+
+   options.environment = childEnv;
+#endif
+
+   // run it
+   core::system::ProcessResult result;
+   error = runCommand(shell_utils::sendStdErrToStdOut(cmd),
+                      options,
+                      &result);
+   if (error)
+      return error;
+
+   // return exit code and output
+   json::Object resultJson;
+   resultJson["failed_key_exists"] = false;
+   resultJson["exit_status"] = result.exitStatus;
+   resultJson["output"] = result.stdOut;
+   pResponse->setResult(resultJson);
+   return Success();
+}
+
+
+
 // path edit file postback script (provided as GIT_EDITOR and SVN_EDITOR)
 std::string s_editFileCommand;
 
@@ -674,6 +770,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_r_prefs", getRPrefs))
       (bind(registerRpcMethod, "set_cran_mirror", setCRANMirror))
       (bind(registerRpcMethod, "get_terminal_options", getTerminalOptions))
+      (bind(registerRpcMethod, "create_ssh_key", createSshKey))
       (bind(registerRpcMethod, "start_shell_dialog", startShellDialog));
    return initBlock.execute();
 }

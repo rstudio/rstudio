@@ -22,6 +22,9 @@ public interface VCSServerOperations extends CryptoServerOperations
    void askpassCompleted(String value, boolean remember,
          ServerRequestCallback<Void> requestCallback);
    
+   void createSshKey(CreateKeyOptions options,
+                     ServerRequestCallback<CreateKeyResult> requestCallback);
+   
    void vcsClone(VcsCloneOptions options,
                  ServerRequestCallback<ConsoleProcess> requestCallback);
 
