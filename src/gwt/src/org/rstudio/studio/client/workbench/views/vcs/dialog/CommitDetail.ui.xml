@@ -27,6 +27,15 @@
       .detailPanel {
          width: 100%;
       }
+      .emptySelectionLabel {
+         width: 100%;
+         height: 48px;
+         margin-top: 80px;
+         font-size: 130%;
+         font-weight: bold;
+         color: #AAA;
+         text-align: center;
+      }
       .progressPanel {
          width: 100%;
          height: 48px;
@@ -34,34 +43,42 @@
       }
    </ui:style>
 
-   <g:HTMLPanel visible="false">
-      <table class="{style.summary}" cellspacing="0" cellpadding="0">
-         <tr>
-            <td><g:Label ui:field="labelIdDesc_" /></td>
-            <td><g:Label ui:field="labelId_" /></td>
-         </tr>
-         <tr>
-            <td>Author</td>
-            <td><g:Label ui:field="labelAuthor_" /></td>
-         </tr>
-         <tr>
-            <td>Date</td>
-            <td><g:Label ui:field="labelDate_" /></td>
-         </tr>
-         <tr>
-            <td>Subject</td>
-            <td class="{style.subject}"><g:Label ui:field="labelSubject_" /></td>
-         </tr>
-         <tr ui:field="parentTableRow_">
-            <td>Parent</td>
-            <td><g:Label ui:field="labelParent_" /></td>
-         </tr>
-      </table>
-      <hist:SizeWarningWidget ui:field="sizeWarning_"/>
-      <g:VerticalPanel ui:field="tocPanel_" styleName="{style.toc}" />
-      <widget:ProgressPanel ui:field="progressPanel_" visible="false"
-                            styleName="{style.progressPanel}"/>
-      <g:VerticalPanel ui:field="detailPanel_" styleName="{style.detailPanel}" />
-   </g:HTMLPanel>
+   <g:FlowPanel>
+      <g:Label ui:field="emptySelectionLabel_"
+               styleName="{style.emptySelectionLabel}"
+               text="(No commit selected)"/>
+
+      <g:HTMLPanel ui:field="commitViewPanel_" visible="false">
+         <table class="{style.summary}" cellspacing="0" cellpadding="0">
+            <tr>
+               <td><g:Label ui:field="labelIdDesc_" /></td>
+               <td><g:Label ui:field="labelId_" /></td>
+            </tr>
+            <tr>
+               <td>Author</td>
+               <td><g:Label ui:field="labelAuthor_" /></td>
+            </tr>
+            <tr>
+               <td>Date</td>
+               <td><g:Label ui:field="labelDate_" /></td>
+            </tr>
+            <tr>
+               <td>Subject</td>
+               <td class="{style.subject}"><g:Label ui:field="labelSubject_" /></td>
+            </tr>
+            <tr ui:field="parentTableRow_">
+               <td>Parent</td>
+               <td><g:Label ui:field="labelParent_" /></td>
+            </tr>
+         </table>
+         <hist:SizeWarningWidget ui:field="sizeWarning_"/>
+         <g:VerticalPanel ui:field="tocPanel_" styleName="{style.toc}" />
+         <g:VerticalPanel ui:field="detailPanel_" styleName="{style.detailPanel}" />
+
+         <widget:ProgressPanel ui:field="progressPanel_" visible="false"
+                               styleName="{style.progressPanel}"/>
+
+      </g:HTMLPanel>
+   </g:FlowPanel>
 
 </ui:UiBinder>

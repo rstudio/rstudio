@@ -69,7 +69,9 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
       commit_ = commit;
       if (commit_ != null)
          updateInfo();
-      setVisible(commit_ != null);
+
+      commitViewPanel_.setVisible(commit_ != null);
+      emptySelectionLabel_.setVisible(!(commit_ != null));
    }
 
    @Override
@@ -250,6 +252,11 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    SizeWarningWidget sizeWarning_;
    @UiField
    TableRowElement parentTableRow_;
+   @UiField
+   Label emptySelectionLabel_;
+   @UiField
+   HTMLPanel commitViewPanel_;
+
    private ScrollPanel container_;
    
 }
