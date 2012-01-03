@@ -1,3 +1,15 @@
+/*
+ * Ignore.java
+ *
+ * Copyright (C) 2009-11 by RStudio, Inc.
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 package org.rstudio.studio.client.common.vcs.ignore;
 
 import java.util.ArrayList;
@@ -23,10 +35,6 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-
-//TODO: ignore on nothing should bring up ignore on root
-
-//TODO: ignore on directory should bring up ignores for THAT directory
 
 public class Ignore
 {
@@ -86,7 +94,14 @@ public class Ignore
       pDisplay_ = pDisplay;
    }
    
-   public void showDialog(ArrayList<String> paths,
+   public void showDialog(ArrayList<String> paths, Strategy strategy)
+   {
+      IgnoreList ignoreList = createIgnoreList(paths, strategy.getFilter());
+      if (ignoreList != null)
+         showDialog(ignoreList, strategy);
+   }
+   
+   public void showDialog(final IgnoreList ignoreList,
                           final Strategy strategy)
    {
       // show progress
@@ -95,15 +110,6 @@ public class Ignore
                        500,
                        "Getting ignored files for path...").getIndicator();
       
-      // derive an ignore list
-      final IgnoreList ignoreList = createIgnoreList(paths, 
-                                                     strategy.getFilter());
-      if (ignoreList == null)
-      {
-         globalIndicator.onCompleted();
-         return;
-      }
-        
       // get existing ignores
       final String fullPath = projPathToFullPath(ignoreList.getPath());
       strategy.getIgnores(fullPath, 
@@ -305,23 +311,7 @@ public class Ignore
          return false;
       }
    }
-
-   
-   private class IgnoreList
-   {
-      public IgnoreList(String path, ArrayList<String> files)
-      {
-         path_ = path;
-         files_ = files;
-      }
-      
-      public String getPath() { return path_; }
-      public ArrayList<String> getFiles() { return files_; }
-      
-      private final String path_;
-      private final ArrayList<String> files_;
-   }
-   
+  
    private final GlobalDisplay globalDisplay_;
    private final Session session_;
    private final Provider<Display> pDisplay_;
