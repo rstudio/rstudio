@@ -236,6 +236,49 @@ BOOL write_to_handle(const std::string& output, HANDLE hOutput)
    return true;
 }
 
+bool isNotSpace(char c)
+{
+   return c != ' ';
+}
+
+std::string calcDifference(const std::string& current,
+                           const std::string& prev)
+{
+   std::string::const_iterator itCur = current.begin(), itPrev = prev.begin();
+   for (;
+        itCur != current.end() && itPrev != prev.end() && *itCur == *itPrev;
+        itCur++, itPrev++)
+   {
+   }
+
+   if (itPrev == prev.end())
+   {
+      // Entire prefix matched--good!
+      return std::string(itCur, current.end());
+   }
+
+   if (std::find_if(itPrev, prev.end(), isNotSpace) != prev.end())
+   {
+      // Significant (non-space) part of prev was not found in current.
+      // Send \f which causes the screen to clear, then the entire current
+      // snapshot.
+      return "\f" + current;
+   }
+
+   // If we got here, current starts with prev except for the end of prev which
+   // consists only of spaces.
+
+   if (itCur != current.end() && (*itCur == '\r' || *itCur == '\n'))
+   {
+      // We'll accept newline as a substitute for those spaces, this is common
+      // due to trimming which occurs on all lines but the last one when
+      // capturing console output.
+      return std::string(itCur, current.end());
+   }
+
+   return "\f" + current;
+}
+
 void transferStdInToConsole(HANDLE hConIn)
 {
    HANDLE hStdIn = ::GetStdHandle(STD_INPUT_HANDLE);
@@ -253,7 +296,6 @@ void transferStdInToConsole(HANDLE hConIn)
 
 void transferConsoleOutToStdErr(HANDLE hConOut)
 {
-   std::string ff("\f"); // form feed instructs client to clear screen
    std::string lastKnownConsoleContents;
    std::string output;
    while (true)
@@ -272,10 +314,8 @@ void transferConsoleOutToStdErr(HANDLE hConOut)
          continue;
       }
 
-      std::string valueToWrite =
-            boost::algorithm::starts_with(output, lastKnownConsoleContents) ?
-               output.substr(lastKnownConsoleContents.size()) :
-               ff + output;
+      std::string valueToWrite = calcDifference(output,
+                                                lastKnownConsoleContents);
 
       if (valueToWrite.empty())
          continue;
