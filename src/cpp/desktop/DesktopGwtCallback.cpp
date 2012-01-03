@@ -756,10 +756,18 @@ void GwtCallback::openTerminal(QString terminalPath,
    }
    else
    {
+      // set HOME to USERPROFILE so msys ssh can find our keys
+      std::string previousHome = core::system::getenv("HOME");
+      std::string userProfile = core::system::getenv("USERPROFILE");
+      core::system::setenv("HOME", userProfile);
+
+      // run the process
       QProcess::startDetached(QString::fromAscii("cmd.exe"),
                               QStringList(),
                               resolveAliasedPath(workingDirectory));
 
+      // revert to previous home
+      core::system::setenv("HOME", previousHome);
    }
 
 
