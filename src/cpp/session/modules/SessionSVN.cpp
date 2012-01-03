@@ -1543,8 +1543,8 @@ Error svnGetIgnores(const json::JsonRpcRequest& request,
 }
 
 Error setIgnores(const FilePath& filePath,
-                    const std::string& ignores,
-                    core::system::ProcessResult* pResult)
+                 const std::string& ignores,
+                 core::system::ProcessResult* pResult)
 {
    // write the ignores to a temporary file
    FilePath ignoresFile = module_context::tempFile("svn-ignore", "txt");
