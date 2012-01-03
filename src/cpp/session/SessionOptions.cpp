@@ -187,7 +187,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
        "Path to consoleio executable")
       ("external-gnudiff-path",
        value<std::string>(&gnudiffPath_)->default_value("bin/gnudiff"),
-       "Path to gnudiff utilities");
+       "Path to gnudiff utilities")
+      ("external-msysssh-path",
+       value<std::string>(&msysSshPath_)->default_value("bin/msys_ssh"),
+       "Path to msys_ssh utilities");;
    
    // user options (default user identity to current username)
    std::string currentUsername = core::system::username();
@@ -292,6 +295,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 #ifdef _WIN32
    resolvePath(resourcePath, &consoleIoPath_);
    resolvePath(resourcePath, &gnudiffPath_);
+   resolvePath(resourcePath, &msysSshPath_);
 #endif
 
    // shared secret with parent

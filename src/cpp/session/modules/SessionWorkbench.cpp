@@ -378,13 +378,19 @@ Error getRPrefs(const json::JsonRpcRequest& request,
 template <typename T>
 void ammendShellPaths(T* pTarget)
 {
+   // non-path git bin dir
    std::string gitBinDir = git::nonPathGitBinDir();
    if (!gitBinDir.empty())
       core::system::addToPath(pTarget, gitBinDir);
 
+   // non-path svn bin dir
    std::string svnBinDir = svn::nonPathSvnBinDir();
    if (!svnBinDir.empty())
       core::system::addToPath(pTarget, svnBinDir);
+
+   // msys_ssh path
+   core::system::addToPath(pTarget,
+                           session::options().msysSshPath().absolutePath());
 }
 
 Error getTerminalOptions(const json::JsonRpcRequest& request,

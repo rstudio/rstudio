@@ -725,6 +725,15 @@ Section "-Core installation"
 @CPACK_NSIS_CREATE_ICONS_EXTRA@
   CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
 
+  ;
+  ; RSTUDIO CHANGE - add shortcut to SSH Command Prompt
+  ;
+  CreateShortCut "$INSTDIR\bin\msys_ssh\SSH Command Prompt.lnk" \
+                 "$WINDIR\system32\cmd.exe" \
+                 "/K $\"$INSTDIR\bin\msys_ssh\ssh-console.bat$\"" \
+                 "$WINDIR\system32\cmd.exe" 0 \
+                 SW_SHOWNORMAL
+  
   ;Read a value from an InstallOptions INI file
   !insertmacro MUI_INSTALLOPTIONS_READ $DO_NOT_ADD_TO_PATH "NSIS.InstallOptions.ini" "Field 2" "State"
   !insertmacro MUI_INSTALLOPTIONS_READ $ADD_TO_PATH_ALL_USERS "NSIS.InstallOptions.ini" "Field 3" "State"

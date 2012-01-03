@@ -226,9 +226,12 @@ if (NOT RSTUDIO_SESSION_WIN64)
       endif()
    endif()
 
-   # install gnudiff tools on windows
+   # install gnudiff and mysys_ssh tools on windows
    if(WIN32)
       install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/gnudiff"
+              USE_SOURCE_PERMISSIONS
+              DESTINATION  ${RSTUDIO_INSTALL_BIN})
+      install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/msys_ssh"
               USE_SOURCE_PERMISSIONS
               DESTINATION  ${RSTUDIO_INSTALL_BIN})
    endif()

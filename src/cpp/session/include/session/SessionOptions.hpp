@@ -182,6 +182,11 @@ public:
    {
       return core::FilePath(gnudiffPath_.c_str());
    }
+
+   core::FilePath msysSshPath() const
+   {
+      return core::FilePath(msysSshPath_.c_str());
+   }
    
    // user info
    std::string userIdentity() const 
@@ -296,6 +301,7 @@ private:
    std::string rpostbackPath_;
    std::string consoleIoPath_;
    std::string gnudiffPath_;
+   std::string msysSshPath_;
 
    // user info
    std::string userIdentity_;

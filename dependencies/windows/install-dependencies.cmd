@@ -14,6 +14,7 @@ set GIN_FILE=gin-1.5.zip
 set GWT_FILE=gwt-2.4.0.zip
 set JUNIT_FILE=junit-4.9b3.jar
 set GNUDIFF_FILE=gnudiff.zip
+set MSYS_SSH_FILE=msys_ssh.zip
 
 if not exist boost-win (
   wget %WGET_ARGS% "%BASEURL%%BOOST_FILE%"
@@ -35,6 +36,14 @@ if not exist gnudiff (
   echo Unzipping %GNUDIFF_FILE%
   unzip %UNZIP_ARGS% "%GNUDIFF_FILE%" -d gnudiff
   del "%GNUDIFF_FILE%"
+)
+
+if not exist msys_ssh (
+  wget %WGET_ARGS% "%BASEURL%%MSYS_SSH_FILE%"
+  mkdir msys_ssh
+  echo Unzipping %MSYS_SSH_FILE%
+  unzip %UNZIP_ARGS% "%MSYS_SSH_FILE%" -d msys_ssh
+  del "%MSYS_SSH_FILE%"
 )
 
 mkdir ..\..\src\gwt\lib

@@ -128,10 +128,13 @@ core::system::ProcessOptions procOptions(bool requiresSsh)
                            session::options().gnudiffPath().absolutePath());
 #endif
 
-   // on windows add git bin dir to path (for ssh.exe) if this is an ssh repo
+   // on windows add msys_ssh to the path if we need ssh
 #ifdef _WIN32
    if (requiresSsh)
-      addGitBinDirToPath(&childEnv);
+   {
+      core::system::addToPath(&childEnv,
+                              session::options().msysSshPath().absolutePath());
+   }
 #endif
 
    if (!s_workingDir.empty())
