@@ -13,7 +13,6 @@
 package org.rstudio.studio.client.common.shell;
 
 
-import com.google.gwt.user.client.Window;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
