@@ -1218,6 +1218,8 @@ void history(int rev,
 
    if (rev > 0)
       args << "-r" << boost::lexical_cast<std::string>(rev) + ":1";
+   else
+      args << "-r" << "HEAD:1";
 
    if (!fileFilter.empty())
       args << fileFilter;
