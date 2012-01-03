@@ -106,52 +106,50 @@ public class SVNCommandHandler
    public void onVcsIgnore()
    {
       ArrayList<String> paths = getPathArray();
+      
+      pIgnore_.get().showDialog(paths, new Ignore.Strategy() {
 
-      if (paths.size() > 0)
-      {
-         pIgnore_.get().showDialog(paths, new Ignore.Strategy() {
+         @Override
+         public String getDialogCaption()
+         {
+            return "SVN Ignore";
+         }
+         
+         @Override
+         public String getIgnoresCaption()
+         {
+            return "svn:ignore";
+         }
+         
+         @Override
+         public String getHelpLinkName()
+         {
+            return "svn_ignore_help";
+         }
 
-            @Override
-            public String getDialogCaption()
-            {
-               return "SVN Ignore";
-            }
-            
-            @Override
-            public String getIgnoresCaption()
-            {
-               return "svn:ignore";
-            }
-            
-            @Override
-            public String getHelpLinkName()
-            {
-               return "svn_ignore_help";
-            }
+         @Override
+         public Filter getFilter()
+         {
+            return null;
+         }
 
-            @Override
-            public Filter getFilter()
-            {
-               return null;
-            }
+         
+         @Override
+         public void getIgnores(String path,
+               ServerRequestCallback<ProcessResult> requestCallback)
+         {
+            server_.svnGetIgnores(path, requestCallback);
+         }
 
-            
-            @Override
-            public void getIgnores(String path,
-                  ServerRequestCallback<ProcessResult> requestCallback)
-            {
-               server_.svnGetIgnores(path, requestCallback);
-            }
-
-            @Override
-            public void setIgnores(String path, String ignores,
-                  ServerRequestCallback<ProcessResult> requestCallback)
-            {
-               server_.svnSetIgnores(path, ignores, requestCallback);
-            }
-            
-         });
-      }
+         @Override
+         public void setIgnores(String path, String ignores,
+               ServerRequestCallback<ProcessResult> requestCallback)
+         {
+            server_.svnSetIgnores(path, ignores, requestCallback);
+         }
+         
+      });
+      
    }
    
    @Handler

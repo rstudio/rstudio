@@ -86,7 +86,7 @@ public class Ignore
       pDisplay_ = pDisplay;
    }
    
-   public void showDialog(final ArrayList<String> paths,
+   public void showDialog(ArrayList<String> paths,
                           final Strategy strategy)
    {
       // show progress
@@ -219,9 +219,11 @@ public class Ignore
    private IgnoreList createIgnoreList(ArrayList<String> paths,
                                        Ignore.Strategy.Filter filter)   
    {
+      // special case for empty path list -- make the project root the 
+      // parent path and return an empty list
       if (paths.size() == 0)
-         return null;
-      
+         return new IgnoreList("", new ArrayList<String>());
+       
       // get the parent path of the first element
       FileSystemItem firstPath = FileSystemItem.createFile(paths.get(0));
       String parentPath = firstPath.getParentPathString();

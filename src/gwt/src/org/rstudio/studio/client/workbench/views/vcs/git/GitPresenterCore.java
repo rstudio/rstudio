@@ -106,55 +106,54 @@ public class GitPresenterCore
    public void onVcsIgnore(ArrayList<StatusAndPath> items)
    {
       ArrayList<String> paths = getPathArray(items);
-      if (paths.size() > 0)
-      {
-         pIgnore_.get().showDialog(paths, new Ignore.Strategy() {
+     
+      pIgnore_.get().showDialog(paths, new Ignore.Strategy() {
 
-            @Override
-            public String getDialogCaption()
-            {
-               return "Git Ignore";
-            }
-            
-            @Override
-            public String getIgnoresCaption()
-            {
-               return ".gitignore";
-            }
-            
-            @Override
-            public String getHelpLinkName()
-            {
-               return "git_ignore_help";
-            }
-            
-            @Override
-            public Ignore.Strategy.Filter getFilter()
-            {
-               return new Ignore.Strategy.Filter() {
-                  @Override
-                  public boolean includeFile(FileSystemItem file)
-                  {
-                     return !file.getName().equals(".gitignore");
-                  }
-               };
-            }
+         @Override
+         public String getDialogCaption()
+         {
+            return "Git Ignore";
+         }
+         
+         @Override
+         public String getIgnoresCaption()
+         {
+            return ".gitignore";
+         }
+         
+         @Override
+         public String getHelpLinkName()
+         {
+            return "git_ignore_help";
+         }
+         
+         @Override
+         public Ignore.Strategy.Filter getFilter()
+         {
+            return new Ignore.Strategy.Filter() {
+               @Override
+               public boolean includeFile(FileSystemItem file)
+               {
+                  return !file.getName().equals(".gitignore");
+               }
+            };
+         }
 
-            @Override
-            public void getIgnores(String path,
-                  ServerRequestCallback<ProcessResult> requestCallback)
-            {
-               server_.gitGetIgnores(path, requestCallback);
-            }
+         @Override
+         public void getIgnores(String path,
+               ServerRequestCallback<ProcessResult> requestCallback)
+         {
+            server_.gitGetIgnores(path, requestCallback);
+         }
 
-            @Override
-            public void setIgnores(String path, String ignores,
-                  ServerRequestCallback<ProcessResult> requestCallback)
-            {
-               server_.gitSetIgnores(path, ignores, requestCallback);
-            }
-         });
-      }
+         @Override
+         public void setIgnores(String path, String ignores,
+               ServerRequestCallback<ProcessResult> requestCallback)
+         {
+            server_.gitSetIgnores(path, ignores, requestCallback);
+         }
+      });
+      
    }
    
    private ArrayList<String> getPathArray(ArrayList<StatusAndPath> items)
