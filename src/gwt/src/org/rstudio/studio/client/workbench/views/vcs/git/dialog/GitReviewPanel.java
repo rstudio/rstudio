@@ -268,6 +268,8 @@ public class GitReviewPanel extends ResizeComposite implements Display
       diffToolbar_.addStyleName(RES.styles().toolbar());
       diffToolbar_.addStyleName(RES.styles().diffToolbar());
 
+      toolbarWrapper_.setCellWidth(diffToolbar_, "100%");
+
       stageAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
             "Stage All", RES.stage(), (ClickHandler) null));
       diffToolbar_.addLeftSeparator();
@@ -630,6 +632,10 @@ public class GitReviewPanel extends ResizeComposite implements Display
    CheckBox commitIsAmend_;
    @UiField
    ScrollPanel diffScroll_;
+   @UiField
+   FlowPanel diffViewOptions_;
+   @UiField
+   HorizontalPanel toolbarWrapper_;
 
    private ListBoxAdapter listBoxAdapter_;
 
