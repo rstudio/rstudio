@@ -1506,7 +1506,9 @@ Error vcsGetIgnores(const json::JsonRpcRequest& request,
    // read the file if it exists
    if (gitIgnorePath.exists())
    {
-      Error error = core::readStringFromFile(gitIgnorePath, &result.stdOut);
+      Error error = core::readStringFromFile(gitIgnorePath,
+                                             &result.stdOut,
+                                             string_utils::LineEndingPosix);
       if (error)
          return error;
    }
@@ -1532,7 +1534,9 @@ Error vcsSetIgnores(const json::JsonRpcRequest& request,
    FilePath gitIgnorePath = filePath.complete(".gitignore");
 
    // write the .gitignore file
-   error = core::writeStringToFile(gitIgnorePath, ignores);
+   error = core::writeStringToFile(gitIgnorePath,
+                                   ignores,
+                                   string_utils::LineEndingNative);
    if (error)
       return error;
 
