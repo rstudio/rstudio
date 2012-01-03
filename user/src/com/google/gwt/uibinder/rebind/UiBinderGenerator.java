@@ -163,7 +163,8 @@ public class UiBinderGenerator extends Generator {
     MessagesWriter messages = new MessagesWriter(oracle, BINDER_URI, logger,
         templatePath, interfaceType.getPackage().getName(), implName);
 
-    boolean useLazyWidgetBuilders = useLazyWidgetBuilders(logger, propertyOracle);
+    boolean useLazyWidgetBuilders =
+        useLazyWidgetBuilders(logger, propertyOracle) && !designTime.isDesignTime();
     FieldManager fieldManager = new FieldManager(oracle, logger, useLazyWidgetBuilders);
 
     UiBinderWriter uiBinderWriter = new UiBinderWriter(interfaceType, implName,
