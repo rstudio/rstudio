@@ -24,6 +24,13 @@ public class DoubleClickState
 {
    public boolean checkForDoubleClick(NativeEvent event)
    {
+      if (event.getButton() != NativeEvent.BUTTON_LEFT)
+      {
+         lastClickPos_ = null;
+         lastClickTime_ = null;
+         return false;
+      }
+
       Date now = new Date();
 
       if (!isDoubleClick(event, now))
