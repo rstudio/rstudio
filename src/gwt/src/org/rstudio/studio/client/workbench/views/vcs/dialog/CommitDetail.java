@@ -167,7 +167,13 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
          }
       });
    }
-   
+
+   @Override
+   public void setCommitListIsLoading(boolean isLoading)
+   {
+      emptySelectionLabel_.setText(isLoading ? "" : "(No commit selected)");
+   }
+
    @Override
    public HandlerRegistration addViewFileRevisionHandler(
                                              ViewFileRevisionHandler handler)

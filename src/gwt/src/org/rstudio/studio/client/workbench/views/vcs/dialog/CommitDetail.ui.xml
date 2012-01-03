@@ -44,9 +44,9 @@
    </ui:style>
 
    <g:FlowPanel>
+      <!-- Text will be dynamically set to "(No commit selected)" -->
       <g:Label ui:field="emptySelectionLabel_"
-               styleName="{style.emptySelectionLabel}"
-               text="(No commit selected)"/>
+               styleName="{style.emptySelectionLabel}"/>
 
       <g:HTMLPanel ui:field="commitViewPanel_" visible="false">
          <table class="{style.summary}" cellspacing="0" cellpadding="0">

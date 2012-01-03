@@ -20,6 +20,8 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.json.client.JSONNumber;
+import com.google.gwt.user.cellview.client.LoadingStateChangeEvent;
+import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
@@ -94,6 +96,9 @@ public class HistoryPresenter
       HandlerRegistration addRangeChangeHandler(
             RangeChangeEvent.Handler handler);
 
+      HandlerRegistration addLoadingStateChangeHandler(
+            LoadingStateChangeEvent.Handler handler);
+
       CommitInfo getSelectedCommit();
 
       void clearSelection();
@@ -107,6 +112,7 @@ public class HistoryPresenter
       void clearDetails();
       void showDetailProgress();
       void setDetails(DiffParser unifiedParser, boolean suppressViewLink);
+      void setCommitListIsLoading(boolean isLoading);
       
       HandlerRegistration addViewFileRevisionHandler(
                                           ViewFileRevisionHandler handler);
@@ -164,6 +170,15 @@ public class HistoryPresenter
          public void onRangeChange(RangeChangeEvent event)
          {
             view_.getCommitList().clearSelection();
+         }
+      });
+      view_.getCommitList().addLoadingStateChangeHandler(new LoadingStateChangeEvent.Handler()
+      {
+         @Override
+         public void onLoadingStateChanged(LoadingStateChangeEvent event)
+         {
+            view_.getCommitDetail().setCommitListIsLoading(
+                  event.getLoadingState() == LoadingState.LOADING);
          }
       });
 
