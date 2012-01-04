@@ -28,7 +28,10 @@ public class ShellPane extends ShellWidget implements Shell.Display
       super(editor);
       
       editor.setFileType(FileTypeRegistry.R, true);
-      
+      // Setting file type to R changes the wrap mode to false. We want it to
+      // be true so that the console input can wrap.
+      editor.setUseWrapMode(true);
+
       uiPrefs.syntaxColorConsole().bind(new CommandWithArg<Boolean>()
       {
          public void execute(Boolean arg)
