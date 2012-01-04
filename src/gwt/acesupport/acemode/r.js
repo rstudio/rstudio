@@ -32,6 +32,7 @@ define("mode/r", function(require, exports, module)
 
    var Mode = function(suppressHighlighting, doc)
    {
+      TextMode.call(this);
       if (suppressHighlighting)
          this.$tokenizer = new Tokenizer(new TextHighlightRules().getRules());
       else

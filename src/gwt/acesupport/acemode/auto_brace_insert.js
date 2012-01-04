@@ -123,40 +123,6 @@ define("mode/auto_brace_insert", function(require, exports, module)
                 token.column === pos.column-1;
       };
 
-      this.wrapRemoveLeft = function(editor, __removeLeft)
-      {
-         if (!this.insertMatching) {
-            __removeLeft.call(editor);
-            return;
-         }
-
-         if (editor.$readOnly)
-            return;
-
-         var secondaryDeletion = null;
-         if (editor.selection.isEmpty()) {
-            editor.selection.selectLeft();
-            var text = editor.session.getDocument().getTextRange(editor.selection.getRange());
-            if (this.$reOpen.test(text))
-            {
-               var nextCharRng = Range.fromPoints(editor.selection.getRange().end, {
-                  row: editor.selection.getRange().end.row,
-                  column: editor.selection.getRange().end.column + 1
-               });
-               var nextChar = editor.session.getDocument().getTextRange(nextCharRng);
-               if (nextChar == this.$complements[text])
-               {
-                  secondaryDeletion = editor.getSelectionRange();
-               }
-            }
-         }
-
-         editor.session.remove(editor.getSelectionRange());
-         if (secondaryDeletion)
-            editor.session.remove(secondaryDeletion);
-         editor.clearSelection();
-      };
-
       this.$moveLeft = function(doc, pos)
       {
          if (pos.row == 0 && pos.column == 0)
@@ -193,6 +159,46 @@ define("mode/auto_brace_insert", function(require, exports, module)
          else
             return {row: row, column: col};
       };
+
+      this.$attachBehavioursIfNeeded = function() {
+         if (this.$autoBraceInsertBehaviorsAttached)
+            return;
+
+         this.$autoBraceInsertBehaviorsAttached = true;
+
+         this.$behaviour.add('auto_insert', 'deletion',
+                             function(state, action, editor, session, range) {
+            if (!this.insertMatching) {
+               return false;
+            }
+
+            if (editor.getReadOnly())
+               return false;
+
+            var text = session.getDocument().getTextRange(range);
+            if (this.$reOpen.test(text))
+            {
+               var nextCharRng = Range.fromPoints(range.end, {
+                  row: editor.selection.getRange().end.row,
+                  column: editor.selection.getRange().end.column + 1
+               });
+               var nextChar = session.getDocument().getTextRange(nextCharRng);
+               if (nextChar == this.$complements[text])
+               {
+                  return Range.fromPoints(range.start, nextCharRng.end);
+               }
+            }
+
+            return false;
+         });
+      };
+
+      var __transformAction = this.transformAction;
+      this.transformAction = function(state, action, editor, session, param) {
+         this.$attachBehavioursIfNeeded();
+         return __transformAction.apply(this, arguments);
+      };
+
    }).call(TextMode.prototype);
 
    exports.setInsertMatching = function(insertMatching) {

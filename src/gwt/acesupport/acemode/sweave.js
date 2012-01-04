@@ -26,6 +26,7 @@ var RCodeModel = require("mode/r_code_model").RCodeModel;
 var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
 
 var Mode = function(suppressHighlighting, doc) {
+   TextMode.call(this);
 	if (suppressHighlighting)
     	this.$tokenizer = new Tokenizer(new TextHighlightRules().getRules());
 	else

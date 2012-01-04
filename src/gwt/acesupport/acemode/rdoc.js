@@ -25,6 +25,7 @@ var RDocHighlightRules = require("mode/rdoc_highlight_rules").RDocHighlightRules
 var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
 
 var Mode = function(suppressHighlighting) {
+   TextMode.call(this);
 	if (suppressHighlighting)
     	this.$tokenizer = new Tokenizer(new TextHighlightRules().getRules());
 	else
