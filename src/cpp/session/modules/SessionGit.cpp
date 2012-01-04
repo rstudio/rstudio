@@ -258,6 +258,12 @@ boost::function<bool(CommitInfo)> createSearchTextPredicate(
    return boost::bind(commitIsMatch, results, _1);
 }
 
+bool isUntracked(const source_control::StatusResult& statusResult,
+                 const FilePath& filePath)
+{
+   return statusResult.getStatus(filePath).status() == "??";
+}
+
 class Git : public boost::noncopyable
 {
 private:
@@ -411,9 +417,19 @@ public:
 
    core::Error discard(const std::vector<FilePath>& filePaths)
    {
-      std::vector<std::string> args;
-      args.push_back("-f"); // don't fail on unmerged entries
-      return runGit(ShellArgs() << "checkout" << "-f" << "--" << filePaths);
+      source_control::StatusResult statusResult;
+      Error error = status(root_, &statusResult);
+      if (error)
+         return error;
+
+      std::vector<FilePath> trackedPaths;
+      std::remove_copy_if(filePaths.begin(),
+                          filePaths.end(),
+                          std::back_inserter(trackedPaths),
+                          boost::bind(isUntracked, statusResult, _1));
+
+      // -f means don't fail on unmerged entries
+      return runGit(ShellArgs() << "checkout" << "-f" << "--" << trackedPaths);
    }
 
    core::Error stage(const std::vector<FilePath> &filePaths)
@@ -1227,10 +1243,10 @@ Error vcsRevert(const json::JsonRpcRequest& request,
 
    error = s_git_.unstage(resolveAliasedPaths(paths, true, true));
    if (error)
-      return error;
+      LOG_ERROR(error);
    error = s_git_.discard(resolveAliasedPaths(paths, true, false));
    if (error)
-      return error;
+      LOG_ERROR(error);
 
    return Success();
 }
