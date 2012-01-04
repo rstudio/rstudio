@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 
@@ -31,38 +32,64 @@ class ScrollImpl {
    */
   static class ScrollImplTrident extends ScrollImpl {
 
+    private static JavaScriptObject scrollHandler;
+
+    private static JavaScriptObject resizeHandler;
+
+    /**
+     * Creates static, leak-safe scroll/resize handlers.
+     */
+    private static native void initStaticHandlers() /*-{
+      // caches last scroll position
+      @com.google.gwt.user.client.ui.ScrollImpl.ScrollImplTrident::scrollHandler = function() {
+        var scrollableElem = $wnd.event.srcElement;
+        scrollableElem.__lastScrollTop = scrollableElem.scrollTop;
+        scrollableElem.__lastScrollLeft = scrollableElem.scrollLeft;
+      };
+      // watches for resizes that should fire a fake scroll event
+      @com.google.gwt.user.client.ui.ScrollImpl.ScrollImplTrident::resizeHandler = function() {
+        var scrollableElem = $wnd.event.srcElement;
+        if (scrollableElem.__isScrollContainer) {
+          scrollableElem = scrollableElem.parentNode;
+        }
+        // Give the browser a chance to fire a native scroll event before synthesizing one.
+        setTimeout($entry(function() {
+          // Trigger a synthetic scroll event if the scroll position changes.
+          if (scrollableElem.scrollTop != scrollableElem.__lastScrollTop ||
+              scrollableElem.scrollLeft != scrollableElem.__lastScrollLeft) {
+            // Update scroll positions.
+            scrollableElem.__lastScrollTop = scrollableElem.scrollTop;
+            scrollableElem.__lastScrollLeft = scrollableElem.scrollLeft;
+            @com.google.gwt.user.client.ui.ScrollImpl.ScrollImplTrident::triggerScrollEvent(Lcom/google/gwt/dom/client/Element;)
+              (scrollableElem);
+          }
+        }), 1);
+      };
+    }-*/;
+
     private static void triggerScrollEvent(Element elem) {
       elem.dispatchEvent(Document.get().createScrollEvent());
+    }
+
+    ScrollImplTrident() {
+      initStaticHandlers();
     }
 
     @Override
     public native void initialize(Element scrollable, Element container) /*-{
       // Remember the last scroll position.
-      var scrollableElem = scrollable;
-      scrollableElem.__lastScrollTop = scrollableElem.__lastScrollLeft = 0;
-      var scrollHandler = $entry(function() {
-        scrollableElem.__lastScrollTop = scrollableElem.scrollTop;
-        scrollableElem.__lastScrollLeft = scrollableElem.scrollLeft;
-      });
-      scrollable.attachEvent('onscroll', scrollHandler);
+      scrollable.__lastScrollTop = scrollable.__lastScrollLeft = 0;
+      scrollable.attachEvent('onscroll',
+        @com.google.gwt.user.client.ui.ScrollImpl.ScrollImplTrident::scrollHandler);
 
       // Detect if the scrollable element or the container within it changes
       // size, either of which could affect the scroll position.
-      var resizeHandler = $entry(function() {
-        // Give the browser a chance to fire a native scroll event before
-        // synthesizing one. 
-        setTimeout($entry(function() {
-          // Trigger a synthetic scroll event if the scroll position changes.
-          if (scrollableElem.scrollTop != scrollableElem.__lastScrollTop ||
-              scrollableElem.scrollLeft != scrollableElem.__lastScrollLeft) {
-            scrollHandler(); // Update scroll positions.
-            @com.google.gwt.user.client.ui.ScrollImpl.ScrollImplTrident::triggerScrollEvent(Lcom/google/gwt/dom/client/Element;)
-              (scrollableElem);
-          }
-        }), 1);
-      });
-      scrollable.attachEvent('onresize', resizeHandler);
-      container.attachEvent('onresize', resizeHandler);
+      scrollable.attachEvent('onresize',
+        @com.google.gwt.user.client.ui.ScrollImpl.ScrollImplTrident::resizeHandler);
+      container.attachEvent('onresize',
+        @com.google.gwt.user.client.ui.ScrollImpl.ScrollImplTrident::resizeHandler);
+      // use boolean (primitive, won't leak) hint to resizeHandler that its the container
+      container.__isScrollContainer = true;
     }-*/;
 
     @Override
