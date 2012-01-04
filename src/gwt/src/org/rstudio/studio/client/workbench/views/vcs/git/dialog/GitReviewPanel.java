@@ -426,6 +426,13 @@ public class GitReviewPanel extends ResizeComposite implements Display
    }
 
    @Override
+   public void setShowActions(boolean showActions)
+   {
+      diffToolbar_.setVisible(showActions);
+      lines_.setShowActions(showActions);
+   }
+
+   @Override
    public void setData(ArrayList<ChunkOrLine> lines, PatchMode patchMode)
    {
       int vscroll = diffScroll_.getVerticalScrollPosition();

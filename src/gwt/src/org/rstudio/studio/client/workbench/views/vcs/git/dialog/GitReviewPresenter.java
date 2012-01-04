@@ -111,6 +111,8 @@ public class GitReviewPresenter implements ReviewPresenter
                            Command openSelectedCommand);
       
       void onShow();
+
+      void setShowActions(boolean showActions);
    }
 
    private class ApplyPatchClickHandler implements ClickHandler, Command
@@ -527,7 +529,11 @@ public class GitReviewPresenter implements ReviewPresenter
                            public void onProcessExit(ProcessExitEvent event)
                            {
                               if (event.getExitCode() == 0)
+                              {
                                  view_.getCommitMessage().setText("");
+                                 if (view_.getCommitIsAmend().getValue())
+                                    view_.getCommitIsAmend().setValue(false);
+                              }
                            }
                         });
                         new ConsoleProgressDialog(proc, server_).showModal();
@@ -670,8 +676,9 @@ public class GitReviewPresenter implements ReviewPresenter
                         allLines.add(new ChunkOrLine(line));
                   }
 
-                  view_.getLineTableDisplay().setShowActions(
-                        !"??".equals(item.getStatus()));
+                  view_.setShowActions(
+                        !"??".equals(item.getStatus()) &&
+                        !"UU".equals(item.getStatus()));
                   view_.setData(allLines, patchMode);
                }
 
