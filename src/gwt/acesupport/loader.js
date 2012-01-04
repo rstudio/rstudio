@@ -34,12 +34,12 @@ var RStudioEditor = function(renderer, session) {
 oop.inherits(RStudioEditor, Editor);
 
 (function() {
-   this.removeLeft = function() {
-      if (this.session.getMode().wrapRemoveLeft) {
-         return this.session.getMode().wrapRemoveLeft(this, Editor.prototype.removeLeft);
+   this.remove = function(dir) {
+      if (this.session.getMode().wrapRemove) {
+         return this.session.getMode().wrapRemove(this, Editor.prototype.remove, dir);
       }
       else {
-         return Editor.prototype.removeLeft.call(this);
+         return Editor.prototype.remove.call(this, dir);
       }
    };
 

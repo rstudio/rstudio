@@ -123,38 +123,33 @@ define("mode/auto_brace_insert", function(require, exports, module)
                 token.column === pos.column-1;
       };
 
-      this.wrapRemoveLeft = function(editor, __removeLeft)
+      this.wrapRemove = function(editor, __remove, dir)
       {
-         if (!this.insertMatching) {
-            __removeLeft.call(editor);
-            return;
+         var cursor = editor.selection.getCursor();
+         var doc = editor.session.getDocument();
+
+         // Here are some easy-to-spot reasons why it might be impossible for us
+         // to need our special deletion logic.
+         if (!this.insertMatching ||
+             dir != "left" ||
+             !editor.selection.isEmpty() ||
+             editor.$readOnly ||
+             cursor.column == 0 ||     // hitting backspace at the start of line
+             doc.getLine(cursor.row).length <= cursor.column) {
+
+            return __remove.call(editor, dir);
          }
 
-         if (editor.$readOnly)
-            return;
+         var leftRange = Range.fromPoints(this.$moveLeft(doc, cursor), cursor);
+         var rightRange = Range.fromPoints(cursor, this.$moveRight(doc, cursor));
+         var leftText = doc.getTextRange(leftRange);
 
-         var secondaryDeletion = null;
-         if (editor.selection.isEmpty()) {
-            editor.selection.selectLeft();
-            var text = editor.session.getDocument().getTextRange(editor.selection.getRange());
-            if (this.$reOpen.test(text))
-            {
-               var nextCharRng = Range.fromPoints(editor.selection.getRange().end, {
-                  row: editor.selection.getRange().end.row,
-                  column: editor.selection.getRange().end.column + 1
-               });
-               var nextChar = editor.session.getDocument().getTextRange(nextCharRng);
-               if (nextChar == this.$complements[text])
-               {
-                  secondaryDeletion = editor.getSelectionRange();
-               }
-            }
-         }
+         var deleteRight = this.$reOpen.test(leftText) &&
+                           this.$complements[leftText] == doc.getTextRange(rightRange);
 
-         editor.session.remove(editor.getSelectionRange());
-         if (secondaryDeletion)
-            editor.session.remove(secondaryDeletion);
-         editor.clearSelection();
+         __remove.call(editor, dir);
+         if (deleteRight)
+            __remove.call(editor, 'right');
       };
 
       this.$moveLeft = function(doc, pos)
