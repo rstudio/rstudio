@@ -216,15 +216,16 @@ public class CompositeCell<C> extends AbstractCell<C> {
     return hasCell.getCell().isEditing(context, cellParent, hasCell.getValue(object));
   }  
 
-  private <X> void onBrowserEventImpl(Context context, Element parent,
+  private <X> void onBrowserEventImpl(final Context context, Element parent,
       final C object, NativeEvent event, final ValueUpdater<C> valueUpdater,
       final HasCell<C, X> hasCell) {
     ValueUpdater<X> tempUpdater = null;
     final FieldUpdater<C, X> fieldUpdater = hasCell.getFieldUpdater();
     if (fieldUpdater != null) {
       tempUpdater = new ValueUpdater<X>() {
+        @Override
         public void update(X value) {
-          fieldUpdater.update(-1, object, value);
+          fieldUpdater.update(context.getIndex(), object, value);
           if (valueUpdater != null) {
             valueUpdater.update(object);
           }
