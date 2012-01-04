@@ -874,6 +874,10 @@ Section "Uninstall"
   Delete "$INSTDIR\Uninstall.exe"
   DeleteRegKey SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\@CPACK_PACKAGE_NAME@"
 
+  ;Remove the SSH Command Prompt Shortcut
+  Delete "$INSTDIR\bin\msys_ssh\SSH Command Prompt.lnk" 
+  RMDir /r "$INSTDIR\bin\"
+  
   ;Remove the installation directory if it is empty.
   RMDir "$INSTDIR"
 
