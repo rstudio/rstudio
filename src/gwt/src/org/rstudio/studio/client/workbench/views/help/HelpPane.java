@@ -337,6 +337,12 @@ public class HelpPane extends WorkbenchPane
      
    private void setLocation(final String url)
    {
+      // allow subsequent calls to setLocation to override any previous 
+      // call (necessary so two consecutive calls like we get during
+      // some startup scenarios don't result in the first url displaying
+      // rather than the second)
+      targetUrl_ = url;
+      
       RepeatingCommand navigateCommand = new RepeatingCommand() {
          @Override
          public boolean execute()
@@ -344,8 +350,8 @@ public class HelpPane extends WorkbenchPane
             if (getIFrameEx() != null && 
                   getIFrameEx().getContentWindow() != null)
             {
-               getIFrameEx().getContentWindow().replaceLocationHref(url);
-               frame_.setUrl(url);
+               getIFrameEx().getContentWindow().replaceLocationHref(targetUrl_);
+               frame_.setUrl(targetUrl_);
                return false;
             }
             else
@@ -446,4 +452,5 @@ public class HelpPane extends WorkbenchPane
    private final Commands commands_;
    private boolean navigated_;
    private boolean initialized_;
+   private String targetUrl_;
 }
