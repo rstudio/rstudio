@@ -2,6 +2,10 @@
 # append our module directory to path
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
+# install ssh-console batch file into msys_ssh directory (called by shortcut)
+install(PROGRAMS src/ssh-console.bat
+        DESTINATION "${RSTUDIO_INSTALL_BIN}/msys_ssh")
+
 # cpack variables
 set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}")
 set(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\rstudio.exe")
