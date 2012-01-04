@@ -22,11 +22,13 @@ public class CreateKeyOptions extends JavaScriptObject
    
    public native static final CreateKeyOptions create(String path,
                                                       String type,
-                                                      String passphrase) /*-{
+                                                      String passphrase,
+                                                      boolean overwrite) /*-{
       var options = new Object();
       options.path = path;
       options.type = type;
-      options.passphrase = passphrase;                              
+      options.passphrase = passphrase;  
+      options.overwrite = overwrite;                            
       return options;
    }-*/;
    
@@ -40,5 +42,9 @@ public class CreateKeyOptions extends JavaScriptObject
    
    public native final String getPassphrase() /*-{
       return this.passphrase;
+   }-*/;   
+   
+   public native final boolean getOverwrite() /*-{
+      return this.overwrite;
    }-*/;   
 }

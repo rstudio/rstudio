@@ -1,0 +1,21 @@
+
+.viewPublicKeyLink {
+   font-size: 11px;  
+}
+
+.captionPanel {
+   margin-bottom: 2px;
+}
+
+.keyPath {
+   background-color: transparent;
+}
+
+.keyPathNone {
+   color: gray;
+}
+
+.sshButtonPanel {
+   margin-top: 4px;
+   margin-left: -2px;
+}

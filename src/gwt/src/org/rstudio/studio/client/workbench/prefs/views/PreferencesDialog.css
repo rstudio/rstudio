@@ -6,13 +6,12 @@
    height: 420px;
 }
 
-.usingVcsHelp {
-   margin-top: 30px;
+.sshKeyWidget {
+   margin-top: 20px;
 }
 
-.viewSshKey {
-   padding-top: 20px;
-   margin-left: 2px;
+.usingVcsHelp {
+   margin-top: 30px;
 }
 
 .newSection {

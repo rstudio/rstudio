@@ -4,13 +4,13 @@
    margin-bottom: 2px;
 }
 
-.keyTypeSelector {
-   width: 70px;
-   margin-right: 12px;	
-}
-
 .mainWidget {
    width: 350px;
+}
+
+.keyPathTextBox {
+   margin-top: 2px;
+   background-color: transparent;
 }
 
 .newSection {

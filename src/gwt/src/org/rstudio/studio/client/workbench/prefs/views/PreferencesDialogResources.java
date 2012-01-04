@@ -23,8 +23,8 @@ public interface PreferencesDialogResources extends ClientBundle
       String panelContainer();
       String paneLayoutTable();
       String themeChooser();
+      String sshKeyWidget();
       String usingVcsHelp();
-      String viewSshKey();
       String newSection();
       String encodingChooser();
    }

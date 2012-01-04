@@ -44,6 +44,7 @@ import org.rstudio.studio.client.common.StudioResources;
 import org.rstudio.studio.client.common.mirrors.ChooseMirrorDialog;
 import org.rstudio.studio.client.common.vcs.CreateKeyDialog;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
+import org.rstudio.studio.client.common.vcs.SshKeyWidget;
 import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
 import org.rstudio.studio.client.impl.BrowserFence;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
@@ -192,6 +193,7 @@ public class RStudio implements EntryPoint
       CodeBrowserEditingTargetWidget.ensureStylesInjected();
       ShowPublicKeyDialog.ensureStylesInjected();
       CreateKeyDialog.ensureStylesInjected();
+      SshKeyWidget.ensureStylesInjected();
       IgnoreDialog.ensureStylesInjected();
       WizardResources.INSTANCE.styles().ensureInjected();
       NewProjectResources.INSTANCE.styles().ensureInjected();

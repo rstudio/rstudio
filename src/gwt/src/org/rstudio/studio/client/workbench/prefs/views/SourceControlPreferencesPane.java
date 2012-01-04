@@ -13,8 +13,6 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
@@ -30,10 +28,11 @@ import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.TextBoxWithButton;
-import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.vcs.GitServerOperations;
+import org.rstudio.studio.client.common.vcs.SshKeyWidget;
 import org.rstudio.studio.client.common.vcs.VCSHelpLink;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -46,9 +45,10 @@ public class SourceControlPreferencesPane extends PreferencesPane
    @Inject
    public SourceControlPreferencesPane(PreferencesDialogResources res,
                                        Session session,
+                                       GitServerOperations server,
                                        final GlobalDisplay globalDisplay,
                                        final Commands commands,
-                                       RemoteFileSystemContext fsContext,
+                                       RemoteFileSystemContext fsContext,   
                                        FileDialogs fileDialogs)
    {
       res_ = res;
@@ -106,19 +106,12 @@ public class SourceControlPreferencesPane extends PreferencesPane
       if (haveTerminalPathPref())
          addTextBoxChooser(terminalPathLabel_, null, null, terminalPathChooser_);
      
-      // show ssh key button
-      showSshKeyButton_ = new ThemedButton(
-         "View RSA Public Key...", new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event)
-            {
-               commands.versionControlShowRsaKey().execute();
-            }
-         });
-      showSshKeyButton_.addStyleName(res_.styles().viewSshKey());
-      add(showSshKeyButton_);
+      // ssh key widget
+      sshKeyWidget_ = new SshKeyWidget(server, "330px");
+      sshKeyWidget_.addStyleName(res_.styles().sshKeyWidget());
+      nudgeRight(sshKeyWidget_);
+      add(sshKeyWidget_);
             
-       
       VCSHelpLink vcsHelpLink = new VCSHelpLink();
       nudgeRight(vcsHelpLink); 
       vcsHelpLink.addStyleName(res_.styles().newSection()); 
@@ -129,7 +122,6 @@ public class SourceControlPreferencesPane extends PreferencesPane
       svnExePathChooser_.setEnabled(false);
       terminalPathChooser_.setEnabled(false);
       chkUseGitBash_.setEnabled(false);
-      showSshKeyButton_.setEnabled(false);
    }
 
    @Override
@@ -137,20 +129,22 @@ public class SourceControlPreferencesPane extends PreferencesPane
    {
       // source control prefs
       SourceControlPrefs prefs = rPrefs.getSourceControlPrefs();
-      originalPrefs_ = prefs;
 
       chkVcsEnabled_.setEnabled(true);
       gitExePathChooser_.setEnabled(true);
       svnExePathChooser_.setEnabled(true);
       terminalPathChooser_.setEnabled(true);
       chkUseGitBash_.setEnabled(true);
-      showSshKeyButton_.setEnabled(true);
 
       chkVcsEnabled_.setValue(prefs.getVcsEnabled());
       gitExePathChooser_.setText(prefs.getGitExePath());
       svnExePathChooser_.setText(prefs.getSvnExePath());
       terminalPathChooser_.setText(prefs.getTerminalPath());
       chkUseGitBash_.setValue(prefs.getUseGitBash());
+      
+      sshKeyWidget_.setRsaSshKeyPath(prefs.getRsaKeyPath(),
+                                     prefs.getHaveRsaKey());
+      sshKeyWidget_.setProgressIndicator(getProgressIndicator());
 
       manageControlVisibility();
    }
@@ -239,16 +233,13 @@ public class SourceControlPreferencesPane extends PreferencesPane
       terminalPathLabel_.setVisible(vcsEnabled);
       terminalPathChooser_.setVisible(vcsEnabled && haveTerminalPathPref());
       chkUseGitBash_.setVisible(vcsEnabled && haveGitBashPref());
-      showSshKeyButton_.setVisible(vcsEnabled
-            && originalPrefs_.haveRsaPublicKey());
+      sshKeyWidget_.setVisible(vcsEnabled);
    }
 
    private final PreferencesDialogResources res_;
 
    private final CheckBox chkVcsEnabled_;
-
-   private SourceControlPrefs originalPrefs_;
-
+   
    private Label svnExePathLabel_;
    private Label gitExePathLabel_;
    private TextBoxWithButton gitExePathChooser_;
@@ -256,5 +247,5 @@ public class SourceControlPreferencesPane extends PreferencesPane
    private Label terminalPathLabel_;
    private TextBoxWithButton terminalPathChooser_;
    private CheckBox chkUseGitBash_;
-   private ThemedButton showSshKeyButton_;
+   private SshKeyWidget sshKeyWidget_;
 }

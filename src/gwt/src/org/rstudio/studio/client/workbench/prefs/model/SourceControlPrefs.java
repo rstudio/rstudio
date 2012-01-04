@@ -18,8 +18,9 @@ public class SourceControlPrefs extends JavaScriptObject
 {
    protected SourceControlPrefs() {}
 
-   // create source control prefs -- don't pass the have_rsa_public_key
-   // parameter because that is a read-only rider for the prefs ui
+   // create source control prefs -- don't pass the rsa_public_key_path
+   // and have_rsa_public_key parameters because they are read-only riders
+   // for the prefs ui
    public static final native SourceControlPrefs create(boolean vcsEnabled,
                                                         String gitExePath,
                                                         String svnExePath,
@@ -55,7 +56,11 @@ public class SourceControlPrefs extends JavaScriptObject
       return this.use_git_bash;
    }-*/;
    
-   public native final boolean haveRsaPublicKey() /*-{
-      return this.have_rsa_public_key;
+   public native final String getRsaKeyPath() /*-{
+      return this.rsa_key_path;
+   }-*/;
+   
+   public native final boolean getHaveRsaKey() /*-{
+      return this.have_rsa_key;
    }-*/;
 }

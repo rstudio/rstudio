@@ -364,9 +364,11 @@ Error getRPrefs(const json::JsonRpcRequest& request,
 
    sourceControlPrefs["use_git_bash"] = userSettings().vcsUseGitBash();
 
-   sourceControlPrefs["have_rsa_public_key"] =
-      modules::source_control::defaultSshKeyDir().childPath(
-                                                   "id_rsa.pub").exists();
+   FilePath sshKeyDir = modules::source_control::defaultSshKeyDir();
+   FilePath rsaSshKeyPath = sshKeyDir.childPath("id_rsa");
+   sourceControlPrefs["rsa_key_path"] =
+                  module_context::createAliasedPath(rsaSshKeyPath);
+   sourceControlPrefs["have_rsa_key"] = rsaSshKeyPath.exists();
 
    // initialize and set result object
    json::Object result;
@@ -446,10 +448,12 @@ Error createSshKey(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
    std::string path, type, passphrase;
+   bool overwrite;
    Error error = json::readObjectParam(request.params, 0,
                                        "path", &path,
                                        "type", &type,
-                                       "passphrase", &passphrase);
+                                       "passphrase", &passphrase,
+                                       "overwrite", &overwrite);
    if (error)
       return error;
 
@@ -461,16 +465,28 @@ Error createSshKey(const json::JsonRpcRequest& request,
       return error;
 #endif
 
-   // verify that the path doesn't already exist
+   // resolve key path
    FilePath sshKeyPath = module_context::resolveAliasedPath(path);
    FilePath sshPublicKeyPath = sshKeyPath.parent().complete(
                                              sshKeyPath.stem() + ".pub");
    if (sshKeyPath.exists() || sshPublicKeyPath.exists())
    {
-      json::Object resultJson;
-      resultJson["failed_key_exists"] = true;
-      pResponse->setResult(resultJson);
-      return Success();
+      if (!overwrite)
+      {
+         json::Object resultJson;
+         resultJson["failed_key_exists"] = true;
+         pResponse->setResult(resultJson);
+         return Success();
+      }
+      else
+      {
+         Error error = sshKeyPath.removeIfExists();
+         if (error)
+            return error;
+         error = sshPublicKeyPath.removeIfExists();
+         if (error)
+            return error;
+      }
    }
 
    // compose a shell command to create the key

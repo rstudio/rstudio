@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.common.vcs;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -28,15 +29,10 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -44,29 +40,34 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
 {
-   public CreateKeyDialog(String defaultSshKeyPath,
+   public CreateKeyDialog(String rsaSshKeyPath,
                           final VCSServerOperations server,
-                          final OperationWithInput<String> onSuccess)
+                          final OperationWithInput<String> onCompleted)
    {
-      super("Create SSH Key", new ProgressOperationWithInput<CreateKeyOptions>() {
+      super("Create RSA Key", new ProgressOperationWithInput<CreateKeyOptions>() {
+         
          @Override
          public void execute(final CreateKeyOptions input, 
                              final ProgressIndicator indicator)
          {
-            indicator.onProgress("Creating SSH Key...");
+            final ProgressOperationWithInput<CreateKeyOptions> 
+                                                      thisOperation = this;
+            
+            indicator.onProgress("Creating RSA Key...");
             
             RSAEncrypt.encrypt_ServerOnly(
                server, 
                input.getPassphrase(), 
                new RSAEncrypt.ResponseCallback() {
                   @Override
-                  public void onSuccess(String encryptedData)
+                  public void onSuccess(final String encryptedData)
                   {
                      // substitute encrypted data
-                     CreateKeyOptions options = CreateKeyOptions.create(
-                                                            input.getPath(),
-                                                            input.getType(),
-                                                            encryptedData);
+                     final CreateKeyOptions options = CreateKeyOptions.create(
+                                                         input.getPath(),
+                                                         input.getType(),
+                                                         encryptedData,
+                                                         input.getOverwrite());
                      
                      // call server to create the key
                      server.createSshKey(
@@ -76,25 +77,45 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
                            @Override
                            public void onResponseReceived(CreateKeyResult res)
                            {
-                              // check for failure due to the key existing
                               if (res.getFailedKeyExists())
                               {
                                  indicator.clearProgress();
-                                 showKeyExistsError(input.getPath());
+                                 
+                                 confirmOverwriteKey(
+                                    input.getPath(), 
+                                    new Operation() 
+                                    {
+                                       @Override
+                                       public void execute()
+                                       {
+                                          // re-execute with overwrite == true
+                                          thisOperation.execute(
+                                             CreateKeyOptions.create(
+                                                   options.getPath(),
+                                                   options.getType(),
+                                                   input.getPassphrase(),
+                                                   true),
+                                             indicator);
+                                       }  
+                                 });
+                               
                               }
                               else
                               {
                                  // close the dialog
                                  indicator.onCompleted();
                               
-                                 // update the key path if we succeeded
+                                 // update the key path 
                                  if (res.getExitStatus() == 0)
-                                    onSuccess.execute(input.getPath());
+                                    onCompleted.execute(input.getPath());
+                                 
+                                 else if (input.getOverwrite())
+                                    onCompleted.execute(null);
                                  
                                  // show the output
                                  new ShowContentDialog(
-                                             "Create SSH Key",
-                                             res.getOutput()).showModal();
+                                                "Create RSA Key",
+                                                res.getOutput()).showModal();
                               }
                            }
                            
@@ -117,38 +138,21 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
          }
       });
       
-      defaultSshKeyPath_ = FileSystemItem.createDir(defaultSshKeyPath);
+      rsaSshKeyPath_ = FileSystemItem.createDir(rsaSshKeyPath);
       
       setOkButtonCaption("Create");
    }
    
-   private static void showKeyExistsError(String path)
-   {
-      HTML msgHTML = new HTML(
-         "<p>The SSH key could not be created because the key file '" + path +
-         "' (or its corresponding public key) already exists.</p>" +
-         "<p>Please delete or rename the existing key file(s) before " +
-         "proceeding.</p>");
-      msgHTML.getElement().getStyle().setMarginLeft(10, Unit.PX);
-      msgHTML.setWidth("300px");    
-      
-      MessageDialog dlg = new MessageDialog(MessageDialog.ERROR, 
-                                            "Key Already Exists", 
-                                            msgHTML);
-      dlg.addButton("OK", (Operation)null, true, false);
-      dlg.showModal();
-        
-   }
-
    @Override
    protected CreateKeyOptions collectInput()
-   {
-      if (getPath().length() == 0)
-         return null;
-      else if (!getPassphrase().equals(getConfirmPassphrase()))
+   {  
+      if (!getPassphrase().equals(getConfirmPassphrase()))
          return null;
       else
-         return CreateKeyOptions.create(getPath(), getType(), getPassphrase());
+         return CreateKeyOptions.create(rsaSshKeyPath_.getPath(),
+                                        "rsa",
+                                        getPassphrase(),
+                                        false);
    }
 
    @Override
@@ -162,14 +166,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       {
          GlobalDisplay display = RStudioGinjector.INSTANCE.getGlobalDisplay();
          
-         if (getPath().length() == 0)
-         {
-            display.showErrorMessage(
-                  "Missing Key Path", 
-                  "You must provide a destination path for the key.",
-                  txtName_);
-         }
-         else if (!getPassphrase().equals(getConfirmPassphrase()))
+         if (!getPassphrase().equals(getConfirmPassphrase()))
          {
             display.showErrorMessage(
                   "Non-Matching Passphrases", 
@@ -189,50 +186,26 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       VerticalPanel panel = new VerticalPanel();
       panel.addStyleName(styles.mainWidget());
       
-      HorizontalPanel nameAndTypePanel = new HorizontalPanel();
-      nameAndTypePanel.setWidth("100%");
-      
-      VerticalPanel typePanel = new VerticalPanel();
-      Label typeLabel = new Label("Type:");
-      typeLabel.addStyleName(styles.entryLabel());
-      typePanel.add(typeLabel);
-   
-      typeSelector_ = new ListBox();
-      typeSelector_.addStyleName(styles.keyTypeSelector());
-      typeSelector_.addItem(RSA);
-      typeSelector_.addItem(DSA);
-      typeSelector_.addItem(RSA1);
-      typeSelector_.setSelectedIndex(0);
-      typeSelector_.addChangeHandler(new ChangeHandler() {
-
-         @Override
-         public void onChange(ChangeEvent event)
-         {
-            String type = getType();
-            if (type.equals(RSA))
-               txtName_.setValue(defaultSshKeyPath_.completePath("id_rsa"));
-            else if (type.equals(DSA))
-               txtName_.setValue(defaultSshKeyPath_.completePath("id_dsa"));
-            else if (type.equals(RSA1))
-               txtName_.setValue(defaultSshKeyPath_.completePath("identity")); 
-         }
-         
-      });
-      typePanel.add(typeSelector_);
-      nameAndTypePanel.add(typePanel);
-      
       VerticalPanel namePanel = new VerticalPanel();
-      namePanel.setWidth("270px");
-      Label nameLabel = new Label("Path:");
-      nameLabel.addStyleName(styles.entryLabel());
-      namePanel.add(nameLabel);
-      txtName_ = new TextBox();
-      txtName_.setText(defaultSshKeyPath_.completePath("id_rsa"));
-      txtName_.setWidth("100%");
-      namePanel.add(txtName_);
-      nameAndTypePanel.add(namePanel);
+      namePanel.setWidth("100%");
+     
+      // path
+      CaptionWithHelp pathCaption = new CaptionWithHelp(
+                                 "The RSA key will be created at:",
+                                 "SSH/RSA key management",
+                                 "rsa_key_help");  
+      pathCaption.setIncludeVersionInfo(false);
+      pathCaption.setWidth("100%");
+      namePanel.add(pathCaption);
       
-      panel.add(nameAndTypePanel);
+      TextBox txtKeyPath = new TextBox();
+      txtKeyPath.addStyleName(styles.keyPathTextBox());
+      txtKeyPath.setReadOnly(true);
+      txtKeyPath.setText(rsaSshKeyPath_.getPath());
+      txtKeyPath.setWidth("100%");
+      namePanel.add(txtKeyPath);
+      
+      panel.add(namePanel);
       
       HorizontalPanel passphrasePanel = new HorizontalPanel();
       passphrasePanel.addStyleName(styles.newSection());
@@ -270,14 +243,16 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       FocusHelper.setFocusDeferred(txtPassphrase_);
    }
    
-   private String getPath()
-   {
-      return txtName_.getText().trim();
-   }
    
-   private String getType()
+   private static void confirmOverwriteKey(String path, Operation onConfirmed)
    {
-      return typeSelector_.getItemText(typeSelector_.getSelectedIndex());
+      RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
+            MessageDialog.WARNING, 
+            "Key Already Exists", 
+            "An RSA key already exists at " + path + ". " +
+            "Do you want to overwrite the existing key?", 
+            onConfirmed,
+            false);
    }
    
    private String getPassphrase()
@@ -290,14 +265,10 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       return txtConfirmPassphrase_.getText().trim();
    }
    
-   private final String RSA = "rsa";
-   private final String DSA = "dsa";
-   private final String RSA1 = "rsa1";
-   
    static interface Styles extends CssResource
    {
       String entryLabel();
-      String keyTypeSelector();
+      String keyPathTextBox();
       String mainWidget();
       String newSection();
       String lastSection();
@@ -316,11 +287,9 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
    {
       RESOURCES.styles().ensureInjected();
    }
-   
-   private ListBox typeSelector_;
-   private TextBox txtName_;
+
    private TextBox txtPassphrase_;
    private TextBox txtConfirmPassphrase_;
    
-   private final FileSystemItem defaultSshKeyPath_;
+   private final FileSystemItem rsaSshKeyPath_;
 }

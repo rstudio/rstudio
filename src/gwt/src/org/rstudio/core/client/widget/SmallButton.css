@@ -24,5 +24,6 @@
 
 .buttonContent {
    font-size: 9px;
+   color: black;
    white-space: nowrap;
 }

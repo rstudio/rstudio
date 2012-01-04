@@ -1,5 +1,5 @@
 /*
- * SshKeyChooser.java
+ * SshKeyWidget.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -12,60 +12,42 @@
  */
 package org.rstudio.studio.client.common.vcs;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SmallButton;
-import org.rstudio.core.client.widget.TextBoxWithButton;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.TextBox;
 
-
-// TODO: Project setup -- auth config (shared with New Proj from VC)
-
-
-
-public class SshKeyChooser extends Composite
-{  
-   public static boolean isSupportedForCurrentPlatform()
-   {
-      return !Desktop.isDesktop() || BrowseCap.isWindows();  
-   }
-   
-   public SshKeyChooser(GitServerOperations server,
-                        String defaultSshKeyDir,
-                        String textWidth)
+public class SshKeyWidget extends Composite
+{   
+   public SshKeyWidget(GitServerOperations server, String textWidth)
                        
    {
       server_ = server;
-      defaultSshKeyDir_ = defaultSshKeyDir;
       progressIndicator_ = new NullProgressIndicator();
       
       FlowPanel panel = new FlowPanel();
            
       // caption panel
       HorizontalPanel captionPanel = new HorizontalPanel();
+      captionPanel.addStyleName(RES.styles().captionPanel());
       captionPanel.setWidth(textWidth);
-      Label sshKeyPathLabel = new Label("SSH key path:");
+      Label sshKeyPathLabel = new Label("SSH RSA Key:");
       captionPanel.add(sshKeyPathLabel);
       captionPanel.setCellHorizontalAlignment(
                                           sshKeyPathLabel,
@@ -90,48 +72,28 @@ public class SshKeyChooser extends Composite
       
       
       // chooser
-      sshKeyPathChooser_ = new FileChooserTextBox(
-           null,
-           "(None)",
-           null,
-           new Command() {
-            @Override
-            public void execute()
-            {
-               publicKeyLink_.setVisible(true); 
-            }    
-      });
-      sshKeyPathChooser_.setTextWidth(textWidth);
-      setSshKey("");
-      panel.add(sshKeyPathChooser_);  
+      txtSshKeyPath_ = new TextBox();
+      txtSshKeyPath_.addStyleName(RES.styles().keyPath());
+      txtSshKeyPath_.setReadOnly(true);
+      txtSshKeyPath_.setWidth(textWidth);
+      panel.add(txtSshKeyPath_);  
       
     
       // ssh key path action buttons
       HorizontalPanel sshButtonPanel = new HorizontalPanel();
       sshButtonPanel.addStyleName(RES.styles().sshButtonPanel());
       createKeyButton_ = new SmallButton();
-      createKeyButton_.setText("Create New Key...");
+      createKeyButton_.setText("Create RSA Key...");
       createKeyButton_.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
          {
-            new CreateKeyDialog(defaultSshKeyDir_,
-                                server_,
-                                new OperationWithInput<String>() {
-               @Override
-               public void execute(String keyPath)
-               {
-                  setSshKey(keyPath);             
-               }
-            }).showModal();    
+            showCreateKeyDialog(); 
          }
       });
       sshButtonPanel.add(createKeyButton_);
       panel.add(sshButtonPanel);
-      
-      // default visibility of create key based on desktop vs. server
-      setAllowKeyCreation(!Desktop.isDesktop());
-     
+           
       initWidget(panel);
    }
    
@@ -139,36 +101,50 @@ public class SshKeyChooser extends Composite
    {
       progressIndicator_ = progressIndicator;
    }
-   
-   // use a special adornment when the displayed key matches an 
-   // arbitrary default value
-   public void setDefaultSskKey(String keyPath)
+      
+   public void setRsaSshKeyPath(String rsaSshKeyPath,
+                                boolean haveRsaSshKey)
    {
-      sshKeyPathChooser_.setUseDefaultValue(keyPath);
+      rsaSshKeyPath_ = rsaSshKeyPath;
+      if (haveRsaSshKey)
+         setSshKey(rsaSshKeyPath_);
+      else
+         setSshKey(NONE);
    }
    
-   public void setSshKey(String keyPath)
+   private void setSshKey(String keyPath)
    {
-      sshKeyPathChooser_.setText(keyPath);
-      publicKeyLink_.setVisible(getSshKey().length() > 0);
+      txtSshKeyPath_.setText(keyPath);
+      if (keyPath.equals(NONE))
+      {
+         publicKeyLink_.setVisible(false);
+         txtSshKeyPath_.addStyleName(RES.styles().keyPathNone());
+      }
+      else
+      {
+         publicKeyLink_.setVisible(true);
+         txtSshKeyPath_.removeStyleName(RES.styles().keyPathNone());
+      }
    }
    
-   public String getSshKey()
+   private void showCreateKeyDialog()
    {
-      return sshKeyPathChooser_.getText().trim();
+      new CreateKeyDialog(
+         rsaSshKeyPath_,
+         server_,
+         new OperationWithInput<String>() 
+         {
+            @Override
+            public void execute(String keyPath)
+            {
+               if (keyPath != null)
+                  setSshKey(keyPath);
+               else
+                  setSshKey(NONE);
+            }
+         }).showModal();     
    }
-   
-   public void setAllowKeyCreation(boolean allowKeyCreation)
-   {
-      createKeyButton_.setVisible(allowKeyCreation);
-   }
-   
-   public HandlerRegistration addValueChangeHandler(
-                                          ValueChangeHandler<String> handler)
-   {
-      return sshKeyPathChooser_.addValueChangeHandler(handler);
-   }
-   
+
    
    private void viewPublicKey()
    {
@@ -176,7 +152,7 @@ public class SshKeyChooser extends Composite
       
       // compute path to public key
       FileSystemItem privKey = 
-               FileSystemItem.createFile(sshKeyPathChooser_.getText());
+               FileSystemItem.createFile(txtSshKeyPath_.getText());
       FileSystemItem keyDir = privKey.getParentPath();
       final String keyPath = keyDir.completePath(privKey.getStem() + ".pub");
       
@@ -206,12 +182,15 @@ public class SshKeyChooser extends Composite
    static interface Styles extends CssResource
    {
       String viewPublicKeyLink();
+      String captionPanel();
       String sshButtonPanel();
+      String keyPath();
+      String keyPathNone();
    }
   
    static interface Resources extends ClientBundle
    {
-      @Source("SshKeyChooser.css")
+      @Source("SshKeyWidget.css")
       Styles styles();
    }
    
@@ -221,12 +200,13 @@ public class SshKeyChooser extends Composite
       RES.styles().ensureInjected();
    }
    
-   private String defaultSshKeyDir_;
-   
    private HyperlinkLabel publicKeyLink_;
-   private TextBoxWithButton sshKeyPathChooser_;
+   private TextBox txtSshKeyPath_;
    private SmallButton createKeyButton_;
    
    private final GitServerOperations server_;
    private ProgressIndicator progressIndicator_;
+   private String rsaSshKeyPath_;
+   
+   private static final String NONE = "(None)";
 }
