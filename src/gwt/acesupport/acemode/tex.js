@@ -25,7 +25,6 @@ var TexHighlightRules = require("mode/tex_highlight_rules").TexHighlightRules;
 var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
 
 var Mode = function(suppressHighlighting) {
-   TextMode.call(this);
 	if (suppressHighlighting)
     	this.$tokenizer = new Tokenizer(new TextHighlightRules().getRules());
 	else
