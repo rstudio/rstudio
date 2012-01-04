@@ -76,5 +76,23 @@ public class BottomScrollPanel extends ScrollPanel
          scrollToBottom();
    }
 
+   public void saveScrollPosition()
+   {
+      vScroll_ = scrolledToBottom_ ? null : getVerticalScrollPosition();
+      hScroll_ = getHorizontalScrollPosition();
+   }
+
+   public void restoreScrollPosition()
+   {
+      if (vScroll_ == null)
+         scrollToBottom();
+      else
+         setVerticalScrollPosition(vScroll_);
+
+      setHorizontalScrollPosition(hScroll_);
+   }
+
    private boolean scrolledToBottom_;
+   private Integer vScroll_;
+   private int hScroll_;
 }

@@ -60,6 +60,11 @@ public class VCSPresenter implements IsWidget,
       }
    }
 
+   public void onBeforeUnselected()
+   {
+      presenter_.onBeforeUnselected();
+   }
+
    public void onBeforeSelected()
    {
       presenter_.onBeforeSelected();

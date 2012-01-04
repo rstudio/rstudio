@@ -17,6 +17,7 @@ public interface WorkbenchView
 {
    void bringToFront();
    void setProgress(boolean showProgress);
+   void onBeforeUnselected();
    void onBeforeSelected();
    void onSelected();
 }

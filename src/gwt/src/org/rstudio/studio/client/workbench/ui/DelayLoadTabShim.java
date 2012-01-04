@@ -56,6 +56,7 @@ public abstract class DelayLoadTabShim<T extends IsWidget,
       parentTab_.getPanel().add(child);
    }
 
+   public abstract void onBeforeUnselected();
    public abstract void onBeforeSelected();
    public abstract void onSelected();
 

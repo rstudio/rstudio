@@ -29,15 +29,12 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
-import org.rstudio.core.client.widget.BottomScrollPanel;
-import org.rstudio.core.client.widget.DoubleClickState;
-import org.rstudio.core.client.widget.SearchWidget;
-import org.rstudio.core.client.widget.SmallButton;
-import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.history.HasHistory;
@@ -97,6 +94,27 @@ public class HistoryPane extends WorkbenchPane
    }
 
    @Override
+   public void onBeforeUnselected()
+   {
+      super.onBeforeUnselected();
+      recentScrollPanel_.saveScrollPosition();
+   }
+
+   @Override
+   public void onSelected()
+   {
+      super.onSelected();
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            recentScrollPanel_.restoreScrollPosition();
+         }
+      });
+   }
+
+   @Override
    protected Widget createMainWidget()
    {
       mainPanel_ = new LayoutPanel();
@@ -120,7 +138,13 @@ public class HistoryPane extends WorkbenchPane
       commandList_ = createHistoryTable(TimestampMode.NONE);
       vpanel.add(commandList_);
 
-      recentScrollPanel_ = new BottomScrollPanel();
+      recentScrollPanel_ = new BottomScrollPanel() {
+         @Override
+         protected void onLoad()
+         {
+            super.onLoad();
+         }
+      };
       recentScrollPanel_.getElement().getStyle().setProperty("overflowX", "hidden");
       recentScrollPanel_.setWidget(vpanel);
       commandList_.setOwningScrollPanel(recentScrollPanel_);

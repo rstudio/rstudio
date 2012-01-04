@@ -19,6 +19,7 @@ import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 public interface WorkbenchTab extends IsWidget, HasEnsureVisibleHandlers
 {
    String getTitle();
+   void onBeforeUnselected();
    void onBeforeSelected();
    void onSelected();
    void prefetch(Command continuation);

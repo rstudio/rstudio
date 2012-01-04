@@ -35,6 +35,9 @@ public abstract class WorkbenchPane extends ToolbarPane
    }
 
    // hook for subclasses to be notified right before & after they are selected
+   public void onBeforeUnselected()
+   {
+   }
    public void onBeforeSelected()
    {
    }

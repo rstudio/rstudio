@@ -28,6 +28,11 @@ public abstract class BasePresenter implements IsWidget
       return (Widget) view_;
    }
 
+   public void onBeforeUnselected()
+   {
+      view_.onBeforeUnselected();
+   }
+
    public void onBeforeSelected()
    {
       view_.onBeforeSelected();

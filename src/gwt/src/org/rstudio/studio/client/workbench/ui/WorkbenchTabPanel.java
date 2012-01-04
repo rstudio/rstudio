@@ -55,6 +55,12 @@ class WorkbenchTabPanel
             if (clearing_)
                return;
 
+            if (getSelectedIndex() >= 0)
+            {
+               WorkbenchTab lastTab = tabs_.get(getSelectedIndex());
+               lastTab.onBeforeUnselected();
+            }
+
             WorkbenchTab tab = tabs_.get(event.getItem().intValue());
             tab.onBeforeSelected();
          }

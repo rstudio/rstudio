@@ -58,6 +58,11 @@ public abstract class DelayLoadWorkbenchTab<T extends IsWidget>
       shimmed_.onBeforeSelected();
    }
 
+   public void onBeforeUnselected()
+   {
+      shimmed_.onBeforeUnselected();
+   }
+
    public void prefetch(final Command continuation)
    {
       shimmed_.forceLoad(true, continuation);
