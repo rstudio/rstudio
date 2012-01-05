@@ -1178,17 +1178,16 @@ Error fileStatus(const FilePath& filePath, VCSStatus* pStatus)
 
 namespace {
 
-std::string convertToUtf8(const std::string& content)
+std::string convertToUtf8(const std::string& content, bool allowSubst)
 {
    std::string output;
    Error error = module_context::convertToUtf8(
                         content,
                         projects::projectContext().defaultEncoding(),
-                        true,
+                        allowSubst,
                         &output);
    if (error)
    {
-      LOG_ERROR(error);
       return content;
    }
    else
@@ -1696,6 +1695,7 @@ Error vcsShow(const json::JsonRpcRequest& request,
 
    std::string output;
    s_git_.show(rev, &output);
+   output = convertToUtf8(output, true);
    output = string_utils::filterControlChars(output);
 
    if (!noSizeWarning && output.size() > source_control::WARN_SIZE)
@@ -1727,7 +1727,7 @@ Error vcsShowFile(const json::JsonRpcRequest& request,
       return error;
 
    // convert to utf8
-   output = convertToUtf8(output);
+   output = convertToUtf8(output, false);
 
    output = string_utils::filterControlChars(output);
 
