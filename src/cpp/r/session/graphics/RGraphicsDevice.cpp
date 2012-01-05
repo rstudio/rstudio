@@ -418,7 +418,11 @@ SEXP createGD()
 {   
    // error if there is already an RStudio device
    if (s_pGEDevDesc != NULL)
-      Rf_error("Only one RStudio graphics device is permitted");
+   {
+      Rf_warning("Only one RStudio graphics device is permitted");
+      return R_NilValue;
+   }
+
 
    R_CheckDeviceAvailable();
    
