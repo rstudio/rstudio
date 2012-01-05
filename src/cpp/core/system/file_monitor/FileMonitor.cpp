@@ -44,8 +44,10 @@ namespace {
 // track active handles so we can implement unregisterAll and
 // activeEventContexts. note that this  list is accessed from
 // the platform-specific file-monitor thread (checkForInput and
-// catch clause of fileMonitorMainThread
-std::list<Handle> s_activeHandles;
+// catch clause of fileMonitorMainThread. this is a naked pointer
+// because it is static and accessed from multiple threads (so
+// we don't want it to ever be destructed)
+std::list<Handle>* s_pActiveHandles;
 
 void addEvent(FileChangeEvent::Type type,
               const FileInfo& fileInfo,
@@ -364,8 +366,8 @@ Error discoverAndProcessFileChanges(
 std::list<void*> activeEventContexts()
 {
    std::list<void*> contexts;
-   std::transform(s_activeHandles.begin(),
-                  s_activeHandles.end(),
+   std::transform(s_pActiveHandles->begin(),
+                  s_pActiveHandles->end(),
                   std::back_inserter(contexts),
                   boost::bind(&Handle::pData, _1));
 
@@ -493,7 +495,7 @@ void checkForInput()
                                                  command.filter(),
                                                  command.callbacks());
          if (!handle.empty())
-            s_activeHandles.push_back(handle);
+            s_pActiveHandles->push_back(handle);
          break;
       }
 
@@ -502,13 +504,13 @@ void checkForInput()
          // first ensure that this handle is active (protects against double
          // unregister, which can occur if we've automatically unregistered
          // as a result of an error or a call to file_monitor::stop)
-         std::list<Handle>::iterator it = std::find(s_activeHandles.begin(),
-                                                    s_activeHandles.end(),
+         std::list<Handle>::iterator it = std::find(s_pActiveHandles->begin(),
+                                                    s_pActiveHandles->end(),
                                                     command.handle());
-         if (it != s_activeHandles.end())
+         if (it != s_pActiveHandles->end())
          {
             detail::unregisterMonitor(*it);
-            s_activeHandles.erase(it);
+            s_pActiveHandles->erase(it);
          }
          break;
       }
@@ -544,12 +546,12 @@ void fileMonitorThreadMain()
    {
       // unregister all active handles. these are direct calls to
       // detail::unregisterMonitor (on the background thread)
-      std::for_each(s_activeHandles.begin(),
-                    s_activeHandles.end(),
+      std::for_each(s_pActiveHandles->begin(),
+                    s_pActiveHandles->end(),
                     detail::unregisterMonitor);
 
       // clear the list
-      s_activeHandles.clear();
+      s_pActiveHandles->clear();
 
       // allow the implementation a chance to stop completely (e.g. may
       // need to wait for pending async operations to complete)
@@ -611,6 +613,7 @@ boost::thread s_fileMonitorThread;
 
 void initialize()
 {
+   s_pActiveHandles = new std::list<Handle>();
    core::thread::safeLaunchThread(fileMonitorThreadMain, &s_fileMonitorThread);
 }
 
