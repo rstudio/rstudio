@@ -35,6 +35,23 @@ void splitMessage(const std::string message,
                   std::string* pSubject,
                   std::string* pDescription);
 
+// If no invalid byte ranges are encountered, then everything will be converted
+// from project encoding to UTF-8, regardless of allowSubst value.
+//
+// If allowSubst is true, and invalid byte ranges are encountered, they will
+// be replaced with ? and any valid byte ranges will be converted from project
+// encoding to UTF-8.
+//
+// If allowSubst is false, and invalid byte ranges are encountered, the entire
+// string is returned unchanged.
+std::string convertToUtf8(const std::string& content, bool allowSubst);
+
+std::string convertDiff(const std::string& diff,
+                        const std::string& fromEncoding,
+                        const std::string& toEncoding,
+                        bool allowSubst,
+                        bool* pSuccess=NULL);
+
 struct RefreshOnExit : public boost::noncopyable
 {
    ~RefreshOnExit()

@@ -45,7 +45,6 @@
 #include <core/StringUtils.hpp>
 
 #include <r/RExec.hpp>
-#include <r/RUtil.hpp>
 
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -1178,24 +1177,6 @@ Error fileStatus(const FilePath& filePath, VCSStatus* pStatus)
 
 namespace {
 
-std::string convertToUtf8(const std::string& content, bool allowSubst)
-{
-   std::string output;
-   Error error = module_context::convertToUtf8(
-                        content,
-                        projects::projectContext().defaultEncoding(),
-                        allowSubst,
-                        &output);
-   if (error)
-   {
-      return content;
-   }
-   else
-   {
-      return output;
-   }
-}
-
 Error vcsAdd(const json::JsonRpcRequest& request,
              json::JsonRpcResponse* pResponse)
 {
@@ -1465,12 +1446,10 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
       return error;
 
    std::string sourceEncoding = projects::projectContext().defaultEncoding();
-   error = r::util::iconvstr(output,
-                             sourceEncoding,
-                             "UTF-8",
-                             false,
-                             &output);
-   if (error)
+   bool usedSourceEncoding;
+   output = convertDiff(output, sourceEncoding, "UTF-8", false,
+                        &usedSourceEncoding);
+   if (!usedSourceEncoding)
       sourceEncoding = "";
 
    if (!noSizeWarning && output.size() > source_control::WARN_SIZE)
@@ -1497,14 +1476,15 @@ Error vcsApplyPatch(const json::JsonRpcRequest& request,
 
    std::string patch;
    int mode;
-   std::string encoding;
-   Error error = json::readParams(request.params, &patch, &mode, &encoding);
+   std::string sourceEncoding;
+   Error error = json::readParams(request.params, &patch, &mode, &sourceEncoding);
    if (error)
       return error;
 
-   error = r::util::iconvstr(patch, "UTF-8", encoding, false, &patch);
-   if (error)
-      return error;
+   bool converted;
+   patch = convertDiff(patch, "UTF-8", sourceEncoding, false, &converted);
+   if (!converted)
+      return systemError(boost::system::errc::illegal_byte_sequence, ERROR_LOCATION);
 
    FilePath patchFile = module_context::tempFile("rstudiovcs", "patch");
    error = writeStringToFile(patchFile, patch);
@@ -1695,7 +1675,8 @@ Error vcsShow(const json::JsonRpcRequest& request,
 
    std::string output;
    s_git_.show(rev, &output);
-   output = convertToUtf8(output, true);
+   output = convertDiff(output, projects::projectContext().defaultEncoding(),
+                        "UTF-8", true);
    output = string_utils::filterControlChars(output);
 
    if (!noSizeWarning && output.size() > source_control::WARN_SIZE)

@@ -53,10 +53,11 @@ public interface SVNServerOperations extends VCSServerOperations
    void svnDiffFile(String path,
                     Integer contextLines,
                     boolean noSizeWarning,
-                    ServerRequestCallback<String> requestCallback);
+                    ServerRequestCallback<DiffResult> requestCallback);
 
    void svnApplyPatch(String path,
                       String patch,
+                      String sourceEncoding,
                       ServerRequestCallback<Void> requestCallback);
 
    /**
