@@ -18,6 +18,9 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Debug;
@@ -53,6 +56,24 @@ import java.util.ArrayList;
 
 public class RCompletionManager implements CompletionManager
 {  
+   // globally suppress F1 and F2 so no default browser behavior takes those
+   // keystrokes (e.g. Help in Chrome)
+   static
+   {
+      Event.addNativePreviewHandler(new NativePreviewHandler() {
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent event)
+         {
+            if (event.getTypeInt() == Event.ONKEYDOWN)
+            {
+               int keyCode = event.getNativeEvent().getKeyCode();
+               if (keyCode == 112 || keyCode == 113)
+                 event.getNativeEvent().preventDefault();
+            }
+         }
+      });   
+   }
+   
    public RCompletionManager(InputEditorDisplay input,
                              NavigableSourceEditor navigableSourceEditor,
                              CompletionPopupDisplay popup,
