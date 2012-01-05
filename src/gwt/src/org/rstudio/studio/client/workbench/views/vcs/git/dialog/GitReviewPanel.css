@@ -28,7 +28,6 @@
    gwt-image: 'toolbarTile';
    padding-top: 2px;
    font-size: 11px;
-   width: 100%;
 }
 
 /** END SHARED BETWEEN HISTORY AND REVIEW PANELS **/
@@ -57,9 +56,9 @@
 }
 
 .diffViewOptions {
-   position: relative;
-   left: 6px;
-   width: 400px;
+   white-space: nowrap;
+   margin-left: 6px;
+   margin-right: 16px;
 }
 
 .commitMessage {
