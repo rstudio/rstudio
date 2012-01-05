@@ -15,9 +15,19 @@ sudo mkdir -p /etc/rstudio
 sudo sh -c "echo `date +%s` > /etc/rstudio/installed"
 sudo rstudio-server force-suspend-all
 
+# Make sure all dependencies are available. We do this here rather than
+# relying on CPACK_DEBIAN_PACKAGE_DEPENDS because as of Ubuntu 11.10 dpkg -i
+# doesn't seem to auto-install depenencies
+sudo apt-get install -y libc6, psmisc, libpango1.0-0, libssl0.9.8
+
 # add apparmor profile
 if test -e /etc/apparmor.d/
 then
+   # install dependencies (required for Ubuntu 11.10 -- see note above). Ignore
+   # stderr because straight Debian systems don't have these packages at all
+   # (they are included in the base AppArmor package)
+   sudo apt-get install -y libapparmor1 apparmor-utils 2>/dev/null
+
    sudo cp ${CMAKE_INSTALL_PREFIX}/extras/apparmor/rstudio-server /etc/apparmor.d/
    sudo aa-enforce /etc/apparmor.d/rstudio-server
 fi
