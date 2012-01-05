@@ -27,7 +27,7 @@ namespace session {
 namespace graphics {
 
 void setCompatibleEngineVersion(int version);
-bool validateEngineVersion(std::string* pMessage = NULL);
+bool validateRequirements(std::string* pMessage = NULL);
 
 class RestorePreviousGraphicsDeviceScope
 {

@@ -516,7 +516,7 @@ SEXP createGD()
 Error makeActive()
 {
    // don't make active if our graphics version is incompatible
-   if (!graphics::validateEngineVersion())
+   if (!graphics::validateRequirements())
       return Error(graphics::errc::IncompatibleGraphicsEngine, ERROR_LOCATION);
 
    // make sure we have been created
@@ -681,7 +681,7 @@ Error initialize(
 
    // check for an incompatible graphics version before fully initializing.
    std::string message;
-   if (graphics::validateEngineVersion(&message))
+   if (graphics::validateRequirements(&message))
    {
       // register device creation routine
       R_CallMethodDef createGDMethodDef ;

@@ -18,10 +18,16 @@
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 
+#include <r/RExec.hpp>
+
 #include <Rinternals.h>
 #define R_USE_PROTOTYPES 1
 #include <R_ext/GraphicsEngine.h>
 #include <R_ext/GraphicsDevice.h>
+
+#ifdef __APPLE__
+#include <R_ext/QuartzDevice.h>
+#endif
 
 #include <r/RErrorCategory.hpp>
 
@@ -32,15 +38,77 @@ namespace session {
 namespace graphics { 
 
 namespace {
+
 int s_compatibleEngineVersion = 8;
+
+#ifdef __APPLE__
+class QuartzStatus : boost::noncopyable
+{
+public:
+   QuartzStatus() : checked_(false), installed_(false) {}
+
+   bool isInstalled()
+   {
+      if (!checked_)
+      {
+         checked_ = true;
+
+         QuartzFunctions_t* pQuartzFunctions = NULL;
+         Error error = r::exec::executeSafely<QuartzFunctions_t*>(
+                                                         &getQuartzFunctions,
+                                                         &pQuartzFunctions);
+         if (error)
+            LOG_ERROR(error);
+
+         installed_ = pQuartzFunctions != NULL;
+      }
+
+      return installed_;
+   }
+
+private:
+   bool checked_;
+   bool installed_;
+};
+
+bool hasRequiredGraphicsDevices(std::string* pMessage)
+{
+   static QuartzStatus s_quartzStatus;
+   if (!s_quartzStatus.isInstalled())
+   {
+      if (pMessage != NULL)
+      {
+         *pMessage = "\nWARNING: The version of R you are running against "
+                     "does not support the quartz graphics device (which is "
+                     "required by RStudio for graphics). The Plots tab will "
+                     "be disabled until a version of R that supports quartz "
+                     "is installed.";
+      }
+      return false;
+   }
+   else
+   {
+      return true;
+   }
 }
+
+#else
+
+bool hasRequiredGraphicsDevices(std::string* pMessage)
+{
+   return true;
+}
+
+#endif
+
+} // anonymous namespace
 
 void setCompatibleEngineVersion(int version)
 {
    s_compatibleEngineVersion = version;
 }
 
-bool validateEngineVersion(std::string* pMessage)
+bool validateRequirements(std::string* pMessage)
 {
    // get engineVersion
    int engineVersion = R_GE_getVersion();
@@ -75,10 +143,11 @@ bool validateEngineVersion(std::string* pMessage)
       return false;
    }
 
-   // compatible
+
+   // check for required devices
    else
    {
-      return true;
+      return hasRequiredGraphicsDevices(pMessage);
    }
 }
 
