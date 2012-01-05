@@ -77,9 +77,16 @@ public interface GitServerOperations extends VCSServerOperations
                     PatchMode patchMode,
                     int contextLines,
                     boolean noSizeWarning,
-                    ServerRequestCallback<String> requestCallback);
+                    ServerRequestCallback<DiffResult> requestCallback);
 
-   void gitApplyPatch(String patch, PatchMode mode,
+   /**
+    * @param patch The patch, in UTF-8 encoding
+    * @param mode Whether the patch should be applied to working copy or index
+    * @param sourceEncoding The encoding that the patch should be transcoded to
+    *    before applying
+    * @param requestCallback
+    */
+   void gitApplyPatch(String patch, PatchMode mode, String sourceEncoding,
                       ServerRequestCallback<Void> requestCallback);
 
    void gitHistoryCount(String spec, 

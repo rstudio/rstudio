@@ -45,6 +45,7 @@
 #include <core/StringUtils.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RUtil.hpp>
 
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -550,7 +551,10 @@ public:
       pStream->flush();
       pStream.reset();  // release file handle
 
-      ShellArgs args = ShellArgs() << "commit" << "-F" << tempFile;
+      // Make sure we override i18n settings that may cause the commit message
+      // to be marked as using an encoding other than utf-8.
+      ShellArgs args = ShellArgs() << "-c" << "i18n.commitencoding=utf-8"
+                       << "commit" << "-F" << tempFile;
       if (amend)
          args << "--amend";
       if (signOff)
@@ -815,8 +819,9 @@ public:
                    const std::string& searchText,
                    std::vector<CommitInfo>* pOutput)
    {
-      ShellArgs args = ShellArgs() << "log";
-      args << "--pretty=raw" << "--decorate=full" << "--date-order";
+      ShellArgs args = ShellArgs() << "-c" << "i18n.logoutputencoding=utf-8"
+                       << "log" << "--pretty=raw" << "--decorate=full"
+                       << "--date-order";
 
       ShellArgs revListArgs = ShellArgs() << "rev-list" << "--date-order" << "--parents";
       int revListSkip = skip;
@@ -1460,6 +1465,15 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   std::string sourceEncoding = projects::projectContext().defaultEncoding();
+   error = r::util::iconvstr(output,
+                             sourceEncoding,
+                             "UTF-8",
+                             false,
+                             &output);
+   if (error)
+      sourceEncoding = "";
+
    if (!noSizeWarning && output.size() > source_control::WARN_SIZE)
    {
       error = systemError(boost::system::errc::file_too_large,
@@ -1469,7 +1483,10 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
    }
    else
    {
-      pResponse->setResult(output);
+      json::Object result;
+      result["source_encoding"] = sourceEncoding;
+      result["decoded_value"] = output;
+      pResponse->setResult(result);
    }
    return Success();
 }
@@ -1481,7 +1498,12 @@ Error vcsApplyPatch(const json::JsonRpcRequest& request,
 
    std::string patch;
    int mode;
-   Error error = json::readParams(request.params, &patch, &mode);
+   std::string encoding;
+   Error error = json::readParams(request.params, &patch, &mode, &encoding);
+   if (error)
+      return error;
+
+   error = r::util::iconvstr(patch, "UTF-8", encoding, false, &patch);
    if (error)
       return error;
 

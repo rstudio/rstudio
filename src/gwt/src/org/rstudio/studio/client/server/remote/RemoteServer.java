@@ -1463,7 +1463,7 @@ public class RemoteServer implements Server
                            PatchMode mode,
                            int contextLines,
                            boolean noSizeWarning,
-                           ServerRequestCallback<String> requestCallback)
+                           ServerRequestCallback<DiffResult> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
@@ -1476,11 +1476,13 @@ public class RemoteServer implements Server
    @Override
    public void gitApplyPatch(String patch,
                              PatchMode mode,
+                             String sourceEncoding,
                              ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(patch));
       params.set(1, new JSONNumber(mode.getValue()));
+      params.set(2, new JSONString(sourceEncoding));
       sendRequest(RPC_SCOPE, GIT_APPLY_PATCH, params, requestCallback);
    }
 

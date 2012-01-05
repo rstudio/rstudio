@@ -32,6 +32,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -43,6 +44,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
+import org.rstudio.studio.client.common.vcs.DiffResult;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
@@ -582,7 +584,9 @@ public class GitReviewPresenter implements ReviewPresenter
       String patch = emitter.createPatch(true);
 
       softModeSwitch_ = true;
-      server_.gitApplyPatch(patch, patchMode, new SimpleRequestCallback<Void>());
+      server_.gitApplyPatch(patch, patchMode,
+                            StringUtil.notNull(currentSourceEncoding_),
+                            new SimpleRequestCallback<Void>());
    }
 
    private void updateDiff(boolean allowModeSwitch)
@@ -648,18 +652,20 @@ public class GitReviewPresenter implements ReviewPresenter
             patchMode,
             view_.getContextLines().getValue(),
             overrideSizeWarning_,
-            new SimpleRequestCallback<String>("Diff Error")
+            new SimpleRequestCallback<DiffResult>("Diff Error")
             {
                @Override
-               public void onResponseReceived(String response)
+               public void onResponseReceived(DiffResult diffResult)
                {
                   if (token.isInvalid())
                      return;
 
                   // Use lastResponse_ to prevent unnecessary flicker
+                  String response = diffResult.getDecodedValue();
                   if (response.equals(currentResponse_))
                      return;
                   currentResponse_ = response;
+                  currentSourceEncoding_ = diffResult.getSourceEncoding();
 
                   UnifiedParser parser = new UnifiedParser(response);
                   parser.nextFilePair();
@@ -767,6 +773,7 @@ public class GitReviewPresenter implements ReviewPresenter
    private final GlobalDisplay globalDisplay_;
    private ArrayList<DiffChunk> activeChunks_ = new ArrayList<DiffChunk>();
    private String currentResponse_;
+   private String currentSourceEncoding_;
    private String currentFilename_;
    // Hack to prevent us flipping to unstaged view when a line is unstaged
    // from staged view
