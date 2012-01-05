@@ -90,6 +90,7 @@ public:
    void setConfig(const core::r_util::RProjectConfig& config)
    {
       config_ = config;
+      updateDefaultEncoding();
    }
 
    core::Error readVcsOptions(RProjectVcsOptions* pOptions) const;
@@ -137,6 +138,8 @@ private:
    void fileMonitorTermination(const core::Error& error);
 
    core::FilePath vcsOptionsFilePath() const;
+
+   void updateDefaultEncoding();
 
 private:
    core::FilePath file_;

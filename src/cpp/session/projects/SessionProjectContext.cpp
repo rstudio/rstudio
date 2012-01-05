@@ -170,29 +170,7 @@ Error ProjectContext::initialize()
    if (hasProject())
    {
       // compute the default encoding
-      Error error = r::exec::RFunction(
-                        ".rs.validateAndNormalizeEncoding",
-                        config().encoding).call(&defaultEncoding_);
-      if (error)
-         return error;
-
-      // if the default encoding is empty then change to UTF-8 and
-      // and enque a warning
-      if (defaultEncoding_.empty())
-      {
-         // fallback
-         defaultEncoding_ = "UTF-8";
-
-         // enque a warning
-         json::Object msgJson;
-         msgJson["severe"] = false;
-         boost::format fmt(
-           "Project text encoding '%1%' not available (using UTF-8). "
-           "You can specify an alternate text encoding via Project Options.");
-         msgJson["message"] = boost::str(fmt % config().encoding);
-         ClientEvent event(client_events::kShowWarningBar, msgJson);
-         module_context::enqueClientEvent(event);
-      }
+      updateDefaultEncoding();
 
       // subscribe to deferred init (for initializing our file monitor)
       if (config().enableCodeIndexing)
@@ -391,6 +369,34 @@ void ProjectContext::subscribeToFileMonitor(const std::string& featureName,
 std::string ProjectContext::defaultEncoding() const
 {
    return defaultEncoding_;
+}
+
+void ProjectContext::updateDefaultEncoding()
+{
+   defaultEncoding_.clear();
+   Error error = r::exec::RFunction(
+                     ".rs.validateAndNormalizeEncoding",
+                     config().encoding).call(&defaultEncoding_);
+   if (error)
+      LOG_ERROR(error);
+
+   // if the default encoding is empty then change to UTF-8 and
+   // and enque a warning
+   if (defaultEncoding_.empty())
+   {
+      // fallback
+      defaultEncoding_ = "UTF-8";
+
+      // enque a warning
+      json::Object msgJson;
+      msgJson["severe"] = false;
+      boost::format fmt(
+        "Project text encoding '%1%' not available (using UTF-8). "
+        "You can specify an alternate text encoding via Project Options.");
+      msgJson["message"] = boost::str(fmt % config().encoding);
+      ClientEvent event(client_events::kShowWarningBar, msgJson);
+      module_context::enqueClientEvent(event);
+   }
 }
 
 json::Object ProjectContext::uiPrefs() const
