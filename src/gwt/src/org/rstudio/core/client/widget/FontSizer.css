@@ -5,7 +5,7 @@
 }
 
  @if rstudio.desktop true { .windows .normalSize, .windows .normalSize td, .windows .normalSize pre {
-      line-height: 1.25;
+      line-height: 1.20;
    }
  }
  @else { .windows .normalSize, .windows .normalSize td, .windows .normalSize pre {
