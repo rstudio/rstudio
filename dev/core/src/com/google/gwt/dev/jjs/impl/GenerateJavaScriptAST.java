@@ -151,7 +151,9 @@ import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.js.ast.JsWhile;
+import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.StringInterner;
+import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Maps;
@@ -189,6 +191,7 @@ public class GenerateJavaScriptAST {
 
     private final Stack<JsScope> scopeStack = new Stack<JsScope>();
 
+
     @Override
     public void endVisit(JArrayType x, Context ctx) {
       JsName name = topScope.declareName(x.getName());
@@ -199,6 +202,16 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JClassType x, Context ctx) {
       pop();
+    }
+
+    @Override
+    public void endVisit(JsCastMap x, Context ctx) {
+      /*
+       * Intern JsCastMaps, at this stage, they are only present in Array initialization,
+       * so we always intern them even if they occur once, since every array initialization
+       * makes a copy.
+       */
+      internedCastMap.add(castMapToString(x));
     }
 
     @Override
@@ -552,6 +565,7 @@ public class GenerateJavaScriptAST {
      */
     private void setupSymbolicCastMaps() {
       namesByQueryId = new ArrayList<JsName>();
+
       for (JReferenceType type : program.getTypesByQueryId()) {
         String shortName;
         String longName;
@@ -590,6 +604,8 @@ public class GenerateJavaScriptAST {
     private final Set<JClassType> alreadyRan = new HashSet<JClassType>();
 
     private final JsName arrayLength = objectScope.declareName("length");
+
+    private final Set<String> castMapSeen = new HashSet<String>();
 
     private final Map<JClassType, JsFunction> clinitMap = new HashMap<JClassType, JsFunction>();
 
@@ -1277,7 +1293,8 @@ public class GenerateJavaScriptAST {
       generateLongLiterals(vars);
       generateImmortalTypes(vars);
       generateQueryIdConstants(vars);
-
+      generateInternedCastMapLiterals(vars);
+     
       // Class objects, but only if there are any.
       if (x.getDeclaredTypes().contains(x.getTypeClassLiteralHolder())) {
         // TODO: perhaps they could be constant field initializers also?
@@ -1324,15 +1341,30 @@ public class GenerateJavaScriptAST {
       JsArrayLiteral arrayLit = (JsArrayLiteral) pop();
       SourceInfo sourceInfo = x.getSourceInfo();
       if (namesByQueryId == null || x.getExprs().size() == 0) {
-        // {2:1, 4:1, 12:1};
-        JsObjectLiteral objLit = new JsObjectLiteral(sourceInfo);
-        List<JsPropertyInitializer> props = objLit.getPropertyInitializers();
-        JsNumberLiteral one = new JsNumberLiteral(sourceInfo, 1);
-        for (JsExpression expr : arrayLit.getExpressions()) {
-          JsPropertyInitializer prop = new JsPropertyInitializer(sourceInfo, expr, one);
-          props.add(prop);
+        String stringMap = castMapToString(x);
+        // if interned, use variable reference
+        if (namesByCastMap.containsKey(stringMap)) {
+          push(namesByCastMap.get(stringMap).makeRef(x.getSourceInfo()));
+        } else if (internedCastMap.contains(stringMap)) {
+          // interned variable hasn't been created yet
+          String internName = "CM$";
+          boolean first = true;
+          for (JExpression expr : x.getExprs()) {
+            if (first) {
+              first = false;
+            } else {
+              internName += "_";
+            }
+            // Name is CM$queryId_queryId_queryId
+            internName += ((JsQueryType) expr).getQueryId();
+          }
+          JsName internedCastMapName = topScope.declareName(internName, internName);
+          namesByCastMap.put(stringMap, internedCastMapName);
+          castMapByString.put(stringMap, castMapToObjectLiteral(arrayLit, sourceInfo));
+          push(internedCastMapName.makeRef(x.getSourceInfo()));
+        } else {
+          push(castMapToObjectLiteral(arrayLit, sourceInfo));
         }
-        push(objLit);
       } else {
         // makeMap([Q_Object, Q_Foo, Q_Bar]);
         JsInvocation inv = new JsInvocation(sourceInfo);
@@ -1481,6 +1513,11 @@ public class GenerateJavaScriptAST {
         entryMethodToIndex.put(entryMethods.get(i), i);
       }
 
+      for (JDeclaredType type : x.getDeclaredTypes()) {
+        if (program.typeOracle.isInstantiatedType(type)) {
+          internCastMap(program.getCastMap(type));
+        }
+      }
       return true;
     }
 
@@ -1645,6 +1682,17 @@ public class GenerateJavaScriptAST {
 
       push(jsSwitch);
       return false;
+    }
+
+    private JsObjectLiteral castMapToObjectLiteral(JsArrayLiteral arrayLit, SourceInfo sourceInfo) {
+      JsObjectLiteral objLit = new JsObjectLiteral(sourceInfo);
+      List<JsPropertyInitializer> props = objLit.getPropertyInitializers();
+      JsNumberLiteral one = new JsNumberLiteral(sourceInfo, 1);
+      for (JsExpression expr : arrayLit.getExpressions()) {
+        JsPropertyInitializer prop = new JsPropertyInitializer(sourceInfo, expr, one);
+        props.add(prop);
+      }
+      return objLit;
     }
 
     private void checkForDupMethods(JDeclaredType x) {
@@ -1896,6 +1944,16 @@ public class GenerateJavaScriptAST {
       }
     }
 
+    private void generateInternedCastMapLiterals(JsVars vars) {
+      SourceInfo info = vars.getSourceInfo();
+      int id = 0;
+      for (Map.Entry<String, JsName> castMapEntry : namesByCastMap.entrySet()) {
+        JsVar var = new JsVar(info, castMapEntry.getValue());
+        var.setInitExpr(castMapByString.get(castMapEntry.getKey()));
+        vars.add(var);
+      }
+    }
+
     private void generateLongLiterals(JsVars vars) {
       for (Entry<Long, JsName> entry : longLits.entrySet()) {
         JsName jsName = entry.getValue();
@@ -1917,6 +1975,8 @@ public class GenerateJavaScriptAST {
         }
       }
     }
+
+
 
     private void generateSeedFuncAndPrototype(JClassType x, List<JsStatement> globalStmts) {
       SourceInfo sourceInfo = x.getSourceInfo();
@@ -2049,6 +2109,15 @@ public class GenerateJavaScriptAST {
           createAssignment(clinitFunc.getName().makeRef(sourceInfo), nullFunc.getName().makeRef(
               sourceInfo));
       statements.add(0, asg.makeStmt());
+    }
+
+    private void internCastMap(JsCastMap x) {
+      String stringMap = castMapToString(x);
+      if (castMapSeen.contains(stringMap)) {
+        internedCastMap.add(stringMap);
+      } else {
+        castMapSeen.add(stringMap);
+      }
     }
 
     private JsInvocation maybeCreateClinitCall(JField x) {
@@ -2239,6 +2308,8 @@ public class GenerateJavaScriptAST {
     return generateJavaScriptAST.execImpl();
   }
 
+  private Map<String, JsExpression> castMapByString = new HashMap<String, JsExpression>();
+
   private final Map<JBlock, JsCatch> catchMap = new IdentityHashMap<JBlock, JsCatch>();
 
   private final Map<JClassType, JsScope> classScopes = new IdentityHashMap<JClassType, JsScope>();
@@ -2258,6 +2329,8 @@ public class GenerateJavaScriptAST {
    */
   private final JsScope interfaceScope;
 
+  private final Set<String> internedCastMap = new HashSet<String>();
+
   private final JsProgram jsProgram;
 
   private final Set<JConstructor> liveCtors = new IdentityHashSet<JConstructor>();
@@ -2274,6 +2347,7 @@ public class GenerateJavaScriptAST {
   private final Map<HasName, JsName> names = new IdentityHashMap<HasName, JsName>();
   private int nextSeedId = 1;
   private List<JsName> namesByQueryId;
+  private Map<String, JsName> namesByCastMap = new HashMap<String, JsName>();
   private JsFunction nullFunc;
 
   /**
@@ -2391,6 +2465,18 @@ public class GenerateJavaScriptAST {
     // to have seed ids 1,2
     getSeedId(program.getTypeJavaLangObject());
     getSeedId(program.getTypeJavaLangString());
+  }
+
+  String castMapToString(JsCastMap x) {
+    if (x == null || x.getExprs() == null || x.getExprs().size() == 0) {
+      return "{}";
+    } else {
+      TextOutput textOutput = new DefaultTextOutput(true);
+      ToStringGenerationVisitor toStringer = new ToStringGenerationVisitor(textOutput);
+      toStringer.accept(x);
+      String stringMap = textOutput.toString();
+      return stringMap;
+    }
   }
 
   String getNameString(HasName hasName) {
