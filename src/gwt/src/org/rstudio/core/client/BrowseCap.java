@@ -14,6 +14,7 @@ package org.rstudio.core.client;
 
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.FontDetector;
+import org.rstudio.studio.client.application.Desktop;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
@@ -32,6 +33,8 @@ public class BrowseCap
          else
             return 0.4;
       }
+      else if (!Desktop.isDesktop() && isWindows())
+         return 0.4;
       else
          return 0;
    }
