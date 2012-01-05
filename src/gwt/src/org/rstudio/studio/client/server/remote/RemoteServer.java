@@ -2304,7 +2304,7 @@ public class RemoteServer implements Server
    public void svnDiffFile(String path,
                            Integer contextLines,
                            boolean noSizeWarning,
-                           ServerRequestCallback<String> requestCallback)
+                           ServerRequestCallback<DiffResult> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
@@ -2316,11 +2316,13 @@ public class RemoteServer implements Server
    @Override
    public void svnApplyPatch(String path,
                              String patch,
+                             String sourceEncoding,
                              ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
       params.set(1, new JSONString(patch));
+      params.set(2, new JSONString(sourceEncoding));
       sendRequest(RPC_SCOPE, SVN_APPLY_PATCH, params, requestCallback);
    }
 

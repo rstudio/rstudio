@@ -1020,6 +1020,13 @@ Error svnDiffFile(const json::JsonRpcRequest& request,
       LOG_ERROR_MESSAGE(stdErr);
    }
 
+   std::string sourceEncoding = projects::projectContext().defaultEncoding();
+   bool usedSourceEncoding;
+   stdOut = convertDiff(stdOut, sourceEncoding, "UTF-8", false,
+                        &usedSourceEncoding);
+   if (!usedSourceEncoding)
+      sourceEncoding = "";
+
    if (!noSizeWarning && stdOut.size() > source_control::WARN_SIZE)
    {
       error = systemError(boost::system::errc::file_too_large,
@@ -1029,7 +1036,10 @@ Error svnDiffFile(const json::JsonRpcRequest& request,
    }
    else
    {
-      pResponse->setResult(stdOut);
+      json::Object result;
+      result["source_encoding"] = sourceEncoding;
+      result["decoded_value"] = stdOut;
+      pResponse->setResult(result);
    }
 
    return Success();
@@ -1040,12 +1050,18 @@ Error svnApplyPatch(const json::JsonRpcRequest& request,
 {
    RefreshOnExit refreshOnExit;
 
-   std::string path, patch;
+   std::string path, patch, sourceEncoding;
    Error error = json::readParams(request.params,
                                   &path,
-                                  &patch);
+                                  &patch,
+                                  &sourceEncoding);
    if (error)
       return error;
+
+   bool converted;
+   patch = convertDiff(patch, "UTF-8", sourceEncoding, false, &converted);
+   if (!converted)
+      return systemError(boost::system::errc::illegal_byte_sequence, ERROR_LOCATION);
 
    FilePath filePath = resolveAliasedPath(path);
 
@@ -1445,7 +1461,11 @@ void svnShowEnd(bool noSizeWarning,
    }
    else
    {
-      response.setResult(result.stdOut);
+      response.setResult(
+            convertDiff(result.stdOut,
+                        projects::projectContext().defaultEncoding(),
+                        "UTF-8",
+                        true));
    }
 
    cont(error, &response);
@@ -1486,7 +1506,7 @@ void svnShowFileEnd(const json::JsonRpcFunctionContinuation& cont,
       return;
    }
 
-   response.setResult(result.stdOut);
+   response.setResult(convertToUtf8(result.stdOut, false));
    cont(error, &response);
 }
 

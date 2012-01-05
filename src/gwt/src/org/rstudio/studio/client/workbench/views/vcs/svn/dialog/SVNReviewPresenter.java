@@ -30,6 +30,7 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -37,6 +38,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.vcs.DiffResult;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.server.ServerError;
@@ -359,7 +361,9 @@ public class SVNReviewPresenter implements ReviewPresenter
       emitter.addDiffs(lines);
       String patch = emitter.createPatch(false);
 
-      server_.svnApplyPatch(path, patch, new SimpleRequestCallback<Void>());
+      server_.svnApplyPatch(path, patch,
+                            StringUtil.notNull(currentEncoding_),
+                            new SimpleRequestCallback<Void>());
    }
 
    private void updateDiff()
@@ -392,18 +396,21 @@ public class SVNReviewPresenter implements ReviewPresenter
             item.getPath(),
             view_.getContextLines().getValue(),
             overrideSizeWarning_,
-            new SimpleRequestCallback<String>("Diff Error")
+            new SimpleRequestCallback<DiffResult>("Diff Error")
             {
                @Override
-               public void onResponseReceived(String response)
+               public void onResponseReceived(DiffResult diffResult)
                {
                   if (token.isInvalid())
                      return;
+
+                  String response = diffResult.getDecodedValue();
 
                   // Use lastResponse_ to prevent unnecessary flicker
                   if (response.equals(currentResponse_))
                      return;
                   currentResponse_ = response;
+                  currentEncoding_ = diffResult.getSourceEncoding();
 
                   SVNDiffParser parser = new SVNDiffParser(response);
                   parser.nextFilePair();
@@ -506,6 +513,7 @@ public class SVNReviewPresenter implements ReviewPresenter
    private final Display view_;
    private ArrayList<DiffChunk> activeChunks_ = new ArrayList<DiffChunk>();
    private String currentResponse_;
+   private String currentEncoding_;
    private String currentFilename_;
    private SVNState svnState_;
    private boolean initialized_;
