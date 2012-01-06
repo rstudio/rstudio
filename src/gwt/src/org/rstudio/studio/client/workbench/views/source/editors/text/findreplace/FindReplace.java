@@ -251,6 +251,12 @@ public class FindReplace
                   {
                      case '\\':
                         return "\\";
+                     case 'n':
+                        return "\n";
+                     case 'r':
+                        return "\r";
+                     case 't':
+                        return "\t";
                   }
                   break;
                case '$':
