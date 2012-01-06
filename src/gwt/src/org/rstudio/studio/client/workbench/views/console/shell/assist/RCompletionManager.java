@@ -67,8 +67,12 @@ public class RCompletionManager implements CompletionManager
             if (event.getTypeInt() == Event.ONKEYDOWN)
             {
                int keyCode = event.getNativeEvent().getKeyCode();
-               if (keyCode == 112 || keyCode == 113)
+               if ((keyCode == 112 || keyCode == 113) &&
+                   KeyboardShortcut.NONE ==
+                      KeyboardShortcut.getModifierValue(event.getNativeEvent()))
+               {
                  event.getNativeEvent().preventDefault();
+               }
             }
          }
       });   
