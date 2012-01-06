@@ -480,8 +480,17 @@ public:
 
    core::Error unstage(const std::vector<FilePath>& filePaths)
    {
-      return runGit(ShellArgs() << "reset" << "HEAD" << "--" << filePaths,
-                    NULL, NULL, NULL);
+      // Detect if HEAD does not exist (i.e. no commits in repo yet)
+      int exitCode;
+      Error error = runGit(ShellArgs() << "rev-parse" << "HEAD", NULL, NULL,
+                           &exitCode);
+      if (error)
+         return error;
+
+      if (exitCode == 0)
+        return runGit(ShellArgs() << "reset" << "HEAD" << "--" << filePaths);
+      else
+         return runGit(ShellArgs() << "rm" << "--cached" << "--" << filePaths);
    }
 
    core::Error listBranches(std::vector<std::string>* pBranches,
