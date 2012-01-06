@@ -121,6 +121,12 @@ public class ColumnSortList {
   private final List<ColumnSortInfo> infos = new ArrayList<ColumnSortInfo>();
 
   /**
+   * This limit prevents the infos list to grow over a given size. The default value (0) means
+   * that the size can grow indefinitely.
+   */
+  private int limit = 0;
+
+  /**
    * Construct a new {@link ColumnSortList} without a {@link Delegate}.
    */
   public ColumnSortList() {
@@ -172,6 +178,15 @@ public class ColumnSortList {
     return infos.get(index);
   }
 
+  /**
+   * Get the actual limit value
+   * 
+   * @return the actual limit value
+   */
+  public int getLimit() {
+    return limit;
+  }
+
   @Override
   public int hashCode() {
     return 31 * infos.hashCode() + 13;
@@ -199,6 +214,17 @@ public class ColumnSortList {
           index--;
         }
         i--;
+      }
+    }
+    
+    if (limit > 0) {
+      // at this point, infos.size() must not exceed the limit, a simple condition check is enough
+      if (limit == infos.size()) {
+        infos.remove(infos.size() - 1);
+      }
+      // by the contract of the limit, inserting after the limit must not be allowed
+      if (index >= limit) {
+        throw new IndexOutOfBoundsException("Index: " + index + ", Limit: " + limit);
       }
     }
 
@@ -250,6 +276,31 @@ public class ColumnSortList {
     boolean toRet = infos.remove(sortInfo);
     fireDelegate();
     return toRet;
+  }
+
+  /**
+   * Set the limit to a positive value to prevent the growth of the infos list over the given size.
+   * This method will check if the actual infos list is over the limit, and it will fire the
+   * delegate in the case it should remove items from the list.
+   * 
+   * The default value (0) means the size can grow indefinitely. 
+   * 
+   * @param limit the new limit value
+   */
+  public void setLimit(int limit) {
+    this.limit = limit;
+    
+    if (limit > 0) {
+      // checking the list size, as it might have been populated over the limit
+      boolean modified = false;
+      while (limit < infos.size()) {
+        infos.remove(infos.size() - 1);
+        modified = true;
+      }
+      if (modified) {
+        fireDelegate();
+      }
+    }
   }
 
   /**
