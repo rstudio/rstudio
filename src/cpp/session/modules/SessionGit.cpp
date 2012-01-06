@@ -1441,10 +1441,7 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
    if (contextLines < 0)
       contextLines = 999999999;
 
-   if (static_cast<PatchMode>(mode) == PatchModeStage)
-      splitRename(path, &path, NULL);
-   else
-      splitRename(path, NULL, &path);
+   splitRename(path, NULL, &path);
 
    std::string output;
    error = s_git_.diffFile(resolveAliasedPath(path),
