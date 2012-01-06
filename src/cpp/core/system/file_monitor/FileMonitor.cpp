@@ -93,6 +93,11 @@ bool shouldTraverse(const FileInfo& fileInfo)
           !FilePath(fileInfo.absolutePath()).isSymlink();
 }
 
+bool sizeAndLastWriteTimeAreEqual(const FileInfo& a, const FileInfo& b)
+{
+   return a.size() == b.size() && a.lastWriteTime() == b.lastWriteTime();
+}
+
 } // anonymous namespace
 
 
@@ -211,7 +216,8 @@ void processFileModified(tree<FileInfo>::iterator parentIt,
    // can generate redundant modified events for save operations as well as
    // when directories are copied and pasted, in which case an add is followed
    // by a modified)
-   if (modIt != pTree->end(parentIt) && fileChange.fileInfo() != *modIt)
+   if ((modIt != pTree->end(parentIt)) &&
+       !sizeAndLastWriteTimeAreEqual(fileChange.fileInfo(), *modIt))
    {
       pTree->replace(modIt, fileChange.fileInfo());
 
