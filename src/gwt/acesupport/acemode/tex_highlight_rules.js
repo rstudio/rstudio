@@ -38,18 +38,6 @@ var TexHighlightRules = function() {
 	            token : "keyword", // command
 	            regex : "\\\\(?:[a-zA-z0-9]+|[^a-zA-z0-9])"
 	        }, {
-	            token : "string", // double quoted string
-	            regex : "``",
-               next : "qqstring"
-	        }, {
-	            token : "string", // double quoted string
-	            regex : ",,",
-               next : "qqstring"
-	        }, {
-	            token : "string", // single quoted string
-	            regex : "`",
-	            next : "qstring"
-	        }, {
                // Obviously these are neither keywords nor operators, but
                // labelling them as such was the easiest way to get them
                // to be colored distinctly from regular text
@@ -65,78 +53,6 @@ var TexHighlightRules = function() {
 	            token : "text",
 	            regex : "\\s+"
 	        }
-        ],
-        "qqstring" : [
-	        {
-	            token : "string",
-	            regex : "['][']",
-	            next : "start"
-	        }, {
-	            token : "string",
-	            regex : '"',
-	            next : "start"
-	        }, {
-	            token : "comment",
-	            regex : "%.*$"
-	        }, {
-	            token : "string", // non-command
-	            regex : "\\\\[$&%#\\{\\}]"
-	        }, {
-	            token : "keyword", // command
-	            regex : "\\\\(?:[a-zA-z0-9]+|[^a-zA-z0-9])"
-	        }, {
-               // Obviously these are neither keywords nor operators, but
-               // labelling them as such was the easiest way to get them
-               // to be colored distinctly from regular text
-               token : "paren.keyword.operator",
-	            regex : "[[({]"
-	        }, {
-               // Obviously these are neither keywords nor operators, but
-               // labelling them as such was the easiest way to get them
-               // to be colored distinctly from regular text
-               token : "paren.keyword.operator",
-	            regex : "[\\])}]"
-	        }, {
-	            token : "string",
-	            regex : "[^\\\\'\"[({\\])}%]+"
-	        }, {
-               token : "string",
-               regex : "."
-           }
-        ],
-        "qstring" : [
-	        {
-	            token : "string",
-	            regex : "['](?!['])",
-	            next : "start"
-	        }, {
-	            token : "comment",
-	            regex : "%.*$"
-	        }, {
-	            token : "string", // non-command
-	            regex : "\\\\[$&%#\\{\\}]"
-	        }, {
-	            token : "keyword", // command
-	            regex : "\\\\(?:[a-zA-z0-9]+|[^a-zA-z0-9])"
-	        }, {
-               // Obviously these are neither keywords nor operators, but
-               // labelling them as such was the easiest way to get them
-               // to be colored distinctly from regular text
-               token : "paren.keyword.operator",
-	            regex : "[[({]"
-	        }, {
-               // Obviously these are neither keywords nor operators, but
-               // labelling them as such was the easiest way to get them
-               // to be colored distinctly from regular text
-               token : "paren.keyword.operator",
-	            regex : "[\\])}]"
-	        }, {
-	            token : "string",
-	            regex : "[^\\\\'[({\\])}%]+"
-	        }, {
-		        token : "string",
-				regex : "."
-			}
         ]
     };
 };
