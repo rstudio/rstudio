@@ -723,6 +723,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 
 .globalToolbar {
    height:27px;
+   z-index: 1;
 }
 
 .globalToolbar .toolbarButton {
