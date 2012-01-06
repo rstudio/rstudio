@@ -66,6 +66,8 @@ public interface ThemeStyles extends CssResource
    String toolbarButtonPushed();
    String emptyProjectMenu();
 
+   String scrollableMenuBar();
+
    String moduleTabPanel();
    String minimized();
           

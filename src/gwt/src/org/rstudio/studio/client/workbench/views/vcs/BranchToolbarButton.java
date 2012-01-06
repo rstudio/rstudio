@@ -20,10 +20,10 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
-
 import com.google.inject.Provider;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.WidgetHandlerRegistration;
+import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -40,7 +40,7 @@ public class BranchToolbarButton extends ToolbarButton
    {
       super("",
             StandardIcons.INSTANCE.empty_command(),
-            new ToolbarPopupMenu());
+            new ScrollableToolbarPopupMenu());
       pVcsState_ = pVcsState;
 
       setTitle("Switch branch");
@@ -73,24 +73,25 @@ public class BranchToolbarButton extends ToolbarButton
    @Override
    public void onVcsRefresh(VcsRefreshEvent event)
    {
-      ToolbarPopupMenu menu = getMenu();
-      menu.clearItems();
+      ToolbarPopupMenu rootMenu = getMenu();
+      rootMenu.clearItems();
       JsArrayString branches = pVcsState_.get().getBranchInfo()
             .getBranches();
       for (int i = 0; i < branches.length(); i++)
       {
-         final String branch = branches.get(i);
-         menu.addItem(new MenuItem(branch, new Command()
+         String branch = branches.get(i);
+         final String branchLabel = branch.replaceFirst("^remotes/", "");
+         final String branchValue = branch.replaceFirst(" ->.*", "");
+         rootMenu.addItem(new MenuItem(branchLabel, new Command()
          {
             @Override
             public void execute()
             {
-               setBranchCaption(branch);
-               ValueChangeEvent.fire(BranchToolbarButton.this, branch);
+               setBranchCaption(branchLabel);
+               ValueChangeEvent.fire(BranchToolbarButton.this, branchValue);
             }
          }));
       }
-
    }
 
    protected final Provider<GitState> pVcsState_;

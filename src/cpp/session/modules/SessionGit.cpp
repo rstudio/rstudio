@@ -499,7 +499,7 @@ public:
       std::vector<std::string> lines;
 
       std::string output;
-      Error error = runGit(ShellArgs() << "branch", &output);
+      Error error = runGit(ShellArgs() << "branch" << "-a", &output);
       if (error)
          return error;
       lines = split(output);

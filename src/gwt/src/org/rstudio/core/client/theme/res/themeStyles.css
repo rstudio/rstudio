@@ -185,6 +185,10 @@ pre {
    margin-bottom: 2px;
 }
 
+.scrollableMenuBar .gwt-MenuItem {
+   padding-right: 20px;
+}
+
 .highlight {
    color: #900 !important;
 }

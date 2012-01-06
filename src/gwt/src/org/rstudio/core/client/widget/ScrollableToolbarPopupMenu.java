@@ -13,12 +13,14 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.dom.client.Style.Overflow;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 
 public class ScrollableToolbarPopupMenu extends ToolbarPopupMenu
@@ -51,6 +53,7 @@ public class ScrollableToolbarPopupMenu extends ToolbarPopupMenu
    protected Widget wrapMenuBar(ToolbarMenuBar menuBar)
    {
       scrollPanel_ = new ScrollPanel(menuBar);
+      scrollPanel_.addStyleName(ThemeStyles.INSTANCE.scrollableMenuBar());
       scrollPanel_.getElement().getStyle().setOverflowY(Overflow.AUTO);
       scrollPanel_.getElement().getStyle().setOverflowX(Overflow.HIDDEN);
       scrollPanel_.getElement().getStyle().setProperty("maxHeight", 
