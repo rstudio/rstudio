@@ -75,8 +75,8 @@
   </tr>
   <tr>
     <td>Change working directory</td>
-    <td>Ctrl+Shift+D</td>
-    <td>Ctrl+Shift+D</td>
+    <td>Ctrl+Shift+K</td>
+    <td>Ctrl+Shift+K</td>
   </tr>
   <tr><td><br/></td></tr>
   <tr><td colspan="3"><h3>Source</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
@@ -110,6 +110,11 @@
     <td>Ctrl+Shift+L</td>
     <td>Command+Shift+L</td>
   </tr>
+  <tr>
+     <td>Close all open documents</td>
+     <td>Ctrl+Shift+W</td>
+     <td>Command+Shift+W</td>
+   </tr>
   <tr>
     <td>Compile PDF (TeX and Sweave)</td>
     <td>Ctrl+Shift+I</td>
@@ -161,6 +166,11 @@
     <td>Command+Shift+Enter</td>
   </tr>
   <tr>
+     <td>Jump to line</td>
+     <td>Ctrl+G</td>
+     <td>Command+G</td>
+   </tr>
+  <tr>
     <td>Jump to function (.R files only)</td>
     <td>Ctrl+Alt+Up</td>
     <td>Ctrl+Option+Up</td>
@@ -191,10 +201,25 @@
     <td>Ctrl+Shift+Option+Right</td>
   </tr>
   <tr>
+     <td>Navigate back</td>
+     <td>Ctrl+F9</td>
+     <td>Cmd+F9</td>
+  </tr>
+  <tr>
+     <td>Navigate forward</td>
+     <td>Ctrl+F10</td>
+     <td>Cmd+F10</td>
+  </tr>
+  <tr>
     <td>Extract function from selection</td>
     <td>Ctrl+Shift+U</td>
     <td>Command+Shift+U</td>
   </tr>
+  <tr>
+     <td>Reindent Lines</td>
+     <td>Ctrl+I</td>
+     <td>Command+I</td>
+   </tr>
   <tr>
     <td>Comment/uncomment current line/selection</td>
     <td>Ctrl+/</td>
@@ -342,6 +367,16 @@
     <td>Alt+-</td>
     <td>Option+-</td>
   </tr>
+  <tr>
+    <td>Show help for function at cursor</td>
+    <td>F1</td>
+    <td>F1</td>
+  </tr>
+  <tr>
+    <td>Show source code for function at cursor</td>
+    <td>F2</td>
+    <td>F2</td>
+  </tr>
   <tr><td><br/></td></tr>
   <tr><td colspan="3"><h3>Completions (Console and Source)</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
   <tr>
@@ -360,17 +395,17 @@
     <td>Enter, Tab, or Right</td>
   </tr>
   <tr>
-    <td>Show help for selected candidate</td>
-    <td>F1</td>
-    <td>F1</td>
-  </tr>
-  <tr>
     <td>Dismiss completion popup</td>
     <td>Esc</td>
     <td>Esc</td>
   </tr>
   <tr><td><br/></td></tr>
   <tr><td colspan="3"><h3>Views</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
+  <tr>
+    <td>Goto File/Function</td>
+    <td>Ctrl+.</td>
+    <td>Command+.</td>
+  </tr>
   <tr>
     <td>Move cursor to Source Editor</td>
     <td>Ctrl+1</td>
@@ -387,34 +422,39 @@
     <td>Ctrl+3</td>
   </tr>
   <tr>
-    <td>Show data</td>
-    <td>Ctrl+4</td>
-    <td>Ctrl+4</td>
-  </tr>
-  <tr>
     <td>Show history</td>
-    <td>Ctrl+5</td>
-    <td>Ctrl+5</td>
+    <td>Ctrl+4</td>
+    <td>Ctrl+4</td>
   </tr>
   <tr>
     <td>Show files</td>
-    <td>Ctrl+6</td>
-    <td>Ctrl+6</td>
+    <td>Ctrl+5</td>
+    <td>Ctrl+5</td>
   </tr>
   <tr>
     <td>Show plots</td>
-    <td>Ctrl+7</td>
-    <td>Ctrl+7</td>
+    <td>Ctrl+6</td>
+    <td>Ctrl+6</td>
   </tr>
   <tr>
     <td>Show packages</td>
+    <td>Ctrl+7</td>
+    <td>Ctrl+7</td>
+  </tr>
+  <tr>
+    <td>Show help</td>
     <td>Ctrl+8</td>
     <td>Ctrl+8</td>
   </tr>
   <tr>
-    <td>Show help</td>
+    <td>Show Git/SVN</td>
     <td>Ctrl+9</td>
     <td>Ctrl+9</td>
+  </tr>
+  <tr>
+    <td>Shell</td>
+    <td>Ctrl+Shift+H</td>
+    <td>Command+Shift+H</td>
   </tr>
   <tr><td><br/></td></tr>
   <tr><td colspan="3"><h3>Plots</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
@@ -428,29 +468,37 @@
     <td>Ctrl+Shift+PageDown</td>
     <td>Command+Shift+PageDown</td>
   </tr>
-  <tr><td><br/></td></tr>
-  <tr><td colspan="3"><h3>Git &mdash; Review Changes</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
   <tr>
-    <td>Stage/Unstage</td>
-    <td>Spacebar</td>
-    <td>Spacebar</td>
+    <td>Show manipulator</td>
+    <td>Ctrl+Shift+M</td>
+    <td>Command+Shift+M</td>
+  </tr>
+  <tr><td><br/></td></tr>
+  <tr><td colspan="3"><h3>Git/SVN</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
+  <tr>
+    <td>Diff active source document</td>
+    <td>Ctrl+Shift+D</td>
+    <td>Command+Shift+D</td>
   </tr>
   <tr>
-    <td>Stage/Unstage and Move to Next</td>
-    <td>Enter</td>
-    <td>Enter</td>
+    <td>Commit changes</td>
+    <td>Ctrl+Shift+T</td>
+    <td>Command+Shift+T</td>
   </tr>
   <tr>
     <td>Scroll Diff View</td>
     <td>Ctrl+Up/Down</td>
     <td>Ctrl+Up/Down</td>
   </tr>
-  <tr><td><br/></td></tr>
-  <tr><td colspan="3"><h3>SVN &mdash; Review Changes</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
   <tr>
-    <td>Scroll Diff View</td>
-    <td>Ctrl+Up/Down</td>
-    <td>Ctrl+Up/Down</td>
+    <td>Stage/Unstage (Git)</td>
+    <td>Spacebar</td>
+    <td>Spacebar</td>
+  </tr>
+  <tr>
+    <td>Stage/Unstage and Move to Next (Git)</td>
+    <td>Enter</td>
+    <td>Enter</td>
   </tr>
   <tr><td><br/></td></tr>
 </table>
