@@ -237,32 +237,49 @@ public class FindReplace
                              String replacement,
                              final String data)
    {
-      Pattern pattern = Pattern.create("\\$([1-9][0-9]?|.)");
+      Pattern pattern = Pattern.create("[$\\\\]([1-9][0-9]?|.)");
       return pattern.replaceAll(replacement, new ReplaceOperation()
       {
          public String replace(Match m)
          {
+            char p = m.getValue().charAt(0);
             char c = m.getValue().charAt(1);
+            switch (p)
+            {
+               case '\\':
+                  switch (c)
+                  {
+                     case '\\':
+                        return "\\";
+                  }
+                  break;
+               case '$':
+                  switch (c)
+                  {
+                     case '$':
+                        return "$";
+                     case '&':
+                        return match.getValue();
+                     case '`':
+                        String prefix = data.substring(0, match.getIndex());
+                        int lastLF = prefix.lastIndexOf("\n");
+                        if (lastLF > 0)
+                           prefix = prefix.substring(lastLF + 1);
+                        return prefix;
+                     case '\'':
+                        String suffix = data.substring(match.getIndex() + match.getValue().length());
+                        int firstBreak = suffix.indexOf("\r");
+                        if (firstBreak < 0)
+                           firstBreak = suffix.indexOf("\n");
+                        if (firstBreak >= 0)
+                           suffix = suffix.substring(0, firstBreak);
+                        return suffix;
+                  }
+                  break;
+            }
+
             switch (c)
             {
-               case '&':
-                  return match.getValue();
-               case '`':
-                  String prefix = data.substring(0, match.getIndex());
-                  int lastLF = prefix.lastIndexOf("\n");
-                  if (lastLF > 0)
-                     prefix = prefix.substring(lastLF + 1);
-                  return prefix;
-               case '\'':
-                  String suffix = data.substring(match.getIndex() + match.getValue().length());
-                  int firstBreak = suffix.indexOf("\r");
-                  if (firstBreak < 0)
-                     firstBreak = suffix.indexOf("\n");
-                  if (firstBreak >= 0)
-                     suffix = suffix.substring(0, firstBreak);
-                  return suffix;
-               case '$':
-                  return "$";
                case '1':
                case '2':
                case '3':
