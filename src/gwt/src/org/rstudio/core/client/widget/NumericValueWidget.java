@@ -60,6 +60,20 @@ public class NumericValueWidget extends Composite
 
    public boolean validate(String fieldName)
    {
+      return validateRange(fieldName, null, null);
+   }
+
+   public boolean validatePositive(String fieldName)
+   {
+      return validateRange(fieldName, 1, null);
+   }
+
+   /**
+    * Make sure field is a valid integer in the range [min, max). If min or max
+    * are null, then 0 and infinity are assumed, respectively.
+    */
+   public boolean validateRange(String fieldName, Integer min, Integer max)
+   {
       String value = textBox_.getValue().trim();
       if (!value.matches("^\\d+$"))
       {
@@ -69,6 +83,24 @@ public class NumericValueWidget extends Composite
                "Error",
                fieldName + " must be a valid number.");
          return false;
+      }
+      if (min != null || max != null)
+      {
+         int intVal = Integer.parseInt(value);
+         if (min != null && intVal < min)
+         {
+            RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                  "Error",
+                  fieldName + " must be greater than or equal to " + min + ".");
+            return false;
+         }
+         if (max != null && intVal >= max)
+         {
+            RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                  "Error",
+                  fieldName + " must be less than " + max + ".");
+            return false;
+         }
       }
       return true;
    }

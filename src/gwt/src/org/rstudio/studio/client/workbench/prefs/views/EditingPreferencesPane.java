@@ -110,7 +110,7 @@ public class EditingPreferencesPane extends PreferencesPane
    @Override
    public boolean validate()
    {
-      return (!spacesForTab_.getValue() || tabWidth_.validate("Tab width")) &&
+      return (!spacesForTab_.getValue() || tabWidth_.validatePositive("Tab width")) &&
              (!showMargin_.getValue() || marginCol_.validate("Margin column"));
    }
 
