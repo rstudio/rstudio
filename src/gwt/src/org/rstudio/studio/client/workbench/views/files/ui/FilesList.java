@@ -430,6 +430,13 @@ public class FilesList extends Composite
             if (row != -1)
             {
                files.remove(row);
+               
+               // if a file is deleted and then re-added within the same
+               // event loop (as occurs when gedit saves a text file) the
+               // table doesn't always update correctly (it has a duplicate
+               // of the item deleted / re-added). the call to flush overcomes
+               // this issue
+               dataProvider_.flush();
             }
          }
          break;
@@ -439,12 +446,6 @@ public class FilesList extends Composite
          
          break;
       }
-      
-      // multiple actions on a file in the same event loop sometimes cause
-      // the table to not update correctly -- flush the data provider
-      // to prevent this from occuring
-      dataProvider_.flush();
-      
    }
    
    public void renameFile(FileSystemItem from, FileSystemItem to)
