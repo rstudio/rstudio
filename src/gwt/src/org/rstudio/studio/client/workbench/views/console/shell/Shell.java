@@ -24,6 +24,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -121,8 +122,17 @@ public class Shell implements ConsoleInputHandler,
       addKeyDownPreviewHandler(completionManager) ;
       addKeyPressPreviewHandler(completionManager) ;
       
-      // fake keyboard shortcut for completion
-      commands.complete().setShortcut(new KeyboardShortcut(KeyCodes.KEY_TAB));
+      // fake keyboard shortcut for completion (web only -- fake shortcuts
+      // don't show up in desktop mode)
+      if (!Desktop.isDesktop())
+      {
+         commands.complete().setShortcut(
+                              new KeyboardShortcut(KeyCodes.KEY_TAB));
+      }
+      else
+      {
+         commands.complete().remove();
+      }
 
       addKeyDownPreviewHandler(new HistoryCompletionManager(
             view_.getInputEditorDisplay(), server));
