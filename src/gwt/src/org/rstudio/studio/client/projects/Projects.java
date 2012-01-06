@@ -135,7 +135,7 @@ public class Projects implements OpenProjectFileHandler,
                {
                   commands.vcsPush().remove();
                   commands.vcsPull().setButtonLabel("Update");
-                  commands.vcsPull().setMenuLabel("Update");
+                  commands.vcsPull().setMenuLabel("_Update");
                }    
                
                // customize for git if necessary

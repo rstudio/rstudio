@@ -88,7 +88,7 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="complete"/>
          <separator/>
-         <menu label="Run Code">
+         <menu label="Ru_n Code">
             <cmd refid="executeCode"/>
             <cmd refid="executeAllCode"/>
             <cmd refid="executeToCurrentLine"/>
@@ -167,7 +167,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="saveWorkspace"/>
          <cmd refid="saveDefaultWorkspace"/>
          <separator/>
-         <menu label="Import Dataset">
+         <menu label="_Import Dataset">
             <cmd refid="importDatasetFromFile"/>
             <cmd refid="importDatasetFromURL"/>
             <cmd refid="importDatasetFromGoogleSpreadsheet"/>
@@ -199,7 +199,7 @@ well as menu structures (for main menu and popup menus).
       <menu label="_Tools">
          <cmd refid="interruptR"/>
          <separator/>
-         <menu label="Set Working Directory">
+         <menu label="Set _Working Directory">
             <cmd refid="setWorkingDirToActiveDoc"/>
             <cmd refid="setWorkingDirToFilesPane"/>
             <separator/>
@@ -209,7 +209,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="installPackage"/>
          <cmd refid="updatePackages"/>
          <separator/>
-         <menu label="Version Control">
+         <menu label="_Version Control">
             <cmd refid="vcsFileDiff"/>
             <cmd refid="vcsFileLog"/>
             <cmd refid="vcsFileRevert"/>
@@ -245,7 +245,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="rstudioLicense"/>
          <cmd refid="rstudioAgreement"/>
          <separator/>
-         <menu label="Diagnostics">
+         <menu label="Dia_gnostics">
             <cmd refid="showLogFiles"/>
             <cmd refid="updateCredentials"/>
             <cmd refid="showRequestLog"/>
@@ -387,7 +387,7 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Save as"
         desc="Save current file to a specific path" />
    <cmd id="saveAllSourceDocs"
-        menuLabel="Save All"
+        menuLabel="Sa_ve All"
         buttonLabel=""
         desc="Save all open documents"/>
    <cmd id="saveSourceDocWithEncoding"
@@ -398,7 +398,7 @@ well as menu structures (for main menu and popup menus).
         enabled="false"
         preventShortcutWhenDisabled="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
    <cmd id="closeAllSourceDocs"
-        menuLabel="Close All"/>
+        menuLabel="C_lose All"/>
    <cmd id="vcsFileDiff"
         menuLabel="_Diff of"
         desc="Show differences for the file"/>
@@ -458,18 +458,18 @@ well as menu structures (for main menu and popup menus).
         desc="Close the currently open project"/>
 
    <cmd id="projectOptions"
-        menuLabel="Project _Options..."
+        menuLabel="_Project Options..."
         buttonLabel=""
         desc="Edit options for the current project"/>
 
    <cmd id="showToolbar"
-        menuLabel="Show Toolbar"/>
+        menuLabel="Show _Toolbar"/>
    <cmd id="hideToolbar"
-        menuLabel="Hide Toolbar"/>
+        menuLabel="Hide _Toolbar"/>
    <cmd id="goToFileFunction"
-        menuLabel="Go to File/Function..."/>   
+        menuLabel="Go to File/F_unction..."/>   
    <cmd id="activateSource"
-        menuLabel="Move Cursor to _Source"/>
+        menuLabel="Move Cursor to Sou_rce"/>
    <cmd id="activateConsole"
         menuLabel="Move Cursor to _Console"/>
    <cmd id="activateWorkspace"
@@ -491,7 +491,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="jumpToFunction"
         menuLabel="_Jump to Function..."/>
    <cmd id="switchToTab"
-        menuLabel="Switch to _Tab..."/>
+        menuLabel="Switch to Ta_b..."/>
    <cmd id="previousTab"
         menuLabel="_Previous Tab"/>
    <cmd id="nextTab"
@@ -624,14 +624,14 @@ well as menu structures (for main menu and popup menus).
         desc="Diff selected file(s)"/>
    <cmd id="vcsCommit"
         buttonLabel="Commit"
-        menuLabel="Commit..."
+        menuLabel="_Commit..."
         desc="Commit pending changes"/>
    <cmd id="vcsRevert"
         buttonLabel="Revert"
         menuLabel="Revert..."
         desc="Revert selected changes"/>
    <cmd id="vcsShowHistory"
-        menuLabel="History"
+        menuLabel="_History"
         desc="View history of previous commits"/>
    <cmd id="vcsRefresh"
         desc="Refresh listing"/>
@@ -643,17 +643,17 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Ignore"
         desc="Ignore the selected files or folders"/>
    <cmd id="vcsPull"
-        menuLabel="Pull Branches"
+        menuLabel="_Pull Branches"
         buttonLabel="Pull"/>
    <cmd id="vcsPush"
-        menuLabel="Push Branch"
+        menuLabel="P_ush Branch"
         buttonLabel="Push"/>
    <cmd id="vcsCleanup"
-        menuLabel="Cleanup"
+        menuLabel="Cleanu_p"
         buttonLabel="Cleanup"
         desc="Recursively clean up the working copy (removing locks, etc)"/>
    <cmd id="consoleClear"
-        menuLabel="Clear Con_sole"/>
+        menuLabel="Cle_ar Console"/>
    <cmd id="interruptR"
         menuLabel="_Interrupt R"/>
    <cmd id="vcsResolve"
@@ -708,7 +708,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Save Plot as _Image..."
         desc="Save the current plot as an image file"/> 
     <cmd id="savePlotAsPdf"
-        menuLabel="Save Plot as _PDF..."
+        menuLabel="Save Plot as P_DF..."
         desc="Save the current plot as a PDF file"/>
    <cmd id="copyPlotToClipboard"
         menuLabel="Cop_y Plot to Clipboard..."
@@ -746,11 +746,11 @@ well as menu structures (for main menu and popup menus).
    <cmd id="saveDefaultWorkspace"
         menuLabel="Save _As Default Workspace"/>
    <cmd id="importDatasetFromFile"
-        menuLabel="From Text File..."/>
+        menuLabel="From _Text File..."/>
    <cmd id="importDatasetFromURL"
-        menuLabel="From Web URL..."/>
+        menuLabel="From _Web URL..."/>
    <cmd id="importDatasetFromGoogleSpreadsheet"
-        menuLabel="From Google Spreadsheet..."/>
+        menuLabel="From _Google Spreadsheet..."/>
    <cmd id="refreshWorkspace"
         buttonLabel=""
         menuLabel="Refresh"
@@ -781,7 +781,7 @@ well as menu structures (for main menu and popup menus).
         desc="Show RSA public key"/>     
         
    <cmd id="versionControlProjectSetup"
-        menuLabel="_Project Setup..."
+        menuLabel="Project _Setup..."
         desc="Setup version control for the current project"/>
 
    <cmd id="showShellDialog"
@@ -830,15 +830,15 @@ well as menu structures (for main menu and popup menus).
    <cmd id="showWarningBar"
         menuLabel="Show warning bar"/>
    <cmd id="showRequestLog"
-        menuLabel="Request Log"/>
+        menuLabel="_Request Log"/>
    <cmd id="logFocusedElement"
         menuLabel="Log focused element"/>
    <cmd id="debugForceTopsToZero"
-        menuLabel="Reset editor top value"/>
+        menuLabel="Reset _Editor Top Value"/>
    <cmd id="debugDumpContents"
-        menuLabel="Dump the raw contents of the editor"/>
+        menuLabel="_Dump Editor Contents..."/>
    <cmd id="debugImportDump"
-        menuLabel="Imports the raw contents of another editor"/>
+        menuLabel="_Import Editor Contents..."/>
 
    <cmd id="quitSession"
         menuLabel="_Quit R..."/>
@@ -847,10 +847,10 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_About RStudio"
         visible="false"/>
    <cmd id="showLogFiles"
-        menuLabel="Show Log Files"
+        menuLabel="_Show Log Files"
         visible="false"/>
    <cmd id="updateCredentials"
-        menuLabel="Update Credentials"/>
+        menuLabel="_Update Credentials"/>
                
    <cmd id="rstudioSupport"
         menuLabel="RStudio _Support" />
