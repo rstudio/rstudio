@@ -251,6 +251,8 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="showRequestLog"/>
             <separator/>
             <cmd refid="debugForceTopsToZero"/>
+            <cmd refid="debugDumpContents"/>
+            <cmd refid="debugImportDump"/>
             <!--
             <cmd refid="raiseException"/>
 -           <cmd refid="raiseException2"/>
@@ -833,6 +835,10 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Log focused element"/>
    <cmd id="debugForceTopsToZero"
         menuLabel="Reset editor top value"/>
+   <cmd id="debugDumpContents"
+        menuLabel="Dump the raw contents of the editor"/>
+   <cmd id="debugImportDump"
+        menuLabel="Imports the raw contents of another editor"/>
 
    <cmd id="quitSession"
         menuLabel="_Quit R..."/>

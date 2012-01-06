@@ -145,6 +145,8 @@ public class TextFileType extends EditableFileType
       results.add(commands.findReplace());
       results.add(commands.setWorkingDirToActiveDoc());
       results.add(commands.debugForceTopsToZero());
+      results.add(commands.debugDumpContents());
+      results.add(commands.debugImportDump());
       return results;
    }
 

@@ -18,22 +18,17 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.HasValue;
-import com.google.gwt.user.client.ui.ResizeComposite;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.core.client.widget.ToolbarButton;
-import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.core.client.widget.InfoBar;
+import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
@@ -232,6 +227,49 @@ public class TextEditingTargetWidget
    public void debug_forceTopsToZero()
    {
       editor_.debug_forceTopsToZero();
+   }
+
+   @Override
+   public void debug_dumpContents()
+   {
+      String dump = editor_.debug_getDocumentDump();
+      new EditDialog(dump, false, false, new ProgressOperationWithInput<String>()
+      {
+         @Override
+         public void execute(String input, ProgressIndicator indicator)
+         {
+            indicator.onCompleted();
+         }
+      }).showModal();
+   }
+
+   @Override
+   public void debug_importDump()
+   {
+      new EditDialog("", false, false, new ProgressOperationWithInput<String>()
+      {
+         @Override
+         public void execute(String input, ProgressIndicator indicator)
+         {
+            indicator.onCompleted();
+            if (input == null)
+               return;
+
+            input = input.replaceAll("[ \\r\\n]+", " ");
+            String[] chars = input.split(" ");
+
+            StringBuilder sb = new StringBuilder();
+            for (String s : chars)
+            {
+               if (s.equals("."))
+                  sb.append('\n');
+               else
+                  sb.append((char)Integer.parseInt(s));
+            }
+
+            editor_.debug_setSessionValueDirectly(sb.toString());
+         }
+      }).showModal();
    }
 
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)

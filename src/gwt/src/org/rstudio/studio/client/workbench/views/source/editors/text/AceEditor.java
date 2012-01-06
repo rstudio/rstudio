@@ -556,6 +556,18 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().getRenderer().debug_forceTopsToZero();
    }
 
+   @Override
+   public String debug_getDocumentDump()
+   {
+      return widget_.getEditor().getSession().getDocument().getDocumentDump();
+   }
+
+   @Override
+   public void debug_setSessionValueDirectly(String s)
+   {
+      widget_.getEditor().getSession().setValue(s);
+   }
+
    public void setSelection(InputEditorSelection selection)
    {
       AceInputEditorPosition start = (AceInputEditorPosition)selection.getStart();

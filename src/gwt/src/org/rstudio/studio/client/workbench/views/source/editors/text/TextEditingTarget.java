@@ -103,6 +103,8 @@ public class TextEditingTarget implements EditingTarget
       boolean isAttached();
 
       void debug_forceTopsToZero();
+      void debug_dumpContents();
+      void debug_importDump();
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -1056,6 +1058,18 @@ public class TextEditingTarget implements EditingTarget
    void onDebugForceTopsToZero()
    {
       view_.debug_forceTopsToZero();
+   }
+
+   @Handler
+   void onDebugDumpContents()
+   {
+      view_.debug_dumpContents();
+   }
+
+   @Handler
+   void onDebugImportDump()
+   {
+      view_.debug_importDump();
    }
 
    @Handler

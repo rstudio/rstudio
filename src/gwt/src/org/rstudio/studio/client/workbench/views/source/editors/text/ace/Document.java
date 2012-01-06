@@ -30,4 +30,22 @@ public class Document extends JavaScriptObject
    public native final int getLength() /*-{
       return this.getLength();
    }-*/;
+
+   public final String getDocumentDump()
+   {
+      StringBuilder output = new StringBuilder();
+      for (int i = 0; i < getLength(); i++)
+      {
+         String line = getLine(i);
+         for (int j = 0; j < line.length(); j++)
+         {
+            char c = line.charAt(j);
+            output.append((int)c);
+            output.append(' ');
+         }
+
+         output.append(". \n");
+      }
+      return output.toString();
+   }
 }

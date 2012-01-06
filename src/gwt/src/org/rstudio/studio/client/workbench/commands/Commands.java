@@ -198,6 +198,8 @@ public abstract class
    public abstract AppCommand showRequestLog();
    public abstract AppCommand logFocusedElement();
    public abstract AppCommand debugForceTopsToZero();
+   public abstract AppCommand debugDumpContents();
+   public abstract AppCommand debugImportDump();
 
    // Application
    public abstract AppCommand quitSession();
