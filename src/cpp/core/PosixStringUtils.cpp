@@ -41,7 +41,7 @@ std::string wideToUtf8(const std::wstring& value)
    }
 }
 
-std::wstring utf8ToWide(const std::string& value)
+std::wstring utf8ToWide(const std::string& value, const std::string& context)
 {
    try
    {
@@ -61,7 +61,10 @@ std::wstring utf8ToWide(const std::string& value)
       }
       else
       {
-         LOG_ERROR_MESSAGE("Invalid multibyte character");
+         std::string message = "Invalid multibyte character";
+         if (!context.empty())
+            message += " " + context;
+         LOG_ERROR_MESSAGE(message);
          return std::wstring();
       }
    }

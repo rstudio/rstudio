@@ -195,7 +195,7 @@ RSourceIndex::RSourceIndex(const std::string& context,
    : context_(context)
 {
    // convert code to wide
-   std::wstring wCode = string_utils::utf8ToWide(code);
+   std::wstring wCode = string_utils::utf8ToWide(code, context);
 
    // determine where the linebreaks are and initialize an iterator
    // used for scanning them

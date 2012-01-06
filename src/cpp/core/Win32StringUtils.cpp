@@ -45,7 +45,8 @@ std::string wideToUtf8(const std::wstring& value)
    return std::string(&(result[0]));
 }
 
-std::wstring utf8ToWide(const std::string& value)
+std::wstring utf8ToWide(const std::string& value,
+                        const std::string& context)
 {
    if (value.size() == 0)
       return std::wstring();
@@ -56,7 +57,10 @@ std::wstring utf8ToWide(const std::string& value)
                                      NULL, 0);
    if (chars == 0)
    {
-      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      Error error = systemError(::GetLastError(), ERROR_LOCATION);
+      if (!context.empty())
+         error.addProperty("context", context);
+      LOG_ERROR(error);
       return std::wstring();
    }
 
