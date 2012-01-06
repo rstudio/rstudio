@@ -144,8 +144,8 @@ public class DefaultGlobalDisplay extends GlobalDisplay
             {
                @Override
                public void execute(String input, ProgressIndicator indicator)
-               {
-                  int value = Integer.parseInt(input);
+               {  
+                  int value = Integer.parseInt(input.trim());
                   okOperation.execute(value, indicator);
                }
             },

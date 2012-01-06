@@ -1400,6 +1400,8 @@ public class TextEditingTarget implements EditingTarget
                @Override
                public void execute(Integer line, ProgressIndicator indicator)
                {
+                  indicator.onCompleted();
+                  
                   line = Math.max(1, line);
                   line = Math.min(docDisplay_.getRowCount(), line);
 

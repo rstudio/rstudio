@@ -109,10 +109,9 @@ public class TextEntryModalDialog extends ModalDialog<String>
 
       if (numbersOnly_)
       {
-         setText(getText().trim());
          try
          {
-            Integer.parseInt(getText());
+            Integer.parseInt(input.trim());
          }
          catch (NumberFormatException nfe)
          {
