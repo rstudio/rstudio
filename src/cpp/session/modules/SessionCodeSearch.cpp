@@ -895,16 +895,19 @@ void getFunctionS4Methods(const std::string& methodName, json::Array* pMethods)
 {
    // check if the function isGeneric
    bool generic = false;
-   Error error = r::exec::RFunction("methods:::isGeneric", methodName).call(
+   if (methodName != "class")
+   {
+      Error error = r::exec::RFunction("methods:::isGeneric", methodName).call(
                                                                      &generic);
-   if (error)
-      LOG_ERROR(error);
+      if (error)
+         LOG_ERROR(error);
+   }
 
    if (generic)
    {
       std::vector<std::string> methods;
       r::exec::RFunction rFunc(".rs.getS4MethodsForFunction", methodName);
-      error = rFunc.call(&methods);
+      Error error = rFunc.call(&methods);
       if (error)
          LOG_ERROR(error);
 
