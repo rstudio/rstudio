@@ -40,7 +40,11 @@ var TexHighlightRules = function() {
 	        }, {
 	            token : "string", // double quoted string
 	            regex : "``",
-				next : "qqstring"
+               next : "qqstring"
+	        }, {
+	            token : "string", // double quoted string
+	            regex : ",,",
+               next : "qqstring"
 	        }, {
 	            token : "string", // single quoted string
 	            regex : "`",
@@ -68,6 +72,10 @@ var TexHighlightRules = function() {
 	            regex : "['][']",
 	            next : "start"
 	        }, {
+	            token : "string",
+	            regex : '"',
+	            next : "start"
+	        }, {
 	            token : "comment",
 	            regex : "%.*$"
 	        }, {
@@ -90,11 +98,11 @@ var TexHighlightRules = function() {
 	            regex : "[\\])}]"
 	        }, {
 	            token : "string",
-	            regex : "[^\\\\'[({\\])}%]+"
+	            regex : "[^\\\\'\"[({\\])}%]+"
 	        }, {
-		        token : "string",
-				regex : "."
-			}
+               token : "string",
+               regex : "."
+           }
         ],
         "qstring" : [
 	        {
