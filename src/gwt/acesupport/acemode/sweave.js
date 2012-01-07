@@ -24,6 +24,7 @@ var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightR
 var SweaveHighlightRules = require("mode/sweave_highlight_rules").SweaveHighlightRules;
 var RCodeModel = require("mode/r_code_model").RCodeModel;
 var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
+var unicode = require("ace/unicode");
 
 var Mode = function(suppressHighlighting, doc) {
 	if (suppressHighlighting)
@@ -37,6 +38,20 @@ var Mode = function(suppressHighlighting, doc) {
 oop.inherits(Mode, TextMode);
 
 (function() {
+
+   this.tokenRe = new RegExp("^["
+       + unicode.packages.L
+       + unicode.packages.Mn + unicode.packages.Mc
+       + unicode.packages.Nd
+       + unicode.packages.Pc + "_]+", "g"
+   );
+
+   this.nonTokenRe = new RegExp("^(?:[^"
+       + unicode.packages.L
+       + unicode.packages.Mn + unicode.packages.Mc
+       + unicode.packages.Nd
+       + unicode.packages.Pc + "_]|\s])+", "g"
+   );
 
    this.$complements = {
             "(": ")",

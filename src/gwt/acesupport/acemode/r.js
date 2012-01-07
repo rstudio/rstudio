@@ -29,6 +29,7 @@ define("mode/r", function(require, exports, module)
    var RCodeModel = require("mode/r_code_model").RCodeModel;
    var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
    var AutoBraceInsert = require("mode/auto_brace_insert").AutoBraceInsert;
+   var unicode = require("ace/unicode");
 
    var Mode = function(suppressHighlighting, doc)
    {
@@ -44,6 +45,20 @@ define("mode/r", function(require, exports, module)
 
    (function()
    {
+      this.tokenRe = new RegExp("^["
+          + unicode.packages.L
+          + unicode.packages.Mn + unicode.packages.Mc
+          + unicode.packages.Nd
+          + unicode.packages.Pc + "._]+", "g"
+      );
+
+      this.nonTokenRe = new RegExp("^(?:[^"
+          + unicode.packages.L
+          + unicode.packages.Mn + unicode.packages.Mc
+          + unicode.packages.Nd
+          + unicode.packages.Pc + "._]|\s])+", "g"
+      );
+
       this.$complements = {
                "(": ")",
                "[": "]",
