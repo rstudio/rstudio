@@ -83,7 +83,7 @@ public:
    virtual ~FileDecorationContext() {}
 
    virtual void decorateFile(const core::FilePath& filePath,
-                             core::json::Object* pFileObject) const = 0;
+                             core::json::Object* pFileObject) = 0;
 };
 
 } // namespace source_control

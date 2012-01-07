@@ -37,7 +37,7 @@ public:
    SvnFileDecorationContext(const core::FilePath& rootDir);
    virtual ~SvnFileDecorationContext();
    void decorateFile(const core::FilePath& filePath,
-                     core::json::Object* pFileObject) const;
+                     core::json::Object* pFileObject);
 private:
    source_control::StatusResult vcsResult_;
 };

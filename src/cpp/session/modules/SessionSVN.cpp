@@ -1700,7 +1700,7 @@ SvnFileDecorationContext::~SvnFileDecorationContext()
 }
 
 void SvnFileDecorationContext::decorateFile(const core::FilePath& filePath,
-                                            core::json::Object* pFileObject) const
+                                            core::json::Object* pFileObject)
 {
    using namespace source_control;
 

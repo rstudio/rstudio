@@ -1142,6 +1142,7 @@ FilePath detectGitDir(const FilePath& workingDir)
 } // anonymous namespace
 
 GitFileDecorationContext::GitFileDecorationContext(const FilePath& rootDir)
+   : fullRefreshRequired_(false)
 {
    // get source control status (merely log errors doing this)
    Error error = git::status(rootDir, &vcsStatus_);
@@ -1151,12 +1152,36 @@ GitFileDecorationContext::GitFileDecorationContext(const FilePath& rootDir)
 
 GitFileDecorationContext::~GitFileDecorationContext()
 {
+   if (fullRefreshRequired_)
+      enqueueRefreshEvent();
 }
 
 void GitFileDecorationContext::decorateFile(const FilePath &filePath,
-                                            json::Object *pFileObject) const
+                                            json::Object *pFileObject)
 {
    VCSStatus status = vcsStatus_.getStatus(filePath);
+
+   if (status.status().empty() && !fullRefreshRequired_)
+   {
+      // Special edge case when file is inside an untracked directory
+      // that may or may not be known to the client. (It wouldn't be
+      // known if the directory was empty until this file event.)
+
+      FilePath parent = filePath;
+      while (true)
+      {
+         if (parent == parent.parent())
+            break;
+
+         parent = parent.parent();
+         if (vcsStatus_.getStatus(parent).status() == "??")
+         {
+            fullRefreshRequired_ = true;
+            break;
+         }
+      }
+   }
+
    json::Object vcsObj;
    Error error = statusToJson(filePath, status, &vcsObj);
    if (error)

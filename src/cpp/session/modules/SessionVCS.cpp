@@ -124,7 +124,7 @@ Error vcsClone(const json::JsonRpcRequest& request,
 
 class NullFileDecorationContext : public FileDecorationContext
 {
-   void decorateFile(const FilePath&, json::Object*) const
+   void decorateFile(const FilePath&, json::Object*)
    {
    }
 };

@@ -40,10 +40,11 @@ public:
    GitFileDecorationContext(const core::FilePath& rootDir);
    virtual ~GitFileDecorationContext();
    virtual void decorateFile(const core::FilePath &filePath,
-                             core::json::Object *pFileObject) const;
+                             core::json::Object *pFileObject);
 
 private:
    source_control::StatusResult vcsStatus_;
+   bool fullRefreshRequired_;
 };
 
 bool isGitInstalled();
