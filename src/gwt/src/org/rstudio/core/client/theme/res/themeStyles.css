@@ -872,6 +872,9 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 body.windows .searchBox {
    font-size: 11px;
 }
+body.ubuntu_mono .searchBox {
+   font-size: 11px;
+}
 
 /** Workbench **/
 
