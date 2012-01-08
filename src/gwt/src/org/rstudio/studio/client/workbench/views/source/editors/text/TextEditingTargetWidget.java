@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -49,7 +50,7 @@ public class TextEditingTargetWidget
       commands_ = commands;
       uiPrefs_ = uiPrefs;
       editor_ = editor;
-      sourceOnSave_ = new CheckBox("Source on Save");
+      sourceOnSave_ = new CheckBox();
       statusBar_ = new StatusBarWidget();
       
       findReplace_ = new TextEditingTargetFindReplace(
@@ -92,7 +93,11 @@ public class TextEditingTargetWidget
       Toolbar toolbar = new EditingTargetToolbar(commands_);
        
       toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
+      sourceOnSave_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(sourceOnSave_);
+      Label srcOnSaveLabel = new Label("Source on save");
+      srcOnSaveLabel.getElement().getStyle().setMarginRight(9, Unit.PX);
+      toolbar.addLeftWidget(srcOnSaveLabel);
 
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(findReplace_.createFindReplaceButton());

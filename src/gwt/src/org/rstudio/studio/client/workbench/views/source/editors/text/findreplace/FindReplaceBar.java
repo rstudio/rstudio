@@ -42,8 +42,9 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    interface Styles extends CssResource
    {
       String findReplaceBar();
-      String matchCaseCheckBox();
-      String regexCheckBox();
+      String regexLabel();
+      String matchCaseLabel();
+      String checkboxLabel();
       String closeButton();
    }
 
@@ -56,15 +57,22 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       btnFindPrev_ = null;
       //shelf.addLeftWidget(btnFindPrev_ = new SmallButton("&lt;", true));
       shelf.addLeftWidget(btnFindNext_ = new SmallButton("Find", true));
-      shelf.addLeftWidget(chkCaseSensitive_ = new CheckBox("Match case"));
-      shelf.addLeftWidget(chkRegEx_ = new CheckBox("Regex"));
+      shelf.addLeftWidget(chkCaseSensitive_ = new CheckBox());
+      Label matchCaseLabel = new Label("Match case");
+      matchCaseLabel.addStyleName(RES.styles().checkboxLabel());
+      matchCaseLabel.addStyleName(RES.styles().matchCaseLabel());
+      shelf.addLeftWidget(matchCaseLabel);
+      shelf.addLeftWidget(chkRegEx_ = new CheckBox());
+      Label regexLabel = new Label("Regex");
+      regexLabel.addStyleName(RES.styles().checkboxLabel());
+      regexLabel.addStyleName(RES.styles().regexLabel());
+      shelf.addLeftWidget(regexLabel);
       shelf.addLeftWidget(txtReplace_ = new FindTextBox("Replace"));
       shelf.addLeftWidget(btnReplace_ = new SmallButton("Replace"));
       shelf.addLeftWidget(btnReplaceAll_ = new SmallButton("All"));
       
       // pad after regex check box
-      chkCaseSensitive_.addStyleName(RES.styles().matchCaseCheckBox());
-      chkRegEx_.addStyleName(RES.styles().regexCheckBox());
+     
       
       // remove SmallButton instances from tab order since (a) they aren't
       // capable of showing a focused state; and (b) enter is already a

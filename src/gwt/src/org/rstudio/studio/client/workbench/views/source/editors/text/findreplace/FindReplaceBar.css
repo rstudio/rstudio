@@ -1,4 +1,5 @@
 @external gwt-CheckBox;
+@external ubuntu_mono;
 
 .findReplaceBar div, .findReplaceBar td {
    white-space: nowrap;
@@ -11,16 +12,27 @@
 }
 
 .findReplaceBar .gwt-CheckBox {
+   margin-top: 1px;
    font-size: 9px;
    white-space: nowrap;
 }
 
-.matchCaseCheckBox {
-   margin-right: 2px;
+
+.checkboxLabel {
+   margin-top: 1px;
+   font-size: 9px;
 }
 
-.regexCheckBox {
-	margin-right: 10px;
+.ubuntu_mono .checkboxLabel {
+   font-size: 10px;
+}
+
+.matchCaseLabel {
+   margin-right: 2px;	
+}
+
+.regexLabel {
+   margin-right: 10px;
 }
 
 .closeButton {
