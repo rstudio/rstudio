@@ -1,5 +1,5 @@
 @external gwt-CheckBox;
-@external ubuntu_mono;
+@external windows, ubuntu_mono;
 
 .findReplaceBar div, .findReplaceBar td {
    white-space: nowrap;
@@ -24,6 +24,10 @@
 }
 
 .ubuntu_mono .checkboxLabel {
+   font-size: 10px;
+}
+
+.windows .checkboxLabel {
    font-size: 10px;
 }
 
