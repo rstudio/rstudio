@@ -95,7 +95,7 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
       sourceOnSave_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(sourceOnSave_);
-      Label srcOnSaveLabel = new Label("Source on save");
+      Label srcOnSaveLabel = new Label("Source on Save");
       srcOnSaveLabel.getElement().getStyle().setMarginRight(9, Unit.PX);
       toolbar.addLeftWidget(srcOnSaveLabel);
 
