@@ -51,6 +51,8 @@ public class TextEditingTargetWidget
       uiPrefs_ = uiPrefs;
       editor_ = editor;
       sourceOnSave_ = new CheckBox();
+      srcOnSaveLabel_ =
+                  new CheckboxLabel(sourceOnSave_, "Source on Save").getLabel();
       statusBar_ = new StatusBarWidget();
       
       findReplace_ = new TextEditingTargetFindReplace(
@@ -95,9 +97,8 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
       sourceOnSave_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(sourceOnSave_);
-      Label srcOnSaveLabel = new Label("Source on Save");
-      srcOnSaveLabel.getElement().getStyle().setMarginRight(9, Unit.PX);
-      toolbar.addLeftWidget(srcOnSaveLabel);
+      srcOnSaveLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
+      toolbar.addLeftWidget(srcOnSaveLabel_);
 
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(findReplace_.createFindReplaceButton());
@@ -175,6 +176,7 @@ public class TextEditingTargetWidget
    {
       editor_.setFileType(fileType);
       sourceOnSave_.setVisible(fileType.canSourceOnSave());
+      srcOnSaveLabel_.setVisible(fileType.canSourceOnSave());
       codeTransform_.setVisible(fileType.canExecuteCode());
       sourceButton_.setVisible(fileType.canExecuteCode());
       sourceMenuButton_.setVisible(fileType.canExecuteCode());
@@ -297,4 +299,5 @@ public class TextEditingTargetWidget
    private ToolbarButton codeTransform_;
    private ToolbarButton sourceButton_;
    private ToolbarButton sourceMenuButton_;
+   private Label srcOnSaveLabel_;
 }

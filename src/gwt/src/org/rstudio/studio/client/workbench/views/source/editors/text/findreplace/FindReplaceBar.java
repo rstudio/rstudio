@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.CheckboxLabel;
 import org.rstudio.core.client.widget.FindTextBox;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.common.Value;
@@ -58,12 +59,13 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       //shelf.addLeftWidget(btnFindPrev_ = new SmallButton("&lt;", true));
       shelf.addLeftWidget(btnFindNext_ = new SmallButton("Find", true));
       shelf.addLeftWidget(chkCaseSensitive_ = new CheckBox());
-      Label matchCaseLabel = new Label("Match case");
+      Label matchCaseLabel =
+                  new CheckboxLabel(chkCaseSensitive_, "Match case").getLabel();
       matchCaseLabel.addStyleName(RES.styles().checkboxLabel());
       matchCaseLabel.addStyleName(RES.styles().matchCaseLabel());
       shelf.addLeftWidget(matchCaseLabel);
       shelf.addLeftWidget(chkRegEx_ = new CheckBox());
-      Label regexLabel = new Label("Regex");
+      Label regexLabel = new CheckboxLabel(chkRegEx_, "Regex").getLabel();
       regexLabel.addStyleName(RES.styles().checkboxLabel());
       regexLabel.addStyleName(RES.styles().regexLabel());
       shelf.addLeftWidget(regexLabel);
