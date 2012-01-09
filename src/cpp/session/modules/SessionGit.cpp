@@ -480,17 +480,28 @@ public:
 
    core::Error unstage(const std::vector<FilePath>& filePaths)
    {
+      source_control::StatusResult statusResult;
+      Error error = status(root_, &statusResult);
+      if (error)
+         return error;
+
+      std::vector<FilePath> trackedPaths;
+      std::remove_copy_if(filePaths.begin(),
+                          filePaths.end(),
+                          std::back_inserter(trackedPaths),
+                          boost::bind(isUntracked, statusResult, _1));
+
       // Detect if HEAD does not exist (i.e. no commits in repo yet)
       int exitCode;
-      Error error = runGit(ShellArgs() << "rev-parse" << "HEAD", NULL, NULL,
-                           &exitCode);
+      error = runGit(ShellArgs() << "rev-parse" << "HEAD", NULL, NULL,
+                     &exitCode);
       if (error)
          return error;
 
       if (exitCode == 0)
-        return runGit(ShellArgs() << "reset" << "HEAD" << "--" << filePaths);
+         return runGit(ShellArgs() << "reset" << "HEAD" << "--" << trackedPaths);
       else
-         return runGit(ShellArgs() << "rm" << "--cached" << "--" << filePaths);
+         return runGit(ShellArgs() << "rm" << "--cached" << "--" << trackedPaths);
    }
 
    core::Error listBranches(std::vector<std::string>* pBranches,
