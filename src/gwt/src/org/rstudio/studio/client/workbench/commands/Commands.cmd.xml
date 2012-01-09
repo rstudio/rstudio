@@ -301,7 +301,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="commentUncomment" value="Cmd+/"/>
       <shortcut refid="reindent" value="Cmd+I"/>
       <shortcut refid="consoleClear" value="Ctrl+L"/>
-      <shortcut refid="goToFileFunction" value="Cmd+."/>
+      <shortcut refid="goToFileFunction" value="Ctrl+."/>
       <shortcut refid="activateSource" value="Ctrl+1"/>
       <shortcut refid="activateConsole" value="Ctrl+2"/>
       <shortcut refid="activateWorkspace" value="Ctrl+3"/>
