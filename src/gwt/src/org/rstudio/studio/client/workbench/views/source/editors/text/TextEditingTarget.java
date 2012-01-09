@@ -1106,6 +1106,7 @@ public class TextEditingTarget implements EditingTarget
       withChooseEncoding(
             StringUtil.firstNotNullOrEmpty(new String[] {
                   docUpdateSentinel_.getEncoding(),
+                  prefs_.defaultEncoding().getValue(),
                   session_.getSessionInfo().getSystemEncoding()
             }),
             new CommandWithArg<String>()
