@@ -1842,8 +1842,6 @@ Error vcsInitRepo(const json::JsonRpcRequest& request,
       return error;
    FilePath dirPath = module_context::resolveAliasedPath(directory);
 
-   // TODO: Change to runProgram
-
    // create command
    std::string cmd = shell_utils::join_and(
          ShellCommand("cd") << dirPath,

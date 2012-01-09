@@ -76,7 +76,7 @@ public class GitStatusRenderer implements SafeHtmlRenderer<String>
 
    private String descForStatus(String str)
    {
-      // TODO: Provide a suitable tooltip value for status
+      // We could provide a suitable tooltip value for status here
       return "";
    }
 

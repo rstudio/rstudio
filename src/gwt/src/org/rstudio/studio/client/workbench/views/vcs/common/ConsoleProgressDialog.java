@@ -305,8 +305,6 @@ public class ConsoleProgressDialog extends ModalDialogBase
       stopButton_.setText("Close");
       stopButton_.setDefault(true);
       hideProgress();
-     
-      // TODO: Show warning if exitCode != 0
    }
 
    @Override

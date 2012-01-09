@@ -351,10 +351,6 @@ public class SVNReviewPresenter implements ReviewPresenter
 
       String path = view_.getChangelistTable().getSelectedPaths().get(0);
 
-      // TODO: Verify that this is not possible in SVN, and remove
-      if (path.indexOf(" -> ") >= 0)
-         path = path.substring(path.indexOf(" -> ") + " -> ".length());
-
       UnifiedEmitter emitter = new UnifiedEmitter(path);
       for (DiffChunk chunk : chunks)
          emitter.addContext(chunk);
