@@ -118,6 +118,7 @@ public class ConsoleProgressDialog extends ModalDialogBase
       setText(title);
 
       display_ = new ConsoleProgressWidget();
+      display_.addStyleName(resources_.styles().shellDisplay());
       Style style = display_.getElement().getStyle();
       double skewFactor = (12 + BrowseCap.getFontSkew()) / 12.0;
       int width = Math.min((int)(skewFactor * 660),

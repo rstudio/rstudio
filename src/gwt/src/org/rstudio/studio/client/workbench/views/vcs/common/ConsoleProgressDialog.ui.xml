@@ -13,7 +13,7 @@
             <td align="right" width="1%" class="{res.styles.buttonCell}"><r:ThemedButton text="Stop" ui:field="stopButton_" /></td>
          </tr>
          <tr>
-            <td colspan="3"><c:ConsoleProgressWidget styleName="{res.styles.shellDisplay}" ui:field="display_"/></td>
+            <td colspan="3"><c:ConsoleProgressWidget ui:field="display_"/></td>
          </tr>
       </table>
    </g:HTMLPanel>
