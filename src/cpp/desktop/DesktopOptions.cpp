@@ -106,6 +106,13 @@ QString findFirstMatchingFont(const QStringList& fonts, QString defaultFont)
 
 QString Options::proportionalFont() const
 {
+   QString font =
+         settings_.value(QString::fromAscii("font.proportional")).toString();
+   if (!font.isEmpty())
+   {
+      return font;
+   }
+
    QStringList fontList;
 #if defined(_WIN32)
    fontList <<
@@ -134,6 +141,13 @@ QString Options::proportionalFont() const
 
 QString Options::fixedWidthFont() const
 {
+   QString font =
+         settings_.value(QString::fromAscii("font.fixedWidth")).toString();
+   if (!font.isEmpty())
+   {
+      return font;
+   }
+
    // NB: Windows has "Lucida Console" and "Consolas" reversed vs.
    // the list in WebThemeFontLoader (in the GWT codebase). This is
    // because Consolas is more attractive but has a spacing issue
