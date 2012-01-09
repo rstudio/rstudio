@@ -41,7 +41,6 @@ public class ArgHandlerCompileReport extends ArgHandlerFlag {
   @Override
   public boolean setFlag() {
     options.setSoycEnabled(true);
-    options.setCompilerMetricsEnabled(true);
     return true;
   }
 }

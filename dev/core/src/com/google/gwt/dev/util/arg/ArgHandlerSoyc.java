@@ -46,7 +46,6 @@ public class ArgHandlerSoyc extends ArgHandlerFlag {
   @Override
   public boolean setFlag() {
     options.setSoycEnabled(true);
-    options.setCompilerMetricsEnabled(true);
     return true;
   }
 }
