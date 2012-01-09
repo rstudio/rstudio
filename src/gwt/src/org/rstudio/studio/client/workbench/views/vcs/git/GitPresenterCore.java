@@ -78,7 +78,13 @@ public class GitPresenterCore
       gitState_.refresh();
    }
 
-   
+   @Handler
+   void onVcsRefreshNoError()
+   {
+      gitState_.refresh(false);
+   }
+
+
    public void onVcsPull()
    {
       server_.gitPull(new SimpleRequestCallback<ConsoleProcess>()

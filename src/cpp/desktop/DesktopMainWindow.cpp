@@ -240,7 +240,7 @@ bool MainWindow::desktopHooksAvailable()
 void MainWindow::onActivated()
 {
    if (desktopHooksAvailable())
-      invokeCommand(QString::fromAscii("vcsRefresh"));
+      invokeCommand(QString::fromAscii("vcsRefreshNoError"));
 }
 
 } // namespace desktop

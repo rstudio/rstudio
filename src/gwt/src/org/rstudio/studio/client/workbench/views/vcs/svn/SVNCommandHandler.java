@@ -185,6 +185,13 @@ public class SVNCommandHandler
    }
    
    @Handler
+   void onVcsRefreshNoError()
+   {
+      display_.getChangelistTable().showProgress();
+      svnState_.refresh(false);
+   }
+
+   @Handler
    void onVcsAddFiles()
    {
       ArrayList<String> paths = getPathArray();

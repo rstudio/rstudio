@@ -96,7 +96,7 @@ public class VCSApplicationWindow extends SatelliteWindow
       // for no parameters passed we still want to do a refresh
       else
       {
-         pCommands_.get().vcsRefresh().execute();
+         pCommands_.get().vcsRefreshNoError().execute();
       }
    }
    

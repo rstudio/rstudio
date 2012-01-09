@@ -106,6 +106,7 @@ public abstract class
    public abstract AppCommand vcsRevert();
    public abstract AppCommand vcsShowHistory();
    public abstract AppCommand vcsRefresh();
+   public abstract AppCommand vcsRefreshNoError();
    public abstract AppCommand vcsOpen();
    public abstract AppCommand vcsIgnore();
    public abstract AppCommand vcsPull();
