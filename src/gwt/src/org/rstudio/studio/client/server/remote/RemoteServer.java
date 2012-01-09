@@ -1872,12 +1872,7 @@ public class RemoteServer implements Server
                                              clientVersion_);
       
       if (isDisconnected())
-      {
-         RpcError error = RpcError.create(RpcError.CONNECTION_ERROR, 
-                                          "Server disconnected");
-         responseHandler.onResponseReceived(RpcResponse.create(error));
          return rpcRequest;
-      }
 
       // send the request
       rpcRequest.send(new RpcRequestCallback() {
