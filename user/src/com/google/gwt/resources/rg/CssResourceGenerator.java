@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -91,18 +91,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.zip.Adler32;
 
 /**
  * Provides implementations of CSSResources.
  */
-public class CssResourceGenerator extends AbstractResourceGenerator 
+public class CssResourceGenerator extends AbstractResourceGenerator
     implements SupportsGeneratorResultCaching {
 
   @SuppressWarnings("serial")
   static class JClassOrderComparator implements Comparator<JClassType>,
       Serializable {
+    @Override
     public int compare(JClassType o1, JClassType o2) {
       return o1.getQualifiedSourceName().compareTo(o2.getQualifiedSourceName());
     }
@@ -232,7 +234,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator
       /*
        * Compute a new prefix for the identifier to mask the prefix and add the
        * reserved identifier character to prevent conflicts with makeIdent().
-       * 
+       *
        * Assuming "gwt-" is a reserved prefix: gwt-A -> ab32ZA
        */
       String newPrefix = makeIdent(hash.getValue()).substring(0,
@@ -267,7 +269,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator
      * Very large concatenation expressions using '+' cause the GWT compiler to
      * overflow the stack due to deep AST nesting. The workaround for now is to
      * force it to be more balanced using intermediate concatenation groupings.
-     * 
+     *
      * This variable is used to track the number of subexpressions within the
      * current parenthetical expression.
      */
@@ -339,7 +341,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator
   /**
    * Check if number of concat expressions currently exceeds limit and either
    * append '+' if the limit isn't reached or ') + (' if it is.
-   * 
+   *
    * @return numExpressions + 1 or 0 if limit was exceeded.
    */
   private static int concatOp(int numExpressions, StringBuilder b) {
@@ -442,7 +444,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator
     JClassType cssResourceSubtype = method.getReturnType().isInterface();
     assert cssResourceSubtype != null;
     CssStylesheet stylesheet = stylesheetMap.get(method);
-    
+
     // Optimize the stylesheet, recording the class selector obfuscations
     Map<JMethod, String> actualReplacements = optimize(logger, context, method);
 
@@ -450,7 +452,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator
 
     outputAdditionalArtifacts(logger, context, method, actualReplacements,
         cssResourceSubtype, stylesheet);
-    
+
     return getResourceImplAsString(logger, context, method, actualReplacements,
         cssResourceSubtype, stylesheet);
   }
@@ -460,22 +462,22 @@ public class CssResourceGenerator extends AbstractResourceGenerator
       throws UnableToCompleteException {
     String classPrefix;
     try {
-      PropertyOracle propertyOracle = 
+      PropertyOracle propertyOracle =
         context.getGeneratorContext().getPropertyOracle();
-      ConfigurationProperty styleProp = 
+      ConfigurationProperty styleProp =
         propertyOracle.getConfigurationProperty(KEY_STYLE);
       obfuscationStyle = CssObfuscationStyle.getObfuscationStyle(
           styleProp.getValues().get(0));
-      
-      ConfigurationProperty mergeProp = 
+
+      ConfigurationProperty mergeProp =
         propertyOracle.getConfigurationProperty(KEY_MERGE_ENABLED);
       String merge = mergeProp.getValues().get(0);
       enableMerge = merge.equals("true");
 
-      ConfigurationProperty classPrefixProp = 
+      ConfigurationProperty classPrefixProp =
         propertyOracle.getConfigurationProperty(KEY_OBFUSCATION_PREFIX);
       classPrefix = classPrefixProp.getValues().get(0);
-      
+
       // add these configuration properties to our requirements
       ClientBundleRequirements requirements = context.getRequirements();
       requirements.addConfigurationProperty(KEY_STYLE);
@@ -495,7 +497,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator
     }
 
     stylesheetMap = new IdentityHashMap<JMethod, CssStylesheet>();
-    
+
     SortedSet<JClassType> cssResourceSubtypes =
       computeOperableTypes(logger, baseInterface);
     initReplacements(logger, context, classPrefix, cssResourceSubtypes);
@@ -521,14 +523,14 @@ public class CssResourceGenerator extends AbstractResourceGenerator
     CssStylesheet sheet = GenerateCssAst.exec(logger, resources);
     checkSheet(logger, sheet);
     stylesheetMap.put(method, sheet);
-    (new RequirementsCollector(logger, context.getRequirements())).accept(sheet);    
+    (new RequirementsCollector(logger, context.getRequirements())).accept(sheet);
   }
-  
+
   protected void checkSheet(TreeLogger logger, CssStylesheet stylesheet)
   throws UnableToCompleteException {
     // Do nothing
   }
- 
+
   /**
    * Return the name of the class which is at the base of the CssResource
    * generation tree.  Since obfuscation is done globally, this should be the
@@ -552,18 +554,18 @@ public class CssResourceGenerator extends AbstractResourceGenerator
     // Methods defined by CssResource interface
     writeEnsureInjected(sw);
     writeGetName(method, sw);
-  
+
     // Create the Java expression that generates the CSS
     writeGetText(logger, context, method, sw);
-   
+
     // getOverridableMethods is used to handle CssResources extending
     // non-CssResource types. See the discussion in computeReplacementsForType.
     writeUserMethods(logger, sw, stylesheet,
         cssResourceSubtype.getOverridableMethods(), actualReplacements);
-   
+
     sw.outdent();
     sw.println("}");
-   
+
     return sw.toString();
   }
 
@@ -579,7 +581,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator
   protected String getSuperclassInterfaceName() {
     return CssResource.class.getCanonicalName();
   }
-  
+
   /**
    * Output additional artifacts. Does nothing in this baseclass, but is a hook
    * for subclasses to do so.
@@ -764,7 +766,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator
          */
         String obfuscatedClassName = computeObfuscatedClassName(classPrefix,
             classCounter, reservedPrefixes);
-        
+
         // Modify the name based on the obfuscation style requested
         obfuscatedClassName = obfuscationStyle.getPrettyName(name, type,
               obfuscatedClassName);
@@ -852,7 +854,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator
 
     return toReturn;
   }
-  
+
   /**
    * Determine if a type is derived from CssResource.
    */
@@ -891,13 +893,13 @@ public class CssResourceGenerator extends AbstractResourceGenerator
      * result regardless of the order in which the generators fired. (It no
      * longer behaves that way, as that scheme prevented the generation of new
      * CssResource interfaces, but the complexity lives on.)
-     * 
+     *
      * TODO(rjrjr,bobv) These days scottb tells us we're guaranteed that the
      * recompiling the same code will fire the generators in a consistent order,
      * so the old gymnastics aren't really justified anyway. It would probably
      * be be worth the effort to simplify this.
      */
-    
+
     if (context.getCachedData(KEY_HAS_CACHED_DATA, Boolean.class) != Boolean.TRUE) {
 
       ConfigurationProperty prop;
@@ -990,7 +992,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator
   /**
    * Create a Java expression that evaluates to the string representation of the
    * stylesheet resource.
-   * 
+   *
    * @param actualReplacements An out parameter that will be populated by the
    *          obfuscated class names that should be used for the particular
    *          instance of the CssResource, based on any substitution
@@ -1003,7 +1005,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator
       String standard = makeExpression(logger, context, sheet, obfuscationStyle.isPretty());
       (new RtlVisitor()).accept(sheet);
       String reversed = makeExpression(logger, context, sheet, obfuscationStyle.isPretty());
-      
+
       if (standard.equals(reversed)) {
         return standard;
       } else {
@@ -1021,7 +1023,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator
 
   private Map<JMethod, String> optimize(TreeLogger logger,
       ResourceContext context, JMethod method) throws UnableToCompleteException {
-    
+
     TypeOracle typeOracle = context.getGeneratorContext().getTypeOracle();
     JClassType cssResourceSubtype = method.getReturnType().isInterface();
     assert cssResourceSubtype != null;
@@ -1034,7 +1036,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator
 
     boolean strict = isStrict(logger, method);
     CssStylesheet sheet = stylesheetMap.get(method);
-    
+
     // Create CSS sprites
     (new Spriter(logger, context)).accept(sheet);
 
@@ -1056,7 +1058,22 @@ public class CssResourceGenerator extends AbstractResourceGenerator
     ClassRenamer renamer = new ClassRenamer(logger,
         classReplacementsWithPrefix, strict, externalClasses.getClasses());
     renamer.accept(sheet);
-    Map<JMethod, String> actualReplacements = new HashMap<JMethod, String>();
+    Map<JMethod, String> actualReplacements = new TreeMap<JMethod, String>(
+        new Comparator<JMethod>() {
+          @Override
+          public int compare(JMethod o1, JMethod o2) {
+            String qualifiedName = source(o1);
+            int result = source(o1).compareTo(source(o2));
+            if (result == 0) {
+              result = o1.getName().compareTo(o2.getName());
+            }
+            return result;
+          }
+
+          private String source(JMethod o) {
+            return o.getEnclosingType().getQualifiedSourceName();
+          }
+        });
     actualReplacements.putAll(renamer.getReplacements());
 
     // Combine rules with identical selectors
@@ -1064,8 +1081,8 @@ public class CssResourceGenerator extends AbstractResourceGenerator
       (new SplitRulesVisitor()).accept(sheet);
       (new MergeIdenticalSelectorsVisitor()).accept(sheet);
       (new MergeRulesByContentVisitor()).accept(sheet);
-    } 
-    
+    }
+
     return actualReplacements;
   }
 
@@ -1093,7 +1110,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator
 
         // add this import type as a requirement for this generator
         context.getRequirements().addTypeHierarchy(importType);
-        
+
         String prefix = getImportPrefix(importType);
 
         if (replacementsWithPrefix.put(prefix,
@@ -1105,7 +1122,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator
       }
       if (fail) {
         throw new UnableToCompleteException();
-      }  
+      }
     }
     return replacementsWithPrefix;
   }
