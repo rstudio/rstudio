@@ -540,6 +540,22 @@ public class GitReviewPresenter implements ReviewPresenter
                         });
                         new ConsoleProgressDialog(proc, server_).showModal();
                      }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        if (error.getClientInfo() != null
+                            && error.getClientInfo().isString() != null)
+                        {
+                           globalDisplay_.showErrorMessage(
+                                 "Commit",
+                                 error.getClientInfo().isString().stringValue());
+                        }
+                        else
+                        {
+                           super.onError(error);
+                        }
+                     }
                   });
          }
       });

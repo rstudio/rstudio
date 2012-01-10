@@ -45,6 +45,7 @@
 #include <core/StringUtils.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RUtil.hpp>
 
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -538,9 +539,39 @@ public:
                                ppCP);
    }
 
-   core::Error commit(const std::string& message, bool amend, bool signOff,
+   core::Error commit(std::string message, bool amend, bool signOff,
                       boost::shared_ptr<ConsoleProcess>* ppCP)
    {
+      bool alwaysUseUtf8 = s_gitVersion >= GIT_1_7_2;
+
+      if (!alwaysUseUtf8)
+      {
+         std::string encoding;
+         int exitCode;
+         Error error = runGit(ShellArgs() << "config" << "i18n.commitencoding",
+                              &encoding,
+                              NULL,
+                              &exitCode);
+         if (!error)
+         {
+            boost::algorithm::trim_right(encoding);
+            if (!encoding.empty() && encoding != "UTF-8")
+            {
+               error = r::util::iconvstr(message,
+                                         "UTF-8",
+                                         encoding,
+                                         false,
+                                         &message);
+               if (error)
+               {
+                  return systemError(boost::system::errc::illegal_byte_sequence,
+                                     "The commit message could not be encoded to " + encoding + ".\n\nYou can correct this by calling 'git config i18n.commitencoding UTF-8' and committing again.",
+                                     ERROR_LOCATION);
+               }
+            }
+         }
+      }
+
       FilePath tempFile = module_context::tempFile("gitmsg", "txt");
       boost::shared_ptr<std::ostream> pStream;
 
@@ -572,8 +603,11 @@ public:
 
       // Make sure we override i18n settings that may cause the commit message
       // to be marked as using an encoding other than utf-8.
-      ShellArgs args = ShellArgs() << "-c" << "i18n.commitencoding=utf-8"
-                       << "commit" << "-F" << tempFile;
+      ShellArgs args;
+      if (alwaysUseUtf8)
+         args << "-c" << "i18n.commitencoding=utf-8";
+      args << "commit" << "-F" << tempFile;
+
       if (amend)
          args << "--amend";
       if (signOff)
@@ -838,8 +872,8 @@ public:
                    const std::string& searchText,
                    std::vector<CommitInfo>* pOutput)
    {
-      ShellArgs args = ShellArgs() << "-c" << "i18n.logoutputencoding=utf-8"
-                       << "log" << "--pretty=raw" << "--decorate=full"
+      ShellArgs args = ShellArgs() << "log" << "--encoding=UTF-8"
+                       << "--pretty=raw" << "--decorate=full"
                        << "--date-order";
 
       ShellArgs revListArgs = ShellArgs() << "rev-list" << "--date-order" << "--parents";
@@ -1422,7 +1456,15 @@ Error vcsCommit(const json::JsonRpcRequest& request,
    boost::shared_ptr<ConsoleProcess> pCP;
    error = s_git_.commit(commitMsg, amend, signOff, &pCP);
    if (error)
+   {
+      if (error.code() == boost::system::errc::illegal_byte_sequence)
+      {
+         pResponse->setError(error, error.getProperty("description"));
+         return Success();
+      }
+
       return error;
+   }
 
    pResponse->setResult(pCP->toJson());
 
