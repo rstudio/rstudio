@@ -241,7 +241,9 @@ public class ClosureJsRunner {
     }
 
     // Then the leftovers fragments:
-    closureModuleSequenceMap[fragments - 1] = module++;
+    if (fragments > 1) {
+      closureModuleSequenceMap[fragments - 1] = module++;
+    }
 
     // Finally, the exclusive fragments.
     // The order of the remaining fragments doesn't matter.
