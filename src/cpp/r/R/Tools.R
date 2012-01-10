@@ -130,6 +130,22 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
 {
    load(filename)
    
+   # restore native symbols for R >= 2.14
+   if (getRversion() >= "2.14")
+   {
+     try({
+       for(i in 1:length(plot[[1]])) 
+       {
+         if("NativeSymbolInfo" %in% class(plot[[1]][[i]][[2]][[1]]))
+         {
+           nativeSymbol <-getNativeSymbolInfo(plot[[1]][[i]][[2]][[1]]$name);
+           plot[[1]][[i]][[2]][[1]] <- nativeSymbol;         
+         }
+       }
+     },
+     silent = TRUE);
+   }
+   
    # we suppressWarnings so that R doesnt print a warning if we restore
    # a plot saved from a previous version of R (which will occur if we 
    # do a resume after upgrading the version of R on the server)
