@@ -170,13 +170,15 @@ void ProjectContext::augmentRbuildignore()
    if (directory().childPath("DESCRIPTION").exists())
    {
       // constants
-      const char * const kIgnoreRprojUser = "^\\.Rproj\\.user$\n";
+      const char * const kIgnoreRprojUser = "^\\.Rproj\\.user$";
 
       // create the file if it doesn't exists
       FilePath rbuildIgnorePath = directory().childPath(".Rbuildignore");
       if (!rbuildIgnorePath.exists())
       {
-         Error error = writeStringToFile(rbuildIgnorePath, kIgnoreRprojUser);
+         Error error = writeStringToFile(rbuildIgnorePath,
+                                         kIgnoreRprojUser + std::string("\n"),
+                                         string_utils::LineEndingNative);
          if (error)
             LOG_ERROR(error);
       }
@@ -184,7 +186,10 @@ void ProjectContext::augmentRbuildignore()
       {
          // if .Rbuildignore exists, add .Rproj.user unless already there
          std::string strIgnore;
-         Error error = core::readStringFromFile(rbuildIgnorePath, &strIgnore);
+         Error error = core::readStringFromFile(
+                                             rbuildIgnorePath,
+                                             &strIgnore,
+                                             string_utils::LineEndingPosix);
          if (error)
          {
             LOG_ERROR(error);
@@ -197,11 +202,13 @@ void ProjectContext::augmentRbuildignore()
          bool addExtraNewline = strIgnore.size() > 0
                                 && strIgnore[strIgnore.size() - 1] != '\n';
 
-         std::string newContent;
          if (addExtraNewline)
-            newContent += "\n";
-         newContent += kIgnoreRprojUser;
-         error = core::appendToFile(rbuildIgnorePath, newContent);
+            strIgnore += "\n";
+         strIgnore += kIgnoreRprojUser;
+         strIgnore += "\n";
+         error = core::writeStringToFile(rbuildIgnorePath,
+                                         strIgnore,
+                                         string_utils::LineEndingNative);
          if (error)
             LOG_ERROR(error);
       }
