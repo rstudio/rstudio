@@ -107,6 +107,11 @@ public:
       std::for_each(descriptorIndex().begin(), descriptorIndex().end(), op);
    }
 
+   void clear()
+   {
+      watches_ = WatchesContainer();
+   }
+
 private:
 
    struct wd {};
@@ -239,7 +244,7 @@ boost::function<Error(const FileInfo&)> addWatchFunction(
                         &pContext->watches);
 }
 
-void removeWatch(int fd, const Watch& watch, Watches* pWatches)
+void removeWatch(int fd, const Watch& watch)
 {
    // remove the watch
    int result = ::inotify_rm_watch(fd, watch.wd);
@@ -252,17 +257,14 @@ void removeWatch(int fd, const Watch& watch, Watches* pWatches)
       error.addProperty("path", watch.path);
       LOG_ERROR(error);
    }
-
-   // remove it from the container
-   pWatches->erase(watch);
 }
 
 void removeAllWatches(FileEventContext* pContext)
 {
    pContext->watches.forEach(boost::bind(removeWatch,
                                           pContext->fd,
-                                          _1,
-                                          &pContext->watches));
+                                          _1));
+   pContext->watches.clear();
 }
 
 void closeContext(FileEventContext* pContext)
@@ -361,7 +363,10 @@ Error processEvent(FileEventContext* pContext,
                   Watch watch = pContext->watches.find(
                                              event.fileInfo().absolutePath());
                   if (!watch.empty())
-                     removeWatch(pContext->fd, watch, &pContext->watches);
+                  {
+                     removeWatch(pContext->fd, watch);
+                     pContext->watches.erase(watch);
+                  }
                }
             }
 
