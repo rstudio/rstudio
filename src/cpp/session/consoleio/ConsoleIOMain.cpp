@@ -383,6 +383,13 @@ int main(int argc, char** argv)
       return 1;
    }
 
+   SMALL_RECT screenSize = { 1, 1, 3, 3 };
+   if (!::SetConsoleWindowInfo(hConOut, TRUE, &screenSize))
+   {
+      print_error("SetConsoleWindowInfo");
+      return 1;
+   }
+
    COORD newSize = {80, 160};
    if (!::SetConsoleScreenBufferSize(hConOut, newSize))
    {
