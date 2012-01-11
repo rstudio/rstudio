@@ -141,6 +141,8 @@ private:
 
    void updateDefaultEncoding();
 
+   void augmentRbuildignore();
+
 private:
    core::FilePath file_;
    core::FilePath directory_;

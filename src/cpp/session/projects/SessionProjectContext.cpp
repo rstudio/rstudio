@@ -165,12 +165,58 @@ Error ProjectContext::startup(const FilePath& projectFile,
 
 }
 
+void ProjectContext::augmentRbuildignore()
+{
+   if (directory().childPath("DESCRIPTION").exists())
+   {
+      // constants
+      const char * const kIgnoreRprojUser = "^\\.Rproj\\.user$\n";
+
+      // create the file if it doesn't exists
+      FilePath rbuildIgnorePath = directory().childPath(".Rbuildignore");
+      if (!rbuildIgnorePath.exists())
+      {
+         Error error = writeStringToFile(rbuildIgnorePath, kIgnoreRprojUser);
+         if (error)
+            LOG_ERROR(error);
+      }
+      else
+      {
+         // if .Rbuildignore exists, add .Rproj.user unless already there
+         std::string strIgnore;
+         Error error = core::readStringFromFile(rbuildIgnorePath, &strIgnore);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return;
+         }
+
+         if (strIgnore.find(kIgnoreRprojUser) != std::string::npos)
+            return;
+
+         bool addExtraNewline = strIgnore.size() > 0
+                                && strIgnore[strIgnore.size() - 1] != '\n';
+
+         std::string newContent;
+         if (addExtraNewline)
+            newContent += "\n";
+         newContent += kIgnoreRprojUser;
+         error = core::appendToFile(rbuildIgnorePath, newContent);
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+}
+
 Error ProjectContext::initialize()
 {
    if (hasProject())
    {
       // compute the default encoding
       updateDefaultEncoding();
+
+      // augmewnt .Rbuildignore if this is a package
+      augmentRbuildignore();
 
       // subscribe to deferred init (for initializing our file monitor)
       if (config().enableCodeIndexing)
