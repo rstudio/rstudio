@@ -2263,6 +2263,12 @@ Error addFilesToGitIgnore(const FilePath& gitIgnoreFile,
                           const std::vector<std::string>& filesToIgnore,
                           bool addExtraNewline)
 {
+#ifdef _WIN32
+   const char * const kNewline = "\r\n";
+#else
+   const char * const kNewline = "\n";
+#endif
+
    if (filesToIgnore.empty())
       return Success();
 
@@ -2275,11 +2281,11 @@ Error addFilesToGitIgnore(const FilePath& gitIgnoreFile,
    if (ptrOs->good())
    {
       if (addExtraNewline)
-         *ptrOs << std::endl;
+         *ptrOs << kNewline;
 
       BOOST_FOREACH(const std::string& line, filesToIgnore)
       {
-         *ptrOs << line << std::endl;
+         *ptrOs << line << kNewline;
       }
 
       ptrOs->flush();
