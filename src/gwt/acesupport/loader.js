@@ -108,6 +108,16 @@ oop.inherits(RStudioEditSession, EditSession);
       var matchLen = line.match(/^\s*/g)[0].length;
       this.replace(new Range(lineNum, 0, lineNum, matchLen), indent);
    };
+
+   this.$disableOverwrite = false;
+   this.setDisableOverwrite = function(disableOverwrite) {
+      this.$disableOverwrite = disableOverwrite;
+      this.setOverwrite(this.$overwrite);
+   };
+
+   this.setOverwrite = function(overwrite) {
+      EditSession.prototype.setOverwrite(overwrite && !this.$disableOverwrite);
+   };
 }).call(RStudioEditSession.prototype);
 
 

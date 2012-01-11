@@ -75,6 +75,10 @@ public class EditSession extends JavaScriptObject
       return this.getMode();
    }-*/;
 
+   public native final void setDisableOverwrite(boolean disableOverwrite) /*-{
+      this.setDisableOverwrite(disableOverwrite);
+   }-*/;
+
    public native final int documentToScreenRow(Position position) /*-{
       return this.documentToScreenRow(position.row, position.column);
    }-*/;

@@ -1173,6 +1173,11 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().getRenderer().setPasswordMode(passwordMode);
    }
 
+   public void setDisableOverwrite(boolean disableOverwrite)
+   {
+      getSession().setDisableOverwrite(disableOverwrite);
+   }
+
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
    private CompletionManager completionManager_;

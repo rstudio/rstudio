@@ -26,6 +26,8 @@ public class ShellPane extends ShellWidget implements Shell.Display
    public ShellPane(final AceEditor editor, UIPrefs uiPrefs)
    {
       super(editor);
+
+      editor.setDisableOverwrite(true);
       
       editor.setFileType(FileTypeRegistry.R, true);
       // Setting file type to R changes the wrap mode to false. We want it to
