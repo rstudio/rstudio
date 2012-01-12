@@ -25,6 +25,8 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
  * @see com.google.gwt.resources.ext.ResourceGeneratorUtil
  */
 public abstract class AbstractResourceGenerator implements ResourceGenerator {
+  protected static final boolean STRIP_COMMENTS = System.getProperty("gwt.resourceBundle.stripComments") != null;
+
   public abstract String createAssignment(TreeLogger logger,
       ResourceContext context, JMethod method) throws UnableToCompleteException;
 

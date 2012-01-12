@@ -61,8 +61,10 @@ public final class TextResourceGenerator extends AbstractResourceGenerator
     sw.println("new " + TextResource.class.getName() + "() {");
     sw.indent();
 
-    // Convenience when examining the generated code.
-    sw.println("// " + resource.toExternalForm());
+    if (!AbstractResourceGenerator.STRIP_COMMENTS) {
+      // Convenience when examining the generated code.
+      sw.println("// " + resource.toExternalForm());
+    }
 
     sw.println("public String getText() {");
     sw.indent();

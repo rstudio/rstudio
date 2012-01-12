@@ -60,7 +60,9 @@ public final class DataResourceGenerator extends AbstractResourceGenerator imple
 
     SourceWriter sw = new StringSourceWriter();
     // Convenience when examining the generated code.
-    sw.println("// " + resource.toExternalForm());
+    if (!AbstractResourceGenerator.STRIP_COMMENTS) {
+      sw.println("// " + resource.toExternalForm());
+    }
     sw.println("new " + DataResourcePrototype.class.getName() + "(");
     sw.indent();
     sw.println('"' + method.getName() + "\",");
