@@ -11,6 +11,20 @@
  *
  */
 
+// A very low level assertion (line 595 of cpp_regex_traits.hpp) is firing
+// on WindowsXP when we create a boost::wregex within R session. This code
+// is part of boost attempting to detect the sort syntax, and the assertion
+// is that there are no nulls in a buffer after a call to locale->transform.
+// Within the same method there are workarounds for both borland c++ and
+// dinkumware c++ std library to strip embedded nulls, so it seems as if
+// there is some variation in whether nulls come out of the call to transforn.
+// Note also that boost has a macro titled BOOST_REGEX_NO_WIN32 which we are
+// not using, which means that boost regex does call into native windows APIs
+// for locale oriented functions (thus explaining a difference in runtime
+// behavior across platforms). Tokenization appears to continue to work
+// correctly in the presence of the assertion (with the annoying side effect
+// of logging an assertion every time the product starts up)
+
 #include <core/r_util/RTokenizer.hpp>
 
 #include <boost/regex.hpp>
