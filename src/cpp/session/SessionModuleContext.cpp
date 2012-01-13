@@ -913,7 +913,7 @@ std::string generateShortenedUuid()
    return core::hash::crc32HexHash(uuid);
 }
 
-FilePath uniqueDirectory(const FilePath& parent, const std::string& prefix)
+FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix)
 {
    // try up to 100 times then fallback to a uuid
    for (int i=0; i<100; i++)

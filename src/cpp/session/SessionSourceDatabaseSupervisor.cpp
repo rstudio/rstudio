@@ -91,8 +91,8 @@ Error removeSessionDir(const FilePath& sessionDir)
 
 FilePath generateSessionDirPath()
 {
-   return module_context::uniqueDirectory(sourceDatabaseRoot(),
-                                          kSessionDirPrefix);
+   return module_context::uniqueFilePath(sourceDatabaseRoot(),
+                                         kSessionDirPrefix);
 }
 
 bool isNotSessionDir(const FilePath& filePath)
@@ -131,7 +131,13 @@ void attemptToMoveSourceDbFiles(const FilePath& fromPath,
    // move the files
    BOOST_FOREACH(const FilePath& filePath, children)
    {
-      Error error = filePath.move(toPath.complete(filePath.filename()));
+      // if the target path already exists then just generate a
+      // new unique filename
+      FilePath targetPath = toPath.complete(filePath.filename());
+      if (targetPath.exists())
+         targetPath = module_context::uniqueFilePath(toPath);
+
+      Error error = filePath.move(targetPath);
       if (error)
          LOG_ERROR(error);
    }

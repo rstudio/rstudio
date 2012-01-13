@@ -307,8 +307,8 @@ core::FilePath shellWorkingDirectory();
 
 std::string generateShortenedUuid();
 
-core::FilePath uniqueDirectory(const core::FilePath& parent,
-                               const std::string& prefix);
+core::FilePath uniqueFilePath(const core::FilePath& parent,
+                              const std::string& prefix = "");
 
 // persist state accross suspend and resume
    

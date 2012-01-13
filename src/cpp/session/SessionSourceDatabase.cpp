@@ -96,7 +96,8 @@ Error putProperties(const std::string& path, const json::Object& properties)
    std::string propertiesFile = propertiesDB.index[escapedPath];
    if (propertiesFile.empty())
    {
-      propertiesFile = core::system::generateUuid(false);
+      FilePath propFile = module_context::uniqueFilePath(propertiesDB.path);
+      propertiesFile = propFile.filename();
       propertiesDB.index[escapedPath] = propertiesFile;
       updateIndex = true;
    }
@@ -159,7 +160,9 @@ Error getProperties(const std::string& path, json::Object* pProperties)
 
 SourceDocument::SourceDocument(const std::string& type)
 {
-   id_ = core::system::generateUuid();
+   FilePath srcDBPath = source_database::path();
+   FilePath docPath = module_context::uniqueFilePath(srcDBPath);
+   id_ = docPath.filename();
    type_ = type;
    setContents("");
    dirty_ = false;
