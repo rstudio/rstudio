@@ -57,6 +57,14 @@ FilePath persistentTitledDir()
    return sourceDatabaseRoot().complete("per/t");
 }
 
+FilePath oldPersistentTitledDir()
+{
+   FilePath oldPath = module_context::oldScopedScratchPath();
+   if (oldPath.exists())
+      return oldPath.complete("source_database_v2/persistent/titled");
+   else
+      return FilePath();
+}
 
 FilePath persistentUntitledDir()
 {
@@ -205,6 +213,10 @@ Error createSessionDirFromPersistent(FilePath* pSessionDir)
    // move persistent titled files
    if (persistentTitledDir().exists())
       attemptToMoveSourceDbFiles(persistentTitledDir(), *pSessionDir);
+
+   // get legacy titled docs if they exist
+   if (oldPersistentTitledDir().exists())
+      attemptToMoveSourceDbFiles(oldPersistentTitledDir(), *pSessionDir);
 
    // move persistent untitled files
    if (persistentUntitledDir().exists())
