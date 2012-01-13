@@ -315,7 +315,14 @@ Error detachFromSourceDatabase()
    {
       if (pDoc->isUntitled())
       {
-         error = pDoc->writeToFile(untitledDir.complete(pDoc->id()));
+         // compute the target path (manage uniqueness since this
+         // directory is appended to from multiple processes who
+         // could have created docs with the same id)
+         FilePath targetPath = untitledDir.complete(pDoc->id());
+         if (targetPath.exists())
+            targetPath = module_context::uniqueFilePath(untitledDir);
+
+         error = pDoc->writeToFile(targetPath);
          if (error)
             LOG_ERROR(error);
       }
