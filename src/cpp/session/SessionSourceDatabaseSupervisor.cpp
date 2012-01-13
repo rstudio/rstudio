@@ -63,6 +63,15 @@ FilePath persistentUntitledDir()
    return sourceDatabaseRoot().complete("per/u");
 }
 
+FilePath oldPersistentUntitledDir()
+{
+   FilePath oldPath = module_context::oldScopedScratchPath();
+   if (oldPath.exists())
+      return oldPath.complete("source_database_v2/persistent/untitled");
+   else
+      return FilePath();
+}
+
 FilePath sessionLockFilePath(const FilePath& sessionDir)
 {
    return sessionDir.complete("lock_file");
@@ -200,6 +209,10 @@ Error createSessionDirFromPersistent(FilePath* pSessionDir)
    // move persistent untitled files
    if (persistentUntitledDir().exists())
       attemptToMoveSourceDbFiles(persistentUntitledDir(), *pSessionDir);
+
+   // get legacy untitled docs if they exist
+   if (oldPersistentUntitledDir().exists())
+      attemptToMoveSourceDbFiles(oldPersistentUntitledDir(), *pSessionDir);
 
    // return success
    return Success();

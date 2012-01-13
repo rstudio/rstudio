@@ -642,6 +642,14 @@ FilePath scopedScratchPath()
    else
       return userScratchPath();
 }
+
+FilePath oldScopedScratchPath()
+{
+   if (projects::projectContext().hasProject())
+      return projects::projectContext().oldScratchPath();
+   else
+      return userScratchPath();
+}
    
 bool isVisibleUserFile(const FilePath& filePath)
 {

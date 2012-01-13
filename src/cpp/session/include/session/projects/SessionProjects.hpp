@@ -86,6 +86,8 @@ public:
    const core::FilePath& directory() const { return directory_; }
    const core::FilePath& scratchPath() const { return scratchPath_; }
 
+   core::FilePath oldScratchPath() const;
+
    const core::r_util::RProjectConfig& config() const { return config_; }
    void setConfig(const core::r_util::RProjectConfig& config)
    {

@@ -51,6 +51,7 @@ std::string createAliasedPath(const core::FilePath& path);
 core::FilePath resolveAliasedPath(const std::string& aliasedPath);
 core::FilePath userScratchPath();
 core::FilePath scopedScratchPath();
+core::FilePath oldScopedScratchPath();
 bool isVisibleUserFile(const core::FilePath& filePath);
 
 core::FilePath safeCurrentPath();

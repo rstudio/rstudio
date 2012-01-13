@@ -153,6 +153,11 @@ std::string UserSettings::contextId() const
    return settings_.get(kContextId);
 }
 
+std::string UserSettings::oldContextId() const
+{
+   return settings_.get("contextId");
+}
+
 void UserSettings::setContextId(const std::string& contextId)
 {
    settings_.set(kContextId, contextId);

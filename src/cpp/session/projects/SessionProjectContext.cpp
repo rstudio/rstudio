@@ -86,6 +86,31 @@ Error computeScratchPath(const FilePath& projectFile, FilePath* pScratchPath)
    return Success();
 }
 
+FilePath ProjectContext::oldScratchPath() const
+{
+   // start from the standard .Rproj.user dir
+   FilePath projectUserDir = directory().complete(".Rproj.user");
+   if (!projectUserDir.exists())
+      return FilePath();
+
+   // add username if we can get one
+   std::string username = core::system::username();
+   if (!username.empty())
+      projectUserDir = projectUserDir.complete(username);
+
+   // if this path doesn't exist then bail
+   if (!projectUserDir.exists())
+      return FilePath();
+
+   // see if an old scratch path using the old contextId is present
+   // and if so return it
+   FilePath oldPath = projectUserDir.complete(userSettings().oldContextId());
+   if (oldPath.exists())
+      return oldPath;
+   else
+      return FilePath();
+}
+
 // NOTE: this function is called very early in the process lifetime (from
 // session::projects::startup) so can only have limited dependencies.
 // specifically, it can rely on userSettings() being available, but can

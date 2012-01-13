@@ -70,6 +70,9 @@ public:
    std::string contextId() const;
    void setContextId(const std::string& contextId);
 
+   // old context-id (for migrating untitled files)
+   std::string oldContextId() const;
+
    // agreement hash code
    std::string agreementHash() const;
    void setAgreementHash(const std::string& hash) ;
