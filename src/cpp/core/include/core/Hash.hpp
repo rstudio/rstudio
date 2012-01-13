@@ -21,6 +21,8 @@ namespace hash {
    
 std::string crc32Hash(const std::string& content);
 
+std::string crc32HexHash(const std::string& content);
+
 } // namespace hash
 } // namespace core 
 

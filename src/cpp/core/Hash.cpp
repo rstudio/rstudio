@@ -27,6 +27,18 @@ std::string crc32Hash(const std::string& content)
    result.process_bytes(content.data(), content.length());
    return boost::lexical_cast<std::string>(result.checksum());
 }
+
+std::string crc32HexHash(const std::string& content)
+{
+   // compute checksum
+   boost::crc_32_type result;
+   result.process_bytes(content.data(), content.length());
+
+   // return hex representation
+   std::ostringstream output;
+   output << std::uppercase << std::hex << result.checksum();
+   return output.str();
+}
    
 } // namespace hash
 } // namespace core 

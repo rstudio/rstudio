@@ -910,7 +910,7 @@ FilePath shellWorkingDirectory()
 std::string generateShortenedUuid()
 {
    std::string uuid = core::system::generateUuid(false);
-   return core::hash::crc32Hash(uuid);
+   return core::hash::crc32HexHash(uuid);
 }
 
 FilePath uniqueDirectory(const FilePath& parent, const std::string& prefix)
