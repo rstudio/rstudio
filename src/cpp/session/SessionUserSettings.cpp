@@ -34,7 +34,7 @@ namespace session {
 #define kAgreementPrefix "agreement."
    
 namespace {
-const char * const kContextId ="contextId";
+const char * const kContextId ="contextIdentifier";
 const char * const kAgreementHash = kAgreementPrefix "agreedToHash";
 const char * const kAutoCreatedProfile = "autoCreatedProfile";
 const char * const kUiPrefs = "uiPrefs";
@@ -105,7 +105,7 @@ Error UserSettings::initialize()
 
    // make sure we have a context id
    if (contextId().empty())
-      setContextId(core::system::generateUuid());
+      setContextId(module_context::generateShortenedUuid());
 
    return Success();
 }

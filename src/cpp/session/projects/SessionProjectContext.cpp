@@ -75,16 +75,6 @@ Error computeScratchPath(const FilePath& projectFile, FilePath* pScratchPath)
 #endif
    }
 
-   // create user subdirectory if we have a username
-   std::string username = core::system::username();
-   if (!username.empty())
-   {
-      projectUserDir = projectUserDir.complete(username);
-      Error error = projectUserDir.ensureDirectory();
-      if (error)
-         return error;
-   }
-
    // now add context id to form scratch path
    FilePath scratchPath = projectUserDir.complete(userSettings().contextId());
    Error error = scratchPath.ensureDirectory();

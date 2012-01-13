@@ -39,7 +39,7 @@ namespace supervisor {
 
 namespace {
 
-const char * const kSessionDirPrefix = "session-";
+const char * const kSessionDirPrefix = "s-";
 
 FilePath oldSourceDatabaseRoot()
 {
@@ -49,19 +49,18 @@ FilePath oldSourceDatabaseRoot()
 
 FilePath sourceDatabaseRoot()
 {
-   return
-      module_context::scopedScratchPath().complete("source_database_v2");
+   return module_context::scopedScratchPath().complete("sdb");
 }
 
 FilePath persistentTitledDir()
 {
-   return sourceDatabaseRoot().complete("persistent/titled");
+   return sourceDatabaseRoot().complete("per/t");
 }
 
 
 FilePath persistentUntitledDir()
 {
-   return sourceDatabaseRoot().complete("persistent/untitled");
+   return sourceDatabaseRoot().complete("per/u");
 }
 
 FilePath sessionLockFilePath(const FilePath& sessionDir)
@@ -92,8 +91,8 @@ Error removeSessionDir(const FilePath& sessionDir)
 
 FilePath generateSessionDirPath()
 {
-   return sourceDatabaseRoot().complete(kSessionDirPrefix +
-                                        core::system::generateUuid());
+   return module_context::uniqueDirectory(sourceDatabaseRoot(),
+                                          kSessionDirPrefix);
 }
 
 bool isNotSessionDir(const FilePath& filePath)
@@ -160,7 +159,7 @@ Error createSessionDirFromOldSourceDatabase(FilePath* pSessionDir)
    FilePath propsPath = oldSourceDatabaseRoot().complete("properties");
    if (propsPath.exists())
    {
-      FilePath newPropsPath = sourceDatabaseRoot().complete("properties");
+      FilePath newPropsPath = sourceDatabaseRoot().complete("prop");
       Error error = propsPath.move(newPropsPath);
       if (error)
          LOG_ERROR(error);

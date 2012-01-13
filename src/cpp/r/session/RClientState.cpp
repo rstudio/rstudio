@@ -32,7 +32,7 @@ namespace {
   
 const char * const kTemporaryExt = ".temporary";
 const char * const kPersistentExt = ".persistent";
-const char * const kProjPersistentExt = ".proj_persistent";
+const char * const kProjPersistentExt = ".pper";
    
 void putState(const std::string& scope, 
               const json::Object::value_type& entry,

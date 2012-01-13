@@ -1110,7 +1110,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
 
    // set client state paths
    s_clientStatePath = s_options.userScratchPath.complete("client-state");
-   s_projectClientStatePath = s_options.scopedScratchPath.complete("project-client-state");
+   s_projectClientStatePath = s_options.scopedScratchPath.complete("pcs");
    
    // set source reloading behavior
    sourceManager().setAutoReload(options.autoReloadSource);
