@@ -345,6 +345,29 @@ protected:
       return output;
    }
 
+
+   void appendPathArgs(const std::vector<FilePath>& filePaths,
+                       ShellArgs* pArgs)
+   {
+      // On OSX we observed that staging and unstaging operations involving
+      // directories that didn't exist would fail with an "unable to switch
+      // to directory" message from git. We discovered this at the very
+      // end of the v0.95 cycle so wanted to make as targeted a fix as
+      // we could, so below we use git root relative paths whenever we can
+      // on OSX, but on other platforms continue to use full absolute paths
+#ifdef __APPLE__
+      BOOST_FOREACH(const FilePath& filePath, filePaths)
+      {
+         if (filePath.isWithin(root_))
+            *pArgs << filePath.relativePath(root_);
+         else
+            *pArgs << filePath;
+      }
+#else
+      *pArgs << filePaths;
+#endif
+   }
+
 public:
 
    Git() : root_(FilePath())
@@ -413,7 +436,10 @@ public:
 
    core::Error remove(const std::vector<FilePath>& filePaths)
    {
-      return runGit(ShellArgs() << "rm" << "--" << filePaths);
+      ShellArgs args;
+      args << "rm" << "--";
+      appendPathArgs(filePaths, &args);
+      return runGit(args);
    }
 
    core::Error discard(const std::vector<FilePath>& filePaths)
@@ -499,10 +525,13 @@ public:
       if (error)
          return error;
 
+      ShellArgs args;
       if (exitCode == 0)
-         return runGit(ShellArgs() << "reset" << "HEAD" << "--" << trackedPaths);
+         args << "reset" << "HEAD" << "--" ;
       else
-         return runGit(ShellArgs() << "rm" << "--cached" << "--" << trackedPaths);
+         args << "rm" << "--cached" << "--";
+      appendPathArgs(trackedPaths, &args);
+      return runGit(args);
    }
 
    core::Error listBranches(std::vector<std::string>* pBranches,
