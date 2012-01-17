@@ -71,6 +71,11 @@ public class HistoryImpl implements HasValueChangeHandlers<String> {
     return handlers.addHandler(ValueChangeEvent.getType(), handler);
   }
 
+  public native String encodeFragment(String fragment) /*-{
+    // encodeURI() does *not* encode the '#' character.
+    return encodeURI(fragment).replace("#", "%23");
+  }-*/;
+
   public void fireEvent(GwtEvent<?> event) {
     handlers.fireEvent(event);
   }
@@ -140,11 +145,6 @@ public class HistoryImpl implements HasValueChangeHandlers<String> {
   protected native String decodeFragment(String encodedFragment) /*-{
     // decodeURI() does *not* decode the '#' character.
     return decodeURI(encodedFragment.replace("%23", "#"));
-  }-*/;
-
-  protected native String encodeFragment(String fragment) /*-{
-    // encodeURI() does *not* encode the '#' character.
-    return encodeURI(fragment).replace("#", "%23");
   }-*/;
 
   /**
