@@ -89,6 +89,39 @@ const FilePath& FilesListingMonitor::currentMonitoredPath() const
    return currentPath_;
 }
 
+namespace {
+
+// Convert fileInfo returned from file monitor into a normalized path which
+// will traverse a symlink if necessary. this addresses the following concern:
+//
+//   - Our core file listing code calls FilePath::children which traverses
+//     symblinks to list the actual underlying file or directory linked to
+//
+//   - Our file monitoring code however treats symlinks literally (to avoid
+//     recursive or otherwise very long traversals)
+//
+//   - The above two behaviors intersect to cause a pair of add/remove events
+//     for symliniks within onRegistered (because the initial snapshot
+//     was taken with FilePath::children and the file monitor enumeration
+//     is taken using core::scanFiles). When propagated to the client this
+//     results in symlinked directories appearing as documents and not
+//     being traversable in the files pane
+//
+//   - We could fix this by changing the behavior of core::scanFiles and/or
+//     another layer in the file listing / monitoring code however we
+//     are making the fix late in the cycle and therefore want to treat
+//     only the symptom (it's not clear that this isn't the best fix anyway,
+//     but just want to note that other fixes were not considered and
+//     might be superior)
+//
+FileInfo normalizeFileScannerPath(const FileInfo& fileInfo)
+{
+   FilePath filePath(fileInfo.absolutePath());
+   return FileInfo(filePath);
+}
+
+} // anonymous namespace
+
 void FilesListingMonitor::onRegistered(core::system::file_monitor::Handle handle,
                                        const FilePath& filePath,
                                        const std::vector<FileInfo>& prevFiles,
@@ -98,13 +131,20 @@ void FilesListingMonitor::onRegistered(core::system::file_monitor::Handle handle
    currentPath_ = filePath;
    currentHandle_ = handle;
 
+   // normalize scanned file paths (see comment above for explanation)
+   std::vector<FileInfo> currFiles;
+   std::transform(files.begin(files.begin()),
+                  files.end(files.begin()),
+                  std::back_inserter(currFiles),
+                  normalizeFileScannerPath);
+
    // compare the previously returned listing with the initial scan to see if any
    // file changes occurred between listings
    std::vector<core::system::FileChangeEvent> events;
    core::system::collectFileChangeEvents(prevFiles.begin(),
                                          prevFiles.end(),
-                                         files.begin(files.begin()),
-                                         files.end(files.begin()),
+                                         currFiles.begin(),
+                                         currFiles.end(),
                                          module_context::fileListingFilter,
                                          &events);
 
