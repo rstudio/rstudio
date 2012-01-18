@@ -67,6 +67,9 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
                 this, 
                 true);
           
+         if (activeProjectFile_ != null)
+            toolbarButton_.setTitle(activeProjectFile_);
+        
           if (activeProjectFile_ == null)
           {
              toolbarButton_.addStyleName(
