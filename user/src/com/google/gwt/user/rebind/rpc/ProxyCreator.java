@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -250,7 +250,7 @@ public class ProxyCreator {
 
   /**
    * Creates the client-side proxy class.
-   * 
+   *
    * @throws UnableToCompleteException
    */
   public RebindResult create(TreeLogger logger, GeneratorContext context)
@@ -370,7 +370,7 @@ public class ProxyCreator {
 
     srcWriter.commit(logger);
 
-    if (context.isProdMode() || logger.isLoggable(TreeLogger.DEBUG)) {
+    if (logger.isLoggable(TreeLogger.DEBUG)) {
       // Create an artifact explaining STOB's decisions. It will be emitted by
       // RpcLogLinker
       context.commitArtifact(logger, new RpcLogArtifact(serviceIntf.getQualifiedSourceName(),
@@ -479,7 +479,7 @@ public class ProxyCreator {
 
   /**
    * Generate any fields required by the proxy.
-   * 
+   *
    * @param serializableTypeOracle the type oracle
    */
   protected void generateProxyFields(SourceWriter srcWriter,
@@ -498,7 +498,7 @@ public class ProxyCreator {
 
   /**
    * Generates the client's asynchronous proxy method.
-   * 
+   *
    * @param serializableTypeOracle the type oracle
    */
   protected void generateProxyMethod(SourceWriter w, SerializableTypeOracle serializableTypeOracle,
