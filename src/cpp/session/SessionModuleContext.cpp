@@ -726,6 +726,7 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
    core::FilePath filePath(fileInfo.absolutePath());
    std::string ext = filePath.extensionLowerCase();
    if (ext == ".rprofile" ||
+       ext == ".rbuildignore" ||
        ext == ".rdata"    ||
        ext == ".rhistory" ||
        ext == ".renviron" ||
