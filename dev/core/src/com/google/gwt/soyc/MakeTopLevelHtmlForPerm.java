@@ -352,7 +352,7 @@ public class MakeTopLevelHtmlForPerm {
       
       // follows all method dependency stacks
       outFile.println("  function j() {");
-      outFile.println("    document.write(\"</div></table>\");");
+      outFile.println("    document.write(\"</table></div>\");");
       outFile.println("  }");
 
       // leftovers status line
