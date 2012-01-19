@@ -15,6 +15,7 @@ set GWT_FILE=gwt-2.4.0.zip
 set JUNIT_FILE=junit-4.9b3.jar
 set GNUDIFF_FILE=gnudiff.zip
 set MSYS_SSH_FILE=msys_ssh.zip
+set HUNSPELL_FILE=hunspell-1.3.zip
 
 if not exist boost-win (
   wget %WGET_ARGS% "%BASEURL%%BOOST_FILE%"
@@ -45,6 +46,15 @@ if not exist msys_ssh (
   unzip %UNZIP_ARGS% "%MSYS_SSH_FILE%" -d msys_ssh
   del "%MSYS_SSH_FILE%"
 )
+
+if not exist hunspell/hunspell-1.3 (
+  wget %WGET_ARGS% "%BASEURL%%HUNSPELL_FILE%"
+  mkdir hunspell\hunspell-1.3
+  echo Unzipping %HUNSPELL_FILE%
+  unzip %UNZIP_ARGS% "%HUNSPELL_FILE%" -d hunspell/hunspell-1.3
+  del "%HUNSPELL_FILE%"
+)
+
 
 mkdir ..\..\src\gwt\lib
 pushd ..\..\src\gwt\lib
