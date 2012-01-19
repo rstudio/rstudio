@@ -188,7 +188,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("external-gnudiff-path",
        value<std::string>(&gnudiffPath_)->default_value("bin/gnudiff"),
        "Path to gnudiff utilities (windows-only)")
-      ("external-msysssh-path (windows-only)",
+      ("external-msysssh-path",
        value<std::string>(&msysSshPath_)->default_value("bin/msys_ssh"),
        "Path to msys_ssh utilities (windows-only)")
       ("external-hunspell-path",
