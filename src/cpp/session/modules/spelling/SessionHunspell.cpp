@@ -12,10 +12,7 @@
  */
 #include "SessionHunspell.hpp"
 
-#if defined(_WIN32)
-
-
-#elif defined(__APPLE__)
+#ifndef _WIN32
   #include <dlfcn.h>
 #else
 
@@ -62,13 +59,18 @@ struct LibHunspell
 
 Error initialize()
 {
+   LibHunspell hs;
 #if defined(_WIN32)
 
 
-#elif defined(__APPLE__)
-   LibHunspell hs;
-   void* pHunspell = ::dlopen("libhunspell-1.2.dylib",
-                               RTLD_LAZY | RTLD_LOCAL | RTLD_FIRST);
+#else
+
+#if defined(__APPLE__)
+   void* pHunspell = ::dlopen("libhunspell-1.2.dylib", RTLD_LAZY | RTLD_LOCAL);
+#else
+   void* pHunspell = ::dlopen("libhunspell-1.2.so.0", RTLD_LAZY | RTLD_LOCAL);
+#endif
+
    if (pHunspell)
    {
       hs.create = (PtrHunspellCreate)::dlsym(pHunspell,"Hunspell_create");
@@ -76,9 +78,6 @@ Error initialize()
       hs.spell = (PtrHunspellSpell)::dlsym(pHunspell, "Hunspell_spell");
       hs.suggest = (PtrHunspellSuggest)::dlsym(pHunspell, "Hunspell_suggest");
    }
-
-#else
-
 
 #endif
 
