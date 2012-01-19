@@ -107,6 +107,8 @@
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"
 
+#include "modules/spelling/SessionHunspell.hpp"
+
 #include <session/projects/SessionProjects.hpp>
 #include "projects/SessionProjectsInternal.hpp"
 
@@ -1304,6 +1306,9 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::tex::initialize)
       (modules::history::initialize)
       (modules::code_search::initialize)
+
+      // disabled for now
+      //(modules::spelling::hunspell::initialize)
 
       // workers
       (workers::web_request::initialize)
