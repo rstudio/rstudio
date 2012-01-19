@@ -187,10 +187,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
        "Path to consoleio executable")
       ("external-gnudiff-path",
        value<std::string>(&gnudiffPath_)->default_value("bin/gnudiff"),
-       "Path to gnudiff utilities")
-      ("external-msysssh-path",
+       "Path to gnudiff utilities (windows-only)")
+      ("external-msysssh-path (windows-only)",
        value<std::string>(&msysSshPath_)->default_value("bin/msys_ssh"),
-       "Path to msys_ssh utilities");;
+       "Path to msys_ssh utilities (windows-only)")
+      ("external-hunspell-path",
+       value<std::string>(&hunspellPath_)->default_value("bin/hunspell/hunspell-1.3"),
+       "Path to hunspell libraries (windows-only)");
    
    // user options (default user identity to current username)
    std::string currentUsername = core::system::username();
@@ -296,6 +299,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(resourcePath, &consoleIoPath_);
    resolvePath(resourcePath, &gnudiffPath_);
    resolvePath(resourcePath, &msysSshPath_);
+   resolvePath(resourcePath, &hunspellPath_);
 #endif
 
    // shared secret with parent

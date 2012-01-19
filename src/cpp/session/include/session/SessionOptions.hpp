@@ -188,6 +188,11 @@ public:
       return core::FilePath(msysSshPath_.c_str());
    }
    
+   core::FilePath hunspellPath() const
+   {
+      return core::FilePath(hunspellPath_.c_str());
+   }
+
    // user info
    std::string userIdentity() const 
    { 
@@ -302,6 +307,7 @@ private:
    std::string consoleIoPath_;
    std::string gnudiffPath_;
    std::string msysSshPath_;
+   std::string hunspellPath_;
 
    // user info
    std::string userIdentity_;

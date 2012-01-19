@@ -226,7 +226,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
       endif()
    endif()
 
-   # install gnudiff and mysys_ssh tools on windows
+   # install gnudiff, mysys_ssh, and hunspell on windows
    if(WIN32)
       install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/gnudiff"
               USE_SOURCE_PERMISSIONS
@@ -234,6 +234,10 @@ if (NOT RSTUDIO_SESSION_WIN64)
       install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/msys_ssh"
               USE_SOURCE_PERMISSIONS
               DESTINATION  ${RSTUDIO_INSTALL_BIN})
+      file(MAKE_DIRECTORY "${RSTUDIO_INSTALL_BIN}/hunspell")
+      install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/hunspell/hunspell-1.3"
+              USE_SOURCE_PERMISSIONS
+              DESTINATION "${RSTUDIO_INSTALL_BIN}/hunspell")
    endif()
 endif()
 
