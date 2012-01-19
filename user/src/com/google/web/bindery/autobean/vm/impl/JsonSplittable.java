@@ -285,14 +285,6 @@ public class JsonSplittable implements Splittable, HasSplittable {
     return array.length();
   }
 
-  /**
-   * For debugging use only.
-   */
-  @Override
-  public String toString() {
-    return getPayload();
-  }
-
   private synchronized JsonSplittable makeSplittable(Object object) {
     if (JSONObject.NULL.equals(object)) {
       return null;

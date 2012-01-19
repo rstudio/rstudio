@@ -271,11 +271,11 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
       sb.append("[");
       if (it.hasNext()) {
         // TODO: Allow for the encoding of nested collections. See issue 5974.
-        sb.append(nonCollectionEncode(it.next()));
+        sb.append(nonCollectionEncode(it.next()).getPayload());
         while (it.hasNext()) {
           sb.append(",");
           // TODO: Allow for the encoding of nested collections. See issue 5974.
-          sb.append(nonCollectionEncode(it.next()));
+          sb.append(nonCollectionEncode(it.next()).getPayload());
         }
       }
       sb.append("]");
