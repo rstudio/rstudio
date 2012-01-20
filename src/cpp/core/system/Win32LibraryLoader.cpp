@@ -13,6 +13,8 @@
 
 #include <core/system/LibraryLoader.hpp>
 
+#include <windows.h>
+
 #include <core/Error.hpp>
 
 namespace core {
@@ -20,21 +22,42 @@ namespace system {
 
 Error loadLibrary(const std::string& libPath, void** ppLib)
 {
-   return Success();
+   *ppLib = NULL;
+   *ppLib = (void*)::LoadLibrary(libPath.c_str());
+   if (*ppLib == NULL)
+   {
+      Error error = systemError(::GetLastError(), ERROR_LOCATION);
+      error.addProperty("lib-path", libPath);
+      return error;
+   }
+   else
+   {
+      return Success();
+   }
 }
 
 Error loadSymbol(void* pLib, const std::string& name, void** ppSymbol)
 {
-
-
-   return Success();
+   *ppSymbol = NULL;
+   *ppSymbol = (void*)::GetProcAddress((HINSTANCE)pLib, name.c_str());
+   if (*ppSymbol == NULL)
+   {
+      Error error = systemError(::GetLastError(), ERROR_LOCATION);
+      error.addProperty("symbol", name);
+      return error;
+   }
+   else
+   {
+      return Success();
+   }
 }
 
 Error closeLibrary(void* pLib)
 {
-
-
-   return Success();
+   if (!::FreeLibrary((HMODULE)pLib))
+      return systemError(::GetLastError(), ERROR_LOCATION);
+   else
+      return Success();
 }
 
 } // namespace system
