@@ -19,6 +19,7 @@
 
 #include <core/system/System.hpp>
 
+#include <core/spelling/SpellChecker.hpp>
 
 using namespace core ;
 
@@ -29,7 +30,17 @@ int main(int argc, char * const argv[])
       // initialize log
       initializeSystemLog("coredev", core::system::kLogLevelWarning);
 
+#if defined(__APPLE__)
+      std::string hunspellPath = "libhunspell-1.2.dylib";
+#else
+      std::string hunspellPath = "libhunspell-1.2.so.0";
+#endif
      
+      boost::shared_ptr<core::spelling::SpellChecker> pSpellChecker;
+      Error error =  core::spelling::createHunspell(hunspellPath,
+                                                    &pSpellChecker);
+      if (error)
+         LOG_ERROR(error);
    
      
       return EXIT_SUCCESS;

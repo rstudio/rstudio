@@ -63,6 +63,7 @@ set (CORE_SOURCE_FILES
    r_util/RTokenizer.cpp
    r_util/RSourceIndex.cpp
    r_util/RTokenizerTests.cpp
+   spelling/Hunspell.cpp
    system/Environment.cpp
    system/Process.cpp
    system/ShellUtils.cpp
@@ -126,6 +127,7 @@ if (UNIX)
       SyslogLogWriter.cpp
       system/PosixEnvironment.cpp
       system/PosixFileScanner.cpp
+      system/PosixLibraryLoader.cpp
       system/PosixParentProcessMonitor.cpp
       system/PosixOutputCapture.cpp
       system/PosixShellUtils.cpp
@@ -162,6 +164,7 @@ else()
       system/Win32FileScanner.cpp
       system/RegistryKey.cpp
       system/Win32Environment.cpp
+      system/Win32LibraryLoader.cpp
       system/Win32ParentProcessMonitor.cpp
       system/Win32OutputCapture.cpp
       system/Win32ShellUtils.cpp

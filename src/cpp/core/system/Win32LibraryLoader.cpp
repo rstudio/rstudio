@@ -1,5 +1,5 @@
 /*
- * SessionHunspell.hpp
+ * Win32LibraryLoader.cpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -11,24 +11,31 @@
  *
  */
 
-#ifndef SESSION_HUNSPELL_HPP
-#define SESSION_HUNSPELL_HPP
+#include <core/system/LibraryLoader.hpp>
+
+#include <core/Error.hpp>
 
 namespace core {
-   class Error;
+namespace system {
+
+Error loadLibrary(const std::string& libPath, void** ppLib)
+{
+   return Success();
 }
 
-namespace session {
-namespace modules {
-namespace spelling {
-namespace hunspell {
+Error loadSymbol(void* pLib, const std::string& name, void** ppSymbol)
+{
 
-core::Error initialize();
 
-} // namespace hunspell
-} // namespace spelling
-} // namespace modules
-} // namespace session
+   return Success();
+}
 
-#endif // SESSION_HUNSPELL_HPP
+Error closeLibrary(void* pLib)
+{
 
+
+   return Success();
+}
+
+} // namespace system
+} // namespace core
