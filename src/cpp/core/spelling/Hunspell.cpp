@@ -66,7 +66,9 @@ public:
       }
    }
 
-   Error initialize(const std::string& libPath)
+   Error initialize(const std::string& libPath,
+                    const std::string& affPath,
+                    const std::string& dicPath)
    {
       // load the library
       Error error = core::system::loadLibrary(libPath, &pLib_);
@@ -80,7 +82,16 @@ public:
         (bind(&Hunspell::setSymbol, this, "Hunspell_create", (void**)&sym_.create))
         (bind(&Hunspell::setSymbol, this, "Hunspell_destroy", (void**)&sym_.destroy))
         (bind(&Hunspell::setSymbol, this, "Hunspell_spell", (void**)&sym_.spell));
-      return setSymbols.execute();
+      error = setSymbols.execute();
+      if (error)
+         return error;
+
+      // create the hunspell engine
+      pHandle_ = sym_.create(affPath.c_str(), dicPath.c_str());
+      if (pHandle_ == NULL)
+         return core::pathNotFoundError(affPath, ERROR_LOCATION);
+
+      return Success();
    }
 
    void destroy()
@@ -125,13 +136,15 @@ private:
 
 
 core::Error createHunspell(const std::string& libPath,
+                           const std::string& affPath,
+                           const std::string& dicPath,
                            boost::shared_ptr<SpellChecker>* pHunspell)
 {
    // create the hunspell engine
    boost::shared_ptr<Hunspell> pNew(new Hunspell());
 
    // initialize it
-   Error error = pNew->initialize(libPath);
+   Error error = pNew->initialize(libPath, affPath, dicPath);
    if (error)
       return error;
 

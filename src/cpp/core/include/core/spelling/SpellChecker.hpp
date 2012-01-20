@@ -34,6 +34,8 @@ public:
 };
 
 core::Error createHunspell(const std::string& libPath,
+                           const std::string& affPath,
+                           const std::string& dicPath,
                            boost::shared_ptr<SpellChecker>* pHunspell);
 
 
