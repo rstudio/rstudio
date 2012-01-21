@@ -13,6 +13,10 @@
 
 #include <core/spelling/SpellChecker.hpp>
 
+#ifndef _WIN32
+#include <dlfcn.h>
+#endif
+
 #include <boost/bind.hpp>
 
 #include <core/Error.hpp>
@@ -20,6 +24,16 @@
 #include <core/FilePath.hpp>
 
 #include <core/system/LibraryLoader.hpp>
+
+// TODO: Need to have an unavailable state for systems where we can't
+// bind to Hunspell. Currently this includes:
+//
+//  - Windows systems without LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR (including XP)
+//  - Mac OSX 10.5
+//  - Linux systems without libhunspell (including RedHat 5)
+//
+
+// TODO: ability to bind to variations of libhunspell (including 1.3)
 
 namespace core {
 namespace spelling {
@@ -71,7 +85,14 @@ public:
                     const std::string& dicPath)
    {
       // load the library
-      Error error = core::system::loadLibrary(libPath, &pLib_);
+      Error error = core::system::loadLibrary(
+                     libPath,
+#ifdef _WIN32
+                     0x00000100 /* LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR */,
+#else
+                     RTLD_LAZY | RTLD_LOCAL,
+#endif
+                     &pLib_);
       if (error)
          return error;
 

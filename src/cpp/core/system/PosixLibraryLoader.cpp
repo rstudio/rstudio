@@ -31,10 +31,10 @@ void addLastDLErrorMessage(Error* pError)
 
 } // anonymous namespace
 
-Error loadLibrary(const std::string& libPath, void** ppLib)
+Error loadLibrary(const std::string& libPath, int options, void** ppLib)
 {
    *ppLib = NULL;
-   *ppLib = ::dlopen(libPath.c_str(), RTLD_LAZY | RTLD_LOCAL);
+   *ppLib = ::dlopen(libPath.c_str(), options);
    if (*ppLib == NULL)
    {
       Error error = systemError(

@@ -20,10 +20,11 @@
 namespace core {
 namespace system {
 
-Error loadLibrary(const std::string& libPath, void** ppLib)
+Error loadLibrary(const std::string& libPath, int options, void** ppLib)
 {
+   // use
    *ppLib = NULL;
-   *ppLib = (void*)::LoadLibrary(libPath.c_str());
+   *ppLib = (void*)::LoadLibraryEx(libPath.c_str(), NULL, options);
    if (*ppLib == NULL)
    {
       Error error = systemError(::GetLastError(), ERROR_LOCATION);

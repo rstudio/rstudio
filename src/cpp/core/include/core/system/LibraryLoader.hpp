@@ -22,7 +22,7 @@ class Error;
 
 namespace system {
 
-Error loadLibrary(const std::string& libPath, void** ppLib);
+Error loadLibrary(const std::string& libPath, int options, void** ppLib);
 Error loadSymbol(void* pLib, const std::string& name, void** ppSymbol);
 Error closeLibrary(void* pLib);
 
