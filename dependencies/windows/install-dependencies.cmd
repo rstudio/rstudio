@@ -49,9 +49,9 @@ if not exist msys_ssh (
 
 if not exist hunspell/hunspell-1.3 (
   wget %WGET_ARGS% "%BASEURL%%HUNSPELL_FILE%"
-  mkdir hunspell\hunspell-1.3
+  mkdir hunspell
   echo Unzipping %HUNSPELL_FILE%
-  unzip %UNZIP_ARGS% "%HUNSPELL_FILE%" -d hunspell/hunspell-1.3
+  unzip %UNZIP_ARGS% "%HUNSPELL_FILE%" -d hunspell
   del "%HUNSPELL_FILE%"
 )
 
