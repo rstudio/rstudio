@@ -18,6 +18,13 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 
+// Including the hunspell headers caused compilation errors for Windows 64-bit
+// builds. The trouble seemd to be a 'near' macro defined somewhere in the
+// mingw toolchain (couldn't find where). Fix this by undefining 'near' right
+// before we include hunspell.hxx.
+#if defined(near)
+#undef near
+#endif
 #include "hunspell/hunspell.hxx"
 
 namespace core {
