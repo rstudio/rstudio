@@ -191,9 +191,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("external-msysssh-path",
        value<std::string>(&msysSshPath_)->default_value("bin/msys_ssh"),
        "Path to msys_ssh utilities (windows-only)")
-      ("external-hunspell-path",
-       value<std::string>(&hunspellPath_)->default_value("bin/hunspell/hunspell-1.3"),
-       "Path to hunspell libraries (windows-only)");
+      ("external-hunspell-dictionaries-path",
+       value<std::string>(&hunspellDictionariesPath_)->default_value("resources/dictionaries"),
+       "Path to hunspell dictionaries");
    
    // user options (default user identity to current username)
    std::string currentUsername = core::system::username();
@@ -299,8 +299,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(resourcePath, &consoleIoPath_);
    resolvePath(resourcePath, &gnudiffPath_);
    resolvePath(resourcePath, &msysSshPath_);
-   resolvePath(resourcePath, &hunspellPath_);
+
 #endif
+   resolvePath(resourcePath, &hunspellDictionariesPath_);
 
    // shared secret with parent
    secret_ = core::system::getenv("RS_SHARED_SECRET");

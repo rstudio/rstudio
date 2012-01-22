@@ -54,6 +54,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionPath.cpp
    modules/SessionPlots.cpp
    modules/SessionSource.cpp
+   modules/SessionSpelling.cpp
    modules/SessionSVN.cpp
    modules/SessionTeX.cpp
    modules/SessionVCS.cpp
@@ -227,7 +228,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
       endif()
    endif()
 
-   # install gnudiff, mysys_ssh, and hunspell on windows
+   # install gnudiff and mysys_ssh on windows
    if(WIN32)
       install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/gnudiff"
               USE_SOURCE_PERMISSIONS
@@ -235,12 +236,12 @@ if (NOT RSTUDIO_SESSION_WIN64)
       install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/msys_ssh"
               USE_SOURCE_PERMISSIONS
               DESTINATION  ${RSTUDIO_INSTALL_BIN})
-      file(MAKE_DIRECTORY "${RSTUDIO_INSTALL_BIN}/hunspell")
-      install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/hunspell/hunspell-1.3"
-              USE_SOURCE_PERMISSIONS
-              DESTINATION "${RSTUDIO_INSTALL_BIN}/hunspell")
    endif()
 endif()
+
+# install hunspell dictionaries
+install(DIRECTORY resources/dictionaries
+        DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
 # add gpl for desktop
 if(RSTUDIO_DESKTOP)

@@ -43,16 +43,17 @@ public:
       }
    }
 
-   Error initialize(const std::string& affPath, const std::string& dicPath)
+   Error initialize(const FilePath& affPath, const FilePath& dicPath)
    {
       // validate that dictionaries exist
-      if (!FilePath(affPath).exists())
+      if (!affPath.exists())
          return core::fileNotFoundError(affPath, ERROR_LOCATION);
-      if (!FilePath(dicPath).exists())
+      if (!dicPath.exists())
          return core::fileNotFoundError(dicPath, ERROR_LOCATION);
 
       // initialize hunspell and return success
-      pHunspell_.reset(new Hunspell(affPath.c_str(), dicPath.c_str()));
+      pHunspell_.reset(new Hunspell(affPath.absolutePath().c_str(),
+                                    dicPath.absolutePath().c_str()));
       return Success();
    }
 
@@ -69,8 +70,8 @@ private:
 } // anonymous namespace
 
 
-core::Error createHunspell(const std::string& affPath,
-                           const std::string& dicPath,
+core::Error createHunspell(const FilePath& affPath,
+                           const FilePath& dicPath,
                            boost::shared_ptr<SpellChecker>* pHunspell)
 {
    // create the hunspell engine

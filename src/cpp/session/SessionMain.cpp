@@ -96,6 +96,7 @@
 #include "modules/SessionPlots.hpp"
 #include "modules/SessionPath.hpp"
 #include "modules/SessionPackages.hpp"
+#include "modules/SessionSpelling.hpp"
 #include "modules/SessionSource.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/SessionTeX.hpp"
@@ -1281,6 +1282,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (source_database::initialize)
    
       // modules with c++ implementations
+      (modules::spelling::initialize)
       (modules::lists::initialize)
       (modules::path::initialize)
       (modules::content_urls::initialize)

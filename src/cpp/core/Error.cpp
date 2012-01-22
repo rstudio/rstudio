@@ -186,6 +186,15 @@ Error fileNotFoundError(const std::string& path,
    return error;
 }
 
+Error fileNotFoundError(const FilePath& filePath,
+                        const ErrorLocation& location)
+{
+   Error error = fileNotFoundError(location);
+   error.addProperty("path", filePath);
+   return error;
+}
+
+
 Error pathNotFoundError(const ErrorLocation& location)
 {
 #ifdef _WIN32

@@ -126,6 +126,8 @@ Error fileExistsError(const ErrorLocation& location);
 Error fileNotFoundError(const ErrorLocation& location);
 Error fileNotFoundError(const std::string& path,
                         const ErrorLocation& location);
+Error fileNotFoundError(const FilePath& filePath,
+                        const ErrorLocation& location);
 
 Error pathNotFoundError(const ErrorLocation& location);
 Error pathNotFoundError(const std::string& path,

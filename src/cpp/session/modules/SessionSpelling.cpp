@@ -1,0 +1,75 @@
+/*
+ * SessionSpelling.cpp
+ *
+ * Copyright (C) 2009-11 by RStudio, Inc.
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+#include "SessionSpelling.hpp"
+
+#include <boost/shared_ptr.hpp>
+
+#include <core/Error.hpp>
+
+#include <core/spelling/SpellChecker.hpp>
+
+#include <r/RSexp.hpp>
+#include <r/RRoutines.hpp>
+
+#include <session/SessionModuleContext.hpp>
+
+using namespace core;
+
+namespace session {
+namespace modules { 
+namespace spelling {
+
+namespace {
+
+// spell checking engine
+boost::shared_ptr<core::spelling::SpellChecker> s_pSpellChecker;
+
+// R function for testing & debugging
+SEXP rs_checkSpelling(SEXP wordSEXP)
+{
+   std::string word = r::sexp::asString(wordSEXP);
+
+   bool isCorrect = s_pSpellChecker->checkSpelling(word);
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(isCorrect, &rProtect);
+}
+
+
+} // anonymous namespace
+
+
+Error initialize()
+{
+   // register rs_ensureFileHidden with R
+   R_CallMethodDef checkSpellingMethodDef;
+   checkSpellingMethodDef.name = "rs_checkSpelling" ;
+   checkSpellingMethodDef.fun = (DL_FUNC) rs_checkSpelling ;
+   checkSpellingMethodDef.numArgs = 1;
+   r::routines::addCallMethod(checkSpellingMethodDef);
+
+   // initialize the spell checker
+   using namespace core::spelling;
+   session::Options& options = session::options();
+   FilePath enUSPath = options.hunspellDictionariesPath().childPath("en_US");
+   return createHunspell(enUSPath.childPath("en_US.aff"),
+                         enUSPath.childPath("en_US.dic"),
+                         &s_pSpellChecker);
+}
+
+
+} // namespace spelling
+} // namespace modules
+} // namesapce session
+
