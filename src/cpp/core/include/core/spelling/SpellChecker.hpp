@@ -33,8 +33,7 @@ public:
    virtual bool checkSpelling(const std::string& word) = 0;
 };
 
-core::Error createHunspell(const std::string& libPath,
-                           const std::string& affPath,
+core::Error createHunspell(const std::string& affPath,
                            const std::string& dicPath,
                            boost::shared_ptr<SpellChecker>* pHunspell);
 

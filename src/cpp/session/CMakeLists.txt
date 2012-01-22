@@ -185,6 +185,7 @@ add_executable(rsession ${SESSION_SOURCE_FILES} ${SESSION_HEADER_FILES})
 # set link dependencies
 target_link_libraries(rsession
    rstudio-core
+   rstudio-core-hunspell
    rstudio-r
    rstudio-session-workers
    ${SESSION_SYSTEM_LIBRARIES}

@@ -13,6 +13,8 @@
 
 project (CORE)
 
+add_subdirectory(spelling/hunspell)
+
 # include files
 file(GLOB_RECURSE CORE_HEADER_FILES "*.h*")
 
@@ -63,7 +65,7 @@ set (CORE_SOURCE_FILES
    r_util/RTokenizer.cpp
    r_util/RSourceIndex.cpp
    r_util/RTokenizerTests.cpp
-   spelling/Hunspell.cpp
+   spelling/HunspellSpellChecker.cpp
    system/Environment.cpp
    system/Process.cpp
    system/ShellUtils.cpp
