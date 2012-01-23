@@ -18,6 +18,8 @@ package com.google.gwt.dev.js;
 import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
+import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.impl.FragmentExtractor;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
@@ -28,8 +30,8 @@ import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsProgramFragment;
 import com.google.gwt.dev.js.ast.JsSeedIdOf;
 import com.google.gwt.dev.js.ast.JsStatement;
-import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
+import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.dev.util.collect.HashMap;
 
@@ -43,8 +45,8 @@ import java.util.Map;
 public class JsSourceGenerationVisitorWithSizeBreakdown extends
     JsSourceGenerationVisitor {
 
-  private final JavaToJavaScriptMap map;
-  private JsName nameToBillTo;
+  private JavaToJavaScriptMap map;
+  private JsName billedAncestor; // non-null when an ancestor is also being billed
   private TextOutput out;
   private final Map<JsName, Integer> sizeMap = new HashMap<JsName, Integer>();
 
@@ -89,19 +91,9 @@ public class JsSourceGenerationVisitorWithSizeBreakdown extends
   }
 
   @Override
-  protected <T extends JsVisitable> T doAccept(T node) {
-    JsName newName = nameToBillTo(node);
-    if (newName == null) {
-      return super.doAccept(node);
-    } else {
-      JsName oldName = nameToBillTo;
-      nameToBillTo = newName;
-      int start = out.getPosition();
-      T retValue = super.doAccept(node);
-      billChars(nameToBillTo, out.getPosition() - start);
-      nameToBillTo = oldName;
-      return retValue;
-    }
+  protected final <T extends JsVisitable> T doAccept(T node) {
+    JsName newName = nameToBillTo(node, billedAncestor != null);
+    return generateAndBill(node, newName);
   }
 
   @Override
@@ -119,6 +111,48 @@ public class JsSourceGenerationVisitorWithSizeBreakdown extends
     }
   }
 
+  /**
+   * Generate some JavaScript and bill the number of characters generated to the given name.
+   */
+  protected <T extends JsVisitable> T generateAndBill(T node, JsName nameToBillTo) {
+    if (nameToBillTo == null) {
+      return super.doAccept(node);
+    } else {
+      int start = out.getPosition();
+
+      JsName savedAncestor = billedAncestor;
+      billedAncestor = nameToBillTo;
+      T retValue = super.doAccept(node);
+      billedAncestor = savedAncestor;
+
+      billChars(nameToBillTo, out.getPosition() - start);
+      return retValue;
+    }
+  }
+
+  protected JDeclaredType getDirectlyEnclosingType(JsName nameToBillTo) {
+    if (nameToBillTo == null) {
+      return null;
+    }
+
+    JDeclaredType type = map.nameToType(nameToBillTo);
+    if (type != null) {
+      return type;
+    }
+
+    JMethod method = map.nameToMethod(nameToBillTo);
+    if (method != null) {
+      return method.getEnclosingType();
+    }
+
+    JField field = map.nameToField(nameToBillTo);
+    if (field != null) {
+      return field.getEnclosingType();
+    }
+
+    return null;
+  }
+
   private void billChars(JsName nameToBillTo, int chars) {
     Integer oldSize = sizeMap.get(nameToBillTo);
     if (oldSize == null) {
@@ -128,10 +162,10 @@ public class JsSourceGenerationVisitorWithSizeBreakdown extends
   }
 
   /**
-   * If parameter is JsVisitable, javac version sun jdk1.6.0 complains about
-   * incompatible types.
+   * Returns the type, function, or variable name where this node's character count
+   * should be added, or null to bill to nobody.
    */
-  private JsName nameToBillTo(JsVisitable node) {
+  private JsName nameToBillTo(JsVisitable node, boolean isAncestorBilled) {
     if (node instanceof JsStatement) {
       JsStatement stat = (JsStatement) node;
       JClassType type = map.typeForStatement(stat);
@@ -143,12 +177,11 @@ public class JsSourceGenerationVisitorWithSizeBreakdown extends
       if (method != null) {
         return map.nameForMethod(method);
       }
-    }
 
-    if (node instanceof JsVar) {
-      if (nameToBillTo == null) {
-        return ((JsVar) node).getName();
-      }
+      return null;
+
+    } else if (node instanceof JsVar) {
+      return isAncestorBilled ? null : ((JsVar) node).getName(); // handle top-level vars
     }
 
     return null;
