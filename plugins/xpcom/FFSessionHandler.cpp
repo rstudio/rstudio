@@ -206,9 +206,9 @@ void FFSessionHandler::fatalError(HostChannel& channel,
   // TODO(jat): implement
 }
 
-bool FFSessionHandler::invoke(HostChannel& channel, const Value& thisObj, const std::string& methodName,
-    int numArgs, const Value* const args, Value* returnValue) {
-  Debug::log(Debug::Spam) << "FFSessionHandler::invoke " << thisObj.toString()
+bool FFSessionHandler::invoke(HostChannel& channel, const gwt::Value& thisObj, const std::string& methodName,
+    int numArgs, const gwt::Value* const args, gwt::Value* returnValue) {
+  Debug::log(Debug::Debugging) << "FFSessionHandler::invoke " << thisObj.toString()
       << "::" << methodName << Debug::flush;
   JSContext* ctx = getJSContext();
 
@@ -300,7 +300,7 @@ bool FFSessionHandler::invoke(HostChannel& channel, const Value& thisObj, const 
  * Returns true if an exception occurred.
  */
 bool FFSessionHandler::invokeSpecial(HostChannel& channel, SpecialMethodId method, int numArgs,
-    const Value* const args, Value* returnValue)  {
+    const gwt::Value* const args, gwt::Value* returnValue)  {
   Debug::log(Debug::Spam) << "FFSessionHandler::invokeSpecial" << Debug::flush;
   return false;
 }
@@ -434,7 +434,7 @@ static JSString* stringUtf8(JSContext* ctx, const std::string& utf8str) {
   return JS_NewUCString(ctx, buf, p - buf);
 }
 
-void FFSessionHandler::makeValueFromJsval(Value& retVal, JSContext* ctx,
+void FFSessionHandler::makeValueFromJsval(gwt::Value& retVal, JSContext* ctx,
     const jsval& value) {
   if (JSVAL_IS_VOID(value)) {
     retVal.setUndefined();
@@ -491,24 +491,24 @@ void FFSessionHandler::makeValueFromJsval(Value& retVal, JSContext* ctx,
 }
 
 void FFSessionHandler::makeJsvalFromValue(jsval& retVal, JSContext* ctx,
-    const Value& value) {
+    const gwt::Value& value) {
   switch (value.getType()) {
-    case Value::NULL_TYPE:
+    case gwt::Value::NULL_TYPE:
       retVal = JSVAL_NULL;
       break;
-    case Value::BOOLEAN:
+    case gwt::Value::BOOLEAN:
       retVal = BOOLEAN_TO_JSVAL(value.getBoolean());
       break;
-    case Value::BYTE:
+    case gwt::Value::BYTE:
       retVal = INT_TO_JSVAL((int) value.getByte());
       break;
-    case Value::CHAR:
+    case gwt::Value::CHAR:
       retVal = INT_TO_JSVAL((int) value.getChar());
       break;
-    case Value::SHORT:
+    case gwt::Value::SHORT:
       retVal = INT_TO_JSVAL((int) value.getShort());
       break;
-    case Value::INT: {
+    case gwt::Value::INT: {
       int intValue = value.getInt();
       if (INT_FITS_IN_JSVAL(intValue)) {
         retVal = INT_TO_JSVAL(intValue);
@@ -518,22 +518,22 @@ void FFSessionHandler::makeJsvalFromValue(jsval& retVal, JSContext* ctx,
       break;
     }
     // TODO(jat): do we still need long support in the wire format and Value?
-//    case Value::LONG:
+//    case gwt::Value::LONG:
 //      retVal = value.getLong();
 //      break;
-    case Value::FLOAT:
+    case gwt::Value::FLOAT:
       JS_NewNumberValue(ctx, (jsdouble) value.getFloat(), &retVal);
       break;
-    case Value::DOUBLE:
+    case gwt::Value::DOUBLE:
       JS_NewNumberValue(ctx, (jsdouble) value.getDouble(), &retVal);
       break;
-    case Value::STRING:
+    case gwt::Value::STRING:
       {
         JSString* str = stringUtf8(ctx, value.getString());
         retVal = STRING_TO_JSVAL(str);
       }
       break;
-    case Value::JAVA_OBJECT:
+    case gwt::Value::JAVA_OBJECT:
       {
         int javaId = value.getJavaObjectId();
         std::map<int, JSObject*>::iterator i = javaObjectsById.find(javaId);
@@ -549,7 +549,7 @@ void FFSessionHandler::makeJsvalFromValue(jsval& retVal, JSContext* ctx,
         }
       }
       break;
-    case Value::JS_OBJECT:
+    case gwt::Value::JS_OBJECT:
       {
         int jsId = value.getJsObjectId();
         if (!JS_GetElement(ctx, jsObjectsById, jsId, &retVal)) {
@@ -560,7 +560,7 @@ void FFSessionHandler::makeJsvalFromValue(jsval& retVal, JSContext* ctx,
         }
       }
       break;
-    case Value::UNDEFINED:
+    case gwt::Value::UNDEFINED:
       retVal = JSVAL_VOID;
       break;
     default:

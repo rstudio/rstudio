@@ -57,13 +57,13 @@ public:
   * Convert a value from the JavaScript into something that can be sent back
   * to the OOPHM host.
   */
-  virtual void makeValueFromJsval(Value& retVal, JSContext* ctx, const jsval& value)=0;
+  virtual void makeValueFromJsval(gwt::Value& retVal, JSContext* ctx, const jsval& value)=0;
 
   /*
   * Convert a value from the OOPHM host into something that can be passed into
   * the JavaScript execution environment.
   */
-  virtual void makeJsvalFromValue(jsval& retVal, JSContext* ctx, const Value& value)=0;
+  virtual void makeJsvalFromValue(jsval& retVal, JSContext* ctx, const gwt::Value& value)=0;
   
   /*
   * Removes the JavaObject wrapper with the given id and notifies the host.

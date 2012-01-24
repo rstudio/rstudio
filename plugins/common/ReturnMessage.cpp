@@ -27,7 +27,7 @@ ReturnMessage* ReturnMessage::receive(HostChannel& channel) {
     // TODO(jat): error handling
     return 0;
   }
-  Value retval;
+  gwt::Value retval;
   if (!channel.readValue(retval)) {
     // TODO(jat): error handling
     return 0;
@@ -35,7 +35,7 @@ ReturnMessage* ReturnMessage::receive(HostChannel& channel) {
   return new ReturnMessage(isException != 0, retval);
 }
 
-bool ReturnMessage::send(HostChannel& channel, bool isException, const Value& retval) {
+bool ReturnMessage::send(HostChannel& channel, bool isException, const gwt::Value& retval) {
   if (!channel.sendByte(TYPE)) return false;
   if (!channel.sendByte(isException ? 1 : 0)) return false;
   return channel.sendValue(retval);

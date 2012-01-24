@@ -30,7 +30,7 @@ bool LoadModuleMessage::send(HostChannel& channel, const std::string& url,
     const std::string& tabKey, const std::string& sessionKey,
     const std::string& moduleName, const std::string& userAgent,
     SessionHandler* handler) {
-  Debug::log(Debug::Spam) << "LoadModule(url=\"" << url << "\", tabKey=\""
+  Debug::log(Debug::Debugging) << "LoadModule(url=\"" << url << "\", tabKey=\""
       << "\", sessionKey=\"" << sessionKey << "\", module=\"" << moduleName
       << "\")" << Debug::flush;
   if (!channel.sendByte(TYPE) || !channel.sendString(url)
@@ -45,6 +45,5 @@ bool LoadModuleMessage::send(HostChannel& channel, const std::string& url,
   if (!ret.get()) {
     return false;
   }
-
   return !ret.get()->isException();
 }

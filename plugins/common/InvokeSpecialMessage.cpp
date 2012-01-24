@@ -45,7 +45,7 @@ InvokeSpecialMessage* InvokeSpecialMessage::receive(HostChannel& channel) {
     printf("Failed to read #args\n");
     return 0;
   }
-  scoped_array<Value> args(new Value[numArgs]);
+  scoped_array<gwt::Value> args(new gwt::Value[numArgs]);
   for (int i = 0; i < numArgs; ++i) {
     if (!channel.readValue(args[i])) {
       // TODO(jat): error handling
@@ -63,7 +63,7 @@ InvokeSpecialMessage* InvokeSpecialMessage::receive(HostChannel& channel) {
  * Request the server perform a special method and return the result.
  */
 bool InvokeSpecialMessage::send(HostChannel& channel, int dispatchId,
-    int numArgs, const Value* args) {
+    int numArgs, const gwt::Value* args) {
   if (!channel.sendByte(TYPE)) return false;
   if (!channel.sendByte(dispatchId)) return false;
   if (!channel.sendInt(numArgs)) return false;

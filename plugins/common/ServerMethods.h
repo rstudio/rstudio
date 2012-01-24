@@ -33,7 +33,7 @@ public:
    * @param dispatchID dispatch ID of field
    * @return the value of the property, undef if none (or on error)
    */
-  static Value getProperty(HostChannel& channel, SessionHandler* handler, int objectRef,
+  static gwt::Value getProperty(HostChannel& channel, SessionHandler* handler, int objectRef,
       int dispatchId);
   
   /**
@@ -63,7 +63,7 @@ public:
    * @return false if an error occurred
    */
   static bool setProperty(HostChannel& channel, SessionHandler* handler, int objectRef,
-      int dispatchId, const Value& value);
+      int dispatchId, const gwt::Value& value);
   
   /**
    * Tell the server that the client no longer has any references to the specified

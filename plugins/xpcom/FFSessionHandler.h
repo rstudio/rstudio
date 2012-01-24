@@ -26,17 +26,19 @@
 #include "jsapi.h"
 
 class HostChannel;
-class Value;
+namespace gwt {
+  class Value;
+}
 
 class FFSessionHandler : public SessionData, public SessionHandler {
   friend class JavaObject;
 public:
   FFSessionHandler(HostChannel* channel);
   ~FFSessionHandler(void);
-  virtual void makeValueFromJsval(Value& retVal, JSContext* ctx,
+  virtual void makeValueFromJsval(gwt::Value& retVal, JSContext* ctx,
       const jsval& value);
   virtual void makeJsvalFromValue(jsval& retVal, JSContext* ctx,
-      const Value& value);
+      const gwt::Value& value);
   virtual void freeJavaObject(int objectId);
   void disconnect();
 
@@ -44,10 +46,10 @@ protected:
   virtual void disconnectDetectedImpl();
   virtual void freeValue(HostChannel& channel, int idCount, const int* ids);
   virtual void loadJsni(HostChannel& channel, const std::string& js);
-  virtual bool invoke(HostChannel& channel, const Value& thisObj, const std::string& methodName,
-      int numArgs, const Value* const args, Value* returnValue);
+  virtual bool invoke(HostChannel& channel, const gwt::Value& thisObj, const std::string& methodName,
+      int numArgs, const gwt::Value* const args, gwt::Value* returnValue);
   virtual bool invokeSpecial(HostChannel& channel, SpecialMethodId method, int numArgs,
-      const Value* const args, Value* returnValue);
+      const gwt::Value* const args, gwt::Value* returnValue);
   virtual void sendFreeValues(HostChannel& channel);
   virtual void fatalError(HostChannel& channel, const std::string& message);
 

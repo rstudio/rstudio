@@ -77,7 +77,11 @@ MOZALLOC_DLLFLAGS = -lmozalloc
 #default ALLARCHFLAGS for post-FF4
 ALLARCHCFLAGS = -arch i386 -arch x86_64 -Xarch_i386 -DFLAG32BIT=32 -Xarch_x86_64 -DFLAG32BIT=64
 
+# Python xpidl tool is the new hotness post-FF9
+XPIDL_TOOL = python
+
 ifeq ($(BROWSER),ff3)
+XPIDL_TOOL = binary
 MOZALLOC_DLLFLAGS =
 GECKO_VERSION   = 1.9.0
 CFLAGS += -DGECKO_VERSION=1900
@@ -87,6 +91,7 @@ ALLARCHCFLAGS = -arch i386 -arch ppc
 endif
 else
 ifeq ($(BROWSER),ff3+)
+XPIDL_TOOL = binary
 MOZALLOC_DLLFLAGS =
 GECKO_VERSION   = 1.9.0
 CFLAGS += -DGECKO_VERSION=1901
@@ -97,6 +102,7 @@ ALLARCHCFLAGS = -arch i386 -arch ppc
 endif
 else
 ifeq ($(BROWSER),ff35)
+XPIDL_TOOL = binary
 MOZALLOC_DLLFLAGS =
 GECKO_VERSION   = 1.9.1
 CFLAGS += -DGECKO_VERSION=1910
@@ -106,6 +112,7 @@ ALLARCHCFLAGS = -arch i386 -arch ppc
 endif
 else
 ifeq ($(BROWSER),ff36)
+XPIDL_TOOL = binary
 MOZALLOC_DLLFLAGS =
 GECKO_VERSION   = 1.9.2
 CFLAGS += -DGECKO_VERSION=1920
@@ -115,26 +122,36 @@ ALLARCHCFLAGS = -arch i386 -arch ppc
 endif
 else
 ifeq ($(BROWSER),ff40)
+XPIDL_TOOL = binary
 GECKO_VERSION   = 2.0.0
 CFLAGS += -DGECKO_VERSION=2000
 else
 ifeq ($(BROWSER),ff50)
+XPIDL_TOOL = binary
 GECKO_VERSION   = 5.0.0
 CFLAGS += -DGECKO_VERSION=5000
 else
 ifeq ($(BROWSER),ff60)
+XPIDL_TOOL = binary
 GECKO_VERSION   = 6.0.0
 CFLAGS += -DGECKO_VERSION=6000
 else
 ifeq ($(BROWSER),ff70)
+XPIDL_TOOL = binary
 GECKO_VERSION   = 7.0.0
 CFLAGS += -DGECKO_VERSION=7000
 else
 ifeq ($(BROWSER),ff80)
+XPIDL_TOOL = binary
 GECKO_VERSION   = 8.0.0
 CFLAGS += -DGECKO_VERSION=8000
 else
-$(error Unrecognized BROWSER of $(BROWSER) - options are ff3, ff3+, ff35, ff36, ff40, ff50, ff60, ff70, f80)
+ifeq ($(BROWSER),ff90)
+GECKO_VERSION   = 9.0.0
+CFLAGS += -DGECKO_VERSION=9000
+else
+$(error Unrecognized BROWSER of $(BROWSER) - options are ff3, ff3+, ff35, ff36, ff40, ff50, ff60, ff70, ff80, ff90)
+endif
 endif
 endif
 endif
@@ -171,7 +188,17 @@ SDK_PATH          = $(PLUGIN_SDKS)/gecko-sdks
 GECKO_SDK         = $(SDK_PATH)/gecko-$(GECKO_VERSION)
 GECKO_PLAT_INC    = $(GECKO_SDK)/$(GECKO_PLATFORM)/include
 GECKO_LIBS        = $(GECKO_SDK)/$(GECKO_PLATFORM)/lib$(GECKO_MINOR_VERSION)
+
+ifeq ($(XPIDL_TOOL),python)
+XPIDL             = $(GECKO_SDK)/bin/xpidl.py
+XPIDL_HEADER      = $(GECKO_SDK)/bin/header.py
+XPIDL_TYPELIBS    = $(GECKO_SDK)/bin/typelib.py
+else
 XPIDL             = $(GECKO_SDK)/$(GECKO_PLATFORM)/bin/xpidl
+XPIDL_HEADER      = $(GECKO_SDK)/$(GECKO_PLATFORM)/bin/xpidl -m header 
+XPIDL_TYPELIBS    = $(GECKO_SDK)/$(GECKO_PLATFORM)/bin/xpidl -m typelib
+endif
+
 XPIDL_FLAGS       = -I$(GECKO_SDK)/idl
 
 DLLFLAGS += \
@@ -225,6 +252,8 @@ linuxplatforms:
 	$(MAKE) lib BROWSER=ff60 ARCH=x86_64
 	$(MAKE) lib BROWSER=ff70 ARCH=x86_64
 	$(MAKE) lib BROWSER=ff80 ARCH=x86_64
+	$(MAKE) lib BROWSER=ff90 ARCH=x86
+	$(MAKE) lib BROWSER=ff90 ARCH=x86_64
 
 macplatforms:
 	$(MAKE) lib BROWSER=ff3
@@ -235,6 +264,7 @@ macplatforms:
 	$(MAKE) lib BROWSER=ff60
 	$(MAKE) lib BROWSER=ff70
 	$(MAKE) lib BROWSER=ff80
+	$(MAKE) lib BROWSER=ff90
 
 SRCS =	\
 		ExternalWrapper.cpp \
@@ -259,10 +289,10 @@ $(INSTALLER_XPI): $(FF_TYPELIB) $(EXTENSION_OUTDIR) generate-install $(shell fin
 	(cd $(EXTENSION_OUTDIR) && zip -r -D -9 $(DIR)/$(INSTALLER_XPI) * -x '*/.svn/*' -x 'META-INF/*')
 
 $(FF_TYPELIB): IOOPHM.idl
-	[ ! -x $(XPIDL) -o \( -e $(FF_TYPELIB) -a ! -w $(FF_TYPELIB) \) ] || $(XPIDL) $(XPIDL_FLAGS) -m typelib -e $@ $<
+	[ ! -x $(XPIDL) -o \( -e $(FF_TYPELIB) -a ! -w $(FF_TYPELIB) \) ] || $(XPIDL_TYPELIBS) $(XPIDL_FLAGS) -o $@ $<
 
 $(FF_HEADER): IOOPHM.idl $(OBJ_OUTDIR)
-	[ ! -x $(XPIDL) -o \( -e $(FF_HEADER) -a ! -w $(FF_HEADER) \) ] || $(XPIDL) $(XPIDL_FLAGS) -m header -e $@ $<
+	[ ! -x $(XPIDL) -o \( -e $(FF_HEADER) -a ! -w $(FF_HEADER) \) ] || $(XPIDL_HEADER) $(XPIDL_FLAGS) -o $@ $<
 
 $(FF_DLL): $(FF_OBJS) $(COMMON)
 	$(CXX) -o $@ $(FF_OBJS) $(COMMON) $(DLLFLAGS)

@@ -34,15 +34,15 @@ public:
 private:
   SessionHandler::SpecialMethodId dispatchId;
   int numArgs;
-  const Value* args;
+  const gwt::Value* args;
 
 protected:
   /**
    * @param args array of arguments -- InvokeMessage takes ownership and will
    *     destroy when it is destroyed.
    */
-  InvokeSpecialMessage(SessionHandler::SpecialMethodId dispatchId, int numArgs, const Value* args) : dispatchId(dispatchId),
-      numArgs(numArgs), args(args) {}
+  InvokeSpecialMessage(SessionHandler::SpecialMethodId dispatchId, int numArgs,
+      const gwt::Value* args) : dispatchId(dispatchId), numArgs(numArgs), args(args) {}
 
 public:
   ~InvokeSpecialMessage();
@@ -50,10 +50,10 @@ public:
 
   SessionHandler::SpecialMethodId getDispatchId() const { return dispatchId; }
   int getNumArgs() const { return numArgs; }
-  const Value* const getArgs() const { return args; }
+  const gwt::Value* const getArgs() const { return args; }
 
   static InvokeSpecialMessage* receive(HostChannel& channel);
   static bool send(HostChannel& channel, int dispatchId, int numArgs,
-      const Value* args);
+      const gwt::Value* args);
 };
 #endif

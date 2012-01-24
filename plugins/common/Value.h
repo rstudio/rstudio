@@ -27,6 +27,7 @@
 
 #include "BrowserChannel.h"
 
+namespace gwt {
 class Value {
 public:
   enum ValueType {
@@ -392,5 +393,7 @@ inline Debug::DebugStream& operator<<(Debug::DebugStream& dbg, const Value& val)
   }
   return dbg;
 }
+
+} // namespace gwt
 
 #endif

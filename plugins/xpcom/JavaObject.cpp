@@ -148,14 +148,16 @@ JSBool JavaObject::getProperty(JSContext* ctx, JSObject* obj, jsid id,
       *rval = JSVAL_VOID;
       return JS_TRUE;
     }
-    Debug::log(Debug::Error) << "Getting unexpected string property "
-        << dumpJsVal(ctx, id) << Debug::flush;
+    // TODO: dumpJsVal can no longer handle this case
+    //Debug::log(Debug::Error) << "Getting unexpected string property "
+    //    << dumpJsVal(ctx, id) << Debug::flush;
     // TODO: throw a better exception here
     return JS_FALSE;
   }
   if (!JSID_IS_INT(id)) {
-    Debug::log(Debug::Error) << "Getting non-int/non-string property "
-          << dumpJsVal(ctx, id) << Debug::flush;
+    // TODO: dumpJsVal can no longer handle this case
+    //Debug::log(Debug::Error) << "Getting non-int/non-string property "
+    //      << dumpJsVal(ctx, id) << Debug::flush;
     // TODO: throw a better exception here
     return JS_FALSE;
   }
@@ -164,7 +166,7 @@ JSBool JavaObject::getProperty(JSContext* ctx, JSObject* obj, jsid id,
   HostChannel* channel = data->getHostChannel();
   SessionHandler* handler = data->getSessionHandler();
 
-  Value value = ServerMethods::getProperty(*channel, handler, objectRef, dispId);
+  gwt::Value value = ServerMethods::getProperty(*channel, handler, objectRef, dispId);
   data->makeJsvalFromValue(*rval, ctx, value);
   return JS_TRUE;
 }
@@ -192,7 +194,7 @@ JSBool JavaObject::setProperty(JSContext* ctx, JSObject* obj, jsid id,
   int objectRef = JavaObject::getObjectId(ctx, obj);
   int dispId = JSID_TO_INT(id);
 
-  Value value;
+  gwt::Value value;
   data->makeValueFromJsval(value, ctx, *vp);
 
   HostChannel* channel = data->getHostChannel();
@@ -301,7 +303,7 @@ JSBool JavaObject::toString(JSContext* ctx, JSObject* obj, uintN argc,
   int oid = getObjectId(ctx, obj);
   Debug::log(Debug::Spam) << "JavaObject::toString(id=" << oid << ")"
       << Debug::flush;
-  Value javaThis;
+  gwt::Value javaThis;
   javaThis.setJavaObject(oid);
   // we ignore any supplied parameters
   return invokeJava(ctx, data, javaThis, InvokeMessage::TOSTRING_DISP_ID, 0,
@@ -346,7 +348,7 @@ JSBool JavaObject::call(JSContext* ctx, JSObject*, uintN argc, jsval* argv,
   }
   Debug::log(Debug::Spam) << "Data = " << data << Debug::flush;
 
-  Value javaThis;
+  gwt::Value javaThis;
   if (!JSVAL_IS_NULL(argv[1])) {
     JSObject* thisObj = JSVAL_TO_OBJECT(argv[1]);
     if (isJavaObject(ctx, thisObj)) {
@@ -392,17 +394,17 @@ JSBool JavaObject::call20(JSContext* ctx, uintN argc, jsval* vp) {
  * and the second element is the actual return value or exception.
  */
 JSBool JavaObject::invokeJava(JSContext* ctx, SessionData* data,
-    const Value& javaThis, int dispId, int numArgs, const jsval* jsargs,
+    const gwt::Value& javaThis, int dispId, int numArgs, const jsval* jsargs,
     jsval* rval) {
   HostChannel* channel = data->getHostChannel();
   SessionHandler* handler = data->getSessionHandler();
-  scoped_array<Value> args(new Value[numArgs]);
+  scoped_array<gwt::Value> args(new gwt::Value[numArgs]);
   for (int i = 0; i < numArgs; ++i) {
     data->makeValueFromJsval(args[i], ctx, jsargs[i]);
   }
 
   bool isException = false;
-  Value returnValue;
+  gwt::Value returnValue;
   if (!InvokeMessage::send(*channel, javaThis, dispId, numArgs, args.get())) {
     Debug::log(Debug::Debugging) << "JavaObject::call failed to send invoke message" << Debug::flush;
   } else {

@@ -36,32 +36,32 @@ public:
   static const char TYPE = MESSAGE_TYPE_INVOKE;
   static const int TOSTRING_DISP_ID = 0;
 private:
-  Value thisRef;
+  gwt::Value thisRef;
   std::string methodName;
   int methodDispatchId;
   int numArgs;
-  const Value* args;
+  const gwt::Value* args;
 
 protected:
   /**
    * @param args array of arguments -- InvokeMessage takes ownership and will
    *     destroy when it is destroyed.
    */
-  InvokeMessage(const Value& thisRef, const std::string& methodName,
-      int numArgs, const Value* args) : thisRef(thisRef), methodName(methodName),
+  InvokeMessage(const gwt::Value& thisRef, const std::string& methodName,
+      int numArgs, const gwt::Value* args) : thisRef(thisRef), methodName(methodName),
       numArgs(numArgs), args(args) {}
 
 public:
   ~InvokeMessage();
   virtual char getType() const;
 
-  Value getThis() const { return thisRef; }
+  gwt::Value getThis() const { return thisRef; }
   const std::string& getMethodName() const { return methodName; }
   int getNumArgs() const { return numArgs; }
-  const Value* const getArgs() const { return args; }
+  const gwt::Value* const getArgs() const { return args; }
 
   static InvokeMessage* receive(HostChannel& channel);
-  static bool send(HostChannel& channel, const Value& thisRef, int methodDispatchId,
-      int numArgs, const Value* args);
+  static bool send(HostChannel& channel, const gwt::Value& thisRef, int methodDispatchId,
+      int numArgs, const gwt::Value* args);
 };
 #endif

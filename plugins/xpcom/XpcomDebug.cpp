@@ -77,7 +77,8 @@ std::string dumpJsVal(JSContext* ctx, jsval v) {
     snprintf(buf, sizeof(buf), "bool(%s)", JSVAL_TO_BOOLEAN(v) ? "true"
         : " false");
   } else {
-    snprintf(buf, sizeof(buf), "unknown(%08x)", (unsigned) v);
+    // TODO(acleung): When we run into this, use the other api to figure out what v is.
+    // snprintf(buf, sizeof(buf), "unknown(%08x)", (unsigned) v);
   }
   buf[sizeof(buf) - 1] = 0;
   return std::string(buf);

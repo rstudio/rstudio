@@ -34,17 +34,17 @@ class ReturnMessage : public Message {
   static const char TYPE = MESSAGE_TYPE_RETURN;
 private:
   bool bisException;
-  Value retval;
+  gwt::Value retval;
 
 public:
-  ReturnMessage(bool isException, const Value& retValue) : bisException(isException),
+  ReturnMessage(bool isException, const gwt::Value& retValue) : bisException(isException),
       retval(retValue) {}
 
   bool isException() const { return bisException; }
-  const Value& getReturnValue() const { return retval; }
+  const gwt::Value& getReturnValue() const { return retval; }
   virtual char getType() const;
 
   static ReturnMessage* receive(HostChannel& channel);
-  static bool send(HostChannel& channel, bool isException, const Value& retValue);
+  static bool send(HostChannel& channel, bool isException, const gwt::Value& retValue);
 };
 #endif

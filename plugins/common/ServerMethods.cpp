@@ -27,26 +27,26 @@
 
 using std::string;
 
-Value ServerMethods::getProperty(HostChannel& channel, SessionHandler* handler, int objectRef,
+gwt::Value ServerMethods::getProperty(HostChannel& channel, SessionHandler* handler, int objectRef,
     int dispatchId) {
   if (!channel.isConnected()) {
     Debug::log(Debug::Debugging) << "Ignoring getProperty after disconnect"
         << Debug::flush;
-    return Value();
+    return gwt::Value();
   }
-  Value args[2];
+  gwt::Value args[2];
   args[0].setInt(objectRef);
   args[1].setInt(dispatchId);
   if (!InvokeSpecialMessage::send(channel, SPECIAL_GET_PROPERTY, 2, args)) {
     Debug::log(Debug::Error) << "  failed to send invoke of GetProperty(disp=" << dispatchId
         << ", obj=" << objectRef << ")" << Debug::flush;
-    return Value();
+    return gwt::Value();
   }
   scoped_ptr<ReturnMessage> retMsg(channel.reactToMessagesWhileWaitingForReturn(handler));
   if (!retMsg.get()) {
     Debug::log(Debug::Error) << "getProperty: get return value failed for GetProperty(disp="
         << dispatchId << ", obj=" << objectRef << ")" << Debug::flush;
-    return Value();
+    return gwt::Value();
   }
   return retMsg->getReturnValue();
 }
@@ -62,7 +62,7 @@ int ServerMethods::hasMethod(HostChannel& channel, SessionHandler* handler, int 
         << Debug::flush;
     return -2;
   }
-  Value arg;
+  gwt::Value arg;
   arg.setString(name);
   if (!InvokeSpecialMessage::send(channel, SPECIAL_HAS_METHOD, 1, &arg)) {
     Debug::log(Debug::Error) << "hasMethod: invoke(hasMethod) failed" << Debug::flush;
@@ -73,7 +73,7 @@ int ServerMethods::hasMethod(HostChannel& channel, SessionHandler* handler, int 
     Debug::log(Debug::Error) << "hasMethod: get return value failed" << Debug::flush;
     return -2;
   }
-  Value retval = retMsg->getReturnValue();
+  gwt::Value retval = retMsg->getReturnValue();
   // TODO(jat): better error handling?
   return retval.isInt() ? retval.getInt() : -2;
 }
@@ -89,7 +89,7 @@ int ServerMethods::hasProperty(HostChannel& channel, SessionHandler* handler, in
         << Debug::flush;
     return -2;
   }
-  Value arg;
+  gwt::Value arg;
   arg.setString(name);
   if (!InvokeSpecialMessage::send(channel, SPECIAL_HAS_PROPERTY, 1, &arg)) {
     Debug::log(Debug::Error) << "hasProperty: invoke(hasProperty) failed" << Debug::flush;
@@ -100,20 +100,20 @@ int ServerMethods::hasProperty(HostChannel& channel, SessionHandler* handler, in
     Debug::log(Debug::Error) << "hasProperty: get return value failed" << Debug::flush;
     return -2;
   }
-  Value retval = retMsg->getReturnValue();
+  gwt::Value retval = retMsg->getReturnValue();
   // TODO(jat): better error handling?
   return retval.isInt() ? retval.getInt() : -2;
 }
 
 bool ServerMethods::setProperty(HostChannel& channel, SessionHandler* handler, int objectRef,
-    int dispatchId, const Value& value) {
+    int dispatchId, const gwt::Value& value) {
   if (!channel.isConnected()) {
     Debug::log(Debug::Debugging) << "Ignoring setProperty after disconnect"
         << Debug::flush;
     return false;
   }
   // TODO(jat): error handling?
-  Value args[3];
+  gwt::Value args[3];
   args[0].setInt(objectRef);
   args[1].setInt(dispatchId);
   args[2] = value;

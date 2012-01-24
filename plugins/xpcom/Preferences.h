@@ -26,7 +26,9 @@
 #include "nsIPrefBranch2.h"
 
 class HostChannel;
-class Value;
+namespace gwt {
+  class Value;
+}
 
 class Preferences : public nsIObserver {
   NS_DECL_ISUPPORTS

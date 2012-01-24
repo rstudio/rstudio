@@ -131,8 +131,8 @@ public:
     return sendString(str.c_str(), static_cast<uint32_t>(str.length()));
   }
 
-  bool readValue(Value& valueRef);
-  bool sendValue(const Value& value);
+  bool readValue(gwt::Value& valueRef);
+  bool sendValue(const gwt::Value& value);
 
   ReturnMessage* reactToMessages(SessionHandler* handler, bool expectReturn);
 

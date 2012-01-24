@@ -20,7 +20,9 @@
 #include "jsapi.h"
 
 class SessionData;
-class Value;
+namespace gwt {
+  class Value;
+}
 
 #if GECKO_VERSION < 2000
 #define jsid jsval
@@ -61,7 +63,7 @@ public:
 private:
   static SessionData* getSessionData(JSContext* ctx, JSObject* obj);
   static JSBool invokeJava(JSContext* ctx, SessionData* data,
-      const Value& javaThis, int dispId, int numArgs, const jsval* jsargs,
+      const gwt::Value& javaThis, int dispId, int numArgs, const jsval* jsargs,
       jsval* rval);
 };
 

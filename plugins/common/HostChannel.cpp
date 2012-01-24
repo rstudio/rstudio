@@ -83,6 +83,7 @@ bool HostChannel::init(SessionHandler* handler, int minProtoVers,
     disconnectFromHost();
     return false;
   }
+
   switch (type) {
     case MESSAGE_TYPE_PROTOCOL_VERSION:
     {
@@ -237,11 +238,10 @@ ReturnMessage* HostChannel::reactToMessages(SessionHandler* handler, bool expect
   char type;
   while (true) {
     flush();
-    Debug::log(Debug::Spam) << "Waiting for response, flushed output"
-        << Debug::flush;
+    Debug::log(Debug::Debugging) << "Waiting for response, flushed output" << Debug::flush;
     if (!readByte(type)) {
       if (isConnected()) {
-        Debug::log(Debug::Error) << "Failed to receive message type"
+        Debug::log(Debug::Debugging) << "Failed to receive message type"
             << Debug::flush;
       }
       return 0;
@@ -254,7 +254,7 @@ ReturnMessage* HostChannel::reactToMessages(SessionHandler* handler, bool expect
             Debug::log(Debug::Error) << "Failed to receive invoke message" << Debug::flush;
             return 0;
           }
-          Value returnValue;
+          gwt::Value returnValue;
           bool exception = handler->invoke(*this, imsg->getThis(), imsg->getMethodName(),
               imsg->getNumArgs(), imsg->getArgs(), &returnValue);
           handler->sendFreeValues(*this);
@@ -269,7 +269,7 @@ ReturnMessage* HostChannel::reactToMessages(SessionHandler* handler, bool expect
             Debug::log(Debug::Error) << "Failed to receive invoke special message" << Debug::flush;
             return 0;
           }
-          Value returnValue;
+          gwt::Value returnValue;
           bool exception = handler->invokeSpecial(*this, imsg->getDispatchId(),
               imsg->getNumArgs(), imsg->getArgs(), &returnValue);
           handler->sendFreeValues(*this);
@@ -319,81 +319,81 @@ ReturnMessage* HostChannel::reactToMessages(SessionHandler* handler, bool expect
   }
 }
 
-bool HostChannel::readValue(Value& valueRef) {
+bool HostChannel::readValue(gwt::Value& valueRef) {
   char typeBuf;
   if (!readByte(typeBuf)) return false;
-  Value::ValueType type = Value::ValueType(typeBuf);
+  gwt::Value::ValueType type = gwt::Value::ValueType(typeBuf);
   switch (type) {
-    case Value::NULL_TYPE:
+    case gwt::Value::NULL_TYPE:
       valueRef.setNull();
       return true;
-    case Value::UNDEFINED:
+    case gwt::Value::UNDEFINED:
       valueRef.setUndefined();
       return true;
-    case Value::BOOLEAN:
+    case gwt::Value::BOOLEAN:
       {
         char val;
         if (!readByte(val)) return false;
         valueRef.setBoolean(val != 0);
       }
       return true;
-    case Value::BYTE:
+    case gwt::Value::BYTE:
       {
         char val;
         if (!readByte(val)) return false;
         valueRef.setByte(val);
       }
       return true;
-    case Value::CHAR:
+    case gwt::Value::CHAR:
       {
         short val;
         if (!readShort(val)) return false;
         valueRef.setChar(val);
       }
       return true;
-    case Value::SHORT:
+    case gwt::Value::SHORT:
       {
         short val;
         if (!readShort(val)) return false;
         valueRef.setShort(val);
       }
       return true;
-    case Value::STRING:
+    case gwt::Value::STRING:
       {
         std::string val;
         if (!readString(val)) return false;
         valueRef.setString(val);
       }
       return true;
-    case Value::INT:
+    case gwt::Value::INT:
       {
         int val;
         if (!readInt(val)) return false;
         valueRef.setInt(val);
       }
       return true;
-    case Value::LONG:
+    case gwt::Value::LONG:
       {
         int64_t val;
         if (!readLong(val)) return false;
         valueRef.setLong(val);
       }
       return true;
-    case Value::DOUBLE:
+    case gwt::Value::DOUBLE:
       {
         double val;
         if (!readDouble(val)) return false;
         valueRef.setDouble(val);
       }
       return true;
-    case Value::JAVA_OBJECT:
+    case gwt::Value::JAVA_OBJECT:
       {
         int objId;
         if (!readInt(objId)) return false;
         valueRef.setJavaObject(objId);
       }
       return true;
-    case Value::JS_OBJECT:
+    case gwt::Value::JS_OBJECT:
       {
         int val;
         if (!readInt(val)) return false;
@@ -407,35 +407,35 @@ bool HostChannel::readValue(Value& valueRef) {
   return false;
 }
 
-bool HostChannel::sendValue(const Value& value) {
-  Value::ValueType type = value.getType();
+bool HostChannel::sendValue(const gwt::Value& value) {
+  gwt::Value::ValueType type = value.getType();
   if (!sendByte(type)) return false;
   switch (type) {
-    case Value::NULL_TYPE:
-    case Value::UNDEFINED:
+    case gwt::Value::NULL_TYPE:
+    case gwt::Value::UNDEFINED:
       // Null and Undefined only have the tag byte, no data
       return true;
-    case Value::BOOLEAN:
+    case gwt::Value::BOOLEAN:
       return sendByte(value.getBoolean() ? 1 : 0);
-    case Value::BYTE:
+    case gwt::Value::BYTE:
       return sendByte(value.getByte());
-    case Value::CHAR:
+    case gwt::Value::CHAR:
       return sendShort(short(value.getChar()));
-    case Value::SHORT:
+    case gwt::Value::SHORT:
       return sendShort(value.getShort());
-    case Value::INT:
+    case gwt::Value::INT:
       return sendInt(value.getInt());
-    case Value::LONG:
+    case gwt::Value::LONG:
       return sendLong(value.getLong());
-    case Value::STRING:
+    case gwt::Value::STRING:
       return sendString(value.getString());
-    case Value::DOUBLE:
+    case gwt::Value::DOUBLE:
       return sendDouble(value.getDouble());
-    case Value::FLOAT:
+    case gwt::Value::FLOAT:
       return sendFloat(value.getFloat());
-    case Value::JS_OBJECT:
+    case gwt::Value::JS_OBJECT:
       return sendInt(value.getJsObjectId());
-    case Value::JAVA_OBJECT:
+    case gwt::Value::JAVA_OBJECT:
       return sendInt(value.getJavaObjectId());
     default:
       Debug::log(Debug::Error) << "Unhandled value type sent to server: " << type << Debug::flush;

@@ -84,8 +84,9 @@ protected:
    *
    * Returns true if an exception occurred.
    */
-  virtual bool invoke(HostChannel& channel, const Value& thisObj, const std::string& methodName,
-      int numArgs, const Value* const args, Value* returnValue)=0;
+  virtual bool invoke(HostChannel& channel, const gwt::Value& thisObj,
+      const std::string& methodName, int numArgs, const gwt::Value* const args,
+      gwt::Value* returnValue) = 0;
 
   /**
    * Invoke a plugin-provided method with the given args.  As above, this method does not own
@@ -94,7 +95,7 @@ protected:
    * Returns true if an exception occurred.
    */
   virtual bool invokeSpecial(HostChannel& channel, SpecialMethodId method, int numArgs,
-      const Value* const args, Value* returnValue) = 0;
+      const gwt::Value* const args, gwt::Value* returnValue) = 0;
 
   /**
    * Send any queued up free values back to the server.
