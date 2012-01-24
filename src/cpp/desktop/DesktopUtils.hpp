@@ -38,6 +38,8 @@ void showInfo(QWidget* parent, const QString& title, const QString& text);
 
 void launchProjectInNewInstance(QString projectFilename);
 
+bool isFixedWidthFont(const QFont& font);
+
 } // namespace desktop
 
 #endif // DESKTOP_UTILS_HPP

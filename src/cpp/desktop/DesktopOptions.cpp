@@ -19,6 +19,8 @@
 #include <core/Random.hpp>
 #include <core/system/System.hpp>
 
+#include "DesktopUtils.hpp"
+
 using namespace core;
 
 namespace desktop {
@@ -94,24 +96,34 @@ QString Options::newPortNumber()
 }
 
 namespace {
-QString findFirstMatchingFont(const QStringList& fonts, QString defaultFont)
+QString findFirstMatchingFont(const QStringList& fonts,
+                              QString defaultFont,
+                              bool fixedWidthOnly)
 {
-   QStringList families = QFontDatabase().families();
    for (int i = 0; i < fonts.size(); i++)
-      if (families.contains(fonts.at(i)))
-         return fonts.at(i);
+   {
+      QFont font(fonts.at(i));
+      if (font.exactMatch())
+         if (!fixedWidthOnly || isFixedWidthFont(QFont(fonts.at(i))))
+            return fonts.at(i);
+   }
    return defaultFont;
 }
 } // anonymous namespace
 
 QString Options::proportionalFont() const
 {
+   static QString detectedFont;
+
    QString font =
          settings_.value(QString::fromAscii("font.proportional")).toString();
    if (!font.isEmpty())
    {
       return font;
    }
+
+   if (!detectedFont.isEmpty())
+      return detectedFont;
 
    QStringList fontList;
 #if defined(_WIN32)
@@ -135,18 +147,23 @@ QString Options::proportionalFont() const
            QString::fromAscii("Helvetica");
 #endif
    return QString::fromAscii("\"") +
-         findFirstMatchingFont(fontList, QString::fromAscii("sans-serif")) +
+         findFirstMatchingFont(fontList, QString::fromAscii("sans-serif"), false) +
          QString::fromAscii("\"");
 }
 
 QString Options::fixedWidthFont() const
 {
+   static QString detectedFont;
+
    QString font =
          settings_.value(QString::fromAscii("font.fixedWidth")).toString();
    if (!font.isEmpty())
    {
       return font;
    }
+
+   if (!detectedFont.isEmpty())
+      return detectedFont;
 
    // NB: Windows has "Lucida Console" and "Consolas" reversed vs.
    // the list in WebThemeFontLoader (in the GWT codebase). This is
@@ -163,8 +180,12 @@ QString Options::fixedWidthFont() const
            QString::fromAscii("Lucida Console") << QString::fromAscii("Consolas")   // Windows;
 #endif
            ;
-   return QString::fromAscii("\"") +
-         findFirstMatchingFont(fontList, QString::fromAscii("monospace")) +
+
+   // The fallback font is Courier, not monospace, because QtWebKit doesn't
+   // actually provide a monospace font (appears to use Helvetica)
+
+   return detectedFont = QString::fromAscii("\"") +
+         findFirstMatchingFont(fontList, QString::fromAscii("Courier"), true) +
          QString::fromAscii("\"");
 }
 

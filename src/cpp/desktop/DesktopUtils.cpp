@@ -105,5 +105,17 @@ void launchProjectInNewInstance(QString projectFilename)
    QProcess::startDetached(exePath, args);
 }
 
+bool isFixedWidthFont(const QFont& font)
+{
+   QFontMetrics metrics(font);
+   int width = metrics.width(QChar::fromAscii(' '));
+   char chars[] = {'m', 'i', 'A', '/', '-', '1', 'l', '!', 'x', 'X', 'y', 'Y'};
+   for (size_t i = 0; i < sizeof(chars); i++)
+   {
+      if (metrics.width(QChar::fromAscii(chars[i])) != width)
+         return false;
+   }
+   return true;
+}
 
 } // namespace desktop
