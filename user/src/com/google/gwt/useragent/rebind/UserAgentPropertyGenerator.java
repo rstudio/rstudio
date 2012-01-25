@@ -14,11 +14,13 @@
  * the License.
  */
 
-package com.google.gwt.user.rebind;
+package com.google.gwt.useragent.rebind;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.linker.ConfigurationProperty;
 import com.google.gwt.core.ext.linker.PropertyProviderGenerator;
+import com.google.gwt.user.rebind.SourceWriter;
+import com.google.gwt.user.rebind.StringSourceWriter;
 
 import java.util.Arrays;
 import java.util.List;
@@ -33,7 +35,7 @@ public class UserAgentPropertyGenerator implements PropertyProviderGenerator {
   /**
    * List of valid user agent selection property values, which helps ensure that
    * UserAgent.gwt.xml stays in sync with the
-   * {@link #writeUserAgentPropertyJavaScript(SourceWriter)} method body of this
+   * {@link #writeUserAgentPropertyJavaScript(SourceWriter,SortedSet)} method body of this
    * class.
    */
   private static final List<String> VALID_VALUES = Arrays.asList(new String[]{
@@ -142,6 +144,7 @@ public class UserAgentPropertyGenerator implements PropertyProviderGenerator {
     body.println("return 'unknown';");
   }
 
+  @Override
   public String generate(TreeLogger logger, SortedSet<String> possibleValues,
       String fallback, SortedSet<ConfigurationProperty> configProperties) {
     for (String value : possibleValues) {

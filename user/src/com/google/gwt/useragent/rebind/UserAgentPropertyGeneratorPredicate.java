@@ -14,7 +14,9 @@
  * the License.
  */
 
-package com.google.gwt.user.rebind;
+package com.google.gwt.useragent.rebind;
+
+import com.google.gwt.user.rebind.StringSourceWriter;
 
 /**
  * Represents a predicate expressed in Javascript

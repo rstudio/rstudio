@@ -1,5 +1,5 @@
 <!--                                                                        -->
-<!-- Copyright 2009 Google Inc.                                             -->
+<!-- Copyright 2012 Google Inc.                                             -->
 <!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
 <!-- may not use this file except in compliance with the License. You may   -->
 <!-- may obtain a copy of the License at                                    -->
@@ -12,12 +12,8 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<!-- Types and resources required to support HTTP requests.                 -->
-<!--                                                                        -->
-<!-- Any user application that wishes to use the types declared in the http -->
-<!-- package must inherit this module.                                      -->
-<!--                                                                        -->
 <module>
-  <inherits name="com.google.gwt.core.Core"/>
   <inherits name="com.google.gwt.typedarrays.TypedArrays"/>
-</module>
+  <source path="client" />
+  <source path="shared" />
+ </module>

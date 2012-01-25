@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.gwt.user.client;
+package com.google.gwt.useragent.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -40,6 +40,7 @@ public class UserAgentAsserter implements EntryPoint {
     String getRuntimeValue();
   }
 
+  @Override
   public void onModuleLoad() {
     UserAgentProperty impl = GWT.create(UserAgentProperty.class);
     if (!impl.getUserAgentRuntimeWarning()) {

@@ -16,6 +16,7 @@
 package com.google.gwt.xhr.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.typedarrays.shared.ArrayBuffer;
 
 /**
  * The native XMLHttpRequest object. Most applications should use the higher-
@@ -27,6 +28,40 @@ import com.google.gwt.core.client.JavaScriptObject;
  */
 public class XMLHttpRequest extends JavaScriptObject {
 
+  /**
+   * The type of response expected from the XHR.
+   */
+  public enum ResponseType {
+    /**
+     * The default response type -- use {@link XMLHttpRequest#getResponseText()}
+     * for the return value.
+     */
+    Default(""),
+
+    /**
+     * The default response type -- use
+     * {@link XMLHttpRequest#getResponseArrayBuffer()} for the return value.
+     * This value may only be used if
+     * {@link com.google.gwt.typedarrays.shared.TypedArrays#isSupported()}
+     * returns true.
+     */
+    ArrayBuffer("arraybuffer");
+
+    // not implemented yet
+    /*
+    Blob("blob"),
+    
+    Document("document"),
+    
+    Text("text");
+    */
+
+    protected final String responseTypeString;
+
+    private ResponseType(String responseTypeString) {
+      this.responseTypeString = responseTypeString;
+    }
+  }
   /*
    * NOTE: Testing discovered that for some bizarre reason, on Mozilla, the
    * JavaScript <code>XmlHttpRequest.onreadystatechange</code> handler
@@ -81,19 +116,44 @@ public class XMLHttpRequest extends JavaScriptObject {
    * 
    * @return the created object
    */
-  public static native XMLHttpRequest create() /*-{
+  public static XMLHttpRequest create() {
+    return create(ResponseType.Default);
+  }
+
+  /**
+   * Creates an XMLHttpRequest object.
+   * 
+   * @param responseType the type of response desired.  See {@link ResponseType}
+   *     for limitations on using the different values
+   * @return the created object
+   */
+  public static XMLHttpRequest create(ResponseType responseType) {
+    return create(responseType.responseTypeString);
+  }
+
+  /**
+   * Creates an XMLHttpRequest object.
+   * 
+   * @return the created object
+   */
+  private static native XMLHttpRequest create(String responseType) /*-{
     // Don't check window.XMLHttpRequest, because it can
     // cause cross-site problems on IE8 if window's URL
     // is javascript:'' .
+    var xhr;
     if ($wnd.XMLHttpRequest) {
-      return new $wnd.XMLHttpRequest();
+      xhr = new $wnd.XMLHttpRequest();
     } else {
       try {
-        return new $wnd.ActiveXObject('MSXML2.XMLHTTP.3.0');
+        xhr = new $wnd.ActiveXObject('MSXML2.XMLHTTP.3.0');
       } catch (e) {
-        return new $wnd.ActiveXObject("Microsoft.XMLHTTP");
+        xhr = new $wnd.ActiveXObject("Microsoft.XMLHTTP");
       }
     }
+    if (xhr && responseType) {
+      xhr.responsetype = responseType;
+    }
+    return xhr;
   }-*/;
 
   protected XMLHttpRequest() {
@@ -148,6 +208,16 @@ public class XMLHttpRequest extends JavaScriptObject {
    */
   public final native int getReadyState() /*-{
     return this.readyState;
+  }-*/;
+
+  /**
+   * Get the response as an {@link ArrayBuffer}.
+   * 
+   * @return an {@link ArrayBuffer} containing the response, or null if the
+   *     request is in progress or failed
+   */
+  public final native ArrayBuffer getResponseArrayBuffer() /*-{
+    return this.response;
   }-*/;
 
   /**

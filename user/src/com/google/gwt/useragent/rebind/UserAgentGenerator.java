@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.gwt.user.rebind;
+package com.google.gwt.useragent.rebind;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.ConfigurationProperty;
@@ -27,11 +27,13 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
+import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
 
 /**
- * Generator for {@link com.google.gwt.user.client.UserAgentAsserter}.
+ * Generator for {@link com.google.gwt.useragent.client.UserAgentAsserter}.
  */
 public class UserAgentGenerator extends Generator {
   static final String PROPERTY_USER_AGENT = "user.agent";
