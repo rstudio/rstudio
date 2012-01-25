@@ -15,14 +15,14 @@
  */
 package com.google.gwt.core.ext.soyc;
 
-import com.google.gwt.thirdparty.debugging.sourcemap.FilePosition;
-import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapFormat;
-import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGenerator;
-import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGeneratorFactory;
 import com.google.gwt.core.ext.linker.SyntheticArtifact;
 import com.google.gwt.core.linker.SymbolMapsLinker;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.thirdparty.debugging.sourcemap.FilePosition;
+import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapFormat;
+import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGenerator;
+import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGeneratorFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -69,8 +69,12 @@ public class SourceMapRecorder {
             // or other bogus entries that appear
             continue;
           }
+
+          // Starting with V3, SourceMap line numbers are zero-based.
+          // GWT's line numbers for Java files originally came from the JDT, which is 1-based,
+          // so adjust them here to avoid an off-by-one error in debuggers.
           generator.addMapping(si.getFileName(), null,
-              new FilePosition(si.getStartLine(), 0),
+              new FilePosition(si.getStartLine() - 1, 0),
               new FilePosition(r.getStartLine(), r.getStartColumn()),
               new FilePosition(r.getEndLine(), r.getEndColumn()));
         }
