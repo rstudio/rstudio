@@ -100,12 +100,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       public void onValueChange(ValueChangeEvent<Boolean> event)
       {
-         if (getValue().size() > 0)
-            ValueChangeEvent.fire(this, getSelectedIndices());
-         else
-         {
-            ((CheckBox)event.getSource()).setValue(true, false);
-         }
+         ValueChangeEvent.fire(this, getSelectedIndices());
       }
 
       public ArrayList<Boolean> getSelectedIndices()
@@ -234,16 +229,13 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
                                ? tabSet2ModuleList_
                                : tabSet1ModuleList_;
 
-            if (source.getValue().size() == PaneConfig.getAllTabs().length)
+            if (!PaneConfig.isValidConfig(source.getValue()))
             {
                ArrayList<Boolean> indices = source.getSelectedIndices();
                ArrayList<Boolean> otherIndices = other.getSelectedIndices();
                for (int i = 0; i < indices.size(); i++)
                {
-                  if (otherIndices.get(i))
-                  {
-                     indices.set(i, false);
-                  }
+                  indices.set(i, !otherIndices.get(i));
                }
                source.setSelectedIndices(indices);
             }
