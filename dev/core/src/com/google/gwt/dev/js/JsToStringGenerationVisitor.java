@@ -767,6 +767,12 @@ public class JsToStringGenerationVisitor extends JsVisitor {
   @Override
   public boolean visit(JsNumberLiteral x, JsContext ctx) {
     double dvalue = x.getValue();
+    if (dvalue == 0.0 && 1.0 / dvalue == Double.NEGATIVE_INFINITY) {
+      // Negative zero is distinct from 0.0 and (integer) 0
+      p.print("-0.");
+      return false;
+    }
+
     long lvalue = (long) dvalue;
     if (lvalue == dvalue) {
       p.print(Long.toString(lvalue));

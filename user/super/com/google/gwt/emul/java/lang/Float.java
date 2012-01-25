@@ -29,6 +29,9 @@ public final class Float extends Number implements Comparable<Float> {
   public static final float POSITIVE_INFINITY = 1f / 0f;
   public static final int SIZE = 32;
 
+  private static final long POWER_31_INT = 2147483648L;
+  private static final long POWER_32_INT = 4294967296L;
+
   public static int compare(float x, float y) {
     if (x < y) {
       return -1;
@@ -39,6 +42,54 @@ public final class Float extends Number implements Comparable<Float> {
     }
   }
 
+  public static int floatToIntBits(float value) {
+    // Return a canonical NaN
+    if (isNaN(value)) {
+      return 0x7fc00000;
+    }
+
+    if (value == 0.0f) {
+      if (1.0 / value == NEGATIVE_INFINITY) {
+        return 0x80000000; // -0.0f
+      } else {
+        return 0x0;
+      }
+    }
+    boolean negative = false;
+    if (value < 0.0) {
+      negative = true;
+      value = -value;
+    }
+    if (isInfinite(value)) {
+      if (negative) {
+        return 0xff800000;
+      } else {
+        return 0x7f800000;
+      }
+    }
+
+    // Obtain the 64-bit representation and extract its exponent and
+    // mantissa.
+    long l = Double.doubleToLongBits((double) value);
+    int exp = (int) (((l >> 52) & 0x7ff) - 1023);
+    int mantissa = (int) ((l & 0xfffffffffffffL) >> 29);
+
+    // If the number will be a denorm in the float representation
+    // (i.e., its exponent is -127 or smaller), add a leading 1 to the
+    // mantissa and shift it right to maintain an exponent of -127.
+    if (exp <= -127) {
+      mantissa = (0x800000 | mantissa) >> (-127 - exp + 1);
+      exp = -127;
+    }
+
+    // Construct the 32-bit representation
+    long bits = negative ? POWER_31_INT : 0x0L;
+    bits |= (exp + 127) << 23;
+    bits |= mantissa;
+
+    return (int) bits;
+  }
+
   /**
    * @skip Here for shared implementation with Arrays.hashCode.
    * @param f 
@@ -46,6 +97,43 @@ public final class Float extends Number implements Comparable<Float> {
    */
   public static int hashCode(float f) {
     return (int) f;
+  }
+
+  public static float intBitsToFloat(int bits) {
+    boolean negative = (bits & 0x80000000) != 0;
+    int exp = (bits >> 23) & 0xff;
+    bits &= 0x7fffff;
+
+    if (exp == 0x0) {
+      // Handle +/- 0 here, denorms below
+      if (bits == 0) {
+        return negative ? -0.0f : 0.0f;
+      }
+    } else if (exp == 0xff) {
+      // Inf & NaN
+      if (bits == 0) {
+        return negative ? NEGATIVE_INFINITY : POSITIVE_INFINITY;
+      } else {
+        return NaN;
+      }
+    }
+
+    if (exp == 0) {
+      // Input is denormalized, renormalize by shifting left until there is a
+      // leading 1
+      exp = 1;
+      while ((bits & 0x800000) == 0) {
+        bits <<= 1;
+        exp--;
+      }
+      bits &= 0x7fffff;
+    }
+
+    // Build the bits of a 64-bit double from the incoming bits
+    long bits64 = negative ? 0x8000000000000000L : 0x0L;
+    bits64 |= ((long) (exp + 896)) << 52;
+    bits64 |= ((long) bits) << 29;
+    return (float) Double.longBitsToDouble(bits64);
   }
 
   public static native boolean isInfinite(float x) /*-{
