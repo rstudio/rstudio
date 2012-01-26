@@ -1210,7 +1210,8 @@ FilePath detectGitDir(const FilePath& workingDir)
    if (result.exitStatus != 0)
       return FilePath();
 
-   return FilePath(boost::algorithm::trim_copy(result.stdOut));
+   return FilePath(boost::algorithm::trim_copy(
+                      string_utils::systemToUtf8(result.stdOut)));
 }
 
 } // anonymous namespace
