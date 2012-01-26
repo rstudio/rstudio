@@ -319,14 +319,14 @@ bool isHiddenFile(const FileInfo& fileInfo)
 
 Error makeFileHidden(const FilePath& path)
 {
-   std::string filePath = path.absolutePath();
-   LPCSTR lpszPath = filePath.c_str();
+   std::wstring filePath = path.absolutePathW();
+   LPCWSTR lpszPath = filePath.c_str();
 
-   DWORD attribs = ::GetFileAttributesA(lpszPath);
+   DWORD attribs = ::GetFileAttributesW(lpszPath);
    if (attribs == INVALID_FILE_ATTRIBUTES)
       return systemError(GetLastError(), ERROR_LOCATION);
 
-   if (!::SetFileAttributesA(lpszPath, attribs | FILE_ATTRIBUTE_HIDDEN))
+   if (!::SetFileAttributesW(lpszPath, attribs | FILE_ATTRIBUTE_HIDDEN))
       return systemError(GetLastError(), ERROR_LOCATION);
 
    return Success();
