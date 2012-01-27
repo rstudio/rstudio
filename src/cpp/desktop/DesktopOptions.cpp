@@ -151,6 +151,15 @@ QString Options::proportionalFont() const
          QString::fromAscii("\"");
 }
 
+void Options::setFixedWidthFont(QString font)
+{
+   if (font.isEmpty())
+      settings_.remove(QString::fromAscii("font.fixedWidth"));
+   else
+      settings_.setValue(QString::fromAscii("font.fixedWidth"),
+                         font);
+}
+
 QString Options::fixedWidthFont() const
 {
    static QString detectedFont;

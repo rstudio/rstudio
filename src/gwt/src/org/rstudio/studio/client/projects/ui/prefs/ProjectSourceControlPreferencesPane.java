@@ -131,10 +131,11 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    }
 
    @Override
-   public void onApply(RProjectOptions options)
+   public boolean onApply(RProjectOptions options)
    {
       RProjectVcsOptions vcsOptions = options.getVcsOptions();
       setVcsOptions(vcsOptions);
+      return false;
    }
    
    private void setVcsOptions(RProjectVcsOptions vcsOptions)

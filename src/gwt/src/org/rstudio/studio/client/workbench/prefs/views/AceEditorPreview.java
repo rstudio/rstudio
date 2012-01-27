@@ -52,10 +52,8 @@ public class AceEditorPreview extends DynamicIFrame
       style.setInnerText(
             ".ace_editor {\n" +
             "border: none !important;\n" +
-            "}\n" +
-            ".ace_editor, .ace_text-layer {\n" +
-            "font-family: " + ThemeFonts.getFixedWidthFont() + " !important;\n" +
             "}");
+      setFont(ThemeFonts.getFixedWidthFont());
       body.appendChild(style);
 
       DivElement div = doc.createDivElement();
@@ -120,6 +118,27 @@ public class AceEditorPreview extends DynamicIFrame
       }
 
       FontSizer.setNormalFontSize(getDocument(), fontSize);
+   }
+
+   public void setFont(String font)
+   {
+      final String STYLE_EL_ID = "__rstudio_font_family";
+      Document document = getDocument();
+
+      Element oldStyle = document.getElementById(STYLE_EL_ID);
+
+      StyleElement style = document.createStyleElement();
+      style.setAttribute("type", "text/css");
+      style.setInnerText(".ace_editor, .ace_text-layer {\n" +
+                         "font-family: " + font + " !important;\n" +
+                         "}");
+
+      document.getBody().appendChild(style);
+
+      if (oldStyle != null)
+         oldStyle.removeFromParent();
+
+      style.setId(STYLE_EL_ID);
    }
 
    private LinkElement currentStyleLink_;

@@ -86,4 +86,12 @@ public class JsUtil
          }
       };
    }
+
+   public static String[] toStringArray(JsArrayString strings)
+   {
+      String[] result = new String[strings.length()];
+      for (int i = 0; i < strings.length(); i++)
+         result[i] = strings.get(i);
+      return result;
+   }
 }

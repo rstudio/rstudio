@@ -36,8 +36,11 @@ implements HasEnsureVisibleHandlers
    public abstract String getName();
 
    protected abstract void initialize(T prefs);
-   
-   public abstract void onApply(T prefs);
+
+   /**
+    * @return True if reload of the browser UI is required
+    */
+   public abstract boolean onApply(T prefs);
    
    
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)

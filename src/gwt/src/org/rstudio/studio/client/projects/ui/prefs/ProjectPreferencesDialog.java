@@ -63,7 +63,8 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    @Override
    protected void doSaveChanges(final RProjectOptions options,
                                 final Operation onCompleted,
-                                final ProgressIndicator indicator)
+                                final ProgressIndicator indicator,
+                                final boolean reload)
    {
       
       server_.writeProjectOptions(
@@ -88,6 +89,8 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                 
                 if (onCompleted != null)
                    onCompleted.execute();
+                if (reload)
+                   reload();
              }
 
              @Override

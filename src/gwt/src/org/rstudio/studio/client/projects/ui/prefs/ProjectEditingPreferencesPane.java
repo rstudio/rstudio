@@ -117,13 +117,14 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    }
 
    @Override
-   public void onApply(RProjectOptions options)
+   public boolean onApply(RProjectOptions options)
    {
       RProjectConfig config = options.getConfig();
       config.setEnableCodeIndexing(enableCodeIndexing_.getValue());
       config.setUseSpacesForTab(chkSpacesForTab_.getValue());
       config.setNumSpacesForTab(getTabWidth());
       config.setEncoding(encodingValue_);
+      return false;
    }
    
    private void setEncoding(String encoding)

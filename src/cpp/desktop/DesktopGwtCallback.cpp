@@ -795,5 +795,35 @@ void GwtCallback::openTerminal(QString terminalPath,
    core::system::setenv("PATH", previousPath);
 }
 
+bool isProportionalFont(QString fontFamily)
+{
+   QFont font(fontFamily, 12);
+   return !isFixedWidthFont(font);
+}
+
+QVariant GwtCallback::getFontList(bool fixedWidthOnly)
+{
+   QFontDatabase db;
+   QStringList families = db.families();
+
+   if (fixedWidthOnly)
+   {
+      QStringList::iterator it = std::remove_if(
+            families.begin(), families.end(), isProportionalFont);
+      families.erase(it, families.end());
+   }
+
+   return QVariant(families);
+}
+
+QString GwtCallback::getFixedWidthFont()
+{
+   return options().fixedWidthFont();
+}
+
+void GwtCallback::setFixedWidthFont(QString font)
+{
+   options().setFixedWidthFont(font);
+}
 
 } // namespace desktop

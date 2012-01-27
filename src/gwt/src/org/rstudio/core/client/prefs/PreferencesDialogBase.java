@@ -23,13 +23,14 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
-
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.ReloadEvent;
 
 public abstract class PreferencesDialogBase<T> extends ModalDialogBase
 {
@@ -161,12 +162,14 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
       {
          // apply changes
          T prefs = createEmptyPrefs();
+         boolean restartRequired = false;
          for (PreferencesDialogPaneBase<T> pane : panes_)
-            pane.onApply(prefs);
-         
+            if (pane.onApply(prefs))
+               restartRequired = true;
+
          // perform save
          progressIndicator_.onProgress("Saving...");
-         doSaveChanges(prefs, onCompleted, progressIndicator_);
+         doSaveChanges(prefs, onCompleted, progressIndicator_, restartRequired);
       }
    }
    
@@ -174,7 +177,13 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
    
    protected abstract void doSaveChanges(T prefs,
                                          Operation onCompleted,
-                                         ProgressIndicator progressIndicator);
+                                         ProgressIndicator progressIndicator,
+                                         boolean reload);
+
+   protected void reload()
+   {
+      RStudioGinjector.INSTANCE.getEventBus().fireEvent(new ReloadEvent());
+   }
    
    
    void forceClosed(final Command onClosed)

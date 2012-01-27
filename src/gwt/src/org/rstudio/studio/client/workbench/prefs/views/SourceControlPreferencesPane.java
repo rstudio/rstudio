@@ -168,9 +168,9 @@ public class SourceControlPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public void onApply(RPrefs rPrefs)
+   public boolean onApply(RPrefs rPrefs)
    {
-      super.onApply(rPrefs);
+      boolean restartRequired = super.onApply(rPrefs);
 
       SourceControlPrefs prefs = SourceControlPrefs.create(
             chkVcsEnabled_.getValue(), gitExePathChooser_.getText(),
@@ -178,6 +178,8 @@ public class SourceControlPreferencesPane extends PreferencesPane
             chkUseGitBash_.getValue());
 
       rPrefs.setSourceControlPrefs(prefs);
+
+      return restartRequired;
    }
    
    private boolean haveTerminalPathPref()

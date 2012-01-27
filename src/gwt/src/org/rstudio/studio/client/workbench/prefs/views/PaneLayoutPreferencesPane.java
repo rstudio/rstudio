@@ -291,9 +291,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public void onApply(RPrefs rPrefs)
+   public boolean onApply(RPrefs rPrefs)
    {
-      super.onApply(rPrefs);
+      boolean restartRequired = super.onApply(rPrefs);
 
       if (dirty_)
       {
@@ -315,6 +315,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
          dirty_ = false;
       }
+
+      return restartRequired;
    }
 
    @Override

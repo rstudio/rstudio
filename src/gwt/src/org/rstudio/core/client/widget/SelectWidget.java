@@ -139,6 +139,8 @@ public class SelectWidget extends Composite
 
    public String getValue()
    {
+      if (listBox_.getSelectedIndex() < 0)
+         return null;
       return listBox_.getValue(listBox_.getSelectedIndex());
    }
 
