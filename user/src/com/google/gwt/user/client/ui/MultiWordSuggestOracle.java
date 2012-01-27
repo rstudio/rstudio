@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 import java.util.ArrayList;
@@ -284,7 +285,7 @@ public class MultiWordSuggestOracle extends SuggestOracle {
       Collection<String> suggestionList) {
     Collection<Suggestion> accum = new ArrayList<Suggestion>();
     for (String candidate : suggestionList) {
-      accum.add(createSuggestion(candidate, candidate));
+      accum.add(createSuggestion(candidate, SafeHtmlUtils.htmlEscape(candidate)));
     }
     setDefaultSuggestions(accum);
   }
