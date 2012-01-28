@@ -33,11 +33,40 @@ namespace session {
 
 namespace {
 
+const char* const kDefaultPostbackPath = "bin/postback/rpostback";
+
 void resolvePath(const FilePath& resourcePath, std::string* pPath)
 {
    if (!pPath->empty())
       *pPath = resourcePath.complete(*pPath).absolutePath();
 }
+
+#ifdef __APPLE__
+
+void resolvePostbackPath(const FilePath& resourcePath, std::string* pPath)
+{
+   // On OSX we keep the postback scripts over in the MacOS directory
+   // rather than in the Resources directory -- make this adjustment
+   // when the default postback path has been passed
+   if (*pPath == kDefaultPostbackPath)
+   {
+      FilePath path = resourcePath.parent().complete("MacOS/postback/rpostback");
+      *pPath = path.absolutePath();
+   }
+   else
+   {
+      resolvePath(resourcePath, pPath);
+   }
+}
+
+#else
+
+void resolvePostbackPath(const FilePath& resourcePath, std::string* pPath)
+{
+   resolvePath(resourcePath, pPath);
+}
+
+#endif
 
 }
 
@@ -180,7 +209,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    options_description external("external");
    external.add_options()
       ("external-rpostback-path", 
-       value<std::string>(&rpostbackPath_)->default_value("bin/postback/rpostback"),
+       value<std::string>(&rpostbackPath_)->default_value(kDefaultPostbackPath),
        "Path to rpostback executable")
       ("external-consoleio-path",
        value<std::string>(&consoleIoPath_)->default_value("bin/consoleio.exe"),
@@ -291,7 +320,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(resourcePath, &coreRSourcePath_);
    resolvePath(resourcePath, &modulesRSourcePath_);
    resolvePath(resourcePath, &sessionPackagesPath_);
-   resolvePath(resourcePath, &rpostbackPath_);
+   resolvePostbackPath(resourcePath, &rpostbackPath_);
 #ifdef _WIN32
    resolvePath(resourcePath, &consoleIoPath_);
    resolvePath(resourcePath, &gnudiffPath_);
