@@ -129,6 +129,7 @@ void openUrl(const QUrl& url)
    {
       core::system::ProcessOptions options;
       options.breakawayFromJob = true;
+      options.detachProcess = true;
 
       std::vector<std::string> args;
       args.push_back(url.toString().toStdString());
