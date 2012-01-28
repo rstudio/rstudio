@@ -248,6 +248,20 @@ FilePath Options::supportingFilePath() const
    return supportingFilePath_;
 }
 
+#ifdef _WIN32
+
+FilePath Options::urlopenerPath() const
+{
+   FilePath parentDir = scriptsPath();
+
+   // detect dev configuration
+   if (parentDir.filename() == "desktop")
+      parentDir = parentDir.complete("urlopener");
+
+   return parentDir.complete("urlopener.exe");
+}
+
+#endif
 
 QStringList Options::ignoredUpdateVersions() const
 {

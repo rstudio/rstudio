@@ -13,7 +13,6 @@
 
 #include "DesktopUpdateChecker.hpp"
 
-#include <QDesktopServices>
 #include <QMessageBox>
 #include <QPushButton>
 
@@ -129,7 +128,7 @@ void UpdateChecker::manifestDownloadComplete(const QByteArray& data)
       switch (result)
       {
       case DesktopUpdateAvailableDialog::Accepted:
-         QDesktopServices::openUrl(QUrl(updateInfo.updateURL));
+         desktop::openUrl(QUrl(updateInfo.updateURL));
          break;
       case DesktopUpdateAvailableDialog::Rejected:
          break;

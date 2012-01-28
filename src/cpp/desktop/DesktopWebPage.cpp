@@ -16,6 +16,8 @@
 #include <QtDebug>
 #include "DesktopNetworkAccessManager.hpp"
 
+#include "DesktopUtils.hpp"
+
 extern QString sharedSecret;
 
 namespace desktop {
@@ -76,7 +78,7 @@ bool WebPage::acceptNavigationRequest(QWebFrame*,
    }
    else
    {
-      QDesktopServices::openUrl(url);
+      desktop::openUrl(url);
 
       if (!navigated_)
          this->view()->window()->deleteLater();

@@ -46,6 +46,9 @@
 #ifndef JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
 #define JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE 0x2000
 #endif
+#ifndef JOB_OBJECT_LIMIT_BREAKAWAY_OK
+#define JOB_OBJECT_LIMIT_BREAKAWAY_OK 0x00000800
+#endif
 
 namespace core {
 namespace system {
@@ -72,7 +75,8 @@ Error initJobObject(bool* detachFromJob)
       return systemError(::GetLastError(), ERROR_LOCATION);
 
    JOBOBJECT_EXTENDED_LIMIT_INFORMATION jeli = { 0 };
-   jeli.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+   jeli.BasicLimitInformation.LimitFlags =
+         JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE | JOB_OBJECT_LIMIT_BREAKAWAY_OK;
    ::SetInformationJobObject(hJob,
                              JobObjectExtendedLimitInformation,
                              &jeli,

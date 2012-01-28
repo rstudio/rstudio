@@ -149,6 +149,11 @@ if(WIN32)
          ${DESKTOP_SOURCE_FILES}
          "${CMAKE_CURRENT_BINARY_DIR}/res.o")
    endif(MINGW)
+
+   if(NOT RSTUDIO_SESSION_WIN64)
+      add_subdirectory(urlopener)
+   endif()
+
 elseif(APPLE)
    find_library(APPLICATION_SERVICES_LIBRARY NAMES ApplicationServices)
    set(LINK_FLAGS ${APPLICATION_SERVICES_LIBRARY})

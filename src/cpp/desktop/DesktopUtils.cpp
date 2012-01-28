@@ -15,8 +15,14 @@
 
 #include <QProcess>
 #include <QPushButton>
+#include <QDesktopServices>
+
+#include <core/Error.hpp>
+#include <core/system/Process.hpp>
 
 #include "DesktopOptions.hpp"
+
+using namespace core;
 
 namespace desktop {
 
@@ -105,5 +111,50 @@ void launchProjectInNewInstance(QString projectFilename)
    QProcess::startDetached(exePath, args);
 }
 
+#ifdef _WIN32
+
+// on Win32 open urls using our special urlopener.exe -- this is
+// so that the shell exec is made out from under our windows "job"
+void openUrl(const QUrl& url)
+{
+   // we allow default handling for  mailto and file schemes because qt
+   // does custom handling for them and they aren't affected by the chrome
+   //job object issue noted above
+   if (url.scheme() == QString::fromAscii("mailto") ||
+       url.scheme() == QString::fromAscii("file"))
+   {
+      QDesktopServices::openUrl(url);
+   }
+   else
+   {
+      core::system::ProcessOptions options;
+      options.breakawayFromJob = true;
+
+      std::vector<std::string> args;
+      args.push_back(url.toString().toStdString());
+
+      core::system::ProcessResult result;
+      Error error = core::system::runProgram(
+            desktop::options().urlopenerPath().absolutePath(),
+            args,
+            "",
+            options,
+            &result);
+
+      if (error)
+         LOG_ERROR(error);
+      else if (result.exitStatus != EXIT_SUCCESS)
+         LOG_ERROR_MESSAGE(result.stdErr);
+   }
+}
+
+#else
+
+void openUrl(const QUrl& url)
+{
+   QDesktopServices::openUrl(url);
+}
+
+#endif
 
 } // namespace desktop

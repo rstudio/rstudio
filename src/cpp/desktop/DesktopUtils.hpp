@@ -14,6 +14,7 @@
 #ifndef DESKTOP_UTILS_HPP
 #define DESKTOP_UTILS_HPP
 
+#include <QUrl>
 #include <QMessageBox>
 
 namespace desktop {
@@ -37,6 +38,8 @@ void showWarning(QWidget *parent, const QString &title, const QString& text);
 void showInfo(QWidget* parent, const QString& title, const QString& text);
 
 void launchProjectInNewInstance(QString projectFilename);
+
+void openUrl(const QUrl& url);
 
 } // namespace desktop
 

@@ -59,6 +59,10 @@ public:
    core::FilePath executablePath() const;
    core::FilePath supportingFilePath() const;
 
+#ifdef _WIN32
+   core::FilePath urlopenerPath() const;
+#endif
+
    QStringList ignoredUpdateVersions() const;
    void setIgnoredUpdateVersions(const QStringList& ignoredVersions);
 
