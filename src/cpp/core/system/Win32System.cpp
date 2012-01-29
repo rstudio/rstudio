@@ -46,6 +46,9 @@
 #ifndef JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
 #define JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE 0x2000
 #endif
+#ifndef JOB_OBJECT_LIMIT_BREAKAWAY_OK
+#define JOB_OBJECT_LIMIT_BREAKAWAY_OK 0x00000800
+#endif
 
 namespace core {
 namespace system {
@@ -60,7 +63,10 @@ Error initJobObject(bool* detachFromJob)
     * cause all child processes to be assigned to the same job.
     * With JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE set, all the child
     * processes will be killed when this process terminates (since
-    * it is the only one holding a handle to the job).
+    * it is the only one holding a handle to the job). With
+    * JOB_OBJECT_LIMIT_BREAKAWAY_OK set it is possible to pass
+    * CREATE_BREAKAWAY_FROM_JOB to CreateProcess (this is required
+    * by Chrome for creating its sub-processes)
     */
 
    // If detachFromJob is true, it means we need to relaunch this
@@ -72,7 +78,8 @@ Error initJobObject(bool* detachFromJob)
       return systemError(::GetLastError(), ERROR_LOCATION);
 
    JOBOBJECT_EXTENDED_LIMIT_INFORMATION jeli = { 0 };
-   jeli.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+   jeli.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE |
+                                           JOB_OBJECT_LIMIT_BREAKAWAY_OK;
    ::SetInformationJobObject(hJob,
                              JobObjectExtendedLimitInformation,
                              &jeli,
@@ -319,14 +326,14 @@ bool isHiddenFile(const FileInfo& fileInfo)
 
 Error makeFileHidden(const FilePath& path)
 {
-   std::string filePath = path.absolutePath();
-   LPCSTR lpszPath = filePath.c_str();
+   std::wstring filePath = path.absolutePathW();
+   LPCWSTR lpszPath = filePath.c_str();
 
-   DWORD attribs = ::GetFileAttributesA(lpszPath);
+   DWORD attribs = ::GetFileAttributesW(lpszPath);
    if (attribs == INVALID_FILE_ATTRIBUTES)
       return systemError(GetLastError(), ERROR_LOCATION);
 
-   if (!::SetFileAttributesA(lpszPath, attribs | FILE_ATTRIBUTE_HIDDEN))
+   if (!::SetFileAttributesW(lpszPath, attribs | FILE_ATTRIBUTE_HIDDEN))
       return systemError(GetLastError(), ERROR_LOCATION);
 
    return Success();

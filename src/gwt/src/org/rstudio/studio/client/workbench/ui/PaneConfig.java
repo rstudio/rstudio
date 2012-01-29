@@ -111,6 +111,12 @@ public class PaneConfig extends JavaScriptObject
          ts1.push("VCS");
       }
 
+      // Can't have a tabset that only contains VCS since it will be hidden when
+      // outside of a project context (or in a non-VCS project)
+      String[] justVCS = {"VCS"};
+      if (sameElements(ts1, justVCS) || sameElements(ts2, justVCS))
+         return false;
+
       return true;
    }
 
@@ -166,5 +172,18 @@ public class PaneConfig extends JavaScriptObject
       for (int i = 0; i < array.length(); i++)
          copy.push(array.get(i));
       return copy;
+   }
+
+   public static boolean isValidConfig(ArrayList<String> tabs)
+   {
+      if (tabs.size() == 0)
+         return false;
+      if (tabs.size() == 1 && "VCS".equals(tabs.get(0)))
+         return false;
+      if (tabs.size() == getAllTabs().length)
+         return false;
+      if (tabs.size() == getAllTabs().length - 1 && !tabs.contains("VCS"))
+         return false;
+      return true;
    }
 }

@@ -1210,7 +1210,8 @@ FilePath detectGitDir(const FilePath& workingDir)
    if (result.exitStatus != 0)
       return FilePath();
 
-   return FilePath(boost::algorithm::trim_copy(result.stdOut));
+   return FilePath(boost::algorithm::trim_copy(
+                      string_utils::systemToUtf8(result.stdOut)));
 }
 
 } // anonymous namespace
@@ -2615,20 +2616,21 @@ core::Error initialize()
 #endif
    }
 
+   // register postback handler
+   std::string sshAskCmd;
+   error = module_context::registerPostbackHandler("askpass",
+                                                   postbackSSHAskPass,
+                                                   &sshAskCmd);
+   if (error)
+      return error;
+
+   // setup environment
+   BOOST_ASSERT(boost::algorithm::ends_with(sshAskCmd, "rpostback-askpass"));
+   core::system::setenv("GIT_ASKPASS", "rpostback-askpass");
+
    if (interceptAskPass)
    {
-      // register postback handler
-      std::string sshAskCmd;
-      error = module_context::registerPostbackHandler("askpass",
-                                                      postbackSSHAskPass,
-                                                      &sshAskCmd);
-      if (error)
-         return error;
-
-      // setup environment
-      BOOST_ASSERT(boost::algorithm::ends_with(sshAskCmd, "rpostback-askpass"));
       core::system::setenv("SSH_ASKPASS", "rpostback-askpass");
-      core::system::setenv("GIT_ASKPASS", "rpostback-askpass");
    }
 
    // add suspend/resume handler

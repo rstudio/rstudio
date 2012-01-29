@@ -508,8 +508,8 @@ Handle registerMonitor(const core::FilePath& filePath,
    pContext->recursive = recursive;
 
    // open the directory
-   pContext->hDirectory = ::CreateFile(
-                     filePath.absolutePath().c_str(),
+   pContext->hDirectory = ::CreateFileW(
+                     filePath.absolutePathW().c_str(),
                      FILE_LIST_DIRECTORY,
                      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                      NULL,

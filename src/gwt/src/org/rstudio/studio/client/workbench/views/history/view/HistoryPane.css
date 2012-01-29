@@ -37,13 +37,12 @@
    padding-left: 3px;
    padding-right: 3px;
    text-overflow: ellipsis;
-   overflow-x: hidden;
-   overflow-y: visible;
+   overflow: hidden;
 }
 
 .historyTable .selected td:first-child div {
    width: auto;
-   overflow-x: visible;
+   overflow: visible;
    margin-left: 28px;
    text-indent: -28px;
 }

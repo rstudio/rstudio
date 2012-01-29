@@ -19,6 +19,7 @@
 #include <core/Log.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/StringUtils.hpp>
 
 #include <core/BoostErrors.hpp>
 
@@ -43,7 +44,7 @@ bool FileLock::isLocked(const FilePath& lockFilePath)
    // check if it is locked
    try
    {
-      file_lock lock(lockFilePath.absolutePath().c_str());
+      file_lock lock(string_utils::utf8ToSystem(lockFilePath.absolutePath()).c_str());
 
       if (lock.try_lock())
       {
@@ -95,7 +96,7 @@ Error FileLock::acquire(const FilePath& lockFilePath)
    // try to acquire the lock
    try
    {
-      file_lock lock(lockFilePath.absolutePath().c_str());
+      file_lock lock(string_utils::utf8ToSystem(lockFilePath.absolutePath()).c_str());
 
       if (lock.try_lock())
       {
