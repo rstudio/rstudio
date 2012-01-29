@@ -17,7 +17,6 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QListWidgetItem>
-#include <QDesktopServices>
 
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
@@ -231,7 +230,7 @@ void ChooseRHome::done(int r)
                                        "You can download R from the official R Project "
                                        "website. Would you like to go there now?")))
                {
-                  QDesktopServices::openUrl(QUrl(QString::fromAscii("http://www.rstudio.org/links/r-project")));
+                  desktop::openUrl(QUrl(QString::fromAscii("http://www.rstudio.org/links/r-project")));
                }
             }
          }

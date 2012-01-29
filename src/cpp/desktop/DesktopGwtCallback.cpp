@@ -23,7 +23,6 @@
 
 #include <QtGui/QFileDialog>
 #include <QFileDialog>
-#include <QDesktopServices>
 #include <QMessageBox>
 
 #include <core/FilePath.hpp>
@@ -103,7 +102,7 @@ void GwtCallback::browseUrl(QString url)
       if (url.startsWith(QString::fromAscii("custom/")) ||
           url.startsWith(QString::fromAscii("help/")))
       {
-         QDesktopServices::openUrl(localUrl);
+         desktop::openUrl(localUrl);
       }
       else
       {
@@ -115,7 +114,7 @@ void GwtCallback::browseUrl(QString url)
    }
    else
    {
-      QDesktopServices::openUrl(qurl);
+      desktop::openUrl(qurl);
    };
 }
 
@@ -314,7 +313,7 @@ void GwtCallback::showFolder(QString path)
    QDir dir(path);
    if (dir.exists())
    {
-      QDesktopServices::openUrl(QUrl::fromLocalFile(dir.absolutePath()));
+      desktop::openUrl(QUrl::fromLocalFile(dir.absolutePath()));
    }
 }
 

@@ -58,6 +58,7 @@ struct ProcessOptions
       : terminateChildren(false),
         detachProcess(false),
         createNewConsole(false),
+        breakawayFromJob(false),
         redirectStdErrToStdOut(false)
 #else
       : terminateChildren(false),
@@ -96,6 +97,9 @@ struct ProcessOptions
 
    // Creates the process with CREATE_NEW_CONSOLE but with the console hidden
    bool createNewConsole;
+
+   // create the process with CREATE_BREAKAWAY_FROM_JOB
+   bool breakawayFromJob;
 #endif
 
    bool redirectStdErrToStdOut;

@@ -479,6 +479,9 @@ Error ChildProcess::run()
       si.wShowWindow = SW_HIDE;
    }
 
+   if (options_.breakawayFromJob)
+      dwFlags |= CREATE_BREAKAWAY_FROM_JOB;
+
    std::string workingDir;
    if (!options_.workingDir.empty())
    {

@@ -14,6 +14,7 @@
 #ifndef DESKTOP_UTILS_HPP
 #define DESKTOP_UTILS_HPP
 
+#include <QUrl>
 #include <QMessageBox>
 
 namespace desktop {
@@ -39,6 +40,9 @@ void showInfo(QWidget* parent, const QString& title, const QString& text);
 void launchProjectInNewInstance(QString projectFilename);
 
 bool isFixedWidthFont(const QFont& font);
+
+void openUrl(const QUrl& url);
+
 
 } // namespace desktop
 
