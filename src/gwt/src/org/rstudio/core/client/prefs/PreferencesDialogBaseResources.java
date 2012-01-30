@@ -33,12 +33,15 @@ public interface PreferencesDialogBaseResources extends ClientBundle
       String spaced();
       String extraSpaced();
       String textBoxWithChooser();
+      String infoLabel();
+      String headerLabel();
    }
 
    @Source("PreferencesDialogBase.css")
    Styles styles();
    
-   ImageResource iconEdit();
+   ImageResource iconCodeEditing();
+   ImageResource iconWriting();
    ImageResource iconR();
    ImageResource iconSourceControl();
    

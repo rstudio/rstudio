@@ -281,6 +281,18 @@ Error readProjectFile(const FilePath& projectFilePath,
       *pProvidedDefaults = true;
    }
 
+   // extract default sweave engine
+   it = dcfFields.find("WeaveRnwWith");
+   if (it != dcfFields.end())
+   {
+      pConfig->weaveRnwWith = it->second;
+   }
+   else
+   {
+      pConfig->weaveRnwWith = defaultConfig.weaveRnwWith;
+      *pProvidedDefaults = true;
+   }
+
    return Success();
 }
 
@@ -299,7 +311,9 @@ Error writeProjectFile(const FilePath& projectFilePath,
       "EnableCodeIndexing: %5%\n"
       "UseSpacesForTab: %6%\n"
       "NumSpacesForTab: %7%\n"
-      "Encoding: %8%\n");
+      "Encoding: %8%\n"
+      "\n"
+      "WeaveRnwWith: %9%\n");
 
    std::string contents = boost::str(fmt %
         boost::io::group(std::fixed, std::setprecision(1), config.version) %
@@ -309,7 +323,8 @@ Error writeProjectFile(const FilePath& projectFilePath,
         boolValueToString(config.enableCodeIndexing) %
         boolValueToString(config.useSpacesForTab) %
         config.numSpacesForTab %
-        config.encoding);
+        config.encoding %
+        config.weaveRnwWith);
 
    // write it
    return writeStringToFile(projectFilePath,

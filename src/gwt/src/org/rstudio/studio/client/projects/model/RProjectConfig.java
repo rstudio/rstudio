@@ -37,7 +37,8 @@ public class RProjectConfig extends JavaScriptObject
                                                     boolean enableCodeIndexing,
                                                     boolean useSpacesForTab,
                                                     int numSpacesForTab,
-                                                    String encoding) /*-{
+                                                    String encoding,
+                                                    String weaveRnwWith) /*-{
       var config = new Object();
       config.version = 1.0;
       config.restore_workspace = restoreWorkspace;
@@ -47,6 +48,7 @@ public class RProjectConfig extends JavaScriptObject
       config.use_spaces_for_tab = useSpacesForTab;
       config.num_spaces_for_tab = numSpacesForTab;
       config.default_encoding = encoding;
+      config.weave_rnw_with = weaveRnwWith;
       return config;
    }-*/;
 
@@ -108,5 +110,13 @@ public class RProjectConfig extends JavaScriptObject
    
    public native final void setEncoding(String defaultEncoding) /*-{
       this.default_encoding = defaultEncoding;
+   }-*/;
+   
+   public native final String getWeaveRnwWith() /*-{
+      return this.weave_rnw_with;
+   }-*/;
+
+   public native final void setSweaveRnwWith(String weaveRnwWith) /*-{
+      this.weave_rnw_with = weaveRnwWith;
    }-*/;
 }

@@ -90,13 +90,13 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return PreferencesDialogBaseResources.INSTANCE.iconEdit();
+      return PreferencesDialogBaseResources.INSTANCE.iconCodeEditing();
    }
 
    @Override
    public String getName()
    {
-      return "Editing";
+      return "Code Editing";
    }
 
    @Override

@@ -80,6 +80,7 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["use_spaces_for_tab"] = config.useSpacesForTab;
    configJson["num_spaces_for_tab"] = config.numSpacesForTab;
    configJson["default_encoding"] = config.encoding;
+   configJson["weave_rnw_with"] = config.weaveRnwWith;
    return configJson;
 }
 
@@ -169,7 +170,8 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
                     "enable_code_indexing", &(config.enableCodeIndexing),
                     "use_spaces_for_tab", &(config.useSpacesForTab),
                     "num_spaces_for_tab", &(config.numSpacesForTab),
-                    "default_encoding", &(config.encoding));
+                    "default_encoding", &(config.encoding),
+                    "weave_rnw_with", &(config.weaveRnwWith));
    if (error)
       return error;
 

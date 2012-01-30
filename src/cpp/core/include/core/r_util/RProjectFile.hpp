@@ -44,7 +44,8 @@ struct RProjectConfig
         enableCodeIndexing(true),
         useSpacesForTab(true),
         numSpacesForTab(2),
-        encoding()
+        encoding(),
+        weaveRnwWith()
    {
    }
 
@@ -56,6 +57,7 @@ struct RProjectConfig
    bool useSpacesForTab;
    int numSpacesForTab;
    std::string encoding;
+   std::string weaveRnwWith;
 };
 
 

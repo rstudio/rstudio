@@ -129,4 +129,9 @@ public class UIPrefsAccessor extends Prefs
       return bool("new_proj_git_init", false);
    }
    
+   public PrefValue<String> defaultSweaveEngine()
+   {
+      return string("default_sweave_engine", "Sweave");
+   }
+   
 }

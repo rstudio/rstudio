@@ -238,6 +238,9 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
 
    std::string enc = readPref<std::string>(prefs, "default_encoding", "");
    pDefaultEncoding_.reset(new std::string(enc));
+
+   std::string sweave = readPref<std::string>(prefs, "default_sweave_engine", "Sweave");
+   pDefaultSweaveEngine_.reset(new std::string(sweave));
 }
 
 
@@ -256,6 +259,11 @@ int UserSettings::numSpacesForTab() const
 std::string UserSettings::defaultEncoding() const
 {
    return readUiPref<std::string>(pDefaultEncoding_);
+}
+
+std::string UserSettings::defaultSweaveEngine() const
+{
+   return readUiPref<std::string>(pDefaultSweaveEngine_);
 }
 
 bool UserSettings::alwaysRestoreLastProject() const

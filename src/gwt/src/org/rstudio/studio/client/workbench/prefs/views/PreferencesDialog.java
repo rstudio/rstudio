@@ -33,6 +33,7 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
                             PreferencesDialogResources res,
                             Provider<GeneralPreferencesPane> pR,
                             EditingPreferencesPane source,
+                            WritingPreferencesPane writing,
                             AppearancePreferencesPane appearance,
                             PaneLayoutPreferencesPane paneLayout,
                             SourceControlPreferencesPane sourceControl)
@@ -42,6 +43,7 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
             true,
             new PreferencesPane[] {pR.get(),
                                    source, 
+                                   writing,
                                    appearance, 
                                    paneLayout,
                                    sourceControl}); 

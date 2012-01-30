@@ -35,12 +35,13 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                    Session session,
                                    ProjectGeneralPreferencesPane general,
                                    ProjectEditingPreferencesPane editing,
+                                   ProjectWritingPreferencesPane writing,
                                    ProjectSourceControlPreferencesPane source)
    {
       super("Project Options",
             RES.styles().panelContainer(),
             false,
-            new ProjectPreferencesPane[] {general, editing, source});
+            new ProjectPreferencesPane[] {general, editing, writing, source});
       
       server_ = server;
       pUIPrefs_ = pUIPrefs;  
@@ -48,7 +49,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    
    public void activateSourceControl()
    {
-      activatePane(2);
+      activatePane(3);
    }
    
    
@@ -81,7 +82,9 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                 uiPrefs.numSpacesForTab().setProjectValue(
                                            config.getNumSpacesForTab());
                 uiPrefs.defaultEncoding().setProjectValue(
-                                           config.getEncoding());   
+                                           config.getEncoding()); 
+                uiPrefs.defaultSweaveEngine().setProjectValue(
+                                           config.getWeaveRnwWith());
                 
                 if (onCompleted != null)
                    onCompleted.execute();

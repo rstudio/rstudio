@@ -25,6 +25,12 @@
    margin-left: 2px;
 }
 
+.headerLabel {
+   font-weight: bold;
+   font-size: 1.1em;
+   margin-bottom: 4px;
+}
+
 @if user.agent gecko1_8 { .nudgeRight {
    margin-left: 5px; 
 }
@@ -60,5 +66,11 @@
 .textBoxWithChooser {
    width: 350px;	
 }
+
+.infoLabel {
+   font-style: italic;
+   font-size: 0.9em; 
+}
+
 
 

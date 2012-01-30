@@ -25,7 +25,9 @@
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
+#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 using namespace core;
 
@@ -35,31 +37,83 @@ namespace tex {
 
 namespace {
 
+std::string activeSweaveEngine()
+{
+   if (projects::projectContext().hasProject())
+      return projects::projectContext().config().weaveRnwWith;
+   else
+      return userSettings().defaultSweaveEngine();
+}
+
 FilePath pdfPathForTexPath(const FilePath& texPath)
 {
    return texPath.parent().complete(texPath.stem() + ".pdf");
 }
 
-void callSweave(const std::string& rBinDir,
-                const std::string& file)
-{
-   // build R exe path and args
 #ifdef _WIN32
-   std::string path = FilePath(rBinDir).complete("Rterm.exe").absolutePath();
+
+std::vector<std::string> sweaveArgs(const std::string& file)
+{
    std::vector<std::string> args;
    std::string sweaveCmd = "\"Sweave('" + file + "')\"";
    args.push_back("-e");
    args.push_back(sweaveCmd);
    args.push_back("--silent");
+   return args;
+}
+
 #else
-   std::string path = FilePath(rBinDir).complete("R").absolutePath();
+
+std::vector<std::string> sweaveArgs(const std::string& file)
+{
    std::vector<std::string> args;
    args.push_back("CMD");
    args.push_back("Sweave");
    args.push_back(file);
+   return args;
+}
+
 #endif
 
-   // call sweave
+std::vector<std::string> knitrArgs(const std::string& file)
+{
+   std::vector<std::string> args;
+   std::string knitrCmd = "library(knitr); knit('" + file + "')";
+   args.push_back("--silent");
+   args.push_back("-e");
+   args.push_back(knitrCmd);
+   return args;
+}
+
+
+void callSweave(const std::string& rBinDir,
+                const std::string& file)
+{
+   // R exe path differs by platform
+#ifdef _WIN32
+   std::string path = FilePath(rBinDir).complete("Rterm.exe").absolutePath();
+#else
+   std::string path = FilePath(rBinDir).complete("R").absolutePath();
+#endif
+
+   // args differ by back-end
+   std::string sweaveEngine = activeSweaveEngine();
+   std::vector<std::string> args;
+   if (sweaveEngine == "Sweave")
+   {
+      args = sweaveArgs(file);
+   }
+   else if (sweaveEngine == "knitr")
+   {
+      args = knitrArgs(file);
+   }
+   else
+   {
+      r::exec::warning("Unknown Sweave engine: " + sweaveEngine);
+      args = sweaveArgs(file);
+   }
+
+   // call back-end
    Error error = module_context::executeInterruptableChild(path, args);
    if (error)
       LOG_ERROR(error);

@@ -148,6 +148,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
             savePlotAsPdfOptions().setGlobalValue(
                          newUiPrefs.savePlotAsPdfOptions().getGlobalValue());
          }
+         
+         // default sweave engine
+         defaultSweaveEngine().setGlobalValue(
+                           newUiPrefs.defaultSweaveEngine().getGlobalValue());
       }
       else if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
       {
@@ -160,13 +164,17 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          useSpacesForTab().setProjectValue(
                           newUiPrefs.useSpacesForTab().getValue());
            
-         // num spacers for tab
+         // num spaces for tab
          numSpacesForTab().setProjectValue(
                newUiPrefs.numSpacesForTab().getValue());
    
          // default encoding
          defaultEncoding().setProjectValue(
                                  newUiPrefs.defaultEncoding().getValue());
+         
+         // default sweave engine
+         defaultSweaveEngine().setProjectValue(
+                                 newUiPrefs.defaultSweaveEngine().getValue());
  
       }
       else

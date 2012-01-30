@@ -487,6 +487,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
       defaultConfig.encoding = userSettings().defaultEncoding();
    else
       defaultConfig.encoding = "UTF-8";
+   defaultConfig.weaveRnwWith = userSettings().defaultSweaveEngine();
    return defaultConfig;
 }
 

@@ -104,7 +104,7 @@ public class EditingPreferencesPane extends PreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return PreferencesDialogBaseResources.INSTANCE.iconEdit();
+      return PreferencesDialogBaseResources.INSTANCE.iconCodeEditing();
    }
 
    @Override
@@ -117,7 +117,7 @@ public class EditingPreferencesPane extends PreferencesPane
    @Override
    public String getName()
    {
-      return "Editing";
+      return "Code Editing";
    }
 
    @Override

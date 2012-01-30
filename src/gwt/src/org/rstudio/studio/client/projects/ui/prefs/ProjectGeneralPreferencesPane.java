@@ -32,7 +32,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       grid.setCellSpacing(8);
       
       Label infoLabel = new Label("Use (Default) to inherit the global default setting");
-      infoLabel.addStyleName(RESOURCES.styles().infoLabel());
+      infoLabel.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().infoLabel());
       grid.setWidget(0, 0, infoLabel);
       
       // restore workspace
