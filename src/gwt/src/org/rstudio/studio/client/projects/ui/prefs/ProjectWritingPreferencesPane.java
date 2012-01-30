@@ -64,10 +64,11 @@ public class ProjectWritingPreferencesPane extends ProjectPreferencesPane
    }
 
    @Override
-   public void onApply(RProjectOptions options)
+   public boolean onApply(RProjectOptions options)
    {
       RProjectConfig config = options.getConfig();
       config.setDefaultSweaveEngine(defaultSweaveEngine_.getValue());
+      return false;
    }
     
    private WeaveRnwSelectWidget defaultSweaveEngine_;
