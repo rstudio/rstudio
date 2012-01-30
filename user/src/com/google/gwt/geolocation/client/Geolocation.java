@@ -294,8 +294,10 @@ public class Geolocation {
       (callback, err.code, err.message);
     });
 
+    var id = -1;
     if (@com.google.gwt.geolocation.client.Geolocation::isSupported()) {
-      $wnd.navigator.geolocation.watchPosition(success, failure, opt);
+      id = $wnd.navigator.geolocation.watchPosition(success, failure, opt);
     }
+    return id;
   }-*/;
 }
