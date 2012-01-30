@@ -38,13 +38,15 @@ public class WritingPreferencesPane extends PreferencesPane
       
       
       Label perProjectLabel = new Label(
-          "Note: Projects have their own Compile PDF options (initialized with these defaults)");
+          "NOTE: Compile PDF options can also be set on a per-project basis. " +
+          "Options for new projects are based on the defaults below.");
       perProjectLabel.addStyleName(baseRes.styles().infoLabel());
       nudgeRight(perProjectLabel);
       add(perProjectLabel);
     
       
-      defaultSweaveEngine_ = new WeaveRnwSelectWidget("Default engine for weaving Rnw files:");
+      defaultSweaveEngine_ = new WeaveRnwSelectWidget(
+                                 "Default method for weaving Rnw files:");
       defaultSweaveEngine_.getElement().getStyle().setMarginTop(7, Unit.PX);
       defaultSweaveEngine_.setValue(
                               prefs.defaultSweaveEngine().getGlobalValue());
