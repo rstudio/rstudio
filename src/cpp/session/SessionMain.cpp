@@ -400,9 +400,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["console_actions"] = actionsObject;
    }
 
-   bool texInstalled;
-   error = r::exec::RFunction(".rs.is_tex_installed").call(&texInstalled);
-   sessionInfo["tex_installed"] = !error ? texInstalled : false;
+   sessionInfo["tex_capabilities"] = modules::tex::capabilitiesAsJson();
 
    sessionInfo["googleDocsIntegrationEnabled"] =
          session::module_context::isGoogleDocsIntegrationEnabled();

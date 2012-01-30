@@ -54,6 +54,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -407,16 +408,23 @@ public class TextEditingTarget implements EditingTarget
             }, 500);
          }
       });
+      
+      TexCapabilities texCap = session_.getSessionInfo().getTexCapabilities();
 
-      if (fileType_.canCompilePDF()
-          && !session_.getSessionInfo().isTexInstalled())
+      final boolean checkForTeX = fileType_.canCompilePDF() && 
+                                  !texCap.isTexInstalled();
+      final boolean checkForKnitr = 
+          FileTypeRegistry.SWEAVE.getTypeId().equals(fileType_.getTypeId()) &&
+          !texCap.isKnitrInstalled();
+      
+      if (checkForTeX || checkForKnitr)
       {
-         server_.isTexInstalled(new ServerRequestCallback<Boolean>()
+         server_.getTexCapabilities(new ServerRequestCallback<TexCapabilities>()
          {
             @Override
-            public void onResponseReceived(Boolean response)
+            public void onResponseReceived(TexCapabilities response)
             {
-               if (!response)
+               if (checkForTeX && !response.isTexInstalled())
                {
                   String warning;
                   if (Desktop.isDesktop())
@@ -426,6 +434,12 @@ public class TextEditingTarget implements EditingTarget
                      warning = "This server does not have TeX installed. You " +
                                "may not be able to compile.";
                   view_.showWarningBar(warning);
+               }
+               else if (checkForKnitr && !response.isKnitrInstalled())
+               {
+                  view_.showWarningBar(
+                      "knitr is configured to weave Rnw files however " + 
+                      "the knitr package is not installed.");
                }
             }
 

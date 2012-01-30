@@ -41,8 +41,8 @@ public class SessionInfo extends JavaScriptObject
       return this.userIdentity;
    }-*/;
 
-   public final native boolean isTexInstalled() /*-{
-      return this.tex_installed;
+   public final native TexCapabilities getTexCapabilities() /*-{
+      return this.tex_capabilities;
    }-*/;
 
    public final native String getLogDir() /*-{

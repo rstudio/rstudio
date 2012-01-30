@@ -18,6 +18,7 @@ import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
+import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 
@@ -120,7 +121,8 @@ public interface SourceServerOperations extends FilesServerOperations,
                    boolean update,
                    ServerRequestCallback<PublishPdfResult> requestCallback);
 
-   void isTexInstalled(ServerRequestCallback<Boolean> requestCallback);
+   void getTexCapabilities(
+                  ServerRequestCallback<TexCapabilities> requestCallback);
 
    void saveActiveDocument(String contents,
                            boolean sweave,

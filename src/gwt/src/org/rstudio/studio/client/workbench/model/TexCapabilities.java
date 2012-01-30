@@ -1,5 +1,5 @@
 /*
- * SessionTeX.hpp
+ * TexCapabilities.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,26 +10,21 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.workbench.model;
 
-#ifndef SESSION_TEX_HPP
-#define SESSION_TEX_HPP
+import com.google.gwt.core.client.JavaScriptObject;
 
-#include <core/json/Json.hpp>
-
-namespace core {
-   class Error;
-}
- 
-namespace session {
-namespace modules { 
-namespace tex {
+public class TexCapabilities extends JavaScriptObject
+{
+   protected TexCapabilities()
+   {
+   }
    
-core::json::Object capabilitiesAsJson();
+   public final native boolean isTexInstalled() /*-{
+      return this.tex_installed;
+   }-*/;
 
-core::Error initialize();
-                       
-} // namespace tex
-} // namespace modules
-} // namesapce session
-
-#endif // SESSION_TEX_HPP
+   public final native boolean isKnitrInstalled() /*-{
+      return this.knitr_installed;
+   }-*/;
+}

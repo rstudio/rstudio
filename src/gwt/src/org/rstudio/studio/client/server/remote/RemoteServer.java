@@ -50,6 +50,7 @@ import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.TerminalOptions;
+import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
@@ -1087,10 +1088,11 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, PUBLISH_PDF, params, requestCallback);
    }
 
-   public void isTexInstalled(ServerRequestCallback<Boolean> requestCallback)
+   public void getTexCapabilities(
+                  ServerRequestCallback<TexCapabilities> requestCallback)
    {
       sendRequest(RPC_SCOPE,
-                  IS_TEX_INSTALLED,
+                  GET_TEX_CAPABILITIES,
                   requestCallback);
    }
    
@@ -2526,7 +2528,7 @@ public class RemoteServer implements Server
    private static final String DETECT_FREE_VARS = "detect_free_vars";
    private static final String ICONVLIST = "iconvlist";
    private static final String PUBLISH_PDF = "publish_pdf";
-   private static final String IS_TEX_INSTALLED = "is_tex_installed";
+   private static final String GET_TEX_CAPABILITIES = "get_tex_capabilities";
 
    private static final String GET_RECENT_HISTORY = "get_recent_history";
    private static final String GET_HISTORY_ITEMS = "get_history_items";

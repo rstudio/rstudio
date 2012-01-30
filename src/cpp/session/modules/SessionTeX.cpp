@@ -21,6 +21,8 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/Exec.hpp>
+#include <core/json/JsonRpc.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
@@ -168,8 +170,31 @@ SEXP rs_viewPdf(SEXP texPathSEXP)
    return R_NilValue;
 }
 
+
+Error getTexCapabilities(const core::json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(tex::capabilitiesAsJson());
+   return Success();
+}
+
 } // anonymous namespace
-      
+
+json::Object capabilitiesAsJson()
+{
+   json::Object obj;
+
+   bool texInstalled;
+   Error error = r::exec::RFunction(".rs.is_tex_installed").call(&texInstalled);
+   obj["tex_installed"] = !error ? texInstalled : false;
+
+   bool knitrInstalled;
+   error = r::exec::RFunction(".rs.is_knitr_installed").call(&knitrInstalled);
+   obj["knitr_installed"] = !error ? knitrInstalled : false;
+
+   return obj;
+}
+
 Error initialize()
 {
    // install core Sweave/TeX routines
@@ -191,8 +216,15 @@ Error initialize()
    viewPdfMethodDef.numArgs = 1;
    r::routines::addCallMethod(viewPdfMethodDef);
 
-   // source TeX R helpers
-   return module_context::sourceModuleRFile("SessionTeX.R");
+   // install rpc methods
+   using boost::bind;
+   using namespace module_context;
+   ExecBlock initBlock ;
+   initBlock.addFunctions()
+      (bind(registerRpcMethod, "get_tex_capabilities", getTexCapabilities))
+      (bind(sourceModuleRFile, "SessionTeX.R"))
+      ;
+  return initBlock.execute();
 }
 
 

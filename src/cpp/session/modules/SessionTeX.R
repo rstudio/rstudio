@@ -85,7 +85,29 @@
 
 .rs.addFunction("is_tex_installed", function()
 {
-    return(.rs.scalar(file.exists(Sys.which('pdflatex'))))
+   return(.rs.scalar(file.exists(Sys.which('pdflatex'))))
 })
 
-.rs.addJsonRpcHandler("is_tex_installed", .rs.is_tex_installed)
+.rs.addFunction("is_knitr_installed", function()
+{
+   isLoaded <- "knitr" %in% .packages()
+   if (isLoaded)
+   {
+      return (TRUE)
+   }
+   else
+   {
+      if (suppressWarnings(require("knitr",
+                                   quietly = TRUE,
+                                   warn.conflicts = FALSE)))
+      {
+         .rs.unloadPackage("knitr")
+         return (TRUE)
+      }
+      else
+      {
+         return (FALSE)
+      }
+  }
+})
+
