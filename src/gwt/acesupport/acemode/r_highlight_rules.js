@@ -22,6 +22,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
    var lang = require("pilot/lang");
    var TextHighlightRules = require("ace/mode/text_highlight_rules")
          .TextHighlightRules;
+   var TexHighlightRules = require("mode/tex_highlight_rules").TexHighlightRules;
 
    var RHighlightRules = function()
    {
@@ -48,7 +49,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
             {
                token : "comment",
                regex : "#'",
-               next : "roxygen-comment"
+               next : "rd-start"
             },
             {
                token : "string", // single line
@@ -154,27 +155,24 @@ define("mode/r_highlight_rules", function(require, exports, module)
                token : "string",
                regex : '.+'
             }
-         ],
-         "roxygen-comment" : [
-            {
-               token : "comment",
-               regex : "^",
-               next : "start"
-            },
-            {
-               token : "keyword",
-               regex : "@(?!@)[^ ]*"
-            },
-            {
-               token : "comment",
-               regex : "@@"
-            },
-            {
-               token : "comment",
-               regex : "[^@]+"
-            }
          ]
       };
+
+      var rdRules = new TexHighlightRules().getRules();
+      this.addRules(rdRules, "rd-");
+      this.$rules["rd-start"].unshift({
+          token: "text",
+          regex: "^",
+          next: "start"
+      });
+      this.$rules["rd-start"].unshift({
+         token : "keyword",
+         regex : "@(?!@)[^ ]*"
+      });
+      this.$rules["rd-start"].unshift({
+         token : "text",
+         regex : "@@"
+      });
    };
 
    oop.inherits(RHighlightRules, TextHighlightRules);
