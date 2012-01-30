@@ -285,11 +285,11 @@ Error readProjectFile(const FilePath& projectFilePath,
    it = dcfFields.find("WeaveRnwWith");
    if (it != dcfFields.end())
    {
-      pConfig->weaveRnwWith = it->second;
+      pConfig->defaultSweaveEngine = it->second;
    }
    else
    {
-      pConfig->weaveRnwWith = defaultConfig.weaveRnwWith;
+      pConfig->defaultSweaveEngine = defaultConfig.defaultSweaveEngine;
       *pProvidedDefaults = true;
    }
 
@@ -324,7 +324,7 @@ Error writeProjectFile(const FilePath& projectFilePath,
         boolValueToString(config.useSpacesForTab) %
         config.numSpacesForTab %
         config.encoding %
-        config.weaveRnwWith);
+        config.defaultSweaveEngine);
 
    // write it
    return writeStringToFile(projectFilePath,

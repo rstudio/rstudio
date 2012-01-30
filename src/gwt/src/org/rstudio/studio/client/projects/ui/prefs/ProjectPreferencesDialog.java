@@ -84,7 +84,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                 uiPrefs.defaultEncoding().setProjectValue(
                                            config.getEncoding()); 
                 uiPrefs.defaultSweaveEngine().setProjectValue(
-                                           config.getWeaveRnwWith());
+                                           config.getDefaultSweaveEngine());
                 
                 if (onCompleted != null)
                    onCompleted.execute();

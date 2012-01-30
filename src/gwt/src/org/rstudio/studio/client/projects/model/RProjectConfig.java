@@ -38,7 +38,7 @@ public class RProjectConfig extends JavaScriptObject
                                                     boolean useSpacesForTab,
                                                     int numSpacesForTab,
                                                     String encoding,
-                                                    String weaveRnwWith) /*-{
+                                                    String defaultSweaveEngine) /*-{
       var config = new Object();
       config.version = 1.0;
       config.restore_workspace = restoreWorkspace;
@@ -48,7 +48,7 @@ public class RProjectConfig extends JavaScriptObject
       config.use_spaces_for_tab = useSpacesForTab;
       config.num_spaces_for_tab = numSpacesForTab;
       config.default_encoding = encoding;
-      config.weave_rnw_with = weaveRnwWith;
+      config.default_sweave_engine = defaultSweaveEngine;
       return config;
    }-*/;
 
@@ -112,11 +112,11 @@ public class RProjectConfig extends JavaScriptObject
       this.default_encoding = defaultEncoding;
    }-*/;
    
-   public native final String getWeaveRnwWith() /*-{
-      return this.weave_rnw_with;
+   public native final String getDefaultSweaveEngine() /*-{
+      return this.default_sweave_engine;
    }-*/;
 
-   public native final void setSweaveRnwWith(String weaveRnwWith) /*-{
-      this.weave_rnw_with = weaveRnwWith;
+   public native final void setDefaultSweaveEngine(String defaultSweaveEngine) /*-{
+      this.default_sweave_engine = defaultSweaveEngine;
    }-*/;
 }

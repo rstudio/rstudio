@@ -40,7 +40,7 @@ namespace {
 std::string activeSweaveEngine()
 {
    if (projects::projectContext().hasProject())
-      return projects::projectContext().config().weaveRnwWith;
+      return projects::projectContext().config().defaultSweaveEngine;
    else
       return userSettings().defaultSweaveEngine();
 }

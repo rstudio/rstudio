@@ -54,7 +54,7 @@ public class ProjectWritingPreferencesPane extends ProjectPreferencesPane
    protected void initialize(RProjectOptions options)
    {
       RProjectConfig config = options.getConfig();
-      defaultSweaveEngine_.setValue(config.getWeaveRnwWith());
+      defaultSweaveEngine_.setValue(config.getDefaultSweaveEngine());
    }
    
    @Override
@@ -67,7 +67,7 @@ public class ProjectWritingPreferencesPane extends ProjectPreferencesPane
    public void onApply(RProjectOptions options)
    {
       RProjectConfig config = options.getConfig();
-      config.setSweaveRnwWith(defaultSweaveEngine_.getValue());
+      config.setDefaultSweaveEngine(defaultSweaveEngine_.getValue());
    }
     
    private WeaveRnwSelectWidget defaultSweaveEngine_;
