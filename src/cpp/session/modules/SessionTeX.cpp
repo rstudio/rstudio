@@ -78,7 +78,7 @@ std::vector<std::string> sweaveArgs(const std::string& file)
 std::vector<std::string> knitrArgs(const std::string& file)
 {
    std::vector<std::string> args;
-   std::string knitrCmd = "library(knitr); knit('" + file + "')";
+   std::string knitrCmd = "require(knitr); knit('" + file + "')";
    args.push_back("--silent");
    args.push_back("-e");
    args.push_back(knitrCmd);
