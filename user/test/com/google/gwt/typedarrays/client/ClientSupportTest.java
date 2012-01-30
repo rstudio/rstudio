@@ -68,6 +68,6 @@ public class ClientSupportTest extends GWTTestCase {
   }-*/;
 
   private static native int getIeDocumentMode() /*-{
-    return $doc.documentMode;
+    return $doc.documentMode || 0;
   }-*/;
 }
