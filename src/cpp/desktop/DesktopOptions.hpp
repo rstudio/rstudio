@@ -43,6 +43,7 @@ public:
 
    QString proportionalFont() const;
    QString fixedWidthFont() const;
+   void setFixedWidthFont(QString font);
 
 #ifdef _WIN32
    // If "", then use automatic detection

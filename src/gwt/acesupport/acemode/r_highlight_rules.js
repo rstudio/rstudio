@@ -43,7 +43,12 @@ define("mode/r_highlight_rules", function(require, exports, module)
          "start" : [
             {
                token : "comment",
-               regex : "#.*$"
+               regex : "#[^'].*$"
+            },
+            {
+               token : "comment",
+               regex : "#'",
+               next : "roxygen-comment"
             },
             {
                token : "string", // single line
@@ -148,6 +153,25 @@ define("mode/r_highlight_rules", function(require, exports, module)
             {
                token : "string",
                regex : '.+'
+            }
+         ],
+         "roxygen-comment" : [
+            {
+               token : "comment",
+               regex : "^",
+               next : "start"
+            },
+            {
+               token : "keyword",
+               regex : "@(?!@)[^ ]*"
+            },
+            {
+               token : "comment",
+               regex : "@@"
+            },
+            {
+               token : "comment",
+               regex : "[^@]+"
             }
          ]
       };

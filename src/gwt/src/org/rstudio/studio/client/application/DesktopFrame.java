@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.application;
 
+import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.core.client.js.BaseExpression;
 import org.rstudio.core.client.js.JavaScriptPassthrough;
 import org.rstudio.core.client.js.JsObject;
@@ -83,4 +84,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void openTerminal(String terminalPath,
                      String workingDirectory,
                      String extraPathEntries);
+
+   JsArrayString getFontList(boolean fixedWidthOnly);
+   String getFixedWidthFont();
+   void setFixedWidthFont(String font);
 }

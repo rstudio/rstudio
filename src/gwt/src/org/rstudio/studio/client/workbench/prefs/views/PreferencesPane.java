@@ -24,10 +24,11 @@ import java.util.ArrayList;
 public abstract class PreferencesPane extends PreferencesDialogPaneBase<RPrefs>
 { 
    @Override
-   public void onApply(RPrefs rPrefs)
+   public boolean onApply(RPrefs rPrefs)
    {
       for (Command cmd : onApplyCommands_)
          cmd.execute();
+      return false;
    }
    
    protected CheckBox checkboxPref(String label,

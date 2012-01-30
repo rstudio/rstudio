@@ -16,10 +16,14 @@ import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
-
+import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
@@ -35,6 +39,28 @@ public class AppearancePreferencesPane extends PreferencesPane
       uiPrefs_ = uiPrefs;
 
       VerticalPanel leftPanel = new VerticalPanel();
+
+      if (Desktop.isDesktop())
+      {
+         String[] fonts =
+               JsUtil.toStringArray(Desktop.getFrame().getFontList(true));
+
+         fontFace_ = new SelectWidget("Editor font:", fonts, fonts, false, false, false);
+         fontFace_.setValue(Desktop.getFrame().getFixedWidthFont());
+         leftPanel.add(fontFace_);
+         fontFace_.addChangeHandler(new ChangeHandler()
+         {
+            @Override
+            public void onChange(ChangeEvent event)
+            {
+               String font = fontFace_.getValue();
+               if (font != null)
+                  preview_.setFont(font);
+               else
+                  preview_.setFont(ThemeFonts.getFixedWidthFont());
+            }
+         });
+      }
 
       String[] labels = {"7", "8", "9", "10", "11", "12", "13", "14", "16", "18", "24", "36"};
       String[] values = new String[labels.length];
@@ -104,12 +130,23 @@ public class AppearancePreferencesPane extends PreferencesPane
    }
 
    @Override
-   public void onApply(RPrefs rPrefs)
+   public boolean onApply(RPrefs rPrefs)
    {
-      super.onApply(rPrefs);
+      boolean restartRequired = super.onApply(rPrefs);
+
       double fontSize = Double.parseDouble(fontSize_.getValue());
       uiPrefs_.fontSize().setGlobalValue(fontSize);
       uiPrefs_.theme().setGlobalValue(theme_.getValue());
+      if (Desktop.isDesktop())
+      {
+         if (!Desktop.getFrame().getFixedWidthFont().equals(fontFace_.getValue()))
+         {
+            Desktop.getFrame().setFixedWidthFont(fontFace_.getValue());
+            restartRequired = true;
+         }
+      }
+
+      return restartRequired;
    }
 
    @Override
@@ -123,6 +160,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    private SelectWidget fontSize_;
    private SelectWidget theme_;
    private AceEditorPreview preview_;
+   private SelectWidget fontFace_;
 
    private static final String CODE_SAMPLE =
          "# plotting of R objects\n" +

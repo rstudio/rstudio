@@ -80,11 +80,12 @@ public class WritingPreferencesPane extends PreferencesPane
    }
    
    @Override
-   public void onApply(RPrefs rPrefs)
+   public boolean onApply(RPrefs rPrefs)
    {
-      super.onApply(rPrefs);
+      boolean requiresRestart = super.onApply(rPrefs);
       prefs_.defaultSweaveEngine().setGlobalValue(
                                     defaultSweaveEngine_.getValue());
+      return requiresRestart;
    }
 
    private final UIPrefs prefs_;

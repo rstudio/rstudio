@@ -69,7 +69,8 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
    @Override
    protected void doSaveChanges(final RPrefs rPrefs,
                                 final Operation onCompleted,
-                                final ProgressIndicator progressIndicator)
+                                final ProgressIndicator progressIndicator,
+                                final boolean reload)
    {
       // save changes
       server_.setPrefs(
@@ -83,6 +84,8 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
                progressIndicator.onCompleted();
                if (onCompleted != null)
                   onCompleted.execute();
+               if (reload)
+                  reload();
             }
 
             @Override

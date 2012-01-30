@@ -110,6 +110,10 @@ public slots:
                      QString workingDirectory,
                      QString extraPathEntries);
 
+   QVariant getFontList(bool fixedWidthOnly);
+   QString getFixedWidthFont();
+   void setFixedWidthFont(QString font);
+
 private:
    void doAction(QKeySequence::StandardKey key);
    QWebView* webView();

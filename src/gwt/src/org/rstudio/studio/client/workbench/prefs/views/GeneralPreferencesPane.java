@@ -204,9 +204,9 @@ public class GeneralPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public void onApply(RPrefs rPrefs)
+   public boolean onApply(RPrefs rPrefs)
    {
-      super.onApply(rPrefs);
+      boolean restartRequired = super.onApply(rPrefs);
 
       if (saveWorkspace_.isEnabled())
       {
@@ -246,6 +246,8 @@ public class GeneralPreferencesPane extends PreferencesPane
                                              restoreLastProject_.getValue());
          rPrefs.setProjectsPrefs(projectsPrefs);
       }
+
+      return restartRequired;
    }
 
    @Override

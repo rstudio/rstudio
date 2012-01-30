@@ -15,6 +15,9 @@ package org.rstudio.studio.client.application;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -102,6 +105,7 @@ public class Application implements ApplicationEventHandlers
       // subscribe to events
       events.addHandler(LogoutRequestedEvent.TYPE, this);
       events.addHandler(UnauthorizedEvent.TYPE, this);
+      events.addHandler(ReloadEvent.TYPE, this);
       events.addHandler(QuitEvent.TYPE, this);
       events.addHandler(SuicideEvent.TYPE, this);
       events.addHandler(SessionAbendWarningEvent.TYPE, this);    
@@ -346,6 +350,12 @@ public class Application implements ApplicationEventHandlers
    public void onServerUnavailable(ServerUnavailableEvent event)
    {
       view_.hideSerializationProgress();
+   }
+
+   public void onReload(ReloadEvent event)
+   {
+      cleanupWorkbench();
+      Window.Location.reload();
    }
    
    public void onQuit(QuitEvent event)

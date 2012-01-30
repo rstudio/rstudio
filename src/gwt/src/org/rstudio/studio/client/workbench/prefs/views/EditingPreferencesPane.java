@@ -126,10 +126,11 @@ public class EditingPreferencesPane extends PreferencesPane
    }
    
    @Override
-   public void onApply(RPrefs rPrefs)
+   public boolean onApply(RPrefs rPrefs)
    {
-      super.onApply(rPrefs);
+      boolean restartRequired = super.onApply(rPrefs);
       prefs_.defaultEncoding().setGlobalValue(encodingValue_);
+      return restartRequired;
    }
 
    private final SourceServerOperations server_;

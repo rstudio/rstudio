@@ -74,12 +74,14 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
    }
 
    @Override
-   public void onApply(RProjectOptions options)
+   public boolean onApply(RProjectOptions options)
    {
       RProjectConfig config = options.getConfig();
       config.setRestoreWorkspace(restoreWorkspace_.getSelectedValue());
       config.setSaveWorkspace(saveWorkspace_.getSelectedValue());
       config.setAlwaysSaveHistory(alwaysSaveHistory_.getSelectedValue());
+
+      return false;
    }
    
    private class YesNoAskDefault extends ListBox
