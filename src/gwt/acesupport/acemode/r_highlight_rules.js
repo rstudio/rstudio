@@ -47,8 +47,9 @@ define("mode/r_highlight_rules", function(require, exports, module)
                regex : "#[^'].*$"
             },
             {
+               // Roxygen
                token : "comment",
-               regex : "#'",
+               regex : "#+'",
                next : "rd-start"
             },
             {

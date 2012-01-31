@@ -30,6 +30,7 @@ var Range = require("ace/range").Range;
 
 var RStudioEditor = function(renderer, session) {
    Editor.call(this, renderer, session);
+   this.setBehavioursEnabled(true);
 };
 oop.inherits(RStudioEditor, Editor);
 

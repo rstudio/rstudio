@@ -139,6 +139,19 @@ define("mode/r", function(require, exports, module)
 
          return "";
       };
+
+      this.transformAction = function(state, action, editor, session, text) {
+         if (action === 'insertion' && text === "\n") {
+
+            // If newline in a doxygen comment, continue the comment
+            var pos = editor.getSelectionRange().start;
+            var match = /^(\s*#+'\s*)/.exec(session.doc.getLine(pos.row));
+            if (match) {
+               return {text: "\n" + match[1]};
+            }
+         }
+         return false;
+      };
    }).call(Mode.prototype);
    exports.Mode = Mode;
 });
