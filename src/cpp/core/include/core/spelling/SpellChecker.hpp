@@ -14,6 +14,7 @@
 #ifndef CORE_SPELLING_SPELL_CHECKER_HPP
 #define CORE_SPELLING_SPELL_CHECKER_HPP
 
+#include <vector>
 #include <string>
 
 #include <boost/utility.hpp>
@@ -32,6 +33,7 @@ class SpellChecker : boost::noncopyable
 public:
    virtual ~SpellChecker() {}
    virtual bool checkSpelling(const std::string& word) = 0;
+   virtual int suggestionList(const std::string& word, std::vector<std::string>* pSugs) = 0;
 };
 
 core::Error createHunspell(const core::FilePath& affPath,

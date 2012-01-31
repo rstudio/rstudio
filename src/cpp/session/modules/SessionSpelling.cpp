@@ -46,6 +46,17 @@ SEXP rs_checkSpelling(SEXP wordSEXP)
    return r::sexp::create(isCorrect, &rProtect);
 }
 
+SEXP rs_suggestionList(SEXP wordSEXP)
+{
+    std::string word = r::sexp::asString(wordSEXP);
+    std::vector<std::string> sugs;
+
+    s_pSpellChecker->suggestionList(word,&sugs);
+
+    r::sexp::Protect rProtect;
+    return r::sexp::create(sugs,&rProtect);
+}
+
 
 } // anonymous namespace
 
@@ -54,9 +65,14 @@ Error initialize()
 {
    // register rs_ensureFileHidden with R
    R_CallMethodDef checkSpellingMethodDef;
+
    checkSpellingMethodDef.name = "rs_checkSpelling" ;
    checkSpellingMethodDef.fun = (DL_FUNC) rs_checkSpelling ;
    checkSpellingMethodDef.numArgs = 1;
+   r::routines::addCallMethod(checkSpellingMethodDef);
+
+   checkSpellingMethodDef.name = "rs_suggestionList" ;
+   checkSpellingMethodDef.fun = (DL_FUNC) rs_suggestionList ;
    r::routines::addCallMethod(checkSpellingMethodDef);
 
    // initialize the spell checker
