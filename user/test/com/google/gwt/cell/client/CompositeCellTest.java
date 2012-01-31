@@ -39,19 +39,7 @@ public class CompositeCellTest extends CellTestBase<String> {
     // Add one cell that consumes events.
     List<HasCell<String, ?>> cells = createHasCells(3);
     final MockCell<String> mock = new MockCell<String>(true, null);
-    cells.add(new HasCell<String, String>() {
-      public Cell<String> getCell() {
-        return mock;
-      }
-
-      public FieldUpdater<String, String> getFieldUpdater() {
-        return null;
-      }
-
-      public String getValue(String object) {
-        return object;
-      }
-    });
+    addCell(mock, cells);
     CompositeCell<String> cell = new CompositeCell<String>(cells);
     assertNull(cell.getConsumedEvents());
     assertTrue(cell.dependsOnSelection());
@@ -64,19 +52,7 @@ public class CompositeCellTest extends CellTestBase<String> {
     // Add one cell that consumes events.
     List<HasCell<String, ?>> cells = createHasCells(3);
     final MockCell<String> mock = new MockCell<String>(false, null, "click");
-    cells.add(new HasCell<String, String>() {
-      public Cell<String> getCell() {
-        return mock;
-      }
-
-      public FieldUpdater<String, String> getFieldUpdater() {
-        return null;
-      }
-
-      public String getValue(String object) {
-        return object;
-      }
-    });
+    addCell(mock, cells);
     CompositeCell<String> cell = new CompositeCell<String>(cells);
     assertEquals(1, cell.getConsumedEvents().size());
     assertTrue(cell.getConsumedEvents().contains("click"));
@@ -100,19 +76,7 @@ public class CompositeCellTest extends CellTestBase<String> {
         return true;
       }
     };
-    cells.add(new HasCell<String, String>() {
-      public Cell<String> getCell() {
-        return mock;
-      }
-
-      public FieldUpdater<String, String> getFieldUpdater() {
-        return null;
-      }
-
-      public String getValue(String object) {
-        return object;
-      }
-    });
+    addCell(mock, cells);
     CompositeCell<String> cell = new CompositeCell<String>(cells);
     Element parent = Document.get().createDivElement();
     parent.setInnerHTML(getExpectedInnerHtml());
@@ -139,15 +103,16 @@ public class CompositeCellTest extends CellTestBase<String> {
     Document.get().getBody().appendChild(parent);
 
     // Create the composite cell and updater.
-    List<HasCell<String, ?>> cells = createHasCells(3);
+    List<HasCell<String, ?>> cells = createHasCells(2);
+    MockCell<String> innerCell = new MockCell<String>(false, "fromCell2", "click");
+    addCell(innerCell, cells);
     final CompositeCell<String> cell = new CompositeCell<String>(cells);
-    MockCell<String> innerCell = (MockCell<String>) cells.get(1).getCell();
 
     // Add an event listener.
     EventListener listener = new EventListener() {
       public void onBrowserEvent(Event event) {
         Context context = new Context(3, 4, "key");
-        cell.onBrowserEvent(context, parent, "test", event, null);
+        cell.onBrowserEvent(context, parent, "test-x", event, null);
       }
     };
     DOM.sinkEvents(parent, Event.ONCLICK);
@@ -156,13 +121,19 @@ public class CompositeCellTest extends CellTestBase<String> {
     // Fire the event on one of the inner cells.
     NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false,
         false, false, false);
-    Element.as(parent.getChild(1)).dispatchEvent(event);
-    innerCell.assertLastEventValue("test-1");
-    innerCell.assertLastParentElement(Element.as(parent.getChild(1)));
+    Element.as(parent.getChild(2)).dispatchEvent(event);
+    innerCell.assertLastEventValue("test-x");
+    innerCell.assertLastParentElement(Element.as(parent.getChild(2)));
     Context innerContext = innerCell.getLastContext();
     assertEquals("key", innerContext.getKey());
     assertEquals(3, innerContext.getIndex());
     assertEquals(4, innerContext.getColumn());
+
+    // Fire the event to another cell that doesn't consume this event. Shouldn't respond
+    // to the event
+    MockCell<String> innerCell2 = (MockCell<String>) cells.get(1).getCell();
+    Element.as(parent.getChild(1)).dispatchEvent(event);
+    innerCell2.assertLastEventValue(null);
 
     // Remove the element and event listener.
     DOM.setEventListener(parent, null);
@@ -210,6 +181,25 @@ public class CompositeCellTest extends CellTestBase<String> {
   @Override
   protected String getExpectedInnerHtmlNull() {
     return "<span></span><span></span><span></span>";
+  }
+
+  /**
+   * Add a cell to a {@link HasCell} list.
+   */
+  private void addCell(final Cell<String> cell, List<HasCell<String, ?>> cells) {
+    cells.add(new HasCell<String, String>() {
+      public Cell<String> getCell() {
+        return cell;
+      }
+
+      public FieldUpdater<String, String> getFieldUpdater() {
+        return null;
+      }
+
+      public String getValue(String object) {
+        return object;
+      }
+    });
   }
 
   /**

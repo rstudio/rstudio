@@ -219,6 +219,13 @@ public class CompositeCell<C> extends AbstractCell<C> {
   private <X> void onBrowserEventImpl(final Context context, Element parent,
       final C object, NativeEvent event, final ValueUpdater<C> valueUpdater,
       final HasCell<C, X> hasCell) {
+    Cell<X> cell = hasCell.getCell();
+    String eventType = event.getType();
+    Set<String> cellConsumedEvents = cell.getConsumedEvents();
+    if (cellConsumedEvents == null || !cellConsumedEvents.contains(eventType)) {
+      // If this sub-cell doesn't consume this event.
+      return;
+    }
     ValueUpdater<X> tempUpdater = null;
     final FieldUpdater<C, X> fieldUpdater = hasCell.getFieldUpdater();
     if (fieldUpdater != null) {
@@ -232,7 +239,6 @@ public class CompositeCell<C> extends AbstractCell<C> {
         }
       };
     }
-    Cell<X> cell = hasCell.getCell();
     cell.onBrowserEvent(context, parent, hasCell.getValue(object), event,
         tempUpdater);
   }
