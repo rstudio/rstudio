@@ -43,14 +43,14 @@ define("mode/r_highlight_rules", function(require, exports, module)
       this.$rules = {
          "start" : [
             {
-               token : "comment",
-               regex : "#[^'].*$"
-            },
-            {
                // Roxygen
                token : "comment",
                regex : "#+'",
                next : "rd-start"
+            },
+            {
+               token : "comment",
+               regex : "#.*$"
             },
             {
                token : "string", // single line
