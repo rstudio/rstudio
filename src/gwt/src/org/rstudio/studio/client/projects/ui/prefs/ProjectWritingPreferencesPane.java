@@ -13,7 +13,7 @@
 package org.rstudio.studio.client.projects.ui.prefs;
 
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
-import org.rstudio.studio.client.common.prefs.WeaveRnwSelectWidget;
+import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 
@@ -34,7 +34,7 @@ public class ProjectWritingPreferencesPane extends ProjectPreferencesPane
       add(pdfCompilationLabel);
   
       
-      defaultSweaveEngine_ = new WeaveRnwSelectWidget();
+      defaultSweaveEngine_ = new RnwWeaveSelectWidget();
       add(defaultSweaveEngine_);  
    }
    
@@ -71,6 +71,6 @@ public class ProjectWritingPreferencesPane extends ProjectPreferencesPane
       return false;
    }
     
-   private WeaveRnwSelectWidget defaultSweaveEngine_;
+   private RnwWeaveSelectWidget defaultSweaveEngine_;
 
 }

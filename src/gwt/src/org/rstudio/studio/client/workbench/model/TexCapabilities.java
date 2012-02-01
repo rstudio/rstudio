@@ -27,4 +27,8 @@ public class TexCapabilities extends JavaScriptObject
    public final native boolean isKnitrInstalled() /*-{
       return this.knitr_installed;
    }-*/;
+   
+   public final native boolean isPgfSweaveInstalled() /*-{
+      return this.pgfsweave_installed;
+   }-*/;
 }

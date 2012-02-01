@@ -252,6 +252,10 @@ json::Object capabilitiesAsJson()
    error = r::exec::RFunction(".rs.is_knitr_installed").call(&knitrInstalled);
    obj["knitr_installed"] = !error ? knitrInstalled : false;
 
+   bool pgfSweaveInstalled;
+   error = r::exec::RFunction(".rs.is_pgfsweave_installed").call(&pgfSweaveInstalled);
+   obj["pgfsweave_installed"] = !error ? pgfSweaveInstalled : false;
+
    return obj;
 }
 

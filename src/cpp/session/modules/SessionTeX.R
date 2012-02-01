@@ -79,7 +79,6 @@
    invisible(.rs.compilePdf(file, "view"))
 })
 
-
 .rs.addGlobalFunction("publishPdf", function(file)
 {
    invisible(.rs.compilePdf(file,  "publish"))
@@ -92,24 +91,12 @@
 
 .rs.addFunction("is_knitr_installed", function()
 {
-   isLoaded <- "knitr" %in% .packages()
-   if (isLoaded)
-   {
-      return (TRUE)
-   }
-   else
-   {
-      if (suppressWarnings(require("knitr",
-                                   quietly = TRUE,
-                                   warn.conflicts = FALSE)))
-      {
-         .rs.unloadPackage("knitr")
-         return (TRUE)
-      }
-      else
-      {
-         return (FALSE)
-      }
-  }
+   .rs.isPackageInstalled("knitr")
 })
+
+.rs.addFunction("is_pgfsweave_installed", function()
+{
+   .rs.isPackageInstalled("pgfSweave")
+})
+
 

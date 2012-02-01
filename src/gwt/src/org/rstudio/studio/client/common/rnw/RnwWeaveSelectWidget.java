@@ -10,7 +10,8 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.prefs;
+package org.rstudio.studio.client.common.rnw;
+
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -28,49 +29,56 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 
 import com.google.inject.Inject;
 
-public class WeaveRnwSelectWidget extends SelectWidget
+public class RnwWeaveSelectWidget extends SelectWidget
 {
-   public WeaveRnwSelectWidget()
-   {
-      super("Default method for weaving Rnw files:", 
-            new String[] { SWEAVE, KNITR }); 
-     
+   public RnwWeaveSelectWidget()
+   { 
+      super("Default method for weaving Rnw files:",
+            rnwWeaveRegistry_.getTypeNames());
+  
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       this.addChangeHandler(new ChangeHandler() {
          @Override
          public void onChange(ChangeEvent event)
          {
-            if (getValue().equals(KNITR))
-               verifyKnitrAvailable();
+            RnwWeave weave = rnwWeaveRegistry_.findTypeIgnoreCase(getValue());
+            verifyAvailable(weave);
             
          } 
       });
    }  
    
-   protected void verifyKnitrAvailable()
+   protected void verifyAvailable(final RnwWeave weave)
    {
       server_.getTexCapabilities(new ServerRequestCallback<TexCapabilities>() {
 
          @Override
          public void onResponseReceived(TexCapabilities capabilities)
          {
-            if (!capabilities.isKnitrInstalled())
+            if (!weave.isAvailable(capabilities))
             {
                globalDisplay_.showYesNoMessage(
                   MessageDialog.QUESTION,
                   "Confirm Change", 
-                  "The knitr package is required for knitr weaving, " +
+                  "The " + weave.getPackageName() + " package is required " +
+                  "for " + weave.getName() + " weaving, " +
                   "however it is not currently installed. You should " +
-                  "ensure that knitr is installed prior to compiling a PDF." +
+                  "ensure that " + weave.getPackageName() + " is installed " +
+                  "prior to compiling a PDF." +
                   "\n\nAre you sure you want to change this option?",
                   false,
-                  new Operation() { public void execute() { }},
+                  new Operation() { 
+                     @Override
+                     public void execute() 
+                     { 
+                     }
+                   },
                   new Operation() {
                      @Override
                      public void execute()
                      {
-                        setValue(SWEAVE);
+                        setValue(rnwWeaveRegistry_.getDefaultType().getName());
                      }  
                   },
                   false );
@@ -99,6 +107,7 @@ public class WeaveRnwSelectWidget extends SelectWidget
    private TexServerOperations server_;
    private GlobalDisplay globalDisplay_;
    
-   private final static String SWEAVE = "Sweave";
-   private final static String KNITR = "knitr";
+   
+   public static final RnwWeaveRegistry rnwWeaveRegistry_ = 
+                           RStudioGinjector.INSTANCE.getRnwWeaveRegistry();
 }

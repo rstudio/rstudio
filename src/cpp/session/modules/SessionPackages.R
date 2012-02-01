@@ -108,6 +108,31 @@
    .rs.scalar(packageName %in% .packages())
 })
 
+.rs.addFunction("isPackageInstalled", function(name)
+{
+   isLoaded <- name %in% .packages()
+   if (isLoaded)
+   {
+      return (TRUE)
+   }
+   else
+   {
+      if (suppressWarnings(require(name,
+                                   quietly = TRUE,
+                                   character.only = TRUE,
+                                   warn.conflicts = FALSE)))
+      {
+         .rs.unloadPackage(name)
+         return (TRUE)
+      }
+      else
+      {
+         return (FALSE)
+      }
+  }
+})
+
+
 .rs.addJsonRpcHandler( "list_packages", function()
 {
    # calculate unique libpaths

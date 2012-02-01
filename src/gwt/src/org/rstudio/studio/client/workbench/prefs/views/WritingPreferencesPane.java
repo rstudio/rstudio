@@ -16,7 +16,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
-import org.rstudio.studio.client.common.prefs.WeaveRnwSelectWidget;
+import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
@@ -35,7 +35,7 @@ public class WritingPreferencesPane extends PreferencesPane
       nudgeRight(pdfCompilationLabel);
       add(pdfCompilationLabel);
             
-      defaultSweaveEngine_ = new WeaveRnwSelectWidget();
+      defaultSweaveEngine_ = new RnwWeaveSelectWidget();
       defaultSweaveEngine_.setValue(
                               prefs.defaultSweaveEngine().getGlobalValue());
       tight(defaultSweaveEngine_);
@@ -89,6 +89,6 @@ public class WritingPreferencesPane extends PreferencesPane
    @SuppressWarnings("unused")
    private final PreferencesDialogResources res_;
    
-   private WeaveRnwSelectWidget defaultSweaveEngine_;
+   private RnwWeaveSelectWidget defaultSweaveEngine_;
    
 }

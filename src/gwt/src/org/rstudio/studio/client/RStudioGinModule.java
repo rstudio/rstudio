@@ -30,6 +30,7 @@ import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
+import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.vcs.AskPassManager;
@@ -136,6 +137,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ApplicationQuit.class).asEagerSingleton();
       bind(ClientStateUpdater.class).asEagerSingleton();
       bind(ConsoleProcessFactory.class).asEagerSingleton();
+      bind(RnwWeaveRegistry.class).asEagerSingleton();
       bind(Commands.class).in(Singleton.class);
       bind(DefaultCRANMirror.class).in(Singleton.class);
       bind(ChooseFile.class).in(Singleton.class);
