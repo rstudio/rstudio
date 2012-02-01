@@ -20,11 +20,8 @@ public class WeaveRnwSelectWidget extends SelectWidget
 {
    public WeaveRnwSelectWidget()
    {
-      this("Weave Rnw files with:");
-   }
-   public WeaveRnwSelectWidget(String label)
-   {
-      super(label, new String[] { "Sweave", "knitr" }); 
+      super("Default method for weaving Rnw files:", 
+            new String[] { "Sweave", "knitr" }); 
       getElement().getStyle().setMarginLeft(2, Unit.PX);
    }        
 }

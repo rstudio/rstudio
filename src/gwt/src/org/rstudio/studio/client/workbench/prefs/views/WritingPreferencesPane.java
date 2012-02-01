@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
@@ -35,22 +34,20 @@ public class WritingPreferencesPane extends PreferencesPane
       pdfCompilationLabel.addStyleName(baseRes.styles().headerLabel());
       nudgeRight(pdfCompilationLabel);
       add(pdfCompilationLabel);
-      
+            
+      defaultSweaveEngine_ = new WeaveRnwSelectWidget();
+      defaultSweaveEngine_.setValue(
+                              prefs.defaultSweaveEngine().getGlobalValue());
+      tight(defaultSweaveEngine_);
+      add(defaultSweaveEngine_);
       
       Label perProjectLabel = new Label(
-          "NOTE: Compile PDF options can also be set on a per-project basis. " +
-          "Options for new projects are based on the defaults below.");
+            "NOTE: The Rnw weave method is also set on a per-project basis. " +
+            "Newly opened projects will inherit the default value specified here.");
       perProjectLabel.addStyleName(baseRes.styles().infoLabel());
       nudgeRight(perProjectLabel);
       add(perProjectLabel);
-    
       
-      defaultSweaveEngine_ = new WeaveRnwSelectWidget(
-                                 "Default method for weaving Rnw files:");
-      defaultSweaveEngine_.getElement().getStyle().setMarginTop(7, Unit.PX);
-      defaultSweaveEngine_.setValue(
-                              prefs.defaultSweaveEngine().getGlobalValue());
-      add(defaultSweaveEngine_);
    }
 
   

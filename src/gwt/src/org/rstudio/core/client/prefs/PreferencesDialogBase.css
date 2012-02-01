@@ -27,8 +27,7 @@
 
 .headerLabel {
    font-weight: bold;
-   font-size: 1.1em;
-   margin-bottom: 4px;
+   margin-bottom: 3px;
 }
 
 @if user.agent gecko1_8 { .nudgeRight {
