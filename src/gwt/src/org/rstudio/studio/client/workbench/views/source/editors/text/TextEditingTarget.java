@@ -410,51 +410,10 @@ public class TextEditingTarget implements EditingTarget
          }
       });
       
-      final SessionInfo sessionInfo = session_.getSessionInfo();
-      TexCapabilities texCap = sessionInfo.getTexCapabilities();
-
-      final boolean checkForTeX = fileType_.canCompilePDF() && 
-                                  !texCap.isTexInstalled();
-      final boolean checkForKnitr = 
-          FileTypeRegistry.SWEAVE.getTypeId().equals(fileType_.getTypeId()) &&
-          prefs_.defaultSweaveEngine().getValue().equals("knitr") &&
-          !texCap.isKnitrInstalled();
       
-      if (checkForTeX || checkForKnitr)
-      {
-         server_.getTexCapabilities(new ServerRequestCallback<TexCapabilities>()
-         {
-            @Override
-            public void onResponseReceived(TexCapabilities response)
-            {
-               if (checkForTeX && !response.isTexInstalled())
-               {
-                  String warning;
-                  if (Desktop.isDesktop())
-                     warning = "No TeX installation detected. Please install " +
-                               "TeX before compiling.";
-                  else
-                     warning = "This server does not have TeX installed. You " +
-                               "may not be able to compile.";
-                  view_.showWarningBar(warning);
-               }
-               else if (checkForKnitr && !response.isKnitrInstalled())
-               {
-                  boolean inProj = sessionInfo.getActiveProjectFile() != null;
-                  String forProject = inProj ? "for this project " : ""; 
-                  view_.showWarningBar(
-                      "knitr is configured to weave Rnw files " + forProject +
-                      "however the knitr package is not installed.");
-               }
-            }
-
-            @Override
-            public void onError(ServerError error)
-            {
-               Debug.logError(error);
-            }
-         });
-      }
+      // validate required compontents (e.g. Tex, knitr, etc.)
+      validateRequiredComponents();
+     
 
       syncFontSize(releaseOnDismiss_, events_, view_, fontSizeManager_);
      
@@ -503,6 +462,65 @@ public class TextEditingTarget implements EditingTarget
       initStatusBar();
    }
 
+   
+   private void validateRequiredComponents()
+   {
+      final SessionInfo sessionInfo = session_.getSessionInfo();
+      TexCapabilities texCap = sessionInfo.getTexCapabilities();
+
+      final boolean checkForTeX = fileType_.canCompilePDF() && 
+                                  !texCap.isTexInstalled();
+      final boolean checkForKnitr = 
+          FileTypeRegistry.SWEAVE.getTypeId().equals(fileType_.getTypeId()) &&
+          prefs_.defaultSweaveEngine().getValue().equals("knitr") &&
+          !texCap.isKnitrInstalled();
+      
+      if (checkForTeX || checkForKnitr)
+      {
+         server_.getTexCapabilities(new ServerRequestCallback<TexCapabilities>()
+         {
+            @Override
+            public void onResponseReceived(TexCapabilities response)
+            {
+               if (checkForTeX && !response.isTexInstalled())
+               {
+                  String warning;
+                  if (Desktop.isDesktop())
+                     warning = "No TeX installation detected. Please install " +
+                               "TeX before compiling.";
+                  else
+                     warning = "This server does not have TeX installed. You " +
+                               "may not be able to compile.";
+                  view_.showWarningBar(warning);
+               }
+               else if (checkForKnitr && !response.isKnitrInstalled())
+               {
+                  boolean inProj = sessionInfo.getActiveProjectFile() != null;
+                  String forProject = inProj ? "for this project " : ""; 
+                  view_.showWarningBar(
+                      "knitr is configured to weave Rnw files " + forProject +
+                      "however the knitr package is not installed.");
+               }
+               else
+               {
+                  view_.hideWarningBar();
+               }
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
+      }
+      else
+      {
+         view_.hideWarningBar();
+      }
+   }
+   
+   
    private void initStatusBar()
    {
       statusBar_ = view_.getStatusBar();
@@ -826,6 +844,8 @@ public class TextEditingTarget implements EditingTarget
 
    private void saveThenExecute(String encodingOverride, final Command command)
    {
+      validateRequiredComponents();
+      
       final String path = docUpdateSentinel_.getPath();
       if (path == null)
       {
