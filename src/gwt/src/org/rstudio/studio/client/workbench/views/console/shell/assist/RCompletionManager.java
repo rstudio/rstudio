@@ -354,9 +354,34 @@ public class RCompletionManager implements CompletionManager
             });
          }
       }
+      else
+      {
+         if (c == '@' && isRoxygenTagValidHere())
+         {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  beginSuggest(true) ;
+               }
+            });
+         }
+      }
       return false ;
    }
-   
+
+   private boolean isRoxygenTagValidHere()
+   {
+      if (input_.getText().matches("\\s*#+'.*"))
+      {
+         String linePart = input_.getText().substring(0, input_.getSelection().getStart().getPosition());
+         if (linePart.matches("\\s*#+'\\s*"))
+            return true;
+      }
+      return false;
+   }
+
    private static boolean isIdentifierKey(NativeEvent event)
    {
       if (event.getAltKey()
