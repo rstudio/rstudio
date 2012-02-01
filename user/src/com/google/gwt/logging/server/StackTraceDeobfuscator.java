@@ -217,7 +217,7 @@ public class StackTraceDeobfuscator {
             methodName = mappingForLine.getIdentifier();
           }
           filename = mappingForLine.getOriginalFile();
-          lineNumber = mappingForLine.getLineNumber() - 1;
+          lineNumber = mappingForLine.getLineNumber();
         }
       }
     }
@@ -274,10 +274,8 @@ public class StackTraceDeobfuscator {
     SourceMapping toReturn = sourceMaps.get(permutationStrongName + fragmentId);
     if (toReturn == null) {
       try {
-        SourceMapConsumerV3 consumer = new SourceMapConsumerV3();
         String sourceMapString = loadStreamAsString(
             getSourceMapInputStream(permutationStrongName, fragmentId));
-        JSONObject obj = new JSONObject(sourceMapString);
         toReturn = SourceMapConsumerFactory.parse(sourceMapString);
         sourceMaps.put(permutationStrongName + fragmentId, toReturn);
       } catch (Exception e) {
