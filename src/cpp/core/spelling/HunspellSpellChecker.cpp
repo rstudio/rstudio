@@ -70,7 +70,7 @@ public:
       return pHunspell_->spell(word.c_str());
    }
 
-   int suggestionList(const std::string& word, std::vector<std::string>* pSug)
+   void suggestionList(const std::string& word, std::vector<std::string>* pSug)
    {
        char ** wlst;
        int ns = pHunspell_->suggest(&wlst,word.c_str());
@@ -79,8 +79,6 @@ public:
            pSug->push_back(wlst[i]);
        }
        pHunspell_->free_list(&wlst, ns);
-
-       return ns;
    }
 
 private:

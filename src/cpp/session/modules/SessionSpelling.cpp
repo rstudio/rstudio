@@ -73,6 +73,7 @@ Error initialize()
 
    checkSpellingMethodDef.name = "rs_suggestionList" ;
    checkSpellingMethodDef.fun = (DL_FUNC) rs_suggestionList ;
+   checkSpellingMethodDef.numArgs = 1;
    r::routines::addCallMethod(checkSpellingMethodDef);
 
    // initialize the spell checker
