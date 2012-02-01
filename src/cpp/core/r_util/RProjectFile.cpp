@@ -282,7 +282,7 @@ Error readProjectFile(const FilePath& projectFilePath,
    }
 
    // extract default sweave engine
-   it = dcfFields.find("WeaveRnwMethod");
+   it = dcfFields.find("RnwWeave");
    if (it != dcfFields.end())
    {
       pConfig->defaultSweaveEngine = it->second;
@@ -313,7 +313,7 @@ Error writeProjectFile(const FilePath& projectFilePath,
       "NumSpacesForTab: %7%\n"
       "Encoding: %8%\n"
       "\n"
-      "WeaveRnwMethod: %9%\n");
+      "RnwWeave: %9%\n");
 
    std::string contents = boost::str(fmt %
         boost::io::group(std::fixed, std::setprecision(1), config.version) %
