@@ -204,9 +204,9 @@ public class TextEditingTargetWidget
             }
             
          });
-         panel_.insertNorth(warningBar_, warningBar_.getHeight(), null);
       }
       warningBar_.setText(warning);
+      panel_.insertNorth(warningBar_, warningBar_.getHeight(), null);
    }
 
    public void hideWarningBar()
