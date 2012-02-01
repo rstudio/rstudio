@@ -346,6 +346,10 @@ public class StackTraceCreator {
       return (toReturn.length() > 0 ? toReturn : "anonymous") + "@@" + location;
     }
 
+    protected int replaceIfNoSourceMap(int line) {
+         return line;
+    }
+
     @Override
     protected int toSplice() {
       return 3;
@@ -373,9 +377,19 @@ public class StackTraceCreator {
           }
         }
         stackTrace[i] = new StackTraceElement("Unknown", stackElements[0], fileName + "@" + col,
-            line < 0 ? -1 : line);
+            replaceIfNoSourceMap(line < 0 ? -1 : line));
       }
       e.setStackTrace(stackTrace);
+    }
+  }
+
+  /**
+   * Subclass that forces reported line numbers to -1 (fetch from symbolMap) if source maps are
+   * disabled.
+   */
+  static class CollectorChromeNoSourceMap extends CollectorChrome {
+    protected int replaceIfNoSourceMap(int line) {
+      return -1;
     }
   }
 

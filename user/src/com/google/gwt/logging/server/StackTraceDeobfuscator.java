@@ -17,11 +17,8 @@
 package com.google.gwt.logging.server;
 
 import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapConsumerFactory;
-import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapConsumerV3;
 import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapping;
 import com.google.gwt.thirdparty.debugging.sourcemap.proto.Mapping;
-
-import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -136,6 +133,22 @@ public class StackTraceDeobfuscator {
     SymbolMap map = loadSymbolMap(strongName);
     String symbolData = map == null ? null : map.get(ste.getMethodName());
 
+    boolean sourceMapCapable = false;
+
+    int column = 1;
+    // column information is encoded in filename after '@' for sourceMap capable browsers
+    if (steFilename != null) {
+      int columnMarkerIndex = steFilename.indexOf("@");
+      if (columnMarkerIndex != -1) {
+        try {
+          column = Integer.parseInt(steFilename.substring(columnMarkerIndex + 1));
+          sourceMapCapable = true;
+        } catch (NumberFormatException nfe) {
+        }
+        steFilename = steFilename.substring(0, columnMarkerIndex);
+      }
+    }
+
     // first use symbolMap, then refine via sourceMap if possible
     if (symbolData != null) {
       // jsniIdent, className, memberName, sourceUri, sourceLine, fragmentId
@@ -164,7 +177,8 @@ public class StackTraceDeobfuscator {
          * compiler.emulatedStack.recordLineNumbers is false, use the method
          * declaration line number from the symbol map.
          */
-        if (lineNumber == LINE_NUMBER_UNKNOWN) {
+        if (lineNumber == LINE_NUMBER_UNKNOWN || (sourceMapCapable && column == -1)) {
+          // Safari will send line numbers, with col == -1, we need to use symbolMap in this case
           lineNumber = Integer.parseInt(parts[4]);
         }
 
@@ -172,20 +186,7 @@ public class StackTraceDeobfuscator {
       }
     }
 
-    int column = 1;
-    // column information is encoded in filename after '@'
-    if (steFilename != null) {
-      int columnMarkerIndex = steFilename.indexOf("@");
-      if (columnMarkerIndex != -1) {
-        try {
-          column = Integer.parseInt(steFilename.substring(columnMarkerIndex + 1));
-        } catch (NumberFormatException nfe) {
-        }
-        steFilename = steFilename.substring(0, columnMarkerIndex);
-      }
-    }
-
-    // anonymous function, try to use <fragmentNum>.js:line:col to lookup function
+    // anonymous function, try to use <fragmentNum>.js:line to determine fragment id
     if (fragmentId == -1 && steFilename != null) {
       // fragment identifier encoded in filename
       Matcher matcher = fragmentIdPattern.matcher(steFilename);
@@ -205,7 +206,7 @@ public class StackTraceDeobfuscator {
     int jsLineNumber = ste.getLineNumber();
 
     // try to refine location via sourcemap
-    if (fragmentId != -1) {
+    if (sourceMapCapable && fragmentId != -1 && column != -1) {
       SourceMapping sourceMapping = loadSourceMap(strongName, fragmentId);
       if (sourceMapping != null && ste.getLineNumber() > -1) {
         Mapping.OriginalMapping mappingForLine = sourceMapping
