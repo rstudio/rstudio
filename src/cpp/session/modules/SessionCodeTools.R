@@ -145,7 +145,7 @@
 .rs.addFunction("attemptRoxygenTagCompletion", function(line, cursorPos)
 {
    line <- substr(line, 0, cursorPos)
-   match <- regexec("^\\s*#+'\\s*(@[a-zA-Z]*)$", line)
+   match <- regexec("^\\s*#+'\\s*(@[a-zA-Z0-9]*)$", line)
    if (match[[1]][1] == -1)
       return(NULL)
    
