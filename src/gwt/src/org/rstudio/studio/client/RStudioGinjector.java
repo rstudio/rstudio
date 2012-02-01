@@ -26,6 +26,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.NewFileMenu;
 import org.rstudio.studio.client.common.impl.DesktopFileDialogs;
+import org.rstudio.studio.client.common.prefs.WeaveRnwSelectWidget;
 import org.rstudio.studio.client.vcs.VCSApplication;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -48,6 +49,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(RCompletionManager rCompletionManager);
    void injectMembers(SVNCommandHandler svnCommandHandler);
    void injectMembers(CaptionWithHelp captionWithHelp);
+   void injectMembers(WeaveRnwSelectWidget selectWidget);
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

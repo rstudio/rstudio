@@ -54,6 +54,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
@@ -409,12 +410,14 @@ public class TextEditingTarget implements EditingTarget
          }
       });
       
-      TexCapabilities texCap = session_.getSessionInfo().getTexCapabilities();
+      final SessionInfo sessionInfo = session_.getSessionInfo();
+      TexCapabilities texCap = sessionInfo.getTexCapabilities();
 
       final boolean checkForTeX = fileType_.canCompilePDF() && 
                                   !texCap.isTexInstalled();
       final boolean checkForKnitr = 
           FileTypeRegistry.SWEAVE.getTypeId().equals(fileType_.getTypeId()) &&
+          prefs_.defaultSweaveEngine().getValue().equals("knitr") &&
           !texCap.isKnitrInstalled();
       
       if (checkForTeX || checkForKnitr)
@@ -437,9 +440,11 @@ public class TextEditingTarget implements EditingTarget
                }
                else if (checkForKnitr && !response.isKnitrInstalled())
                {
+                  boolean inProj = sessionInfo.getActiveProjectFile() != null;
+                  String forProject = inProj ? "for this project " : ""; 
                   view_.showWarningBar(
-                      "knitr is configured to weave Rnw files however " + 
-                      "the knitr package is not installed.");
+                      "knitr is configured to weave Rnw files " + forProject +
+                      "however the knitr package is not installed.");
                }
             }
 

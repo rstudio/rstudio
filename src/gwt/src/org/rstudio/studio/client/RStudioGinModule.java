@@ -99,6 +99,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSou
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
+import org.rstudio.studio.client.workbench.views.source.model.TexServerOperations;
 import org.rstudio.studio.client.workbench.views.vcs.VCSTab;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
@@ -214,6 +215,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(CodeSearchServerOperations.class).to(RemoteServer.class);
       bind(WorkbenchListsServerOperations.class).to(RemoteServer.class);
       bind(CryptoServerOperations.class).to(RemoteServer.class);
+      bind(TexServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 
