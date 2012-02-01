@@ -142,9 +142,68 @@
   }
 })
 
+.rs.addFunction("attemptRoxygenTagCompletion", function(line, cursorPos)
+{
+   line <- substr(line, 0, cursorPos)
+   match <- regexec("^\\s*#+'\\s*(@[a-zA-Z]*)$", line)
+   if (match[[1]][1] == -1)
+      return(NULL)
+   
+   tag <- substring(line, match[[1]][2])
+   
+   # All known Roxygen2 tags, in alphabetical order
+   tags <- c(
+      "@aliases",
+      "@author",
+      "@concepts",
+      "@docType",
+      "@example",
+      "@examples",
+      "@export",
+      "@exportClass",
+      "@exportMethod",
+      "@family",
+      "@format",
+      "@import",
+      "@importClassesFrom",
+      "@importFrom",
+      "@importMethodsFrom",
+      "@include",
+      "@inheritParams",
+      "@keywords",
+      "@method",
+      "@name",
+      "@note",
+      "@param",
+      "@rdname",
+      "@references",
+      "@return",
+      "@S3method",
+      "@section",
+      "@seealso",
+      "@source",
+      "@template",
+      "@templateVar",
+      "@title",
+      "@usage",
+      "@useDynLib"
+      );
+   
+   matchingTags <- grep(paste("^", tag, sep=""), tags, value=T)
+   
+   list(token=tag,
+        results=matchingTags,
+        packages=vector(mode='character', length=length(matchingTags)),
+        fguess=c())
+})
+
 utils:::rc.settings(files=T)
 .rs.addJsonRpcHandler("get_completions", function(line, cursorPos)
 {
+   roxygen <- .rs.attemptRoxygenTagCompletion(line, cursorPos)
+   if (!is.null(roxygen))
+      return(roxygen);
+   
    utils:::.assignLinebuffer(line)
    utils:::.assignEnd(cursorPos)
    token = utils:::.guessTokenFromLine()

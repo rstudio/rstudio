@@ -178,7 +178,7 @@ public class CompletionRequester
          if (name.endsWith("=") ^ o.name.endsWith("="))
             return name.endsWith("=") ? -1 : 1 ;
          
-         int result = name.compareTo(o.name) ;
+         int result = String.CASE_INSENSITIVE_ORDER.compare(name, o.name) ;
          if (result != 0)
             return result ;
          

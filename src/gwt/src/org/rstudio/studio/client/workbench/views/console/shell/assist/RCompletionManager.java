@@ -22,7 +22,6 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.inject.Inject;
-
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
@@ -422,6 +421,16 @@ public class RCompletionManager implements CompletionManager
       if (selection == null)
          return false;
 
+      String linePart = line.substring(0, selection.getStart().getPosition());
+
+      if (line.matches("\\s*#.*") && !linePart.matches("\\s*#+'\\s*[^\\s].*"))
+      {
+         // No completion inside comments (except Roxygen). For the Roxygen
+         // case, only do completion if we're past the first non-whitespace
+         // character (to allow for easy indenting).
+         return false;
+      }
+
       boolean canAutoAccept = flushCache;
       context_ = new CompletionRequestContext(invalidation_.getInvalidationToken(),
                                               selection,
@@ -432,7 +441,7 @@ public class RCompletionManager implements CompletionManager
 
       return true ;
    }
-   
+
    /**
     * It's important that we create a new instance of this each time.
     * It maintains state that is associated with a completion request.
