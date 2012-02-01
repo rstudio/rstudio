@@ -16,6 +16,7 @@
 #include <string>
 
 #include <boost/regex.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
@@ -23,6 +24,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/Exec.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/tex/TexMagicComment.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
@@ -39,9 +41,39 @@ namespace tex {
 
 namespace {
 
-std::string activeSweaveEngine()
+std::string sweaveEngineForFile(const FilePath& rnwPath)
 {
-   if (projects::projectContext().hasProject())
+   // first see if the file contains an rnw weave magic comment
+   std::string rnwWeaveDirective;
+   std::vector<core::tex::TexMagicComment> magicComments;
+   Error error = core::tex::parseMagicComments(rnwPath, &magicComments);
+   if (!error)
+   {
+      BOOST_FOREACH(const core::tex::TexMagicComment& mc, magicComments)
+      {
+         if (boost::algorithm::iequals(mc.scope(), "rnw") &&
+             boost::algorithm::iequals(mc.variable(), "weave"))
+         {
+            if (boost::algorithm::iequals(mc.value(), "sweave"))
+               rnwWeaveDirective = "Sweave";
+            else if (boost::algorithm::iequals(mc.value(), "knitr"))
+               rnwWeaveDirective = "knitr";
+            else
+               rnwWeaveDirective = mc.value();
+
+            break;
+         }
+      }
+   }
+   else
+   {
+      LOG_ERROR(error);
+   }
+
+   // return the correct sweave engine
+   if (!rnwWeaveDirective.empty())
+      return rnwWeaveDirective;
+   else if (projects::projectContext().hasProject())
       return projects::projectContext().config().defaultSweaveEngine;
    else
       return userSettings().defaultSweaveEngine();
@@ -88,7 +120,7 @@ std::vector<std::string> knitrArgs(const std::string& file)
 }
 
 
-void callSweave(const std::string& rBinDir,
+bool callSweave(const std::string& rBinDir,
                 const std::string& file)
 {
    // R exe path differs by platform
@@ -98,8 +130,12 @@ void callSweave(const std::string& rBinDir,
    std::string path = FilePath(rBinDir).complete("R").absolutePath();
 #endif
 
+   // calculate the full path to the file then use it to determine
+   // the active sweave engine
+   FilePath rnwPath = module_context::resolveAliasedPath(file);
+   std::string sweaveEngine = sweaveEngineForFile(rnwPath);
+
    // args differ by back-end
-   std::string sweaveEngine = activeSweaveEngine();
    std::vector<std::string> args;
    if (sweaveEngine == "Sweave")
    {
@@ -111,26 +147,50 @@ void callSweave(const std::string& rBinDir,
    }
    else
    {
-      r::exec::warning("Unknown Sweave engine: " + sweaveEngine);
-      args = sweaveArgs(file);
+      throw r::exec::RErrorException(
+            "Unknown Rnw weave method: " + sweaveEngine + " (valid values " +
+            "are Sweave and knitr)");
    }
 
    // call back-end
-   Error error = module_context::executeInterruptableChild(path, args);
+   int exitStatus;
+   Error error = module_context::executeInterruptableChild(path,
+                                                           args,
+                                                           &exitStatus);
    if (error)
+   {
       LOG_ERROR(error);
+      return false;
+   }
+   else if (exitStatus != EXIT_SUCCESS)
+   {
+      return false;
+   }
+   else
+   {
+      return true;
+   }
 }
 
 SEXP rs_callSweave(SEXP rBinDirSEXP, SEXP fileSEXP)
 {
    // call sweave
-   callSweave(r::sexp::asString(rBinDirSEXP),
-              r::sexp::asString(fileSEXP));
+   bool success = false;
+   try
+   {
+      success = callSweave(r::sexp::asString(rBinDirSEXP),
+                           r::sexp::asString(fileSEXP));
+   }
+   catch(const r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
 
    // check for interrupts (likely since sweave can be long running)
    r::exec::checkUserInterrupt();
 
-   return R_NilValue;
+   r::sexp::Protect rProtect;
+   return r::sexp::create(success, &rProtect);
 }
 
 SEXP rs_validateTexFile(SEXP texFileSEXP)

@@ -2159,10 +2159,16 @@ bool continueChildProcess(core::system::ProcessOperations&)
    return true;
 }
 
+void onChildExit(int exitStatus, int* pExitStatus)
+{
+   *pExitStatus = exitStatus;
+}
+
 } // anonymous namespace
 
 Error executeInterruptableChild(const std::string& path,
-                                const std::vector<std::string>& args)
+                                const std::vector<std::string>& args,
+                                int *pExitStatus)
 {
    // error if an interruptable child is already running (we can't
    // marry more than one child process to the interrupt state without)
@@ -2183,6 +2189,10 @@ Error executeInterruptableChild(const std::string& path,
    cb.onStdout = boost::bind(rConsoleWrite, _2, 0);
    cb.onStderr = boost::bind(rConsoleWrite, _2, 1);
    cb.onContinue = continueChildProcess;
+
+   // capture process exit status
+   *pExitStatus = EXIT_SUCCESS;
+   cb.onExit = boost::bind(onChildExit, _1, pExitStatus);
 
    // run process with a supervisor
    core::system::ProcessOptions options;
