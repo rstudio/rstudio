@@ -39,6 +39,7 @@ import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.tex.TexMagicComment;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
@@ -465,18 +466,32 @@ public class TextEditingTarget implements EditingTarget
    
    private void validateRequiredComponents()
    {
+      // for Rnw we first scan for directive
+      String rnwWeave = null;
+      boolean hasRnwWeaveDirective = false;
+      boolean isRnw = FileTypeRegistry.SWEAVE.getTypeId().equals(fileType_.getTypeId());
+      if (isRnw)
+      {
+         rnwWeave = detectRnwWeaveDirective();
+         if (rnwWeave == null)
+            rnwWeave = prefs_.defaultSweaveEngine().getValue();
+         else
+            hasRnwWeaveDirective = true;
+      }
+      
       final SessionInfo sessionInfo = session_.getSessionInfo();
       TexCapabilities texCap = sessionInfo.getTexCapabilities();
 
       final boolean checkForTeX = fileType_.canCompilePDF() && 
                                   !texCap.isTexInstalled();
-      final boolean checkForKnitr = 
-          FileTypeRegistry.SWEAVE.getTypeId().equals(fileType_.getTypeId()) &&
-          prefs_.defaultSweaveEngine().getValue().equals("knitr") &&
-          !texCap.isKnitrInstalled();
+      
+      final boolean checkForKnitr = isRnw &&
+                                    rnwWeave.equals("knitr") &&
+                                    !texCap.isKnitrInstalled();
       
       if (checkForTeX || checkForKnitr)
       {
+         final boolean rnwWeaveFileOverride = hasRnwWeaveDirective;
          server_.getTexCapabilities(new ServerRequestCallback<TexCapabilities>()
          {
             @Override
@@ -495,10 +510,15 @@ public class TextEditingTarget implements EditingTarget
                }
                else if (checkForKnitr && !response.isKnitrInstalled())
                {
-                  boolean inProj = sessionInfo.getActiveProjectFile() != null;
-                  String forProject = inProj ? "for this project " : ""; 
+                  String forContext = "";
+                  if (rnwWeaveFileOverride)
+                     forContext = "this file";
+                  else if (sessionInfo.getActiveProjectFile() != null)
+                     forContext = "Rnw files for this project"; 
+                  else
+                     forContext = "Rnw files";
                   view_.showWarningBar(
-                      "knitr is configured to weave Rnw files " + forProject +
+                      "knitr is configured to weave " + forContext + " " +
                       "however the knitr package is not installed.");
                }
                else
@@ -518,6 +538,31 @@ public class TextEditingTarget implements EditingTarget
       {
          view_.hideWarningBar();
       }
+   }
+   
+   private String detectRnwWeaveDirective()
+   {
+      ArrayList<TexMagicComment> magicComments = 
+                        TexMagicComment.parseComments(docDisplay_.getCode());
+      
+      for (TexMagicComment comment : magicComments)
+      {
+         if (comment.getScope().equalsIgnoreCase("rnw") &&
+             comment.getVariable().equalsIgnoreCase("weave"))
+         {
+            // normalize case
+            if (comment.getValue().equalsIgnoreCase("sweave"))
+               return "Sweave";
+            else if (comment.getValue().equalsIgnoreCase("knitr"))
+               return "knitr";
+            else
+               // server will flag this an unregognized
+               return comment.getValue();
+
+         }
+      }
+      
+      return null;
    }
    
    
@@ -1938,7 +1983,7 @@ public class TextEditingTarget implements EditingTarget
    private FileSystemContext fileContext_;
    private final Provider<PublishPdf> pPublishPdf_;
    private boolean ignoreDeletes_;
-
+  
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =
          new Invalidation();
