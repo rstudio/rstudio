@@ -70,6 +70,17 @@ public:
       return pHunspell_->spell(word.c_str());
    }
 
+   void suggestionList(const std::string& word, std::vector<std::string>* pSug)
+   {
+       char ** wlst;
+       int ns = pHunspell_->suggest(&wlst,word.c_str());
+       for (int i=0; i < ns; i++)
+       {
+           pSug->push_back(wlst[i]);
+       }
+       pHunspell_->free_list(&wlst, ns);
+   }
+
 private:
    boost::scoped_ptr<Hunspell> pHunspell_;
 };
