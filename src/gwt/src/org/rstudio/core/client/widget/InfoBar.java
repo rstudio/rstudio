@@ -13,6 +13,7 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
@@ -22,13 +23,18 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
-public class InfoBar extends Composite
+public class InfoBar extends Composite 
 {
    public static final int INFO = 0;
    public static final int WARNING = 1;
    public static final int ERROR = 2;
    
    public InfoBar(int mode)
+   {
+      this(mode, null);
+   }
+   
+   public InfoBar(int mode, ClickHandler dismissHandler)
    {
       switch(mode)
       {
@@ -46,8 +52,14 @@ public class InfoBar extends Composite
       }
      
       initWidget(binder.createAndBindUi(this));
+      
+      if (dismissHandler != null)
+         dismiss_.addClickHandler(dismissHandler);
+      else
+         dismiss_.setVisible(false);
    }
-
+   
+  
    public String getText()
    {
       return label_.getText();
@@ -69,6 +81,8 @@ public class InfoBar extends Composite
    protected Image icon_;
    @UiField
    protected Label label_;
+   @UiField
+   Image dismiss_;
 
    interface MyBinder extends UiBinder<Widget, InfoBar>{}
    private static MyBinder binder = GWT.create(MyBinder.class);

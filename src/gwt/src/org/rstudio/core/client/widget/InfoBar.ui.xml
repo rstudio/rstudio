@@ -1,6 +1,9 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'>
 
+    <ui:with field="themeRes" type="org.rstudio.core.client.theme.res.ThemeResources"/>
+
+
    <ui:style>
       .outer {
          width: 100%;
@@ -17,6 +20,11 @@
          margin-top: 2px;
          color: #555;
       }
+      .dismiss {
+         cursor: pointer;
+         margin-top: 4px;
+         margin-right: 4px;
+   }
    </ui:style>
 
    <g:FlowPanel>
@@ -27,6 +35,12 @@
       <g:center>
          <g:Label ui:field="label_" styleName="{style.label}" wordWrap="false"/>
       </g:center>
+      <g:east size="13">
+          <g:Image ui:field="dismiss_"
+                   resource="{themeRes.closeTab}"
+                   styleName="{style.dismiss}"
+                   title="Dismiss"/>
+      </g:east>
    </g:DockLayoutPanel>
    </g:FlowPanel>
 </ui:UiBinder>

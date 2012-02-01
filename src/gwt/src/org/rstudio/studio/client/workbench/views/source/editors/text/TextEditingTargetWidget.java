@@ -196,7 +196,14 @@ public class TextEditingTargetWidget
    {
       if (warningBar_ == null)
       {
-         warningBar_ = new InfoBar(InfoBar.WARNING);
+         warningBar_ = new InfoBar(InfoBar.WARNING, new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event)
+            {
+               hideWarningBar();
+            }
+            
+         });
          panel_.insertNorth(warningBar_, warningBar_.getHeight(), null);
       }
       warningBar_.setText(warning);
