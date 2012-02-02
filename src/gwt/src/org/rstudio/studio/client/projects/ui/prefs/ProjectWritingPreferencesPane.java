@@ -47,7 +47,7 @@ public class ProjectWritingPreferencesPane extends ProjectPreferencesPane
    @Override
    public String getName()
    {
-      return "Writing";
+      return "Authoring";
    }
 
    @Override

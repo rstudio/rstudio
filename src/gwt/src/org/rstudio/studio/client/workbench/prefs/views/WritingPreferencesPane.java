@@ -68,7 +68,7 @@ public class WritingPreferencesPane extends PreferencesPane
    @Override
    public String getName()
    {
-      return "Writing";
+      return "Authoring";
    }
 
    @Override
