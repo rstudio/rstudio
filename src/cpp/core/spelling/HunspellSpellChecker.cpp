@@ -35,7 +35,7 @@ namespace {
 class HunspellSpellChecker : public SpellChecker
 {
 public:
-   HunspellSpellChecker()
+    HunspellSpellChecker()
    {
    }
 
@@ -50,7 +50,13 @@ public:
       }
    }
 
-   Error initialize(const FilePath& affPath, const FilePath& dicPath)
+   Error initialize(const FilePath& affPath,
+                    const FilePath& dicPath,
+                    const boost::function<core::Error(const std::string& value,
+                                                const std::string& from,
+                                                const std::string& to,
+                                                bool allowSubstitution,
+                                                std::string* pResult)>& pIconvStr)
    {
       // validate that dictionaries exist
       if (!affPath.exists())
@@ -61,13 +67,29 @@ public:
       // initialize hunspell and return success
       pHunspell_.reset(new Hunspell(affPath.absolutePath().c_str(),
                                     dicPath.absolutePath().c_str()));
+
+      pIconvStr_ = pIconvStr;
       return Success();
    }
 
 public:
    bool checkSpelling(const std::string& word)
    {
-      return pHunspell_->spell(word.c_str());
+       Error error;
+       std::string encoded;
+       std::string encoding(pHunspell_->get_dic_encoding());
+
+       error = pIconvStr_(word,"UTF-8",encoding,false,&encoded);
+       if (error)
+       {
+          error = pIconvStr_(word,"UTF-8",encoding,true,&encoded);
+          if (error){
+
+              // Would be nice to raise an error here
+              return false;
+          }
+       }
+       return pHunspell_->spell(encoded.c_str());
    }
 
    void suggestionList(const std::string& word, std::vector<std::string>* pSug)
@@ -83,6 +105,11 @@ public:
 
 private:
    boost::scoped_ptr<Hunspell> pHunspell_;
+   boost::function<core::Error(const std::string& value,
+                               const std::string& from,
+                               const std::string& to,
+                               bool allowSubstitution,
+                               std::string* pResult)> pIconvStr_;
 };
 
 } // anonymous namespace
@@ -90,13 +117,19 @@ private:
 
 core::Error createHunspell(const FilePath& affPath,
                            const FilePath& dicPath,
-                           boost::shared_ptr<SpellChecker>* pHunspell)
+                           boost::shared_ptr<SpellChecker>* pHunspell,
+                           const boost::function<core::Error(const std::string& value,
+                                                    const std::string& from,
+                                                    const std::string& to,
+                                                    bool allowSubstitution,
+                                                    std::string* pResult)>& pIconvStr
+                           )
 {
    // create the hunspell engine
    boost::shared_ptr<HunspellSpellChecker> pNew(new HunspellSpellChecker());
 
    // initialize it
-   Error error = pNew->initialize(affPath, dicPath);
+   Error error = pNew->initialize(affPath, dicPath, pIconvStr);
    if (error)
       return error;
 

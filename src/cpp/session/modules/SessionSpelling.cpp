@@ -21,6 +21,7 @@
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RUtil.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -82,7 +83,7 @@ Error initialize()
    FilePath enUSPath = options.hunspellDictionariesPath().childPath("en_US");
    return createHunspell(enUSPath.childPath("en_US.aff"),
                          enUSPath.childPath("en_US.dic"),
-                         &s_pSpellChecker);
+                         &s_pSpellChecker,r::util::iconvstr);
 }
 
 

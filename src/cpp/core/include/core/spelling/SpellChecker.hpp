@@ -19,6 +19,7 @@
 
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/function.hpp>
 
 
 namespace core {
@@ -38,7 +39,12 @@ public:
 
 core::Error createHunspell(const core::FilePath& affPath,
                            const core::FilePath& dicPath,
-                           boost::shared_ptr<SpellChecker>* pHunspell);
+                           boost::shared_ptr<SpellChecker>* pHunspell,
+                           const boost::function<core::Error(const std::string& value,
+                                                    const std::string& from,
+                                                    const std::string& to,
+                                                    bool allowSubstitution,
+                                                    std::string* pResult)>& pIconvStr);
 
 
 } // namespace spelling
