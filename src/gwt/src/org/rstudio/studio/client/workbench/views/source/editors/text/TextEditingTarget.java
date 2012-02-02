@@ -97,6 +97,7 @@ public class TextEditingTarget implements EditingTarget
    {
    }
 
+   @SuppressWarnings("serial")
    private class InvalidSelectionException extends Exception
    {
    }
