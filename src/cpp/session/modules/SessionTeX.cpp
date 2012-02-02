@@ -164,8 +164,8 @@ private:
    RnwWeaveRegistry()
    {
       weaveTypes_.push_back(boost::shared_ptr<RnwWeave>(new RnwSweave()));
-      weaveTypes_.push_back(boost::shared_ptr<RnwWeave>(new RnwPgfSweave()));
       weaveTypes_.push_back(boost::shared_ptr<RnwWeave>(new RnwKnitr()));
+      weaveTypes_.push_back(boost::shared_ptr<RnwWeave>(new RnwPgfSweave()));
    }
    friend const RnwWeaveRegistry& weaveRegistry();
 
