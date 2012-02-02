@@ -42,8 +42,10 @@ public class WritingPreferencesPane extends PreferencesPane
       add(defaultSweaveEngine_);
       
       Label perProjectLabel = new Label(
-            "NOTE: The Rnw weave method is also set on a per-project basis. " +
-            "Newly opened projects will inherit the default value specified here.");
+            "NOTE: The Rnw weave method is also set on a per-project " +
+            "(and optionally per-file) basis. Click the help icon above " + 
+            "for more details.");
+           
       perProjectLabel.addStyleName(baseRes.styles().infoLabel());
       nudgeRight(perProjectLabel);
       add(perProjectLabel);

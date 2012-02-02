@@ -23,6 +23,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Panel;
+import com.google.gwt.user.client.ui.Widget;
 
 public class SelectWidget extends Composite
 {   
@@ -61,29 +62,29 @@ public class SelectWidget extends Composite
       Panel panel = null;
       if (horizontalLayout)
       {
-         HorizontalPanel horizontalPanel = new HorizontalPanel();
+         horizontalPanel_ = new HorizontalPanel();
          Label labelWidget = new Label(label);
          if (listOnLeft)
          {
-            horizontalPanel.add(listBox_);
-            horizontalPanel.add(labelWidget);
+            horizontalPanel_.add(listBox_);
+            horizontalPanel_.add(labelWidget);
          }
          else
          {
-            horizontalPanel.add(labelWidget);
-            horizontalPanel.add(listBox_);
+            horizontalPanel_.add(labelWidget);
+            horizontalPanel_.add(listBox_);
          }
         
-         horizontalPanel.setCellVerticalAlignment(
+         horizontalPanel_.setCellVerticalAlignment(
                                           labelWidget, 
                                           HasVerticalAlignment.ALIGN_MIDDLE);
-         panel = horizontalPanel;
+         panel = horizontalPanel_;
       }
       else
       {
-         FlowPanel flowPanel = new FlowPanel();
-         flowPanel.add(new Label(label, true));
-         panel = flowPanel;
+         flowPanel_ = new FlowPanel();
+         flowPanel_.add(new Label(label, true));
+         panel = flowPanel_;
          panel.add(listBox_);
       }
 
@@ -144,5 +145,23 @@ public class SelectWidget extends Composite
       return listBox_.getValue(listBox_.getSelectedIndex());
    }
 
+   
+   protected void addWidget(Widget widget)
+   {
+      if (horizontalPanel_ != null)
+      {
+         horizontalPanel_.add(widget);
+         horizontalPanel_.setCellVerticalAlignment(
+               widget, 
+               HasVerticalAlignment.ALIGN_MIDDLE);
+      }
+      else
+      {
+         flowPanel_.add(widget);
+      }
+   }
+   
+   private HorizontalPanel horizontalPanel_ = null;
+   private FlowPanel flowPanel_ = null;
    private final ListBox listBox_;
 }

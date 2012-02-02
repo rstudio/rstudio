@@ -43,9 +43,9 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
             true,
             new PreferencesPane[] {pR.get(),
                                    source, 
-                                   writing,
                                    appearance, 
                                    paneLayout,
+                                   writing,
                                    sourceControl}); 
 
       session_ = session;

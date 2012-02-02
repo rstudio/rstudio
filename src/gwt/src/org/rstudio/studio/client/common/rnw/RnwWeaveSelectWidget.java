@@ -14,6 +14,7 @@ package org.rstudio.studio.client.common.rnw;
 
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -25,6 +26,8 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.views.source.model.TexServerOperations;
 
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 
@@ -37,6 +40,12 @@ public class RnwWeaveSelectWidget extends SelectWidget
       super("Default method for weaving Rnw files:",
             rnwWeaveRegistry_.getTypeNames());
   
+      HelpButton helpButton = new HelpButton("rnw_weave_method");
+      Style style = helpButton.getElement().getStyle();
+      style.setMarginTop(3, Unit.PX);
+      style.setMarginLeft(4, Unit.PX);
+      addWidget(helpButton);
+      
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       this.addChangeHandler(new ChangeHandler() {
