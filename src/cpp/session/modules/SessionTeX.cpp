@@ -61,6 +61,8 @@ public:
    const std::string& name() const { return name_; }
    const std::string& packageName() const { return packageName_; }
 
+   virtual bool isInstalled() const = 0;
+
    virtual std::vector<std::string> commandArgs(
                                     const std::string& file) const = 0;
 
@@ -76,6 +78,8 @@ public:
       : RnwWeave("Sweave")
    {
    }
+
+   virtual bool isInstalled() const { return true; }
 
 #ifdef _WIN32
    virtual std::vector<std::string> commandArgs(const std::string& file) const
@@ -107,7 +111,14 @@ public:
                     const std::string& cmdFmt)
      : RnwWeave(name, packageName), cmdFmt_(cmdFmt)
    {
+   }
 
+   virtual bool isInstalled() const
+   {
+      bool installed;
+      r::exec::RFunction func(".rs.isPackageInstalled", packageName());
+      Error error = func.call(&installed);
+      return !error ? installed : false;
    }
 
    virtual std::vector<std::string> commandArgs(const std::string& file) const
@@ -159,7 +170,10 @@ private:
    friend const RnwWeaveRegistry& weaveRegistry();
 
 public:
+   typedef std::vector<boost::shared_ptr<RnwWeave> > RnwWeaveTypes;
 
+
+public:
    std::string printableTypeNames() const
    {
       std::string str;
@@ -174,6 +188,8 @@ public:
       return str;
    }
 
+   RnwWeaveTypes weaveTypes() const { return weaveTypes_; }
+
    boost::shared_ptr<RnwWeave> findTypeIgnoreCase(const std::string& name)
                                                                         const
    {
@@ -187,7 +203,7 @@ public:
    }
 
 private:
-   std::vector<boost::shared_ptr<RnwWeave> > weaveTypes_;
+   RnwWeaveTypes weaveTypes_;
 };
 
 
@@ -351,6 +367,21 @@ Error getTexCapabilities(const core::json::JsonRpcRequest& request,
 
 } // anonymous namespace
 
+json::Array supportedRnwWeaveTypes()
+{
+   // query for list of supported types
+   json::Array array;
+   BOOST_FOREACH(boost::shared_ptr<RnwWeave> pRnwWeave,
+                 weaveRegistry().weaveTypes())
+   {
+      json::Object object;
+      object["name"] = pRnwWeave->name();
+      object["package_name"] = pRnwWeave->packageName();
+      array.push_back(object);
+   }
+   return array;
+}
+
 json::Object capabilitiesAsJson()
 {
    json::Object obj;
@@ -359,13 +390,13 @@ json::Object capabilitiesAsJson()
    Error error = r::exec::RFunction(".rs.is_tex_installed").call(&texInstalled);
    obj["tex_installed"] = !error ? texInstalled : false;
 
-   bool knitrInstalled;
-   error = r::exec::RFunction(".rs.is_knitr_installed").call(&knitrInstalled);
-   obj["knitr_installed"] = !error ? knitrInstalled : false;
-
-   bool pgfSweaveInstalled;
-   error = r::exec::RFunction(".rs.is_pgfsweave_installed").call(&pgfSweaveInstalled);
-   obj["pgfsweave_installed"] = !error ? pgfSweaveInstalled : false;
+   // query for status of all rnw weave types
+   BOOST_FOREACH(boost::shared_ptr<RnwWeave> pRnwWeave,
+                 weaveRegistry().weaveTypes())
+   {
+      std::string n = string_utils::toLower(pRnwWeave->name() + "_installed");
+      obj[n] = pRnwWeave->isInstalled();
+   }
 
    return obj;
 }

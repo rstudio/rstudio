@@ -89,14 +89,5 @@
    return(.rs.scalar(file.exists(Sys.which('pdflatex'))))
 })
 
-.rs.addFunction("is_knitr_installed", function()
-{
-   .rs.isPackageInstalled("knitr")
-})
-
-.rs.addFunction("is_pgfsweave_installed", function()
-{
-   .rs.isPackageInstalled("pgfSweave")
-})
 
 

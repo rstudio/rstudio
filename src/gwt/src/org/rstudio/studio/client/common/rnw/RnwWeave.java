@@ -12,16 +12,19 @@
  */
 package org.rstudio.studio.client.common.rnw;
 
-import org.rstudio.studio.client.workbench.model.TexCapabilities;
+import com.google.gwt.core.client.JavaScriptObject;
 
-public abstract class RnwWeave
+public class RnwWeave extends JavaScriptObject
 {
-   public abstract String getName();
-   
-   public String getPackageName()
+   protected RnwWeave()
    {
-      return getName();
    }
    
-   public abstract boolean isAvailable(TexCapabilities texCapabilities);
+   public final native String getName() /*-{
+      return this.name;
+   }-*/;
+   
+   public final native String getPackageName() /*-{
+      return this.package_name;
+   }-*/;
 }

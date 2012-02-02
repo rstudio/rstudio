@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.model;
 
+import org.rstudio.studio.client.common.rnw.RnwWeave;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class TexCapabilities extends JavaScriptObject
@@ -23,12 +25,14 @@ public class TexCapabilities extends JavaScriptObject
    public final native boolean isTexInstalled() /*-{
       return this.tex_installed;
    }-*/;
-
-   public final native boolean isKnitrInstalled() /*-{
-      return this.knitr_installed;
-   }-*/;
    
-   public final native boolean isPgfSweaveInstalled() /*-{
-      return this.pgfsweave_installed;
+   public final boolean isRnwWeaveAvailable(RnwWeave rnwWeave)
+   {
+      return isPackageInstalledNative(
+                    rnwWeave.getPackageName().toLowerCase() + "_installed");
+   }
+   
+   private final native boolean isPackageInstalledNative(String attrib) /*-{
+      return this[attrib];
    }-*/;
 }

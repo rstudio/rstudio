@@ -21,6 +21,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
+import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 public class SessionInfo extends JavaScriptObject
@@ -41,6 +42,10 @@ public class SessionInfo extends JavaScriptObject
       return this.userIdentity;
    }-*/;
 
+   public final native JsArray<RnwWeave> getRnwWeaveTypes() /*-{
+      return this.rnw_weave_types;
+   }-*/;
+   
    public final native TexCapabilities getTexCapabilities() /*-{
       return this.tex_capabilities;
    }-*/;

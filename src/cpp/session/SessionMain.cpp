@@ -400,6 +400,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["console_actions"] = actionsObject;
    }
 
+   sessionInfo["rnw_weave_types"] = modules::tex::supportedRnwWeaveTypes();
    sessionInfo["tex_capabilities"] = modules::tex::capabilitiesAsJson();
 
    sessionInfo["googleDocsIntegrationEnabled"] =

@@ -518,7 +518,7 @@ public class TextEditingTarget implements EditingTarget
                                   !texCap.isTexInstalled();
       
       final boolean checkForRnwWeave = (rnwWeave != null) && 
-                                       !rnwWeave.isAvailable(texCap);
+                                       !texCap.isRnwWeaveAvailable(rnwWeave);
                                  
       if (checkForTeX || checkForRnwWeave)
       {
@@ -542,7 +542,8 @@ public class TextEditingTarget implements EditingTarget
                                "may not be able to compile.";
                   view_.showWarningBar(warning);
                }
-               else if (checkForRnwWeave && !fRnwWeave.isAvailable(response))
+               else if (checkForRnwWeave && 
+                        !response.isRnwWeaveAvailable(fRnwWeave))
                {
                   String forContext = "";
                   if (hasRnwWeaveDirective)

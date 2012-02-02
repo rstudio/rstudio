@@ -14,31 +14,28 @@ package org.rstudio.studio.client.common.rnw;
 
 import java.util.ArrayList;
 
+import org.rstudio.studio.client.workbench.model.Session;
+
+import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
 public class RnwWeaveRegistry
 {
    @Inject
-   public RnwWeaveRegistry()
+   public RnwWeaveRegistry(Provider<Session> pSession)
    {
-      defaultType_ = new RnwSweave();
-      register(defaultType_);
-      register(new RnwPgfSweave());
-      register(new RnwKnitr());
+      pSession_ = pSession;
    }
-   
-   public RnwWeave getDefaultType()
-   {
-      return defaultType_;
-   }
-   
+  
    public String[] getTypeNames()
    {
-      String[] typeNames = new String[weaveTypes_.size()];
-      for (int i=0; i<weaveTypes_.size(); i++)
-         typeNames[i] = weaveTypes_.get(i).getName();
+      ArrayList<RnwWeave> weaveTypes = getTypes();
+      String[] typeNames = new String[weaveTypes.size()];
+      for (int i=0; i<weaveTypes.size(); i++)
+         typeNames[i] = weaveTypes.get(i).getName();
       return typeNames;
    }
    
@@ -59,12 +56,21 @@ public class RnwWeaveRegistry
    
    public ArrayList<RnwWeave> getTypes()
    {
+      if (weaveTypes_ == null)
+      {
+         JsArray<RnwWeave> types = 
+                           pSession_.get().getSessionInfo().getRnwWeaveTypes();
+       
+         weaveTypes_ = new ArrayList<RnwWeave>();
+         for (int i=0; i<types.length(); i++)
+            weaveTypes_.add(types.get(i));
+      }
       return weaveTypes_;
    }
    
    public RnwWeave findTypeIgnoreCase(String name)
    {
-      for (RnwWeave rnwWeave : weaveTypes_)
+      for (RnwWeave rnwWeave : getTypes())
       {
          if (rnwWeave.getName().equalsIgnoreCase(name))
             return rnwWeave;
@@ -73,11 +79,8 @@ public class RnwWeaveRegistry
       return null;
    }
 
-   private void register(RnwWeave weave)
-   {
-      weaveTypes_.add(weave);
-   }
+  
    
-   private final RnwWeave defaultType_;
-   private ArrayList<RnwWeave> weaveTypes_ = new ArrayList<RnwWeave>();
+   private final Provider<Session> pSession_;
+   private ArrayList<RnwWeave> weaveTypes_ = null;
 }

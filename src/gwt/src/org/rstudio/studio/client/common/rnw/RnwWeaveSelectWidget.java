@@ -53,7 +53,8 @@ public class RnwWeaveSelectWidget extends SelectWidget
    protected void verifyAvailable(final RnwWeave weave)
    {
       // first check if it was already available at startup
-      if (weave.isAvailable(session_.getSessionInfo().getTexCapabilities()))
+      TexCapabilities texCap = session_.getSessionInfo().getTexCapabilities();
+      if (texCap.isRnwWeaveAvailable(weave))
          return;
       
       server_.getTexCapabilities(new ServerRequestCallback<TexCapabilities>() {
@@ -61,7 +62,7 @@ public class RnwWeaveSelectWidget extends SelectWidget
          @Override
          public void onResponseReceived(TexCapabilities capabilities)
          {
-            if (!weave.isAvailable(capabilities))
+            if (!capabilities.isRnwWeaveAvailable(weave))
             {
                globalDisplay_.showYesNoMessage(
                   MessageDialog.QUESTION,
@@ -83,7 +84,7 @@ public class RnwWeaveSelectWidget extends SelectWidget
                      @Override
                      public void execute()
                      {
-                        setValue(rnwWeaveRegistry_.getDefaultType().getName());
+                        setValue(rnwWeaveRegistry_.getTypes().get(0).getName());
                      }  
                   },
                   false );

@@ -24,6 +24,8 @@ namespace session {
 namespace modules { 
 namespace tex {
    
+core::json::Array supportedRnwWeaveTypes();
+
 core::json::Object capabilitiesAsJson();
 
 core::Error initialize();
