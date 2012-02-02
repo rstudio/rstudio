@@ -859,6 +859,10 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   private CellTableBuilder<T> tableBuilder;
   private boolean updatingSortList;
 
+  private boolean skipRowHoverCheck;
+  private boolean skipRowHoverFloatElementCheck;
+  private boolean skipRowHoverStyleUpdate;
+
   /**
    * Constructs a table with the given page size, the specified {@link Style},
    * and the given key provider.
@@ -1355,6 +1359,36 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
+   * Gets the skipRowHoverCheck flag. If true, the CellTable will not check for
+   * row-level hover events (MOUSEOVER and MOUSEOUT).
+   *
+   * @return the flag value
+   */
+  public boolean isSkipRowHoverCheck() {
+    return this.skipRowHoverCheck;
+  }
+
+  /**
+   * Gets the skipRowHoverFloatElementCheck flag. If true, the CellTable will
+   * not check for floating (fixed position) elements over the hovered row.
+   *
+   * @return the flag value
+   */
+  public boolean isSkipRowHoverFloatElementCheck() {
+    return this.skipRowHoverFloatElementCheck;
+  }
+
+  /**
+   * Gets the skipRowHoverStyleUpdate flag. If true, the CellTable will not update
+   * the row's style on row-level hover events (MOUSEOVER and MOUSEOUT).
+   *
+   * @return the flag value
+   */
+  public boolean isSkipRowHoverStyleUpdate() {
+    return this.skipRowHoverStyleUpdate;
+  }
+
+  /**
    * Redraw the table's footers. The footers will be re-rendered synchronously.
    */
   public void redrawFooters() {
@@ -1601,6 +1635,36 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    */
   public void setRowStyles(RowStyles<T> rowStyles) {
     this.rowStyles = rowStyles;
+  }
+
+  /**
+   * Sets the skipRowHoverCheck flag. If set, the CellTable will not check for
+   * row-level hover events (MOUSEOVER and MOUSEOUT).
+   *
+   * @param skipRowHoverCheck the new flag value
+   */
+  public void setSkipRowHoverCheck(boolean skipRowHoverCheck) {
+    this.skipRowHoverCheck = skipRowHoverCheck;
+  }
+
+  /**
+   * Sets the skipRowHoverFloatElementCheck flag. If set, the CellTable will not
+   * not check for floating (fixed position) elements over the hovered row.
+   *
+   * @param skipRowHoverFloatElementCheck the new flag value
+   */
+  public void setSkipRowHoverFloatElementCheck(boolean skipRowHoverFloatElementCheck) {
+    this.skipRowHoverFloatElementCheck = skipRowHoverFloatElementCheck;
+  }
+
+  /**
+   * Sets the skipRowHoverStyleUpdate flag. If set, the CellTable will not update
+   * the row's style on row-level hover events (MOUSEOVER and MOUSEOUT).
+   *
+   * @param skipRowHoverCheck the new flag value
+   */
+  public void setSkipRowHoverStyleUpdate(boolean skipRowHoverStyleUpdate) {
+    this.skipRowHoverStyleUpdate = skipRowHoverStyleUpdate;
   }
 
   /**
@@ -1856,28 +1920,35 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
       int absRow = tableBuilder.getRowValueIndex(targetTableRow);
       int relRow = absRow - getPageStart();
       int subrow = tableBuilder.getSubrowValueIndex(targetTableRow);
-      if (BrowserEvents.MOUSEOVER.equals(eventType)) {
-        // Unstyle the old row if it is still part of the table.
-        if (hoveringRow != null && getTableBodyElement().isOrHasChild(hoveringRow)) {
-          setRowHover(hoveringRow, event, false);
-        }
-        hoveringRow = targetTableRow;
-        setRowHover(hoveringRow, event, true);
-      } else if (BrowserEvents.MOUSEOUT.equals(eventType) && hoveringRow != null) {
-        // Ignore events happening directly over the hovering row. If there are floating element
-        // on top of the row, mouseout event should not be triggered. This is to avoid the flickring
-        // effect if the floating element is shown/hide based on hover event.
-        int clientX = event.getClientX() + Window.getScrollLeft();
-        int clientY = event.getClientY() + Window.getScrollTop();
-        int rowLeft = hoveringRow.getAbsoluteLeft();
-        int rowTop = hoveringRow.getAbsoluteTop();
-        int rowWidth = hoveringRow.getOffsetWidth();
-        int rowHeight = hoveringRow.getOffsetHeight();
-        int rowBottom = rowTop + rowHeight;
-        int rowRight = rowLeft + rowWidth;
-        if (clientX < rowLeft || clientX > rowRight || clientY < rowTop || clientY > rowBottom) {
-          setRowHover(hoveringRow, event, false);
-          hoveringRow = null;
+
+      if (!skipRowHoverCheck && hoveringRow != targetTableRow) {
+        if (BrowserEvents.MOUSEOVER.equals(eventType)) {
+          // Unstyle the old row if it is still part of the table.
+          if (hoveringRow != null && getTableBodyElement().isOrHasChild(hoveringRow)) {
+            setRowHover(hoveringRow, event, false);
+          }
+          hoveringRow = targetTableRow;
+          setRowHover(hoveringRow, event, true);
+        } else if (BrowserEvents.MOUSEOUT.equals(eventType) && hoveringRow != null) {
+          boolean unhover = true;
+          if (!skipRowHoverFloatElementCheck) {
+            // Ignore events happening directly over the hovering row. If there are floating element
+            // on top of the row, mouseout event should not be triggered. This is to avoid the flickring
+            // effect if the floating element is shown/hide based on hover event.
+            int clientX = event.getClientX() + Window.getScrollLeft();
+            int clientY = event.getClientY() + Window.getScrollTop();
+            int rowLeft = hoveringRow.getAbsoluteLeft();
+            int rowTop = hoveringRow.getAbsoluteTop();
+            int rowWidth = hoveringRow.getOffsetWidth();
+            int rowHeight = hoveringRow.getOffsetHeight();
+            int rowBottom = rowTop + rowHeight;
+            int rowRight = rowLeft + rowWidth;
+            unhover = clientX < rowLeft || clientX > rowRight || clientY < rowTop || clientY > rowBottom;
+          }
+          if (unhover) {
+            setRowHover(hoveringRow, event, false);
+            hoveringRow = null;
+          }
         }
       }
 
@@ -2509,7 +2580,9 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    * @param isHovering false if this is an unhover event
    */
   private void setRowHover(TableRowElement tr, Event event, boolean isHovering) {
-    setRowStyleName(tr, style.hoveredRow(), style.hoveredRowCell(), isHovering);
+    if (!skipRowHoverStyleUpdate) {
+      setRowStyleName(tr, style.hoveredRow(), style.hoveredRowCell(), isHovering);
+    }
     RowHoverEvent.fire(this, tr, event, !isHovering);
   }
   
