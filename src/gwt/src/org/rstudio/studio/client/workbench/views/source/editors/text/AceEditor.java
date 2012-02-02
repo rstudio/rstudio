@@ -430,6 +430,13 @@ public class AceEditor implements DocDisplay,
       return getSession().getTextRange(Range.fromPoints(start, end));
    }
 
+   @Override
+   public String getCode(InputEditorSelection selection)
+   {
+      return getCode(((AceInputEditorPosition)selection.getStart()).getValue(),
+                     ((AceInputEditorPosition)selection.getEnd()).getValue());
+   }
+
    public void focus()
    {
       widget_.getEditor().focus();

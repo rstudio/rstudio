@@ -123,6 +123,7 @@ public class TextFileType extends EditableFileType
          results.add(commands.extractFunction());
          results.add(commands.commentUncomment());
          results.add(commands.reindent());
+         results.add(commands.reflowComment());
       }
       if (canExecuteAllCode())
       {

@@ -60,6 +60,7 @@ public abstract class
    public abstract AppCommand extractFunction();
    public abstract AppCommand commentUncomment();
    public abstract AppCommand reindent();
+   public abstract AppCommand reflowComment();
    public abstract AppCommand setWorkingDirToActiveDoc();
    
    // Projects

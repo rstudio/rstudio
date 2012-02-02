@@ -4,7 +4,7 @@
     <option name="VM_PARAMETERS" value="-Xmx1024m" />
     <option name="SHELL_PARAMETERS" value="-noserver -war www" />
     <option name="RUN_PAGE" value="http://localhost:8787" />
-    <option name="GWT_MODULE" value="org.rstudio.studio.RStudio" />
+    <option name="GWT_MODULE" value="org.rstudio.studio.RStudioDraft" />
     <option name="OPEN_IN_BROWSER" value="false" />
     <RunnerSettings RunnerId="Debug">
       <option name="DEBUG_PORT" value="61866" />

@@ -12,7 +12,10 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import com.google.gwt.core.client.*;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
@@ -24,7 +27,10 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.HasValue;
+import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.UIObject;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.*;
@@ -60,6 +66,7 @@ import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
@@ -87,6 +94,10 @@ public class TextEditingTarget implements EditingTarget
 {
    interface MyCommandBinder
          extends CommandBinder<Commands, TextEditingTarget>
+   {
+   }
+
+   private class InvalidSelectionException extends Exception
    {
    }
 
@@ -1353,6 +1364,105 @@ public class TextEditingTarget implements EditingTarget
    {
       docDisplay_.reindent();
       docDisplay_.focus();
+   }
+
+   @Handler
+   void onReflowComment()
+   {
+      docDisplay_.focus();
+
+      InputEditorSelection selection = docDisplay_.getSelection();
+      selection = selection.shrinkToNonEmptyLines();
+      selection = selection.extendToLineStart();
+      selection = selection.extendToLineEnd();
+      if (selection.isEmpty())
+         return;
+
+      String code = docDisplay_.getCode(selection);
+      String reflowed;
+      try
+      {
+         reflowed = reflowComments(code);
+      }
+      catch (InvalidSelectionException ise)
+      {
+         return;
+      }
+      docDisplay_.setSelection(selection);
+      if (!reflowed.equals(code))
+      {
+         docDisplay_.replaceSelection(reflowed);
+      }
+   }
+
+   private String reflowComments(String code) throws InvalidSelectionException
+   {
+      String[] lines = code.split("\n");
+      String prefix = StringUtil.getCommonPrefix(lines, true);
+      Pattern pattern = Pattern.create("^\\s*#+('?)\\s*");
+      Match match = pattern.match(prefix, 0);
+      // Selection includes non-comments? Throw.
+      if (match == null)
+         throw new InvalidSelectionException();
+      prefix = match.getValue();
+      final boolean roxygen = match.hasGroup(1);
+
+      int maxLineLength =
+                        prefs_.printMarginColumn().getValue() - prefix.length();
+
+      WordWrap wordWrap = new WordWrap(maxLineLength, false)
+      {
+         @Override
+         protected boolean forceWrapBefore(String line)
+         {
+            String trimmed = line.trim();
+            if (roxygen && trimmed.startsWith("@") && !trimmed.startsWith("@@"))
+            {
+               // Roxygen tags always need to be at the start of a line. If
+               // there is content immediately following the roxygen tag, then
+               // content should be wrapped until the next roxygen tag is
+               // encountered.
+
+               indent_ = "";
+               if (TAG_WITH_CONTENTS.match(line, 0) != null)
+               {
+                  indentRestOfLines_ = true;
+               }
+               return true;
+            }
+            return super.forceWrapBefore(line);
+         }
+
+         @Override
+         protected void onChunkWritten(String chunk,
+                                       int length,
+                                       int insertionPoint)
+         {
+            if (indentRestOfLines_)
+            {
+               indentRestOfLines_ = false;
+               indent_ = "  "; // TODO: Use real indent from settings
+            }
+         }
+
+         private boolean indentRestOfLines_ = false;
+         private Pattern TAG_WITH_CONTENTS = Pattern.create("@\\w+\\s+[^\\s]");
+      };
+
+      for (String line : lines)
+         wordWrap.appendLine(
+                      line.substring(Math.min(line.length(), prefix.length())));
+
+      String wrappedString = wordWrap.getOutput();
+
+      StringBuilder finalOutput = new StringBuilder();
+      for (String line : StringUtil.getLineIterator(wrappedString))
+         finalOutput.append(prefix).append(line).append("\n");
+      // Remove final \n
+      if (finalOutput.length() > 0)
+         finalOutput.deleteCharAt(finalOutput.length()-1);
+
+      return finalOutput.toString();
    }
 
    @Handler

@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 
 public class AceInputEditorPosition extends InputEditorPosition
@@ -46,6 +47,62 @@ public class AceInputEditorPosition extends InputEditorPosition
    public int getLineLength()
    {
       return session_.getLine(getRow()).length();
+   }
+
+   /**
+    *
+    * @param upwards True if the position should be moved upwards. If true, the
+    *    resulting position (if non-null) will be at the end of a non-empty
+    *    line. If false, the resulting position (if non-null) will be at the
+    *    beginning of a non-empty line.
+    * @param boundary If non-null, provides a boundary point beyond which the
+    *    skipping may not pass.
+    * @return A position that's on a non-empty line, or else, null if such a
+    *    position couldn't be found before hitting the beginning/end of the
+    *    document or a boundary position.
+    */
+   @Override
+   public InputEditorPosition skipEmptyLines(boolean upwards,
+                                             InputEditorPosition boundary)
+   {
+      Position position = Position.create(getRow(), getPosition());
+      while (isLineEmpty(position, upwards))
+      {
+         if (upwards)
+         {
+            if (position.getRow() <= 0)
+               return null;
+
+            position = Position.create(
+                  position.getRow() - 1,
+                  session_.getLine(position.getRow() - 1).length());
+         }
+         else
+         {
+            if (position.getRow() >= session_.getLength()-1)
+               return null;
+
+            position = Position.create(position.getRow() + 1, 0);
+         }
+      }
+
+      InputEditorPosition pos = new AceInputEditorPosition(session_, position);
+      return boundary == null ? pos :
+             (upwards && pos.compareTo(boundary) >= 0) ? pos :
+             (!upwards && pos.compareTo(boundary) <= 0) ? pos :
+             null;
+   }
+
+   private boolean isLineEmpty(Position position, boolean leftwards)
+   {
+      String line = session_.getLine(position.getRow());
+      int column = position.getColumn();
+      if (leftwards)
+         line = line.substring(0, Math.min(line.length(), column));
+      else
+         line = line.substring(Math.min(line.length(), column));
+
+      return StringUtil.notNull(line).trim().length() == 0;
    }
 
    public Position getValue()

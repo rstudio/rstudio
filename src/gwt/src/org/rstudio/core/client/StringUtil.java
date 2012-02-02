@@ -14,19 +14,19 @@ package org.rstudio.core.client;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
-
-import java.util.AbstractCollection;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Iterator;
-
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+
 public class StringUtil
 {
+
    public static int parseInt(String value, int defaultValue)
    {
       try
@@ -204,7 +204,7 @@ public class StringUtil
       return indent + str.replaceAll("\n", "\n" + indent);
    }
 
-   public static String join(AbstractCollection<?> collection,
+   public static String join(Collection<?> collection,
                              String delim)
    {
       String currDelim = "";
@@ -309,6 +309,112 @@ public class StringUtil
       data = Pattern.create("^[\\r\\n\\t ]*\\n", "g").replaceAll(data, "");
       data = Pattern.create("\\r?\\n[\\r\\n\\t ]*$", "g").replaceAll(data, "");
       return data;
+   }
+
+   public static String trimRight(String str)
+   {
+      Match m = trimRightPattern.match(str, 0);
+      if (m == null)
+         return str;
+      return str.substring(0, str.length() - m.getValue().length());
+   }
+   private static final Pattern trimRightPattern = Pattern.create("\\s+$");
+
+   /**
+    * Returns the zero or more characters that prefix all of the lines (but see
+    * allowPhantomWhitespace).
+    * @param lines The lines from which to find a common prefix.
+    * @param allowPhantomWhitespace See comment in function body
+    * @return
+    */
+   public static String getCommonPrefix(String[] lines,
+                                        boolean allowPhantomWhitespace)
+   {
+      if (lines.length == 0)
+         return "";
+
+      /**
+       * allowPhantomWhitespace demands some explanation. Assuming these lines:
+       *
+       * {
+       *    "#",
+       *    "#  hello",
+       *    "#",
+       *    "#  goodbye",
+       *    "#    hello again"
+       * }
+       *
+       * The result with allowPhantomWhitespace = false would be "#", but with
+       * allowPhantomWhiteSpace = true it would be "#  ". Basically phantom
+       * whitespace refers to spots at the end of a line where additional
+       * whitespace would lead to a longer overall prefix but would not change
+       * the visible appearance of the document.
+       */
+
+
+      String prefix = notNull(lines[0]);
+
+      // Usually the prefix gradually gets shorter and shorter.
+      // whitespaceExpansionAllowed means that the prefix might get longer,
+      // because the prefix as it stands is eligible for phantom whitespace
+      // insertion. This is true iff the prefix is the same length as, or longer
+      // than, all of the lines we have processed.
+      boolean whitespaceExpansionAllowed = allowPhantomWhitespace;
+
+      for (int i = 1; i < lines.length && prefix.length() > 0; i++)
+      {
+         String line = notNull(lines[i]);
+         int len = whitespaceExpansionAllowed ? Math.max(prefix.length(), line.length()) :
+                   allowPhantomWhitespace ? prefix.length() :
+                   Math.min(prefix.length(), line.length());
+         int j;
+         for (j = 0; j < len; j++)
+         {
+            if (j >= prefix.length())
+            {
+               assert whitespaceExpansionAllowed;
+               if (!isWhitespace(line.charAt(j)))
+                  break;
+               continue;
+            }
+
+            if (j >= line.length())
+            {
+               assert allowPhantomWhitespace;
+               if (!isWhitespace(prefix.charAt(j)))
+                  break;
+               continue;
+            }
+
+            if (prefix.charAt(j) != line.charAt(j))
+            {
+               break;
+            }
+         }
+
+         prefix = j <= prefix.length() ? prefix.substring(0, j)
+                                       : line.substring(0, j);
+
+         whitespaceExpansionAllowed =
+               whitespaceExpansionAllowed && (prefix.length() >= line.length());
+      }
+
+      return prefix;
+   }
+
+   private static boolean isWhitespace(char c)
+   {
+      switch (c)
+      {
+         case ' ':
+         case '\t':
+         case '\u00A0':
+         case '\r':
+         case '\n':
+            return true;
+         default:
+            return false;
+      }
    }
 
    private static final long[] SIZES = {

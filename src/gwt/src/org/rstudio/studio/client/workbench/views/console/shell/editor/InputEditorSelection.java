@@ -75,6 +75,16 @@ public final class InputEditorSelection
              ", End: " + (end_ == null ? "null" : end_);
    }
 
+   public InputEditorSelection shrinkToNonEmptyLines()
+   {
+      InputEditorPosition newEnd = end_.skipEmptyLines(true, start_);
+      if (newEnd == null || newEnd.compareTo(start_) <= 0)
+         return new InputEditorSelection(start_, start_);
+      InputEditorPosition newStart = start_.skipEmptyLines(false, end_);
+      assert newStart != null;
+      return new InputEditorSelection(newStart, newEnd);
+   }
+
    private final InputEditorPosition start_;
    private final InputEditorPosition end_;
 }

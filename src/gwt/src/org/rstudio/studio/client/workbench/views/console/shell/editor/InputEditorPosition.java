@@ -75,6 +75,10 @@ public abstract class InputEditorPosition implements Comparable<InputEditorPosit
 
    public abstract int getLineLength();
 
+   public abstract InputEditorPosition skipEmptyLines(
+         boolean upwards,
+         InputEditorPosition boundary);
+
    private final Object line_;
    private final int position_;
 }

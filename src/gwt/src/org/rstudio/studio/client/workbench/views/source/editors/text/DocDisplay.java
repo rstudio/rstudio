@@ -17,6 +17,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
@@ -62,6 +63,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    String getCode(Position start, Position end);
    DocDisplay.AnchoredSelection createAnchoredSelection(Position start,
                                              Position end);
+   String getCode(InputEditorSelection selection);
 
    void fitSelectionToLines(boolean expand);
    int getSelectionOffset(boolean start);
