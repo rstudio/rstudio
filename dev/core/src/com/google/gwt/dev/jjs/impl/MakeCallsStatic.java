@@ -264,7 +264,7 @@ public class MakeCallsStatic {
         // The target method was already pruned (TypeTightener will fix this).
         return;
       }
-
+  
       // Let's do it!
       toBeMadeStatic.add(method);
     }
@@ -288,7 +288,8 @@ public class MakeCallsStatic {
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod oldMethod = x.getTarget();
       JMethod newMethod = program.getStaticImpl(oldMethod);
-      if (newMethod == null || x.canBePolymorphic()) {
+      
+      if (newMethod == null || x.canBePolymorphic()) {        
         return;
       }
 
@@ -302,6 +303,7 @@ public class MakeCallsStatic {
          */
         return;
       }
+
       ctx.replaceMe(makeStaticCall(x, newMethod));
     }
 
@@ -313,7 +315,7 @@ public class MakeCallsStatic {
 
     @Override
     public boolean visit(JProgram x, Context ctx) {
-      initiallyLive = CodeSplitter.computeInitiallyLive(x);
+      initiallyLive = CodeSplitter2.computeInitiallyLive(x);
       return true;
     }
   }

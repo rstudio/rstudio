@@ -15,10 +15,10 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.linker.CastableTypeMap;
 import com.google.gwt.core.ext.linker.impl.StandardCastableTypeMap;
 import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
+import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.JsOutputOption;
@@ -68,6 +68,7 @@ import com.google.gwt.dev.jjs.ast.JNameOf;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNode;
+import com.google.gwt.dev.jjs.ast.JNumericEntry;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
@@ -130,6 +131,7 @@ import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsNormalScope;
 import com.google.gwt.dev.js.ast.JsNullLiteral;
 import com.google.gwt.dev.js.ast.JsNumberLiteral;
+import com.google.gwt.dev.js.ast.JsNumericEntry;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
@@ -1248,7 +1250,12 @@ public class GenerateJavaScriptAST {
       popList(newOp.getArguments(), x.getArgs().size()); // args
       push(newOp);
     }
-
+    
+    @Override
+    public void endVisit(JNumericEntry x, Context ctx) {
+      push(new JsNumericEntry(x.getSourceInfo(), x.getKey(), x.getValue()));
+    }
+    
     @Override
     public void endVisit(JParameter x, Context ctx) {
       push(new JsParameter(x.getSourceInfo(), names.get(x)));

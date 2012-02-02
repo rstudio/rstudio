@@ -217,7 +217,7 @@ public class CodeSplitter2Test extends JJSTestBase {
     JavaToJavaScriptMap map = GenerateJavaScriptAST.exec(
         jProgram, jsProgram, JsOutputOption.PRETTY, symbolTable, new PropertyOracle[]{
             new StaticPropertyOracle(orderedProps, orderedPropValues, configProps)});
-    CodeSplitter2.exec(logger, jProgram, jsProgram, map, null);    
+    CodeSplitter2.exec(logger, jProgram, jsProgram, map, 4, null);    
   }
   
   private static String createRunAsync(String body) {

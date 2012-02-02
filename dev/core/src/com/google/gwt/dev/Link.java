@@ -503,7 +503,7 @@ public class Link {
 
   /**
    * Logs the total script size for this permutation, as calculated by
-   * {@link CodeSplitter#totalScriptSize(int[])}.
+   * {@link CodeSplitter2#totalScriptSize(int[])}.
    */
   private static void logScriptSize(TreeLogger logger, int permId,
       StandardCompilationResult compilation) {
@@ -518,6 +518,7 @@ public class Link {
       jsLengths[i] = javaScript[i].length();
     }
 
+    // TODO(acleung): This is broken for CodeSplitter2.
     int totalSize = CodeSplitter.totalScriptSize(jsLengths);
 
     if (logger.isLoggable(TreeLogger.TRACE)) {

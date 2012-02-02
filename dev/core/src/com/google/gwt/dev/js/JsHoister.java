@@ -30,6 +30,7 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNullLiteral;
 import com.google.gwt.dev.js.ast.JsNumberLiteral;
+import com.google.gwt.dev.js.ast.JsNumericEntry;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
@@ -170,6 +171,11 @@ public final class JsHoister {
 
     @Override
     public void endVisit(JsNumberLiteral x, JsContext ctx) {
+      stack.push(x);
+    }
+    
+    @Override
+    public void endVisit(JsNumericEntry x, JsContext ctx) {
       stack.push(x);
     }
 

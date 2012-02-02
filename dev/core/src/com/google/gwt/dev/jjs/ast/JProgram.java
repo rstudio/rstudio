@@ -21,6 +21,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.js.JsCastMap;
 import com.google.gwt.dev.jjs.impl.CodeSplitter;
+import com.google.gwt.dev.jjs.impl.CodeSplitter2.FragmentPartitioningResult;
 import com.google.gwt.dev.util.collect.Lists;
 
 import java.io.IOException;
@@ -45,6 +46,7 @@ import java.util.Set;
  * Root for the AST representing an entire Java program.
  */
 public class JProgram extends JNode {
+
   private static final class ArrayTypeComparator implements Comparator<JArrayType>, Serializable {
     public int compare(JArrayType o1, JArrayType o2) {
       int comp = o1.getDims() - o2.getDims();
@@ -244,18 +246,29 @@ public class JProgram extends JNode {
    * be preferred whenever a JProgram instance is available.
    * 
    * @param initialSeq The initial split point sequence of the program
+   * @param result The fragment partitioning result, null if it hasn't be partitioned.
    * @param numSps The number of split points in the program
    * @param firstFragment The first fragment to consider
    * @param restFragments The rest of the fragments to consider
    */
-  public static int lastFragmentLoadingBefore(List<Integer> initialSeq, int numSps,
-      int firstFragment, int... restFragments) {
+  public static int lastFragmentLoadingBefore(List<Integer> initialSeq,
+      FragmentPartitioningResult result, int numSps, int firstFragment, int... restFragments) {
     int latest = firstFragment;
     for (int frag : restFragments) {
-      latest = pairwiseLastFragmentLoadingBefore(initialSeq, numSps, latest, frag);
+      latest = pairwiseLastFragmentLoadingBefore(initialSeq, result, numSps, latest, frag);
     }
     return latest;
   }
+  
+  public static int lastFragmentLoadingBefore(List<Integer> initialSeq,
+      int numSps, int firstFragment, int... restFragments) {
+    int latest = firstFragment;
+    for (int frag : restFragments) {
+      latest = pairwiseLastFragmentLoadingBefore(initialSeq, null, numSps, latest, frag);
+    }
+    return latest;
+  }
+
 
   public static void serializeTypes(List<JDeclaredType> types, ObjectOutputStream stream)
       throws IOException {
@@ -272,8 +285,9 @@ public class JProgram extends JNode {
    * The main logic behind {@link #lastFragmentLoadingBefore(int, int...)} and
    * {@link #lastFragmentLoadingBefore(List, int, int, int...)}.
    */
-  private static int pairwiseLastFragmentLoadingBefore(List<Integer> initialSeq, int numSps,
-      int frag1, int frag2) {
+  private static int pairwiseLastFragmentLoadingBefore(List<Integer> initialSeq,
+      FragmentPartitioningResult result, int numSps, int frag1, int frag2) {
+
     if (frag1 == frag2) {
       return frag1;
     }
@@ -286,10 +300,22 @@ public class JProgram extends JNode {
       return 0;
     }
 
-    // See if either is in the initial sequence
-    int initPos1 = initialSeq.indexOf(frag1);
-    int initPos2 = initialSeq.indexOf(frag2);
+    // TODO(acleung): While the logic for this is correct, the terminology used
+    // in the code is not correct when fragment partitioning is on.
+    // Once the new code splitter is the default. This function needs to be
+    // rewritten.
+    int sp1 = frag1;
+    int sp2 = frag2;
 
+    // If there were some fragment merging.
+    if (result != null) {
+      sp1 = result.getSplitPointFromFragmnet(sp1);
+      sp2 = result.getSplitPointFromFragmnet(sp2);
+    }
+    
+    int initPos1 = initialSeq.indexOf(sp1);
+    int initPos2 = initialSeq.indexOf(sp2);
+    
     // If both are in the initial sequence, then pick the earlier
     if (initPos1 >= 0 && initPos2 >= 0) {
       if (initPos1 < initPos2) {
@@ -309,8 +335,11 @@ public class JProgram extends JNode {
     assert (initPos1 < 0 && initPos2 < 0);
     assert (frag1 != frag2);
 
-    // They are both leftovers or exclusive. Leftovers goes first in all cases.
-    return CodeSplitter.getLeftoversFragmentNumber(numSps);
+    if (result != null) {
+      return result.getLeftoverFragmentIndex();
+    } else {
+      return CodeSplitter.getLeftoversFragmentNumber(numSps);
+    }
   }
 
   public final List<JClassType> codeGenTypes = new ArrayList<JClassType>();
@@ -369,6 +398,8 @@ public class JProgram extends JNode {
   private JClassType typeSpecialJavaScriptObject;
 
   private JClassType typeString;
+  
+  private FragmentPartitioningResult fragmentPartitioninResult;
 
   /**
    * Constructor.
@@ -897,8 +928,8 @@ public class JProgram extends JNode {
    * supplied fragments, or it might be a common predecessor.
    */
   public int lastFragmentLoadingBefore(int firstFragment, int... restFragments) {
-    return lastFragmentLoadingBefore(splitPointInitialSequence, runAsyncs.size(), firstFragment,
-        restFragments);
+    return lastFragmentLoadingBefore(splitPointInitialSequence, fragmentPartitioninResult,
+        runAsyncs.size(), firstFragment, restFragments);
   }
 
   public void putIntoTypeMap(String qualifiedBinaryName, JDeclaredType type) {
@@ -930,6 +961,10 @@ public class JProgram extends JNode {
     if (instanceMethod != null) {
       instanceToStaticMap.remove(instanceMethod);
     }
+  }
+
+  public void setFragmentPartitioningResult(FragmentPartitioningResult result) {
+    fragmentPartitioninResult = result;
   }
 
   public void setRunAsyncs(List<JRunAsync> runAsyncs) {

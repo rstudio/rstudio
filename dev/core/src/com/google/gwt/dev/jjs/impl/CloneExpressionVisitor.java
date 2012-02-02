@@ -41,6 +41,7 @@ import com.google.gwt.dev.jjs.ast.JNameOf;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
+import com.google.gwt.dev.jjs.ast.JNumericEntry;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
@@ -265,6 +266,12 @@ public class CloneExpressionVisitor extends JVisitor {
     return false;
   }
 
+  @Override
+  public boolean visit(JNumericEntry x, Context ctx) {
+    expression = new JNumericEntry(x.getSourceInfo(), x.getKey(), x.getValue());
+    return false;
+  }
+  
   @Override
   public boolean visit(JNullLiteral x, Context ctx) {
     expression = x;

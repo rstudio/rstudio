@@ -24,10 +24,10 @@ import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
-import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
+import com.google.gwt.dev.jjs.ast.JNumericEntry;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
@@ -100,7 +100,7 @@ public class ReplaceRunAsyncs {
         JMethod runAsyncMethod = program.getIndexedMethod("AsyncFragmentLoader.runAsync");
         assert runAsyncMethod != null;
         JMethodCall runAsyncCall = new JMethodCall(info, null, runAsyncMethod);
-        runAsyncCall.addArg(JIntLiteral.get(splitPoint));
+        runAsyncCall.addArg(new JNumericEntry(info, "RunAsyncFragmentIndex", splitPoint));
         runAsyncCall.addArg(asyncCallback);
 
         JReferenceType callbackType = (JReferenceType) asyncCallback.getType();
@@ -188,7 +188,7 @@ public class ReplaceRunAsyncs {
         JMethodCall newCall =
             new JMethodCall(info, null, program
                 .getIndexedMethod("RunAsyncCode.forSplitPointNumber"));
-        newCall.addArg(program.getLiteralInt(splitPoint));
+        newCall.addArg(new JNumericEntry(info, "RunAsyncFragmentIndex", splitPoint));
         ctx.replaceMe(newCall);
       }
     }
@@ -269,6 +269,7 @@ public class ReplaceRunAsyncs {
   private void setNumEntriesInAsyncFragmentLoader(int entryCount) {
     JMethodCall constructorCall = getBrowserLoaderConstructor(program);
     assert constructorCall.getArgs().get(0).getType() == JPrimitiveType.INT;
-    constructorCall.setArg(0, program.getLiteralInt(entryCount));
+    constructorCall.setArg(0,
+        new JNumericEntry(constructorCall.getSourceInfo(), "RunAsyncFragmentCount", entryCount));
   }
 }

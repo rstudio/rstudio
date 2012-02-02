@@ -48,6 +48,7 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNullLiteral;
 import com.google.gwt.dev.js.ast.JsNumberLiteral;
+import com.google.gwt.dev.js.ast.JsNumericEntry;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsOperator;
 import com.google.gwt.dev.js.ast.JsParameter;
@@ -779,6 +780,12 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     } else {
       p.print(Double.toString(dvalue));
     }
+    return false;
+  }
+  
+  @Override
+  public boolean visit(JsNumericEntry x, JsContext ctx) {
+    p.print(Integer.toString(x.getValue()));
     return false;
   }
 

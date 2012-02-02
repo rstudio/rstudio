@@ -38,6 +38,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean soycHtmlDisabled = false;
   private boolean strict = false;
   private boolean closureCompilerEnabled;
+  private int fragmentsMerge = -1;
 
   public JJSOptionsImpl() {
   }
@@ -60,8 +61,14 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setSoycHtmlDisabled(other.isSoycHtmlDisabled());
     setStrict(other.isStrict());
     setClosureCompilerEnabled(other.isClosureCompilerEnabled());
+    setFragmentsMerge(other.getFragmentsMerge());
   }
-
+  
+  @Override
+  public int getFragmentsMerge() {
+    return fragmentsMerge;
+  }
+  
   @Override
   public int getOptimizationLevel() {
     return optimizationLevel;
@@ -167,6 +174,11 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   }
 
   @Override
+  public void setFragmentsMerge(int numFragments) {
+    this.fragmentsMerge = numFragments;
+  }
+
+  @Override
   public void setOptimizationLevel(int level) {
     optimizationLevel = level;
   }
@@ -205,4 +217,5 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   public void setStrict(boolean strict) {
     this.strict = strict;
   }
+
 }

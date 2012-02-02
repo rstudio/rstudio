@@ -49,6 +49,11 @@ class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl implements Precom
   }
 
   @Override
+  public int getFragmentsMerge() {
+    return jjsOptions.getFragmentsMerge();
+  }
+
+  @Override
   public File getGenDir() {
     return genDir;
   }
@@ -185,6 +190,11 @@ class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl implements Precom
   @Override
   public void setEnabledGeneratingOnShards(boolean enabled) {
     enableGeneratingOnShards = enabled;
+  }
+
+  @Override
+  public void setFragmentsMerge(int numFragments) {
+    jjsOptions.setFragmentsMerge(numFragments);
   }
 
   @Override

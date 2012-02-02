@@ -202,6 +202,9 @@ public class JsVisitor {
 
   public void endVisit(JsNumberLiteral x, JsContext ctx) {
   }
+  
+  public void endVisit(JsNumericEntry x, JsContext ctx) {
+  }
 
   public void endVisit(JsObjectLiteral x, JsContext ctx) {
   }
@@ -359,6 +362,10 @@ public class JsVisitor {
   }
 
   public boolean visit(JsNumberLiteral x, JsContext ctx) {
+    return true;
+  }
+  
+  public boolean visit(JsNumericEntry x, JsContext ctx) {
     return true;
   }
 
