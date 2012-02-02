@@ -496,7 +496,7 @@ public class TextEditingTarget implements EditingTarget
             {
                // show warning and bail 
                view_.showWarningBar(
-                  "Unknown Rnw weave type '" + rnwWeaveDirective.getName() + 
+                  "Unknown Rnw weave method '" + rnwWeaveDirective.getName() + 
                   "' specified (valid types are " + 
                   rnwWeaveRegistry_.getPrintableTypeNames() +  ")");
                

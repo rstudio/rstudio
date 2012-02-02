@@ -16,6 +16,7 @@
 #include <string>
 
 #include <boost/regex.hpp>
+#include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <core/Log.hpp>
@@ -41,10 +42,164 @@ namespace tex {
 
 namespace {
 
-std::string sweaveEngineForFile(const FilePath& rnwPath)
+class RnwWeave : boost::noncopyable
+{
+public:
+   explicit RnwWeave(const std::string& name,
+                     const std::string& packageName = "")
+   {
+      name_ = name;
+      packageName_ = !packageName.empty() ? packageName : name;
+   }
+
+   virtual ~RnwWeave()
+   {
+   }
+
+   // COPYING: noncopyable (to prevent slicing)
+
+   const std::string& name() const { return name_; }
+   const std::string& packageName() const { return packageName_; }
+
+   virtual std::vector<std::string> commandArgs(
+                                    const std::string& file) const = 0;
+
+private:
+   std::string name_;
+   std::string packageName_;
+};
+
+class RnwSweave : public RnwWeave
+{
+public:
+   RnwSweave()
+      : RnwWeave("Sweave")
+   {
+   }
+
+#ifdef _WIN32
+   virtual std::vector<std::string> commandArgs(const std::string& file) const
+   {
+      std::vector<std::string> args;
+      std::string sweaveCmd = "\"Sweave('" + file + "')\"";
+      args.push_back("-e");
+      args.push_back(sweaveCmd);
+      args.push_back("--silent");
+      return args;
+   }
+#else
+   virtual std::vector<std::string> commandArgs(const std::string& file) const
+   {
+      std::vector<std::string> args;
+      args.push_back("CMD");
+      args.push_back("Sweave");
+      args.push_back(file);
+      return args;
+   }
+#endif
+};
+
+class RnwExternalWeave : public RnwWeave
+{
+public:
+   RnwExternalWeave(const std::string& name,
+                    const std::string& packageName,
+                    const std::string& cmdFmt)
+     : RnwWeave(name, packageName), cmdFmt_(cmdFmt)
+   {
+
+   }
+
+   virtual std::vector<std::string> commandArgs(const std::string& file) const
+   {
+      std::vector<std::string> args;
+      args.push_back("--silent");
+      args.push_back("-e");
+      std::string cmd = boost::str(boost::format(cmdFmt_) % file);
+      args.push_back(cmd);
+      return args;
+   }
+
+private:
+   std::string cmdFmt_;
+};
+
+class RnwPgfSweave : public RnwExternalWeave
+{
+public:
+   RnwPgfSweave()
+      : RnwExternalWeave("pgfSweave",
+                         "pgfSweave",
+                         "require(pgfSweave); pgfSweave('%1%')")
+   {
+   }
+};
+
+class RnwKnitr : public RnwExternalWeave
+{
+public:
+   RnwKnitr()
+      : RnwExternalWeave("knitr",
+                         "knitr",
+                         "require(knitr); knit('%1%')")
+   {
+   }
+};
+
+
+class RnwWeaveRegistry : boost::noncopyable
+{
+private:
+   RnwWeaveRegistry()
+   {
+      weaveTypes_.push_back(boost::shared_ptr<RnwWeave>(new RnwSweave()));
+      weaveTypes_.push_back(boost::shared_ptr<RnwWeave>(new RnwPgfSweave()));
+      weaveTypes_.push_back(boost::shared_ptr<RnwWeave>(new RnwKnitr()));
+   }
+   friend const RnwWeaveRegistry& weaveRegistry();
+
+public:
+
+   std::string printableTypeNames() const
+   {
+      std::string str;
+      for (std::size_t i=0; i<weaveTypes_.size(); i++)
+      {
+         str.append(weaveTypes_[i]->name());
+         if (i != (weaveTypes_.size() - 1))
+            str.append(", ");
+         if (i == (weaveTypes_.size() - 2))
+            str.append("and ");
+      }
+      return str;
+   }
+
+   boost::shared_ptr<RnwWeave> findTypeIgnoreCase(const std::string& name)
+                                                                        const
+   {
+      BOOST_FOREACH(boost::shared_ptr<RnwWeave> weaveType, weaveTypes_)
+      {
+         if (boost::algorithm::iequals(weaveType->name(), name))
+            return weaveType;
+      }
+
+      return boost::shared_ptr<RnwWeave>();
+   }
+
+private:
+   std::vector<boost::shared_ptr<RnwWeave> > weaveTypes_;
+};
+
+
+const RnwWeaveRegistry& weaveRegistry()
+{
+   static RnwWeaveRegistry instance;
+   return instance;
+}
+
+std::string weaveTypeForFile(const FilePath& rnwPath)
 {
    // first see if the file contains an rnw weave magic comment
-   std::string rnwWeaveDirective;
    std::vector<core::tex::TexMagicComment> magicComments;
    Error error = core::tex::parseMagicComments(rnwPath, &magicComments);
    if (!error)
@@ -54,14 +209,7 @@ std::string sweaveEngineForFile(const FilePath& rnwPath)
          if (boost::algorithm::iequals(mc.scope(), "rnw") &&
              boost::algorithm::iequals(mc.variable(), "weave"))
          {
-            if (boost::algorithm::iequals(mc.value(), "sweave"))
-               rnwWeaveDirective = "Sweave";
-            else if (boost::algorithm::iequals(mc.value(), "knitr"))
-               rnwWeaveDirective = "knitr";
-            else
-               rnwWeaveDirective = mc.value();
-
-            break;
+            return mc.value();
          }
       }
    }
@@ -70,10 +218,8 @@ std::string sweaveEngineForFile(const FilePath& rnwPath)
       LOG_ERROR(error);
    }
 
-   // return the correct sweave engine
-   if (!rnwWeaveDirective.empty())
-      return rnwWeaveDirective;
-   else if (projects::projectContext().hasProject())
+   // if we didn't find a directive then inspect project & global config
+   if (projects::projectContext().hasProject())
       return projects::projectContext().config().defaultSweaveEngine;
    else
       return userSettings().defaultSweaveEngine();
@@ -82,41 +228,6 @@ std::string sweaveEngineForFile(const FilePath& rnwPath)
 FilePath pdfPathForTexPath(const FilePath& texPath)
 {
    return texPath.parent().complete(texPath.stem() + ".pdf");
-}
-
-#ifdef _WIN32
-
-std::vector<std::string> sweaveArgs(const std::string& file)
-{
-   std::vector<std::string> args;
-   std::string sweaveCmd = "\"Sweave('" + file + "')\"";
-   args.push_back("-e");
-   args.push_back(sweaveCmd);
-   args.push_back("--silent");
-   return args;
-}
-
-#else
-
-std::vector<std::string> sweaveArgs(const std::string& file)
-{
-   std::vector<std::string> args;
-   args.push_back("CMD");
-   args.push_back("Sweave");
-   args.push_back(file);
-   return args;
-}
-
-#endif
-
-std::vector<std::string> knitrArgs(const std::string& file)
-{
-   std::vector<std::string> args;
-   std::string knitrCmd = "require(knitr); knit('" + file + "')";
-   args.push_back("--silent");
-   args.push_back("-e");
-   args.push_back(knitrCmd);
-   return args;
 }
 
 
@@ -133,42 +244,42 @@ bool callSweave(const std::string& rBinDir,
    // calculate the full path to the file then use it to determine
    // the active sweave engine
    FilePath rnwPath = module_context::resolveAliasedPath(file);
-   std::string sweaveEngine = sweaveEngineForFile(rnwPath);
+   std::string weaveType = weaveTypeForFile(rnwPath);
+   boost::shared_ptr<RnwWeave> pRnwWeave = weaveRegistry()
+                                             .findTypeIgnoreCase(weaveType);
 
-   // args differ by back-end
-   std::vector<std::string> args;
-   if (sweaveEngine == "Sweave")
+   // run the weave
+   if (pRnwWeave)
    {
-      args = sweaveArgs(file);
-   }
-   else if (sweaveEngine == "knitr")
-   {
-      args = knitrArgs(file);
+      std::vector<std::string> args = pRnwWeave->commandArgs(file);
+
+      // call back-end
+      int exitStatus;
+      Error error = module_context::executeInterruptableChild(path,
+                                                              args,
+                                                              &exitStatus);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return false;
+      }
+      else if (exitStatus != EXIT_SUCCESS)
+      {
+         return false;
+      }
+      else
+      {
+         return true;
+      }
    }
    else
    {
       throw r::exec::RErrorException(
-            "Unknown Rnw weave method: " + sweaveEngine + " (valid values " +
-            "are Sweave and knitr)");
-   }
+         "Unknown Rnw weave method '" + weaveType + "' specified (valid " +
+         "values are " + weaveRegistry().printableTypeNames() + ")");
 
-   // call back-end
-   int exitStatus;
-   Error error = module_context::executeInterruptableChild(path,
-                                                           args,
-                                                           &exitStatus);
-   if (error)
-   {
-      LOG_ERROR(error);
+      // keep compiler happy
       return false;
-   }
-   else if (exitStatus != EXIT_SUCCESS)
-   {
-      return false;
-   }
-   else
-   {
-      return true;
    }
 }
 

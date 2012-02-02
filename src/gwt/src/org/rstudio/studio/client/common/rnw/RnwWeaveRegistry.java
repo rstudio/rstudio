@@ -25,7 +25,7 @@ public class RnwWeaveRegistry
    {
       defaultType_ = new RnwSweave();
       register(defaultType_);
-      //register(new RnwPgfSweave());
+      register(new RnwPgfSweave());
       register(new RnwKnitr());
    }
    
