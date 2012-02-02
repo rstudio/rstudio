@@ -99,10 +99,15 @@ public class TextFileType extends EditableFileType
    {
       return canCompilePDF_;
    }
-
+   
    public boolean canAutoIndent()
    {
       return canAutoIndent_;
+   }
+   
+   public boolean isRnw()
+   {
+      return FileTypeRegistry.SWEAVE.getTypeId().equals(getTypeId());
    }
 
    public HashSet<AppCommand> getSupportedCommands(Commands commands)

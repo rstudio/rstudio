@@ -25,6 +25,7 @@ public class RnwWeaveRegistry
    {
       defaultType_ = new RnwSweave();
       register(defaultType_);
+      //register(new RnwPgfSweave());
       register(new RnwKnitr());
    }
    
@@ -39,6 +40,21 @@ public class RnwWeaveRegistry
       for (int i=0; i<weaveTypes_.size(); i++)
          typeNames[i] = weaveTypes_.get(i).getName();
       return typeNames;
+   }
+   
+   public String getPrintableTypeNames()
+   {
+      StringBuffer str = new StringBuffer();
+      String[] typeNames = getTypeNames();
+      for (int i=0; i<typeNames.length; i++)
+      {
+         str.append(typeNames[i]);
+         if (i != (typeNames.length - 1))
+            str.append(", ");
+         if (i == (typeNames.length - 2))
+            str.append("and ");
+      }
+      return str.toString();
    }
    
    public ArrayList<RnwWeave> getTypes()

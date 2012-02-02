@@ -55,6 +55,9 @@ import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.rnw.RnwWeave;
+import org.rstudio.studio.client.common.rnw.RnwWeaveDirective;
+import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -203,6 +206,7 @@ public class TextEditingTarget implements EditingTarget
                             GlobalDisplay globalDisplay,
                             FileDialogs fileDialogs,
                             FileTypeRegistry fileTypeRegistry,
+                            RnwWeaveRegistry rnwWeaveRegistry,
                             ConsoleDispatcher consoleDispatcher,
                             WorkbenchContext workbenchContext,
                             Provider<PublishPdf> pPublishPdf,
@@ -217,6 +221,7 @@ public class TextEditingTarget implements EditingTarget
       globalDisplay_ = globalDisplay;
       fileDialogs_ = fileDialogs;
       fileTypeRegistry_ = fileTypeRegistry;
+      rnwWeaveRegistry_ = rnwWeaveRegistry;
       consoleDispatcher_ = consoleDispatcher;
       workbenchContext_ = workbenchContext;
       session_ = session;
@@ -478,32 +483,49 @@ public class TextEditingTarget implements EditingTarget
    
    private void validateRequiredComponents()
    {
-      // for Rnw we first scan for directive
-      String rnwWeave = null;
-      boolean hasRnwWeaveDirective = false;
-      boolean isRnw = FileTypeRegistry.SWEAVE.getTypeId().equals(fileType_.getTypeId());
-      if (isRnw)
+      // for Rnw we first determine the RnwWeave type
+      RnwWeave rnwWeave = null;
+      RnwWeaveDirective rnwWeaveDirective = null;
+      if (fileType_.isRnw())
       {
-         rnwWeave = detectRnwWeaveDirective();
-         if (rnwWeave == null)
-            rnwWeave = prefs_.defaultSweaveEngine().getValue();
+         rnwWeaveDirective = detectRnwWeaveDirective();
+         if (rnwWeaveDirective != null) 
+         {
+            rnwWeave = rnwWeaveDirective.getRnwWeave();
+            if (rnwWeave == null)
+            {
+               // show warning and bail 
+               view_.showWarningBar(
+                  "Unknown Rnw weave type '" + rnwWeaveDirective.getName() + 
+                  "' specified (valid types are " + 
+                  rnwWeaveRegistry_.getPrintableTypeNames() +  ")");
+               
+               return;
+            }    
+         }
          else
-            hasRnwWeaveDirective = true;
+         {
+            rnwWeave = rnwWeaveRegistry_.findTypeIgnoreCase(
+                                    prefs_.defaultSweaveEngine().getValue());
+         }     
       }
       
+       
       final SessionInfo sessionInfo = session_.getSessionInfo();
       TexCapabilities texCap = sessionInfo.getTexCapabilities();
 
       final boolean checkForTeX = fileType_.canCompilePDF() && 
                                   !texCap.isTexInstalled();
       
-      final boolean checkForKnitr = isRnw &&
-                                    rnwWeave.equals("knitr") &&
-                                    !texCap.isKnitrInstalled();
-      
-      if (checkForTeX || checkForKnitr)
+      final boolean checkForRnwWeave = (rnwWeave != null) && 
+                                       !rnwWeave.isAvailable(texCap);
+                                 
+      if (checkForTeX || checkForRnwWeave)
       {
-         final boolean rnwWeaveFileOverride = hasRnwWeaveDirective;
+         // alias variables to finals
+         final boolean hasRnwWeaveDirective = rnwWeaveDirective != null;
+         final RnwWeave fRnwWeave = rnwWeave;
+         
          server_.getTexCapabilities(new ServerRequestCallback<TexCapabilities>()
          {
             @Override
@@ -520,18 +542,20 @@ public class TextEditingTarget implements EditingTarget
                                "may not be able to compile.";
                   view_.showWarningBar(warning);
                }
-               else if (checkForKnitr && !response.isKnitrInstalled())
+               else if (checkForRnwWeave && !fRnwWeave.isAvailable(response))
                {
                   String forContext = "";
-                  if (rnwWeaveFileOverride)
+                  if (hasRnwWeaveDirective)
                      forContext = "this file";
                   else if (sessionInfo.getActiveProjectFile() != null)
                      forContext = "Rnw files for this project"; 
                   else
                      forContext = "Rnw files";
+                  
                   view_.showWarningBar(
-                      "knitr is configured to weave " + forContext + " " +
-                      "however the knitr package is not installed.");
+                     fRnwWeave.getName() + " is configured to weave " + 
+                     forContext + " " + "however the " + 
+                     fRnwWeave.getPackageName() + " package is not installed.");
                }
                else
                {
@@ -552,26 +576,17 @@ public class TextEditingTarget implements EditingTarget
       }
    }
    
-   private String detectRnwWeaveDirective()
+   private RnwWeaveDirective detectRnwWeaveDirective()
    {
       ArrayList<TexMagicComment> magicComments = 
                         TexMagicComment.parseComments(docDisplay_.getCode());
       
       for (TexMagicComment comment : magicComments)
       {
-         if (comment.getScope().equalsIgnoreCase("rnw") &&
-             comment.getVariable().equalsIgnoreCase("weave"))
-         {
-            // normalize case
-            if (comment.getValue().equalsIgnoreCase("sweave"))
-               return "Sweave";
-            else if (comment.getValue().equalsIgnoreCase("knitr"))
-               return "knitr";
-            else
-               // server will flag this an unregognized
-               return comment.getValue();
-
-         }
+         RnwWeaveDirective rnwWeaveDirective = 
+                           RnwWeaveDirective.fromTexMagicComment(comment);
+         if (rnwWeaveDirective != null)
+            return rnwWeaveDirective;
       }
       
       return null;
@@ -2077,6 +2092,7 @@ public class TextEditingTarget implements EditingTarget
    private final GlobalDisplay globalDisplay_;
    private final FileDialogs fileDialogs_;
    private final FileTypeRegistry fileTypeRegistry_;
+   private final RnwWeaveRegistry rnwWeaveRegistry_;
    private final ConsoleDispatcher consoleDispatcher_;
    private final WorkbenchContext workbenchContext_;
    private final Session session_;

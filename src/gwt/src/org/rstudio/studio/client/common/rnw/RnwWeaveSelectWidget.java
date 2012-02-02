@@ -21,6 +21,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.views.source.model.TexServerOperations;
 
@@ -51,6 +52,10 @@ public class RnwWeaveSelectWidget extends SelectWidget
    
    protected void verifyAvailable(final RnwWeave weave)
    {
+      // first check if it was already available at startup
+      if (weave.isAvailable(session_.getSessionInfo().getTexCapabilities()))
+         return;
+      
       server_.getTexCapabilities(new ServerRequestCallback<TexCapabilities>() {
 
          @Override
@@ -97,16 +102,18 @@ public class RnwWeaveSelectWidget extends SelectWidget
 
    @Inject
    void initialize(GlobalDisplay globalDisplay,
-                   TexServerOperations server)
+                   TexServerOperations server,
+                   Session session)
    {
       globalDisplay_ = globalDisplay;
       server_ = server;
+      session_ = session;
    }
    
    
    private TexServerOperations server_;
    private GlobalDisplay globalDisplay_;
-   
+   private Session session_;
    
    public static final RnwWeaveRegistry rnwWeaveRegistry_ = 
                            RStudioGinjector.INSTANCE.getRnwWeaveRegistry();
