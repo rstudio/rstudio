@@ -27,6 +27,15 @@
 
 #include <session/SessionModuleContext.hpp>
 
+// TODO: why does R texi2dvi set LC_COLLATE=C?
+
+// TODO: respect getOption("texi2dvi") and fallback appropriately
+
+// TODO: investigate other texi2dvi and pdflatex options
+//         -- shell-escape
+//         -- clean
+//         -- alternative output file location
+
 using namespace core;
 
 namespace session {
