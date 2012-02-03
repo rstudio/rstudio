@@ -64,7 +64,7 @@ SEXP rs_analyzeWord(SEXP wordSEXP)
    std::string word = r::sexp::asString(wordSEXP);
    std::vector<std::string> res;
 
-   s_pSpellChecker->suggestionList(word,&res);
+   s_pSpellChecker->analyzeWord(word,&res);
 
    r::sexp::Protect rProtect;
    return r::sexp::create(res,&rProtect);
@@ -101,7 +101,7 @@ Error initialize()
    return createHunspell(enUSPath.childPath("en_US.aff"),
                          enUSPath.childPath("en_US.dic"),
                          &s_pSpellChecker,
-                         r::util::iconvstr);
+                         &r::util::iconvstr);
 }
 
 

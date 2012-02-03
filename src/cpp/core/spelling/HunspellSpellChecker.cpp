@@ -52,7 +52,7 @@ public:
 
    Error initialize(const FilePath& affPath,
                     const FilePath& dicPath,
-                    const iconvstrFunction iconvstrFunc)
+                    const IconvstrFunction& iconvstrFunc)
    {
       // validate that dictionaries exist
       if (!affPath.exists())
@@ -128,7 +128,7 @@ public:
 
 private:
    boost::scoped_ptr<Hunspell> pHunspell_;
-   iconvstrFunction iconvstrFunc_;
+   IconvstrFunction iconvstrFunc_;
    std::string encoding_;
 };
 
@@ -137,7 +137,7 @@ private:
 core::Error createHunspell(const FilePath& affPath,
                            const FilePath& dicPath,
                            boost::shared_ptr<SpellChecker>* pHunspell,
-                           const iconvstrFunction iconvstrFunc)
+                           const IconvstrFunction& iconvstrFunc)
 {
    // create the hunspell engine
    boost::shared_ptr<HunspellSpellChecker> pNew(new HunspellSpellChecker());

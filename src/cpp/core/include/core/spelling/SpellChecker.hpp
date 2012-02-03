@@ -42,12 +42,12 @@ typedef boost::function<core::Error(const std::string&,
                                     const std::string&,
                                     const std::string&,
                                     bool,
-                                    std::string*)> iconvstrFunction;
+                                    std::string*)> IconvstrFunction;
 
 core::Error createHunspell(const core::FilePath& affPath,
                            const core::FilePath& dicPath,
                            boost::shared_ptr<SpellChecker>* pHunspell,
-                           const iconvstrFunction iconvstrFunc);
+                           const IconvstrFunction& iconvstrFunc);
 
 
 } // namespace spelling
