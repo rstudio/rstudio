@@ -27,9 +27,9 @@
 
 #include <session/SessionModuleContext.hpp>
 
-// TODO: why does R texi2dvi set LC_COLLATE=C?
+// TODO: refactor
 
-// TODO: respect getOption("texi2dvi") and fallback appropriately?
+// TODO: why does R texi2dvi set LC_COLLATE=C?
 
 // TODO: investigate other texi2dvi and pdflatex options
 //         -- shell-escape
@@ -38,8 +38,6 @@
 
 // TODO: emulate texi2dvi on linux to workaround debian tilde
 //       escaping bug (http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=534458)
-
-// TODO: should we wrap PDFLATEX in a script?
 
 // TODO: verify we got all of the shell/path escaping right
 
@@ -136,16 +134,16 @@ core::system::Option texEnvVar(const std::string& name,
 core::system::Option pdfLatexEnvVar()
 {
 #ifdef _WIN32
+   const char* const kScriptEx = ".cmd";
+#else
+   const char* const kScriptEx = ".sh";
+#endif
+
    FilePath texScriptsPath = session::options().texScriptsPath();
-   FilePath pdfLatexPath = texScriptsPath.complete("rstudio-pdflatex.cmd");
+   FilePath pdfLatexPath = texScriptsPath.complete("rstudio-pdflatex" +
+                                                   std::string(kScriptEx));
    std::string path = string_utils::utf8ToSystem(pdfLatexPath.absolutePath());
    return std::make_pair("PDFLATEX", path);
-#else
-   std::string pdfLatexCmd =
-      string_utils::utf8ToSystem(texBinaryPath("pdflatex").absolutePath());
-   pdfLatexCmd += " --file-line-error --synctex=-1";
-   return std::make_pair("PDFLATEX", pdfLatexCmd);
-#endif
 }
 
 core::system::Options texEnvironmentVars(const std::string&)
