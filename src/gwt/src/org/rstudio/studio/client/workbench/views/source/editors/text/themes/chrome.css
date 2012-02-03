@@ -7,17 +7,24 @@
 }
 
 .ace_gutter {
+  width: 50px;
   background: #e8e8e8;
   color: #333;
+  overflow : hidden;
+}
+
+.ace_gutter-layer {
+  width: 100%;
+  text-align: right;
+}
+
+.ace_gutter-layer .ace_gutter-cell {
+  padding-right: 6px;
 }
 
 .ace_print_margin {
   width: 1px;
   background: #e8e8e8;
-}
-
-.ace_fold {
-    background-color: #0000A2;
 }
 
 .ace_text-layer {
@@ -58,6 +65,9 @@
   color: white;
 }
 
+.ace_line .ace_fold {
+}
+
 .ace_line .ace_support.ace_function {
   color: rgb(60, 76, 114);
 }
@@ -76,19 +86,19 @@
 }
 
 .ace_line .ace_string {
-  color: rgb(3, 106, 7);
+  color: #1919a6;
 }
 
 .ace_line .ace_comment {
-  color: rgb(76, 136, 107);
+  color: #236e24;
 }
 
 .ace_line .ace_comment.ace_doc {
-  color: rgb(0, 102, 255);
+  color: #236e24;
 }
 
 .ace_line .ace_comment.ace_doc.ace_tag {
-  color: rgb(128, 159, 191);
+  color: #236e24;
 }
 
 .ace_line .ace_constant.ace_numeric {
@@ -146,11 +156,15 @@
 }
 
 .ace_meta.ace_tag {
-  color:rgb(28, 2, 255);
+  color: rgb(147, 15, 128);
 }
 
 .ace_string.ace_regex {
   color: rgb(255, 0, 0)
+}
+
+.ace_entity.ace_other.ace_attribute-name{
+  color: #994409;
 }
 .nocolor.ace_editor .ace_line span {color: blue !important;}
 .ace_bracket {margin: 0 !important; border: 0 !important; background-color: rgb(192, 192, 192);}

@@ -17,7 +17,7 @@
 }
 
 .ace_fold {
-    background-color: #0000A2;
+    background-color: #00F;
 }
 
 .ace_text-layer {
@@ -68,7 +68,11 @@
 
 .ace_line .ace_support.ace_type,
 .ace_line .ace_support.ace_class {
-  color: rgb(109, 121, 222);
+  color: #009;
+}
+
+.ace_line .ace_support.ace_php_tag {
+  color: #f00;
 }
 
 .ace_line .ace_keyword.ace_operator {
@@ -76,7 +80,7 @@
 }
 
 .ace_line .ace_string {
-  color: rgb(3, 106, 7);
+  color: #00F;
 }
 
 .ace_line .ace_comment {
@@ -96,7 +100,7 @@
 }
 
 .ace_line .ace_variable {
-  color: rgb(49, 132, 149);
+  color: #06F
 }
 
 .ace_line .ace_xml_pe {
@@ -104,7 +108,7 @@
 }
 
 .ace_entity.ace_name.ace_function {
-  color: #0000A2;
+  color: #00F;
 }
 
 .ace_markup.ace_markupine {
@@ -146,7 +150,31 @@
 }
 
 .ace_meta.ace_tag {
-  color:rgb(28, 2, 255);
+  color:#009;
+}
+
+.ace_meta.ace_tag.ace_anchor {
+  color:#060;
+}
+
+.ace_meta.ace_tag.ace_form {
+  color:#F90;
+}
+
+.ace_meta.ace_tag.ace_image {
+  color:#909;
+}
+
+.ace_meta.ace_tag.ace_script {
+  color:#900;
+}
+
+.ace_meta.ace_tag.ace_style {
+  color:#909;
+}
+
+.ace_meta.ace_tag.ace_table {
+  color:#099;
 }
 
 .ace_string.ace_regex {

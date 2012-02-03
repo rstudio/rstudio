@@ -51,7 +51,7 @@ define("mode/r_background_highlighter", function(require, exports, module)
             if (!!this.$rowState[row] != !!this.$markers[row]) {
                if (this.$rowState[row]) {
                   this.$markers[row] = this.$session.addMarker(new Range(row, 0, row, this.$session.getLine(row).length),
-                                                               "ace_active_line",
+                                                               "ace_foreign_line",
                                                                "background",
                                                                false);
                }

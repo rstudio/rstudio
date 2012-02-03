@@ -7,8 +7,19 @@
 }
 
 .ace_gutter {
+  width: 50px;
   background: #e8e8e8;
   color: #333;
+  overflow : hidden;
+}
+
+.ace_gutter-layer {
+  width: 100%;
+  text-align: right;
+}
+
+.ace_gutter-layer .ace_gutter-cell {
+  padding-right: 6px;
 }
 
 .ace_print_margin {
@@ -16,12 +27,9 @@
   background: #e8e8e8;
 }
 
-.ace_fold {
-    background-color: #0000A2;
-}
-
 .ace_text-layer {
   cursor: text;
+  color: rgb(64, 64, 64);
 }
 
 .ace_cursor {
@@ -32,9 +40,13 @@
   border-left: 0px;
   border-bottom: 1px solid black;
 }
-        
+
 .ace_line .ace_invisible {
   color: rgb(191, 191, 191);
+}
+
+.ace_line .ace_identifier {
+  color: black;
 }
 
 .ace_line .ace_keyword {
@@ -46,7 +58,7 @@
 }
 
 .ace_line .ace_constant.ace_language {
-  color: rgb(88, 92, 246);
+  color: rgb(255, 156, 0);
 }
 
 .ace_line .ace_constant.ace_library {
@@ -54,12 +66,15 @@
 }
 
 .ace_line .ace_invalid {
-  background-color: rgb(153, 0, 0);
-  color: white;
+  text-decoration: line-through;
+  color: rgb(224, 0, 0);
+}
+
+.ace_line .ace_fold {
 }
 
 .ace_line .ace_support.ace_function {
-  color: rgb(60, 76, 114);
+  color: rgb(192, 0, 0);
 }
 
 .ace_line .ace_support.ace_constant {
@@ -72,11 +87,11 @@
 }
 
 .ace_line .ace_keyword.ace_operator {
-  color: rgb(104, 118, 135);
+  color: rgb(49, 132, 149);
 }
 
 .ace_line .ace_string {
-  color: rgb(3, 106, 7);
+  color: rgb(128, 0, 128);
 }
 
 .ace_line .ace_comment {
@@ -92,31 +107,15 @@
 }
 
 .ace_line .ace_constant.ace_numeric {
-  color: rgb(0, 0, 205);
+  color: rgb(0, 0, 64);
 }
 
 .ace_line .ace_variable {
-  color: rgb(49, 132, 149);
+  color: rgb(0, 64, 128);
 }
 
 .ace_line .ace_xml_pe {
   color: rgb(104, 104, 91);
-}
-
-.ace_entity.ace_name.ace_function {
-  color: #0000A2;
-}
-
-.ace_markup.ace_markupine {
-    text-decoration:underline;
-}
-
-.ace_markup.ace_heading {
-  color: rgb(12, 7, 255);
-}
-
-.ace_markup.ace_list {
-  color:rgb(185, 6, 144);
 }
 
 .ace_marker-layer .ace_selection {
@@ -137,7 +136,11 @@
 }
 
 .ace_marker-layer .ace_active_line {
-  background: rgba(0, 0, 0, 0.07);
+  background: rgb(232, 242, 254);
+}
+
+.ace_meta.ace_tag {
+  color:rgb(28, 2, 255);
 }
 
 .ace_marker-layer .ace_selected_word {
@@ -145,13 +148,9 @@
   border: 1px solid rgb(200, 200, 250);
 }
 
-.ace_meta.ace_tag {
-  color:rgb(28, 2, 255);
-}
-
 .ace_string.ace_regex {
-  color: rgb(255, 0, 0)
+  color: rgb(192, 0, 192);
 }
 .nocolor.ace_editor .ace_line span {color: blue !important;}
 .ace_bracket {margin: 0 !important; border: 0 !important; background-color: rgb(192, 192, 192);}
-.ace_marker-layer .ace_foreign_line {background-color: rgb(248, 248, 248);}
+.ace_marker-layer .ace_foreign_line {background-color: rgb(235, 235, 235);}
