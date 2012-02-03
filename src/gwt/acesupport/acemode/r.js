@@ -147,8 +147,8 @@ define("mode/r", function(require, exports, module)
 
             // If newline in a doxygen comment, continue the comment
             var pos = editor.getSelectionRange().start;
-            var match = /^(\s*#+'\s*)/.exec(session.doc.getLine(pos.row));
-            if (match) {
+            var match = /^((\s*#+')\s*)/.exec(session.doc.getLine(pos.row));
+            if (match && editor.getSelectionRange().start.column >= match[2].length) {
                return {text: "\n" + match[1]};
             }
          }
