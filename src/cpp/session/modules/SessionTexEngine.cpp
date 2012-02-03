@@ -29,12 +29,15 @@
 
 // TODO: why does R texi2dvi set LC_COLLATE=C?
 
-// TODO: respect getOption("texi2dvi") and fallback appropriately
+// TODO: respect getOption("texi2dvi") and fallback appropriately?
 
 // TODO: investigate other texi2dvi and pdflatex options
 //         -- shell-escape
 //         -- clean
 //         -- alternative output file location
+
+// TODO: emulate texi2dvi on linux to workaround debian tilde
+//       escaping bug (http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=534458)
 
 // TODO: should we wrap PDFLATEX in a script?
 
