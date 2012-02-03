@@ -57,6 +57,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionSpelling.cpp
    modules/SessionSVN.cpp
    modules/SessionTeX.cpp
+   modules/SessionTexEngine.cpp
    modules/SessionVCS.cpp
    modules/SessionWorkbench.cpp
    modules/SessionWorkspace.cpp

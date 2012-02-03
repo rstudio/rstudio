@@ -34,6 +34,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
+#include "SessionTexEngine.hpp"
+
 using namespace core;
 
 namespace session {
@@ -427,12 +429,12 @@ Error initialize()
    using namespace module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
+      (tex::engine::initialize)
       (bind(registerRpcMethod, "get_tex_capabilities", getTexCapabilities))
       (bind(sourceModuleRFile, "SessionTeX.R"))
       ;
   return initBlock.execute();
 }
-
 
 } // namespace tex
 } // namespace modules
