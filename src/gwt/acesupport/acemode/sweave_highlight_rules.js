@@ -41,6 +41,11 @@ var SweaveHighlightRules = function() {
         regex: "^@(?:\\s.*)?$",
         next: "start"
     });
+   this.$rules["r-start"].unshift({
+       token: "comment",
+       regex: "^\\<\\<.*\\>\\>=.*$",
+       next: "r-start"
+   });
 };
 
 oop.inherits(SweaveHighlightRules, TextHighlightRules);
