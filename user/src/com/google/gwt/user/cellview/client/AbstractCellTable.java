@@ -1921,14 +1921,15 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
       int relRow = absRow - getPageStart();
       int subrow = tableBuilder.getSubrowValueIndex(targetTableRow);
 
-      if (!skipRowHoverCheck && hoveringRow != targetTableRow) {
+      if (!skipRowHoverCheck) {
+        boolean isRowChange = hoveringRow != targetTableRow;
         if (BrowserEvents.MOUSEOVER.equals(eventType)) {
           // Unstyle the old row if it is still part of the table.
           if (hoveringRow != null && getTableBodyElement().isOrHasChild(hoveringRow)) {
-            setRowHover(hoveringRow, event, false);
+            setRowHover(hoveringRow, event, false, isRowChange);
           }
           hoveringRow = targetTableRow;
-          setRowHover(hoveringRow, event, true);
+          setRowHover(hoveringRow, event, true, isRowChange);
         } else if (BrowserEvents.MOUSEOUT.equals(eventType) && hoveringRow != null) {
           boolean unhover = true;
           if (!skipRowHoverFloatElementCheck) {
@@ -1946,7 +1947,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
             unhover = clientX < rowLeft || clientX > rowRight || clientY < rowTop || clientY > rowBottom;
           }
           if (unhover) {
-            setRowHover(hoveringRow, event, false);
+            setRowHover(hoveringRow, event, false, isRowChange);
             hoveringRow = null;
           }
         }
@@ -2574,18 +2575,23 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
 
   /**
    * Set a row's hovering style and fire a {@link RowHoverEvent}
-   * 
+   *
    * @param tr the row element
    * @param event the original event
    * @param isHovering false if this is an unhover event
+   * @param isRowChange true if the hover event is a full row change, false if it is a hover on a
+   *     cell. Row style update is called only on full row change.
    */
-  private void setRowHover(TableRowElement tr, Event event, boolean isHovering) {
+  private void setRowHover(TableRowElement tr, Event event, boolean isHovering,
+      boolean isRowChange) {
     if (!skipRowHoverStyleUpdate) {
       setRowStyleName(tr, style.hoveredRow(), style.hoveredRowCell(), isHovering);
     }
-    RowHoverEvent.fire(this, tr, event, !isHovering);
+    RowHoverEvent.fire(this, tr, event, !isHovering,
+        isRowChange ? RowHoverEvent.HoveringScope.ROW_HOVER
+            : RowHoverEvent.HoveringScope.CELL_HOVER);
   }
-  
+
   /**
    * Apply a style to a row and all cells in the row.
    * 
