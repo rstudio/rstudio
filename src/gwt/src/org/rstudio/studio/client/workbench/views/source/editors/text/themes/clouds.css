@@ -110,4 +110,4 @@
 }
 .nocolor.ace_editor .ace_line span {color:#AF956F !important;}
 .ace_bracket {margin: 0 !important; border: 0 !important; background-color: #BFBFBF;}
-.ace_marker-layer .ace_foreign_line {background-color: rgb(229, 229, 229);}
+.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(229, 229, 229);}

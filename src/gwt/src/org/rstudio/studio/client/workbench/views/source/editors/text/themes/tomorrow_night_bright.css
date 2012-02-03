@@ -132,4 +132,4 @@ background-color:#B798BF;
 }
 .nocolor.ace_editor .ace_line span {color:#C397D8 !important;}
 .ace_bracket {margin: 0 !important; border: 0 !important; background-color: #343434;}
-.ace_marker-layer .ace_foreign_line {background-color: rgb(22, 22, 22);}
+.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(22, 22, 22);}
