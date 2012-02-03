@@ -46,8 +46,11 @@ define("mode/r_background_highlighter", function(require, exports, module)
          }
       };
 
-      this.$syncMarkers = function(startRow) {
-         for (var row = startRow; row < this.$doc.getLength(); row++) {
+      this.$syncMarkers = function(startRow, endRow) {
+         if (typeof(endRow) == 'undefined')
+            endRow = this.$doc.getLength() - 1;
+
+         for (var row = startRow; row <= endRow; row++) {
             if (!!this.$rowState[row] != !!this.$markers[row]) {
                if (this.$rowState[row]) {
                   this.$markers[row] = this.$session.addMarker(new Range(row, 0, row, this.$session.getLine(row).length),
@@ -98,7 +101,7 @@ define("mode/r_background_highlighter", function(require, exports, module)
             else
             {
                this.$updateRow(delta.range.start.row);
-               this.$syncMarkers(delta.range.start.row);
+               this.$syncMarkers(delta.range.start.row, delta.range.start.row);
             }
          }
          else if (delta.action === "removeLines")
@@ -119,7 +122,7 @@ define("mode/r_background_highlighter", function(require, exports, module)
             else
             {
                this.$updateRow(delta.range.start.row);
-               this.$syncMarkers(delta.range.start.row);
+               this.$syncMarkers(delta.range.start.row, delta.range.start.row);
             }
          }
       };
