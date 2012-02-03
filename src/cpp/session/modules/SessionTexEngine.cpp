@@ -65,12 +65,20 @@ core::system::Option texEnvVar(const std::string& name,
       boost::algorithm::replace_all(value, "\\", "/");
 
    core::system::addToPath(&value, extraPath.absolutePath());
+   core::system::addToPath(&value, ""); // trailing : required by tex
 
    return std::make_pair(name, value);
 }
 
 core::system::Options texEnvironmentVars()
 {
+   // custom environment for tex
+   core::system::Options envVars;
+
+   // TODO: R texi2dvi sets LC_COLLATE=C before calling texi2dvi, why?
+   envVars.push_back(std::make_pair("LC_COLLATE", "C"));
+
+
    // first determine the R share directory
    std::string rHomeShare;
    r::exec::RFunction rHomeShareFunc("R.home", "share");
@@ -92,7 +100,6 @@ core::system::Options texEnvironmentVars()
 
    // fixup tex related environment variables to point to the R
    // tex, bib, and bst directories
-   core::system::Options envVars;
 
    envVars.push_back(texEnvVar("TEXINPUTS",
                                rTexmfPath.childPath("tex/latex"),
@@ -112,6 +119,8 @@ core::system::Options texEnvironmentVars()
 shell_utils::ShellArgs texShellArgs()
 {
    shell_utils::ShellArgs args;
+
+   args << "--pdf";
 
    /*
    args << "-file-line-error";  // errors as file:line:error
@@ -135,6 +144,11 @@ Error executeTexToPdf(const FilePath& texProgramPath,
       core::system::setenv(&env, var.first, var.second);
    }
 
+   // setup args
+   shell_utils::ShellArgs procArgs;
+   procArgs << args;
+   procArgs << texFilePath.filename();
+
    // set options
    core::system::ProcessOptions procOptions;
    procOptions.terminateChildren = true;
@@ -149,10 +163,10 @@ Error executeTexToPdf(const FilePath& texProgramPath,
    // run the program
    using namespace core::shell_utils;
    return module_context::processSupervisor().runProgram(
-                              texProgramPath.absolutePath(),
-                              ShellArgs() << args << texFilePath.filename(),
-                              procOptions,
-                              cb);
+                                             texProgramPath.absolutePath(),
+                                             procArgs,
+                                             procOptions,
+                                             cb);
 }
 
 
