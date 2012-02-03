@@ -41,6 +41,9 @@
 
 // TODO: should we wrap PDFLATEX in a script?
 
+// TODO: verify we got all of the shell/path escaping right
+*/
+
 using namespace core;
 
 namespace session {
@@ -49,6 +52,51 @@ namespace tex {
 namespace engine {
 
 namespace {
+
+struct RTexmfPaths
+{
+   bool empty() const { return texInputsPath.empty(); }
+
+   FilePath texInputsPath;
+   FilePath bibInputsPath;
+   FilePath bstInputsPath;
+};
+
+RTexmfPaths rTexmfPaths()
+{
+   // first determine the R share directory
+   std::string rHomeShare;
+   r::exec::RFunction rHomeShareFunc("R.home", "share");
+   Error error = rHomeShareFunc.call(&rHomeShare);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return RTexmfPaths();
+   }
+   FilePath rHomeSharePath(rHomeShare);
+   if (!rHomeSharePath.exists())
+   {
+      LOG_ERROR(core::pathNotFoundError(rHomeShare, ERROR_LOCATION));
+      return RTexmfPaths();
+   }
+
+   // R texmf path
+   FilePath rTexmfPath(rHomeSharePath.complete("texmf"));
+   if (!rTexmfPath.exists())
+   {
+      LOG_ERROR(core::pathNotFoundError(rTexmfPath.absolutePath(),
+                                        ERROR_LOCATION));
+      return RTexmfPaths();
+   }
+
+   // populate and return struct
+   RTexmfPaths texmfPaths;
+   texmfPaths.texInputsPath = rTexmfPath.childPath("tex/latex");
+   texmfPaths.bibInputsPath = rTexmfPath.childPath("bibtex/bib");
+   texmfPaths.bstInputsPath = rTexmfPath.childPath("bibtex/bst");
+   return texmfPaths;
+}
+
 
 FilePath texBinaryPath(const std::string& name)
 {
@@ -75,6 +123,8 @@ core::system::Option texEnvVar(const std::string& name,
    if (value.empty())
       value = ".";
 
+   // TODO: R texi2dvi does this for TEXINPUTS but not for BIBINPUTS and
+   // BSTINPUTS, why?
    if (ensureForwardSlashes)
       boost::algorithm::replace_all(value, "\\", "/");
 
@@ -92,48 +142,24 @@ core::system::Option pdfLatexEnvVar()
    return std::make_pair("PDFLATEX", pdfLatexCmd);
 }
 
-core::system::Options texEnvironmentVars()
+core::system::Options texEnvironmentVars(const std::string&)
 {
    // custom environment for tex
    core::system::Options envVars;
 
-   // TODO: R texi2dvi sets LC_COLLATE=C before calling texi2dvi, why?
+   // these behaviors are from R texi2dvi -- not sure why the are important
+#ifndef _WIN32
+   envVars.push_back(std::make_pair("TEXINDY", "false"));
    envVars.push_back(std::make_pair("LC_COLLATE", "C"));
+#endif
 
-
-   // first determine the R share directory
-   std::string rHomeShare;
-   r::exec::RFunction rHomeShareFunc("R.home", "share");
-   Error error = rHomeShareFunc.call(&rHomeShare);
-   if (error)
+   RTexmfPaths texmfPaths = rTexmfPaths();
+   if (!texmfPaths.empty())
    {
-      LOG_ERROR(error);
-      return core::system::Options();
+      envVars.push_back(texEnvVar("TEXINPUTS", texmfPaths.texInputsPath, true));
+      envVars.push_back(texEnvVar("BIBINPUTS", texmfPaths.bibInputsPath,false));
+      envVars.push_back(texEnvVar("BSTINPUTS", texmfPaths.bstInputsPath,false));
    }
-   FilePath rHomeSharePath(rHomeShare);
-   if (!rHomeSharePath.exists())
-   {
-      LOG_ERROR(core::pathNotFoundError(rHomeShare, ERROR_LOCATION));
-      return core::system::Options();
-   }
-
-   // R texmf path
-   FilePath rTexmfPath(rHomeSharePath.complete("texmf"));
-
-   // fixup tex related environment variables to point to the R
-   // tex, bib, and bst directories
-
-   envVars.push_back(texEnvVar("TEXINPUTS",
-                               rTexmfPath.childPath("tex/latex"),
-                               true));
-
-   envVars.push_back(texEnvVar("BIBINPUTS",
-                               rTexmfPath.childPath("bibtex/bib"),
-                               false));
-
-   envVars.push_back(texEnvVar("BSTINPUTS",
-                               rTexmfPath.childPath("bibtex/bst"),
-                               false));
 
    // define a custom variation of PDFLATEX that includes the
    // command line parameters we need
@@ -142,12 +168,30 @@ core::system::Options texEnvironmentVars()
    return envVars;
 }
 
-shell_utils::ShellArgs texShellArgs()
+shell_utils::ShellArgs texShellArgs(const std::string& texVersionInfo)
 {
    shell_utils::ShellArgs args;
 
    args << "--pdf";
    args << "--quiet";
+
+#ifdef _WIN32
+   if (texVersionInfo.find("MiKTeX") != std::string::npos)
+   {
+      // TODO: R texi2dvi doesn't include BIBINPUTS here, why?
+      RTexmfPaths texmfPaths = rTexmfPaths();
+      if (!texmfPaths.empty())
+      {
+         std::string texInputs = texmfPaths.texInputsPath.absolutePath();
+         boost::algorithm::replace_all(texInputs, "\\", "/");
+         args << "-I" << texInputs;
+
+         std::string bstInputs = texmfPaths.bstInputsPath.absolutePath();
+         boost::algorithm::replace_all(bstInputs, "\\", "/");
+         args << "-I" << bstInputs;
+      }
+   }
+#endif
 
    return args;
 }
@@ -196,10 +240,38 @@ SEXP rs_texToPdf(SEXP filePathSEXP)
    FilePath texFilePath =
          module_context::resolveAliasedPath(r::sexp::asString(filePathSEXP));
 
-   Error error = executeTexToPdf(texBinaryPath("texi2dvi"),
-                                 texEnvironmentVars(),
-                                 texShellArgs(),
-                                 texFilePath);
+
+   // get the path to the texi2dvi binary
+   FilePath texi2dviPath = texBinaryPath("texi2dvi");
+   if (texi2dviPath.empty())
+   {
+      module_context::consoleWriteError("can't find texi2dvi\n");
+      return R_NilValue;
+   }
+
+   // get version info from it
+   core::system::ProcessResult result;
+   Error error = core::system::runProgram(
+                            texi2dviPath.absolutePath(),
+                            core::shell_utils::ShellArgs() << "--version",
+                            "",
+                            core::system::ProcessOptions(),
+                            &result);
+   if (error)
+   {
+      module_context::consoleWriteError(error.summary() + "\n");
+      return R_NilValue;
+   }
+   else if (result.exitStatus != EXIT_SUCCESS)
+   {
+      module_context::consoleWriteError(result.stdErr);
+      return R_NilValue;
+   }
+
+   error = executeTexToPdf(texi2dviPath,
+                           texEnvironmentVars(result.stdOut),
+                           texShellArgs(result.stdOut),
+                           texFilePath);
    if (error)
       module_context::consoleWriteError(error.summary() + "\n");
 
