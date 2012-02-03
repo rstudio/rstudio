@@ -74,7 +74,7 @@ core::system::Option pdfLatexEnvVar()
 {
    std::string pdfLatexCmd =
       string_utils::utf8ToSystem(texBinaryPath("pdflatex").absolutePath());
-   pdfLatexCmd += " -file-line-error -synctex=-1";
+   pdfLatexCmd += " --file-line-error --synctex=-1";
    return std::make_pair("PDFLATEX", pdfLatexCmd);
 }
 
