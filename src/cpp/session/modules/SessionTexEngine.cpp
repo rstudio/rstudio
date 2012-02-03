@@ -36,6 +36,8 @@
 //         -- clean
 //         -- alternative output file location
 
+// TODO: should we wrap PDFLATEX in a script?
+
 using namespace core;
 
 namespace session {
