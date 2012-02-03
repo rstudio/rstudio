@@ -245,7 +245,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
    else()
      file(GLOB TEX_SCRIPTS "${CMAKE_CURRENT_SOURCE_DIR}/tex/*.sh")
    endif()
-   install(FILES ${TEX_SCRIPTS}
+   install(PROGRAMS ${TEX_SCRIPTS}
            DESTINATION "${RSTUDIO_INSTALL_BIN}/tex")
 endif()
 
