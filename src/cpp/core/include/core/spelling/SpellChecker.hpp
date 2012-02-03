@@ -33,18 +33,21 @@ class SpellChecker : boost::noncopyable
 {
 public:
    virtual ~SpellChecker() {}
-   virtual bool checkSpelling(const std::string& word) = 0;
-   virtual void suggestionList(const std::string& word, std::vector<std::string>* pSugs) = 0;
+   virtual Error checkSpelling(const std::string& word, bool *pCorrect) = 0;
+   virtual Error suggestionList(const std::string& word, std::vector<std::string>* pSugs) = 0;
+   virtual Error analyzeWord(const std::string& word, std::vector<std::string>* pResult) = 0;
 };
+
+typedef boost::function<core::Error(const std::string&,
+                                    const std::string&,
+                                    const std::string&,
+                                    bool,
+                                    std::string*)> iconvstrFunction;
 
 core::Error createHunspell(const core::FilePath& affPath,
                            const core::FilePath& dicPath,
                            boost::shared_ptr<SpellChecker>* pHunspell,
-                           const boost::function<core::Error(const std::string& value,
-                                                    const std::string& from,
-                                                    const std::string& to,
-                                                    bool allowSubstitution,
-                                                    std::string* pResult)>& pIconvStr);
+                           const iconvstrFunction iconvstrFunc);
 
 
 } // namespace spelling
