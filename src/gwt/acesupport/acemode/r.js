@@ -27,11 +27,12 @@ define("mode/r", function(require, exports, module)
          .TextHighlightRules;
    var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
    var RCodeModel = require("mode/r_code_model").RCodeModel;
+   var RBackgroundHighlighter = require("mode/r_background_highlighter").RBackgroundHighlighter;
    var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
    var AutoBraceInsert = require("mode/auto_brace_insert").AutoBraceInsert;
    var unicode = require("ace/unicode");
 
-   var Mode = function(suppressHighlighting, doc)
+   var Mode = function(suppressHighlighting, doc, session)
    {
       if (suppressHighlighting)
          this.$tokenizer = new Tokenizer(new TextHighlightRules().getRules());
@@ -40,6 +41,7 @@ define("mode/r", function(require, exports, module)
       this.$outdent = new MatchingBraceOutdent();
 
       this.$rCodeModel = new RCodeModel(doc, this.$tokenizer, null);
+      this.$rBackgroundHighlighter = new RBackgroundHighlighter(session);
    };
    oop.inherits(Mode, TextMode);
 
