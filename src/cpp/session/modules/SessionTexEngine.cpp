@@ -42,7 +42,6 @@
 // TODO: should we wrap PDFLATEX in a script?
 
 // TODO: verify we got all of the shell/path escaping right
-*/
 
 using namespace core;
 
@@ -136,10 +135,17 @@ core::system::Option texEnvVar(const std::string& name,
 
 core::system::Option pdfLatexEnvVar()
 {
+#ifdef _WIN32
+   FilePath texScriptsPath = session::options().texScriptsPath();
+   FilePath pdfLatexPath = texScriptsPath.complete("rstudio-pdflatex.cmd");
+   std::string path = string_utils::utf8ToSystem(pdfLatexPath.absolutePath());
+   return std::make_pair("PDFLATEX", path);
+#else
    std::string pdfLatexCmd =
       string_utils::utf8ToSystem(texBinaryPath("pdflatex").absolutePath());
    pdfLatexCmd += " --file-line-error --synctex=-1";
    return std::make_pair("PDFLATEX", pdfLatexCmd);
+#endif
 }
 
 core::system::Options texEnvironmentVars(const std::string&)

@@ -173,6 +173,11 @@ public:
       return core::FilePath(rpostbackPath_.c_str());
    }
 
+   core::FilePath texScriptsPath() const
+   {
+      return core::FilePath(texScriptsPath_.c_str());
+   }
+
    core::FilePath consoleIoPath() const
    {
       return core::FilePath(consoleIoPath_.c_str());
@@ -304,6 +309,7 @@ private:
    
    // external
    std::string rpostbackPath_;
+   std::string texScriptsPath_;
    std::string consoleIoPath_;
    std::string gnudiffPath_;
    std::string msysSshPath_;
