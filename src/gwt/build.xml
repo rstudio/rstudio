@@ -51,6 +51,7 @@
             <file name="r.js"/>
             <file name="tex_highlight_rules.js"/>
             <file name="tex.js"/>
+            <file name="sweave_background_highlighter.js"/>
             <file name="sweave_highlight_rules.js"/>
             <file name="sweave.js"/>
             <file name="rdoc_highlight_rules.js"/>

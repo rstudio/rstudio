@@ -21,12 +21,13 @@ var oop = require("pilot/oop");
 var TextMode = require("ace/mode/text").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
+var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").SweaveBackgroundHighlighter;
 var SweaveHighlightRules = require("mode/sweave_highlight_rules").SweaveHighlightRules;
 var RCodeModel = require("mode/r_code_model").RCodeModel;
 var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
 var unicode = require("ace/unicode");
 
-var Mode = function(suppressHighlighting, doc) {
+var Mode = function(suppressHighlighting, doc, session) {
 	if (suppressHighlighting)
     	this.$tokenizer = new Tokenizer(new TextHighlightRules().getRules());
 	else
@@ -34,6 +35,7 @@ var Mode = function(suppressHighlighting, doc) {
    this.$outdent = new MatchingBraceOutdent();
 
    this.$rCodeModel = new RCodeModel(doc, this.$tokenizer, /^r-/);
+   this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(session);
 };
 oop.inherits(Mode, TextMode);
 

@@ -30,7 +30,7 @@ var SweaveHighlightRules = function() {
     this.$rules = new TexHighlightRules().getRules();
     this.$rules["start"].unshift({
         token: "comment",
-        regex: "^\\<\\<.*\\>\\>=.*$",
+        regex: "^\\s*\\<\\<.*\\>\\>=.*$",
         next: "r-start"
     });
 
@@ -38,7 +38,7 @@ var SweaveHighlightRules = function() {
     this.addRules(rRules, "r-");
     this.$rules["r-start"].unshift({
         token: "comment",
-        regex: "^@(?:\\s.*)?$",
+        regex: "^\\s*@(?:\\s.*)?$",
         next: "start"
     });
    this.$rules["r-start"].unshift({
