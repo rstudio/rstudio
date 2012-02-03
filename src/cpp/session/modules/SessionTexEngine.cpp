@@ -36,10 +36,10 @@ namespace engine {
 
 namespace {
 
-FilePath texProgramPath()
+FilePath texBinaryPath(const std::string& name)
 {
    std::string which;
-   Error error = r::exec::RFunction("Sys.which", "texi2dvi").call(&which);
+   Error error = r::exec::RFunction("Sys.which", name).call(&which);
    if (error)
    {
       LOG_ERROR(error);
@@ -68,6 +68,14 @@ core::system::Option texEnvVar(const std::string& name,
    core::system::addToPath(&value, ""); // trailing : required by tex
 
    return std::make_pair(name, value);
+}
+
+core::system::Option pdfLatexEnvVar()
+{
+   std::string pdfLatexCmd =
+      string_utils::utf8ToSystem(texBinaryPath("pdflatex").absolutePath());
+   pdfLatexCmd += " -file-line-error -synctex=-1";
+   return std::make_pair("PDFLATEX", pdfLatexCmd);
 }
 
 core::system::Options texEnvironmentVars()
@@ -113,6 +121,10 @@ core::system::Options texEnvironmentVars()
                                rTexmfPath.childPath("bibtex/bst"),
                                false));
 
+   // define a custom variation of PDFLATEX that includes the
+   // command line parameters we need
+   envVars.push_back(pdfLatexEnvVar());
+
    return envVars;
 }
 
@@ -121,12 +133,7 @@ shell_utils::ShellArgs texShellArgs()
    shell_utils::ShellArgs args;
 
    args << "--pdf";
-
-   /*
-   args << "-file-line-error";  // errors as file:line:error
-   args << "-synctex=-1";       // output synctex (non-compressed)
-   args << "-interaction=nonstopmode";
-   */
+   args << "--quiet";
 
    return args;
 }
@@ -175,7 +182,7 @@ SEXP rs_texToPdf(SEXP filePathSEXP)
    FilePath texFilePath =
          module_context::resolveAliasedPath(r::sexp::asString(filePathSEXP));
 
-   Error error = executeTexToPdf(texProgramPath(),
+   Error error = executeTexToPdf(texBinaryPath("texi2dvi"),
                                  texEnvironmentVars(),
                                  texShellArgs(),
                                  texFilePath);
