@@ -145,11 +145,11 @@
 .rs.addFunction("attemptRoxygenTagCompletion", function(line, cursorPos)
 {
    line <- substr(line, 0, cursorPos)
-   match <- regexec("^\\s*#+'\\s*(@[a-zA-Z0-9]*)$", line)
-   if (match[[1]][1] == -1)
+   match <- grepl("^\\s*#+'\\s*@[a-zA-Z0-9]*$", line, perl=T)
+   if (!match)
       return(NULL)
    
-   tag <- substring(line, match[[1]][2])
+   tag <- sub(".*(?=@)", '', line, perl=T)
    
    # All known Roxygen2 tags, in alphabetical order
    tags <- c(
