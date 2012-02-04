@@ -29,13 +29,6 @@
 
 // TODO: refactor
 
-// TODO: R texi2dvi does ensureForwardSlashes for TEXINPUTS but not for
-// BIBINPUTS and BSTINPUTS, why?
-
-// TODO: why does R texi2dvi set TEXINDY=false
-
-// TODO: why does R texi2dvi set LC_COLLATE=C?
-
 // TODO: investigate other texi2dvi and pdflatex options
 //         -- shell-escape
 //         -- clean
@@ -124,8 +117,12 @@ core::system::Option texEnvVar(const std::string& name,
    if (value.empty())
       value = ".";
 
+   // on windows tools::texi2dvi replaces \ with / when defining the TEXINPUTS
+   // environment variable (but for BIBINPUTS and BSTINPUTS)
+#ifdef _WIN32
    if (ensureForwardSlashes)
       boost::algorithm::replace_all(value, "\\", "/");
+#endif
 
    std::string sysPath = string_utils::utf8ToSystem(extraPath.absolutePath());
    core::system::addToPath(&value, sysPath);
@@ -149,17 +146,12 @@ core::system::Option pdfLatexEnvVar()
    return std::make_pair("PDFLATEX", path);
 }
 
-core::system::Options texEnvironmentVars(const std::string&)
+
+// build TEXINPUTS, BIBINPUTS etc. by composing any existing value in
+// the environment (or . if none) with the R dirs in share/texmf
+core::system::Options inputsEnvironmentVars()
 {
-   // custom environment for tex
    core::system::Options envVars;
-
-   // these behaviors are from R texi2dvi -- not sure why the are important
-#ifndef _WIN32
-   envVars.push_back(std::make_pair("TEXINDY", "false"));
-   envVars.push_back(std::make_pair("LC_COLLATE", "C"));
-#endif
-
    RTexmfPaths texmfPaths = rTexmfPaths();
    if (!texmfPaths.empty())
    {
@@ -167,6 +159,22 @@ core::system::Options texEnvironmentVars(const std::string&)
       envVars.push_back(texEnvVar("BIBINPUTS", texmfPaths.bibInputsPath,false));
       envVars.push_back(texEnvVar("BSTINPUTS", texmfPaths.bstInputsPath,false));
    }
+   return envVars;
+}
+
+core::system::Options texi2dviEnvironmentVars(const std::string&)
+{
+   // start with inputs (TEXINPUTS, BIBINPUTS, BSTINPUTS)
+   core::system::Options envVars = inputsEnvironmentVars();
+
+   // The tools::texi2dvi function sets these environment variables (on posix)
+   // so they are presumably there as workarounds-- it would be good to
+   // understand exactly why they are defined and consequently whether we also
+   // need to define them
+#ifndef _WIN32
+   envVars.push_back(std::make_pair("TEXINDY", "false"));
+   envVars.push_back(std::make_pair("LC_COLLATE", "C"));
+#endif
 
    // define a custom variation of PDFLATEX that includes the
    // command line parameters we need
@@ -175,7 +183,7 @@ core::system::Options texEnvironmentVars(const std::string&)
    return envVars;
 }
 
-shell_utils::ShellArgs texShellArgs(const std::string& texVersionInfo)
+shell_utils::ShellArgs texi2dviShellArgs(const std::string& texVersionInfo)
 {
    shell_utils::ShellArgs args;
 
@@ -183,9 +191,15 @@ shell_utils::ShellArgs texShellArgs(const std::string& texVersionInfo)
    args << "--quiet";
 
 #ifdef _WIN32
+   // This emulates two behaviors found in tools::texi2dvi:
+   //
+   //   (1) Detecting MikTeX and in that case passing TEXINPUTS and
+   //       BSTINPUTS (but not BIBINPUTS) on the texi2devi command line
+   //
+   //   (2) Substituting any instances of \ in the paths with /
+   //
    if (texVersionInfo.find("MiKTeX") != std::string::npos)
    {
-      // TODO: R texi2dvi doesn't include BIBINPUTS here, why?
       RTexmfPaths texmfPaths = rTexmfPaths();
       if (!texmfPaths.empty())
       {
@@ -278,8 +292,8 @@ SEXP rs_texToPdf(SEXP filePathSEXP)
    }
 
    error = executeTexToPdf(texi2dviPath,
-                           texEnvironmentVars(result.stdOut),
-                           texShellArgs(result.stdOut),
+                           texi2dviEnvironmentVars(result.stdOut),
+                           texi2dviShellArgs(result.stdOut),
                            texFilePath);
    if (error)
       module_context::consoleWriteError(error.summary() + "\n");
