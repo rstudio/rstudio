@@ -29,6 +29,11 @@
 
 // TODO: refactor
 
+// TODO: R texi2dvi does ensureForwardSlashes for TEXINPUTS but not for
+// BIBINPUTS and BSTINPUTS, why?
+
+// TODO: why does R texi2dvi set TEXINDY=false
+
 // TODO: why does R texi2dvi set LC_COLLATE=C?
 
 // TODO: investigate other texi2dvi and pdflatex options
@@ -39,7 +44,6 @@
 // TODO: emulate texi2dvi on linux to workaround debian tilde
 //       escaping bug (http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=534458)
 
-// TODO: verify we got all of the shell/path escaping right
 
 using namespace core;
 
@@ -120,12 +124,11 @@ core::system::Option texEnvVar(const std::string& name,
    if (value.empty())
       value = ".";
 
-   // TODO: R texi2dvi does this for TEXINPUTS but not for BIBINPUTS and
-   // BSTINPUTS, why?
    if (ensureForwardSlashes)
       boost::algorithm::replace_all(value, "\\", "/");
 
-   core::system::addToPath(&value, extraPath.absolutePath());
+   std::string sysPath = string_utils::utf8ToSystem(extraPath.absolutePath());
+   core::system::addToPath(&value, sysPath);
    core::system::addToPath(&value, ""); // trailing : required by tex
 
    return std::make_pair(name, value);
@@ -186,11 +189,13 @@ shell_utils::ShellArgs texShellArgs(const std::string& texVersionInfo)
       RTexmfPaths texmfPaths = rTexmfPaths();
       if (!texmfPaths.empty())
       {
-         std::string texInputs = texmfPaths.texInputsPath.absolutePath();
+         std::string texInputs = string_utils::utf8ToSystem(
+                                    texmfPaths.texInputsPath.absolutePath());
          boost::algorithm::replace_all(texInputs, "\\", "/");
          args << "-I" << texInputs;
 
-         std::string bstInputs = texmfPaths.bstInputsPath.absolutePath();
+         std::string bstInputs = string_utils::utf8ToSystem(
+                                    texmfPaths.bstInputsPath.absolutePath());
          boost::algorithm::replace_all(bstInputs, "\\", "/");
          args << "-I" << bstInputs;
       }
@@ -232,10 +237,10 @@ Error executeTexToPdf(const FilePath& texProgramPath,
    // run the program
    using namespace core::shell_utils;
    return module_context::processSupervisor().runProgram(
-                                             texProgramPath.absolutePath(),
-                                             procArgs,
-                                             procOptions,
-                                             cb);
+                    string_utils::utf8ToSystem(texProgramPath.absolutePath()),
+                    procArgs,
+                    procOptions,
+                    cb);
 }
 
 
@@ -256,11 +261,11 @@ SEXP rs_texToPdf(SEXP filePathSEXP)
    // get version info from it
    core::system::ProcessResult result;
    Error error = core::system::runProgram(
-                            texi2dviPath.absolutePath(),
-                            core::shell_utils::ShellArgs() << "--version",
-                            "",
-                            core::system::ProcessOptions(),
-                            &result);
+                     string_utils::utf8ToSystem(texi2dviPath.absolutePath()),
+                     core::shell_utils::ShellArgs() << "--version",
+                     "",
+                     core::system::ProcessOptions(),
+                     &result);
    if (error)
    {
       module_context::consoleWriteError(error.summary() + "\n");
