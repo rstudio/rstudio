@@ -667,6 +667,21 @@ FilePath tempFile(const std::string& prefix, const std::string& extension)
    return r::session::utils::tempFile(prefix, extension);
 }
 
+FilePath findProgram(const std::string& name)
+{
+   std::string which;
+   Error error = r::exec::RFunction("Sys.which", name).call(&which);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return FilePath();
+   }
+   else
+   {
+      return FilePath(which);
+   }
+}
+
 json::Object createFileSystemItem(const FileInfo& fileInfo)
 {
    json::Object entry ;

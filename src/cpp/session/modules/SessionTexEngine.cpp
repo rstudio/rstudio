@@ -92,26 +92,11 @@ RTexmfPaths rTexmfPaths()
 }
 
 
-FilePath texBinaryPath(const std::string& name)
-{
-   std::string which;
-   Error error = r::exec::RFunction("Sys.which", name).call(&which);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return FilePath();
-   }
-   else
-   {
-      return FilePath(which);
-   }
-}
-
 // this function attempts to emulate the behavior of tools::texi2dvi
 // in appending extra paths to TEXINPUTS, BIBINPUTS, & BSTINPUTS
-core::system::Option texEnvVar(const std::string& name,
-                               const FilePath& extraPath,
-                               bool ensureForwardSlashes)
+core::system::Option inputsEnvVar(const std::string& name,
+                                  const FilePath& extraPath,
+                                  bool ensureForwardSlashes)
 {
    std::string value = core::system::getenv(name);
    if (value.empty())
@@ -155,9 +140,15 @@ core::system::Options inputsEnvironmentVars()
    RTexmfPaths texmfPaths = rTexmfPaths();
    if (!texmfPaths.empty())
    {
-      envVars.push_back(texEnvVar("TEXINPUTS", texmfPaths.texInputsPath, true));
-      envVars.push_back(texEnvVar("BIBINPUTS", texmfPaths.bibInputsPath,false));
-      envVars.push_back(texEnvVar("BSTINPUTS", texmfPaths.bstInputsPath,false));
+      envVars.push_back(inputsEnvVar("TEXINPUTS",
+                                     texmfPaths.texInputsPath,
+                                     true));
+      envVars.push_back(inputsEnvVar("BIBINPUTS",
+                                     texmfPaths.bibInputsPath,
+                                     false));
+      envVars.push_back(inputsEnvVar("BSTINPUTS",
+                                     texmfPaths.bstInputsPath,
+                                     false));
    }
    return envVars;
 }
@@ -265,7 +256,7 @@ SEXP rs_texToPdf(SEXP filePathSEXP)
 
 
    // get the path to the texi2dvi binary
-   FilePath texi2dviPath = texBinaryPath("texi2dvi");
+   FilePath texi2dviPath = module_context::findProgram("texi2dvi");
    if (texi2dviPath.empty())
    {
       module_context::consoleWriteError("can't find texi2dvi\n");

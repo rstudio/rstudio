@@ -62,7 +62,10 @@ core::json::Object createFileSystemItem(const core::FilePath& filePath);
 // get a temp file
 core::FilePath tempFile(const std::string& prefix, 
                         const std::string& extension);
- 
+
+// find out the location of a binary
+core::FilePath findProgram(const std::string& name);
+
 // register a handler for rBrowseUrl
 typedef boost::function<bool(const std::string&)> RBrowseUrlHandler;
 core::Error registerRBrowseUrlHandler(const RBrowseUrlHandler& handler);
