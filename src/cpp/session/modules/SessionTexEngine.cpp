@@ -14,6 +14,8 @@
 #include "SessionTexEngine.hpp"
 
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/format.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -27,8 +29,6 @@
 
 #include <session/SessionModuleContext.hpp>
 
-// TODO: refactor
-
 // TODO: investigate other texi2dvi and pdflatex options
 //         -- shell-escape
 //         -- clean
@@ -38,6 +38,15 @@
 //       escaping bug (http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=534458)
 
 
+// platform specific constants
+#ifdef _WIN32
+const char * const kScriptEx = ".cmd";
+const char * const kFileLineErrors = "-c-style-errors";
+#else
+const char * const kScriptEx = ".sh";
+const char * const kFileLineErrors = "-file-line-error";
+#endif
+
 using namespace core;
 
 namespace session {
@@ -46,6 +55,54 @@ namespace tex {
 namespace engine {
 
 namespace {
+
+
+struct PdfLatexOptions
+{
+   PdfLatexOptions()
+      : fileLineError(false), syncTex(false)
+   {
+   }
+
+   bool fileLineError;
+   bool syncTex;
+
+};
+
+
+// set of environment variables to customize pdflatex invocation
+// includes both the core PDFLATEX command (which maps to the location
+// of the custom rstudio-pdflatex script) as well as environment
+// variables required to pass options to the script
+core::system::Options pdfLatexEnvVars(const PdfLatexOptions& options)
+{
+   core::system::Options envVars;
+
+   // options
+   boost::format fmt("RS_PDFLATEX_OPTION_%1%");
+   int n = 1;
+   if (options.fileLineError)
+   {
+      envVars.push_back(std::make_pair(boost::str(fmt % n++),
+                                       kFileLineErrors));
+   }
+   if (options.syncTex)
+   {
+      envVars.push_back(std::make_pair(boost::str(fmt % n++),
+                                       "-synctex=-1"));
+   }
+
+   // rstudio-pdflatex script
+   FilePath texScriptsPath = session::options().texScriptsPath();
+   FilePath pdfLatexPath = texScriptsPath.complete("rstudio-pdflatex" +
+                                                   std::string(kScriptEx));
+   std::string path = string_utils::utf8ToSystem(pdfLatexPath.absolutePath());
+   envVars.push_back(std::make_pair("PDFLATEX", path));
+
+   // return envVars
+   return envVars;
+}
+
 
 struct RTexmfPaths
 {
@@ -116,21 +173,6 @@ core::system::Option inputsEnvVar(const std::string& name,
    return std::make_pair(name, value);
 }
 
-core::system::Option pdfLatexEnvVar()
-{
-#ifdef _WIN32
-   const char* const kScriptEx = ".cmd";
-#else
-   const char* const kScriptEx = ".sh";
-#endif
-
-   FilePath texScriptsPath = session::options().texScriptsPath();
-   FilePath pdfLatexPath = texScriptsPath.complete("rstudio-pdflatex" +
-                                                   std::string(kScriptEx));
-   std::string path = string_utils::utf8ToSystem(pdfLatexPath.absolutePath());
-   return std::make_pair("PDFLATEX", path);
-}
-
 
 // build TEXINPUTS, BIBINPUTS etc. by composing any existing value in
 // the environment (or . if none) with the R dirs in share/texmf
@@ -167,9 +209,14 @@ core::system::Options texi2dviEnvironmentVars(const std::string&)
    envVars.push_back(std::make_pair("LC_COLLATE", "C"));
 #endif
 
-   // define a custom variation of PDFLATEX that includes the
-   // command line parameters we need
-   envVars.push_back(pdfLatexEnvVar());
+   // env vars required to customize invocation of pdflatex
+   PdfLatexOptions pdfLatexOptions;
+   pdfLatexOptions.fileLineError = true;
+   pdfLatexOptions.syncTex = true;
+   core::system::Options pdfLatexVars = pdfLatexEnvVars(pdfLatexOptions);
+   std::copy(pdfLatexVars.begin(),
+             pdfLatexVars.end(),
+             std::back_inserter(envVars));
 
    return envVars;
 }
