@@ -44,6 +44,13 @@ SEXP rs_checkSpelling(SEXP wordSEXP)
 
    Error error = s_pSpellChecker->checkSpelling(word,&isCorrect);
 
+   // We'll return true here so as not to tie up the front end.
+   if (error)
+   {
+      LOG_ERROR(error);
+      isCorrect = true;
+   }
+
    r::sexp::Protect rProtect;
    return r::sexp::create(isCorrect, &rProtect);
 }
@@ -53,7 +60,10 @@ SEXP rs_suggestionList(SEXP wordSEXP)
     std::string word = r::sexp::asString(wordSEXP);
     std::vector<std::string> sugs;
 
-    s_pSpellChecker->suggestionList(word,&sugs);
+    Error error = s_pSpellChecker->suggestionList(word,&sugs);
+
+   if (error)
+      LOG_ERROR(error);
 
     r::sexp::Protect rProtect;
     return r::sexp::create(sugs,&rProtect);
@@ -77,22 +87,22 @@ SEXP rs_analyzeWord(SEXP wordSEXP)
 Error initialize()
 {
    // register rs_ensureFileHidden with R
-   R_CallMethodDef checkSpellingMethodDef;
+   R_CallMethodDef methodDef;
 
-   checkSpellingMethodDef.name = "rs_checkSpelling" ;
-   checkSpellingMethodDef.fun = (DL_FUNC) rs_checkSpelling ;
-   checkSpellingMethodDef.numArgs = 1;
-   r::routines::addCallMethod(checkSpellingMethodDef);
+   methodDef.name = "rs_checkSpelling" ;
+   methodDef.fun = (DL_FUNC) rs_checkSpelling ;
+   methodDef.numArgs = 1;
+   r::routines::addCallMethod(methodDef);
 
-   checkSpellingMethodDef.name = "rs_suggestionList" ;
-   checkSpellingMethodDef.fun = (DL_FUNC) rs_suggestionList ;
-   checkSpellingMethodDef.numArgs = 1;
-   r::routines::addCallMethod(checkSpellingMethodDef);
+   methodDef.name = "rs_suggestionList" ;
+   methodDef.fun = (DL_FUNC) rs_suggestionList ;
+   methodDef.numArgs = 1;
+   r::routines::addCallMethod(methodDef);
 
-   checkSpellingMethodDef.name = "rs_analyzeWord" ;
-   checkSpellingMethodDef.fun = (DL_FUNC) rs_analyzeWord ;
-   checkSpellingMethodDef.numArgs = 1;
-   r::routines::addCallMethod(checkSpellingMethodDef);
+   methodDef.name = "rs_analyzeWord" ;
+   methodDef.fun = (DL_FUNC) rs_analyzeWord ;
+   methodDef.numArgs = 1;
+   r::routines::addCallMethod(methodDef);
 
    // initialize the spell checker
    using namespace core::spelling;

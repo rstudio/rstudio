@@ -68,41 +68,43 @@ public:
       return Success();
    }
 
+private:
+
+   // helpers
+   void copyToHunspellVector(std::vector<std::string>* pVec,
+                                    char **wlst,
+                                    int len)
+   {
+      for (int i=0; i < len; i++)
+      {
+         pVec->push_back(wlst[i]);
+      }
+      pHunspell_->free_list(&wlst, len);
+   }
+
 public:
    Error checkSpelling(const std::string& word, bool *pCorrect)
    {
-       std::string encoded;
+      std::string encoded;
 
-       Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
-       if (error)
-       {
-          error = iconvstrFunc_(word,"UTF-8",encoding_,true,&encoded);
-          if (error)
-              return error;
-       }
-       *pCorrect = pHunspell_->spell(encoded.c_str());
-       return Success();
+      Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
+      if (error)
+         return error;
+      *pCorrect = pHunspell_->spell(encoded.c_str());
+      return Success();
    }
 
    Error suggestionList(const std::string& word, std::vector<std::string>* pSug)
    {
-       char ** wlst;
-       std::string encoded;
+      char ** wlst;
+      std::string encoded;
 
-       Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
-       if (error)
-       {
-          error = iconvstrFunc_(word,"UTF-8",encoding_,true,&encoded);
-          if (error)
-              return error;
-       }
-       int ns = pHunspell_->suggest(&wlst,encoded.c_str());
-       for (int i=0; i < ns; i++)
-       {
-           pSug->push_back(wlst[i]);
-       }
-       pHunspell_->free_list(&wlst, ns);
-       return Success();
+      Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
+      if (error)
+         return error;
+      int ns = pHunspell_->suggest(&wlst,encoded.c_str());
+      copyToHunspellVector(pSug,wlst,ns);
+      return Success();
    }
 
    Error analyzeWord(const std::string& word, std::vector<std::string>* pResult)
@@ -112,19 +114,12 @@ public:
 
       Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
       if (error)
-      {
-         error = iconvstrFunc_(word,"UTF-8",encoding_,true,&encoded);
-         if (error)
-             return error;
-      }
+         return error;
       int ns = pHunspell_->analyze(&wlst,encoded.c_str());
-      for (int i=0; i < ns; i++)
-      {
-          pResult->push_back(wlst[i]);
-      }
-      pHunspell_->free_list(&wlst, ns);
+      copyToHunspellVector(pResult,wlst,ns);
       return Success();
    }
+
 
 private:
    boost::scoped_ptr<Hunspell> pHunspell_;
