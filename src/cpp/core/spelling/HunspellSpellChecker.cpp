@@ -50,7 +50,9 @@ public:
       }
    }
 
-   Error initialize(const FilePath& affPath, const FilePath& dicPath)
+   Error initialize(const FilePath& affPath,
+                    const FilePath& dicPath,
+                    const IconvstrFunction& iconvstrFunc)
    {
       // validate that dictionaries exist
       if (!affPath.exists())
@@ -58,50 +60,90 @@ public:
       if (!dicPath.exists())
          return core::fileNotFoundError(dicPath, ERROR_LOCATION);
 
-      // initialize hunspell and return success
+      // initialize hunspell, iconvstrFunc_, encoding_, and return success
       pHunspell_.reset(new Hunspell(affPath.absolutePath().c_str(),
                                     dicPath.absolutePath().c_str()));
+      iconvstrFunc_ = iconvstrFunc;
+      encoding_ = pHunspell_->get_dic_encoding();
       return Success();
    }
 
-public:
-   bool checkSpelling(const std::string& word)
+private:
+
+   // helpers
+   void copyAndFreeHunspellVector(std::vector<std::string>* pVec,
+                                    char **wlst,
+                                    int len)
    {
-      return pHunspell_->spell(word.c_str());
+      for (int i=0; i < len; i++)
+      {
+         pVec->push_back(wlst[i]);
+      }
+      pHunspell_->free_list(&wlst, len);
    }
 
-   void suggestionList(const std::string& word, std::vector<std::string>* pSug)
+public:
+   Error checkSpelling(const std::string& word, bool *pCorrect)
    {
-       char ** wlst;
-       int ns = pHunspell_->suggest(&wlst,word.c_str());
-       for (int i=0; i < ns; i++)
-       {
-           pSug->push_back(wlst[i]);
-       }
-       pHunspell_->free_list(&wlst, ns);
+      std::string encoded;
+      Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
+      if (error)
+         return error;
+
+      *pCorrect = pHunspell_->spell(encoded.c_str());
+      return Success();
    }
+
+   Error suggestionList(const std::string& word, std::vector<std::string>* pSug)
+   {
+      std::string encoded;
+      Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
+      if (error)
+         return error;
+
+      char ** wlst;
+      int ns = pHunspell_->suggest(&wlst,encoded.c_str());
+      copyAndFreeHunspellVector(pSug,wlst,ns);
+      return Success();
+   }
+
+   Error analyzeWord(const std::string& word, std::vector<std::string>* pResult)
+   {
+      std::string encoded;
+      Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
+      if (error)
+         return error;
+
+      char ** wlst;
+      int ns = pHunspell_->analyze(&wlst,encoded.c_str());
+      copyAndFreeHunspellVector(pResult,wlst,ns);
+      return Success();
+   }
+
 
 private:
    boost::scoped_ptr<Hunspell> pHunspell_;
+   IconvstrFunction iconvstrFunc_;
+   std::string encoding_;
 };
 
 } // anonymous namespace
 
-
 core::Error createHunspell(const FilePath& affPath,
                            const FilePath& dicPath,
-                           boost::shared_ptr<SpellChecker>* pHunspell)
+                           boost::shared_ptr<SpellChecker>* ppHunspell,
+                           const IconvstrFunction& iconvstrFunc)
 {
    // create the hunspell engine
    boost::shared_ptr<HunspellSpellChecker> pNew(new HunspellSpellChecker());
 
    // initialize it
-   Error error = pNew->initialize(affPath, dicPath);
+   Error error = pNew->initialize(affPath, dicPath, iconvstrFunc);
    if (error)
       return error;
 
    // return
-   *pHunspell = boost::shared_static_cast<SpellChecker>(pNew);
+   *ppHunspell = boost::shared_static_cast<SpellChecker>(pNew);
    return Success();
 }
 

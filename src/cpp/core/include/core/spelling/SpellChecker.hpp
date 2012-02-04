@@ -19,6 +19,7 @@
 
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/function.hpp>
 
 
 namespace core {
@@ -32,13 +33,21 @@ class SpellChecker : boost::noncopyable
 {
 public:
    virtual ~SpellChecker() {}
-   virtual bool checkSpelling(const std::string& word) = 0;
-   virtual void suggestionList(const std::string& word, std::vector<std::string>* pSugs) = 0;
+   virtual Error checkSpelling(const std::string& word, bool *pCorrect) = 0;
+   virtual Error suggestionList(const std::string& word, std::vector<std::string>* pSugs) = 0;
+   virtual Error analyzeWord(const std::string& word, std::vector<std::string>* pResult) = 0;
 };
+
+typedef boost::function<core::Error(const std::string&,
+                                    const std::string&,
+                                    const std::string&,
+                                    bool,
+                                    std::string*)> IconvstrFunction;
 
 core::Error createHunspell(const core::FilePath& affPath,
                            const core::FilePath& dicPath,
-                           boost::shared_ptr<SpellChecker>* pHunspell);
+                           boost::shared_ptr<SpellChecker>* pHunspell,
+                           const IconvstrFunction& iconvstrFunc);
 
 
 } // namespace spelling
