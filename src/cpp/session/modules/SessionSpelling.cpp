@@ -57,16 +57,15 @@ SEXP rs_checkSpelling(SEXP wordSEXP)
 
 SEXP rs_suggestionList(SEXP wordSEXP)
 {
-    std::string word = r::sexp::asString(wordSEXP);
-    std::vector<std::string> sugs;
+   std::string word = r::sexp::asString(wordSEXP);
+   std::vector<std::string> sugs;
 
-    Error error = s_pSpellChecker->suggestionList(word,&sugs);
-
+   Error error = s_pSpellChecker->suggestionList(word,&sugs);
    if (error)
       LOG_ERROR(error);
 
-    r::sexp::Protect rProtect;
-    return r::sexp::create(sugs,&rProtect);
+   r::sexp::Protect rProtect;
+   return r::sexp::create(sugs,&rProtect);
 }
 
 SEXP rs_analyzeWord(SEXP wordSEXP)
@@ -74,7 +73,9 @@ SEXP rs_analyzeWord(SEXP wordSEXP)
    std::string word = r::sexp::asString(wordSEXP);
    std::vector<std::string> res;
 
-   s_pSpellChecker->analyzeWord(word,&res);
+   Error error = s_pSpellChecker->analyzeWord(word,&res);
+   if (error)
+      LOG_ERROR(error);
 
    r::sexp::Protect rProtect;
    return r::sexp::create(res,&rProtect);

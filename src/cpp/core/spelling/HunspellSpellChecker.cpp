@@ -71,7 +71,7 @@ public:
 private:
 
    // helpers
-   void copyToHunspellVector(std::vector<std::string>* pVec,
+   void copyAndFreeHunspellVector(std::vector<std::string>* pVec,
                                     char **wlst,
                                     int len)
    {
@@ -86,37 +86,37 @@ public:
    Error checkSpelling(const std::string& word, bool *pCorrect)
    {
       std::string encoded;
-
       Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
       if (error)
          return error;
+
       *pCorrect = pHunspell_->spell(encoded.c_str());
       return Success();
    }
 
    Error suggestionList(const std::string& word, std::vector<std::string>* pSug)
    {
-      char ** wlst;
       std::string encoded;
-
       Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
       if (error)
          return error;
+
+      char ** wlst;
       int ns = pHunspell_->suggest(&wlst,encoded.c_str());
-      copyToHunspellVector(pSug,wlst,ns);
+      copyAndFreeHunspellVector(pSug,wlst,ns);
       return Success();
    }
 
    Error analyzeWord(const std::string& word, std::vector<std::string>* pResult)
    {
-      char ** wlst;
       std::string encoded;
-
       Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
       if (error)
          return error;
+
+      char ** wlst;
       int ns = pHunspell_->analyze(&wlst,encoded.c_str());
-      copyToHunspellVector(pResult,wlst,ns);
+      copyAndFreeHunspellVector(pResult,wlst,ns);
       return Success();
    }
 
@@ -131,7 +131,7 @@ private:
 
 core::Error createHunspell(const FilePath& affPath,
                            const FilePath& dicPath,
-                           boost::shared_ptr<SpellChecker>* pHunspell,
+                           boost::shared_ptr<SpellChecker>* ppHunspell,
                            const IconvstrFunction& iconvstrFunc)
 {
    // create the hunspell engine
@@ -143,7 +143,7 @@ core::Error createHunspell(const FilePath& affPath,
       return error;
 
    // return
-   *pHunspell = boost::shared_static_cast<SpellChecker>(pNew);
+   *ppHunspell = boost::shared_static_cast<SpellChecker>(pNew);
    return Success();
 }
 
