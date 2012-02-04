@@ -21,7 +21,10 @@ var oop = require("pilot/oop");
 var lang = require("pilot/lang");
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 
-var TexHighlightRules = function() {
+var TexHighlightRules = function(textClass) {
+
+    if (!textClass)
+        textClass = "text";
 
     // regexp must not have capturing parentheses. Use (?:) instead.
     // regexps are ordered -> the first match is used
@@ -32,7 +35,7 @@ var TexHighlightRules = function() {
 	            token : "comment",
 	            regex : "%.*$"
 	        }, {
-	            token : "text", // non-command
+	            token : textClass, // non-command
 	            regex : "\\\\[$&%#\\{\\}]"
 	        }, {
 	            token : "keyword", // command
@@ -50,7 +53,7 @@ var TexHighlightRules = function() {
                token : "paren.keyword.operator",
 	            regex : "[\\])}]"
 	        }, {
-	            token : "text",
+	            token : textClass,
 	            regex : "\\s+"
 	        }
         ]

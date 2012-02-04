@@ -159,7 +159,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
          ]
       };
 
-      var rdRules = new TexHighlightRules().getRules();
+      var rdRules = new TexHighlightRules("comment").getRules();
       this.addRules(rdRules, "rd-");
       this.$rules["rd-start"].unshift({
           token: "text",
@@ -171,8 +171,12 @@ define("mode/r_highlight_rules", function(require, exports, module)
          regex : "@(?!@)[^ ]*"
       });
       this.$rules["rd-start"].unshift({
-         token : "text",
+         token : "comment",
          regex : "@@"
+      });
+      this.$rules["rd-start"].push({
+         token : "comment",
+         regex : "[^%\\\\[({\\])}]+"
       });
    };
 
