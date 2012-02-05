@@ -64,6 +64,7 @@ set (SESSION_SOURCE_FILES
    modules/tex/SessionCompilePdf.cpp
    modules/tex/SessionRnwWeave.cpp
    modules/tex/SessionTexCompiler.cpp
+   modules/tex/SessionTexInputs.cpp
    modules/vcs/SessionVCSCore.cpp
    modules/vcs/SessionVCSUtils.cpp
    projects/SessionProjects.cpp

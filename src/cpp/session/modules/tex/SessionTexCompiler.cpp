@@ -31,6 +31,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include "SessionTexInputs.hpp"
+
 // TODO: investigate other texi2dvi and pdflatex options
 //         -- shell-escape
 //         -- clean
@@ -106,101 +108,10 @@ core::system::Options pdfLatexEnvVars(const PdfLatexOptions& options)
 }
 
 
-struct RTexmfPaths
-{
-   bool empty() const { return texInputsPath.empty(); }
-
-   FilePath texInputsPath;
-   FilePath bibInputsPath;
-   FilePath bstInputsPath;
-};
-
-RTexmfPaths rTexmfPaths()
-{
-   // first determine the R share directory
-   std::string rHomeShare;
-   r::exec::RFunction rHomeShareFunc("R.home", "share");
-   Error error = rHomeShareFunc.call(&rHomeShare);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return RTexmfPaths();
-   }
-   FilePath rHomeSharePath(rHomeShare);
-   if (!rHomeSharePath.exists())
-   {
-      LOG_ERROR(core::pathNotFoundError(rHomeShare, ERROR_LOCATION));
-      return RTexmfPaths();
-   }
-
-   // R texmf path
-   FilePath rTexmfPath(rHomeSharePath.complete("texmf"));
-   if (!rTexmfPath.exists())
-   {
-      LOG_ERROR(core::pathNotFoundError(rTexmfPath.absolutePath(),
-                                        ERROR_LOCATION));
-      return RTexmfPaths();
-   }
-
-   // populate and return struct
-   RTexmfPaths texmfPaths;
-   texmfPaths.texInputsPath = rTexmfPath.childPath("tex/latex");
-   texmfPaths.bibInputsPath = rTexmfPath.childPath("bibtex/bib");
-   texmfPaths.bstInputsPath = rTexmfPath.childPath("bibtex/bst");
-   return texmfPaths;
-}
-
-
-// this function attempts to emulate the behavior of tools::texi2dvi
-// in appending extra paths to TEXINPUTS, BIBINPUTS, & BSTINPUTS
-core::system::Option inputsEnvVar(const std::string& name,
-                                  const FilePath& extraPath,
-                                  bool ensureForwardSlashes)
-{
-   std::string value = core::system::getenv(name);
-   if (value.empty())
-      value = ".";
-
-   // on windows tools::texi2dvi replaces \ with / when defining the TEXINPUTS
-   // environment variable (but for BIBINPUTS and BSTINPUTS)
-#ifdef _WIN32
-   if (ensureForwardSlashes)
-      boost::algorithm::replace_all(value, "\\", "/");
-#endif
-
-   std::string sysPath = string_utils::utf8ToSystem(extraPath.absolutePath());
-   core::system::addToPath(&value, sysPath);
-   core::system::addToPath(&value, ""); // trailing : required by tex
-
-   return std::make_pair(name, value);
-}
-
-
-// build TEXINPUTS, BIBINPUTS etc. by composing any existing value in
-// the environment (or . if none) with the R dirs in share/texmf
-core::system::Options inputsEnvironmentVars()
-{
-   core::system::Options envVars;
-   RTexmfPaths texmfPaths = rTexmfPaths();
-   if (!texmfPaths.empty())
-   {
-      envVars.push_back(inputsEnvVar("TEXINPUTS",
-                                     texmfPaths.texInputsPath,
-                                     true));
-      envVars.push_back(inputsEnvVar("BIBINPUTS",
-                                     texmfPaths.bibInputsPath,
-                                     false));
-      envVars.push_back(inputsEnvVar("BSTINPUTS",
-                                     texmfPaths.bstInputsPath,
-                                     false));
-   }
-   return envVars;
-}
-
 core::system::Options texi2dviEnvironmentVars(const std::string&)
 {
    // start with inputs (TEXINPUTS, BIBINPUTS, BSTINPUTS)
-   core::system::Options envVars = inputsEnvironmentVars();
+   core::system::Options envVars = inputs::environmentVars();
 
    // The tools::texi2dvi function sets these environment variables (on posix)
    // so they are presumably there as workarounds-- it would be good to
@@ -240,7 +151,7 @@ shell_utils::ShellArgs texi2dviShellArgs(const std::string& texVersionInfo)
    //
    if (texVersionInfo.find("MiKTeX") != std::string::npos)
    {
-      RTexmfPaths texmfPaths = rTexmfPaths();
+      inputs::RTexmfPaths texmfPaths = inputs::rTexmfPaths();
       if (!texmfPaths.empty())
       {
          std::string texInputs = string_utils::utf8ToSystem(
