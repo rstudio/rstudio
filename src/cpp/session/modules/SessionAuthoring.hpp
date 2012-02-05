@@ -1,5 +1,5 @@
 /*
- * SessionTeX.hpp
+ * SessionAuthoring.hpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -11,8 +11,8 @@
  *
  */
 
-#ifndef SESSION_TEX_HPP
-#define SESSION_TEX_HPP
+#ifndef SESSION_MODULES_AUTHORING_HPP
+#define SESSION_MODULES_AUTHORING_HPP
 
 #include <core/json/Json.hpp>
 
@@ -22,16 +22,16 @@ namespace core {
  
 namespace session {
 namespace modules { 
-namespace tex {
+namespace authoring {
    
+// accessors used by SessionMain
 core::json::Array supportedRnwWeaveTypes();
-
-core::json::Object capabilitiesAsJson();
+core::json::Object texCapabilitiesAsJson();
 
 core::Error initialize();
                        
-} // namespace tex
+} // namespace authoring
 } // namespace modules
 } // namesapce session
 
-#endif // SESSION_TEX_HPP
+#endif // SESSION_MODULES_AUTHORING_HPP

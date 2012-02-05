@@ -37,6 +37,7 @@ set (SESSION_SOURCE_FILES
    http/SessionHttpLog.cpp
    modules/SessionAgreement.cpp
    modules/SessionAskPass.cpp
+   modules/SessionAuthoring.cpp
    modules/SessionCodeSearch.cpp
    modules/SessionConsole.cpp
    modules/SessionConsoleProcess.cpp
@@ -56,7 +57,6 @@ set (SESSION_SOURCE_FILES
    modules/SessionSource.cpp
    modules/SessionSpelling.cpp
    modules/SessionSVN.cpp
-   modules/SessionTeX.cpp
    modules/SessionVCS.cpp
    modules/SessionWorkbench.cpp
    modules/SessionWorkspace.cpp

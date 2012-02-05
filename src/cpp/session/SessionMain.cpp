@@ -84,6 +84,7 @@
 
 #include "modules/SessionAgreement.hpp"
 #include "modules/SessionAskPass.hpp"
+#include "modules/SessionAuthoring.hpp"
 #include "modules/SessionCodeSearch.hpp"
 #include "modules/SessionConsole.hpp"
 #include "modules/SessionConsoleProcess.hpp"
@@ -99,7 +100,6 @@
 #include "modules/SessionSpelling.hpp"
 #include "modules/SessionSource.hpp"
 #include "modules/SessionVCS.hpp"
-#include "modules/SessionTeX.hpp"
 #include "modules/SessionHistory.hpp"
 #include "modules/SessionLimits.hpp"
 #include "modules/SessionLists.hpp"
@@ -400,8 +400,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["console_actions"] = actionsObject;
    }
 
-   sessionInfo["rnw_weave_types"] = modules::tex::supportedRnwWeaveTypes();
-   sessionInfo["tex_capabilities"] = modules::tex::capabilitiesAsJson();
+   sessionInfo["rnw_weave_types"] = modules::authoring::supportedRnwWeaveTypes();
+   sessionInfo["tex_capabilities"] = modules::authoring::texCapabilitiesAsJson();
 
    sessionInfo["googleDocsIntegrationEnabled"] =
          session::module_context::isGoogleDocsIntegrationEnabled();
@@ -1302,7 +1302,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::packages::initialize)
       (modules::source::initialize)
       (modules::source_control::initialize)
-      (modules::tex::initialize)
+      (modules::authoring::initialize)
       (modules::history::initialize)
       (modules::code_search::initialize)
 

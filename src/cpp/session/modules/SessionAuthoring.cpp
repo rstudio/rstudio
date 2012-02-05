@@ -1,5 +1,5 @@
 /*
- * SessionTeX.cpp
+ * SessionAuthoring.cpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -11,7 +11,7 @@
  *
  */
 
-#include "SessionTeX.hpp"
+#include "SessionAuthoring.hpp"
 
 #include <string>
 
@@ -20,9 +20,6 @@
 #include <core/FilePath.hpp>
 #include <core/Exec.hpp>
 #include <core/json/JsonRpc.hpp>
-
-#include <r/RExec.hpp>
-#include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -35,34 +32,32 @@ using namespace core;
 
 namespace session {
 namespace modules { 
-namespace tex {
+namespace authoring {
 
 namespace {
-
-
-
 
 Error getTexCapabilities(const core::json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
-   pResponse->setResult(tex::capabilitiesAsJson());
+   pResponse->setResult(authoring::texCapabilitiesAsJson());
    return Success();
 }
 
 } // anonymous namespace
 
 
-core::json::Array supportedRnwWeaveTypes()
+json::Array supportedRnwWeaveTypes()
 {
    return tex::rnw_weave::supportedTypes();
 }
 
-json::Object capabilitiesAsJson()
+json::Object texCapabilitiesAsJson()
 {
    json::Object obj;
 
    obj["tex_installed"] = tex::engine::isInstalled();
-   rnw_weave::getTypesInstalledStatus(&obj);
+
+   tex::rnw_weave::getTypesInstalledStatus(&obj);
 
    return obj;
 }
@@ -83,7 +78,7 @@ Error initialize()
   return initBlock.execute();
 }
 
-} // namespace tex
+} // namespace authoring
 } // namespace modules
 } // namesapce session
 
