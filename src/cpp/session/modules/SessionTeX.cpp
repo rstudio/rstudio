@@ -34,7 +34,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-#include "SessionTexEngine.hpp"
+#include "tex/SessionTexEngine.hpp"
 
 using namespace core;
 

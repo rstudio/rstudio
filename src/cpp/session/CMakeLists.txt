@@ -57,10 +57,10 @@ set (SESSION_SOURCE_FILES
    modules/SessionSpelling.cpp
    modules/SessionSVN.cpp
    modules/SessionTeX.cpp
-   modules/SessionTexEngine.cpp
    modules/SessionVCS.cpp
    modules/SessionWorkbench.cpp
    modules/SessionWorkspace.cpp
+   modules/tex/SessionTexEngine.cpp
    modules/vcs/SessionVCSCore.cpp
    modules/vcs/SessionVCSUtils.cpp
    projects/SessionProjects.cpp
