@@ -60,6 +60,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionVCS.cpp
    modules/SessionWorkbench.cpp
    modules/SessionWorkspace.cpp
+   modules/tex/SessionRnwWeave.cpp
    modules/tex/SessionTexEngine.cpp
    modules/vcs/SessionVCSCore.cpp
    modules/vcs/SessionVCSUtils.cpp
