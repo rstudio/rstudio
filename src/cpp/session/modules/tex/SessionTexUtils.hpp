@@ -1,5 +1,5 @@
 /*
- * SessionTexInputs.hpp
+ * SessionTexUtils.hpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -11,11 +11,12 @@
  *
  */
 
-#ifndef SESSION_MODULES_TEX_INPUTS_HPP
-#define SESSION_MODULES_TEX_INPUTS_HPP
+#ifndef SESSION_MODULES_TEX_UTILS_HPP
+#define SESSION_MODULES_TEX_UTILS_HPP
 
 #include <core/FilePath.hpp>
 
+#include <core/system/ShellUtils.hpp>
 #include <core/system/Types.hpp>
 
 namespace core {
@@ -25,7 +26,7 @@ namespace core {
 namespace session {
 namespace modules { 
 namespace tex {
-namespace inputs {
+namespace utils {
 
 struct RTexmfPaths
 {
@@ -38,12 +39,16 @@ struct RTexmfPaths
 
 RTexmfPaths rTexmfPaths();
 
+core::system::Options rTexInputsEnvVars();
 
-core::system::Options environmentVars();
+core::Error runTexCompile(const core::FilePath& texProgramPath,
+                          const core::system::Options& envVars,
+                          const core::shell_utils::ShellArgs& args,
+                          const core::FilePath& texFilePath);
 
-} // namespace inputs
+} // namespace utils
 } // namespace tex
 } // namespace modules
 } // namesapce session
 
-#endif // SESSION_MODULES_TEX_INPUTS_HPP
+#endif // SESSION_MODULES_TEX_UTILS_HPP

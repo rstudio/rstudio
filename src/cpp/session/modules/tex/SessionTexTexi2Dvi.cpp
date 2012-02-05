@@ -20,8 +20,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include "SessionTexInputs.hpp"
-#include "SessionTexCompiler.hpp"
+#include "SessionTexUtils.hpp"
 
 
 // platform specific constants
@@ -119,7 +118,7 @@ core::system::Options environmentVars(
                            const pdflatex::PdfLatexOptions& pdfLatexOptions)
 {
    // start with inputs (TEXINPUTS, BIBINPUTS, BSTINPUTS)
-   core::system::Options envVars = inputs::environmentVars();
+   core::system::Options envVars = utils::rTexInputsEnvVars();
 
    // The tools::texi2dvi function sets these environment variables (on posix)
    // so they are presumably there as workarounds-- it would be good to
@@ -185,12 +184,11 @@ Error texToPdf(const tex::pdflatex::PdfLatexOptions& options,
    if (t2dviInfo.empty())
       return core::fileNotFoundError("texi2dvi", ERROR_LOCATION);
 
-   return compiler::texToPdf(t2dviInfo.programFilePath,
-                             environmentVars(t2dviInfo.versionInfo, options),
-                             shellArgs(t2dviInfo.versionInfo),
-                             texFilePath);
+   return utils::runTexCompile(t2dviInfo.programFilePath,
+                               environmentVars(t2dviInfo.versionInfo, options),
+                               shellArgs(t2dviInfo.versionInfo),
+                               texFilePath);
 }
-
 
 } // namespace texi2dvi
 } // namespace tex

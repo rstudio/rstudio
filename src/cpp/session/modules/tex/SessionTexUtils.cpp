@@ -1,5 +1,5 @@
 /*
- * SessionTexInputs.cpp
+ * SessionTexUtils.cpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -11,10 +11,12 @@
  *
  */
 
-#include "SessionTexInputs.hpp"
+#include "SessionTexUtils.hpp"
 
+#include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 
+#include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
@@ -26,7 +28,7 @@ using namespace core;
 namespace session {
 namespace modules { 
 namespace tex {
-namespace inputs {
+namespace utils {
 
 namespace {
 
@@ -94,7 +96,7 @@ RTexmfPaths rTexmfPaths()
 
 // build TEXINPUTS, BIBINPUTS etc. by composing any existing value in
 // the environment (or . if none) with the R dirs in share/texmf
-core::system::Options environmentVars()
+core::system::Options rTexInputsEnvVars()
 {
    core::system::Options envVars;
    RTexmfPaths texmfPaths = rTexmfPaths();
@@ -113,7 +115,45 @@ core::system::Options environmentVars()
    return envVars;
 }
 
-} // namespace inputs
+Error runTexCompile(const FilePath& texProgramPath,
+                    const core::system::Options& envVars,
+                    const shell_utils::ShellArgs& args,
+                    const FilePath& texFilePath)
+{
+   // copy extra environment variables
+   core::system::Options env;
+   core::system::environment(&env);
+   BOOST_FOREACH(const core::system::Option& var, envVars)
+   {
+      core::system::setenv(&env, var.first, var.second);
+   }
+
+   // setup args
+   shell_utils::ShellArgs procArgs;
+   procArgs << args;
+   procArgs << texFilePath.filename();
+
+   // set options
+   core::system::ProcessOptions procOptions;
+   procOptions.terminateChildren = true;
+   procOptions.environment = env;
+   procOptions.workingDir = texFilePath.parent();
+
+   // setup callbacks
+   core::system::ProcessCallbacks cb;
+   cb.onStdout = boost::bind(module_context::consoleWriteOutput, _2);
+   cb.onStderr = boost::bind(module_context::consoleWriteError, _2);
+
+   // run the program
+   using namespace core::shell_utils;
+   return module_context::processSupervisor().runProgram(
+                    string_utils::utf8ToSystem(texProgramPath.absolutePath()),
+                    procArgs,
+                    procOptions,
+                    cb);
+}
+
+} // namespace utils
 } // namespace tex
 } // namespace modules
 } // namesapce session

@@ -25,6 +25,14 @@
 #include "SessionTexPdfLatex.hpp"
 #include "SessionTexTexi2Dvi.hpp"
 
+// TODO: investigate other texi2dvi and pdflatex options
+//         -- shell-escape
+//         -- clean
+//         -- alternative output file location
+
+// TODO: emulate texi2dvi on linux to workaround debian tilde
+//       escaping bug (http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=534458)
+
 using namespace core;
 
 namespace session {
