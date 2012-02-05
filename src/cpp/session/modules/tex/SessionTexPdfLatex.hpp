@@ -1,5 +1,5 @@
 /*
- * SessionTexCompiler.hpp
+ * SessionTexPdfLatex.hpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -11,32 +11,40 @@
  *
  */
 
-#ifndef SESSION_MODULES_TEX_COMPILER_HPP
-#define SESSION_MODULES_TEX_COMPILER_HPP
+#ifndef SESSION_MODULES_TEX_PDFLATEX_HPP
+#define SESSION_MODULES_TEX_TEXI2DVI_HPP
+
+#include <core/FilePath.hpp>
 
 #include <core/system/Types.hpp>
 
 namespace core {
    class Error;
    class FilePath;
-   namespace shell_utils {
-      class ShellArgs;
-   }
 }
  
 namespace session {
 namespace modules { 
 namespace tex {
-namespace compiler {
+namespace pdflatex {
 
-core::Error texToPdf(const core::FilePath& texProgramPath,
-                     const core::system::Options& envVars,
-                     const core::shell_utils::ShellArgs& args,
-                     const core::FilePath& texFilePath);
+struct PdfLatexOptions
+{
+   PdfLatexOptions()
+      : fileLineError(false), syncTex(false)
+   {
+   }
 
-} // namespace compiler
+   bool fileLineError;
+   bool syncTex;
+
+};
+
+bool isInstalled();
+
+} // namespace pdflatex
 } // namespace tex
 } // namespace modules
 } // namesapce session
 
-#endif // SESSION_MODULES_TEX_COMPILER_HPP
+#endif // SESSION_MODULES_TEX_TEXI2DVI_HPP

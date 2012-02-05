@@ -17,9 +17,12 @@
 #include <core/Exec.hpp>
 
 #include <r/RSexp.hpp>
+#include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
+
+#include "SessionTexTexi2Dvi.hpp"
 
 using namespace core;
 
@@ -29,6 +32,23 @@ namespace tex {
 namespace compile_pdf {
 
 namespace {
+
+SEXP rs_texToPdf(SEXP filePathSEXP)
+{
+   FilePath filePath = module_context::resolveAliasedPath(
+                           r::sexp::asString(filePathSEXP));
+
+   pdflatex::PdfLatexOptions options;
+   options.fileLineError = true;
+   options.syncTex = true;
+
+   Error error = texi2dvi::texToPdf(options, filePath);
+   if (error)
+      r::exec::warning("Unable to compile pdf: " + error.summary());
+
+   return R_NilValue;
+}
+
 
 FilePath pdfPathForTexPath(const FilePath& texPath)
 {
@@ -47,6 +67,13 @@ SEXP rs_viewPdf(SEXP texPathSEXP)
 
 Error initialize()
 {
+   R_CallMethodDef runTexToPdfMethodDef;
+   runTexToPdfMethodDef.name = "rs_texToPdf" ;
+   runTexToPdfMethodDef.fun = (DL_FUNC) rs_texToPdf ;
+   runTexToPdfMethodDef.numArgs = 1;
+   r::routines::addCallMethod(runTexToPdfMethodDef);
+
+
    R_CallMethodDef viewPdfMethodDef ;
    viewPdfMethodDef.name = "rs_viewPdf" ;
    viewPdfMethodDef.fun = (DL_FUNC) rs_viewPdf ;

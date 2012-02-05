@@ -25,7 +25,7 @@
 
 #include "tex/SessionCompilePdf.hpp"
 #include "tex/SessionRnwWeave.hpp"
-#include "tex/SessionTexCompiler.hpp"
+#include "tex/SessionTexPdfLatex.hpp"
 
 using namespace core;
 
@@ -45,7 +45,7 @@ Error getTexCapabilities(const core::json::JsonRpcRequest& request,
 Error isTexInstalled(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   pResponse->setResult(tex::compiler::isInstalled());
+   pResponse->setResult(tex::pdflatex::isInstalled());
    return Success();
 }
 
@@ -62,7 +62,7 @@ json::Object texCapabilitiesAsJson()
 {
    json::Object obj;
 
-   obj["tex_installed"] = tex::compiler::isInstalled();
+   obj["tex_installed"] = tex::pdflatex::isInstalled();
 
    tex::rnw_weave::getTypesInstalledStatus(&obj);
 
@@ -78,7 +78,6 @@ Error initialize()
    initBlock.addFunctions()
       (tex::compile_pdf::initialize)
       (tex::rnw_weave::initialize)
-      (tex::compiler::initialize)
       (bind(registerRpcMethod, "is_tex_installed", isTexInstalled));
       (bind(registerRpcMethod, "get_tex_capabilities", getTexCapabilities))
       ;
