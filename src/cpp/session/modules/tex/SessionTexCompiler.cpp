@@ -358,14 +358,6 @@ SEXP rs_texToPdf(SEXP filePathSEXP)
    return R_NilValue;
 }
 
-
-Error isTexInstalled(const json::JsonRpcRequest& request,
-                     json::JsonRpcResponse* pResponse)
-{
-   pResponse->setResult(tex::compiler::isInstalled());
-   return Success();
-}
-
 } // anonymous namespace
 
 
@@ -381,13 +373,6 @@ Error initialize()
    runTexToPdfMethodDef.fun = (DL_FUNC) rs_texToPdf ;
    runTexToPdfMethodDef.numArgs = 1;
    r::routines::addCallMethod(runTexToPdfMethodDef);
-
-   using namespace module_context;
-   ExecBlock initBlock ;
-   initBlock.addFunctions()
-      (boost::bind(registerRpcMethod, "is_tex_installed", isTexInstalled));
-   return initBlock.execute();
-
 
    return Success();
 }

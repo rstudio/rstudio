@@ -42,6 +42,14 @@ Error getTexCapabilities(const core::json::JsonRpcRequest& request,
    return Success();
 }
 
+Error isTexInstalled(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(tex::compiler::isInstalled());
+   return Success();
+}
+
+
 } // anonymous namespace
 
 
@@ -71,6 +79,7 @@ Error initialize()
       (tex::compile_pdf::initialize)
       (tex::rnw_weave::initialize)
       (tex::compiler::initialize)
+      (bind(registerRpcMethod, "is_tex_installed", isTexInstalled));
       (bind(registerRpcMethod, "get_tex_capabilities", getTexCapabilities))
       ;
   return initBlock.execute();
