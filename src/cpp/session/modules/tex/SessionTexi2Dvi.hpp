@@ -1,5 +1,5 @@
 /*
- * SessionTexTexi2Dvi.hpp
+ * SessionTexi2Dvi.hpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -18,7 +18,7 @@
 
 #include <core/system/Types.hpp>
 
-#include "SessionTexPdfLatex.hpp"
+#include "SessionPdfLatex.hpp"
 
 namespace core {
    class Error;

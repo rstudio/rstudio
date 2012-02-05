@@ -22,8 +22,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include "SessionTexPdfLatex.hpp"
-#include "SessionTexTexi2Dvi.hpp"
+#include "SessionPdfLatex.hpp"
+#include "SessionTexi2Dvi.hpp"
 
 // TODO: investigate other texi2dvi and pdflatex options
 //         -- shell-escape

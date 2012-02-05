@@ -62,9 +62,9 @@ set (SESSION_SOURCE_FILES
    modules/SessionWorkbench.cpp
    modules/SessionWorkspace.cpp
    modules/tex/SessionCompilePdf.cpp
+   modules/tex/SessionPdfLatex.cpp
    modules/tex/SessionRnwWeave.cpp
-   modules/tex/SessionTexPdfLatex.cpp
-   modules/tex/SessionTexTexi2Dvi.cpp
+   modules/tex/SessionTexi2Dvi.cpp
    modules/tex/SessionTexUtils.cpp
    modules/vcs/SessionVCSCore.cpp
    modules/vcs/SessionVCSUtils.cpp

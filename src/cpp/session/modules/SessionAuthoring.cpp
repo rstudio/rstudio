@@ -25,7 +25,7 @@
 
 #include "tex/SessionCompilePdf.hpp"
 #include "tex/SessionRnwWeave.hpp"
-#include "tex/SessionTexPdfLatex.hpp"
+#include "tex/SessionPdfLatex.hpp"
 
 using namespace core;
 

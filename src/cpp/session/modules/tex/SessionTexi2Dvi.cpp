@@ -1,5 +1,5 @@
 /*
- * SessionTexTexi2Dvi.cpp
+ * SessionTexi2Dvi.cpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -11,7 +11,7 @@
  *
  */
 
-#include "SessionTexTexi2Dvi.hpp"
+#include "SessionTexi2Dvi.hpp"
 
 #include <boost/format.hpp>
 

@@ -1,5 +1,5 @@
 /*
- * SessionTexPdfLatex.cpp
+ * SessionPdfLatex.hpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -11,42 +11,46 @@
  *
  */
 
-#include "SessionTexPdfLatex.hpp"
+#ifndef SESSION_MODULES_TEX_PDFLATEX_HPP
+#define SESSION_MODULES_TEX_PDFLATEX_HPP
 
+#include <core/FilePath.hpp>
 
-#include <session/SessionModuleContext.hpp>
+#include <core/system/Types.hpp>
 
-using namespace core;
-
+namespace core {
+   class Error;
+   class FilePath;
+}
+ 
 namespace session {
 namespace modules { 
 namespace tex {
 namespace pdflatex {
 
-#ifdef _WIN32
-const char * const kFileLineErrorOption = "-c-style-errors";
-#else
-const char * const kFileLineErrorOption = "-file-line-error";
-#endif
 
-const char * const kSynctexOption = "-synctex";
+extern const char * const kFileLineErrorOption;
+extern const char * const kSynctexOption;
 
-bool isInstalled()
+struct PdfLatexOptions
 {
-   return !module_context::findProgram("pdflatex").empty();
-}
+   PdfLatexOptions()
+      : fileLineError(false), syncTex(false)
+   {
+   }
 
+   bool fileLineError;
+   bool syncTex;
+};
 
 core::Error texToPdf(const PdfLatexOptions& options,
-                     const core::FilePath& texFilePath)
-{
+                     const core::FilePath& texFilePath);
 
-   return Success();
-}
-
+bool isInstalled();
 
 } // namespace pdflatex
 } // namespace tex
 } // namespace modules
 } // namesapce session
 
+#endif // SESSION_MODULES_TEX_PDFLATEX_HPP
