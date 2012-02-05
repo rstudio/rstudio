@@ -26,8 +26,9 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include "tex/SessionTexEngine.hpp"
 #include "tex/SessionRnwWeave.hpp"
+#include "tex/SessionTexEngine.hpp"
+#include "tex/SessionPdfPreview.hpp"
 
 using namespace core;
 
@@ -38,17 +39,7 @@ namespace tex {
 namespace {
 
 
-FilePath pdfPathForTexPath(const FilePath& texPath)
-{
-   return texPath.parent().complete(texPath.stem() + ".pdf");
-}
 
-SEXP rs_viewPdf(SEXP texPathSEXP)
-{
-   FilePath pdfPath = pdfPathForTexPath(FilePath(r::sexp::asString(texPathSEXP)));
-   module_context::showFile(pdfPath, "_rstudio_compile_pdf");
-   return R_NilValue;
-}
 
 Error getTexCapabilities(const core::json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
@@ -80,12 +71,6 @@ json::Object capabilitiesAsJson()
 
 Error initialize()
 {
-   R_CallMethodDef viewPdfMethodDef ;
-   viewPdfMethodDef.name = "rs_viewPdf" ;
-   viewPdfMethodDef.fun = (DL_FUNC) rs_viewPdf ;
-   viewPdfMethodDef.numArgs = 1;
-   r::routines::addCallMethod(viewPdfMethodDef);
-
    // install rpc methods
    using boost::bind;
    using namespace module_context;
@@ -93,6 +78,7 @@ Error initialize()
    initBlock.addFunctions()
       (tex::rnw_weave::initialize)
       (tex::engine::initialize)
+      (tex::pdf_preview::initialize)
       (bind(registerRpcMethod, "get_tex_capabilities", getTexCapabilities))
       (bind(sourceModuleRFile, "SessionTeX.R"))
       ;
