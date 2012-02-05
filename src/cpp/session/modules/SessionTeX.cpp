@@ -18,7 +18,6 @@
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
-#include <core/FileSerializer.hpp>
 #include <core/Exec.hpp>
 #include <core/json/JsonRpc.hpp>
 
@@ -44,43 +43,12 @@ FilePath pdfPathForTexPath(const FilePath& texPath)
    return texPath.parent().complete(texPath.stem() + ".pdf");
 }
 
-SEXP rs_validateTexFile(SEXP texFileSEXP)
-{
-   // used to protect return value
-   r::sexp::Protect rProtect;
-
-   // get path to TeX file
-   std::string texFile = r::sexp::asString(texFileSEXP);
-
-   // false if no file passed
-   if (texFile.empty())
-      return r::sexp::create(false, &rProtect);
-
-   // read its contents
-   FilePath texFilePath = module_context::safeCurrentPath().complete(texFile);
-   if (!texFilePath.exists())
-      return r::sexp::create(false, &rProtect);
-
-   std::string contents;
-   Error error = readStringFromFile(texFilePath, &contents);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return r::sexp::create(false, &rProtect);
-   }
-
-   // return based on whether it contains an \end{document}
-   bool hasEndDoc = contents.find("\\end{document}") != std::string::npos;
-   return r::sexp::create(hasEndDoc, &rProtect);
-}
-
 SEXP rs_viewPdf(SEXP texPathSEXP)
 {
    FilePath pdfPath = pdfPathForTexPath(FilePath(r::sexp::asString(texPathSEXP)));
    module_context::showFile(pdfPath, "_rstudio_compile_pdf");
    return R_NilValue;
 }
-
 
 Error getTexCapabilities(const core::json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
@@ -112,12 +80,6 @@ json::Object capabilitiesAsJson()
 
 Error initialize()
 {
-   R_CallMethodDef validateTexFileMethodDef;
-   validateTexFileMethodDef.name = "rs_validateTexFile" ;
-   validateTexFileMethodDef.fun = (DL_FUNC) rs_validateTexFile ;
-   validateTexFileMethodDef.numArgs = 1;
-   r::routines::addCallMethod(validateTexFileMethodDef);
-
    R_CallMethodDef viewPdfMethodDef ;
    viewPdfMethodDef.name = "rs_viewPdf" ;
    viewPdfMethodDef.fun = (DL_FUNC) rs_viewPdf ;

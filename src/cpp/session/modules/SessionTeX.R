@@ -43,11 +43,6 @@
        return()
 
      fileName = paste(pathInfo$stem, ".tex", sep="")
-
-     # validate the TeX file before proceeding (will be invalid if
-     # Sweave aborted due to an R syntax or processing error)
-     if ( !.Call("rs_validateTexFile", fileName) )
-        return ()
    }
 
    # run texi2dvi
