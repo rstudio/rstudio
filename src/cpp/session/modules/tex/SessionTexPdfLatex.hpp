@@ -12,7 +12,7 @@
  */
 
 #ifndef SESSION_MODULES_TEX_PDFLATEX_HPP
-#define SESSION_MODULES_TEX_TEXI2DVI_HPP
+#define SESSION_MODULES_TEX_PDFLATEX_HPP
 
 #include <core/FilePath.hpp>
 
@@ -28,6 +28,10 @@ namespace modules {
 namespace tex {
 namespace pdflatex {
 
+
+extern const char * const kFileLineErrorOption;
+extern const char * const kSynctexOption;
+
 struct PdfLatexOptions
 {
    PdfLatexOptions()
@@ -37,8 +41,10 @@ struct PdfLatexOptions
 
    bool fileLineError;
    bool syncTex;
-
 };
+
+core::Error texToPdf(const PdfLatexOptions& options,
+                     const core::FilePath& texFilePath);
 
 bool isInstalled();
 
@@ -47,4 +53,4 @@ bool isInstalled();
 } // namespace modules
 } // namesapce session
 
-#endif // SESSION_MODULES_TEX_TEXI2DVI_HPP
+#endif // SESSION_MODULES_TEX_PDFLATEX_HPP

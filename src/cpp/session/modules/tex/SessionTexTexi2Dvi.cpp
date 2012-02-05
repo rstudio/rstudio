@@ -24,14 +24,11 @@
 #include "SessionTexCompiler.hpp"
 
 
-
 // platform specific constants
 #ifdef _WIN32
 const char * const kScriptEx = ".cmd";
-const char * const kFileLineErrors = "-c-style-errors";
 #else
 const char * const kScriptEx = ".sh";
-const char * const kFileLineErrors = "-file-line-error";
 #endif
 
 
@@ -96,12 +93,13 @@ core::system::Options pdfLatexEnvVars(
    if (options.fileLineError)
    {
       envVars.push_back(std::make_pair(boost::str(fmt % n++),
-                                       kFileLineErrors));
+                                       pdflatex::kFileLineErrorOption));
    }
    if (options.syncTex)
    {
-      envVars.push_back(std::make_pair(boost::str(fmt % n++),
-                                       "-synctex=-1"));
+      envVars.push_back(std::make_pair(
+                     boost::str(fmt % n++),
+                     pdflatex::kSynctexOption + std::string("=-1")));
    }
 
    // rstudio-pdflatex script

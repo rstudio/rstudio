@@ -22,6 +22,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include "SessionTexPdfLatex.hpp"
 #include "SessionTexTexi2Dvi.hpp"
 
 using namespace core;
@@ -42,8 +43,13 @@ SEXP rs_texToPdf(SEXP filePathSEXP)
    options.fileLineError = true;
    options.syncTex = true;
 
-   Error error = texi2dvi::texToPdf(options, filePath);
-   if (error)
+#if defined(_WIN32) || defined(__APPLE__)
+   Error error = tex::texi2dvi::texToPdf(options, filePath);
+#else
+   Error error = tex::texi2dvi::texToPdf(options, filePath);
+#endif
+
+  if (error)
       r::exec::warning("Unable to compile pdf: " + error.summary());
 
    return R_NilValue;

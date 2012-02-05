@@ -23,10 +23,27 @@ namespace modules {
 namespace tex {
 namespace pdflatex {
 
+#ifdef _WIN32
+const char * const kFileLineErrorOption = "-c-style-errors";
+#else
+const char * const kFileLineErrorOption = "-file-line-error";
+#endif
+
+const char * const kSynctexOption = "-synctex";
+
 bool isInstalled()
 {
    return !module_context::findProgram("pdflatex").empty();
 }
+
+
+core::Error texToPdf(const PdfLatexOptions& options,
+                     const core::FilePath& texFilePath)
+{
+
+   return Success();
+}
+
 
 } // namespace pdflatex
 } // namespace tex
