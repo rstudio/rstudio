@@ -13,12 +13,14 @@
 
 #include "SessionTexEngine.hpp"
 
+#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
+#include <core/Exec.hpp>
 
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
@@ -357,8 +359,20 @@ SEXP rs_texToPdf(SEXP filePathSEXP)
 }
 
 
+Error isTexInstalled(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(engine::isInstalled());
+   return Success();
+}
+
 } // anonymous namespace
 
+
+bool isInstalled()
+{
+   return !module_context::findProgram("pdflatex").empty();
+}
 
 Error initialize()
 {
@@ -368,6 +382,11 @@ Error initialize()
    runTexToPdfMethodDef.numArgs = 1;
    r::routines::addCallMethod(runTexToPdfMethodDef);
 
+   using namespace module_context;
+   ExecBlock initBlock ;
+   initBlock.addFunctions()
+      (boost::bind(registerRpcMethod, "is_tex_installed", isTexInstalled));
+   return initBlock.execute();
 
 
    return Success();

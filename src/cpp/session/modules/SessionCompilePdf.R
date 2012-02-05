@@ -1,5 +1,5 @@
 #
-# SessionTeX.R
+# SessionCompilePdf.R
 #
 # Copyright (C) 2009-11 by RStudio, Inc.
 #
@@ -78,11 +78,5 @@
 {
    invisible(.rs.compilePdf(file,  "publish"))
 })
-
-.rs.addFunction("is_tex_installed", function()
-{
-   return(.rs.scalar(file.exists(Sys.which('pdflatex'))))
-})
-
 
 

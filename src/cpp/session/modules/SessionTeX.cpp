@@ -26,6 +26,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include "tex/SessionCompilePdf.hpp"
 #include "tex/SessionRnwWeave.hpp"
 #include "tex/SessionTexEngine.hpp"
 #include "tex/SessionPdfPreview.hpp"
@@ -60,10 +61,7 @@ json::Object capabilitiesAsJson()
 {
    json::Object obj;
 
-   bool texInstalled;
-   Error error = r::exec::RFunction(".rs.is_tex_installed").call(&texInstalled);
-   obj["tex_installed"] = !error ? texInstalled : false;
-
+   obj["tex_installed"] = tex::engine::isInstalled();
    rnw_weave::getTypesInstalledStatus(&obj);
 
    return obj;
@@ -76,11 +74,11 @@ Error initialize()
    using namespace module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
+      (tex::compile_pdf::initialize)
       (tex::rnw_weave::initialize)
       (tex::engine::initialize)
       (tex::pdf_preview::initialize)
       (bind(registerRpcMethod, "get_tex_capabilities", getTexCapabilities))
-      (bind(sourceModuleRFile, "SessionTeX.R"))
       ;
   return initBlock.execute();
 }

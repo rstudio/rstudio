@@ -1,5 +1,5 @@
 /*
- * SessionTexEngine.hpp
+ * SessionCompilePdf.hpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -11,9 +11,8 @@
  *
  */
 
-#ifndef SESSION_MODULES_TEX_ENGINE_HPP
-#define SESSION_MODULES_TEX_ENGINE_HPP
-
+#ifndef SESSION_MODULES_TEX_COMPILE_PDF_HPP
+#define SESSION_MODULES_TEX_COMPILE_PDF_HPP
 
 namespace core {
    class Error;
@@ -22,15 +21,13 @@ namespace core {
 namespace session {
 namespace modules { 
 namespace tex {
-namespace engine {
-
-bool isInstalled();
+namespace compile_pdf {
 
 core::Error initialize();
 
-} // namespace engine
+} // namespace compile_pdf
 } // namespace tex
 } // namespace modules
 } // namesapce session
 
-#endif // SESSION_MODULES_TEX_ENGINE_HPP
+#endif // SESSION_MODULES_TEX_COMPILE_PDF_HPP

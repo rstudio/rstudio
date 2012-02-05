@@ -1,5 +1,5 @@
 /*
- * SessionTexEngine.hpp
+ * SessionCompilePdf.cpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -11,26 +11,40 @@
  *
  */
 
-#ifndef SESSION_MODULES_TEX_ENGINE_HPP
-#define SESSION_MODULES_TEX_ENGINE_HPP
+#include "SessionCompilePdf.hpp"
 
+#include <core/Exec.hpp>
 
-namespace core {
-   class Error;
-}
- 
+#include <session/SessionModuleContext.hpp>
+
+using namespace core;
+
 namespace session {
 namespace modules { 
 namespace tex {
-namespace engine {
+namespace compile_pdf {
 
-bool isInstalled();
+namespace {
 
-core::Error initialize();
 
-} // namespace engine
+} // anonymous namespace
+
+
+Error initialize()
+{
+   using boost::bind;
+   using namespace module_context;
+   ExecBlock initBlock ;
+   initBlock.addFunctions()
+      (bind(sourceModuleRFile, "SessionCompilePdf.R"))
+      ;
+   return initBlock.execute();
+
+}
+
+
+} // namespace compile_pdf
 } // namespace tex
 } // namespace modules
 } // namesapce session
 
-#endif // SESSION_MODULES_TEX_ENGINE_HPP
