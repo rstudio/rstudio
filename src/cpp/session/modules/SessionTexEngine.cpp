@@ -296,43 +296,60 @@ Error executeTexToPdf(const FilePath& texProgramPath,
 }
 
 
+struct Texi2DviInfo
+{
+   bool empty() const { return programFilePath.empty(); }
+
+   FilePath programFilePath;
+   const std::string versionInfo;
+};
+
+Texi2DviInfo texi2DviInfo()
+{
+   // get the path to the texi2dvi binary
+   FilePath programFilePath = module_context::findProgram("texi2dvi");
+   if (programFilePath.empty())
+      return Texi2DviInfo();
+
+   // this is enough to return so setup the return structure
+   Texi2DviInfo t2dviInfo;
+   t2dviInfo.programFilePath = programFilePath;
+
+   // try to get version info from it
+   core::system::ProcessResult result;
+   Error error = core::system::runProgram(
+                  string_utils::utf8ToSystem(programFilePath.absolutePath()),
+                  core::shell_utils::ShellArgs() << "--version",
+                  "",
+                  core::system::ProcessOptions(),
+                  &result);
+   if (error)
+      LOG_ERROR(error);
+   else if (result.exitStatus != EXIT_SUCCESS)
+      LOG_ERROR_MESSAGE("Error probing for texi2dvi version: "+ result.stdErr);
+
+   // return what we have
+   return t2dviInfo;
+}
+
+
+
 SEXP rs_texToPdf(SEXP filePathSEXP)
 {
    FilePath texFilePath =
          module_context::resolveAliasedPath(r::sexp::asString(filePathSEXP));
 
-
-   // get the path to the texi2dvi binary
-   FilePath texi2dviPath = module_context::findProgram("texi2dvi");
-   if (texi2dviPath.empty())
+   Texi2DviInfo t2dviInfo = texi2DviInfo();
+   if (t2dviInfo.empty())
    {
-      module_context::consoleWriteError("can't find texi2dvi\n");
+      r::exec::warning("Unable to find texi2dvi executable");
       return R_NilValue;
    }
 
-   // get version info from it
-   core::system::ProcessResult result;
-   Error error = core::system::runProgram(
-                     string_utils::utf8ToSystem(texi2dviPath.absolutePath()),
-                     core::shell_utils::ShellArgs() << "--version",
-                     "",
-                     core::system::ProcessOptions(),
-                     &result);
-   if (error)
-   {
-      module_context::consoleWriteError(error.summary() + "\n");
-      return R_NilValue;
-   }
-   else if (result.exitStatus != EXIT_SUCCESS)
-   {
-      module_context::consoleWriteError(result.stdErr);
-      return R_NilValue;
-   }
-
-   error = executeTexToPdf(texi2dviPath,
-                           texi2dviEnvironmentVars(result.stdOut),
-                           texi2dviShellArgs(result.stdOut),
-                           texFilePath);
+   Error error = executeTexToPdf(t2dviInfo.programFilePath,
+                                 texi2dviEnvironmentVars(t2dviInfo.versionInfo),
+                                 texi2dviShellArgs(t2dviInfo.versionInfo),
+                                 texFilePath);
    if (error)
       module_context::consoleWriteError(error.summary() + "\n");
 
