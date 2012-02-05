@@ -18,6 +18,7 @@ add_subdirectory(workers)
 # include files
 file(GLOB_RECURSE SESSION_HEADER_FILES "*.h*")
 
+
 # source files
 set (SESSION_SOURCE_FILES
    SessionClientEvent.cpp
@@ -61,7 +62,6 @@ set (SESSION_SOURCE_FILES
    modules/SessionWorkbench.cpp
    modules/SessionWorkspace.cpp
    modules/tex/SessionCompilePdf.cpp
-   modules/tex/SessionPdfPreview.cpp
    modules/tex/SessionRnwWeave.cpp
    modules/tex/SessionTexEngine.cpp
    modules/vcs/SessionVCSCore.cpp

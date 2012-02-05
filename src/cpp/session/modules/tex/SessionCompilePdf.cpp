@@ -13,7 +13,11 @@
 
 #include "SessionCompilePdf.hpp"
 
+#include <core/FilePath.hpp>
 #include <core/Exec.hpp>
+
+#include <r/RSexp.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -26,18 +30,34 @@ namespace compile_pdf {
 
 namespace {
 
+FilePath pdfPathForTexPath(const FilePath& texPath)
+{
+   return texPath.parent().complete(texPath.stem() + ".pdf");
+}
+
+SEXP rs_viewPdf(SEXP texPathSEXP)
+{
+   FilePath pdfPath = pdfPathForTexPath(FilePath(r::sexp::asString(texPathSEXP)));
+   module_context::showFile(pdfPath, "_rstudio_compile_pdf");
+   return R_NilValue;
+}
 
 } // anonymous namespace
 
 
 Error initialize()
 {
+   R_CallMethodDef viewPdfMethodDef ;
+   viewPdfMethodDef.name = "rs_viewPdf" ;
+   viewPdfMethodDef.fun = (DL_FUNC) rs_viewPdf ;
+   viewPdfMethodDef.numArgs = 1;
+   r::routines::addCallMethod(viewPdfMethodDef);
+
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(sourceModuleRFile, "SessionCompilePdf.R"))
-      ;
+      (bind(sourceModuleRFile, "SessionCompilePdf.R"));
    return initBlock.execute();
 
 }

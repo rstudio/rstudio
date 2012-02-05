@@ -26,7 +26,6 @@
 #include "tex/SessionCompilePdf.hpp"
 #include "tex/SessionRnwWeave.hpp"
 #include "tex/SessionTexEngine.hpp"
-#include "tex/SessionPdfPreview.hpp"
 
 using namespace core;
 
@@ -72,7 +71,6 @@ Error initialize()
       (tex::compile_pdf::initialize)
       (tex::rnw_weave::initialize)
       (tex::engine::initialize)
-      (tex::pdf_preview::initialize)
       (bind(registerRpcMethod, "get_tex_capabilities", getTexCapabilities))
       ;
   return initBlock.execute();
