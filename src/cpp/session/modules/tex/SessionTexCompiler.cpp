@@ -1,5 +1,5 @@
 /*
- * SessionTexEngine.cpp
+ * SessionTexCompiler.cpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -11,7 +11,7 @@
  *
  */
 
-#include "SessionTexEngine.hpp"
+#include "SessionTexCompiler.hpp"
 
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
@@ -54,7 +54,7 @@ using namespace core;
 namespace session {
 namespace modules { 
 namespace tex {
-namespace engine {
+namespace compiler {
 
 namespace {
 
@@ -362,7 +362,7 @@ SEXP rs_texToPdf(SEXP filePathSEXP)
 Error isTexInstalled(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   pResponse->setResult(engine::isInstalled());
+   pResponse->setResult(tex::compiler::isInstalled());
    return Success();
 }
 
@@ -393,7 +393,7 @@ Error initialize()
 }
 
 
-} // namespace engine
+} // namespace compiler
 } // namespace tex
 } // namespace modules
 } // namesapce session

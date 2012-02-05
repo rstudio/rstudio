@@ -25,7 +25,7 @@
 
 #include "tex/SessionCompilePdf.hpp"
 #include "tex/SessionRnwWeave.hpp"
-#include "tex/SessionTexEngine.hpp"
+#include "tex/SessionTexCompiler.hpp"
 
 using namespace core;
 
@@ -54,7 +54,7 @@ json::Object texCapabilitiesAsJson()
 {
    json::Object obj;
 
-   obj["tex_installed"] = tex::engine::isInstalled();
+   obj["tex_installed"] = tex::compiler::isInstalled();
 
    tex::rnw_weave::getTypesInstalledStatus(&obj);
 
@@ -70,7 +70,7 @@ Error initialize()
    initBlock.addFunctions()
       (tex::compile_pdf::initialize)
       (tex::rnw_weave::initialize)
-      (tex::engine::initialize)
+      (tex::compiler::initialize)
       (bind(registerRpcMethod, "get_tex_capabilities", getTexCapabilities))
       ;
   return initBlock.execute();
