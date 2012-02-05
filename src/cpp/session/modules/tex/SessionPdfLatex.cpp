@@ -16,6 +16,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include "SessionTexUtils.hpp"
+
 using namespace core;
 
 namespace session {
@@ -23,13 +25,29 @@ namespace modules {
 namespace tex {
 namespace pdflatex {
 
+namespace {
+
+shell_utils::ShellArgs shellArgs(const PdfLatexOptions& options)
+{
+   shell_utils::ShellArgs args;
+
+   if (options.fileLineError)
+      args << kFileLineErrorOption;
+   if (options.syncTex)
+      args << kSynctexOption;
+
+   return args;
+}
+
+} // anonymous namespace
+
 #ifdef _WIN32
 const char * const kFileLineErrorOption = "-c-style-errors";
 #else
 const char * const kFileLineErrorOption = "-file-line-error";
 #endif
 
-const char * const kSynctexOption = "-synctex";
+const char * const kSynctexOption = "-synctex=-1";
 
 bool isInstalled()
 {
@@ -40,8 +58,14 @@ bool isInstalled()
 core::Error texToPdf(const PdfLatexOptions& options,
                      const core::FilePath& texFilePath)
 {
+   FilePath pdflatexPath = module_context::findProgram("pdflatex");
+   if (pdflatexPath.empty())
+      return core::fileNotFoundError("pdflatex", ERROR_LOCATION);
 
-   return Success();
+   return utils::runTexCompile(pdflatexPath,
+                               utils::rTexInputsEnvVars(),
+                               shellArgs(options),
+                               texFilePath);
 }
 
 

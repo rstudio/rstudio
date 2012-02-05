@@ -25,6 +25,10 @@
 #include "SessionPdfLatex.hpp"
 #include "SessionTexi2Dvi.hpp"
 
+// TODO: call our texi2dvi stuff rather than R function
+
+// TODO: re-write compilePdf in C++
+
 // TODO: investigate other texi2dvi and pdflatex options
 //         -- shell-escape
 //         -- clean
@@ -54,7 +58,7 @@ SEXP rs_texToPdf(SEXP filePathSEXP)
 #if defined(_WIN32) || defined(__APPLE__)
    Error error = tex::texi2dvi::texToPdf(options, filePath);
 #else
-   Error error = tex::texi2dvi::texToPdf(options, filePath);
+   Error error = tex::pdflatex::texToPdf(options, filePath);
 #endif
 
   if (error)

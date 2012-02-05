@@ -20,6 +20,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include "SessionPdfLatex.hpp"
 #include "SessionTexUtils.hpp"
 
 
@@ -96,9 +97,8 @@ core::system::Options pdfLatexEnvVars(
    }
    if (options.syncTex)
    {
-      envVars.push_back(std::make_pair(
-                     boost::str(fmt % n++),
-                     pdflatex::kSynctexOption + std::string("=-1")));
+      envVars.push_back(std::make_pair(boost::str(fmt % n++),
+                                       pdflatex::kSynctexOption));
    }
 
    // rstudio-pdflatex script
