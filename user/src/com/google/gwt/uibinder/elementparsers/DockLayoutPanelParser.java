@@ -82,8 +82,8 @@ public class DockLayoutPanelParser implements ElementParser {
       if (!isValidChildElement(elem, child)) {
         writer.die(elem,
             "Child must be one of "
-                + "<%2$s:north>, <%2$s:south>, <%2$s:east>, <%2$s:west> or <%2$s:center>, "
-                + "but found %3$s", elem.getPrefix(), child);
+                + "<%1$s:north>, <%1$s:south>, <%1$s:east>, <%1$s:west> or <%1$s:center>, "
+                + "but found %2$s", elem.getPrefix(), child);
       }
 
       // Consume the single widget element.
