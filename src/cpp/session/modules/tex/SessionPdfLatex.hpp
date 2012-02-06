@@ -17,6 +17,7 @@
 #include <core/FilePath.hpp>
 
 #include <core/system/Types.hpp>
+#include <core/system/Process.hpp>
 
 namespace core {
    class Error;
@@ -44,7 +45,8 @@ struct PdfLatexOptions
 };
 
 core::Error texToPdf(const PdfLatexOptions& options,
-                     const core::FilePath& texFilePath);
+                     const core::FilePath& texFilePath,
+                     core::system::ProcessResult* pResult);
 
 bool isInstalled();
 

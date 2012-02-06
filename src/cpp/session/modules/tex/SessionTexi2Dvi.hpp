@@ -17,6 +17,7 @@
 #include <core/FilePath.hpp>
 
 #include <core/system/Types.hpp>
+#include <core/system/Process.hpp>
 
 #include "SessionPdfLatex.hpp"
 
@@ -31,7 +32,8 @@ namespace tex {
 namespace texi2dvi {
 
 core::Error texToPdf(const tex::pdflatex::PdfLatexOptions& options,
-                     const core::FilePath& texFilePath);
+                     const core::FilePath& texFilePath,
+                     core::system::ProcessResult* pResult);
 
 } // namespace texi2dvi
 } // namespace tex

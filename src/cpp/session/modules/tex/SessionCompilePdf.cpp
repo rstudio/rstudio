@@ -15,6 +15,7 @@
 
 #include <core/FilePath.hpp>
 #include <core/Exec.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -24,18 +25,31 @@
 
 #include "SessionPdfLatex.hpp"
 #include "SessionTexi2Dvi.hpp"
+#include "SessionRnwWeave.hpp"
 
-// TODO: call our texi2dvi stuff rather than R function
+// TODO: emulate texi2dvi on linux to workaround debian tilde
+//       escaping bug (http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=534458)
 
 // TODO: re-write compilePdf in C++
+//
+//     - sustain overridability using PDFLATEX
+//     - test on all platforms
+//
+
+// TODO: consider option for texi2dvi
+
+// TODO: investigate luatex, xelatex (ConTeXt?)
+//       (engines names must be compatible with TexShop/Texworks
+//        magic markers)
+
+
+// TODO: check spaces in path constraint on various platforms
 
 // TODO: investigate other texi2dvi and pdflatex options
 //         -- shell-escape
 //         -- clean
 //         -- alternative output file location
 
-// TODO: emulate texi2dvi on linux to workaround debian tilde
-//       escaping bug (http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=534458)
 
 using namespace core;
 
@@ -46,37 +60,126 @@ namespace compile_pdf {
 
 namespace {
 
-SEXP rs_texToPdf(SEXP filePathSEXP)
+void viewPdf(const FilePath& texPath)
 {
-   FilePath filePath = module_context::resolveAliasedPath(
-                           r::sexp::asString(filePathSEXP));
+   FilePath pdfPath = texPath.parent().complete(texPath.stem() + ".pdf");
+   module_context::showFile(pdfPath, "_rstudio_compile_pdf");
+}
 
+void publishPdf(const FilePath& texPath)
+{
+   std::string aliasedPath = module_context::createAliasedPath(texPath);
+   ClientEvent event(client_events::kPublishPdf, aliasedPath);
+   module_context::enqueClientEvent(event);
+}
+
+void showCompileLog(const FilePath& texPath)
+{
+   FilePath logPath = texPath.parent().complete(texPath.stem() + ".log");
+   std::string logContents;
+   Error error = core::readStringFromFile(logPath,
+                                          &logContents,
+                                          string_utils::LineEndingPosix);
+   if (error)
+      LOG_ERROR(error);
+
+   module_context::consoleWriteOutput(logContents);
+}
+
+bool compilePdf(const FilePath& targetFilePath,
+                const std::string& completedAction,
+                std::string* pUserErrMsg)
+{
+   // set the working directory for the duration of the compile
+   RestoreCurrentPathScope pathScope(module_context::safeCurrentPath());
+   Error error = targetFilePath.parent().makeCurrentPath();
+   if (error)
+   {
+      *pUserErrMsg = "Error setting current path: " + error.summary();
+      return false;
+   }
+
+   // ensure no spaces in path
+   std::string filename = targetFilePath.filename();
+   if (filename.find(' ') != std::string::npos)
+   {
+      *pUserErrMsg = "Invalid filename: '" + filename +
+                     "' (TeX does not understand paths with spaces)";
+      return false;
+   }
+
+   // see if we need to sweave
+   std::string ext = targetFilePath.extensionLowerCase();
+   if (ext == ".rnw" || ext == ".snw" || ext == ".nw")
+   {
+      // attempt to weave the rnw
+      bool success = rnw_weave::runWeave(targetFilePath, pUserErrMsg);
+      if (!success)
+         return false;
+   }
+
+   // configure pdflatex options
    pdflatex::PdfLatexOptions options;
    options.fileLineError = true;
    options.syncTex = true;
 
+   // run tex compile
+   FilePath texFilePath = targetFilePath.parent().complete(
+                                             targetFilePath.stem() +
+                                             ".tex");
+   core::system::ProcessResult result;
 #if defined(_WIN32) || defined(__APPLE__)
-   Error error = tex::texi2dvi::texToPdf(options, filePath);
+   error = tex::texi2dvi::texToPdf(options, texFilePath, &result);
 #else
-   Error error = tex::pdflatex::texToPdf(options, filePath);
+   // workaround for tex2dvi special character bug on linux:
+   //   http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=577741
+  error = tex::pdflatex::texToPdf(options, texFilePath, &result);
 #endif
 
-  if (error)
-      r::exec::warning("Unable to compile pdf: " + error.summary());
+   if (error)
+   {
+      *pUserErrMsg = "Unable to compile pdf: " + error.summary();
+      return false;
+   }
+   else if (result.exitStatus != EXIT_SUCCESS)
+   {
+      showCompileLog(texFilePath);
+      return false;
+   }
+   else
+   {
+      if (completedAction == "view")
+         viewPdf(targetFilePath);
+      else if (completedAction == "publish")
+         publishPdf(targetFilePath);
 
-   return R_NilValue;
+      return true;
+   }
 }
 
-
-FilePath pdfPathForTexPath(const FilePath& texPath)
+SEXP rs_compilePdf(SEXP filePathSEXP, SEXP completedActionSEXP)
 {
-   return texPath.parent().complete(texPath.stem() + ".pdf");
-}
+   try
+   {
+      // extract parameters
+      FilePath targetFilePath = module_context::resolveAliasedPath(
+                                          r::sexp::asString(filePathSEXP));
+      std::string completedAction = r::sexp::asString(completedActionSEXP);
 
-SEXP rs_viewPdf(SEXP texPathSEXP)
-{
-   FilePath pdfPath = pdfPathForTexPath(FilePath(r::sexp::asString(texPathSEXP)));
-   module_context::showFile(pdfPath, "_rstudio_compile_pdf");
+      // compile pdf
+      std::string userErrMsg;
+      if (!compilePdf(targetFilePath, completedAction, &userErrMsg))
+      {
+         if (!userErrMsg.empty())
+            throw r::exec::RErrorException(userErrMsg);
+      }
+   }
+   catch(const r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
    return R_NilValue;
 }
 
@@ -85,18 +188,13 @@ SEXP rs_viewPdf(SEXP texPathSEXP)
 
 Error initialize()
 {
-   R_CallMethodDef runTexToPdfMethodDef;
-   runTexToPdfMethodDef.name = "rs_texToPdf" ;
-   runTexToPdfMethodDef.fun = (DL_FUNC) rs_texToPdf ;
-   runTexToPdfMethodDef.numArgs = 1;
-   r::routines::addCallMethod(runTexToPdfMethodDef);
+   R_CallMethodDef compilePdfMethodDef;
+   compilePdfMethodDef.name = "rs_compilePdf" ;
+   compilePdfMethodDef.fun = (DL_FUNC) rs_compilePdf ;
+   compilePdfMethodDef.numArgs = 2;
+   r::routines::addCallMethod(compilePdfMethodDef);
 
 
-   R_CallMethodDef viewPdfMethodDef ;
-   viewPdfMethodDef.name = "rs_viewPdf" ;
-   viewPdfMethodDef.fun = (DL_FUNC) rs_viewPdf ;
-   viewPdfMethodDef.numArgs = 1;
-   r::routines::addCallMethod(viewPdfMethodDef);
 
    using boost::bind;
    using namespace module_context;

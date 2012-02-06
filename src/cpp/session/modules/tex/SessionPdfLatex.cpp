@@ -36,6 +36,8 @@ shell_utils::ShellArgs shellArgs(const PdfLatexOptions& options)
    if (options.syncTex)
       args << kSynctexOption;
 
+   args << "-interaction=nonstopmode";
+
    return args;
 }
 
@@ -56,7 +58,8 @@ bool isInstalled()
 
 
 core::Error texToPdf(const PdfLatexOptions& options,
-                     const core::FilePath& texFilePath)
+                     const core::FilePath& texFilePath,
+                     core::system::ProcessResult* pResult)
 {
    FilePath pdflatexPath = module_context::findProgram("pdflatex");
    if (pdflatexPath.empty())
@@ -65,7 +68,8 @@ core::Error texToPdf(const PdfLatexOptions& options,
    return utils::runTexCompile(pdflatexPath,
                                utils::rTexInputsEnvVars(),
                                shellArgs(options),
-                               texFilePath);
+                               texFilePath,
+                               pResult);
 }
 
 

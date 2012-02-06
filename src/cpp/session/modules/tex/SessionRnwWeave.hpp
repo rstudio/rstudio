@@ -18,6 +18,7 @@
 
 namespace core {
    class Error;
+   class FilePath;
 }
  
 namespace session {
@@ -26,10 +27,10 @@ namespace tex {
 namespace rnw_weave {
 
 core::json::Array supportedTypes();
-
 void getTypesInstalledStatus(core::json::Object* pObj);
 
-core::Error initialize();
+bool runWeave(const core::FilePath& filePath, std::string* pUserErrMsg);
+
 
 } // namespace rnw_weave
 } // namespace tex

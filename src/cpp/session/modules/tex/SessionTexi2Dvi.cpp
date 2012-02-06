@@ -178,7 +178,8 @@ shell_utils::ShellArgs shellArgs(const std::string& texVersionInfo)
 
 
 Error texToPdf(const tex::pdflatex::PdfLatexOptions& options,
-               const FilePath& texFilePath)
+               const FilePath& texFilePath,
+               core::system::ProcessResult* pResult)
 {
    Texi2DviInfo t2dviInfo = texi2DviInfo();
    if (t2dviInfo.empty())
@@ -187,7 +188,8 @@ Error texToPdf(const tex::pdflatex::PdfLatexOptions& options,
    return utils::runTexCompile(t2dviInfo.programFilePath,
                                environmentVars(t2dviInfo.versionInfo, options),
                                shellArgs(t2dviInfo.versionInfo),
-                               texFilePath);
+                               texFilePath,
+                               pResult);
 }
 
 } // namespace texi2dvi

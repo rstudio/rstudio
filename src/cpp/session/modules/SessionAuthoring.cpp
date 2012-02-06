@@ -77,7 +77,6 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (tex::compile_pdf::initialize)
-      (tex::rnw_weave::initialize)
       (bind(registerRpcMethod, "is_tex_installed", isTexInstalled));
       (bind(registerRpcMethod, "get_tex_capabilities", getTexCapabilities))
       ;

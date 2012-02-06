@@ -118,7 +118,8 @@ core::system::Options rTexInputsEnvVars()
 Error runTexCompile(const FilePath& texProgramPath,
                     const core::system::Options& envVars,
                     const shell_utils::ShellArgs& args,
-                    const FilePath& texFilePath)
+                    const FilePath& texFilePath,
+                    core::system::ProcessResult* pResult)
 {
    // copy extra environment variables
    core::system::Options env;
@@ -139,18 +140,13 @@ Error runTexCompile(const FilePath& texProgramPath,
    procOptions.environment = env;
    procOptions.workingDir = texFilePath.parent();
 
-   // setup callbacks
-   core::system::ProcessCallbacks cb;
-   cb.onStdout = boost::bind(module_context::consoleWriteOutput, _2);
-   cb.onStderr = boost::bind(module_context::consoleWriteError, _2);
-
    // run the program
-   using namespace core::shell_utils;
-   return module_context::processSupervisor().runProgram(
-                    string_utils::utf8ToSystem(texProgramPath.absolutePath()),
-                    procArgs,
-                    procOptions,
-                    cb);
+   return core::system::runProgram(
+               string_utils::utf8ToSystem(texProgramPath.absolutePath()),
+               procArgs,
+               "",
+               procOptions,
+               pResult);
 }
 
 } // namespace utils

@@ -18,6 +18,7 @@
 
 #include <core/system/ShellUtils.hpp>
 #include <core/system/Types.hpp>
+#include <core/system/Process.hpp>
 
 namespace core {
    class Error;
@@ -44,7 +45,8 @@ core::system::Options rTexInputsEnvVars();
 core::Error runTexCompile(const core::FilePath& texProgramPath,
                           const core::system::Options& envVars,
                           const core::shell_utils::ShellArgs& args,
-                          const core::FilePath& texFilePath);
+                          const core::FilePath& texFilePath,
+                          core::system::ProcessResult* pResult);
 
 } // namespace utils
 } // namespace tex

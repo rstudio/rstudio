@@ -35,6 +35,19 @@ namespace rnw_weave {
 
 namespace {
 
+Error rBinDir(FilePath* pRBinDir)
+{
+   std::string rHomeBin;
+   r::exec::RFunction rHomeBinFunc("R.home", "bin");
+   Error error = rHomeBinFunc.call(&rHomeBin);
+   if (error)
+      return error;
+
+   *pRBinDir = FilePath(rHomeBin);
+   return Success();
+}
+
+
 class RnwWeave : boost::noncopyable
 {
 public:
@@ -234,19 +247,28 @@ std::string weaveTypeForFile(const FilePath& rnwPath)
       return userSettings().defaultSweaveEngine();
 }
 
-bool callSweave(const std::string& rBinDir,
-                const std::string& file)
+} // anonymous namespace
+
+bool runWeave(const core::FilePath& rnwPath, std::string* pUserErrMsg)
 {
+   // get the R bin dir
+   FilePath rBin;
+   Error error = rBinDir(&rBin);
+   if (error)
+   {
+      LOG_ERROR(error);
+      *pUserErrMsg = error.summary();
+      return false;
+   }
+
    // R exe path differs by platform
 #ifdef _WIN32
-   std::string path = FilePath(rBinDir).complete("Rterm.exe").absolutePath();
+   std::string path = rBin.complete("Rterm.exe").absolutePath();
 #else
-   std::string path = FilePath(rBinDir).complete("R").absolutePath();
+   std::string path = rBin.complete("R").absolutePath();
 #endif
 
-   // calculate the full path to the file then use it to determine
-   // the active sweave engine
-   FilePath rnwPath = module_context::resolveAliasedPath(file);
+   // determine the active sweave engine
    std::string weaveType = weaveTypeForFile(rnwPath);
    boost::shared_ptr<RnwWeave> pRnwWeave = weaveRegistry()
                                              .findTypeIgnoreCase(weaveType);
@@ -254,7 +276,8 @@ bool callSweave(const std::string& rBinDir,
    // run the weave
    if (pRnwWeave)
    {
-      std::vector<std::string> args = pRnwWeave->commandArgs(file);
+      std::vector<std::string> args = pRnwWeave->commandArgs(
+                                                         rnwPath.filename());
 
       // call back-end
       int exitStatus;
@@ -264,10 +287,13 @@ bool callSweave(const std::string& rBinDir,
       if (error)
       {
          LOG_ERROR(error);
+         *pUserErrMsg = error.summary();
          return false;
       }
       else if (exitStatus != EXIT_SUCCESS)
       {
+         // we don't set a user error message here because the weave
+         // almost certainly printed something to stderr
          return false;
       }
       else
@@ -277,41 +303,13 @@ bool callSweave(const std::string& rBinDir,
    }
    else
    {
-      throw r::exec::RErrorException(
+      *pUserErrMsg =
          "Unknown Rnw weave method '" + weaveType + "' specified (valid " +
-         "values are " + weaveRegistry().printableTypeNames() + ")");
+         "values are " + weaveRegistry().printableTypeNames() + ")";
 
-      // keep compiler happy
       return false;
    }
 }
-
-SEXP rs_callSweave(SEXP rBinDirSEXP, SEXP fileSEXP)
-{
-   // call sweave
-   bool success = false;
-   try
-   {
-      success = callSweave(r::sexp::asString(rBinDirSEXP),
-                           r::sexp::asString(fileSEXP));
-   }
-   catch(const r::exec::RErrorException& e)
-   {
-      r::exec::error(e.message());
-   }
-
-   // check for interrupts (likely since sweave can be long running)
-   r::exec::checkUserInterrupt();
-
-   r::sexp::Protect rProtect;
-   return r::sexp::create(success, &rProtect);
-}
-
-
-
-
-} // anonymous namespace
-
 
 json::Array supportedTypes()
 {
@@ -338,21 +336,6 @@ void getTypesInstalledStatus(json::Object* pObj)
       (*pObj)[n] = pRnwWeave->isInstalled();
    }
 }
-
-
-Error initialize()
-{
-   R_CallMethodDef callSweaveMethodDef;
-   callSweaveMethodDef.name = "rs_callSweave" ;
-   callSweaveMethodDef.fun = (DL_FUNC) rs_callSweave ;
-   callSweaveMethodDef.numArgs = 2;
-   r::routines::addCallMethod(callSweaveMethodDef);
-
-
-
-   return Success();
-}
-
 
 } // namespace rnw_weave
 } // namespace tex

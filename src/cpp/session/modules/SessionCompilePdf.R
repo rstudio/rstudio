@@ -11,72 +11,15 @@
 #
 #
 
-.rs.addFunction("compilePdf", function(file, completedAction = "")
-{
-   # get the path info
-   pathInfo = .Call("rs_pathInfo", file)
-   
-   # check for spaces in path (sweave chokes on these)
-   if ( length(grep(" ", pathInfo$name)) > 0 )
-   {
-     stop(paste("Invalid filename: '", pathInfo$name,
-                "' (TeX does not understand paths with spaces)",
-                sep=""))
-   }
-     
-   # determine the directory name of the passed file and setwd to it
-   # (but restore to the current wd on exit)
-   currentDir <- getwd()
-   setwd(pathInfo$directory)
-   
-   # on exit restore working dir 
-   on.exit(setwd(currentDir))
-   
-   # set the filename for the compile (will be changed if we Sweave)
-   fileName <- pathInfo$name
-
-   # check extension to see if we need to Sweave
-   ext <- tolower(pathInfo$extension)
-   if (ext == ".rnw" || ext == ".snw" || ext == ".nw")
-   {
-     if (!.Call("rs_callSweave", R.home("bin"), fileName))
-       return()
-
-     fileName = paste(pathInfo$stem, ".tex", sep="")
-   }
-
-   # run texi2dvi
-   cat("\n")
-   cat("Running texi2dvi...")
-   if (getRversion() >= "2.12")
-   {
-      # workaround for: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=577741
-      # set index = FALSE on unix to force use of pdflatex rather than
-      # texi2dvi (the bug is that texi2dvi doesn't escape tildes)
-      index = !identical(.Platform$pkgType, "source")
-      tools:::texi2dvi(file=fileName, pdf=TRUE, index=index)
-   }
-   else
-   {
-      tools:::texi2dvi(file=fileName, pdf=TRUE)
-   }
-   cat("completed\n\n")
- 
-   # check for completed action
-   if (completedAction == "view")
-     .Call("rs_viewPdf", pathInfo$path)
-   else if (completedAction == "publish")
-     .Call("rs_publishPdf", pathInfo$path)
-})
-
 .rs.addGlobalFunction("compilePdf", function(file)
 {
-   invisible(.rs.compilePdf(file, "view"))
+   invisible(.Call("rs_compilePdf", file, "view"))
 })
 
 .rs.addGlobalFunction("publishPdf", function(file)
 {
-   invisible(.rs.compilePdf(file,  "publish"))
+   invisible(.Call("rs_compilePdf", file, "publish"))
 })
+
 
 
