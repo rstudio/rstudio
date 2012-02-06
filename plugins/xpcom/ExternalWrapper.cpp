@@ -205,8 +205,15 @@ std::string ExternalWrapper::computeTabIdentity() {
 }
 
 // TODO(jat): remove suppliedWindow and update hosted.html API
+
+#if GECKO_VERSION < 10000
 NS_IMETHODIMP ExternalWrapper::Init(nsIDOMWindow* suppliedWindow,
     PRBool *_retval) {
+#else
+NS_IMETHODIMP ExternalWrapper::Init(nsIDOMWindow* suppliedWindow,
+    bool *_retval) {
+#endif //GECKO_VERSION
+
   Debug::log(Debug::Debugging) << "Plugin initialized from hosted.html"
       << Debug::flush;
   *_retval = false;
@@ -238,25 +245,56 @@ bool ExternalWrapper::askUserToAllow(const std::string& url) {
       "developer plugin connection -- do you want to allow it?");
   NS_ConvertASCIItoUTF16 checkMsg("Remember this decision for this server "
       "(change in GWT Developer Plugin preferences)");
+
+#if GECKO_VERSION < 10000
+  // Please see: https://bugzilla.mozilla.org/show_bug.cgi?id=681188
   PRBool remember = false;
   PRBool include = true;
   if (promptService->ConfirmCheck(domWindow.get(), title.get(), text.get(),
       checkMsg.get(), &remember, &include) != NS_OK) {
     return false;
   }
+
   if (remember) {
     std::string host = AllowedConnections::getHostFromUrl(url);
     std::string server = AllowedConnections::getCodeServerFromUrl(url);
     preferences->addNewRule(host + "/" + server, !include);
   }
   return include;
+
+#else
+
+  bool remember = false;
+  bool include = true;
+  if (promptService->ConfirmCheck(domWindow.get(), title.get(), text.get(),
+      checkMsg.get(), &remember, &include) != NS_OK) {
+    return false;
+  }
+
+  if (remember) {
+    std::string host = AllowedConnections::getHostFromUrl(url);
+    std::string server = AllowedConnections::getCodeServerFromUrl(url);
+    preferences->addNewRule(host + "/" + server, !include);
+  }
+
+  return include;
+
+#endif //GECKO_VERSION
 }
 
 // TODO(jat): remove suppliedUrl and update hosted.html API
+#if GECKO_VERSION < 10000
 NS_IMETHODIMP ExternalWrapper::Connect(const nsACString& suppliedUrl,
                 const nsACString& sessionKey, const nsACString& aAddr,
                 const nsACString& aModuleName, const nsACString& hostedHtmlVersion,
                 PRBool *_retval) {
+#else
+NS_IMETHODIMP ExternalWrapper::Connect(const nsACString& suppliedUrl,
+                const nsACString& sessionKey, const nsACString& aAddr,
+                const nsACString& aModuleName, const nsACString& hostedHtmlVersion,
+                bool *_retval) {
+#endif //GECKO_VERSION
+
   Debug::log(Debug::Info) << "Connect(url=" <<  url << ", sessionKey="
       << sessionKey << ", address=" << aAddr << ", module=" << aModuleName
       << ", hostedHtmlVersion=" << hostedHtmlVersion << Debug::flush;

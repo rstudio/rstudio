@@ -22,7 +22,7 @@
 
 #include "jsapi.h"
 
-#if GECKO_VERSION >= 2000
+#if GECKO_VERSION >= 2000 && GECKO_VERSION < 10000
 #include "jsobj.h"
 #endif
 
@@ -72,12 +72,21 @@ public:
 
 private:
   static JSObject* getJSGlobalObject(JSContext* ctx) {
+#if GECKO_VERSION < 10000
     JSObject* global = JS_GetGlobalObject(ctx);
-#if GECKO_VERSION >= 2000
+#endif
+
+// See: https://developer.mozilla.org/en/SpiderMonkey/JSAPI_Reference/JS_GetGlobalObject
+#if GECKO_VERSION >= 2000 && GECKO_VERSION < 10000
     // Innerize the global object from the WindowProxy object to its inner
     // Window delegate since the proxy can't be used for evaluating scripts.
     OBJ_TO_INNER_OBJECT(ctx, global);
-#endif //GECKO_VERSION
+#endif
+
+#if GECKO_VERSION >= 10000
+    JSObject* global = JS_GetGlobalForScopeChain(ctx);
+#endif
+
     return global;
   }
 
