@@ -30,18 +30,9 @@
 // TODO: emulate texi2dvi on linux to workaround debian tilde
 //       escaping bug (http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=534458)
 
-// TODO: re-write compilePdf in C++
-//
-//     - sustain overridability using PDFLATEX
-//     - test on all platforms
-
-
 // TODO: consider option for texi2dvi
 
-// TODO: investigate luatex, xelatex (ConTeXt?)
-//       (engines names must be compatible with TexShop/Texworks
-//        magic markers)
-
+// TODO: support !TeX program = pdfLaTeX, XeLaTeX, LuaLaTeX
 
 // TODO: check spaces in path constraint on various platforms
 
