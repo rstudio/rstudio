@@ -13,6 +13,7 @@
 
 #include "SessionPdfLatex.hpp"
 
+#include <core/system/Environment.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -61,11 +62,20 @@ core::Error texToPdf(const PdfLatexOptions& options,
                      const core::FilePath& texFilePath,
                      core::system::ProcessResult* pResult)
 {
-   FilePath pdflatexPath = module_context::findProgram("pdflatex");
-   if (pdflatexPath.empty())
-      return core::fileNotFoundError("pdflatex", ERROR_LOCATION);
+   FilePath pdfLatexPath;
+   std::string pdfLatexEnv = core::system::getenv("PDFLATEX");
+   if (!pdfLatexEnv.empty())
+   {
+      pdfLatexPath = FilePath(pdfLatexEnv);
+   }
+   else
+   {
+      pdfLatexPath = module_context::findProgram("pdflatex");
+      if (pdfLatexPath.empty())
+         return core::fileNotFoundError("pdflatex", ERROR_LOCATION);
+   }
 
-   return utils::runTexCompile(pdflatexPath,
+   return utils::runTexCompile(pdfLatexPath,
                                utils::rTexInputsEnvVars(),
                                shellArgs(options),
                                texFilePath,

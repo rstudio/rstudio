@@ -34,7 +34,7 @@
 //
 //     - sustain overridability using PDFLATEX
 //     - test on all platforms
-//
+
 
 // TODO: consider option for texi2dvi
 

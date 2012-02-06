@@ -17,6 +17,7 @@
 
 #include <core/system/ShellUtils.hpp>
 #include <core/system/Process.hpp>
+#include <core/system/Environment.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -87,6 +88,20 @@ core::system::Options pdfLatexEnvVars(
 {
    core::system::Options envVars;
 
+   // executable
+   FilePath pdfLatexPath;
+   std::string pdfLatexEnv = core::system::getenv("PDFLATEX");
+   if (!pdfLatexEnv.empty())
+   {
+      pdfLatexPath = FilePath(pdfLatexEnv);
+   }
+   else
+   {
+      pdfLatexPath = module_context::findProgram("pdflatex");
+   }
+   envVars.push_back(std::make_pair("RS_PDFLATEX",
+                     string_utils::utf8ToSystem(pdfLatexPath.absolutePath())));
+
    // options
    boost::format fmt("RS_PDFLATEX_OPTION_%1%");
    int n = 1;
@@ -103,9 +118,9 @@ core::system::Options pdfLatexEnvVars(
 
    // rstudio-pdflatex script
    FilePath texScriptsPath = session::options().texScriptsPath();
-   FilePath pdfLatexPath = texScriptsPath.complete("rstudio-pdflatex" +
+   FilePath scriptPath = texScriptsPath.complete("rstudio-pdflatex" +
                                                    std::string(kScriptEx));
-   std::string path = string_utils::utf8ToSystem(pdfLatexPath.absolutePath());
+   std::string path = string_utils::utf8ToSystem(scriptPath.absolutePath());
    envVars.push_back(std::make_pair("PDFLATEX", path));
 
    // return envVars
