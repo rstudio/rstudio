@@ -93,6 +93,39 @@ public class AceInputEditorPosition extends InputEditorPosition
              null;
    }
 
+   @Override
+   public InputEditorPosition growToIncludeLines(String pattern, boolean upwards)
+   {
+      int rowNum = getRow();
+      String line = session_.getLine(rowNum);
+      if (!line.matches(pattern))
+         return this;
+
+      while (true)
+      {
+         if (upwards)
+         {
+            if (rowNum == 0)
+               break;
+            if (!session_.getLine(rowNum-1).matches(pattern))
+               break;
+            rowNum--;
+         }
+         else
+         {
+            if (rowNum == session_.getLength()-1)
+               break;
+            if (!session_.getLine(rowNum+1).matches(pattern))
+               break;
+            rowNum++;
+         }
+      }
+
+      int col = upwards ? 0 : session_.getLine(rowNum).length();
+
+      return new AceInputEditorPosition(session_, Position.create(rowNum, col));
+   }
+
    private boolean isLineEmpty(Position position, boolean leftwards)
    {
       String line = session_.getLine(position.getRow());

@@ -79,6 +79,9 @@ public abstract class InputEditorPosition implements Comparable<InputEditorPosit
          boolean upwards,
          InputEditorPosition boundary);
 
+   public abstract InputEditorPosition growToIncludeLines(String pattern,
+                                                          boolean upwards);
+
    private final Object line_;
    private final int position_;
 }

@@ -1388,39 +1388,35 @@ public class TextEditingTarget implements EditingTarget
    {
       docDisplay_.focus();
 
-      InputEditorSelection selection = docDisplay_.getSelection();
-      selection = selection.shrinkToNonEmptyLines();
-      selection = selection.extendToLineStart();
-      selection = selection.extendToLineEnd();
+      InputEditorSelection originalSelection = docDisplay_.getSelection();
+      InputEditorSelection selection = originalSelection;
+
+      if (selection.isEmpty())
+      {
+         selection = selection.growToIncludeLines("^\\s*#.*$");
+      }
+      else
+      {
+         selection = selection.shrinkToNonEmptyLines();
+         selection = selection.extendToLineStart();
+         selection = selection.extendToLineEnd();
+      }
       if (selection.isEmpty())
          return;
 
-      String code = docDisplay_.getCode(selection);
-      String reflowed;
-      try
-      {
-         reflowed = reflowComments(code);
-      }
-      catch (InvalidSelectionException ise)
-      {
-         return;
-      }
-      docDisplay_.setSelection(selection);
-      if (!reflowed.equals(code))
-      {
-         docDisplay_.replaceSelection(reflowed);
-      }
+      reflowComments(selection);
    }
 
-   private String reflowComments(String code) throws InvalidSelectionException
+   private void reflowComments(InputEditorSelection selection)
    {
+      String code = docDisplay_.getCode(selection);
       String[] lines = code.split("\n");
       String prefix = StringUtil.getCommonPrefix(lines, true);
       Pattern pattern = Pattern.create("^\\s*#+('?)\\s*");
       Match match = pattern.match(prefix, 0);
-      // Selection includes non-comments? Throw.
+      // Selection includes non-comments? Abort.
       if (match == null)
-         throw new InvalidSelectionException();
+         return;
       prefix = match.getValue();
       final boolean roxygen = match.hasGroup(1);
 
@@ -1479,7 +1475,13 @@ public class TextEditingTarget implements EditingTarget
       if (finalOutput.length() > 0)
          finalOutput.deleteCharAt(finalOutput.length()-1);
 
-      return finalOutput.toString();
+      String reflowed = finalOutput.toString();
+
+      docDisplay_.setSelection(selection);
+      if (!reflowed.equals(code))
+      {
+         docDisplay_.replaceSelection(reflowed);
+      }
    }
 
    @Handler

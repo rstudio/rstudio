@@ -46,8 +46,6 @@ public class WordWrap
 
    private void processLine(String line)
    {
-      Debug.devlog("processLine(" + line + ")");
-
       assert line.indexOf('\n') < 0;
 
       line = line.trim();
@@ -65,11 +63,6 @@ public class WordWrap
       // wrapping
       while (true)
       {
-         Debug.devlogf("Line: {0}\n" +
-                       "LineLength: {1}\n" +
-                       "MaxLineLength: {2}",
-                       line, lineLength_, maxLineLength_);
-
          // chars left
          int charsLeft = lineLength_ == 0 ? maxLineLength_ - indent_.length()
                                           : maxLineLength_ - lineLength_;
