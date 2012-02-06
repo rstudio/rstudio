@@ -114,4 +114,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void debug_forceTopsToZero();
    String debug_getDocumentDump();
    void debug_setSessionValueDirectly(String s);
+
+   // HACK: This should not use Ace-specific data structures
+   InputEditorSelection createSelection(Position pos1, Position pos2);
 }

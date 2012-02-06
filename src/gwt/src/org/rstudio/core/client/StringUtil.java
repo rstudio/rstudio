@@ -311,14 +311,15 @@ public class StringUtil
       return data;
    }
 
+   public static String trimLeft(String str)
+   {
+      return str.replaceFirst("^\\s+", "");
+   }
+
    public static String trimRight(String str)
    {
-      Match m = trimRightPattern.match(str, 0);
-      if (m == null)
-         return str;
-      return str.substring(0, str.length() - m.getValue().length());
+      return str.replaceFirst("\\s+$", "");
    }
-   private static final Pattern trimRightPattern = Pattern.create("\\s+$");
 
    /**
     * Returns the zero or more characters that prefix all of the lines (but see

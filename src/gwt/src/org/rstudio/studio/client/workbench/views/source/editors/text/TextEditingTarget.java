@@ -69,12 +69,14 @@ import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceInputEditorPosition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
@@ -1404,10 +1406,20 @@ public class TextEditingTarget implements EditingTarget
       if (selection.isEmpty())
          return;
 
-      reflowComments(selection);
+      reflowComments(selection, originalSelection.isEmpty() ?
+                                originalSelection.getStart() :
+                                null);
    }
 
-   private void reflowComments(InputEditorSelection selection)
+   private Position selectionToPosition(InputEditorPosition pos)
+   {
+      // HACK: This cast is gross, InputEditorPosition should just become
+      // AceInputEditorPosition
+      return Position.create((Integer) pos.getLine(), pos.getPosition());
+   }
+
+   private void reflowComments(InputEditorSelection selection,
+                               final InputEditorPosition cursorPos)
    {
       String code = docDisplay_.getCode(selection);
       String[] lines = code.split("\n");
@@ -1419,6 +1431,18 @@ public class TextEditingTarget implements EditingTarget
          return;
       prefix = match.getValue();
       final boolean roxygen = match.hasGroup(1);
+
+      int cursorRowIndex = 0;
+      int cursorColIndex = 0;
+      if (cursorPos != null)
+      {
+         cursorRowIndex = selectionToPosition(cursorPos).getRow() -
+                          selectionToPosition(selection.getStart()).getRow();
+         cursorColIndex =
+               Math.max(0, cursorPos.getPosition() - prefix.length());
+      }
+      final WordWrapCursorTracker wwct = new WordWrapCursorTracker(
+                                                cursorRowIndex, cursorColIndex);
 
       int maxLineLength =
                         prefs_.printMarginColumn().getValue() - prefix.length();
@@ -1448,14 +1472,18 @@ public class TextEditingTarget implements EditingTarget
 
          @Override
          protected void onChunkWritten(String chunk,
-                                       int length,
-                                       int insertionPoint)
+                                       int insertionRow,
+                                       int insertionCol,
+                                       int indexInOriginalString)
          {
             if (indentRestOfLines_)
             {
                indentRestOfLines_ = false;
                indent_ = "  "; // TODO: Use real indent from settings
             }
+
+            wwct.onChunkWritten(chunk, insertionRow, insertionCol,
+                                indexInOriginalString);
          }
 
          private boolean indentRestOfLines_ = false;
@@ -1463,8 +1491,11 @@ public class TextEditingTarget implements EditingTarget
       };
 
       for (String line : lines)
+      {
+         wwct.onBeginInputRow();
          wordWrap.appendLine(
                       line.substring(Math.min(line.length(), prefix.length())));
+      }
 
       String wrappedString = wordWrap.getOutput();
 
@@ -1481,6 +1512,23 @@ public class TextEditingTarget implements EditingTarget
       if (!reflowed.equals(code))
       {
          docDisplay_.replaceSelection(reflowed);
+      }
+
+      if (cursorPos != null)
+      {
+         if (wwct.getResult() != null)
+         {
+            int row = wwct.getResult().getY();
+            int col = wwct.getResult().getX();
+            row += selectionToPosition(selection.getStart()).getRow();
+            col += prefix.length();
+            Position pos = Position.create(row, col);
+            docDisplay_.setSelection(docDisplay_.createSelection(pos, pos));
+         }
+         else
+         {
+            docDisplay_.collapseSelection(false);
+         }
       }
    }
 
