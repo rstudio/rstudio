@@ -442,7 +442,12 @@ public class JdtCompiler {
 
     if (type != null) {
       if (type instanceof UnresolvedReferenceBinding) {
-        type = BinaryTypeBinding.resolveType(type, lookupEnvironment, true);
+        /*
+         * Since type is an instance of UnresolvedReferenceBinding, we know that
+         * the return value BinaryTypeBinding.resolveType will be of type
+         * ReferenceBinding
+         */
+        type = (ReferenceBinding) BinaryTypeBinding.resolveType(type, lookupEnvironment, true);
       }
       // found it
       return type;
