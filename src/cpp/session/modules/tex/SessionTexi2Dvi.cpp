@@ -170,7 +170,7 @@ shell_utils::ShellArgs shellArgs(const std::string& texVersionInfo)
    //
    if (texVersionInfo.find("MiKTeX") != std::string::npos)
    {
-      inputs::RTexmfPaths texmfPaths = inputs::rTexmfPaths();
+      utils::RTexmfPaths texmfPaths = utils::rTexmfPaths();
       if (!texmfPaths.empty())
       {
          std::string texInputs = string_utils::utf8ToSystem(
