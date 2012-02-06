@@ -200,7 +200,7 @@ XPIDL_HEADER      = $(GECKO_SDK)/bin/header.py
 XPIDL_TYPELIBS    = $(GECKO_SDK)/bin/typelib.py
 else
 XPIDL             = $(GECKO_SDK)/$(GECKO_PLATFORM)/bin/xpidl
-XPIDL_HEADER      = $(GECKO_SDK)/$(GECKO_PLATFORM)/bin/xpidl -m header 
+XPIDL_HEADER      = $(GECKO_SDK)/$(GECKO_PLATFORM)/bin/xpidl -m header
 XPIDL_TYPELIBS    = $(GECKO_SDK)/$(GECKO_PLATFORM)/bin/xpidl -m typelib
 endif
 
