@@ -73,17 +73,30 @@ void publishPdf(const FilePath& texPath)
    module_context::enqueClientEvent(event);
 }
 
-void showCompileLog(const FilePath& texPath)
+void showCompilationErrors(const FilePath& texPath)
 {
-   FilePath logPath = texPath.parent().complete(texPath.stem() + ".log");
-   std::string logContents;
-   Error error = core::readStringFromFile(logPath,
-                                          &logContents,
-                                          string_utils::LineEndingPosix);
+   std::string errors;
+   Error error = r::exec::RFunction(".rs.getCompilationErrors",
+                                    texPath.absolutePath()).call(&errors);
    if (error)
       LOG_ERROR(error);
 
-   module_context::consoleWriteOutput(logContents);
+   if (!errors.empty())
+   {
+      module_context::consoleWriteOutput(errors);
+   }
+   else
+   {
+      FilePath logPath = texPath.parent().complete(texPath.stem() + ".log");
+      std::string logContents;
+      Error error = core::readStringFromFile(logPath,
+                                             &logContents,
+                                             string_utils::LineEndingPosix);
+      if (error)
+         LOG_ERROR(error);
+
+        module_context::consoleWriteOutput(logContents);
+   }
 }
 
 bool compilePdf(const FilePath& targetFilePath,
@@ -120,7 +133,7 @@ bool compilePdf(const FilePath& targetFilePath,
 
    // configure pdflatex options
    pdflatex::PdfLatexOptions options;
-   options.fileLineError = true;
+   options.fileLineError = false;
    options.syncTex = true;
 
    // run tex compile
@@ -143,7 +156,7 @@ bool compilePdf(const FilePath& targetFilePath,
    }
    else if (result.exitStatus != EXIT_SUCCESS)
    {
-      showCompileLog(texFilePath);
+      showCompilationErrors(texFilePath);
       return false;
    }
    else
