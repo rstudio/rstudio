@@ -29,6 +29,11 @@
 #include "SessionTexi2Dvi.hpp"
 #include "SessionRnwWeave.hpp"
 
+// TODO: don't dump log file if there is no error output in the log
+//       (can end up dumping old log file which has no errors)
+
+// TODO: get xelatex (install + aa) and lualatex (aa) working on test
+
 // TODO: write latex_program docs and deploy to site
 
 // TODO: emulate texi2dvi on linux to workaround debian tilde
