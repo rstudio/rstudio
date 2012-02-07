@@ -170,11 +170,8 @@ bool latexProgramForFile(const core::tex::TexMagicComments& magicComments,
                          FilePath* pTexProgramPath,
                          std::string* pUserErrMsg)
 {
-   // get any magic comments or envirornment variables set
-   std::string latexProgramMC = latexProgramMagicComment(magicComments);
-   std::string latexProgramEnv = core::system::getenv("PDFLATEX");
-
    // magic comment always takes highest priority
+   std::string latexProgramMC = latexProgramMagicComment(magicComments);
    if (!latexProgramMC.empty())
    {
       // validate magic comment
@@ -192,38 +189,6 @@ bool latexProgramForFile(const core::tex::TexMagicComments& magicComments,
          return validateLatexProgram(latexProgramMC,
                                      pTexProgramPath,
                                      pUserErrMsg);
-      }
-   }
-
-   // PDFLATEX environment variable takes next priority
-   else if (!latexProgramEnv.empty())
-   {
-      if (FilePath::isRootPath(latexProgramEnv))
-      {
-         FilePath latexProgramEnvPath(latexProgramEnv);
-         if (!latexProgramEnvPath.exists())
-         {
-            *pUserErrMsg = "LaTeX program specified in PDFLATEX environment "
-                           "variable (" + latexProgramEnv + ") was not found";
-            return false;
-         }
-         else
-         {
-            *pTexProgramPath = latexProgramEnvPath;
-            return true;
-         }
-      }
-      else
-      {
-         bool isValid = validateLatexProgram(latexProgramEnv,
-                                             pTexProgramPath,
-                                             pUserErrMsg);
-         if (!isValid)
-         {
-            pUserErrMsg->append(" (program was determined by custom "
-                                "PDFLATEX environment variable)");
-         }
-         return isValid;
       }
    }
 
