@@ -38,7 +38,8 @@ public class RProjectConfig extends JavaScriptObject
                                                     boolean useSpacesForTab,
                                                     int numSpacesForTab,
                                                     String encoding,
-                                                    String defaultSweaveEngine) /*-{
+                                                    String defaultSweaveEngine,
+                                                    String defaultLatexProgram) /*-{
       var config = new Object();
       config.version = 1.0;
       config.restore_workspace = restoreWorkspace;
@@ -49,6 +50,7 @@ public class RProjectConfig extends JavaScriptObject
       config.num_spaces_for_tab = numSpacesForTab;
       config.default_encoding = encoding;
       config.default_sweave_engine = defaultSweaveEngine;
+      config.default_latex_program = defaultLatexProgram;
       return config;
    }-*/;
 
@@ -119,4 +121,13 @@ public class RProjectConfig extends JavaScriptObject
    public native final void setDefaultSweaveEngine(String defaultSweaveEngine) /*-{
       this.default_sweave_engine = defaultSweaveEngine;
    }-*/;
+   
+   public native final String getDefaultLatexProgram() /*-{
+      return this.default_latex_program;
+   }-*/;
+
+   public native final void setDefaultLatexProgram(String defaultLatexProgram) /*-{
+      this.default_latex_program = defaultLatexProgram;
+   }-*/;
+   
 }

@@ -401,6 +401,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    }
 
    sessionInfo["rnw_weave_types"] = modules::authoring::supportedRnwWeaveTypes();
+   sessionInfo["latex_program_types"] = modules::authoring::supportedLatexProgramTypes();
    sessionInfo["tex_capabilities"] = modules::authoring::texCapabilitiesAsJson();
 
    sessionInfo["googleDocsIntegrationEnabled"] =

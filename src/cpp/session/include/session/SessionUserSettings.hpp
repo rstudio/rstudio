@@ -89,6 +89,7 @@ public:
    int numSpacesForTab() const;
    std::string defaultEncoding() const;
    std::string defaultSweaveEngine() const;
+   std::string defaultLatexProgram() const;
 
    bool alwaysRestoreLastProject() const;
    void setAlwaysRestoreLastProject(bool alwaysRestore);
@@ -158,6 +159,7 @@ private:
    mutable boost::scoped_ptr<int> pNumSpacesForTab_;
    mutable boost::scoped_ptr<std::string> pDefaultEncoding_;
    mutable boost::scoped_ptr<std::string> pDefaultSweaveEngine_;
+   mutable boost::scoped_ptr<std::string> pDefaultLatexProgram_;
 
 
 };

@@ -45,9 +45,9 @@ private:
    std::string value_;
 };
 
+typedef std::vector<TexMagicComment> TexMagicComments;
 
-Error parseMagicComments(const FilePath& texFile,
-                         std::vector<TexMagicComment>* pComments);
+Error parseMagicComments(const FilePath& texFile, TexMagicComments* pComments);
 
 
 

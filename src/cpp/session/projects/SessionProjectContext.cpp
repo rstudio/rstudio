@@ -474,6 +474,7 @@ json::Object ProjectContext::uiPrefs() const
    uiPrefs["num_spaces_for_tab"] = config_.numSpacesForTab;
    uiPrefs["default_encoding"] = defaultEncoding();
    uiPrefs["default_sweave_engine"] = config_.defaultSweaveEngine;
+   uiPrefs["default_latex_program"] = config_.defaultLatexProgram;
    return uiPrefs;
 }
 
@@ -489,6 +490,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
    else
       defaultConfig.encoding = "UTF-8";
    defaultConfig.defaultSweaveEngine = userSettings().defaultSweaveEngine();
+   defaultConfig.defaultLatexProgram = userSettings().defaultLatexProgram();
    return defaultConfig;
 }
 

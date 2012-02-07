@@ -55,6 +55,7 @@ import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.latex.LatexProgramRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.rnw.RnwWeaveDirective;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
@@ -207,6 +208,7 @@ public class TextEditingTarget implements EditingTarget
                             FileDialogs fileDialogs,
                             FileTypeRegistry fileTypeRegistry,
                             RnwWeaveRegistry rnwWeaveRegistry,
+                            LatexProgramRegistry latexProgramRegistry,
                             ConsoleDispatcher consoleDispatcher,
                             WorkbenchContext workbenchContext,
                             Provider<PublishPdf> pPublishPdf,
@@ -222,6 +224,7 @@ public class TextEditingTarget implements EditingTarget
       fileDialogs_ = fileDialogs;
       fileTypeRegistry_ = fileTypeRegistry;
       rnwWeaveRegistry_ = rnwWeaveRegistry;
+      latexProgramRegistry_ = latexProgramRegistry;
       consoleDispatcher_ = consoleDispatcher;
       workbenchContext_ = workbenchContext;
       session_ = session;
@@ -483,12 +486,37 @@ public class TextEditingTarget implements EditingTarget
    
    private void validateRequiredComponents()
    {
+      // for all tex files we need to parse magic comments and validate
+      // any explict latex proram directive
+      ArrayList<TexMagicComment> magicComments = null;
+      if (fileType_.canCompilePDF())
+      {
+         magicComments = TexMagicComment.parseComments(docDisplay_.getCode());
+         String latexProgramDirective = 
+                           detectLatexProgramDirective(magicComments);
+           
+         if (latexProgramDirective != null)
+         {
+            if (latexProgramRegistry_.findTypeIgnoreCase(latexProgramDirective)
+                  == null)
+            {
+               // show warning and bail 
+               view_.showWarningBar(
+                  "Unknown LaTeX program type '" + latexProgramDirective + 
+                  "' specified (valid types are " + 
+                  latexProgramRegistry_.getPrintableTypeNames() +  ")");
+               
+               return;
+            }
+         }
+      }
+      
       // for Rnw we first determine the RnwWeave type
       RnwWeave rnwWeave = null;
       RnwWeaveDirective rnwWeaveDirective = null;
       if (fileType_.isRnw())
       {
-         rnwWeaveDirective = detectRnwWeaveDirective();
+         rnwWeaveDirective = detectRnwWeaveDirective(magicComments);
          if (rnwWeaveDirective != null) 
          {
             rnwWeave = rnwWeaveDirective.getRnwWeave();
@@ -509,7 +537,7 @@ public class TextEditingTarget implements EditingTarget
                                     prefs_.defaultSweaveEngine().getValue());
          }     
       }
-      
+            
        
       final SessionInfo sessionInfo = session_.getSessionInfo();
       TexCapabilities texCap = sessionInfo.getTexCapabilities();
@@ -577,17 +605,30 @@ public class TextEditingTarget implements EditingTarget
       }
    }
    
-   private RnwWeaveDirective detectRnwWeaveDirective()
+   private RnwWeaveDirective detectRnwWeaveDirective(
+         ArrayList<TexMagicComment> magicComments)
    {
-      ArrayList<TexMagicComment> magicComments = 
-                        TexMagicComment.parseComments(docDisplay_.getCode());
-      
       for (TexMagicComment comment : magicComments)
       {
          RnwWeaveDirective rnwWeaveDirective = 
                            RnwWeaveDirective.fromTexMagicComment(comment);
          if (rnwWeaveDirective != null)
             return rnwWeaveDirective;
+      }
+      
+      return null;
+   }
+   
+   private String detectLatexProgramDirective(
+                     ArrayList<TexMagicComment> magicComments)
+   {
+      for (TexMagicComment comment : magicComments)
+      {
+         if (comment.getScope().equalsIgnoreCase("tex") &&
+             comment.getVariable().equalsIgnoreCase("program"))
+         { 
+            return comment.getValue();
+         }
       }
       
       return null;
@@ -2094,6 +2135,7 @@ public class TextEditingTarget implements EditingTarget
    private final FileDialogs fileDialogs_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final RnwWeaveRegistry rnwWeaveRegistry_;
+   private final LatexProgramRegistry latexProgramRegistry_;
    private final ConsoleDispatcher consoleDispatcher_;
    private final WorkbenchContext workbenchContext_;
    private final Session session_;

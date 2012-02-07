@@ -16,6 +16,10 @@
 
 #include <core/FilePath.hpp>
 
+#include <core/json/Json.hpp>
+
+#include <core/tex/TexMagicComment.hpp>
+
 #include <core/system/Types.hpp>
 #include <core/system/Process.hpp>
 
@@ -28,7 +32,6 @@ namespace session {
 namespace modules { 
 namespace tex {
 namespace pdflatex {
-
 
 extern const char * const kFileLineErrorOption;
 extern const char * const kSynctexOption;
@@ -44,11 +47,18 @@ struct PdfLatexOptions
    bool syncTex;
 };
 
-core::Error texToPdf(const PdfLatexOptions& options,
+core::Error texToPdf(const core::FilePath& texProgramPath,
                      const core::FilePath& texFilePath,
+                     const tex::pdflatex::PdfLatexOptions& options,
                      core::system::ProcessResult* pResult);
 
 bool isInstalled();
+
+core::json::Array supportedTypes();
+
+bool latexProgramForFile(const core::tex::TexMagicComments& magicComments,
+                         core::FilePath* pTexProgramPath,
+                         std::string* pUserErrMsg);
 
 } // namespace pdflatex
 } // namespace tex

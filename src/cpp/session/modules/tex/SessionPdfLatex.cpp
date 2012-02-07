@@ -13,8 +13,13 @@
 
 #include "SessionPdfLatex.hpp"
 
+#include <boost/algorithm/string.hpp>
+
 #include <core/system/Environment.hpp>
 
+#include <session/projects/SessionProjects.hpp>
+
+#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 
 #include "SessionTexUtils.hpp"
@@ -27,6 +32,103 @@ namespace tex {
 namespace pdflatex {
 
 namespace {
+
+class LatexProgramTypes : boost::noncopyable
+{
+public:
+   LatexProgramTypes()
+   {
+      types_.push_back("pdfLaTeX");
+      types_.push_back("XeLaTeX");
+      types_.push_back("LuaLaTeX");
+   }
+
+   const std::vector<std::string>& allTypes() const
+   {
+      return types_;
+   }
+
+   json::Array allTypesAsJson() const
+   {
+      json::Array typesJson;
+      std::transform(types_.begin(),
+                     types_.end(),
+                     std::back_inserter(typesJson),
+                     json::toJsonString);
+      return typesJson;
+   }
+
+   bool isValidTypeName(const std::string& name) const
+   {
+      BOOST_FOREACH(const std::string& type, types_)
+      {
+         if (boost::algorithm::iequals(name, type))
+            return true;
+      }
+
+      return false;
+   }
+
+   std::string printableTypeNames() const
+   {
+      std::string str;
+      for (std::size_t i=0; i<types_.size(); i++)
+      {
+         str.append(types_[i]);
+         if (i != (types_.size() - 1))
+            str.append(", ");
+         if (i == (types_.size() - 2))
+            str.append("and ");
+      }
+      return str;
+   }
+
+private:
+   std::vector<std::string> types_;
+};
+
+const LatexProgramTypes& programTypes()
+{
+   static LatexProgramTypes instance;
+   return instance;
+}
+
+std::string latexProgramMagicComment(
+                     const core::tex::TexMagicComments& magicComments)
+{
+   BOOST_FOREACH(const core::tex::TexMagicComment& mc, magicComments)
+   {
+      if (boost::algorithm::iequals(mc.scope(), "tex") &&
+          boost::algorithm::iequals(mc.variable(), "program"))
+      {
+         return mc.value();
+      }
+   }
+
+   return std::string();
+}
+
+
+bool validateLatexProgram(const std::string& program,
+                          FilePath* pTexProgramPath,
+                          std::string* pUserErrMsg)
+{
+   // convert to lower case for finding
+   std::string programName = string_utils::toLower(program);
+
+   // try to find on the path
+   *pTexProgramPath = module_context::findProgram(programName);
+   if (pTexProgramPath->empty())
+   {
+      *pUserErrMsg = "Unabled to find specified LaTeX program '" +
+                     program + "' on the system path";
+      return false;
+   }
+   else
+   {
+      return true;
+   }
+}
 
 shell_utils::ShellArgs shellArgs(const PdfLatexOptions& options)
 {
@@ -41,6 +143,7 @@ shell_utils::ShellArgs shellArgs(const PdfLatexOptions& options)
 
    return args;
 }
+
 
 } // anonymous namespace
 
@@ -58,24 +161,99 @@ bool isInstalled()
 }
 
 
-core::Error texToPdf(const PdfLatexOptions& options,
-                     const core::FilePath& texFilePath,
-                     core::system::ProcessResult* pResult)
+core::json::Array supportedTypes()
 {
-   FilePath pdfLatexPath;
-   std::string pdfLatexEnv = core::system::getenv("PDFLATEX");
-   if (!pdfLatexEnv.empty())
+   return programTypes().allTypesAsJson();
+}
+
+
+bool latexProgramForFile(const core::tex::TexMagicComments& magicComments,
+                         FilePath* pTexProgramPath,
+                         std::string* pUserErrMsg)
+{
+   // get any magic comments or envirornment variables set
+   std::string latexProgramMC = latexProgramMagicComment(magicComments);
+   std::string latexProgramEnv = core::system::getenv("PDFLATEX");
+
+   // magic comment always takes highest priority
+   if (!latexProgramMC.empty())
    {
-      pdfLatexPath = FilePath(pdfLatexEnv);
-   }
-   else
-   {
-      pdfLatexPath = module_context::findProgram("pdflatex");
-      if (pdfLatexPath.empty())
-         return core::fileNotFoundError("pdflatex", ERROR_LOCATION);
+      // validate magic comment
+      if (!programTypes().isValidTypeName(latexProgramMC))
+      {
+         *pUserErrMsg =
+            "Unknown LaTeX program type '" + latexProgramMC +
+            "' specified (valid types are " +
+            programTypes().printableTypeNames() + ")";
+
+         return false;
+      }
+      else
+      {
+         return validateLatexProgram(latexProgramMC,
+                                     pTexProgramPath,
+                                     pUserErrMsg);
+      }
    }
 
-   return utils::runTexCompile(pdfLatexPath,
+   // PDFLATEX environment variable takes next priority
+   else if (!latexProgramEnv.empty())
+   {
+      if (FilePath::isRootPath(latexProgramEnv))
+      {
+         FilePath latexProgramEnvPath(latexProgramEnv);
+         if (!latexProgramEnvPath.exists())
+         {
+            *pUserErrMsg = "LaTeX program specified in PDFLATEX environment "
+                           "variable (" + latexProgramEnv + ") was not found";
+            return false;
+         }
+         else
+         {
+            *pTexProgramPath = latexProgramEnvPath;
+            return true;
+         }
+      }
+      else
+      {
+         bool isValid = validateLatexProgram(latexProgramEnv,
+                                             pTexProgramPath,
+                                             pUserErrMsg);
+         if (!isValid)
+         {
+            pUserErrMsg->append(" (program was determined by custom "
+                                "PDFLATEX environment variable)");
+         }
+         return isValid;
+      }
+   }
+
+   // project level setting next
+   else if (projects::projectContext().hasProject())
+   {
+      return validateLatexProgram(
+                  projects::projectContext().config().defaultLatexProgram,
+                  pTexProgramPath,
+                  pUserErrMsg);
+   }
+
+   // finally global setting if we aren't in a project
+   else
+   {
+      return validateLatexProgram(
+                  userSettings().defaultLatexProgram(),
+                  pTexProgramPath,
+                  pUserErrMsg);
+   }
+}
+
+
+core::Error texToPdf(const core::FilePath& texProgramPath,
+                     const core::FilePath& texFilePath,
+                     const tex::pdflatex::PdfLatexOptions& options,
+                     core::system::ProcessResult* pResult)
+{
+   return utils::runTexCompile(texProgramPath,
                                utils::rTexInputsEnvVars(),
                                shellArgs(options),
                                texFilePath,

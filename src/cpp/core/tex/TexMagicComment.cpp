@@ -26,7 +26,7 @@ namespace core {
 namespace tex {
 
 Error parseMagicComments(const FilePath& texFile,
-                         std::vector<TexMagicComment>* pComments)
+                         TexMagicComments* pComments)
 {
    std::vector<std::string> lines;
    Error error = core::readStringVectorFromFile(texFile, &lines);

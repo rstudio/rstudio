@@ -58,6 +58,11 @@ json::Array supportedRnwWeaveTypes()
    return tex::rnw_weave::supportedTypes();
 }
 
+json::Array supportedLatexProgramTypes()
+{
+   return tex::pdflatex::supportedTypes();
+}
+
 json::Object texCapabilitiesAsJson()
 {
    json::Object obj;
@@ -77,9 +82,9 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (tex::compile_pdf::initialize)
-      (bind(registerRpcMethod, "is_tex_installed", isTexInstalled));
+      (bind(registerRpcMethod, "is_tex_installed", isTexInstalled))
       (bind(registerRpcMethod, "get_tex_capabilities", getTexCapabilities))
-      ;
+   ;
   return initBlock.execute();
 }
 

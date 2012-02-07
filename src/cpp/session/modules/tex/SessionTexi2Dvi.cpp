@@ -84,23 +84,14 @@ Texi2DviInfo texi2DviInfo()
 // of the custom rstudio-pdflatex script) as well as environment
 // variables required to pass options to the script
 core::system::Options pdfLatexEnvVars(
+                           const core::FilePath& texProgramPath,
                            const tex::pdflatex::PdfLatexOptions& options)
 {
    core::system::Options envVars;
 
-   // executable
-   FilePath pdfLatexPath;
-   std::string pdfLatexEnv = core::system::getenv("PDFLATEX");
-   if (!pdfLatexEnv.empty())
-   {
-      pdfLatexPath = FilePath(pdfLatexEnv);
-   }
-   else
-   {
-      pdfLatexPath = module_context::findProgram("pdflatex");
-   }
-   envVars.push_back(std::make_pair("RS_PDFLATEX",
-                     string_utils::utf8ToSystem(pdfLatexPath.absolutePath())));
+   envVars.push_back(
+         std::make_pair("RS_PDFLATEX",
+         string_utils::utf8ToSystem(texProgramPath.absolutePath())));
 
    // options
    boost::format fmt("RS_PDFLATEX_OPTION_%1%");
@@ -130,6 +121,7 @@ core::system::Options pdfLatexEnvVars(
 
 core::system::Options environmentVars(
                            const std::string& versionInfo,
+                           const core::FilePath& texProgramPath,
                            const pdflatex::PdfLatexOptions& pdfLatexOptions)
 {
    // start with inputs (TEXINPUTS, BIBINPUTS, BSTINPUTS)
@@ -145,7 +137,8 @@ core::system::Options environmentVars(
 #endif
 
    // env vars required to customize invocation of pdflatex
-   core::system::Options pdfLatexVars = pdfLatexEnvVars(pdfLatexOptions);
+   core::system::Options pdfLatexVars = pdfLatexEnvVars(texProgramPath,
+                                                        pdfLatexOptions);
    std::copy(pdfLatexVars.begin(),
              pdfLatexVars.end(),
              std::back_inserter(envVars));
@@ -192,16 +185,19 @@ shell_utils::ShellArgs shellArgs(const std::string& texVersionInfo)
 } // anonymous namespace
 
 
-Error texToPdf(const tex::pdflatex::PdfLatexOptions& options,
-               const FilePath& texFilePath,
-               core::system::ProcessResult* pResult)
+core::Error texToPdf(const core::FilePath& texProgramPath,
+                     const core::FilePath& texFilePath,
+                     const tex::pdflatex::PdfLatexOptions& options,
+                     core::system::ProcessResult* pResult)
 {
    Texi2DviInfo t2dviInfo = texi2DviInfo();
    if (t2dviInfo.empty())
       return core::fileNotFoundError("texi2dvi", ERROR_LOCATION);
 
    return utils::runTexCompile(t2dviInfo.programFilePath,
-                               environmentVars(t2dviInfo.versionInfo, options),
+                               environmentVars(t2dviInfo.versionInfo,
+                                               texProgramPath,
+                                               options),
                                shellArgs(t2dviInfo.versionInfo),
                                texFilePath,
                                pResult);

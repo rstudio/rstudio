@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.projects.ui.prefs;
 
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.studio.client.common.latex.LatexProgramSelectWidget;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
@@ -36,6 +37,9 @@ public class ProjectWritingPreferencesPane extends ProjectPreferencesPane
       
       defaultSweaveEngine_ = new RnwWeaveSelectWidget();
       add(defaultSweaveEngine_);  
+      
+      defaultLatexProgram_ = new LatexProgramSelectWidget();
+      add(defaultLatexProgram_);
    }
    
    @Override
@@ -55,6 +59,7 @@ public class ProjectWritingPreferencesPane extends ProjectPreferencesPane
    {
       RProjectConfig config = options.getConfig();
       defaultSweaveEngine_.setValue(config.getDefaultSweaveEngine());
+      defaultLatexProgram_.setValue(config.getDefaultLatexProgram());
    }
    
    @Override
@@ -68,9 +73,11 @@ public class ProjectWritingPreferencesPane extends ProjectPreferencesPane
    {
       RProjectConfig config = options.getConfig();
       config.setDefaultSweaveEngine(defaultSweaveEngine_.getValue());
+      config.setDefaultLatexProgram(defaultLatexProgram_.getValue());
       return false;
    }
     
    private RnwWeaveSelectWidget defaultSweaveEngine_;
+   private LatexProgramSelectWidget defaultLatexProgram_;
 
 }

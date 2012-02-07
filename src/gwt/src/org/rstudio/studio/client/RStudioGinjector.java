@@ -26,6 +26,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.NewFileMenu;
 import org.rstudio.studio.client.common.impl.DesktopFileDialogs;
+import org.rstudio.studio.client.common.latex.LatexProgramRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.vcs.VCSApplication;
@@ -62,6 +63,7 @@ public interface RStudioGinjector extends Ginjector
    FileDialogs getFileDialogs();
    FileTypeRegistry getFileTypeRegistry();
    RnwWeaveRegistry getRnwWeaveRegistry();
+   LatexProgramRegistry getLatexProgramRegistry();
    Commands getCommands();
    UIPrefs getUIPrefs();
    Session getSession();

@@ -19,6 +19,8 @@
 #include <core/system/Types.hpp>
 #include <core/system/Process.hpp>
 
+#include <core/tex/TexMagicComment.hpp>
+
 #include "SessionPdfLatex.hpp"
 
 namespace core {
@@ -31,8 +33,9 @@ namespace modules {
 namespace tex {
 namespace texi2dvi {
 
-core::Error texToPdf(const tex::pdflatex::PdfLatexOptions& options,
+core::Error texToPdf(const core::FilePath& texProgramPath,
                      const core::FilePath& texFilePath,
+                     const tex::pdflatex::PdfLatexOptions& options,
                      core::system::ProcessResult* pResult);
 
 } // namespace texi2dvi

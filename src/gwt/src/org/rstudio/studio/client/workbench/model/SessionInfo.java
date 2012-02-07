@@ -46,6 +46,10 @@ public class SessionInfo extends JavaScriptObject
       return this.rnw_weave_types;
    }-*/;
    
+   public final native JsArrayString getLatexProgramTypes() /*-{
+      return this.latex_program_types;
+   }-*/;
+   
    public final native TexCapabilities getTexCapabilities() /*-{
       return this.tex_capabilities;
    }-*/;

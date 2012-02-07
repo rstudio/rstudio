@@ -17,6 +17,8 @@
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 
+#include <core/tex/TexMagicComment.hpp>
+
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
@@ -32,7 +34,7 @@
 
 // TODO: consider option for texi2dvi
 
-// TODO: support !TeX program = pdfLaTeX, XeLaTeX, LuaLaTeX
+// TODO: investigate whether texlive on windows uses -file-line-error
 
 // TODO: check spaces in path constraint on various platforms
 
@@ -112,12 +114,29 @@ bool compilePdf(const FilePath& targetFilePath,
       return false;
    }
 
+   // parse out magic comments
+   core::tex::TexMagicComments magicComments;
+   error = core::tex::parseMagicComments(targetFilePath, &magicComments);
+   if (error)
+      LOG_ERROR(error);
+
+   // discover and validate tex program path
+   FilePath texProgramPath;
+   if (!pdflatex::latexProgramForFile(magicComments,
+                                      &texProgramPath,
+                                      pUserErrMsg))
+   {
+      return false;
+   }
+
    // see if we need to sweave
    std::string ext = targetFilePath.extensionLowerCase();
    if (ext == ".rnw" || ext == ".snw" || ext == ".nw")
    {
       // attempt to weave the rnw
-      bool success = rnw_weave::runWeave(targetFilePath, pUserErrMsg);
+      bool success = rnw_weave::runWeave(targetFilePath,
+                                         magicComments,
+                                         pUserErrMsg);
       if (!success)
          return false;
    }
@@ -133,11 +152,17 @@ bool compilePdf(const FilePath& targetFilePath,
                                              ".tex");
    core::system::ProcessResult result;
 #if defined(_WIN32) || defined(__APPLE__)
-   error = tex::texi2dvi::texToPdf(options, texFilePath, &result);
+   error = tex::texi2dvi::texToPdf(texProgramPath,
+                                   texFilePath,
+                                   options,
+                                   &result);
 #else
    // workaround for tex2dvi special character bug on linux:
    //   http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=577741
-  error = tex::pdflatex::texToPdf(options, texFilePath, &result);
+  error = tex::pdflatex::texToPdf(texProgramPath,
+                                  texFilePath,
+                                  options,
+                                  &result);
 #endif
 
    if (error)

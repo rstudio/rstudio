@@ -14,6 +14,8 @@
 #ifndef SESSION_MODULES_RNW_WEAVE_HPP
 #define SESSION_MODULES_RNW_WEAVE_HPP
 
+#include <core/tex/TexMagicComment.hpp>
+
 #include <core/json/Json.hpp>
 
 namespace core {
@@ -29,7 +31,9 @@ namespace rnw_weave {
 core::json::Array supportedTypes();
 void getTypesInstalledStatus(core::json::Object* pObj);
 
-bool runWeave(const core::FilePath& filePath, std::string* pUserErrMsg);
+bool runWeave(const core::FilePath& filePath,
+              const core::tex::TexMagicComments& magicComments,
+              std::string* pUserErrMsg);
 
 
 } // namespace rnw_weave

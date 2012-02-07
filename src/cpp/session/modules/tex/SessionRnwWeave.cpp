@@ -219,26 +219,18 @@ const RnwWeaveRegistry& weaveRegistry()
    return instance;
 }
 
-std::string weaveTypeForFile(const FilePath& rnwPath)
+std::string weaveTypeForFile(const core::tex::TexMagicComments& magicComments)
 {
    // first see if the file contains an rnw weave magic comment
-   std::vector<core::tex::TexMagicComment> magicComments;
-   Error error = core::tex::parseMagicComments(rnwPath, &magicComments);
-   if (!error)
+   BOOST_FOREACH(const core::tex::TexMagicComment& mc, magicComments)
    {
-      BOOST_FOREACH(const core::tex::TexMagicComment& mc, magicComments)
+      if (boost::algorithm::iequals(mc.scope(), "rnw") &&
+          boost::algorithm::iequals(mc.variable(), "weave"))
       {
-         if (boost::algorithm::iequals(mc.scope(), "rnw") &&
-             boost::algorithm::iequals(mc.variable(), "weave"))
-         {
-            return mc.value();
-         }
+         return mc.value();
       }
    }
-   else
-   {
-      LOG_ERROR(error);
-   }
+
 
    // if we didn't find a directive then inspect project & global config
    if (projects::projectContext().hasProject())
@@ -249,7 +241,9 @@ std::string weaveTypeForFile(const FilePath& rnwPath)
 
 } // anonymous namespace
 
-bool runWeave(const core::FilePath& rnwPath, std::string* pUserErrMsg)
+bool runWeave(const core::FilePath& rnwPath,
+              const core::tex::TexMagicComments& magicComments,
+              std::string* pUserErrMsg)
 {
    // get the R bin dir
    FilePath rBin;
@@ -269,7 +263,7 @@ bool runWeave(const core::FilePath& rnwPath, std::string* pUserErrMsg)
 #endif
 
    // determine the active sweave engine
-   std::string weaveType = weaveTypeForFile(rnwPath);
+   std::string weaveType = weaveTypeForFile(magicComments);
    boost::shared_ptr<RnwWeave> pRnwWeave = weaveRegistry()
                                              .findTypeIgnoreCase(weaveType);
 

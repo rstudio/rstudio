@@ -16,6 +16,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.studio.client.common.latex.LatexProgramSelectWidget;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -38,13 +39,17 @@ public class WritingPreferencesPane extends PreferencesPane
       defaultSweaveEngine_ = new RnwWeaveSelectWidget();
       defaultSweaveEngine_.setValue(
                               prefs.defaultSweaveEngine().getGlobalValue());
-      tight(defaultSweaveEngine_);
       add(defaultSweaveEngine_);
       
+      defaultLatexProgram_ = new LatexProgramSelectWidget();
+      defaultLatexProgram_.setValue(
+                              prefs.defaultLatexProgram().getGlobalValue());
+      add(defaultLatexProgram_);
+      
       Label perProjectLabel = new Label(
-            "NOTE: The Rnw weave method is also set on a per-project " +
-            "(and optionally per-file) basis. Click the help icon above " + 
-            "for more details.");
+            "NOTE: The Rnw weave and LaTeX program options are also set on a " +
+            "per-project (and optionally per-file) basis. Click the help " +
+            "icons above for more details.");
            
       perProjectLabel.addStyleName(baseRes.styles().infoLabel());
       nudgeRight(perProjectLabel);
@@ -84,6 +89,8 @@ public class WritingPreferencesPane extends PreferencesPane
       boolean requiresRestart = super.onApply(rPrefs);
       prefs_.defaultSweaveEngine().setGlobalValue(
                                     defaultSweaveEngine_.getValue());
+      prefs_.defaultLatexProgram().setGlobalValue(
+                                    defaultLatexProgram_.getValue());
       return requiresRestart;
    }
 
@@ -92,5 +99,6 @@ public class WritingPreferencesPane extends PreferencesPane
    private final PreferencesDialogResources res_;
    
    private RnwWeaveSelectWidget defaultSweaveEngine_;
+   private LatexProgramSelectWidget defaultLatexProgram_;
    
 }

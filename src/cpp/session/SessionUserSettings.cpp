@@ -241,6 +241,9 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
 
    std::string sweave = readPref<std::string>(prefs, "default_sweave_engine", "Sweave");
    pDefaultSweaveEngine_.reset(new std::string(sweave));
+
+   std::string latex = readPref<std::string>(prefs, "default_latex_program", "pdfLaTeX");
+   pDefaultLatexProgram_.reset(new std::string(latex));
 }
 
 
@@ -264,6 +267,11 @@ std::string UserSettings::defaultEncoding() const
 std::string UserSettings::defaultSweaveEngine() const
 {
    return readUiPref<std::string>(pDefaultSweaveEngine_);
+}
+
+std::string UserSettings::defaultLatexProgram() const
+{
+   return readUiPref<std::string>(pDefaultLatexProgram_);
 }
 
 bool UserSettings::alwaysRestoreLastProject() const

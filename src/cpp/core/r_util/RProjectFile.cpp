@@ -293,6 +293,18 @@ Error readProjectFile(const FilePath& projectFilePath,
       *pProvidedDefaults = true;
    }
 
+   // extract default latex program
+   it = dcfFields.find("LaTeX");
+   if (it != dcfFields.end())
+   {
+      pConfig->defaultLatexProgram = it->second;
+   }
+   else
+   {
+      pConfig->defaultLatexProgram = defaultConfig.defaultLatexProgram;
+      *pProvidedDefaults = true;
+   }
+
    return Success();
 }
 
@@ -313,7 +325,8 @@ Error writeProjectFile(const FilePath& projectFilePath,
       "NumSpacesForTab: %7%\n"
       "Encoding: %8%\n"
       "\n"
-      "RnwWeave: %9%\n");
+      "RnwWeave: %9%\n"
+      "LaTeX: %10%\n");
 
    std::string contents = boost::str(fmt %
         boost::io::group(std::fixed, std::setprecision(1), config.version) %
@@ -324,7 +337,8 @@ Error writeProjectFile(const FilePath& projectFilePath,
         boolValueToString(config.useSpacesForTab) %
         config.numSpacesForTab %
         config.encoding %
-        config.defaultSweaveEngine);
+        config.defaultSweaveEngine %
+        config.defaultLatexProgram);
 
    // write it
    return writeStringToFile(projectFilePath,

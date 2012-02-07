@@ -134,4 +134,9 @@ public class UIPrefsAccessor extends Prefs
       return string("default_sweave_engine", "Sweave");
    }
    
+   public PrefValue<String> defaultLatexProgram()
+   {
+      return string("default_latex_program", "pdfLaTeX");
+   }
+   
 }
