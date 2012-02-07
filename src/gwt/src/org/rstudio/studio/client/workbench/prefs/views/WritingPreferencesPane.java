@@ -53,7 +53,12 @@ public class WritingPreferencesPane extends PreferencesPane
            
       perProjectLabel.addStyleName(baseRes.styles().infoLabel());
       nudgeRight(perProjectLabel);
+      spaced(perProjectLabel);
       add(perProjectLabel);
+      
+      add(checkboxPref(
+            "Resolve cross-references and build indices using texi2dvi",
+            prefs_.useTexi2Dvi()));
       
    }
 

@@ -139,4 +139,9 @@ public class UIPrefsAccessor extends Prefs
       return string("default_latex_program", "pdfLaTeX");
    }
    
+   public PrefValue<Boolean> useTexi2Dvi()
+   {
+      return bool("use_texi2dvi", true);
+   }
+   
 }

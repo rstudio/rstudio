@@ -25,6 +25,7 @@
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
+#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 
 #include "SessionPdfLatex.hpp"
@@ -32,8 +33,6 @@
 #include "SessionRnwWeave.hpp"
 
 // TODO: write latex_program docs and deploy to site
-
-// TODO: make using texi2dvi as the front-end optional
 
 // TODO: investigate whether texlive on windows uses -file-line-error
 
@@ -145,19 +144,20 @@ bool compilePdf(const FilePath& targetFilePath,
                                              targetFilePath.stem() +
                                              ".tex");
    core::system::ProcessResult result;
-#if defined(_WIN32) || defined(__APPLE__)
-   error = tex::texi2dvi::texToPdf(texProgramPath,
-                                   texFilePath,
-                                   options,
-                                   &result);
-#else
-   // workaround for tex2dvi special character bug on linux:
-   //   http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=577741
-  error = tex::pdflatex::texToPdf(texProgramPath,
-                                  texFilePath,
-                                  options,
-                                  &result);
-#endif
+   if (userSettings().useTexi2Dvi())
+   {
+      error = tex::texi2dvi::texToPdf(texProgramPath,
+                                      texFilePath,
+                                      options,
+                                      &result);
+   }
+   else
+   {
+      error = tex::pdflatex::texToPdf(texProgramPath,
+                                      texFilePath,
+                                      options,
+                                      &result);
+   }
 
    if (error)
    {

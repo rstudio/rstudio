@@ -244,6 +244,9 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
 
    std::string latex = readPref<std::string>(prefs, "default_latex_program", "pdfLaTeX");
    pDefaultLatexProgram_.reset(new std::string(latex));
+
+   bool useTexi2Dvi = readPref<bool>(prefs, "use_texi2dvi", true);
+   pUseTexi2Dvi_.reset(new bool(useTexi2Dvi));
 }
 
 
@@ -272,6 +275,11 @@ std::string UserSettings::defaultSweaveEngine() const
 std::string UserSettings::defaultLatexProgram() const
 {
    return readUiPref<std::string>(pDefaultLatexProgram_);
+}
+
+bool UserSettings::useTexi2Dvi() const
+{
+   return readUiPref<bool>(pUseTexi2Dvi_);
 }
 
 bool UserSettings::alwaysRestoreLastProject() const
