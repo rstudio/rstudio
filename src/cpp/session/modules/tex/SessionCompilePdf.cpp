@@ -33,11 +33,11 @@
 #include "SessionTexi2Dvi.hpp"
 #include "SessionRnwWeave.hpp"
 
+// TODO: implement clean option on back-end
 
-// TODO: investigate other texi2dvi and pdflatex options
-//         -- shell-escape
-//         -- clean
-//         -- alternative output file location
+// TODO: automatically clean log file after successful compile?
+//       (otherwise is left sitting around)
+
 
 using namespace core;
 
