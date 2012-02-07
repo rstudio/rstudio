@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
@@ -56,9 +57,10 @@ public class WritingPreferencesPane extends PreferencesPane
       spaced(perProjectLabel);
       add(perProjectLabel);
       
-      add(checkboxPref(
+      CheckBox checkBox = checkboxPref(
             "Resolve cross-references and build indices using texi2dvi",
-            prefs_.useTexi2Dvi()));
+            prefs_.useTexi2Dvi());
+      add(checkBox);
       
    }
 
