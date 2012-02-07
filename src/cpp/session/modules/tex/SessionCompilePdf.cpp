@@ -38,6 +38,11 @@
 // TODO: automatically clean log file after successful compile?
 //       (otherwise is left sitting around)
 
+// TODO: break magic comment processing out of TextEditingTarget
+
+// TODO: allow RSTUDIO_PDFLATEX environment variable and document
+//       the requirements (i.e. what parameters we will pass it)
+
 
 using namespace core;
 
