@@ -26,7 +26,7 @@ public class LatexProgramSelectWidget extends SelectWidget
       super("Default program for LaTeX typesetting:", 
             latexProgramRegistry_.getTypeNames());
          
-      HelpButton helpButton = new HelpButton("latex_typesetting_method");
+      HelpButton helpButton = new HelpButton("latex_program");
       Style style = helpButton.getElement().getStyle();
       style.setMarginTop(3, Unit.PX);
       style.setMarginLeft(4, Unit.PX);
