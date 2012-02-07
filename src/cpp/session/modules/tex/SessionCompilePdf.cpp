@@ -33,15 +33,15 @@
 #include "SessionTexi2Dvi.hpp"
 #include "SessionRnwWeave.hpp"
 
-// TODO: implement clean option on back-end
-
-// TODO: automatically clean log file after successful compile?
-//       (otherwise is left sitting around)
+// TODO: implement clean option on back-end -- use the tools::texi2dvi
+//       method of checking for files created after running the compile
+//       and then screening out files we want to keep like log, synctec, etc.
 
 // TODO: break magic comment processing out of TextEditingTarget
 
 // TODO: allow RSTUDIO_PDFLATEX environment variable and document
-//       the requirements (i.e. what parameters we will pass it)
+//       the requirements (i.e. what parameters we will pass it).
+//       -file-line-errors, -synctec, -version, etc.
 
 
 using namespace core;
@@ -138,6 +138,7 @@ bool compilePdf(const FilePath& targetFilePath,
    pdflatex::PdfLatexOptions options;
    options.fileLineError = false;
    options.syncTex = true;
+   options.clean = userSettings().cleanTexi2DviOutput();
 
    // get back-end version info
    core::system::ProcessResult result;
