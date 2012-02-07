@@ -29,10 +29,12 @@
 #include "SessionTexi2Dvi.hpp"
 #include "SessionRnwWeave.hpp"
 
+// TODO: write latex_program docs and deploy to site
+
 // TODO: emulate texi2dvi on linux to workaround debian tilde
 //       escaping bug (http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=534458)
 
-// TODO: consider option for texi2dvi
+// TODO: consider ability to opt out of texi2dvi (rather than the above)
 
 // TODO: investigate whether texlive on windows uses -file-line-error
 
