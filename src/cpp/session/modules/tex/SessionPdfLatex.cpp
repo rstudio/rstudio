@@ -144,9 +144,16 @@ shell_utils::ShellArgs shellArgs(const PdfLatexOptions& options)
    shell_utils::ShellArgs args;
 
    if (options.fileLineError)
-      args << kFileLineErrorOption;
+   {
+      if (options.isMikTeX())
+         args << kCStyleErrorsOption;
+      else
+         args << kFileLineErrorOption;
+   }
    if (options.syncTex)
+   {
       args << kSynctexOption;
+   }
 
    args << "-interaction=nonstopmode";
 
@@ -202,12 +209,8 @@ bool logIncludesRerun(const FilePath& logFilePath)
 
 } // anonymous namespace
 
-#ifdef _WIN32
-const char * const kFileLineErrorOption = "-c-style-errors";
-#else
 const char * const kFileLineErrorOption = "-file-line-error";
-#endif
-
+const char * const kCStyleErrorsOption = "-c-style-errors";
 const char * const kSynctexOption = "-synctex=-1";
 
 bool isInstalled()

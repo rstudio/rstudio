@@ -43,40 +43,9 @@ namespace texi2dvi {
 namespace {
 
 
-struct Texi2DviInfo
+FilePath texi2DviPath()
 {
-   bool empty() const { return programFilePath.empty(); }
-
-   FilePath programFilePath;
-   const std::string versionInfo;
-};
-
-Texi2DviInfo texi2DviInfo()
-{
-   // get the path to the texi2dvi binary
-   FilePath programFilePath = module_context::findProgram("texi2dvi");
-   if (programFilePath.empty())
-      return Texi2DviInfo();
-
-   // this is enough to return so setup the return structure
-   Texi2DviInfo t2dviInfo;
-   t2dviInfo.programFilePath = programFilePath;
-
-   // try to get version info from it
-   core::system::ProcessResult result;
-   Error error = core::system::runProgram(
-                  string_utils::utf8ToSystem(programFilePath.absolutePath()),
-                  core::shell_utils::ShellArgs() << "--version",
-                  "",
-                  core::system::ProcessOptions(),
-                  &result);
-   if (error)
-      LOG_ERROR(error);
-   else if (result.exitStatus != EXIT_SUCCESS)
-      LOG_ERROR_MESSAGE("Error probing for texi2dvi version: "+ result.stdErr);
-
-   // return what we have
-   return t2dviInfo;
+   return module_context::findProgram("texi2dvi");
 }
 
 // set of environment variables to customize pdflatex invocation
@@ -98,8 +67,9 @@ core::system::Options pdfLatexEnvVars(
    int n = 1;
    if (options.fileLineError)
    {
-      envVars.push_back(std::make_pair(boost::str(fmt % n++),
-                                       pdflatex::kFileLineErrorOption));
+      std::string option = options.isMikTeX() ? pdflatex::kCStyleErrorsOption :
+                                                pdflatex::kFileLineErrorOption;
+      envVars.push_back(std::make_pair(boost::str(fmt % n++), option));
    }
    if (options.syncTex)
    {
@@ -120,7 +90,6 @@ core::system::Options pdfLatexEnvVars(
 
 
 core::system::Options environmentVars(
-                           const std::string& versionInfo,
                            const core::FilePath& texProgramPath,
                            const pdflatex::PdfLatexOptions& pdfLatexOptions)
 {
@@ -146,7 +115,8 @@ core::system::Options environmentVars(
    return envVars;
 }
 
-shell_utils::ShellArgs shellArgs(const std::string& texVersionInfo)
+shell_utils::ShellArgs shellArgs(
+                     const pdflatex::PdfLatexOptions& pdfLatexOptions)
 {
    shell_utils::ShellArgs args;
 
@@ -161,7 +131,7 @@ shell_utils::ShellArgs shellArgs(const std::string& texVersionInfo)
    //
    //   (2) Substituting any instances of \ in the paths with /
    //
-   if (texVersionInfo.find("MiKTeX") != std::string::npos)
+   if (pdfLatexOptions.isMikTeX())
    {
       utils::RTexmfPaths texmfPaths = utils::rTexmfPaths();
       if (!texmfPaths.empty())
@@ -195,15 +165,14 @@ core::Error texToPdf(const core::FilePath& texProgramPath,
                      const tex::pdflatex::PdfLatexOptions& options,
                      core::system::ProcessResult* pResult)
 {
-   Texi2DviInfo t2dviInfo = texi2DviInfo();
-   if (t2dviInfo.empty())
+   FilePath texi2DviProgramFilePath = texi2DviPath();
+   if (texi2DviProgramFilePath.empty())
       return core::fileNotFoundError("texi2dvi", ERROR_LOCATION);
 
-   return utils::runTexCompile(t2dviInfo.programFilePath,
-                               environmentVars(t2dviInfo.versionInfo,
-                                               texProgramPath,
+   return utils::runTexCompile(texi2DviProgramFilePath,
+                               environmentVars(texProgramPath,
                                                options),
-                               shellArgs(t2dviInfo.versionInfo),
+                               shellArgs(options),
                                texFilePath,
                                pResult);
 }

@@ -34,6 +34,7 @@ namespace tex {
 namespace pdflatex {
 
 extern const char * const kFileLineErrorOption;
+extern const char * const kCStyleErrorsOption;
 extern const char * const kSynctexOption;
 
 struct PdfLatexOptions
@@ -43,8 +44,14 @@ struct PdfLatexOptions
    {
    }
 
+   bool isMikTeX() const
+   {
+      return versionInfo.find("MiKTeX") != std::string::npos;
+   }
+
    bool fileLineError;
    bool syncTex;
+   std::string versionInfo;
 };
 
 core::Error texToPdf(const core::FilePath& texProgramPath,

@@ -18,6 +18,7 @@
 #include <core/FilePath.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/system/ShellUtils.hpp>
 
 #include <core/tex/TexMagicComment.hpp>
 
@@ -35,8 +36,6 @@
 // TODO: write latex_program docs and deploy to site
 
 // TODO: prefs UI indentation issues (windows)
-
-// TODO: investigate whether texlive on windows uses -file-line-error
 
 // TODO: check spaces in path constraint on various platforms
 
@@ -141,11 +140,26 @@ bool compilePdf(const FilePath& targetFilePath,
    options.fileLineError = false;
    options.syncTex = true;
 
+   // get back-end version info
+   core::system::ProcessResult result;
+   error = core::system::runProgram(
+                  string_utils::utf8ToSystem(texProgramPath.absolutePath()),
+                  core::shell_utils::ShellArgs() << "--version",
+                  "",
+                  core::system::ProcessOptions(),
+                  &result);
+   if (error)
+      LOG_ERROR(error);
+   else if (result.exitStatus != EXIT_SUCCESS)
+      LOG_ERROR_MESSAGE("Error probing for latex version: "+ result.stdErr);
+   else
+      options.versionInfo = result.stdOut;
+
+
    // run tex compile
    FilePath texFilePath = targetFilePath.parent().complete(
                                              targetFilePath.stem() +
                                              ".tex");
-   core::system::ProcessResult result;
    if (userSettings().useTexi2Dvi() && tex::texi2dvi::isAvailable())
    {
       error = tex::texi2dvi::texToPdf(texProgramPath,
