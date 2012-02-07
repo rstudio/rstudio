@@ -34,10 +34,6 @@
 
 // TODO: write latex_program docs and deploy to site
 
-// TOOD: automatically fault back to pdflatex if no texi2dvi available?
-
-// TODO: try to limit emulated pdflatex to a single run if no bib and no idx
-
 // TODO: prefs UI indentation issues (windows)
 
 // TODO: investigate whether texlive on windows uses -file-line-error
@@ -150,7 +146,7 @@ bool compilePdf(const FilePath& targetFilePath,
                                              targetFilePath.stem() +
                                              ".tex");
    core::system::ProcessResult result;
-   if (userSettings().useTexi2Dvi())
+   if (userSettings().useTexi2Dvi() && tex::texi2dvi::isAvailable())
    {
       error = tex::texi2dvi::texToPdf(texProgramPath,
                                       texFilePath,

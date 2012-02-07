@@ -33,6 +33,8 @@ namespace modules {
 namespace tex {
 namespace texi2dvi {
 
+bool isAvailable();
+
 core::Error texToPdf(const core::FilePath& texProgramPath,
                      const core::FilePath& texFilePath,
                      const tex::pdflatex::PdfLatexOptions& options,
