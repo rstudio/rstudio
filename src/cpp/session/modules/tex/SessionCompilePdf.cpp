@@ -37,8 +37,6 @@
 
 // TODO: prefs UI indentation issues (windows)
 
-// TODO: check spaces in path constraint on various platforms
-
 // TODO: investigate other texi2dvi and pdflatex options
 //         -- shell-escape
 //         -- clean
