@@ -70,16 +70,23 @@ public:
 
    std::string printableTypeNames() const
    {
-      std::string str;
-      for (std::size_t i=0; i<types_.size(); i++)
+      if (types_.size() == 1)
+         return types_[0];
+      else if (types_.size() == 2)
+         return types_[0] + " and " + types_[1];
+      else
       {
-         str.append(types_[i]);
-         if (i != (types_.size() - 1))
-            str.append(", ");
-         if (i == (types_.size() - 2))
-            str.append("and ");
+         std::string str;
+         for (std::size_t i=0; i<types_.size(); i++)
+         {
+            str.append(types_[i]);
+            if (i != (types_.size() - 1))
+               str.append(", ");
+            if (i == (types_.size() - 2))
+               str.append("and ");
+         }
+         return str;
       }
-      return str;
    }
 
 private:

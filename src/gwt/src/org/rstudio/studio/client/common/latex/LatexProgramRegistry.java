@@ -41,17 +41,27 @@ public class LatexProgramRegistry
    
    public String getPrintableTypeNames()
    {
-      StringBuffer str = new StringBuffer();
+     
       String[] typeNames = getTypeNames();
-      for (int i=0; i<typeNames.length; i++)
+      
+      if (typeNames.length == 1)
+         return typeNames[0];
+      else if (typeNames.length == 2)
+         return typeNames[0] + " and " + typeNames[1];
+      else
       {
-         str.append(typeNames[i]);
-         if (i != (typeNames.length - 1))
-            str.append(", ");
-         if (i == (typeNames.length - 2))
-            str.append("and ");
+         StringBuffer str = new StringBuffer();
+      
+         for (int i=0; i<typeNames.length; i++)
+         {
+            str.append(typeNames[i]);
+            if (i != (typeNames.length - 1))
+               str.append(", ");
+            if (i == (typeNames.length - 2))
+               str.append("and ");
+         }
+         return str.toString();
       }
-      return str.toString();
    }
    
    public ArrayList<String> getTypes()
