@@ -120,6 +120,19 @@ public:
       return Success();
    }
 
+   Error stemWord(const std::string& word, std::vector<std::string>* pResult)
+   {
+      std::string encoded;
+      Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
+      if (error)
+         return error;
+
+      char ** wlst;
+      int ns = pHunspell_->stem(&wlst,encoded.c_str());
+      copyAndFreeHunspellVector(pResult,wlst,ns);
+      return Success();
+   }
+
 
 private:
    boost::scoped_ptr<Hunspell> pHunspell_;

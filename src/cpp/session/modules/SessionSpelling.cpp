@@ -81,6 +81,18 @@ SEXP rs_analyzeWord(SEXP wordSEXP)
    return r::sexp::create(res,&rProtect);
 }
 
+SEXP rs_stemWord(SEXP wordSEXP)
+{
+   std::string word = r::sexp::asString(wordSEXP);
+   std::vector<std::string> res;
+
+   Error error = s_pSpellChecker->stemWord(word,&res);
+   if (error)
+      LOG_ERROR(error);
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(res,&rProtect);
+}
 
 } // anonymous namespace
 
@@ -102,6 +114,11 @@ Error initialize()
 
    methodDef.name = "rs_analyzeWord" ;
    methodDef.fun = (DL_FUNC) rs_analyzeWord ;
+   methodDef.numArgs = 1;
+   r::routines::addCallMethod(methodDef);
+
+   methodDef.name = "rs_stemWord" ;
+   methodDef.fun = (DL_FUNC) rs_stemWord ;
    methodDef.numArgs = 1;
    r::routines::addCallMethod(methodDef);
 

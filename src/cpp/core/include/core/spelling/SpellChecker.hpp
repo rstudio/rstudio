@@ -36,6 +36,7 @@ public:
    virtual Error checkSpelling(const std::string& word, bool *pCorrect) = 0;
    virtual Error suggestionList(const std::string& word, std::vector<std::string>* pSugs) = 0;
    virtual Error analyzeWord(const std::string& word, std::vector<std::string>* pResult) = 0;
+   virtual Error stemWord(const std::string& word, std::vector<std::string>* pResult) = 0;
 };
 
 typedef boost::function<core::Error(const std::string&,
