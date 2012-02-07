@@ -34,6 +34,8 @@
 
 // TODO: write latex_program docs and deploy to site
 
+// TODO: try to limit emulated pdflatex to a single run if no bib and no idx
+
 // TODO: investigate whether texlive on windows uses -file-line-error
 
 // TODO: check spaces in path constraint on various platforms

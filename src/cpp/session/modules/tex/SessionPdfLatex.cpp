@@ -292,11 +292,12 @@ core::Error texToPdf(const core::FilePath& texProgramPath,
 
    // args and process options for running bibtex and makeindex
    core::shell_utils::ShellArgs bibtexArgs;
-   bibtexArgs << baseFilePath;
+   bibtexArgs << string_utils::utf8ToSystem(baseFilePath.filename());
    core::shell_utils::ShellArgs makeindexArgs;
-   makeindexArgs << idxFilePath;
+   makeindexArgs << string_utils::utf8ToSystem(idxFilePath.filename());
    core::system::ProcessOptions procOptions;
    procOptions.environment = utils::rTexInputsEnvVars();
+   procOptions.workingDir = texFilePath.parent();
 
    // run the initial compile
    Error error = utils::runTexCompile(texProgramPath,
