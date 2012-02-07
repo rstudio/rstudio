@@ -33,15 +33,11 @@
 #include "SessionTexi2Dvi.hpp"
 #include "SessionRnwWeave.hpp"
 
-// TODO: write latex_program docs and deploy to site
-
-// TODO: prefs UI indentation issues (windows)
 
 // TODO: investigate other texi2dvi and pdflatex options
 //         -- shell-escape
 //         -- clean
 //         -- alternative output file location
-
 
 using namespace core;
 
