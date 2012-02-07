@@ -77,7 +77,6 @@ import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceInputEditorPosition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
@@ -100,11 +99,6 @@ public class TextEditingTarget implements EditingTarget
 {
    interface MyCommandBinder
          extends CommandBinder<Commands, TextEditingTarget>
-   {
-   }
-
-   @SuppressWarnings("serial")
-   private class InvalidSelectionException extends Exception
    {
    }
 
