@@ -33,10 +33,7 @@
 
 // TODO: write latex_program docs and deploy to site
 
-// TODO: emulate texi2dvi on linux to workaround debian tilde
-//       escaping bug (http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=534458)
-
-// TODO: consider ability to opt out of texi2dvi (rather than the above)
+// TODO: make using texi2dvi as the front-end optional
 
 // TODO: investigate whether texlive on windows uses -file-line-error
 

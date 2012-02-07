@@ -13,9 +13,11 @@
 
 #include "SessionPdfLatex.hpp"
 
+#include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <core/system/Environment.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 
@@ -151,6 +153,52 @@ shell_utils::ShellArgs shellArgs(const PdfLatexOptions& options)
    return args;
 }
 
+FilePath programPath(const std::string& name, const std::string& envOverride)
+{
+   std::string envProgram = core::system::getenv(envOverride);
+   std::string program = envProgram.empty() ? name : envProgram;
+   return module_context::findProgram(program);
+}
+
+
+
+bool lineIncludes(const std::string& line, const boost::regex& regex)
+{
+    boost::smatch match;
+    return boost::regex_search(line, match, regex);
+}
+
+int countCitationMisses(const FilePath& logFilePath)
+{
+   // read the log file
+   std::vector<std::string> lines;
+   Error error = core::readStringVectorFromFile(logFilePath, &lines);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return 0;
+   }
+
+   // look for misses
+   boost::regex missRegex("Warning:.*Citation.*undefined");
+   int misses = std::count_if(lines.begin(),
+                              lines.end(),
+                              boost::bind(lineIncludes, _1, missRegex));
+   return misses;
+}
+
+bool logIncludesRerun(const FilePath& logFilePath)
+{
+   std::string logContents;
+   Error error = core::readStringFromFile(logFilePath, &logContents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   return logContents.find("Rerun to get") != std::string::npos;
+}
 
 } // anonymous namespace
 
@@ -219,17 +267,105 @@ bool latexProgramForFile(const core::tex::TexMagicComments& magicComments,
    }
 }
 
-
+// this function provides an "emulated" version of texi2dvi for when the
+// user has texi2dvi disabled. For example to workaround this bug:
+//
+//  http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=534458
+//
+// this code is a port of the simillar logic which exists in the
+// tools::texi2dvi function (but the regex for detecting citation
+// warnings was made a bit more liberal)
+//
 core::Error texToPdf(const core::FilePath& texProgramPath,
                      const core::FilePath& texFilePath,
                      const tex::pdflatex::PdfLatexOptions& options,
                      core::system::ProcessResult* pResult)
 {
-   return utils::runTexCompile(texProgramPath,
-                               utils::rTexInputsEnvVars(),
-                               shellArgs(options),
-                               texFilePath,
-                               pResult);
+   // input file paths
+   FilePath baseFilePath = texFilePath.parent().complete(texFilePath.stem());
+   FilePath idxFilePath(baseFilePath.absolutePath() + ".idx");
+   FilePath logFilePath(baseFilePath.absolutePath() + ".log");
+
+   // bibtex and makeindex program paths
+   FilePath bibtexProgramPath = programPath("bibtex", "BIBTEX");
+   FilePath makeindexProgramPath = programPath("makeindex", "MAKEINDEX");
+
+   // args and process options for running bibtex and makeindex
+   core::shell_utils::ShellArgs bibtexArgs;
+   bibtexArgs << baseFilePath;
+   core::shell_utils::ShellArgs makeindexArgs;
+   makeindexArgs << idxFilePath;
+   core::system::ProcessOptions procOptions;
+   procOptions.environment = utils::rTexInputsEnvVars();
+
+   // run the initial compile
+   Error error = utils::runTexCompile(texProgramPath,
+                                      utils::rTexInputsEnvVars(),
+                                      shellArgs(options),
+                                      texFilePath,
+                                      pResult);
+   if (error)
+      return error;
+
+   // count misses
+   int misses = countCitationMisses(logFilePath);
+   int previousMisses = 0;
+
+   // resolve citation misses and index
+   for (int i=0; i<10; i++)
+   {
+      // run bibtex if necessary
+      if (misses > 0 && !bibtexProgramPath.empty())
+      {
+         core::system::ProcessResult result;
+         Error error = core::system::runProgram(
+               string_utils::utf8ToSystem(bibtexProgramPath.absolutePath()),
+               bibtexArgs,
+               "",
+               procOptions,
+               &result);
+         if (error)
+            LOG_ERROR(error);
+         else if (result.exitStatus != EXIT_SUCCESS)
+            LOG_ERROR_MESSAGE(result.stdErr);
+      }
+      previousMisses = misses;
+
+      // run makeindex if necessary
+      if (idxFilePath.exists() && !makeindexProgramPath.empty())
+      {
+         core::system::ProcessResult result;
+         Error error = core::system::runProgram(
+               string_utils::utf8ToSystem(makeindexProgramPath.absolutePath()),
+               makeindexArgs,
+               "",
+               procOptions,
+               &result);
+         if (error)
+            LOG_ERROR(error);
+         else if (result.exitStatus != EXIT_SUCCESS)
+            LOG_ERROR_MESSAGE(result.stdErr);
+      }
+
+      // re-run latex
+      Error error = utils::runTexCompile(texProgramPath,
+                                         utils::rTexInputsEnvVars(),
+                                         shellArgs(options),
+                                         texFilePath,
+                                         pResult);
+      if (error)
+         return error;
+
+      // count misses
+      misses = countCitationMisses(logFilePath);
+
+      // if there is no change in misses and there is no "Rerun to get"
+      // in the log file then break
+      if ((misses == previousMisses) && !logIncludesRerun(logFilePath))
+         break;
+   }
+
+   return Success();
 }
 
 
