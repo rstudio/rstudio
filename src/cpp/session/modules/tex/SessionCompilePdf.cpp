@@ -13,6 +13,8 @@
 
 #include "SessionCompilePdf.hpp"
 
+#include <boost/format.hpp>
+
 #include <core/FilePath.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
@@ -28,11 +30,6 @@
 #include "SessionPdfLatex.hpp"
 #include "SessionTexi2Dvi.hpp"
 #include "SessionRnwWeave.hpp"
-
-// TODO: don't dump log file if there is no error output in the log
-//       (can end up dumping old log file which has no errors)
-
-// TODO: get xelatex (install + aa) and lualatex (aa) working on test
 
 // TODO: write latex_program docs and deploy to site
 
@@ -73,7 +70,7 @@ void publishPdf(const FilePath& texPath)
    module_context::enqueClientEvent(event);
 }
 
-void showCompilationErrors(const FilePath& texPath)
+bool showCompilationErrors(const FilePath& texPath)
 {
    std::string errors;
    Error error = r::exec::RFunction(".rs.getCompilationErrors",
@@ -84,18 +81,11 @@ void showCompilationErrors(const FilePath& texPath)
    if (!errors.empty())
    {
       module_context::consoleWriteOutput(errors);
+      return true;
    }
    else
    {
-      FilePath logPath = texPath.parent().complete(texPath.stem() + ".log");
-      std::string logContents;
-      Error error = core::readStringFromFile(logPath,
-                                             &logContents,
-                                             string_utils::LineEndingPosix);
-      if (error)
-         LOG_ERROR(error);
-
-        module_context::consoleWriteOutput(logContents);
+      return false;
    }
 }
 
@@ -179,7 +169,16 @@ bool compilePdf(const FilePath& targetFilePath,
    }
    else if (result.exitStatus != EXIT_SUCCESS)
    {
-      showCompilationErrors(texFilePath);
+      // try to show compilation errors -- if none are found then print
+      // a general error message and stderr
+      if (!showCompilationErrors(texFilePath))
+      {
+         boost::format fmt("Error running %1% (exit code %2%): %3%\n");
+         std::string msg(boost::str(fmt % texProgramPath.absolutePath()
+                                        % result.exitStatus
+                                        % result.stdErr));
+         module_context::consoleWriteError(msg);
+      }
       return false;
    }
    else
