@@ -35,6 +35,25 @@ public class BranchToolbarButton extends ToolbarButton
                                  implements HasValueChangeHandlers<String>,
                                             VcsRefreshHandler
 {
+   protected class SwitchBranchCommand implements Command
+   {
+      public SwitchBranchCommand(String branchLabel, String branchValue)
+      {
+         branchLabel_ = branchLabel;
+         branchValue_ = branchValue;
+      }
+
+      @Override
+      public void execute()
+      {
+         setBranchCaption(branchLabel_);
+         ValueChangeEvent.fire(BranchToolbarButton.this, branchValue_);
+      }
+
+      private final String branchLabel_;
+      private final String branchValue_;
+   }
+
    @Inject
    public BranchToolbarButton(final Provider<GitState> pVcsState)
    {
@@ -77,21 +96,21 @@ public class BranchToolbarButton extends ToolbarButton
       rootMenu.clearItems();
       JsArrayString branches = pVcsState_.get().getBranchInfo()
             .getBranches();
+
+      onBeforePopulateMenu(rootMenu);
       for (int i = 0; i < branches.length(); i++)
       {
          String branch = branches.get(i);
          final String branchLabel = branch.replaceFirst("^remotes/", "");
          final String branchValue = branch.replaceFirst(" ->.*", "");
-         rootMenu.addItem(new MenuItem(branchLabel, new Command()
-         {
-            @Override
-            public void execute()
-            {
-               setBranchCaption(branchLabel);
-               ValueChangeEvent.fire(BranchToolbarButton.this, branchValue);
-            }
-         }));
+         rootMenu.addItem(new MenuItem(branchLabel,
+                                       new SwitchBranchCommand(branchLabel,
+                                                               branchValue)));
       }
+   }
+
+   protected void onBeforePopulateMenu(ToolbarPopupMenu rootMenu)
+   {
    }
 
    protected final Provider<GitState> pVcsState_;

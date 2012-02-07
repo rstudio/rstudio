@@ -12,11 +12,12 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs;
 
+import com.google.gwt.user.client.ui.MenuItem;
+import com.google.inject.Inject;
 import com.google.inject.Provider;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
-
-import com.google.inject.Inject;
 
 public class HistoryBranchToolbarButton extends BranchToolbarButton
 {
@@ -38,6 +39,14 @@ public class HistoryBranchToolbarButton extends BranchToolbarButton
          initialized_ = true;
          setBranchCaption(pVcsState_.get().getBranchInfo().getActiveBranch());
       }
+   }
+
+   @Override
+   protected void onBeforePopulateMenu(ToolbarPopupMenu rootMenu)
+   {
+      String label = "(all branches)";
+      rootMenu.addItem(
+            new MenuItem(label, new SwitchBranchCommand(label, "--all")));
    }
 
    private boolean initialized_ = false;
