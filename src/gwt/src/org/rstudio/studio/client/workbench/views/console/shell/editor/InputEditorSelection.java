@@ -85,6 +85,13 @@ public final class InputEditorSelection
       return new InputEditorSelection(newStart, newEnd);
    }
 
+   public InputEditorSelection growToIncludeLines(String pattern)
+   {
+      return new InputEditorSelection(
+            start_.growToIncludeLines(pattern, true),
+            end_.growToIncludeLines(pattern, false));
+   }
+
    private final InputEditorPosition start_;
    private final InputEditorPosition end_;
 }

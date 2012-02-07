@@ -44,13 +44,21 @@ public class WordWrap
       return output_.toString();
    }
 
+   public int getRow()
+   {
+      return row_;
+   }
+
    private void processLine(String line)
    {
-      Debug.devlog("processLine(" + line + ")");
-
       assert line.indexOf('\n') < 0;
 
-      line = line.trim();
+      int origStringPos = 0;
+
+      String trimmed = StringUtil.trimLeft(line);
+      origStringPos = line.length() - trimmed.length();
+      line = trimmed;
+      line = StringUtil.trimRight(line);
 
       if (line.length() > 0 &&
           lineLength_ > 0 &&
@@ -65,11 +73,6 @@ public class WordWrap
       // wrapping
       while (true)
       {
-         Debug.devlogf("Line: {0}\n" +
-                       "LineLength: {1}\n" +
-                       "MaxLineLength: {2}",
-                       line, lineLength_, maxLineLength_);
-
          // chars left
          int charsLeft = lineLength_ == 0 ? maxLineLength_ - indent_.length()
                                           : maxLineLength_ - lineLength_;
@@ -97,20 +100,36 @@ public class WordWrap
             }
          }
 
+         int insertionRow = row_;
          int insertionPoint = lineLength_;
+         String thisChunk = "";
          if (index > 0)
-            appendRawWithIndent(line.substring(0, index));
+         {
+            thisChunk = line.substring(0, index);
+            appendRawWithIndent(thisChunk);
+         }
          wrap();
-         onChunkWritten(line, index, insertionPoint);
-         line = line.substring(Math.min(line.length(), index + breakChars));
-         line = line.trim();
+         onChunkWritten(thisChunk, insertionRow, insertionPoint, origStringPos);
+
+         int nextLineIndex = Math.min(line.length(), index + breakChars);
+         origStringPos += nextLineIndex;
+         line = line.substring(nextLineIndex);
+         trimmed = StringUtil.trimLeft(line);
+         origStringPos += line.length() - trimmed.length();
+         line = trimmed;
       }
 
       // Now just append the rest of the line
+      int lastInsertionRow = row_;
+      int lastInsertionPoint = lineLength_;
       appendRawWithIndent(line);
+      onChunkWritten(line, lastInsertionRow, lastInsertionPoint, origStringPos);
    }
 
-   protected void onChunkWritten(String chunk, int length, int insertionPoint)
+   protected void onChunkWritten(String chunk,
+                                 int insertionRow,
+                                 int insertionCol,
+                                 int indexInOriginalString)
    {
 
    }
@@ -155,12 +174,17 @@ public class WordWrap
          lineLength_ += value.length();
       else
          lineLength_ = value.length() - (index + 1);
+
+      for (int i = 0; i < value.length(); i++)
+         if (value.charAt(i) == '\n')
+            row_++;
    }
 
    protected String indent_ = "";
 
    private StringBuilder output_ = new StringBuilder();
    private int lineLength_;
+   private int row_ = 0;
    private final int maxLineLength_;
    private final boolean hardWrapIfNecessary_;
 }

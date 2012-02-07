@@ -558,6 +558,14 @@ public class AceEditor implements DocDisplay,
    }
 
    @Override
+   public InputEditorSelection createSelection(Position pos1, Position pos2)
+   {
+      return new InputEditorSelection(
+            new AceInputEditorPosition(getSession(), pos1),
+            new AceInputEditorPosition(getSession(), pos2));
+   }
+
+   @Override
    public void debug_forceTopsToZero()
    {
       widget_.getEditor().getRenderer().debug_forceTopsToZero();

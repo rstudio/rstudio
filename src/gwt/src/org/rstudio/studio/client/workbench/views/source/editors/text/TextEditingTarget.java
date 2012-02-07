@@ -70,12 +70,14 @@ import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceInputEditorPosition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
@@ -1429,41 +1431,59 @@ public class TextEditingTarget implements EditingTarget
    {
       docDisplay_.focus();
 
-      InputEditorSelection selection = docDisplay_.getSelection();
-      selection = selection.shrinkToNonEmptyLines();
-      selection = selection.extendToLineStart();
-      selection = selection.extendToLineEnd();
+      InputEditorSelection originalSelection = docDisplay_.getSelection();
+      InputEditorSelection selection = originalSelection;
+
+      if (selection.isEmpty())
+      {
+         selection = selection.growToIncludeLines("^\\s*#.*$");
+      }
+      else
+      {
+         selection = selection.shrinkToNonEmptyLines();
+         selection = selection.extendToLineStart();
+         selection = selection.extendToLineEnd();
+      }
       if (selection.isEmpty())
          return;
 
-      String code = docDisplay_.getCode(selection);
-      String reflowed;
-      try
-      {
-         reflowed = reflowComments(code);
-      }
-      catch (InvalidSelectionException ise)
-      {
-         return;
-      }
-      docDisplay_.setSelection(selection);
-      if (!reflowed.equals(code))
-      {
-         docDisplay_.replaceSelection(reflowed);
-      }
+      reflowComments(selection, originalSelection.isEmpty() ?
+                                originalSelection.getStart() :
+                                null);
    }
 
-   private String reflowComments(String code) throws InvalidSelectionException
+   private Position selectionToPosition(InputEditorPosition pos)
    {
+      // HACK: This cast is gross, InputEditorPosition should just become
+      // AceInputEditorPosition
+      return Position.create((Integer) pos.getLine(), pos.getPosition());
+   }
+
+   private void reflowComments(InputEditorSelection selection,
+                               final InputEditorPosition cursorPos)
+   {
+      String code = docDisplay_.getCode(selection);
       String[] lines = code.split("\n");
       String prefix = StringUtil.getCommonPrefix(lines, true);
       Pattern pattern = Pattern.create("^\\s*#+('?)\\s*");
       Match match = pattern.match(prefix, 0);
-      // Selection includes non-comments? Throw.
+      // Selection includes non-comments? Abort.
       if (match == null)
-         throw new InvalidSelectionException();
+         return;
       prefix = match.getValue();
       final boolean roxygen = match.hasGroup(1);
+
+      int cursorRowIndex = 0;
+      int cursorColIndex = 0;
+      if (cursorPos != null)
+      {
+         cursorRowIndex = selectionToPosition(cursorPos).getRow() -
+                          selectionToPosition(selection.getStart()).getRow();
+         cursorColIndex =
+               Math.max(0, cursorPos.getPosition() - prefix.length());
+      }
+      final WordWrapCursorTracker wwct = new WordWrapCursorTracker(
+                                                cursorRowIndex, cursorColIndex);
 
       int maxLineLength =
                         prefs_.printMarginColumn().getValue() - prefix.length();
@@ -1493,14 +1513,18 @@ public class TextEditingTarget implements EditingTarget
 
          @Override
          protected void onChunkWritten(String chunk,
-                                       int length,
-                                       int insertionPoint)
+                                       int insertionRow,
+                                       int insertionCol,
+                                       int indexInOriginalString)
          {
             if (indentRestOfLines_)
             {
                indentRestOfLines_ = false;
                indent_ = "  "; // TODO: Use real indent from settings
             }
+
+            wwct.onChunkWritten(chunk, insertionRow, insertionCol,
+                                indexInOriginalString);
          }
 
          private boolean indentRestOfLines_ = false;
@@ -1508,8 +1532,11 @@ public class TextEditingTarget implements EditingTarget
       };
 
       for (String line : lines)
+      {
+         wwct.onBeginInputRow();
          wordWrap.appendLine(
                       line.substring(Math.min(line.length(), prefix.length())));
+      }
 
       String wrappedString = wordWrap.getOutput();
 
@@ -1520,7 +1547,30 @@ public class TextEditingTarget implements EditingTarget
       if (finalOutput.length() > 0)
          finalOutput.deleteCharAt(finalOutput.length()-1);
 
-      return finalOutput.toString();
+      String reflowed = finalOutput.toString();
+
+      docDisplay_.setSelection(selection);
+      if (!reflowed.equals(code))
+      {
+         docDisplay_.replaceSelection(reflowed);
+      }
+
+      if (cursorPos != null)
+      {
+         if (wwct.getResult() != null)
+         {
+            int row = wwct.getResult().getY();
+            int col = wwct.getResult().getX();
+            row += selectionToPosition(selection.getStart()).getRow();
+            col += prefix.length();
+            Position pos = Position.create(row, col);
+            docDisplay_.setSelection(docDisplay_.createSelection(pos, pos));
+         }
+         else
+         {
+            docDisplay_.collapseSelection(false);
+         }
+      }
    }
 
    @Handler
