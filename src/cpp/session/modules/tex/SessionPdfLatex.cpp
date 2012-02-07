@@ -98,7 +98,8 @@ std::string latexProgramMagicComment(
    BOOST_FOREACH(const core::tex::TexMagicComment& mc, magicComments)
    {
       if (boost::algorithm::iequals(mc.scope(), "tex") &&
-          boost::algorithm::iequals(mc.variable(), "program"))
+          (boost::algorithm::iequals(mc.variable(), "program") ||
+           boost::algorithm::iequals(mc.variable(), "ts-program")))
       {
          return mc.value();
       }

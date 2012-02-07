@@ -621,7 +621,8 @@ public class TextEditingTarget implements EditingTarget
       for (TexMagicComment comment : magicComments)
       {
          if (comment.getScope().equalsIgnoreCase("tex") &&
-             comment.getVariable().equalsIgnoreCase("program"))
+             (comment.getVariable().equalsIgnoreCase("program") ||
+              comment.getVariable().equalsIgnoreCase("ts-program")))
          { 
             return comment.getValue();
          }
