@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -46,7 +47,16 @@ public class AppearancePreferencesPane extends PreferencesPane
                JsUtil.toStringArray(Desktop.getFrame().getFontList(true));
 
          fontFace_ = new SelectWidget("Editor font:", fonts, fonts, false, false, false);
-         fontFace_.setValue(Desktop.getFrame().getFixedWidthFont());
+
+         String value = Desktop.getFrame().getFixedWidthFont();
+         String label = Desktop.getFrame().getFixedWidthFont().replaceAll("\\\"",
+                                                                          "");
+         if (!fontFace_.setValue(label))
+         {
+            fontFace_.insertValue(0, label, value);
+            fontFace_.setValue(value);
+         }
+         initialFontFace_ = StringUtil.notNull(fontFace_.getValue());
          leftPanel.add(fontFace_);
          fontFace_.addChangeHandler(new ChangeHandler()
          {
@@ -139,7 +149,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       uiPrefs_.theme().setGlobalValue(theme_.getValue());
       if (Desktop.isDesktop())
       {
-         if (!Desktop.getFrame().getFixedWidthFont().equals(fontFace_.getValue()))
+         if (!initialFontFace_.equals(fontFace_.getValue()))
          {
             Desktop.getFrame().setFixedWidthFont(fontFace_.getValue());
             restartRequired = true;
@@ -161,6 +171,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    private SelectWidget theme_;
    private AceEditorPreview preview_;
    private SelectWidget fontFace_;
+   private String initialFontFace_;
 
    private static final String CODE_SAMPLE =
          "# plotting of R objects\n" +

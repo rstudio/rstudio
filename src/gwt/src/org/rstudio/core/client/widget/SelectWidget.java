@@ -160,7 +160,12 @@ public class SelectWidget extends Composite
          flowPanel_.add(widget);
       }
    }
-   
+
+   public void insertValue(int index, String label, String value)
+   {
+      listBox_.insertItem(label, value, index);
+   }
+
    private HorizontalPanel horizontalPanel_ = null;
    private FlowPanel flowPanel_ = null;
    private final ListBox listBox_;
