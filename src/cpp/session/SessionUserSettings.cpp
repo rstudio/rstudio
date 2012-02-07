@@ -244,9 +244,6 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
 
    std::string latex = readPref<std::string>(prefs, "default_latex_program", "pdfLaTeX");
    pDefaultLatexProgram_.reset(new std::string(latex));
-
-   bool useTexi2Dvi = readPref<bool>(prefs, "use_texi2dvi", true);
-   pUseTexi2Dvi_.reset(new bool(useTexi2Dvi));
 }
 
 
@@ -275,11 +272,6 @@ std::string UserSettings::defaultSweaveEngine() const
 std::string UserSettings::defaultLatexProgram() const
 {
    return readUiPref<std::string>(pDefaultLatexProgram_);
-}
-
-bool UserSettings::useTexi2Dvi() const
-{
-   return readUiPref<bool>(pUseTexi2Dvi_);
 }
 
 bool UserSettings::alwaysRestoreLastProject() const
@@ -425,6 +417,26 @@ bool UserSettings::vcsUseGitBash() const
 void UserSettings::setVcsUseGitBash(bool useGitBash)
 {
    settings_.set("vcsUseGitBash", useGitBash);
+}
+
+bool UserSettings::useTexi2Dvi() const
+{
+   return settings_.getBool("useTexi2Dvi", true);
+}
+
+void UserSettings::setUsetexi2Dvi(bool useTexi2Dvi)
+{
+   settings_.set("useTexi2Dvi", useTexi2Dvi);
+}
+
+bool UserSettings::cleanTexi2DviOutput() const
+{
+   return settings_.getBool("cleanTexi2DviOutput", true);
+}
+
+void UserSettings::setCleanTexi2DviOutput(bool cleanTexi2DviOutput)
+{
+   settings_.set("cleanTexi2DviOutput", cleanTexi2DviOutput);
 }
 
 bool UserSettings::alwaysSaveHistory() const

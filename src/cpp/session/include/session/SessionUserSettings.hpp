@@ -90,7 +90,6 @@ public:
    std::string defaultEncoding() const;
    std::string defaultSweaveEngine() const;
    std::string defaultLatexProgram() const;
-   bool useTexi2Dvi() const;
 
    bool alwaysRestoreLastProject() const;
    void setAlwaysRestoreLastProject(bool alwaysRestore);
@@ -131,6 +130,13 @@ public:
    bool vcsUseGitBash() const;
    void setVcsUseGitBash(bool useGitBash);
 
+   bool useTexi2Dvi() const;
+   void setUsetexi2Dvi(bool useTexi2Dvi);
+
+   bool cleanTexi2DviOutput() const;
+   void setCleanTexi2DviOutput(bool cleanTexi2DviOutput);
+
+
 private:
 
    void onSettingsFileChanged(
@@ -161,9 +167,6 @@ private:
    mutable boost::scoped_ptr<std::string> pDefaultEncoding_;
    mutable boost::scoped_ptr<std::string> pDefaultSweaveEngine_;
    mutable boost::scoped_ptr<std::string> pDefaultLatexProgram_;
-   mutable boost::scoped_ptr<bool> pUseTexi2Dvi_;
-
-
 };
    
 } // namespace session

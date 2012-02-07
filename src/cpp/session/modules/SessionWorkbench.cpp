@@ -162,13 +162,14 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 {
    // read params
    json::Object generalPrefs, historyPrefs, packagesPrefs, projectsPrefs,
-                sourceControlPrefs;
+                sourceControlPrefs, writingPrefs;
    Error error = json::readObjectParam(request.params, 0,
                               "general_prefs", &generalPrefs,
                               "history_prefs", &historyPrefs,
                               "packages_prefs", &packagesPrefs,
                               "projects_prefs", &projectsPrefs,
-                              "source_control_prefs", &sourceControlPrefs);
+                              "source_control_prefs", &sourceControlPrefs,
+                              "writing_prefs", &writingPrefs);
    if (error)
       return error;
    json::Object uiPrefs;
@@ -277,6 +278,19 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 
    userSettings().endUpdate();
 
+
+   // read and update writing prefs
+   bool useTexi2Dvi, cleanOutput;
+   error = json::readObject(writingPrefs,
+                            "use_texi2dvi", &useTexi2Dvi,
+                            "clean_output", &cleanOutput);
+   if (error)
+      return error;
+   userSettings().beginUpdate();
+   userSettings().setUsetexi2Dvi(useTexi2Dvi);
+   userSettings().setCleanTexi2DviOutput(cleanOutput);
+   userSettings().endUpdate();
+
    // set ui prefs
    userSettings().setUiPrefs(uiPrefs);
 
@@ -370,6 +384,12 @@ Error getRPrefs(const json::JsonRpcRequest& request,
                   module_context::createAliasedPath(rsaSshKeyPath);
    sourceControlPrefs["have_rsa_key"] = rsaSshKeyPath.exists();
 
+
+   // get writing prefs
+   json::Object writingPrefs;
+   writingPrefs["use_texi2dvi"] = userSettings().useTexi2Dvi();
+   writingPrefs["clean_output"] = userSettings().cleanTexi2DviOutput();
+
    // initialize and set result object
    json::Object result;
    result["general_prefs"] = generalPrefs;
@@ -377,6 +397,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    result["packages_prefs"] = packagesPrefs;
    result["projects_prefs"] = projectsPrefs;
    result["source_control_prefs"] = sourceControlPrefs;
+   result["writing_prefs"] = writingPrefs;
 
    pResponse->setResult(result);
 

@@ -21,6 +21,7 @@ import org.rstudio.studio.client.common.latex.LatexProgramSelectWidget;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.WritingPrefs;
 
 public class WritingPreferencesPane extends PreferencesPane
 {
@@ -57,10 +58,14 @@ public class WritingPreferencesPane extends PreferencesPane
       spaced(perProjectLabel);
       add(perProjectLabel);
       
-      CheckBox checkBox = checkboxPref(
-            "Resolve cross-references and build indices using texi2dvi",
-            prefs_.useTexi2Dvi());
-      add(checkBox);
+      chkUseTexi2Dvi_ = new CheckBox(
+            "Process LaTeX files using texi2dvi");
+      spaced(chkUseTexi2Dvi_);
+      add(chkUseTexi2Dvi_);
+      
+      chkCleanTexi2DviOutput_ = new CheckBox(
+            "Clean auxillary output (only supported when using texi2dvi)");
+      add(chkCleanTexi2DviOutput_);
       
    }
 
@@ -88,16 +93,26 @@ public class WritingPreferencesPane extends PreferencesPane
    @Override
    protected void initialize(RPrefs prefs)
    {
+      WritingPrefs writingPrefs = prefs.getWritingPrefs();
+      chkUseTexi2Dvi_.setValue(writingPrefs.getUseTexi2Dvi());
+      chkCleanTexi2DviOutput_.setValue(writingPrefs.getCleanOutput());
    }
    
    @Override
    public boolean onApply(RPrefs rPrefs)
    {
       boolean requiresRestart = super.onApply(rPrefs);
+      
       prefs_.defaultSweaveEngine().setGlobalValue(
                                     defaultSweaveEngine_.getValue());
       prefs_.defaultLatexProgram().setGlobalValue(
                                     defaultLatexProgram_.getValue());
+      
+      WritingPrefs writingPrefs = WritingPrefs.create(
+                                       chkUseTexi2Dvi_.getValue(), 
+                                       chkCleanTexi2DviOutput_.getValue());
+      rPrefs.setWritingPrefs(writingPrefs);
+      
       return requiresRestart;
    }
 
@@ -107,5 +122,7 @@ public class WritingPreferencesPane extends PreferencesPane
    
    private RnwWeaveSelectWidget defaultSweaveEngine_;
    private LatexProgramSelectWidget defaultLatexProgram_;
+   private CheckBox chkUseTexi2Dvi_;
+   private CheckBox chkCleanTexi2DviOutput_;
    
 }
