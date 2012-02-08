@@ -183,7 +183,13 @@ shell_utils::ShellArgs shellArgs(const PdfLatexOptions& options)
    {
       args << kSynctexOption;
    }
-
+   if (options.shellEscape)
+   {
+      if (options.isMikTeX())
+         args << kEnableWrite18Option;
+      else
+         args << kShellEscapeOption;
+   }
    args << "-interaction=nonstopmode";
 
    return args;
@@ -240,6 +246,8 @@ bool logIncludesRerun(const FilePath& logFilePath)
 
 const char * const kFileLineErrorOption = "-file-line-error";
 const char * const kCStyleErrorsOption = "-c-style-errors";
+const char * const kShellEscapeOption = "-shell-escape";
+const char * const kEnableWrite18Option = "–enable-write18";
 const char * const kSynctexOption = "-synctex=-1";
 
 bool isInstalled()

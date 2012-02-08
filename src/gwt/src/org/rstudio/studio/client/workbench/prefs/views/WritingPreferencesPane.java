@@ -65,8 +65,12 @@ public class WritingPreferencesPane extends PreferencesPane
       
       chkCleanTexi2DviOutput_ = new CheckBox(
             "Clean auxiliary output after compile");
+      spaced(chkCleanTexi2DviOutput_);
       add(chkCleanTexi2DviOutput_);
       
+      chkEnableShellEscape_ = new CheckBox(
+            "Allow shell escape commands");
+      add(chkEnableShellEscape_);
    }
 
   
@@ -96,6 +100,7 @@ public class WritingPreferencesPane extends PreferencesPane
       WritingPrefs writingPrefs = prefs.getWritingPrefs();
       chkUseTexi2Dvi_.setValue(writingPrefs.getUseTexi2Dvi());
       chkCleanTexi2DviOutput_.setValue(writingPrefs.getCleanOutput());
+      chkEnableShellEscape_.setValue(writingPrefs.getEnableShellEscape());
    }
    
    @Override
@@ -110,7 +115,8 @@ public class WritingPreferencesPane extends PreferencesPane
       
       WritingPrefs writingPrefs = WritingPrefs.create(
                                        chkUseTexi2Dvi_.getValue(), 
-                                       chkCleanTexi2DviOutput_.getValue());
+                                       chkCleanTexi2DviOutput_.getValue(),
+                                       chkEnableShellEscape_.getValue());
       rPrefs.setWritingPrefs(writingPrefs);
       
       return requiresRestart;
@@ -124,5 +130,6 @@ public class WritingPreferencesPane extends PreferencesPane
    private LatexProgramSelectWidget defaultLatexProgram_;
    private CheckBox chkUseTexi2Dvi_;
    private CheckBox chkCleanTexi2DviOutput_;
+   private CheckBox chkEnableShellEscape_;
    
 }

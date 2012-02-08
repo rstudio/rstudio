@@ -35,12 +35,14 @@ namespace pdflatex {
 
 extern const char * const kFileLineErrorOption;
 extern const char * const kCStyleErrorsOption;
+extern const char * const kShellEscapeOption;
+extern const char * const kEnableWrite18Option;
 extern const char * const kSynctexOption;
 
 struct PdfLatexOptions
 {
    PdfLatexOptions()
-      : fileLineError(false), syncTex(false)
+      : fileLineError(false), syncTex(false), shellEscape(false)
    {
    }
 
@@ -51,6 +53,7 @@ struct PdfLatexOptions
 
    bool fileLineError;
    bool syncTex;
+   bool shellEscape;
    std::string versionInfo;
 };
 

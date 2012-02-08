@@ -439,6 +439,17 @@ void UserSettings::setCleanTexi2DviOutput(bool cleanTexi2DviOutput)
    settings_.set("cleanTexi2DviOutput", cleanTexi2DviOutput);
 }
 
+bool UserSettings::enableLaTeXShellEscape() const
+{
+   return settings_.getBool("enableLaTeXShellEscape", false);
+}
+
+void UserSettings::setEnableLaTeXShellEscape(bool enableShellEscape)
+{
+   settings_.set("enableLaTeXShellEscape", enableShellEscape);
+}
+
+
 bool UserSettings::alwaysSaveHistory() const
 {
    return settings_.getBool(kAlwaysSaveHistory, true);

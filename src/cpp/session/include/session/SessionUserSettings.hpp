@@ -136,6 +136,9 @@ public:
    bool cleanTexi2DviOutput() const;
    void setCleanTexi2DviOutput(bool cleanTexi2DviOutput);
 
+   bool enableLaTeXShellEscape() const;
+   void setEnableLaTeXShellEscape(bool enableShellEscape);
+
 
 private:
 

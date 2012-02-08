@@ -198,8 +198,9 @@ bool compilePdf(const FilePath& targetFilePath,
 
    // configure pdflatex options
    pdflatex::PdfLatexOptions options;
-   options.fileLineError = false;
+   options.fileLineError = true;
    options.syncTex = true;
+   options.shellEscape = userSettings().enableLaTeXShellEscape();
 
    // get back-end version info
    core::system::ProcessResult result;

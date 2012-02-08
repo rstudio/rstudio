@@ -76,6 +76,12 @@ core::system::Options pdfLatexEnvVars(
       envVars.push_back(std::make_pair(boost::str(fmt % n++),
                                        pdflatex::kSynctexOption));
    }
+   if (options.shellEscape)
+   {
+      std::string option = options.isMikTeX() ? pdflatex::kEnableWrite18Option :
+                                                pdflatex::kShellEscapeOption;
+      envVars.push_back(std::make_pair(boost::str(fmt % n++), option));
+   }
 
    // rstudio-pdflatex script
    FilePath texScriptsPath = session::options().texScriptsPath();
