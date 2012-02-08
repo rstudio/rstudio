@@ -37,8 +37,6 @@
 //       method of checking for files created after running the compile
 //       and then screening out files we want to keep like log, synctec, etc.
 
-// TODO: break magic comment processing out of TextEditingTarget
-
 // TODO: allow RSTUDIO_PDFLATEX environment variable and document
 //       the requirements (i.e. what parameters we will pass it).
 //       -file-line-errors, -synctec, -version, etc.

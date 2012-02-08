@@ -45,7 +45,6 @@ import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.core.client.tex.TexMagicComment;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
@@ -55,18 +54,12 @@ import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.common.latex.LatexProgramRegistry;
-import org.rstudio.studio.client.common.rnw.RnwWeave;
-import org.rstudio.studio.client.common.rnw.RnwWeaveDirective;
-import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -105,7 +98,9 @@ public class TextEditingTarget implements EditingTarget
    private static final MyCommandBinder commandBinder =
          GWT.create(MyCommandBinder.class);
 
-   public interface Display extends TextDisplay, HasEnsureVisibleHandlers
+   public interface Display extends TextDisplay, 
+                                    CompilePdfDependencyChecker.Display,
+                                    HasEnsureVisibleHandlers
    {
       HasValue<Boolean> getSourceOnSave();
       void ensureVisible();
@@ -203,15 +198,14 @@ public class TextEditingTarget implements EditingTarget
                             GlobalDisplay globalDisplay,
                             FileDialogs fileDialogs,
                             FileTypeRegistry fileTypeRegistry,
-                            RnwWeaveRegistry rnwWeaveRegistry,
-                            LatexProgramRegistry latexProgramRegistry,
                             ConsoleDispatcher consoleDispatcher,
                             WorkbenchContext workbenchContext,
                             Provider<PublishPdf> pPublishPdf,
                             Session session,
                             FontSizeManager fontSizeManager,
                             DocDisplay docDisplay,
-                            UIPrefs prefs)
+                            UIPrefs prefs,
+                            Provider<CompilePdfDependencyChecker> pCPdfDepCheck)
    {
       commands_ = commands;
       server_ = server;
@@ -219,8 +213,6 @@ public class TextEditingTarget implements EditingTarget
       globalDisplay_ = globalDisplay;
       fileDialogs_ = fileDialogs;
       fileTypeRegistry_ = fileTypeRegistry;
-      rnwWeaveRegistry_ = rnwWeaveRegistry;
-      latexProgramRegistry_ = latexProgramRegistry;
       consoleDispatcher_ = consoleDispatcher;
       workbenchContext_ = workbenchContext;
       session_ = session;
@@ -230,6 +222,7 @@ public class TextEditingTarget implements EditingTarget
       docDisplay_ = docDisplay;
       dirtyState_ = new DirtyState(docDisplay_, false);
       prefs_ = prefs;
+      compilePdfDependencyChecker_ = pCPdfDepCheck.get();
       
       addRecordNavigationPositionHandler(releaseOnDismiss_, 
                                          docDisplay_, 
@@ -429,9 +422,8 @@ public class TextEditingTarget implements EditingTarget
       
       
       // validate required compontents (e.g. Tex, knitr, etc.)
-      validateRequiredComponents();
+      checkCompilePdfDependencies();
      
-
       syncFontSize(releaseOnDismiss_, events_, view_, fontSizeManager_);
      
 
@@ -478,159 +470,14 @@ public class TextEditingTarget implements EditingTarget
 
       initStatusBar();
    }
-
    
-   private void validateRequiredComponents()
+   private void checkCompilePdfDependencies()
    {
-      // for all tex files we need to parse magic comments and validate
-      // any explict latex proram directive
-      ArrayList<TexMagicComment> magicComments = null;
-      if (fileType_.canCompilePDF())
-      {
-         magicComments = TexMagicComment.parseComments(docDisplay_.getCode());
-         String latexProgramDirective = 
-                           detectLatexProgramDirective(magicComments);
-           
-         if (latexProgramDirective != null)
-         {
-            if (latexProgramRegistry_.findTypeIgnoreCase(latexProgramDirective)
-                  == null)
-            {
-               // show warning and bail 
-               view_.showWarningBar(
-                  "Unknown LaTeX program type '" + latexProgramDirective + 
-                  "' specified (valid types are " + 
-                  latexProgramRegistry_.getPrintableTypeNames() +  ")");
-               
-               return;
-            }
-         }
-      }
+      compilePdfDependencyChecker_.check(view_, 
+                                         fileType_, 
+                                         docDisplay_.getCode());
       
-      // for Rnw we first determine the RnwWeave type
-      RnwWeave rnwWeave = null;
-      RnwWeaveDirective rnwWeaveDirective = null;
-      if (fileType_.isRnw())
-      {
-         rnwWeaveDirective = detectRnwWeaveDirective(magicComments);
-         if (rnwWeaveDirective != null) 
-         {
-            rnwWeave = rnwWeaveDirective.getRnwWeave();
-            if (rnwWeave == null)
-            {
-               // show warning and bail 
-               view_.showWarningBar(
-                  "Unknown Rnw weave method '" + rnwWeaveDirective.getName() + 
-                  "' specified (valid types are " + 
-                  rnwWeaveRegistry_.getPrintableTypeNames() +  ")");
-               
-               return;
-            }    
-         }
-         else
-         {
-            rnwWeave = rnwWeaveRegistry_.findTypeIgnoreCase(
-                                    prefs_.defaultSweaveEngine().getValue());
-         }     
-      }
-            
-       
-      final SessionInfo sessionInfo = session_.getSessionInfo();
-      TexCapabilities texCap = sessionInfo.getTexCapabilities();
-
-      final boolean checkForTeX = fileType_.canCompilePDF() && 
-                                  !texCap.isTexInstalled();
-      
-      final boolean checkForRnwWeave = (rnwWeave != null) && 
-                                       !texCap.isRnwWeaveAvailable(rnwWeave);
-                                 
-      if (checkForTeX || checkForRnwWeave)
-      {
-         // alias variables to finals
-         final boolean hasRnwWeaveDirective = rnwWeaveDirective != null;
-         final RnwWeave fRnwWeave = rnwWeave;
-         
-         server_.getTexCapabilities(new ServerRequestCallback<TexCapabilities>()
-         {
-            @Override
-            public void onResponseReceived(TexCapabilities response)
-            {
-               if (checkForTeX && !response.isTexInstalled())
-               {
-                  String warning;
-                  if (Desktop.isDesktop())
-                     warning = "No TeX installation detected. Please install " +
-                               "TeX before compiling.";
-                  else
-                     warning = "This server does not have TeX installed. You " +
-                               "may not be able to compile.";
-                  view_.showWarningBar(warning);
-               }
-               else if (checkForRnwWeave && 
-                        !response.isRnwWeaveAvailable(fRnwWeave))
-               {
-                  String forContext = "";
-                  if (hasRnwWeaveDirective)
-                     forContext = "this file";
-                  else if (sessionInfo.getActiveProjectFile() != null)
-                     forContext = "Rnw files for this project"; 
-                  else
-                     forContext = "Rnw files";
-                  
-                  view_.showWarningBar(
-                     fRnwWeave.getName() + " is configured to weave " + 
-                     forContext + " " + "however the " + 
-                     fRnwWeave.getPackageName() + " package is not installed.");
-               }
-               else
-               {
-                  view_.hideWarningBar();
-               }
-            }
-
-            @Override
-            public void onError(ServerError error)
-            {
-               Debug.logError(error);
-            }
-         });
-      }
-      else
-      {
-         view_.hideWarningBar();
-      }
    }
-   
-   private RnwWeaveDirective detectRnwWeaveDirective(
-         ArrayList<TexMagicComment> magicComments)
-   {
-      for (TexMagicComment comment : magicComments)
-      {
-         RnwWeaveDirective rnwWeaveDirective = 
-                           RnwWeaveDirective.fromTexMagicComment(comment);
-         if (rnwWeaveDirective != null)
-            return rnwWeaveDirective;
-      }
-      
-      return null;
-   }
-   
-   private String detectLatexProgramDirective(
-                     ArrayList<TexMagicComment> magicComments)
-   {
-      for (TexMagicComment comment : magicComments)
-      {
-         if (comment.getScope().equalsIgnoreCase("tex") &&
-             (comment.getVariable().equalsIgnoreCase("program") ||
-              comment.getVariable().equalsIgnoreCase("ts-program")))
-         { 
-            return comment.getValue();
-         }
-      }
-      
-      return null;
-   }
-   
    
    private void initStatusBar()
    {
@@ -955,8 +802,8 @@ public class TextEditingTarget implements EditingTarget
 
    private void saveThenExecute(String encodingOverride, final Command command)
    {
-      validateRequiredComponents();
-      
+      checkCompilePdfDependencies();
+   
       final String path = docUpdateSentinel_.getPath();
       if (path == null)
       {
@@ -2179,8 +2026,6 @@ public class TextEditingTarget implements EditingTarget
    private final GlobalDisplay globalDisplay_;
    private final FileDialogs fileDialogs_;
    private final FileTypeRegistry fileTypeRegistry_;
-   private final RnwWeaveRegistry rnwWeaveRegistry_;
-   private final LatexProgramRegistry latexProgramRegistry_;
    private final ConsoleDispatcher consoleDispatcher_;
    private final WorkbenchContext workbenchContext_;
    private final Session session_;
@@ -2197,6 +2042,7 @@ public class TextEditingTarget implements EditingTarget
    private HandlerManager handlers_ = new HandlerManager(this);
    private FileSystemContext fileContext_;
    private final Provider<PublishPdf> pPublishPdf_;
+   private final CompilePdfDependencyChecker compilePdfDependencyChecker_;
    private boolean ignoreDeletes_;
   
    // Allows external edit checks to supercede one another
