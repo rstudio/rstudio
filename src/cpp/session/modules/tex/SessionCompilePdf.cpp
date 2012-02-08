@@ -20,6 +20,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/system/ShellUtils.hpp>
 
+#include <core/tex/TexLogParser.hpp>
 #include <core/tex/TexMagicComment.hpp>
 
 #include <r/RSexp.hpp>
@@ -55,23 +56,84 @@ void publishPdf(const FilePath& texPath)
    module_context::enqueClientEvent(event);
 }
 
+void showLogEntry(const core::tex::LogEntry& logEntry)
+{
+   boost::format fmt("%1% (line %2%): %3%\n");
+   std::string err = boost::str(
+               fmt % logEntry.file() % logEntry.line() % logEntry.message());
+   module_context::consoleWriteError(err);
+}
+
+FilePath ancillaryFilePath(const FilePath& texFilePath, const std::string& ext)
+{
+   return texFilePath.parent().childPath(texFilePath.stem() + ext);
+}
+
+FilePath latexLogPath(const FilePath& texFilePath)
+{
+   return ancillaryFilePath(texFilePath, ".log");
+}
+
+FilePath bibtexLogPath(const FilePath& texFilePath)
+{
+   return ancillaryFilePath(texFilePath, ".blg");
+}
+
 bool showCompilationErrors(const FilePath& texPath)
 {
-   std::string errors;
-   Error error = r::exec::RFunction(".rs.getCompilationErrors",
-                                    texPath.absolutePath()).call(&errors);
+   // latex log file
+   core::tex::LogEntries latexLogEntries;
+   FilePath logPath = latexLogPath(texPath);
+   if (logPath.exists())
+   {
+      Error error = core::tex::parseLatexLog(logPath, &latexLogEntries);
+      if (error)
+         LOG_ERROR(error);
+
+      // show errors
+      if (!latexLogEntries.empty())
+      {
+         module_context::consoleWriteError("LaTeX errors:\n");
+         std::for_each(latexLogEntries.begin(),
+                       latexLogEntries.end(),
+                       showLogEntry);
+         module_context::consoleWriteError("\n");
+      }
+   }
+
+   // bibtex log file
+   core::tex::LogEntries bibtexLogEntries;
+   logPath = bibtexLogPath(texPath);
+   if (logPath.exists())
+   {
+      Error error = core::tex::parseBibtexLog(logPath, &bibtexLogEntries);
+      if (error)
+         LOG_ERROR(error);
+
+      // show errors
+      if (!bibtexLogEntries.empty())
+      {
+         module_context::consoleWriteError("BibTeX errors:\n");
+         std::for_each(bibtexLogEntries.begin(),
+                       bibtexLogEntries.end(),
+                       showLogEntry);
+         module_context::consoleWriteError("\n");
+      }
+   }
+
+   // return true if we printed at least one entry
+   return (latexLogEntries.size() + bibtexLogEntries.size()) > 0;
+}
+
+void removeExistingLogs(const FilePath& texFilePath)
+{
+   Error error = latexLogPath(texFilePath).removeIfExists();
    if (error)
       LOG_ERROR(error);
 
-   if (!errors.empty())
-   {
-      module_context::consoleWriteOutput(errors);
-      return true;
-   }
-   else
-   {
-      return false;
-   }
+   error = bibtexLogPath(texFilePath).removeIfExists();
+   if (error)
+      LOG_ERROR(error);
 }
 
 class AuxillaryFileCleanupContext : boost::noncopyable
@@ -217,15 +279,21 @@ bool compilePdf(const FilePath& targetFilePath,
    else
       options.versionInfo = result.stdOut;
 
-   // setup cleanup context if clean was specified
-   AuxillaryFileCleanupContext fileCleanupContext;
-   if (userSettings().cleanTexi2DviOutput())
-      fileCleanupContext.init(targetFilePath);
-
-   // run tex compile
+   // compute tex file path
    FilePath texFilePath = targetFilePath.parent().complete(
                                              targetFilePath.stem() +
                                              ".tex");
+
+   // remove log files if they exist (avoids confusion created by parsing
+   // old log files for errors)
+   removeExistingLogs(texFilePath);
+
+   // setup cleanup context if clean was specified
+   AuxillaryFileCleanupContext fileCleanupContext;
+   if (userSettings().cleanTexi2DviOutput())
+      fileCleanupContext.init(texFilePath);
+
+   // run tex compile
    if (userSettings().useTexi2Dvi() && tex::texi2dvi::isAvailable())
    {
       error = tex::texi2dvi::texToPdf(texProgramPath,

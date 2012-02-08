@@ -71,6 +71,7 @@ set (CORE_SOURCE_FILES
    system/ShellUtils.cpp
    system/System.cpp
    system/file_monitor/FileMonitor.cpp
+   tex/TexLogParser.cpp
    tex/TexMagicComment.cpp
    text/DcfParser.cpp
    text/TemplateFilter.cpp
