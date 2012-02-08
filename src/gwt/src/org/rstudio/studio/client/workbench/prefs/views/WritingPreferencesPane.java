@@ -69,7 +69,7 @@ public class WritingPreferencesPane extends PreferencesPane
       add(chkCleanTexi2DviOutput_);
       
       chkEnableShellEscape_ = new CheckBox(
-            "Allow shell escape commands");
+            "Enable shell escape commands");
       add(chkEnableShellEscape_);
    }
 

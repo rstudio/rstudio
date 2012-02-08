@@ -33,6 +33,15 @@ namespace modules {
 namespace tex {
 namespace pdflatex {
 
+// NOTE: other potential command line parameters to support:
+//  -interaction=batch (but will that work with texi2dvi?)
+//  -halt-on-error (same question, does it work with texi2dvi)
+//
+
+// NOTE: synctex can be called from the command line as in:
+//  sync­tex view –i 25:15:filename.tex –o filename.pdf
+//
+
 extern const char * const kFileLineErrorOption;
 extern const char * const kCStyleErrorsOption;
 extern const char * const kShellEscapeOption;
