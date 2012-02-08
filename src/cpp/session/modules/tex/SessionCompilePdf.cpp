@@ -33,10 +33,6 @@
 #include "SessionTexi2Dvi.hpp"
 #include "SessionRnwWeave.hpp"
 
-// TODO: implement clean option on back-end -- use the tools::texi2dvi
-//       method of checking for files created after running the compile
-//       and then screening out files we want to keep like log, synctec, etc.
-
 // TODO: allow RSTUDIO_PDFLATEX environment variable and document
 //       the requirements (i.e. what parameters we will pass it).
 //       -file-line-errors, -synctec, -version, etc.
@@ -82,6 +78,68 @@ bool showCompilationErrors(const FilePath& texPath)
       return false;
    }
 }
+
+class AuxillaryFileCleanupContext : boost::noncopyable
+{
+public:
+   AuxillaryFileCleanupContext()
+      : cleanLog_(true)
+   {
+   }
+
+   virtual ~AuxillaryFileCleanupContext()
+   {
+      try
+      {
+         cleanup();
+      }
+      catch(...)
+      {
+      }
+   }
+
+   void init(const FilePath& targetFilePath)
+   {
+      basePath_ = targetFilePath.parent().childPath(
+                                    targetFilePath.stem()).absolutePath();
+   }
+
+   void preserveLog()
+   {
+      cleanLog_ = false;
+   }
+
+   void cleanup()
+   {
+      if (!basePath_.empty())
+      {
+         // remove known auxillary files
+         remove(".out");
+         remove(".aux");
+         remove(".bbl");
+         remove(".blg");
+
+         // remove log unless requested
+         if (cleanLog_)
+            remove(".log");
+
+         // reset base path so we only do this one
+         basePath_.clear();
+      }
+   }
+
+private:
+   void remove(const std::string& extension)
+   {
+      Error error = FilePath(basePath_ + extension).removeIfExists();
+      if (error)
+         LOG_ERROR(error);
+   }
+
+private:
+   std::string basePath_;
+   bool cleanLog_;
+};
 
 bool compilePdf(const FilePath& targetFilePath,
                 const std::string& completedAction,
@@ -136,7 +194,6 @@ bool compilePdf(const FilePath& targetFilePath,
    pdflatex::PdfLatexOptions options;
    options.fileLineError = false;
    options.syncTex = true;
-   options.clean = userSettings().cleanTexi2DviOutput();
 
    // get back-end version info
    core::system::ProcessResult result;
@@ -153,6 +210,10 @@ bool compilePdf(const FilePath& targetFilePath,
    else
       options.versionInfo = result.stdOut;
 
+   // setup cleanup context if clean was specified
+   AuxillaryFileCleanupContext fileCleanupContext;
+   if (userSettings().cleanTexi2DviOutput())
+      fileCleanupContext.init(targetFilePath);
 
    // run tex compile
    FilePath texFilePath = targetFilePath.parent().complete(
@@ -180,6 +241,9 @@ bool compilePdf(const FilePath& targetFilePath,
    }
    else if (result.exitStatus != EXIT_SUCCESS)
    {
+      // don't remove the log
+      fileCleanupContext.preserveLog();
+
       // try to show compilation errors -- if none are found then print
       // a general error message and stderr
       if (!showCompilationErrors(texFilePath))

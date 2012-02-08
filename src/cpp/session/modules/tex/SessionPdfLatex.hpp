@@ -40,7 +40,7 @@ extern const char * const kSynctexOption;
 struct PdfLatexOptions
 {
    PdfLatexOptions()
-      : fileLineError(false), syncTex(false), clean(false)
+      : fileLineError(false), syncTex(false)
    {
    }
 
@@ -51,7 +51,6 @@ struct PdfLatexOptions
 
    bool fileLineError;
    bool syncTex;
-   bool clean;
    std::string versionInfo;
 };
 
