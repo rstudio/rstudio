@@ -139,6 +139,12 @@ bool validateLatexProgram(const std::string& program,
    }
 }
 
+void appendEnvVarNotice(std::string* pUserErrMsg)
+{
+   pUserErrMsg->append(" (the program was specified using the "
+                       "RSTUDIO_PDFLATEX environment variable)");
+}
+
 shell_utils::ShellArgs shellArgs(const PdfLatexOptions& options)
 {
    shell_utils::ShellArgs args;
@@ -229,8 +235,11 @@ bool latexProgramForFile(const core::tex::TexMagicComments& magicComments,
                          FilePath* pTexProgramPath,
                          std::string* pUserErrMsg)
 {
-   // magic comment always takes highest priority
+   // get (optional) magic comments and environment variable override
    std::string latexProgramMC = latexProgramMagicComment(magicComments);
+   std::string pdflatexEnv = core::system::getenv("RSTUDIO_PDFLATEX");
+
+   // magic comment always takes highest priority
    if (!latexProgramMC.empty())
    {
       // validate magic comment
@@ -248,6 +257,38 @@ bool latexProgramForFile(const core::tex::TexMagicComments& magicComments,
          return validateLatexProgram(latexProgramMC,
                                      pTexProgramPath,
                                      pUserErrMsg);
+      }
+   }
+
+   // next is environment variable
+   else if (!pdflatexEnv.empty())
+   {
+      if (FilePath::isRootPath(pdflatexEnv))
+      {
+         FilePath texProgramPath(pdflatexEnv);
+         if (texProgramPath.exists())
+         {
+            *pTexProgramPath = texProgramPath;
+            return true;
+         }
+         else
+         {
+            *pUserErrMsg = "Unabled to find specified LaTeX program " +
+                           pdflatexEnv;
+            appendEnvVarNotice(pUserErrMsg);
+            return false;
+         }
+      }
+      else
+      {
+         bool validated = validateLatexProgram(pdflatexEnv,
+                                               pTexProgramPath,
+                                               pUserErrMsg);
+
+         if (!validated)
+            appendEnvVarNotice(pUserErrMsg);
+
+         return validated;
       }
    }
 

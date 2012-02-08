@@ -33,11 +33,6 @@
 #include "SessionTexi2Dvi.hpp"
 #include "SessionRnwWeave.hpp"
 
-// TODO: allow RSTUDIO_PDFLATEX environment variable and document
-//       the requirements (i.e. what parameters we will pass it).
-//       -file-line-errors, -synctec, -version, etc.
-
-
 using namespace core;
 
 namespace session {
