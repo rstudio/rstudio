@@ -111,12 +111,18 @@ public:
          // remove known auxillary files
          remove(".out");
          remove(".aux");
-         remove(".bbl");
-         remove(".blg");
 
-         // remove log unless requested
+
+         // only clean bbl if .bib exists
+         if (exists(".bib"))
+            remove(".bbl");
+
+         // clean log if requested
          if (cleanLog_)
+         {
+            remove(".blg");
             remove(".log");
+         }
 
          // reset base path so we only do this one
          basePath_.clear();
@@ -124,6 +130,11 @@ public:
    }
 
 private:
+   bool exists(const std::string& extension)
+   {
+      return FilePath(basePath_ + extension).exists();
+   }
+
    void remove(const std::string& extension)
    {
       Error error = FilePath(basePath_ + extension).removeIfExists();
