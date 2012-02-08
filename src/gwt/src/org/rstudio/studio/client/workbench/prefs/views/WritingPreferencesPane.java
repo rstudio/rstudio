@@ -64,7 +64,7 @@ public class WritingPreferencesPane extends PreferencesPane
       add(chkUseTexi2Dvi_);
       
       chkCleanTexi2DviOutput_ = new CheckBox(
-            "Clean auxillary output after compile");
+            "Clean auxiliary output after compile");
       add(chkCleanTexi2DviOutput_);
       
    }
