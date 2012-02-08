@@ -117,6 +117,14 @@ std::string latexProgramMagicComment(
    return std::string();
 }
 
+void setInvalidProgramTypeMessage(const std::string& program,
+                                  std::string* pUserErrMsg)
+{
+   *pUserErrMsg = "Unknown LaTeX program type '" + program +
+                  "' specified (valid types are " +
+                  programTypes().printableTypeNames() + ")";
+}
+
 
 bool validateLatexProgram(const std::string& program,
                           FilePath* pTexProgramPath,
@@ -131,6 +139,21 @@ bool validateLatexProgram(const std::string& program,
    {
       *pUserErrMsg = "Unabled to find specified LaTeX program '" +
                      program + "' on the system path";
+      return false;
+   }
+   else
+   {
+      return true;
+   }
+}
+
+
+bool validateLatexProgramType(const std::string& programType,
+                              std::string* pUserErrMsg)
+{
+   if (!programTypes().isValidTypeName(programType))
+   {
+      setInvalidProgramTypeMessage(programType, pUserErrMsg);
       return false;
    }
    else
@@ -243,13 +266,8 @@ bool latexProgramForFile(const core::tex::TexMagicComments& magicComments,
    if (!latexProgramMC.empty())
    {
       // validate magic comment
-      if (!programTypes().isValidTypeName(latexProgramMC))
+      if (!validateLatexProgramType(latexProgramMC, pUserErrMsg))
       {
-         *pUserErrMsg =
-            "Unknown LaTeX program type '" + latexProgramMC +
-            "' specified (valid types are " +
-            programTypes().printableTypeNames() + ")";
-
          return false;
       }
       else
@@ -292,22 +310,23 @@ bool latexProgramForFile(const core::tex::TexMagicComments& magicComments,
       }
    }
 
-   // project level setting next
-   else if (projects::projectContext().hasProject())
-   {
-      return validateLatexProgram(
-                  projects::projectContext().config().defaultLatexProgram,
-                  pTexProgramPath,
-                  pUserErrMsg);
-   }
-
-   // finally global setting if we aren't in a project
+   // project or global default setting
    else
    {
-      return validateLatexProgram(
-                  userSettings().defaultLatexProgram(),
-                  pTexProgramPath,
-                  pUserErrMsg);
+      std::string defaultProgram = projects::projectContext().hasProject() ?
+                projects::projectContext().config().defaultLatexProgram :
+                userSettings().defaultLatexProgram();
+
+      if (!validateLatexProgramType(defaultProgram, pUserErrMsg))
+      {
+         return false;
+      }
+      else
+      {
+         return validateLatexProgram(defaultProgram,
+                                     pTexProgramPath,
+                                     pUserErrMsg);
+      }
    }
 }
 
