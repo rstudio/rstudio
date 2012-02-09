@@ -130,6 +130,9 @@ public:
    bool vcsUseGitBash() const;
    void setVcsUseGitBash(bool useGitBash);
 
+   bool alwaysEnableRnwCorcordance() const;
+   void setAlwaysEnableRnwConcordance(bool alwaysEnableConcordance);
+
    bool useTexi2Dvi() const;
    void setUsetexi2Dvi(bool useTexi2Dvi);
 

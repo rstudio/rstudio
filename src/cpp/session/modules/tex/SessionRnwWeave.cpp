@@ -29,6 +29,7 @@
 #include "SessionRnwConcordance.hpp"
 
 using namespace core;
+using namespace session::modules::tex::rnw_concordance;
 
 namespace session {
 namespace modules { 
@@ -74,6 +75,12 @@ public:
    virtual std::vector<std::string> commandArgs(
                                     const std::string& file) const = 0;
 
+   virtual boost::shared_ptr<ConcordanceInjector> createConcordanceInjector(
+                                          const FilePath&)
+   {
+      return boost::shared_ptr<ConcordanceInjector>();
+   }
+
 private:
    std::string name_;
    std::string packageName_;
@@ -109,6 +116,16 @@ public:
       return args;
    }
 #endif
+
+   virtual boost::shared_ptr<ConcordanceInjector> createConcordanceInjector(
+                                          const FilePath& rnwFile)
+   {
+       boost::shared_ptr<SweaveConcordanceInjector> pInjector(
+                                    new SweaveConcordanceInjector(rnwFile));
+
+       return boost::shared_static_cast<ConcordanceInjector>(pInjector);
+   }
+
 };
 
 class RnwExternalWeave : public RnwWeave
@@ -245,7 +262,7 @@ std::string weaveTypeForFile(const core::tex::TexMagicComments& magicComments)
 
 bool runWeave(const core::FilePath& rnwPath,
               const core::tex::TexMagicComments& magicComments,
-              rnw_concordance::Concordance* pConcordance,
+              Concordance* pConcordance,
               std::string* pUserErrMsg)
 {
    // remove existing concordance file (if any)
@@ -276,6 +293,11 @@ bool runWeave(const core::FilePath& rnwPath,
    // run the weave
    if (pRnwWeave)
    {
+      // if requested temporarily inject concordance directive
+      boost::shared_ptr<ConcordanceInjector> pConcordanceInjector;
+      if (userSettings().alwaysEnableRnwCorcordance())
+         pConcordanceInjector = pRnwWeave->createConcordanceInjector(rnwPath);
+
       std::vector<std::string> args = pRnwWeave->commandArgs(
                                                          rnwPath.filename());
 

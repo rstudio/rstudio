@@ -26,6 +26,8 @@
 #include <core/FileSerializer.hpp>
 #include <core/SafeConvert.hpp>
 
+#include <session/SessionModuleContext.hpp>
+
 using namespace core;
 
 namespace session {
@@ -191,6 +193,55 @@ Error readIfExists(const core::FilePath& rnwFile, Concordance* pConcordance)
    else
    {
       return Success();
+   }
+}
+
+
+SweaveConcordanceInjector::SweaveConcordanceInjector(const FilePath& rnwFile)
+   : ConcordanceInjector(rnwFile)
+{
+   // backup the rnw file
+   FilePath backupFile = module_context::tempFile(
+                                    rnwFile.stem() + "_backup",
+                                    ".Rnw");
+   Error error = rnwFile.copy(backupFile);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // append the concordance option
+   std::ostringstream ostr;
+   ostr << std::endl << "\\SweaveOpts{concordance=TRUE}" << std::endl;
+   error = core::appendToFile(rnwFile, ostr.str());
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // save the path of the backupFile (for restoration)
+   rnwFileBackup_ = backupFile;
+}
+
+SweaveConcordanceInjector::~SweaveConcordanceInjector()
+{
+   try
+   {
+      // restore the backup
+      if (!rnwFileBackup_.empty())
+      {
+         Error error = rnwFileBackup_.move(rnwFilePath());
+         if (error)
+         {
+            LOG_ERROR(error);
+            return;
+         }
+      }
+   }
+   catch(...)
+   {
    }
 }
 

@@ -419,6 +419,17 @@ void UserSettings::setVcsUseGitBash(bool useGitBash)
    settings_.set("vcsUseGitBash", useGitBash);
 }
 
+bool UserSettings::alwaysEnableRnwCorcordance() const
+{
+   return settings_.getBool("alwaysEnableConcordance", true);
+}
+
+void UserSettings::setAlwaysEnableRnwConcordance(bool alwaysEnableConcordance)
+{
+   settings_.set("alwaysEnableConcordance", alwaysEnableConcordance);
+}
+
+
 bool UserSettings::useTexi2Dvi() const
 {
    return settings_.getBool("useTexi2Dvi", true);

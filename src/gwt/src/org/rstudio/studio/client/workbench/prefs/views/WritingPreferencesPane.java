@@ -58,18 +58,21 @@ public class WritingPreferencesPane extends PreferencesPane
       spaced(perProjectLabel);
       add(perProjectLabel);
       
-      chkUseTexi2Dvi_ = new CheckBox(
-            "Process LaTeX files using texi2dvi");
+      chkAlwaysEnableConcordance_ = new CheckBox(
+                           "Always enable Rnw concordance");
+      spaced(chkAlwaysEnableConcordance_);
+      add(chkAlwaysEnableConcordance_);
+      
+      chkUseTexi2Dvi_ = new CheckBox( "Use texi2dvi for LaTeX compilation");
       spaced(chkUseTexi2Dvi_);
       add(chkUseTexi2Dvi_);
       
       chkCleanTexi2DviOutput_ = new CheckBox(
-            "Clean auxiliary output after compile");
+                                     "Clean auxiliary output after compile");
       spaced(chkCleanTexi2DviOutput_);
       add(chkCleanTexi2DviOutput_);
       
-      chkEnableShellEscape_ = new CheckBox(
-            "Enable shell escape commands");
+      chkEnableShellEscape_ = new CheckBox("Enable shell escape commands");
       add(chkEnableShellEscape_);
    }
 
@@ -98,6 +101,7 @@ public class WritingPreferencesPane extends PreferencesPane
    protected void initialize(RPrefs prefs)
    {
       WritingPrefs writingPrefs = prefs.getWritingPrefs();
+      chkAlwaysEnableConcordance_.setValue(writingPrefs.getAlwaysEnableConcordance());
       chkUseTexi2Dvi_.setValue(writingPrefs.getUseTexi2Dvi());
       chkCleanTexi2DviOutput_.setValue(writingPrefs.getCleanOutput());
       chkEnableShellEscape_.setValue(writingPrefs.getEnableShellEscape());
@@ -114,6 +118,7 @@ public class WritingPreferencesPane extends PreferencesPane
                                     defaultLatexProgram_.getValue());
       
       WritingPrefs writingPrefs = WritingPrefs.create(
+                                       chkAlwaysEnableConcordance_.getValue(),
                                        chkUseTexi2Dvi_.getValue(), 
                                        chkCleanTexi2DviOutput_.getValue(),
                                        chkEnableShellEscape_.getValue());
@@ -128,6 +133,7 @@ public class WritingPreferencesPane extends PreferencesPane
    
    private RnwWeaveSelectWidget defaultSweaveEngine_;
    private LatexProgramSelectWidget defaultLatexProgram_;
+   private CheckBox chkAlwaysEnableConcordance_;
    private CheckBox chkUseTexi2Dvi_;
    private CheckBox chkCleanTexi2DviOutput_;
    private CheckBox chkEnableShellEscape_;

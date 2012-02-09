@@ -280,14 +280,16 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 
 
    // read and update writing prefs
-   bool useTexi2Dvi, cleanOutput, enableShellEscape;
+   bool alwaysEnableConcordance, useTexi2Dvi, cleanOutput, enableShellEscape;
    error = json::readObject(writingPrefs,
+                            "always_enable_concordance", &alwaysEnableConcordance,
                             "use_texi2dvi", &useTexi2Dvi,
                             "clean_output", &cleanOutput,
                             "enable_shell_escape", &enableShellEscape);
    if (error)
       return error;
    userSettings().beginUpdate();
+   userSettings().setAlwaysEnableRnwConcordance(alwaysEnableConcordance);
    userSettings().setUsetexi2Dvi(useTexi2Dvi);
    userSettings().setCleanTexi2DviOutput(cleanOutput);
    userSettings().setEnableLaTeXShellEscape(enableShellEscape);
@@ -389,6 +391,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
 
    // get writing prefs
    json::Object writingPrefs;
+   writingPrefs["always_enable_concordance"] = userSettings().alwaysEnableRnwCorcordance();
    writingPrefs["use_texi2dvi"] = userSettings().useTexi2Dvi();
    writingPrefs["clean_output"] = userSettings().cleanTexi2DviOutput();
    writingPrefs["enable_shell_escape"] = userSettings().enableLaTeXShellEscape();
