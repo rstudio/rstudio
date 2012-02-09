@@ -177,22 +177,32 @@ public class ShellWidget extends Composite implements ShellDisplay,
       scrollToBottomCommand_.nudge();
    }
 
+   private boolean initialized_ = false;
    @Override
    protected void onLoad()
    {
       super.onLoad();
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      if (!initialized_)
       {
-         public void execute()
+         initialized_ = true;
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
-            input_.autoHeight();
-            // Console scroll pos jumps on first typing without this, because the
-            // textarea is in the upper left corner of the screen and when focus
-            // moves to it scrolling ensues.
-            input_.forceCursorChange();
-            scrollPanel_.scrollToBottom();
-         }
-      });
+            public void execute()
+            {
+               doOnLoad();
+               scrollPanel_.scrollToBottom();
+            }
+         });
+      }
+   }
+
+   protected void doOnLoad()
+   {
+      input_.autoHeight();
+      // Console scroll pos jumps on first typing without this, because the
+      // textarea is in the upper left corner of the screen and when focus
+      // moves to it scrolling ensues.
+      input_.forceCursorChange();
    }
 
    public void setSuppressPendingInput(boolean suppressPendingInput)
@@ -498,7 +508,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
                                     inputLine_.getElement());
    }
 
-   private class ClickableScrollPanel extends BottomScrollPanel
+   protected class ClickableScrollPanel extends BottomScrollPanel
    {
       private ClickableScrollPanel()
       {
@@ -663,10 +673,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private Text trailingOutput_ ;
    private VirtualConsole trailingOutputConsole_ ;
    private final HTML prompt_ ;
-   private final AceEditor input_ ;
+   protected final AceEditor input_ ;
    private final DockPanel inputLine_ ;
    private final VerticalPanel verticalPanel_ ;
-   private final ClickableScrollPanel scrollPanel_ ;
+   protected final ClickableScrollPanel scrollPanel_ ;
    private ConsoleResources.ConsoleStyles styles_;
    private final TimeBufferedCommand scrollToBottomCommand_;
    private boolean suppressPendingInput_;

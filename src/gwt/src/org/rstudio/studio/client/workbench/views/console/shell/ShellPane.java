@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CommandWithArg;
@@ -45,5 +47,31 @@ public class ShellPane extends ShellWidget implements Shell.Display
                inputWidget.addStyleName("nocolor");
          }
       });    
+   }
+
+   @Override
+   public void onBeforeUnselected()
+   {
+      scrollPanel_.saveScrollPosition();
+   }
+
+   @Override
+   public void onBeforeSelected()
+   {
+   }
+
+   @Override
+   public void onSelected()
+   {
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            doOnLoad();
+            scrollPanel_.restoreScrollPosition();
+            input_.focus();
+         }
+      });
    }
 }
