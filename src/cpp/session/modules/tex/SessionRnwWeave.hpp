@@ -26,6 +26,11 @@ namespace core {
 namespace session {
 namespace modules { 
 namespace tex {
+
+namespace rnw_concordance {
+   class Concordance;
+}
+
 namespace rnw_weave {
 
 core::json::Array supportedTypes();
@@ -33,6 +38,7 @@ void getTypesInstalledStatus(core::json::Object* pObj);
 
 bool runWeave(const core::FilePath& filePath,
               const core::tex::TexMagicComments& magicComments,
+              rnw_concordance::Concordance* pConcordance,
               std::string* pUserErrMsg);
 
 

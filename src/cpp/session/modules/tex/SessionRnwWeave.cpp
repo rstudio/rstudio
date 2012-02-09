@@ -26,6 +26,8 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include "SessionRnwConcordance.hpp"
+
 using namespace core;
 
 namespace session {
@@ -243,8 +245,12 @@ std::string weaveTypeForFile(const core::tex::TexMagicComments& magicComments)
 
 bool runWeave(const core::FilePath& rnwPath,
               const core::tex::TexMagicComments& magicComments,
+              rnw_concordance::Concordance* pConcordance,
               std::string* pUserErrMsg)
 {
+   // remove existing concordance file (if any)
+   rnw_concordance::removePrevious(rnwPath);
+
    // get the R bin dir
    FilePath rBin;
    Error error = rBinDir(&rBin);
@@ -292,6 +298,11 @@ bool runWeave(const core::FilePath& rnwPath,
       }
       else
       {
+         // pickup concordance if there is any
+         Error error = rnw_concordance::readIfExists(rnwPath, pConcordance);
+         if (error)
+            LOG_ERROR(error);
+
          return true;
       }
    }

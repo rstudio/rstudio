@@ -33,6 +33,7 @@
 #include "SessionPdfLatex.hpp"
 #include "SessionTexi2Dvi.hpp"
 #include "SessionRnwWeave.hpp"
+#include "SessionRnwConcordance.hpp"
 
 using namespace core;
 
@@ -64,6 +65,25 @@ void showLogEntry(const core::tex::LogEntry& logEntry)
    module_context::consoleWriteError(err);
 }
 
+void showLatexLogEntry(const core::tex::LogEntry& logEntry,
+                       const rnw_concordance::Concordance& rnwConcordance)
+{
+   if (!rnwConcordance.empty() &&
+       (rnwConcordance.outputFile() == logEntry.file()))
+   {
+      core::tex::LogEntry rnwEntry(logEntry.type(),
+                                   rnwConcordance.inputFile(),
+                                   rnwConcordance.rnwLine(logEntry.line()),
+                                   logEntry.message());
+
+      showLogEntry(rnwEntry);
+   }
+   else
+   {
+      showLogEntry(logEntry);
+   }
+}
+
 FilePath ancillaryFilePath(const FilePath& texFilePath, const std::string& ext)
 {
    return texFilePath.parent().childPath(texFilePath.stem() + ext);
@@ -79,7 +99,8 @@ FilePath bibtexLogPath(const FilePath& texFilePath)
    return ancillaryFilePath(texFilePath, ".blg");
 }
 
-bool showCompilationErrors(const FilePath& texPath)
+bool showCompilationErrors(const FilePath& texPath,
+                           const rnw_concordance::Concordance& rnwConcordance)
 {
    // latex log file
    core::tex::LogEntries latexLogEntries;
@@ -96,7 +117,7 @@ bool showCompilationErrors(const FilePath& texPath)
          module_context::consoleWriteError("LaTeX errors:\n");
          std::for_each(latexLogEntries.begin(),
                        latexLogEntries.end(),
-                       showLogEntry);
+                       boost::bind(&showLatexLogEntry, _1, rnwConcordance));
          module_context::consoleWriteError("\n");
       }
    }
@@ -246,13 +267,16 @@ bool compilePdf(const FilePath& targetFilePath,
       return false;
    }
 
-   // see if we need to sweave
+   // see if we need to sweave (collect concordance after sweave)
+   rnw_concordance::Concordance rnwConcordance;
    std::string ext = targetFilePath.extensionLowerCase();
-   if (ext == ".rnw" || ext == ".snw" || ext == ".nw")
+   bool isRnw = ext == ".rnw" || ext == ".snw" || ext == ".nw";
+   if (isRnw)
    {
       // attempt to weave the rnw
       bool success = rnw_weave::runWeave(targetFilePath,
                                          magicComments,
+                                         &rnwConcordance,
                                          pUserErrMsg);
       if (!success)
          return false;
@@ -321,7 +345,7 @@ bool compilePdf(const FilePath& targetFilePath,
 
       // try to show compilation errors -- if none are found then print
       // a general error message and stderr
-      if (!showCompilationErrors(texFilePath))
+      if (!showCompilationErrors(texFilePath, rnwConcordance))
       {
          boost::format fmt("Error running %1% (exit code %2%): %3%\n");
          std::string msg(boost::str(fmt % texProgramPath.absolutePath()
