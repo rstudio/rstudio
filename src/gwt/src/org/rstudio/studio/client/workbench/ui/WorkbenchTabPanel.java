@@ -13,6 +13,8 @@
 
 package org.rstudio.studio.client.workbench.ui;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
@@ -20,9 +22,7 @@ import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.HandlerRegistrations;
-import org.rstudio.core.client.events.EnsureVisibleEvent;
-import org.rstudio.core.client.events.EnsureVisibleHandler;
-import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
+import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.theme.ModuleTabLayoutPanel;
 import org.rstudio.core.client.theme.WindowFrame;
 
@@ -103,14 +103,21 @@ class WorkbenchTabPanel
          add(tab);
    }
 
-   private void add(WorkbenchTab tab)
+   private void add(final WorkbenchTab tab)
    {
       if (tab.isSuppressed())
          return;
 
       tabs_.add(tab);
       final Widget widget = tab.asWidget();
-      tabPanel_.add(widget, tab.getTitle());
+      tabPanel_.add(widget, tab.getTitle(), false, !tab.closeable() ? null : new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            tab.ensureHidden();
+         }
+      });
       
       tab.addEnsureVisibleHandler(new EnsureVisibleHandler()
       {

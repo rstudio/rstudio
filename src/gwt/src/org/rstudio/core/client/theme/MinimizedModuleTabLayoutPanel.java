@@ -48,7 +48,7 @@ public class MinimizedModuleTabLayoutPanel
          if (tabName == null)
             continue;
          ModuleTabLayoutPanel.ModuleTab tab
-               = new ModuleTabLayoutPanel.ModuleTab(tabName, styles);
+               = new ModuleTabLayoutPanel.ModuleTab(tabName, styles, false);
          tab.addStyleName("gwt-TabLayoutPanelTab");
          final Integer thisIndex = i;
          tab.addClickHandler(new ClickHandler()

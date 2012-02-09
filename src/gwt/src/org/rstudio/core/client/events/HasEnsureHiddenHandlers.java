@@ -17,4 +17,5 @@ import com.google.gwt.event.shared.HandlerRegistration;
 public interface HasEnsureHiddenHandlers
 {
    HandlerRegistration addEnsureHiddenHandler(EnsureHiddenHandler handler);
+   void ensureHidden();
 }

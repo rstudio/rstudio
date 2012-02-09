@@ -34,4 +34,10 @@ public class CompilePdfOutputTab extends DelayLoadWorkbenchTab<CompilePdfOutputP
 
       events.addHandler(CompilePdfOutputEvent.TYPE, shim);
    }
+
+   @Override
+   public boolean closeable()
+   {
+      return true;
+   }
 }

@@ -44,6 +44,24 @@ public class ConsolePane extends WorkbenchPane
       new Console(this, events, commands);
    }
 
+      commands.goToFileFunction().addHandler(new CommandHandler()
+      {
+         @Override
+         public void onCommand(AppCommand command)
+         {
+            events.fireEvent(new CompilePdfOutputEvent());
+         }
+      });
+      commands.reflowComment().addHandler(new CommandHandler()
+      {
+         @Override
+         public void onCommand(AppCommand command)
+         {
+            events.fireEvent(new FindInFilesResultEvent());
+         }
+      });
+   }
+
    public void setWorkingDirectory(String directory)
    {
       workingDir_.setText(directory);
@@ -77,7 +95,25 @@ public class ConsolePane extends WorkbenchPane
       shell_ = consoleProvider_.get() ;
       return (Widget) shell_.getDisplay() ;
    }
-   
+
+   @Override
+   public void onBeforeUnselected()
+   {
+      shell_.onBeforeUnselected();
+   }
+
+   @Override
+   public void onBeforeSelected()
+   {
+      shell_.onBeforeSelected();
+   }
+
+   @Override
+   public void onSelected()
+   {
+      shell_.onSelected();
+   }
+
    private Provider<Shell> consoleProvider_ ;
    private final Commands commands_;
    private Shell shell_;

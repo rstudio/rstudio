@@ -14,13 +14,15 @@ package org.rstudio.core.client.theme;
 
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Position;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
-import org.rstudio.core.client.events.WindowStateChangeEvent;
+import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -30,7 +32,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
 {
    public static class ModuleTab extends Composite
    {
-      public ModuleTab(String title, ThemeStyles styles)
+      public ModuleTab(String title, ThemeStyles styles, boolean canClose)
       {
          layoutPanel_ = new HorizontalPanel();
          layoutPanel_.setStylePrimaryName(styles.tabLayout());
@@ -39,10 +41,16 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
          left.setStylePrimaryName(styles.tabLayoutLeft());
          layoutPanel_.add(left);
 
-         SimplePanel center = new SimplePanel();
+         HorizontalPanel center = new HorizontalPanel();
          center.setStylePrimaryName(styles.tabLayoutCenter());
          Label label = new Label(title, false);
          center.add(label);
+         if (canClose)
+         {
+            closeButton_ = new Image(ThemeResources.INSTANCE.closeTab());
+            closeButton_.setStylePrimaryName(styles.closeTabButton());
+            center.add(closeButton_);
+         }
          layoutPanel_.add(center);
 
          HTML right = new HTML();
@@ -71,7 +79,13 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
          return addDomHandler(handler, ClickEvent.getType());
       }
 
+      public HandlerRegistration addCloseButtonClickHandler(ClickHandler handler)
+      {
+         return closeButton_.addClickHandler(handler);
+      }
+
       private HorizontalPanel layoutPanel_;
+      private Image closeButton_;
    }
 
    public ModuleTabLayoutPanel(final WindowFrame owner)
@@ -120,10 +134,20 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
    @Override
    public void add(Widget child, String text, boolean asHtml)
    {
+      add(child, text, asHtml, null);
+   }
+
+   public void add(final Widget child, String text, boolean asHtml,
+                   ClickHandler closeHandler)
+   {
       if (asHtml)
          throw new UnsupportedOperationException("HTML tab names not supported");
 
-      super.add(child, new ModuleTab(text, styles_));
+      ModuleTab tab = new ModuleTab(text, styles_, closeHandler != null);
+      super.add(child, tab);
+
+      if (closeHandler != null)
+         tab.addCloseButtonClickHandler(closeHandler);
    }
 
    @Override

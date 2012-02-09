@@ -12,10 +12,10 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
-import org.rstudio.core.client.events.EnsureHiddenEvent;
-import org.rstudio.core.client.events.EnsureHiddenHandler;
-import org.rstudio.core.client.events.EnsureVisibleEvent;
-import org.rstudio.core.client.events.EnsureVisibleHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.theme.PrimaryWindowFrame;
 import org.rstudio.core.client.theme.WindowFrame;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -60,6 +60,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                selectTab(0);
          }
       });
+
       findResultsTab.addEnsureVisibleHandler(new EnsureVisibleHandler()
       {
          @Override
@@ -111,6 +112,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
             tabs.add(compilePdfTab_);
          if (findResultsTabVisible_)
             tabs.add(findResultsTab_);
+
          setTabs(tabs);
       }
 
@@ -122,10 +124,13 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          if (consoleOnly)
          {
             owner_.setMainWidget(consolePane_);
+            consolePane_.onBeforeSelected();
+            consolePane_.onSelected();
             consolePane_.setVisible(true);
          }
          else
          {
+            consolePane_.onBeforeUnselected();
             owner_.setFillWidget(this);
          }
       }

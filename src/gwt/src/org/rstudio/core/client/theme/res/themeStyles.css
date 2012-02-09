@@ -16,6 +16,7 @@
 @external gwt-MenuBar, gwt-MenuBar-vertical;
 @external gwt-SplitLayoutPanel-HDragger, gwt-SplitLayoutPanel-VDragger;
 @external gwt-SuggestBoxPopup, item-selected;
+@external gwt-TabLayoutPanel-Workbench;
 @external gwt-TabLayoutPanelTab, gwt-TabLayoutPanelTab-selected;
 @external gwt-TabLayoutPanelTabs;
 @external gwt-DecoratedPopupPanel;
@@ -497,14 +498,20 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    margin-top: 4px;
    margin-left: 3px;
 }
+.gwt-TabLayoutPanel-Workbench .gwt-TabLayoutPanelTab .closeTabButton {
+   position: relative;
+   top: 5px;
+   margin-left: 4px;
+}
 .closeTabButton {
    filter: literal("alpha(opacity = 40)") !important;
    opacity: 0.4;
 }
 
-.docTabPanel .closeTabButton:hover {
+.closeTabButton:hover {
    filter: literal("alpha(opacity = 100)") !important;
    opacity: 1.0;
+   cursor: pointer;
 }
 .tabLayout {
 }

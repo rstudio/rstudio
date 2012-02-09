@@ -27,4 +27,6 @@ public interface WorkbenchTab extends IsWidget,
    void onSelected();
    void prefetch(Command continuation);
    boolean isSuppressed();
+
+   boolean closeable();
 }

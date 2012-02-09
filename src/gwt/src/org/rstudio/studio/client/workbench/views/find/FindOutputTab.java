@@ -32,4 +32,10 @@ public class FindOutputTab extends DelayLoadWorkbenchTab<FindOutputPresenter>
 
       events.addHandler(FindInFilesResultEvent.TYPE, shim);
    }
+
+   @Override
+   public boolean closeable()
+   {
+      return true;
+   }
 }

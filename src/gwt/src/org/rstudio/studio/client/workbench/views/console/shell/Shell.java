@@ -69,7 +69,10 @@ public class Shell implements ConsoleInputHandler,
    }
 
    public interface Display extends ShellDisplay
-   {   
+   {
+      void onBeforeUnselected();
+      void onBeforeSelected();
+      void onSelected();
    }
    
    @Inject
@@ -471,6 +474,22 @@ public class Shell implements ConsoleInputHandler,
       for (int i = 0; i < history.length(); i++)
          historyList.add(history.get(i));
       historyManager_.setHistory(historyList);
+   }
+
+   public void onBeforeUnselected()
+   {
+      view_.onBeforeUnselected();
+
+   }
+
+   public void onBeforeSelected()
+   {
+      view_.onBeforeSelected();
+   }
+
+   public void onSelected()
+   {
+      view_.onSelected();
    }
 
    private final ConsoleServerOperations server_ ;

@@ -80,6 +80,12 @@ public abstract class DelayLoadWorkbenchTab<T extends IsWidget>
       return false;
    }
 
+   @Override
+   public boolean closeable()
+   {
+      return false;
+   }
+
    public void ensureVisible()
    {
       handlers_.fireEvent(new EnsureVisibleEvent());
