@@ -17,6 +17,7 @@
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
+#include <core/StringUtils.hpp>
 
 // Including the hunspell headers caused compilation errors for Windows 64-bit
 // builds. The trouble seemd to be a 'near' macro defined somewhere in the
@@ -60,9 +61,13 @@ public:
       if (!dicPath.exists())
          return core::fileNotFoundError(dicPath, ERROR_LOCATION);
 
+      // convert paths to system encoding before sending to external API
+      std::string systemAffPath = string_utils::utf8ToSystem(affPath.absolutePath());
+      std::string systemDicPath = string_utils::utf8ToSystem(dicPath.absolutePath());
+
       // initialize hunspell, iconvstrFunc_, encoding_, and return success
-      pHunspell_.reset(new Hunspell(affPath.absolutePath().c_str(),
-                                    dicPath.absolutePath().c_str()));
+      pHunspell_.reset(new Hunspell(systemAffPath.c_str(),
+                                    systemDicPath.c_str()));
       iconvstrFunc_ = iconvstrFunc;
       encoding_ = pHunspell_->get_dic_encoding();
       return Success();
@@ -120,6 +125,67 @@ public:
       return Success();
    }
 
+   Error stemWord(const std::string& word, std::vector<std::string>* pResult)
+   {
+      std::string encoded;
+      Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
+      if (error)
+         return error;
+
+      char ** wlst;
+      int ns = pHunspell_->stem(&wlst,encoded.c_str());
+      copyAndFreeHunspellVector(pResult,wlst,ns);
+      return Success();
+   }
+
+   Error addWord(const std::string& word, bool *pAdded)
+   {
+      std::string encoded;
+      Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
+      if (error)
+         return error;
+
+      // Following the Hunspell::add method through it's various code paths
+      // it seems the return value is always 0, meaning there's really no
+      // error ever thrown if the method fails.
+      *pAdded = (pHunspell_->add(encoded.c_str()) == 0);
+      return Success();
+   }
+
+   Error removeWord(const std::string& word, bool *pRemoved)
+   {
+      std::string encoded;
+      Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
+      if (error)
+         return error;
+
+      // Always returns 0?
+      *pRemoved = (pHunspell_->remove(encoded.c_str()) == 0);
+      return Success();
+   }
+
+   // Hunspell dictionary files are simple: the first line is an integer
+   // indicating the number of entries (one per line), and each line contains
+   // a word followed by '/' plus modifier flags. Example user.dic:
+   // ----------
+   // 3
+   // lol/S
+   // rofl/S
+   // tl;dr/S
+   // ----------
+   // The '/S' modifier treats 'ROFL','rofl', and 'Rofl' as correct spellings.
+   Error addDictionary(const FilePath& dicPath,
+                       const std::string& key,
+                       bool *pAdded)
+   {
+      if (!dicPath.exists())
+         return core::fileNotFoundError(dicPath, ERROR_LOCATION);
+
+      // Convert path to system encoding before sending to external api
+      std::string systemDicPath = string_utils::utf8ToSystem(dicPath.absolutePath());
+      *pAdded = (pHunspell_->add_dic(systemDicPath.c_str(),key.c_str()) == 0);
+      return Success();
+   }
 
 private:
    boost::scoped_ptr<Hunspell> pHunspell_;

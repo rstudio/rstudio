@@ -82,6 +82,59 @@ SEXP rs_analyzeWord(SEXP wordSEXP)
    return r::sexp::create(res,&rProtect);
 }
 
+SEXP rs_stemWord(SEXP wordSEXP)
+{
+   std::string word = r::sexp::asString(wordSEXP);
+   std::vector<std::string> res;
+
+   Error error = s_pSpellChecker->stemWord(word,&res);
+   if (error)
+      LOG_ERROR(error);
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(res,&rProtect);
+}
+
+SEXP rs_addWord(SEXP wordSEXP)
+{
+   std::string word = r::sexp::asString(wordSEXP);
+   bool added;
+
+   Error error = s_pSpellChecker->addWord(word,&added);
+   if (error)
+      LOG_ERROR(error);
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(added,&rProtect);
+}
+
+SEXP rs_removeWord(SEXP wordSEXP)
+{
+   std::string word = r::sexp::asString(wordSEXP);
+   bool removed;
+
+   Error error = s_pSpellChecker->removeWord(word,&removed);
+   if (error)
+      LOG_ERROR(error);
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(removed,&rProtect);
+}
+
+SEXP rs_addDictionary(SEXP dicSEXP, SEXP keySEXP)
+{
+   FilePath dicPath = FilePath(r::sexp::asString(dicSEXP));
+   std::string key = r::sexp::asString(keySEXP);
+   bool added;
+
+   Error error = s_pSpellChecker->addDictionary(dicPath,key,&added);
+   if (error)
+      LOG_ERROR(error);
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(added,&rProtect);
+}
+
 Error checkSpelling(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
@@ -145,6 +198,26 @@ Error initialize()
    methodDef.name = "rs_analyzeWord" ;
    methodDef.fun = (DL_FUNC) rs_analyzeWord ;
    methodDef.numArgs = 1;
+   r::routines::addCallMethod(methodDef);
+
+   methodDef.name = "rs_stemWord" ;
+   methodDef.fun = (DL_FUNC) rs_stemWord ;
+   methodDef.numArgs = 1;
+   r::routines::addCallMethod(methodDef);
+
+   methodDef.name = "rs_addWord" ;
+   methodDef.fun = (DL_FUNC) rs_addWord ;
+   methodDef.numArgs = 1;
+   r::routines::addCallMethod(methodDef);
+
+   methodDef.name = "rs_removeWord" ;
+   methodDef.fun = (DL_FUNC) rs_removeWord ;
+   methodDef.numArgs = 1;
+   r::routines::addCallMethod(methodDef);
+
+   methodDef.name = "rs_addDictionary" ;
+   methodDef.fun = (DL_FUNC) rs_addDictionary ;
+   methodDef.numArgs = 2;
    r::routines::addCallMethod(methodDef);
 
    // initialize the spell checker
