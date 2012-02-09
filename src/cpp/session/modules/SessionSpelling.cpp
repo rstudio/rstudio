@@ -97,41 +97,41 @@ SEXP rs_stemWord(SEXP wordSEXP)
 SEXP rs_addWord(SEXP wordSEXP)
 {
    std::string word = r::sexp::asString(wordSEXP);
-   bool Added;
+   bool added;
 
-   Error error = s_pSpellChecker->addWord(word,&Added);
+   Error error = s_pSpellChecker->addWord(word,&added);
    if (error)
       LOG_ERROR(error);
 
    r::sexp::Protect rProtect;
-   return r::sexp::create(Added,&rProtect);
+   return r::sexp::create(added,&rProtect);
 }
 
 SEXP rs_removeWord(SEXP wordSEXP)
 {
    std::string word = r::sexp::asString(wordSEXP);
-   bool Removed;
+   bool removed;
 
-   Error error = s_pSpellChecker->removeWord(word,&Removed);
+   Error error = s_pSpellChecker->removeWord(word,&removed);
    if (error)
       LOG_ERROR(error);
 
    r::sexp::Protect rProtect;
-   return r::sexp::create(Removed,&rProtect);
+   return r::sexp::create(removed,&rProtect);
 }
 
 SEXP rs_addDictionary(SEXP dicSEXP, SEXP keySEXP)
 {
    FilePath dicPath = FilePath(r::sexp::asString(dicSEXP));
    std::string key = r::sexp::asString(keySEXP);
-   bool Added;
+   bool added;
 
-   Error error = s_pSpellChecker->addDictionary(dicPath,key,&Added);
+   Error error = s_pSpellChecker->addDictionary(dicPath,key,&added);
    if (error)
       LOG_ERROR(error);
 
    r::sexp::Protect rProtect;
-   return r::sexp::create(Added,&rProtect);
+   return r::sexp::create(added,&rProtect);
 }
 
 } // anonymous namespace

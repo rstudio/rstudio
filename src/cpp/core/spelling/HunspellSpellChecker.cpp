@@ -17,6 +17,7 @@
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
+#include <core/StringUtils.hpp>
 
 // Including the hunspell headers caused compilation errors for Windows 64-bit
 // builds. The trouble seemd to be a 'near' macro defined somewhere in the
@@ -60,9 +61,13 @@ public:
       if (!dicPath.exists())
          return core::fileNotFoundError(dicPath, ERROR_LOCATION);
 
+      // convert paths to system encoding before sending to external API
+      std::string systemAffPath = string_utils::utf8ToSystem(affPath.absolutePath());
+      std::string systemDicPath = string_utils::utf8ToSystem(dicPath.absolutePath());
+
       // initialize hunspell, iconvstrFunc_, encoding_, and return success
-      pHunspell_.reset(new Hunspell(affPath.absolutePath().c_str(),
-                                    dicPath.absolutePath().c_str()));
+      pHunspell_.reset(new Hunspell(systemAffPath.c_str(),
+                                    systemDicPath.c_str()));
       iconvstrFunc_ = iconvstrFunc;
       encoding_ = pHunspell_->get_dic_encoding();
       return Success();
@@ -169,11 +174,16 @@ public:
    // tl;dr/S
    // ----------
    // The '/S' modifier treats 'ROFL','rofl', and 'Rofl' as correct spellings.
-   Error addDictionary(const FilePath& dicPath, const std::string& key, bool *pAdded)
+   Error addDictionary(const FilePath& dicPath,
+                       const std::string& key,
+                       bool *pAdded)
    {
       if (!dicPath.exists())
          return core::fileNotFoundError(dicPath, ERROR_LOCATION);
-      *pAdded = (pHunspell_->add_dic(dicPath.absolutePath().c_str(),key.c_str()) == 0);
+
+      // Convert path to system encoding before sending to external api
+      std::string systemDicPath = string_utils::utf8ToSystem(dicPath.absolutePath());
+      *pAdded = (pHunspell_->add_dic(systemDicPath.c_str(),key.c_str()) == 0);
       return Success();
    }
 
