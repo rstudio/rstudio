@@ -140,16 +140,6 @@ public class WorkbenchScreen extends Composite
          }
       });
 
-      eventBus.addHandler(WorkingDirChangedEvent.TYPE,
-                          new WorkingDirChangedHandler()
-                          {
-                             public void onWorkingDirChanged(
-                                   WorkingDirChangedEvent event)
-                             {
-                                updateWorkingDirectory(event.getPath());
-                             }
-                          });
-
       ((PlotsTab) paneManager_.getTab(Tab.Plots)).addResizeHandler(new ResizeHandler()
       {
          public void onResize(ResizeEvent event)
@@ -216,13 +206,6 @@ public class WorkbenchScreen extends Composite
             });
          }
       });
-   }
-
-   private void updateWorkingDirectory(String path)
-   {
-      if (!path.endsWith("/"))
-         path += "/";
-      paneManager_.getConsoleFrame().setSubtitle(path);
    }
 
    public void onResize()

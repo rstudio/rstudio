@@ -77,6 +77,9 @@ import org.rstudio.studio.client.workbench.views.files.Files;
 import org.rstudio.studio.client.workbench.views.files.FilesPane;
 import org.rstudio.studio.client.workbench.views.files.FilesTab;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
+import org.rstudio.studio.client.workbench.views.find.FindOutputPane;
+import org.rstudio.studio.client.workbench.views.find.FindOutputPresenter;
+import org.rstudio.studio.client.workbench.views.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.help.Help;
 import org.rstudio.studio.client.workbench.views.help.HelpPane;
 import org.rstudio.studio.client.workbench.views.help.HelpTab;
@@ -87,6 +90,9 @@ import org.rstudio.studio.client.workbench.views.history.History;
 import org.rstudio.studio.client.workbench.views.history.HistoryTab;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
 import org.rstudio.studio.client.workbench.views.history.view.HistoryPane;
+import org.rstudio.studio.client.workbench.views.output.CompilePdfOutputPane;
+import org.rstudio.studio.client.workbench.views.output.CompilePdfOutputPresenter;
+import org.rstudio.studio.client.workbench.views.output.CompilePdfOutputTab;
 import org.rstudio.studio.client.workbench.views.packages.Packages;
 import org.rstudio.studio.client.workbench.views.packages.PackagesPane;
 import org.rstudio.studio.client.workbench.views.packages.PackagesTab;
@@ -173,6 +179,8 @@ public class RStudioGinModule extends AbstractGinModule
       bind(GitPresenter.Display.class).to(GitPane.class);
       bind(SVNPresenter.Display.class).to(SVNPane.class);
       bind(Ignore.Display.class).to(IgnoreDialog.class);
+      bind(CompilePdfOutputPresenter.Display.class).to(CompilePdfOutputPane.class);
+      bind(FindOutputPresenter.Display.class).to(FindOutputPane.class);
       bindTab("Workspace", WorkspaceTab.class);
       bindTab("History", HistoryTab.class);
       bindTab("Data", DataTab.class);
@@ -181,6 +189,8 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("Packages", PackagesTab.class);
       bindTab("Help", HelpTab.class);
       bindTab("VCS", VCSTab.class);
+      bindTab("Compile PDF", CompilePdfOutputTab.class);
+      bindTab("Find", FindOutputTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class) ;
            

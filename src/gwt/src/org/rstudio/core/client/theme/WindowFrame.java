@@ -131,6 +131,8 @@ public class WindowFrame extends Composite
    {
       if (widget != null)
          setFillWidget(null);
+      if (header_ == null)
+         setHeaderWidget(previousHeader_);
 
       if (main_ != null)
       {
@@ -176,6 +178,7 @@ public class WindowFrame extends Composite
       if (header_ != null)
       {
          frame_.remove(header_);
+         previousHeader_ = header_;
          header_ = null;
       }
 
@@ -303,4 +306,5 @@ public class WindowFrame extends Composite
    private Widget fill_;
    private Widget contextButton_;
    private HandlerRegistration ensureVisibleRegistration_;
+   private Widget previousHeader_;
 }

@@ -98,7 +98,9 @@ public class PaneManager
                       @Named("Plots") final WorkbenchTab plotsTab,
                       @Named("Packages") final WorkbenchTab packagesTab,
                       @Named("Help") final WorkbenchTab helpTab,
-                      @Named("VCS") final WorkbenchTab vcsTab)
+                      @Named("VCS") final WorkbenchTab vcsTab,
+                      @Named("Compile PDF") final WorkbenchTab compilePdfTab,
+                      @Named("Find") final WorkbenchTab findOutputTab)
    {
       eventBus_ = eventBus;
       session_ = session;
@@ -113,6 +115,8 @@ public class PaneManager
       packagesTab_ = packagesTab;
       helpTab_ = helpTab;
       vcsTab_ = vcsTab;
+      compilePdfTab_ = compilePdfTab;
+      findOutputTab_ = findOutputTab;
 
       PaneConfig config = validateConfig(uiPrefs.paneConfig().getValue());
       initPanes(config);
@@ -263,11 +267,6 @@ public class PaneManager
       return sourceLogicalWindow_;
    }
 
-   public PrimaryWindowFrame getConsoleFrame()
-   {
-      return consoleWindowFrame_;
-   }
-
    private DualWindowLayoutPanel createSplitWindow(LogicalWindow top,
                                                    LogicalWindow bottom,
                                                    String name)
@@ -284,17 +283,23 @@ public class PaneManager
 
    private LogicalWindow createConsole()
    {
-      consoleWindowFrame_ = new PrimaryWindowFrame("Console", consolePane_);
-      consoleWindowFrame_.setContextButton(consoleInterrupt_,
-                                           consoleInterrupt_.getWidth(),
-                                           consoleInterrupt_.getHeight());
-      ToolbarButton goToWorkingDirButton = 
+      PrimaryWindowFrame frame = new PrimaryWindowFrame("Console", null);
+      ConsoleTabPanel consoleTabPanel = new ConsoleTabPanel(frame,
+                                                            consolePane_,
+                                                            compilePdfTab_,
+                                                            findOutputTab_,
+                                                            eventBus_);
+      frame.setContextButton(consoleInterrupt_,
+                             consoleInterrupt_.getWidth(),
+                             consoleInterrupt_.getHeight());
+
+      ToolbarButton goToWorkingDirButton =
                            commands_.goToWorkingDir().createToolbarButton();
       goToWorkingDirButton.addStyleName(
             ThemeResources.INSTANCE.themeStyles().windowFrameToolbarButton());
-      consoleWindowFrame_.addLeftWidget(goToWorkingDirButton);
-      return new LogicalWindow(consoleWindowFrame_,
-                               new MinimizedWindowFrame("Console"));
+      frame.addLeftWidget(goToWorkingDirButton);
+
+      return new LogicalWindow(frame, new MinimizedWindowFrame("Console"));
    }
 
    private LogicalWindow createSource()
@@ -392,6 +397,8 @@ public class PaneManager
    private final EventBus eventBus_;
    private final Session session_;
    private final Commands commands_;
+   private final WorkbenchTab findOutputTab_;
+   private final WorkbenchTab compilePdfTab_;
    private final ConsolePane consolePane_;
    private final ConsoleInterruptButton consoleInterrupt_;
    private final SourceShim source_;
@@ -404,7 +411,6 @@ public class PaneManager
    private final WorkbenchTab vcsTab_;
    private MainSplitPanel panel_;
    private LogicalWindow sourceLogicalWindow_;
-   private PrimaryWindowFrame consoleWindowFrame_;
    private final HashMap<Tab, WorkbenchTabPanel> tabToPanel_ =
          new HashMap<Tab, WorkbenchTabPanel>();
    private final HashMap<Tab, Integer> tabToIndex_ =

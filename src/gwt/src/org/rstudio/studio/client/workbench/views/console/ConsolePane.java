@@ -12,31 +12,44 @@
  */
 package org.rstudio.studio.client.workbench.views.console;
 
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.CommandHandler;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CanFocus;
+import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.ui.ToolbarPane;
+import org.rstudio.studio.client.workbench.events.CompilePdfOutputEvent;
+import org.rstudio.studio.client.workbench.events.FindInFilesResultEvent;
+import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.shell.Shell;
 
-public class ConsolePane extends ToolbarPane
-   implements Console.Display,
-              CanFocus
+public class ConsolePane extends WorkbenchPane
+   implements Console.Display, CanFocus
 {
    @Inject
    public ConsolePane(Provider<Shell> consoleProvider,
-                      EventBus events,
+                      final EventBus events,
                       Commands commands)
    {
+      super("Console");
+
       consoleProvider_ = consoleProvider ;
-      
+      commands_ = commands;
+
       // console is interacted with immediately so we make sure it
       // is always created during startup
       ensureWidget();
 
       new Console(this, events, commands);
+
+   public void setWorkingDirectory(String directory)
+   {
+      workingDir_.setText(directory);
    }
 
    public void focus()
@@ -48,7 +61,19 @@ public class ConsolePane extends ToolbarPane
    {
       return shell_.getDisplay().getCharacterWidth();
    }
-      
+
+   @Override
+   protected Toolbar createMainToolbar()
+   {
+      Toolbar toolbar = new Toolbar();
+      workingDir_ = new Label();
+      workingDir_.setStyleName(ThemeStyles.INSTANCE.subtitle());
+      toolbar.addLeftWidget(workingDir_);
+      toolbar.addLeftWidget(commands_.goToWorkingDir().createToolbarButton());
+      toolbar.addRightWidget(commands_.interruptR().createToolbarButton());
+      return toolbar;
+   }
+
    @Override
    protected Widget createMainWidget()
    {
@@ -57,5 +82,7 @@ public class ConsolePane extends ToolbarPane
    }
    
    private Provider<Shell> consoleProvider_ ;
+   private final Commands commands_;
    private Shell shell_;
+   private Label workingDir_;
 }

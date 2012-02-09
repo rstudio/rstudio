@@ -14,13 +14,13 @@ package org.rstudio.studio.client.workbench.ui;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.layout.client.Layout.AnimationCallback;
+import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.LazyPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.events.EnsureVisibleEvent;
-import org.rstudio.core.client.events.EnsureVisibleHandler;
-import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
+import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.core.client.widget.Toolbar;
@@ -120,6 +120,32 @@ public abstract class ToolbarPane extends LazyPanel implements RequiresResize,
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
+   }
+
+   public HandlerRegistration addEnsureHiddenHandler(EnsureHiddenHandler handler)
+   {
+      return addHandler(handler, EnsureHiddenEvent.TYPE);
+   }
+
+   public boolean isMainToolbarVisible()
+   {
+      return mainToolbar_.isVisible();
+   }
+
+   public void setMainToolbarVisible(boolean visible)
+   {
+      setToolbarVisibility(visible, mainToolbar_);
+   }
+
+   private void setToolbarVisibility(final boolean visible,
+                                     final Toolbar toolbar)
+   {
+      if (visible == toolbar.isVisible())
+         return;
+
+      toolbar.setVisible(visible);
+      dockPanel_.setWidgetSize(toolbar, visible ? toolbar.getHeight()
+                                                : 0);
    }
 
    private DockLayoutPanel dockPanel_;

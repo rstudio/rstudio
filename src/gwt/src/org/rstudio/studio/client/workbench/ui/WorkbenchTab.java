@@ -14,9 +14,12 @@ package org.rstudio.studio.client.workbench.ui;
 
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.IsWidget;
+import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 
-public interface WorkbenchTab extends IsWidget, HasEnsureVisibleHandlers
+public interface WorkbenchTab extends IsWidget,
+                                      HasEnsureVisibleHandlers,
+                                      HasEnsureHiddenHandlers
 {
    String getTitle();
    void onBeforeUnselected();
