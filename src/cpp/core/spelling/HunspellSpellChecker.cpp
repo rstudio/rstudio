@@ -133,6 +133,49 @@ public:
       return Success();
    }
 
+   Error addWord(const std::string& word, bool *pAdded)
+   {
+      std::string encoded;
+      Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
+      if (error)
+         return error;
+
+      // Following the Hunspell::add method through it's various code paths
+      // it seems the return value is always 0, meaning there's really no
+      // error ever thrown if the method fails.
+      *pAdded = (pHunspell_->add(encoded.c_str()) == 0);
+      return Success();
+   }
+
+   Error removeWord(const std::string& word, bool *pRemoved)
+   {
+      std::string encoded;
+      Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
+      if (error)
+         return error;
+
+      // Always returns 0?
+      *pRemoved = (pHunspell_->remove(encoded.c_str()) == 0);
+      return Success();
+   }
+
+   // Hunspell dictionary files are simple: the first line is an integer
+   // indicating the number of entries (one per line), and each line contains
+   // a word followed by '/' plus modifier flags. Example user.dic:
+   // ----------
+   // 3
+   // lol/S
+   // rofl/S
+   // tl;dr/S
+   // ----------
+   // The '/S' modifier treats 'ROFL','rofl', and 'Rofl' as correct spellings.
+   Error addDictionary(const FilePath& dicPath, const std::string& key, bool *pAdded)
+   {
+      if (!dicPath.exists())
+         return core::fileNotFoundError(dicPath, ERROR_LOCATION);
+      *pAdded = (pHunspell_->add_dic(dicPath.absolutePath().c_str(),key.c_str()) == 0);
+      return Success();
+   }
 
 private:
    boost::scoped_ptr<Hunspell> pHunspell_;

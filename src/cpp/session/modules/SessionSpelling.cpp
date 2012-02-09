@@ -94,6 +94,46 @@ SEXP rs_stemWord(SEXP wordSEXP)
    return r::sexp::create(res,&rProtect);
 }
 
+SEXP rs_addWord(SEXP wordSEXP)
+{
+   std::string word = r::sexp::asString(wordSEXP);
+   bool Added;
+
+   Error error = s_pSpellChecker->addWord(word,&Added);
+   if (error)
+      LOG_ERROR(error);
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(Added,&rProtect);
+}
+
+SEXP rs_removeWord(SEXP wordSEXP)
+{
+   std::string word = r::sexp::asString(wordSEXP);
+   bool Removed;
+
+   Error error = s_pSpellChecker->removeWord(word,&Removed);
+   if (error)
+      LOG_ERROR(error);
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(Removed,&rProtect);
+}
+
+SEXP rs_addDictionary(SEXP dicSEXP, SEXP keySEXP)
+{
+   FilePath dicPath = FilePath(r::sexp::asString(dicSEXP));
+   std::string key = r::sexp::asString(keySEXP);
+   bool Added;
+
+   Error error = s_pSpellChecker->addDictionary(dicPath,key,&Added);
+   if (error)
+      LOG_ERROR(error);
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(Added,&rProtect);
+}
+
 } // anonymous namespace
 
 
@@ -120,6 +160,21 @@ Error initialize()
    methodDef.name = "rs_stemWord" ;
    methodDef.fun = (DL_FUNC) rs_stemWord ;
    methodDef.numArgs = 1;
+   r::routines::addCallMethod(methodDef);
+
+   methodDef.name = "rs_addWord" ;
+   methodDef.fun = (DL_FUNC) rs_addWord ;
+   methodDef.numArgs = 1;
+   r::routines::addCallMethod(methodDef);
+
+   methodDef.name = "rs_removeWord" ;
+   methodDef.fun = (DL_FUNC) rs_removeWord ;
+   methodDef.numArgs = 1;
+   r::routines::addCallMethod(methodDef);
+
+   methodDef.name = "rs_addDictionary" ;
+   methodDef.fun = (DL_FUNC) rs_addDictionary ;
+   methodDef.numArgs = 2;
    r::routines::addCallMethod(methodDef);
 
    // initialize the spell checker

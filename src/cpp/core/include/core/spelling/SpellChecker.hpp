@@ -34,9 +34,17 @@ class SpellChecker : boost::noncopyable
 public:
    virtual ~SpellChecker() {}
    virtual Error checkSpelling(const std::string& word, bool *pCorrect) = 0;
-   virtual Error suggestionList(const std::string& word, std::vector<std::string>* pSugs) = 0;
-   virtual Error analyzeWord(const std::string& word, std::vector<std::string>* pResult) = 0;
-   virtual Error stemWord(const std::string& word, std::vector<std::string>* pResult) = 0;
+   virtual Error suggestionList(const std::string& word,
+                                std::vector<std::string>* pSugs) = 0;
+   virtual Error analyzeWord(const std::string& word,
+                             std::vector<std::string>* pResult) = 0;
+   virtual Error stemWord(const std::string& word,
+                          std::vector<std::string>* pResult) = 0;
+   virtual Error addWord(const std::string& word, bool *pAdded) = 0;
+   virtual Error removeWord(const std::string& word, bool *pRemoved) = 0;
+   virtual Error addDictionary(const FilePath& dicPath,
+                               const std::string& key,
+                               bool *pAdded) = 0;
 };
 
 typedef boost::function<core::Error(const std::string&,
