@@ -284,6 +284,7 @@ public class PaneManager
    private LogicalWindow createConsole()
    {
       PrimaryWindowFrame frame = new PrimaryWindowFrame("Console", null);
+      @SuppressWarnings("unused")
       ConsoleTabPanel consoleTabPanel = new ConsoleTabPanel(frame,
                                                             consolePane_,
                                                             compilePdfTab_,

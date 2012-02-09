@@ -16,15 +16,11 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import org.rstudio.core.client.command.AppCommand;
-import org.rstudio.core.client.command.CommandHandler;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.CompilePdfOutputEvent;
-import org.rstudio.studio.client.workbench.events.FindInFilesResultEvent;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.shell.Shell;
 
@@ -46,6 +42,7 @@ public class ConsolePane extends WorkbenchPane
       ensureWidget();
 
       new Console(this, events, commands);
+   }
 
    public void setWorkingDirectory(String directory)
    {
