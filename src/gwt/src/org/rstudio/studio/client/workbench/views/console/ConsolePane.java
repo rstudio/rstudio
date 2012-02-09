@@ -44,24 +44,6 @@ public class ConsolePane extends WorkbenchPane
       new Console(this, events, commands);
    }
 
-      commands.goToFileFunction().addHandler(new CommandHandler()
-      {
-         @Override
-         public void onCommand(AppCommand command)
-         {
-            events.fireEvent(new CompilePdfOutputEvent());
-         }
-      });
-      commands.reflowComment().addHandler(new CommandHandler()
-      {
-         @Override
-         public void onCommand(AppCommand command)
-         {
-            events.fireEvent(new FindInFilesResultEvent());
-         }
-      });
-   }
-
    public void setWorkingDirectory(String directory)
    {
       workingDir_.setText(directory);
