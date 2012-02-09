@@ -250,6 +250,7 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="showLogFiles"/>
             <cmd refid="updateCredentials"/>
             <cmd refid="showRequestLog"/>
+            <cmd refid="spellingSandbox"/>
             <separator/>
             <cmd refid="debugForceTopsToZero"/>
             <cmd refid="debugDumpContents"/>
@@ -837,6 +838,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Show warning bar"/>
    <cmd id="showRequestLog"
         menuLabel="_Request Log"/>
+   <cmd id="spellingSandbox"
+        menuLabel="Spelling Sandbox..."/>
    <cmd id="logFocusedElement"
         menuLabel="Log focused element"/>
    <cmd id="debugForceTopsToZero"

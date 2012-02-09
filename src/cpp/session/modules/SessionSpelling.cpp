@@ -16,6 +16,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <core/Error.hpp>
+#include <core/Exec.hpp>
 
 #include <core/spelling/SpellChecker.hpp>
 
@@ -81,6 +82,47 @@ SEXP rs_analyzeWord(SEXP wordSEXP)
    return r::sexp::create(res,&rProtect);
 }
 
+Error checkSpelling(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   std::string word;
+   Error error = json::readParams(request.params, &word);
+   if (error)
+      return error;
+
+   bool isCorrect;
+   error = s_pSpellChecker->checkSpelling(word,&isCorrect);
+   if (error)
+      return error;
+
+   pResponse->setResult(isCorrect);
+
+   return Success();
+}
+
+Error suggestionList(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string word;
+   Error error = json::readParams(request.params, &word);
+   if (error)
+      return error;
+
+   std::vector<std::string> sugs;
+   error = s_pSpellChecker->suggestionList(word,&sugs);
+   if (error)
+      return error;
+
+   json::Array sugsJson;
+   std::transform(sugs.begin(),
+                  sugs.end(),
+                  std::back_inserter(sugsJson),
+                  json::toJsonString);
+   pResponse->setResult(sugsJson);
+
+   return Success();
+}
+
 
 } // anonymous namespace
 
@@ -109,10 +151,21 @@ Error initialize()
    using namespace core::spelling;
    session::Options& options = session::options();
    FilePath enUSPath = options.hunspellDictionariesPath().childPath("en_US");
-   return createHunspell(enUSPath.childPath("en_US.aff"),
-                         enUSPath.childPath("en_US.dic"),
-                         &s_pSpellChecker,
-                         &r::util::iconvstr);
+   Error error = createHunspell(enUSPath.childPath("en_US.aff"),
+                                enUSPath.childPath("en_US.dic"),
+                                &s_pSpellChecker,
+                                &r::util::iconvstr);
+   if (error)
+      return error;
+
+   // register rpc methods
+   using boost::bind;
+   using namespace module_context;
+   ExecBlock initBlock ;
+   initBlock.addFunctions()
+      (bind(registerRpcMethod, "check_spelling", checkSpelling))
+      (bind(registerRpcMethod, "suggestion_list", suggestionList));
+   return initBlock.execute();
 }
 
 

@@ -212,6 +212,7 @@ public abstract class
    public abstract AppCommand rstudioLicense();
 
    public abstract AppCommand showWarningBar();
+   public abstract AppCommand spellingSandbox();
 
    // Clipboard placeholders
    public abstract AppCommand undoDummy();

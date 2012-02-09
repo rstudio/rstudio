@@ -2396,6 +2396,23 @@ public class RemoteServer implements Server
       params.set(1, new JSONString(ignores));
       sendRequest(RPC_SCOPE, SVN_SET_IGNORES, params, requestCallback);
    }
+   
+   public void checkSpelling(String word,
+                             ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(word));
+      sendRequest(RPC_SCOPE, CHECK_SPELLING, params, requestCallback);
+   }
+   
+   public void suggestionList(
+                     String word,
+                     ServerRequestCallback<JsArrayString> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(word));
+      sendRequest(RPC_SCOPE, SUGGESTION_LIST, params, requestCallback);
+   }
 
    private String clientId_;
    private double clientVersion_ = 0;
@@ -2592,6 +2609,9 @@ public class RemoteServer implements Server
    private static final String LIST_APPEND_ITEM = "list_append_item";
    private static final String LIST_REMOVE_ITEM = "list_remove_item";
    private static final String LIST_CLEAR = "list_clear";
+   
+   private static final String CHECK_SPELLING = "check_spelling";
+   private static final String SUGGESTION_LIST = "suggestion_list";
    
    private static final String LOG = "log";
 
