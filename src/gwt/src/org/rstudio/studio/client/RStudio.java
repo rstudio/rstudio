@@ -107,7 +107,14 @@ public class RStudio implements EntryPoint
       {
          public void execute()
          {
-            Document.get().getBody().removeChild(div);
+            try
+            {
+               Document.get().getBody().removeChild(div);
+            }
+            catch (Exception e)
+            {
+               Debug.log(e.toString());
+            }
          }
       };
    }
