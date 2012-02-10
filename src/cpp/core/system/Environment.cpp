@@ -16,6 +16,7 @@
 #include <algorithm>
 
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 
 #ifdef _WIN32
 #define kPathSeparator ";"
@@ -45,6 +46,15 @@ std::string getenv(const Options& environment, const std::string& name)
       return it->second;
    else
       return std::string();
+}
+
+void getModifiedEnv(const Options& extraVars, Options* pEnv)
+{
+   core::system::environment(pEnv);
+   BOOST_FOREACH(const Option& var, extraVars)
+   {
+      core::system::setenv(pEnv, var.first, var.second);
+   }
 }
 
 // set an environment variable within an Options structure (replaces

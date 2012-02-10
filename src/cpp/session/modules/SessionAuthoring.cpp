@@ -26,6 +26,7 @@
 #include "tex/SessionCompilePdf.hpp"
 #include "tex/SessionRnwWeave.hpp"
 #include "tex/SessionPdfLatex.hpp"
+#include "tex/SessionCompilePdfSupervisor.hpp"
 
 using namespace core;
 
@@ -72,6 +73,11 @@ json::Object texCapabilitiesAsJson()
    tex::rnw_weave::getTypesInstalledStatus(&obj);
 
    return obj;
+}
+
+bool hasRunningChildren()
+{
+   return tex::compile_pdf_supervisor::hasRunningChildren();
 }
 
 Error initialize()

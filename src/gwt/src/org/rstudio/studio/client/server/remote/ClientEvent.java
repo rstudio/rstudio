@@ -64,7 +64,8 @@ class ClientEvent extends JavaScriptObject
    public static final String PosixShellExit = "posix_shell_exit";
    public static final String ConsoleProcessPrompt = "console_process_prompt";
    public static final String ConsoleProcessCreated = "console_process_created";
-
+   public static final String CompilePdfOutputEvent = "compile_pdf_output_event";
+   
    protected ClientEvent()
    {
    }

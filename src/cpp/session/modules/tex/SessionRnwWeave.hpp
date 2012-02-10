@@ -14,9 +14,13 @@
 #ifndef SESSION_MODULES_RNW_WEAVE_HPP
 #define SESSION_MODULES_RNW_WEAVE_HPP
 
+#include <boost/function.hpp>
+
 #include <core/tex/TexMagicComment.hpp>
 
 #include <core/json/Json.hpp>
+
+#include "SessionRnwConcordance.hpp"
 
 namespace core {
    class Error;
@@ -27,19 +31,39 @@ namespace session {
 namespace modules { 
 namespace tex {
 
-namespace rnw_concordance {
-   class Concordance;
-}
-
 namespace rnw_weave {
 
 core::json::Array supportedTypes();
 void getTypesInstalledStatus(core::json::Object* pObj);
 
-bool runWeave(const core::FilePath& filePath,
+struct Result
+{
+   static Result error(const std::string& errorMessage)
+   {
+      Result result;
+      result.succeeded = false;
+      result.errorMessage = errorMessage;
+      return result;
+   }
+
+   static Result success(const tex::rnw_concordance::Concordance& concordance)
+   {
+      Result result;
+      result.succeeded = true;
+      result.concordance = concordance;
+      return result;
+   }
+
+   bool succeeded;
+   std::string errorMessage;
+   tex::rnw_concordance::Concordance concordance;
+};
+
+typedef boost::function<void(const Result&)> CompletedFunction;
+
+void runWeave(const core::FilePath& filePath,
               const core::tex::TexMagicComments& magicComments,
-              rnw_concordance::Concordance* pConcordance,
-              std::string* pUserErrMsg);
+              const CompletedFunction& onCompleted);
 
 
 } // namespace rnw_weave

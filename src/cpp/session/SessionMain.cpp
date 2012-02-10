@@ -914,10 +914,15 @@ void suspendIfRequested(const boost::function<bool()>& allowSuspend)
    }
 }
 
+bool haveRunningChildren()
+{
+   return module_context::processSupervisor().hasRunningChildren() ||
+          modules::authoring::hasRunningChildren();
+}
+
 bool canSuspend(const std::string& prompt)
 {
-   return !module_context::processSupervisor().hasRunningChildren()
-      && r::session::isSuspendable(prompt);
+   return !haveRunningChildren() && r::session::isSuspendable(prompt);
 }
 
 
@@ -1006,7 +1011,7 @@ bool waitForMethod(const std::string& method,
 
       // if we have at least one async process running then this counts
       // as "activity" and resets the timeout timer
-      if(module_context::processSupervisor().hasRunningChildren())
+      if(haveRunningChildren())
          timeoutTime = timeoutTimeFromNow();
 
       // look for a connection (waiting for the specified interval)

@@ -62,6 +62,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionWorkbench.cpp
    modules/SessionWorkspace.cpp
    modules/tex/SessionCompilePdf.cpp
+   modules/tex/SessionCompilePdfSupervisor.cpp
    modules/tex/SessionPdfLatex.cpp
    modules/tex/SessionRnwConcordance.cpp
    modules/tex/SessionRnwWeave.cpp

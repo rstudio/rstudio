@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.events;
+package org.rstudio.studio.client.workbench.views.output.compilepdf;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -22,8 +22,14 @@ public class CompilePdfOutputEvent extends GwtEvent<CompilePdfOutputEvent.Handle
       void onCompilePdfOutput(CompilePdfOutputEvent event);
    }
 
-   public CompilePdfOutputEvent()
+   public CompilePdfOutputEvent(String output)
    {
+      output_ = output;
+   }
+   
+   public String getOutput()
+   {
+      return output_;
    }
 
    @Override
@@ -37,6 +43,8 @@ public class CompilePdfOutputEvent extends GwtEvent<CompilePdfOutputEvent.Handle
    {
       handler.onCompilePdfOutput(this);
    }
+   
+   private String output_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

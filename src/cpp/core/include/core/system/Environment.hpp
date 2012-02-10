@@ -60,6 +60,8 @@ void setenv(Options* pEnvironment,
 void unsetenv(Options* pEnvironment,
               const std::string& name);
 
+void getModifiedEnv(const Options& extraVars, Options* pEnv);
+
 // add to the PATH within a string
 void addToPath(std::string* pPath,
                const std::string& filePath);

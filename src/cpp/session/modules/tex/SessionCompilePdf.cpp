@@ -14,6 +14,7 @@
 #include "SessionCompilePdf.hpp"
 
 #include <boost/format.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include <core/FilePath.hpp>
 #include <core/Exec.hpp>
@@ -34,6 +35,28 @@
 #include "SessionTexi2Dvi.hpp"
 #include "SessionRnwWeave.hpp"
 #include "SessionRnwConcordance.hpp"
+#include "SessionCompilePdfSupervisor.hpp"
+
+// TODO: consider making texi2dvi fully async but leaving our own
+// "emulated" texi2dvi sync
+
+// TODO: clear output before new compile
+
+// TODO: distinguished calls for errors
+
+// TODO: don't allow multiple concurrent compilations
+
+// TOOD: perhaps diable closeabilty if running?
+
+// TODO: auto-bring to front on start but not on subsequent output
+
+// TODO: ability to stop/interrupt
+
+// TODO: buffer output on server (devmode perf)
+
+// TOOD: don't grab focus (blinking cursor) -- perhaps just use
+// VirtualConsole + PreWidget?
+
 
 using namespace core;
 
@@ -62,7 +85,7 @@ void showLogEntry(const core::tex::LogEntry& logEntry)
    boost::format fmt("%1% (line %2%): %3%\n");
    std::string err = boost::str(
                fmt % logEntry.file() % logEntry.line() % logEntry.message());
-   module_context::consoleWriteError(err);
+   compile_pdf_supervisor::showOutput(err);
 }
 
 void showLatexLogEntry(const core::tex::LogEntry& logEntry,
@@ -114,11 +137,11 @@ bool showCompilationErrors(const FilePath& texPath,
       // show errors
       if (!latexLogEntries.empty())
       {
-         module_context::consoleWriteError("LaTeX errors:\n");
+         compile_pdf_supervisor::showOutput("\nLaTeX errors:\n");
          std::for_each(latexLogEntries.begin(),
                        latexLogEntries.end(),
                        boost::bind(&showLatexLogEntry, _1, rnwConcordance));
-         module_context::consoleWriteError("\n");
+         compile_pdf_supervisor::showOutput("\n");
       }
    }
 
@@ -134,11 +157,11 @@ bool showCompilationErrors(const FilePath& texPath,
       // show errors
       if (!bibtexLogEntries.empty())
       {
-         module_context::consoleWriteError("BibTeX errors:\n");
+         compile_pdf_supervisor::showOutput("BibTeX errors:\n");
          std::for_each(bibtexLogEntries.begin(),
                        bibtexLogEntries.end(),
                        showLogEntry);
-         module_context::consoleWriteError("\n");
+         compile_pdf_supervisor::showOutput("\n");
       }
    }
 
@@ -230,167 +253,223 @@ private:
    bool cleanLog_;
 };
 
-bool compilePdf(const FilePath& targetFilePath,
-                const std::string& completedAction,
-                std::string* pUserErrMsg)
+// implement pdf compilation within a class so we can maintain state
+// accross the various async callbacks the compile is composed of
+class PdfCompiler : boost::noncopyable,
+                    public boost::enable_shared_from_this<PdfCompiler>
 {
-   // set the working directory for the duration of the compile
-   RestoreCurrentPathScope pathScope(module_context::safeCurrentPath());
-   Error error = targetFilePath.parent().makeCurrentPath();
-   if (error)
+public:
+   static boost::shared_ptr<PdfCompiler> create(
+                              const FilePath& targetFilePath,
+                              const boost::function<void()>& onCompleted)
    {
-      *pUserErrMsg = "Error setting current path: " + error.summary();
-      return false;
+      return boost::shared_ptr<PdfCompiler>(new PdfCompiler(targetFilePath,
+                                                            onCompleted));
+
    }
 
-   // ensure no spaces in path
-   std::string filename = targetFilePath.filename();
-   if (filename.find(' ') != std::string::npos)
+   virtual ~PdfCompiler() {}
+
+private:
+   PdfCompiler(const FilePath& targetFilePath,
+               const boost::function<void()>& onCompleted)
+      : targetFilePath_(targetFilePath), onCompleted_(onCompleted)
    {
-      *pUserErrMsg = "Invalid filename: '" + filename +
-                     "' (TeX does not understand paths with spaces)";
-      return false;
    }
 
-   // parse out magic comments
-   core::tex::TexMagicComments magicComments;
-   error = core::tex::parseMagicComments(targetFilePath, &magicComments);
-   if (error)
-      LOG_ERROR(error);
-
-   // discover and validate tex program path
-   FilePath texProgramPath;
-   if (!pdflatex::latexProgramForFile(magicComments,
-                                      &texProgramPath,
-                                      pUserErrMsg))
+public:
+   void start()
    {
-      return false;
+      // ensure no spaces in path
+      std::string filename = targetFilePath_.filename();
+      if (filename.find(' ') != std::string::npos)
+      {
+         reportError("Invalid filename: '" + filename +
+                     "' (TeX does not understand paths with spaces)");
+         return;
+      }
+
+      // parse magic comments
+      Error error = core::tex::parseMagicComments(targetFilePath_,
+                                                  &magicComments_);
+      if (error)
+         LOG_ERROR(error);
+
+      // determine tex program path
+      std::string userErrMsg;
+      if (!pdflatex::latexProgramForFile(magicComments_,
+                                         &texProgramPath_,
+                                         &userErrMsg))
+      {
+         reportError(userErrMsg);
+         return;
+      }
+
+      // see if we need to weave
+      std::string ext = targetFilePath_.extensionLowerCase();
+      bool isRnw = ext == ".rnw" || ext == ".snw" || ext == ".nw";
+      if (isRnw)
+      {
+         // attempt to weave the rnw
+         rnw_weave::runWeave(targetFilePath_,
+                             magicComments_,
+                             boost::bind(&PdfCompiler::onWeaveCompleted,
+                                      PdfCompiler::shared_from_this(), _1));
+      }
+      else
+      {
+         runLatexCompiler();
+      }
+
    }
 
-   // see if we need to sweave (collect concordance after sweave)
-   rnw_concordance::Concordance rnwConcordance;
-   std::string ext = targetFilePath.extensionLowerCase();
-   bool isRnw = ext == ".rnw" || ext == ".snw" || ext == ".nw";
-   if (isRnw)
+private:
+
+   void onWeaveCompleted(const rnw_weave::Result& result)
    {
-      // attempt to weave the rnw
-      bool success = rnw_weave::runWeave(targetFilePath,
-                                         magicComments,
-                                         &rnwConcordance,
-                                         pUserErrMsg);
-      if (!success)
-         return false;
+      if (result.succeeded)
+         runLatexCompiler(result.concordance);
+      else
+         reportError(result.errorMessage);
    }
 
-   // configure pdflatex options
-   pdflatex::PdfLatexOptions options;
-   options.fileLineError = true;
-   options.syncTex = true;
-   options.shellEscape = userSettings().enableLaTeXShellEscape();
+   void runLatexCompiler(const rnw_concordance::Concordance& concordance =
+                                                rnw_concordance::Concordance())
+   {
+      // configure pdflatex options
+      pdflatex::PdfLatexOptions options;
+      options.fileLineError = true;
+      options.syncTex = true;
+      options.shellEscape = userSettings().enableLaTeXShellEscape();
 
-   // get back-end version info
-   core::system::ProcessResult result;
-   error = core::system::runProgram(
-                  string_utils::utf8ToSystem(texProgramPath.absolutePath()),
+      // get back-end version info
+      core::system::ProcessResult result;
+      Error error = core::system::runProgram(
+                  string_utils::utf8ToSystem(texProgramPath_.absolutePath()),
                   core::shell_utils::ShellArgs() << "--version",
                   "",
                   core::system::ProcessOptions(),
                   &result);
-   if (error)
-      LOG_ERROR(error);
-   else if (result.exitStatus != EXIT_SUCCESS)
-      LOG_ERROR_MESSAGE("Error probing for latex version: "+ result.stdErr);
-   else
-      options.versionInfo = result.stdOut;
+      if (error)
+         LOG_ERROR(error);
+      else if (result.exitStatus != EXIT_SUCCESS)
+         LOG_ERROR_MESSAGE("Error probing for latex version: "+ result.stdErr);
+      else
+         options.versionInfo = result.stdOut;
 
-   // compute tex file path
-   FilePath texFilePath = targetFilePath.parent().complete(
-                                             targetFilePath.stem() +
-                                             ".tex");
+      // compute tex file path
+      FilePath texFilePath = targetFilePath_.parent().complete(
+                                                targetFilePath_.stem() +
+                                                ".tex");
 
-   // remove log files if they exist (avoids confusion created by parsing
-   // old log files for errors)
-   removeExistingLogs(texFilePath);
+      // remove log files if they exist (avoids confusion created by parsing
+      // old log files for errors)
+      removeExistingLogs(texFilePath);
 
-   // setup cleanup context if clean was specified
-   AuxillaryFileCleanupContext fileCleanupContext;
-   if (userSettings().cleanTexi2DviOutput())
-      fileCleanupContext.init(texFilePath);
+      // setup cleanup context if clean was specified
+      if (userSettings().cleanTexi2DviOutput())
+         auxillaryFileCleanupContext_.init(texFilePath);
 
-   // run tex compile
-   if (userSettings().useTexi2Dvi() && tex::texi2dvi::isAvailable())
-   {
-      error = tex::texi2dvi::texToPdf(texProgramPath,
-                                      texFilePath,
-                                      options,
-                                      &result);
-   }
-   else
-   {
-      error = tex::pdflatex::texToPdf(texProgramPath,
-                                      texFilePath,
-                                      options,
-                                      &result);
-   }
-
-   if (error)
-   {
-      *pUserErrMsg = "Unable to compile pdf: " + error.summary();
-      return false;
-   }
-   else if (result.exitStatus != EXIT_SUCCESS)
-   {
-      // don't remove the log
-      fileCleanupContext.preserveLog();
-
-      // try to show compilation errors -- if none are found then print
-      // a general error message and stderr
-      if (!showCompilationErrors(texFilePath, rnwConcordance))
+      // run tex compile
+      compile_pdf_supervisor::showOutput("\nRunning LaTeX compiler...");
+      if (userSettings().useTexi2Dvi() && tex::texi2dvi::isAvailable())
       {
-         boost::format fmt("Error running %1% (exit code %2%): %3%\n");
-         std::string msg(boost::str(fmt % texProgramPath.absolutePath()
-                                        % result.exitStatus
-                                        % result.stdErr));
-         module_context::consoleWriteError(msg);
-      }
-      return false;
-   }
-   else
-   {
-      if (completedAction == "view")
-         viewPdf(targetFilePath);
-      else if (completedAction == "publish")
-         publishPdf(targetFilePath);
+         error = tex::texi2dvi::texToPdf(texProgramPath_,
+                                         texFilePath,
+                                         options,
+                                         &result);
 
-      return true;
+      }
+      else
+      {
+         error = tex::pdflatex::texToPdf(texProgramPath_,
+                                         texFilePath,
+                                         options,
+                                         &result);
+      }
+
+      if (error)
+      {
+         reportError("Unable to compile pdf: " + error.summary());
+      }
+      else
+      {
+          onLatexCompileCompleted(result.exitStatus, texFilePath, concordance);
+      }
    }
-}
+
+   void onLatexCompileCompleted(int exitStatus,
+                                const FilePath& texFilePath,
+                                const rnw_concordance::Concordance& concord)
+   {
+      if (exitStatus == EXIT_SUCCESS)
+      {
+         compile_pdf_supervisor::showOutput("completed\n");
+
+         if (onCompleted_)
+            onCompleted_();
+      }
+      else
+      {
+         compile_pdf_supervisor::showOutput("\n");
+
+         // don't remove the log
+         auxillaryFileCleanupContext_.preserveLog();
+
+         // try to show compilation errors -- if none are found then print
+         // a general error message and stderr
+         if (!showCompilationErrors(texFilePath, concord))
+         {
+            boost::format fmt("Error running %1% (exit code %2%)");
+            std::string msg(boost::str(fmt % texProgramPath_.absolutePath()
+                                           % exitStatus));
+            reportError(msg);
+         }
+      }
+   }
+
+   void reportError(const std::string& message)
+   {
+      compile_pdf_supervisor::showOutput(message + "\n");
+   }
+
+private:
+   const FilePath targetFilePath_;
+   const boost::function<void()> onCompleted_;
+   core::tex::TexMagicComments magicComments_;
+   FilePath texProgramPath_;
+   AuxillaryFileCleanupContext auxillaryFileCleanupContext_;
+};
+
+
 
 SEXP rs_compilePdf(SEXP filePathSEXP, SEXP completedActionSEXP)
 {
    try
    {
-      // extract parameters
+      // get target file path
       FilePath targetFilePath = module_context::resolveAliasedPath(
                                           r::sexp::asString(filePathSEXP));
+
+      // initialize completed function
       std::string completedAction = r::sexp::asString(completedActionSEXP);
+      boost::function<void()> completedFunction;
+      if (completedAction == "view")
+         completedFunction = boost::bind(viewPdf, targetFilePath);
+      else if (completedAction == "publish")
+         completedFunction = boost::bind(publishPdf, targetFilePath);
+
 
       // compile pdf
-      std::string userErrMsg;
-      if (!compilePdf(targetFilePath, completedAction, &userErrMsg))
-      {
-         if (!userErrMsg.empty())
-            throw r::exec::RErrorException(userErrMsg);
-      }
-   }
-   catch(const r::exec::RErrorException& e)
-   {
-      r::exec::error(e.message());
+      boost::shared_ptr<PdfCompiler> pCompiler =
+                        PdfCompiler::create(targetFilePath, completedFunction);
+      pCompiler->start();
    }
    CATCH_UNEXPECTED_EXCEPTION
 
    return R_NilValue;
 }
+
 
 } // anonymous namespace
 
@@ -403,12 +482,11 @@ Error initialize()
    compilePdfMethodDef.numArgs = 2;
    r::routines::addCallMethod(compilePdfMethodDef);
 
-
-
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
+      (compile_pdf_supervisor::initialize)
       (bind(sourceModuleRFile, "SessionCompilePdf.R"));
    return initBlock.execute();
 

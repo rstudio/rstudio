@@ -137,6 +137,7 @@ Error runTexCompile(const FilePath& texProgramPath,
    // set options
    core::system::ProcessOptions procOptions;
    procOptions.terminateChildren = true;
+   procOptions.redirectStdErrToStdOut = true;
    procOptions.environment = env;
    procOptions.workingDir = texFilePath.parent();
 

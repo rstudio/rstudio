@@ -17,6 +17,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
@@ -46,6 +47,7 @@ import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAddedEvent;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
+import org.rstudio.studio.client.workbench.views.output.compilepdf.CompilePdfOutputEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
@@ -304,6 +306,11 @@ public class ClientEventDispatcher
             ServerProcessExitEvent.Data data = event.getData();
             eventBus_.fireEvent(new ServerProcessExitEvent(data.getHandle(),
                                                           data.getExitCode()));
+         }
+         else if (type.equals(ClientEvent.CompilePdfOutputEvent))
+         {
+            String output = event.getData();
+            eventBus_.fireEvent(new CompilePdfOutputEvent(output));
          }
          else if (type.equals(ClientEvent.ListChanged))
          {

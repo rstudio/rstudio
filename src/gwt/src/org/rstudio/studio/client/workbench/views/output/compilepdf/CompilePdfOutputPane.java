@@ -12,14 +12,13 @@
  */
 package org.rstudio.studio.client.workbench.views.output.compilepdf;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import org.rstudio.core.client.events.EnsureHiddenEvent;
+import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.common.shell.ShellWidget;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 
 public class CompilePdfOutputPane extends WorkbenchPane
       implements CompilePdfOutputPresenter.Display
@@ -35,14 +34,32 @@ public class CompilePdfOutputPane extends WorkbenchPane
    protected Widget createMainWidget()
    {
       SimplePanel panel = new SimplePanel();
-      panel.setWidget(new Button("Close", new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            fireEvent(new EnsureHiddenEvent());
-         }
-      }));
+      
+      outputWidget_ = new ShellWidget(new AceEditor());
+      outputWidget_.setSize("100%", "100%");
+      outputWidget_.setMaxOutputLines(1000);
+      outputWidget_.setReadOnly(true);
+      panel.setWidget(outputWidget_);
+      
       return panel;
+   }
+   
+   @Override
+   protected Toolbar createMainToolbar()
+   {
+      Toolbar toolbar = new Toolbar();
+      
+      return toolbar;
+   }
+   
+   
+   ShellWidget outputWidget_;
+
+
+   @Override
+   public void writeOutput(String output)
+   {
+      outputWidget_.consoleWriteOutput(output);
+      
    }
 }

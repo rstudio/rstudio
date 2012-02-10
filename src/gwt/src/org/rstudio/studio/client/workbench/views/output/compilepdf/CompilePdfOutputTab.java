@@ -14,7 +14,6 @@ package org.rstudio.studio.client.workbench.views.output.compilepdf;
 
 import com.google.inject.Inject;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.workbench.events.CompilePdfOutputEvent;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 

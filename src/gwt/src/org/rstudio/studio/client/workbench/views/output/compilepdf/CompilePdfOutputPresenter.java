@@ -15,7 +15,6 @@ package org.rstudio.studio.client.workbench.views.output.compilepdf;
 import com.google.inject.Inject;
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
 import org.rstudio.studio.client.workbench.WorkbenchView;
-import org.rstudio.studio.client.workbench.events.CompilePdfOutputEvent;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 
 public class CompilePdfOutputPresenter extends BasePresenter
@@ -23,7 +22,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
 {
    public interface Display extends WorkbenchView, HasEnsureHiddenHandlers
    {
-
+      void writeOutput(String output);
    }
 
    @Inject
@@ -37,6 +36,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
    public void onCompilePdfOutput(CompilePdfOutputEvent event)
    {
       view_.bringToFront();
+      view_.writeOutput(event.getOutput());
    }
 
    private final Display view_;

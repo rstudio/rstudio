@@ -27,6 +27,7 @@
 #include <session/SessionModuleContext.hpp>
 
 #include "SessionRnwConcordance.hpp"
+#include "SessionCompilePdfSupervisor.hpp"
 
 using namespace core;
 using namespace session::modules::tex::rnw_concordance;
@@ -250,7 +251,6 @@ std::string weaveTypeForFile(const core::tex::TexMagicComments& magicComments)
       }
    }
 
-
    // if we didn't find a directive then inspect project & global config
    if (projects::projectContext().hasProject())
       return projects::projectContext().config().defaultSweaveEngine;
@@ -258,12 +258,39 @@ std::string weaveTypeForFile(const core::tex::TexMagicComments& magicComments)
       return userSettings().defaultSweaveEngine();
 }
 
+
+void onWeaveProcessExit(
+      int exitCode,
+      const FilePath& rnwPath,
+      const CompletedFunction& onCompleted,
+      boost::shared_ptr<ConcordanceInjector>) // bound to keep the object
+                                              // alive until the weave
+                                              // process exits
+{
+   if (exitCode == EXIT_SUCCESS)
+   {
+      // pickup concordance if there is any
+      rnw_concordance::Concordance concordance;
+      Error error = rnw_concordance::readIfExists(rnwPath, &concordance);
+      if (error)
+         LOG_ERROR(error);
+
+      // return success
+      onCompleted(Result::success(concordance));
+   }
+   else
+   {
+      // don't return an error message because the process almost
+      // certainly already printed something to stderr
+      onCompleted(Result::error(std::string()));
+   }
+}
+
 } // anonymous namespace
 
-bool runWeave(const core::FilePath& rnwPath,
+void runWeave(const core::FilePath& rnwPath,
               const core::tex::TexMagicComments& magicComments,
-              Concordance* pConcordance,
-              std::string* pUserErrMsg)
+              const CompletedFunction& onCompleted)
 {
    // remove existing concordance file (if any)
    rnw_concordance::removePrevious(rnwPath);
@@ -274,15 +301,15 @@ bool runWeave(const core::FilePath& rnwPath,
    if (error)
    {
       LOG_ERROR(error);
-      *pUserErrMsg = error.summary();
-      return false;
+      onCompleted(Result::error(error.summary()));
+      return;
    }
 
    // R exe path differs by platform
 #ifdef _WIN32
-   std::string path = rBin.complete("Rterm.exe").absolutePath();
+   FilePath rBinPath = rBin.complete("Rterm.exe";
 #else
-   std::string path = rBin.complete("R").absolutePath();
+   FilePath rBinPath = rBin.complete("R");
 #endif
 
    // determine the active sweave engine
@@ -294,47 +321,31 @@ bool runWeave(const core::FilePath& rnwPath,
    if (pRnwWeave)
    {
       // if requested temporarily inject concordance directive
-      boost::shared_ptr<ConcordanceInjector> pConcordanceInjector;
+      boost::shared_ptr<ConcordanceInjector> pCI;
       if (userSettings().alwaysEnableRnwCorcordance())
-         pConcordanceInjector = pRnwWeave->createConcordanceInjector(rnwPath);
+         pCI = pRnwWeave->createConcordanceInjector(rnwPath);
 
       std::vector<std::string> args = pRnwWeave->commandArgs(
                                                          rnwPath.filename());
 
       // call back-end
-      int exitStatus;
-      Error error = module_context::executeInterruptableChild(path,
-                                                              args,
-                                                              &exitStatus);
+      Error error = compile_pdf_supervisor::runProgram(
+               rBinPath,
+               args,
+               core::system::Options(),
+               rnwPath.parent(),
+               boost::bind(onWeaveProcessExit, _1, rnwPath, onCompleted, pCI));
       if (error)
       {
          LOG_ERROR(error);
-         *pUserErrMsg = error.summary();
-         return false;
-      }
-      else if (exitStatus != EXIT_SUCCESS)
-      {
-         // we don't set a user error message here because the weave
-         // almost certainly printed something to stderr
-         return false;
-      }
-      else
-      {
-         // pickup concordance if there is any
-         Error error = rnw_concordance::readIfExists(rnwPath, pConcordance);
-         if (error)
-            LOG_ERROR(error);
-
-         return true;
+         onCompleted(Result::error(error.summary()));
       }
    }
    else
    {
-      *pUserErrMsg =
+      onCompleted(Result::error(
          "Unknown Rnw weave method '" + weaveType + "' specified (valid " +
-         "values are " + weaveRegistry().printableTypeNames() + ")";
-
-      return false;
+         "values are " + weaveRegistry().printableTypeNames() + ")"));
    }
 }
 
