@@ -21,30 +21,5 @@
    invisible(.Call("rs_compilePdf", file, "publish"))
 })
 
-.rs.addFunction( "getCompilationErrors", function(file)
-{
-   base <- basename(tools:::file_path_sans_ext(file))
 
-   msg <- ""
-   logfile <- paste(base, "log", sep = ".")
-   if (utils::file_test("-f", logfile))
-   {
-      lines <- tools:::.get_LaTeX_errors_from_log_file(logfile)
-      if (length(lines))
-        msg <- paste(msg, "LaTeX errors:", paste(lines,
-                     collapse = "\n"), sep = "\n")
-   }
-
-
-   logfile <- paste(base, "blg", sep = ".")
-   if (utils::file_test("-f", logfile))
-   {
-      lines <- tools:::.get_BibTeX_errors_from_blg_file(logfile)
-      if (length(lines))
-        msg <- paste(msg, "BibTeX errors:", paste(lines,
-                     collapse = "\n"), sep = "\n")
-   }
-
-   return (msg)
-})
 
