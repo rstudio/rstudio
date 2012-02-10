@@ -74,6 +74,7 @@ extern const int kHandleUnsavedChanges;
 extern const int kConsoleProcessPrompt;
 extern const int kConsoleProcessCreated;
 extern const int kCompilePdfOutputEvent;
+extern const int kCompilePdfErrorsEvent;
 }
    
 class ClientEvent

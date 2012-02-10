@@ -12,12 +12,14 @@
  */
 package org.rstudio.studio.client.workbench.views.output.compilepdf;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.shell.ShellWidget;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfError;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 
 public class CompilePdfOutputPane extends WorkbenchPane
@@ -51,15 +53,20 @@ public class CompilePdfOutputPane extends WorkbenchPane
       
       return toolbar;
    }
-   
-   
-   ShellWidget outputWidget_;
-
-
+  
    @Override
-   public void writeOutput(String output)
+   public void showOutput(String output)
    {
       outputWidget_.consoleWriteOutput(output);
       
    }
+
+   @Override
+   public void showErrors(JsArray<CompilePdfError> errors)
+   {
+      for (int i=0; i<errors.length(); i++)
+         outputWidget_.consoleWriteOutput(errors.get(i).asString() + "\n");
+   }
+   
+   private ShellWidget outputWidget_;
 }

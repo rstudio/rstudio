@@ -75,6 +75,7 @@ const int kHandleUnsavedChanges = 48;
 const int kConsoleProcessPrompt = 49;
 const int kShowConsoleProcessDialog = 50;
 const int kCompilePdfOutputEvent = 51;
+const int kCompilePdfErrorsEvent = 52;
 }   
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -190,6 +191,8 @@ std::string ClientEvent::typeName() const
          return "console_process_created";
       case client_events::kCompilePdfOutputEvent:
          return "compile_pdf_output_event";
+      case client_events::kCompilePdfErrorsEvent:
+         return "compile_pdf_errors_event";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              boost::lexical_cast<std::string>(type_));

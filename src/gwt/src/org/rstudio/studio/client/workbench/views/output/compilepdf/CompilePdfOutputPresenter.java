@@ -12,17 +12,25 @@
  */
 package org.rstudio.studio.client.workbench.views.output.compilepdf;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 
+import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfErrorsEvent;
+import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfOutputEvent;
+import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfError;
+
+
 public class CompilePdfOutputPresenter extends BasePresenter
-   implements CompilePdfOutputEvent.Handler
+   implements CompilePdfOutputEvent.Handler, 
+              CompilePdfErrorsEvent.Handler
 {
    public interface Display extends WorkbenchView, HasEnsureHiddenHandlers
    {
-      void writeOutput(String output);
+      void showOutput(String output);
+      void showErrors(JsArray<CompilePdfError> errors);
    }
 
    @Inject
@@ -36,7 +44,14 @@ public class CompilePdfOutputPresenter extends BasePresenter
    public void onCompilePdfOutput(CompilePdfOutputEvent event)
    {
       view_.bringToFront();
-      view_.writeOutput(event.getOutput());
+      view_.showOutput(event.getOutput());
+   }
+   
+   @Override
+   public void onCompilePdfErrors(CompilePdfErrorsEvent event)
+   {
+      view_.bringToFront();
+      view_.showErrors(event.getErrors());
    }
 
    private final Display view_;

@@ -37,6 +37,9 @@
 #include "SessionRnwConcordance.hpp"
 #include "SessionCompilePdfSupervisor.hpp"
 
+// TODO: now that compilePdf is fully async, why should it even
+// be a function call? (why not a command handled by the presenter)
+
 // TODO: texi2dvi script prints to stderr when rstudio-pdflatex fails
 // with an error code, prevent this
 
