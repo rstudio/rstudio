@@ -1914,21 +1914,12 @@ Error vcsInitRepo(const json::JsonRpcRequest& request,
       return error;
    FilePath dirPath = module_context::resolveAliasedPath(directory);
 
-   // get path string and flip slashes if we are on windows
-   // (on WinXP the cd shell command doesn't like forward slashes)
-   std::string path = dirPath.absolutePath();
-#ifdef _WIN32
-   boost::algorithm::replace_all(path, "/", "\\");
-#endif
-
-   // create command
-   std::string cmd = shell_utils::join_and(
-         ShellCommand("cd") << path,
-         git() << "init");
+   core::system::ProcessOptions options = procOptions();
+   options.workingDir = dirPath;
 
    // run it
    core::system::ProcessResult result;
-   error = runCommand(cmd, procOptions(), &result);
+   error = runCommand(git() << "init", options, &result);
    if (error)
       return error;
 

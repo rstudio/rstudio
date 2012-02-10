@@ -309,33 +309,42 @@ Error SourceDocument::readFromJson(json::Object* pDocJson)
    // persistence format we need to make sure this code is robust
    // in the presence of the old format
 
-   json::Object& docJson = *pDocJson;
+   try
+   {
+      json::Object& docJson = *pDocJson;
 
-   id_ = docJson["id"].get_str();
-   json::Value path = docJson["path"];
-   path_ = !path.is_null() ? path.get_str() : std::string();
+      id_ = docJson["id"].get_str();
+      json::Value path = docJson["path"];
+      path_ = !path.is_null() ? path.get_str() : std::string();
 
-   json::Value type = docJson["type"];
-   type_ = !type.is_null() ? type.get_str() : std::string();
+      json::Value type = docJson["type"];
+      type_ = !type.is_null() ? type.get_str() : std::string();
 
-   setContents(docJson["contents"].get_str());
-   dirty_ = docJson["dirty"].get_bool();
-   created_ = docJson["created"].get_real();
-   sourceOnSave_ = docJson["source_on_save"].get_bool();
+      setContents(docJson["contents"].get_str());
+      dirty_ = docJson["dirty"].get_bool();
+      created_ = docJson["created"].get_real();
+      sourceOnSave_ = docJson["source_on_save"].get_bool();
 
-   // read safely (migration)
-   json::Value properties = docJson["properties"];
-   properties_ = !properties.is_null() ? properties.get_obj() : json::Object();
+      // read safely (migration)
+      json::Value properties = docJson["properties"];
+      properties_ = !properties.is_null() ? properties.get_obj() : json::Object();
 
-   json::Value lastKnownWriteTime = docJson["lastKnownWriteTime"];
-   lastKnownWriteTime_ = !lastKnownWriteTime.is_null()
-                            ? lastKnownWriteTime.get_int64()
-                            : 0;
+      json::Value lastKnownWriteTime = docJson["lastKnownWriteTime"];
+      lastKnownWriteTime_ = !lastKnownWriteTime.is_null()
+                               ? lastKnownWriteTime.get_int64()
+                               : 0;
 
-   json::Value encoding = docJson["encoding"];
-   encoding_ = !encoding.is_null() ? encoding.get_str() : std::string();
+      json::Value encoding = docJson["encoding"];
+      encoding_ = !encoding.is_null() ? encoding.get_str() : std::string();
 
-   return Success();
+      return Success();
+   }
+   catch(const std::exception& e)
+   {
+      return systemError(boost::system::errc::protocol_error,
+                         e.what(),
+                         ERROR_LOCATION);
+   }
 }
    
 void SourceDocument::writeToJson(json::Object* pDocJson) const
