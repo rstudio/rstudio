@@ -23,6 +23,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include "SessionCompilePdfSupervisor.hpp"
+
 using namespace core;
 
 namespace session {
@@ -54,6 +56,15 @@ core::system::Option inputsEnvVar(const std::string& name,
    core::system::addToPath(&value, ""); // trailing : required by tex
 
    return std::make_pair(name, value);
+}
+
+shell_utils::ShellArgs buildArgs(const shell_utils::ShellArgs& args,
+                                 const FilePath& texFilePath)
+{
+   shell_utils::ShellArgs procArgs;
+   procArgs << args;
+   procArgs << texFilePath.filename();
+   return procArgs;
 }
 
 } // anonymous namespace
@@ -129,11 +140,6 @@ Error runTexCompile(const FilePath& texProgramPath,
       core::system::setenv(&env, var.first, var.second);
    }
 
-   // setup args
-   shell_utils::ShellArgs procArgs;
-   procArgs << args;
-   procArgs << texFilePath.filename();
-
    // set options
    core::system::ProcessOptions procOptions;
    procOptions.terminateChildren = true;
@@ -144,10 +150,24 @@ Error runTexCompile(const FilePath& texProgramPath,
    // run the program
    return core::system::runProgram(
                string_utils::utf8ToSystem(texProgramPath.absolutePath()),
-               procArgs,
+               buildArgs(args, texFilePath),
                "",
                procOptions,
                pResult);
+}
+
+core::Error runTexCompile(const core::FilePath& texProgramPath,
+                          const core::system::Options& envVars,
+                          const core::shell_utils::ShellArgs& args,
+                          const core::FilePath& texFilePath,
+                          const boost::function<void(int)>& onExited)
+{
+   return compile_pdf_supervisor::runProgram(texProgramPath,
+                                             buildArgs(args, texFilePath),
+                                             envVars,
+                                             texFilePath.parent(),
+                                             onExited);
+
 }
 
 } // namespace utils

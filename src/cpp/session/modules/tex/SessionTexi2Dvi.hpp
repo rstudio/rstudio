@@ -38,7 +38,7 @@ bool isAvailable();
 core::Error texToPdf(const core::FilePath& texProgramPath,
                      const core::FilePath& texFilePath,
                      const tex::pdflatex::PdfLatexOptions& options,
-                     core::system::ProcessResult* pResult);
+                     const boost::function<void(int)>& onExited);
 
 } // namespace texi2dvi
 } // namespace tex

@@ -37,8 +37,10 @@
 #include "SessionRnwConcordance.hpp"
 #include "SessionCompilePdfSupervisor.hpp"
 
-// TODO: consider making texi2dvi fully async but leaving our own
-// "emulated" texi2dvi sync
+// TODO: texi2dvi script prints to stderr when rstudio-pdflatex fails
+// with an error code, prevent this
+
+// TODO: deal with ClientState
 
 // TODO: clear output before new compile
 
@@ -370,31 +372,51 @@ private:
       if (userSettings().cleanTexi2DviOutput())
          auxillaryFileCleanupContext_.init(texFilePath);
 
-      // run tex compile
+      // run latex compile
       compile_pdf_supervisor::showOutput("\nRunning LaTeX compiler...");
+
+      // try to use texi2dvi if we can
       if (userSettings().useTexi2Dvi() && tex::texi2dvi::isAvailable())
       {
-         error = tex::texi2dvi::texToPdf(texProgramPath_,
-                                         texFilePath,
-                                         options,
-                                         &result);
-
+         Error error = tex::texi2dvi::texToPdf(
+                           texProgramPath_,
+                           texFilePath,
+                           options,
+                           boost::bind(&PdfCompiler::onLatexCompileCompleted,
+                                          PdfCompiler::shared_from_this(),
+                                          _1,
+                                          texFilePath,
+                                          concordance));
+         if (error)
+            reportError("Unable to compile pdf: " + error.summary());
       }
+
+      // call pdflatex directly (but still try to run bibtex as necessary)
       else
       {
-         error = tex::pdflatex::texToPdf(texProgramPath_,
-                                         texFilePath,
-                                         options,
-                                         &result);
-      }
+         // this is our "simulated" texi2dvi -- this was originally
+         // coded as a sequence of sync calls to pdflatex, bibtex, and
+         // makeindex. re-coding it as async is going to be a bit
+         // involved so considering that this is not the default
+         // codepath we'll leave it sync for now (and then just call
+         // the (typically) async callback function onLatexCompileCompleted
+         // directly after the function returns
 
-      if (error)
-      {
-         reportError("Unable to compile pdf: " + error.summary());
-      }
-      else
-      {
-          onLatexCompileCompleted(result.exitStatus, texFilePath, concordance);
+         Error error = tex::pdflatex::texToPdf(texProgramPath_,
+                                               texFilePath,
+                                               options,
+                                               &result);
+
+         if (error)
+         {
+            reportError("Unable to compile pdf: " + error.summary());
+         }
+         else
+         {
+            onLatexCompileCompleted(result.exitStatus,
+                                    texFilePath,
+                                    concordance);
+         }
       }
    }
 

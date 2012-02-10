@@ -169,7 +169,7 @@ bool isAvailable()
 core::Error texToPdf(const core::FilePath& texProgramPath,
                      const core::FilePath& texFilePath,
                      const tex::pdflatex::PdfLatexOptions& options,
-                     core::system::ProcessResult* pResult)
+                     const boost::function<void(int)>& onExited)
 {
    FilePath texi2DviProgramFilePath = texi2DviPath();
    if (texi2DviProgramFilePath.empty())
@@ -180,7 +180,7 @@ core::Error texToPdf(const core::FilePath& texProgramPath,
                                                options),
                                shellArgs(options),
                                texFilePath,
-                               pResult);
+                               onExited);
 }
 
 } // namespace texi2dvi
