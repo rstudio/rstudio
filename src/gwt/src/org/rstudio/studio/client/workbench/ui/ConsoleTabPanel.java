@@ -12,9 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.theme.PrimaryWindowFrame;
 import org.rstudio.core.client.theme.WindowFrame;
