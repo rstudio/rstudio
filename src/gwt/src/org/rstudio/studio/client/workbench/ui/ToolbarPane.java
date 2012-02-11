@@ -125,6 +125,16 @@ public abstract class ToolbarPane extends LazyPanel implements RequiresResize,
       return addHandler(handler, EnsureHiddenEvent.TYPE);
    }
 
+   public void ensureVisible()
+   {
+      fireEvent(new EnsureVisibleEvent());
+   }
+
+   public void ensureHidden()
+   {
+      fireEvent(new EnsureHiddenEvent());
+   }
+
    public boolean isMainToolbarVisible()
    {
       return mainToolbar_.isVisible();

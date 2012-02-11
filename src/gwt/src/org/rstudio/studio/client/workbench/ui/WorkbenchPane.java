@@ -13,7 +13,6 @@
 package org.rstudio.studio.client.workbench.ui;
 
 import com.google.gwt.user.client.Command;
-import org.rstudio.core.client.events.EnsureHiddenEvent;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 
 public abstract class WorkbenchPane extends ToolbarPane
@@ -56,12 +55,6 @@ public abstract class WorkbenchPane extends ToolbarPane
    public boolean closeable()
    {
       return false;
-   }
-
-   @Override
-   public void ensureHidden()
-   {
-      fireEvent(new EnsureHiddenEvent());
    }
 
    private String title_;

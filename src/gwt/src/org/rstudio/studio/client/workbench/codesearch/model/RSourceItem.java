@@ -14,6 +14,8 @@ package org.rstudio.studio.client.workbench.codesearch.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import org.rstudio.core.client.CodeNavigationTarget;
+import org.rstudio.core.client.FilePosition;
 
 
 public class RSourceItem extends JavaScriptObject
@@ -51,4 +53,11 @@ public class RSourceItem extends JavaScriptObject
    public final native int getColumn() /*-{
       return this.column;
    }-*/;
+
+   public final CodeNavigationTarget toCodeNavigationTarget()
+   {
+      return new CodeNavigationTarget(getContext(),
+                                      FilePosition.create(getLine(),
+                                                          getColumn()));
+   }
 }

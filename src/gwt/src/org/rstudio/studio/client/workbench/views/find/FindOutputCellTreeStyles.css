@@ -1,0 +1,97 @@
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+/**
+* Applied to the empty message.
+*/
+.cellTreeEmptyMessage { }
+
+/**
+* Applied to tree items.
+*/
+.cellTreeItem {
+   cursor: default;
+}
+
+/**
+* Applied to open/close icon.
+*/
+.cellTreeItemImage img {
+   position: relative;
+   top: 1px;
+   margin-left: 5px;
+}
+
+/**
+* Applied to the wrapper around the image and value.
+*/
+.cellTreeItemImageValue {
+   padding-top: 2px;
+   padding-bottom: 2px;
+}
+
+/**
+* Applied to the value in an item.
+*/
+.cellTreeItemValue {
+   padding-left: 8px;
+   outline: none;
+}
+
+/**
+* Applied to the keyboard selected item.
+*/
+.cellTreeKeyboardSelectedItem { }
+
+/**
+* Applied to open tree items.
+*/
+.cellTreeOpenItem { }
+
+/**
+* Applied to selected tree items.
+*/
+.cellTreeSelectedItem {
+   background-color: rgb(146, 193, 240);
+}
+
+/**
+* Applied to the show more button.
+*/
+.cellTreeShowMoreButton { }
+
+/**
+* Applied to top level items.
+*/
+.cellTreeTopItem {
+   font-weight: bold;
+}
+
+/**
+* Applied to open/close icon at the top level.
+*/
+.cellTreeTopItemImage { }
+
+/**
+* Applied to the wrapper around the image and value of top level items.
+*/
+.cellTreeTopItemImageValue {
+}
+
+/**
+* Applied to the widget.
+*/
+.cellTreeWidget {
+   border: 1px solid #CCC;
+   background-color: white;
+}
+
+.lineNumber {
+   font-family: fixedWidthFont;
+   white-space: pre;
+   color: #AAA;
+}
+
+.cellTreeSelectedItem .lineNumber {
+   color: #DDD;
+}

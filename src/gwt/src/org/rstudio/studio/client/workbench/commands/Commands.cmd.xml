@@ -74,6 +74,7 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="find"/>
          <cmd refid="findReplace"/>
+         <cmd refid="findInFiles"/>
          <separator/>
          <cmd refid="sourceNavigateBack"/>
          <cmd refid="sourceNavigateForward"/>
@@ -299,6 +300,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="sourceActiveDocumentWithEcho" value="Cmd+Shift+Enter"/>;
       <shortcut refid="extractFunction" value="Cmd+Shift+U"/>
       <shortcut refid="executeLastCode" value="Cmd+Shift+P"/>
+      <shortcut refid="findInFiles" value="Ctrl+Shift+F"/>
       <shortcut refid="commentUncomment" value="Cmd+/"/>
       <shortcut refid="reindent" value="Cmd+I"/>
       <shortcut refid="reflowComment" value="Cmd+Shift+/"/>
@@ -506,10 +508,12 @@ well as menu structures (for main menu and popup menus).
    <cmd id="goToLine"
         menuLabel="Jump to Line..."/>
 
-    <cmd id="find"
+   <cmd id="find"
         menuLabel="_Find..."/>
    <cmd id="findReplace"
         menuLabel="_Find and Replace..."/>
+   <cmd id="findInFiles"
+        menuLabel="Find _in Files..."/>
    <cmd id="complete"
         menuLabel="Code Completion"/>
    <cmd id="executeAllCode"
