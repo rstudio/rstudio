@@ -38,8 +38,6 @@
 #include "SessionRnwConcordance.hpp"
 #include "SessionCompilePdfSupervisor.hpp"
 
-// TODO: can't seem to get bibtex errors to show up -- test this
-
 // TODO: pull from find in files branch
 
 // TODO: now that compilePdf is fully async, why should it even
@@ -47,6 +45,9 @@
 
 // TODO: texi2dvi script prints to stderr when rstudio-pdflatex fails
 // with an error code, prevent this
+
+// TODO: texi2dvi script also prints to stderr for citation failures,
+// should we allow this to pass through or capture it (simillar to above)
 
 // TODO: fully mask shared_ptr/start for PdfCompiler (AysncPdfCompiler)
 

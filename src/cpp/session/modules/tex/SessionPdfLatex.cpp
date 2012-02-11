@@ -395,28 +395,27 @@ core::Error texToPdf(const core::FilePath& texProgramPath,
                bibtexArgs,
                "",
                procOptions,
-               &result);
+               pResult);
          if (error)
             LOG_ERROR(error);
-         else if (result.exitStatus != EXIT_SUCCESS)
-            LOG_ERROR_MESSAGE(result.stdErr);
+         else if (pResult->exitStatus != EXIT_SUCCESS)
+            return Success(); // pass error state on to caller
       }
       previousMisses = misses;
 
       // run makeindex if necessary
       if (idxFilePath.exists() && !makeindexProgramPath.empty())
       {
-         core::system::ProcessResult result;
          Error error = core::system::runProgram(
                string_utils::utf8ToSystem(makeindexProgramPath.absolutePath()),
                makeindexArgs,
                "",
                procOptions,
-               &result);
+               pResult);
          if (error)
             LOG_ERROR(error);
-         else if (result.exitStatus != EXIT_SUCCESS)
-            LOG_ERROR_MESSAGE(result.stdErr);
+         else if (pResult->exitStatus != EXIT_SUCCESS)
+            return Success(); // pass error state on to caller
       }
 
       // re-run latex
