@@ -38,11 +38,6 @@
 #include "SessionRnwConcordance.hpp"
 #include "SessionCompilePdfSupervisor.hpp"
 
-// TODO: pull from find in files branch
-
-// TODO: now that compilePdf is fully async, why should it even
-// be a function call? (why not a command handled by the presenter)
-
 // TODO: texi2dvi script prints to stderr when rstudio-pdflatex fails
 // with an error code, prevent this
 
@@ -269,29 +264,28 @@ private:
 
 // implement pdf compilation within a class so we can maintain state
 // accross the various async callbacks the compile is composed of
-class PdfCompiler : boost::noncopyable,
-                    public boost::enable_shared_from_this<PdfCompiler>
+class AsyncPdfCompiler : boost::noncopyable,
+                    public boost::enable_shared_from_this<AsyncPdfCompiler>
 {
 public:
-   static boost::shared_ptr<PdfCompiler> create(
-                              const FilePath& targetFilePath,
-                              const boost::function<void()>& onCompleted)
+   static void start(const FilePath& targetFilePath,
+                    const boost::function<void()>& onCompleted)
    {
-      return boost::shared_ptr<PdfCompiler>(new PdfCompiler(targetFilePath,
-                                                            onCompleted));
+      boost::shared_ptr<AsyncPdfCompiler> pCompiler(
+            new AsyncPdfCompiler(targetFilePath, onCompleted));
 
+      pCompiler->start();
    }
 
-   virtual ~PdfCompiler() {}
+   virtual ~AsyncPdfCompiler() {}
 
 private:
-   PdfCompiler(const FilePath& targetFilePath,
-               const boost::function<void()>& onCompleted)
+   AsyncPdfCompiler(const FilePath& targetFilePath,
+                    const boost::function<void()>& onCompleted)
       : targetFilePath_(targetFilePath), onCompleted_(onCompleted)
    {
    }
 
-public:
    void start()
    {
       // ensure no spaces in path
@@ -327,8 +321,9 @@ public:
          // attempt to weave the rnw
          rnw_weave::runWeave(targetFilePath_,
                              magicComments_,
-                             boost::bind(&PdfCompiler::onWeaveCompleted,
-                                      PdfCompiler::shared_from_this(), _1));
+                             boost::bind(
+                              &AsyncPdfCompiler::onWeaveCompleted,
+                                 AsyncPdfCompiler::shared_from_this(), _1));
       }
       else
       {
@@ -394,11 +389,12 @@ private:
                            texProgramPath_,
                            texFilePath,
                            options,
-                           boost::bind(&PdfCompiler::onLatexCompileCompleted,
-                                          PdfCompiler::shared_from_this(),
-                                          _1,
-                                          texFilePath,
-                                          concordance));
+                           boost::bind(
+                              &AsyncPdfCompiler::onLatexCompileCompleted,
+                                 AsyncPdfCompiler::shared_from_this(),
+                                 _1,
+                                 texFilePath,
+                                 concordance));
          if (error)
             reportError("Unable to compile pdf: " + error.summary());
       }
@@ -493,11 +489,8 @@ SEXP rs_compilePdf(SEXP filePathSEXP, SEXP completedActionSEXP)
       else if (completedAction == "publish")
          completedFunction = boost::bind(publishPdf, targetFilePath);
 
-
       // compile pdf
-      boost::shared_ptr<PdfCompiler> pCompiler =
-                        PdfCompiler::create(targetFilePath, completedFunction);
-      pCompiler->start();
+      AsyncPdfCompiler::start(targetFilePath, completedFunction);
    }
    CATCH_UNEXPECTED_EXCEPTION
 
