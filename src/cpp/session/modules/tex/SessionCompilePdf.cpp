@@ -59,11 +59,6 @@
 
 // TODO: ability to stop/interrupt
 
-// TODO: buffer output on server (devmode perf)
-
-// TOOD: don't grab focus (blinking cursor) -- perhaps just use
-// VirtualConsole + PreWidget?
-
 
 using namespace core;
 

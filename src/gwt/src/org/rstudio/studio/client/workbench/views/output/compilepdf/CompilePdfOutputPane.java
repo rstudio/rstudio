@@ -41,6 +41,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
       outputWidget_.setSize("100%", "100%");
       outputWidget_.setMaxOutputLines(1000);
       outputWidget_.setReadOnly(true);
+      outputWidget_.setSuppressPendingInput(true);
       panel.setWidget(outputWidget_);
       
       return panel;
