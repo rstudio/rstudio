@@ -14,7 +14,6 @@ package org.rstudio.studio.client.workbench.views.find.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import org.rstudio.core.client.CodeNavigationTarget;
 
 public class FindResultEvent extends GwtEvent<FindResultEvent.Handler>
 {

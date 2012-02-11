@@ -49,16 +49,15 @@
 
 // TODO: deal with ClientState
 
-// TODO: clear output before new compile
-
-// TODO: don't allow multiple concurrent compilations
-
 // TOOD: perhaps diable closeabilty if running?
-
-// TODO: auto-bring to front on start but not on subsequent output
 
 // TODO: ability to stop/interrupt
 
+// TODO: show filename in toolbar
+
+// TODO: separate output and error panes
+
+// TODO: sweave/knitr errors
 
 using namespace core;
 
@@ -68,19 +67,6 @@ namespace tex {
 namespace compile_pdf {
 
 namespace {
-
-void viewPdf(const FilePath& texPath)
-{
-   FilePath pdfPath = texPath.parent().complete(texPath.stem() + ".pdf");
-   module_context::showFile(pdfPath, "_rstudio_compile_pdf");
-}
-
-void publishPdf(const FilePath& texPath)
-{
-   std::string aliasedPath = module_context::createAliasedPath(texPath);
-   ClientEvent event(client_events::kPublishPdf, aliasedPath);
-   module_context::enqueClientEvent(event);
-}
 
 json::Object logEntryJson(const core::tex::LogEntry& logEntry)
 {
@@ -468,53 +454,22 @@ private:
 };
 
 
-
-SEXP rs_compilePdf(SEXP filePathSEXP, SEXP completedActionSEXP)
-{
-   try
-   {
-      // get target file path
-      FilePath targetFilePath = module_context::resolveAliasedPath(
-                                          r::sexp::asString(filePathSEXP));
-
-      // initialize completed function
-      std::string completedAction = r::sexp::asString(completedActionSEXP);
-      boost::function<void()> completedFunction;
-      if (completedAction == "view")
-         completedFunction = boost::bind(viewPdf, targetFilePath);
-      else if (completedAction == "publish")
-         completedFunction = boost::bind(publishPdf, targetFilePath);
-
-      // compile pdf
-      AsyncPdfCompiler::start(targetFilePath, completedFunction);
-   }
-   CATCH_UNEXPECTED_EXCEPTION
-
-   return R_NilValue;
-}
-
-
 } // anonymous namespace
 
 
-Error initialize()
+bool startCompile(const core::FilePath& targetFilePath,
+                  const boost::function<void()>& onCompleted)
 {
-   R_CallMethodDef compilePdfMethodDef;
-   compilePdfMethodDef.name = "rs_compilePdf" ;
-   compilePdfMethodDef.fun = (DL_FUNC) rs_compilePdf ;
-   compilePdfMethodDef.numArgs = 2;
-   r::routines::addCallMethod(compilePdfMethodDef);
-
-   using boost::bind;
-   using namespace module_context;
-   ExecBlock initBlock ;
-   initBlock.addFunctions()
-      (compile_pdf_supervisor::initialize)
-      (bind(sourceModuleRFile, "SessionCompilePdf.R"));
-   return initBlock.execute();
-
+   if (!compile_pdf_supervisor::hasRunningChildren())
+   {
+      AsyncPdfCompiler::start(targetFilePath, onCompleted);
+      return true;
+   }
+   else
+   {
+      return false;
+   }
 }
-
 
 } // namespace compile_pdf
 } // namespace tex

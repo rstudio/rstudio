@@ -26,6 +26,7 @@
 #include "tex/SessionCompilePdf.hpp"
 #include "tex/SessionRnwWeave.hpp"
 #include "tex/SessionPdfLatex.hpp"
+#include "tex/SessionCompilePdf.hpp"
 #include "tex/SessionCompilePdfSupervisor.hpp"
 
 using namespace core;
@@ -35,6 +36,20 @@ namespace modules {
 namespace authoring {
 
 namespace {
+
+void viewPdf(const FilePath& texPath)
+{
+   FilePath pdfPath = texPath.parent().complete(texPath.stem() + ".pdf");
+   module_context::showFile(pdfPath, "_rstudio_compile_pdf");
+}
+
+void publishPdf(const FilePath& texPath)
+{
+   std::string aliasedPath = module_context::createAliasedPath(texPath);
+   ClientEvent event(client_events::kPublishPdf, aliasedPath);
+   module_context::enqueClientEvent(event);
+}
+
 
 Error getTexCapabilities(const core::json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
@@ -49,6 +64,35 @@ Error isTexInstalled(const json::JsonRpcRequest& request,
    pResponse->setResult(tex::pdflatex::isInstalled());
    return Success();
 }
+
+Error compilePdf(const json::JsonRpcRequest& request,
+                 json::JsonRpcResponse* pResponse)
+{
+   // read params
+   std::string targetFile, completedAction;
+   Error error = json::readParams(request.params,
+                                  &targetFile,
+                                  &completedAction);
+   if (error)
+      return error;
+   FilePath targetFilePath = module_context::resolveAliasedPath(targetFile);
+
+   // initialize the completed function
+   boost::function<void()> completedFunction;
+   if (completedAction == "view")
+      completedFunction = boost::bind(viewPdf, targetFilePath);
+   else if (completedAction == "publish")
+      completedFunction = boost::bind(publishPdf, targetFilePath);
+
+   // attempt to kickoff the compile
+   bool started = tex::compile_pdf::startCompile(targetFilePath,
+                                                 completedFunction);
+
+   // return true
+   pResponse->setResult(started);
+   return Success();
+}
+
 
 
 } // anonymous namespace
@@ -87,9 +131,10 @@ Error initialize()
    using namespace module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (tex::compile_pdf::initialize)
+      (tex::compile_pdf_supervisor::initialize)
       (bind(registerRpcMethod, "is_tex_installed", isTexInstalled))
       (bind(registerRpcMethod, "get_tex_capabilities", getTexCapabilities))
+      (bind(registerRpcMethod, "compile_pdf", compilePdf))
    ;
   return initBlock.execute();
 }

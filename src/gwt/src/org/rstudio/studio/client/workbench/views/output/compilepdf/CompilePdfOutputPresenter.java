@@ -15,44 +15,92 @@ package org.rstudio.studio.client.workbench.views.output.compilepdf;
 import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
+import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
-
+import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfOutputEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfError;
+import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfServerOperations;
 
 
 public class CompilePdfOutputPresenter extends BasePresenter
-   implements CompilePdfOutputEvent.Handler, 
+   implements CompilePdfEvent.Handler,
+              CompilePdfOutputEvent.Handler, 
               CompilePdfErrorsEvent.Handler
 {
    public interface Display extends WorkbenchView, HasEnsureHiddenHandlers
    {
+      void clearOutput();
       void showOutput(String output);
       void showErrors(JsArray<CompilePdfError> errors);
    }
 
    @Inject
-   public CompilePdfOutputPresenter(Display view)
+   public CompilePdfOutputPresenter(Display view,
+                                    GlobalDisplay globalDisplay,
+                                    CompilePdfServerOperations server)
    {
       super(view);
       view_ = view;
+      globalDisplay_ = globalDisplay;
+      server_ = server;
    }
 
    @Override
-   public void onCompilePdfOutput(CompilePdfOutputEvent event)
+   public void onCompilePdf(CompilePdfEvent event)
    {
       view_.bringToFront();
+      
+      server_.compilePdf(
+         event.getTargetFile(), 
+         event.getCompletedAction(), 
+         new ServerRequestCallback<Boolean>() 
+         {
+            @Override
+            public void onResponseReceived(Boolean started)
+            {
+               if (started)
+               {
+                  view_.clearOutput();
+               }
+               else
+               {
+                  globalDisplay_.showMessage(
+                       MessageDialog.INFO, 
+                       "Compile Already Running",
+                       "Another PDF compilation is already running, please " +
+                       "wait until it completes before starting another.");
+               }
+            }
+            
+            @Override
+            public void onError(ServerError error)
+            {
+               globalDisplay_.showErrorMessage("Error Compiling PDF", 
+                                               error.getUserMessage());
+            }
+      });
+      
+   }
+   
+   @Override
+   public void onCompilePdfOutput(CompilePdfOutputEvent event)
+   {
       view_.showOutput(event.getOutput());
    }
    
    @Override
    public void onCompilePdfErrors(CompilePdfErrorsEvent event)
    {
-      view_.bringToFront();
       view_.showErrors(event.getErrors());
    }
 
    private final Display view_;
+   private final GlobalDisplay globalDisplay_;
+   private final CompilePdfServerOperations server_;
 }

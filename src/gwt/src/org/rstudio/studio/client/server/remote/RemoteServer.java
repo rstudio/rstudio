@@ -2397,6 +2397,17 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SVN_SET_IGNORES, params, requestCallback);
    }
    
+   public void compilePdf(FileSystemItem targetFile, 
+                          String completedAction,
+                          ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(targetFile.getPath()));
+      params.set(1, new JSONString(completedAction));
+      sendRequest(RPC_SCOPE, COMPILE_PDF, params, requestCallback);
+   }
+   
+   
    public void checkSpelling(String word,
                              ServerRequestCallback<Boolean> requestCallback)
    {
@@ -2609,6 +2620,8 @@ public class RemoteServer implements Server
    private static final String LIST_APPEND_ITEM = "list_append_item";
    private static final String LIST_REMOVE_ITEM = "list_remove_item";
    private static final String LIST_CLEAR = "list_clear";
+   
+   private static final String COMPILE_PDF = "compile_pdf";
    
    private static final String CHECK_SPELLING = "check_spelling";
    private static final String SUGGESTION_LIST = "suggestion_list";

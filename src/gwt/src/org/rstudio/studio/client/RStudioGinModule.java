@@ -94,6 +94,7 @@ import org.rstudio.studio.client.workbench.views.history.view.HistoryPane;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.CompilePdfOutputPane;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.CompilePdfOutputPresenter;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.CompilePdfOutputTab;
+import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.Packages;
 import org.rstudio.studio.client.workbench.views.packages.PackagesPane;
 import org.rstudio.studio.client.workbench.views.packages.PackagesTab;
@@ -232,6 +233,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(CryptoServerOperations.class).to(RemoteServer.class);
       bind(TexServerOperations.class).to(RemoteServer.class);
       bind(SpellingServerOperations.class).to(RemoteServer.class);
+      bind(CompilePdfServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

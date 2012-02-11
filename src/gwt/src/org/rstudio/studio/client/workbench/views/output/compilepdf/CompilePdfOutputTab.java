@@ -18,13 +18,16 @@ import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfErrorsEvent;
+import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfOutputEvent;
 
 public class CompilePdfOutputTab extends DelayLoadWorkbenchTab<CompilePdfOutputPresenter>
 {
    public abstract static class Shim extends
                 DelayLoadTabShim<CompilePdfOutputPresenter, CompilePdfOutputTab>
-      implements CompilePdfOutputEvent.Handler, CompilePdfErrorsEvent.Handler
+      implements CompilePdfEvent.Handler,
+                 CompilePdfOutputEvent.Handler, 
+                 CompilePdfErrorsEvent.Handler
    {
    }
 
@@ -34,6 +37,7 @@ public class CompilePdfOutputTab extends DelayLoadWorkbenchTab<CompilePdfOutputP
    {
       super("Compile PDF", shim);
 
+      events.addHandler(CompilePdfEvent.TYPE, shim);
       events.addHandler(CompilePdfOutputEvent.TYPE, shim);
       events.addHandler(CompilePdfErrorsEvent.TYPE, shim);
    }

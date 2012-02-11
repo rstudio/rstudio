@@ -56,6 +56,13 @@ public class CompilePdfOutputPane extends WorkbenchPane
    }
   
    @Override
+   public void clearOutput()
+   {
+      outputWidget_.clearOutput();
+      
+   }
+   
+   @Override
    public void showOutput(String output)
    {
       outputWidget_.consoleWriteOutput(output);

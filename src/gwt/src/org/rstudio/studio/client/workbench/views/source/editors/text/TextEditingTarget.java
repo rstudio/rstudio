@@ -68,6 +68,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
+import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -1723,7 +1724,7 @@ public class TextEditingTarget implements EditingTarget
       });
       
       // send publish to console
-      handlePdfCommand("publishPdf");
+      handlePdfCommand("publish");
    }
    
    private void removePublishPdfHandler()
@@ -1738,7 +1739,7 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onCompilePDF()
    {
-      handlePdfCommand("compilePdf");
+      handlePdfCommand("view");
    }
 
    @Handler
@@ -1747,7 +1748,7 @@ public class TextEditingTarget implements EditingTarget
       view_.showFindReplace();
    }
    
-   void handlePdfCommand(final String function)
+   void handlePdfCommand(final String completedAction)
    {
       saveThenExecute(null, new Command()
       {
@@ -1755,12 +1756,12 @@ public class TextEditingTarget implements EditingTarget
          {
             String path = docUpdateSentinel_.getPath();
             if (path != null)
-               sendPdfFunctionToConsole(function, path);
+               fireCompilePdfEvent(path, completedAction);
          }
       });
    }
    
-   private void sendPdfFunctionToConsole(String function, String path)
+   private void fireCompilePdfEvent(String path, String completedAction)
    {
       // first validate the path to make sure it doesn't contain spaces
       FileSystemItem file = FileSystemItem.createFile(path);
@@ -1776,9 +1777,7 @@ public class TextEditingTarget implements EditingTarget
          return;
       }
       
-      // build the SendToConsoleEvent and fire it
-      String code = function + "(\"" + path + "\")";
-      final SendToConsoleEvent event = new SendToConsoleEvent(code, true);
+      CompilePdfEvent event = new CompilePdfEvent(file, completedAction);
       events_.fireEvent(event);
    }
    

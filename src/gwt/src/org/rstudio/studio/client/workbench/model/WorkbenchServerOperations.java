@@ -33,6 +33,7 @@ import org.rstudio.studio.client.workbench.views.edit.model.EditServerOperations
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
+import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -57,7 +58,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    CodeSearchServerOperations,
                                                    CryptoServerOperations,
                                                    WorkbenchListsServerOperations,
-                                                   SpellingServerOperations
+                                                   SpellingServerOperations,
+                                                   CompilePdfServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();

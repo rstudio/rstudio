@@ -14,8 +14,11 @@
 #ifndef SESSION_MODULES_TEX_COMPILE_PDF_HPP
 #define SESSION_MODULES_TEX_COMPILE_PDF_HPP
 
+#include <boost/function.hpp>
+
 namespace core {
    class Error;
+   class FilePath;
 }
  
 namespace session {
@@ -23,7 +26,8 @@ namespace modules {
 namespace tex {
 namespace compile_pdf {
 
-core::Error initialize();
+bool startCompile(const core::FilePath& targetFilePath,
+                  const boost::function<void()>& onCompleted);
 
 } // namespace compile_pdf
 } // namespace tex
