@@ -14,6 +14,7 @@
 #include "SessionCompilePdf.hpp"
 
 #include <boost/format.hpp>
+#include <boost/foreach.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
 #include <core/FilePath.hpp>
@@ -37,17 +38,19 @@
 #include "SessionRnwConcordance.hpp"
 #include "SessionCompilePdfSupervisor.hpp"
 
+// TODO: can't seem to get bibtex errors to show up -- test this
+
 // TODO: now that compilePdf is fully async, why should it even
 // be a function call? (why not a command handled by the presenter)
 
 // TODO: texi2dvi script prints to stderr when rstudio-pdflatex fails
 // with an error code, prevent this
 
+// TODO: fully mask shared_ptr/start for PdfCompiler (AysncPdfCompiler)
+
 // TODO: deal with ClientState
 
 // TODO: clear output before new compile
-
-// TODO: distinguished calls for errors
 
 // TODO: don't allow multiple concurrent compilations
 
@@ -85,31 +88,41 @@ void publishPdf(const FilePath& texPath)
    module_context::enqueClientEvent(event);
 }
 
-void showLogEntry(const core::tex::LogEntry& logEntry)
+json::Object logEntryJson(const core::tex::LogEntry& logEntry)
 {
-   boost::format fmt("%1% (line %2%): %3%\n");
-   std::string err = boost::str(
-               fmt % logEntry.file() % logEntry.line() % logEntry.message());
-   compile_pdf_supervisor::showOutput(err);
+   json::Object obj;
+   obj["type"] = static_cast<int>(logEntry.type());
+   obj["file"] = logEntry.file();
+   obj["line"] = logEntry.line();
+   obj["message"] = logEntry.message();
+   return obj;
 }
 
-void showLatexLogEntry(const core::tex::LogEntry& logEntry,
-                       const rnw_concordance::Concordance& rnwConcordance)
+void showLogEntries(const core::tex::LogEntries& logEntries,
+                    const rnw_concordance::Concordance& rnwConcordance =
+                                             rnw_concordance::Concordance())
 {
-   if (!rnwConcordance.empty() &&
-       (rnwConcordance.outputFile() == logEntry.file()))
+   json::Array logEntriesJson;
+   BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
    {
-      core::tex::LogEntry rnwEntry(logEntry.type(),
-                                   rnwConcordance.inputFile(),
-                                   rnwConcordance.rnwLine(logEntry.line()),
-                                   logEntry.message());
+      if (!rnwConcordance.empty() &&
+          (rnwConcordance.outputFile() == logEntry.file()))
+      {
+         core::tex::LogEntry rnwEntry(logEntry.type(),
+                                      rnwConcordance.inputFile(),
+                                      rnwConcordance.rnwLine(logEntry.line()),
+                                      logEntry.message());
 
-      showLogEntry(rnwEntry);
+         logEntriesJson.push_back(logEntryJson(rnwEntry));
+      }
+      else
+      {
+         logEntriesJson.push_back(logEntryJson(logEntry));
+      }
    }
-   else
-   {
-      showLogEntry(logEntry);
-   }
+
+   ClientEvent event(client_events::kCompilePdfErrorsEvent, logEntriesJson);
+   module_context::enqueClientEvent(event);
 }
 
 FilePath ancillaryFilePath(const FilePath& texFilePath, const std::string& ext)
@@ -131,23 +144,13 @@ bool showCompilationErrors(const FilePath& texPath,
                            const rnw_concordance::Concordance& rnwConcordance)
 {
    // latex log file
-   core::tex::LogEntries latexLogEntries;
+   core::tex::LogEntries logEntries;
    FilePath logPath = latexLogPath(texPath);
    if (logPath.exists())
    {
-      Error error = core::tex::parseLatexLog(logPath, &latexLogEntries);
+      Error error = core::tex::parseLatexLog(logPath, &logEntries);
       if (error)
          LOG_ERROR(error);
-
-      // show errors
-      if (!latexLogEntries.empty())
-      {
-         compile_pdf_supervisor::showOutput("\nLaTeX errors:\n");
-         std::for_each(latexLogEntries.begin(),
-                       latexLogEntries.end(),
-                       boost::bind(&showLatexLogEntry, _1, rnwConcordance));
-         compile_pdf_supervisor::showOutput("\n");
-      }
    }
 
    // bibtex log file
@@ -158,20 +161,23 @@ bool showCompilationErrors(const FilePath& texPath,
       Error error = core::tex::parseBibtexLog(logPath, &bibtexLogEntries);
       if (error)
          LOG_ERROR(error);
-
-      // show errors
-      if (!bibtexLogEntries.empty())
-      {
-         compile_pdf_supervisor::showOutput("BibTeX errors:\n");
-         std::for_each(bibtexLogEntries.begin(),
-                       bibtexLogEntries.end(),
-                       showLogEntry);
-         compile_pdf_supervisor::showOutput("\n");
-      }
    }
 
-   // return true if we printed at least one entry
-   return (latexLogEntries.size() + bibtexLogEntries.size()) > 0;
+   // concatenate them together
+   std::copy(bibtexLogEntries.begin(),
+             bibtexLogEntries.end(),
+             std::back_inserter(logEntries));
+
+   // show errors if necessary
+   if (!logEntries.empty())
+   {
+      showLogEntries(logEntries, rnwConcordance);
+      return true;
+   }
+   else
+   {
+      return false;
+   }
 }
 
 void removeExistingLogs(const FilePath& texFilePath)

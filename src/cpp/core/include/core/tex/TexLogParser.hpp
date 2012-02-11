@@ -27,7 +27,7 @@ namespace tex {
 class LogEntry
 {
 public:
-   enum Type { Error, Warning, Box };
+   enum Type { Error = 0, Warning = 1, Box = 2};
 
 public:
    LogEntry(Type type,
