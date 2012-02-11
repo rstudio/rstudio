@@ -12,8 +12,12 @@
  */
 package org.rstudio.studio.client.workbench.views.find;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.FindInFilesResultEvent;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
@@ -22,15 +26,24 @@ public class FindOutputTab extends DelayLoadWorkbenchTab<FindOutputPresenter>
 {
    public abstract static class Shim extends DelayLoadTabShim<FindOutputPresenter, FindOutputTab>
       implements FindInFilesResultEvent.Handler
+   {
+      @Handler
+      abstract void onFindInFiles();
+   }
+
+   static interface Binder extends CommandBinder<Commands, Shim>
    {}
 
    @Inject
    public FindOutputTab(Shim shim,
-                        EventBus events)
+                        EventBus events,
+                        Commands commands)
    {
       super("Find", shim);
 
       events.addHandler(FindInFilesResultEvent.TYPE, shim);
+
+      GWT.<Binder>create(Binder.class).bind(commands, shim);
    }
 
    @Override

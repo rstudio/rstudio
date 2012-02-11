@@ -57,6 +57,7 @@ public abstract class
    public abstract AppCommand popoutDoc();
    public abstract AppCommand find();
    public abstract AppCommand findReplace();
+   public abstract AppCommand findInFiles();
    public abstract AppCommand extractFunction();
    public abstract AppCommand commentUncomment();
    public abstract AppCommand reindent();

@@ -10,19 +10,10 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.codesearch.model;
-
-import org.rstudio.core.client.FilePosition;
+package org.rstudio.core.client;
 
 public class CodeNavigationTarget
 {
-   public static CodeNavigationTarget fromRSourceItem(RSourceItem srcItem)
-   {
-      return new CodeNavigationTarget(srcItem.getContext(),
-                                      FilePosition.create(srcItem.getLine(), 
-                                                          srcItem.getColumn()));
-   }
-   
    public CodeNavigationTarget(String file)
    {
       this(file, null);

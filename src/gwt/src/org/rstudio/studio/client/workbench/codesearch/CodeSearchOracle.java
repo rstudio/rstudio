@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.codesearch;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.TimeBufferedCommand;
@@ -22,7 +23,6 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
-import org.rstudio.studio.client.workbench.codesearch.model.CodeNavigationTarget;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.RFileItem;
 import org.rstudio.studio.client.workbench.codesearch.model.RSourceItem;

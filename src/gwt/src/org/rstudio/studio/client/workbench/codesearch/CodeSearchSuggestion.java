@@ -12,11 +12,11 @@
  */
 package org.rstudio.studio.client.workbench.codesearch;
 
+import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.workbench.codesearch.model.CodeNavigationTarget;
 import org.rstudio.studio.client.workbench.codesearch.model.RFileItem;
 import org.rstudio.studio.client.workbench.codesearch.model.RS4MethodParam;
 import org.rstudio.studio.client.workbench.codesearch.model.RSourceItem;
@@ -49,7 +49,7 @@ class CodeSearchSuggestion implements Suggestion
    public CodeSearchSuggestion(RSourceItem sourceItem, FileSystemItem fsContext)
    {
       isFileTarget_ = false;
-      navigationTarget_ = CodeNavigationTarget.fromRSourceItem(sourceItem);
+      navigationTarget_ = sourceItem.toCodeNavigationTarget();
       matchedString_ = sourceItem.getFunctionName();
       
       // compute display string

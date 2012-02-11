@@ -26,6 +26,17 @@ import java.util.Iterator;
 
 public class StringUtil
 {
+   public static String padRight(String value, int minWidth)
+   {
+      if (value.length() >= minWidth)
+         return value;
+
+      StringBuilder out = new StringBuilder();
+      for (int i = minWidth - value.length(); i > 0; i--)
+         out.append(' ');
+      out.append(value);
+      return out.toString();
+   }
 
    public static int parseInt(String value, int defaultValue)
    {

@@ -17,7 +17,6 @@
           </value>
         </option>
         <option name="FIELD_NAME_SUFFIX" value="_" />
-        <option name="INSERT_INNER_CLASS_IMPORTS" value="true" />
         <option name="STATIC_FIELDS_ORDER_WEIGHT" value="7" />
         <option name="FIELDS_ORDER_WEIGHT" value="6" />
         <option name="CONSTRUCTORS_ORDER_WEIGHT" value="4" />
