@@ -2,7 +2,7 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 @external fixedWidthFont;
-@external ace_editor, ace_text-layer, ace_gutter;
+@external ace_editor, ace_text-layer, ace_gutter, ace_gutter-layer, ace_gutter-cell;
 @external cueText;
 @external search;
 @external highlight, disabled;
@@ -151,6 +151,15 @@ pre {
 
 .ace_editor .ace_gutter {
    width: 3.3em !important;
+}
+
+.ace_editor .ace_gutter-layer {
+   position: relative;
+   text-align: right;
+}
+
+.ace_editor .ace_gutter-cell {
+   padding-right: 6px;
 }
 
 .gwt-MenuBar {
