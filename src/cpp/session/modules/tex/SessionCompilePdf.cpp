@@ -40,6 +40,8 @@
 
 // TODO: can't seem to get bibtex errors to show up -- test this
 
+// TODO: pull from find in files branch
+
 // TODO: now that compilePdf is fully async, why should it even
 // be a function call? (why not a command handled by the presenter)
 
