@@ -44,6 +44,12 @@
 // TODO: texi2dvi script prints to stderr when rstudio-pdflatex fails
 // with an error code, prevent this
 
+// TOOD: add support for multiple concordance entries written to file
+
+// TODO: inject concordance in the middle of the document
+
+// TODO: pgfSweave concordance
+
 // TODO: texi2dvi script also prints to stderr for citation failures,
 // should we allow this to pass through or capture it (simillar to above)
 
