@@ -67,6 +67,10 @@ shell_utils::ShellArgs buildArgs(const shell_utils::ShellArgs& args,
    return procArgs;
 }
 
+void ignoreOutput(const std::string& output)
+{
+}
+
 } // anonymous namespace
 
 RTexmfPaths rTexmfPaths()
@@ -162,11 +166,13 @@ core::Error runTexCompile(const core::FilePath& texProgramPath,
                           const core::FilePath& texFilePath,
                           const boost::function<void(int)>& onExited)
 {
-   return compile_pdf_supervisor::runProgram(texProgramPath,
-                                             buildArgs(args, texFilePath),
-                                             envVars,
-                                             texFilePath.parent(),
-                                             onExited);
+   return compile_pdf_supervisor::runProgram(
+                              texProgramPath,
+                              buildArgs(args, texFilePath),
+                              envVars,
+                              texFilePath.parent(),
+                              ignoreOutput,
+                              onExited);
 
 }
 

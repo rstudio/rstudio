@@ -290,6 +290,7 @@ void onWeaveProcessExit(
 
 void runWeave(const core::FilePath& rnwPath,
               const core::tex::TexMagicComments& magicComments,
+              const boost::function<void(const std::string&)>& onOutput,
               const CompletedFunction& onCompleted)
 {
    // remove existing concordance file (if any)
@@ -334,6 +335,7 @@ void runWeave(const core::FilePath& rnwPath,
                args,
                core::system::Options(),
                rnwPath.parent(),
+               onOutput,
                boost::bind(onWeaveProcessExit, _1, rnwPath, onCompleted, pCI));
       if (error)
       {

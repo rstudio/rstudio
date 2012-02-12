@@ -72,6 +72,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
    @Override
    public void showErrors(JsArray<CompilePdfError> errors)
    {
+      outputWidget_.consoleWriteOutput("\n");
       for (int i=0; i<errors.length(); i++)
          outputWidget_.consoleWriteOutput(errors.get(i).asString() + "\n");
    }

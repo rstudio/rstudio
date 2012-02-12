@@ -63,6 +63,7 @@ typedef boost::function<void(const Result&)> CompletedFunction;
 
 void runWeave(const core::FilePath& filePath,
               const core::tex::TexMagicComments& magicComments,
+              const boost::function<void(const std::string&)>& onOutput,
               const CompletedFunction& onCompleted);
 
 

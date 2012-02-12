@@ -59,16 +59,11 @@ bool hasRunningChildren()
    return s_processSupervisor.hasRunningChildren();
 }
 
-void showOutput(const std::string& output)
-{
-   ClientEvent event(client_events::kCompilePdfOutputEvent, output);
-   module_context::enqueClientEvent(event);
-}
-
 Error runProgram(const core::FilePath& programFilePath,
                  const std::vector<std::string>& args,
                  const core::system::Options& extraEnvVars,
                  const core::FilePath& workingDir,
+                 const boost::function<void(const std::string&)>& onOutput,
                  const boost::function<void(int)>& onExited)
 {
    // get system program file path
@@ -86,8 +81,8 @@ Error runProgram(const core::FilePath& programFilePath,
 
    // setup callbacks
    core::system::ProcessCallbacks cb;
-   cb.onStdout = boost::bind(showOutput, _2);
-   cb.onStderr = boost::bind(showOutput, _2);
+   cb.onStdout = boost::bind(onOutput, _2);
+   cb.onStderr = boost::bind(onOutput, _2);
    cb.onExit = onExited;
 
    // run process using supervisor

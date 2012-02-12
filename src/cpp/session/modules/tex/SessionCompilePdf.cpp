@@ -38,20 +38,11 @@
 #include "SessionRnwConcordance.hpp"
 #include "SessionCompilePdfSupervisor.hpp"
 
-// TODO: now that compilePdf is fully async, why should it even
-// be a function call? (why not a command handled by the presenter)
-
-// TODO: texi2dvi script prints to stderr when rstudio-pdflatex fails
-// with an error code, prevent this
-
 // TOOD: add support for multiple concordance entries written to file
 
 // TODO: inject concordance in the middle of the document
 
 // TODO: pgfSweave concordance
-
-// TODO: texi2dvi script also prints to stderr for citation failures,
-// should we allow this to pass through or capture it (simillar to above)
 
 // TODO: deal with ClientState
 
@@ -73,6 +64,12 @@ namespace tex {
 namespace compile_pdf {
 
 namespace {
+
+void showOutput(const std::string& output)
+{
+   ClientEvent event(client_events::kCompilePdfOutputEvent, output);
+   module_context::enqueClientEvent(event);
+}
 
 json::Object logEntryJson(const core::tex::LogEntry& logEntry)
 {
@@ -309,6 +306,7 @@ private:
          // attempt to weave the rnw
          rnw_weave::runWeave(targetFilePath_,
                              magicComments_,
+                             showOutput,
                              boost::bind(
                               &AsyncPdfCompiler::onWeaveCompleted,
                                  AsyncPdfCompiler::shared_from_this(), _1));
@@ -368,7 +366,7 @@ private:
          auxillaryFileCleanupContext_.init(texFilePath);
 
       // run latex compile
-      compile_pdf_supervisor::showOutput("\nRunning LaTeX compiler...");
+      showOutput("\nRunning LaTeX compiler...");
 
       // try to use texi2dvi if we can
       if (userSettings().useTexi2Dvi() && tex::texi2dvi::isAvailable())
@@ -422,14 +420,14 @@ private:
    {
       if (exitStatus == EXIT_SUCCESS)
       {
-         compile_pdf_supervisor::showOutput("completed\n");
+         showOutput("completed\n");
 
          if (onCompleted_)
             onCompleted_();
       }
       else
       {
-         compile_pdf_supervisor::showOutput("\n");
+         showOutput("\n");
 
          // don't remove the log
          auxillaryFileCleanupContext_.preserveLog();
@@ -448,7 +446,7 @@ private:
 
    void reportError(const std::string& message)
    {
-      compile_pdf_supervisor::showOutput(message + "\n");
+      showOutput(message + "\n");
    }
 
 private:

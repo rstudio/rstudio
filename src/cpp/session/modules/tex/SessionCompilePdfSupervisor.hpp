@@ -37,12 +37,11 @@ namespace compile_pdf_supervisor {
 
 bool hasRunningChildren();
 
-void showOutput(const std::string& output);
-
 core::Error runProgram(const core::FilePath& programFilePath,
                        const std::vector<std::string>& args,
                        const core::system::Options& extraEnvVars,
                        const core::FilePath& workingDir,
+                       const boost::function<void(const std::string&)>& onOutput,
                        const boost::function<void(int)>& onExited);
 
 core::Error initialize();
