@@ -244,6 +244,9 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
 
    std::string latex = readPref<std::string>(prefs, "default_latex_program", "pdfLaTeX");
    pDefaultLatexProgram_.reset(new std::string(latex));
+
+   bool alwaysEnableRnwConcordance = readPref<bool>(prefs, "always_enable_concordance", true);
+   pAlwaysEnableRnwConcordance_.reset(new bool(alwaysEnableRnwConcordance));
 }
 
 
@@ -272,6 +275,11 @@ std::string UserSettings::defaultSweaveEngine() const
 std::string UserSettings::defaultLatexProgram() const
 {
    return readUiPref<std::string>(pDefaultLatexProgram_);
+}
+
+bool UserSettings::alwaysEnableRnwCorcordance() const
+{
+   return readUiPref<bool>(pAlwaysEnableRnwConcordance_);
 }
 
 bool UserSettings::alwaysRestoreLastProject() const
@@ -418,17 +426,6 @@ void UserSettings::setVcsUseGitBash(bool useGitBash)
 {
    settings_.set("vcsUseGitBash", useGitBash);
 }
-
-bool UserSettings::alwaysEnableRnwCorcordance() const
-{
-   return settings_.getBool("alwaysEnableConcordance", true);
-}
-
-void UserSettings::setAlwaysEnableRnwConcordance(bool alwaysEnableConcordance)
-{
-   settings_.set("alwaysEnableConcordance", alwaysEnableConcordance);
-}
-
 
 bool UserSettings::useTexi2Dvi() const
 {

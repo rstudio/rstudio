@@ -38,8 +38,8 @@
 #include "SessionRnwConcordance.hpp"
 #include "SessionCompilePdfSupervisor.hpp"
 
-
-// TOOD: can't call move for concordance injector (cross device link)
+// TODO: can't call move for concordance injector (cross device link)
+// TODO: inject concordance in the middle of the document
 
 // TODO: deal with ClientState
 
@@ -55,8 +55,6 @@
 // TODO: sweave/knitr errors
 
 // TOOD: add support for multiple concordance entries written to file
-
-// TODO: inject concordance in the middle of the document
 
 // TODO: pgfSweave concordance
 

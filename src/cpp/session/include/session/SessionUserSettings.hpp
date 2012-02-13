@@ -90,6 +90,7 @@ public:
    std::string defaultEncoding() const;
    std::string defaultSweaveEngine() const;
    std::string defaultLatexProgram() const;
+   bool alwaysEnableRnwCorcordance() const;
 
    bool alwaysRestoreLastProject() const;
    void setAlwaysRestoreLastProject(bool alwaysRestore);
@@ -129,9 +130,6 @@ public:
 
    bool vcsUseGitBash() const;
    void setVcsUseGitBash(bool useGitBash);
-
-   bool alwaysEnableRnwCorcordance() const;
-   void setAlwaysEnableRnwConcordance(bool alwaysEnableConcordance);
 
    bool useTexi2Dvi() const;
    void setUsetexi2Dvi(bool useTexi2Dvi);
@@ -173,6 +171,7 @@ private:
    mutable boost::scoped_ptr<std::string> pDefaultEncoding_;
    mutable boost::scoped_ptr<std::string> pDefaultSweaveEngine_;
    mutable boost::scoped_ptr<std::string> pDefaultLatexProgram_;
+   mutable boost::scoped_ptr<bool> pAlwaysEnableRnwConcordance_;
 };
    
 } // namespace session

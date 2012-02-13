@@ -18,20 +18,14 @@ public class WritingPrefs extends JavaScriptObject
 {
    protected WritingPrefs() {}
 
-   public static final native WritingPrefs create(boolean alwaysEnableConcordance,
-                                                  boolean useTexi2Dvi, 
+   public static final native WritingPrefs create(boolean useTexi2Dvi, 
                                                   boolean cleanOutput,
                                                   boolean enableShellEscape) /*-{
       var prefs = new Object();
-      prefs.always_enable_concordance = alwaysEnableConcordance;
       prefs.use_texi2dvi = useTexi2Dvi;
       prefs.clean_output = cleanOutput;
       prefs.enable_shell_escape = enableShellEscape;
       return prefs ;
-   }-*/;
-
-   public native final boolean getAlwaysEnableConcordance() /*-{
-      return this.always_enable_concordance;
    }-*/;
    
    public native final boolean getUseTexi2Dvi() /*-{

@@ -58,10 +58,11 @@ public class WritingPreferencesPane extends PreferencesPane
       spaced(perProjectLabel);
       add(perProjectLabel);
       
-      chkAlwaysEnableConcordance_ = new CheckBox(
-                           "Always enable Rnw concordance");
-      spaced(chkAlwaysEnableConcordance_);
-      add(chkAlwaysEnableConcordance_);
+      CheckBox chkConcordance = checkboxPref(
+                                       "Always enable Rnw concordance",
+                                       prefs_.alwaysEnableRnwConcordance());
+      spaced(chkConcordance);
+      add(chkConcordance);
       
       chkUseTexi2Dvi_ = new CheckBox( "Use texi2dvi for LaTeX compilation");
       spaced(chkUseTexi2Dvi_);
@@ -101,7 +102,6 @@ public class WritingPreferencesPane extends PreferencesPane
    protected void initialize(RPrefs prefs)
    {
       WritingPrefs writingPrefs = prefs.getWritingPrefs();
-      chkAlwaysEnableConcordance_.setValue(writingPrefs.getAlwaysEnableConcordance());
       chkUseTexi2Dvi_.setValue(writingPrefs.getUseTexi2Dvi());
       chkCleanTexi2DviOutput_.setValue(writingPrefs.getCleanOutput());
       chkEnableShellEscape_.setValue(writingPrefs.getEnableShellEscape());
@@ -116,9 +116,8 @@ public class WritingPreferencesPane extends PreferencesPane
                                     defaultSweaveEngine_.getValue());
       prefs_.defaultLatexProgram().setGlobalValue(
                                     defaultLatexProgram_.getValue());
-      
+         
       WritingPrefs writingPrefs = WritingPrefs.create(
-                                       chkAlwaysEnableConcordance_.getValue(),
                                        chkUseTexi2Dvi_.getValue(), 
                                        chkCleanTexi2DviOutput_.getValue(),
                                        chkEnableShellEscape_.getValue());
@@ -133,7 +132,6 @@ public class WritingPreferencesPane extends PreferencesPane
    
    private RnwWeaveSelectWidget defaultSweaveEngine_;
    private LatexProgramSelectWidget defaultLatexProgram_;
-   private CheckBox chkAlwaysEnableConcordance_;
    private CheckBox chkUseTexi2Dvi_;
    private CheckBox chkCleanTexi2DviOutput_;
    private CheckBox chkEnableShellEscape_;

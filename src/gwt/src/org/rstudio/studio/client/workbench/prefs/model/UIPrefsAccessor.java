@@ -137,5 +137,10 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<String> defaultLatexProgram()
    {
       return string("default_latex_program", "pdfLaTeX");
-   }   
+   }
+   
+   public PrefValue<Boolean> alwaysEnableRnwConcordance()
+   {
+      return bool("always_enable_concordance", true);
+   }
 }
