@@ -39,6 +39,8 @@
 #include "SessionCompilePdfSupervisor.hpp"
 
 
+// TOOD: can't call move for concordance injector (cross device link)
+
 // TODO: deal with ClientState
 
 // TODO: ability to stop/interrupt
