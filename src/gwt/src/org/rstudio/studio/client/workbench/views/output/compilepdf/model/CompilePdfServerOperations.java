@@ -24,7 +24,6 @@ public interface CompilePdfServerOperations
    // to terminate a running compile
    void compilePdf(FileSystemItem targetFile, 
                    String completedAction,
-                   boolean terminateExisting,
                    ServerRequestCallback<Boolean> requestCallback);
    
    // check whether compile pdf is running

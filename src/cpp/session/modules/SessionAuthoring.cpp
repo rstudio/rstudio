@@ -70,22 +70,12 @@ Error compilePdf(const json::JsonRpcRequest& request,
 {
    // read params
    std::string targetFile, completedAction;
-   bool terminateExisting;
    Error error = json::readParams(request.params,
                                   &targetFile,
-                                  &completedAction,
-                                  &terminateExisting);
+                                  &completedAction);
    if (error)
       return error;
    FilePath targetFilePath = module_context::resolveAliasedPath(targetFile);
-
-   // attempt to terminate existing if requested (this will wait up to
-   // 1 second for the processes to exit). continue on even if we
-   // are unable to terminate existing
-   if (tex::compile_pdf::compileIsRunning() && terminateExisting)
-   {
-      tex::compile_pdf::terminateCompile();
-   }
 
    // initialize the completed function
    boost::function<void()> completedFunction;

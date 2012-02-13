@@ -13,10 +13,15 @@
 package org.rstudio.studio.client.workbench.views.output.compilepdf;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -50,43 +55,30 @@ public class CompilePdfOutputPresenter extends BasePresenter
       globalDisplay_ = globalDisplay;
       server_ = server;
    }
+   
+   public void confirmClose(final Command onConfirmed)
+   {  
+      server_.compilePdfRunning(
+                  new RequestCallback<Boolean>("Closing Compile PDF...") {
+         @Override
+         public void onSuccess(Boolean isRunning)
+         {  
+            if (isRunning)
+            {
+               confirmTerminateRunningCompile("close the Compile PDF tab", 
+                                              onConfirmed);
+            }
+         }
+      });
+      
+   }
 
    @Override
    public void onCompilePdf(CompilePdfEvent event)
    {
       view_.bringToFront();
       
-      server_.compilePdf(
-         event.getTargetFile(), 
-         event.getCompletedAction(), 
-         false,
-         new ServerRequestCallback<Boolean>() 
-         {
-            @Override
-            public void onResponseReceived(Boolean started)
-            {
-               if (started)
-               {
-                  view_.clearOutput();
-               }
-               else
-               {
-                  globalDisplay_.showMessage(
-                       MessageDialog.INFO, 
-                       "Compile Already Running",
-                       "Another PDF compilation is already running, please " +
-                       "wait until it completes before starting another.");
-               }
-            }
-            
-            @Override
-            public void onError(ServerError error)
-            {
-               globalDisplay_.showErrorMessage("Error Compiling PDF", 
-                                               error.getUserMessage());
-            }
-      });
-      
+      compilePdf(event.getTargetFile(), event.getCompletedAction());
    }
    
    @Override
@@ -100,7 +92,93 @@ public class CompilePdfOutputPresenter extends BasePresenter
    {
       view_.showErrors(event.getErrors());
    }
+   
+   
+   private void compilePdf(final FileSystemItem targetFile,
+                           final String completedAction)
+   {
+      server_.compilePdf(
+            targetFile, 
+            completedAction, 
+            new RequestCallback<Boolean>("Compiling PDF...") 
+            {
+               @Override
+               protected void onSuccess(Boolean started)
+               {
+                  if (started)
+                  {
+                     view_.clearOutput();
+                  }
+                  else
+                  {
+                     confirmTerminateRunningCompile(
+                           "start a new compilation",
+                           new Command() {
+   
+                              @Override
+                              public void execute()
+                              {
+                                 compilePdf(targetFile, completedAction);
+                              }     
+                           });
+                  }
+               }
+         });
+   }
+   
+   private void confirmTerminateRunningCompile(String operation,
+                                               final Command onTerminated)
+   {
+      globalDisplay_.showYesNoMessage(
+         MessageDialog.WARNING,
+         "Stop Running Compile", 
+         "There is a PDF compilation currently running. If you " +
+         operation + " it will be terminated. Are you " +
+         "sure you want to stop the running PDF compilation?", 
+         new Operation() {
+            @Override
+            public void execute()
+            {
+               server_.terminateCompilePdf(new RequestCallback<Boolean>(
+                                       "Terminating PDF compilation...") {
+                  @Override
+                  protected void onSuccess(Boolean wasTerminated)
+                  {
+                     if (wasTerminated)
+                        onTerminated.execute();           
+                  }
+               });
+            }},
+            false);
+   }
+   
+   
+   private abstract class RequestCallback<T> extends ServerRequestCallback<T>
+   {
+      public RequestCallback(String progressMessage)
+      {
+         indicator_ = new GlobalProgressDelayer(
+            globalDisplay_,  500, progressMessage).getIndicator();
+      }
+      
+      @Override
+      public void onResponseReceived(T response)
+      {
+         indicator_.onCompleted();
+         onSuccess(response);
+      }
+      
+      protected abstract void onSuccess(T response);
 
+      @Override
+      public void onError(ServerError error)
+      {
+         indicator_.onError(error.getUserMessage());
+      }
+      
+      private ProgressIndicator indicator_;   
+   };
+   
    private final Display view_;
    private final GlobalDisplay globalDisplay_;
    private final CompilePdfServerOperations server_;

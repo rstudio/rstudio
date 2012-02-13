@@ -2399,13 +2399,11 @@ public class RemoteServer implements Server
    
    public void compilePdf(FileSystemItem targetFile, 
                           String completedAction,
-                          boolean terminateExisting,
                           ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(targetFile.getPath()));
       params.set(1, new JSONString(completedAction));
-      params.set(2, JSONBoolean.getInstance(terminateExisting));
       sendRequest(RPC_SCOPE, COMPILE_PDF, params, requestCallback);
    }
    

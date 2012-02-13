@@ -41,8 +41,6 @@
 
 // TODO: deal with ClientState
 
-// TOOD: perhaps diable closeabilty if running?
-
 // TODO: ability to stop/interrupt
 
 // TODO: show filename in toolbar
