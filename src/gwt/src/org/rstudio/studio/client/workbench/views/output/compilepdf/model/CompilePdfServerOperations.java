@@ -20,8 +20,16 @@ public interface CompilePdfServerOperations
 {
    // returns true to indicate that the compile has started, returns false
    // to indicate that the compile pdf could not be started because another
-   // compile is currently in progress
+   // compile is currently in progress. pass the terminateExisting flag
+   // to terminate a running compile
    void compilePdf(FileSystemItem targetFile, 
                    String completedAction,
+                   boolean terminateExisting,
                    ServerRequestCallback<Boolean> requestCallback);
+   
+   // check whether compile pdf is running
+   void compilePdfRunning(ServerRequestCallback<Boolean> requestCallback);
+   
+   // terminate any running pdf compilation
+   void terminateCompilePdf(ServerRequestCallback<Boolean> requestCallback);
 }

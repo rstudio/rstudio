@@ -38,11 +38,6 @@
 #include "SessionRnwConcordance.hpp"
 #include "SessionCompilePdfSupervisor.hpp"
 
-// TOOD: add support for multiple concordance entries written to file
-
-// TODO: inject concordance in the middle of the document
-
-// TODO: pgfSweave concordance
 
 // TODO: deal with ClientState
 
@@ -52,9 +47,18 @@
 
 // TODO: show filename in toolbar
 
+// TODO: manaual texi2dvi must correctly detect terminateAll error state
+// (as opposed to stock errors -- check exit codes on all platforms)
+
 // TODO: separate output and error panes
 
 // TODO: sweave/knitr errors
+
+// TOOD: add support for multiple concordance entries written to file
+
+// TODO: inject concordance in the middle of the document
+
+// TODO: pgfSweave concordance
 
 using namespace core;
 
@@ -474,6 +478,27 @@ bool startCompile(const core::FilePath& targetFilePath,
       return false;
    }
 }
+
+bool compileIsRunning()
+{
+   return compile_pdf_supervisor::hasRunningChildren();
+}
+
+bool terminateCompile()
+{
+   Error error = compile_pdf_supervisor::terminateAll(
+                                             boost::posix_time::seconds(1));
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+   else
+   {
+      return true;
+   }
+}
+
 
 } // namespace compile_pdf
 } // namespace tex

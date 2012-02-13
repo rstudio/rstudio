@@ -29,6 +29,10 @@ namespace compile_pdf {
 bool startCompile(const core::FilePath& targetFilePath,
                   const boost::function<void()>& onCompleted);
 
+bool compileIsRunning();
+
+bool terminateCompile();
+
 } // namespace compile_pdf
 } // namespace tex
 } // namespace modules

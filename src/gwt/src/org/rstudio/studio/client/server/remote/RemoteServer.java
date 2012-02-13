@@ -2399,12 +2399,25 @@ public class RemoteServer implements Server
    
    public void compilePdf(FileSystemItem targetFile, 
                           String completedAction,
+                          boolean terminateExisting,
                           ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(targetFile.getPath()));
       params.set(1, new JSONString(completedAction));
+      params.set(2, JSONBoolean.getInstance(terminateExisting));
       sendRequest(RPC_SCOPE, COMPILE_PDF, params, requestCallback);
+   }
+   
+   public void compilePdfRunning(ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, COMPILE_PDF_RUNNING, requestCallback);
+   }
+   
+   public void terminateCompilePdf(
+                           ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, TERMINATE_COMPILE_PDF, requestCallback);
    }
    
    
@@ -2622,6 +2635,8 @@ public class RemoteServer implements Server
    private static final String LIST_CLEAR = "list_clear";
    
    private static final String COMPILE_PDF = "compile_pdf";
+   private static final String COMPILE_PDF_RUNNING = "compile_pdf_running";
+   private static final String TERMINATE_COMPILE_PDF = "terminate_compile_pdf";
    
    private static final String CHECK_SPELLING = "check_spelling";
    private static final String SUGGESTION_LIST = "suggestion_list";

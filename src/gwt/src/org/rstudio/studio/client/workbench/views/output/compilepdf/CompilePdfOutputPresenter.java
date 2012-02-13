@@ -59,6 +59,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
       server_.compilePdf(
          event.getTargetFile(), 
          event.getCompletedAction(), 
+         false,
          new ServerRequestCallback<Boolean>() 
          {
             @Override

@@ -59,6 +59,25 @@ bool hasRunningChildren()
    return s_processSupervisor.hasRunningChildren();
 }
 
+Error terminateAll(const boost::posix_time::time_duration& waitDuration)
+{
+   // send the kill signals
+   s_processSupervisor.terminateAll();
+
+   // wait for the processes to exit
+   if (!s_processSupervisor.wait(boost::posix_time::milliseconds(100),
+                                 waitDuration))
+   {
+      return systemError(boost::system::errc::timed_out,
+                         "CompilePDF didn't terminate within timeout interval",
+                         ERROR_LOCATION);
+   }
+   else
+   {
+      return Success();
+   }
+}
+
 Error runProgram(const core::FilePath& programFilePath,
                  const std::vector<std::string>& args,
                  const core::system::Options& extraEnvVars,

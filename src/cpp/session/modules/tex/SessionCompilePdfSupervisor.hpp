@@ -17,9 +17,10 @@
 #include <string>
 #include <vector>
 
-#include <core/system/Types.hpp>
-
 #include <boost/function.hpp>
+#include <boost/date_time/posix_time/posix_time_duration.hpp>
+
+#include <core/system/Types.hpp>
 
 namespace core {
    class Error;
@@ -36,6 +37,7 @@ namespace compile_pdf_supervisor {
 
 
 bool hasRunningChildren();
+core::Error terminateAll(const boost::posix_time::time_duration& waitDuration);
 
 core::Error runProgram(const core::FilePath& programFilePath,
                        const std::vector<std::string>& args,
