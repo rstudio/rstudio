@@ -256,6 +256,9 @@ public class WindowFrame extends Composite
          frame_.add(button);
          frame_.setWidgetRightWidth(button, 48, Unit.PX, width, Unit.PX);
          frame_.setWidgetTopHeight(button, 3, Unit.PX, height, Unit.PX);
+         // Without z-index, the header widget will obscure the context button
+         // if the former is set after the latter.
+         frame_.getWidgetContainerElement(button).getStyle().setZIndex(10);
       }
    }
 
