@@ -102,10 +102,8 @@ public class CodeSplitter2 {
    */
   public static final class FragmentPartitioningResult {
     private final int[] fragmentToSplitPoint;
-    private final int[] splitPointToFragmentMap;
     
     private FragmentPartitioningResult(int[] splitPointToFragmentMap, int numFragments) {
-      this.splitPointToFragmentMap = splitPointToFragmentMap;
       fragmentToSplitPoint = new int[numFragments];
       for (int i = 0, len = splitPointToFragmentMap.length - 1; i < len; i++) {
         System.out.println("splitPointToFragmentMap[" + i + "] = " + splitPointToFragmentMap[i]);
@@ -118,14 +116,7 @@ public class CodeSplitter2 {
         }
       }
     }
-
-    /**
-     * @return Fragment index from a splitpoint number.
-     */
-    public int getFragmentFromSplitPoint(int splitpoint) {
-      return splitPointToFragmentMap[splitpoint];
-    }
-
+    
     /**
      * @return Fragment number of the left over fragment.
      */
@@ -144,11 +135,11 @@ public class CodeSplitter2 {
      * @return One of the split point number in a given fragment. If there
      *     are more than one splitpoints in the a fragment, -1 is returned.
      */
-    public int getSplitPointFromFragment(int fragment) {
+    public int getSplitPointFromFragmnet(int fragment) {
       return fragmentToSplitPoint[fragment];
     }
   }
-
+  
   /**
    * Marks the type of partition heuristics 
    */
