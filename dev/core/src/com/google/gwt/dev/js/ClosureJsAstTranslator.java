@@ -46,6 +46,7 @@ import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsNullLiteral;
 import com.google.gwt.dev.js.ast.JsNumberLiteral;
+import com.google.gwt.dev.js.ast.JsNumericEntry;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
@@ -83,7 +84,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Translate a Dart JS AST to a Closure Compiler AST.
+ * Translate a GWT JS AST to a Closure Compiler AST.
  */
 public class ClosureJsAstTranslator {
   private static String getStringValue(double value) {
@@ -420,6 +421,9 @@ public class ClosureJsAstTranslator {
       case NULL:
         return transform((JsNullLiteral) x);
       case NUMBER:
+        if (x instanceof JsNumericEntry) {
+          return transform((JsNumericEntry) x);
+        }
         return transform((JsNumberLiteral) x);
       case REGEXP:
         return transform((JsRegExp) x);
@@ -599,6 +603,10 @@ public class ClosureJsAstTranslator {
     return IR.nullNode();
   }
 
+  private Node transform(JsNumericEntry x) {
+    return IR.number(x.getValue());
+  }
+  
   private Node transform(JsNumberLiteral x) {
     return IR.number(x.getValue());
   }
