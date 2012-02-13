@@ -27,4 +27,8 @@ public class RnwWeave extends JavaScriptObject
    public final native String getPackageName() /*-{
       return this.package_name;
    }-*/;
+   
+   public final native boolean getInjectConcordance() /*-{
+      return this.inject_concordance;
+   }-*/;
 }

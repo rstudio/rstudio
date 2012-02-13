@@ -71,6 +71,8 @@ public:
    const std::string& name() const { return name_; }
    const std::string& packageName() const { return packageName_; }
 
+   virtual bool injectConcordance() const = 0;
+
    virtual bool isInstalled() const = 0;
 
    virtual std::vector<std::string> commandArgs(
@@ -90,6 +92,8 @@ public:
    }
 
    virtual bool isInstalled() const { return true; }
+
+    virtual bool injectConcordance() const { return true; }
 
 #ifdef _WIN32
    virtual std::vector<std::string> commandArgs(const std::string& file) const
@@ -154,6 +158,8 @@ public:
                          "require(pgfSweave); pgfSweave('%1%')")
    {
    }
+
+   virtual bool injectConcordance() const { return false; }
 };
 
 class RnwKnitr : public RnwExternalWeave
@@ -165,6 +171,8 @@ public:
                          "require(knitr); knit('%1%')")
    {
    }
+
+   virtual bool injectConcordance() const { return false; }
 };
 
 
@@ -336,6 +344,7 @@ json::Array supportedTypes()
       json::Object object;
       object["name"] = pRnwWeave->name();
       object["package_name"] = pRnwWeave->packageName();
+      object["inject_concordance"] = pRnwWeave->injectConcordance();
       array.push_back(object);
    }
    return array;
