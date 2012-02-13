@@ -196,17 +196,6 @@ Error readIfExists(const core::FilePath& rnwFile, Concordance* pConcordance)
    }
 }
 
-
-SweaveConcordanceInjector::SweaveConcordanceInjector(const FilePath& rnwFile)
-   : ConcordanceInjector(rnwFile)
-{
-}
-
-SweaveConcordanceInjector::~SweaveConcordanceInjector()
-{
-}
-
-
 } // namespace rnw_concordance
 } // namespace tex
 } // namespace modules

@@ -76,12 +76,6 @@ public:
    virtual std::vector<std::string> commandArgs(
                                     const std::string& file) const = 0;
 
-   virtual boost::shared_ptr<ConcordanceInjector> createConcordanceInjector(
-                                          const FilePath&)
-   {
-      return boost::shared_ptr<ConcordanceInjector>();
-   }
-
 private:
    std::string name_;
    std::string packageName_;
@@ -117,16 +111,6 @@ public:
       return args;
    }
 #endif
-
-   virtual boost::shared_ptr<ConcordanceInjector> createConcordanceInjector(
-                                          const FilePath& rnwFile)
-   {
-       boost::shared_ptr<SweaveConcordanceInjector> pInjector(
-                                    new SweaveConcordanceInjector(rnwFile));
-
-       return boost::shared_static_cast<ConcordanceInjector>(pInjector);
-   }
-
 };
 
 class RnwExternalWeave : public RnwWeave
@@ -259,13 +243,9 @@ std::string weaveTypeForFile(const core::tex::TexMagicComments& magicComments)
 }
 
 
-void onWeaveProcessExit(
-      int exitCode,
-      const FilePath& rnwPath,
-      const CompletedFunction& onCompleted,
-      boost::shared_ptr<ConcordanceInjector>) // bound to keep the object
-                                              // alive until the weave
-                                              // process exits
+void onWeaveProcessExit(int exitCode,
+                        const FilePath& rnwPath,
+                        const CompletedFunction& onCompleted)
 {
    if (exitCode == EXIT_SUCCESS)
    {
@@ -321,11 +301,6 @@ void runWeave(const core::FilePath& rnwPath,
    // run the weave
    if (pRnwWeave)
    {
-      // if requested temporarily inject concordance directive
-      boost::shared_ptr<ConcordanceInjector> pCI;
-      if (userSettings().alwaysEnableRnwCorcordance())
-         pCI = pRnwWeave->createConcordanceInjector(rnwPath);
-
       std::vector<std::string> args = pRnwWeave->commandArgs(
                                                          rnwPath.filename());
 
@@ -336,7 +311,7 @@ void runWeave(const core::FilePath& rnwPath,
                core::system::Options(),
                rnwPath.parent(),
                onOutput,
-               boost::bind(onWeaveProcessExit, _1, rnwPath, onCompleted, pCI));
+               boost::bind(onWeaveProcessExit, _1, rnwPath, onCompleted));
       if (error)
       {
          LOG_ERROR(error);

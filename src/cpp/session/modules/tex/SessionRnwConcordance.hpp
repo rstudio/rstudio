@@ -79,36 +79,6 @@ void removePrevious(const core::FilePath& rnwFile);
 core::Error readIfExists(const core::FilePath& rnwFile,
                          Concordance* pConcordance);
 
-class ConcordanceInjector : boost::noncopyable
-{
-public:
-   ConcordanceInjector(const core::FilePath& rnwFile)
-      : rnwFile_(rnwFile)
-   {
-   }
-   virtual ~ConcordanceInjector()
-   {
-   }
-
-   // COPYING: noncopyable (to prevent slicing)
-
-protected:
-   const core::FilePath& rnwFilePath() const { return rnwFile_; }
-
-private:
-   core::FilePath rnwFile_;
-};
-
-class SweaveConcordanceInjector : public ConcordanceInjector
-{
-public:
-   explicit SweaveConcordanceInjector(const core::FilePath& rnwFile);
-   virtual ~SweaveConcordanceInjector();
-
-private:
-   core::FilePath rnwFileBackup_;
-};
-
 } // namespace rnw_concordance
 } // namespace tex
 } // namespace modules
