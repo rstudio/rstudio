@@ -309,8 +309,8 @@ public class JProgram extends JNode {
 
     // If there were some fragment merging.
     if (result != null) {
-      sp1 = result.getSplitPointFromFragmnet(sp1);
-      sp2 = result.getSplitPointFromFragmnet(sp2);
+      sp1 = result.getSplitPointFromFragment(sp1);
+      sp2 = result.getSplitPointFromFragment(sp2);
     }
     
     int initPos1 = initialSeq.indexOf(sp1);
@@ -680,6 +680,10 @@ public class JProgram extends JNode {
   public int getFragmentCount() {
     // Initial fragment is the +1.
     return runAsyncs.size() + 1;
+  }
+  
+  public FragmentPartitioningResult getFragmentPartitioningResult() {
+    return fragmentPartitioninResult;
   }
 
   public JDeclaredType getFromTypeMap(String qualifiedBinaryOrSourceName) {
