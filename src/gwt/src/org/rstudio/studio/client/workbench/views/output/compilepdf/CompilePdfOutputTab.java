@@ -30,19 +30,7 @@ public class CompilePdfOutputTab extends DelayLoadWorkbenchTab<CompilePdfOutputP
                  CompilePdfOutputEvent.Handler, 
                  CompilePdfErrorsEvent.Handler
    {
-      @Override
-      protected void onDelayLoadSuccess(CompilePdfOutputPresenter presenter)
-      {
-         super.onDelayLoadSuccess(presenter);
-         presenter_ = presenter;
-      }
-      
-      public void confirmClose(Command onConfirmed)
-      {
-         presenter_.confirmClose(onConfirmed);
-      }
-      
-      private CompilePdfOutputPresenter presenter_;
+      abstract void confirmClose(Command onConfirmed);
    }
 
    @Inject
