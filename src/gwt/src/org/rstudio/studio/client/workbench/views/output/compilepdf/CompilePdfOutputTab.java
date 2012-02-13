@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.output.compilepdf;
 
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
@@ -29,6 +30,19 @@ public class CompilePdfOutputTab extends DelayLoadWorkbenchTab<CompilePdfOutputP
                  CompilePdfOutputEvent.Handler, 
                  CompilePdfErrorsEvent.Handler
    {
+      @Override
+      protected void onDelayLoadSuccess(CompilePdfOutputPresenter presenter)
+      {
+         super.onDelayLoadSuccess(presenter);
+         presenter_ = presenter;
+      }
+      
+      public void confirmClose(Command onConfirmed)
+      {
+         presenter_.confirmClose(onConfirmed);
+      }
+      
+      private CompilePdfOutputPresenter presenter_;
    }
 
    @Inject
@@ -36,6 +50,7 @@ public class CompilePdfOutputTab extends DelayLoadWorkbenchTab<CompilePdfOutputP
                               EventBus events)
    {
       super("Compile PDF", shim);
+      shim_ = shim;
 
       events.addHandler(CompilePdfEvent.TYPE, shim);
       events.addHandler(CompilePdfOutputEvent.TYPE, shim);
@@ -47,4 +62,14 @@ public class CompilePdfOutputTab extends DelayLoadWorkbenchTab<CompilePdfOutputP
    {
       return true;
    }
+   
+   @Override
+   public void confirmClose(Command onConfirmed)
+   {
+      shim_.confirmClose(onConfirmed);
+   }
+   
+   
+   private Shim shim_;
+  
 }

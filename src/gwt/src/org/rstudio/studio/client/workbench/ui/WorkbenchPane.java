@@ -56,6 +56,12 @@ public abstract class WorkbenchPane extends ToolbarPane
    {
       return false;
    }
+   
+   @Override
+   public void confirmClose(Command onConfirmed)
+   {
+      onConfirmed.execute();
+   }
 
    private String title_;
 }

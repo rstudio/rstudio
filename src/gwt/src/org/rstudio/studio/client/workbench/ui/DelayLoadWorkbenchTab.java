@@ -85,6 +85,12 @@ public abstract class DelayLoadWorkbenchTab<T extends IsWidget>
    {
       return false;
    }
+   
+   @Override
+   public void confirmClose(Command onConfirmed)
+   {
+      onConfirmed.execute();
+   }
 
    public void ensureVisible()
    {

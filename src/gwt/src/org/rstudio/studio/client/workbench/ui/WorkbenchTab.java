@@ -29,4 +29,5 @@ public interface WorkbenchTab extends IsWidget,
    boolean isSuppressed();
 
    boolean closeable();
+   void confirmClose(Command onConfirmed);
 }
