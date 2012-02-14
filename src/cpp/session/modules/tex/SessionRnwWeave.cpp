@@ -296,7 +296,7 @@ void runWeave(const core::FilePath& rnwPath,
 
    // R exe path differs by platform
 #ifdef _WIN32
-   FilePath rBinPath = rBin.complete("Rterm.exe";
+   FilePath rBinPath = rBin.complete("Rterm.exe");
 #else
    FilePath rBinPath = rBin.complete("R");
 #endif
