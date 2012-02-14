@@ -12,8 +12,12 @@
  */
 package org.rstudio.studio.client.workbench.views.find.events;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.studio.client.workbench.views.find.model.FindResult;
+import java.util.ArrayList;
 
 public class FindResultEvent extends GwtEvent<FindResultEvent.Handler>
 {
@@ -22,8 +26,36 @@ public class FindResultEvent extends GwtEvent<FindResultEvent.Handler>
       void onFindResult(FindResultEvent event);
    }
 
-   public FindResultEvent(String handle)
+   public static class Data extends JavaScriptObject
    {
+      protected Data()
+      {
+      }
+
+
+      public native final String getHandle() /*-{
+         return this.handle;
+      }-*/;
+
+      public native final RpcObjectList<FindResult> getResults() /*-{
+         return this.results;
+      }-*/;
+   }
+
+   public FindResultEvent(String handle, ArrayList<FindResult> results)
+   {
+      handle_ = handle;
+      results_ = results;
+   }
+
+   public String getHandle()
+   {
+      return handle_;
+   }
+
+   public ArrayList<FindResult> getResults()
+   {
+      return results_;
    }
 
    @Override
@@ -38,5 +70,8 @@ public class FindResultEvent extends GwtEvent<FindResultEvent.Handler>
       handler.onFindResult(this);
    }
 
-   private static final Type<Handler> TYPE = new Type<Handler>();
+   private final String handle_;
+   private final ArrayList<FindResult> results_;
+
+   public static final Type<Handler> TYPE = new Type<Handler>();
 }

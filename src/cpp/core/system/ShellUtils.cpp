@@ -24,10 +24,24 @@ std::string pipe(const std::string& command1, const std::string& command2)
    return command1 + " | " + command2;
 }
 
+std::string ShellCommand::maybeEscape(const std::string &value)
+{
+   if (escapeMode_ == EscapeAll)
+      return escape(value);
+   else
+      return value;
+}
+
+ShellCommand& ShellCommand::operator<<(EscapeMode escapeMode)
+{
+   escapeMode_ = escapeMode;
+   return *this;
+}
+
 ShellCommand& ShellCommand::operator<<(const std::string& arg)
 {
    output_.push_back(' ');
-   output_.append(escape(arg));
+   output_.append(maybeEscape(arg));
    return *this;
 }
 

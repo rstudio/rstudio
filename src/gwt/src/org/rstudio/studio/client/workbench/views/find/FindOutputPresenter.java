@@ -20,11 +20,18 @@ import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.events.FindInFilesResultEvent;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.find.events.FindResultEvent;
+import org.rstudio.studio.client.workbench.views.find.model.FindInFilesServerOperations;
+import org.rstudio.studio.client.workbench.views.find.model.FindResult;
 
 public class FindOutputPresenter extends BasePresenter
    implements FindInFilesResultEvent.Handler
@@ -33,17 +40,22 @@ public class FindOutputPresenter extends BasePresenter
                                     HasSelectionHandlers<CodeNavigationTarget>
    {
       void addMatch(String path, int line, int column, String value);
+      void clearMatches();
       void ensureVisible();
    }
 
    @Inject
    public FindOutputPresenter(Display view,
+                              EventBus events,
+                              FindInFilesServerOperations server,
                               GlobalDisplay globalDisplay,
-                              final FileTypeRegistry ftr)
+                              final FileTypeRegistry ftr, Session session)
    {
       super(view);
       view_ = view;
+      server_ = server;
       globalDisplay_ = globalDisplay;
+      session_ = session;
 
       view_.addSelectionHandler(new SelectionHandler<CodeNavigationTarget>()
       {
@@ -56,6 +68,21 @@ public class FindOutputPresenter extends BasePresenter
 
             ftr.editFile(FileSystemItem.createFile(target.getFile()),
                          target.getPosition());
+         }
+      });
+
+      events.addHandler(FindResultEvent.TYPE, new FindResultEvent.Handler()
+      {
+         @Override
+         public void onFindResult(FindResultEvent event)
+         {
+            for (FindResult result : event.getResults())
+            {
+               view_.addMatch(result.getFile(),
+                              result.getLine(),
+                              1,
+                              result.getLineValue());
+            }
          }
       });
    }
@@ -74,22 +101,43 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void execute(String input)
          {
-            // TODO: Actually perform search
             // TODO: Show indication that search is in progress
             // TODO: Provide way to cancel a running search
 
-            view_.ensureVisible();
+            if (currentFindHandle_ != null)
+            {
+               server_.stopFind(currentFindHandle_,
+                                new VoidServerRequestCallback());
+               currentFindHandle_ = null;
+               view_.clearMatches();
+            }
 
-            view_.addMatch("~/rstudio/COPYING", 10, 12, "Hello");
-            view_.addMatch("~/rstudio/COPYING", 20, 12, "Hello2");
-            view_.addMatch("~/rstudio/INSTALL", 6, 12, "Hello3");
-            view_.addMatch("~/rstudio/INSTALL", 102, 12, "Hello4");
-            view_.addMatch("~/rstudio/COPYING", 40, 12, "Hello5");
-            view_.addMatch("~/rstudio/COPYING", 60, 12, "Hello6");
+            server_.beginFind(input,
+                              false,
+                              true,
+                              session_.getSessionInfo().getActiveProjectDir(),
+                              "",
+                              new SimpleRequestCallback<String>()
+                              {
+                                 @Override
+                                 public void onResponseReceived(String handle)
+                                 {
+                                    currentFindHandle_ = handle;
+
+                                    super.onResponseReceived(handle);
+                                    // TODO: add tab to view using handle ID
+
+                                    view_.ensureVisible();
+                                 }
+                              });
          }
       });
    }
 
+   private String currentFindHandle_;
+
    private final Display view_;
+   private final FindInFilesServerOperations server_;
    private final GlobalDisplay globalDisplay_;
+   private final Session session_;
 }

@@ -76,6 +76,7 @@ const int kConsoleProcessPrompt = 49;
 const int kShowConsoleProcessDialog = 50;
 const int kCompilePdfOutputEvent = 51;
 const int kCompilePdfErrorsEvent = 52;
+const int kFindResult = 53;
 }   
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -193,6 +194,8 @@ std::string ClientEvent::typeName() const
          return "compile_pdf_output_event";
       case client_events::kCompilePdfErrorsEvent:
          return "compile_pdf_errors_event";
+      case client_events::kFindResult:
+         return "find_result";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              boost::lexical_cast<std::string>(type_));

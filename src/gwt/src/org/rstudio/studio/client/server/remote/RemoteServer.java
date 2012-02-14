@@ -2436,6 +2436,32 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SUGGESTION_LIST, params, requestCallback);
    }
 
+   @Override
+   public void beginFind(String searchString,
+                         boolean regex,
+                         boolean ignoreCase,
+                         FileSystemItem directory,
+                         String filePattern,
+                         ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(searchString));
+      params.set(1, JSONBoolean.getInstance(regex));
+      params.set(2, JSONBoolean.getInstance(ignoreCase));
+      params.set(3, directory.getPath() == null ?
+                    JSONNull.getInstance() :
+                    new JSONString(directory.getPath()));
+      params.set(4, new JSONString(filePattern));
+      sendRequest(RPC_SCOPE, BEGIN_FIND, params, requestCallback);
+   }
+
+   @Override
+   public void stopFind(String findOperationHandle,
+                        ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, STOP_FIND, findOperationHandle, requestCallback);
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -2638,7 +2664,10 @@ public class RemoteServer implements Server
    
    private static final String CHECK_SPELLING = "check_spelling";
    private static final String SUGGESTION_LIST = "suggestion_list";
-   
+
+   private static final String BEGIN_FIND = "begin_find";
+   private static final String STOP_FIND = "stop_find";
+
    private static final String LOG = "log";
 
 

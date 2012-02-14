@@ -47,6 +47,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionFiles.cpp
    modules/SessionFilesListingMonitor.cpp
    modules/SessionFilesQuotas.cpp
+   modules/SessionFind.cpp
    modules/SessionGit.cpp
    modules/SessionHelp.cpp
    modules/SessionHistory.cpp
