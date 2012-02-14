@@ -66,9 +66,24 @@ namespace compile_pdf {
 
 namespace {
 
-void showOutput(const std::string& output)
+void enqueOutputEvent(const std::string& output)
 {
    ClientEvent event(client_events::kCompilePdfOutputEvent, output);
+   module_context::enqueClientEvent(event);
+}
+
+void enqueStatusEvent(int status, const std::string& text = std::string())
+{
+   json::Object dataJson;
+   dataJson["status"] = status;
+   dataJson["text"] = text;
+   ClientEvent event(client_events::kCompilePdfStatusEvent, dataJson);
+   module_context::enqueClientEvent(event);
+}
+
+void enqueErrorsEvent(const json::Array& logEntriesJson)
+{
+   ClientEvent event(client_events::kCompilePdfErrorsEvent, logEntriesJson);
    module_context::enqueClientEvent(event);
 }
 
@@ -110,8 +125,7 @@ void showLogEntries(const core::tex::LogEntries& logEntries,
       }
    }
 
-   ClientEvent event(client_events::kCompilePdfErrorsEvent, logEntriesJson);
-   module_context::enqueClientEvent(event);
+   enqueErrorsEvent(logEntriesJson);
 }
 
 FilePath ancillaryFilePath(const FilePath& texFilePath, const std::string& ext)
@@ -315,7 +329,7 @@ private:
          // attempt to weave the rnw
          rnw_weave::runWeave(targetFilePath_,
                              magicComments_,
-                             showOutput,
+                             enqueOutputEvent,
                              boost::bind(
                               &AsyncPdfCompiler::onWeaveCompleted,
                                  AsyncPdfCompiler::shared_from_this(), _1));
@@ -375,7 +389,7 @@ private:
          auxillaryFileCleanupContext_.init(texFilePath);
 
       // run latex compile
-      showOutput("\nRunning LaTeX compiler...");
+      enqueOutputEvent("\nRunning LaTeX compiler...");
 
       // try to use texi2dvi if we can
       if (userSettings().useTexi2Dvi() && tex::texi2dvi::isAvailable())
@@ -429,14 +443,14 @@ private:
    {
       if (exitStatus == EXIT_SUCCESS)
       {
-         showOutput("completed\n");
+         enqueOutputEvent("completed\n");
 
          if (onCompleted_)
             onCompleted_();
       }
       else
       {
-         showOutput("\n");
+         enqueOutputEvent("\n");
 
          // don't remove the log
          auxillaryFileCleanupContext_.preserveLog();
@@ -448,7 +462,7 @@ private:
             boost::format fmt("Error running %1% (exit code %2%)");
             std::string msg(boost::str(fmt % texProgramPath_.absolutePath()
                                            % exitStatus));
-            showOutput(msg + "\n");
+            enqueOutputEvent(msg + "\n");
          }
       }
 
@@ -458,30 +472,20 @@ private:
 
    void terminateWithError(const std::string& message)
    {
-      showOutput(message + "\n");
+      enqueOutputEvent(message + "\n");
       enqueCompletedEvent();
    }
 
    void enqueStartedEvent()
    {
-      enqueCompilePdfStatusEvent(
+      enqueStatusEvent(
                Started,
                module_context::createAliasedPath(targetFilePath_));
    }
 
    void enqueCompletedEvent()
    {
-      enqueCompilePdfStatusEvent(Completed);
-   }
-
-   void enqueCompilePdfStatusEvent(int status,
-                                   const std::string& text = std::string())
-   {
-      json::Object dataJson;
-      dataJson["status"] = status;
-      dataJson["text"] = text;
-      ClientEvent event(client_events::kCompilePdfStatusEvent, dataJson);
-      module_context::enqueClientEvent(event);
+      enqueStatusEvent(Completed);
    }
 
 private:
@@ -527,7 +531,7 @@ bool terminateCompile()
    }
    else
    {
-      showOutput("\n[Compile PDF Stopped]\n");
+      enqueOutputEvent("\n[Compile PDF Stopped]\n");
       return true;
    }
 }
