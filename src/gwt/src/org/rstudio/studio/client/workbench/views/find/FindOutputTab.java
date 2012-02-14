@@ -19,6 +19,8 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.FindInFilesResultEvent;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 
@@ -37,9 +39,13 @@ public class FindOutputTab extends DelayLoadWorkbenchTab<FindOutputPresenter>
    @Inject
    public FindOutputTab(Shim shim,
                         EventBus events,
-                        Commands commands)
+                        Commands commands,
+                        Session session)
    {
       super("Find", shim);
+
+      if (!session.getSessionInfo().isFindInFilesEnabled())
+         commands.findInFiles().setVisible(false);
 
       events.addHandler(FindInFilesResultEvent.TYPE, shim);
 
