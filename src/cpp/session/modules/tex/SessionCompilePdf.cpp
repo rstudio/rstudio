@@ -38,23 +38,17 @@
 #include "SessionRnwConcordance.hpp"
 #include "SessionCompilePdfSupervisor.hpp"
 
-// TODO: always searches from current selection?
 
-// TODO: recognize concordance in another block of options
-
-// TODO: can't call move for concordance injector (cross device link)
-// TODO: inject concordance in the middle of the document
+// TODO: separate output and error panes
 
 // TODO: deal with ClientState
 
-// TODO: ability to stop/interrupt
 
-// TODO: show filename in toolbar
+// TODO: find concordance always searches from current selection?
+// TODO: recognize concordance in another block of options
 
 // TODO: manaual texi2dvi must correctly detect terminateAll error state
 // (as opposed to stock errors -- check exit codes on all platforms)
-
-// TODO: separate output and error panes
 
 // TODO: sweave/knitr errors
 
@@ -279,11 +273,14 @@ private:
 
    void start()
    {
+      // enque started event
+      enqueStartedEvent();
+
       // ensure no spaces in path
       std::string filename = targetFilePath_.filename();
       if (filename.find(' ') != std::string::npos)
       {
-         reportError("Invalid filename: '" + filename +
+         terminateWithError("Invalid filename: '" + filename +
                      "' (TeX does not understand paths with spaces)");
          return;
       }
@@ -300,7 +297,7 @@ private:
                                          &texProgramPath_,
                                          &userErrMsg))
       {
-         reportError(userErrMsg);
+         terminateWithError(userErrMsg);
          return;
       }
 
@@ -331,7 +328,7 @@ private:
       if (result.succeeded)
          runLatexCompiler(result.concordance);
       else
-         reportError(result.errorMessage);
+         terminateWithError(result.errorMessage);
    }
 
    void runLatexCompiler(const rnw_concordance::Concordance& concordance =
@@ -388,7 +385,7 @@ private:
                                  texFilePath,
                                  concordance));
          if (error)
-            reportError("Unable to compile pdf: " + error.summary());
+            terminateWithError("Unable to compile pdf: " + error.summary());
       }
 
       // call pdflatex directly (but still try to run bibtex as necessary)
@@ -409,7 +406,7 @@ private:
 
          if (error)
          {
-            reportError("Unable to compile pdf: " + error.summary());
+            terminateWithError("Unable to compile pdf: " + error.summary());
          }
          else
          {
@@ -445,17 +442,44 @@ private:
             boost::format fmt("Error running %1% (exit code %2%)");
             std::string msg(boost::str(fmt % texProgramPath_.absolutePath()
                                            % exitStatus));
-            reportError(msg);
+            showOutput(msg + "\n");
          }
       }
+
+      // fire event indicating completion
+      enqueCompletedEvent();
    }
 
-   void reportError(const std::string& message)
+   void terminateWithError(const std::string& message)
    {
       showOutput(message + "\n");
+      enqueCompletedEvent();
+   }
+
+   void enqueStartedEvent()
+   {
+      enqueCompilePdfStatusEvent(
+               Started,
+               module_context::createAliasedPath(targetFilePath_));
+   }
+
+   void enqueCompletedEvent()
+   {
+      enqueCompilePdfStatusEvent(Completed);
+   }
+
+   void enqueCompilePdfStatusEvent(int status,
+                                   const std::string& text = std::string())
+   {
+      json::Object dataJson;
+      dataJson["status"] = status;
+      dataJson["text"] = text;
+      ClientEvent event(client_events::kCompilePdfStatusEvent, dataJson);
+      module_context::enqueClientEvent(event);
    }
 
 private:
+   enum Status { Started = 0, Completed = 1 };
    const FilePath targetFilePath_;
    const boost::function<void()> onCompleted_;
    core::tex::TexMagicComments magicComments_;

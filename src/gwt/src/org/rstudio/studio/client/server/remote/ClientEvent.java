@@ -66,6 +66,7 @@ class ClientEvent extends JavaScriptObject
    public static final String ConsoleProcessCreated = "console_process_created";
    public static final String CompilePdfOutputEvent = "compile_pdf_output_event";
    public static final String CompilePdfErrorsEvent = "compile_pdf_errors_event";
+   public static final String CompilePdfStatusEvent = "compile_pdf_status_event";
    public static final String FindResult = "find_result";
 
    protected ClientEvent()

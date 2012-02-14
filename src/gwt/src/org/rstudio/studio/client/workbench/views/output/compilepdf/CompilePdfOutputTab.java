@@ -18,6 +18,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 
+import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfStatusEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfOutputEvent;
@@ -28,7 +29,8 @@ public class CompilePdfOutputTab extends DelayLoadWorkbenchTab<CompilePdfOutputP
                 DelayLoadTabShim<CompilePdfOutputPresenter, CompilePdfOutputTab>
       implements CompilePdfEvent.Handler,
                  CompilePdfOutputEvent.Handler, 
-                 CompilePdfErrorsEvent.Handler
+                 CompilePdfErrorsEvent.Handler,
+                 CompilePdfStatusEvent.Handler
    {
       abstract void confirmClose(Command onConfirmed);
    }
@@ -43,6 +45,7 @@ public class CompilePdfOutputTab extends DelayLoadWorkbenchTab<CompilePdfOutputP
       events.addHandler(CompilePdfEvent.TYPE, shim);
       events.addHandler(CompilePdfOutputEvent.TYPE, shim);
       events.addHandler(CompilePdfErrorsEvent.TYPE, shim);
+      events.addHandler(CompilePdfStatusEvent.TYPE, shim);
    }
 
    @Override

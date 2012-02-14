@@ -75,6 +75,7 @@ extern const int kConsoleProcessPrompt;
 extern const int kConsoleProcessCreated;
 extern const int kCompilePdfOutputEvent;
 extern const int kCompilePdfErrorsEvent;
+extern const int kCompilePdfStatusEvent;
 extern const int kFindResult;
 }
    

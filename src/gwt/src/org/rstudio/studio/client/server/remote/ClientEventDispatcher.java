@@ -49,6 +49,7 @@ import org.rstudio.studio.client.workbench.views.find.events.FindResultEvent;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAddedEvent;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
+import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfStatusEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfOutputEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfError;
@@ -320,6 +321,11 @@ public class ClientEventDispatcher
          {
             JsArray<CompilePdfError> data = event.getData();
             eventBus_.fireEvent(new CompilePdfErrorsEvent(data));
+         }
+         else if (type.equals(ClientEvent.CompilePdfStatusEvent))
+         {
+            CompilePdfStatusEvent.Data data = event.getData();
+            eventBus_.fireEvent(new CompilePdfStatusEvent(data));
          }
          else if (type.equals(ClientEvent.FindResult))
          {

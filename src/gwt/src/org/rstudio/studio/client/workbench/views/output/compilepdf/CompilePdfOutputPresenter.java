@@ -13,8 +13,12 @@
 package org.rstudio.studio.client.workbench.views.output.compilepdf;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -29,6 +33,7 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfOutputEvent;
+import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfStatusEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfError;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfServerOperations;
 
@@ -36,13 +41,17 @@ import org.rstudio.studio.client.workbench.views.output.compilepdf.model.Compile
 public class CompilePdfOutputPresenter extends BasePresenter
    implements CompilePdfEvent.Handler,
               CompilePdfOutputEvent.Handler, 
-              CompilePdfErrorsEvent.Handler
+              CompilePdfErrorsEvent.Handler,
+              CompilePdfStatusEvent.Handler
 {
    public interface Display extends WorkbenchView, HasEnsureHiddenHandlers
    {
-      void clearOutput();
+      void compileStarted(String text);
       void showOutput(String output);
+      void clearOutput();
       void showErrors(JsArray<CompilePdfError> errors);
+      void compileCompleted();
+      HasClickHandlers stopButton();
    }
 
    @Inject
@@ -54,6 +63,16 @@ public class CompilePdfOutputPresenter extends BasePresenter
       view_ = view;
       globalDisplay_ = globalDisplay;
       server_ = server;
+      
+      view_.stopButton().addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            terminateCompilePdf(null);
+            view_.showOutput("\n[Compile PDF Stopped]\n");
+         }
+         
+      });
    }
    
    public void confirmClose(final Command onConfirmed)
@@ -93,6 +112,14 @@ public class CompilePdfOutputPresenter extends BasePresenter
       view_.showErrors(event.getErrors());
    }
    
+   @Override
+   public void onCompilePdfStatus(CompilePdfStatusEvent event)
+   {
+      if (event.getStatus() == CompilePdfStatusEvent.STARTED)
+         view_.compileStarted(event.getText());
+      else if (event.getStatus() == CompilePdfStatusEvent.COMPLETED)
+         view_.compileCompleted();
+   }
    
    private void compilePdf(final FileSystemItem targetFile,
                            final String completedAction)
@@ -139,17 +166,23 @@ public class CompilePdfOutputPresenter extends BasePresenter
             @Override
             public void execute()
             {
-               server_.terminateCompilePdf(new RequestCallback<Boolean>(
-                                       "Terminating PDF compilation...") {
-                  @Override
-                  protected void onSuccess(Boolean wasTerminated)
-                  {
-                     if (wasTerminated)
-                        onTerminated.execute();           
-                  }
-               });
+               terminateCompilePdf(onTerminated);
             }},
             false);
+   }
+   
+  
+   private void terminateCompilePdf(final Command onTerminated)
+   {
+      server_.terminateCompilePdf(new RequestCallback<Boolean>(
+                                    "Terminating PDF compilation...") {
+         @Override
+         protected void onSuccess(Boolean wasTerminated)
+         {
+            if (wasTerminated && (onTerminated != null))
+               onTerminated.execute();           
+         }
+      });
    }
    
    

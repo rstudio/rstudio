@@ -13,10 +13,21 @@
 package org.rstudio.studio.client.workbench.views.output.compilepdf;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarLabel;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.shell.ShellWidget;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfError;
@@ -26,9 +37,10 @@ public class CompilePdfOutputPane extends WorkbenchPane
       implements CompilePdfOutputPresenter.Display
 {
    @Inject
-   public CompilePdfOutputPane()
+   public CompilePdfOutputPane(FileTypeRegistry fileTypeRegistry)
    {
       super("Compile PDF");
+      fileTypeRegistry_ = fileTypeRegistry;
       ensureWidget();
    }
 
@@ -52,9 +64,36 @@ public class CompilePdfOutputPane extends WorkbenchPane
    {
       Toolbar toolbar = new Toolbar();
       
+      fileImage_ = new Image(); 
+      toolbar.addLeftWidget(fileImage_);
+      
+      fileLabel_ = new ToolbarLabel();
+      fileLabel_.addStyleName(ThemeStyles.INSTANCE.subtitle());
+      toolbar.addLeftWidget(fileLabel_);
+      
+      ImageResource stopImage = RStudioGinjector.INSTANCE.getCommands()
+                                               .interruptR().getImageResource();
+      stopButton_ = new ToolbarButton(stopImage, null);
+      stopButton_.setVisible(false);
+      toolbar.addRightWidget(stopButton_);
       return toolbar;
    }
   
+   @Override
+   public void compileStarted(String fileName)
+   {
+      fileImage_.setResource(fileTypeRegistry_.getIconForFilename(fileName));
+      
+      String shortFileName = StringUtil.shortPathName(
+                                 FileSystemItem.createFile(fileName), 
+                                 ThemeStyles.INSTANCE.subtitle(), 
+                                 350);
+      
+      fileLabel_.setText(shortFileName);
+      
+      stopButton_.setVisible(true);
+   }
+
    @Override
    public void clearOutput()
    {
@@ -65,9 +104,9 @@ public class CompilePdfOutputPane extends WorkbenchPane
    @Override
    public void showOutput(String output)
    {
-      outputWidget_.consoleWriteOutput(output);
-      
+      outputWidget_.consoleWriteOutput(output);  
    }
+   
 
    @Override
    public void showErrors(JsArray<CompilePdfError> errors)
@@ -76,6 +115,23 @@ public class CompilePdfOutputPane extends WorkbenchPane
       for (int i=0; i<errors.length(); i++)
          outputWidget_.consoleWriteOutput(errors.get(i).asString() + "\n");
    }
+
+   @Override
+   public void compileCompleted()
+   {
+      stopButton_.setVisible(false);
+   }
    
+   @Override
+   public HasClickHandlers stopButton()
+   {
+      return stopButton_;
+   }
+   
+   private Image fileImage_;
+   private ToolbarLabel fileLabel_;
+   
+   private ToolbarButton stopButton_;
    private ShellWidget outputWidget_;
+   private FileTypeRegistry fileTypeRegistry_;
 }
