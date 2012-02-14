@@ -31,7 +31,7 @@ public class Search extends JavaScriptObject
          wrap: wrap,
          caseSensitive: caseSensitive,
          wholeWord: wholeWord,
-         start: fromSelection ? null : {row: 0, columns: 0},
+         start: fromSelection ? null : {row: 0, column: 0},
          scope: selectionOnly ? Search.SELECTION : Search.ALL,
          regExp: regexpMode
       })
