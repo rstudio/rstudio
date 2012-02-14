@@ -20,6 +20,7 @@ public interface FindInFilesServerOperations
 {
    void beginFind(String searchString,
                   boolean regex,
+                  boolean ignoreCase,
                   FileSystemItem directory,
                   String filePattern,
                   ServerRequestCallback<String> requestCallback);

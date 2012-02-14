@@ -37,11 +37,19 @@ namespace {
    class GrepOperation : public boost::enable_shared_from_this<GrepOperation>
    {
    public:
-      GrepOperation() : stopped_(false)
+      static boost::shared_ptr<GrepOperation> create(const FilePath& tempFile)
+      {
+         return boost::shared_ptr<GrepOperation>(new GrepOperation(tempFile));
+      }
+
+   private:
+      GrepOperation(const FilePath& tempFile)
+         : stopped_(false), tempFile_(tempFile)
       {
          handle_ = core::system::generateUuid(false);
       }
 
+   public:
       std::string handle() const
       {
          return handle_;
@@ -59,6 +67,9 @@ namespace {
          callbacks.onStderr = boost::bind(&GrepOperation::onStderr,
                                           shared_from_this(),
                                           _1, _2);
+         callbacks.onExit = boost::bind(&GrepOperation::onExit,
+                                        shared_from_this(),
+                                        _1);
          return callbacks;
       }
 
@@ -123,7 +134,14 @@ namespace {
          LOG_ERROR_MESSAGE("grep: " + data);
       }
 
+      void onExit(int exitCode)
+      {
+         if (!tempFile_.empty())
+            tempFile_.removeIfExists();
+      }
+
       bool stopped_;
+      FilePath tempFile_;
       std::string stdOutBuf_;
       std::string handle_;
    };
@@ -134,13 +152,14 @@ core::Error beginFind(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
    std::string searchString;
-   bool asRegex;
+   bool asRegex, ignoreCase;
    std::string directory;
    std::string filePattern;
 
    Error error = json::readParams(request.params,
                                   &searchString,
                                   &asRegex,
+                                  &ignoreCase,
                                   &directory,
                                   &filePattern);
    if (error)
@@ -149,17 +168,33 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    core::system::ProcessOptions options;
    options.workingDir = module_context::resolveAliasedPath(directory);
 
-   boost::shared_ptr<GrepOperation> ptrGrepOp(new GrepOperation());
+   // TODO: Encode the pattern using the project encoding
+
+   // Put the grep pattern in a file
+   FilePath tempFile = module_context::tempFile("rs_grep", "txt");
+   boost::shared_ptr<std::ostream> pStream;
+   error = tempFile.open_w(&pStream);
+   if (error)
+      return error;
+   *pStream << searchString << std::endl;
+   pStream.reset(); // release file handle
+
+   boost::shared_ptr<GrepOperation> ptrGrepOp = GrepOperation::create(tempFile);
    core::system::ProcessCallbacks callbacks =
                                        ptrGrepOp->createProcessCallbacks();
 
-
    shell_utils::ShellCommand cmd("grep");
-   cmd << "-rHn" << "--binary-files=without-match";
-   if (asRegex)
-      cmd << searchString;
-   else
-      cmd << searchString;
+   cmd << "-rHn" << "--binary-files=without-match" << "--devices=skip";
+
+   if (ignoreCase)
+      cmd << "-i";
+
+   // Use -f to pass pattern via file, so we don't have to worry about
+   // escaping double quotes, etc.
+   cmd << "-f";
+   cmd << tempFile;
+   if (!asRegex)
+      cmd << "-F";
 
    cmd << "--";
    if (filePattern.empty())

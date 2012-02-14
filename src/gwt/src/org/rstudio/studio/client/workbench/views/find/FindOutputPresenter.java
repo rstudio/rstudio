@@ -112,7 +112,9 @@ public class FindOutputPresenter extends BasePresenter
                view_.clearMatches();
             }
 
-            server_.beginFind(input, true,
+            server_.beginFind(input,
+                              false,
+                              true,
                               session_.getSessionInfo().getActiveProjectDir(),
                               "",
                               new SimpleRequestCallback<String>()

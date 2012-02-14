@@ -2417,6 +2417,7 @@ public class RemoteServer implements Server
    @Override
    public void beginFind(String searchString,
                          boolean regex,
+                         boolean ignoreCase,
                          FileSystemItem directory,
                          String filePattern,
                          ServerRequestCallback<String> requestCallback)
@@ -2424,10 +2425,11 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(searchString));
       params.set(1, JSONBoolean.getInstance(regex));
-      params.set(2, directory.getPath() == null ?
+      params.set(2, JSONBoolean.getInstance(ignoreCase));
+      params.set(3, directory.getPath() == null ?
                     JSONNull.getInstance() :
                     new JSONString(directory.getPath()));
-      params.set(3, new JSONString(filePattern));
+      params.set(4, new JSONString(filePattern));
       sendRequest(RPC_SCOPE, BEGIN_FIND, params, requestCallback);
    }
 
