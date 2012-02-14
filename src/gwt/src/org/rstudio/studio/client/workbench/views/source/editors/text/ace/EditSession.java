@@ -34,6 +34,11 @@ public class EditSession extends JavaScriptObject
       return this.getSelection();
    }-*/;
 
+   
+   public native final Position search(String regex) /*-{
+      return this.search(regex);
+   }-*/; 
+  
    public native final Position replace(Range range, String text) /*-{
       return this.replace(range, text);
    }-*/;

@@ -37,6 +37,13 @@ public class AceInputEditorPosition extends InputEditorPosition
             Position.create(getRow(),
                             relative ? getPosition() + position : position));
    }
+   
+   @Override
+   public InputEditorPosition moveToNextLine()
+   {
+      return new AceInputEditorPosition(session_,
+                                        Position.create(getRow() + 1, 0));
+   }
 
    private int getRow()
    {

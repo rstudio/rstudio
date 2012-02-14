@@ -38,6 +38,10 @@
 #include "SessionRnwConcordance.hpp"
 #include "SessionCompilePdfSupervisor.hpp"
 
+// TODO: always searches from current selection?
+
+// TODO: recognize concordance in another block of options
+
 // TODO: can't call move for concordance injector (cross device link)
 // TODO: inject concordance in the middle of the document
 

@@ -429,6 +429,35 @@ public class AceEditor implements DocDisplay,
    {
       return getSession().getTextRange(Range.fromPoints(start, end));
    }
+   
+   
+   @Override
+   public InputEditorSelection search(String regex)
+   {
+      Search search = Search.create(regex,   // needle
+                                    false,   // backwards
+                                    true,    // wrap
+                                    false,   // case sensitive
+                                    false,   // whole word
+                                    false,   // selection only
+                                    true);   // regexp mode
+
+      Range range = search.find(getSession());
+      if (range != null)
+      {
+         return createSelection(range.getStart(), range.getEnd());
+      }
+      else
+      {
+         return null;
+      }
+   }
+   
+   @Override
+   public void insertCode(InputEditorPosition position, String content)
+   {
+     getSession().insert(selectionToPosition(position), content);
+   }
 
    @Override
    public String getCode(InputEditorSelection selection)
@@ -564,6 +593,15 @@ public class AceEditor implements DocDisplay,
             new AceInputEditorPosition(getSession(), pos1),
             new AceInputEditorPosition(getSession(), pos2));
    }
+   
+   @Override
+   public Position selectionToPosition(InputEditorPosition pos)
+   {
+      // HACK: This cast is gross, InputEditorPosition should just become
+      // AceInputEditorPosition
+      return Position.create((Integer) pos.getLine(), pos.getPosition());
+   }
+
 
    @Override
    public void debug_forceTopsToZero()

@@ -17,6 +17,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
@@ -91,6 +92,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    Position getCursorPosition();
    void setCursorPosition(Position position);
 
+   InputEditorSelection search(String regex);
+   void insertCode(InputEditorPosition position, String code);
+   
    int getScrollLeft();
    void scrollToX(int x);
    
@@ -117,4 +121,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
 
    // HACK: This should not use Ace-specific data structures
    InputEditorSelection createSelection(Position pos1, Position pos2);
+   
+   // HACK: InputEditorPosition should just become AceInputEditorPosition
+   Position selectionToPosition(InputEditorPosition pos);
 }

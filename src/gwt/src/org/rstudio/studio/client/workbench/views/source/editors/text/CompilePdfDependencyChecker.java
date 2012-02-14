@@ -31,6 +31,8 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.model.TexServerOperations;
 
 import com.google.inject.Inject;
@@ -64,8 +66,13 @@ public class CompilePdfDependencyChecker
       if ( (rnwWeave != null) && rnwWeave.getInjectConcordance())
       {
          if (!hasConcordanceDirective(docDisplay.getCode()))
-         {
-           
+         {    
+            InputEditorSelection doc = docDisplay.search("\\\\begin{document}");
+            if (doc != null)
+            {  
+               InputEditorPosition pos = doc.getEnd().moveToNextLine();
+               docDisplay.insertCode(pos, "\\SweaveOpts{concordance=TRUE}\n");
+            }
          }
       }
    }

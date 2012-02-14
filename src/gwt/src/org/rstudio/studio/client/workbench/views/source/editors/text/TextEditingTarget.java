@@ -1297,9 +1297,7 @@ public class TextEditingTarget implements EditingTarget
 
    private Position selectionToPosition(InputEditorPosition pos)
    {
-      // HACK: This cast is gross, InputEditorPosition should just become
-      // AceInputEditorPosition
-      return Position.create((Integer) pos.getLine(), pos.getPosition());
+      return docDisplay_.selectionToPosition(pos);
    }
 
    private void reflowComments(InputEditorSelection selection,
