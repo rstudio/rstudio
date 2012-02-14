@@ -432,15 +432,21 @@ public class AceEditor implements DocDisplay,
    
    
    @Override
-   public InputEditorSelection search(String regex)
+   public InputEditorSelection search(String needle,
+                                      boolean backwards,
+                                      boolean wrap,
+                                      boolean caseSensitive,
+                                      boolean wholeWord,
+                                      boolean selectionOnly,
+                                      boolean regexpMode)
    {
-      Search search = Search.create(regex,   // needle
-                                    false,   // backwards
-                                    true,    // wrap
-                                    false,   // case sensitive
-                                    false,   // whole word
-                                    false,   // selection only
-                                    true);   // regexp mode
+      Search search = Search.create(needle, 
+                                    backwards, 
+                                    wrap, 
+                                    caseSensitive, 
+                                    wholeWord, 
+                                    selectionOnly, 
+                                    regexpMode);
 
       Range range = search.find(getSession());
       if (range != null)

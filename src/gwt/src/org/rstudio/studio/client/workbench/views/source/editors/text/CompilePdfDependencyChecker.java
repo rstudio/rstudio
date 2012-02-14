@@ -67,7 +67,14 @@ public class CompilePdfDependencyChecker
       {
          if (!hasConcordanceDirective(docDisplay.getCode()))
          {    
-            InputEditorSelection doc = docDisplay.search("\\\\begin{document}");
+            InputEditorSelection doc = docDisplay.search(
+                                          "\\\\begin{document}",
+                                          false,   // backwards
+                                          true,    // wrap
+                                          false,   // case sensitive
+                                          false,   // whole word
+                                          false,   // selection only
+                                          true);   // regexp mode
             if (doc != null)
             {  
                InputEditorPosition pos = doc.getEnd().moveToNextLine();
