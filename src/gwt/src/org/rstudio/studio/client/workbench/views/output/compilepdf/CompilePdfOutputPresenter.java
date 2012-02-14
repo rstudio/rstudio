@@ -48,8 +48,8 @@ public class CompilePdfOutputPresenter extends BasePresenter
    {
       void compileStarted(String text);
       void showOutput(String output);
-      void clearOutput();
       void showErrors(JsArray<CompilePdfError> errors);
+      void clearAll();
       void compileCompleted();
       HasClickHandlers stopButton();
    }
@@ -133,7 +133,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
                {
                   if (started)
                   {
-                     view_.clearOutput();
+                     view_.clearAll();
                   }
                   else
                   {

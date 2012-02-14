@@ -39,8 +39,6 @@
 #include "SessionCompilePdfSupervisor.hpp"
 
 
-// TODO: separate output and error panes
-
 // TODO: deal with ClientState
 
 

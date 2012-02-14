@@ -16,6 +16,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -47,16 +48,20 @@ public class CompilePdfOutputPane extends WorkbenchPane
    @Override
    protected Widget createMainWidget()
    {
-      SimplePanel panel = new SimplePanel();
+      panel_ = new SimplePanel();
       
       outputWidget_ = new ShellWidget(new AceEditor());
       outputWidget_.setSize("100%", "100%");
       outputWidget_.setMaxOutputLines(1000);
       outputWidget_.setReadOnly(true);
       outputWidget_.setSuppressPendingInput(true);
-      panel.setWidget(outputWidget_);
+      panel_.setWidget(outputWidget_);
       
-      return panel;
+      errorsList_ = new ListBox();
+      errorsList_.setVisibleItemCount(100);
+      errorsList_.setSize("100%", "100%");
+      
+      return panel_;
    }
    
    @Override
@@ -95,10 +100,11 @@ public class CompilePdfOutputPane extends WorkbenchPane
    }
 
    @Override
-   public void clearOutput()
+   public void clearAll()
    {
       outputWidget_.clearOutput();
-      
+      errorsList_.clear();
+      panel_.setWidget(outputWidget_);  
    }
    
    @Override
@@ -111,9 +117,10 @@ public class CompilePdfOutputPane extends WorkbenchPane
    @Override
    public void showErrors(JsArray<CompilePdfError> errors)
    {
-      outputWidget_.consoleWriteOutput("\n");
       for (int i=0; i<errors.length(); i++)
-         outputWidget_.consoleWriteOutput(errors.get(i).asString() + "\n");
+         errorsList_.addItem(errors.get(i).asString());
+      
+      panel_.setWidget(errorsList_);
    }
 
    @Override
@@ -132,6 +139,8 @@ public class CompilePdfOutputPane extends WorkbenchPane
    private ToolbarLabel fileLabel_;
    
    private ToolbarButton stopButton_;
+   private SimplePanel panel_;
    private ShellWidget outputWidget_;
+   private ListBox errorsList_;
    private FileTypeRegistry fileTypeRegistry_;
 }
