@@ -474,9 +474,9 @@ public class TextEditingTarget implements EditingTarget
    
    private void checkCompilePdfDependencies()
    {
-      compilePdfDependencyChecker_.check(view_, 
-                                         fileType_, 
-                                         docDisplay_.getCode());
+      compilePdfDependencyChecker_.checkCompilers(view_, 
+                                                  fileType_, 
+                                                  docDisplay_.getCode());
       
    }
    
@@ -1750,6 +1750,8 @@ public class TextEditingTarget implements EditingTarget
    
    void handlePdfCommand(final String completedAction)
    {
+      compilePdfDependencyChecker_.ensureRnwConcordance(docDisplay_);
+      
       saveThenExecute(null, new Command()
       {
          public void execute()

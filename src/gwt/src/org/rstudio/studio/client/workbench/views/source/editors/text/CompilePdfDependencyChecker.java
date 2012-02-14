@@ -15,6 +15,9 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.tex.TexMagicComment;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
@@ -55,8 +58,22 @@ public class CompilePdfDependencyChecker
       latexProgramRegistry_ = latexProgramRegistry;
    }
    
+   public void ensureRnwConcordance(DocDisplay docDisplay)
+   {
+      RnwWeave rnwWeave = getActiveRnwWeave(docDisplay);
+      if ( (rnwWeave != null) && rnwWeave.getInjectConcordance())
+      {
+         if (!hasConcordanceDirective(docDisplay.getCode()))
+         {
+           
+         }
+      }
+   }
    
-   public void check(final Display display, TextFileType fileType, String code)
+   
+   public void checkCompilers(final Display display, 
+                              TextFileType fileType, 
+                              String code)
    {
       // for all tex files we need to parse magic comments and validate
       // any explict latex proram directive
@@ -176,8 +193,41 @@ public class CompilePdfDependencyChecker
          display.hideWarningBar();
       }
    }
+   
+   private boolean hasConcordanceDirective(String code)
+   {
+      Iterable<String> lines = StringUtil.getLineIterator(code);
       
-
+      for (String line : lines)
+      {
+         line = line.trim();
+         if (line.length() == 0)
+         {
+            continue;
+         }
+         else if (line.startsWith("\\SweaveOpts"))
+         {
+            Match match = concordancePattern_.match(line, 0);
+            if (match != null)
+               return true;
+         }
+      }
+    
+      return false;  
+   }
+    
+   // get the currently active rnw weave method -- note this can return
+   // null in the case that there is an embedded directive which is invalid
+   private RnwWeave getActiveRnwWeave(DocDisplay docDisplay)
+   {
+      RnwWeaveDirective rnwWeaveDirective = detectRnwWeaveDirective(
+                         TexMagicComment.parseComments(docDisplay.getCode()));
+      if (rnwWeaveDirective != null)
+         return rnwWeaveDirective.getRnwWeave();
+      else
+         return rnwWeaveRegistry_.findTypeIgnoreCase(
+                                    prefs_.defaultSweaveEngine().getValue());
+   }
    
    private RnwWeaveDirective detectRnwWeaveDirective(
          ArrayList<TexMagicComment> magicComments)
@@ -215,4 +265,7 @@ public class CompilePdfDependencyChecker
    private final TexServerOperations server_;
    private final RnwWeaveRegistry rnwWeaveRegistry_;
    private final LatexProgramRegistry latexProgramRegistry_;
+   
+   private static final Pattern concordancePattern_ = Pattern.create(
+      "\\\\[\\s]*SweaveOpts[\\s]*{[\\s]*concordance[\\s]*=[\\s]*T(?:RUE)?[\\s]*}");
 }
