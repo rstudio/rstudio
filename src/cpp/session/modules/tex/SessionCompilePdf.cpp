@@ -38,12 +38,18 @@
 #include "SessionRnwConcordance.hpp"
 #include "SessionCompilePdfSupervisor.hpp"
 
+// TODO: "Undefined control sequence" in -concordance.tex for injection of
+//       concordance option in JAE-RER.Rnw (on test server)
 
-// TODO: deal with ClientState
+// TODO: latex errors are not displayed on mac for talk.tex (just err 1 ret)
+//       also are not displayed on Windows (full path issue as well)
+//       (the problem is that errors are being reported with a full path)
 
+// TODO: deal with ClientState (need a call to server to notify of close tab)
 
 // TODO: handle unconvential paths coming back from error/warnings
-// (i.e. from parent, child, sibbling, or global directory)
+// (i.e. from parent, child, sibbling, or global directory). perhaps we
+// can assume they are full paths and/or call realpath on the ./ variation
 
 // TODO: recognize concordance in another block of options
 
