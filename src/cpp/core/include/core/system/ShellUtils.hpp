@@ -42,15 +42,23 @@ std::string sendNullToStdIn(const std::string& command);
 
 const FilePath& devnull();
 
+enum EscapeMode
+{
+   EscapeAll,
+   EscapeFilesOnly
+};
+
 class ShellCommand
 {
 public:
    explicit ShellCommand(const core::FilePath& filePath)
+      : escapeMode_(EscapeAll)
    {
       output_ = escape(string_utils::utf8ToSystem(filePath.absolutePath()));
    }
 
    explicit ShellCommand(const std::string& program)
+      : escapeMode_(EscapeAll)
    {
       boost::regex simpleCommand("^[a-zA-Z]+$");
       if (boost::regex_match(program, simpleCommand))
@@ -59,6 +67,7 @@ public:
          output_ = escape(program);
    }
 
+   ShellCommand& operator<<(EscapeMode escapeMode);
    ShellCommand& operator<<(const std::string& arg);
    ShellCommand& operator<<(int arg);
    ShellCommand& operator<<(const FilePath& path);
@@ -76,7 +85,10 @@ public:
    }
 
 private:
+   std::string maybeEscape(const std::string& value);
+
    std::string output_;
+   EscapeMode escapeMode_;
 };
 
 class ShellArgs

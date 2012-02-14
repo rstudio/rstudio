@@ -26,6 +26,7 @@
 * Applied to the wrapper around the image and value.
 */
 .cellTreeItemImageValue {
+   font-family: fixedWidthFont;
    padding-top: 2px;
    padding-bottom: 2px;
 }
@@ -36,6 +37,7 @@
 .cellTreeItemValue {
    padding-left: 8px;
    outline: none;
+   white-space: pre;
 }
 
 /**
@@ -76,6 +78,7 @@
 * Applied to the wrapper around the image and value of top level items.
 */
 .cellTreeTopItemImageValue {
+   font-family: proportionalFont;
 }
 
 /**
@@ -84,10 +87,10 @@
 .cellTreeWidget {
    border: 1px solid #CCC;
    background-color: white;
+   overflow: auto;
 }
 
 .lineNumber {
-   font-family: fixedWidthFont;
    white-space: pre;
    color: #AAA;
 }

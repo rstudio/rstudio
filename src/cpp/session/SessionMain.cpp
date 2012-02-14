@@ -90,6 +90,7 @@
 #include "modules/SessionConsoleProcess.hpp"
 #include "modules/SessionCrypto.hpp"
 #include "modules/SessionFiles.hpp"
+#include "modules/SessionFind.hpp"
 #include "modules/SessionWorkspace.hpp"
 #include "modules/SessionWorkbench.hpp"
 #include "modules/SessionData.hpp"
@@ -1295,6 +1296,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::crypto::initialize)
 #endif
       (modules::files::initialize)
+      (modules::find::initialize)
       (modules::workspace::initialize)
       (modules::workbench::initialize)
       (modules::data::initialize)

@@ -43,6 +43,7 @@ import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
 import org.rstudio.studio.client.workbench.views.edit.model.ShowEditorData;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
+import org.rstudio.studio.client.workbench.views.find.events.FindResultEvent;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAddedEvent;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
@@ -304,6 +305,12 @@ public class ClientEventDispatcher
             ServerProcessExitEvent.Data data = event.getData();
             eventBus_.fireEvent(new ServerProcessExitEvent(data.getHandle(),
                                                           data.getExitCode()));
+         }
+         else if (type.equals(ClientEvent.FindResult))
+         {
+            FindResultEvent.Data data = event.getData();
+            eventBus_.fireEvent(new FindResultEvent(
+                  data.getHandle(), data.getResults().toArrayList()));
          }
          else if (type.equals(ClientEvent.ListChanged))
          {

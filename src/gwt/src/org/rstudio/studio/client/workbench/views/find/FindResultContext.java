@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.views.find;
 
 import com.google.gwt.view.client.AbstractDataProvider;
 import com.google.gwt.view.client.ListDataProvider;
+import com.google.gwt.view.client.ProvidesKey;
 
 import java.util.HashMap;
 
@@ -50,7 +51,14 @@ public class FindResultContext
 
       private final String path_;
       private final ListDataProvider<Match> matchData_ =
-                                                  new ListDataProvider<Match>();
+            new ListDataProvider<Match>(new ProvidesKey<Match>()
+            {
+               @Override
+               public Object getKey(Match item)
+               {
+                  return item.getParent().getPath() + ":" + item.getLine();
+               }
+            });
    }
 
    public class Match
@@ -111,7 +119,21 @@ public class FindResultContext
       return data_;
    }
 
-   private final ListDataProvider<File> data_ = new ListDataProvider<File>();
+   public void reset()
+   {
+      data_.getList().clear();
+      filesByName_.clear();
+      maxLineWidth_ = 0;
+   }
+
+   private final ListDataProvider<File> data_ = new ListDataProvider<File>(new ProvidesKey<File>()
+   {
+      @Override
+      public Object getKey(File item)
+      {
+         return item.getPath();
+      }
+   });
    private final HashMap<String, File> filesByName_ = new HashMap<String, File>();
    private int maxLineWidth_;
 }

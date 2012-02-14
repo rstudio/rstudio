@@ -106,6 +106,12 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
+   public void clearMatches()
+   {
+      context_.reset();
+   }
+
+   @Override
    public void ensureVisible()
    {
       fireEvent(new EnsureVisibleEvent());

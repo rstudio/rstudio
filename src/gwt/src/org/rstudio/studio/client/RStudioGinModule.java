@@ -81,6 +81,7 @@ import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperatio
 import org.rstudio.studio.client.workbench.views.find.FindOutputPane;
 import org.rstudio.studio.client.workbench.views.find.FindOutputPresenter;
 import org.rstudio.studio.client.workbench.views.find.FindOutputTab;
+import org.rstudio.studio.client.workbench.views.find.model.FindInFilesServerOperations;
 import org.rstudio.studio.client.workbench.views.help.Help;
 import org.rstudio.studio.client.workbench.views.help.HelpPane;
 import org.rstudio.studio.client.workbench.views.help.HelpTab;
@@ -232,6 +233,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(CryptoServerOperations.class).to(RemoteServer.class);
       bind(TexServerOperations.class).to(RemoteServer.class);
       bind(SpellingServerOperations.class).to(RemoteServer.class);
+      bind(FindInFilesServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 
