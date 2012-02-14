@@ -13,7 +13,10 @@
 package org.rstudio.studio.client.workbench.views.output.compilepdf;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.dom.client.DoubleClickEvent;
+import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.ListBox;
@@ -22,6 +25,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.events.HasSelectionCommitHandlers;
+import org.rstudio.core.client.events.SelectionCommitEvent;
+import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Toolbar;
@@ -35,7 +41,8 @@ import org.rstudio.studio.client.workbench.views.output.compilepdf.model.Compile
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 
 public class CompilePdfOutputPane extends WorkbenchPane
-      implements CompilePdfOutputPresenter.Display
+      implements CompilePdfOutputPresenter.Display,
+                 HasSelectionCommitHandlers<CompilePdfError>
 {
    @Inject
    public CompilePdfOutputPane(FileTypeRegistry fileTypeRegistry)
@@ -57,9 +64,18 @@ public class CompilePdfOutputPane extends WorkbenchPane
       outputWidget_.setSuppressPendingInput(true);
       panel_.setWidget(outputWidget_);
       
-      errorsList_ = new ListBox();
-      errorsList_.setVisibleItemCount(100);
-      errorsList_.setSize("100%", "100%");
+      lbErrors_ = new ListBox();
+      lbErrors_.setVisibleItemCount(100);
+      lbErrors_.setSize("100%", "100%");
+      lbErrors_.addDoubleClickHandler(new DoubleClickHandler() 
+      {
+         @Override
+         public void onDoubleClick(DoubleClickEvent event)
+         {
+            CompilePdfError error = errors_.get(lbErrors_.getSelectedIndex());  
+            SelectionCommitEvent.fire(CompilePdfOutputPane.this, error);
+         }
+      });
       
       return panel_;
    }
@@ -103,7 +119,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
    public void clearAll()
    {
       outputWidget_.clearOutput();
-      errorsList_.clear();
+      lbErrors_.clear();
       panel_.setWidget(outputWidget_);  
    }
    
@@ -117,10 +133,14 @@ public class CompilePdfOutputPane extends WorkbenchPane
    @Override
    public void showErrors(JsArray<CompilePdfError> errors)
    {
-      for (int i=0; i<errors.length(); i++)
-         errorsList_.addItem(errors.get(i).asString());
+      errors_ = errors;
       
-      panel_.setWidget(errorsList_);
+      lbErrors_.clear();
+      for (int i=0; i<errors.length(); i++)
+         lbErrors_.addItem(errors.get(i).asString(),
+                           errors.get(i).toSource());
+      
+      panel_.setWidget(lbErrors_);
    }
 
    @Override
@@ -134,6 +154,20 @@ public class CompilePdfOutputPane extends WorkbenchPane
    {
       return stopButton_;
    }
+  
+   @Override
+   public HasSelectionCommitHandlers<CompilePdfError> errorList()
+   {
+      return this;
+   }
+   
+   @Override
+   public HandlerRegistration addSelectionCommitHandler(
+                           SelectionCommitHandler<CompilePdfError> handler)
+   {
+      return addHandler(handler, SelectionCommitEvent.getType());
+   }
+  
    
    private Image fileImage_;
    private ToolbarLabel fileLabel_;
@@ -141,6 +175,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
    private ToolbarButton stopButton_;
    private SimplePanel panel_;
    private ShellWidget outputWidget_;
-   private ListBox errorsList_;
+   private JsArray<CompilePdfError> errors_;
+   private ListBox lbErrors_;
    private FileTypeRegistry fileTypeRegistry_;
 }

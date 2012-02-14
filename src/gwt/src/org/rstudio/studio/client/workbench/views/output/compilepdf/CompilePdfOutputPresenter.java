@@ -19,13 +19,18 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
+import org.rstudio.core.client.events.HasSelectionCommitHandlers;
+import org.rstudio.core.client.events.SelectionCommitEvent;
+import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -52,17 +57,20 @@ public class CompilePdfOutputPresenter extends BasePresenter
       void clearAll();
       void compileCompleted();
       HasClickHandlers stopButton();
+      HasSelectionCommitHandlers<CompilePdfError> errorList();
    }
 
    @Inject
    public CompilePdfOutputPresenter(Display view,
                                     GlobalDisplay globalDisplay,
-                                    CompilePdfServerOperations server)
+                                    CompilePdfServerOperations server,
+                                    FileTypeRegistry fileTypeRegistry)
    {
       super(view);
       view_ = view;
       globalDisplay_ = globalDisplay;
       server_ = server;
+      fileTypeRegistry_ = fileTypeRegistry;
       
       view_.stopButton().addClickHandler(new ClickHandler() {
          @Override
@@ -71,6 +79,20 @@ public class CompilePdfOutputPresenter extends BasePresenter
             terminateCompilePdf(null);
          }
          
+      });
+      
+      view_.errorList().addSelectionCommitHandler(
+                              new SelectionCommitHandler<CompilePdfError>() {
+
+         @Override
+         public void onSelectionCommit(
+                              SelectionCommitEvent<CompilePdfError> event)
+         {
+            CompilePdfError error = event.getSelectedItem();
+            FileSystemItem fsi = FileSystemItem.createFile(error.getPath());
+            FilePosition pos = FilePosition.create(error.getLine(), 1);
+            fileTypeRegistry_.editFile(fsi, pos);
+         }
       });
    }
    
@@ -218,4 +240,5 @@ public class CompilePdfOutputPresenter extends BasePresenter
    private final Display view_;
    private final GlobalDisplay globalDisplay_;
    private final CompilePdfServerOperations server_;
+   private final FileTypeRegistry fileTypeRegistry_;
 }

@@ -42,6 +42,9 @@
 // TODO: deal with ClientState
 
 
+// TODO: handle unconvential paths coming back from error/warnings
+// (i.e. from parent, child, sibbling, or global directory)
+
 // TODO: recognize concordance in another block of options
 
 // TODO: manaual texi2dvi must correctly detect terminateAll error state
@@ -69,10 +72,13 @@ void showOutput(const std::string& output)
    module_context::enqueClientEvent(event);
 }
 
-json::Object logEntryJson(const core::tex::LogEntry& logEntry)
+json::Object logEntryJson(const FilePath& parentDir,
+                          const core::tex::LogEntry& logEntry)
 {
    json::Object obj;
    obj["type"] = static_cast<int>(logEntry.type());
+   obj["path"] = module_context::createAliasedPath(
+                                       parentDir.complete(logEntry.file()));
    obj["file"] = logEntry.file();
    obj["line"] = logEntry.line();
    obj["message"] = logEntry.message();
@@ -80,9 +86,11 @@ json::Object logEntryJson(const core::tex::LogEntry& logEntry)
 }
 
 void showLogEntries(const core::tex::LogEntries& logEntries,
+                    const FilePath& texPath,
                     const rnw_concordance::Concordance& rnwConcordance =
                                              rnw_concordance::Concordance())
 {
+   FilePath parentDir = texPath.parent();
    json::Array logEntriesJson;
    BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
    {
@@ -94,11 +102,11 @@ void showLogEntries(const core::tex::LogEntries& logEntries,
                                       rnwConcordance.rnwLine(logEntry.line()),
                                       logEntry.message());
 
-         logEntriesJson.push_back(logEntryJson(rnwEntry));
+         logEntriesJson.push_back(logEntryJson(parentDir, rnwEntry));
       }
       else
       {
-         logEntriesJson.push_back(logEntryJson(logEntry));
+         logEntriesJson.push_back(logEntryJson(parentDir, logEntry));
       }
    }
 
@@ -152,7 +160,7 @@ bool showCompilationErrors(const FilePath& texPath,
    // show errors if necessary
    if (!logEntries.empty())
    {
-      showLogEntries(logEntries, rnwConcordance);
+      showLogEntries(logEntries, texPath, rnwConcordance);
       return true;
    }
    else

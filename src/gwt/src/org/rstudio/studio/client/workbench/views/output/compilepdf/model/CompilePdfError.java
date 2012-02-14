@@ -29,11 +29,15 @@ public class CompilePdfError extends JavaScriptObject
       return this.type;
    }-*/;
    
+   public final native String getPath() /*-{
+      return this.path;
+   }-*/;
+   
    public final native String getFile() /*-{
       return this.file;
    }-*/;
 
-   private final native int getLine() /*-{
+   public final native int getLine() /*-{
       return this.line;
    }-*/;
    
