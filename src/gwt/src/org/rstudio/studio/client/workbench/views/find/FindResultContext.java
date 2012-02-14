@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.find;
 import com.google.gwt.view.client.AbstractDataProvider;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
+import org.rstudio.studio.client.workbench.views.find.model.FindResult;
 
 import java.util.HashMap;
 
@@ -47,6 +48,16 @@ public class FindResultContext
       public AbstractDataProvider<Match> getDataProvider()
       {
          return matchData_;
+      }
+
+      public void refresh()
+      {
+         matchData_.refresh();
+      }
+
+      public void clear()
+      {
+         matchData_.getList().clear();
       }
 
       private final String path_;
@@ -97,7 +108,7 @@ public class FindResultContext
       private final String value_;
    }
 
-   public File getFile(String path)
+   private File getFile(String path)
    {
       File file = filesByName_.get(path);
       if (file == null)
@@ -124,6 +135,28 @@ public class FindResultContext
       data_.getList().clear();
       filesByName_.clear();
       maxLineWidth_ = 0;
+   }
+
+   public void addMatches(Iterable<FindResult> findResults)
+   {
+      int origMaxLineWidth = maxLineWidth_;
+
+      for (FindResult fr : findResults)
+      {
+         File file = getFile(fr.getFile());
+
+         file.addMatch(fr.getLine(), 0, fr.getLineValue());
+
+         int index = data_.getList().indexOf(file);
+         if (index >= 0) // not that we are expecting otherwise...
+            data_.getList().set(index, file);
+      }
+
+      if (maxLineWidth_ != origMaxLineWidth)
+      {
+         for (File aFile : data_.getList())
+            aFile.refresh();
+      }
    }
 
    private final ListDataProvider<File> data_ = new ListDataProvider<File>(new ProvidesKey<File>()

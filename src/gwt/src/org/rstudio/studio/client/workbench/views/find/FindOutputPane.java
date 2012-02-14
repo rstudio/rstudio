@@ -13,7 +13,9 @@
 package org.rstudio.studio.client.workbench.views.find;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -26,10 +28,19 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
+import org.rstudio.core.client.events.HasSelectionCommitHandlers;
+import org.rstudio.core.client.events.SelectionCommitEvent;
+import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.find.model.FindResult;
+
+import java.util.List;
 
 public class FindOutputPane extends WorkbenchPane
-      implements FindOutputPresenter.Display, HasSelectionHandlers<CodeNavigationTarget>
+      implements FindOutputPresenter.Display,
+                 HasSelectionHandlers<CodeNavigationTarget>,
+                 HasSelectionCommitHandlers<CodeNavigationTarget>
 {
    public FindOutputPane()
    {
@@ -50,19 +61,34 @@ public class FindOutputPane extends WorkbenchPane
 
       treeViewModel_ = new FindTreeViewModel(context_,
                                              resources.cellTreeStyle().lineNumber());
-      cellTree_ = new CellTree(treeViewModel_, (Object)null,
-                               resources);
+      cellTree_ = new CellTree(treeViewModel_, (Object)null, resources);
       cellTree_.setKeyboardSelectionPolicy(HasKeyboardSelectionPolicy.KeyboardSelectionPolicy.BOUND_TO_SELECTION);
 
-      treeViewModel_.getSelectionModel().addSelectionChangeHandler(new SelectionChangeEvent.Handler()
+      cellTree_.addDomHandler(new ClickHandler()
       {
          @Override
-         public void onSelectionChange(SelectionChangeEvent event)
+         public void onClick(ClickEvent event)
          {
-            Object o = treeViewModel_.getSelectionModel().getSelectedObject();
-            SelectionEvent.fire(FindOutputPane.this, toCodeNavigationTarget(o));
+            if (event.getNativeButton() != NativeEvent.BUTTON_LEFT)
+               return;
+
+            if (dblClick_.checkForDoubleClick(event.getNativeEvent()))
+               fireSelectionCommitted();
          }
-      });
+         private final DoubleClickState dblClick_ = new DoubleClickState();
+      }, ClickEvent.getType());
+
+      cellTree_.addDomHandler(new KeyDownHandler()
+      {
+         @Override
+         public void onKeyDown(KeyDownEvent event)
+         {
+            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
+               fireSelectionCommitted();
+            event.stopPropagation();
+            event.preventDefault();
+         }
+      }, KeyDownEvent.getType());
 
       panel.add(cellTree_);
       final int PAD = 6;
@@ -74,6 +100,13 @@ public class FindOutputPane extends WorkbenchPane
                                Style.Unit.PX);
 
       return panel;
+   }
+
+   private void fireSelectionCommitted()
+   {
+      Object o = treeViewModel_.getSelectionModel().getSelectedObject();
+      if (o != null)
+         SelectionCommitEvent.fire(this, toCodeNavigationTarget(o));
    }
 
    private CodeNavigationTarget toCodeNavigationTarget(Object o)
@@ -100,9 +133,9 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
-   public void addMatch(String path, int line, int column, String value)
+   public void addMatches(Iterable<FindResult> findResults)
    {
-      context_.getFile(path).addMatch(line, column, value);
+      context_.addMatches(findResults);
    }
 
    @Override
@@ -118,9 +151,27 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
+   public int getFileCount()
+   {
+      return cellTree_.getRootTreeNode().getChildCount();
+   }
+
+   @Override
+   public void setFileOpen(int index, boolean open)
+   {
+      cellTree_.getRootTreeNode().setChildOpen(index, open);
+   }
+
+   @Override
    public HandlerRegistration addSelectionHandler(SelectionHandler<CodeNavigationTarget> handler)
    {
       return addHandler(handler, SelectionEvent.getType());
+   }
+
+   @Override
+   public HandlerRegistration addSelectionCommitHandler(SelectionCommitHandler<CodeNavigationTarget> handler)
+   {
+      return addHandler(handler, SelectionCommitEvent.getType());
    }
 
    private CellTree cellTree_;

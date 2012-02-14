@@ -12,12 +12,17 @@
  */
 package org.rstudio.studio.client.workbench.views.find;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.events.HasSelectionCommitHandlers;
+import org.rstudio.core.client.events.SelectionCommitEvent;
+import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -37,11 +42,15 @@ public class FindOutputPresenter extends BasePresenter
    implements FindInFilesResultEvent.Handler
 {
    public interface Display extends WorkbenchView,
-                                    HasSelectionHandlers<CodeNavigationTarget>
+                                    HasSelectionHandlers<CodeNavigationTarget>,
+                                    HasSelectionCommitHandlers<CodeNavigationTarget>
    {
-      void addMatch(String path, int line, int column, String value);
+      void addMatches(Iterable<FindResult> findResults);
       void clearMatches();
       void ensureVisible();
+
+      int getFileCount();
+      void setFileOpen(int index, boolean open);
    }
 
    @Inject
@@ -57,10 +66,10 @@ public class FindOutputPresenter extends BasePresenter
       globalDisplay_ = globalDisplay;
       session_ = session;
 
-      view_.addSelectionHandler(new SelectionHandler<CodeNavigationTarget>()
+      view_.addSelectionCommitHandler(new SelectionCommitHandler<CodeNavigationTarget>()
       {
          @Override
-         public void onSelection(SelectionEvent<CodeNavigationTarget> event)
+         public void onSelectionCommit(SelectionCommitEvent<CodeNavigationTarget> event)
          {
             CodeNavigationTarget target = event.getSelectedItem();
             if (target == null)
@@ -76,13 +85,22 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onFindResult(FindResultEvent event)
          {
-            for (FindResult result : event.getResults())
+            if (!event.getHandle().equals(currentFindHandle_))
+               return;
+
+            final int count = view_.getFileCount();
+            view_.addMatches(event.getResults());
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
-               view_.addMatch(result.getFile(),
-                              result.getLine(),
-                              1,
-                              result.getLineValue());
-            }
+               @Override
+               public void execute()
+               {
+                  for (int i = count; i < view_.getFileCount(); i++)
+                  {
+                     view_.setFileOpen(i, true);
+                  }
+               }
+            });
          }
       });
    }
