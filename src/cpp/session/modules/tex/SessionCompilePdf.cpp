@@ -44,7 +44,6 @@
 // TODO: deal with ClientState
 
 
-// TODO: find concordance always searches from current selection?
 // TODO: recognize concordance in another block of options
 
 // TODO: manaual texi2dvi must correctly detect terminateAll error state

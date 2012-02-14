@@ -98,6 +98,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
                                boolean wrap,
                                boolean caseSensitive,
                                boolean wholeWord,
+                               boolean fromSelection,
                                boolean selectionOnly,
                                boolean regexpModex);
    

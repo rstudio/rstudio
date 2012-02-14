@@ -138,6 +138,7 @@ public class FindReplace
                                     true,
                                     !ignoreCase,
                                     false,
+                                    true,
                                     false,
                                     regex);
 

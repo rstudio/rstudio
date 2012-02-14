@@ -73,6 +73,7 @@ public class CompilePdfDependencyChecker
                                           true,    // wrap
                                           false,   // case sensitive
                                           false,   // whole word
+                                          true,    // from selection
                                           false,   // selection only
                                           true);   // regexp mode
             if (doc != null)

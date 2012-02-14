@@ -437,6 +437,7 @@ public class AceEditor implements DocDisplay,
                                       boolean wrap,
                                       boolean caseSensitive,
                                       boolean wholeWord,
+                                      boolean fromSelection,
                                       boolean selectionOnly,
                                       boolean regexpMode)
    {
@@ -445,6 +446,7 @@ public class AceEditor implements DocDisplay,
                                     wrap, 
                                     caseSensitive, 
                                     wholeWord, 
+                                    fromSelection,
                                     selectionOnly, 
                                     regexpMode);
 
