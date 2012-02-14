@@ -522,6 +522,7 @@ bool terminateCompile()
    }
    else
    {
+      showOutput("\n[Compile PDF Stopped]\n");
       return true;
    }
 }

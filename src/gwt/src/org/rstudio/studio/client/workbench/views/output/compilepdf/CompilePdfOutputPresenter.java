@@ -69,7 +69,6 @@ public class CompilePdfOutputPresenter extends BasePresenter
          public void onClick(ClickEvent event)
          {
             terminateCompilePdf(null);
-            view_.showOutput("\n[Compile PDF Stopped]\n");
          }
          
       });
