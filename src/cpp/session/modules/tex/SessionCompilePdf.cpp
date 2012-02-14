@@ -55,6 +55,7 @@
 // TOOD: add support for multiple concordance entries written to file
 
 // TODO: pgfSweave concordance
+// TODO: knitr concordance
 
 using namespace core;
 
