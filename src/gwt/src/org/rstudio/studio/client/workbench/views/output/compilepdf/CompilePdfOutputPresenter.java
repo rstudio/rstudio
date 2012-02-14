@@ -86,6 +86,10 @@ public class CompilePdfOutputPresenter extends BasePresenter
                confirmTerminateRunningCompile("close the Compile PDF tab", 
                                               onConfirmed);
             }
+            else
+            {
+               onConfirmed.execute();
+            }
          }
       });
       
