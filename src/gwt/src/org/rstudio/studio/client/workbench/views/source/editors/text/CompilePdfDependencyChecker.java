@@ -282,5 +282,5 @@ public class CompilePdfDependencyChecker
    private final LatexProgramRegistry latexProgramRegistry_;
    
    private static final Pattern concordancePattern_ = Pattern.create(
-      "\\\\[\\s]*SweaveOpts[\\s]*{[\\s]*concordance[\\s]*=[\\s]*T(?:RUE)?[\\s]*}");
+                     "\\\\[\\s]*SweaveOpts[\\s]*{.*concordance[\\s]*=.*}");
 }
