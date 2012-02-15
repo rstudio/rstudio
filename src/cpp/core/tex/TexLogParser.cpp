@@ -103,7 +103,7 @@ LogEntry fromBibtexMatch(const boost::smatch& match,
 Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
 {
    return parseLog(logFilePath,
-                   boost::regex ("^([^:]+):([0-9]+): ([^\n]+)$"),
+                   boost::regex ("^((?:[A-Z]:)?[^:]+):([0-9]+): ([^\n]+)$"),
                    fromLatexMatch,
                    pLogEntries);
 }
