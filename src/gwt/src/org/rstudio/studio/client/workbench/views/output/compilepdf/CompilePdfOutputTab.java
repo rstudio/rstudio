@@ -29,8 +29,6 @@ import org.rstudio.studio.client.workbench.views.output.compilepdf.events.Compil
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfOutputEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfState;
 
-// TODO: if not running need to write state to suspend file
-
 public class CompilePdfOutputTab extends DelayLoadWorkbenchTab<CompilePdfOutputPresenter>
 {
    public abstract static class Shim extends
