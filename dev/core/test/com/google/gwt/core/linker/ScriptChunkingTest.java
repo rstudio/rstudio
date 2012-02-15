@@ -28,6 +28,7 @@ import junit.framework.TestCase;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -79,7 +80,7 @@ public class ScriptChunkingTest extends TestCase {
 
         @Override
         public String getPropertyProvider(TreeLogger logger,
-            SortedSet<ConfigurationProperty> configProperties) throws UnableToCompleteException {
+            SortedSet<ConfigurationProperty> configProperties) {
           return null;
         }
 
@@ -93,7 +94,17 @@ public class ScriptChunkingTest extends TestCase {
           return "false";
         }
       };
-      return new TreeSet<SelectionProperty>(Arrays.asList(mockSourceMapProperty));
+
+      Comparator<SelectionProperty> comparator = new Comparator<SelectionProperty>() {
+        @Override
+        public int compare(SelectionProperty first, SelectionProperty second) {
+          return first.getName().compareTo(second.getName());
+        }
+      };
+      
+      TreeSet<SelectionProperty> result = new TreeSet<SelectionProperty>(comparator);
+      result.add(mockSourceMapProperty);
+      return result;
     }
 
     @Override
