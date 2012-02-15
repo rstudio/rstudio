@@ -485,11 +485,14 @@ private:
          auxillaryFileCleanupContext_.init(texFilePath);
 
       // run latex compile
-      enqueOutputEvent("\nRunning LaTeX compiler...");
+
 
       // try to use texi2dvi if we can
       if (userSettings().useTexi2Dvi() && tex::texi2dvi::isAvailable())
       {
+         enqueOutputEvent("\nRunning texi2dvi on " +
+                          texFilePath.filename() + "...\n");
+
          Error error = tex::texi2dvi::texToPdf(
                            texProgramPath_,
                            texFilePath,
@@ -515,6 +518,9 @@ private:
          // the (typically) async callback function onLatexCompileCompleted
          // directly after the function returns
 
+         enqueOutputEvent("\nRunning " + texProgramPath_.filename() +
+                          " on " + texFilePath.filename() + "...\n");
+
          Error error = tex::pdflatex::texToPdf(texProgramPath_,
                                                texFilePath,
                                                options,
@@ -539,7 +545,10 @@ private:
    {
       if (exitStatus == EXIT_SUCCESS)
       {
-         enqueOutputEvent("completed\n");
+         std::string pdfFile = module_context::createAliasedPath(
+                                    ancillaryFilePath(texFilePath, ".pdf"));
+         std::string completed = "\nCompile PDF completed: " + pdfFile + "\n";
+         enqueOutputEvent(completed);
 
          if (onCompleted_)
             onCompleted_();

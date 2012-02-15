@@ -190,11 +190,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
                @Override
                protected void onSuccess(Boolean started)
                {
-                  if (started)
-                  {
-                     view_.clearAll();
-                  }
-                  else
+                  if (!started)
                   {
                      confirmTerminateRunningCompile(
                            "start a new compilation",

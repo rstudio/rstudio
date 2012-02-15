@@ -103,6 +103,8 @@ public class CompilePdfOutputPane extends WorkbenchPane
    @Override
    public void compileStarted(String fileName)
    {
+      clearAll();
+      
       fileImage_.setResource(fileTypeRegistry_.getIconForFilename(fileName));
       
       String shortFileName = StringUtil.shortPathName(
