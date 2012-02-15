@@ -1748,7 +1748,8 @@ public class TextEditingTarget implements EditingTarget
    
    void handlePdfCommand(final String completedAction)
    {
-      compilePdfDependencyChecker_.ensureRnwConcordance(docDisplay_);
+      if (fileType_.isRnw())
+         compilePdfDependencyChecker_.ensureRnwConcordance(docDisplay_);
       
       saveThenExecute(null, new Command()
       {
