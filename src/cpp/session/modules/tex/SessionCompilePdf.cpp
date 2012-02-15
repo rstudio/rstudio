@@ -328,16 +328,14 @@ public:
          remove(".out");
          remove(".aux");
 
-
          // only clean bbl if .bib exists
          if (exists(".bib"))
             remove(".bbl");
 
-         // clean log if requested
+         // clean anciallary logs if requested (never clean latex log)
          if (cleanLog_)
          {
             remove(".blg");
-            remove(".log");
          }
 
          // reset base path so we only do this one
