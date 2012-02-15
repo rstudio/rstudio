@@ -57,8 +57,10 @@ Error parseLog(
 FilePath texFilePath(const std::string& logPath, const FilePath& compileDir)
 {
    // some tex compilers report file names with absolute paths and some
-   // report them relative to the compilation directory -- use realPath
-   // to get a clean directory back
+   // report them relative to the compilation directory -- on Posix use
+   // realPath to get a clean full path back -- note the fact that we
+   // don't do this on Windows is a tacit assumption that Windows TeX logs
+   // are either absolute or don't require interpretation of .., etc.
 
    FilePath path = compileDir.complete(logPath);
 
