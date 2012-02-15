@@ -14,7 +14,13 @@
         <em:minVersion>3.0</em:minVersion>
         <em:maxVersion>10.0.*</em:maxVersion>
       </Description>
+
+    <!-- TODO: This seems to break Firefox 3.6. With this on, FF gets into a
+               infinity loop of requiring to restart. I suspect it is a bug
+               in that version that was fixed in later version.
     <em:strictCompatibility>true</em:strictCompatibility>
+    -->
+
     </em:targetApplication>
 
     <!-- Front End MetaData -->
