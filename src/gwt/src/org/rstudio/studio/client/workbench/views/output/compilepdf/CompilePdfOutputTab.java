@@ -14,7 +14,12 @@ package org.rstudio.studio.client.workbench.views.output.compilepdf;
 
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 
@@ -22,6 +27,9 @@ import org.rstudio.studio.client.workbench.views.output.compilepdf.events.Compil
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfOutputEvent;
+import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfState;
+
+// TODO: if not running need to write state to suspend file
 
 public class CompilePdfOutputTab extends DelayLoadWorkbenchTab<CompilePdfOutputPresenter>
 {
@@ -32,12 +40,14 @@ public class CompilePdfOutputTab extends DelayLoadWorkbenchTab<CompilePdfOutputP
                  CompilePdfErrorsEvent.Handler,
                  CompilePdfStatusEvent.Handler
    {
+      abstract void initialize(CompilePdfState compilePdfState);
       abstract void confirmClose(Command onConfirmed);
    }
 
    @Inject
    public CompilePdfOutputTab(Shim shim,
-                              EventBus events)
+                              EventBus events,
+                              final Session session)
    {
       super("Compile PDF", shim);
       shim_ = shim;
@@ -46,6 +56,17 @@ public class CompilePdfOutputTab extends DelayLoadWorkbenchTab<CompilePdfOutputP
       events.addHandler(CompilePdfOutputEvent.TYPE, shim);
       events.addHandler(CompilePdfErrorsEvent.TYPE, shim);
       events.addHandler(CompilePdfStatusEvent.TYPE, shim);
+      
+      events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
+         @Override
+         public void onSessionInit(SessionInitEvent sie)
+         {    
+            SessionInfo sessionInfo = session.getSessionInfo();
+            CompilePdfState compilePdfState = sessionInfo.getCompilePdfState();
+            if (compilePdfState.isTabVisible())
+               shim_.initialize(compilePdfState);
+         }
+      });
    }
 
    @Override

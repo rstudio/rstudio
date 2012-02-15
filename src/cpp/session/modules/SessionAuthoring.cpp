@@ -162,6 +162,7 @@ Error initialize()
    using namespace module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
+      (tex::compile_pdf::initialize)
       (tex::compile_pdf_supervisor::initialize)
       (bind(registerRpcMethod, "is_tex_installed", isTexInstalled))
       (bind(registerRpcMethod, "get_tex_capabilities", getTexCapabilities))

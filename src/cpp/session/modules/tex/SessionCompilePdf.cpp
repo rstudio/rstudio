@@ -19,6 +19,7 @@
 
 #include <core/FilePath.hpp>
 #include <core/Exec.hpp>
+#include <core/Settings.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/ShellUtils.hpp>
 
@@ -55,16 +56,32 @@ const int kStatusCompleted = 1;
 class CompilePdfState : boost::noncopyable
 {
 public:
-   CompilePdfState() : tabVisible_(false), running_(false) {}
+   CompilePdfState()
+      : tabVisible_(false), running_(false)
+   {
+   }
+
    virtual ~CompilePdfState() {}
    // COPYING: noncoypable
 
-   void onStarted(const std::string& statusText)
+   Error readFromJson(const json::Object& asJson)
+   {
+      clear();
+      return json::readObject(asJson,
+                              "tab_visible", &tabVisible_,
+                              "running", &running_,
+                              "target_file", &targetFile_,
+                              "output", &output_,
+                              "errors", &errors_);
+   }
+
+
+   void onStarted(const std::string& targetFile)
    {
       clear();
       running_ = true;
       tabVisible_ = true;
-      statusText_ = statusText;
+      targetFile_ = targetFile;
    }
 
    void addOutput(const std::string& output)
@@ -77,17 +94,16 @@ public:
       errors_ = errors;
    }
 
-   void onStopped(const std::string& statusText)
+   void onStopped()
    {
       running_ = false;
-      statusText_ = statusText;
    }
 
    void clear()
    {
       tabVisible_ = false;
       running_ = false;
-      statusText_.clear();
+      targetFile_.clear();
       output_.clear();
       errors_.clear();
    }
@@ -97,7 +113,7 @@ public:
       json::Object obj;
       obj["tab_visible"] = tabVisible_;
       obj["running"] = running_;
-      obj["status_text"] = statusText_;
+      obj["target_file"] = targetFile_;
       obj["output"] = output_;
       obj["errors"] = errors_;
       return obj;
@@ -106,12 +122,38 @@ public:
 private:
    bool tabVisible_;
    bool running_;
-   std::string statusText_;
+   std::string targetFile_;
    std::string output_;
    json::Array errors_;
 };
 
 CompilePdfState s_compilePdfState;
+
+void onSuspend(Settings* pSettings)
+{
+   std::ostringstream os;
+   json::write(s_compilePdfState.asJson(), os);
+   pSettings->set("compile_pdf_state", os.str());
+}
+
+
+void onResume(const Settings& settings)
+{
+   std::string state = settings.get("compile_pdf_state");
+   if (!state.empty())
+   {
+      json::Value stateJson;
+      if (!json::parse(state, &stateJson))
+      {
+         LOG_WARNING_MESSAGE("invalid compile pdf state json");
+         return;
+      }
+
+      Error error = s_compilePdfState.readFromJson(stateJson.get_obj());
+      if (error)
+         LOG_ERROR(error);
+   }
+}
 
 void enqueOutputEvent(const std::string& output)
 {
@@ -126,7 +168,7 @@ void enqueStatusEvent(int status, const std::string& text = std::string())
    if (status == kStatusStarted)
       s_compilePdfState.onStarted(text);
    else if (status == kStatusCompleted)
-      s_compilePdfState.onStopped(text);
+      s_compilePdfState.onStopped();
 
    json::Object dataJson;
    dataJson["status"] = status;
@@ -599,6 +641,15 @@ void notifyTabClosed()
 json::Object currentStateAsJson()
 {
    return s_compilePdfState.asJson();
+}
+
+Error initialize()
+{
+   // register suspend handler
+   using namespace module_context;
+   addSuspendHandler(SuspendHandler(onSuspend, onResume));
+
+   return Success();
 }
 
 } // namespace compile_pdf

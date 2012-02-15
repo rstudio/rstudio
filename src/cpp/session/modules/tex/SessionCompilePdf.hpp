@@ -39,6 +39,8 @@ void notifyTabClosed();
 
 core::json::Object currentStateAsJson();
 
+core::Error initialize();
+
 } // namespace compile_pdf
 } // namespace tex
 } // namespace modules

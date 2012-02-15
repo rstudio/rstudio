@@ -43,6 +43,7 @@ import org.rstudio.studio.client.workbench.views.output.compilepdf.events.Compil
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfStatusEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfError;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfServerOperations;
+import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfState;
 
 
 public class CompilePdfOutputPresenter extends BasePresenter
@@ -96,6 +97,25 @@ public class CompilePdfOutputPresenter extends BasePresenter
             fileTypeRegistry_.editFile(fsi, pos);
          }
       });
+   }
+   
+   public void initialize(CompilePdfState compilePdfState)
+   {
+      // TODO: this should really just ensure that the tab is available
+      // rather than brinning it to the front
+      view_.bringToFront();
+      
+      view_.clearAll();
+      
+      view_.compileStarted(compilePdfState.getTargetFile());
+      
+      view_.showOutput(compilePdfState.getOutput());
+      
+      if (compilePdfState.getErrors().length() > 0)
+         view_.showErrors(compilePdfState.getErrors());    
+      
+      if (!compilePdfState.isRunning())
+         view_.compileCompleted();
    }
    
    public void confirmClose(Command onConfirmed)

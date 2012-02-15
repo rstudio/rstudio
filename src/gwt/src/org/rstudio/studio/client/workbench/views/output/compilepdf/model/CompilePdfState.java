@@ -30,8 +30,8 @@ public class CompilePdfState extends JavaScriptObject
       return this.running;
    }-*/;
    
-   public final native String getStatusText() /*-{
-      return this.status_text;
+   public final native String getTargetFile() /*-{
+      return this.target_file;
    }-*/;
    
    public final native String getOutput() /*-{
