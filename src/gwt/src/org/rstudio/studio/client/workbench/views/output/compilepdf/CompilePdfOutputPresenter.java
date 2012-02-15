@@ -237,8 +237,17 @@ public class CompilePdfOutputPresenter extends BasePresenter
          @Override
          protected void onSuccess(Boolean wasTerminated)
          {
-            if (wasTerminated && (onTerminated != null))
-               onTerminated.execute();           
+            if (wasTerminated)
+            {
+               if (onTerminated != null)
+                  onTerminated.execute(); 
+            }
+            else
+            {
+               globalDisplay_.showErrorMessage(
+                    "Compile PDF",
+                    "Unable to terminate PDF compilation. Please try again.");
+            }
          }
       });
    }
