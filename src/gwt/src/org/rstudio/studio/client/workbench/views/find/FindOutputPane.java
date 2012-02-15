@@ -24,7 +24,6 @@ import com.google.gwt.user.cellview.client.CellTree;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
@@ -35,7 +34,6 @@ import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.find.model.FindResult;
 
-import java.util.List;
 
 public class FindOutputPane extends WorkbenchPane
       implements FindOutputPresenter.Display,

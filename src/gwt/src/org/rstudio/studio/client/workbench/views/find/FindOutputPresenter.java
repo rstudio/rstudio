@@ -15,8 +15,6 @@ package org.rstudio.studio.client.workbench.views.find;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.command.Handler;
