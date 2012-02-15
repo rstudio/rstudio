@@ -40,13 +40,14 @@ public:
 
    // COPYING: via compiler
 
-   core::Error readFromFile(const core::FilePath& inputFile);
+   core::Error readFromFile(const core::FilePath& inputFile,
+                            const core::FilePath& baseDir);
 
    bool empty() const { return mapping_.empty(); }
 
-   const std::string& outputFile() const { return outputFile_; }
+   const core::FilePath& outputFile() const { return outputFile_; }
 
-   const std::string& inputFile() const { return inputFile_; }
+   const core::FilePath& inputFile() const { return inputFile_; }
 
    int offset() const { return offset_; }
 
@@ -68,8 +69,8 @@ public:
    }
 
 private:
-   std::string outputFile_;
-   std::string inputFile_;
+   core::FilePath outputFile_;
+   core::FilePath inputFile_;
    std::size_t offset_;
    std::vector<int> mapping_;
 };

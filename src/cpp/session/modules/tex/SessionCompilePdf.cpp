@@ -206,12 +206,10 @@ void showLogEntries(const core::tex::LogEntries& logEntries,
    BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
    {
       if (!rnwConcordance.empty() &&
-          (rnwConcordance.outputFile() == logEntry.filePath().filename()))
+          (rnwConcordance.outputFile() == logEntry.filePath()))
       {
-         FilePath rnwPath = logEntry.filePath().parent().childPath(
-                                                rnwConcordance.inputFile());
          core::tex::LogEntry rnwEntry(logEntry.type(),
-                                      rnwPath,
+                                      rnwConcordance.inputFile(),
                                       rnwConcordance.rnwLine(logEntry.line()),
                                       logEntry.message());
 

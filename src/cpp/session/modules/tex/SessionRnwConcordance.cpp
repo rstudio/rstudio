@@ -79,7 +79,8 @@ OutputIterator rleDecodeValues(InputIterator begin,
 
 } // anonymous namespace
 
-Error Concordance::readFromFile(const FilePath& inputFile)
+Error Concordance::readFromFile(const FilePath& inputFile,
+                                const FilePath& baseDir)
 {
    // read lines
    std::vector<std::string> lines;
@@ -112,8 +113,8 @@ Error Concordance::readFromFile(const FilePath& inputFile)
        return badFormatError(inputFile, "sections", ERROR_LOCATION);
 
    // get input and output file names
-   outputFile_ = sections[1];
-   inputFile_ = sections[2];
+   outputFile_ = baseDir.complete(sections[1]);
+   inputFile_ = baseDir.complete(sections[2]);
 
    // get offset and values
    std::string valuesSection;
@@ -188,7 +189,7 @@ Error readIfExists(const core::FilePath& rnwFile, Concordance* pConcordance)
    FilePath concordanceFile = concordanceFilePath(rnwFile);
    if (concordanceFile.exists())
    {
-      return pConcordance->readFromFile(concordanceFile);
+      return pConcordance->readFromFile(concordanceFile, rnwFile.parent());
    }
    else
    {
