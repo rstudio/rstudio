@@ -28,6 +28,7 @@ namespace authoring {
 core::json::Array supportedRnwWeaveTypes();
 core::json::Array supportedLatexProgramTypes();
 core::json::Object texCapabilitiesAsJson();
+core::json::Object compilePdfStateAsJson();
 bool hasRunningChildren();
 
 core::Error initialize();

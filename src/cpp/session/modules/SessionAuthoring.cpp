@@ -93,8 +93,8 @@ Error compilePdf(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error compilePdfRunning(const json::JsonRpcRequest& request,
-                       json::JsonRpcResponse* pResponse)
+Error isCompilePdfRunning(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
 {
 
    pResponse->setResult(tex::compile_pdf::compileIsRunning());
@@ -112,6 +112,14 @@ Error terminateCompilePdf(const json::JsonRpcRequest& request,
    return Success();
 }
 
+
+Error compilePdfClosed(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+
+   tex::compile_pdf::notifyTabClosed();
+   return Success();
+}
 
 } // anonymous namespace
 
@@ -142,6 +150,11 @@ bool hasRunningChildren()
    return tex::compile_pdf_supervisor::hasRunningChildren();
 }
 
+json::Object compilePdfStateAsJson()
+{
+   return tex::compile_pdf::currentStateAsJson();
+}
+
 Error initialize()
 {
    // install rpc methods
@@ -153,8 +166,9 @@ Error initialize()
       (bind(registerRpcMethod, "is_tex_installed", isTexInstalled))
       (bind(registerRpcMethod, "get_tex_capabilities", getTexCapabilities))
       (bind(registerRpcMethod, "compile_pdf", compilePdf))
-      (bind(registerRpcMethod, "compile_pdf_running", compilePdfRunning))
+      (bind(registerRpcMethod, "is_compile_pdf_running", isCompilePdfRunning))
       (bind(registerRpcMethod, "terminate_compile_pdf", terminateCompilePdf))
+      (bind(registerRpcMethod, "compile_pdf_closed", compilePdfClosed))
    ;
   return initBlock.execute();
 }

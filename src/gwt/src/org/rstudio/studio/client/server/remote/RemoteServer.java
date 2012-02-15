@@ -2407,9 +2407,9 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, COMPILE_PDF, params, requestCallback);
    }
    
-   public void compilePdfRunning(ServerRequestCallback<Boolean> requestCallback)
+   public void isCompilePdfRunning(ServerRequestCallback<Boolean> requestCallback)
    {
-      sendRequest(RPC_SCOPE, COMPILE_PDF_RUNNING, requestCallback);
+      sendRequest(RPC_SCOPE, IS_COMPILE_PDF_RUNNING, requestCallback);
    }
    
    public void terminateCompilePdf(
@@ -2418,6 +2418,10 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, TERMINATE_COMPILE_PDF, requestCallback);
    }
    
+   public void compilePdfClosed(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, COMPILE_PDF_CLOSED, requestCallback);
+   }
    
    public void checkSpelling(String word,
                              ServerRequestCallback<Boolean> requestCallback)
@@ -2659,8 +2663,9 @@ public class RemoteServer implements Server
    private static final String LIST_CLEAR = "list_clear";
    
    private static final String COMPILE_PDF = "compile_pdf";
-   private static final String COMPILE_PDF_RUNNING = "compile_pdf_running";
+   private static final String IS_COMPILE_PDF_RUNNING = "is_compile_pdf_running";
    private static final String TERMINATE_COMPILE_PDF = "terminate_compile_pdf";
+   private static final String COMPILE_PDF_CLOSED = "compile_pdf_closed";
    
    private static final String CHECK_SPELLING = "check_spelling";
    private static final String SUGGESTION_LIST = "suggestion_list";
@@ -2669,6 +2674,4 @@ public class RemoteServer implements Server
    private static final String STOP_FIND = "stop_find";
 
    private static final String LOG = "log";
-
-
 }

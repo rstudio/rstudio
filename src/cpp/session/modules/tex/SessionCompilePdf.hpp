@@ -16,6 +16,8 @@
 
 #include <boost/function.hpp>
 
+#include <core/json/Json.hpp>
+
 namespace core {
    class Error;
    class FilePath;
@@ -32,6 +34,10 @@ bool startCompile(const core::FilePath& targetFilePath,
 bool compileIsRunning();
 
 bool terminateCompile();
+
+void notifyTabClosed();
+
+core::json::Object currentStateAsJson();
 
 } // namespace compile_pdf
 } // namespace tex

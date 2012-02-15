@@ -14,6 +14,7 @@
 package org.rstudio.studio.client.workbench.views.output.compilepdf.model;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public interface CompilePdfServerOperations
@@ -27,8 +28,11 @@ public interface CompilePdfServerOperations
                    ServerRequestCallback<Boolean> requestCallback);
    
    // check whether compile pdf is running
-   void compilePdfRunning(ServerRequestCallback<Boolean> requestCallback);
+   void isCompilePdfRunning(ServerRequestCallback<Boolean> requestCallback);
    
    // terminate any running pdf compilation
    void terminateCompilePdf(ServerRequestCallback<Boolean> requestCallback);
+   
+   // notify the server that the compile pdf tab was closed
+   void compilePdfClosed(ServerRequestCallback<Void> requestCallback);
 }

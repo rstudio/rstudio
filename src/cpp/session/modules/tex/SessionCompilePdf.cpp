@@ -38,38 +38,6 @@
 #include "SessionRnwConcordance.hpp"
 #include "SessionCompilePdfSupervisor.hpp"
 
-// TODO: realPath on Win32 for tex log
-
-// TODO: file comparison in showLogEntries doesn't use full path from
-//       concordance -- fixup so there is no possiblity of false positive
-
-// TODO: when switching back to compile pdf tab scroll position is not
-//       maintained
-
-// TODO: deal with ClientState (need a call to server to notify of close tab)
-
-// TODO: "Undefined control sequence" in -concordance.tex for injection of
-//       concordance option in JAE-RER.Rnw (on test server)
-
-// TODO: error in rle(filenames) for RER.Rnw
-
-// TODO: more obvious progress for compile pdf
-
-// TODO: when opening doc (e.g. error nav) then closing we don't go
-//       back to the previous source location
-
-// TODO: recognize concordance in another block of options
-
-// TODO: manaual texi2dvi must correctly detect terminateAll error state
-// (as opposed to stock errors -- check exit codes on all platforms)
-
-// TODO: sweave/knitr errors
-
-// TOOD: add support for multiple concordance entries written to file
-
-// TODO: pgfSweave concordance
-// TODO: knitr concordance
-
 using namespace core;
 
 namespace session {
@@ -79,14 +47,87 @@ namespace compile_pdf {
 
 namespace {
 
+// status constants
+const int kStatusStarted  = 0;
+const int kStatusCompleted = 1;
+
+// track compile pdf state so we can send it to the client on client init
+class CompilePdfState : boost::noncopyable
+{
+public:
+   CompilePdfState() : tabVisible_(false), running_(false) {}
+   virtual ~CompilePdfState() {}
+   // COPYING: noncoypable
+
+   void onStarted(const std::string& statusText)
+   {
+      clear();
+      running_ = true;
+      tabVisible_ = true;
+      statusText_ = statusText;
+   }
+
+   void addOutput(const std::string& output)
+   {
+      output_ += output;
+   }
+
+   void setErrors(const json::Array& errors)
+   {
+      errors_ = errors;
+   }
+
+   void onStopped(const std::string& statusText)
+   {
+      running_ = false;
+      statusText_ = statusText;
+   }
+
+   void clear()
+   {
+      tabVisible_ = false;
+      running_ = false;
+      statusText_.clear();
+      output_.clear();
+      errors_.clear();
+   }
+
+   json::Object asJson() const
+   {
+      json::Object obj;
+      obj["tab_visible"] = tabVisible_;
+      obj["running"] = running_;
+      obj["status_text"] = statusText_;
+      obj["output"] = output_;
+      obj["errors"] = errors_;
+      return obj;
+   }
+
+private:
+   bool tabVisible_;
+   bool running_;
+   std::string statusText_;
+   std::string output_;
+   json::Array errors_;
+};
+
+CompilePdfState s_compilePdfState;
+
 void enqueOutputEvent(const std::string& output)
 {
+   s_compilePdfState.addOutput(output);
+
    ClientEvent event(client_events::kCompilePdfOutputEvent, output);
    module_context::enqueClientEvent(event);
 }
 
 void enqueStatusEvent(int status, const std::string& text = std::string())
 {
+   if (status == kStatusStarted)
+      s_compilePdfState.onStarted(text);
+   else if (status == kStatusCompleted)
+      s_compilePdfState.onStopped(text);
+
    json::Object dataJson;
    dataJson["status"] = status;
    dataJson["text"] = text;
@@ -96,6 +137,8 @@ void enqueStatusEvent(int status, const std::string& text = std::string())
 
 void enqueErrorsEvent(const json::Array& logEntriesJson)
 {
+   s_compilePdfState.setErrors(logEntriesJson);
+
    ClientEvent event(client_events::kCompilePdfErrorsEvent, logEntriesJson);
    module_context::enqueClientEvent(event);
 }
@@ -492,17 +535,16 @@ private:
    void enqueStartedEvent()
    {
       enqueStatusEvent(
-               Started,
+               kStatusStarted,
                module_context::createAliasedPath(targetFilePath_));
    }
 
    void enqueCompletedEvent()
    {
-      enqueStatusEvent(Completed);
+      enqueStatusEvent(kStatusCompleted);
    }
 
 private:
-   enum Status { Started = 0, Completed = 1 };
    const FilePath targetFilePath_;
    const boost::function<void()> onCompleted_;
    core::tex::TexMagicComments magicComments_;
@@ -549,6 +591,15 @@ bool terminateCompile()
    }
 }
 
+void notifyTabClosed()
+{
+   s_compilePdfState.clear();
+}
+
+json::Object currentStateAsJson()
+{
+   return s_compilePdfState.asJson();
+}
 
 } // namespace compile_pdf
 } // namespace tex

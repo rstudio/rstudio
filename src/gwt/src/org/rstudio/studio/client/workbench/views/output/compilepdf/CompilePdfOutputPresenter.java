@@ -19,6 +19,7 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CommandUtil;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
@@ -33,6 +34,7 @@ import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
@@ -96,9 +98,20 @@ public class CompilePdfOutputPresenter extends BasePresenter
       });
    }
    
-   public void confirmClose(final Command onConfirmed)
+   public void confirmClose(Command onConfirmed)
    {  
-      server_.compilePdfRunning(
+      // wrap the onConfirmed in another command which notifies the server
+      // that we've closed the tab
+      final Command confirmedCommand = CommandUtil.join(onConfirmed, 
+                                                        new Command() {
+         @Override
+         public void execute()
+         {
+            server_.compilePdfClosed(new VoidServerRequestCallback());
+         }
+      });
+      
+      server_.isCompilePdfRunning(
                   new RequestCallback<Boolean>("Closing Compile PDF...") {
          @Override
          public void onSuccess(Boolean isRunning)
@@ -106,11 +119,11 @@ public class CompilePdfOutputPresenter extends BasePresenter
             if (isRunning)
             {
                confirmTerminateRunningCompile("close the Compile PDF tab", 
-                                              onConfirmed);
+                                              confirmedCommand);
             }
             else
             {
-               onConfirmed.execute();
+               confirmedCommand.execute();
             }
          }
       });
