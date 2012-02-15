@@ -77,7 +77,9 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
       };
 
       this.$syncMarkers = function(startRow, rowsChanged) {
-         var dontStopBeforeRow = startRow + rowsChanged;
+         var dontStopBeforeRow =
+               (typeof(rowsChanged) == 'undefined' ? this.$doc.getLength()
+                                                   : startRow + rowsChanged);
 
          var endRow = this.$doc.getLength() - 1;
          for (var row = startRow; row <= endRow; row++) {
@@ -120,7 +122,7 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
             this.$insertNewRows(delta.range.start.row, newLineCount);
             for (var i = 0; i < newLineCount; i++)
                this.$updateRow(delta.range.start.row + i);
-            this.$syncMarkers(delta.range.start.row, newLineCount);
+            this.$syncMarkers(delta.range.start.row);
          }
          else if (delta.action === "insertText")
          {
@@ -129,7 +131,7 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
                this.$insertNewRows(delta.range.end.row, 1);
                this.$updateRow(delta.range.start.row);
                this.$updateRow(delta.range.start.row + 1);
-               this.$syncMarkers(delta.range.start.row, 2);
+               this.$syncMarkers(delta.range.start.row);
             }
             else
             {
@@ -142,7 +144,7 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
             this.$removeRows(delta.range.start.row,
                              delta.range.end.row - delta.range.start.row);
             this.$updateRow(delta.range.start.row);
-            this.$syncMarkers(delta.range.start.row, 1);
+            this.$syncMarkers(delta.range.start.row);
          }
          else if (delta.action === "removeText")
          {
@@ -150,7 +152,7 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
             {
                this.$removeRows(delta.range.end.row, 1);
                this.$updateRow(delta.range.start.row);
-               this.$syncMarkers(delta.range.start.row, 1);
+               this.$syncMarkers(delta.range.start.row);
             }
             else
             {
