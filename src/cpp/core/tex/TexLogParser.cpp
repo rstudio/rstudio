@@ -21,6 +21,7 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/system/System.hpp>
 
 namespace core {
 namespace tex {
@@ -30,7 +31,8 @@ namespace {
 Error parseLog(
      const FilePath& logFilePath,
      const boost::regex& re,
-     const boost::function<LogEntry(const boost::smatch& match)> matchToEntry,
+     const boost::function<LogEntry(const boost::smatch& match,
+                                    const FilePath&)> matchToEntry,
      LogEntries* pLogEntries)
 {
    // get the lines
@@ -45,25 +47,52 @@ Error parseLog(
       boost::smatch match;
       if (regex_match(line, match, re))
       {
-         pLogEntries->push_back(matchToEntry(match));
+         pLogEntries->push_back(matchToEntry(match, logFilePath.parent()));
       }
    }
 
    return Success();
 }
 
-LogEntry fromLatexMatch(const boost::smatch& match)
+FilePath texFilePath(const std::string& logPath, const FilePath& compileDir)
+{
+   // some tex compilers report file names with absolute paths and some
+   // report them relative to the compilation directory -- use realPath
+   // to get a clean directory back
+
+   FilePath path = compileDir.complete(logPath);
+
+#ifdef _WIN32
+   return path;
+#else
+   FilePath realPath;
+   Error error = core::system::realPath(path.absolutePath(), &realPath);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return path;
+   }
+   else
+   {
+      return realPath;
+   }
+#endif
+}
+
+LogEntry fromLatexMatch(const boost::smatch& match,
+                        const FilePath& compileDir)
 {
    return LogEntry(LogEntry::Error,
-                   match[1],
+                   texFilePath(match[1], compileDir),
                    boost::lexical_cast<int>(match[2]),
                    match[3]);
 }
 
-LogEntry fromBibtexMatch(const boost::smatch& match)
+LogEntry fromBibtexMatch(const boost::smatch& match,
+                         const FilePath& compileDir)
 {
    return LogEntry(LogEntry::Error,
-                   match[3],
+                   texFilePath(match[3], compileDir),
                    boost::lexical_cast<int>(match[2]),
                    match[1]);
 }
@@ -74,7 +103,7 @@ LogEntry fromBibtexMatch(const boost::smatch& match)
 Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
 {
    return parseLog(logFilePath,
-                   boost::regex ("^\\./([^:]+):([0-9]+): ([^\n]+)$"),
+                   boost::regex ("^([^:]+):([0-9]+): ([^\n]+)$"),
                    fromLatexMatch,
                    pLogEntries);
 }

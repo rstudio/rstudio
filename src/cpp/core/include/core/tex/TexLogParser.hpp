@@ -17,10 +17,11 @@
 #include <string>
 #include <vector>
 
+#include <core/FilePath.hpp>
+
 namespace core {
 
 class Error;
-class FilePath;
 
 namespace tex {
 
@@ -31,10 +32,10 @@ public:
 
 public:
    LogEntry(Type type,
-            const std::string& file,
+            const FilePath& filePath,
             int line,
             const std::string& message)
-      : file_(file), line_(line), message_(message)
+      : filePath_(filePath), line_(line), message_(message)
    {
    }
 
@@ -42,13 +43,13 @@ public:
 
 public:
    Type type() const { return type_; }
-   const std::string& file() const { return file_; }
+   const FilePath& filePath() const { return filePath_; }
    int line() const { return line_; }
    const std::string& message() const { return message_; }
 
 private:
    Type type_;
-   std::string file_;
+   FilePath filePath_;
    int line_;
    std::string message_;
 };

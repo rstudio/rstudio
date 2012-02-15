@@ -38,18 +38,25 @@
 #include "SessionRnwConcordance.hpp"
 #include "SessionCompilePdfSupervisor.hpp"
 
-// TODO: "Undefined control sequence" in -concordance.tex for injection of
-//       concordance option in JAE-RER.Rnw (on test server)
+// TODO: realPath on Win32 for tex log
 
-// TODO: latex errors are not displayed on mac for talk.tex (just err 1 ret)
-//       also are not displayed on Windows (full path issue as well)
-//       (the problem is that errors are being reported with a full path)
+// TODO: file comparison in showLogEntries doesn't use full path from
+//       concordance -- fixup so there is no possiblity of false positive
+
+// TODO: when switching back to compile pdf tab scroll position is not
+//       maintained
 
 // TODO: deal with ClientState (need a call to server to notify of close tab)
 
-// TODO: handle unconvential paths coming back from error/warnings
-// (i.e. from parent, child, sibbling, or global directory). perhaps we
-// can assume they are full paths and/or call realpath on the ./ variation
+// TODO: "Undefined control sequence" in -concordance.tex for injection of
+//       concordance option in JAE-RER.Rnw (on test server)
+
+// TODO: error in rle(filenames) for RER.Rnw
+
+// TODO: more obvious progress for compile pdf
+
+// TODO: when opening doc (e.g. error nav) then closing we don't go
+//       back to the previous source location
 
 // TODO: recognize concordance in another block of options
 
@@ -98,9 +105,7 @@ json::Object logEntryJson(const FilePath& parentDir,
 {
    json::Object obj;
    obj["type"] = static_cast<int>(logEntry.type());
-   obj["path"] = module_context::createAliasedPath(
-                                       parentDir.complete(logEntry.file()));
-   obj["file"] = logEntry.file();
+   obj["path"] = module_context::createAliasedPath(logEntry.filePath());
    obj["line"] = logEntry.line();
    obj["message"] = logEntry.message();
    return obj;
@@ -116,10 +121,12 @@ void showLogEntries(const core::tex::LogEntries& logEntries,
    BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
    {
       if (!rnwConcordance.empty() &&
-          (rnwConcordance.outputFile() == logEntry.file()))
+          (rnwConcordance.outputFile() == logEntry.filePath().filename()))
       {
+         FilePath rnwPath = logEntry.filePath().parent().childPath(
+                                                rnwConcordance.inputFile());
          core::tex::LogEntry rnwEntry(logEntry.type(),
-                                      rnwConcordance.inputFile(),
+                                      rnwPath,
                                       rnwConcordance.rnwLine(logEntry.line()),
                                       logEntry.message());
 
