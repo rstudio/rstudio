@@ -37,8 +37,7 @@ public class RnwWeaveSelectWidget extends SelectWidget
 {
    public RnwWeaveSelectWidget()
    { 
-      super("Default method for weaving Rnw files:",
-            rnwWeaveRegistry_.getTypeNames());
+      super("Weave Rnw files using:", rnwWeaveRegistry_.getTypeNames());
   
       HelpButton helpButton = new HelpButton("rnw_weave_method");
       Style style = helpButton.getElement().getStyle();

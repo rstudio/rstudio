@@ -33,10 +33,11 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       res_ = res;
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
 
-      Label pdfCompilationLabel = new Label("Compile PDF");
-      pdfCompilationLabel.addStyleName(baseRes.styles().headerLabel());
-      nudgeRight(pdfCompilationLabel);
-      add(pdfCompilationLabel);
+      Label programDefaultsLabel = new Label(
+                           "Program defaults (when not in a project)");
+      programDefaultsLabel.addStyleName(baseRes.styles().headerLabel());
+      nudgeRight(programDefaultsLabel);
+      add(programDefaultsLabel);
             
       defaultSweaveEngine_ = new RnwWeaveSelectWidget();
       defaultSweaveEngine_.setValue(
@@ -49,7 +50,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       add(defaultLatexProgram_);
       
       Label perProjectLabel = new Label(
-            "NOTE: The Rnw weave and LaTeX program options are also set on a " +
+            "NOTE: The Rnw weave and LaTeX compilation options are also set on a " +
             "per-project (and optionally per-file) basis. Click the help " +
             "icons above for more details.");
            
@@ -57,6 +58,11 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       nudgeRight(perProjectLabel);
       spaced(perProjectLabel);
       add(perProjectLabel);
+      
+      Label compilationOptionsLabel = new Label("Compilation options");
+      compilationOptionsLabel.addStyleName(baseRes.styles().headerLabel());
+      nudgeRight(compilationOptionsLabel);
+      add(compilationOptionsLabel);
       
       CheckBox chkConcordance = checkboxPref(
                                        "Always enable Rnw concordance",

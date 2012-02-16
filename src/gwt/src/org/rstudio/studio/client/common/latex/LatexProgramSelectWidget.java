@@ -23,8 +23,7 @@ public class LatexProgramSelectWidget extends SelectWidget
 {
    public LatexProgramSelectWidget()
    {
-      super("Default program for LaTeX typesetting:", 
-            latexProgramRegistry_.getTypeNames());
+      super("Typeset LaTeX into PDF using:", latexProgramRegistry_.getTypeNames());
          
       HelpButton helpButton = new HelpButton("latex_program");
       Style style = helpButton.getElement().getStyle();
