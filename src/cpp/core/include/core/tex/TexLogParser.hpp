@@ -35,7 +35,7 @@ public:
             const FilePath& filePath,
             int line,
             const std::string& message)
-      : filePath_(filePath), line_(line), message_(message)
+      : type_(type), filePath_(filePath), line_(line), message_(message)
    {
    }
 
