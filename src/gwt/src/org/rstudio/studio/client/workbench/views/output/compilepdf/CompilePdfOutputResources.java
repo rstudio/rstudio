@@ -16,14 +16,29 @@ package org.rstudio.studio.client.workbench.views.output.compilepdf;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
 
 public interface CompilePdfOutputResources extends ClientBundle
 {  
    public static interface Styles extends CssResource
    {
+      String table();
+      String headerRow();
+      String selectedRow();
+      String iconCell();
+      String errorIcon();
+      String warningIcon();
+      String boxIcon();
+      String lineCell();
+      String messageCell();
    }
 
+   @Source("org/rstudio/core/client/theme/res/errorSmall.png")
+   ImageResource error();
   
+   @Source("org/rstudio/core/client/theme/res/errorSmall.png")
+   ImageResource warning();
+
    @Source("CompilePdfOutput.css")
    Styles styles();
    

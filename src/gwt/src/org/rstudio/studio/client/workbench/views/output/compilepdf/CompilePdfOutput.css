@@ -1,1 +1,50 @@
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
+.iconCell {
+   vertical-align: top;
+   width: 34px;
+}
+.iconCell div {
+   margin-left: 18px;
+}
+
+.lineCell {
+   font-family: fixedWidthFont;
+   color: #888;
+   vertical-align: top;
+   white-space: nowrap;
+   width: 1%;
+}
+
+.messageCell {
+   font-family: fixedWidthFont;
+   width: 100%;
+   vertical-align: top;
+}
+
+.selectedRow {
+   background-color: cyan;
+}
+
+.headerRow td {
+   font-weight: bold;
+   padding: 2px;
+   width: 100%;
+}
+
+.table {
+   outline: none;
+}
+
+@sprite .errorIcon {
+   gwt-image: 'error';
+}
+
+@sprite .warningIcon {
+   gwt-image: 'warning';
+}
+
+@sprite .boxIcon {
+   gwt-image: 'warning';
+}

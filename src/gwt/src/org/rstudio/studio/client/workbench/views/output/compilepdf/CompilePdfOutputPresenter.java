@@ -18,9 +18,8 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
-
+import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.CommandUtil;
-import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -37,8 +36,8 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
-import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfErrorsEvent;
+import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfOutputEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfStatusEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfError;
@@ -60,7 +59,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
       void clearAll();
       void compileCompleted();
       HasClickHandlers stopButton();
-      HasSelectionCommitHandlers<CompilePdfError> errorList();
+      HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
    }
 
    @Inject
@@ -85,16 +84,15 @@ public class CompilePdfOutputPresenter extends BasePresenter
       });
       
       view_.errorList().addSelectionCommitHandler(
-                              new SelectionCommitHandler<CompilePdfError>() {
+                              new SelectionCommitHandler<CodeNavigationTarget>() {
 
          @Override
          public void onSelectionCommit(
-                              SelectionCommitEvent<CompilePdfError> event)
+                              SelectionCommitEvent<CodeNavigationTarget> event)
          {
-            CompilePdfError error = event.getSelectedItem();
-            FileSystemItem fsi = FileSystemItem.createFile(error.getPath());
-            FilePosition pos = FilePosition.create(error.getLine(), 1);
-            fileTypeRegistry_.editFile(fsi, pos);
+            CodeNavigationTarget target = event.getSelectedItem();
+            FileSystemItem fsi = FileSystemItem.createFile(target.getFile());
+            fileTypeRegistry_.editFile(fsi, target.getPosition());
          }
       });
    }

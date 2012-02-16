@@ -17,15 +17,15 @@ import com.google.gwt.dom.client.*;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.widget.FastSelectTable.ItemCodec;
+import org.rstudio.core.client.widget.HeaderBreaksItemCodec;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.history.view.HistoryPane.Resources;
 
 import java.util.Date;
 
-public class HistoryEntryItemCodec implements ItemCodec<HistoryEntry, String, Long>
+public class HistoryEntryItemCodec extends HeaderBreaksItemCodec<HistoryEntry, String, Long>
 {
-   public enum TimestampMode { GROUP, ITEM, NONE };
+   public enum TimestampMode { GROUP, ITEM, NONE }
 
    public HistoryEntryItemCodec(String commandClass,
                                 String timestampClass,
@@ -119,154 +119,30 @@ public class HistoryEntryItemCodec implements ItemCodec<HistoryEntry, String, Lo
       return timestampMode_ == TimestampMode.GROUP;
    }
 
-   public void onRowsChanged(TableSectionElement tbody)
+   @Override
+   protected boolean needsBreak(TableRowElement prevRow, TableRowElement row)
    {
-      if (timestampMode_ == TimestampMode.NONE)
-         return;
-
-      long lastTime = -1;
+      if (timestampMode_ == TimestampMode.ITEM)
+         return true;
 
       if (timestampMode_ == TimestampMode.GROUP)
       {
-         Node previousSibling = tbody.getPreviousSibling();
-         if (previousSibling != null
-             && previousSibling.getNodeType() == Node.ELEMENT_NODE
-             && ((Element)previousSibling).getTagName().equalsIgnoreCase("tbody"))
-         {
-            TableSectionElement prevbody = (TableSectionElement) previousSibling;
-            NodeList<TableRowElement> prevrows = prevbody.getRows();
-            if (prevrows.getLength() > 0)
-            {
-               TableRowElement lastRow = prevrows.getItem(prevrows.getLength()-1);
-               if (isValueRow(lastRow))
-               {
-                  lastTime = getTimestampForRow(lastRow);
-               }
-            }
-         }
-      }
-
-      int totalExtraRows = 0;
-      final NodeList<TableRowElement> rows = tbody.getRows();
-      for (int i = 0; i < rows.getLength(); i++)
-      {
-         TableRowElement row = rows.getItem(i);
+         long lastTime = getTimestampForRow(prevRow);
          long time = getTimestampForRow(row);
-         if (timestampMode_ == TimestampMode.ITEM
-             || (timestampMode_ == TimestampMode.GROUP && Math.abs(time - lastTime) > 1000*60*15))
-         {
-            final String formatted = formatDate(time);
-            if (formatted != null)
-            {
-               int extraRows;
-               if (timestampMode_ == TimestampMode.ITEM)
-                  extraRows = addTimestampCell(row, formatted);
-               else
-                  extraRows = addTimestampRow(row, formatted);
-               i += extraRows;
-               totalExtraRows += extraRows;
-            }
-         }
-         lastTime = time;
+         return Math.abs(time - lastTime) > 1000*60*15;
       }
 
-      tbody.setPropertyInt("extrarows", totalExtraRows);
+      return false;
    }
 
-   public Integer logicalOffsetToPhysicalOffset(TableElement table, int offset)
+   @Override
+   protected int addBreak(TableRowElement row)
    {
-      if (!hasNonValueRows())
-         return offset;
-
-      NodeList<TableSectionElement> bodies = table.getTBodies();
-      int skew = 0;
-      int pos = 0;
-      for (int i = 0; i < bodies.getLength(); i++)
-      {
-         TableSectionElement body = bodies.getItem(i);
-         NodeList<TableRowElement> rows = body.getRows();
-         int rowCount = rows.getLength();
-         int extraRows = body.getPropertyInt("extrarows");
-         int max = (pos - skew) + (rowCount - extraRows);
-         if (max <= offset)
-         {
-            // It's safe to skip this whole tbody. These are not the
-            // rows we're looking for.
-            pos += rowCount;
-            skew += extraRows;
-         }
-         else
-         {
-            NodeList<TableRowElement> allRows = table.getRows();
-            for (; pos < allRows.getLength(); pos++)
-            {
-               TableRowElement row = allRows.getItem(pos);
-               if (!isValueRow(row))
-                  skew++;
-               else if (offset == (pos - skew))
-                  return pos;
-            }
-         }
-      }
-
-      if (pos - skew == offset)
-         return pos;
+      String formatted = formatDate(getTimestampForRow(row));
+      if (timestampMode_ == TimestampMode.ITEM)
+         return addTimestampCell(row, formatted);
       else
-         return null;
-   }
-
-   public Integer physicalOffsetToLogicalOffset(TableElement table, int offset)
-   {
-      if (!hasNonValueRows())
-         return offset;
-
-      if (offset >= table.getRows().getLength())
-         return null;
-
-      NodeList<TableSectionElement> bodies = table.getTBodies();
-      int logicalOffset = 0;
-      for (int i = 0; offset > 0 && i < bodies.getLength(); i++)
-      {
-         TableSectionElement body = bodies.getItem(i);
-         NodeList<TableRowElement> rows = body.getRows();
-         int rowCount = rows.getLength();
-         int extraRows = body.getPropertyInt("extrarows");
-         if (rowCount < offset)
-         {
-            logicalOffset += rowCount - extraRows;
-            offset -= rowCount;
-         }
-         else
-         {
-            // It's in here
-            for (int j = 0; offset > 0 && j < rows.getLength(); j++)
-            {
-               offset--;
-               if (isValueRow(rows.getItem(j)))
-                  logicalOffset++;
-            }
-         }
-      }
-
-      return logicalOffset;
-   }
-
-   public int getLogicalRowCount(TableElement table)
-   {
-      if (!hasNonValueRows())
-         return table.getRows().getLength();
-
-      NodeList<TableSectionElement> bodies = table.getTBodies();
-      int logicalOffset = 0;
-      for (int i = 0; i < bodies.getLength(); i++)
-      {
-         TableSectionElement body = bodies.getItem(i);
-         NodeList<TableRowElement> rows = body.getRows();
-         int rowCount = rows.getLength();
-         int extraRows = body.getPropertyInt("extrarows");
-         logicalOffset += rowCount - extraRows;
-      }
-      return logicalOffset;
+         return addTimestampRow(row, formatted);
    }
 
    private int addTimestampRow(TableRowElement row, String formatted)

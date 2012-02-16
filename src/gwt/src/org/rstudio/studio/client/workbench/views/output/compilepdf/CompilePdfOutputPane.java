@@ -12,27 +12,30 @@
  */
 package org.rstudio.studio.client.workbench.views.output.compilepdf;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.event.dom.client.DoubleClickEvent;
-import com.google.gwt.event.dom.client.DoubleClickHandler;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.TableColElement;
+import com.google.gwt.dom.client.TableElement;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-
+import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.core.client.widget.ToolbarButton;
-import org.rstudio.core.client.widget.ToolbarLabel;
+import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.shell.ShellWidget;
@@ -40,9 +43,11 @@ import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfError;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 
+import java.util.ArrayList;
+
 public class CompilePdfOutputPane extends WorkbenchPane
       implements CompilePdfOutputPresenter.Display,
-                 HasSelectionCommitHandlers<CompilePdfError>
+                 HasSelectionCommitHandlers<CodeNavigationTarget>
 {
    @Inject
    public CompilePdfOutputPane(FileTypeRegistry fileTypeRegistry)
@@ -55,6 +60,8 @@ public class CompilePdfOutputPane extends WorkbenchPane
    @Override
    protected Widget createMainWidget()
    {
+      res_ = GWT.create(CompilePdfOutputResources.class);
+
       panel_ = new SimplePanel();
       
       outputWidget_ = new ShellWidget(new AceEditor());
@@ -63,23 +70,60 @@ public class CompilePdfOutputPane extends WorkbenchPane
       outputWidget_.setReadOnly(true);
       outputWidget_.setSuppressPendingInput(true);
       panel_.setWidget(outputWidget_);
-      
-      lbErrors_ = new ListBox();
-      lbErrors_.setVisibleItemCount(100);
-      lbErrors_.setSize("100%", "100%");
-      lbErrors_.addDoubleClickHandler(new DoubleClickHandler() 
+
+      errorTable_ = new FastSelectTable<CompilePdfError, CodeNavigationTarget, Object>(
+            new CompilePdfErrorItemCodec(res_),
+            res_.styles().selectedRow(),
+            true,
+            false);
+      setWidths();
+      errorTable_.setStyleName(res_.styles().table());
+      errorTable_.setSize("100%", "100%");
+      errorTable_.addClickHandler(new ClickHandler()
       {
          @Override
-         public void onDoubleClick(DoubleClickEvent event)
+         public void onClick(ClickEvent event)
          {
-            CompilePdfError error = errors_.get(lbErrors_.getSelectedIndex());  
-            SelectionCommitEvent.fire(CompilePdfOutputPane.this, error);
+            if (doubleClick_.checkForDoubleClick(event.getNativeEvent()))
+            {
+               ArrayList<CodeNavigationTarget> values =
+                                                errorTable_.getSelectedValues();
+               if (values.size() == 1)
+               {
+                  SelectionCommitEvent.fire(CompilePdfOutputPane.this,
+                                            values.get(0));
+               }
+            }
          }
+         private final DoubleClickState doubleClick_ = new DoubleClickState();
       });
-      
+      errorPanel_ = new ScrollPanel(errorTable_);
+      errorPanel_.setSize("100%", "100%");
+
       return panel_;
    }
-   
+
+   private void setWidths()
+   {
+      setColumnClasses(errorTable_.getElement().<TableElement>cast(),
+                       res_.styles().iconCell(),
+                       res_.styles().lineCell(),
+                       res_.styles().messageCell());
+   }
+
+   private void setColumnClasses(TableElement table,
+                                 String... classes)
+   {
+      TableColElement colGroupElement = Document.get().createColGroupElement();
+      for (String clazz : classes)
+      {
+         TableColElement colElement = Document.get().createColElement();
+         colElement.setClassName(clazz);
+         colGroupElement.appendChild(colElement);
+      }
+      table.appendChild(colGroupElement);
+   }
+
    @Override
    protected Toolbar createMainToolbar()
    {
@@ -121,7 +165,8 @@ public class CompilePdfOutputPane extends WorkbenchPane
    public void clearAll()
    {
       outputWidget_.clearOutput();
-      lbErrors_.clear();
+      errorTable_.clear();
+      setWidths();
       panel_.setWidget(outputWidget_);  
    }
    
@@ -135,14 +180,12 @@ public class CompilePdfOutputPane extends WorkbenchPane
    @Override
    public void showErrors(JsArray<CompilePdfError> errors)
    {
-      errors_ = errors;
-      
-      lbErrors_.clear();
-      for (int i=0; i<errors.length(); i++)
-         lbErrors_.addItem(errors.get(i).asString(),
-                           errors.get(i).toSource());
-      
-      panel_.setWidget(lbErrors_);
+      ArrayList<CompilePdfError> errorList = new ArrayList<CompilePdfError>();
+      for (CompilePdfError error : JsUtil.asIterable(errors))
+         errorList.add(error);
+
+      errorTable_.addItems(errorList, false);
+      panel_.setWidget(errorPanel_);
    }
 
    @Override
@@ -158,14 +201,14 @@ public class CompilePdfOutputPane extends WorkbenchPane
    }
   
    @Override
-   public HasSelectionCommitHandlers<CompilePdfError> errorList()
+   public HasSelectionCommitHandlers<CodeNavigationTarget> errorList()
    {
       return this;
    }
    
    @Override
    public HandlerRegistration addSelectionCommitHandler(
-                           SelectionCommitHandler<CompilePdfError> handler)
+                           SelectionCommitHandler<CodeNavigationTarget> handler)
    {
       return addHandler(handler, SelectionCommitEvent.getType());
    }
@@ -177,7 +220,9 @@ public class CompilePdfOutputPane extends WorkbenchPane
    private ToolbarButton stopButton_;
    private SimplePanel panel_;
    private ShellWidget outputWidget_;
-   private JsArray<CompilePdfError> errors_;
-   private ListBox lbErrors_;
+   private FastSelectTable<CompilePdfError, CodeNavigationTarget, Object>
+                                                                    errorTable_;
+   private ScrollPanel errorPanel_;
    private FileTypeRegistry fileTypeRegistry_;
+   private CompilePdfOutputResources res_;
 }
