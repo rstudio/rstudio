@@ -88,52 +88,6 @@ public:
                                     const core::FilePath& rnwFilePath,
                                     core::tex::LogEntries* pLogEntries) const
    {
-      return Success();
-   }
-
-private:
-   std::string name_;
-   std::string packageName_;
-};
-
-class RnwSweave : public RnwWeave
-{
-public:
-   RnwSweave()
-      : RnwWeave("Sweave")
-   {
-   }
-
-   virtual bool isInstalled() const { return true; }
-
-    virtual bool injectConcordance() const { return true; }
-
-#ifdef _WIN32
-   virtual std::vector<std::string> commandArgs(const std::string& file) const
-   {
-      std::vector<std::string> args;
-      std::string sweaveCmd = "\"Sweave('" + file + "')\"";
-      args.push_back("-e");
-      args.push_back(sweaveCmd);
-      args.push_back("--silent");
-      return args;
-   }
-#else
-   virtual std::vector<std::string> commandArgs(const std::string& file) const
-   {
-      std::vector<std::string> args;
-      args.push_back("CMD");
-      args.push_back("Sweave");
-      args.push_back(file);
-      return args;
-   }
-#endif
-
-   virtual core::Error parseOutputForErrors(
-                                    const std::string& output,
-                                    const core::FilePath& rnwFilePath,
-                                    core::tex::LogEntries* pLogEntries) const
-   {
       // split into lines so we can determine the line numbers for the chunks
       // NOTE: will need to read this using global/project encoding if we
       // want to look for text outside of theh orignal error parsing
@@ -177,6 +131,44 @@ public:
 
       return Success();
    }
+
+private:
+   std::string name_;
+   std::string packageName_;
+};
+
+class RnwSweave : public RnwWeave
+{
+public:
+   RnwSweave()
+      : RnwWeave("Sweave")
+   {
+   }
+
+   virtual bool isInstalled() const { return true; }
+
+    virtual bool injectConcordance() const { return true; }
+
+#ifdef _WIN32
+   virtual std::vector<std::string> commandArgs(const std::string& file) const
+   {
+      std::vector<std::string> args;
+      std::string sweaveCmd = "\"Sweave('" + file + "')\"";
+      args.push_back("-e");
+      args.push_back(sweaveCmd);
+      args.push_back("--silent");
+      return args;
+   }
+#else
+   virtual std::vector<std::string> commandArgs(const std::string& file) const
+   {
+      std::vector<std::string> args;
+      args.push_back("CMD");
+      args.push_back("Sweave");
+      args.push_back(file);
+      return args;
+   }
+#endif
 };
 
 class RnwExternalWeave : public RnwWeave
@@ -235,6 +227,14 @@ public:
    }
 
    virtual bool injectConcordance() const { return false; }
+
+   virtual core::Error parseOutputForErrors(
+                                    const std::string& output,
+                                    const core::FilePath& rnwFilePath,
+                                    core::tex::LogEntries* pLogEntries) const
+   {
+      return Success();
+   }
 };
 
 
