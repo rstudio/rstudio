@@ -4,32 +4,38 @@
 .iconCell {
    vertical-align: top;
    width: 34px;
-}
-.iconCell div {
-   margin-left: 18px;
+   padding: 2px 3px;
 }
 
 .lineCell {
-   font-family: fixedWidthFont;
    color: #888;
    vertical-align: top;
    white-space: nowrap;
    width: 1%;
+   padding-right: 8px;
 }
 
 .messageCell {
-   font-family: fixedWidthFont;
    width: 100%;
    vertical-align: top;
+   padding-right: 8px;
 }
 
 .selectedRow {
-   background-color: cyan;
+   background-color: #ccc;
+}
+*:focus .selectedRow {
+   background-color: rgb(146, 193, 240)
+}
+@if user.agent ie8 {
+   .selectedRow {
+      background-color: rgb(146, 193, 240)
+   }
 }
 
 .headerRow td {
    font-weight: bold;
-   padding: 2px;
+   padding: 2px 2px 2px 3px;
    width: 100%;
 }
 

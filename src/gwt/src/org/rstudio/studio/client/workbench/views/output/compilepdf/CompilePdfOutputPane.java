@@ -71,8 +71,9 @@ public class CompilePdfOutputPane extends WorkbenchPane
       outputWidget_.setSuppressPendingInput(true);
       panel_.setWidget(outputWidget_);
 
+      codec_ = new CompilePdfErrorItemCodec(res_, false);
       errorTable_ = new FastSelectTable<CompilePdfError, CodeNavigationTarget, Object>(
-            new CompilePdfErrorItemCodec(res_),
+            codec_,
             res_.styles().selectedRow(),
             true,
             false);
@@ -148,7 +149,9 @@ public class CompilePdfOutputPane extends WorkbenchPane
    public void compileStarted(String fileName)
    {
       clearAll();
-      
+
+      fileName_ = fileName;
+
       fileImage_.setResource(fileTypeRegistry_.getIconForFilename(fileName));
       
       String shortFileName = StringUtil.shortPathName(
@@ -164,6 +167,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
    @Override
    public void clearAll()
    {
+      fileName_ = null;
       outputWidget_.clearOutput();
       errorTable_.clear();
       setWidths();
@@ -180,10 +184,16 @@ public class CompilePdfOutputPane extends WorkbenchPane
    @Override
    public void showErrors(JsArray<CompilePdfError> errors)
    {
+      boolean showFileHeaders = false;
       ArrayList<CompilePdfError> errorList = new ArrayList<CompilePdfError>();
       for (CompilePdfError error : JsUtil.asIterable(errors))
+      {
+         if (!error.getPath().equals(fileName_))
+            showFileHeaders = true;
          errorList.add(error);
+      }
 
+      codec_.setShowFileHeaders(showFileHeaders);
       errorTable_.addItems(errorList, false);
       panel_.setWidget(errorPanel_);
    }
@@ -225,4 +235,6 @@ public class CompilePdfOutputPane extends WorkbenchPane
    private ScrollPanel errorPanel_;
    private FileTypeRegistry fileTypeRegistry_;
    private CompilePdfOutputResources res_;
+   private String fileName_;
+   private CompilePdfErrorItemCodec codec_;
 }

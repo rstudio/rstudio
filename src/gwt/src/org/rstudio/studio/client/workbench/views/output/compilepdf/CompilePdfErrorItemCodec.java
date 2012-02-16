@@ -22,9 +22,21 @@ import org.rstudio.studio.client.workbench.views.output.compilepdf.model.Compile
 public class CompilePdfErrorItemCodec
       extends HeaderBreaksItemCodec<CompilePdfError, CodeNavigationTarget, Object>
 {
-   public CompilePdfErrorItemCodec(CompilePdfOutputResources resources)
+   public CompilePdfErrorItemCodec(CompilePdfOutputResources resources,
+                                   boolean showFileHeaders)
    {
       resources_ = resources;
+      showFileHeaders_ = showFileHeaders;
+   }
+
+   public boolean getShowFileHandlers()
+   {
+      return showFileHeaders_;
+   }
+
+   public void setShowFileHeaders(boolean show)
+   {
+      showFileHeaders_ = show;
    }
 
    @Override
@@ -63,6 +75,9 @@ public class CompilePdfErrorItemCodec
    @Override
    protected boolean needsBreak(TableRowElement prevRow, TableRowElement row)
    {
+      if (!showFileHeaders_)
+         return false;
+
       if (prevRow == null)
          return true;
 
@@ -112,28 +127,11 @@ public class CompilePdfErrorItemCodec
    @Override
    public boolean hasNonValueRows()
    {
-      return true;
-   }
-
-   @Override
-   public Integer logicalOffsetToPhysicalOffset(TableElement table, int offset)
-   {
-      return offset;
-   }
-
-   @Override
-   public Integer physicalOffsetToLogicalOffset(TableElement table, int offset)
-   {
-      return offset;
-   }
-
-   @Override
-   public int getLogicalRowCount(TableElement table)
-   {
-      return table.getRows().getLength();
+      return showFileHeaders_;
    }
 
    private final CompilePdfOutputResources resources_;
+   private boolean showFileHeaders_;
 
    private static final String DATA_PATH = "data-path";
    private static final String DATA_LINE = "data-line";
