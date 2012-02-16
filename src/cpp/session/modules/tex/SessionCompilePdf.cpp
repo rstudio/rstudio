@@ -198,19 +198,21 @@ json::Object logEntryJson(const FilePath& parentDir,
 
 void showLogEntries(const core::tex::LogEntries& logEntries,
                     const FilePath& texPath,
-                    const rnw_concordance::Concordance& rnwConcordance =
-                                             rnw_concordance::Concordance())
+                    const rnw_concordance::Concordances& rnwConcordances =
+                                             rnw_concordance::Concordances())
 {
    FilePath parentDir = texPath.parent();
    json::Array logEntriesJson;
    BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
    {
-      if (!rnwConcordance.empty() &&
-          (rnwConcordance.outputFile() == logEntry.filePath()))
+      using namespace tex::rnw_concordance;
+      FileAndLine rnwFileAndLine = rnwConcordances.lookup(
+                        FileAndLine(logEntry.filePath(), logEntry.line()));
+      if (!rnwFileAndLine.empty())
       {
          core::tex::LogEntry rnwEntry(logEntry.type(),
-                                      rnwConcordance.inputFile(),
-                                      rnwConcordance.rnwLine(logEntry.line()),
+                                      rnwFileAndLine.filePath(),
+                                      rnwFileAndLine.line(),
                                       logEntry.message());
 
          logEntriesJson.push_back(logEntryJson(parentDir, rnwEntry));
@@ -240,7 +242,7 @@ FilePath bibtexLogPath(const FilePath& texFilePath)
 }
 
 bool showCompilationErrors(const FilePath& texPath,
-                           const rnw_concordance::Concordance& rnwConcordance)
+                           const rnw_concordance::Concordances& concordances)
 {
    // latex log file
    core::tex::LogEntries logEntries;
@@ -270,7 +272,7 @@ bool showCompilationErrors(const FilePath& texPath,
    // show errors if necessary
    if (!logEntries.empty())
    {
-      showLogEntries(logEntries, texPath, rnwConcordance);
+      showLogEntries(logEntries, texPath, concordances);
       return true;
    }
    else
@@ -440,13 +442,13 @@ private:
    void onWeaveCompleted(const rnw_weave::Result& result)
    {
       if (result.succeeded)
-         runLatexCompiler(result.concordance);
+         runLatexCompiler(result.concordances);
       else
          terminateWithError(result.errorMessage);
    }
 
-   void runLatexCompiler(const rnw_concordance::Concordance& concordance =
-                                                rnw_concordance::Concordance())
+   void runLatexCompiler(const rnw_concordance::Concordances& concordances =
+                                            rnw_concordance::Concordances())
    {
       // configure pdflatex options
       pdflatex::PdfLatexOptions options;
@@ -500,7 +502,7 @@ private:
                                  AsyncPdfCompiler::shared_from_this(),
                                  _1,
                                  texFilePath,
-                                 concordance));
+                                 concordances));
          if (error)
             terminateWithError("Unable to compile pdf: " + error.summary());
       }
@@ -532,14 +534,14 @@ private:
          {
             onLatexCompileCompleted(result.exitStatus,
                                     texFilePath,
-                                    concordance);
+                                    concordances);
          }
       }
    }
 
    void onLatexCompileCompleted(int exitStatus,
                                 const FilePath& texFilePath,
-                                const rnw_concordance::Concordance& concord)
+                                const rnw_concordance::Concordances& concords)
    {
       if (exitStatus == EXIT_SUCCESS)
       {
@@ -560,7 +562,7 @@ private:
 
          // try to show compilation errors -- if none are found then print
          // a general error message and stderr
-         if (!showCompilationErrors(texFilePath, concord))
+         if (!showCompilationErrors(texFilePath, concords))
          {
             boost::format fmt("Error running %1% (exit code %2%)");
             std::string msg(boost::str(fmt % texProgramPath_.absolutePath()

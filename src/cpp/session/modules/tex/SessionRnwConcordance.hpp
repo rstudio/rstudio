@@ -40,8 +40,9 @@ public:
 
    // COPYING: via compiler
 
-   core::Error readFromFile(const core::FilePath& inputFile,
-                            const core::FilePath& baseDir);
+   core::Error parse(const core::FilePath& sourceFile,
+                     const std::string& input,
+                     const core::FilePath& baseDir);
 
    bool empty() const { return mapping_.empty(); }
 
@@ -75,10 +76,53 @@ private:
    std::vector<int> mapping_;
 };
 
+class FileAndLine
+{
+public:
+   FileAndLine()
+      : line_(-1)
+   {
+   }
+
+   FileAndLine(const core::FilePath& filePath, int line)
+      : filePath_(filePath), line_(line)
+   {
+   }
+   ~FileAndLine() {}
+   // COPYING: via compiler
+
+   bool empty() const { return filePath_.empty(); }
+
+   const core::FilePath& filePath() const { return filePath_; }
+   int line() const { return line_; }
+
+private:
+   core::FilePath filePath_;
+   int line_;
+};
+
+class Concordances
+{
+public:
+   Concordances() {}
+   ~Concordances() {}
+   // COPYING: via compiler
+
+   void add(Concordance& concordance)
+   {
+      concordances_.push_back(concordance);
+   }
+
+   FileAndLine lookup(const FileAndLine& texFileAndLine) const;
+
+private:
+   std::vector<Concordance> concordances_;
+};
+
 void removePrevious(const core::FilePath& rnwFile);
 
 core::Error readIfExists(const core::FilePath& rnwFile,
-                         Concordance* pConcordance);
+                         Concordances* pConcordances);
 
 } // namespace rnw_concordance
 } // namespace tex

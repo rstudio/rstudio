@@ -46,17 +46,18 @@ struct Result
       return result;
    }
 
-   static Result success(const tex::rnw_concordance::Concordance& concordance)
+   static Result success(
+                  const tex::rnw_concordance::Concordances& concordances)
    {
       Result result;
       result.succeeded = true;
-      result.concordance = concordance;
+      result.concordances = concordances;
       return result;
    }
 
    bool succeeded;
    std::string errorMessage;
-   tex::rnw_concordance::Concordance concordance;
+   tex::rnw_concordance::Concordances concordances;
 };
 
 typedef boost::function<void(const Result&)> CompletedFunction;

@@ -20,6 +20,7 @@
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/regex.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -79,16 +80,15 @@ OutputIterator rleDecodeValues(InputIterator begin,
 
 } // anonymous namespace
 
-Error Concordance::readFromFile(const FilePath& inputFile,
-                                const FilePath& baseDir)
+Error Concordance::parse(const FilePath& sourceFile,
+                         const std::string& input,
+                         const FilePath& baseDir)
 {
-   // read lines
+   // split into lines
    std::vector<std::string> lines;
-   Error error = core::readStringVectorFromFile(inputFile, &lines);
-   if (error)
-      return error;
+   boost::algorithm::split(lines, input,  boost::algorithm::is_any_of("\n"));
 
-   // paste them together (removing trailing %)
+   // paste them back together (removing trailing %)
    using namespace boost::algorithm;
    std::string concordance;
    BOOST_FOREACH(const std::string& line, lines)
@@ -100,7 +100,7 @@ Error Concordance::readFromFile(const FilePath& inputFile,
    boost::regex re("\\\\Sconcordance\\{([^\\}]+)\\}");
    boost::smatch match;
    if (!boost::regex_match(concordance, match, re))
-      return badFormatError(inputFile, "body", ERROR_LOCATION);
+      return badFormatError(sourceFile, "body", ERROR_LOCATION);
 
    // split into sections
    std::vector<std::string> sections;
@@ -110,7 +110,7 @@ Error Concordance::readFromFile(const FilePath& inputFile,
 
    // validate the number of sections
    if (sections.size() < 4 || sections.size() > 5)
-       return badFormatError(inputFile, "sections", ERROR_LOCATION);
+       return badFormatError(sourceFile, "sections", ERROR_LOCATION);
 
    // get input and output file names
    outputFile_ = baseDir.complete(sections[1]);
@@ -123,7 +123,7 @@ Error Concordance::readFromFile(const FilePath& inputFile,
       boost::regex re("^ofs ([0-9]+)");
       boost::smatch match;
       if (!boost::regex_match(sections[3], match, re))
-         return badFormatError(inputFile, "offset", ERROR_LOCATION);
+         return badFormatError(sourceFile, "offset", ERROR_LOCATION);
 
       offset_ = safe_convert::stringTo<std::size_t>(match[1], 0);
       valuesSection = sections[4];
@@ -150,12 +150,12 @@ Error Concordance::readFromFile(const FilePath& inputFile,
    }
    catch(const boost::bad_lexical_cast&)
    {
-      return badFormatError(inputFile, "values", ERROR_LOCATION);
+      return badFormatError(sourceFile, "values", ERROR_LOCATION);
    }
 
    // confirm we have at least one element and extract it as the start line
    if (rleValues.size() < 1)
-      return badFormatError(inputFile, "no-values", ERROR_LOCATION);
+      return badFormatError(sourceFile, "no-values", ERROR_LOCATION);
    int startLine = rleValues[0];
 
    // unroll the RLE encoded values
@@ -176,6 +176,21 @@ Error Concordance::readFromFile(const FilePath& inputFile,
    return Success();
 }
 
+
+FileAndLine Concordances::lookup(const FileAndLine& texFileAndLine) const
+{
+   BOOST_FOREACH(const Concordance& concordance, concordances_)
+   {
+      if (concordance.outputFile() ==  texFileAndLine.filePath())
+      {
+         return FileAndLine(concordance.inputFile(),
+                            concordance.rnwLine(texFileAndLine.line()));
+      }
+   }
+
+   return FileAndLine();
+}
+
 void removePrevious(const core::FilePath& rnwFile)
 {
    Error error = concordanceFilePath(rnwFile).removeIfExists();
@@ -184,17 +199,43 @@ void removePrevious(const core::FilePath& rnwFile)
 }
 
 
-Error readIfExists(const core::FilePath& rnwFile, Concordance* pConcordance)
+Error readIfExists(const core::FilePath& rnwFile, Concordances* pConcordances)
 {
+   // return success if the file doesn't exist
    FilePath concordanceFile = concordanceFilePath(rnwFile);
-   if (concordanceFile.exists())
-   {
-      return pConcordance->readFromFile(concordanceFile, rnwFile.parent());
-   }
-   else
-   {
+   if (!concordanceFile.exists())
       return Success();
+
+   // read the file
+   std::string contents;
+   Error error = core::readStringFromFile(concordanceFile,
+                                          &contents,
+                                          string_utils::LineEndingPosix);
+   if (error)
+      return error;
+
+   // split on concordance
+   const char * const kConcordance = "\\Sconcordance";
+   boost::regex re("\\" + std::string(kConcordance));
+   std::vector<std::string> concordances;
+   boost::algorithm::split_regex(concordances, contents, re);
+   BOOST_FOREACH(const std::string& concordance, concordances)
+   {
+      std::string entry = boost::algorithm::trim_copy(concordance);
+      if (!entry.empty())
+      {
+         Concordance concord;
+         Error error = concord.parse(concordanceFile,
+                                     kConcordance + entry,
+                                     rnwFile.parent());
+         if (error)
+            LOG_ERROR(error);
+         else
+            pConcordances->add(concord);
+      }
    }
+
+   return Success();
 }
 
 } // namespace rnw_concordance

@@ -258,13 +258,13 @@ void onWeaveProcessExit(int exitCode,
    if (exitCode == EXIT_SUCCESS)
    {
       // pickup concordance if there is any
-      rnw_concordance::Concordance concordance;
-      Error error = rnw_concordance::readIfExists(rnwPath, &concordance);
+      rnw_concordance::Concordances concordances;
+      Error error = rnw_concordance::readIfExists(rnwPath, &concordances);
       if (error)
          LOG_ERROR(error);
 
       // return success
-      onCompleted(Result::success(concordance));
+      onCompleted(Result::success(concordances));
    }
    else
    {
