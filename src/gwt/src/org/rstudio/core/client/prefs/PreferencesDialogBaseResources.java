@@ -41,7 +41,7 @@ public interface PreferencesDialogBaseResources extends ClientBundle
    Styles styles();
    
    ImageResource iconCodeEditing();
-   ImageResource iconWriting();
+   ImageResource iconCompilePdf();
    ImageResource iconR();
    ImageResource iconSourceControl();
    

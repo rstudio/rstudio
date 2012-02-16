@@ -35,13 +35,13 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                    Session session,
                                    ProjectGeneralPreferencesPane general,
                                    ProjectEditingPreferencesPane editing,
-                                   ProjectWritingPreferencesPane writing,
+                                   ProjectCompilePdfPreferencesPane compilePdf,
                                    ProjectSourceControlPreferencesPane source)
    {
       super("Project Options",
             RES.styles().panelContainer(),
             false,
-            new ProjectPreferencesPane[] {general, editing, writing, source});
+            new ProjectPreferencesPane[] {general, editing, compilePdf, source});
       
       server_ = server;
       pUIPrefs_ = pUIPrefs;  
@@ -86,6 +86,8 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                            config.getEncoding()); 
                 uiPrefs.defaultSweaveEngine().setProjectValue(
                                            config.getDefaultSweaveEngine());
+                uiPrefs.defaultLatexProgram().setProjectValue(
+                                           config.getDefaultLatexProgram());
                 
                 if (onCompleted != null)
                    onCompleted.execute();

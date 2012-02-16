@@ -1,5 +1,5 @@
 /*
- * ProjectWritingPreferencesPane.java
+ * ProjectCompilePdfPreferencesPane.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -22,14 +22,14 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
-public class ProjectWritingPreferencesPane extends ProjectPreferencesPane
+public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
 {
    @Inject
-   public ProjectWritingPreferencesPane()
+   public ProjectCompilePdfPreferencesPane()
    {
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
 
-      Label pdfCompilationLabel = new Label("Compile PDF");
+      Label pdfCompilationLabel = new Label("Program defaults");
       pdfCompilationLabel.addStyleName(baseRes.styles().headerLabel());
       nudgeRight(pdfCompilationLabel);
       add(pdfCompilationLabel);
@@ -45,13 +45,13 @@ public class ProjectWritingPreferencesPane extends ProjectPreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return PreferencesDialogBaseResources.INSTANCE.iconWriting();
+      return PreferencesDialogBaseResources.INSTANCE.iconCompilePdf();
    }
 
    @Override
    public String getName()
    {
-      return "Authoring";
+      return "Compile PDF";
    }
 
    @Override

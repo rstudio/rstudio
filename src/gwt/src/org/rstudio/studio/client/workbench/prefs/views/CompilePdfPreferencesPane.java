@@ -89,7 +89,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return PreferencesDialogBaseResources.INSTANCE.iconWriting();
+      return PreferencesDialogBaseResources.INSTANCE.iconCompilePdf();
    }
 
    @Override
