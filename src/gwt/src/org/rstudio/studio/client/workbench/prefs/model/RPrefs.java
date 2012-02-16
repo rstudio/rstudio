@@ -25,7 +25,7 @@ public class RPrefs extends JavaScriptObject
       this.packages_prefs = new Object();
       this.projects_prefs = new Object();
       this.source_control_prefs = new Object();
-      this.writing_prefs = new Object();
+      this.compile_pdf_prefs = new Object();
       return prefs;
    }-*/;
    
@@ -70,11 +70,11 @@ public class RPrefs extends JavaScriptObject
       this.source_control_prefs = sourceControlPrefs;
    }-*/;
    
-   public native final WritingPrefs getWritingPrefs() /*-{
-      return this.writing_prefs;
+   public native final CompilePdfPrefs getCompilePdfPrefs() /*-{
+      return this.compile_pdf_prefs;
    }-*/;
 
-   public native final void setWritingPrefs(WritingPrefs writingPrefs) /*-{
-      this.writing_prefs = writingPrefs;
+   public native final void setCompilePdfPrefs(CompilePdfPrefs compilePdfPrefs) /*-{
+      this.compile_pdf_prefs = compilePdfPrefs;
    }-*/;
 }

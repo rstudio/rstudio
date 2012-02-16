@@ -162,14 +162,14 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 {
    // read params
    json::Object generalPrefs, historyPrefs, packagesPrefs, projectsPrefs,
-                sourceControlPrefs, writingPrefs;
+                sourceControlPrefs, compilePdfPrefs;
    Error error = json::readObjectParam(request.params, 0,
                               "general_prefs", &generalPrefs,
                               "history_prefs", &historyPrefs,
                               "packages_prefs", &packagesPrefs,
                               "projects_prefs", &projectsPrefs,
                               "source_control_prefs", &sourceControlPrefs,
-                              "writing_prefs", &writingPrefs);
+                              "compile_pdf_prefs", &compilePdfPrefs);
    if (error)
       return error;
    json::Object uiPrefs;
@@ -279,9 +279,9 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().endUpdate();
 
 
-   // read and update writing prefs
+   // read and update compile pdf prefs
    bool useTexi2Dvi, cleanOutput, enableShellEscape;
-   error = json::readObject(writingPrefs,
+   error = json::readObject(compilePdfPrefs,
                             "use_texi2dvi", &useTexi2Dvi,
                             "clean_output", &cleanOutput,
                             "enable_shell_escape", &enableShellEscape);
@@ -387,11 +387,11 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    sourceControlPrefs["have_rsa_key"] = rsaSshKeyPath.exists();
 
 
-   // get writing prefs
-   json::Object writingPrefs;
-   writingPrefs["use_texi2dvi"] = userSettings().useTexi2Dvi();
-   writingPrefs["clean_output"] = userSettings().cleanTexi2DviOutput();
-   writingPrefs["enable_shell_escape"] = userSettings().enableLaTeXShellEscape();
+   // get compile pdf prefs
+   json::Object compilePdfPrefs;
+   compilePdfPrefs["use_texi2dvi"] = userSettings().useTexi2Dvi();
+   compilePdfPrefs["clean_output"] = userSettings().cleanTexi2DviOutput();
+   compilePdfPrefs["enable_shell_escape"] = userSettings().enableLaTeXShellEscape();
 
    // initialize and set result object
    json::Object result;
@@ -400,7 +400,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    result["packages_prefs"] = packagesPrefs;
    result["projects_prefs"] = projectsPrefs;
    result["source_control_prefs"] = sourceControlPrefs;
-   result["writing_prefs"] = writingPrefs;
+   result["compile_pdf_prefs"] = compilePdfPrefs;
 
    pResponse->setResult(result);
 

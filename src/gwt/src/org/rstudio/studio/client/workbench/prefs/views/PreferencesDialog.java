@@ -33,7 +33,7 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
                             PreferencesDialogResources res,
                             Provider<GeneralPreferencesPane> pR,
                             EditingPreferencesPane source,
-                            WritingPreferencesPane writing,
+                            CompilePdfPreferencesPane compilePdf,
                             AppearancePreferencesPane appearance,
                             PaneLayoutPreferencesPane paneLayout,
                             SourceControlPreferencesPane sourceControl)
@@ -45,7 +45,7 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
                                    source, 
                                    appearance, 
                                    paneLayout,
-                                   writing,
+                                   compilePdf,
                                    sourceControl}); 
 
       session_ = session;

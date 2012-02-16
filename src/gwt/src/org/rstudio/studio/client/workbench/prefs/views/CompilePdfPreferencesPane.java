@@ -1,5 +1,5 @@
 /*
- * WritingPreferencesPane.java
+ * CompilePdfPreferencesPane.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -21,13 +21,13 @@ import org.rstudio.studio.client.common.latex.LatexProgramSelectWidget;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.WritingPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.CompilePdfPrefs;
 
-public class WritingPreferencesPane extends PreferencesPane
+public class CompilePdfPreferencesPane extends PreferencesPane
 {
    @Inject
-   public WritingPreferencesPane(UIPrefs prefs,
-                                 PreferencesDialogResources res)
+   public CompilePdfPreferencesPane(UIPrefs prefs,
+                                    PreferencesDialogResources res)
    {
       prefs_ = prefs;
       res_ = res;
@@ -95,16 +95,16 @@ public class WritingPreferencesPane extends PreferencesPane
    @Override
    public String getName()
    {
-      return "Authoring";
+      return "Compile PDF";
    }
 
    @Override
    protected void initialize(RPrefs prefs)
    {
-      WritingPrefs writingPrefs = prefs.getWritingPrefs();
-      chkUseTexi2Dvi_.setValue(writingPrefs.getUseTexi2Dvi());
-      chkCleanTexi2DviOutput_.setValue(writingPrefs.getCleanOutput());
-      chkEnableShellEscape_.setValue(writingPrefs.getEnableShellEscape());
+      CompilePdfPrefs compilePdfPrefs = prefs.getCompilePdfPrefs();
+      chkUseTexi2Dvi_.setValue(compilePdfPrefs.getUseTexi2Dvi());
+      chkCleanTexi2DviOutput_.setValue(compilePdfPrefs.getCleanOutput());
+      chkEnableShellEscape_.setValue(compilePdfPrefs.getEnableShellEscape());
    }
    
    @Override
@@ -117,11 +117,11 @@ public class WritingPreferencesPane extends PreferencesPane
       prefs_.defaultLatexProgram().setGlobalValue(
                                     defaultLatexProgram_.getValue());
          
-      WritingPrefs writingPrefs = WritingPrefs.create(
+      CompilePdfPrefs prefs = CompilePdfPrefs.create(
                                        chkUseTexi2Dvi_.getValue(), 
                                        chkCleanTexi2DviOutput_.getValue(),
                                        chkEnableShellEscape_.getValue());
-      rPrefs.setWritingPrefs(writingPrefs);
+      rPrefs.setCompilePdfPrefs(prefs);
       
       return requiresRestart;
    }

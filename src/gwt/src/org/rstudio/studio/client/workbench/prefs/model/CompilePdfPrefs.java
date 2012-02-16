@@ -1,5 +1,5 @@
 /*
- * WritingPrefs.java
+ * CompilePdfPrefs.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -14,13 +14,13 @@ package org.rstudio.studio.client.workbench.prefs.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class WritingPrefs extends JavaScriptObject
+public class CompilePdfPrefs extends JavaScriptObject
 {
-   protected WritingPrefs() {}
+   protected CompilePdfPrefs() {}
 
-   public static final native WritingPrefs create(boolean useTexi2Dvi, 
-                                                  boolean cleanOutput,
-                                                  boolean enableShellEscape) /*-{
+   public static final native CompilePdfPrefs create(boolean useTexi2Dvi, 
+                                                     boolean cleanOutput,
+                                                     boolean enableShellEscape) /*-{
       var prefs = new Object();
       prefs.use_texi2dvi = useTexi2Dvi;
       prefs.clean_output = cleanOutput;
