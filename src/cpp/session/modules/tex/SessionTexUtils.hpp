@@ -48,11 +48,12 @@ core::Error runTexCompile(const core::FilePath& texProgramPath,
                           const core::FilePath& texFilePath,
                           core::system::ProcessResult* pResult);
 
-core::Error runTexCompile(const core::FilePath& texProgramPath,
-                          const core::system::Options& envVars,
-                          const core::shell_utils::ShellArgs& args,
-                          const core::FilePath& texFilePath,
-                          const boost::function<void(int)>& onExited);
+core::Error runTexCompile(
+              const core::FilePath& texProgramPath,
+              const core::system::Options& envVars,
+              const core::shell_utils::ShellArgs& args,
+              const core::FilePath& texFilePath,
+              const boost::function<void(int,const std::string&)>& onExited);
 
 } // namespace utils
 } // namespace tex

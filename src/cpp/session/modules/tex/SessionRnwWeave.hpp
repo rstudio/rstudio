@@ -16,6 +16,7 @@
 
 #include <boost/function.hpp>
 
+#include <core/tex/TexLogParser.hpp>
 #include <core/tex/TexMagicComment.hpp>
 
 #include <core/json/Json.hpp>
@@ -46,6 +47,14 @@ struct Result
       return result;
    }
 
+   static Result error(const core::tex::LogEntries& logEntries)
+   {
+      Result result;
+      result.succeeded = false;
+      result.errorLogEntries = logEntries;
+      return result;
+   }
+
    static Result success(
                   const tex::rnw_concordance::Concordances& concordances)
    {
@@ -57,6 +66,7 @@ struct Result
 
    bool succeeded;
    std::string errorMessage;
+   core::tex::LogEntries errorLogEntries;
    tex::rnw_concordance::Concordances concordances;
 };
 

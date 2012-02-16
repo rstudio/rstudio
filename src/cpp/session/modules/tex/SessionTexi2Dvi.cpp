@@ -166,10 +166,11 @@ bool isAvailable()
    return !module_context::findProgram("texi2dvi").empty();
 }
 
-core::Error texToPdf(const core::FilePath& texProgramPath,
-                     const core::FilePath& texFilePath,
-                     const tex::pdflatex::PdfLatexOptions& options,
-                     const boost::function<void(int)>& onExited)
+core::Error texToPdf(
+         const core::FilePath& texProgramPath,
+         const core::FilePath& texFilePath,
+         const tex::pdflatex::PdfLatexOptions& options,
+         const boost::function<void(int,const std::string&)>& onExited)
 {
    FilePath texi2DviProgramFilePath = texi2DviPath();
    if (texi2DviProgramFilePath.empty())

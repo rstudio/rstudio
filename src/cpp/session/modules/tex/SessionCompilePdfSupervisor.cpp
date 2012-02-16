@@ -52,6 +52,36 @@ void onShutdown(bool)
    }
 }
 
+// define class which accumulates output and passes it to onExited
+class CB : boost::noncopyable
+{
+public:
+   CB(const boost::function<void(const std::string&)>& onOutput,
+      const boost::function<void(int,const std::string&)>& onExited)
+         : onOutput_(onOutput), onExited_(onExited)
+   {
+   }
+   virtual ~CB() {}
+
+public:
+   void onOutput(const std::string& output)
+   {
+      onOutput_(output);
+      output_ += output;
+   }
+
+   void onExit(int exitStatus)
+   {
+      onExited_(exitStatus, output_);
+   }
+
+private:
+   std::string output_;
+   boost::function<void(const std::string&)> onOutput_;
+   boost::function<void(int,const std::string&)> onExited_;
+};
+
+
 } // anonymous namespace
 
 bool hasRunningChildren()
@@ -83,7 +113,7 @@ Error runProgram(const core::FilePath& programFilePath,
                  const core::system::Options& extraEnvVars,
                  const core::FilePath& workingDir,
                  const boost::function<void(const std::string&)>& onOutput,
-                 const boost::function<void(int)>& onExited)
+                 const boost::function<void(int,const std::string&)>& onExited)
 {
    // get system program file path
    std::string programPath = string_utils::utf8ToSystem(
@@ -99,10 +129,10 @@ Error runProgram(const core::FilePath& programFilePath,
    options.workingDir = workingDir;
 
    // setup callbacks
+   boost::shared_ptr<CB> pCB(new CB(onOutput, onExited));
    core::system::ProcessCallbacks cb;
-   cb.onStdout = boost::bind(onOutput, _2);
-   cb.onStderr = boost::bind(onOutput, _2);
-   cb.onExit = onExited;
+   cb.onStdout = cb.onStderr = boost::bind(&CB::onOutput, pCB, _2);
+   cb.onExit = boost::bind(&CB::onExit, pCB, _1);
 
    // run process using supervisor
    return s_processSupervisor.runProgram(programPath, args, options, cb);

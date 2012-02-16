@@ -35,10 +35,11 @@ namespace texi2dvi {
 
 bool isAvailable();
 
-core::Error texToPdf(const core::FilePath& texProgramPath,
-                     const core::FilePath& texFilePath,
-                     const tex::pdflatex::PdfLatexOptions& options,
-                     const boost::function<void(int)>& onExited);
+core::Error texToPdf(
+         const core::FilePath& texProgramPath,
+         const core::FilePath& texFilePath,
+         const tex::pdflatex::PdfLatexOptions& options,
+         const boost::function<void(int,const std::string&)>& onExited);
 
 } // namespace texi2dvi
 } // namespace tex

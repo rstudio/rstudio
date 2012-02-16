@@ -185,8 +185,7 @@ void enqueErrorsEvent(const json::Array& logEntriesJson)
    module_context::enqueClientEvent(event);
 }
 
-json::Object logEntryJson(const FilePath& parentDir,
-                          const core::tex::LogEntry& logEntry)
+json::Object logEntryJson(const core::tex::LogEntry& logEntry)
 {
    json::Object obj;
    obj["type"] = static_cast<int>(logEntry.type());
@@ -197,11 +196,9 @@ json::Object logEntryJson(const FilePath& parentDir,
 }
 
 void showLogEntries(const core::tex::LogEntries& logEntries,
-                    const FilePath& texPath,
                     const rnw_concordance::Concordances& rnwConcordances =
                                              rnw_concordance::Concordances())
 {
-   FilePath parentDir = texPath.parent();
    json::Array logEntriesJson;
    BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
    {
@@ -215,11 +212,11 @@ void showLogEntries(const core::tex::LogEntries& logEntries,
                                       rnwFileAndLine.line(),
                                       logEntry.message());
 
-         logEntriesJson.push_back(logEntryJson(parentDir, rnwEntry));
+         logEntriesJson.push_back(logEntryJson(rnwEntry));
       }
       else
       {
-         logEntriesJson.push_back(logEntryJson(parentDir, logEntry));
+         logEntriesJson.push_back(logEntryJson(logEntry));
       }
    }
 
@@ -272,7 +269,7 @@ bool showCompilationErrors(const FilePath& texPath,
    // show errors if necessary
    if (!logEntries.empty())
    {
-      showLogEntries(logEntries, texPath, concordances);
+      showLogEntries(logEntries, concordances);
       return true;
    }
    else
@@ -443,6 +440,8 @@ private:
    {
       if (result.succeeded)
          runLatexCompiler(result.concordances);
+      else if (!result.errorLogEntries.empty())
+         terminateWithErrorLogEntries(result.errorLogEntries);
       else
          terminateWithError(result.errorMessage);
    }
@@ -578,6 +577,12 @@ private:
    void terminateWithError(const std::string& message)
    {
       enqueOutputEvent(message + "\n");
+      enqueCompletedEvent();
+   }
+
+   void terminateWithErrorLogEntries(const core::tex::LogEntries& logEntries)
+   {
+      showLogEntries(logEntries);
       enqueCompletedEvent();
    }
 

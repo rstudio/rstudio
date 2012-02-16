@@ -17,6 +17,11 @@
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
 
+#include <boost/algorithm/string/split.hpp>
+
+#include <core/FileSerializer.hpp>
+
+#include <core/tex/TexLogParser.hpp>
 #include <core/tex/TexMagicComment.hpp>
 
 #include <r/RExec.hpp>
@@ -78,6 +83,14 @@ public:
    virtual std::vector<std::string> commandArgs(
                                     const std::string& file) const = 0;
 
+   virtual core::Error parseOutputForErrors(
+                                    const std::string& output,
+                                    const core::FilePath& rnwFilePath,
+                                    core::tex::LogEntries* pLogEntries) const
+   {
+      return Success();
+   }
+
 private:
    std::string name_;
    std::string packageName_;
@@ -115,6 +128,55 @@ public:
       return args;
    }
 #endif
+
+   virtual core::Error parseOutputForErrors(
+                                    const std::string& output,
+                                    const core::FilePath& rnwFilePath,
+                                    core::tex::LogEntries* pLogEntries) const
+   {
+      // split into lines so we can determine the line numbers for the chunks
+      // NOTE: will need to read this using global/project encoding if we
+      // want to look for text outside of theh orignal error parsing
+      // scenario (which only required ascii)
+      std::string rnwContents;
+      Error error = core::readStringFromFile(rnwFilePath, &rnwContents);
+      if (error)
+         return error;
+      std::vector<std::string> lines;
+      boost::algorithm::split(lines, rnwContents, boost::is_any_of("\n"));
+
+      // determine line numbers
+      boost::regex re("^<<(.*)>>=.*");
+      boost::smatch match;
+      std::vector<int> chunkLineNumbers;
+      for (std::size_t i=0; i<lines.size(); i++)
+      {
+         if (boost::regex_match(lines[i], match, re))
+            chunkLineNumbers.push_back(i+1);
+      }
+
+      // determine chunk number and error message
+      boost::regex cre(
+         "[\\w]+:[\\s]+chunk[\\s]+(\\d+)[^\n]+\n[^:]+:[\\s]*[\n]?([^\n]+)\n");
+      if (boost::regex_search(output, match, cre))
+      {
+         std::string match1(match[1]);
+         std::string match2(match[2]);
+         std::size_t chunk = core::safe_convert::stringTo<int>(match1, 0);
+         std::string msg = boost::algorithm::trim_copy(match2);
+         if (chunk > 0 && chunk <= chunkLineNumbers.size())
+         {
+            boost::format fmt("(chunk %1%) %2%");
+            core::tex::LogEntry logEntry(core::tex::LogEntry::Error,
+                                         rnwFilePath,
+                                         chunkLineNumbers[chunk-1],
+                                         boost::str(fmt % chunk % msg));
+            pLogEntries->push_back(logEntry);
+         }
+      }
+
+      return Success();
+   }
 };
 
 class RnwExternalWeave : public RnwWeave
@@ -251,7 +313,9 @@ std::string weaveTypeForFile(const core::tex::TexMagicComments& magicComments)
 }
 
 
-void onWeaveProcessExit(int exitCode,
+void onWeaveProcessExit(boost::shared_ptr<RnwWeave> pRnwWeave,
+                        int exitCode,
+                        const std::string& output,
                         const FilePath& rnwPath,
                         const CompletedFunction& onCompleted)
 {
@@ -268,9 +332,22 @@ void onWeaveProcessExit(int exitCode,
    }
    else
    {
-      // don't return an error message because the process almost
-      // certainly already printed something to stderr
-      onCompleted(Result::error(std::string()));
+      // see if we can pick errors from the output
+      core::tex::LogEntries entries;
+      Error error = pRnwWeave->parseOutputForErrors(output, rnwPath, &entries);
+      if (error)
+         LOG_ERROR(error);
+
+      if (!entries.empty())
+      {
+         onCompleted(Result::error(entries));
+      }
+      else
+      {
+         // don't return an error message because the process almost
+         // certainly already printed something to stderr
+         onCompleted(Result::error(std::string()));
+      }
    }
 }
 
@@ -319,7 +396,8 @@ void runWeave(const core::FilePath& rnwPath,
                core::system::Options(),
                rnwPath.parent(),
                onOutput,
-               boost::bind(onWeaveProcessExit, _1, rnwPath, onCompleted));
+               boost::bind(onWeaveProcessExit,
+                                 pRnwWeave, _1, _2, rnwPath, onCompleted));
       if (error)
       {
          LOG_ERROR(error);

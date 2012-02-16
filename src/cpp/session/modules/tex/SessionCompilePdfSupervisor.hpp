@@ -44,7 +44,7 @@ core::Error runProgram(const core::FilePath& programFilePath,
                        const core::system::Options& extraEnvVars,
                        const core::FilePath& workingDir,
                        const boost::function<void(const std::string&)>& onOutput,
-                       const boost::function<void(int)>& onExited);
+                       const boost::function<void(int,const std::string&)>& onExited);
 
 core::Error initialize();
 
