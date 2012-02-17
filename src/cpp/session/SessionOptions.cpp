@@ -85,10 +85,9 @@ void resolvePostbackPath(const FilePath& resourcePath, std::string* pPath)
 
 void resolveRsPdfLatexPath(const FilePath& resourcePath, std::string* pPath)
 {
-   std::string path;
-   resolvePath(resourcePath, &path);
+   resolvePath(resourcePath, pPath);
 
-   FilePath exePath(path);
+   FilePath exePath(*pPath);
    core::system::fixupExecutablePath(&exePath);
    *pPath = exePath.absolutePath();
 }
