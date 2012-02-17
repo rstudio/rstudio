@@ -105,11 +105,11 @@ ReadCollectionAction parseString(const std::string& line, std::string* pStr)
 }
    
 Error readStringVectorFromFile(const core::FilePath& filePath,
-                               std::vector<std::string>* pVector)
+                               std::vector<std::string>* pVector,
+                               bool trimAndIgnoreBlankLines)
 {
-   return readCollectionFromFile<std::vector<std::string> > (filePath,
-                                                             pVector,
-                                                             parseString);
+   return readCollectionFromFile<std::vector<std::string> > (
+         filePath, pVector, parseString, trimAndIgnoreBlankLines);
    
 }
    

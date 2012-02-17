@@ -82,7 +82,8 @@ Error readCollectionFromFile(
          CollectionType* pCollection,
          boost::function<ReadCollectionAction(const std::string& line, 
                                  typename CollectionType::value_type* pValue)>
-                         parseFunction)
+                         parseFunction,
+                         bool trimAndIgnoreBlankLines=true)
 {
    using namespace boost::system::errc ;
    
@@ -110,9 +111,12 @@ Error readCollectionFromFile(
             return systemError(io_error, ERROR_LOCATION);
 
          // trim whitespace then ignore it if it is a blank line
-         boost::algorithm::trim(nextLine) ;
-         if (nextLine.empty())
-            continue ;
+         if (trimAndIgnoreBlankLines)
+         {
+            boost::algorithm::trim(nextLine) ;
+            if (nextLine.empty())
+               continue ;
+         }
 
          // parse it and add it to the collection
          typename CollectionType::value_type value ;
@@ -191,7 +195,8 @@ Error writeStringVectorToFile(const core::FilePath& filePath,
                               const std::vector<std::string>& vector);
    
 Error readStringVectorFromFile(const core::FilePath& filePath,
-                               std::vector<std::string>* pVector);
+                               std::vector<std::string>* pVector,
+                               bool trimAndIgnoreBlankLines=true);
 
 // lineEnding is the type of line ending you want to end up on disk
 Error writeStringToFile(const core::FilePath& filePath,
