@@ -179,6 +179,9 @@ Error Concordance::parse(const FilePath& sourceFile,
 
 FileAndLine Concordances::lookup(const FileAndLine& texFileAndLine) const
 {
+   if (texFileAndLine.filePath().empty())
+      return FileAndLine();
+
    BOOST_FOREACH(const Concordance& concordance, concordances_)
    {
       if (concordance.outputFile() ==  texFileAndLine.filePath())
@@ -189,6 +192,65 @@ FileAndLine Concordances::lookup(const FileAndLine& texFileAndLine) const
    }
 
    return FileAndLine();
+}
+
+std::string fixup_formatter(const Concordances& concordances,
+                            const FilePath& sourceFile,
+                            const boost::smatch& what)
+{
+   std::string result = what[0];
+
+   for (unsigned int i = what.size()-1; i > 0; i--)
+   {
+      if (what[i].matched)
+      {
+         int inputLine = core::safe_convert::stringTo<int>(what[i], 1);
+         FileAndLine dest = concordances.lookup(
+                                           FileAndLine(sourceFile, inputLine));
+         if (!dest.empty())
+         {
+            result.replace(what.position(i) - what.position(),
+                           what.length(i),
+                           boost::lexical_cast<std::string>(dest.line()));
+         }
+      }
+   }
+
+   return result;
+}
+
+core::tex::LogEntry Concordances::fixup(const core::tex::LogEntry &entry,
+                                        bool *pSuccess) const
+{
+   // Error messages themselves can (and usually do) contain line numbers.
+   // It looks silly when we show the Rnw line numbers juxtaposed with the
+   // TeX line numbers (e.g. "Line 102: Error at line 192")
+   static boost::regex regexLines("\\blines? (\\d+)(?:-{1,3}(\\d+))?\\b");
+
+   FileAndLine mapped = lookup(FileAndLine(entry.filePath(), entry.line()));
+   if (!mapped.empty())
+   {
+      boost::function<std::string(boost::smatch)> formatter =
+            boost::bind(fixup_formatter, *this, entry.filePath(), _1);
+      std::string mappedMsg =
+            boost::regex_replace(entry.message(), regexLines, formatter);
+
+      if (pSuccess)
+         *pSuccess = true;
+
+      return core::tex::LogEntry(entry.logFilePath(),
+                                 entry.logLine(),
+                                 entry.type(),
+                                 mapped.filePath(),
+                                 mapped.line(),
+                                 mappedMsg);
+   }
+   else
+   {
+      if (pSuccess)
+         *pSuccess = false;
+      return entry;
+   }
 }
 
 void removePrevious(const core::FilePath& rnwFile)

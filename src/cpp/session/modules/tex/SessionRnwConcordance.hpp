@@ -20,6 +20,7 @@
 #include <boost/utility.hpp>
 
 #include <core/FilePath.hpp>
+#include <core/tex/TexLogParser.hpp>
 
 namespace core {
    class Error;
@@ -114,6 +115,8 @@ public:
    }
 
    FileAndLine lookup(const FileAndLine& texFileAndLine) const;
+   core::tex::LogEntry fixup(const core::tex::LogEntry& entry,
+                             bool* pSuccess=NULL) const;
 
 private:
    std::vector<Concordance> concordances_;

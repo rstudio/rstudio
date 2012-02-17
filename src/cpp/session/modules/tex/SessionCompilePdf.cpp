@@ -203,23 +203,8 @@ void showLogEntries(const core::tex::LogEntries& logEntries,
    BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
    {
       using namespace tex::rnw_concordance;
-      FileAndLine rnwFileAndLine = rnwConcordances.lookup(
-                        FileAndLine(logEntry.filePath(), logEntry.line()));
-      if (!rnwFileAndLine.empty())
-      {
-         core::tex::LogEntry rnwEntry(logEntry.logFilePath(),
-                                      logEntry.logLine(),
-                                      logEntry.type(),
-                                      rnwFileAndLine.filePath(),
-                                      rnwFileAndLine.line(),
-                                      logEntry.message());
-
-         logEntriesJson.push_back(logEntryJson(rnwEntry));
-      }
-      else
-      {
-         logEntriesJson.push_back(logEntryJson(logEntry));
-      }
+      core::tex::LogEntry rnwEntry = rnwConcordances.fixup(logEntry);
+      logEntriesJson.push_back(logEntryJson(rnwEntry));
    }
 
    enqueErrorsEvent(logEntriesJson);
