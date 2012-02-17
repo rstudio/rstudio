@@ -58,8 +58,3 @@
   };
 
   __MODULE_FUNC__.__computePropValue = computePropValue;
-  var activeModules = (window.__gwt_activeModules =
-      window.__gwt_activeModules || {});
-  var moduleName = __MODULE_FUNC__.__moduleName.replace('.', '_');
-  activeModules[moduleName] = {moduleName: moduleName,
-      bindings: __MODULE_FUNC__.__getPropMap()};
