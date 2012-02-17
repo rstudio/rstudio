@@ -162,7 +162,10 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
 .rs.addFunction( "shellViewPdf", function(path)
 {
    if(.Platform$OS.type == "windows")
-      shell.exec(path)
+   {
+      require(utils, quietly=TRUE)
+      shell.exec(normalizePath(path))
+   }
    else if (identical(substr(.Platform$pkgType, 1L, 10L), "mac.binary"))
 	  system(paste("open", "-a", "Preview", shQuote(path)), wait = FALSE)
    else
