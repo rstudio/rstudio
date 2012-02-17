@@ -142,6 +142,33 @@ public class CompilePdfOutputPane extends WorkbenchPane
       stopButton_ = new ToolbarButton(stopImage, null);
       stopButton_.setVisible(false);
       toolbar.addRightWidget(stopButton_);
+      
+      showOutputButton_ = new LeftRightToggleButton("Output",  "Errors", false);
+      showOutputButton_.setVisible(false);
+      showOutputButton_.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+           showOutputButton_.setVisible(false);
+           showErrorsButton_.setVisible(true);
+           panel_.setWidget(outputWidget_);
+         }
+      });
+      toolbar.addRightWidget(showOutputButton_);
+       
+      showErrorsButton_ = new LeftRightToggleButton("Output",  "Errors", true);
+      showErrorsButton_.setVisible(false);
+      showErrorsButton_.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+           showOutputButton_.setVisible(true);
+           showErrorsButton_.setVisible(false);
+           panel_.setWidget(errorPanel_);
+         }
+      });
+      toolbar.addRightWidget(showErrorsButton_);
+     
       return toolbar;
    }
   
@@ -161,6 +188,8 @@ public class CompilePdfOutputPane extends WorkbenchPane
       
       fileLabel_.setText(shortFileName);
       
+      showOutputButton_.setVisible(false);
+      showErrorsButton_.setVisible(false);
       stopButton_.setVisible(true);
    }
 
@@ -168,6 +197,9 @@ public class CompilePdfOutputPane extends WorkbenchPane
    public void clearAll()
    {
       fileName_ = null;
+      showOutputButton_.setVisible(false);
+      showErrorsButton_.setVisible(false);
+      stopButton_.setVisible(false);
       outputWidget_.clearOutput();
       errorTable_.clear();
       setWidths();
@@ -196,6 +228,8 @@ public class CompilePdfOutputPane extends WorkbenchPane
       codec_.setShowFileHeaders(showFileHeaders);
       errorTable_.addItems(errorList, false);
       panel_.setWidget(errorPanel_);
+      
+      showOutputButton_.setVisible(true);
    }
 
    @Override
@@ -223,11 +257,11 @@ public class CompilePdfOutputPane extends WorkbenchPane
       return addHandler(handler, SelectionCommitEvent.getType());
    }
   
-   
    private Image fileImage_;
    private ToolbarLabel fileLabel_;
-   
    private ToolbarButton stopButton_;
+   private LeftRightToggleButton showOutputButton_;
+   private LeftRightToggleButton showErrorsButton_;
    private SimplePanel panel_;
    private ShellWidget outputWidget_;
    private FastSelectTable<CompilePdfError, CodeNavigationTarget, Object>

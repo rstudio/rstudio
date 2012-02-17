@@ -554,7 +554,7 @@ private:
       }
       else
       {
-         enqueOutputEvent("\n");
+         enqueOutputEvent("\n[Stopped: Errors encountered]\n");
 
          // don't remove the log
          auxillaryFileCleanupContext_.preserveLog();
