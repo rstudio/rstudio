@@ -103,7 +103,7 @@
             <path refid="project.class.path"/>
          </classpath>
          <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
-         <jvmarg value="-Xmx512M"/>
+         <jvmarg value="-Xmx1024M"/>
          <arg value="-war"/>
          <arg value="www"/>
          <arg value="-localWorkers"/>
