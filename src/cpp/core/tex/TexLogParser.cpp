@@ -172,43 +172,90 @@ void unwrapLines(std::vector<std::string>* pLines)
    }
 }
 
-// Given the value of the line, push and pop files from the stack as needed.
-void maintainFileStack(const std::string line,
-                       std::vector<std::string>* pFileStack)
+class FileStack : public boost::noncopyable
 {
-   std::vector<std::string::const_iterator> parens;
-   findUnmatchedParens(line, &parens);
-   BOOST_FOREACH(std::string::const_iterator it, parens)
+public:
+   FileStack(FilePath rootDir) : rootDir_(rootDir)
    {
-      if (*it == ')')
-      {
-         if (pFileStack->size() > 1)
-            pFileStack->pop_back();
-         else
-         {
-            LOG_WARNING_MESSAGE("File context stack underflow while parsing "
-                                "TeX log");
-         }
-      }
-      else if (*it == '(')
-      {
-         std::string filename;
-         std::copy(it + 1, line.end(), std::back_inserter(filename));
-
-         // Remove quotes if present
-         if (filename.size() >= 2 &&
-             filename[0] == '"' &&
-             filename[filename.size()-1] == '"')
-         {
-            filename = filename.substr(1, filename.size()-2);
-         }
-
-         pFileStack->push_back(filename);
-      }
-      else
-         BOOST_ASSERT(false);
    }
-}
+
+   FilePath currentFile()
+   {
+      return currentFile_;
+   }
+
+   void processLine(const std::string& line)
+   {
+      std::vector<std::string::const_iterator> parens;
+      findUnmatchedParens(line, &parens);
+      BOOST_FOREACH(std::string::const_iterator it, parens)
+      {
+         if (*it == ')')
+         {
+            if (!fileStack_.empty())
+            {
+               fileStack_.pop_back();
+               updateCurrentFile();
+            }
+            else
+            {
+               LOG_WARNING_MESSAGE("File context stack underflow while parsing "
+                                   "TeX log");
+            }
+         }
+         else if (*it == '(')
+         {
+            std::string filename;
+            std::copy(it + 1, line.end(), std::back_inserter(filename));
+
+            // Remove quotes if present
+            if (filename.size() >= 2 &&
+                filename[0] == '"' &&
+                filename[filename.size()-1] == '"')
+            {
+               filename = filename.substr(1, filename.size()-2);
+            }
+
+            if (beginsWith(filename, "./"))
+               filename = filename.substr(2);
+
+            bool fileExists = !filename.empty() &&
+                                          rootDir_.complete(filename).exists();
+            if (!fileExists)
+               filename = "";
+
+            fileStack_.push_back(filename.empty()
+                                 ? FilePath()
+                                 : rootDir_.complete(filename));
+
+            updateCurrentFile();
+         }
+         else
+            BOOST_ASSERT(false);
+      }
+   }
+
+private:
+
+   void updateCurrentFile()
+   {
+      for (std::vector<FilePath>::reverse_iterator it = fileStack_.rbegin();
+           it != fileStack_.rend();
+           it++)
+      {
+         if (!it->empty())
+         {
+            currentFile_ = *it;
+            return;
+         }
+      }
+      currentFile_ = FilePath();
+   }
+
+   FilePath rootDir_;
+   FilePath currentFile_;
+   std::vector<FilePath> fileStack_;
+};
 
 Error parseLog(
      const FilePath& logFilePath,
@@ -298,8 +345,7 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
 
    unwrapLines(&lines);
 
-   std::vector<std::string> fileStack;
-   fileStack.push_back(""); // The "null" file context
+   FileStack fileStack(logFilePath.parent());
 
    for (std::vector<std::string>::const_iterator it = lines.begin();
         it != lines.end();
@@ -313,9 +359,6 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
       if (beginsWith(line, "Overfull ", "Underfull "))
       {
          std::string msg = line;
-         FilePath filePath = fileStack.back().empty()
-                             ? FilePath()
-                             : FilePath(fileStack.back());
          int lineNum = -1;
 
          // Parse lines, if present
@@ -338,7 +381,7 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
          }
 
          pLogEntries->push_back(LogEntry(LogEntry::Box,
-                                         filePath,
+                                         fileStack.currentFile(),
                                          lineNum,
                                          msg));
 
@@ -362,16 +405,13 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
             continue;
       }
 
-      maintainFileStack(line, &fileStack);
+      fileStack.processLine(line);
 
       // Now see if it's an error or warning
 
       if (beginsWith(line, "! "))
       {
          std::string errorMsg = line.substr(2);
-         FilePath filePath = fileStack.back().empty()
-                             ? FilePath()
-                             : FilePath(fileStack.back());
          int lineNum = -1;
 
          boost::smatch match;
@@ -385,7 +425,7 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
          }
 
          pLogEntries->push_back(LogEntry(LogEntry::Error,
-                                         filePath,
+                                         fileStack.currentFile(),
                                          lineNum,
                                          errorMsg));
 
@@ -403,9 +443,6 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
       if (boost::regex_search(line, warningMatch, regexWarning))
       {
          std::string warningMsg = warningMatch[1];
-         FilePath filePath = fileStack.back().empty()
-                             ? FilePath()
-                             : FilePath(fileStack.back());
          int lineNum = -1;
          while (true)
          {
@@ -425,7 +462,7 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
          }
 
          pLogEntries->push_back(LogEntry(LogEntry::Warning,
-                                         filePath,
+                                         fileStack.currentFile(),
                                          lineNum,
                                          warningMsg));
 
