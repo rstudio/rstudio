@@ -60,7 +60,8 @@ public class CompilePdfErrorItemCodec
 
       TableCellElement tdLine = Document.get().createTDElement();
       tdLine.setClassName(resources_.styles().lineCell());
-      tdLine.setInnerText("Line " + entry.getLine());
+      if (entry.getLine() >= 0)
+         tdLine.setInnerText("Line " + entry.getLine());
       tr.appendChild(tdLine);
 
       TableCellElement tdMsg = Document.get().createTDElement();
@@ -108,6 +109,8 @@ public class CompilePdfErrorItemCodec
    {
       String path = row.getAttribute(DATA_PATH);
       int line = Integer.parseInt(row.getAttribute(DATA_LINE));
+      if (line < 0) // If we couldn't figure out the line
+         line = 1;
       return new CodeNavigationTarget(path,
                                       FilePosition.create(line, 0));
    }
