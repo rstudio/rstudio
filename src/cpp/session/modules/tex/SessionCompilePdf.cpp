@@ -207,7 +207,9 @@ void showLogEntries(const core::tex::LogEntries& logEntries,
                         FileAndLine(logEntry.filePath(), logEntry.line()));
       if (!rnwFileAndLine.empty())
       {
-         core::tex::LogEntry rnwEntry(logEntry.type(),
+         core::tex::LogEntry rnwEntry(logEntry.logFilePath(),
+                                      logEntry.logLine(),
+                                      logEntry.type(),
                                       rnwFileAndLine.filePath(),
                                       rnwFileAndLine.line(),
                                       logEntry.message());

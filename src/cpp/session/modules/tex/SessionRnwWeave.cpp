@@ -121,7 +121,9 @@ public:
          if (chunk > 0 && chunk <= chunkLineNumbers.size())
          {
             boost::format fmt("(chunk %1%) %2%");
-            core::tex::LogEntry logEntry(core::tex::LogEntry::Error,
+            core::tex::LogEntry logEntry(FilePath(),
+                                         -1,
+                                         core::tex::LogEntry::Error,
                                          rnwFilePath,
                                          chunkLineNumbers[chunk-1],
                                          boost::str(fmt % chunk % msg));

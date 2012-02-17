@@ -31,11 +31,14 @@ public:
    enum Type { Error = 0, Warning = 1, Box = 2};
 
 public:
-   LogEntry(Type type,
+   LogEntry(const FilePath& logFilePath,
+            int logLine,
+            Type type,
             const FilePath& filePath,
             int line,
             const std::string& message)
-      : type_(type), filePath_(filePath), line_(line), message_(message)
+      : type_(type), logFilePath_(logFilePath), logLine_(logLine),
+        filePath_(filePath), line_(line), message_(message)
    {
    }
 
@@ -43,12 +46,25 @@ public:
 
 public:
    Type type() const { return type_; }
+
+   // The log file in which this entry can be found
+   const FilePath& logFilePath() const { return logFilePath_; }
+
+   // The line number at which this entry can be found in the log file
+   int logLine() const { return logLine_; }
+
+   // The source file that this error refers to
    const FilePath& filePath() const { return filePath_; }
+
+   // The line number in the source file that this error refers to
    int line() const { return line_; }
+
    const std::string& message() const { return message_; }
 
 private:
    Type type_;
+   FilePath logFilePath_;
+   int logLine_;
    FilePath filePath_;
    int line_;
    std::string message_;

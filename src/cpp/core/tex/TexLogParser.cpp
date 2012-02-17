@@ -257,32 +257,6 @@ private:
    std::vector<FilePath> fileStack_;
 };
 
-Error parseLog(
-     const FilePath& logFilePath,
-     const boost::regex& re,
-     const boost::function<LogEntry(const boost::smatch& match,
-                                    const FilePath&)> matchToEntry,
-     LogEntries* pLogEntries)
-{
-   // get the lines
-   std::vector<std::string> lines;
-   Error error = core::readStringVectorFromFile(logFilePath, &lines);
-   if (error)
-      return error;
-
-   // look for error messages
-   BOOST_FOREACH(std::string line, lines)
-   {
-      boost::smatch match;
-      if (regex_match(line, match, re))
-      {
-         pLogEntries->push_back(matchToEntry(match, logFilePath.parent()));
-      }
-   }
-
-   return Success();
-}
-
 FilePath texFilePath(const std::string& logPath, const FilePath& compileDir)
 {
    // some tex compilers report file names with absolute paths and some
@@ -310,25 +284,6 @@ FilePath texFilePath(const std::string& logPath, const FilePath& compileDir)
 #endif
 }
 
-LogEntry fromLatexMatch(const boost::smatch& match,
-                        const FilePath& compileDir)
-{
-   return LogEntry(LogEntry::Error,
-                   texFilePath(match[1], compileDir),
-                   boost::lexical_cast<int>(match[2]),
-                   match[3]);
-}
-
-LogEntry fromBibtexMatch(const boost::smatch& match,
-                         const FilePath& compileDir)
-{
-   return LogEntry(LogEntry::Error,
-                   texFilePath(match[3], compileDir),
-                   boost::lexical_cast<int>(match[2]),
-                   match[1]);
-}
-
-
 } // anonymous namespace
 
 Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
@@ -352,6 +307,7 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
         it++)
    {
       const std::string& line = *it;
+      int logLineNum = (it - lines.begin()) + 1;
 
       // We slurp overfull/underfull messages with no further processing
       // (i.e. not manipulating the file stack)
@@ -380,7 +336,9 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
             boost::algorithm::trim_right(msg);
          }
 
-         pLogEntries->push_back(LogEntry(LogEntry::Box,
+         pLogEntries->push_back(LogEntry(logFilePath,
+                                         logLineNum,
+                                         LogEntry::Box,
                                          fileStack.currentFile(),
                                          lineNum,
                                          msg));
@@ -424,7 +382,9 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
             }
          }
 
-         pLogEntries->push_back(LogEntry(LogEntry::Error,
+         pLogEntries->push_back(LogEntry(logFilePath,
+                                         logLineNum,
+                                         LogEntry::Error,
                                          fileStack.currentFile(),
                                          lineNum,
                                          errorMsg));
@@ -461,7 +421,9 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
             warningMsg.append(*it);
          }
 
-         pLogEntries->push_back(LogEntry(LogEntry::Warning,
+         pLogEntries->push_back(LogEntry(logFilePath,
+                                         logLineNum,
+                                         LogEntry::Warning,
                                          fileStack.currentFile(),
                                          lineNum,
                                          warningMsg));
@@ -482,11 +444,34 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
 
 Error parseBibtexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
 {
-   return parseLog(logFilePath,
-                   boost::regex("^(.*)---line ([0-9]+) of file (.*)$"),
-                   fromBibtexMatch,
-                   pLogEntries);
-  ;
+   boost::regex re("^(.*)---line ([0-9]+) of file (.*)$");
+
+   // get the lines
+   std::vector<std::string> lines;
+   Error error = core::readStringVectorFromFile(logFilePath, &lines, false);
+   if (error)
+      return error;
+
+   // look for error messages
+   for (std::vector<std::string>::const_iterator it = lines.begin();
+        it != lines.end();
+        it++)
+   {
+      boost::smatch match;
+      if (regex_match(*it, match, re))
+      {
+         pLogEntries->push_back(
+               LogEntry(
+                     logFilePath,
+                     (it - lines.begin()) + 1,
+                     LogEntry::Error,
+                     texFilePath(match[3], logFilePath.parent()),
+                     boost::lexical_cast<int>(match[2]),
+                     match[1]));
+      }
+   }
+
+   return Success();
 }
 
 } // namespace tex
