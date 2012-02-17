@@ -207,9 +207,10 @@ class RnwPgfSweave : public RnwExternalWeave
 {
 public:
    RnwPgfSweave()
-      : RnwExternalWeave("pgfSweave",
-                         "pgfSweave",
-                         "require(pgfSweave); pgfSweave('%1%')")
+      : RnwExternalWeave(
+            "pgfSweave",
+            "pgfSweave",
+            "require(pgfSweave); pgfSweave('%1%', compile.tex = FALSE)")
    {
    }
 
