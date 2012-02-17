@@ -451,7 +451,7 @@ private:
    {
       // configure pdflatex options
       pdflatex::PdfLatexOptions options;
-      options.fileLineError = true;
+      options.fileLineError = false;
       options.syncTex = true;
       options.shellEscape = userSettings().enableLaTeXShellEscape();
 

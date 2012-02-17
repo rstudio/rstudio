@@ -21,6 +21,7 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/SafeConvert.hpp>
 #include <core/system/System.hpp>
 
 namespace core {
@@ -63,18 +64,45 @@ bool beginsWith(const std::string& str,
 void findUnmatchedParens(const std::string& line,
                          std::vector<std::string::const_iterator>* pParens)
 {
+   // We need to ignore close parens unless they are at the start of a line,
+   // preceded by nothing but whitespace and/or other close parens. Without
+   // this, sample.Rnw has some false positives due to some math errors, e.g.:
+   //
+   // l.204 (x + (y^
+   //               2))
+   //
+   // The first line is ignored because it's part of an error message. The rest
+   // gets parsed and underflows the file stack.
+   bool ignoreCloseParens = false;
+
+   // NOTE: I don't know if it's possible for (<filename> to appear anywhere
+   // but the beginning of the line (preceded only by whitespace(?) and close
+   // parens). But the Sublime Text 2 plugin code seemed to imply that it is
+   // possible.
+
    for (std::string::const_iterator it = line.begin(); it != line.end(); it++)
    {
       switch (*it)
       {
       case '(':
          pParens->push_back(it);
+         ignoreCloseParens = true;
          break;
       case ')':
          if (pParens->empty() || *(pParens->back()) == ')')
-            pParens->push_back(it);
+         {
+            if (!ignoreCloseParens)
+               pParens->push_back(it);
+         }
          else
             pParens->pop_back();
+         break;
+      case ' ':
+      case '\t':
+         break;
+      default:
+         ignoreCloseParens = true;
+         break;
       }
    }
 }
@@ -111,10 +139,16 @@ void unwrapLines(std::vector<std::string>* pLines)
          if (nextPos->empty())
             break;
 
+         // Underfull/Overfull terminator
+         if (*nextPos == " []")
+            break;
+
+         // Common prefixes
          if (beginsWith(*nextPos, "File:", "Package:", "Document Class:"))
             break;
 
-         if (beginsWith(*nextPos, "LaTeX Info:", "LaTeX2e <"))
+         // More prefixes
+         if (beginsWith(*nextPos, "LaTeX Warning:", "LaTeX Info:", "LaTeX2e <"))
             break;
 
          if (boost::regex_search(*nextPos, regexAssignment))
@@ -148,12 +182,18 @@ void maintainFileStack(const std::string line,
    {
       if (*it == ')')
       {
-         pFileStack->pop_back();
+         if (pFileStack->size() > 1)
+            pFileStack->pop_back();
+         else
+         {
+            LOG_WARNING_MESSAGE("File context stack underflow while parsing "
+                                "TeX log");
+         }
       }
       else if (*it == '(')
       {
          std::string filename;
-         std::copy(it, line.end(), std::back_inserter(filename));
+         std::copy(it + 1, line.end(), std::back_inserter(filename));
 
          // Remove quotes if present
          if (filename.size() >= 2 &&
@@ -246,10 +286,161 @@ LogEntry fromBibtexMatch(const boost::smatch& match,
 
 Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
 {
-   return parseLog(logFilePath,
-                   boost::regex ("^((?:[A-Z]:)?[^:]+):([0-9]+): ([^\n]+)$"),
-                   fromLatexMatch,
-                   pLogEntries);
+   static boost::regex regexOverUnderfullLines(" at lines (\\d+)--(\\d+)\\s*(?:\\[])?$");
+   static boost::regex regexWarning("^(?:.*?) Warning: (.+)");
+   static boost::regex regexWarningEnd(" input line (\\d+)\\.$");
+   static boost::regex regexLnn("^l\\.(\\d+)\\s");
+
+   std::vector<std::string> lines;
+   Error error = readStringVectorFromFile(logFilePath, &lines, false);
+   if (error)
+      return error;
+
+   unwrapLines(&lines);
+
+   std::vector<std::string> fileStack;
+   fileStack.push_back(""); // The "null" file context
+
+   for (std::vector<std::string>::const_iterator it = lines.begin();
+        it != lines.end();
+        it++)
+   {
+      const std::string& line = *it;
+
+      // We slurp overfull/underfull messages with no further processing
+      // (i.e. not manipulating the file stack)
+
+      if (beginsWith(line, "Overfull ", "Underfull "))
+      {
+         std::string msg = line;
+         FilePath filePath = fileStack.back().empty()
+                             ? FilePath()
+                             : FilePath(fileStack.back());
+         int lineNum = -1;
+
+         // Parse lines, if present
+         boost::smatch overUnderfullLinesMatch;
+         if (boost::regex_search(line,
+                                 overUnderfullLinesMatch,
+                                 regexOverUnderfullLines))
+         {
+            lineNum = safe_convert::stringTo<int>(overUnderfullLinesMatch[1],
+                                                  -1);
+         }
+
+         // Single line case
+         bool singleLine = boost::algorithm::ends_with(line, "[]");
+
+         if (singleLine)
+         {
+            msg.erase(line.size()-2, 2);
+            boost::algorithm::trim_right(msg);
+         }
+
+         pLogEntries->push_back(LogEntry(LogEntry::Box,
+                                         filePath,
+                                         lineNum,
+                                         msg));
+
+         if (singleLine)
+            continue;
+
+         for (; it != lines.end(); it++)
+         {
+            // For multi-line case, we're looking for " []" on a line by itself
+            if (*it == " []")
+               break;
+         }
+
+         // The iterator would be incremented by the outer for loop, must not
+         // let it go past the end! (If we did get to the end, it would
+         // mean the log file was malformed, but we still can't crash in this
+         // situation.)
+         if (it == lines.end())
+            break;
+         else
+            continue;
+      }
+
+      maintainFileStack(line, &fileStack);
+
+      // Now see if it's an error or warning
+
+      if (beginsWith(line, "! "))
+      {
+         std::string errorMsg = line.substr(2);
+         FilePath filePath = fileStack.back().empty()
+                             ? FilePath()
+                             : FilePath(fileStack.back());
+         int lineNum = -1;
+
+         boost::smatch match;
+         for (it++; it != lines.end(); it++)
+         {
+            if (boost::regex_search(*it, match, regexLnn))
+            {
+               lineNum = safe_convert::stringTo<int>(match[1], -1);
+               break;
+            }
+         }
+
+         pLogEntries->push_back(LogEntry(LogEntry::Error,
+                                         filePath,
+                                         lineNum,
+                                         errorMsg));
+
+         // The iterator would be incremented by the outer for loop, must not
+         // let it go past the end! (If we did get to the end, it would
+         // mean the log file was malformed, but we still can't crash in this
+         // situation.)
+         if (it == lines.end())
+            break;
+         else
+            continue;
+      }
+
+      boost::smatch warningMatch;
+      if (boost::regex_search(line, warningMatch, regexWarning))
+      {
+         std::string warningMsg = warningMatch[1];
+         FilePath filePath = fileStack.back().empty()
+                             ? FilePath()
+                             : FilePath(fileStack.back());
+         int lineNum = -1;
+         while (true)
+         {
+            if (boost::algorithm::ends_with(warningMsg, "."))
+            {
+               boost::smatch warningEndMatch;
+               if (boost::regex_search(*it, warningEndMatch, regexWarningEnd))
+               {
+                  lineNum = safe_convert::stringTo<int>(warningEndMatch[1], -1);
+               }
+               break;
+            }
+
+            if (++it == lines.end())
+               break;
+            warningMsg.append(*it);
+         }
+
+         pLogEntries->push_back(LogEntry(LogEntry::Warning,
+                                         filePath,
+                                         lineNum,
+                                         warningMsg));
+
+         // The iterator would be incremented by the outer for loop, must not
+         // let it go past the end! (If we did get to the end, it would
+         // mean the log file was malformed, but we still can't crash in this
+         // situation.)
+         if (it == lines.end())
+            break;
+         else
+            continue;
+      }
+   }
+
+   return Success();
 }
 
 Error parseBibtexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
