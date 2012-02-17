@@ -83,11 +83,9 @@ core::system::Options pdfLatexEnvVars(
       envVars.push_back(std::make_pair(boost::str(fmt % n++), option));
    }
 
-   // rstudio-pdflatex script
-   FilePath texScriptsPath = session::options().texScriptsPath();
-   FilePath scriptPath = texScriptsPath.complete("rstudio-pdflatex" +
-                                                   std::string(kScriptEx));
-   std::string path = string_utils::utf8ToSystem(scriptPath.absolutePath());
+   // rspdflatex binary
+   FilePath pdflatexPath(session::options().rspdflatexPath());
+   std::string path = string_utils::utf8ToSystem(pdflatexPath.absolutePath());
    envVars.push_back(std::make_pair("PDFLATEX", path));
 
    // return envVars

@@ -218,6 +218,9 @@ if (NOT RSTUDIO_SESSION_WIN64)
    # postback
    add_subdirectory(postback)
 
+   # rspdflatex
+   add_subdirectory(rspdflatex)
+
    # Resources
    install(FILES resources/R.css
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
@@ -246,15 +249,6 @@ if (NOT RSTUDIO_SESSION_WIN64)
               USE_SOURCE_PERMISSIONS
               DESTINATION  ${RSTUDIO_INSTALL_BIN})
    endif()
-
-   # tex scripts
-   if(WIN32)
-     file(GLOB TEX_SCRIPTS "${CMAKE_CURRENT_SOURCE_DIR}/tex/*.cmd")
-   else()
-     file(GLOB TEX_SCRIPTS "${CMAKE_CURRENT_SOURCE_DIR}/tex/*.sh")
-   endif()
-   install(PROGRAMS ${TEX_SCRIPTS}
-           DESTINATION "${RSTUDIO_INSTALL_BIN}/tex")
 endif()
 
 # install hunspell dictionaries

@@ -34,7 +34,7 @@ namespace session {
 namespace {
 
 const char* const kDefaultPostbackPath = "bin/postback/rpostback";
-const char* const kDefaultTexScriptsPath = "bin/tex";
+const char* const kDefaultRsPdfLatexPath = "bin/rspdflatex";
 
 void resolvePath(const FilePath& resourcePath, std::string* pPath)
 {
@@ -60,14 +60,14 @@ void resolvePostbackPath(const FilePath& resourcePath, std::string* pPath)
    }
 }
 
-void resolveTexScriptsPath(const FilePath& resourcePath, std::string* pPath)
+void resolveRsPdfLatexPath(const FilePath& resourcePath, std::string* pPath)
 {
-   // On OSX we keep the tex scripts over in the MacOS directory
+   // On OSX we keep the rspdflatex biary over in the MacOS directory
    // rather than in the Resources directory -- make this adjustment
-   // when the default tex scripts path has been passed
-   if (*pPath == kDefaultTexScriptsPath)
+   // when the default rspdflatex path has been passed
+   if (*pPath == kDefaultRsPdfLatexPath)
    {
-      FilePath path = resourcePath.parent().complete("MacOS/tex");
+      FilePath path = resourcePath.parent().complete("MacOS/rspdflatex");
       *pPath = path.absolutePath();
    }
    else
@@ -83,9 +83,14 @@ void resolvePostbackPath(const FilePath& resourcePath, std::string* pPath)
    resolvePath(resourcePath, pPath);
 }
 
-void resolveTexScriptsPath(const FilePath& resourcePath, std::string* pPath)
+void resolveRsPdfLatexPath(const FilePath& resourcePath, std::string* pPath)
 {
-   resolvePath(resourcePath, pPath);
+   std::string path;
+   resolvePath(resourcePath, &path);
+
+   FilePath exePath(path);
+   core::system::fixupExecutablePath(&exePath);
+   *pPath = exePath.absolutePath();
 }
 
 #endif
@@ -233,8 +238,8 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("external-rpostback-path", 
        value<std::string>(&rpostbackPath_)->default_value(kDefaultPostbackPath),
        "Path to rpostback executable")
-      ("external-tex-scripts-path",
-       value<std::string>(&texScriptsPath_)->default_value(kDefaultTexScriptsPath),
+      ("external-rspdflatex-path",
+       value<std::string>(&rspdflatexPath_)->default_value(kDefaultRsPdfLatexPath),
        "Path to tex scripts")
       ("external-consoleio-path",
        value<std::string>(&consoleIoPath_)->default_value("bin/consoleio.exe"),
@@ -358,7 +363,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(resourcePath, &modulesRSourcePath_);
    resolvePath(resourcePath, &sessionPackagesPath_);
    resolvePostbackPath(resourcePath, &rpostbackPath_);
-   resolveTexScriptsPath(resourcePath, &texScriptsPath_);
+   resolveRsPdfLatexPath(resourcePath, &rspdflatexPath_);
 #ifdef _WIN32
    resolvePath(resourcePath, &consoleIoPath_);
    resolvePath(resourcePath, &gnudiffPath_);

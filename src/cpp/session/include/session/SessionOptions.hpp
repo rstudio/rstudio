@@ -173,9 +173,9 @@ public:
       return core::FilePath(rpostbackPath_.c_str());
    }
 
-   core::FilePath texScriptsPath() const
+   core::FilePath rspdflatexPath() const
    {
-      return core::FilePath(texScriptsPath_.c_str());
+      return core::FilePath(rspdflatexPath_.c_str());
    }
 
    core::FilePath consoleIoPath() const
@@ -314,7 +314,7 @@ private:
    
    // external
    std::string rpostbackPath_;
-   std::string texScriptsPath_;
+   std::string rspdflatexPath_;
    std::string consoleIoPath_;
    std::string gnudiffPath_;
    std::string msysSshPath_;
