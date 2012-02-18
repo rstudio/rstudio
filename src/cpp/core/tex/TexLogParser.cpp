@@ -107,6 +107,34 @@ void findUnmatchedParens(const std::string& line,
    }
 }
 
+FilePath resolveFilename(const FilePath& rootDir,
+                         const std::string& filename)
+{
+   std::string result = filename;
+
+   // Remove quotes if necessary
+   if (result.size() > 2 &&
+       boost::algorithm::starts_with(result, "\"") &&
+       boost::algorithm::ends_with(result, "\""))
+   {
+      result.erase(result.size()-1, 1);
+   }
+
+   // Strip leading ./
+   if (boost::algorithm::starts_with(result, "./"))
+      result.erase(0, 2);
+
+   if (result.empty())
+      return FilePath();
+
+   // Check for existence of file
+   FilePath file = rootDir.complete(result);
+   if (file.exists())
+      return file;
+   else
+      return FilePath();
+}
+
 // TeX wraps lines hard at 79 characters. We use heuristics as described in
 // Sublime Text's TeX plugin to determine where these breaks are.
 void unwrapLines(std::vector<std::string>* pLines)
@@ -205,28 +233,8 @@ public:
          }
          else if (*it == '(')
          {
-            std::string filename;
-            std::copy(it + 1, line.end(), std::back_inserter(filename));
-
-            // Remove quotes if present
-            if (filename.size() >= 2 &&
-                filename[0] == '"' &&
-                filename[filename.size()-1] == '"')
-            {
-               filename = filename.substr(1, filename.size()-2);
-            }
-
-            if (beginsWith(filename, "./"))
-               filename = filename.substr(2);
-
-            bool fileExists = !filename.empty() &&
-                                          rootDir_.complete(filename).exists();
-            if (!fileExists)
-               filename = "";
-
-            fileStack_.push_back(filename.empty()
-                                 ? FilePath()
-                                 : rootDir_.complete(filename));
+            fileStack_.push_back(
+                  resolveFilename(rootDir_, std::string(it+1, line.end())));
 
             updateCurrentFile();
          }
@@ -443,7 +451,7 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
       boost::smatch cStyleErrorMatch;
       if (boost::regex_search(line, cStyleErrorMatch, regexCStyleError))
       {
-         FilePath cstyleFile = rootDir.complete(cStyleErrorMatch[1]);
+         FilePath cstyleFile = resolveFilename(rootDir, cStyleErrorMatch[1]);
          if (cstyleFile.exists())
          {
             int lineNum = safe_convert::stringTo<int>(cStyleErrorMatch[2], -1);
