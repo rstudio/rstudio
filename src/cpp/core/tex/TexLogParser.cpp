@@ -203,7 +203,7 @@ void unwrapLines(std::vector<std::string>* pLines)
 class FileStack : public boost::noncopyable
 {
 public:
-   FileStack(FilePath rootDir) : rootDir_(rootDir)
+   explicit FileStack(FilePath rootDir) : rootDir_(rootDir)
    {
    }
 
