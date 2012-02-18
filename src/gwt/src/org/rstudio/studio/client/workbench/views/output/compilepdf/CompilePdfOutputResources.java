@@ -36,7 +36,7 @@ public interface CompilePdfOutputResources extends ClientBundle
    @Source("images/error.png")
    ImageResource error();
   
-   @Source("org/rstudio/core/client/theme/res/errorSmall.png")
+   @Source("org/rstudio/core/client/theme/res/warningSmall.png")
    ImageResource warning();
 
    @Source("images/badbox.png")
