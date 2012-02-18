@@ -42,6 +42,14 @@ public class CompilePdfError extends JavaScriptObject
    public final native String getMessage() /*-{
       return this.message;
    }-*/;
+   
+   public final native String getLogPath() /*-{
+      return this.log_path;
+   }-*/;
+
+   public final native int getLogLine() /*-{
+      return this.log_line;
+   }-*/;
 
    public final String asString()
    {

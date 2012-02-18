@@ -58,3 +58,13 @@
 @sprite .boxIcon {
    gwt-image: 'badbox';
 }
+
+@sprite div.disclosure {
+   gwt-image: 'logContextButton';
+   cursor: pointer;
+   margin-top: 1px;
+   margin-right: 3px;
+}
+@sprite .selectedRow div.disclosure {
+   gwt-image: 'logContextButtonSelected';
+}

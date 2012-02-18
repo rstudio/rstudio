@@ -20,8 +20,13 @@ import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -72,7 +77,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
       panel_.setWidget(outputWidget_);
 
       codec_ = new CompilePdfErrorItemCodec(res_, false);
-      errorTable_ = new FastSelectTable<CompilePdfError, CodeNavigationTarget, Object>(
+      errorTable_ = new FastSelectTable<CompilePdfError, CodeNavigationTarget, CodeNavigationTarget>(
             codec_,
             res_.styles().selectedRow(),
             true,
@@ -98,6 +103,27 @@ public class CompilePdfOutputPane extends WorkbenchPane
          }
          private final DoubleClickState doubleClick_ = new DoubleClickState();
       });
+      
+      errorTable_.addMouseDownHandler(new MouseDownHandler()
+      {
+         public void onMouseDown(MouseDownEvent event)
+         {
+            Element el = DOM.eventGetTarget((Event) event.getNativeEvent());
+            if (el != null
+                && el.getTagName().equalsIgnoreCase("div")
+                && el.getClassName().equals(res_.styles().disclosure()))
+            {
+               ArrayList<CodeNavigationTarget> values =
+                                             errorTable_.getSelectedValues2();
+               if (values.size() == 1)
+               {
+                  SelectionCommitEvent.fire(CompilePdfOutputPane.this,
+                                            values.get(0));
+               }
+            }
+         }
+      });
+      
       errorPanel_ = new ScrollPanel(errorTable_);
       errorPanel_.setSize("100%", "100%");
 
@@ -264,7 +290,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
    private LeftRightToggleButton showErrorsButton_;
    private SimplePanel panel_;
    private ShellWidget outputWidget_;
-   private FastSelectTable<CompilePdfError, CodeNavigationTarget, Object>
+   private FastSelectTable<CompilePdfError, CodeNavigationTarget, CodeNavigationTarget>
                                                                     errorTable_;
    private ScrollPanel errorPanel_;
    private FileTypeRegistry fileTypeRegistry_;

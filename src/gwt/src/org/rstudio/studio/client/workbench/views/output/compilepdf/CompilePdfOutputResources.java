@@ -31,6 +31,7 @@ public interface CompilePdfOutputResources extends ClientBundle
       String boxIcon();
       String lineCell();
       String messageCell();
+      String disclosure();
    }
 
    @Source("images/error.png")
@@ -44,6 +45,12 @@ public interface CompilePdfOutputResources extends ClientBundle
 
    @Source("CompilePdfOutput.css")
    Styles styles();
+   
+   @Source("images/logContextButton.png")
+   ImageResource logContextButton();
+   
+   @Source("images/logContextButtonSelected.png")
+   ImageResource logContextButtonSelected();
    
    
    public static CompilePdfOutputResources INSTANCE = 

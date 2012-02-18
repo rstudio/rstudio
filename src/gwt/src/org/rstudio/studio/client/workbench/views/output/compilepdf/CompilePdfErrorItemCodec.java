@@ -20,7 +20,7 @@ import org.rstudio.core.client.widget.HeaderBreaksItemCodec;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfError;
 
 public class CompilePdfErrorItemCodec
-      extends HeaderBreaksItemCodec<CompilePdfError, CodeNavigationTarget, Object>
+      extends HeaderBreaksItemCodec<CompilePdfError, CodeNavigationTarget, CodeNavigationTarget>
 {
    public CompilePdfErrorItemCodec(CompilePdfOutputResources resources,
                                    boolean showFileHeaders)
@@ -47,6 +47,10 @@ public class CompilePdfErrorItemCodec
                       entry.getPath());
       tr.setAttribute(DATA_LINE,
                       entry.getLine() + "");
+      tr.setAttribute(LOG_PATH,
+                      entry.getLogPath());
+      tr.setAttribute(LOG_LINE,
+                      entry.getLogLine() + "");
 
       TableCellElement tdIcon = Document.get().createTDElement();
       tdIcon.setClassName(resources_.styles().iconCell());
@@ -68,9 +72,34 @@ public class CompilePdfErrorItemCodec
       tdMsg.setClassName(resources_.styles().messageCell());
       tdMsg.setInnerText(entry.getMessage());
       tr.appendChild(tdMsg);
+      
+      TableCellElement tdDiscButton = maybeCreateDisclosureButton(entry);
+      if (tdDiscButton != null)
+         tr.appendChild(tdDiscButton);
 
       return tr;
 
+   }
+   
+   protected TableCellElement maybeCreateDisclosureButton(CompilePdfError entry)
+   {
+      if (entry.getLogLine() != -1)
+      {
+         TableCellElement td = Document.get().createTDElement();
+         td.setClassName(resources_.styles().disclosure());
+         td.setVAlign("middle");
+   
+         DivElement div = Document.get().createDivElement();
+         div.setTitle("Show location in log file where this item appeared");
+         div.setClassName(resources_.styles().disclosure());
+   
+         td.appendChild(div);
+         return td;
+      }
+      else
+      {
+         return null;
+      }
    }
 
    @Override
@@ -116,9 +145,14 @@ public class CompilePdfErrorItemCodec
    }
 
    @Override
-   public Object getOutputForRow2(TableRowElement row)
+   public CodeNavigationTarget getOutputForRow2(TableRowElement row)
    {
-      return null;
+      String path = row.getAttribute(LOG_PATH);
+      int line = Integer.parseInt(row.getAttribute(LOG_LINE));
+      if (line < 0) // If we couldn't figure out the line
+         line = 1;
+      return new CodeNavigationTarget(path,
+                                      FilePosition.create(line, 0));
    }
 
    @Override
@@ -138,4 +172,6 @@ public class CompilePdfErrorItemCodec
 
    private static final String DATA_PATH = "data-path";
    private static final String DATA_LINE = "data-line";
+   private static final String LOG_PATH = "log-path";
+   private static final String LOG_LINE = "log-line";
 }
