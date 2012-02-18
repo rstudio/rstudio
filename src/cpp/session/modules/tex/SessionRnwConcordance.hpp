@@ -67,7 +67,7 @@ public:
       if (texLine >= 0 && texLine < mapping_.size())
          return mapping_[texLine];
       else
-         return 1;
+         return -1;
    }
 
 private:

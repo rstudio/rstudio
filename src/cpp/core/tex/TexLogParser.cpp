@@ -292,6 +292,7 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
    static boost::regex regexWarning("^(?:.*?) Warning: (.+)");
    static boost::regex regexWarningEnd(" input line (\\d+)\\.$");
    static boost::regex regexLnn("^l\\.(\\d+)\\s");
+   static boost::regex regexCStyleError("^(.+):(\\d+):\\s(.+)$");
 
    std::vector<std::string> lines;
    Error error = readStringVectorFromFile(logFilePath, &lines, false);
@@ -300,7 +301,8 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
 
    unwrapLines(&lines);
 
-   FileStack fileStack(logFilePath.parent());
+   FilePath rootDir = logFilePath.parent();
+   FileStack fileStack(rootDir);
 
    for (std::vector<std::string>::const_iterator it = lines.begin();
         it != lines.end();
@@ -436,6 +438,22 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
             break;
          else
             continue;
+      }
+
+      boost::smatch cStyleErrorMatch;
+      if (boost::regex_search(line, cStyleErrorMatch, regexCStyleError))
+      {
+         FilePath cstyleFile = rootDir.complete(cStyleErrorMatch[1]);
+         if (cstyleFile.exists())
+         {
+            int lineNum = safe_convert::stringTo<int>(cStyleErrorMatch[2], -1);
+            pLogEntries->push_back(LogEntry(logFilePath,
+                                            logLineNum,
+                                            LogEntry::Error,
+                                            cstyleFile,
+                                            lineNum,
+                                            cStyleErrorMatch[3]));
+         }
       }
    }
 
