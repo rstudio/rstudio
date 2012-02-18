@@ -22,6 +22,7 @@ public interface CompilePdfOutputResources extends ClientBundle
 {  
    public static interface Styles extends CssResource
    {
+      String fileLabel();
       String table();
       String headerRow();
       String selectedRow();
@@ -49,8 +50,8 @@ public interface CompilePdfOutputResources extends ClientBundle
    @Source("images/logContextButton.png")
    ImageResource logContextButton();
    
-   @Source("images/logContextButtonSelected.png")
-   ImageResource logContextButtonSelected();
+   @Source("images/showLogCommand.png")
+   ImageResource showLogCommand();
    
    
    public static CompilePdfOutputResources INSTANCE = 

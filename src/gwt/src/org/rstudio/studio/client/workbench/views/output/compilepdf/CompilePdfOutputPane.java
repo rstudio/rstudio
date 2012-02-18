@@ -17,6 +17,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.TableColElement;
 import com.google.gwt.dom.client.TableElement;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -44,6 +45,7 @@ import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.shell.ShellWidget;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfError;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -59,14 +61,13 @@ public class CompilePdfOutputPane extends WorkbenchPane
    {
       super("Compile PDF");
       fileTypeRegistry_ = fileTypeRegistry;
+      res_ = GWT.create(CompilePdfOutputResources.class);
       ensureWidget();
    }
 
    @Override
    protected Widget createMainWidget()
    {
-      res_ = GWT.create(CompilePdfOutputResources.class);
-
       panel_ = new SimplePanel();
       
       outputWidget_ = new ShellWidget(new AceEditor());
@@ -161,13 +162,24 @@ public class CompilePdfOutputPane extends WorkbenchPane
       
       fileLabel_ = new ToolbarLabel();
       fileLabel_.addStyleName(ThemeStyles.INSTANCE.subtitle());
+      fileLabel_.addStyleName(res_.styles().fileLabel());
       toolbar.addLeftWidget(fileLabel_);
       
-      ImageResource stopImage = RStudioGinjector.INSTANCE.getCommands()
-                                               .interruptR().getImageResource();
+      Commands commands = RStudioGinjector.INSTANCE.getCommands();
+      ImageResource stopImage = commands.interruptR().getImageResource();
       stopButton_ = new ToolbarButton(stopImage, null);
       stopButton_.setVisible(false);
       toolbar.addRightWidget(stopButton_);
+      
+      ImageResource showLogImage = res_.showLogCommand();
+      showLogButton_ = new ToolbarButton("View Log", 
+                                         showLogImage, 
+                                         (ClickHandler) null);
+      showLogButton_.getElement().getStyle().setMarginBottom(3, Unit.PX);
+      showLogButton_.setTitle("View the LaTeX compilation log");
+      showLogSeparator_ = toolbar.addLeftSeparator();
+      setShowLogVisible(false);
+      toolbar.addLeftWidget(showLogButton_);
       
       showOutputButton_ = new LeftRightToggleButton("Output",  "Errors", false);
       showOutputButton_.setVisible(false);
@@ -217,6 +229,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
       showOutputButton_.setVisible(false);
       showErrorsButton_.setVisible(false);
       stopButton_.setVisible(true);
+      setShowLogVisible(false);
    }
 
    @Override
@@ -226,6 +239,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
       showOutputButton_.setVisible(false);
       showErrorsButton_.setVisible(false);
       stopButton_.setVisible(false);
+      setShowLogVisible(false);
       outputWidget_.clearOutput();
       errorTable_.clear();
       setWidths();
@@ -262,12 +276,19 @@ public class CompilePdfOutputPane extends WorkbenchPane
    public void compileCompleted()
    {
       stopButton_.setVisible(false);
+      setShowLogVisible(true);
    }
    
    @Override
    public HasClickHandlers stopButton()
    {
       return stopButton_;
+   }
+   
+   @Override 
+   public HasClickHandlers showLogButton()
+   {
+      return showLogButton_;
    }
   
    @Override
@@ -283,9 +304,17 @@ public class CompilePdfOutputPane extends WorkbenchPane
       return addHandler(handler, SelectionCommitEvent.getType());
    }
   
+   private void setShowLogVisible(boolean visible)
+   {
+      showLogSeparator_.setVisible(visible);
+      showLogButton_.setVisible(visible);
+   }
+   
    private Image fileImage_;
    private ToolbarLabel fileLabel_;
    private ToolbarButton stopButton_;
+   private Widget showLogSeparator_;
+   private ToolbarButton showLogButton_;
    private LeftRightToggleButton showOutputButton_;
    private LeftRightToggleButton showErrorsButton_;
    private SimplePanel panel_;

@@ -90,7 +90,7 @@ public class CompilePdfErrorItemCodec
          td.setVAlign("middle");
    
          DivElement div = Document.get().createDivElement();
-         div.setTitle("Show location in log file where this item appeared");
+         div.setTitle("View error or warning within the log file");
          div.setClassName(resources_.styles().disclosure());
    
          td.appendChild(div);

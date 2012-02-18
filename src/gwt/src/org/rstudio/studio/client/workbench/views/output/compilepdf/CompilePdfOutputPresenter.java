@@ -59,6 +59,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
       void clearAll();
       void compileCompleted();
       HasClickHandlers stopButton();
+      HasClickHandlers showLogButton();
       HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
    }
 
@@ -83,6 +84,19 @@ public class CompilePdfOutputPresenter extends BasePresenter
          
       });
       
+      view_.showLogButton().addClickHandler(new ClickHandler() {
+
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            FileSystemItem logFile = FileSystemItem.createFile(
+                        targetFile_.getParentPath().completePath(
+                                            targetFile_.getStem() + ".log"));
+            fileTypeRegistry_.editFile(logFile);
+         }
+         
+      });
+      
       view_.errorList().addSelectionCommitHandler(
                               new SelectionCommitHandler<CodeNavigationTarget>() {
 
@@ -100,12 +114,13 @@ public class CompilePdfOutputPresenter extends BasePresenter
    public void initialize(CompilePdfState compilePdfState)
    {
       // TODO: this should really just ensure that the tab is available
-      // rather than brinning it to the front
+      // rather than bringing it to the front
+      
       view_.bringToFront();
       
       view_.clearAll();
       
-      view_.compileStarted(compilePdfState.getTargetFile());
+      compileStarted(compilePdfState.getTargetFile());
       
       view_.showOutput(compilePdfState.getOutput());
       
@@ -172,9 +187,19 @@ public class CompilePdfOutputPresenter extends BasePresenter
    public void onCompilePdfStatus(CompilePdfStatusEvent event)
    {
       if (event.getStatus() == CompilePdfStatusEvent.STARTED)
-         view_.compileStarted(event.getText());
+      {
+         compileStarted(event.getText());
+      }
       else if (event.getStatus() == CompilePdfStatusEvent.COMPLETED)
+      {
          view_.compileCompleted();
+      }
+   }
+   
+   private void compileStarted(String targetFile)
+   {
+      targetFile_ = FileSystemItem.createFile(targetFile);
+      view_.compileStarted(targetFile);
    }
    
    private void compilePdf(final FileSystemItem targetFile,
@@ -273,6 +298,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
       private ProgressIndicator indicator_;   
    };
    
+   private FileSystemItem targetFile_ = null;
    private final Display view_;
    private final GlobalDisplay globalDisplay_;
    private final CompilePdfServerOperations server_;

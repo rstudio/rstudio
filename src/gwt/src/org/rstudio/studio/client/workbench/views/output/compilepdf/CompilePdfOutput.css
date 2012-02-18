@@ -1,6 +1,10 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
+.fileLabel {
+   margin-right: 7px;
+}
+
 .iconCell {
    vertical-align: top;
    width: 34px;
@@ -59,12 +63,11 @@
    gwt-image: 'badbox';
 }
 
-@sprite div.disclosure {
-   gwt-image: 'logContextButton';
+div.disclosure {
    cursor: pointer;
    margin-top: 1px;
    margin-right: 3px;
 }
 @sprite .selectedRow div.disclosure {
-   gwt-image: 'logContextButtonSelected';
+   gwt-image: 'logContextButton';
 }
