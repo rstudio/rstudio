@@ -284,7 +284,7 @@ std::string buildIssuesMessage(const core::tex::LogEntries& logEntries)
          badBoxes++;
    }
 
-   std::string issues = "Issues: ";
+   std::string issues;
    boost::format fmt("%1% %2%");
    if (errors > 0)
    {
@@ -311,7 +311,10 @@ std::string buildIssuesMessage(const core::tex::LogEntries& logEntries)
          issues += "box";
    }
 
-   return issues;
+   if (!issues.empty())
+      return "Issues: " + issues;
+   else
+      return std::string();
 }
 
 class AuxillaryFileCleanupContext : boost::noncopyable
