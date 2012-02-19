@@ -20,6 +20,7 @@
 #include <core/FilePath.hpp>
 #include <core/Exec.hpp>
 #include <core/Settings.hpp>
+#include <core/Algorithm.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/ShellUtils.hpp>
 
@@ -227,6 +228,37 @@ FilePath bibtexLogPath(const FilePath& texFilePath)
    return ancillaryFilePath(texFilePath, ".blg");
 }
 
+bool includeLogEntry(const core::tex::LogEntry& logEntry)
+{
+   // bbl files are generated so there is nothing which can be done
+   // about box errors within them
+   if (logEntry.filePath().extensionLowerCase() == ".bbl" &&
+       logEntry.type() == core::tex::LogEntry::Box)
+   {
+      return false;
+   }
+   // if we can't identify the file where the error or warning took
+   // place then exclude these as well
+   else if (logEntry.filePath().empty())
+   {
+      return false;
+   }
+   else
+   {
+      return true;
+   }
+}
+
+// filter out log entries which we view as superflous or distracting
+void filterLatexLog(const core::tex::LogEntries& logEntries,
+                    core::tex::LogEntries* pFilteredLogEntries)
+{
+   core::algorithm::copy_if(logEntries.begin(),
+                            logEntries.end(),
+                            std::back_inserter(*pFilteredLogEntries),
+                            includeLogEntry);
+}
+
 void getLogEntries(const FilePath& texPath,
                    const rnw_concordance::Concordances& concordances,
                    core::tex::LogEntries* pLogEntries)
@@ -235,9 +267,12 @@ void getLogEntries(const FilePath& texPath,
    FilePath logPath = latexLogPath(texPath);
    if (logPath.exists())
    {
-      Error error = core::tex::parseLatexLog(logPath, pLogEntries);
+      core::tex::LogEntries logEntries;
+      Error error = core::tex::parseLatexLog(logPath, &logEntries);
       if (error)
          LOG_ERROR(error);
+
+      filterLatexLog(logEntries, pLogEntries);
    }
 
    // bibtex log file
