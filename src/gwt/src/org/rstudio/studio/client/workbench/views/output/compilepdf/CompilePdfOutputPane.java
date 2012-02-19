@@ -273,9 +273,14 @@ public class CompilePdfOutputPane extends WorkbenchPane
       errorTable_.addItems(errorList, false);
 
      if (showErrorPane)
-       panel_.setWidget(errorPanel_);
-      
-      showOutputButton_.setVisible(true);
+     {
+        panel_.setWidget(errorPanel_);
+        showOutputButton_.setVisible(true);
+     }
+     else
+     {
+        showErrorsButton_.setVisible(true);
+     }
    }
 
    @Override
