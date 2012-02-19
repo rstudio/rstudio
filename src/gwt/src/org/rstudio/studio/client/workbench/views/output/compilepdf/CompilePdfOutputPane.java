@@ -181,7 +181,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
       setShowLogVisible(false);
       toolbar.addLeftWidget(showLogButton_);
       
-      showOutputButton_ = new LeftRightToggleButton("Output",  "Errors", false);
+      showOutputButton_ = new LeftRightToggleButton("Output", "Issues", false);
       showOutputButton_.setVisible(false);
       showOutputButton_.addClickHandler(new ClickHandler() {
          @Override
@@ -194,7 +194,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
       });
       toolbar.addRightWidget(showOutputButton_);
        
-      showErrorsButton_ = new LeftRightToggleButton("Output",  "Errors", true);
+      showErrorsButton_ = new LeftRightToggleButton("Output", "Issues",  true);
       showErrorsButton_.setVisible(false);
       showErrorsButton_.addClickHandler(new ClickHandler() {
          @Override
@@ -214,7 +214,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
    public void compileStarted(String fileName)
    {
       clearAll();
-
+      
       fileName_ = fileName;
 
       fileImage_.setResource(fileTypeRegistry_.getIconForFilename(fileName));
@@ -257,17 +257,23 @@ public class CompilePdfOutputPane extends WorkbenchPane
    public void showErrors(JsArray<CompilePdfError> errors)
    {
       boolean showFileHeaders = false;
+      boolean showErrorPane = false;
       ArrayList<CompilePdfError> errorList = new ArrayList<CompilePdfError>();
       for (CompilePdfError error : JsUtil.asIterable(errors))
       {
          if (!error.getPath().equals(fileName_))
             showFileHeaders = true;
          errorList.add(error);
+         
+         if (!showErrorPane && (error.getType() == CompilePdfError.ERROR))
+            showErrorPane = true;
       }
 
       codec_.setShowFileHeaders(showFileHeaders);
       errorTable_.addItems(errorList, false);
-      panel_.setWidget(errorPanel_);
+
+     if (showErrorPane)
+       panel_.setWidget(errorPanel_);
       
       showOutputButton_.setVisible(true);
    }

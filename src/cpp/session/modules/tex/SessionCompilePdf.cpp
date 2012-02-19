@@ -227,15 +227,15 @@ FilePath bibtexLogPath(const FilePath& texFilePath)
    return ancillaryFilePath(texFilePath, ".blg");
 }
 
-bool showCompilationErrors(const FilePath& texPath,
-                           const rnw_concordance::Concordances& concordances)
+void getLogEntries(const FilePath& texPath,
+                   const rnw_concordance::Concordances& concordances,
+                   core::tex::LogEntries* pLogEntries)
 {
    // latex log file
-   core::tex::LogEntries logEntries;
    FilePath logPath = latexLogPath(texPath);
    if (logPath.exists())
    {
-      Error error = core::tex::parseLatexLog(logPath, &logEntries);
+      Error error = core::tex::parseLatexLog(logPath, pLogEntries);
       if (error)
          LOG_ERROR(error);
    }
@@ -253,18 +253,7 @@ bool showCompilationErrors(const FilePath& texPath,
    // concatenate them together
    std::copy(bibtexLogEntries.begin(),
              bibtexLogEntries.end(),
-             std::back_inserter(logEntries));
-
-   // show errors if necessary
-   if (!logEntries.empty())
-   {
-      showLogEntries(logEntries, concordances);
-      return true;
-   }
-   else
-   {
-      return false;
-   }
+             std::back_inserter(*pLogEntries));
 }
 
 void removeExistingLogs(const FilePath& texFilePath)
@@ -276,6 +265,53 @@ void removeExistingLogs(const FilePath& texFilePath)
    error = bibtexLogPath(texFilePath).removeIfExists();
    if (error)
       LOG_ERROR(error);
+}
+
+std::string buildIssuesMessage(const core::tex::LogEntries& logEntries)
+{
+   if (logEntries.empty())
+      return std::string();
+
+   // count error types
+   int errors = 0, warnings = 0, badBoxes = 0;
+   BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
+   {
+      if (logEntry.type() == core::tex::LogEntry::Error)
+         errors++;
+      else if (logEntry.type() == core::tex::LogEntry::Warning)
+         warnings++;
+      else if (logEntry.type() == core::tex::LogEntry::Box)
+         badBoxes++;
+   }
+
+   std::string issues = "Issues: ";
+   boost::format fmt("%1% %2%");
+   if (errors > 0)
+   {
+      issues += boost::str(fmt % errors % "error");
+      if (errors > 1)
+         issues += "s";
+   }
+   if (warnings > 0)
+   {
+      if (!issues.empty())
+         issues += ", ";
+      issues += boost::str(fmt % warnings % "warning");
+      if (warnings > 1)
+         issues += "s";
+   }
+   if (badBoxes > 0)
+   {
+      if (!issues.empty())
+         issues += ", ";
+      issues += boost::str(fmt % badBoxes % "bad");
+      if (badBoxes > 1)
+         issues += "boxes";
+      else
+         issues += "box";
+   }
+
+   return issues;
 }
 
 class AuxillaryFileCleanupContext : boost::noncopyable
@@ -478,8 +514,8 @@ private:
       // try to use texi2dvi if we can
       if (userSettings().useTexi2Dvi() && tex::texi2dvi::isAvailable())
       {
-         enqueOutputEvent("\nRunning texi2dvi on " +
-                          texFilePath.filename() + "...\n");
+         enqueOutputEvent("Running texi2dvi on " +
+                          texFilePath.filename() + "...");
 
          Error error = tex::texi2dvi::texToPdf(
                            texProgramPath_,
@@ -506,8 +542,8 @@ private:
          // the (typically) async callback function onLatexCompileCompleted
          // directly after the function returns
 
-         enqueOutputEvent("\nRunning " + texProgramPath_.filename() +
-                          " on " + texFilePath.filename() + "...\n");
+         enqueOutputEvent("Running " + texProgramPath_.filename() +
+                          " on " + texFilePath.filename() + "...");
 
          Error error = tex::pdflatex::texToPdf(texProgramPath_,
                                                texFilePath,
@@ -531,11 +567,24 @@ private:
                                 const FilePath& texFilePath,
                                 const rnw_concordance::Concordances& concords)
    {
+      // collect errors from the log, show them, and build the issues string
+      core::tex::LogEntries logEntries;
+      getLogEntries(texFilePath, concords, &logEntries);
+
+      // show log entries
+      if (!logEntries.empty())
+         showLogEntries(logEntries, concords);
+
+      // build issues mesage
+      std::string issues = buildIssuesMessage(logEntries);
+
       if (exitStatus == EXIT_SUCCESS)
       {
          std::string pdfFile = module_context::createAliasedPath(
                                     ancillaryFilePath(texFilePath, ".pdf"));
-         std::string completed = "\nCompile PDF completed: " + pdfFile + "\n";
+         std::string completed = "completed\n\nCreated PDF: " + pdfFile + "\n";
+         if (!issues.empty())
+            completed += "\n" + issues;
          enqueOutputEvent(completed);
 
          if (onCompleted_)
@@ -543,14 +592,14 @@ private:
       }
       else
       {
-         enqueOutputEvent("\n[Stopped: Errors encountered]\n");
+         enqueOutputEvent("failed\n\n" + issues);
 
          // don't remove the log
          auxillaryFileCleanupContext_.preserveLog();
 
-         // try to show compilation errors -- if none are found then print
-         // a general error message and stderr
-         if (!showCompilationErrors(texFilePath, concords))
+         // if there were no error found in the log file then just
+         // print the error and exit code
+         if (logEntries.empty())
          {
             boost::format fmt("Error running %1% (exit code %2%)");
             std::string msg(boost::str(fmt % texProgramPath_.absolutePath()
