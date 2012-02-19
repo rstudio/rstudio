@@ -386,14 +386,9 @@ core::Error texToPdf(const core::FilePath& texProgramPath,
    // resolve citation misses and index
    for (int i=0; i<10; i++)
    {
-      // do we need to re-run at the end of the loop iteration
-      bool reRunTexCompile = false;
-
       // run bibtex if necessary
       if (misses > 0 && !bibtexProgramPath.empty())
       {
-         reRunTexCompile = true;
-
          core::system::ProcessResult result;
          Error error = core::system::runProgram(
                string_utils::utf8ToSystem(bibtexProgramPath.absolutePath()),
@@ -411,8 +406,6 @@ core::Error texToPdf(const core::FilePath& texProgramPath,
       // run makeindex if necessary
       if (idxFilePath.exists() && !makeindexProgramPath.empty())
       {
-         reRunTexCompile = true;
-
          Error error = core::system::runProgram(
                string_utils::utf8ToSystem(makeindexProgramPath.absolutePath()),
                makeindexArgs,
@@ -426,19 +419,16 @@ core::Error texToPdf(const core::FilePath& texProgramPath,
       }
 
       // re-run latex
-      if (reRunTexCompile)
-      {
-         Error error = utils::runTexCompile(texProgramPath,
-                                            utils::rTexInputsEnvVars(),
-                                            shellArgs(options),
-                                            texFilePath,
-                                            pResult);
-         if (error)
-            return error;
+      Error error = utils::runTexCompile(texProgramPath,
+                                         utils::rTexInputsEnvVars(),
+                                         shellArgs(options),
+                                         texFilePath,
+                                         pResult);
+      if (error)
+         return error;
 
-         // count misses
-         misses = countCitationMisses(logFilePath);
-      }
+      // count misses
+      misses = countCitationMisses(logFilePath);
 
       // if there is no change in misses and there is no "Rerun to get"
       // in the log file then break
