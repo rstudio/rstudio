@@ -1,5 +1,5 @@
 /*
- * ActiveTabClosingEvent.java
+ * TabCloseEvent.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -14,13 +14,16 @@ package org.rstudio.core.client.events;
 
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ActiveTabClosingEvent 
-                           extends GwtEvent<ActiveTabClosingHandler>
+/**
+ * Indicates that the specified tab is about to close. Happens after
+ * TabClosingEvent but before TabClosedEvent.
+ */
+public class TabCloseEvent extends GwtEvent<TabCloseHandler>
 { 
-   public static final GwtEvent.Type<ActiveTabClosingHandler> TYPE =
-      new GwtEvent.Type<ActiveTabClosingHandler>();
+   public static final GwtEvent.Type<TabCloseHandler> TYPE =
+      new GwtEvent.Type<TabCloseHandler>();
 
-   public ActiveTabClosingEvent(int tabIndex)
+   public TabCloseEvent(int tabIndex)
    {
       tabIndex_ = tabIndex;
    }
@@ -30,28 +33,17 @@ public class ActiveTabClosingEvent
       return tabIndex_;
    }
 
-   public int getNextTabIndex()
+   @Override
+   protected void dispatch(TabCloseHandler handler)
    {
-      return nextTabIndex_;
-   }
-
-   public void setNextTabIndex(int nextTabIndex)
-   {
-      nextTabIndex_ = nextTabIndex;
+      handler.onTabClose(this);
    }
 
    @Override
-   protected void dispatch(ActiveTabClosingHandler handler)
-   {
-      handler.onActiveTabClosing(this);
-   }
-
-   @Override
-   public GwtEvent.Type<ActiveTabClosingHandler> getAssociatedType()
+   public GwtEvent.Type<TabCloseHandler> getAssociatedType()
    {
       return TYPE;
    }
 
    private final int tabIndex_;
-   private int nextTabIndex_ = -1;
 }

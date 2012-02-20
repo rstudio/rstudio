@@ -31,8 +31,8 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
  */
 public class DocTabLayoutPanel
       extends TabLayoutPanel
-      implements HasTabClosingHandlers, 
-                 HasActiveTabClosingHandlers,
+      implements HasTabClosingHandlers,
+                 HasTabCloseHandlers,
                  HasTabClosedHandlers
 {
    public DocTabLayoutPanel(boolean closeableTabs,
@@ -208,23 +208,16 @@ public class DocTabLayoutPanel
         return false;
       }
 
+      fireEvent(new TabCloseEvent(index));
+
       if (getSelectedIndex() == index)
       {
-         ActiveTabClosingEvent event = new ActiveTabClosingEvent(index);
-         fireEvent(event);
-         if (event.getNextTabIndex() >= 0)
-         {
-            selectTab(event.getNextTabIndex());
-         }
-         else
-         {
-            boolean closingLastTab = index == getWidgetCount() - 1;
-            int indexToSelect = closingLastTab
-                                ? index - 1
-                                : index + 1;
-            if (indexToSelect >= 0)
-               selectTab(indexToSelect);
-         }
+         boolean closingLastTab = index == getWidgetCount() - 1;
+         int indexToSelect = closingLastTab
+                             ? index - 1
+                             : index + 1;
+         if (indexToSelect >= 0)
+            selectTab(indexToSelect);
       }
 
       if (!super.remove(index))
@@ -346,10 +339,10 @@ public class DocTabLayoutPanel
    }
    
    @Override
-   public HandlerRegistration addActiveTabClosingHandler(
-                                             ActiveTabClosingHandler handler)
+   public HandlerRegistration addTabCloseHandler(
+         TabCloseHandler handler)
    {
-      return addHandler(handler, ActiveTabClosingEvent.TYPE);
+      return addHandler(handler, TabCloseEvent.TYPE);
    }
 
    public HandlerRegistration addTabClosedHandler(TabClosedHandler handler)

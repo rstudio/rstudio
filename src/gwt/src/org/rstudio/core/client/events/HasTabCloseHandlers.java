@@ -1,5 +1,5 @@
 /*
- * HasActiveTabClosingHandlers.java
+ * HasTabCloseHandlers.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -14,8 +14,7 @@ package org.rstudio.core.client.events;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 
-public interface HasActiveTabClosingHandlers
+public interface HasTabCloseHandlers
 {
-   HandlerRegistration addActiveTabClosingHandler(
-                                          ActiveTabClosingHandler handler);
+   HandlerRegistration addTabCloseHandler(TabCloseHandler handler);
 }
