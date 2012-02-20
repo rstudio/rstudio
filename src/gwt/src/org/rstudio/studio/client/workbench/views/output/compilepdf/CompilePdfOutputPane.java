@@ -18,11 +18,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.TableColElement;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.HasClickHandlers;
-import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.DOM;
@@ -93,16 +89,18 @@ public class CompilePdfOutputPane extends WorkbenchPane
          {
             if (doubleClick_.checkForDoubleClick(event.getNativeEvent()))
             {
-               ArrayList<CodeNavigationTarget> values =
-                                                errorTable_.getSelectedValues();
-               if (values.size() == 1)
-               {
-                  SelectionCommitEvent.fire(CompilePdfOutputPane.this,
-                                            values.get(0));
-               }
+               fireSelectionCommitted();
             }
          }
          private final DoubleClickState doubleClick_ = new DoubleClickState();
+      });
+      errorTable_.addKeyDownHandler(new KeyDownHandler()
+      {
+         @Override
+         public void onKeyDown(KeyDownEvent event)
+         {
+            fireSelectionCommitted();
+         }
       });
       
       errorTable_.addMouseDownHandler(new MouseDownHandler()
@@ -129,6 +127,13 @@ public class CompilePdfOutputPane extends WorkbenchPane
       errorPanel_.setSize("100%", "100%");
 
       return panel_;
+   }
+
+   private void fireSelectionCommitted()
+   {
+      ArrayList<CodeNavigationTarget> values = errorTable_.getSelectedValues();
+      if (values.size() == 1)
+         SelectionCommitEvent.fire(this, values.get(0));
    }
 
    private void setWidths()
