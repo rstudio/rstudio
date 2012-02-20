@@ -84,6 +84,7 @@ public class Source implements InsertSourceHandler,
                                IsWidget,
                              OpenSourceFileHandler,
                              TabClosingHandler,
+                             ActiveTabClosingHandler,
                              SelectionHandler<Integer>,
                              TabClosedHandler,
                              FileEditHandler,
@@ -94,6 +95,7 @@ public class Source implements InsertSourceHandler,
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
+                                    HasActiveTabClosingHandlers,
                                     HasTabClosedHandlers,
                                     HasBeforeSelectionHandlers<Integer>,
                                     HasSelectionHandlers<Integer>
@@ -166,6 +168,7 @@ public class Source implements InsertSourceHandler,
       uiPrefs_ = uiPrefs;
 
       view_.addTabClosingHandler(this);
+      view_.addActiveTabClosingHandler(this);
       view_.addTabClosedHandler(this);
       view_.addSelectionHandler(this);
       view_.addBeforeShowHandler(this);
@@ -1155,6 +1158,41 @@ public class Source implements InsertSourceHandler,
       EditingTarget target = editors_.get(event.getTabIndex());
       if (!target.onBeforeDismiss())
          event.cancel();
+   }
+   
+   @Override
+   public void onActiveTabClosing(ActiveTabClosingEvent event)
+   {
+      // can't proceed if there is no active editor
+      if (activeEditor_ == null)
+         return;
+      
+      // scan the source navigation history for an entry that can 
+      // be used as the next active tab (anything that doesn't have
+      // the same document id as the currently active tab)
+      final String activeEditorId = activeEditor_.getId();
+      SourceNavigation srcNav = sourceNavigationHistory_.scanBack(
+         new SourceNavigationHistory.Filter()
+         {
+            public boolean includeEntry(SourceNavigation navigation)
+            {
+               return !navigation.getDocumentId().equals(activeEditorId);
+            }
+         });
+    
+      // see if the source navigation we found corresponds to an active
+      // tab -- if it does then set this on the event
+      if (srcNav != null)
+      {
+         for (int i=0; i<editors_.size(); i++)
+         {
+            if (srcNav.getDocumentId().equals(editors_.get(i).getId()))
+            {
+               event.setNextTabIndex(i);
+               break;
+            }
+         }
+      }
    }
 
    public void onTabClosed(TabClosedEvent event)

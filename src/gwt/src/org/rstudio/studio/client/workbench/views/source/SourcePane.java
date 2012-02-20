@@ -196,6 +196,12 @@ public class SourcePane extends Composite implements Display,
       return tabPanel_.addTabClosingHandler(handler);
    }
 
+   public HandlerRegistration addActiveTabClosingHandler(
+                                    ActiveTabClosingHandler handler)
+   {
+      return tabPanel_.addActiveTabClosingHandler(handler);
+   }
+   
    public HandlerRegistration addTabClosedHandler(TabClosedHandler handler)
    {
       return tabPanel_.addTabClosedHandler(handler);

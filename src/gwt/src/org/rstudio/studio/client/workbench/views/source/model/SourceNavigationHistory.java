@@ -27,6 +27,11 @@ import com.google.gwt.event.shared.HandlerRegistration;
 
 public class SourceNavigationHistory
 {
+   public interface Filter
+   {
+      boolean includeEntry(SourceNavigation navigation);
+   }
+   
    public SourceNavigationHistory(int maxItems)
    {
       maxItems_ = maxItems;
@@ -71,6 +76,20 @@ public class SourceNavigationHistory
    public boolean isForwardEnabled()
    {
       return currentLocation_ < (history_.size() - 1);
+   }
+   
+   public SourceNavigation scanBack(Filter filter)
+   {
+       if (!isBackEnabled())
+          return null;
+       
+       for (int i=currentLocation_; i >= 0; i--)
+       {
+          if (filter.includeEntry(history_.get(i)))
+             return history_.get(i);
+       }
+       
+       return null;
    }
    
    public SourceNavigation goBack()
