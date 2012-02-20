@@ -41,7 +41,7 @@ public class ExampleValidatorFactory extends AbstractGwtValidatorFactory {
    * client.
    */
   @GwtValidation(
-      value = {Author.class},
+      value = {Author.class, Book.class},
       groups = {Default.class, ClientGroup.class})
   public interface GwtValidator extends Validator {
   }

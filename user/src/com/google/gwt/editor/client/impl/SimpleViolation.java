@@ -75,7 +75,7 @@ public abstract class SimpleViolation {
 
     @Override
     public Object getKey() {
-      return v.getLeafBean();
+      return v.getRootBean();
     }
 
     @Override

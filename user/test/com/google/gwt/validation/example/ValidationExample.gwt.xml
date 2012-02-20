@@ -16,6 +16,7 @@
   the License.
 -->
 <module>
+  <inherits name="com.google.gwt.editor.Editor" />
   <inherits name="com.google.gwt.user.User" />
   <inherits name="org.hibernate.validator.HibernateValidator" />
   <source path="client">
