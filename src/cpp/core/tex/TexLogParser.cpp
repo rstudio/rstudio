@@ -137,7 +137,8 @@ FilePath resolveFilename(const FilePath& rootDir,
 
 // TeX wraps lines hard at 79 characters. We use heuristics as described in
 // Sublime Text's TeX plugin to determine where these breaks are.
-void unwrapLines(std::vector<std::string>* pLines)
+void unwrapLines(std::vector<std::string>* pLines,
+                 std::vector<size_t>* pLinesUnwrapped=NULL)
 {
    static boost::regex regexLine("^l\\.(\\d+)\\s");
    static boost::regex regexAssignment("^\\\\.*?=");
@@ -193,6 +194,8 @@ void unwrapLines(std::vector<std::string>* pLines)
          //    correct point in pLines, and when finished, truncate whatever
          //    elements come after the final position of the output iterator.
          pLines->erase(nextPos, nextPos+1);
+         if (pLinesUnwrapped)
+            pLinesUnwrapped->push_back(1 + (pos - pLines->begin()));
 
          if (breakAfterAppend)
             break;
@@ -292,6 +295,22 @@ FilePath texFilePath(const std::string& logPath, const FilePath& compileDir)
 #endif
 }
 
+size_t calculateWrappedLine(const std::vector<size_t>& unwrappedLines,
+                               size_t unwrappedLineNum)
+{
+   for (std::vector<size_t>::const_iterator it = unwrappedLines.begin();
+        it != unwrappedLines.end();
+        it++)
+   {
+      if (*it >= unwrappedLineNum)
+      {
+         return unwrappedLineNum + (it - unwrappedLines.begin());
+      }
+   }
+
+   return unwrappedLineNum + unwrappedLines.size();
+}
+
 } // anonymous namespace
 
 Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
@@ -307,7 +326,8 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
    if (error)
       return error;
 
-   unwrapLines(&lines);
+   std::vector<size_t> linesUnwrapped;
+   unwrapLines(&lines, &linesUnwrapped);
 
    FilePath rootDir = logFilePath.parent();
    FileStack fileStack(rootDir);
@@ -347,7 +367,8 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
          }
 
          pLogEntries->push_back(LogEntry(logFilePath,
-                                         logLineNum,
+                                         calculateWrappedLine(linesUnwrapped,
+                                                              logLineNum),
                                          LogEntry::Box,
                                          fileStack.currentFile(),
                                          lineNum,
@@ -393,7 +414,8 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
          }
 
          pLogEntries->push_back(LogEntry(logFilePath,
-                                         logLineNum,
+                                         calculateWrappedLine(linesUnwrapped,
+                                                              logLineNum),
                                          LogEntry::Error,
                                          fileStack.currentFile(),
                                          lineNum,
@@ -432,7 +454,8 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
          }
 
          pLogEntries->push_back(LogEntry(logFilePath,
-                                         logLineNum,
+                                         calculateWrappedLine(linesUnwrapped,
+                                                              logLineNum),
                                          LogEntry::Warning,
                                          fileStack.currentFile(),
                                          lineNum,
@@ -456,7 +479,8 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
          {
             int lineNum = safe_convert::stringTo<int>(cStyleErrorMatch[2], -1);
             pLogEntries->push_back(LogEntry(logFilePath,
-                                            logLineNum,
+                                            calculateWrappedLine(linesUnwrapped,
+                                                                 logLineNum),
                                             LogEntry::Error,
                                             cstyleFile,
                                             lineNum,
