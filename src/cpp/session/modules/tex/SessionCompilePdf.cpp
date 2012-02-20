@@ -230,23 +230,7 @@ FilePath bibtexLogPath(const FilePath& texFilePath)
 
 bool includeLogEntry(const core::tex::LogEntry& logEntry)
 {
-   // bbl files are generated so there is nothing which can be done
-   // about box errors within them
-   if (logEntry.filePath().extensionLowerCase() == ".bbl" &&
-       logEntry.type() == core::tex::LogEntry::Box)
-   {
-      return false;
-   }
-   // if we can't identify the file where the error or warning took
-   // place then exclude these as well
-   else if (logEntry.filePath().empty())
-   {
-      return false;
-   }
-   else
-   {
-      return true;
-   }
+   return true;
 }
 
 // filter out log entries which we view as superflous or distracting
