@@ -13,10 +13,10 @@
 package org.rstudio.studio.client.workbench.views.pdfviewer.pdfjs;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.resources.client.ClientBundle.Source;
+import com.google.gwt.resources.client.ClientBundle;
 import org.rstudio.core.client.resources.StaticDataResource;
 
-public interface PdfJsResources
+public interface PdfJsResources extends ClientBundle
 {
    public static PdfJsResources INSTANCE = GWT.create(PdfJsResources.class);
 

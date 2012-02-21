@@ -29,12 +29,23 @@ public class PdfJs
       {
          public void onLoaded()
          {
+            if (!initialized_)
+            {
+               initialize(PdfJsResources.INSTANCE.pdfjs().getSafeUri().asString());
+               initialized_ = true;
+            }
+
             if (command != null)
                command.execute();
          }
       });
    }
 
+   private static native void initialize(String pdfjsUrl) /*-{
+      $wnd.PDFJS.workerSrc = pdfjsUrl;
+   }-*/;
+
+   private static boolean initialized_;
    private static final ExternalJavaScriptLoader pdfjs_ = new ExternalJavaScriptLoader(
          PdfJsResources.INSTANCE.pdfjs().getSafeUri().asString());
 }
