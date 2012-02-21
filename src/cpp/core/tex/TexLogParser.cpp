@@ -129,7 +129,7 @@ FilePath resolveFilename(const FilePath& rootDir,
 
    // Check for existence of file
    FilePath file = rootDir.complete(result);
-   if (file.exists())
+   if (file.exists() && !file.isDirectory())
       return file;
    else
       return FilePath();
@@ -217,10 +217,15 @@ public:
 
    void processLine(const std::string& line)
    {
-      std::vector<std::string::const_iterator> parens;
+      typedef std::vector<std::string::const_iterator> Iterators;
+      Iterators parens;
       findUnmatchedParens(line, &parens);
-      BOOST_FOREACH(std::string::const_iterator it, parens)
+      for (Iterators::const_iterator itParen = parens.begin();
+           itParen != parens.end();
+           itParen++)
       {
+         std::string::const_iterator it = *itParen;
+
          if (*it == ')')
          {
             if (!fileStack_.empty())
@@ -236,8 +241,16 @@ public:
          }
          else if (*it == '(')
          {
-            fileStack_.push_back(
-                  resolveFilename(rootDir_, std::string(it+1, line.end())));
+            std::string::const_iterator itFilenameEnd =
+                  // case: no other ( on this line
+                  (itParen + 1 == parens.end()) ? line.end() :
+                  // case: space before next paren, eat it
+                  *(*(itParen+1)-1) == ' ' ? *(itParen+1)-1 :
+                  // case: other
+                  *(itParen+1);
+
+            std::string filename = std::string(it+1, itFilenameEnd);
+            fileStack_.push_back(resolveFilename(rootDir_, filename));
 
             updateCurrentFile();
          }
