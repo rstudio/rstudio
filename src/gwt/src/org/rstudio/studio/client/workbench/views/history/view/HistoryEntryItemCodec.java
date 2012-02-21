@@ -127,7 +127,8 @@ public class HistoryEntryItemCodec extends HeaderBreaksItemCodec<HistoryEntry, S
 
       if (timestampMode_ == TimestampMode.GROUP)
       {
-         long lastTime = getTimestampForRow(prevRow);
+         long lastTime = prevRow == null ? Long.MIN_VALUE
+                                         : getTimestampForRow(prevRow);
          long time = getTimestampForRow(row);
          return Math.abs(time - lastTime) > 1000*60*15;
       }
