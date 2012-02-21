@@ -1,0 +1,38 @@
+#!/bin/bash
+
+#
+# install-qt-48-sdk
+#
+# Copyright (C) 2009-11 by RStudio, Inc.
+#
+# This program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+# define QT archive to download
+SYSTEM_ARCH=`getconf LONG_BIT`
+if [ "$SYSTEM_ARCH" == "64" ]
+then
+  QT_ARCH=64
+else
+  QT_ARCH=32
+fi
+QT_SDK_BINARY=Qt_SDK_Lin${QT_ARCH}_offline_v1_2_en.run
+QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/$QT_SDK_BINARY
+QT_SDK_DIR=$HOME/QtSDK/Desktop/Qt/4.8.0
+
+if ! test -e $QT_SDK_DIR
+then
+   # download and install
+   wget $QT_SDK_URL -O $QT_SDK_BINARY
+   chmod +x $QT_SDK_BINARY
+   ./$QT_SDK_BINARY
+   rm $QT_SDK_BINARY
+else
+   echo "Qt 4.8.0 SDK already installed at $QT_SDK_DIR"
+fi
+
