@@ -13,9 +13,17 @@
 
 project(DESKTOP)
 
+# include qt (on linux prefer sdk installation of qt 4.8.0 if it exists)
+if (UNIX AND NOT APPLE)
+   if(NOT QT_QMAKE_EXECUTABLE)
+      set(QMAKE_QT48_SDK "$ENV{HOME}/QtSDK/Desktop/Qt/4.8.0/gcc/bin/qmake")
+      if(EXISTS ${QMAKE_QT48_SDK})
+         set(QT_QMAKE_EXECUTABLE ${QMAKE_QT48_SDK})
+         set(RSTUDIO_USING_QT48_SDK TRUE)
+      endif()
+   endif()
+endif()
 add_definitions(-DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII)
-
-# include Qt4
 find_package(Qt4 4.7.0 COMPONENTS QtCore QtGui QtNetwork QtWebKit REQUIRED)
 include(${QT_USE_FILE})
 
@@ -269,7 +277,13 @@ if(RSTUDIO_BUNDLE_QT)
    # copy qt shared objects directly to bin on unix (fixed up rpath above)
    elseif(UNIX)
       # compute path to release libs
-      get_filename_component(QT_RELEASE_LIBRARY_DIR "${QT_LIBRARY_DIR}/../../lib" REALPATH)
+      if (RSTUDIO_USING_QT48_SDK)
+         set(QT_RELEASE_LIBRARY_DIR ${QT_LIBRARY_DIR})
+         set(QT_WEBKIT_LIBRARY_PATH ${QT_RELEASE_LIBRARY_DIR}/libQtWebKit.so.4.9.0)
+      else()
+         get_filename_component(QT_RELEASE_LIBRARY_DIR "${QT_LIBRARY_DIR}/../../lib" REALPATH)
+         set(QT_WEBKIT_LIBRARY_PATH ${QT_RELEASE_LIBRARY_DIR}/libQtWebKit.so.${QT_FULL_VERSION})
+      endif()
 
       # install dependent libraries
       set(QT_FULL_VERSION "${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH}")
@@ -282,7 +296,7 @@ if(RSTUDIO_BUNDLE_QT)
                        ${QT_RELEASE_LIBRARY_DIR}/libQtNetwork.so.4
                        ${QT_RELEASE_LIBRARY_DIR}/libQtNetwork.so.${QT_FULL_VERSION}
                        ${QT_RELEASE_LIBRARY_DIR}/libQtWebKit.so.4
-                       ${QT_RELEASE_LIBRARY_DIR}/libQtWebKit.so.${QT_FULL_VERSION}
+                       ${QT_WEBKIT_LIBRARY_PATH}
                        ${QT_RELEASE_LIBRARY_DIR}/libQtSvg.so.4
                        ${QT_RELEASE_LIBRARY_DIR}/libQtSvg.so.${QT_FULL_VERSION}
                        ${QT_RELEASE_LIBRARY_DIR}/libQtXml.so.4
