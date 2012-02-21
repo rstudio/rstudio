@@ -65,11 +65,15 @@ public class RoleTest extends GWTTestCase {
   }
   
   public void testSetGetRemoveExtraAttributes() {
-    assertEquals("", regionRole.getTabindexExtraAttribute(div));
+    // Some versions of IE default to "0" instead of ""
+    assertTrue("".equals(regionRole.getTabindexExtraAttribute(div)) 
+        || "0".equals(regionRole.getTabindexExtraAttribute(div)));
     regionRole.setTabindexExtraAttribute(div, 1);
     assertEquals("1", regionRole.getTabindexExtraAttribute(div));
     regionRole.removeTabindexExtraAttribute(div);
-    assertEquals("", regionRole.getTabindexExtraAttribute(div));
+    // Some versions of IE default to "0" instead of ""
+    assertTrue("".equals(regionRole.getTabindexExtraAttribute(div)) 
+        || "0".equals(regionRole.getTabindexExtraAttribute(div)));
   }
   
   @Override
