@@ -284,21 +284,20 @@ public class PaneManager
    private LogicalWindow createConsole()
    {
       PrimaryWindowFrame frame = new PrimaryWindowFrame("Console", null);
+
+      ToolbarButton goToWorkingDirButton =
+            commands_.goToWorkingDir().createToolbarButton();
+      goToWorkingDirButton.addStyleName(
+            ThemeResources.INSTANCE.themeStyles().windowFrameToolbarButton());
+
       @SuppressWarnings("unused")
       ConsoleTabPanel consoleTabPanel = new ConsoleTabPanel(frame,
                                                             consolePane_,
                                                             compilePdfTab_,
                                                             findOutputTab_,
-                                                            eventBus_);
-      frame.setContextButton(consoleInterrupt_,
-                             consoleInterrupt_.getWidth(),
-                             consoleInterrupt_.getHeight());
-
-      ToolbarButton goToWorkingDirButton =
-                           commands_.goToWorkingDir().createToolbarButton();
-      goToWorkingDirButton.addStyleName(
-            ThemeResources.INSTANCE.themeStyles().windowFrameToolbarButton());
-      frame.addLeftWidget(goToWorkingDirButton);
+                                                            eventBus_,
+                                                            consoleInterrupt_,
+                                                            goToWorkingDirButton);
 
       return new LogicalWindow(frame, new MinimizedWindowFrame("Console"));
    }

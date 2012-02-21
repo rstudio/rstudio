@@ -15,7 +15,9 @@ package org.rstudio.studio.client.workbench.ui;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.theme.PrimaryWindowFrame;
 import org.rstudio.core.client.theme.WindowFrame;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
@@ -28,13 +30,17 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                           ConsolePane consolePane,
                           WorkbenchTab compilePdfTab,
                           WorkbenchTab findResultsTab,
-                          EventBus events)
+                          EventBus events,
+                          ConsoleInterruptButton consoleInterrupt,
+                          ToolbarButton goToWorkingDirButton)
    {
       super(owner);
       owner_ = owner;
       consolePane_ = consolePane;
       compilePdfTab_ = compilePdfTab;
       findResultsTab_ = findResultsTab;
+      consoleInterrupt_ = consoleInterrupt;
+      goToWorkingDirButton_ = goToWorkingDirButton;
 
       compilePdfTab.addEnsureVisibleHandler(new EnsureVisibleHandler()
       {
@@ -121,6 +127,10 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          if (consoleOnly)
          {
             owner_.setMainWidget(consolePane_);
+            owner_.addLeftWidget(goToWorkingDirButton_);
+            owner_.setContextButton(consoleInterrupt_,
+                                    consoleInterrupt_.getWidth(),
+                                    consoleInterrupt_.getHeight());
             consolePane_.onBeforeSelected();
             consolePane_.onSelected();
             consolePane_.setVisible(true);
@@ -129,15 +139,18 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          {
             consolePane_.onBeforeUnselected();
             owner_.setFillWidget(this);
+            owner_.setContextButton(null, 0, 0);
          }
       }
    }
 
-   private final WindowFrame owner_;
+   private final PrimaryWindowFrame owner_;
    private final ConsolePane consolePane_;
    private final WorkbenchTab compilePdfTab_;
    private boolean compilePdfTabVisible_;
    private final WorkbenchTab findResultsTab_;
+   private final ConsoleInterruptButton consoleInterrupt_;
+   private final ToolbarButton goToWorkingDirButton_;
    private boolean findResultsTabVisible_;
    private boolean consoleOnly_;
 }
