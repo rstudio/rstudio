@@ -1,0 +1,22 @@
+#!/bin/sh
+
+set -e
+
+if [ ! -d "./pdfjs" ]; then
+    git clone git://github.com/mozilla/pdf.js.git pdfjs
+fi
+
+cd pdfjs
+git clean -dfx
+
+# Use this commit
+git checkout f4aff1d8486a98e61c8caadc3a43e81fd8f55d59
+
+make
+cd ..
+
+CC_OPTS="--compilation_level SIMPLE_OPTIMIZATIONS --language_in ECMASCRIPT5"
+java -jar "compiler/compiler.jar" $CC_OPTS --js pdfjs/build/pdf.js --js_output_file pdfjs/build/pdf.min.js
+
+cp pdfjs/build/pdf.js ../src/org/rstudio/studio/client/workbench/views/pdfviewer/pdfjs/pdf.js
+cp pdfjs/build/pdf.min.js ../src/org/rstudio/studio/client/workbench/views/pdfviewer/pdfjs/pdf.min.js

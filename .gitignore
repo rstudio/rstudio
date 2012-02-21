@@ -9,6 +9,7 @@ src/gwt/src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ac
 src/gwt/src/org/rstudio/core/client/jsonrpc/json2.min.js
 src/gwt/www/js/json2.min.js
 src/gwt/tools/ace/
+src/gwt/tools/pdfjs/
 /src/gwt/.gwt/.gwt-log
 rstudio.Rproj
 .Rproj.user
