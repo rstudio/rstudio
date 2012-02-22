@@ -12,8 +12,9 @@
  */
 package org.rstudio.studio.client.workbench.views.output.find;
 
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
@@ -47,8 +48,7 @@ public class FindOutputPresenter extends BasePresenter
       void clearMatches();
       void ensureVisible();
 
-      int getFileCount();
-      void setFileOpen(int index, boolean open);
+      HasClickHandlers getClearButton();
    }
 
    @Inject
@@ -78,6 +78,15 @@ public class FindOutputPresenter extends BasePresenter
          }
       });
 
+      view_.getClearButton().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            stopAndClear();
+         }
+      });
+
       events.addHandler(FindResultEvent.TYPE, new FindResultEvent.Handler()
       {
          @Override
@@ -85,20 +94,7 @@ public class FindOutputPresenter extends BasePresenter
          {
             if (!event.getHandle().equals(currentFindHandle_))
                return;
-
-            final int count = view_.getFileCount();
             view_.addMatches(event.getResults());
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  for (int i = count; i < view_.getFileCount(); i++)
-                  {
-                     view_.setFileOpen(i, true);
-                  }
-               }
-            });
          }
       });
    }
@@ -120,13 +116,7 @@ public class FindOutputPresenter extends BasePresenter
             // TODO: Show indication that search is in progress
             // TODO: Provide way to cancel a running search
 
-            if (currentFindHandle_ != null)
-            {
-               server_.stopFind(currentFindHandle_,
-                                new VoidServerRequestCallback());
-               currentFindHandle_ = null;
-               view_.clearMatches();
-            }
+            stopAndClear();
 
             server_.beginFind(input,
                               false,
@@ -148,6 +138,17 @@ public class FindOutputPresenter extends BasePresenter
                               });
          }
       });
+   }
+
+   private void stopAndClear()
+   {
+      if (currentFindHandle_ != null)
+      {
+         server_.stopFind(currentFindHandle_,
+                          new VoidServerRequestCallback());
+         currentFindHandle_ = null;
+      }
+      view_.clearMatches();
    }
 
    private String currentFindHandle_;

@@ -1,0 +1,37 @@
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+.findOutput {
+}
+
+.headerRow td {
+   font-weight: bold;
+   padding: 2px 2px 2px 3px;
+}
+
+.line {
+   color: #777;
+   font-family: fixedWidthFont;
+   text-align: right;
+   padding-left: 12px;
+}
+
+.lineValue {
+   font-family: fixedWidthFont;
+   padding-right: 2px;
+   white-space: nowrap;
+   overflow-x: hidden;
+   text-overflow: ellipsis;
+}
+
+.selectedRow {
+   background-color: #ccc;
+}
+*:focus .selectedRow {
+   background-color: rgb(146, 193, 240)
+}
+@if user.agent ie8 {
+   .selectedRow {
+      background-color: rgb(146, 193, 240)
+   }
+}

@@ -20,19 +20,21 @@ import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.cellview.client.CellTree;
-import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.LayoutPanel;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
-import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
-import org.rstudio.core.client.widget.DoubleClickState;
+import org.rstudio.core.client.widget.*;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
+
+import java.util.ArrayList;
 
 
 public class FindOutputPane extends WorkbenchPane
@@ -40,29 +42,45 @@ public class FindOutputPane extends WorkbenchPane
                  HasSelectionHandlers<CodeNavigationTarget>,
                  HasSelectionCommitHandlers<CodeNavigationTarget>
 {
-   public FindOutputPane()
+   @Inject
+   public FindOutputPane(Commands commands)
    {
       super("Find Results");
+      commands_ = commands;
       ensureWidget();
+   }
+
+   @Override
+   protected Toolbar createMainToolbar()
+   {
+      Toolbar toolbar = new Toolbar();
+
+      clearResults_ = new ToolbarButton(
+            "Clear",
+            commands_.clearWorkspace().getImageResource(),
+            (ClickHandler) null);
+
+      toolbar.addLeftWidget(clearResults_);
+
+      return toolbar;
    }
 
    @Override
    protected Widget createMainWidget()
    {
-      LayoutPanel panel = new LayoutPanel();
-      panel.getElement().getStyle().setBackgroundColor("#F4F6F7");
-
       context_ = new FindResultContext();
 
-      FindOutputCellTreeResources resources = GWT.create(
-                                             FindOutputCellTreeResources.class);
+      FindOutputResources resources = GWT.create(FindOutputResources.class);
+      resources.styles().ensureInjected();
 
-      treeViewModel_ = new FindTreeViewModel(context_,
-                                             resources.cellTreeStyle().lineNumber());
-      cellTree_ = new CellTree(treeViewModel_, (Object)null, resources);
-      cellTree_.setKeyboardSelectionPolicy(HasKeyboardSelectionPolicy.KeyboardSelectionPolicy.BOUND_TO_SELECTION);
-
-      cellTree_.addDomHandler(new ClickHandler()
+      table_ = new FastSelectTable<FindResult, CodeNavigationTarget, Object>(
+            new FindOutputCodec(resources),
+            resources.styles().selectedRow(),
+            true,
+            false);
+      FontSizer.applyNormalFontSize(table_);
+      table_.addStyleName(resources.styles().findOutput());
+      table_.addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
@@ -73,10 +91,11 @@ public class FindOutputPane extends WorkbenchPane
             if (dblClick_.checkForDoubleClick(event.getNativeEvent()))
                fireSelectionCommitted();
          }
-         private final DoubleClickState dblClick_ = new DoubleClickState();
-      }, ClickEvent.getType());
 
-      cellTree_.addDomHandler(new KeyDownHandler()
+         private final DoubleClickState dblClick_ = new DoubleClickState();
+      });
+
+      table_.addKeyDownHandler(new KeyDownHandler()
       {
          @Override
          public void onKeyDown(KeyDownEvent event)
@@ -86,60 +105,29 @@ public class FindOutputPane extends WorkbenchPane
             event.stopPropagation();
             event.preventDefault();
          }
-      }, KeyDownEvent.getType());
+      });
 
-      panel.add(cellTree_);
-      final int PAD = 6;
-      panel.setWidgetTopBottom(cellTree_, 30, Style.Unit.PX, PAD, Style.Unit.PX);
-      panel.setWidgetLeftRight(cellTree_,
-                               PAD,
-                               Style.Unit.PX,
-                               PAD,
-                               Style.Unit.PX);
-
-      return panel;
+      return new ScrollPanel(table_);
    }
 
    private void fireSelectionCommitted()
    {
-      Object o = treeViewModel_.getSelectionModel().getSelectedObject();
-      if (o != null)
-         SelectionCommitEvent.fire(this, toCodeNavigationTarget(o));
-   }
-
-   private CodeNavigationTarget toCodeNavigationTarget(Object o)
-   {
-      if (o == null)
-         return null;
-      if (o instanceof FindResultContext.File)
-      {
-         String path = ((FindResultContext.File)o).getPath();
-         return new CodeNavigationTarget(path, null);
-      }
-      else if (o instanceof FindResultContext.Match)
-      {
-         FindResultContext.Match match = (FindResultContext.Match)o;
-         String path = match.getParent().getPath();
-         return new CodeNavigationTarget(
-               path, FilePosition.create(match.getLine(), 1));
-      }
-      else
-      {
-         assert false;
-         return null;
-      }
+      ArrayList<CodeNavigationTarget> values = table_.getSelectedValues();
+      if (values.size() == 1)
+         SelectionCommitEvent.fire(this, values.get(0));
    }
 
    @Override
    public void addMatches(Iterable<FindResult> findResults)
    {
-      context_.addMatches(findResults);
+      table_.addItems(findResults, false);
    }
 
    @Override
    public void clearMatches()
    {
       context_.reset();
+      table_.clear();
    }
 
    @Override
@@ -149,15 +137,9 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
-   public int getFileCount()
+   public HasClickHandlers getClearButton()
    {
-      return cellTree_.getRootTreeNode().getChildCount();
-   }
-
-   @Override
-   public void setFileOpen(int index, boolean open)
-   {
-      cellTree_.getRootTreeNode().setChildOpen(index, open);
+      return clearResults_;
    }
 
    @Override
@@ -172,7 +154,8 @@ public class FindOutputPane extends WorkbenchPane
       return addHandler(handler, SelectionCommitEvent.getType());
    }
 
-   private CellTree cellTree_;
-   private FindTreeViewModel treeViewModel_;
+   private FastSelectTable<FindResult, CodeNavigationTarget, Object> table_;
    private FindResultContext context_;
+   private final Commands commands_;
+   private ToolbarButton clearResults_;
 }

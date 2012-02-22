@@ -1,5 +1,5 @@
 /*
- * FindOutputCellTreeStyles.java
+ * FindOutputResources.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -12,9 +12,20 @@
  */
 package org.rstudio.studio.client.workbench.views.output.find;
 
-import com.google.gwt.user.cellview.client.CellTree;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 
-public interface FindOutputCellTreeStyles extends CellTree.Style
+public interface FindOutputResources extends ClientBundle
 {
-   String lineNumber();
+   public interface Styles extends CssResource
+   {
+      String findOutput();
+      String headerRow();
+      String line();
+      String lineValue();
+      String selectedRow();
+   }
+
+   @Source("FindOutput.css")
+   Styles styles();
 }
