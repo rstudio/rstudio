@@ -10,13 +10,13 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.find.events;
+package org.rstudio.studio.client.workbench.views.output.find.events;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
-import org.rstudio.studio.client.workbench.views.find.model.FindResult;
+import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
 import java.util.ArrayList;
 
 public class FindResultEvent extends GwtEvent<FindResultEvent.Handler>

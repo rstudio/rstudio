@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.find;
+package org.rstudio.studio.client.workbench.views.output.find;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -32,9 +32,9 @@ import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.events.FindInFilesResultEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
-import org.rstudio.studio.client.workbench.views.find.events.FindResultEvent;
-import org.rstudio.studio.client.workbench.views.find.model.FindInFilesServerOperations;
-import org.rstudio.studio.client.workbench.views.find.model.FindResult;
+import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
+import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
+import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
 
 public class FindOutputPresenter extends BasePresenter
    implements FindInFilesResultEvent.Handler
