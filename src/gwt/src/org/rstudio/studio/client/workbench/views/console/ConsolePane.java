@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.console;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -19,6 +20,7 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -54,6 +56,12 @@ public class ConsolePane extends WorkbenchPane
       shell_.getDisplay().focus();
    }
 
+   @Override
+   public IsWidget getConsoleInterruptButton()
+   {
+      return consoleInterruptButton_;
+   }
+
    public int getCharacterWidth()
    {
       return shell_.getDisplay().getCharacterWidth();
@@ -67,7 +75,8 @@ public class ConsolePane extends WorkbenchPane
       workingDir_.setStyleName(ThemeStyles.INSTANCE.subtitle());
       toolbar.addLeftWidget(workingDir_);
       toolbar.addLeftWidget(commands_.goToWorkingDir().createToolbarButton());
-      toolbar.addRightWidget(commands_.interruptR().createToolbarButton());
+      consoleInterruptButton_ = commands_.interruptR().createToolbarButton();
+      toolbar.addRightWidget(consoleInterruptButton_);
       return toolbar;
    }
 
@@ -100,4 +109,5 @@ public class ConsolePane extends WorkbenchPane
    private final Commands commands_;
    private Shell shell_;
    private Label workingDir_;
+   private ToolbarButton consoleInterruptButton_;
 }

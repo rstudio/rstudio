@@ -14,11 +14,10 @@ package org.rstudio.studio.client.workbench.views.console;
 
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
-import org.rstudio.core.client.layout.FadeInAnimation;
+import org.rstudio.core.client.layout.DelayFadeInHelper;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -33,6 +32,8 @@ public class ConsoleInterruptButton extends Composite
    public ConsoleInterruptButton(EventBus events,
                                  Commands commands)
    {
+      fadeInHelper_ = new DelayFadeInHelper(this);
+
       // The SimplePanel wrapper is necessary for the toolbar button's "pushed"
       // effect to work.
       SimplePanel panel = new SimplePanel();
@@ -54,9 +55,15 @@ public class ConsoleInterruptButton extends Composite
          public void onBusy(BusyEvent event)
          {
             if (event.isBusy())
-               beginShow();
+            {
+               fadeInHelper_.beginShow();
+               commands_.interruptR().setEnabled(true);
+            }
             else
-               hide();
+            {
+               fadeInHelper_.hide();
+               commands_.interruptR().setEnabled(false);
+            }
          }
       });
 
@@ -72,7 +79,8 @@ public class ConsoleInterruptButton extends Composite
       {
          public void onConsolePrompt(ConsolePromptEvent event)
          {
-            hide();
+            fadeInHelper_.hide();
+            commands_.interruptR().setEnabled(false);
          }
       });
    }
@@ -87,49 +95,8 @@ public class ConsoleInterruptButton extends Composite
       return height_;
    }
 
-   private void beginShow()
-   {
-      hide();
-
-      commands_.interruptR().setEnabled(true);
-      
-      final Object nonce = new Object();
-      nonce_ = nonce;
-      new Timer()
-      {
-         @Override
-         public void run()
-         {
-            if (nonce_ == nonce)
-            {
-               animation_ = new FadeInAnimation(
-                     ConsoleInterruptButton.this, 1, null);
-               animation_.run(250);
-            }
-         }
-      }.schedule(750);
-   }
-
-   private void hide()
-   {
-      stopPending();
-      setVisible(false);
-      commands_.interruptR().setEnabled(false);
-   }
-
-   private void stopPending()
-   {
-      nonce_ = null;
-      if (animation_ != null)
-      {
-         animation_.cancel();
-         animation_ = null;
-      }
-   }
-
-   private Object nonce_;
+   private final DelayFadeInHelper fadeInHelper_;
    private final int width_;
    private final int height_;
-   private FadeInAnimation animation_;
    private final Commands commands_;
 }

@@ -13,11 +13,17 @@
 package org.rstudio.studio.client.workbench.views.console;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.layout.DelayFadeInHelper;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.BusyEvent;
+import org.rstudio.studio.client.workbench.events.BusyHandler;
+import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleHandler;
 
@@ -29,6 +35,7 @@ public class Console
    {
       void bringToFront();
       void focus();
+      IsWidget getConsoleInterruptButton();
    }
    
    @Inject
@@ -45,6 +52,29 @@ public class Console
       });
 
       ((Binder) GWT.create(Binder.class)).bind(commands, this);
+
+      fadeInHelper_ = new DelayFadeInHelper(
+            view_.getConsoleInterruptButton().asWidget());
+      events.addHandler(BusyEvent.TYPE, new BusyHandler()
+      {
+         @Override
+         public void onBusy(BusyEvent event)
+         {
+            if (event.isBusy())
+               fadeInHelper_.beginShow();
+            else
+               fadeInHelper_.hide();
+         }
+      });
+
+      events.addHandler(ConsolePromptEvent.TYPE, new ConsolePromptHandler()
+      {
+         @Override
+         public void onConsolePrompt(ConsolePromptEvent event)
+         {
+            fadeInHelper_.hide();
+         }
+      });
    }
 
    @Handler
@@ -58,6 +88,7 @@ public class Console
    {
       return view_ ;
    }
-   
+
+   private final DelayFadeInHelper fadeInHelper_;
    private final Display view_;
 }
