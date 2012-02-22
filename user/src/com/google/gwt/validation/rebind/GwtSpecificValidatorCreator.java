@@ -195,19 +195,48 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
         || Iterable.class.isAssignableFrom(elementClass)
         || Map.class.isAssignableFrom(elementClass);
   }
+
+  /**
+   * Finds the type that a constraint validator will check.
+   *
+   * <p>This type comes from the first parameter of the isValid() method on
+   * the constraint validator. However, this is a bit tricky because ConstraintValidator
+   * has a parameterized type. When using Java reflection, we will see multiple isValid()
+   * methods, including one that checks java.lang.Object.</p>
+   *
+   * <p>Strategy: for now, assume there are at most two isValid() methods. If there are two,
+   * assume one of them has a type that is assignable from the other. (Most likely,
+   * one of them will be java.lang.Object.)</p>
+   *
+   * @throws IllegalStateException if there isn't any isValid() method or there are more than two.
+   */
   static <T extends Annotation> Class<?> getTypeOfConstraintValidator(
       Class<? extends ConstraintValidator<T, ?>> constraintClass) {
-
+    
+    int candidateCount = 0;
+    Class<?> result = null;
     for (Method method :  constraintClass.getMethods()) {
       if (method.getName().equals("isValid")
           && method.getParameterTypes().length == 2
           && method.getReturnType().isAssignableFrom(Boolean.TYPE)) {
-        return method.getParameterTypes()[0];
+        Class<?> firstArgType = method.getParameterTypes()[0];
+        if (result == null || result.isAssignableFrom(firstArgType)) {
+          result = firstArgType;
+        }
+        candidateCount++;
       }
     }
-    throw new IllegalStateException(
-        "ConstraintValidators must have a isValid method");
+
+    if (candidateCount == 0) {
+      throw new IllegalStateException("ConstraintValidators must have a isValid method");
+    } else if (candidateCount > 2) {
+      throw new IllegalStateException(
+          "ConstraintValidators must have no more than two isValid methods");
+    }
+
+    return result;
   }
+
   // Visible for testing
   static <A extends Annotation> ImmutableSet<Class<? extends ConstraintValidator<A, ?>>> getValidatorForType(
       Class<?> type,
