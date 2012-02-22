@@ -71,6 +71,10 @@ public class ValueTypesTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
+  public String echo(String value) {
+    return value;
+  }
+
   public boolean echo_FALSE(boolean value) {
     if (value != false) {
       throw new RuntimeException();

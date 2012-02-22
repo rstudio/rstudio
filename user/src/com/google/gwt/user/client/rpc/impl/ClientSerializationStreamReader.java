@@ -18,6 +18,8 @@ package com.google.gwt.user.client.rpc.impl;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.ast.JsArrayLiteral;
+import com.google.gwt.dev.js.ast.JsBinaryOperation;
+import com.google.gwt.dev.js.ast.JsBinaryOperator;
 import com.google.gwt.dev.js.ast.JsBooleanLiteral;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsExpression;
@@ -194,7 +196,7 @@ public final class ClientSerializationStreamReader extends
    * This visitor reverses that transform by reducing all concat invocations into a single array 
    * literal. 
    */
-  private static class ConcatEvaler extends JsModVisitor {
+  private static class ArrayConcatEvaler extends JsModVisitor {
 
     @Override
     public boolean visit(JsInvocation invoke, JsContext ctx) {
@@ -202,7 +204,7 @@ public final class ClientSerializationStreamReader extends
       if (!(expr instanceof JsNameRef)) {
         return super.visit(invoke, ctx);
       }
-      
+
       JsNameRef name = (JsNameRef) expr;
       if (!name.getIdent().equals("concat")) {
         return super.visit(invoke, ctx);
@@ -214,12 +216,93 @@ public final class ClientSerializationStreamReader extends
         JsArrayLiteral arg = (JsArrayLiteral) ex;
         headElements.getExpressions().addAll(arg.getExpressions());
       }
-      
+
       ctx.replaceMe(headElements);
       return true;
     }
   }
-  
+
+  /**
+   * The server splits up string literals into 64KB chunks using '+' operators. For example
+   * ['chunk1chunk2'] is broken up into ['chunk1' + 'chunk2'].
+   * <p>
+   * This visitor reverses that transform by reducing such strings into a single string literal.
+   */
+  private static class StringConcatEvaler extends JsModVisitor {
+
+    @Override public boolean visit(JsBinaryOperation x, JsContext ctx) {
+      if (x.getOperator() != JsBinaryOperator.ADD) {
+        return super.visit(x, ctx);
+      }
+
+      // Do a first pass to get the total string length to avoid dynamically resizing the buffer.
+      int stringLength = getStringLength(x);
+      if (stringLength >= 0) {
+        StringBuilder builder = new StringBuilder(stringLength);
+        if (expressionToString(x, builder)) {
+          ctx.replaceMe(new JsStringLiteral(x.getSourceInfo(), builder.toString()));
+        }
+      }
+
+      return true;
+    }
+
+    /**
+     * Transforms an expression into a string. This will recurse into JsBinaryOperations of type
+     * JsBinaryOperator.ADD, which may have other ADD operations or JsStringLiterals as arguments.
+     *
+     * @param expression the expression to evaluate
+     * @param builder a builder that the string will be appended to
+     * @return true if the expression represents a valid string, or false otherwise
+     */
+    private boolean expressionToString(JsExpression expression, StringBuilder builder) {
+      if (expression instanceof JsStringLiteral) {
+        builder.append(((JsStringLiteral) expression).getValue());
+        return true;
+      }
+
+      if (expression instanceof JsBinaryOperation) {
+        JsBinaryOperation operation = (JsBinaryOperation) expression;
+        if (operation.getOperator() != JsBinaryOperator.ADD) {
+          return false;
+        }
+        return expressionToString(operation.getArg1(), builder)
+            && expressionToString(operation.getArg2(), builder);
+      }
+
+      return false;
+    }
+
+    /**
+     * Gets the total string length of the given expression. This will recurse into
+     * JsBinaryOperations of type JsBinaryOperator.ADD, which may have other ADD operations or
+     * JsStringLiterals as arguments.
+     *
+     * @param expression the expression to evaluate
+     * @return the total string length, or -1 if the given expression does not represent a valid
+     *     string
+     */
+    private int getStringLength(JsExpression expression) {
+      if (expression instanceof JsStringLiteral) {
+        return ((JsStringLiteral) expression).getValue().length();
+      }
+
+      if (expression instanceof JsBinaryOperation) {
+        JsBinaryOperation operation = (JsBinaryOperation) expression;
+        if (operation.getOperator() != JsBinaryOperator.ADD) {
+          return -1;
+        }
+
+        int arg1Length = getStringLength(operation.getArg1());
+        int arg2Length = getStringLength(operation.getArg2());
+
+        return (arg1Length >= 0 && arg2Length >= 0) ? (arg1Length + arg2Length) : -1;
+      }
+
+      return -1;
+    }
+  }
+
   public ClientSerializationStreamReader(Serializer serializer) {
     this.serializer = serializer;
   }
@@ -229,8 +312,10 @@ public final class ClientSerializationStreamReader extends
     try {
       List<JsStatement> stmts = JsParser.parse(SourceOrigin.UNKNOWN, JsRootScope.INSTANCE,
           new StringReader(encoded));
-      ConcatEvaler concatEvaler = new ConcatEvaler();
-      concatEvaler.acceptList(stmts);
+      ArrayConcatEvaler arrayConcatEvaler = new ArrayConcatEvaler();
+      arrayConcatEvaler.acceptList(stmts);
+      StringConcatEvaler stringConcatEvaler = new StringConcatEvaler();
+      stringConcatEvaler.acceptList(stmts);
       decoder = new RpcDecoder();
       decoder.acceptList(stmts);
     } catch (Exception e) {

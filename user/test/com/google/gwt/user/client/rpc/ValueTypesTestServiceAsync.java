@@ -44,6 +44,8 @@ public interface ValueTypesTestServiceAsync {
   void echo(SerializableGenericWrapperType<Void> value,
       AsyncCallback<SerializableGenericWrapperType<Void>> callback);
 
+  void echo(String value, AsyncCallback<String> callback);
+
   void echo_FALSE(boolean value, AsyncCallback<Boolean> callback);
 
   void echo_MAX_VALUE(byte value, AsyncCallback<Byte> callback);

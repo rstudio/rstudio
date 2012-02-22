@@ -323,6 +323,14 @@ public final class ServerSerializationStreamWriter extends
 
   private static final char NON_BREAKING_HYPHEN = '\u2011';
 
+  /**
+   * Maximum length of a string node in RPC responses, not including surrounding
+   * quote characters (2 ^ 16 - 1) = 65535.
+   * This exists to work around a Rhino parser bug in the hosted mode client
+   * that limits string node lengths to 64KB.
+   */
+  private static final int MAX_STRING_NODE_LENGTH = 0xFFFF;
+
   static {
     /*
      * NOTE: The JS VM in IE6 & IE7 do not interpret \v correctly. They convert
@@ -370,18 +378,59 @@ public final class ServerSerializationStreamWriter extends
    * than 1.3 that supports unicode strings.
    */
   public static String escapeString(String toEscape) {
-    // make output big enough to escape every character (plus the quotes)
+    return escapeString(toEscape, false);
+  }
+
+  /**
+   * This method takes a string and outputs a JavaScript string literal. The
+   * data is surrounded with quotes, and any contained characters that need to
+   * be escaped are mapped onto their escape sequence.
+   *
+   * This splits strings into 64KB chunks to workaround an issue with the hosted mode client where
+   * the Rhino parser can't handle string nodes larger than 64KB, e.g. {@code "longstring"} is
+   * converted to {@code "long" + "string"}.
+   *
+   * Assumptions: We are targeting a version of JavaScript that that is later
+   * than 1.3 that supports unicode strings.
+   */
+  public static String escapeStringSplitNodes(String toEscape) {
+    return escapeString(toEscape, true);
+  }
+
+  private static String escapeString(String toEscape, boolean splitNodes) {
     char[] input = toEscape.toCharArray();
-    CharVector charVector = new CharVector(input.length * 2 + 2, input.length);
+
+    // Since escaped characters will increase the output size, allocate extra room to start.
+    int capacityIncrement = Math.max(input.length, 16);
+    CharVector charVector = new CharVector(capacityIncrement * 2, capacityIncrement);
+
+    int i = 0;
+    int length = input.length;
 
     charVector.add(JS_QUOTE_CHAR);
 
-    for (int i = 0, n = input.length; i < n; ++i) {
-      char c = input[i];
-      if (needsUnicodeEscape(c)) {
-        unicodeEscape(c, charVector);
-      } else {
-        charVector.add(c);
+    while (i < length) {
+
+      // Add one segment at a time, up to maxNodeLength characters. Note this always leave room
+      // for at least 6 characters at the end (maximum unicode escaped character size).
+      int maxSegmentVectorSize = splitNodes
+          ? (charVector.getSize() + MAX_STRING_NODE_LENGTH - 5)
+          : Integer.MAX_VALUE;
+
+      while (i < length && charVector.getSize() < maxSegmentVectorSize) {
+        char c = input[i++];
+        if (needsUnicodeEscape(c)) {
+          unicodeEscape(c, charVector);
+        } else {
+          charVector.add(c);
+        }
+      }
+
+      // If there's another segment left, insert a '+' operator.
+      if (splitNodes && i < length) {
+        charVector.add(JS_QUOTE_CHAR);
+        charVector.add('+');
+        charVector.add(JS_QUOTE_CHAR);
       }
     }
 
@@ -798,7 +847,7 @@ public final class ServerSerializationStreamWriter extends
   private void writeStringTable(LengthConstrainedArray stream) {
     LengthConstrainedArray tableStream = new LengthConstrainedArray();
     for (String s : getStringTable()) {
-      tableStream.addToken(escapeString(s));
+      tableStream.addToken(escapeStringSplitNodes(s));
     }
     stream.addToken(tableStream.toString());
   }

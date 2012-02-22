@@ -594,7 +594,36 @@ public class ValueTypesTest extends RpcTestBase {
           }
         });
   }
-  
+
+  public void testString() {
+    assertEcho("test");
+  }
+
+  public void testString_empty() {
+    assertEcho("");
+  }
+
+  public void testString_over64KB() {
+    // Test a string over 64KB of a-z characters repeated.
+    String testString = "";
+    int totalChars = 0xFFFF + 0xFF;
+    for (int i = 0; i < totalChars; i++) {
+      testString += (char) ('a' + (i % 26));
+    }
+    assertEcho(testString);
+  }
+
+  public void testString_over64KBWithUnicode() {
+    // Test a string over64KB string that requires unicode escaping.
+    String testString = "";
+    int totalChars = 0xFFFF + 0xFF;
+    for (int i = 0; i < totalChars; i += 2) {
+      testString += '\u2011';
+      testString += (char) 0x08;
+    }
+    assertEcho(testString);
+  }
+
   private void assertEcho(final BigDecimal value) {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
@@ -619,6 +648,21 @@ public class ValueTypesTest extends RpcTestBase {
       }
 
       public void onSuccess(BigInteger result) {
+        assertEquals(value, result);
+        finishTest();
+      }
+    });
+  }
+
+  private void assertEcho(final String value) {
+    ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
+    service.echo(value, new AsyncCallback<String>() {
+      public void onFailure(Throwable caught) {
+        TestSetValidator.rethrowException(caught);
+      }
+
+      public void onSuccess(String result) {
         assertEquals(value, result);
         finishTest();
       }

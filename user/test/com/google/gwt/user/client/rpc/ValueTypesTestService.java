@@ -43,6 +43,8 @@ public interface ValueTypesTestService extends RemoteService {
   SerializableGenericWrapperType<Void> echo(
       SerializableGenericWrapperType<Void> value);
 
+  String echo(String value);
+
   boolean echo_FALSE(boolean value);
 
   byte echo_MAX_VALUE(byte value);

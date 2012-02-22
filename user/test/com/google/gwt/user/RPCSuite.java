@@ -49,6 +49,7 @@ import com.google.gwt.user.client.rpc.UnicodeEscapingTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.ValueTypesTest;
 import com.google.gwt.user.client.rpc.ValueTypesTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.XsrfProtectionTest;
+import com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReaderTest;
 import com.google.gwt.user.rebind.rpc.BlacklistTypeFilterTest;
 import com.google.gwt.user.rebind.rpc.SerializableTypeOracleBuilderTest;
 import com.google.gwt.user.rebind.rpc.TypeHierarchyUtilsTest;
@@ -60,6 +61,7 @@ import com.google.gwt.user.server.rpc.RPCServletUtilsTest;
 import com.google.gwt.user.server.rpc.RPCTest;
 import com.google.gwt.user.server.rpc.SerializationPolicyLoaderTest;
 import com.google.gwt.user.server.rpc.impl.LegacySerializationPolicyTest;
+import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamWriterTest;
 import com.google.gwt.user.server.rpc.impl.StandardSerializationPolicyTest;
 
 import junit.framework.Test;
@@ -98,6 +100,8 @@ public class RPCSuite {
     suite.addTestSuite(Base64Test.class);
     suite.addTestSuite(UtilTest.class);
     suite.addTestSuite(AbstractXsrfProtectedServiceServletTest.class);
+    suite.addTestSuite(ClientSerializationStreamReaderTest.class);
+    suite.addTestSuite(ServerSerializationStreamWriterTest.class);
 
     // GWTTestCases
     suite.addTestSuite(ValueTypesTest.class);
