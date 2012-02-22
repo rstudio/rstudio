@@ -35,6 +35,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
@@ -62,20 +63,23 @@ public class CompilePdfOutputPresenter extends BasePresenter
       HasClickHandlers stopButton();
       HasClickHandlers showLogButton();
       HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
+      boolean isErrorPanelShowing();
    }
 
    @Inject
    public CompilePdfOutputPresenter(Display view,
                                     GlobalDisplay globalDisplay,
                                     CompilePdfServerOperations server,
-                                    FileTypeRegistry fileTypeRegistry)
+                                    FileTypeRegistry fileTypeRegistry,
+                                    Commands commands)
    {
       super(view);
       view_ = view;
       globalDisplay_ = globalDisplay;
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
-      
+      commands_ = commands;
+
       view_.stopButton().addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
@@ -114,9 +118,6 @@ public class CompilePdfOutputPresenter extends BasePresenter
    
    public void initialize(CompilePdfState compilePdfState)
    {
-      // TODO: this should really just ensure that the tab is available
-      // rather than bringing it to the front
-
       view_.ensureVisible(false);
 
       view_.clearAll();
@@ -129,9 +130,16 @@ public class CompilePdfOutputPresenter extends BasePresenter
          view_.showErrors(compilePdfState.getErrors());    
       
       if (!compilePdfState.isRunning())
-         view_.compileCompleted();
+         compileCompleted();
    }
-   
+
+   private void compileCompleted()
+   {
+      view_.compileCompleted();
+      if (!view_.isErrorPanelShowing())
+         commands_.activateConsole().execute();
+   }
+
    public void confirmClose(Command onConfirmed)
    {  
       // wrap the onConfirmed in another command which notifies the server
@@ -167,7 +175,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
    @Override
    public void onCompilePdf(CompilePdfEvent event)
    {
-      view_.ensureVisible(false);
+      view_.ensureVisible(true);
       
       compilePdf(event.getTargetFile(), event.getCompletedAction());
    }
@@ -193,7 +201,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
       }
       else if (event.getStatus() == CompilePdfStatusEvent.COMPLETED)
       {
-         view_.compileCompleted();
+         compileCompleted();
       }
    }
    
@@ -304,4 +312,5 @@ public class CompilePdfOutputPresenter extends BasePresenter
    private final GlobalDisplay globalDisplay_;
    private final CompilePdfServerOperations server_;
    private final FileTypeRegistry fileTypeRegistry_;
+   private final Commands commands_;
 }
