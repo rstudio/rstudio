@@ -13,26 +13,40 @@
 #
 #
 
+# This archive includes the files required to build against Qt 4.8. It was 
+# created by:
+#
+#  1) Installing the Qt 4.8 SDK into the default location in the home folder
+#  2) Removing all folders in the QtSDK folder except for the Desktop folder
+#  3) Creating an archive from ~ using: 
+#
+#     tar czf QtSDK-4.8.0-x86_64.tar.gz QtSDK/
+#
+
+# install dir
+INSTALL_DIR=`pwd`
+
 # define QT archive to download
 SYSTEM_ARCH=`getconf LONG_BIT`
 if [ "$SYSTEM_ARCH" == "64" ]
 then
-  QT_ARCH=64
+  QT_ARCH=x86_64
 else
-  QT_ARCH=32
+  QT_ARCH=x86
 fi
-QT_SDK_BINARY=Qt_SDK_Lin${QT_ARCH}_offline_v1_2_en.run
+QT_SDK_BINARY=QtSDK-4.8.0-${QT_ARCH}.tar.gz
 QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/$QT_SDK_BINARY
-QT_SDK_DIR=$HOME/QtSDK/Desktop/Qt/4.8.0
+QT_SDK_DIR=$INSTALL_DIR/../QtSDK
 
 if ! test -e $QT_SDK_DIR
 then
    # download and install
+   cd ..
    wget $QT_SDK_URL -O $QT_SDK_BINARY
-   chmod +x $QT_SDK_BINARY
-   ./$QT_SDK_BINARY
+   tar xf $QT_SDK_BINARY
    rm $QT_SDK_BINARY
+   cd $INSTALL_DIR
 else
-   echo "Qt 4.8.0 SDK already installed at $QT_SDK_DIR"
+   echo "Qt 4.8.0 SDK already installed"
 fi
 
