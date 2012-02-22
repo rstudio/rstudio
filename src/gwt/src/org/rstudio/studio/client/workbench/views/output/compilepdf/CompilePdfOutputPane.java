@@ -31,6 +31,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
@@ -214,7 +215,13 @@ public class CompilePdfOutputPane extends WorkbenchPane
      
       return toolbar;
    }
-  
+
+   @Override
+   public void ensureVisible(boolean activate)
+   {
+      fireEvent(new EnsureVisibleEvent(activate));
+   }
+
    @Override
    public void compileStarted(String fileName)
    {
@@ -281,6 +288,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
      {
         panel_.setWidget(errorPanel_);
         showOutputButton_.setVisible(true);
+        ensureVisible(true);
      }
      else
      {

@@ -49,7 +49,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          {
             compilePdfTabVisible_ = true;
             managePanels();
-            selectTab(compilePdfTab_);
+            if (event.getActivate())
+               selectTab(compilePdfTab_);
          }
       });
       compilePdfTab.addEnsureHiddenHandler(new EnsureHiddenHandler()
@@ -71,7 +72,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          {
             findResultsTabVisible_ = true;
             managePanels();
-            selectTab(findResultsTab_);
+            if (event.getActivate())
+               selectTab(findResultsTab_);
          }
       });
       findResultsTab.addEnsureHiddenHandler(new EnsureHiddenHandler()

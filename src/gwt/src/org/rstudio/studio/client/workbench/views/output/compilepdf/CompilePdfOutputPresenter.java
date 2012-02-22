@@ -53,6 +53,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
 {
    public interface Display extends WorkbenchView, HasEnsureHiddenHandlers
    {
+      void ensureVisible(boolean activate);
       void compileStarted(String text);
       void showOutput(String output);
       void showErrors(JsArray<CompilePdfError> errors);
@@ -115,9 +116,9 @@ public class CompilePdfOutputPresenter extends BasePresenter
    {
       // TODO: this should really just ensure that the tab is available
       // rather than bringing it to the front
-      
-      view_.bringToFront();
-      
+
+      view_.ensureVisible(false);
+
       view_.clearAll();
       
       compileStarted(compilePdfState.getTargetFile());
@@ -166,7 +167,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
    @Override
    public void onCompilePdf(CompilePdfEvent event)
    {
-      view_.bringToFront();
+      view_.ensureVisible(false);
       
       compilePdf(event.getTargetFile(), event.getCompletedAction());
    }

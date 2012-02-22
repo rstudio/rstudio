@@ -45,7 +45,7 @@ public abstract class DelayLoadTabShim<T extends IsWidget,
          {
             public void onEnsureVisible(EnsureVisibleEvent event)
             {
-               parentTab_.ensureVisible();
+               parentTab_.ensureVisible(event.getActivate());
             }
          });
       }

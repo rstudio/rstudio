@@ -97,11 +97,30 @@ class WorkbenchTabPanel
 
    public void setTabs(ArrayList<WorkbenchTab> tabs)
    {
+      if (areTabsIdentical(tabs))
+         return;
+
       tabPanel_.clear();
       tabs_.clear();
 
       for (WorkbenchTab tab : tabs)
          add(tab);
+   }
+
+   private boolean areTabsIdentical(ArrayList<WorkbenchTab> tabs)
+   {
+      if (tabs_.size() != tabs.size())
+         return false;
+
+      // In case tab panels were removed implicitly (such as Console)
+      if (tabPanel_.getWidgetCount() != tabs.size())
+         return false;
+
+      for (int i = 0; i < tabs.size(); i++)
+         if (tabs_.get(i) != tabs.get(i))
+            return false;
+
+      return true;
    }
 
    private void add(final WorkbenchTab tab)
@@ -131,15 +150,18 @@ class WorkbenchTabPanel
          public void onEnsureVisible(EnsureVisibleEvent event)
          {
             // First ensure that we ourselves are visible
-            fireEvent(new EnsureVisibleEvent());
-
-            tabPanel_.selectTab(widget);
+            fireEvent(new EnsureVisibleEvent(event.getActivate()));
+            if (event.getActivate())
+               tabPanel_.selectTab(widget);
          }
       });
    }
 
    public void selectTab(int tabIndex)
    {
+      if (tabPanel_.getSelectedIndex() == tabIndex)
+         return;
+
       // deal with migrating from n+1 to n tabs, and with -1 values
       int safeIndex = Math.min(Math.max(0, tabIndex), tabs_.size() - 1);
       

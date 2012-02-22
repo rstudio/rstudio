@@ -93,7 +93,7 @@ public class SourceShim extends Composite
                   {
                      public void onEnsureVisible(EnsureVisibleEvent event)
                      {
-                        parent_.fireEvent(new EnsureVisibleEvent());
+                        parent_.fireEvent(new EnsureVisibleEvent(event.getActivate()));
                      }
                   });
          }

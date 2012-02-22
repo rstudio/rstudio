@@ -92,9 +92,9 @@ public abstract class DelayLoadWorkbenchTab<T extends IsWidget>
       onConfirmed.execute();
    }
 
-   public void ensureVisible()
+   public void ensureVisible(boolean activate)
    {
-      handlers_.fireEvent(new EnsureVisibleEvent());
+      handlers_.fireEvent(new EnsureVisibleEvent(activate));
    }
 
    public void ensureHidden()
@@ -138,7 +138,7 @@ public abstract class DelayLoadWorkbenchTab<T extends IsWidget>
       {
          public void onEnsureVisible(EnsureVisibleEvent event)
          {
-            ensureVisible();
+            ensureVisible(event.getActivate());
          }
       });
       pane.addEnsureHiddenHandler(new EnsureHiddenHandler()
