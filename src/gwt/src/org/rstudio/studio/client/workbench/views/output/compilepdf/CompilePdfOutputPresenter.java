@@ -64,6 +64,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
       HasClickHandlers showLogButton();
       HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
       boolean isErrorPanelShowing();
+      boolean isEffectivelyVisible();
    }
 
    @Inject
@@ -136,7 +137,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
    private void compileCompleted()
    {
       view_.compileCompleted();
-      if (!view_.isErrorPanelShowing())
+      if (!view_.isErrorPanelShowing() && switchToConsoleOnSuccessfulCompile_)
          commands_.activateConsole().execute();
    }
 
@@ -175,6 +176,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
    @Override
    public void onCompilePdf(CompilePdfEvent event)
    {
+      switchToConsoleOnSuccessfulCompile_ = !view_.isEffectivelyVisible();
       view_.ensureVisible(true);
       
       compilePdf(event.getTargetFile(), event.getCompletedAction());
@@ -313,4 +315,5 @@ public class CompilePdfOutputPresenter extends BasePresenter
    private final CompilePdfServerOperations server_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final Commands commands_;
+   private boolean switchToConsoleOnSuccessfulCompile_;
 }

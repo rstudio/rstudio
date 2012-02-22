@@ -19,6 +19,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.*;
+import com.google.gwt.user.client.ui.UIObject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Rectangle;
@@ -98,6 +99,17 @@ public class DomUtils
             return null;
       }
       return null;
+   }
+
+   public static boolean isEffectivelyVisible(Element element)
+   {
+      while (element != null)
+      {
+         if (!UIObject.isVisible(element))
+            return false;
+         element = element.getParentElement();
+      }
+      return true;
    }
 
    private static final Pattern NEWLINE = Pattern.create("\\n");

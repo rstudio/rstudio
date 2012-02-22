@@ -31,6 +31,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -300,6 +301,12 @@ public class CompilePdfOutputPane extends WorkbenchPane
    public boolean isErrorPanelShowing()
    {
       return errorPanel_.isAttached();
+   }
+
+   @Override
+   public boolean isEffectivelyVisible()
+   {
+      return DomUtils.isEffectivelyVisible(getElement());
    }
 
    @Override
