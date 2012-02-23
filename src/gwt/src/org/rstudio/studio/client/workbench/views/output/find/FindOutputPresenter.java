@@ -16,6 +16,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
+import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.command.Handler;
@@ -48,6 +49,7 @@ public class FindOutputPresenter extends BasePresenter
       void clearMatches();
       void ensureVisible();
 
+      HasText getSearchLabel();
       HasClickHandlers getClearButton();
    }
 
@@ -111,7 +113,7 @@ public class FindOutputPresenter extends BasePresenter
       globalDisplay_.promptForText("Find", "Find:", "", new OperationWithInput<String>()
       {
          @Override
-         public void execute(String input)
+         public void execute(final String input)
          {
             // TODO: Show indication that search is in progress
             // TODO: Provide way to cancel a running search
@@ -129,6 +131,8 @@ public class FindOutputPresenter extends BasePresenter
                                  public void onResponseReceived(String handle)
                                  {
                                     currentFindHandle_ = handle;
+                                    view_.getSearchLabel().setText(
+                                          "Find results: " + input);
 
                                     super.onResponseReceived(handle);
                                     // TODO: add tab to view using handle ID
@@ -149,6 +153,7 @@ public class FindOutputPresenter extends BasePresenter
          currentFindHandle_ = null;
       }
       view_.clearMatches();
+      view_.getSearchLabel().setText("");
    }
 
    private String currentFindHandle_;

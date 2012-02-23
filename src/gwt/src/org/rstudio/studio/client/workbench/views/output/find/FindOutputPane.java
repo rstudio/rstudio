@@ -20,9 +20,7 @@ import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.ui.LayoutPanel;
-import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
@@ -55,12 +53,16 @@ public class FindOutputPane extends WorkbenchPane
    {
       Toolbar toolbar = new Toolbar();
 
+      searchLabel_ = new Label();
+      toolbar.addLeftWidget(searchLabel_);
+
       clearResults_ = new ToolbarButton(
             "Clear",
             commands_.clearWorkspace().getImageResource(),
             (ClickHandler) null);
 
-      toolbar.addLeftWidget(clearResults_);
+      toolbar.addRightWidget(clearResults_);
+
 
       return toolbar;
    }
@@ -137,6 +139,12 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
+   public HasText getSearchLabel()
+   {
+      return searchLabel_;
+   }
+
+   @Override
    public HasClickHandlers getClearButton()
    {
       return clearResults_;
@@ -158,4 +166,5 @@ public class FindOutputPane extends WorkbenchPane
    private FindResultContext context_;
    private final Commands commands_;
    private ToolbarButton clearResults_;
+   private Label searchLabel_;
 }
