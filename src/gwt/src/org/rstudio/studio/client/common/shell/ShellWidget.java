@@ -177,6 +177,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
       scrollToBottomCommand_.nudge();
    }
 
+   public void scrollToBottom()
+   {
+      scrollPanel_.scrollToBottom();
+   }
+
    private boolean initialized_ = false;
    @Override
    protected void onLoad()

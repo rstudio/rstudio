@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.output.compilepdf;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -65,6 +66,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
       HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
       boolean isErrorPanelShowing();
       boolean isEffectivelyVisible();
+      void scrollToBottom();
    }
 
    @Inject
@@ -206,7 +208,21 @@ public class CompilePdfOutputPresenter extends BasePresenter
          compileCompleted();
       }
    }
-   
+
+   @Override
+   public void onSelected()
+   {
+      super.onSelected();
+      Scheduler.get().scheduleDeferred(new Command()
+      {
+         @Override
+         public void execute()
+         {
+            view_.scrollToBottom();
+         }
+      });
+   }
+
    private void compileStarted(String targetFile)
    {
       targetFile_ = FileSystemItem.createFile(targetFile);
