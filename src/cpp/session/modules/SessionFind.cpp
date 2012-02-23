@@ -136,6 +136,8 @@ namespace {
 
       void onExit(int exitCode)
       {
+         module_context::enqueClientEvent(
+               ClientEvent(client_events::kFindOperationEnded, handle()));
          if (!tempFile_.empty())
             tempFile_.removeIfExists();
       }

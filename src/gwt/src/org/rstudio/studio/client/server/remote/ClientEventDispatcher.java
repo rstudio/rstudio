@@ -51,6 +51,7 @@ import org.rstudio.studio.client.workbench.views.output.compilepdf.events.Compil
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfOutputEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfStatusEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfError;
+import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
@@ -331,6 +332,11 @@ public class ClientEventDispatcher
             FindResultEvent.Data data = event.getData();
             eventBus_.fireEvent(new FindResultEvent(
                   data.getHandle(), data.getResults().toArrayList()));
+         }
+         else if (type.equals(ClientEvent.FindOperationEnded))
+         {
+            String data = event.getData();
+            eventBus_.fireEvent(new FindOperationEndedEvent(data));
          }
          else if (type.equals(ClientEvent.ListChanged))
          {

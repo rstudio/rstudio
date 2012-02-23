@@ -78,7 +78,8 @@ const int kCompilePdfOutputEvent = 51;
 const int kCompilePdfErrorsEvent = 52;
 const int kCompilePdfStatusEvent = 53;
 const int kFindResult = 54;
-}   
+const int kFindOperationEnded = 55;
+}
 
 void ClientEvent::init(int type, const json::Value& data)
 {
@@ -199,6 +200,8 @@ std::string ClientEvent::typeName() const
          return "compile_pdf_status_event";
       case client_events::kFindResult:
          return "find_result";
+      case client_events::kFindOperationEnded:
+         return "find_operation_ended";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              boost::lexical_cast<std::string>(type_));

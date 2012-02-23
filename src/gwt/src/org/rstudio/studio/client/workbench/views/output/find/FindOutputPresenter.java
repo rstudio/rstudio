@@ -34,6 +34,7 @@ import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.events.FindInFilesResultEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
@@ -50,7 +51,8 @@ public class FindOutputPresenter extends BasePresenter
       void ensureVisible();
 
       HasText getSearchLabel();
-      HasClickHandlers getClearButton();
+      HasClickHandlers getStopSearchButton();
+      void setStopSearchButtonVisible(boolean visible);
    }
 
    @Inject
@@ -80,12 +82,12 @@ public class FindOutputPresenter extends BasePresenter
          }
       });
 
-      view_.getClearButton().addClickHandler(new ClickHandler()
+      view_.getStopSearchButton().addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
          {
-            stopAndClear();
+            stop();
          }
       });
 
@@ -97,6 +99,19 @@ public class FindOutputPresenter extends BasePresenter
             if (!event.getHandle().equals(currentFindHandle_))
                return;
             view_.addMatches(event.getResults());
+         }
+      });
+
+      events.addHandler(FindOperationEndedEvent.TYPE, new FindOperationEndedEvent.Handler()
+      {
+         @Override
+         public void onFindOperationEnded(FindOperationEndedEvent event)
+         {
+            if (event.getHandle().equals(currentFindHandle_))
+            {
+               currentFindHandle_ = null;
+               view_.setStopSearchButtonVisible(false);
+            }
          }
       });
    }
@@ -133,6 +148,7 @@ public class FindOutputPresenter extends BasePresenter
                                     currentFindHandle_ = handle;
                                     view_.getSearchLabel().setText(
                                           "Find results: " + input);
+                                    view_.setStopSearchButtonVisible(true);
 
                                     super.onResponseReceived(handle);
                                     // TODO: add tab to view using handle ID
@@ -146,14 +162,20 @@ public class FindOutputPresenter extends BasePresenter
 
    private void stopAndClear()
    {
+      stop();
+      view_.clearMatches();
+      view_.getSearchLabel().setText("");
+   }
+
+   private void stop()
+   {
       if (currentFindHandle_ != null)
       {
          server_.stopFind(currentFindHandle_,
                           new VoidServerRequestCallback());
          currentFindHandle_ = null;
       }
-      view_.clearMatches();
-      view_.getSearchLabel().setText("");
+      view_.setStopSearchButtonVisible(false);
    }
 
    private String currentFindHandle_;

@@ -56,12 +56,12 @@ public class FindOutputPane extends WorkbenchPane
       searchLabel_ = new Label();
       toolbar.addLeftWidget(searchLabel_);
 
-      clearResults_ = new ToolbarButton(
-            "Clear",
-            commands_.clearWorkspace().getImageResource(),
+      stopSearch_ = new ToolbarButton(
+            commands_.interruptR().getImageResource(),
             (ClickHandler) null);
+      stopSearch_.setVisible(false);
 
-      toolbar.addRightWidget(clearResults_);
+      toolbar.addRightWidget(stopSearch_);
 
 
       return toolbar;
@@ -145,9 +145,15 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
-   public HasClickHandlers getClearButton()
+   public HasClickHandlers getStopSearchButton()
    {
-      return clearResults_;
+      return stopSearch_;
+   }
+
+   @Override
+   public void setStopSearchButtonVisible(boolean visible)
+   {
+      stopSearch_.setVisible(visible);
    }
 
    @Override
@@ -165,6 +171,6 @@ public class FindOutputPane extends WorkbenchPane
    private FastSelectTable<FindResult, CodeNavigationTarget, Object> table_;
    private FindResultContext context_;
    private final Commands commands_;
-   private ToolbarButton clearResults_;
    private Label searchLabel_;
+   private ToolbarButton stopSearch_;
 }
