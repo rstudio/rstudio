@@ -17,6 +17,7 @@ package com.google.gwt.aria.client;
 import com.google.gwt.aria.client.CommonAttributeTypes.IdReferenceList;
 import com.google.gwt.aria.client.PropertyTokenTypes.DropeffectToken;
 import com.google.gwt.aria.client.PropertyTokenTypes.DropeffectTokenList;
+import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -65,15 +66,22 @@ public class RoleTest extends GWTTestCase {
   }
   
   public void testSetGetRemoveExtraAttributes() {
+    // Older versions of IE do not support tabIndex on divs, so use an anchor
+    // element instead.
+    AnchorElement anchor = Document.get().createAnchorElement();
+    Document.get().getBody().appendChild(anchor);
+
     // Some versions of IE default to "0" instead of ""
     assertTrue("".equals(regionRole.getTabindexExtraAttribute(div)) 
         || "0".equals(regionRole.getTabindexExtraAttribute(div)));
-    regionRole.setTabindexExtraAttribute(div, 1);
-    assertEquals("1", regionRole.getTabindexExtraAttribute(div));
-    regionRole.removeTabindexExtraAttribute(div);
+    regionRole.setTabindexExtraAttribute(anchor, 1);
+    assertEquals("1", regionRole.getTabindexExtraAttribute(anchor));
+    regionRole.removeTabindexExtraAttribute(anchor);
     // Some versions of IE default to "0" instead of ""
     assertTrue("".equals(regionRole.getTabindexExtraAttribute(div)) 
         || "0".equals(regionRole.getTabindexExtraAttribute(div)));
+
+    anchor.removeFromParent();
   }
   
   @Override

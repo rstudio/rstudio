@@ -23,7 +23,7 @@ package com.google.gwt.aria.client;
  */
 public final class ExtraAttribute<T> extends Attribute<T> {
   public static final ExtraAttribute<Integer> TABINDEX =
-      new ExtraAttribute<Integer>("tabindex", "");
+      new ExtraAttribute<Integer>("tabIndex", "");
 
 
   public ExtraAttribute(String name) {
