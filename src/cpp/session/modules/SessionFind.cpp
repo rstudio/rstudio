@@ -34,119 +34,119 @@ namespace find {
 
 namespace {
 
-   class GrepOperation : public boost::enable_shared_from_this<GrepOperation>
+class GrepOperation : public boost::enable_shared_from_this<GrepOperation>
+{
+public:
+   static boost::shared_ptr<GrepOperation> create(const FilePath& tempFile)
    {
-   public:
-      static boost::shared_ptr<GrepOperation> create(const FilePath& tempFile)
-      {
-         return boost::shared_ptr<GrepOperation>(new GrepOperation(tempFile));
-      }
+      return boost::shared_ptr<GrepOperation>(new GrepOperation(tempFile));
+   }
 
-   private:
-      GrepOperation(const FilePath& tempFile)
-         : stopped_(false), tempFile_(tempFile)
-      {
-         handle_ = core::system::generateUuid(false);
-      }
+private:
+   GrepOperation(const FilePath& tempFile)
+      : stopped_(false), tempFile_(tempFile)
+   {
+      handle_ = core::system::generateUuid(false);
+   }
 
-   public:
-      std::string handle() const
-      {
-         return handle_;
-      }
+public:
+   std::string handle() const
+   {
+      return handle_;
+   }
 
-      core::system::ProcessCallbacks createProcessCallbacks()
-      {
-         core::system::ProcessCallbacks callbacks;
-         callbacks.onContinue = boost::bind(&GrepOperation::onContinue,
-                                            shared_from_this(),
-                                            _1);
-         callbacks.onStdout = boost::bind(&GrepOperation::onStdout,
-                                          shared_from_this(),
-                                          _1, _2);
-         callbacks.onStderr = boost::bind(&GrepOperation::onStderr,
-                                          shared_from_this(),
-                                          _1, _2);
-         callbacks.onExit = boost::bind(&GrepOperation::onExit,
-                                        shared_from_this(),
-                                        _1);
-         return callbacks;
-      }
+   core::system::ProcessCallbacks createProcessCallbacks()
+   {
+      core::system::ProcessCallbacks callbacks;
+      callbacks.onContinue = boost::bind(&GrepOperation::onContinue,
+                                         shared_from_this(),
+                                         _1);
+      callbacks.onStdout = boost::bind(&GrepOperation::onStdout,
+                                       shared_from_this(),
+                                       _1, _2);
+      callbacks.onStderr = boost::bind(&GrepOperation::onStderr,
+                                       shared_from_this(),
+                                       _1, _2);
+      callbacks.onExit = boost::bind(&GrepOperation::onExit,
+                                     shared_from_this(),
+                                     _1);
+      return callbacks;
+   }
 
-      void stop()
-      {
-         stopped_ = true;
-      }
+   void stop()
+   {
+      stopped_ = true;
+   }
 
-   private:
-      bool onContinue(const core::system::ProcessOperations& ops) const
-      {
-         return !stopped_;
-      }
+private:
+   bool onContinue(const core::system::ProcessOperations& ops) const
+   {
+      return !stopped_;
+   }
 
-      void onStdout(const core::system::ProcessOperations& ops, const std::string& data)
-      {
-         json::Array files;
-         json::Array lineNums;
-         json::Array contents;
+   void onStdout(const core::system::ProcessOperations& ops, const std::string& data)
+   {
+      json::Array files;
+      json::Array lineNums;
+      json::Array contents;
 
-         stdOutBuf_.append(data);
-         size_t nextLineStart = 0;
-         size_t pos = -1;
-         while (std::string::npos != (pos = stdOutBuf_.find('\n', pos + 1)))
+      stdOutBuf_.append(data);
+      size_t nextLineStart = 0;
+      size_t pos = -1;
+      while (std::string::npos != (pos = stdOutBuf_.find('\n', pos + 1)))
+      {
+         std::string line = stdOutBuf_.substr(nextLineStart, pos - nextLineStart);
+         nextLineStart = pos + 1;
+
+         boost::smatch match;
+         if (boost::regex_match(line, match, boost::regex("^([^:]+):(\\d+):(.*)")))
          {
-            std::string line = stdOutBuf_.substr(nextLineStart, pos - nextLineStart);
-            nextLineStart = pos + 1;
+            std::string file = match[1];
+            int lineNum = safe_convert::stringTo<int>(std::string(match[2]), -1);
+            std::string lineContents = match[3];
+            boost::algorithm::trim(lineContents);
 
-            boost::smatch match;
-            if (boost::regex_match(line, match, boost::regex("^([^:]+):(\\d+):(.*)")))
-            {
-               std::string file = match[1];
-               int lineNum = safe_convert::stringTo<int>(std::string(match[2]), -1);
-               std::string lineContents = match[3];
-               boost::algorithm::trim(lineContents);
-
-               files.push_back(file);
-               lineNums.push_back(lineNum);
-               contents.push_back(lineContents);
-            }
+            files.push_back(file);
+            lineNums.push_back(lineNum);
+            contents.push_back(lineContents);
          }
-
-         if (nextLineStart)
-         {
-            stdOutBuf_.erase(0, nextLineStart);
-         }
-
-         json::Object result;
-         result["handle"] = handle();
-         json::Object results;
-         results["file"] = files;
-         results["line"] = lineNums;
-         results["lineValue"] = contents;
-         result["results"] = results;
-
-         module_context::enqueClientEvent(
-               ClientEvent(client_events::kFindResult, result));
       }
 
-      void onStderr(const core::system::ProcessOperations& ops, const std::string& data)
+      if (nextLineStart)
       {
-         LOG_ERROR_MESSAGE("grep: " + data);
+         stdOutBuf_.erase(0, nextLineStart);
       }
 
-      void onExit(int exitCode)
-      {
-         module_context::enqueClientEvent(
-               ClientEvent(client_events::kFindOperationEnded, handle()));
-         if (!tempFile_.empty())
-            tempFile_.removeIfExists();
-      }
+      json::Object result;
+      result["handle"] = handle();
+      json::Object results;
+      results["file"] = files;
+      results["line"] = lineNums;
+      results["lineValue"] = contents;
+      result["results"] = results;
 
-      bool stopped_;
-      FilePath tempFile_;
-      std::string stdOutBuf_;
-      std::string handle_;
-   };
+      module_context::enqueClientEvent(
+            ClientEvent(client_events::kFindResult, result));
+   }
+
+   void onStderr(const core::system::ProcessOperations& ops, const std::string& data)
+   {
+      LOG_ERROR_MESSAGE("grep: " + data);
+   }
+
+   void onExit(int exitCode)
+   {
+      module_context::enqueClientEvent(
+            ClientEvent(client_events::kFindOperationEnded, handle()));
+      if (!tempFile_.empty())
+         tempFile_.removeIfExists();
+   }
+
+   bool stopped_;
+   FilePath tempFile_;
+   std::string stdOutBuf_;
+   std::string handle_;
+};
 
 } // namespace
 
