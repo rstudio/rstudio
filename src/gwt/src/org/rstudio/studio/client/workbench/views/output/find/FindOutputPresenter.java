@@ -19,7 +19,6 @@ import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
