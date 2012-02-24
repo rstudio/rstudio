@@ -417,36 +417,35 @@ public class XMLElement {
   /**
    * Consumes all child text nodes, and asserts that this element held only
    * text. Trailing and leading whitespace is trimmed, and escaped for use as a
-   * string literal. Notice that HTML entities in the text are also escaped--is
-   * this a source of errors?
+   * string literal. Notice that HTML entities in the text are also escaped
    * <p>
    * This call requires an interpreter to make sense of any special children.
    * The odds are you want to use
    * {@link com.google.gwt.uibinder.elementparsers.TextInterpreter}
-   * 
+   *
    * @throws UnableToCompleteException If any elements present are not consumed
    *           by the interpreter
    */
   public String consumeInnerTextEscapedAsHtmlStringLiteral(Interpreter<String> interpreter)
       throws UnableToCompleteException {
-    if (interpreter == null) {
-      throw new NullPointerException("interpreter must not be null");
-    }
-    StringBuffer buf = new StringBuffer();
+    return consumeInnerTextEscapedAsHtmlStringLiteral(interpreter, true);
+  }
 
-    GetEscapedInnerTextVisitor.getEscapedInnerText(elem, buf, interpreter, provider);
-
-    // Make sure there are no children left but empty husks
-    for (XMLElement child : consumeChildElementsNoEmptyCheck()) {
-      if (child.hasChildNodes() || child.getAttributeCount() > 0) {
-        logger.die(this, "Illegal child %s in a text-only context. "
-            + "Perhaps you are trying to use unescaped HTML "
-            + "where text is required, as in a HasText widget?", child);
-      }
-    }
-
-    clearChildren(elem);
-    return buf.toString().trim();
+  /**
+   * Consumes all child text nodes, and asserts that this element held only
+   * text. Trailing and leading whitespace is trimmed, and escaped for use as a
+   * string literal. Notice that HTML entities in the text are NOT escaped
+   * <p>
+   * This call requires an interpreter to make sense of any special children.
+   * The odds are you want to use
+   * {@link com.google.gwt.uibinder.elementparsers.TextInterpreter}
+   *
+   * @throws UnableToCompleteException If any elements present are not consumed
+   *           by the interpreter
+   */
+  public String consumeInnerTextEscapedAsStringLiteral(Interpreter<String> interpreter)
+      throws UnableToCompleteException {
+    return consumeInnerTextEscapedAsHtmlStringLiteral(interpreter, false);
   }
 
   /**
@@ -817,6 +816,45 @@ public class XMLElement {
     } catch (UnableToCompleteException e) {
       throw new RuntimeException("Impossible exception", e);
     }
+  }
+
+  /**
+   * Consumes all child text nodes, and asserts that this element held only
+   * text. Trailing and leading whitespace is trimmed, and escaped for use as a
+   * string literal. If escapeHtmlEntities is true, HTML Entities are also escaped.
+   * <p>
+   * This call requires an interpreter to make sense of any special children.
+   * The odds are you want to use
+   * {@link com.google.gwt.uibinder.elementparsers.TextInterpreter}
+   *
+   * @throws UnableToCompleteException If any elements present are not consumed
+   *           by the interpreter
+   */
+  private String consumeInnerTextEscapedAsHtmlStringLiteral(Interpreter<String> interpreter,
+                                                           boolean escapeHtmlEntities)
+      throws UnableToCompleteException {
+    if (interpreter == null) {
+      throw new NullPointerException("interpreter must not be null");
+    }
+    StringBuffer buf = new StringBuffer();
+
+    if (escapeHtmlEntities) {
+      GetInnerTextVisitor.getHtmlEscapedInnerText(elem, buf, interpreter, provider);
+    } else {
+      GetInnerTextVisitor.getEscapedInnerText(elem, buf, interpreter, provider);
+    }
+
+    // Make sure there are no children left but empty husks
+    for (XMLElement child : consumeChildElementsNoEmptyCheck()) {
+      if (child.hasChildNodes() || child.getAttributeCount() > 0) {
+        logger.die(this, "Illegal child %s in a text-only context. "
+            + "Perhaps you are trying to use unescaped HTML "
+            + "where text is required, as in a HasText widget?", child);
+      }
+    }
+
+    clearChildren(elem);
+    return buf.toString().trim();
   }
 
   private void failRequired(String name) throws UnableToCompleteException {

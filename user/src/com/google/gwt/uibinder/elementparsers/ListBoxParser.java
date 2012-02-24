@@ -36,7 +36,8 @@ public class ListBoxParser implements ElementParser {
         writer.die(elem, "Invalid ListBox child element: " + tagName);
       }
       String value = child.consumeStringAttribute("value");
-      String innerText = child.consumeInnerTextEscapedAsHtmlStringLiteral(new TextInterpreter(writer));
+      String innerText = child.consumeInnerTextEscapedAsStringLiteral(
+            new TextInterpreter(writer));
       if (value != null) {
         writer.addStatement("%s.addItem(\"%s\", %s);", fieldName, innerText, value);
       } else {
