@@ -77,6 +77,7 @@ extern const int kCompilePdfOutputEvent;
 extern const int kCompilePdfErrorsEvent;
 extern const int kCompilePdfStatusEvent;
 extern const int kFindResult;
+extern const int kFindOperationEnded;
 }
    
 class ClientEvent

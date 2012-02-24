@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.find.model;
+package org.rstudio.studio.client.workbench.views.output.find.model;
 
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.server.*;
@@ -27,4 +27,6 @@ public interface FindInFilesServerOperations
 
    void stopFind(String findOperationHandle,
                  ServerRequestCallback<Void> requestCallback);
+
+   void clearFindResults(ServerRequestCallback<Void> requestCallback);
 }

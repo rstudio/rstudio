@@ -291,7 +291,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
          setSelected(selectedRows_.get(0), false);
    }
 
-   public void addItems(ArrayList<TItemInput> items, boolean top)
+   public void addItems(Iterable<TItemInput> items, boolean top)
    {
       TableSectionElement tbody = Document.get().createTBodyElement();
       for (TItemInput item : items)

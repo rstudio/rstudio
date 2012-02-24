@@ -10,12 +10,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.find;
+package org.rstudio.studio.client.workbench.views.output.find;
 
 import com.google.gwt.view.client.AbstractDataProvider;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
-import org.rstudio.studio.client.workbench.views.find.model.FindResult;
+import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
 
 import java.util.HashMap;
 

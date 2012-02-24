@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.output.compilepdf;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -20,10 +21,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.CommandUtil;
-import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
-import org.rstudio.core.client.events.HasSelectionCommitHandlers;
-import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -65,6 +63,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
       HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
       boolean isErrorPanelShowing();
       boolean isEffectivelyVisible();
+      void scrollToBottom();
    }
 
    @Inject
@@ -206,7 +205,21 @@ public class CompilePdfOutputPresenter extends BasePresenter
          compileCompleted();
       }
    }
-   
+
+   @Override
+   public void onSelected()
+   {
+      super.onSelected();
+      Scheduler.get().scheduleDeferred(new Command()
+      {
+         @Override
+         public void execute()
+         {
+            view_.scrollToBottom();
+         }
+      });
+   }
+
    private void compileStarted(String targetFile)
    {
       targetFile_ = FileSystemItem.createFile(targetFile);

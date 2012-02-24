@@ -310,6 +310,12 @@ public class CompilePdfOutputPane extends WorkbenchPane
    }
 
    @Override
+   public void scrollToBottom()
+   {
+      outputWidget_.scrollToBottom();
+   }
+
+   @Override
    public void compileCompleted()
    {
       stopButton_.setVisible(false);

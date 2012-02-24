@@ -23,6 +23,7 @@ import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfState;
+import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 public class SessionInfo extends JavaScriptObject
@@ -57,6 +58,10 @@ public class SessionInfo extends JavaScriptObject
    
    public final native CompilePdfState getCompilePdfState() /*-{
       return this.compile_pdf_state;
+   }-*/;
+
+   public final native FindInFilesState getFindInFilesState() /*-{
+      return this.find_in_files_state;
    }-*/;
 
    public final native String getLogDir() /*-{

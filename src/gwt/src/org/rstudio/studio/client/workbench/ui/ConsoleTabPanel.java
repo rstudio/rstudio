@@ -21,6 +21,7 @@ import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
+import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 
 import java.util.ArrayList;
 
@@ -29,7 +30,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    public ConsoleTabPanel(final PrimaryWindowFrame owner,
                           ConsolePane consolePane,
                           WorkbenchTab compilePdfTab,
-                          WorkbenchTab findResultsTab,
+                          FindOutputTab findResultsTab,
                           EventBus events,
                           ConsoleInterruptButton consoleInterrupt,
                           ToolbarButton goToWorkingDirButton)
@@ -81,6 +82,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          @Override
          public void onEnsureHidden(EnsureHiddenEvent event)
          {
+            findResultsTab_.onDismiss();
             findResultsTabVisible_ = false;
             managePanels();
             if (!consoleOnly_)
@@ -150,7 +152,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private final ConsolePane consolePane_;
    private final WorkbenchTab compilePdfTab_;
    private boolean compilePdfTabVisible_;
-   private final WorkbenchTab findResultsTab_;
+   private final FindOutputTab findResultsTab_;
    private final ConsoleInterruptButton consoleInterrupt_;
    private final ToolbarButton goToWorkingDirButton_;
    private boolean findResultsTabVisible_;
