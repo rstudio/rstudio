@@ -16,12 +16,14 @@ import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
@@ -33,9 +35,11 @@ import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.spelling.view.SpellingSandboxDialog;
 import org.rstudio.studio.client.common.vcs.AskPassManager;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
+import org.rstudio.studio.client.pdfviewer.model.PDFViewerParams;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -73,7 +77,8 @@ public class Workbench implements BusyHandler,
                     ConsoleDispatcher consoleDispatcher,
                     ChooseFile chooseFile,   // require to force gin to create
                     AskPassManager askPass,  // required to force gin to create
-                    Provider<SpellingSandboxDialog> pSpellingSandboxDialog)
+                    Provider<SpellingSandboxDialog> pSpellingSandboxDialog,
+                    SatelliteManager satelliteManager)
   {
       view_ = view;
       workbenchContext_ = workbenchContext;
@@ -87,6 +92,7 @@ public class Workbench implements BusyHandler,
       fileDialogs_ = fileDialogs;
       consoleDispatcher_ = consoleDispatcher;
       pSpellingSandboxDialog_ = pSpellingSandboxDialog;
+      satelliteManager_ = satelliteManager;
       
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
       
@@ -351,6 +357,29 @@ public class Workbench implements BusyHandler,
       pSpellingSandboxDialog_.get().showModal();
    }
    
+   @Handler
+   public void onShowPdfViewer()
+   {
+      globalDisplay_.promptForText(
+         "PDF Viewer", 
+         "URL to View", 
+         "", 
+         new OperationWithInput<String>() {
+            @Override
+            public void execute(String input)
+            {
+               // setup params
+               PDFViewerParams params = PDFViewerParams.create(input);
+                            
+               // open the window 
+               satelliteManager_.openSatellite("pdf_viewer",     
+                                               params,
+                                               new Size(600,900)); 
+               
+            }
+      });
+   }
+   
    private final Server server_;
    private final EventBus eventBus_;
    private final Session session_;
@@ -362,6 +391,7 @@ public class Workbench implements BusyHandler,
    private final FileDialogs fileDialogs_;
    private final WorkbenchContext workbenchContext_;
    private final ConsoleDispatcher consoleDispatcher_;
+   private final SatelliteManager satelliteManager_;
    private final Provider<SpellingSandboxDialog> pSpellingSandboxDialog_;
    private final TimeBufferedCommand metricsChangedCommand_;
    private WorkbenchMetrics lastWorkbenchMetrics_;

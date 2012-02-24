@@ -41,6 +41,10 @@ import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.common.vcs.ignore.Ignore;
 import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
+import org.rstudio.studio.client.pdfviewer.PDFViewerApplicationView;
+import org.rstudio.studio.client.pdfviewer.PDFViewerApplicationWindow;
+import org.rstudio.studio.client.pdfviewer.PDFViewerPanel;
+import org.rstudio.studio.client.pdfviewer.PDFViewerPresenter;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.server.Server;
@@ -163,6 +167,8 @@ public class RStudioGinModule extends AbstractGinModule
             .in(Singleton.class);
       bind(ReviewPresenter.class).to(ReviewPresenterImpl.class);
       
+      bind(PDFViewerApplicationView.class).to(PDFViewerApplicationWindow.class);
+      
       bind(Server.class).to(RemoteServer.class) ;
       bind(WorkbenchServerOperations.class).to(RemoteServer.class) ;
 
@@ -205,6 +211,8 @@ public class RStudioGinModule extends AbstractGinModule
       bind(LineTablePresenter.Display.class).to(LineTableView.class);
       bind(HistoryPresenter.DisplayBuilder.class).to(
                                                     HistoryPanel.Builder.class);
+      
+      bind(PDFViewerPresenter.Display.class).to(PDFViewerPanel.class);
       
       bind(GlobalDisplay.class)
             .to(DefaultGlobalDisplay.class)

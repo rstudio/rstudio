@@ -1,5 +1,5 @@
 /*
- * VCSApplicationView.java
+ * PDFViewerApplicationView.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,10 +10,10 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.vcs;
+package org.rstudio.studio.client.pdfviewer;
 
 import org.rstudio.studio.client.common.satellite.SatelliteApplicationView;
 
-public interface VCSApplicationView extends SatelliteApplicationView
+public interface PDFViewerApplicationView extends SatelliteApplicationView
 {
 }

@@ -214,6 +214,7 @@ public abstract class
 
    public abstract AppCommand showWarningBar();
    public abstract AppCommand spellingSandbox();
+   public abstract AppCommand showPdfViewer();
 
    // Clipboard placeholders
    public abstract AppCommand undoDummy();

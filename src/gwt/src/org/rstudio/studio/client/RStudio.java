@@ -145,6 +145,12 @@ public class RStudio implements EntryPoint
                            RootLayoutPanel.get(),
                            dismissProgressAnimation);
                   }
+                  else if ("pdf_viewer".equals(view))
+                  {
+                     RStudioGinjector.INSTANCE.getPDFViewerApplication().go(
+                           RootLayoutPanel.get(), 
+                           dismissProgressAnimation);
+                  }
                   else
                   {
                      RStudioGinjector.INSTANCE.getApplication().go(

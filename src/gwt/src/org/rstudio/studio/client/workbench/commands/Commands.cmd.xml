@@ -333,6 +333,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="vcsFileDiff" value="Cmd+Shift+D" />
       <shortcut refid="vcsCommit" value="Cmd+Shift+T" />
       <shortcut refid="showShellDialog" value="Cmd+Shift+H" />
+      <shortcut refid="showPdfViewer" value="Cmd+Shift+F6" />
    </shortcuts>
 
    <!--
@@ -844,6 +845,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Request Log"/>
    <cmd id="spellingSandbox"
         menuLabel="Spelling Sandbox..."/>
+   <cmd id="showPdfViewer"
+        menuLabel="PDF Viewer (test)..."/>
    <cmd id="logFocusedElement"
         menuLabel="Log focused element"/>
    <cmd id="debugForceTopsToZero"

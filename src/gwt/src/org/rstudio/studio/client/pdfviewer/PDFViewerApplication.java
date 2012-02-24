@@ -1,5 +1,5 @@
 /*
- * VCSApplication.java
+ * PDFViewerApplication.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,12 +10,11 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.vcs;
+package org.rstudio.studio.client.pdfviewer;
 
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteApplication;
-import org.rstudio.studio.client.common.vcs.AskPassManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.inject.Inject;
@@ -23,15 +22,15 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
-public class VCSApplication extends SatelliteApplication
+public class PDFViewerApplication extends SatelliteApplication
 {
    @Inject
-   public VCSApplication(VCSApplicationView view,
-                         Satellite satellite,
-                         Provider<AceThemes> pAceThemes,
-                         ApplicationUncaughtExceptionHandler uncaughtExHandler,
-                         AskPassManager askPassManager) // force gin to create
+   public PDFViewerApplication(
+                        PDFViewerApplicationView view,
+                        Satellite satellite,
+                        Provider<AceThemes> pAceThemes,
+                        ApplicationUncaughtExceptionHandler uncaughtExHandler)
    {
-      super("review_changes", view, satellite, pAceThemes, uncaughtExHandler);
+      super("pdf_viewer", view, satellite, pAceThemes, uncaughtExHandler);
    }
 }

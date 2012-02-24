@@ -18,5 +18,5 @@ cd ..
 CC_OPTS="--compilation_level SIMPLE_OPTIMIZATIONS --language_in ECMASCRIPT5"
 java -jar "compiler/compiler.jar" $CC_OPTS --js pdfjs/build/pdf.js --js_output_file pdfjs/build/pdf.min.js
 
-cp pdfjs/build/pdf.js ../src/org/rstudio/studio/client/workbench/views/pdfviewer/pdfjs/pdf.js
-cp pdfjs/build/pdf.min.js ../src/org/rstudio/studio/client/workbench/views/pdfviewer/pdfjs/pdf.min.js
+cp pdfjs/build/pdf.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/pdf.js
+cp pdfjs/build/pdf.min.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/pdf.min.js
