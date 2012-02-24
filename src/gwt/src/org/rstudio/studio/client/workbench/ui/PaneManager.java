@@ -43,6 +43,7 @@ import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
+import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 
 import java.util.ArrayList;
@@ -100,7 +101,7 @@ public class PaneManager
                       @Named("Help") final WorkbenchTab helpTab,
                       @Named("VCS") final WorkbenchTab vcsTab,
                       @Named("Compile PDF") final WorkbenchTab compilePdfTab,
-                      @Named("Find") final WorkbenchTab findOutputTab)
+                      final FindOutputTab findOutputTab)
    {
       eventBus_ = eventBus;
       session_ = session;
@@ -397,7 +398,7 @@ public class PaneManager
    private final EventBus eventBus_;
    private final Session session_;
    private final Commands commands_;
-   private final WorkbenchTab findOutputTab_;
+   private final FindOutputTab findOutputTab_;
    private final WorkbenchTab compilePdfTab_;
    private final ConsolePane consolePane_;
    private final ConsoleInterruptButton consoleInterrupt_;

@@ -34,6 +34,125 @@ namespace find {
 
 namespace {
 
+// Reflects the current set of Find results that are being
+// displayed, in case they need to be re-fetched (i.e. browser
+// refresh)
+class FindInFilesState : public boost::noncopyable
+{
+public:
+
+   explicit FindInFilesState() : running_(false)
+   {
+   }
+
+   std::string handle() const
+   {
+      return handle_;
+   }
+
+   bool isRunning() const
+   {
+      return running_;
+   }
+
+   bool addResult(const std::string& handle,
+                  const json::Array& files,
+                  const json::Array& lineNums,
+                  const json::Array& contents)
+   {
+      if (handle_.empty())
+         handle_ = handle;
+      else if (handle_ != handle)
+         return false;
+
+      std::copy(files.begin(), files.end(), std::back_inserter(files_));
+      std::copy(lineNums.begin(), lineNums.end(), std::back_inserter(lineNums_));
+      std::copy(contents.begin(), contents.end(), std::back_inserter(contents_));
+      return true;
+   }
+
+   void onFindBegin(const std::string& handle,
+                    const std::string& input)
+   {
+      handle_ = handle;
+      input_ = input;
+      running_ = true;
+   }
+
+   void onFindEnd(const std::string& handle)
+   {
+      if (handle_ == handle)
+         running_ = false;
+   }
+
+   void clear()
+   {
+      handle_ = std::string();
+      files_.clear();
+      lineNums_.clear();
+      contents_.clear();
+   }
+
+   Error readFromJson(const json::Object& asJson)
+   {
+      json::Object results;
+      Error error = json::readObject(asJson,
+                                     "handle", &handle_,
+                                     "input", &input_,
+                                     "results", &results,
+                                     "running", &running_);
+      if (error)
+         return error;
+
+      error = json::readObject(results,
+                               "file", &files_,
+                               "line", &lineNums_,
+                               "lineValue", &contents_);
+      if (error)
+         return error;
+
+      if (files_.size() != lineNums_.size() || files_.size() != contents_.size())
+      {
+         files_.clear();
+         lineNums_.clear();
+         contents_.clear();
+      }
+
+      return Success();
+   }
+
+   json::Object asJson()
+   {
+      json::Object obj;
+      obj["handle"] = handle_;
+      obj["input"] = input_;
+
+      json::Object results;
+      results["file"] = files_;
+      results["line"] = lineNums_;
+      results["lineValue"] = contents_;
+      obj["results"] = results;
+
+      obj["running"] = running_;
+
+      return obj;
+   }
+
+private:
+   std::string handle_;
+   std::string input_;
+   json::Array files_;
+   json::Array lineNums_;
+   json::Array contents_;
+   bool running_;
+};
+
+FindInFilesState& findResults()
+{
+   static FindInFilesState s_findResults;
+   return s_findResults;
+}
+
 class GrepOperation : public boost::enable_shared_from_this<GrepOperation>
 {
 public:
@@ -73,15 +192,10 @@ public:
       return callbacks;
    }
 
-   void stop()
-   {
-      stopped_ = true;
-   }
-
 private:
    bool onContinue(const core::system::ProcessOperations& ops) const
    {
-      return !stopped_;
+      return findResults().isRunning() && findResults().handle() == handle();
    }
 
    void onStdout(const core::system::ProcessOperations& ops, const std::string& data)
@@ -125,6 +239,8 @@ private:
       results["lineValue"] = contents;
       result["results"] = results;
 
+      findResults().addResult(handle(), files, lineNums, contents);
+
       module_context::enqueClientEvent(
             ClientEvent(client_events::kFindResult, result));
    }
@@ -136,6 +252,7 @@ private:
 
    void onExit(int exitCode)
    {
+      findResults().onFindEnd(handle());
       module_context::enqueClientEvent(
             ClientEvent(client_events::kFindOperationEnded, handle()));
       if (!tempFile_.empty())
@@ -204,12 +321,16 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    else
       cmd << filePattern;
 
+   // Clear existing results
+   findResults().clear();
+
    error = module_context::processSupervisor().runCommand(cmd,
                                                           options,
                                                           callbacks);
    if (error)
       return error;
 
+   findResults().onFindBegin(ptrGrepOp->handle(), searchString);
    pResponse->setResult(ptrGrepOp->handle());
 
    return Success();
@@ -219,20 +340,66 @@ core::Error stopFind(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
    std::string handle;
+   Error error = json::readParams(request.params, &handle);
+   if (error)
+      return error;
+
+   findResults().onFindEnd(handle);
 
    return Success();
+}
+
+core::Error clearFindResults(const json::JsonRpcRequest& request,
+                             json::JsonRpcResponse* pResponse)
+{
+   findResults().clear();
+   return Success();
+}
+
+void onSuspend(core::Settings* pSettings)
+{
+   std::ostringstream os;
+   json::write(findResults().asJson(), os);
+   pSettings->set("find_in_files_state", os.str());
+}
+
+void onResume(const core::Settings& settings)
+{
+   std::string state = settings.get("find_in_files_state");
+   if (!state.empty())
+   {
+      json::Value stateJson;
+      if (!json::parse(state, &stateJson))
+      {
+         LOG_WARNING_MESSAGE("invalid find results state json");
+         return;
+      }
+
+      Error error = findResults().readFromJson(stateJson.get_obj());
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
+json::Object findInFilesStateAsJson()
+{
+   return findResults().asJson();
 }
 
 core::Error initialize()
 {
    using namespace session::module_context;
 
+   // register suspend handler
+   addSuspendHandler(SuspendHandler(onSuspend, onResume));
+
    // install handlers
    using boost::bind;
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "begin_find", beginFind))
-      (bind(registerRpcMethod, "stop_find", stopFind));
+      (bind(registerRpcMethod, "stop_find", stopFind))
+      (bind(registerRpcMethod, "clear_find_results", clearFindResults));
    return initBlock.execute();
 }
 

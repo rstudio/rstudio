@@ -2466,6 +2466,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, STOP_FIND, findOperationHandle, requestCallback);
    }
 
+   @Override
+   public void clearFindResults(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "clear_find_results", requestCallback);
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;

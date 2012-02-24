@@ -19,10 +19,9 @@ import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.events.HasSelectionCommitHandlers;
-import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -31,24 +30,24 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
-import org.rstudio.studio.client.workbench.events.FindInFilesResultEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
+import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
 
 public class FindOutputPresenter extends BasePresenter
-   implements FindInFilesResultEvent.Handler
 {
    public interface Display extends WorkbenchView,
                                     HasSelectionHandlers<CodeNavigationTarget>,
-                                    HasSelectionCommitHandlers<CodeNavigationTarget>
+                                    HasSelectionCommitHandlers<CodeNavigationTarget>,
+                                    HasEnsureHiddenHandlers
    {
       void addMatches(Iterable<FindResult> findResults);
       void clearMatches();
-      void ensureVisible();
+      void ensureVisible(boolean activate);
 
       HasText getSearchLabel();
       HasClickHandlers getStopSearchButton();
@@ -64,6 +63,7 @@ public class FindOutputPresenter extends BasePresenter
    {
       super(view);
       view_ = view;
+      events_ = events;
       server_ = server;
       globalDisplay_ = globalDisplay;
       session_ = session;
@@ -91,7 +91,7 @@ public class FindOutputPresenter extends BasePresenter
          }
       });
 
-      events.addHandler(FindResultEvent.TYPE, new FindResultEvent.Handler()
+      events_.addHandler(FindResultEvent.TYPE, new FindResultEvent.Handler()
       {
          @Override
          public void onFindResult(FindResultEvent event)
@@ -102,10 +102,11 @@ public class FindOutputPresenter extends BasePresenter
          }
       });
 
-      events.addHandler(FindOperationEndedEvent.TYPE, new FindOperationEndedEvent.Handler()
+      events_.addHandler(FindOperationEndedEvent.TYPE, new FindOperationEndedEvent.Handler()
       {
          @Override
-         public void onFindOperationEnded(FindOperationEndedEvent event)
+         public void onFindOperationEnded(
+               FindOperationEndedEvent event)
          {
             if (event.getHandle().equals(currentFindHandle_))
             {
@@ -116,10 +117,18 @@ public class FindOutputPresenter extends BasePresenter
       });
    }
 
-   @Override
-   public void onFindInFilesResult(FindInFilesResultEvent event)
+   public void initialize(FindInFilesState state)
    {
-      view_.bringToFront();
+      view_.ensureVisible(false);
+
+      currentFindHandle_ = state.getHandle();
+      view_.addMatches(state.getResults().toArrayList());
+      view_.getSearchLabel().setText("Find results: " + state.getInput());
+
+      if (state.isRunning())
+         view_.setStopSearchButtonVisible(true);
+      else
+         events_.fireEvent(new FindOperationEndedEvent(state.getHandle()));
    }
 
    @Handler
@@ -130,9 +139,6 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void execute(final String input)
          {
-            // TODO: Show indication that search is in progress
-            // TODO: Provide way to cancel a running search
-
             stopAndClear();
 
             server_.beginFind(input,
@@ -151,13 +157,18 @@ public class FindOutputPresenter extends BasePresenter
                                     view_.setStopSearchButtonVisible(true);
 
                                     super.onResponseReceived(handle);
-                                    // TODO: add tab to view using handle ID
 
-                                    view_.ensureVisible();
+                                    view_.ensureVisible(true);
                                  }
                               });
          }
       });
+   }
+
+   public void onDismiss()
+   {
+      stopAndClear();
+      server_.clearFindResults(new VoidServerRequestCallback());
    }
 
    private void stopAndClear()
@@ -184,4 +195,5 @@ public class FindOutputPresenter extends BasePresenter
    private final FindInFilesServerOperations server_;
    private final GlobalDisplay globalDisplay_;
    private final Session session_;
+   private EventBus events_;
 }

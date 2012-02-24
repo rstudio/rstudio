@@ -14,7 +14,6 @@ package org.rstudio.studio.client.workbench.views.output.find;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -133,9 +132,9 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
-   public void ensureVisible()
+   public void ensureVisible(boolean activate)
    {
-      fireEvent(new EnsureVisibleEvent());
+      fireEvent(new EnsureVisibleEvent(activate));
    }
 
    @Override

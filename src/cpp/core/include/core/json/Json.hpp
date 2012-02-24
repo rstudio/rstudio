@@ -15,6 +15,7 @@
 #define CORE_JSON_HPP
 
 #include <string>
+#include <vector>
 #include <iosfwd>
 
 #include <boost/type_traits/is_same.hpp>
@@ -67,6 +68,14 @@ json::Value toJsonValue(const T& val)
 }
 
 json::Value toJsonString(const std::string& val);
+
+template<typename T>
+json::Array toJsonArray(const std::vector<T>& val)
+{
+   json::Array results;
+   std::copy(val.begin(), val.end(), std::back_inserter(results));
+   return results;
+}
 
 bool parse(const std::string& input, Value* pValue);
 

@@ -27,4 +27,6 @@ public interface FindInFilesServerOperations
 
    void stopFind(String findOperationHandle,
                  ServerRequestCallback<Void> requestCallback);
+
+   void clearFindResults(ServerRequestCallback<Void> requestCallback);
 }

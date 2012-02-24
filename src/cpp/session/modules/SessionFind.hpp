@@ -15,10 +15,13 @@
 #define SESSION_FIND_HPP
 
 #include <core/Error.hpp>
+#include <core/json/Json.hpp>
 
 namespace session {
 namespace modules {
 namespace find {
+
+core::json::Object findInFilesStateAsJson();
 
 core::Error initialize();
 
