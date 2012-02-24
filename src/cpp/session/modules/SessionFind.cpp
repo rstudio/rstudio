@@ -290,8 +290,10 @@ core::Error beginFind(const json::JsonRpcRequest& request,
 #ifdef _WIN32
    core::system::Options childEnv;
    core::system::environment(&childEnv);
-   core::system::addToPath(&childEnv,
-                           session::options().gnugrepPath().absolutePath());
+   core::system::addToPath(
+            &childEnv,
+            string_utils::utf8ToSystem(
+               session::options().gnugrepPath().absolutePath()));
    options.environment = childEnv;
 #endif
 
