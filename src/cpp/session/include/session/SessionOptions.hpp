@@ -188,6 +188,11 @@ public:
       return core::FilePath(gnudiffPath_.c_str());
    }
 
+   core::FilePath gnugrepPath() const
+   {
+      return core::FilePath(gnugrepPath_.c_str());
+   }
+
    core::FilePath msysSshPath() const
    {
       return core::FilePath(msysSshPath_.c_str());
@@ -317,6 +322,7 @@ private:
    std::string rspdflatexPath_;
    std::string consoleIoPath_;
    std::string gnudiffPath_;
+   std::string gnugrepPath_;
    std::string msysSshPath_;
    std::string hunspellDictionariesPath_;
 

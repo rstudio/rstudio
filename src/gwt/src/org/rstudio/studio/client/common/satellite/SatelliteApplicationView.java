@@ -1,5 +1,5 @@
 /*
- * VCSApplicationView.java
+ * SatelliteApplicationView.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,10 +10,15 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.vcs;
+package org.rstudio.studio.client.common.satellite;
 
-import org.rstudio.studio.client.common.satellite.SatelliteApplicationView;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.user.client.ui.Widget;
 
-public interface VCSApplicationView extends SatelliteApplicationView
+public interface SatelliteApplicationView
 {
+   Widget getWidget() ;
+   
+   void show(JavaScriptObject params);
+   void reactivate(JavaScriptObject params);
 }

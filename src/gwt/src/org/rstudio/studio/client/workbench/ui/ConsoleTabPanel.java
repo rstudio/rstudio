@@ -14,7 +14,6 @@ package org.rstudio.studio.client.workbench.ui;
 
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.theme.PrimaryWindowFrame;
-import org.rstudio.core.client.theme.WindowFrame;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;

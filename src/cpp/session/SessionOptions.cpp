@@ -246,6 +246,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("external-gnudiff-path",
        value<std::string>(&gnudiffPath_)->default_value("bin/gnudiff"),
        "Path to gnudiff utilities (windows-only)")
+      ("external-gnugrep-path",
+       value<std::string>(&gnugrepPath_)->default_value("bin/gnugrep"),
+       "Path to gnugrep utilities (windows-only)")
       ("external-msysssh-path",
        value<std::string>(&msysSshPath_)->default_value("bin/msys_ssh"),
        "Path to msys_ssh utilities (windows-only)")
@@ -366,6 +369,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 #ifdef _WIN32
    resolvePath(resourcePath, &consoleIoPath_);
    resolvePath(resourcePath, &gnudiffPath_);
+   resolvePath(resourcePath, &gnugrepPath_);
    resolvePath(resourcePath, &msysSshPath_);
 
 #endif

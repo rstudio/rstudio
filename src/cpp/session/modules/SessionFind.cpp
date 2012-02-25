@@ -287,6 +287,16 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    core::system::ProcessOptions options;
    options.workingDir = module_context::resolveAliasedPath(directory);
 
+#ifdef _WIN32
+   core::system::Options childEnv;
+   core::system::environment(&childEnv);
+   core::system::addToPath(
+            &childEnv,
+            string_utils::utf8ToSystem(
+               session::options().gnugrepPath().absolutePath()));
+   options.environment = childEnv;
+#endif
+
    // TODO: Encode the pattern using the project encoding
 
    // Put the grep pattern in a file
@@ -303,7 +313,10 @@ core::Error beginFind(const json::JsonRpcRequest& request,
                                        ptrGrepOp->createProcessCallbacks();
 
    shell_utils::ShellCommand cmd("grep");
-   cmd << "-rHn" << "--binary-files=without-match" << "--devices=skip";
+   cmd << "-rHn" << "--binary-files=without-match";
+#ifndef _WIN32
+   cmd << "--devices=skip";
+#endif
 
    if (ignoreCase)
       cmd << "-i";
