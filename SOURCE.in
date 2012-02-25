@@ -15,6 +15,11 @@ You can obtain the source code for GNU DiffUtils at:
 
   http://ftp.gnu.org/gnu/diffutils/
 
+RStudio for Windows is bundled with a binary copy of GNU Grep. 
+You can obtain the source code for GNU Grep at:
+
+  http://ftp.gnu.org/gnu/grep/
+
 RStudio for Windows is bundled with various binaries from the MSYS
 project. You can obtain the source code for MSYS at:
 
