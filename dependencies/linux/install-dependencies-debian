@@ -44,14 +44,16 @@ cd ../common
 cd ../linux
 
 # desktop dependencies (qt)
-if [ "$1" != "--server-only" ]
+if [ "$1" != "--exclude-qt-sdk" ]
 then
-   sudo apt-get -y install qt4-dev-tools
-
    # ubuntu server doesn't include gstreamer by default so ensure that these
    # libs are always available for desktop builds (required by QtWebKit 2.2)
    sudo apt-get -y install libgstreamer0.10-0
    sudo apt-get -y install libgstreamer-plugins-base0.10-0
+
+   # install Qt 4.8 SDK (into a private /opt/RStudio-QtSDK directory so as to 
+   # not conflict with any other installed versions of Qt on the system)
+   ./install-qt-sdk
 fi
 
 

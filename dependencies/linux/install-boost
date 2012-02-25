@@ -14,9 +14,10 @@
 #
 
 # alias to common
-cd ../../common
+cd ../common
 ./install-boost
-cd ../linux/older
+cd ../linux
+
 
 
 

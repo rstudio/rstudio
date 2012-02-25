@@ -10,17 +10,28 @@ systems. Specific version requirements for various components include:
 - CMake 2.6
 - Pango 1.14
 - Boost 1.42
-- Qt 4.7 [Required only for Desktop]
+- Qt 4.8 [Required only for Desktop]
 
 
-Desktop vs. Server Builds
+Installation of Qt SDK 4.8
 =============================================================================
 
-The dependencies described below are for RStudio desktop and server. If you 
-only want to build the server then Qt is not required. In this case you can
-invoke the install-dependencies scripts with a --server-only flag, e.g.
+RStudio Desktop requires Qt 4.8 (the most recent version). Qt 4.8 is included 
+in only the most up to date Linux distros (e.g. Ubuntu 12.04, Fedora 16, 
+OpenSUSE 12.2). Therefore, the install-dependencies scripts referenced below
+install a version of the Qt 4.8 SDK into /opt/RStudio-QtSDK (the special 
+RStudio prefix on the directory is included so this installation doesn't 
+conflict with any other versions of Qt installed on the system).
 
-./install-dependencies-debian --server-only
+If you are either building RStudio Server or running a Linux distribution 
+that already includes Qt 4.8 you may wish to prevent installation of the
+Qt 4.8 SDK. To do this pass the --exclude-qt-sdk flag to the install 
+dependencies script, for example:
+
+./install-dependencies-debian --exclude-qt-sdk
+
+More information on running the install-dependencies script is included
+in the section below.
 
 
 Installing Dependencies for Debian/Ubuntu, Fedora, RedHat/CentOS, or OpenSUSE
@@ -34,29 +45,25 @@ installing it using the system standard package management tools (apt-get,
 yum, etc).
 
 2) Run the install-dependencies script appropriate to your platform's
-package management system (for server-only builds be sure to include the
---server-only flag as described above):
+package management system (to optionally exclude installation of the Qt 4.8
+SDK be sure to specify the --exclude-qt-sdk flag as described above).
 
    ./install-dependencies-debian  
    ./install-dependencies-yum
    ./install-dependencies-zypper
    
-The versions of Boost (1.42) and Qt (4.7) required by RStudio are
-relatively recent. If you install these components using your system
-package manager then the following minimum OS versions are required:
+The version of Boost (1.42) required by RStudio is relatively recent. If 
+you install Boost using your system package manager then the following 
+minimum OS versions are required:
 
    - Debian 6
    - Ubuntu 10.10
    - Fedora 14
    - OpenSUSE 11.4
-
-Note that Debian 6 includes only Qt 4.6 so the Desktop version won't build
-with just the system Qt libraries. To build Desktop on Debian 6 (or other
-older systems) see the instructions below.
    
 If you aren't building on one of these more recent system versions then
-you can satisfy the Boost and/or Qt version requirements by installing
-them using the scripts in dependencies/linux/older (described below).
+you can satisfy the Boost requirement by running the install-boost script
+in dependencies/linux/older (described below).
 
 
 Installing Dependencies for Other Systems
@@ -75,27 +82,19 @@ ensure that all of the referenced libraries are available on your system.
       common
          install-gwt
 
-3) If your system doesn't meet the minimum version requirements for Boost (1.44)
-and/or Qt (4.7) then install them using the scripts provided here:
+3) If your system doesn't meet the minimum version requirements for Boost (1.42)
+and/or Qt (4.8) then install them using the scripts provided here:
 
    dependencies
-     linux
-       older
+      linux
          install-boost
          install-qt-sdk
          
-Notes on using these scripts:
-
-QT: The Qt installation prompts for confirmation of the install location
-and approval of the Qt license. When installing the Qt SDK you should
-accept the default installation path of /opt/qtsdk-<version>. This 
-ensures that RStudio will use the sdk in preference to any version of
-Qt installed in /usr/lib.
-
-BOOST: The Boost libraries are not built if the directory 
+NOTE: The Boost libraries are not built if the directory 
 /usr/local/include/boost already exists.
 
 4) If your system doesn't meet the minimum version requirements for CMake (2.6)
 you can download a Linux binary of the latest version of CMake here:
 
   - http://www.cmake.org/cmake/resources/software.html
+
