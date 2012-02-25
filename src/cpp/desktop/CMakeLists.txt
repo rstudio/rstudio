@@ -14,29 +14,22 @@
 project(DESKTOP)
 
 # include qt (on linux prefer sdk installation of qt 4.8.0 if it exists)
-if (UNIX AND NOT APPLE)
+set(QT_VERSION 4.7.0)
+if(UNIX AND NOT APPLE)
+   set(QT_VERSION 4.8.0)
    if(NOT QT_QMAKE_EXECUTABLE)
-      # check for rstudio-specific install (via install-qt-48-sdk script)
+      # check for rstudio-specific install (via install-qt-sdk script)
       set(QMAKE_QT48_SDK "/opt/RStudio-QtSDK/Desktop/Qt/4.8.0/gcc/bin/qmake")
       if(EXISTS ${QMAKE_QT48_SDK})
          set(QT_QMAKE_EXECUTABLE ${QMAKE_QT48_SDK})
-         set(RSTUDIO_USING_QT48_SDK TRUE)
       else()
          # check for stock qt 4.8 sdk install in home directory
          set(QMAKE_QT48_SDK "$ENV{HOME}/QtSDK/Desktop/Qt/4.8.0/gcc/bin/qmake")
          if(EXISTS ${QMAKE_QT48_SDK})
             set(QT_QMAKE_EXECUTABLE ${QMAKE_QT48_SDK})
-            set(RSTUDIO_USING_QT48_SDK TRUE)
          endif()
       endif()
    endif()
-endif()
-if(WIN32)
-   set(QT_VERSION 4.7.0)
-elseif(APPLE)
-   set(QT_VERSION 4.7.0)
-else()
-   set(QT_VERSION 4.8.0)
 endif()
 add_definitions(-DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII)
 find_package(Qt4 ${QT_VERSION} COMPONENTS QtCore QtGui QtNetwork QtWebKit REQUIRED)
@@ -189,7 +182,7 @@ endif(WIN32)
 # qt libraries which should therefore not be bundled
 if(APPLE OR WIN32 OR
    RSTUDIO_PACKAGE_BUILD OR
-   (${QT_LIBRARY_DIR} MATCHES ".*qtsdk.*"))
+   (${QT_LIBRARY_DIR} MATCHES ".*QtSDK.*"))
   set(RSTUDIO_BUNDLE_QT TRUE)
 endif()
 
@@ -291,35 +284,26 @@ if(RSTUDIO_BUNDLE_QT)
 
    # copy qt shared objects directly to bin on unix (fixed up rpath above)
    elseif(UNIX)
-      # compute path to release libs
-      if (RSTUDIO_USING_QT48_SDK)
-         set(QT_RELEASE_LIBRARY_DIR ${QT_LIBRARY_DIR})
-         set(QT_WEBKIT_LIBRARY_PATH ${QT_RELEASE_LIBRARY_DIR}/libQtWebKit.so.4.9.0)
-      else()
-         get_filename_component(QT_RELEASE_LIBRARY_DIR "${QT_LIBRARY_DIR}/../../lib" REALPATH)
-         set(QT_WEBKIT_LIBRARY_PATH ${QT_RELEASE_LIBRARY_DIR}/libQtWebKit.so.${QT_FULL_VERSION})
-      endif()
-
       # install dependent libraries
       set(QT_FULL_VERSION "${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH}")
-      install(PROGRAMS ${QT_RELEASE_LIBRARY_DIR}/libQtCore.so.4
-                       ${QT_RELEASE_LIBRARY_DIR}/libQtCore.so.${QT_FULL_VERSION}
-                       ${QT_RELEASE_LIBRARY_DIR}/libQtDBus.so.4
-                       ${QT_RELEASE_LIBRARY_DIR}/libQtDBus.so.${QT_FULL_VERSION}
-                       ${QT_RELEASE_LIBRARY_DIR}/libQtGui.so.4
-                       ${QT_RELEASE_LIBRARY_DIR}/libQtGui.so.${QT_FULL_VERSION}
-                       ${QT_RELEASE_LIBRARY_DIR}/libQtNetwork.so.4
-                       ${QT_RELEASE_LIBRARY_DIR}/libQtNetwork.so.${QT_FULL_VERSION}
-                       ${QT_RELEASE_LIBRARY_DIR}/libQtWebKit.so.4
-                       ${QT_WEBKIT_LIBRARY_PATH}
-                       ${QT_RELEASE_LIBRARY_DIR}/libQtSvg.so.4
-                       ${QT_RELEASE_LIBRARY_DIR}/libQtSvg.so.${QT_FULL_VERSION}
-                       ${QT_RELEASE_LIBRARY_DIR}/libQtXml.so.4
-                       ${QT_RELEASE_LIBRARY_DIR}/libQtXml.so.${QT_FULL_VERSION}
-                       ${QT_RELEASE_LIBRARY_DIR}/libQtXmlPatterns.so.4
-                       ${QT_RELEASE_LIBRARY_DIR}/libQtXmlPatterns.so.${QT_FULL_VERSION}
-                       ${QT_RELEASE_LIBRARY_DIR}/libphonon.so.4
-                       ${QT_RELEASE_LIBRARY_DIR}/libphonon.so.4.4.0
+      install(PROGRAMS ${QT_LIBRARY_DIR}/libQtCore.so.4
+                       ${QT_LIBRARY_DIR}/libQtCore.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQtDBus.so.4
+                       ${QT_LIBRARY_DIR}/libQtDBus.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQtGui.so.4
+                       ${QT_LIBRARY_DIR}/libQtGui.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQtNetwork.so.4
+                       ${QT_LIBRARY_DIR}/libQtNetwork.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQtWebKit.so.4
+                       ${QT_LIBRARY_DIR}/libQtWebKit.so.4.9.0
+                       ${QT_LIBRARY_DIR}/libQtSvg.so.4
+                       ${QT_LIBRARY_DIR}/libQtSvg.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQtXml.so.4
+                       ${QT_LIBRARY_DIR}/libQtXml.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQtXmlPatterns.so.4
+                       ${QT_LIBRARY_DIR}/libQtXmlPatterns.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libphonon.so.4
+                       ${QT_LIBRARY_DIR}/libphonon.so.4.4.0
               DESTINATION ${RSTUDIO_INSTALL_BIN})
 
    # copy qt dlls directly to bin on win32
