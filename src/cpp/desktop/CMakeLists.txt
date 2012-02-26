@@ -13,20 +13,23 @@
 
 project(DESKTOP)
 
-# include qt (prefer sdk installation of qt 4.8.0 if it exists)
-if(WIN32)
-   set(QT_VERSION 4.8.0)
-elseif(APPLE)
-   set(QT_VERSION 4.7.0)
-else()
-   set(QT_VERSION 4.8.0)
+# require Qt 4.8 (although note carve-out for OSX until we can address
+# the glass trackpad webkit scrolling issue)
+set(QT_VERSION 4.8.0)
+
+# on unix prefer qtsdk installs over system-level libraries. note this
+# can be overriden by defining QT_QMAKE_EXECUTABLE when invoking cmake
+if(NOT WIN32)
+   # temporary Qt 4.7 carve-out for OSX
+   if(APPLE)
+      set(QT_VERSION 4.7.0)
+   endif()
+   # prefer rstudio qtsdk install then home qtsdk install
    if(NOT QT_QMAKE_EXECUTABLE)
-      # check for rstudio-specific install (via install-qt-sdk script)
       set(QMAKE_QT48_SDK "/opt/RStudio-QtSDK/Desktop/Qt/4.8.0/gcc/bin/qmake")
       if(EXISTS ${QMAKE_QT48_SDK})
          set(QT_QMAKE_EXECUTABLE ${QMAKE_QT48_SDK})
       else()
-         # check for stock qt 4.8 sdk install in home directory
          set(QMAKE_QT48_SDK "$ENV{HOME}/QtSDK/Desktop/Qt/4.8.0/gcc/bin/qmake")
          if(EXISTS ${QMAKE_QT48_SDK})
             set(QT_QMAKE_EXECUTABLE ${QMAKE_QT48_SDK})
@@ -34,6 +37,8 @@ else()
       endif()
    endif()
 endif()
+
+# find and include Qt
 add_definitions(-DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII)
 find_package(Qt4 ${QT_VERSION} COMPONENTS QtCore QtGui QtNetwork QtWebKit REQUIRED)
 include(${QT_USE_FILE})
