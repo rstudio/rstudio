@@ -136,7 +136,11 @@ Error savePlotAs(const json::JsonRpcRequest& request,
    Display& display = r::session::graphics::display();
    error = display.savePlotAsImage(plotPath, format, width, height);
    if (error)
-      return error;
+   {
+       LOG_ERROR(error);
+       return error;
+   }
+
 
    // set success result
    pResponse->setResult(boolObject(true));
