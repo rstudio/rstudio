@@ -245,6 +245,9 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    std::string latex = readPref<std::string>(prefs, "default_latex_program", "pdfLaTeX");
    pDefaultLatexProgram_.reset(new std::string(latex));
 
+   bool showPdfAfterCompile = readPref<bool>(prefs, "show_pdf_after_compile", true);
+   pShowPdfAfterCompile_.reset(new bool(showPdfAfterCompile));
+
    bool alwaysEnableRnwConcordance = readPref<bool>(prefs, "always_enable_concordance", true);
    pAlwaysEnableRnwConcordance_.reset(new bool(alwaysEnableRnwConcordance));
 }
@@ -275,6 +278,11 @@ std::string UserSettings::defaultSweaveEngine() const
 std::string UserSettings::defaultLatexProgram() const
 {
    return readUiPref<std::string>(pDefaultLatexProgram_);
+}
+
+bool UserSettings::showPdfAfterCompile() const
+{
+   return readUiPref<bool>(pShowPdfAfterCompile_);
 }
 
 bool UserSettings::alwaysEnableRnwCorcordance() const

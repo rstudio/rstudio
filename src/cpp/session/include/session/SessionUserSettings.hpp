@@ -90,6 +90,7 @@ public:
    std::string defaultEncoding() const;
    std::string defaultSweaveEngine() const;
    std::string defaultLatexProgram() const;
+   bool showPdfAfterCompile() const;
    bool alwaysEnableRnwCorcordance() const;
 
    bool alwaysRestoreLastProject() const;
@@ -171,6 +172,7 @@ private:
    mutable boost::scoped_ptr<std::string> pDefaultEncoding_;
    mutable boost::scoped_ptr<std::string> pDefaultSweaveEngine_;
    mutable boost::scoped_ptr<std::string> pDefaultLatexProgram_;
+   mutable boost::scoped_ptr<bool> pShowPdfAfterCompile_;
    mutable boost::scoped_ptr<bool> pAlwaysEnableRnwConcordance_;
 };
    

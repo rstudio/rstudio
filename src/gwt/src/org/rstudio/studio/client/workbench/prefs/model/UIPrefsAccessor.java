@@ -139,6 +139,11 @@ public class UIPrefsAccessor extends Prefs
       return string("default_latex_program", "pdfLaTeX");
    }
    
+   public PrefValue<Boolean> showPdfAfterCompile()
+   {
+      return bool("show_pdf_after_compile", true);
+   }
+   
    public PrefValue<Boolean> alwaysEnableRnwConcordance()
    {
       return bool("always_enable_concordance", true);

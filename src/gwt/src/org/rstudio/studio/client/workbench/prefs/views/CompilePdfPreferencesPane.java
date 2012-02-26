@@ -58,19 +58,13 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       nudgeRight(perProjectLabel);
       spaced(perProjectLabel);
       add(perProjectLabel);
-      
-      Label compilationOptionsLabel = new Label("Compilation options");
+       
+      Label compilationOptionsLabel = new Label("LaTeX compilation");
       compilationOptionsLabel.addStyleName(baseRes.styles().headerLabel());
       nudgeRight(compilationOptionsLabel);
       add(compilationOptionsLabel);
-      
-      CheckBox chkConcordance = checkboxPref(
-                                       "Always enable Rnw concordance",
-                                       prefs_.alwaysEnableRnwConcordance());
-      spaced(chkConcordance);
-      add(chkConcordance);
-      
-      chkUseTexi2Dvi_ = new CheckBox( "Use texi2dvi for LaTeX compilation");
+            
+      chkUseTexi2Dvi_ = new CheckBox( "Use texi2dvi to resolve cross-references");
       spaced(chkUseTexi2Dvi_);
       add(chkUseTexi2Dvi_);
       
@@ -80,7 +74,24 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       add(chkCleanTexi2DviOutput_);
       
       chkEnableShellEscape_ = new CheckBox("Enable shell escape commands");
+      spaced(chkEnableShellEscape_);
       add(chkEnableShellEscape_);
+      
+      Label previwingOptionsLabel = new Label("PDF preview");
+      previwingOptionsLabel.addStyleName(baseRes.styles().headerLabel());
+      nudgeRight(previwingOptionsLabel);
+      add(previwingOptionsLabel);
+      
+      CheckBox chkShowPdf = checkboxPref("Show PDF preview after compile",
+                                         prefs_.showPdfAfterCompile());
+      spaced(chkShowPdf);
+      add(chkShowPdf);
+      
+      CheckBox chkConcordance = checkboxPref(
+            "Always enable Rnw concordance (required for synctex)",
+            prefs_.alwaysEnableRnwConcordance());
+      spaced(chkConcordance);
+      add(chkConcordance);
    }
 
   
