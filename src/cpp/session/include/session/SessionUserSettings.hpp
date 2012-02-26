@@ -141,6 +141,7 @@ public:
    bool enableLaTeXShellEscape() const;
    void setEnableLaTeXShellEscape(bool enableShellEscape);
 
+   bool internalPdfPreviewEnabled() const;
 
 private:
 

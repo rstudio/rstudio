@@ -453,6 +453,19 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["feature_find_in_files"] = options.featureFindInFiles();
 
+   // is internal preview enabled? (feature flag plus Qt 4.8)
+   bool browserSupportsPdfPreview = true;
+   if (options.programMode() == kSessionProgramModeDesktop)
+   {
+    std::string userAgent = ptrConnection->request().userAgent();
+    bool isQt47 = userAgent.find("Qt/4.7") != std::string::npos;
+    if (isQt47)
+        browserSupportsPdfPreview = false;
+   }
+   sessionInfo["internal_pdf_preview_enabled"] =
+                        browserSupportsPdfPreview &&
+                        userSettings().internalPdfPreviewEnabled();
+
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
    json::JsonRpcResponse jsonRpcResponse ;

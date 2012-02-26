@@ -224,4 +224,9 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean isFindInFilesEnabled() /*-{
       return this.feature_find_in_files;
    }-*/;
+   
+   public final native boolean isInternalPdfPreviewEnabled() /*-{
+      return this.internal_pdf_preview_enabled;
+   }-*/;
+   
 }
