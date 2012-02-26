@@ -22,8 +22,8 @@ via the CMake installer if the "Add to system path" option was chosen during
 installation). For Qt and MinGW you should ensure that the following 
 additional directories are available on the path:
 
-C:\Qt\<QtVersion>\qt\bin
-C:\Qt\<QtVersion>\mingw\bin
+C:\QtSDK\Desktop\Qt\4.8.0\mingw\bin
+C:\QtSDK\mingw\bin
 
 Finally, you should also ensure that your R installation's bin directory is
 on the system path.

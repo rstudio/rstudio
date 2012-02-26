@@ -13,9 +13,12 @@
 
 project(DESKTOP)
 
-# include qt (on linux prefer sdk installation of qt 4.8.0 if it exists)
-set(QT_VERSION 4.7.0)
-if(UNIX AND NOT APPLE)
+# include qt (prefer sdk installation of qt 4.8.0 if it exists)
+if(WIN32)
+   set(QT_VERSION 4.8.0)
+elseif(APPLE)
+   set(QT_VERSION 4.7.0)
+else()
    set(QT_VERSION 4.8.0)
    if(NOT QT_QMAKE_EXECUTABLE)
       # check for rstudio-specific install (via install-qt-sdk script)
