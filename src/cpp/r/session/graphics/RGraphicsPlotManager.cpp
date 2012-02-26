@@ -295,7 +295,7 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
       extraParams = ", quality = 100";
 
 #ifdef __APPLE__
-   extraParams += ", type = \"quartz\"";
+   extraParams += ", type = \"quartz\", antialias=\"default\"";
 #endif
 
    // generate code for creating bitmap file device
