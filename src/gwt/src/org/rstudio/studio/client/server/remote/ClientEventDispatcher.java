@@ -28,6 +28,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcessCreatedEvent;
 import org.rstudio.studio.client.common.console.ServerConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ServerConsolePromptEvent;
 import org.rstudio.studio.client.common.console.ServerProcessExitEvent;
+import org.rstudio.studio.client.pdfviewer.events.ViewPdfEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
 import org.rstudio.studio.client.server.Bool;
@@ -337,6 +338,11 @@ public class ClientEventDispatcher
          {
             String data = event.getData();
             eventBus_.fireEvent(new FindOperationEndedEvent(data));
+         }
+         else if (type.equals(ClientEvent.ViewPdf))
+         {
+            ViewPdfEvent.Data data = event.getData();
+            eventBus_.fireEvent(new ViewPdfEvent(data));
          }
          else if (type.equals(ClientEvent.ListChanged))
          {

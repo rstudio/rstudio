@@ -512,7 +512,7 @@ void UserSettings::setWorkingDirectoryValue(const std::string& key,
 
 bool UserSettings::internalPdfPreviewEnabled() const
 {
-   return settings_.getBool("internal_pdf_preview_enabled", false);
+   return settings_.getBool("internalPdfPreviewEnabled", false);
 }
 
 } // namespace session

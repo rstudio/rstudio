@@ -10,7 +10,9 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.pdfviewer;
+package org.rstudio.studio.client.pdfviewer.ui;
+
+import org.rstudio.studio.client.pdfviewer.PDFViewerPresenter;
 
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RequiresResize;

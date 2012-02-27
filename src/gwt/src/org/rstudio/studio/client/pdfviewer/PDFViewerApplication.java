@@ -15,6 +15,7 @@ package org.rstudio.studio.client.pdfviewer;
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteApplication;
+import org.rstudio.studio.client.pdfviewer.ui.PDFViewerApplicationView;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.inject.Inject;
@@ -24,6 +25,8 @@ import com.google.inject.Singleton;
 @Singleton
 public class PDFViewerApplication extends SatelliteApplication
 {
+   public static final String NAME = "pdf";
+   
    @Inject
    public PDFViewerApplication(
                         PDFViewerApplicationView view,
@@ -31,6 +34,6 @@ public class PDFViewerApplication extends SatelliteApplication
                         Provider<AceThemes> pAceThemes,
                         ApplicationUncaughtExceptionHandler uncaughtExHandler)
    {
-      super("pdf_viewer", view, satellite, pAceThemes, uncaughtExHandler);
+      super(NAME, view, satellite, pAceThemes, uncaughtExHandler);
    }
 }

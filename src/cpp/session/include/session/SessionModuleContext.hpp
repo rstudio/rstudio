@@ -48,6 +48,7 @@ namespace module_context {
 core::FilePath userHomePath();
 std::string createAliasedPath(const core::FileInfo& fileInfo);
 std::string createAliasedPath(const core::FilePath& path);
+std::string createFileUrl(const core::FilePath& path);
 core::FilePath resolveAliasedPath(const std::string& aliasedPath);
 core::FilePath userScratchPath();
 core::FilePath scopedScratchPath();

@@ -879,23 +879,28 @@ void showFile(const FilePath& filePath, const std::string& window)
    }
    else if (session::options().programMode() == kSessionProgramModeServer)
    {
-      // determine url based on whether this is in ~ or not
-      std::string url ;
-
-      if (isVisibleUserFile(filePath))
-      {
-         std::string relPath = filePath.relativePath(module_context::userHomePath());
-         url = "files/" + relPath;
-      }
-      else
-      {
-         url = "file_show?path=" + http::util::urlEncode(filePath.absolutePath(), true);
-      }
-
-      // fire event
+      std::string url = createFileUrl(filePath);
       ClientEvent event = browseUrlEvent(url);
       module_context::enqueClientEvent(event);
    }
+}
+
+std::string createFileUrl(const core::FilePath& filePath)
+{
+    // determine url based on whether this is in ~ or not
+    std::string url ;
+    if (isVisibleUserFile(filePath))
+    {
+       std::string relPath = filePath.relativePath(
+                                    module_context::userHomePath());
+       url = "files/" + relPath;
+    }
+    else
+    {
+       url = "file_show?path=" + http::util::urlEncode(
+                                filePath.absolutePath(), true);
+    }
+    return url;
 }
 
 

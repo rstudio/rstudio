@@ -1737,7 +1737,15 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onCompilePDF()
    {
-      String action = prefs_.showPdfAfterCompile().getValue() ? "view" : "";
+      String action = new String();
+      if (prefs_.showPdfAfterCompile().getValue())
+      {
+         if (session_.getSessionInfo().isInternalPdfPreviewEnabled())
+            action = "view";
+         else
+            action = "view_external";
+      }
+      
       handlePdfCommand(action);
    }
 

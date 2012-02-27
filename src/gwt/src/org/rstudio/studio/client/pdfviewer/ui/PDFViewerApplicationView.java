@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.pdfviewer;
+package org.rstudio.studio.client.pdfviewer.ui;
 
 import org.rstudio.studio.client.common.satellite.SatelliteApplicationView;
 

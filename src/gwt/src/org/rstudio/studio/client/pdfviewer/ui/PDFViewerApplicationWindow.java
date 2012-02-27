@@ -10,10 +10,11 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.pdfviewer;
+package org.rstudio.studio.client.pdfviewer.ui;
 
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
+import org.rstudio.studio.client.pdfviewer.PDFViewerPresenter;
 import org.rstudio.studio.client.pdfviewer.model.PDFViewerParams;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 
@@ -43,7 +44,7 @@ public class PDFViewerApplicationWindow extends SatelliteWindow
    @Override
    protected void onInitialize(LayoutPanel mainPanel, JavaScriptObject params)
    {
-      Window.setTitle("PDF Preview");
+      Window.setTitle("RStudio: Compile PDF");
       
       // create the presenter and activate it with the passed params
       PDFViewerParams pdfParams = params.<PDFViewerParams>cast();

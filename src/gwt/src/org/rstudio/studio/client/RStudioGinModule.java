@@ -41,10 +41,11 @@ import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.common.vcs.ignore.Ignore;
 import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
-import org.rstudio.studio.client.pdfviewer.PDFViewerApplicationView;
-import org.rstudio.studio.client.pdfviewer.PDFViewerApplicationWindow;
-import org.rstudio.studio.client.pdfviewer.PDFViewerPanel;
+import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.pdfviewer.PDFViewerPresenter;
+import org.rstudio.studio.client.pdfviewer.ui.PDFViewerApplicationView;
+import org.rstudio.studio.client.pdfviewer.ui.PDFViewerApplicationWindow;
+import org.rstudio.studio.client.pdfviewer.ui.PDFViewerPanel;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.server.Server;
@@ -158,6 +159,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ChooseFile.class).in(Singleton.class);
       bind(ConsoleDispatcher.class).in(Singleton.class);
       bind(FileTypeCommands.class).in(Singleton.class);
+      bind(PDFViewer.class).in(Singleton.class);
       
 
       bind(ApplicationView.class).to(ApplicationWindow.class)

@@ -37,10 +37,25 @@ namespace authoring {
 
 namespace {
 
+FilePath pdfFilePath(const FilePath& texFilePath)
+{
+   return texFilePath.parent().complete(texFilePath.stem() + ".pdf");
+}
+
 void viewPdf(const FilePath& texPath)
 {
-   FilePath pdfPath = texPath.parent().complete(texPath.stem() + ".pdf");
-   module_context::showFile(pdfPath, "_rstudio_compile_pdf");
+   FilePath pdfPath = pdfFilePath(texPath);
+
+   json::Object dataJson;
+   dataJson["pdf_url"] = module_context::createFileUrl(pdfPath);
+   ClientEvent event(client_events::kViewPdf, dataJson);
+   module_context::enqueClientEvent(event);
+}
+
+void viewPdfExternal(const FilePath& texPath)
+{
+   module_context::showFile(pdfFilePath(texPath),
+                            "_rstudio_compile_pdf");
 }
 
 void publishPdf(const FilePath& texPath)
@@ -80,7 +95,9 @@ Error compilePdf(const json::JsonRpcRequest& request,
    // initialize the completed function
    boost::function<void()> completedFunction;
    if (completedAction == "view")
-      completedFunction = boost::bind(viewPdf, targetFilePath);
+       completedFunction = boost::bind(viewPdf, targetFilePath);
+   if (completedAction == "view_external")
+      completedFunction = boost::bind(viewPdfExternal, targetFilePath);
    else if (completedAction == "publish")
       completedFunction = boost::bind(publishPdf, targetFilePath);
 

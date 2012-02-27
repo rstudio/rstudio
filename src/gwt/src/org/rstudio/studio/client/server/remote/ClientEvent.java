@@ -69,6 +69,7 @@ class ClientEvent extends JavaScriptObject
    public static final String CompilePdfStatusEvent = "compile_pdf_status_event";
    public static final String FindResult = "find_result";
    public static final String FindOperationEnded = "find_operation_ended";
+   public static final String ViewPdf = "view_pdf";
 
    protected ClientEvent()
    {

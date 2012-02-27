@@ -47,6 +47,7 @@ import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
 import org.rstudio.studio.client.common.vcs.SshKeyWidget;
 import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
 import org.rstudio.studio.client.impl.BrowserFence;
+import org.rstudio.studio.client.pdfviewer.PDFViewerApplication;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
@@ -145,7 +146,7 @@ public class RStudio implements EntryPoint
                            RootLayoutPanel.get(),
                            dismissProgressAnimation);
                   }
-                  else if ("pdf_viewer".equals(view))
+                  else if (PDFViewerApplication.NAME.equals(view))
                   {
                      RStudioGinjector.INSTANCE.getPDFViewerApplication().go(
                            RootLayoutPanel.get(), 
