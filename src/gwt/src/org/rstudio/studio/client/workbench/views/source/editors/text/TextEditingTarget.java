@@ -54,6 +54,7 @@ import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -1741,9 +1742,13 @@ public class TextEditingTarget implements EditingTarget
       if (prefs_.showPdfAfterCompile().getValue())
       {
          if (session_.getSessionInfo().isInternalPdfPreviewEnabled())
-            action = "view";
+         {
+            events_.fireEvent(new ShowPDFViewerEvent());
+         }
          else
+         {
             action = "view_external";
+         }
       }
       
       handlePdfCommand(action);
