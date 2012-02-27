@@ -42,7 +42,7 @@ public class PDFViewer implements ViewPdfHandler
       // open the window 
       satelliteManager_.openSatellite(PDFViewerApplication.NAME,     
                                       params,
-                                      new Size(600,900)); 
+                                      new Size(800,900)); 
       
    }
    

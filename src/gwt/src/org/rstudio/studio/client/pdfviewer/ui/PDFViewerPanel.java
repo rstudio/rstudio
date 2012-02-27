@@ -14,8 +14,8 @@ package org.rstudio.studio.client.pdfviewer.ui;
 
 import org.rstudio.studio.client.pdfviewer.PDFViewerPresenter;
 
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
 
 public class PDFViewerPanel extends ResizeComposite 
@@ -23,30 +23,35 @@ public class PDFViewerPanel extends ResizeComposite
 {
    public PDFViewerPanel()
    {
-      label_ =  new RequiresResizeLabel();
+      panel_ = new LayoutPanel();
+      panel_.getElement().getStyle().setBackgroundColor("white");
       
-      initWidget(label_);
+      initWidget(panel_);
    }
    
   
    @Override
    public void setURL(String url)
    {
-      label_.setText("PDF URL: " + url);
-      
-   }
-   
-   private class RequiresResizeLabel extends Label implements RequiresResize
-   {
-
-      @Override
-      public void onResize()
+      // remove existing
+      if (pdfWidget_ != null)
       {
-         // TODO Auto-generated method stub
-         
+         panel_.remove(pdfWidget_);
+         pdfWidget_ = null;
       }
       
+      // create new
+      pdfWidget_ = new PDFWidget(url);
+      panel_.add(pdfWidget_);
+      panel_.setWidgetLeftRight(pdfWidget_, 0, Unit.PX, 0, Unit.PX);
+      panel_.setWidgetTopBottom(pdfWidget_, 0, Unit.PX, 0, Unit.PX);
+      
    }
    
-   private RequiresResizeLabel label_;
+   
+   
+   
+   
+   private LayoutPanel panel_;
+   private PDFWidget pdfWidget_ = null;
 }

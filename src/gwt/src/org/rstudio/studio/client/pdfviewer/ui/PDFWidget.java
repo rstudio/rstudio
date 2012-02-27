@@ -47,9 +47,7 @@ public class PDFWidget extends Composite
    }
 
    private native void loadPdf(String pdfUrl, Context2d context2d) /*-{
-      $wnd.alert("got here: " + pdfUrl);
       $wnd.PDFJS.getPdf(pdfUrl, function(data) {
-         $wnd.alert("got here 2");
          try
          {
         //
@@ -57,8 +55,7 @@ public class PDFWidget extends Composite
         //
         var pdf = new $wnd.PDFJS.PDFDoc(data);
         var page = pdf.getPage(1);
-        var scale = 1.5;
-
+      
         //
         // Render PDF page into canvas context
         //
