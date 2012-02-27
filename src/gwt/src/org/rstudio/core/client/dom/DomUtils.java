@@ -107,9 +107,16 @@ public class DomUtils
       {
          if (!UIObject.isVisible(element))
             return false;
+
+         // If element never equals body, then the element is not attached
+         if (element == Document.get().getBody())
+            return true;
+
          element = element.getParentElement();
       }
-      return true;
+
+      // Element is not attached
+      return false;
    }
 
    private static final Pattern NEWLINE = Pattern.create("\\n");
