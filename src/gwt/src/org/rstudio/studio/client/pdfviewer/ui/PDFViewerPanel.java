@@ -62,7 +62,7 @@ public class PDFViewerPanel extends Composite
    }
 
    private native void open(String url) /*-{
-      $wnd.PDFView.open(url);
+      $wnd.PDFView.open(url, 0);
    }-*/;
 
    private boolean loaded_;

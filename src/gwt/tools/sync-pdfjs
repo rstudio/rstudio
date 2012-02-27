@@ -18,17 +18,14 @@ git checkout 4a9c1ac4831077dc52e4f7591d6a78e1851d3152
 make
 cd ..
 
-cat pdfjs/web/compatibility.js \
-  pdfjs/build/pdf.js \
-  pdfjs/web/debugger.js \
-  pdfjs/web/viewer.js \
-  > pdfjs/build/pdf_all.js
-
-
 CC_OPTS="--compilation_level SIMPLE_OPTIMIZATIONS --language_in ECMASCRIPT5"
-java -jar "compiler/compiler.jar" $CC_OPTS --js pdfjs/build/pdf_all.js --js_output_file pdfjs/build/pdf_all.min.js
+java -jar "compiler/compiler.jar" $CC_OPTS --js pdfjs/build/pdf.js --js_output_file pdfjs/build/pdf.min.js
 
-cp pdfjs/build/pdf_all.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/pdf_all.js
-cp pdfjs/build/pdf_all.min.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/pdf_all.min.js
+cp pdfjs/build/pdf.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/pdf.js
+cp pdfjs/build/pdf.min.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/pdf.min.js
 
-cp pdfjs/web/viewer.css ../src/org/rstudio/studio/client/pdfviewer/pdfjs/viewer.css
+cp pdfjs/web/compatibility.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
+cp pdfjs/web/debugger.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
+# viewer.js uses CustomStyle which is defined in util.js
+cat pdfjs/src/util.js pdfjs/web/viewer.js > ../src/org/rstudio/studio/client/pdfviewer/pdfjs/viewer.js
+cp pdfjs/web/viewer.css ../src/org/rstudio/studio/client/pdfviewer/pdfjs/

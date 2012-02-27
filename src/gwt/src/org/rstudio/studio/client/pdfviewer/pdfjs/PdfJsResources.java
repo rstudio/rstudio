@@ -20,8 +20,17 @@ public interface PdfJsResources extends ClientBundle
 {
    public static PdfJsResources INSTANCE = GWT.create(PdfJsResources.class);
 
-   @Source("pdf_all.min.js")
+   @Source("pdf.js")
    StaticDataResource pdfjs();
+
+   @Source("compatibility.js")
+   StaticDataResource compatibilityJs();
+
+   @Source("debugger.js")
+   StaticDataResource debuggerJs();
+
+   @Source("viewer.js")
+   StaticDataResource viewerJs();
 
    @Source("viewer.css")
    StaticDataResource viewerCss();
