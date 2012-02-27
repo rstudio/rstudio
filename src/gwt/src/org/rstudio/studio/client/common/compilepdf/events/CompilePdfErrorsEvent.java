@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.output.compilepdf.events;
+package org.rstudio.studio.client.common.compilepdf.events;
 
 import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfError;
 

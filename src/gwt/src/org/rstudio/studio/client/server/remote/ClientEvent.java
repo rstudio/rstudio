@@ -64,9 +64,10 @@ class ClientEvent extends JavaScriptObject
    public static final String PosixShellExit = "posix_shell_exit";
    public static final String ConsoleProcessPrompt = "console_process_prompt";
    public static final String ConsoleProcessCreated = "console_process_created";
+   public static final String CompilePdfStartedEvent = "compile_pdf_started_event";
    public static final String CompilePdfOutputEvent = "compile_pdf_output_event";
    public static final String CompilePdfErrorsEvent = "compile_pdf_errors_event";
-   public static final String CompilePdfStatusEvent = "compile_pdf_status_event";
+   public static final String CompilePdfCompletedEvent = "compile_pdf_completed_event";
    public static final String FindResult = "find_result";
    public static final String FindOperationEnded = "find_operation_ended";
    public static final String ViewPdf = "view_pdf";

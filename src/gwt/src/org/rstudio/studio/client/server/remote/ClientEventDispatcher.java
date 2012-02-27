@@ -24,6 +24,10 @@ import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
+import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
+import org.rstudio.studio.client.common.compilepdf.events.CompilePdfErrorsEvent;
+import org.rstudio.studio.client.common.compilepdf.events.CompilePdfOutputEvent;
+import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent;
 import org.rstudio.studio.client.common.console.ConsoleProcessCreatedEvent;
 import org.rstudio.studio.client.common.console.ServerConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ServerConsolePromptEvent;
@@ -48,9 +52,6 @@ import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAddedEvent;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
-import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfErrorsEvent;
-import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfOutputEvent;
-import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfStatusEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfError;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
@@ -313,6 +314,11 @@ public class ClientEventDispatcher
             eventBus_.fireEvent(new ServerProcessExitEvent(data.getHandle(),
                                                           data.getExitCode()));
          }
+         else if (type.equals(ClientEvent.CompilePdfStartedEvent))
+         {
+            String targetFile = event.getData();
+            eventBus_.fireEvent(new CompilePdfStartedEvent(targetFile));
+         }
          else if (type.equals(ClientEvent.CompilePdfOutputEvent))
          {
             String output = event.getData();
@@ -323,10 +329,10 @@ public class ClientEventDispatcher
             JsArray<CompilePdfError> data = event.getData();
             eventBus_.fireEvent(new CompilePdfErrorsEvent(data));
          }
-         else if (type.equals(ClientEvent.CompilePdfStatusEvent))
+         else if (type.equals(ClientEvent.CompilePdfCompletedEvent))
          {
-            CompilePdfStatusEvent.Data data = event.getData();
-            eventBus_.fireEvent(new CompilePdfStatusEvent(data));
+            boolean succeeded = event.<Bool>getData().getValue();
+            eventBus_.fireEvent(new CompilePdfCompletedEvent(succeeded));
          }
          else if (type.equals(ClientEvent.FindResult))
          {

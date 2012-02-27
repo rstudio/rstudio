@@ -16,6 +16,10 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
+import org.rstudio.studio.client.common.compilepdf.events.CompilePdfErrorsEvent;
+import org.rstudio.studio.client.common.compilepdf.events.CompilePdfOutputEvent;
+import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -23,10 +27,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 
-import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfStatusEvent;
-import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
-import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfOutputEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfState;
 
 public class CompilePdfOutputTab extends DelayLoadWorkbenchTab<CompilePdfOutputPresenter>
@@ -34,9 +35,10 @@ public class CompilePdfOutputTab extends DelayLoadWorkbenchTab<CompilePdfOutputP
    public abstract static class Shim extends
                 DelayLoadTabShim<CompilePdfOutputPresenter, CompilePdfOutputTab>
       implements CompilePdfEvent.Handler,
+                 CompilePdfStartedEvent.Handler,
                  CompilePdfOutputEvent.Handler, 
                  CompilePdfErrorsEvent.Handler,
-                 CompilePdfStatusEvent.Handler
+                 CompilePdfCompletedEvent.Handler
    {
       abstract void initialize(CompilePdfState compilePdfState);
       abstract void confirmClose(Command onConfirmed);
@@ -53,7 +55,8 @@ public class CompilePdfOutputTab extends DelayLoadWorkbenchTab<CompilePdfOutputP
       events.addHandler(CompilePdfEvent.TYPE, shim);
       events.addHandler(CompilePdfOutputEvent.TYPE, shim);
       events.addHandler(CompilePdfErrorsEvent.TYPE, shim);
-      events.addHandler(CompilePdfStatusEvent.TYPE, shim);
+      events.addHandler(CompilePdfStartedEvent.TYPE, shim);
+      events.addHandler(CompilePdfCompletedEvent.TYPE, shim);
       
       events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
          @Override

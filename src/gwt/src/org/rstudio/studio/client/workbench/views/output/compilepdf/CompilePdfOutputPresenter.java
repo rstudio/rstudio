@@ -28,6 +28,10 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
+import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
+import org.rstudio.studio.client.common.compilepdf.events.CompilePdfErrorsEvent;
+import org.rstudio.studio.client.common.compilepdf.events.CompilePdfOutputEvent;
+import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -35,10 +39,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
-import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
-import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfOutputEvent;
-import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfStatusEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfError;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfServerOperations;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfState;
@@ -46,9 +47,10 @@ import org.rstudio.studio.client.workbench.views.output.compilepdf.model.Compile
 
 public class CompilePdfOutputPresenter extends BasePresenter
    implements CompilePdfEvent.Handler,
+              CompilePdfStartedEvent.Handler,
               CompilePdfOutputEvent.Handler, 
               CompilePdfErrorsEvent.Handler,
-              CompilePdfStatusEvent.Handler
+              CompilePdfCompletedEvent.Handler
 {
    public interface Display extends WorkbenchView, HasEnsureHiddenHandlers
    {
@@ -193,19 +195,18 @@ public class CompilePdfOutputPresenter extends BasePresenter
       view_.showErrors(event.getErrors());
    }
    
-   @Override
-   public void onCompilePdfStatus(CompilePdfStatusEvent event)
+   @Override 
+   public void onCompilePdfStarted(CompilePdfStartedEvent event)
    {
-      if (event.getStatus() == CompilePdfStatusEvent.STARTED)
-      {
-         compileStarted(event.getText());
-      }
-      else if (event.getStatus() == CompilePdfStatusEvent.COMPLETED)
-      {
-         compileCompleted();
-      }
+      compileStarted(event.getTargetFile());
    }
-
+   
+   @Override 
+   public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
+   {
+      compileCompleted();
+   }
+   
    @Override
    public void onSelected()
    {

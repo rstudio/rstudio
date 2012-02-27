@@ -95,7 +95,7 @@ public:
       errors_ = errors;
    }
 
-   void onStopped()
+   void onCompleted()
    {
       running_ = false;
    }
@@ -164,18 +164,23 @@ void enqueOutputEvent(const std::string& output)
    module_context::enqueClientEvent(event);
 }
 
-void enqueStatusEvent(int status, const std::string& text = std::string())
+void enqueStartedEvent(const std::string& targetFile)
 {
-   if (status == kStatusStarted)
-      s_compilePdfState.onStarted(text);
-   else if (status == kStatusCompleted)
-      s_compilePdfState.onStopped();
+   s_compilePdfState.onStarted(targetFile);
 
-   json::Object dataJson;
-   dataJson["status"] = status;
-   dataJson["text"] = text;
-   ClientEvent event(client_events::kCompilePdfStatusEvent, dataJson);
+   ClientEvent event(client_events::kCompilePdfStartedEvent,
+                     targetFile);
    module_context::enqueClientEvent(event);
+
+}
+
+void enqueCompletedEvent(bool succeeded)
+{
+    s_compilePdfState.onCompleted();
+
+    ClientEvent event(client_events::kCompilePdfCompletedEvent,
+                      succeeded);
+    module_context::enqueClientEvent(event);
 }
 
 void enqueErrorsEvent(const json::Array& logEntriesJson)
@@ -434,7 +439,8 @@ private:
    void start()
    {
       // enque started event
-      enqueStartedEvent();
+      enqueStartedEvent(
+              module_context::createAliasedPath(targetFilePath_));
 
       // ensure no spaces in path
       std::string filename = targetFilePath_.filename();
@@ -611,6 +617,8 @@ private:
 
          if (onCompleted_)
             onCompleted_();
+
+         enqueCompletedEvent(true);
       }
       else
       {
@@ -628,34 +636,21 @@ private:
                                            % exitStatus));
             enqueOutputEvent(msg + "\n");
          }
-      }
 
-      // fire event indicating completion
-      enqueCompletedEvent();
+         enqueCompletedEvent(false);
+      }
    }
 
    void terminateWithError(const std::string& message)
    {
       enqueOutputEvent(message + "\n");
-      enqueCompletedEvent();
+      enqueCompletedEvent(false);
    }
 
    void terminateWithErrorLogEntries(const core::tex::LogEntries& logEntries)
    {
       showLogEntries(logEntries);
-      enqueCompletedEvent();
-   }
-
-   void enqueStartedEvent()
-   {
-      enqueStatusEvent(
-               kStatusStarted,
-               module_context::createAliasedPath(targetFilePath_));
-   }
-
-   void enqueCompletedEvent()
-   {
-      enqueStatusEvent(kStatusCompleted);
+      enqueCompletedEvent(false);
    }
 
 private:

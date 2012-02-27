@@ -1,5 +1,5 @@
 /*
- * CompilePdfOutputEvent.java
+ * CompilePdfStartedEvent.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,28 +10,28 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.output.compilepdf.events;
+package org.rstudio.studio.client.common.compilepdf.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class CompilePdfOutputEvent extends GwtEvent<CompilePdfOutputEvent.Handler>
-{
+public class CompilePdfStartedEvent extends GwtEvent<CompilePdfStartedEvent.Handler>
+{  
    public interface Handler extends EventHandler
    {
-      void onCompilePdfOutput(CompilePdfOutputEvent event);
+      void onCompilePdfStarted(CompilePdfStartedEvent event);
    }
 
-   public CompilePdfOutputEvent(String output)
+   public CompilePdfStartedEvent(String targetFile)
    {
-      output_ = output;
-   }
-   
-   public String getOutput()
-   {
-      return output_;
+      targetFile_ = targetFile;
    }
 
+   public String getTargetFile()
+   {
+      return targetFile_;
+   }
+    
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -41,10 +41,10 @@ public class CompilePdfOutputEvent extends GwtEvent<CompilePdfOutputEvent.Handle
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onCompilePdfOutput(this);
+      handler.onCompilePdfStarted(this);
    }
    
-   private String output_;
+   private final String targetFile_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }
