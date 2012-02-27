@@ -19,6 +19,7 @@ import org.rstudio.studio.client.pdfviewer.events.ViewPdfEvent;
 import org.rstudio.studio.client.pdfviewer.events.ViewPdfHandler;
 import org.rstudio.studio.client.pdfviewer.model.PDFViewerParams;
 
+import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -42,8 +43,17 @@ public class PDFViewer implements ViewPdfHandler
       // open the window 
       satelliteManager_.openSatellite(PDFViewerApplication.NAME,     
                                       params,
-                                      new Size(800,900)); 
+                                      getPreferredWindowSize()); 
       
+   }
+   
+   private Size getPreferredWindowSize()
+   {
+      Size windowBounds = new Size(Window.getClientWidth(),
+                                   Window.getClientHeight());
+
+      return new Size(Math.min(windowBounds.width - 100, 1200),
+                      windowBounds.height - 25);
    }
    
 
