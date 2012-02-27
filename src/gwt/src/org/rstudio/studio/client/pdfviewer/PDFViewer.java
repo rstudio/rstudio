@@ -14,9 +14,11 @@ package org.rstudio.studio.client.pdfviewer;
 
 import org.rstudio.core.client.Size;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
+import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
-import org.rstudio.studio.client.pdfviewer.events.ViewPdfEvent;
-import org.rstudio.studio.client.pdfviewer.events.ViewPdfHandler;
+import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
+import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerHandler;
 import org.rstudio.studio.client.pdfviewer.model.PDFViewerParams;
 
 import com.google.gwt.user.client.Window;
@@ -24,28 +26,50 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class PDFViewer implements ViewPdfHandler
+public class PDFViewer 
 {
    @Inject
    public PDFViewer(EventBus eventBus,
-                    SatelliteManager satelliteManager)
-   {
-      eventBus.addHandler(ViewPdfEvent.TYPE, this);
-      satelliteManager_ = satelliteManager;
+                    final SatelliteManager satelliteManager)
+   {  
+      eventBus.addHandler(ShowPDFViewerEvent.TYPE, 
+                          new ShowPDFViewerHandler() 
+      {
+         @Override
+         public void onShowPDFViewer(ShowPDFViewerEvent event)
+         {
+            // setup params
+            PDFViewerParams params = PDFViewerParams.create(runningTargetFile_);
+                         
+            // open the window 
+            satelliteManager.openSatellite(PDFViewerApplication.NAME,     
+                                            params,
+                                            getPreferredWindowSize());   
+         }
+      });
+      
+      eventBus.addHandler(CompilePdfStartedEvent.TYPE, 
+                          new CompilePdfStartedEvent.Handler()
+      { 
+         @Override
+         public void onCompilePdfStarted(CompilePdfStartedEvent event)
+         {
+            runningTargetFile_ = event.getTargetFile();
+         }
+      });
+      
+      eventBus.addHandler(CompilePdfCompletedEvent.TYPE,
+                          new CompilePdfCompletedEvent.Handler()
+      {
+         
+         @Override
+         public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
+         {
+            runningTargetFile_ = null;
+         }
+      });
    }
 
-   @Override
-   public void onViewPdf(ViewPdfEvent event)
-   {
-      // setup params
-      PDFViewerParams params = PDFViewerParams.create(event.getPdfUrl());
-                   
-      // open the window 
-      satelliteManager_.openSatellite(PDFViewerApplication.NAME,     
-                                      params,
-                                      getPreferredWindowSize()); 
-      
-   }
    
    private Size getPreferredWindowSize()
    {
@@ -56,6 +80,5 @@ public class PDFViewer implements ViewPdfHandler
                       windowBounds.height - 25);
    }
    
-
-   private final SatelliteManager satelliteManager_;
+   private String runningTargetFile_ = null;
 }

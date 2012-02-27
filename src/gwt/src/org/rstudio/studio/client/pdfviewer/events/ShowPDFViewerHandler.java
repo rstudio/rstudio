@@ -1,5 +1,5 @@
 /*
- * ViewPdfHandler.java
+ * ShowPDFViewerHandler.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -14,7 +14,7 @@ package org.rstudio.studio.client.pdfviewer.events;
 
 import com.google.gwt.event.shared.EventHandler;
 
-public interface ViewPdfHandler extends EventHandler
+public interface ShowPDFViewerHandler extends EventHandler
 {
-   void onViewPdf(ViewPdfEvent event);
+   void onShowPDFViewer(ShowPDFViewerEvent event);
 }

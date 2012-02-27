@@ -33,7 +33,6 @@ public class PDFViewerPresenter implements IsWidget
 
    public void onActivated(PDFViewerParams params)
    {
-      view_.setURL(params.getURL());
    }
    
    @Override
