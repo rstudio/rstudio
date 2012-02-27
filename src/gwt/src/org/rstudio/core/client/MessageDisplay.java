@@ -12,9 +12,12 @@
  */
 package org.rstudio.core.client;
 
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Focusable;
+
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.*;
-import org.rstudio.core.client.widget.DialogBuilder;
+import org.rstudio.studio.client.common.GlobalDisplay;
 
 public abstract class MessageDisplay
 {
@@ -244,5 +247,32 @@ public abstract class MessageDisplay
                                 CanFocus focusAfter)
    {
       showMessage(MSG_ERROR, caption, message, focusAfter);
+   }
+   
+   public void showPopupBlockedMessage(Operation yesOperation)
+   {
+      showYesNoMessage(
+            GlobalDisplay.MSG_POPUP_BLOCKED,
+            "Popup Blocked",
+            "We attempted to open an external browser window, but " +
+            "the action was prevented by your popup blocker. You " +
+            "can attempt to open the window again by pressing the " +
+            "\"Try Again\" button below.\n\n" +
+            "NOTE: To prevent seeing this message in the future, you " +
+            "should configure your browser to allow popup windows " +
+            "for " + Window.Location.getHostName() + ".",
+            false,
+            yesOperation,
+            new Operation()
+            {
+               public void execute()
+               {
+
+               }
+            },
+            null,
+            "Try Again",
+            "Cancel",
+            true);
    }
 }

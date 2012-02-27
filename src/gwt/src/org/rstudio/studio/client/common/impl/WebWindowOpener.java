@@ -135,46 +135,24 @@ public class WebWindowOpener implements WindowOpener
       {
          if (showPopupBlockedMessage())
          {
-            globalDisplay.showYesNoMessage(
-                  GlobalDisplay.MSG_POPUP_BLOCKED,
-                  "Popup Blocked",
-                  "We attempted to open an external browser window, but " +
-                  "the action was prevented by your popup blocker. You " +
-                  "can attempt to open the window again by pressing the " +
-                  "\"Try Again\" button below.\n\n" +
-                  "NOTE: To prevent seeing this message in the future, you " +
-                  "should configure your browser to allow popup windows " +
-                  "for " + Window.Location.getHostName() + ".",
-                  false,
-                  new Operation()
+            globalDisplay.showPopupBlockedMessage(new Operation()
+            {
+               public void execute()
+               {
+                  WindowEx window = doOpenWindow(absUrl,
+                                                 finalName,
+                                                 features,
+                                                 focus);
+                  if (window != null)
                   {
-                     public void execute()
-                     {
-                        WindowEx window = doOpenWindow(absUrl,
-                                                       finalName,
-                                                       features,
-                                                       focus);
-                        if (window != null)
-                        {
-                           if (width > 0 && height > 0)
-                              window.resizeInnerTo(width, height);
-                           if (openOperation != null)
-                              openOperation.execute(window);
-                        }
-                     }
-                  },
-                  new Operation()
-                  {
-                     public void execute()
-                     {
-   
-                     }
-                  },
-                  null,
-                  "Try Again",
-                  "Cancel",
-                  true);
-            }
+                     if (width > 0 && height > 0)
+                        window.resizeInnerTo(width, height);
+                     if (openOperation != null)
+                        openOperation.execute(window);
+                  }
+               }
+            });
+         }
       }
       else
       {
