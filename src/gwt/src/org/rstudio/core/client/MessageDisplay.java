@@ -15,7 +15,6 @@ package org.rstudio.core.client;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Focusable;
 
-import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.GlobalDisplay;
 
