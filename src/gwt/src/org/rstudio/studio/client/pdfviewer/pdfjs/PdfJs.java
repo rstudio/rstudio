@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.pdfviewer.pdfjs;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.user.client.Command;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
@@ -31,7 +33,17 @@ public class PdfJs
          {
             if (!initialized_)
             {
-               initialize(PdfJsResources.INSTANCE.pdfjs().getSafeUri().asString());
+               PdfJsResources resources = PdfJsResources.INSTANCE;
+
+               LinkElement styleLink = Document.get().createLinkElement();
+               styleLink.setType("text/css");
+               styleLink.setRel("stylesheet");
+               styleLink.setHref(resources.viewerCss().getSafeUri().asString());
+               Document.get().getElementsByTagName("head").getItem(0)
+                     .appendChild(styleLink);
+
+               initialize(resources.pdfjs().getSafeUri().asString());
+
                initialized_ = true;
             }
 

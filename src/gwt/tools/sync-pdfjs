@@ -3,20 +3,32 @@
 set -e
 
 if [ ! -d "./pdfjs" ]; then
-    git clone git://github.com/mozilla/pdf.js.git pdfjs
+    git clone git://github.com/rstudio/pdf.js.git pdfjs
+    cd pdfjs
+    git remote add upstream git://github.com/mozilla/pdf.js.git
+    cd ..
 fi
 
 cd pdfjs
 git clean -dfx
 
 # Use this commit
-git checkout f4aff1d8486a98e61c8caadc3a43e81fd8f55d59
+git checkout 4a9c1ac4831077dc52e4f7591d6a78e1851d3152
 
 make
 cd ..
 
-CC_OPTS="--compilation_level SIMPLE_OPTIMIZATIONS --language_in ECMASCRIPT5"
-java -jar "compiler/compiler.jar" $CC_OPTS --js pdfjs/build/pdf.js --js_output_file pdfjs/build/pdf.min.js
+cat pdfjs/web/compatibility.js \
+  pdfjs/build/pdf.js \
+  pdfjs/web/debugger.js \
+  pdfjs/web/viewer.js \
+  > pdfjs/build/pdf_all.js
 
-cp pdfjs/build/pdf.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/pdf.js
-cp pdfjs/build/pdf.min.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/pdf.min.js
+
+CC_OPTS="--compilation_level SIMPLE_OPTIMIZATIONS --language_in ECMASCRIPT5"
+java -jar "compiler/compiler.jar" $CC_OPTS --js pdfjs/build/pdf_all.js --js_output_file pdfjs/build/pdf_all.min.js
+
+cp pdfjs/build/pdf_all.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/pdf_all.js
+cp pdfjs/build/pdf_all.min.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/pdf_all.min.js
+
+cp pdfjs/web/viewer.css ../src/org/rstudio/studio/client/pdfviewer/pdfjs/viewer.css

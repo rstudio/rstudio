@@ -1,13 +1,249 @@
 /* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
+'use strict';
+
+// Checking if the typed arrays are supported
+(function checkTypedArrayCompatibility() {
+  if (typeof Uint8Array !== 'undefined') {
+    // some mobile version might not support Float64Array
+    if (typeof Float64Array === 'undefined')
+      window.Float64Array = Float32Array;
+
+    return;
+  }
+
+  function subarray(start, end) {
+    return new TypedArray(this.slice(start, end));
+  }
+
+  function setArrayOffset(array, offset) {
+    if (arguments.length < 2)
+      offset = 0;
+    for (var i = 0, n = array.length; i < n; ++i, ++offset)
+      this[offset] = array[i] & 0xFF;
+  }
+
+  function TypedArray(arg1) {
+    var result;
+    if (typeof arg1 === 'number') {
+      result = [];
+      for (var i = 0; i < arg1; ++i)
+        result[i] = 0;
+    } else
+      result = arg1.slice(0);
+
+    result.subarray = subarray;
+    result.buffer = result;
+    result.byteLength = result.length;
+    result.set = setArrayOffset;
+
+    if (typeof arg1 === 'object' && arg1.buffer)
+      result.buffer = arg1.buffer;
+
+    return result;
+  }
+
+  window.Uint8Array = TypedArray;
+
+  // we don't need support for set, byteLength for 32-bit array
+  // so we can use the TypedArray as well
+  window.Uint32Array = TypedArray;
+  window.Int32Array = TypedArray;
+  window.Uint16Array = TypedArray;
+  window.Float32Array = TypedArray;
+  window.Float64Array = TypedArray;
+})();
+
+// Object.create() ?
+(function checkObjectCreateCompatibility() {
+  if (typeof Object.create !== 'undefined')
+    return;
+
+  Object.create = function objectCreate(proto) {
+    var constructor = function objectCreateConstructor() {};
+    constructor.prototype = proto;
+    return new constructor();
+  };
+})();
+
+// Object.defineProperty() ?
+(function checkObjectDefinePropertyCompatibility() {
+  if (typeof Object.defineProperty !== 'undefined')
+    return;
+
+  Object.defineProperty = function objectDefineProperty(obj, name, def) {
+    delete obj[name];
+    if ('get' in def)
+      obj.__defineGetter__(name, def['get']);
+    if ('set' in def)
+      obj.__defineSetter__(name, def['set']);
+    if ('value' in def) {
+      obj.__defineSetter__(name, function objectDefinePropertySetter(value) {
+        this.__defineGetter__(name, function objectDefinePropertyGetter() {
+          return value;
+        });
+        return value;
+      });
+      obj[name] = def.value;
+    }
+  };
+})();
+
+// Object.keys() ?
+(function checkObjectKeysCompatibility() {
+  if (typeof Object.keys !== 'undefined')
+    return;
+
+  Object.keys = function objectKeys(obj) {
+    var result = [];
+    for (var i in obj) {
+      if (obj.hasOwnProperty(i))
+        result.push(i);
+    }
+    return result;
+  };
+})();
+
+// No XMLHttpRequest.response ?
+(function checkXMLHttpRequestResponseCompatibility() {
+  var xhrPrototype = XMLHttpRequest.prototype;
+  if ('response' in xhrPrototype ||
+      'mozResponseArrayBuffer' in xhrPrototype ||
+      'mozResponse' in xhrPrototype ||
+      'responseArrayBuffer' in xhrPrototype)
+    return;
+  // IE ?
+  if (typeof VBArray !== 'undefined') {
+    Object.defineProperty(xhrPrototype, 'response', {
+      get: function xmlHttpRequestResponseGet() {
+        return new Uint8Array(new VBArray(this.responseBody).toArray());
+      }
+    });
+    return;
+  }
+
+  // other browsers
+  function responseTypeSetter() {
+    // will be only called to set "arraybuffer"
+    this.overrideMimeType('text/plain; charset=x-user-defined');
+  }
+  if (typeof xhrPrototype.overrideMimeType === 'function') {
+    Object.defineProperty(xhrPrototype, 'responseType',
+                          { set: responseTypeSetter });
+  }
+  function responseGetter() {
+    var text = this.responseText;
+    var i, n = text.length;
+    var result = new Uint8Array(n);
+    for (i = 0; i < n; ++i)
+      result[i] = text.charCodeAt(i) & 0xFF;
+    return result;
+  }
+  Object.defineProperty(xhrPrototype, 'response', { get: responseGetter });
+})();
+
+// window.btoa (base64 encode function) ?
+(function checkWindowBtoaCompatibility() {
+  if ('btoa' in window)
+    return;
+
+  var digits =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+
+  window.btoa = function windowBtoa(chars) {
+    var buffer = '';
+    var i, n;
+    for (i = 0, n = chars.length; i < n; i += 3) {
+      var b1 = chars.charCodeAt(i) & 0xFF;
+      var b2 = chars.charCodeAt(i + 1) & 0xFF;
+      var b3 = chars.charCodeAt(i + 2) & 0xFF;
+      var d1 = b1 >> 2, d2 = ((b1 & 3) << 4) | (b2 >> 4);
+      var d3 = i + 1 < n ? ((b2 & 0xF) << 2) | (b3 >> 6) : 64;
+      var d4 = i + 2 < n ? (b3 & 0x3F) : 64;
+      buffer += (digits.charAt(d1) + digits.charAt(d2) +
+                 digits.charAt(d3) + digits.charAt(d4));
+    }
+    return buffer;
+  };
+})();
+
+// Function.prototype.bind ?
+(function checkFunctionPrototypeBindCompatibility() {
+  if (typeof Function.prototype.bind !== 'undefined')
+    return;
+
+  Function.prototype.bind = function functionPrototypeBind(obj) {
+    var fn = this, headArgs = Array.prototype.slice.call(arguments, 1);
+    var bound = function functionPrototypeBindBound() {
+      var args = Array.prototype.concat.apply(headArgs, arguments);
+      return fn.apply(obj, args);
+    };
+    return bound;
+  };
+})();
+
+// IE9 text/html data URI
+(function checkDocumentDocumentModeCompatibility() {
+  if (!('documentMode' in document) || document.documentMode !== 9)
+    return;
+  // overriding the src property
+  var originalSrcDescriptor = Object.getOwnPropertyDescriptor(
+    HTMLIFrameElement.prototype, 'src');
+  Object.defineProperty(HTMLIFrameElement.prototype, 'src', {
+    get: function htmlIFrameElementPrototypeSrcGet() { return this.$src; },
+    set: function htmlIFrameElementPrototypeSrcSet(src) {
+      this.$src = src;
+      if (src.substr(0, 14) != 'data:text/html') {
+        originalSrcDescriptor.set.call(this, src);
+        return;
+      }
+      // for text/html, using blank document and then
+      // document's open, write, and close operations
+      originalSrcDescriptor.set.call(this, 'about:blank');
+      setTimeout((function htmlIFrameElementPrototypeSrcOpenWriteClose() {
+        var doc = this.contentDocument;
+        doc.open('text/html');
+        doc.write(src.substr(src.indexOf(',') + 1));
+        doc.close();
+      }).bind(this), 0);
+    },
+    enumerable: true
+  });
+})();
+
+// HTMLElement dataset property
+(function checkDatasetProperty() {
+  var div = document.createElement('div');
+  if ('dataset' in div)
+    return; // dataset property exists
+  var oldCreateElement = document.createElement;
+  document.createElement = function newCreateElement() {
+    var result = oldCreateElement.apply(document, arguments);
+    if (arguments[0] === 'div') {
+      // creating dataset property for the div elements
+      result.dataset = {};
+    }
+    return result;
+  };
+})();
+
+// Check console compatability
+(function checkConsoleCompatibility() {
+  if (typeof console == 'undefined') {
+    console = {log: function() {}};
+  }
+})();
+/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+
 var PDFJS = {};
 
 (function pdfjsWrapper() {
   // Use strict in our context only - users might not want it
   'use strict';
 
-  PDFJS.build = 'f4aff1d';
+  PDFJS.build = '4a9c1ac';
 
   // Files are inserted below - see Makefile
   /* PDFJSSCRIPT_INCLUDE_ALL */
@@ -1046,6 +1282,57 @@ var Util = (function UtilClosure() {
   return Util;
 })();
 
+// optimised CSS custom property getter/setter
+var CustomStyle = (function CustomStyleClosure() {
+
+  // As noted on: http://www.zachstronaut.com/posts/2009/02/17/
+  //              animate-css-transforms-firefox-webkit.html
+  // in some versions of IE9 it is critical that ms appear in this list
+  // before Moz
+  var prefixes = ['ms', 'Moz', 'Webkit', 'O'];
+  var _cache = { };
+
+  function CustomStyle() {
+  }
+
+  CustomStyle.getProp = function get(propName, element) {
+    // check cache only when no element is given
+    if (arguments.length == 1 && typeof _cache[propName] == 'string') {
+      return _cache[propName];
+    }
+
+    element = element || document.documentElement;
+    var style = element.style, prefixed, uPropName;
+
+    // test standard property first
+    if (typeof style[propName] == 'string') {
+      return (_cache[propName] = propName);
+    }
+
+    // capitalize
+    uPropName = propName.charAt(0).toUpperCase() + propName.slice(1);
+
+    // test vendor specific properties
+    for (var i = 0, l = prefixes.length; i < l; i++) {
+      prefixed = prefixes[i] + uPropName;
+      if (typeof style[prefixed] == 'string') {
+        return (_cache[propName] = prefixed);
+      }
+    }
+
+    //if all fails then set to undefined
+    return (_cache[propName] = 'undefined');
+  }
+
+  CustomStyle.setProp = function set(propName, element, str) {
+    var prop = this.getProp(propName);
+    if (prop != 'undefined')
+      element.style[prop] = str;
+  }
+
+  return CustomStyle;
+})();
+
 var PDFStringTranslateTable = [
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0x2D8, 0x2C7, 0x2C6, 0x2D9, 0x2DD, 0x2DB, 0x2DA, 0x2DC, 0, 0, 0, 0, 0, 0, 0,
@@ -2068,8 +2355,16 @@ var CanvasGraphics = (function CanvasGraphicsClosure() {
 
           x += charWidth;
 
-          text.str += glyph.unicode === ' ' ? '\u00A0' : glyph.unicode;
-          text.length++;
+          var glyphUnicode = glyph.unicode === ' ' ? '\u00A0' : glyph.unicode;
+          var glyphUnicodeLength = glyphUnicode.length;
+          //reverse an arabic ligature
+          if (glyphUnicodeLength > 1 &&
+              isRTLRangeFor(glyphUnicode.charCodeAt(0))) {
+            for (var ii = glyphUnicodeLength - 1; ii >= 0; ii--)
+              text.str += glyphUnicode[ii];
+          } else
+            text.str += glyphUnicode;
+          text.length += glyphUnicodeLength;
           text.canvasWidth += charWidth;
         }
         current.x += x * textHScale2;
@@ -2135,7 +2430,7 @@ var CanvasGraphics = (function CanvasGraphicsClosure() {
               text.str += shownText.str;
             }
             text.canvasWidth += shownText.canvasWidth;
-            text.length += e.length;
+            text.length += shownText.length;
           }
         } else {
           malformed('TJ array element ' + e + ' is not string or num');
@@ -12979,8 +13274,18 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
               } else {
                 // parsing hex UTF-16BE numbers
                 var str = [];
-                for (var i = 0, ii = token.length; i < ii; i += 4)
-                  str.push(parseInt(token.substr(i, 4), 16));
+                for (var k = 0, kk = token.length; k < kk; k += 4) {
+                  var b = parseInt(token.substr(k, 4), 16);
+                  if (b <= 0x10) {
+                    k += 4;
+                    b = (b << 16) | parseInt(token.substr(k, 4), 16);
+                    b -= 0x10000;
+                    str.push(0xD800 | (b >> 10));
+                    str.push(0xDC00 | (b & 0x3FF));
+                    break;
+                  }
+                  str.push(b);
+                }
                 tokens.push(String.fromCharCode.apply(String, str));
                 token = '';
               }
@@ -13261,6 +13566,7 @@ var kMaxWaitForFontFace = 1000;
 // Unicode Private Use Area
 var kCmapGlyphOffset = 0xE000;
 var kSizeOfGlyphArea = 0x1900;
+var kSymbolicFontGlyphOffset = 0xF000;
 
 // PDF Glyph Space Units are one Thousandth of a TextSpace Unit
 // except for Type 3 fonts
@@ -13282,269 +13588,241 @@ var FontFlags = {
 };
 
 var Encodings = {
-  get ExpertEncoding() {
-    return shadow(this, 'ExpertEncoding', ['', '', '', '', '', '', '', '', '',
-      '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
-      '', '', '', '', '', 'space', 'exclamsmall', 'Hungarumlautsmall', '',
-      'dollaroldstyle', 'dollarsuperior', 'ampersandsmall', 'Acutesmall',
-      'parenleftsuperior', 'parenrightsuperior', 'twodotenleader',
-      'onedotenleader', 'comma', 'hyphen', 'period', 'fraction',
-      'zerooldstyle', 'oneoldstyle', 'twooldstyle', 'threeoldstyle',
-      'fouroldstyle', 'fiveoldstyle', 'sixoldstyle', 'sevenoldstyle',
-      'eightoldstyle', 'nineoldstyle', 'colon', 'semicolon', 'commasuperior',
-      'threequartersemdash', 'periodsuperior', 'questionsmall', '',
-      'asuperior', 'bsuperior', 'centsuperior', 'dsuperior', 'esuperior', '',
-      '', 'isuperior', '', '', 'lsuperior', 'msuperior', 'nsuperior',
-      'osuperior', '', '', 'rsuperior', 'ssuperior', 'tsuperior', '', 'ff',
-      'fi', 'fl', 'ffi', 'ffl', 'parenleftinferior', '', 'parenrightinferior',
-      'Circumflexsmall', 'hyphensuperior', 'Gravesmall', 'Asmall', 'Bsmall',
-      'Csmall', 'Dsmall', 'Esmall', 'Fsmall', 'Gsmall', 'Hsmall', 'Ismall',
-      'Jsmall', 'Ksmall', 'Lsmall', 'Msmall', 'Nsmall', 'Osmall', 'Psmall',
-      'Qsmall', 'Rsmall', 'Ssmall', 'Tsmall', 'Usmall', 'Vsmall', 'Wsmall',
-      'Xsmall', 'Ysmall', 'Zsmall', 'colonmonetary', 'onefitted', 'rupiah',
-      'Tildesmall', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
-      '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
-      '', 'exclamdownsmall', 'centoldstyle', 'Lslashsmall', '', '',
-      'Scaronsmall', 'Zcaronsmall', 'Dieresissmall', 'Brevesmall',
-      'Caronsmall', '', 'Dotaccentsmall', '', '', 'Macronsmall', '', '',
-      'figuredash', 'hypheninferior', '', '', 'Ogoneksmall', 'Ringsmall',
-      'Cedillasmall', '', '', '', 'onequarter', 'onehalf', 'threequarters',
-      'questiondownsmall', 'oneeighth', 'threeeighths', 'fiveeighths',
-      'seveneighths', 'onethird', 'twothirds', '', '', 'zerosuperior',
-      'onesuperior', 'twosuperior', 'threesuperior', 'foursuperior',
-      'fivesuperior', 'sixsuperior', 'sevensuperior', 'eightsuperior',
-      'ninesuperior', 'zeroinferior', 'oneinferior', 'twoinferior',
-      'threeinferior', 'fourinferior', 'fiveinferior', 'sixinferior',
-      'seveninferior', 'eightinferior', 'nineinferior', 'centinferior',
-      'dollarinferior', 'periodinferior', 'commainferior', 'Agravesmall',
-      'Aacutesmall', 'Acircumflexsmall', 'Atildesmall', 'Adieresissmall',
-      'Aringsmall', 'AEsmall', 'Ccedillasmall', 'Egravesmall', 'Eacutesmall',
-      'Ecircumflexsmall', 'Edieresissmall', 'Igravesmall', 'Iacutesmall',
-      'Icircumflexsmall', 'Idieresissmall', 'Ethsmall', 'Ntildesmall',
-      'Ogravesmall', 'Oacutesmall', 'Ocircumflexsmall', 'Otildesmall',
-      'Odieresissmall', 'OEsmall', 'Oslashsmall', 'Ugravesmall', 'Uacutesmall',
-      'Ucircumflexsmall', 'Udieresissmall', 'Yacutesmall', 'Thornsmall',
-      'Ydieresissmall'
-    ]);
-  },
-  get MacExpertEncoding() {
-    return shadow(this, 'MacExpertEncoding', ['', '', '', '', '', '', '', '',
-      '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
-      '', '', '', '', '', '', 'space', 'exclamsmall', 'Hungarumlautsmall',
-      'centoldstyle', 'dollaroldstyle', 'dollarsuperior', 'ampersandsmall',
-      'Acutesmall', 'parenleftsuperior', 'parenrightsuperior',
-      'twodotenleader', 'onedotenleader', 'comma', 'hyphen', 'period',
-      'fraction', 'zerooldstyle', 'oneoldstyle', 'twooldstyle',
-      'threeoldstyle', 'fouroldstyle', 'fiveoldstyle', 'sixoldstyle',
-      'sevenoldstyle', 'eightoldstyle', 'nineoldstyle', 'colon', 'semicolon',
-      '', 'threequartersemdash', '', 'questionsmall', '', '', '', '',
-      'Ethsmall', '', '', 'onequarter', 'onehalf', 'threequarters',
-      'oneeighth', 'threeeighths', 'fiveeighths', 'seveneighths', 'onethird',
-      'twothirds', '', '', '', '', '', '', 'ff', 'fi', 'fl', 'ffi', 'ffl',
-      'parenleftinferior', '', 'parenrightinferior', 'Circumflexsmall',
-      'hypheninferior', 'Gravesmall', 'Asmall', 'Bsmall', 'Csmall', 'Dsmall',
-      'Esmall', 'Fsmall', 'Gsmall', 'Hsmall', 'Ismall', 'Jsmall', 'Ksmall',
-      'Lsmall', 'Msmall', 'Nsmall', 'Osmall', 'Psmall', 'Qsmall', 'Rsmall',
-      'Ssmall', 'Tsmall', 'Usmall', 'Vsmall', 'Wsmall', 'Xsmall', 'Ysmall',
-      'Zsmall', 'colonmonetary', 'onefitted', 'rupiah', 'Tildesmall', '', '',
-      'asuperior', 'centsuperior', '', '', '', '', 'Aacutesmall',
-      'Agravesmall', 'Acircumflexsmall', 'Adieresissmall', 'Atildesmall',
-      'Aringsmall', 'Ccedillasmall', 'Eacutesmall', 'Egravesmall',
-      'Ecircumflexsmall', 'Edieresissmall', 'Iacutesmall', 'Igravesmall',
-      'Icircumflexsmall', 'Idieresissmall', 'Ntildesmall', 'Oacutesmall',
-      'Ogravesmall', 'Ocircumflexsmall', 'Odieresissmall', 'Otildesmall',
-      'Uacutesmall', 'Ugravesmall', 'Ucircumflexsmall', 'Udieresissmall', '',
-      'eightsuperior', 'fourinferior', 'threeinferior', 'sixinferior',
-      'eightinferior', 'seveninferior', 'Scaronsmall', '', 'centinferior',
-      'twoinferior', '', 'Dieresissmall', '', 'Caronsmall', 'osuperior',
-      'fiveinferior', '', 'commainferior', 'periodinferior', 'Yacutesmall', '',
-      'dollarinferior', '', 'Thornsmall', '', 'nineinferior', 'zeroinferior',
-      'Zcaronsmall', 'AEsmall', 'Oslashsmall', 'questiondownsmall',
-      'oneinferior', 'Lslashsmall', '', '', '', '', '', '', 'Cedillasmall', '',
-      '', '', '', '', 'OEsmall', 'figuredash', 'hyphensuperior', '', '', '',
-      '', 'exclamdownsmall', '', 'Ydieresissmall', '', 'onesuperior',
-      'twosuperior', 'threesuperior', 'foursuperior', 'fivesuperior',
-      'sixsuperior', 'sevensuperior', 'ninesuperior', 'zerosuperior', '',
-      'esuperior', 'rsuperior', 'tsuperior', '', '', 'isuperior', 'ssuperior',
-      'dsuperior', '', '', '', '', '', 'lsuperior', 'Ogoneksmall',
-      'Brevesmall', 'Macronsmall', 'bsuperior', 'nsuperior', 'msuperior',
-      'commasuperior', 'periodsuperior', 'Dotaccentsmall', 'Ringsmall'
-    ]);
-  },
-  get MacRomanEncoding() {
-    return shadow(this, 'MacRomanEncoding', ['', '', '', '', '', '', '', '',
-      '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
-      '', '', '', '', '', '', 'space', 'exclam', 'quotedbl', 'numbersign',
-      'dollar', 'percent', 'ampersand', 'quotesingle', 'parenleft',
-      'parenright', 'asterisk', 'plus', 'comma', 'hyphen', 'period', 'slash',
-      'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight',
-      'nine', 'colon', 'semicolon', 'less', 'equal', 'greater', 'question',
-      'at', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-      'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-      'bracketleft', 'backslash', 'bracketright', 'asciicircum', 'underscore',
-      'grave', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-      'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-      'braceleft', 'bar', 'braceright', 'asciitilde', '', 'Adieresis', 'Aring',
-      'Ccedilla', 'Eacute', 'Ntilde', 'Odieresis', 'Udieresis', 'aacute',
-      'agrave', 'acircumflex', 'adieresis', 'atilde', 'aring', 'ccedilla',
-      'eacute', 'egrave', 'ecircumflex', 'edieresis', 'iacute', 'igrave',
-      'icircumflex', 'idieresis', 'ntilde', 'oacute', 'ograve', 'ocircumflex',
-      'odieresis', 'otilde', 'uacute', 'ugrave', 'ucircumflex', 'udieresis',
-      'dagger', 'degree', 'cent', 'sterling', 'section', 'bullet', 'paragraph',
-      'germandbls', 'registered', 'copyright', 'trademark', 'acute',
-      'dieresis', 'notequal', 'AE', 'Oslash', 'infinity', 'plusminus',
-      'lessequal', 'greaterequal', 'yen', 'mu', 'partialdiff', 'summation',
-      'product', 'pi', 'integral', 'ordfeminine', 'ordmasculine', 'Omega',
-      'ae', 'oslash', 'questiondown', 'exclamdown', 'logicalnot', 'radical',
-      'florin', 'approxequal', 'Delta', 'guillemotleft', 'guillemotright',
-      'ellipsis', 'space', 'Agrave', 'Atilde', 'Otilde', 'OE', 'oe', 'endash',
-      'emdash', 'quotedblleft', 'quotedblright', 'quoteleft', 'quoteright',
-      'divide', 'lozenge', 'ydieresis', 'Ydieresis', 'fraction', 'currency',
-      'guilsinglleft', 'guilsinglright', 'fi', 'fl', 'daggerdbl',
-      'periodcentered', 'quotesinglbase', 'quotedblbase', 'perthousand',
-      'Acircumflex', 'Ecircumflex', 'Aacute', 'Edieresis', 'Egrave', 'Iacute',
-      'Icircumflex', 'Idieresis', 'Igrave', 'Oacute', 'Ocircumflex', 'apple',
-      'Ograve', 'Uacute', 'Ucircumflex', 'Ugrave', 'dotlessi', 'circumflex',
-      'tilde', 'macron', 'breve', 'dotaccent', 'ring', 'cedilla',
-      'hungarumlaut', 'ogonek', 'caron'
-    ]);
-  },
-  get StandardEncoding() {
-    return shadow(this, 'StandardEncoding', ['', '', '', '', '', '', '', '',
-      '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
-      '', '', '', '', '', '', 'space', 'exclam', 'quotedbl', 'numbersign',
-      'dollar', 'percent', 'ampersand', 'quoteright', 'parenleft',
-      'parenright', 'asterisk', 'plus', 'comma', 'hyphen', 'period', 'slash',
-      'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight',
-      'nine', 'colon', 'semicolon', 'less', 'equal', 'greater', 'question',
-      'at', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-      'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-      'bracketleft', 'backslash', 'bracketright', 'asciicircum', 'underscore',
-      'quoteleft', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
-      'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-      'braceleft', 'bar', 'braceright', 'asciitilde', '', '', '', '', '', '',
-      '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
-      '', '', '', '', '', '', '', '', '', '', 'exclamdown', 'cent', 'sterling',
-      'fraction', 'yen', 'florin', 'section', 'currency', 'quotesingle',
-      'quotedblleft', 'guillemotleft', 'guilsinglleft', 'guilsinglright', 'fi',
-      'fl', '', 'endash', 'dagger', 'daggerdbl', 'periodcentered', '',
-      'paragraph', 'bullet', 'quotesinglbase', 'quotedblbase', 'quotedblright',
-      'guillemotright', 'ellipsis', 'perthousand', '', 'questiondown', '',
-      'grave', 'acute', 'circumflex', 'tilde', 'macron', 'breve', 'dotaccent',
-      'dieresis', '', 'ring', 'cedilla', '', 'hungarumlaut', 'ogonek', 'caron',
-      'emdash', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
-      'AE', '', 'ordfeminine', '', '', '', '', 'Lslash', 'Oslash', 'OE',
-      'ordmasculine', '', '', '', '', '', 'ae', '', '', '', 'dotlessi', '', '',
-      'lslash', 'oslash', 'oe', 'germandbls'
-    ]);
-  },
-  get WinAnsiEncoding() {
-    return shadow(this, 'WinAnsiEncoding', ['', '', '', '', '', '', '', '', '',
-      '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
-      '', '', '', '', '', 'space', 'exclam', 'quotedbl', 'numbersign',
-      'dollar', 'percent', 'ampersand', 'quotesingle', 'parenleft',
-      'parenright', 'asterisk', 'plus', 'comma', 'hyphen', 'period', 'slash',
-      'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight',
-      'nine', 'colon', 'semicolon', 'less', 'equal', 'greater', 'question',
-      'at', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-      'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-      'bracketleft', 'backslash', 'bracketright', 'asciicircum', 'underscore',
-      'grave', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-      'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-      'braceleft', 'bar', 'braceright', 'asciitilde', 'bullet', 'Euro',
-      'bullet', 'quotesinglbase', 'florin', 'quotedblbase', 'ellipsis',
-      'dagger', 'daggerdbl', 'circumflex', 'perthousand', 'Scaron',
-      'guilsinglleft', 'OE', 'bullet', 'Zcaron', 'bullet', 'bullet',
-      'quoteleft', 'quoteright', 'quotedblleft', 'quotedblright', 'bullet',
-      'endash', 'emdash', 'tilde', 'trademark', 'scaron', 'guilsinglright',
-      'oe', 'bullet', 'zcaron', 'Ydieresis', 'space', 'exclamdown', 'cent',
-      'sterling', 'currency', 'yen', 'brokenbar', 'section', 'dieresis',
-      'copyright', 'ordfeminine', 'guillemotleft', 'logicalnot', 'hyphen',
-      'registered', 'macron', 'degree', 'plusminus', 'twosuperior',
-      'threesuperior', 'acute', 'mu', 'paragraph', 'periodcentered',
-      'cedilla', 'onesuperior', 'ordmasculine', 'guillemotright', 'onequarter',
-      'onehalf', 'threequarters', 'questiondown', 'Agrave', 'Aacute',
-      'Acircumflex', 'Atilde', 'Adieresis', 'Aring', 'AE', 'Ccedilla',
-      'Egrave', 'Eacute', 'Ecircumflex', 'Edieresis', 'Igrave', 'Iacute',
-      'Icircumflex', 'Idieresis', 'Eth', 'Ntilde', 'Ograve', 'Oacute',
-      'Ocircumflex', 'Otilde', 'Odieresis', 'multiply', 'Oslash', 'Ugrave',
-      'Uacute', 'Ucircumflex', 'Udieresis', 'Yacute', 'Thorn', 'germandbls',
-      'agrave', 'aacute', 'acircumflex', 'atilde', 'adieresis', 'aring', 'ae',
-      'ccedilla', 'egrave', 'eacute', 'ecircumflex', 'edieresis', 'igrave',
-      'iacute', 'icircumflex', 'idieresis', 'eth', 'ntilde', 'ograve',
-      'oacute', 'ocircumflex', 'otilde', 'odieresis', 'divide', 'oslash',
-      'ugrave', 'uacute', 'ucircumflex', 'udieresis', 'yacute', 'thorn',
-      'ydieresis'
-    ]);
-  },
-  get symbolsEncoding() {
-    return shadow(this, 'symbolsEncoding', ['', '', '', '', '', '', '', '', '',
-      '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
-      '', '', '', '', '', 'space', 'exclam', 'universal', 'numbersign',
-      'existential', 'percent', 'ampersand', 'suchthat', 'parenleft',
-      'parenright', 'asteriskmath', 'plus', 'comma', 'minus', 'period',
-      'slash', 'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven',
-      'eight', 'nine', 'colon', 'semicolon', 'less', 'equal', 'greater',
-      'question', 'congruent', 'Alpha', 'Beta', 'Chi', 'Delta', 'Epsilon',
-      'Phi', 'Gamma', 'Eta', 'Iota', 'theta1', 'Kappa', 'Lambda', 'Mu', 'Nu',
-      'Omicron', 'Pi', 'Theta', 'Rho', 'Sigma', 'Tau', 'Upsilon', 'sigma1',
-      'Omega', 'Xi', 'Psi', 'Zeta', 'bracketleft', 'therefore', 'bracketright',
-      'perpendicular', 'underscore', 'radicalex', 'alpha', 'beta', 'chi',
-      'delta', 'epsilon', 'phi', 'gamma', 'eta', 'iota', 'phi1', 'kappa',
-      'lambda', 'mu', 'nu', 'omicron', 'pi', 'theta', 'rho', 'sigma', 'tau',
-      'upsilon', 'omega1', 'omega', 'xi', 'psi', 'zeta', 'braceleft', 'bar',
-      'braceright', 'similar', '', '', '', '', '', '', '', '', '', '', '', '',
-      '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
-      '', '', '', 'Euro', 'Upsilon1', 'minute', 'lessequal', 'fraction',
-      'infinity', 'florin', 'club', 'diamond', 'heart', 'spade', 'arrowboth',
-      'arrowleft', 'arrowup', 'arrowright', 'arrowdown', 'degree', 'plusminus',
-      'second', 'greaterequal', 'multiply', 'proportional', 'partialdiff',
-      'bullet', 'divide', 'notequal', 'equivalence', 'approxequal', 'ellipsis',
-      'arrowvertex', 'arrowhorizex', 'carriagereturn', 'aleph', 'Ifraktur',
-      'Rfraktur', 'weierstrass', 'circlemultiply', 'circleplus', 'emptyset',
-      'intersection', 'union', 'propersuperset', 'reflexsuperset', 'notsubset',
-      'propersubset', 'reflexsubset', 'element', 'notelement', 'angle',
-      'gradient', 'registerserif', 'copyrightserif', 'trademarkserif',
-      'product', 'radical', 'dotmath', 'logicalnot', 'logicaland', 'logicalor',
-      'arrowdblboth', 'arrowdblleft', 'arrowdblup', 'arrowdblright',
-      'arrowdbldown', 'lozenge', 'angleleft', 'registersans', 'copyrightsans',
-      'trademarksans', 'summation', 'parenlefttp', 'parenleftex',
-      'parenleftbt', 'bracketlefttp', 'bracketleftex', 'bracketleftbt',
-      'bracelefttp', 'braceleftmid', 'braceleftbt', 'braceex', '',
-      'angleright', 'integral', 'integraltp', 'integralex', 'integralbt',
-      'parenrighttp', 'parenrightex', 'parenrightbt', 'bracketrighttp',
-      'bracketrightex', 'bracketrightbt', 'bracerighttp', 'bracerightmid',
-      'bracerightbt'
-    ]);
-  },
-  get zapfDingbatsEncoding() {
-    return shadow(this, 'zapfDingbatsEncoding', ['', '', '', '', '', '', '',
-      '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
-      '', '', '', '', '', '', '', 'space', 'a1', 'a2', 'a202', 'a3', 'a4',
-      'a5', 'a119', 'a118', 'a117', 'a11', 'a12', 'a13', 'a14', 'a15', 'a16',
-      'a105', 'a17', 'a18', 'a19', 'a20', 'a21', 'a22', 'a23', 'a24', 'a25',
-      'a26', 'a27', 'a28', 'a6', 'a7', 'a8', 'a9', 'a10', 'a29', 'a30', 'a31',
-      'a32', 'a33', 'a34', 'a35', 'a36', 'a37', 'a38', 'a39', 'a40', 'a41',
-      'a42', 'a43', 'a44', 'a45', 'a46', 'a47', 'a48', 'a49', 'a50', 'a51',
-      'a52', 'a53', 'a54', 'a55', 'a56', 'a57', 'a58', 'a59', 'a60', 'a61',
-      'a62', 'a63', 'a64', 'a65', 'a66', 'a67', 'a68', 'a69', 'a70', 'a71',
-      'a72', 'a73', 'a74', 'a203', 'a75', 'a204', 'a76', 'a77', 'a78', 'a79',
-      'a81', 'a82', 'a83', 'a84', 'a97', 'a98', 'a99', 'a100', '', '', '', '',
-      '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
-      '', '', '', '', '', '', '', '', '', '', '', '', 'a101', 'a102', 'a103',
-      'a104', 'a106', 'a107', 'a108', 'a112', 'a111', 'a110', 'a109', 'a120',
-      'a121', 'a122', 'a123', 'a124', 'a125', 'a126', 'a127', 'a128', 'a129',
-      'a130', 'a131', 'a132', 'a133', 'a134', 'a135', 'a136', 'a137', 'a138',
-      'a139', 'a140', 'a141', 'a142', 'a143', 'a144', 'a145', 'a146', 'a147',
-      'a148', 'a149', 'a150', 'a151', 'a152', 'a153', 'a154', 'a155', 'a156',
-      'a157', 'a158', 'a159', 'a160', 'a161', 'a163', 'a164', 'a196', 'a165',
-      'a192', 'a166', 'a167', 'a168', 'a169', 'a170', 'a171', 'a172', 'a173',
-      'a162', 'a174', 'a175', 'a176', 'a177', 'a178', 'a179', 'a193', 'a180',
-      'a199', 'a181', 'a200', 'a182', '', 'a201', 'a183', 'a184', 'a197',
-      'a185', 'a194', 'a198', 'a186', 'a195', 'a187', 'a188', 'a189', 'a190',
-      'a191'
-    ]);
-  }
+  ExpertEncoding: ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    'space', 'exclamsmall', 'Hungarumlautsmall', '', 'dollaroldstyle',
+    'dollarsuperior', 'ampersandsmall', 'Acutesmall', 'parenleftsuperior',
+    'parenrightsuperior', 'twodotenleader', 'onedotenleader', 'comma',
+    'hyphen', 'period', 'fraction', 'zerooldstyle', 'oneoldstyle',
+    'twooldstyle', 'threeoldstyle', 'fouroldstyle', 'fiveoldstyle',
+    'sixoldstyle', 'sevenoldstyle', 'eightoldstyle', 'nineoldstyle', 'colon',
+    'semicolon', 'commasuperior', 'threequartersemdash', 'periodsuperior',
+    'questionsmall', '', 'asuperior', 'bsuperior', 'centsuperior', 'dsuperior',
+    'esuperior', '', '', 'isuperior', '', '', 'lsuperior', 'msuperior',
+    'nsuperior', 'osuperior', '', '', 'rsuperior', 'ssuperior', 'tsuperior',
+    '', 'ff', 'fi', 'fl', 'ffi', 'ffl', 'parenleftinferior', '',
+    'parenrightinferior', 'Circumflexsmall', 'hyphensuperior', 'Gravesmall',
+    'Asmall', 'Bsmall', 'Csmall', 'Dsmall', 'Esmall', 'Fsmall', 'Gsmall',
+    'Hsmall', 'Ismall', 'Jsmall', 'Ksmall', 'Lsmall', 'Msmall', 'Nsmall',
+    'Osmall', 'Psmall', 'Qsmall', 'Rsmall', 'Ssmall', 'Tsmall', 'Usmall',
+    'Vsmall', 'Wsmall', 'Xsmall', 'Ysmall', 'Zsmall', 'colonmonetary',
+    'onefitted', 'rupiah', 'Tildesmall', '', '', '', '', '', '', '', '', '',
+    '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    '', '', '', '', '', '', 'exclamdownsmall', 'centoldstyle', 'Lslashsmall',
+    '', '', 'Scaronsmall', 'Zcaronsmall', 'Dieresissmall', 'Brevesmall',
+    'Caronsmall', '', 'Dotaccentsmall', '', '', 'Macronsmall', '', '',
+    'figuredash', 'hypheninferior', '', '', 'Ogoneksmall', 'Ringsmall',
+    'Cedillasmall', '', '', '', 'onequarter', 'onehalf', 'threequarters',
+    'questiondownsmall', 'oneeighth', 'threeeighths', 'fiveeighths',
+    'seveneighths', 'onethird', 'twothirds', '', '', 'zerosuperior',
+    'onesuperior', 'twosuperior', 'threesuperior', 'foursuperior',
+    'fivesuperior', 'sixsuperior', 'sevensuperior', 'eightsuperior',
+    'ninesuperior', 'zeroinferior', 'oneinferior', 'twoinferior',
+    'threeinferior', 'fourinferior', 'fiveinferior', 'sixinferior',
+    'seveninferior', 'eightinferior', 'nineinferior', 'centinferior',
+    'dollarinferior', 'periodinferior', 'commainferior', 'Agravesmall',
+    'Aacutesmall', 'Acircumflexsmall', 'Atildesmall', 'Adieresissmall',
+    'Aringsmall', 'AEsmall', 'Ccedillasmall', 'Egravesmall', 'Eacutesmall',
+    'Ecircumflexsmall', 'Edieresissmall', 'Igravesmall', 'Iacutesmall',
+    'Icircumflexsmall', 'Idieresissmall', 'Ethsmall', 'Ntildesmall',
+    'Ogravesmall', 'Oacutesmall', 'Ocircumflexsmall', 'Otildesmall',
+    'Odieresissmall', 'OEsmall', 'Oslashsmall', 'Ugravesmall', 'Uacutesmall',
+    'Ucircumflexsmall', 'Udieresissmall', 'Yacutesmall', 'Thornsmall',
+    'Ydieresissmall'],
+  MacExpertEncoding: ['', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    'space', 'exclamsmall', 'Hungarumlautsmall', 'centoldstyle',
+    'dollaroldstyle', 'dollarsuperior', 'ampersandsmall', 'Acutesmall',
+    'parenleftsuperior', 'parenrightsuperior', 'twodotenleader',
+    'onedotenleader', 'comma', 'hyphen', 'period', 'fraction', 'zerooldstyle',
+    'oneoldstyle', 'twooldstyle', 'threeoldstyle', 'fouroldstyle',
+    'fiveoldstyle', 'sixoldstyle', 'sevenoldstyle', 'eightoldstyle',
+    'nineoldstyle', 'colon', 'semicolon', '', 'threequartersemdash', '',
+    'questionsmall', '', '', '', '', 'Ethsmall', '', '', 'onequarter',
+    'onehalf', 'threequarters', 'oneeighth', 'threeeighths', 'fiveeighths',
+    'seveneighths', 'onethird', 'twothirds', '', '', '', '', '', '', 'ff',
+    'fi', 'fl', 'ffi', 'ffl', 'parenleftinferior', '', 'parenrightinferior',
+    'Circumflexsmall', 'hypheninferior', 'Gravesmall', 'Asmall', 'Bsmall',
+    'Csmall', 'Dsmall', 'Esmall', 'Fsmall', 'Gsmall', 'Hsmall', 'Ismall',
+    'Jsmall', 'Ksmall', 'Lsmall', 'Msmall', 'Nsmall', 'Osmall', 'Psmall',
+    'Qsmall', 'Rsmall', 'Ssmall', 'Tsmall', 'Usmall', 'Vsmall', 'Wsmall',
+    'Xsmall', 'Ysmall', 'Zsmall', 'colonmonetary', 'onefitted', 'rupiah',
+    'Tildesmall', '', '', 'asuperior', 'centsuperior', '', '', '', '',
+    'Aacutesmall', 'Agravesmall', 'Acircumflexsmall', 'Adieresissmall',
+    'Atildesmall', 'Aringsmall', 'Ccedillasmall', 'Eacutesmall', 'Egravesmall',
+    'Ecircumflexsmall', 'Edieresissmall', 'Iacutesmall', 'Igravesmall',
+    'Icircumflexsmall', 'Idieresissmall', 'Ntildesmall', 'Oacutesmall',
+    'Ogravesmall', 'Ocircumflexsmall', 'Odieresissmall', 'Otildesmall',
+    'Uacutesmall', 'Ugravesmall', 'Ucircumflexsmall', 'Udieresissmall', '',
+    'eightsuperior', 'fourinferior', 'threeinferior', 'sixinferior',
+    'eightinferior', 'seveninferior', 'Scaronsmall', '', 'centinferior',
+    'twoinferior', '', 'Dieresissmall', '', 'Caronsmall', 'osuperior',
+    'fiveinferior', '', 'commainferior', 'periodinferior', 'Yacutesmall', '',
+    'dollarinferior', '', 'Thornsmall', '', 'nineinferior', 'zeroinferior',
+    'Zcaronsmall', 'AEsmall', 'Oslashsmall', 'questiondownsmall',
+    'oneinferior', 'Lslashsmall', '', '', '', '', '', '', 'Cedillasmall', '',
+    '', '', '', '', 'OEsmall', 'figuredash', 'hyphensuperior', '', '', '', '',
+    'exclamdownsmall', '', 'Ydieresissmall', '', 'onesuperior', 'twosuperior',
+    'threesuperior', 'foursuperior', 'fivesuperior', 'sixsuperior',
+    'sevensuperior', 'ninesuperior', 'zerosuperior', '', 'esuperior',
+    'rsuperior', 'tsuperior', '', '', 'isuperior', 'ssuperior', 'dsuperior',
+    '', '', '', '', '', 'lsuperior', 'Ogoneksmall', 'Brevesmall',
+    'Macronsmall', 'bsuperior', 'nsuperior', 'msuperior', 'commasuperior',
+    'periodsuperior', 'Dotaccentsmall', 'Ringsmall'],
+  MacRomanEncoding: ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    'space', 'exclam', 'quotedbl', 'numbersign', 'dollar', 'percent',
+    'ampersand', 'quotesingle', 'parenleft', 'parenright', 'asterisk', 'plus',
+    'comma', 'hyphen', 'period', 'slash', 'zero', 'one', 'two', 'three',
+    'four', 'five', 'six', 'seven', 'eight', 'nine', 'colon', 'semicolon',
+    'less', 'equal', 'greater', 'question', 'at', 'A', 'B', 'C', 'D', 'E', 'F',
+    'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
+    'V', 'W', 'X', 'Y', 'Z', 'bracketleft', 'backslash', 'bracketright',
+    'asciicircum', 'underscore', 'grave', 'a', 'b', 'c', 'd', 'e', 'f', 'g',
+    'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+    'w', 'x', 'y', 'z', 'braceleft', 'bar', 'braceright', 'asciitilde', '',
+    'Adieresis', 'Aring', 'Ccedilla', 'Eacute', 'Ntilde', 'Odieresis',
+    'Udieresis', 'aacute', 'agrave', 'acircumflex', 'adieresis', 'atilde',
+    'aring', 'ccedilla', 'eacute', 'egrave', 'ecircumflex', 'edieresis',
+    'iacute', 'igrave', 'icircumflex', 'idieresis', 'ntilde', 'oacute',
+    'ograve', 'ocircumflex', 'odieresis', 'otilde', 'uacute', 'ugrave',
+    'ucircumflex', 'udieresis', 'dagger', 'degree', 'cent', 'sterling',
+    'section', 'bullet', 'paragraph', 'germandbls', 'registered', 'copyright',
+    'trademark', 'acute', 'dieresis', 'notequal', 'AE', 'Oslash', 'infinity',
+    'plusminus', 'lessequal', 'greaterequal', 'yen', 'mu', 'partialdiff',
+    'summation', 'product', 'pi', 'integral', 'ordfeminine', 'ordmasculine',
+    'Omega', 'ae', 'oslash', 'questiondown', 'exclamdown', 'logicalnot',
+    'radical', 'florin', 'approxequal', 'Delta', 'guillemotleft',
+    'guillemotright', 'ellipsis', 'space', 'Agrave', 'Atilde', 'Otilde', 'OE',
+    'oe', 'endash', 'emdash', 'quotedblleft', 'quotedblright', 'quoteleft',
+    'quoteright', 'divide', 'lozenge', 'ydieresis', 'Ydieresis', 'fraction',
+    'currency', 'guilsinglleft', 'guilsinglright', 'fi', 'fl', 'daggerdbl',
+    'periodcentered', 'quotesinglbase', 'quotedblbase', 'perthousand',
+    'Acircumflex', 'Ecircumflex', 'Aacute', 'Edieresis', 'Egrave', 'Iacute',
+    'Icircumflex', 'Idieresis', 'Igrave', 'Oacute', 'Ocircumflex', 'apple',
+    'Ograve', 'Uacute', 'Ucircumflex', 'Ugrave', 'dotlessi', 'circumflex',
+    'tilde', 'macron', 'breve', 'dotaccent', 'ring', 'cedilla', 'hungarumlaut',
+    'ogonek', 'caron'],
+  StandardEncoding: ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    'space', 'exclam', 'quotedbl', 'numbersign', 'dollar', 'percent',
+    'ampersand', 'quoteright', 'parenleft', 'parenright', 'asterisk', 'plus',
+    'comma', 'hyphen', 'period', 'slash', 'zero', 'one', 'two', 'three',
+    'four', 'five', 'six', 'seven', 'eight', 'nine', 'colon', 'semicolon',
+    'less', 'equal', 'greater', 'question', 'at', 'A', 'B', 'C', 'D', 'E', 'F',
+    'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
+    'V', 'W', 'X', 'Y', 'Z', 'bracketleft', 'backslash', 'bracketright',
+    'asciicircum', 'underscore', 'quoteleft', 'a', 'b', 'c', 'd', 'e', 'f',
+    'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
+    'v', 'w', 'x', 'y', 'z', 'braceleft', 'bar', 'braceright', 'asciitilde',
+    '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'exclamdown',
+    'cent', 'sterling', 'fraction', 'yen', 'florin', 'section', 'currency',
+    'quotesingle', 'quotedblleft', 'guillemotleft', 'guilsinglleft',
+    'guilsinglright', 'fi', 'fl', '', 'endash', 'dagger', 'daggerdbl',
+    'periodcentered', '', 'paragraph', 'bullet', 'quotesinglbase',
+    'quotedblbase', 'quotedblright', 'guillemotright', 'ellipsis',
+    'perthousand', '', 'questiondown', '', 'grave', 'acute', 'circumflex',
+    'tilde', 'macron', 'breve', 'dotaccent', 'dieresis', '', 'ring', 'cedilla',
+    '', 'hungarumlaut', 'ogonek', 'caron', 'emdash', '', '', '', '', '', '',
+    '', '', '', '', '', '', '', '', '', '', 'AE', '', 'ordfeminine', '', '',
+    '', '', 'Lslash', 'Oslash', 'OE', 'ordmasculine', '', '', '', '', '', 'ae',
+    '', '', '', 'dotlessi', '', '', 'lslash', 'oslash', 'oe', 'germandbls'],
+  WinAnsiEncoding: ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+
+    '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    'space', 'exclam', 'quotedbl', 'numbersign', 'dollar', 'percent',
+    'ampersand', 'quotesingle', 'parenleft', 'parenright', 'asterisk', 'plus',
+    'comma', 'hyphen', 'period', 'slash', 'zero', 'one', 'two', 'three',
+    'four', 'five', 'six', 'seven', 'eight', 'nine', 'colon', 'semicolon',
+    'less', 'equal', 'greater', 'question', 'at', 'A', 'B', 'C', 'D', 'E', 'F',
+    'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
+    'V', 'W', 'X', 'Y', 'Z', 'bracketleft', 'backslash', 'bracketright',
+    'asciicircum', 'underscore', 'grave', 'a', 'b', 'c', 'd', 'e', 'f', 'g',
+    'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+    'w', 'x', 'y', 'z', 'braceleft', 'bar', 'braceright', 'asciitilde',
+    'bullet', 'Euro', 'bullet', 'quotesinglbase', 'florin', 'quotedblbase',
+    'ellipsis', 'dagger', 'daggerdbl', 'circumflex', 'perthousand', 'Scaron',
+    'guilsinglleft', 'OE', 'bullet', 'Zcaron', 'bullet', 'bullet', 'quoteleft',
+    'quoteright', 'quotedblleft', 'quotedblright', 'bullet', 'endash',
+    'emdash', 'tilde', 'trademark', 'scaron', 'guilsinglright', 'oe', 'bullet',
+    'zcaron', 'Ydieresis', 'space', 'exclamdown', 'cent', 'sterling',
+    'currency', 'yen', 'brokenbar', 'section', 'dieresis', 'copyright',
+    'ordfeminine', 'guillemotleft', 'logicalnot', 'hyphen', 'registered',
+    'macron', 'degree', 'plusminus', 'twosuperior', 'threesuperior', 'acute',
+    'mu', 'paragraph', 'periodcentered', 'cedilla', 'onesuperior',
+    'ordmasculine', 'guillemotright', 'onequarter', 'onehalf', 'threequarters',
+    'questiondown', 'Agrave', 'Aacute', 'Acircumflex', 'Atilde', 'Adieresis',
+    'Aring', 'AE', 'Ccedilla', 'Egrave', 'Eacute', 'Ecircumflex', 'Edieresis',
+    'Igrave', 'Iacute', 'Icircumflex', 'Idieresis', 'Eth', 'Ntilde', 'Ograve',
+    'Oacute', 'Ocircumflex', 'Otilde', 'Odieresis', 'multiply', 'Oslash',
+    'Ugrave', 'Uacute', 'Ucircumflex', 'Udieresis', 'Yacute', 'Thorn',
+    'germandbls', 'agrave', 'aacute', 'acircumflex', 'atilde', 'adieresis',
+    'aring', 'ae', 'ccedilla', 'egrave', 'eacute', 'ecircumflex', 'edieresis',
+    'igrave', 'iacute', 'icircumflex', 'idieresis', 'eth', 'ntilde', 'ograve',
+    'oacute', 'ocircumflex', 'otilde', 'odieresis', 'divide', 'oslash',
+    'ugrave', 'uacute', 'ucircumflex', 'udieresis', 'yacute', 'thorn',
+    'ydieresis'],
+  symbolsEncoding: ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    'space', 'exclam', 'universal', 'numbersign', 'existential', 'percent',
+    'ampersand', 'suchthat', 'parenleft', 'parenright', 'asteriskmath', 'plus',
+    'comma', 'minus', 'period', 'slash', 'zero', 'one', 'two', 'three', 'four',
+    'five', 'six', 'seven', 'eight', 'nine', 'colon', 'semicolon', 'less',
+    'equal', 'greater', 'question', 'congruent', 'Alpha', 'Beta', 'Chi',
+    'Delta', 'Epsilon', 'Phi', 'Gamma', 'Eta', 'Iota', 'theta1', 'Kappa',
+    'Lambda', 'Mu', 'Nu', 'Omicron', 'Pi', 'Theta', 'Rho', 'Sigma', 'Tau',
+    'Upsilon', 'sigma1', 'Omega', 'Xi', 'Psi', 'Zeta', 'bracketleft',
+    'therefore', 'bracketright', 'perpendicular', 'underscore', 'radicalex',
+    'alpha', 'beta', 'chi', 'delta', 'epsilon', 'phi', 'gamma', 'eta', 'iota',
+    'phi1', 'kappa', 'lambda', 'mu', 'nu', 'omicron', 'pi', 'theta', 'rho',
+    'sigma', 'tau', 'upsilon', 'omega1', 'omega', 'xi', 'psi', 'zeta',
+    'braceleft', 'bar', 'braceright', 'similar', '', '', '', '', '', '', '',
+    '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    '', '', '', '', '', '', '', 'Euro', 'Upsilon1', 'minute', 'lessequal',
+    'fraction', 'infinity', 'florin', 'club', 'diamond', 'heart', 'spade',
+    'arrowboth', 'arrowleft', 'arrowup', 'arrowright', 'arrowdown', 'degree',
+    'plusminus', 'second', 'greaterequal', 'multiply', 'proportional',
+    'partialdiff', 'bullet', 'divide', 'notequal', 'equivalence',
+    'approxequal', 'ellipsis', 'arrowvertex', 'arrowhorizex', 'carriagereturn',
+    'aleph', 'Ifraktur', 'Rfraktur', 'weierstrass', 'circlemultiply',
+    'circleplus', 'emptyset', 'intersection', 'union', 'propersuperset',
+    'reflexsuperset', 'notsubset', 'propersubset', 'reflexsubset', 'element',
+    'notelement', 'angle', 'gradient', 'registerserif', 'copyrightserif',
+    'trademarkserif', 'product', 'radical', 'dotmath', 'logicalnot',
+    'logicaland', 'logicalor', 'arrowdblboth', 'arrowdblleft', 'arrowdblup',
+    'arrowdblright', 'arrowdbldown', 'lozenge', 'angleleft', 'registersans',
+    'copyrightsans', 'trademarksans', 'summation', 'parenlefttp',
+    'parenleftex', 'parenleftbt', 'bracketlefttp', 'bracketleftex',
+    'bracketleftbt', 'bracelefttp', 'braceleftmid', 'braceleftbt', 'braceex',
+    '', 'angleright', 'integral', 'integraltp', 'integralex', 'integralbt',
+    'parenrighttp', 'parenrightex', 'parenrightbt', 'bracketrighttp',
+    'bracketrightex', 'bracketrightbt', 'bracerighttp', 'bracerightmid',
+    'bracerightbt'],
+  zapfDingbatsEncoding: ['', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    'space', 'a1', 'a2', 'a202', 'a3', 'a4', 'a5', 'a119', 'a118', 'a117',
+    'a11', 'a12', 'a13', 'a14', 'a15', 'a16', 'a105', 'a17', 'a18', 'a19',
+    'a20', 'a21', 'a22', 'a23', 'a24', 'a25', 'a26', 'a27', 'a28', 'a6', 'a7',
+    'a8', 'a9', 'a10', 'a29', 'a30', 'a31', 'a32', 'a33', 'a34', 'a35', 'a36',
+    'a37', 'a38', 'a39', 'a40', 'a41', 'a42', 'a43', 'a44', 'a45', 'a46',
+    'a47', 'a48', 'a49', 'a50', 'a51', 'a52', 'a53', 'a54', 'a55', 'a56',
+    'a57', 'a58', 'a59', 'a60', 'a61', 'a62', 'a63', 'a64', 'a65', 'a66',
+    'a67', 'a68', 'a69', 'a70', 'a71', 'a72', 'a73', 'a74', 'a203', 'a75',
+    'a204', 'a76', 'a77', 'a78', 'a79', 'a81', 'a82', 'a83', 'a84', 'a97',
+    'a98', 'a99', 'a100', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    '', '', 'a101', 'a102', 'a103', 'a104', 'a106', 'a107', 'a108', 'a112',
+    'a111', 'a110', 'a109', 'a120', 'a121', 'a122', 'a123', 'a124', 'a125',
+    'a126', 'a127', 'a128', 'a129', 'a130', 'a131', 'a132', 'a133', 'a134',
+    'a135', 'a136', 'a137', 'a138', 'a139', 'a140', 'a141', 'a142', 'a143',
+    'a144', 'a145', 'a146', 'a147', 'a148', 'a149', 'a150', 'a151', 'a152',
+    'a153', 'a154', 'a155', 'a156', 'a157', 'a158', 'a159', 'a160', 'a161',
+    'a163', 'a164', 'a196', 'a165', 'a192', 'a166', 'a167', 'a168', 'a169',
+    'a170', 'a171', 'a172', 'a173', 'a162', 'a174', 'a175', 'a176', 'a177',
+    'a178', 'a179', 'a193', 'a180', 'a199', 'a181', 'a200', 'a182', '', 'a201',
+    'a183', 'a184', 'a197', 'a185', 'a194', 'a198', 'a186', 'a195', 'a187',
+    'a188', 'a189', 'a190', 'a191']
 };
 
 /**
@@ -14013,6 +14291,16 @@ function getUnicodeRangeFor(value) {
   return -1;
 }
 
+function isRTLRangeFor(value) {
+  var range = UnicodeRanges[13];
+  if (value >= range.begin && value < range.end)
+    return true;
+  range = UnicodeRanges[11];
+  if (value >= range.begin && value < range.end)
+    return true;
+  return false;
+}
+
 function isSpecialUnicode(unicode) {
   return (unicode <= 0x1F || (unicode >= 127 && unicode < kSizeOfGlyphArea)) ||
     (unicode >= kCmapGlyphOffset &&
@@ -14072,6 +14360,8 @@ var Font = (function FontClosure() {
       this.toUnicode = properties.toUnicode;
     else
       this.rebuildToUnicode(properties);
+
+    this.toFontChar = this.buildToFontChar(this.toUnicode);
 
     if (!file) {
       // The file data is not specified. Trying to fix the font name
@@ -14898,6 +15188,18 @@ var Font = (function FontClosure() {
           itemEncode(locaData, j, writeOffset);
           startOffset = endOffset;
         }
+
+        if (writeOffset == 0) {
+          // glyf table cannot be empty -- redoing the glyf and loca tables
+          // to have single glyph with one point
+          var simpleGlyph = new Uint8Array(
+            [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 49, 0]);
+          for (var i = 0, j = itemSize; i < numGlyphs; i++, j += itemSize)
+            itemEncode(locaData, j, simpleGlyph.length);
+          glyf.data = simpleGlyph;
+          return;
+        }
+
         glyf.data = newGlyfData.subarray(0, writeOffset);
       }
 
@@ -15082,9 +15384,9 @@ var Font = (function FontClosure() {
         var unassignedUnicodeItems = [];
         for (var i = 1; i < numGlyphs; i++) {
           var cid = gidToCidMap[i] || i;
-          var unicode = this.toUnicode[cid];
-          if (!unicode || isSpecialUnicode(unicode) ||
-              unicode in usedUnicodes) {
+          var unicode = this.toFontChar[cid];
+          if (!unicode || typeof unicode !== 'number' ||
+              isSpecialUnicode(unicode) || unicode in usedUnicodes) {
             unassignedUnicodeItems.push(i);
             continue;
           }
@@ -15103,7 +15405,7 @@ var Font = (function FontClosure() {
           if (unusedUnicode >= kCmapGlyphOffset + kSizeOfGlyphArea)
             break;
           var unicode = unusedUnicode++;
-          this.toUnicode[cid] = unicode;
+          this.toFontChar[cid] = unicode;
           usedUnicodes[unicode] = true;
           glyphs.push({ unicode: unicode, code: cid });
           ids.push(i);
@@ -15114,9 +15416,9 @@ var Font = (function FontClosure() {
         var glyphs = cmapTable.glyphs;
         var ids = cmapTable.ids;
         var hasShortCmap = !!cmapTable.hasShortCmap;
-        var toUnicode = this.toUnicode;
+        var toFontChar = this.toFontChar;
 
-        if (toUnicode && toUnicode.length > 0) {
+        if (toFontChar && toFontChar.length > 0) {
           // checking if cmap is just identity map
           var isIdentity = true;
           for (var i = 0, ii = glyphs.length; i < ii; i++) {
@@ -15126,11 +15428,12 @@ var Font = (function FontClosure() {
             }
           }
           // if it is, replacing with meaningful toUnicode values
-          if (isIdentity) {
+          if (isIdentity && !this.isSymbolicFont) {
             var usedUnicodes = [], unassignedUnicodeItems = [];
             for (var i = 0, ii = glyphs.length; i < ii; i++) {
-              var unicode = toUnicode[i + 1];
-              if (!unicode || unicode in usedUnicodes) {
+              var unicode = toFontChar[i + 1];
+              if (!unicode || typeof unicode !== 'number' ||
+                  unicode in usedUnicodes) {
                 unassignedUnicodeItems.push(i);
                 continue;
               }
@@ -15144,11 +15447,11 @@ var Font = (function FontClosure() {
                 unusedUnicode++;
               var cid = i + 1;
               // override only if unicode mapping is not specified
-              if (!(cid in toUnicode))
-                toUnicode[cid] = unusedUnicode;
+              if (!(cid in toFontChar))
+                toFontChar[cid] = unusedUnicode;
               glyphs[i].unicode = unusedUnicode++;
             }
-            this.useToUnicode = true;
+            this.useToFontChar = true;
           }
         }
 
@@ -15176,6 +15479,16 @@ var Font = (function FontClosure() {
               ids.push(ids[i]);
             }
           }
+        }
+
+        // Moving all symbolic font glyphs into 0xF000 - 0xF0FF range.
+        if (this.isSymbolicFont) {
+          for (var i = 0, ii = glyphs.length; i < ii; i++) {
+            var code = glyphs[i].unicode & 0xFF;
+            var fontCharCode = kSymbolicFontGlyphOffset | code;
+            glyphs[i].unicode = toFontChar[code] = fontCharCode;
+          }
+          this.useToFontChar = true;
         }
 
         // remove glyph references outside range of avaialable glyphs
@@ -15278,12 +15591,12 @@ var Font = (function FontClosure() {
         properties.baseEncoding = encoding;
       }
       if (properties.subtype == 'CIDFontType0C') {
-        var toUnicode = [];
+        var toFontChar = [];
         for (var i = 0; i < charstrings.length; ++i) {
           var charstring = charstrings[i];
-          toUnicode[charstring.code] = charstring.unicode;
+          toFontChar[charstring.code] = charstring.unicode;
         }
-        this.toUnicode = toUnicode;
+        this.toFontChar = toFontChar;
       }
 
       var fields = {
@@ -15376,6 +15689,19 @@ var Font = (function FontClosure() {
       }
 
       return stringToArray(otf.file);
+    },
+
+    buildToFontChar: function font_buildToFontChar(toUnicode) {
+      var result = [];
+      var unusedUnicode = kCmapGlyphOffset;
+      for (var i = 0, ii = toUnicode.length; i < ii; i++) {
+        var unicode = toUnicode[i];
+        var fontCharCode = typeof unicode === 'object' ? unusedUnicode++ :
+          unicode;
+        if (typeof unicode !== 'undefined')
+          result[i] = fontCharCode;
+      }
+      return result;
     },
 
     rebuildToUnicode: function font_rebuildToUnicode(properties) {
@@ -15513,7 +15839,7 @@ var Font = (function FontClosure() {
     },
 
     charToGlyph: function fonts_charToGlyph(charcode) {
-      var unicode, width, codeIRQueue;
+      var fontCharCode, width, codeIRQueue;
 
       var width = this.widths[charcode];
 
@@ -15521,38 +15847,39 @@ var Font = (function FontClosure() {
         case 'CIDFontType0':
           if (this.noUnicodeAdaptation) {
             width = this.widths[this.unicodeToCID[charcode] || charcode];
-            unicode = mapPrivateUseChars(charcode);
+            fontCharCode = mapPrivateUseChars(charcode);
             break;
           }
-          unicode = this.toUnicode[charcode] || charcode;
+          fontCharCode = this.toFontChar[charcode] || charcode;
           break;
         case 'CIDFontType2':
           if (this.noUnicodeAdaptation) {
             width = this.widths[this.unicodeToCID[charcode] || charcode];
-            unicode = mapPrivateUseChars(charcode);
+            fontCharCode = mapPrivateUseChars(charcode);
             break;
           }
-          unicode = this.toUnicode[charcode] || charcode;
+          fontCharCode = this.toFontChar[charcode] || charcode;
           break;
         case 'Type1':
           var glyphName = this.differences[charcode] || this.encoding[charcode];
           if (!isNum(width))
             width = this.widths[glyphName];
           if (this.noUnicodeAdaptation) {
-            unicode = mapPrivateUseChars(GlyphsUnicode[glyphName] || charcode);
+            fontCharCode = mapPrivateUseChars(GlyphsUnicode[glyphName] ||
+              charcode);
             break;
           }
-          unicode = this.glyphNameMap[glyphName] ||
+          fontCharCode = this.glyphNameMap[glyphName] ||
             GlyphsUnicode[glyphName] || charcode;
           break;
         case 'Type3':
           var glyphName = this.differences[charcode] || this.encoding[charcode];
           codeIRQueue = this.charProcIRQueues[glyphName];
-          unicode = charcode;
+          fontCharCode = charcode;
           break;
         case 'TrueType':
-          if (this.useToUnicode) {
-            unicode = this.toUnicode[charcode] || charcode;
+          if (this.useToFontChar) {
+            fontCharCode = this.toFontChar[charcode] || charcode;
             break;
           }
           var glyphName = this.differences[charcode] || this.encoding[charcode];
@@ -15561,16 +15888,17 @@ var Font = (function FontClosure() {
           if (!isNum(width))
             width = this.widths[glyphName];
           if (this.noUnicodeAdaptation) {
-            unicode = GlyphsUnicode[glyphName] || charcode;
+            fontCharCode = GlyphsUnicode[glyphName] || charcode;
             break;
           }
           if (!this.hasEncoding || this.isSymbolicFont) {
-            unicode = this.useToUnicode ? this.toUnicode[charcode] : charcode;
+            fontCharCode = this.useToFontChar ? this.toFontChar[charcode] :
+              charcode;
             break;
           }
 
           // MacRoman encoding address by re-encoding the cmap table
-          unicode = glyphName in this.glyphNameMap ?
+          fontCharCode = glyphName in this.glyphNameMap ?
             this.glyphNameMap[glyphName] : GlyphsUnicode[glyphName];
           break;
         default:
@@ -15586,7 +15914,7 @@ var Font = (function FontClosure() {
       width = (isNum(width) ? width : this.defaultWidth) * this.widthMultiplier;
 
       return {
-        fontChar: String.fromCharCode(unicode),
+        fontChar: String.fromCharCode(fontCharCode),
         unicode: unicodeChars,
         width: width,
         codeIRQueue: codeIRQueue
@@ -24878,17 +25206,17 @@ var Parser = (function ParserClosure() {
       // parse image stream
       var startPos = stream.pos;
 
-      // searching for the /\sEI\s/
+      // searching for the /EI\s/
       var state = 0, ch;
       while (state != 4 && (ch = stream.getByte()) != null) {
         switch (ch) {
           case 0x20:
           case 0x0D:
           case 0x0A:
-            state = state === 3 ? 4 : 1;
+            state = state === 3 ? 4 : 0;
             break;
           case 0x45:
-            state = state === 1 ? 2 : 0;
+            state = 2;
             break;
           case 0x49:
             state = state === 2 ? 3 : 0;
@@ -30212,7 +30540,7 @@ var JpxImage = (function JpxImageClosure() {
         }
         r = 0;
       }
-      error('JPX error: Out of packets');
+      throw 'Out of packets';
     };
   }
   function ResolutionLayerComponentPositionIterator(context) {
@@ -30251,7 +30579,7 @@ var JpxImage = (function JpxImageClosure() {
         }
         l = 0;
       }
-      error('JPX error: Out of packets');
+      throw 'Out of packets';
     };
   }
   function buildPackets(context) {
@@ -30347,7 +30675,7 @@ var JpxImage = (function JpxImageClosure() {
           new ResolutionLayerComponentPositionIterator(context);
         break;
       default:
-        error('JPX error: Unsupported progression order ' + progressionOrder);
+        throw 'Unsupported progression order ' + progressionOrder;
     }
   }
   function parseTilePackets(context, data, offset, dataLength) {
@@ -30713,6 +31041,7 @@ var JpxImage = (function JpxImageClosure() {
   }
 
   function JpxImage() {
+    this.failOnCorruptedImage = false;
   }
   JpxImage.prototype = {
     load: function jpxImageLoad(url) {
@@ -30772,237 +31101,244 @@ var JpxImage = (function JpxImageClosure() {
     },
     parseCodestream: function jpxImageParseCodestream(data, start, end) {
       var context = {};
-      var position = start;
-      while (position < end) {
-        var code = readUint16(data, position);
-        position += 2;
+      try {
+        var position = start;
+        while (position < end) {
+          var code = readUint16(data, position);
+          position += 2;
 
-        var length = 0, j;
-        switch (code) {
-          case 0xFF4F: // Start of codestream (SOC)
-            context.mainHeader = true;
-            break;
-          case 0xFFD9: // End of codestream (EOC)
-            break;
-          case 0xFF51: // Image and tile size (SIZ)
-            length = readUint16(data, position);
-            var siz = {};
-            siz.Xsiz = readUint32(data, position + 4);
-            siz.Ysiz = readUint32(data, position + 8);
-            siz.XOsiz = readUint32(data, position + 12);
-            siz.YOsiz = readUint32(data, position + 16);
-            siz.XTsiz = readUint32(data, position + 20);
-            siz.YTsiz = readUint32(data, position + 24);
-            siz.XTOsiz = readUint32(data, position + 28);
-            siz.YTOsiz = readUint32(data, position + 32);
-            var componentsCount = readUint16(data, position + 36);
-            siz.Csiz = componentsCount;
-            var components = [];
-            j = position + 38;
-            for (var i = 0; i < componentsCount; i++) {
-              var component = {
-                precision: (data[j] & 0x7F) + 1,
-                isSigned: !!(data[j] & 0x80),
-                XRsiz: data[j + 1],
-                YRsiz: data[j + 1]
-              };
-              calculateComponentDimensions(component, siz);
-              components.push(component);
-            }
-            context.SIZ = siz;
-            context.components = components;
-            calculateTileGrids(context, components);
-            context.QCC = [];
-            context.COC = [];
-            break;
-          case 0xFF5C: // Quantization default (QCD)
-            length = readUint16(data, position);
-            var qcd = {};
-            j = position + 2;
-            var sqcd = data[j++];
-            var spqcdSize, scalarExpounded;
-            switch (sqcd & 0x1F) {
-              case 0:
-                spqcdSize = 8;
-                scalarExpounded = true;
-                break;
-              case 1:
-                spqcdSize = 16;
-                scalarExpounded = false;
-                break;
-              case 2:
-                spqcdSize = 16;
-                scalarExpounded = true;
-                break;
-              default:
-                error('JPX error: Invalid SQcd value ' + sqcd);
-            }
-            qcd.noQuantization = spqcdSize == 8;
-            qcd.scalarExpounded = scalarExpounded;
-            qcd.guardBits = sqcd >> 5;
-            var spqcds = [];
-            while (j < length + position) {
-              var spqcd = {};
-              if (spqcdSize == 8) {
-                spqcd.epsilon = data[j++] >> 3;
-                spqcd.mu = 0;
-              } else {
-                spqcd.epsilon = data[j] >> 3;
-                spqcd.mu = ((data[j] & 0x7) << 8) | data[j + 1];
-                j += 2;
+          var length = 0, j;
+          switch (code) {
+            case 0xFF4F: // Start of codestream (SOC)
+              context.mainHeader = true;
+              break;
+            case 0xFFD9: // End of codestream (EOC)
+              break;
+            case 0xFF51: // Image and tile size (SIZ)
+              length = readUint16(data, position);
+              var siz = {};
+              siz.Xsiz = readUint32(data, position + 4);
+              siz.Ysiz = readUint32(data, position + 8);
+              siz.XOsiz = readUint32(data, position + 12);
+              siz.YOsiz = readUint32(data, position + 16);
+              siz.XTsiz = readUint32(data, position + 20);
+              siz.YTsiz = readUint32(data, position + 24);
+              siz.XTOsiz = readUint32(data, position + 28);
+              siz.YTOsiz = readUint32(data, position + 32);
+              var componentsCount = readUint16(data, position + 36);
+              siz.Csiz = componentsCount;
+              var components = [];
+              j = position + 38;
+              for (var i = 0; i < componentsCount; i++) {
+                var component = {
+                  precision: (data[j] & 0x7F) + 1,
+                  isSigned: !!(data[j] & 0x80),
+                  XRsiz: data[j + 1],
+                  YRsiz: data[j + 1]
+                };
+                calculateComponentDimensions(component, siz);
+                components.push(component);
               }
-              spqcds.push(spqcd);
-            }
-            qcd.SPqcds = spqcds;
-            if (context.mainHeader)
-              context.QCD = qcd;
-            else {
-              context.currentTile.QCD = qcd;
-              context.currentTile.QCC = [];
-            }
-            break;
-          case 0xFF5D: // Quantization component (QCC)
-            length = readUint16(data, position);
-            var qcc = {};
-            j = position + 2;
-            var cqcc;
-            if (context.SIZ.Csiz < 257)
-              cqcc = data[j++];
-            else {
-              cqcc = readUint16(data, j);
-              j += 2;
-            }
-            var sqcd = data[j++];
-            var spqcdSize, scalarExpounded;
-            switch (sqcd & 0x1F) {
-              case 0:
-                spqcdSize = 8;
-                scalarExpounded = true;
-                break;
-              case 1:
-                spqcdSize = 16;
-                scalarExpounded = false;
-                break;
-              case 2:
-                spqcdSize = 16;
-                scalarExpounded = true;
-                break;
-              default:
-                error('JPX error: Invalid SQcd value ' + sqcd);
-            }
-            qcc.noQuantization = spqcdSize == 8;
-            qcc.scalarExpounded = scalarExpounded;
-            qcc.guardBits = sqcd >> 5;
-            var spqcds = [];
-            while (j < length + position) {
-              var spqcd = {};
-              if (spqcdSize == 8) {
-                spqcd.epsilon = data[j++] >> 3;
-                spqcd.mu = 0;
-              } else {
-                spqcd.epsilon = data[j] >> 3;
-                spqcd.mu = ((data[j] & 0x7) << 8) | data[j + 1];
-                j += 2;
+              context.SIZ = siz;
+              context.components = components;
+              calculateTileGrids(context, components);
+              context.QCC = [];
+              context.COC = [];
+              break;
+            case 0xFF5C: // Quantization default (QCD)
+              length = readUint16(data, position);
+              var qcd = {};
+              j = position + 2;
+              var sqcd = data[j++];
+              var spqcdSize, scalarExpounded;
+              switch (sqcd & 0x1F) {
+                case 0:
+                  spqcdSize = 8;
+                  scalarExpounded = true;
+                  break;
+                case 1:
+                  spqcdSize = 16;
+                  scalarExpounded = false;
+                  break;
+                case 2:
+                  spqcdSize = 16;
+                  scalarExpounded = true;
+                  break;
+                default:
+                  throw 'Invalid SQcd value ' + sqcd;
               }
-              spqcds.push(spqcd);
-            }
-            qcc.SPqcds = spqcds;
-            if (context.mainHeader)
-              context.QCC[cqcc] = qcc;
-            else
-              context.currentTile.QCC[cqcc] = qcc;
-            break;
-          case 0xFF52: // Coding style default (COD)
-            length = readUint16(data, position);
-            var cod = {};
-            j = position + 2;
-            var scod = data[j++];
-            cod.entropyCoderWithCustomPrecincts = !!(scod & 1);
-            cod.sopMarkerUsed = !!(scod & 2);
-            cod.ephMarkerUsed = !!(scod & 4);
-            var codingStyle = {};
-            cod.progressionOrder = data[j++];
-            cod.layersCount = readUint16(data, j);
-            j += 2;
-            cod.multipleComponentTransform = data[j++];
-
-            cod.decompositionLevelsCount = data[j++];
-            cod.xcb = (data[j++] & 0xF) + 2;
-            cod.ycb = (data[j++] & 0xF) + 2;
-            var blockStyle = data[j++];
-            cod.selectiveArithmeticCodingBypass = !!(blockStyle & 1);
-            cod.resetContextProbabilities = !!(blockStyle & 2);
-            cod.terminationOnEachCodingPass = !!(blockStyle & 4);
-            cod.verticalyStripe = !!(blockStyle & 8);
-            cod.predictableTermination = !!(blockStyle & 16);
-            cod.segmentationSymbolUsed = !!(blockStyle & 32);
-            cod.transformation = data[j++];
-            if (cod.entropyCoderWithCustomPrecincts) {
-              var precinctsSizes = {};
+              qcd.noQuantization = spqcdSize == 8;
+              qcd.scalarExpounded = scalarExpounded;
+              qcd.guardBits = sqcd >> 5;
+              var spqcds = [];
               while (j < length + position) {
-                var precinctsSize = data[j];
-                precinctsSizes.push({
-                  PPx: precinctsSize & 0xF,
-                  PPy: precinctsSize >> 4
-                });
+                var spqcd = {};
+                if (spqcdSize == 8) {
+                  spqcd.epsilon = data[j++] >> 3;
+                  spqcd.mu = 0;
+                } else {
+                  spqcd.epsilon = data[j] >> 3;
+                  spqcd.mu = ((data[j] & 0x7) << 8) | data[j + 1];
+                  j += 2;
+                }
+                spqcds.push(spqcd);
               }
-              cod.precinctsSizes = precinctsSizes;
-            }
+              qcd.SPqcds = spqcds;
+              if (context.mainHeader)
+                context.QCD = qcd;
+              else {
+                context.currentTile.QCD = qcd;
+                context.currentTile.QCC = [];
+              }
+              break;
+            case 0xFF5D: // Quantization component (QCC)
+              length = readUint16(data, position);
+              var qcc = {};
+              j = position + 2;
+              var cqcc;
+              if (context.SIZ.Csiz < 257)
+                cqcc = data[j++];
+              else {
+                cqcc = readUint16(data, j);
+                j += 2;
+              }
+              var sqcd = data[j++];
+              var spqcdSize, scalarExpounded;
+              switch (sqcd & 0x1F) {
+                case 0:
+                  spqcdSize = 8;
+                  scalarExpounded = true;
+                  break;
+                case 1:
+                  spqcdSize = 16;
+                  scalarExpounded = false;
+                  break;
+                case 2:
+                  spqcdSize = 16;
+                  scalarExpounded = true;
+                  break;
+                default:
+                  throw 'Invalid SQcd value ' + sqcd;
+              }
+              qcc.noQuantization = spqcdSize == 8;
+              qcc.scalarExpounded = scalarExpounded;
+              qcc.guardBits = sqcd >> 5;
+              var spqcds = [];
+              while (j < length + position) {
+                var spqcd = {};
+                if (spqcdSize == 8) {
+                  spqcd.epsilon = data[j++] >> 3;
+                  spqcd.mu = 0;
+                } else {
+                  spqcd.epsilon = data[j] >> 3;
+                  spqcd.mu = ((data[j] & 0x7) << 8) | data[j + 1];
+                  j += 2;
+                }
+                spqcds.push(spqcd);
+              }
+              qcc.SPqcds = spqcds;
+              if (context.mainHeader)
+                context.QCC[cqcc] = qcc;
+              else
+                context.currentTile.QCC[cqcc] = qcc;
+              break;
+            case 0xFF52: // Coding style default (COD)
+              length = readUint16(data, position);
+              var cod = {};
+              j = position + 2;
+              var scod = data[j++];
+              cod.entropyCoderWithCustomPrecincts = !!(scod & 1);
+              cod.sopMarkerUsed = !!(scod & 2);
+              cod.ephMarkerUsed = !!(scod & 4);
+              var codingStyle = {};
+              cod.progressionOrder = data[j++];
+              cod.layersCount = readUint16(data, j);
+              j += 2;
+              cod.multipleComponentTransform = data[j++];
 
-            if (cod.sopMarkerUsed || cod.ephMarkerUsed ||
-                cod.selectiveArithmeticCodingBypass ||
-                cod.resetContextProbabilities ||
-                cod.terminationOnEachCodingPass ||
-                cod.verticalyStripe || cod.predictableTermination ||
-                cod.segmentationSymbolUsed)
-              error('JPX error: Unsupported COD options: ' + uneval(cod));
+              cod.decompositionLevelsCount = data[j++];
+              cod.xcb = (data[j++] & 0xF) + 2;
+              cod.ycb = (data[j++] & 0xF) + 2;
+              var blockStyle = data[j++];
+              cod.selectiveArithmeticCodingBypass = !!(blockStyle & 1);
+              cod.resetContextProbabilities = !!(blockStyle & 2);
+              cod.terminationOnEachCodingPass = !!(blockStyle & 4);
+              cod.verticalyStripe = !!(blockStyle & 8);
+              cod.predictableTermination = !!(blockStyle & 16);
+              cod.segmentationSymbolUsed = !!(blockStyle & 32);
+              cod.transformation = data[j++];
+              if (cod.entropyCoderWithCustomPrecincts) {
+                var precinctsSizes = {};
+                while (j < length + position) {
+                  var precinctsSize = data[j];
+                  precinctsSizes.push({
+                    PPx: precinctsSize & 0xF,
+                    PPy: precinctsSize >> 4
+                  });
+                }
+                cod.precinctsSizes = precinctsSizes;
+              }
 
-            if (context.mainHeader)
-              context.COD = cod;
-            else {
-              context.currentTile.COD = cod;
-              context.currentTile.COC = [];
-            }
-            break;
-          case 0xFF90: // Start of tile-part (SOT)
-            length = readUint16(data, position);
-            var tile = {};
-            tile.index = readUint16(data, position + 2);
-            tile.length = readUint32(data, position + 4);
-            tile.dataEnd = tile.length + position - 2;
-            tile.partIndex = data[position + 8];
-            tile.partsCount = data[position + 9];
+              if (cod.sopMarkerUsed || cod.ephMarkerUsed ||
+                  cod.selectiveArithmeticCodingBypass ||
+                  cod.resetContextProbabilities ||
+                  cod.terminationOnEachCodingPass ||
+                  cod.verticalyStripe || cod.predictableTermination ||
+                  cod.segmentationSymbolUsed)
+                throw 'Unsupported COD options: ' + uneval(cod);
 
-            context.mainHeader = false;
-            if (tile.partIndex == 0) {
-              // reset component specific settings
-              tile.COD = context.COD;
-              tile.COC = context.COC.slice(0); // clone of the global COC
-              tile.QCD = context.QCD;
-              tile.QCC = context.QCC.slice(0); // clone of the global COC
-            }
-            context.currentTile = tile;
-            break;
-          case 0xFF93: // Start of data (SOD)
-            var tile = context.currentTile;
-            if (tile.partIndex == 0) {
-              initializeTile(context, tile.index);
-              buildPackets(context);
-            }
+              if (context.mainHeader)
+                context.COD = cod;
+              else {
+                context.currentTile.COD = cod;
+                context.currentTile.COC = [];
+              }
+              break;
+            case 0xFF90: // Start of tile-part (SOT)
+              length = readUint16(data, position);
+              var tile = {};
+              tile.index = readUint16(data, position + 2);
+              tile.length = readUint32(data, position + 4);
+              tile.dataEnd = tile.length + position - 2;
+              tile.partIndex = data[position + 8];
+              tile.partsCount = data[position + 9];
 
-            // moving to the end of the data
-            length = tile.dataEnd - position;
+              context.mainHeader = false;
+              if (tile.partIndex == 0) {
+                // reset component specific settings
+                tile.COD = context.COD;
+                tile.COC = context.COC.slice(0); // clone of the global COC
+                tile.QCD = context.QCD;
+                tile.QCC = context.QCC.slice(0); // clone of the global COC
+              }
+              context.currentTile = tile;
+              break;
+            case 0xFF93: // Start of data (SOD)
+              var tile = context.currentTile;
+              if (tile.partIndex == 0) {
+                initializeTile(context, tile.index);
+                buildPackets(context);
+              }
 
-            parseTilePackets(context, data, position, length);
-            break;
-          case 0xFF64: // Comment (COM)
-            length = readUint16(data, position);
-            // skipping content
-            break;
-          default:
-            error('JPX error: Unknown codestream code: ' + code.toString(16));
+              // moving to the end of the data
+              length = tile.dataEnd - position;
+
+              parseTilePackets(context, data, position, length);
+              break;
+            case 0xFF64: // Comment (COM)
+              length = readUint16(data, position);
+              // skipping content
+              break;
+            default:
+              throw 'Unknown codestream code: ' + code.toString(16);
+          }
+          position += length;
         }
-        position += length;
+      } catch (e) {
+        if (this.failOnCorruptedImage)
+          error('JPX error: ' + e);
+        else
+          warn('JPX error: ' + e + '. Trying to recover');
       }
       this.tiles = transformComponents(context);
       this.width = context.SIZ.Xsiz - context.SIZ.XOsiz;
@@ -31012,5 +31348,2229 @@ var JpxImage = (function JpxImageClosure() {
   };
   return JpxImage;
 })();
+/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+
+'use strict';
+
+var bidi = PDFJS.bidi = (function bidiClosure() {
+  // Character types for symbols from 0000 to 00FF.
+  var baseTypes = [
+    'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'S', 'B', 'S', 'WS',
+    'B', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN',
+    'BN', 'BN', 'B', 'B', 'B', 'S', 'WS', 'ON', 'ON', 'ET', 'ET', 'ET', 'ON',
+    'ON', 'ON', 'ON', 'ON', 'ON', 'CS', 'ON', 'CS', 'ON', 'EN', 'EN', 'EN',
+    'EN', 'EN', 'EN', 'EN', 'EN', 'EN', 'EN', 'ON', 'ON', 'ON', 'ON', 'ON',
+    'ON', 'ON', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L',
+    'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'ON', 'ON',
+    'ON', 'ON', 'ON', 'ON', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L',
+    'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L',
+    'L', 'ON', 'ON', 'ON', 'ON', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'B', 'BN',
+    'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN',
+    'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN', 'BN',
+    'BN', 'CS', 'ON', 'ET', 'ET', 'ET', 'ET', 'ON', 'ON', 'ON', 'ON', 'L', 'ON',
+    'ON', 'ON', 'ON', 'ON', 'ET', 'ET', 'EN', 'EN', 'ON', 'L', 'ON', 'ON', 'ON',
+    'EN', 'L', 'ON', 'ON', 'ON', 'ON', 'ON', 'L', 'L', 'L', 'L', 'L', 'L', 'L',
+    'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L',
+    'L', 'ON', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L',
+    'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L',
+    'L', 'L', 'L', 'ON', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L'
+  ];
+
+  // Character types for symbols from 0600 to 06FF
+  var arabicTypes = [
+    'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL',
+    'CS', 'AL', 'ON', 'ON', 'NSM', 'NSM', 'NSM', 'NSM', 'NSM', 'NSM', 'AL',
+    'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL',
+    'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL',
+    'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL',
+    'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL',
+    'AL', 'AL', 'AL', 'AL', 'NSM', 'NSM', 'NSM', 'NSM', 'NSM', 'NSM', 'NSM',
+    'NSM', 'NSM', 'NSM', 'NSM', 'NSM', 'NSM', 'NSM', 'AL', 'AL', 'AL', 'AL',
+    'AL', 'AL', 'AL', 'AN', 'AN', 'AN', 'AN', 'AN', 'AN', 'AN', 'AN', 'AN',
+    'AN', 'ET', 'AN', 'AN', 'AL', 'AL', 'AL', 'NSM', 'AL', 'AL', 'AL', 'AL',
+    'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL',
+    'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL',
+    'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL',
+    'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL',
+    'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL',
+    'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL',
+    'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL',
+    'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL',
+    'AL', 'NSM', 'NSM', 'NSM', 'NSM', 'NSM', 'NSM', 'NSM', 'NSM', 'NSM', 'NSM',
+    'NSM', 'NSM', 'NSM', 'NSM', 'NSM', 'NSM', 'NSM', 'NSM', 'NSM', 'ON', 'NSM',
+    'NSM', 'NSM', 'NSM', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL',
+    'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL', 'AL'
+  ];
+
+  function isOdd(i) {
+    return (i & 1) != 0;
+  }
+
+  function isEven(i) {
+    return (i & 1) == 0;
+  }
+
+  function findUnequal(arr, start, value) {
+    var j;
+    for (var j = start, jj = arr.length; j < jj; ++j) {
+      if (arr[j] != value)
+        return j;
+    }
+    return j;
+  }
+
+  function setValues(arr, start, end, value) {
+    for (var j = start; j < end; ++j) {
+      arr[j] = value;
+    }
+  }
+
+  function reverseValues(arr, start, end) {
+    for (var i = start, j = end - 1; i < j; ++i, --j) {
+      var temp = arr[i];
+      arr[i] = arr[j];
+      arr[j] = temp;
+    }
+  }
+
+  function mirrorGlyphs(c) {
+    /*
+     # BidiMirroring-1.txt
+     0028; 0029 # LEFT PARENTHESIS
+     0029; 0028 # RIGHT PARENTHESIS
+     003C; 003E # LESS-THAN SIGN
+     003E; 003C # GREATER-THAN SIGN
+     005B; 005D # LEFT SQUARE BRACKET
+     005D; 005B # RIGHT SQUARE BRACKET
+     007B; 007D # LEFT CURLY BRACKET
+     007D; 007B # RIGHT CURLY BRACKET
+     00AB; 00BB # LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+     00BB; 00AB # RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+     */
+    switch (c) {
+      case '(':
+        return ')';
+      case ')':
+        return '(';
+      case '<':
+        return '>';
+      case '>':
+        return '<';
+      case ']':
+        return '[';
+      case '[':
+        return ']';
+      case '}':
+        return '{';
+      case '{':
+        return '}';
+      case '\u00AB':
+        return '\u00BB';
+      case '\u00BB':
+        return '\u00AB';
+      default:
+        return c;
+    }
+  }
+
+  return (function bidi(text, startLevel) {
+    var str = text.str;
+    var strLength = str.length;
+    if (strLength == 0)
+      return str;
+
+    // get types, fill arrays
+
+    var chars = new Array(strLength);
+    var types = new Array(strLength);
+    var oldtypes = new Array(strLength);
+    var numBidi = 0;
+
+    for (var i = 0; i < strLength; ++i) {
+      chars[i] = str.charAt(i);
+
+      var charCode = str.charCodeAt(i);
+      var charType = 'L';
+      if (charCode <= 0x00ff)
+        charType = baseTypes[charCode];
+      else if (0x0590 <= charCode && charCode <= 0x05f4)
+        charType = 'R';
+      else if (0x0600 <= charCode && charCode <= 0x06ff)
+        charType = arabicTypes[charCode & 0xff];
+      else if (0x0700 <= charCode && charCode <= 0x08AC)
+        charType = 'AL';
+
+      if (charType == 'R' || charType == 'AL' || charType == 'AN')
+        numBidi++;
+
+      oldtypes[i] = types[i] = charType;
+    }
+
+    // detect the bidi method
+    //  if there are no rtl characters then no bidi needed
+    //  if less than 30% chars are rtl then string is primarily ltr
+    //  if more than 30% chars are rtl then string is primarily rtl
+    if (numBidi == 0) {
+      text.direction = 'ltr';
+      return str;
+    }
+
+    if (startLevel == -1) {
+      if ((strLength / numBidi) < 0.3) {
+        text.direction = 'ltr';
+        startLevel = 0;
+      } else {
+        text.direction = 'rtl';
+        startLevel = 1;
+      }
+    }
+
+    var levels = new Array(strLength);
+
+    for (var i = 0; i < strLength; ++i) {
+      levels[i] = startLevel;
+    }
+
+    var diffChars = new Array(strLength);
+    var diffLevels = new Array(strLength);
+    var diffTypes = new Array(strLength);
+
+    /*
+     X1-X10: skip most of this, since we are NOT doing the embeddings.
+     */
+
+    var e = isOdd(startLevel) ? 'R' : 'L';
+    var sor = e;
+    var eor = sor;
+
+    /*
+     W1. Examine each non-spacing mark (NSM) in the level run, and change the
+     type of the NSM to the type of the previous character. If the NSM is at the
+     start of the level run, it will get the type of sor.
+     */
+
+    var lastType = sor;
+    for (var i = 0; i < strLength; ++i) {
+      if (types[i] == 'NSM')
+        types[i] = lastType;
+      else
+        lastType = types[i];
+    }
+
+    /*
+     W2. Search backwards from each instance of a European number until the
+     first strong type (R, L, AL, or sor) is found.  If an AL is found, change
+     the type of the European number to Arabic number.
+     */
+
+    var lastType = sor;
+    for (var i = 0; i < strLength; ++i) {
+      var t = types[i];
+      if (t == 'EN')
+        types[i] = (lastType == 'AL') ? 'AN' : 'EN';
+      else if (t == 'R' || t == 'L' || t == 'AL')
+        lastType = t;
+    }
+
+    /*
+     W3. Change all ALs to R.
+     */
+
+    for (var i = 0; i < strLength; ++i) {
+      var t = types[i];
+      if (t == 'AL')
+        types[i] = 'R';
+    }
+
+    /*
+     W4. A single European separator between two European numbers changes to a
+     European number. A single common separator between two numbers of the same
+     type changes to that type:
+     */
+
+    for (var i = 1; i < strLength - 1; ++i) {
+      if (types[i] == 'ES' && types[i - 1] == 'EN' && types[i + 1] == 'EN')
+        types[i] = 'EN';
+      if (types[i] == 'CS' && (types[i - 1] == 'EN' || types[i - 1] == 'AN') &&
+          types[i + 1] == types[i - 1])
+        types[i] = types[i - 1];
+    }
+
+    /*
+     W5. A sequence of European terminators adjacent to European numbers changes
+     to all European numbers:
+     */
+
+    for (var i = 0; i < strLength; ++i) {
+      if (types[i] == 'EN') {
+        // do before
+        for (var j = i - 1; j >= 0; --j) {
+          if (types[j] != 'ET')
+            break;
+          types[j] = 'EN';
+        }
+        // do after
+        for (var j = i + 1; j < strLength; --j) {
+          if (types[j] != 'ET')
+            break;
+          types[j] = 'EN';
+        }
+      }
+    }
+
+    /*
+     W6. Otherwise, separators and terminators change to Other Neutral:
+     */
+
+    for (var i = 0; i < strLength; ++i) {
+      var t = types[i];
+      if (t == 'WS' || t == 'ES' || t == 'ET' || t == 'CS')
+        types[i] = 'ON';
+    }
+
+    /*
+     W7. Search backwards from each instance of a European number until the
+     first strong type (R, L, or sor) is found. If an L is found,  then change
+     the type of the European number to L.
+     */
+
+    var lastType = sor;
+    for (var i = 0; i < strLength; ++i) {
+      var t = types[i];
+      if (t == 'EN')
+        types[i] = (lastType == 'L') ? 'L' : 'EN';
+      else if (t == 'R' || t == 'L')
+        lastType = t;
+    }
+
+    /*
+     N1. A sequence of neutrals takes the direction of the surrounding strong
+     text if the text on both sides has the same direction. European and Arabic
+     numbers are treated as though they were R. Start-of-level-run (sor) and
+     end-of-level-run (eor) are used at level run boundaries.
+     */
+
+    for (var i = 0; i < strLength; ++i) {
+      if (types[i] == 'ON') {
+        var end = findUnequal(types, i + 1, 'ON');
+        var before = sor;
+        if (i > 0)
+          before = types[i - 1];
+        var after = eor;
+        if (end + 1 < strLength)
+          after = types[end + 1];
+        if (before != 'L')
+          before = 'R';
+        if (after != 'L')
+          after = 'R';
+        if (before == after)
+          setValues(types, i, end, before);
+        i = end - 1; // reset to end (-1 so next iteration is ok)
+      }
+    }
+
+    /*
+     N2. Any remaining neutrals take the embedding direction.
+     */
+
+    for (var i = 0; i < strLength; ++i) {
+      if (types[i] == 'ON')
+        types[i] = e;
+    }
+
+    /*
+     I1. For all characters with an even (left-to-right) embedding direction,
+     those of type R go up one level and those of type AN or EN go up two
+     levels.
+     I2. For all characters with an odd (right-to-left) embedding direction,
+     those of type L, EN or AN go up one level.
+     */
+
+    for (var i = 0; i < strLength; ++i) {
+      var t = types[i];
+      if (isEven(levels[i])) {
+        if (t == 'R') {
+          levels[i] += 1;
+        } else if (t == 'AN' || t == 'EN') {
+          levels[i] += 2;
+        }
+      } else { // isOdd, so
+        if (t == 'L' || t == 'AN' || t == 'EN') {
+          levels[i] += 1;
+        }
+      }
+    }
+
+    /*
+     L1. On each line, reset the embedding level of the following characters to
+     the paragraph embedding level:
+
+     segment separators,
+     paragraph separators,
+     any sequence of whitespace characters preceding a segment separator or
+     paragraph separator, and any sequence of white space characters at the end
+     of the line.
+     */
+
+    // don't bother as text is only single line
+
+    /*
+     L2. From the highest level found in the text to the lowest odd level on
+     each line, reverse any contiguous sequence of characters that are at that
+     level or higher.
+     */
+
+    // find highest level & lowest odd level
+
+    var highestLevel = -1;
+    var lowestOddLevel = 99;
+    for (var i = 0, ii = levels.length; i < ii; ++i) {
+      var level = levels[i];
+      if (highestLevel < level)
+        highestLevel = level;
+      if (lowestOddLevel > level && isOdd(level))
+        lowestOddLevel = level;
+    }
+
+    // now reverse between those limits
+
+    for (var level = highestLevel; level >= lowestOddLevel; --level) {
+      // find segments to reverse
+      var start = -1;
+      for (var i = 0, ii = levels.length; i < ii; ++i) {
+        if (levels[i] < level) {
+          if (start >= 0) {
+            reverseValues(chars, start, i);
+            start = -1;
+          }
+        } else if (start < 0) {
+          start = i;
+        }
+      }
+      if (start >= 0) {
+        reverseValues(chars, start, levels.length);
+      }
+    }
+
+    /*
+     L3. Combining marks applied to a right-to-left base character will at this
+     point precede their base character. If the rendering engine expects them to
+     follow the base characters in the final display process, then the ordering
+     of the marks and the base character must be reversed.
+     */
+
+    // don't bother for now
+
+    /*
+     L4. A character that possesses the mirrored property as specified by
+     Section 4.7, Mirrored, must be depicted by a mirrored glyph if the resolved
+     directionality of that character is R.
+     */
+
+    // don't mirror as characters are already mirrored in the pdf
+
+    // Finally, return string
+
+    var result = '';
+    for (var i = 0, ii = chars.length; i < ii; ++i) {
+      var ch = chars[i];
+      if (ch != '<' && ch != '>')
+        result += ch;
+    }
+    return result;
+  });
+})();
 
 }).call((typeof window === 'undefined') ? this : window);
+/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+
+'use strict';
+
+var FontInspector = (function FontInspectorClosure() {
+  var fonts;
+  var panelWidth = 300;
+  var active = false;
+  var fontAttribute = 'data-font-name';
+  function removeSelection() {
+    var divs = document.querySelectorAll('div[' + fontAttribute + ']');
+    for (var i = 0, ii = divs.length; i < ii; ++i) {
+      var div = divs[i];
+      div.className = '';
+    }
+  }
+  function resetSelection() {
+    var divs = document.querySelectorAll('div[' + fontAttribute + ']');
+    for (var i = 0, ii = divs.length; i < ii; ++i) {
+      var div = divs[i];
+      div.className = 'debuggerHideText';
+    }
+  }
+  function selectFont(fontName, show) {
+    var divs = document.querySelectorAll('div[' + fontAttribute + '=' +
+                                         fontName + ']');
+    for (var i = 0, ii = divs.length; i < ii; ++i) {
+      var div = divs[i];
+      div.className = show ? 'debuggerShowText' : 'debuggerHideText';
+    }
+  }
+  function textLayerClick(e) {
+    if (!e.target.dataset.fontName || e.target.tagName != 'DIV')
+      return;
+    var fontName = e.target.dataset.fontName;
+    var selects = document.getElementsByTagName('input');
+    for (var i = 0; i < selects.length; ++i) {
+      var select = selects[i];
+      if (select.dataset.fontName != fontName) continue;
+      select.checked = !select.checked;
+      selectFont(fontName, select.checked);
+      select.scrollIntoView();
+    }
+  }
+  return {
+    // Poperties/functions needed by PDFBug.
+    id: 'FontInspector',
+    name: 'Font Inspector',
+    panel: null,
+    manager: null,
+    init: function init() {
+      var panel = this.panel;
+      panel.setAttribute('style', 'padding: 5px;');
+      var tmp = document.createElement('button');
+      tmp.addEventListener('click', resetSelection);
+      tmp.textContent = 'Refresh';
+      panel.appendChild(tmp);
+
+      fonts = document.createElement('div');
+      panel.appendChild(fonts);
+    },
+    enabled: false,
+    get active() {
+      return active;
+    },
+    set active(value) {
+      active = value;
+      if (active) {
+        document.body.addEventListener('click', textLayerClick, true);
+        resetSelection();
+      } else {
+        document.body.removeEventListener('click', textLayerClick, true);
+        removeSelection();
+      }
+    },
+    // FontInspector specific functions.
+    fontAdded: function fontAdded(fontObj, url) {
+      function properties(obj, list) {
+        var moreInfo = document.createElement('table');
+        for (var i = 0; i < list.length; i++) {
+          var tr = document.createElement('tr');
+          var td1 = document.createElement('td');
+          td1.textContent = list[i];
+          tr.appendChild(td1);
+          var td2 = document.createElement('td');
+          td2.textContent = obj[list[i]].toString();
+          tr.appendChild(td2);
+          moreInfo.appendChild(tr);
+        }
+        return moreInfo;
+      }
+      var moreInfo = properties(fontObj, ['name', 'type']);
+      var m = /url\(['"]?([^\)"']+)/.exec(url);
+      var fontName = fontObj.loadedName;
+      var font = document.createElement('div');
+      var name = document.createElement('span');
+      name.textContent = fontName;
+      var download = document.createElement('a');
+      download.href = m[1];
+      download.textContent = 'Download';
+      var logIt = document.createElement('a');
+      logIt.href = '';
+      logIt.textContent = 'Log';
+      logIt.addEventListener('click', function(event) {
+        event.preventDefault();
+        console.log(fontObj);
+      });
+      var select = document.createElement('input');
+      select.setAttribute('type', 'checkbox');
+      select.dataset.fontName = fontName;
+      select.addEventListener('click', (function(select, fontName) {
+        return (function() {
+           selectFont(fontName, select.checked);
+        });
+      })(select, fontName));
+      font.appendChild(select);
+      font.appendChild(name);
+      font.appendChild(document.createTextNode(' '));
+      font.appendChild(download);
+      font.appendChild(document.createTextNode(' '));
+      font.appendChild(logIt);
+      font.appendChild(moreInfo);
+      fonts.appendChild(font);
+      // Somewhat of a hack, should probably add a hook for when the text layer
+      // is done rendering.
+      setTimeout(function() {
+        if (this.active)
+          resetSelection();
+      }.bind(this), 2000);
+    }
+  };
+})();
+
+// Manages all the page steppers.
+var StepperManager = (function StepperManagerClosure() {
+  var steppers = [];
+  var stepperDiv = null;
+  var stepperControls = null;
+  var stepperChooser = null;
+  var breakPoints = {};
+  return {
+    // Poperties/functions needed by PDFBug.
+    id: 'Stepper',
+    name: 'Stepper',
+    panel: null,
+    manager: null,
+    init: function init() {
+      var self = this;
+      this.panel.setAttribute('style', 'padding: 5px;');
+      stepperControls = document.createElement('div');
+      stepperChooser = document.createElement('select');
+      stepperChooser.addEventListener('change', function(event) {
+        self.selectStepper(this.value);
+      });
+      stepperControls.appendChild(stepperChooser);
+      stepperDiv = document.createElement('div');
+      this.panel.appendChild(stepperControls);
+      this.panel.appendChild(stepperDiv);
+      if (sessionStorage.getItem('pdfjsBreakPoints'))
+        breakPoints = JSON.parse(sessionStorage.getItem('pdfjsBreakPoints'));
+    },
+    enabled: false,
+    active: false,
+    // Stepper specific functions.
+    create: function create(pageNumber) {
+      var debug = document.createElement('div');
+      debug.id = 'stepper' + pageNumber;
+      debug.setAttribute('hidden', true);
+      debug.className = 'stepper';
+      stepperDiv.appendChild(debug);
+      var b = document.createElement('option');
+      b.textContent = 'Page ' + (pageNumber + 1);
+      b.value = pageNumber;
+      stepperChooser.appendChild(b);
+      var initBreakPoints = breakPoints[pageNumber] || [];
+      var stepper = new Stepper(debug, pageNumber, initBreakPoints);
+      steppers.push(stepper);
+      if (steppers.length === 1)
+        this.selectStepper(pageNumber, false);
+      return stepper;
+    },
+    selectStepper: function selectStepper(pageNumber, selectPanel) {
+      if (selectPanel)
+        this.manager.selectPanel(1);
+      for (var i = 0; i < steppers.length; ++i) {
+        var stepper = steppers[i];
+        if (stepper.pageNumber == pageNumber)
+          stepper.panel.removeAttribute('hidden');
+        else
+          stepper.panel.setAttribute('hidden', true);
+      }
+      var options = stepperChooser.options;
+      for (var i = 0; i < options.length; ++i) {
+        var option = options[i];
+        option.selected = option.value == pageNumber;
+      }
+    },
+    saveBreakPoints: function saveBreakPoints(pageNumber, bps) {
+      breakPoints[pageNumber] = bps;
+      sessionStorage.setItem('pdfjsBreakPoints', JSON.stringify(breakPoints));
+    }
+  };
+})();
+
+// The stepper for each page's IRQueue.
+var Stepper = (function StepperClosure() {
+  function Stepper(panel, pageNumber, initialBreakPoints) {
+    this.panel = panel;
+    this.len;
+    this.breakPoint = 0;
+    this.nextBreakPoint = null;
+    this.pageNumber = pageNumber;
+    this.breakPoints = initialBreakPoints;
+    this.currentIdx = -1;
+  }
+  Stepper.prototype = {
+    init: function init(IRQueue) {
+      // Shorter way to create element and optionally set textContent.
+      function c(tag, textContent) {
+        var d = document.createElement(tag);
+        if (textContent)
+          d.textContent = textContent;
+        return d;
+      }
+      var panel = this.panel;
+      this.len = IRQueue.fnArray.length;
+      var content = c('div', 'c=continue, s=step');
+      var table = c('table');
+      content.appendChild(table);
+      table.cellSpacing = 0;
+      var headerRow = c('tr');
+      table.appendChild(headerRow);
+      headerRow.appendChild(c('th', 'Break'));
+      headerRow.appendChild(c('th', 'Idx'));
+      headerRow.appendChild(c('th', 'fn'));
+      headerRow.appendChild(c('th', 'args'));
+
+      for (var i = 0; i < IRQueue.fnArray.length; i++) {
+        var line = c('tr');
+        line.className = 'line';
+        line.dataset.idx = i;
+        table.appendChild(line);
+        var checked = this.breakPoints.indexOf(i) != -1;
+        var args = IRQueue.argsArray[i] ? IRQueue.argsArray[i] : [];
+
+        var breakCell = c('td');
+        var cbox = c('input');
+        cbox.type = 'checkbox';
+        cbox.className = 'points';
+        cbox.checked = checked;
+        var self = this;
+        cbox.onclick = (function(x) {
+          return function() {
+            if (this.checked)
+              self.breakPoints.push(x);
+            else
+              self.breakPoints.splice(self.breakPoints.indexOf(x), 1);
+            StepperManager.saveBreakPoints(self.pageNumber, self.breakPoints);
+          }
+        })(i);
+
+        breakCell.appendChild(cbox);
+        line.appendChild(breakCell);
+        line.appendChild(c('td', i.toString()));
+        line.appendChild(c('td', IRQueue.fnArray[i]));
+        line.appendChild(c('td', args.join(', ')));
+      }
+      panel.appendChild(content);
+      var self = this;
+    },
+    getNextBreakPoint: function getNextBreakPoint() {
+      this.breakPoints.sort(function(a, b) { return a - b; });
+      for (var i = 0; i < this.breakPoints.length; i++) {
+        if (this.breakPoints[i] > this.currentIdx)
+          return this.breakPoints[i];
+      }
+      return null;
+    },
+    breakIt: function breakIt(idx, callback) {
+      StepperManager.selectStepper(this.pageNumber, true);
+      var self = this;
+      var dom = document;
+      self.currentIdx = idx;
+      var listener = function(e) {
+        switch (e.keyCode) {
+          case 83: // step
+            dom.removeEventListener('keydown', listener, false);
+            self.nextBreakPoint = self.currentIdx + 1;
+            self.goTo(-1);
+            callback();
+            break;
+          case 67: // continue
+            dom.removeEventListener('keydown', listener, false);
+            var breakPoint = self.getNextBreakPoint();
+            self.nextBreakPoint = breakPoint;
+            self.goTo(-1);
+            callback();
+            break;
+        }
+      }
+      dom.addEventListener('keydown', listener, false);
+      self.goTo(idx);
+    },
+    goTo: function goTo(idx) {
+      var allRows = this.panel.getElementsByClassName('line');
+      for (var x = 0, xx = allRows.length; x < xx; ++x) {
+        var row = allRows[x];
+        if (row.dataset.idx == idx) {
+          row.style.backgroundColor = 'rgb(251,250,207)';
+          row.scrollIntoView();
+        } else {
+          row.style.backgroundColor = null;
+        }
+      }
+    }
+  };
+  return Stepper;
+})();
+
+// Manages all the debugging tools.
+var PDFBug = (function PDFBugClosure() {
+  var panelWidth = 300;
+  var buttons = [];
+  var activePanel = null;
+
+  return {
+    tools: [
+      FontInspector,
+      StepperManager
+    ],
+    init: function init() {
+      /*
+       * Basic Layout:
+       * PDFBug
+       *  Controls
+       *  Panels
+       *    Panel
+       *    Panel
+       *    ...
+       */
+      var ui = document.createElement('div');
+      ui.id = 'PDFBug';
+
+      var controls = document.createElement('div');
+      controls.setAttribute('class', 'controls');
+      ui.appendChild(controls);
+
+      var panels = document.createElement('div');
+      panels.setAttribute('class', 'panels');
+      ui.appendChild(panels);
+
+      document.body.appendChild(ui);
+      document.body.style.paddingRight = panelWidth + 'px';
+
+      // Initialize all the debugging tools.
+      var tools = this.tools;
+      for (var i = 0; i < tools.length; ++i) {
+        var tool = tools[i];
+        var panel = document.createElement('div');
+        var panelButton = document.createElement('button');
+        panelButton.textContent = tool.name;
+        var self = this;
+        panelButton.addEventListener('click', (function(selected) {
+          return function(event) {
+            event.preventDefault();
+            self.selectPanel(selected);
+          };
+        })(i));
+        controls.appendChild(panelButton);
+        panels.appendChild(panel);
+        tool.panel = panel;
+        tool.manager = this;
+        if (tool.enabled)
+          tool.init();
+        else
+          panel.textContent = tool.name + ' is disabled. To enable add ' +
+                              ' "' + tool.id + '" to the pdfBug parameter ' +
+                              'and refresh (seperate multiple by commas).';
+        buttons.push(panelButton);
+      }
+      this.selectPanel(0);
+    },
+    selectPanel: function selectPanel(index) {
+      if (index === activePanel)
+        return;
+      activePanel = index;
+      var tools = this.tools;
+      for (var j = 0; j < tools.length; ++j) {
+        if (j == index) {
+          buttons[j].setAttribute('class', 'active');
+          tools[j].active = true;
+          tools[j].panel.removeAttribute('hidden');
+        } else {
+          buttons[j].setAttribute('class', '');
+          tools[j].active = false;
+          tools[j].panel.setAttribute('hidden', 'true');
+        }
+      }
+    }
+  };
+})();
+/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+
+'use strict';
+
+var kDefaultURL = 'compressed.tracemonkey-pldi-09.pdf';
+var kDefaultScale = 'auto';
+var kDefaultScaleDelta = 1.1;
+var kUnknownScale = 0;
+var kCacheSize = 20;
+var kCssUnits = 96.0 / 72.0;
+var kScrollbarPadding = 40;
+var kMinScale = 0.25;
+var kMaxScale = 4.0;
+var kImageDirectory = './images/';
+var kSettingsMemory = 20;
+
+var Cache = function cacheCache(size) {
+  var data = [];
+  this.push = function cachePush(view) {
+    var i = data.indexOf(view);
+    if (i >= 0)
+      data.splice(i);
+    data.push(view);
+    if (data.length > size)
+      data.shift().update();
+  };
+};
+
+var RenderingQueue = (function RenderingQueueClosure() {
+  function RenderingQueue() {
+    this.items = [];
+  }
+
+  RenderingQueue.prototype = {
+    enqueueDraw: function RenderingQueueEnqueueDraw(item) {
+      if (!item.drawingRequired())
+        return; // as no redraw required, no need for queueing.
+
+      this.items.push(item);
+      if (this.items.length > 1)
+        return; // not first item
+
+      item.draw(this.continueExecution.bind(this));
+    },
+    continueExecution: function RenderingQueueContinueExecution() {
+      var item = this.items.shift();
+
+      if (this.items.length == 0)
+        return; // queue is empty
+
+      item = this.items[0];
+      item.draw(this.continueExecution.bind(this));
+    }
+  };
+
+  return RenderingQueue;
+})();
+
+var FirefoxCom = (function FirefoxComClosure() {
+  return {
+    /**
+     * Creates an event that hopefully the extension is listening for and will
+     * synchronously respond to.
+     * @param {String} action The action to trigger.
+     * @param {String} data Optional data to send.
+     * @return {*} The response.
+     */
+    request: function(action, data) {
+      var request = document.createTextNode('');
+      request.setUserData('action', action, null);
+      request.setUserData('data', data, null);
+      document.documentElement.appendChild(request);
+
+      var sender = document.createEvent('Events');
+      sender.initEvent('pdf.js.message', true, false);
+      request.dispatchEvent(sender);
+      var response = request.getUserData('response');
+      document.documentElement.removeChild(request);
+      return response;
+    }
+  };
+})();
+
+// Settings Manager - This is a utility for saving settings
+// First we see if localStorage is available
+// If not, we use FUEL in FF
+var Settings = (function SettingsClosure() {
+  var isLocalStorageEnabled = (function localStorageEnabledTest() {
+    // Feature test as per http://diveintohtml5.info/storage.html
+    // The additional localStorage call is to get around a FF quirk, see
+    // bug #495747 in bugzilla
+    try {
+      return 'localStorage' in window && window['localStorage'] !== null &&
+          localStorage;
+    } catch (e) {
+      return false;
+    }
+  })();
+
+  var isFirefoxExtension = PDFJS.isFirefoxExtension;
+
+  function Settings(fingerprint) {
+    var database = null;
+    var index;
+    if (isFirefoxExtension)
+      database = FirefoxCom.request('getDatabase', null) || '{}';
+    else if (isLocalStorageEnabled)
+      database = localStorage.getItem('database') || '{}';
+    else
+      return false;
+
+    database = JSON.parse(database);
+    if (!('files' in database))
+      database.files = [];
+    if (database.files.length >= kSettingsMemory)
+      database.files.shift();
+    for (var i = 0, length = database.files.length; i < length; i++) {
+      var branch = database.files[i];
+      if (branch.fingerprint == fingerprint) {
+        index = i;
+        break;
+      }
+    }
+    if (typeof index != 'number')
+      index = database.files.push({fingerprint: fingerprint}) - 1;
+    this.file = database.files[index];
+    this.database = database;
+  }
+
+  Settings.prototype = {
+    set: function settingsSet(name, val) {
+      if (!('file' in this))
+        return false;
+
+      var file = this.file;
+      file[name] = val;
+      var database = JSON.stringify(this.database);
+      if (isFirefoxExtension)
+        FirefoxCom.request('setDatabase', database);
+      else if (isLocalStorageEnabled)
+        localStorage.setItem('database', database);
+    },
+
+    get: function settingsGet(name, defaultValue) {
+      if (!('file' in this))
+        return defaultValue;
+
+      return this.file[name] || defaultValue;
+    }
+  };
+
+  return Settings;
+})();
+
+var cache = new Cache(kCacheSize);
+var renderingQueue = new RenderingQueue();
+var currentPageNumber = 1;
+
+var PDFView = {
+  pages: [],
+  thumbnails: [],
+  currentScale: kUnknownScale,
+  currentScaleValue: null,
+  initialBookmark: document.location.hash.substring(1),
+
+  setScale: function pdfViewSetScale(val, resetAutoSettings) {
+    if (val == this.currentScale)
+      return;
+
+    var pages = this.pages;
+    for (var i = 0; i < pages.length; i++)
+      pages[i].update(val * kCssUnits);
+
+    if (this.currentScale != val)
+      this.pages[this.page - 1].scrollIntoView();
+    this.currentScale = val;
+
+    var event = document.createEvent('UIEvents');
+    event.initUIEvent('scalechange', false, false, window, 0);
+    event.scale = val;
+    event.resetAutoSettings = resetAutoSettings;
+    window.dispatchEvent(event);
+  },
+
+  parseScale: function pdfViewParseScale(value, resetAutoSettings) {
+    if ('custom' == value)
+      return;
+
+    var scale = parseFloat(value);
+    this.currentScaleValue = value;
+    if (scale) {
+      this.setScale(scale, true);
+      return;
+    }
+
+    var currentPage = this.pages[this.page - 1];
+    var pageWidthScale = (window.innerWidth - kScrollbarPadding) /
+                          currentPage.width / kCssUnits;
+    var pageHeightScale = (window.innerHeight - kScrollbarPadding) /
+                           currentPage.height / kCssUnits;
+    if ('page-width' == value)
+      this.setScale(pageWidthScale, resetAutoSettings);
+    if ('page-height' == value)
+      this.setScale(pageHeightScale, resetAutoSettings);
+    if ('page-fit' == value) {
+      this.setScale(
+        Math.min(pageWidthScale, pageHeightScale), resetAutoSettings);
+    }
+    if ('auto' == value)
+      this.setScale(Math.min(1.0, pageWidthScale), resetAutoSettings);
+
+    selectScaleOption(value);
+  },
+
+  zoomIn: function pdfViewZoomIn() {
+    var newScale = Math.min(kMaxScale, this.currentScale * kDefaultScaleDelta);
+    this.parseScale(newScale, true);
+  },
+
+  zoomOut: function pdfViewZoomOut() {
+    var newScale = Math.max(kMinScale, this.currentScale / kDefaultScaleDelta);
+    this.parseScale(newScale, true);
+  },
+
+  set page(val) {
+    var pages = this.pages;
+    var input = document.getElementById('pageNumber');
+    if (!(0 < val && val <= pages.length)) {
+      var event = document.createEvent('UIEvents');
+      event.initUIEvent('pagechange', false, false, window, 0);
+      event.pageNumber = this.page;
+      window.dispatchEvent(event);
+      return;
+    }
+
+    currentPageNumber = val;
+    var event = document.createEvent('UIEvents');
+    event.initUIEvent('pagechange', false, false, window, 0);
+    event.pageNumber = val;
+    window.dispatchEvent(event);
+
+    // checking if the this.page was called from the updateViewarea function:
+    // avoiding the creation of two "set page" method (internal and public)
+    if (updateViewarea.inProgress)
+      return;
+
+    // Avoid scrolling the first page during loading
+    if (this.loading && val == 1)
+      return;
+
+    pages[val - 1].scrollIntoView();
+  },
+
+  get page() {
+    return currentPageNumber;
+  },
+
+  open: function pdfViewOpen(url, scale) {
+    document.title = this.url = url;
+
+    var self = this;
+    PDFJS.getPdf(
+      {
+        url: url,
+        progress: function getPdfProgress(evt) {
+          if (evt.lengthComputable)
+            self.progress(evt.loaded / evt.total);
+        },
+        error: function getPdfError(e) {
+          var loadingIndicator = document.getElementById('loading');
+          loadingIndicator.textContent = 'Error';
+          var moreInfo = {
+            message: 'Unexpected server response of ' + e.target.status + '.'
+          };
+          self.error('An error occurred while loading the PDF.', moreInfo);
+        }
+      },
+      function getPdfLoad(data) {
+        self.loading = true;
+        self.load(data, scale);
+        self.loading = false;
+      });
+  },
+
+  download: function pdfViewDownload() {
+    var url = this.url.split('#')[0];
+    if (PDFJS.isFirefoxExtension) {
+      FirefoxCom.request('download', url);
+    } else {
+      url += '#pdfjs.action=download', '_parent';
+      window.open(url, '_parent');
+    }
+  },
+
+  navigateTo: function pdfViewNavigateTo(dest) {
+    if (typeof dest === 'string')
+      dest = this.destinations[dest];
+    if (!(dest instanceof Array))
+      return; // invalid destination
+    // dest array looks like that: <page-ref> </XYZ|FitXXX> <args..>
+    var destRef = dest[0];
+    var pageNumber = destRef instanceof Object ?
+      this.pagesRefMap[destRef.num + ' ' + destRef.gen + ' R'] : (destRef + 1);
+    if (pageNumber) {
+      this.page = pageNumber;
+      var currentPage = this.pages[pageNumber - 1];
+      currentPage.scrollIntoView(dest);
+    }
+  },
+
+  getDestinationHash: function pdfViewGetDestinationHash(dest) {
+    if (typeof dest === 'string')
+      return PDFView.getAnchorUrl('#' + escape(dest));
+    if (dest instanceof Array) {
+      var destRef = dest[0]; // see navigateTo method for dest format
+      var pageNumber = destRef instanceof Object ?
+        this.pagesRefMap[destRef.num + ' ' + destRef.gen + ' R'] :
+        (destRef + 1);
+      if (pageNumber) {
+        var pdfOpenParams = PDFView.getAnchorUrl('#page=' + pageNumber);
+        var destKind = dest[1];
+        if (typeof destKind === 'object' && 'name' in destKind &&
+            destKind.name == 'XYZ') {
+          var scale = (dest[4] || this.currentScale);
+          pdfOpenParams += '&zoom=' + (scale * 100);
+          if (dest[2] || dest[3]) {
+            pdfOpenParams += ',' + (dest[2] || 0) + ',' + (dest[3] || 0);
+          }
+        }
+        return pdfOpenParams;
+      }
+    }
+    return '';
+  },
+
+  /**
+   * For the firefox extension we prefix the full url on anchor links so they
+   * don't come up as resource:// urls and so open in new tab/window works.
+   * @param {String} anchor The anchor hash include the #.
+   */
+  getAnchorUrl: function getAnchorUrl(anchor) {
+    if (PDFJS.isFirefoxExtension)
+      return this.url.split('#')[0] + anchor;
+    return anchor;
+  },
+
+  /**
+   * Show the error box.
+   * @param {String} message A message that is human readable.
+   * @param {Object} moreInfo (optional) Further information about the error
+   *                            that is more technical.  Should have a 'message'
+   *                            and optionally a 'stack' property.
+   */
+  error: function pdfViewError(message, moreInfo) {
+    var errorWrapper = document.getElementById('errorWrapper');
+    errorWrapper.removeAttribute('hidden');
+
+    var errorMessage = document.getElementById('errorMessage');
+    errorMessage.textContent = message;
+
+    var closeButton = document.getElementById('errorClose');
+    closeButton.onclick = function() {
+      errorWrapper.setAttribute('hidden', 'true');
+    };
+
+    var errorMoreInfo = document.getElementById('errorMoreInfo');
+    var moreInfoButton = document.getElementById('errorShowMore');
+    var lessInfoButton = document.getElementById('errorShowLess');
+    moreInfoButton.onclick = function() {
+      errorMoreInfo.removeAttribute('hidden');
+      moreInfoButton.setAttribute('hidden', 'true');
+      lessInfoButton.removeAttribute('hidden');
+    };
+    lessInfoButton.onclick = function() {
+      errorMoreInfo.setAttribute('hidden', 'true');
+      moreInfoButton.removeAttribute('hidden');
+      lessInfoButton.setAttribute('hidden', 'true');
+    };
+    moreInfoButton.removeAttribute('hidden');
+    lessInfoButton.setAttribute('hidden', 'true');
+    errorMoreInfo.value = 'PDF.JS Build: ' + PDFJS.build + '\n';
+
+    if (moreInfo) {
+      errorMoreInfo.value += 'Message: ' + moreInfo.message;
+      if (moreInfo.stack) {
+        errorMoreInfo.value += '\n' + 'Stack: ' + moreInfo.stack;
+      } else {
+        if (moreInfo.filename)
+          errorMoreInfo.value += '\n' + 'File: ' + moreInfo.filename;
+        if (moreInfo.lineNumber)
+          errorMoreInfo.value += '\n' + 'Line: ' + moreInfo.lineNumber;
+      }
+    }
+    errorMoreInfo.rows = errorMoreInfo.value.split('\n').length - 1;
+  },
+
+  progress: function pdfViewProgress(level) {
+    var percent = Math.round(level * 100);
+    var loadingIndicator = document.getElementById('loading');
+    loadingIndicator.textContent = 'Loading... ' + percent + '%';
+  },
+
+  load: function pdfViewLoad(data, scale) {
+    function bindOnAfterDraw(pageView, thumbnailView) {
+      // when page is painted, using the image as thumbnail base
+      pageView.onAfterDraw = function pdfViewLoadOnAfterDraw() {
+        thumbnailView.setImage(pageView.canvas);
+        preDraw();
+      };
+    }
+
+    var errorWrapper = document.getElementById('errorWrapper');
+    errorWrapper.setAttribute('hidden', 'true');
+
+    var loadingIndicator = document.getElementById('loading');
+    loadingIndicator.setAttribute('hidden', 'true');
+
+    var sidebar = document.getElementById('sidebarView');
+    sidebar.parentNode.scrollTop = 0;
+
+    while (sidebar.hasChildNodes())
+      sidebar.removeChild(sidebar.lastChild);
+
+    if ('_loadingInterval' in sidebar)
+      clearInterval(sidebar._loadingInterval);
+
+    var container = document.getElementById('viewer');
+    while (container.hasChildNodes())
+      container.removeChild(container.lastChild);
+
+    var pdf;
+    try {
+      pdf = new PDFJS.PDFDoc(data);
+    } catch (e) {
+      this.error('An error occurred while reading the PDF.', e);
+    }
+    var pagesCount = pdf.numPages;
+    var id = pdf.fingerprint;
+    var storedHash = null;
+    document.getElementById('numPages').textContent = pagesCount;
+    document.getElementById('pageNumber').max = pagesCount;
+    PDFView.documentFingerprint = id;
+    var store = PDFView.store = new Settings(id);
+    if (store.get('exists', false)) {
+      var page = store.get('page', '1');
+      var zoom = store.get('zoom', PDFView.currentScale);
+      var left = store.get('scrollLeft', '0');
+      var top = store.get('scrollTop', '0');
+
+      storedHash = 'page=' + page + '&zoom=' + zoom + ',' + left + ',' + top;
+    }
+
+    var pages = this.pages = [];
+    var pagesRefMap = {};
+    var thumbnails = this.thumbnails = [];
+    for (var i = 1; i <= pagesCount; i++) {
+      var page = pdf.getPage(i);
+      var pageView = new PageView(container, page, i, page.width, page.height,
+                                  page.stats, this.navigateTo.bind(this));
+      var thumbnailView = new ThumbnailView(sidebar, page, i,
+                                            page.width / page.height);
+      bindOnAfterDraw(pageView, thumbnailView);
+
+      pages.push(pageView);
+      thumbnails.push(thumbnailView);
+      var pageRef = page.ref;
+      pagesRefMap[pageRef.num + ' ' + pageRef.gen + ' R'] = i;
+    }
+
+    this.pagesRefMap = pagesRefMap;
+    this.destinations = pdf.catalog.destinations;
+
+    if (pdf.catalog.documentOutline) {
+      this.outline = new DocumentOutlineView(pdf.catalog.documentOutline);
+      var outlineSwitchButton = document.getElementById('outlineSwitch');
+      outlineSwitchButton.removeAttribute('disabled');
+      this.switchSidebarView('outline');
+    }
+
+    // Reset the current scale, as otherwise the page's scale might not get
+    // updated if the zoom level stayed the same.
+    this.currentScale = 0;
+    this.currentScaleValue = null;
+    if (this.initialBookmark) {
+      this.setHash(this.initialBookmark);
+      this.initialBookmark = null;
+    }
+    else if (storedHash)
+      this.setHash(storedHash);
+    else if (scale) {
+      this.parseScale(scale, true);
+      this.page = 1;
+    }
+
+    if (PDFView.currentScale === kUnknownScale) {
+      // Scale was not initialized: invalid bookmark or scale was not specified.
+      // Setting the default one.
+      this.parseScale(kDefaultScale, true);
+    }
+  },
+
+  setHash: function pdfViewSetHash(hash) {
+    if (!hash)
+      return;
+
+    if (hash.indexOf('=') >= 0) {
+      var params = PDFView.parseQueryString(hash);
+      // borrowing syntax from "Parameters for Opening PDF Files"
+      if ('nameddest' in params) {
+        PDFView.navigateTo(params.nameddest);
+        return;
+      }
+      if ('page' in params) {
+        var pageNumber = (params.page | 0) || 1;
+        this.page = pageNumber;
+        if ('zoom' in params) {
+          var zoomArgs = params.zoom.split(','); // scale,left,top
+          // building destination array
+
+          // If the zoom value, it has to get divided by 100. If it is a string,
+          // it should stay as it is.
+          var zoomArg = zoomArgs[0];
+          var zoomArgNumber = parseFloat(zoomArg);
+          if (zoomArgNumber)
+            zoomArg = zoomArgNumber / 100;
+
+          var dest = [null, {name: 'XYZ'}, (zoomArgs[1] | 0),
+            (zoomArgs[2] | 0), zoomArg];
+          var currentPage = this.pages[pageNumber - 1];
+          currentPage.scrollIntoView(dest);
+        } else
+          this.page = params.page; // simple page
+        return;
+      }
+    } else if (/^\d+$/.test(hash)) // page number
+      this.page = hash;
+    else // named destination
+      PDFView.navigateTo(unescape(hash));
+  },
+
+  switchSidebarView: function pdfViewSwitchSidebarView(view) {
+    var thumbsScrollView = document.getElementById('sidebarScrollView');
+    var outlineScrollView = document.getElementById('outlineScrollView');
+    var thumbsSwitchButton = document.getElementById('thumbsSwitch');
+    var outlineSwitchButton = document.getElementById('outlineSwitch');
+    switch (view) {
+      case 'thumbs':
+        thumbsScrollView.removeAttribute('hidden');
+        outlineScrollView.setAttribute('hidden', 'true');
+        thumbsSwitchButton.setAttribute('data-selected', true);
+        outlineSwitchButton.removeAttribute('data-selected');
+        updateThumbViewArea();
+        break;
+      case 'outline':
+        thumbsScrollView.setAttribute('hidden', 'true');
+        outlineScrollView.removeAttribute('hidden');
+        thumbsSwitchButton.removeAttribute('data-selected');
+        outlineSwitchButton.setAttribute('data-selected', true);
+        break;
+    }
+  },
+
+  pinSidebar: function pdfViewPinSidebar() {
+    document.getElementById('sidebar').classList.toggle('pinned');
+  },
+
+  getVisiblePages: function pdfViewGetVisiblePages() {
+    var pages = this.pages;
+    var kBottomMargin = 10;
+    var visiblePages = [];
+
+    var currentHeight = kBottomMargin;
+    var windowTop = window.pageYOffset;
+    for (var i = 1; i <= pages.length; ++i) {
+      var page = pages[i - 1];
+      var pageHeight = page.height * page.scale + kBottomMargin;
+      if (currentHeight + pageHeight > windowTop)
+        break;
+
+      currentHeight += pageHeight;
+    }
+
+    var windowBottom = window.pageYOffset + window.innerHeight;
+    for (; i <= pages.length && currentHeight < windowBottom; ++i) {
+      var singlePage = pages[i - 1];
+      visiblePages.push({ id: singlePage.id, y: currentHeight,
+                          view: singlePage });
+      currentHeight += singlePage.height * singlePage.scale + kBottomMargin;
+    }
+    return visiblePages;
+  },
+
+  getVisibleThumbs: function pdfViewGetVisibleThumbs() {
+    var thumbs = this.thumbnails;
+    var kBottomMargin = 5;
+    var visibleThumbs = [];
+
+    var view = document.getElementById('sidebarScrollView');
+    var currentHeight = kBottomMargin;
+    var top = view.scrollTop;
+    for (var i = 1; i <= thumbs.length; ++i) {
+      var thumb = thumbs[i - 1];
+      var thumbHeight = thumb.height * thumb.scaleY + kBottomMargin;
+      if (currentHeight + thumbHeight > top)
+        break;
+
+      currentHeight += thumbHeight;
+    }
+
+    var bottom = top + view.clientHeight;
+    for (; i <= thumbs.length && currentHeight < bottom; ++i) {
+      var singleThumb = thumbs[i - 1];
+      visibleThumbs.push({ id: singleThumb.id, y: currentHeight,
+                          view: singleThumb });
+      currentHeight += singleThumb.height * singleThumb.scaleY + kBottomMargin;
+    }
+
+    return visibleThumbs;
+  },
+
+  // Helper function to parse query string (e.g. ?param1=value&parm2=...).
+  parseQueryString: function pdfViewParseQueryString(query) {
+    var parts = query.split('&');
+    var params = {};
+    for (var i = 0, ii = parts.length; i < parts.length; ++i) {
+      var param = parts[i].split('=');
+      var key = param[0];
+      var value = param.length > 1 ? param[1] : null;
+      params[unescape(key)] = unescape(value);
+    }
+    return params;
+  }
+};
+
+var PageView = function pageView(container, content, id, pageWidth, pageHeight,
+                                 stats, navigateTo) {
+  this.id = id;
+  this.content = content;
+
+  var view = this.content.view;
+  this.x = view.x;
+  this.y = view.y;
+  this.width = view.width;
+  this.height = view.height;
+
+  var anchor = document.createElement('a');
+  anchor.name = '' + this.id;
+
+  var div = document.createElement('div');
+  div.id = 'pageContainer' + this.id;
+  div.className = 'page';
+
+  container.appendChild(anchor);
+  container.appendChild(div);
+
+  this.update = function pageViewUpdate(scale) {
+    this.scale = scale || this.scale;
+    div.style.width = (this.width * this.scale) + 'px';
+    div.style.height = (this.height * this.scale) + 'px';
+
+    while (div.hasChildNodes())
+      div.removeChild(div.lastChild);
+    div.removeAttribute('data-loaded');
+
+    delete this.canvas;
+
+    this.loadingIconDiv = document.createElement('div');
+    this.loadingIconDiv.className = 'loadingIcon';
+    div.appendChild(this.loadingIconDiv);
+  };
+
+  function setupAnnotations(content, scale) {
+    function bindLink(link, dest) {
+      link.href = PDFView.getDestinationHash(dest);
+      link.onclick = function pageViewSetupLinksOnclick() {
+        if (dest)
+          PDFView.navigateTo(dest);
+        return false;
+      };
+    }
+    function createElementWithStyle(tagName, item) {
+      var element = document.createElement(tagName);
+      element.style.left = (Math.floor(item.x - view.x) * scale) + 'px';
+      element.style.top = (Math.floor(item.y - view.y) * scale) + 'px';
+      element.style.width = Math.ceil(item.width * scale) + 'px';
+      element.style.height = Math.ceil(item.height * scale) + 'px';
+      return element;
+    }
+    function createCommentAnnotation(type, item) {
+      var container = document.createElement('section');
+      container.className = 'annotComment';
+
+      var image = createElementWithStyle('img', item);
+      image.src = kImageDirectory + type.toLowerCase() + '.svg';
+      var content = document.createElement('div');
+      content.setAttribute('hidden', true);
+      var title = document.createElement('h1');
+      var text = document.createElement('p');
+      var offsetPos = Math.floor(item.x - view.x + item.width);
+      content.style.left = (offsetPos * scale) + 'px';
+      content.style.top = (Math.floor(item.y - view.y) * scale) + 'px';
+      title.textContent = item.title;
+
+      if (!item.content) {
+        content.setAttribute('hidden', true);
+      } else {
+        var e = document.createElement('span');
+        var lines = item.content.split('\n');
+        for (var i = 0, ii = lines.length; i < ii; ++i) {
+          var line = lines[i];
+          e.appendChild(document.createTextNode(line));
+          if (i < (ii - 1))
+            e.appendChild(document.createElement('br'));
+        }
+        text.appendChild(e);
+        image.addEventListener('mouseover', function annotationImageOver() {
+           this.nextSibling.removeAttribute('hidden');
+        }, false);
+
+        image.addEventListener('mouseout', function annotationImageOut() {
+           this.nextSibling.setAttribute('hidden', true);
+        }, false);
+      }
+
+      content.appendChild(title);
+      content.appendChild(text);
+      container.appendChild(image);
+      container.appendChild(content);
+
+      return container;
+    }
+
+    var items = content.getAnnotations();
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      switch (item.type) {
+        case 'Link':
+          var link = createElementWithStyle('a', item);
+          link.href = item.url || '';
+          if (!item.url)
+            bindLink(link, ('dest' in item) ? item.dest : null);
+          div.appendChild(link);
+          break;
+        case 'Text':
+          var comment = createCommentAnnotation(item.name, item);
+          if (comment)
+            div.appendChild(comment);
+          break;
+      }
+    }
+  }
+
+  this.getPagePoint = function pageViewGetPagePoint(x, y) {
+    var scale = PDFView.currentScale;
+    return this.content.rotatePoint(x / scale, y / scale);
+  };
+
+  this.scrollIntoView = function pageViewScrollIntoView(dest) {
+      if (!dest) {
+        div.scrollIntoView(true);
+        return;
+      }
+
+      var x = 0, y = 0;
+      var width = 0, height = 0, widthScale, heightScale;
+      var scale = 0;
+      switch (dest[1].name) {
+        case 'XYZ':
+          x = dest[2];
+          y = dest[3];
+          scale = dest[4];
+          break;
+        case 'Fit':
+        case 'FitB':
+          scale = 'page-fit';
+          break;
+        case 'FitH':
+        case 'FitBH':
+          y = dest[2];
+          scale = 'page-width';
+          break;
+        case 'FitV':
+        case 'FitBV':
+          x = dest[2];
+          scale = 'page-height';
+          break;
+        case 'FitR':
+          x = dest[2];
+          y = dest[3];
+          width = dest[4] - x;
+          height = dest[5] - y;
+          widthScale = (window.innerWidth - kScrollbarPadding) /
+            width / kCssUnits;
+          heightScale = (window.innerHeight - kScrollbarPadding) /
+            height / kCssUnits;
+          scale = Math.min(widthScale, heightScale);
+          break;
+        default:
+          return;
+      }
+
+      var boundingRect = [
+        this.content.rotatePoint(x, y),
+        this.content.rotatePoint(x + width, y + height)
+      ];
+
+      if (scale && scale !== PDFView.currentScale)
+        PDFView.parseScale(scale, true);
+      else if (PDFView.currentScale === kUnknownScale)
+        PDFView.parseScale(kDefaultScale, true);
+
+      setTimeout(function pageViewScrollIntoViewRelayout() {
+        // letting page to re-layout before scrolling
+        var scale = PDFView.currentScale;
+        var x = Math.min(boundingRect[0].x, boundingRect[1].x);
+        var y = Math.min(boundingRect[0].y, boundingRect[1].y);
+        var width = Math.abs(boundingRect[0].x - boundingRect[1].x);
+        var height = Math.abs(boundingRect[0].y - boundingRect[1].y);
+
+        // using temporary div to scroll it into view
+        var tempDiv = document.createElement('div');
+        tempDiv.style.position = 'absolute';
+        tempDiv.style.left = Math.floor(x * scale) + 'px';
+        tempDiv.style.top = Math.floor(y * scale) + 'px';
+        tempDiv.style.width = Math.ceil(width * scale) + 'px';
+        tempDiv.style.height = Math.ceil(height * scale) + 'px';
+        div.appendChild(tempDiv);
+        tempDiv.scrollIntoView(true);
+        div.removeChild(tempDiv);
+      }, 0);
+  };
+
+  this.drawingRequired = function() {
+    return !div.querySelector('canvas');
+  };
+
+  this.draw = function pageviewDraw(callback) {
+    if (!this.drawingRequired()) {
+      this.updateStats();
+      callback();
+      return;
+    }
+
+    var canvas = document.createElement('canvas');
+    canvas.id = 'page' + this.id;
+    canvas.mozOpaque = true;
+    div.appendChild(canvas);
+    this.canvas = canvas;
+
+    var textLayerDiv = null;
+    if (!PDFJS.disableTextLayer) {
+      textLayerDiv = document.createElement('div');
+      textLayerDiv.className = 'textLayer';
+      div.appendChild(textLayerDiv);
+    }
+    var textLayer = textLayerDiv ? new TextLayerBuilder(textLayerDiv) : null;
+
+    var scale = this.scale;
+    canvas.width = pageWidth * scale;
+    canvas.height = pageHeight * scale;
+
+    var ctx = canvas.getContext('2d');
+    ctx.save();
+    ctx.fillStyle = 'rgb(255, 255, 255)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+    ctx.translate(-this.x * scale, -this.y * scale);
+
+    // Rendering area
+
+    var self = this;
+    stats.begin = Date.now();
+    this.content.startRendering(ctx, function pageViewDrawCallback(error) {
+      if (self.loadingIconDiv) {
+        div.removeChild(self.loadingIconDiv);
+        delete self.loadingIconDiv;
+      }
+
+      if (error)
+        PDFView.error('An error occurred while rendering the page.', error);
+
+      self.updateStats();
+      if (self.onAfterDraw)
+        self.onAfterDraw();
+
+      cache.push(self);
+      callback();
+    }, textLayer);
+
+    setupAnnotations(this.content, this.scale);
+    div.setAttribute('data-loaded', true);
+  };
+
+  this.updateStats = function pageViewUpdateStats() {
+    var t1 = stats.compile, t2 = stats.fonts, t3 = stats.render;
+    var str = 'Time to compile/fonts/render: ' +
+              (t1 - stats.begin) + '/' + (t2 - t1) + '/' + (t3 - t2) + ' ms';
+    document.getElementById('info').textContent = str;
+  };
+};
+
+var ThumbnailView = function thumbnailView(container, page, id, pageRatio) {
+  var anchor = document.createElement('a');
+  anchor.href = PDFView.getAnchorUrl('#page=' + id);
+  anchor.onclick = function stopNivigation() {
+    PDFView.page = id;
+    return false;
+  };
+
+  var view = page.view;
+  this.width = view.width;
+  this.height = view.height;
+  this.id = id;
+
+  var maxThumbSize = 134;
+  var canvasWidth = pageRatio >= 1 ? maxThumbSize :
+    maxThumbSize * pageRatio;
+  var canvasHeight = pageRatio <= 1 ? maxThumbSize :
+    maxThumbSize / pageRatio;
+  var scaleX = this.scaleX = (canvasWidth / this.width);
+  var scaleY = this.scaleY = (canvasHeight / this.height);
+
+  var div = document.createElement('div');
+  div.id = 'thumbnailContainer' + id;
+  div.className = 'thumbnail';
+
+  anchor.appendChild(div);
+  container.appendChild(anchor);
+
+  this.hasImage = false;
+
+  function getPageDrawContext() {
+    var canvas = document.createElement('canvas');
+    canvas.id = 'thumbnail' + id;
+    canvas.mozOpaque = true;
+
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+
+    div.setAttribute('data-loaded', true);
+    div.appendChild(canvas);
+
+    var ctx = canvas.getContext('2d');
+    ctx.save();
+    ctx.fillStyle = 'rgb(255, 255, 255)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+
+    var view = page.view;
+    ctx.translate(-view.x * scaleX, -view.y * scaleY);
+    div.style.width = (view.width * scaleX) + 'px';
+    div.style.height = (view.height * scaleY) + 'px';
+    div.style.lineHeight = (view.height * scaleY) + 'px';
+
+    return ctx;
+  }
+
+  this.drawingRequired = function thumbnailViewDrawingRequired() {
+    return !this.hasImage;
+  };
+
+  this.draw = function thumbnailViewDraw(callback) {
+    if (this.hasImage) {
+      callback();
+      return;
+    }
+
+    var ctx = getPageDrawContext();
+    page.startRendering(ctx, function thumbnailViewDrawStartRendering() {
+      callback();
+    });
+
+    this.hasImage = true;
+  };
+
+  this.setImage = function thumbnailViewSetImage(img) {
+    if (this.hasImage || !img)
+      return;
+
+    var ctx = getPageDrawContext();
+    ctx.drawImage(img, 0, 0, img.width, img.height,
+                  0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    this.hasImage = true;
+  };
+};
+
+var DocumentOutlineView = function documentOutlineView(outline) {
+  var outlineView = document.getElementById('outlineView');
+
+  function bindItemLink(domObj, item) {
+    domObj.href = PDFView.getDestinationHash(item.dest);
+    domObj.onclick = function documentOutlineViewOnclick(e) {
+      PDFView.navigateTo(item.dest);
+      return false;
+    };
+  }
+
+  var queue = [{parent: outlineView, items: outline}];
+  while (queue.length > 0) {
+    var levelData = queue.shift();
+    var i, n = levelData.items.length;
+    for (i = 0; i < n; i++) {
+      var item = levelData.items[i];
+      var div = document.createElement('div');
+      div.className = 'outlineItem';
+      var a = document.createElement('a');
+      bindItemLink(a, item);
+      a.textContent = item.title;
+      div.appendChild(a);
+
+      if (item.items.length > 0) {
+        var itemsDiv = document.createElement('div');
+        itemsDiv.className = 'outlineItems';
+        div.appendChild(itemsDiv);
+        queue.push({parent: itemsDiv, items: item.items});
+      }
+
+      levelData.parent.appendChild(div);
+    }
+  }
+};
+
+var TextLayerBuilder = function textLayerBuilder(textLayerDiv) {
+  this.textLayerDiv = textLayerDiv;
+
+  this.beginLayout = function textLayerBuilderBeginLayout() {
+    this.textDivs = [];
+    this.textLayerQueue = [];
+  };
+
+  this.endLayout = function textLayerBuilderEndLayout() {
+    var self = this;
+    var textDivs = this.textDivs;
+    var textLayerDiv = this.textLayerDiv;
+    var renderTimer = null;
+    var renderingDone = false;
+    var renderInterval = 0;
+    var resumeInterval = 500; // in ms
+
+    // Render the text layer, one div at a time
+    function renderTextLayer() {
+      if (textDivs.length === 0) {
+        clearInterval(renderTimer);
+        renderingDone = true;
+        return;
+      }
+      var textDiv = textDivs.shift();
+      if (textDiv.dataset.textLength > 0) {
+        textLayerDiv.appendChild(textDiv);
+
+        if (textDiv.dataset.textLength > 1) { // avoid div by zero
+          // Adjust div width to match canvas text
+          // Due to the .offsetWidth calls, this is slow
+          // This needs to come after appending to the DOM
+          var textScale = textDiv.dataset.canvasWidth / textDiv.offsetWidth;
+          CustomStyle.setProp('transform' , textDiv,
+            'scale(' + textScale + ', 1)');
+          CustomStyle.setProp('transformOrigin' , textDiv, '0% 0%');
+        }
+      } // textLength > 0
+    }
+    renderTimer = setInterval(renderTextLayer, renderInterval);
+
+    // Stop rendering when user scrolls. Resume after XXX milliseconds
+    // of no scroll events
+    var scrollTimer = null;
+    function textLayerOnScroll() {
+      if (renderingDone) {
+        window.removeEventListener('scroll', textLayerOnScroll, false);
+        return;
+      }
+
+      // Immediately pause rendering
+      clearInterval(renderTimer);
+
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(function textLayerScrollTimer() {
+        // Resume rendering
+        renderTimer = setInterval(renderTextLayer, renderInterval);
+      }, resumeInterval);
+    }; // textLayerOnScroll
+
+    window.addEventListener('scroll', textLayerOnScroll, false);
+  }; // endLayout
+
+  this.appendText = function textLayerBuilderAppendText(text,
+                                                        fontName, fontSize) {
+    var textDiv = document.createElement('div');
+
+    // vScale and hScale already contain the scaling to pixel units
+    var fontHeight = fontSize * text.geom.vScale;
+    textDiv.dataset.canvasWidth = text.canvasWidth * text.geom.hScale;
+    textDiv.dataset.fontName = fontName;
+
+    textDiv.style.fontSize = fontHeight + 'px';
+    textDiv.style.left = text.geom.x + 'px';
+    textDiv.style.top = (text.geom.y - fontHeight) + 'px';
+    textDiv.textContent = PDFJS.bidi(text, -1);
+    textDiv.dir = text.direction;
+    textDiv.dataset.textLength = text.length;
+    this.textDivs.push(textDiv);
+  };
+};
+
+window.addEventListener('load', function webViewerLoad(evt) {
+/*
+  var params = PDFView.parseQueryString(document.location.search.substring(1));
+
+  var file = PDFJS.isFirefoxExtension ?
+              window.location.toString() : params.file || kDefaultURL;
+  PDFView.open(file, 0);
+
+  if (PDFJS.isFirefoxExtension || !window.File || !window.FileReader ||
+      !window.FileList || !window.Blob) {
+    document.getElementById('fileInput').setAttribute('hidden', 'true');
+    document.getElementById('fileInputSeperator')
+                              .setAttribute('hidden', 'true');
+  } else {
+    document.getElementById('fileInput').value = null;
+  }
+*/
+
+  // Special debugging flags in the hash section of the URL.
+  var hash = document.location.hash.substring(1);
+  var hashParams = PDFView.parseQueryString(hash);
+
+  if ('disableWorker' in hashParams)
+    PDFJS.disableWorker = (hashParams['disableWorker'] === 'true');
+
+  if ('disableTextLayer' in hashParams)
+    PDFJS.disableTextLayer = (hashParams['disableTextLayer'] === 'true');
+
+  if ('pdfBug' in hashParams) {
+    PDFJS.pdfBug = true;
+    var pdfBug = hashParams['pdfBug'];
+    var all = false, enabled = [];
+    if (pdfBug === 'all')
+      all = true;
+    else
+      enabled = pdfBug.split(',');
+    var debugTools = PDFBug.tools;
+    for (var i = 0; i < debugTools.length; ++i) {
+      var tool = debugTools[i];
+      if (all || enabled.indexOf(tool.id) !== -1)
+        tool.enabled = true;
+    }
+    PDFBug.init();
+  }
+
+  var sidebarScrollView = document.getElementById('sidebarScrollView');
+  sidebarScrollView.addEventListener('scroll', updateThumbViewArea, true);
+}, true);
+
+window.addEventListener('unload', function webViewerUnload(evt) {
+  window.scrollTo(0, 0);
+}, true);
+
+/**
+ * Render the next not yet visible page already such that it is
+ * hopefully ready once the user scrolls to it.
+ */
+function preDraw() {
+  var pages = PDFView.pages;
+  var visible = PDFView.getVisiblePages();
+  var last = visible[visible.length - 1];
+  // PageView.id is the actual page number, which is + 1 compared
+  // to the index in `pages`. That means, pages[last.id] is the next
+  // PageView instance.
+  if (pages[last.id] && pages[last.id].drawingRequired()) {
+    renderingQueue.enqueueDraw(pages[last.id]);
+    return;
+  }
+  // If there is nothing to draw on the next page, maybe the user
+  // is scrolling up, so, let's try to render the next page *before*
+  // the first visible page
+  if (pages[visible[0].id - 2]) {
+    renderingQueue.enqueueDraw(pages[visible[0].id - 2]);
+  }
+}
+
+function updateViewarea() {
+  var visiblePages = PDFView.getVisiblePages();
+  var pageToDraw;
+  for (var i = 0; i < visiblePages.length; i++) {
+    var page = visiblePages[i];
+    var pageObj = PDFView.pages[page.id - 1];
+
+    pageToDraw |= pageObj.drawingRequired();
+    renderingQueue.enqueueDraw(pageObj);
+  }
+
+  if (!visiblePages.length)
+    return;
+
+  // If there is no need to draw a page that is currenlty visible, preDraw the
+  // next page the user might scroll to.
+  if (!pageToDraw) {
+    preDraw();
+  }
+
+  updateViewarea.inProgress = true; // used in "set page"
+  var currentId = PDFView.page;
+  var firstPage = visiblePages[0];
+  PDFView.page = firstPage.id;
+  updateViewarea.inProgress = false;
+
+  var currentScale = PDFView.currentScale;
+  var currentScaleValue = PDFView.currentScaleValue;
+  var normalizedScaleValue = currentScaleValue == currentScale ?
+    currentScale * 100 : currentScaleValue;
+
+  var kViewerTopMargin = 52;
+  var pageNumber = firstPage.id;
+  var pdfOpenParams = '#page=' + pageNumber;
+  pdfOpenParams += '&zoom=' + normalizedScaleValue;
+  var currentPage = PDFView.pages[pageNumber - 1];
+  var topLeft = currentPage.getPagePoint(window.pageXOffset,
+    window.pageYOffset - firstPage.y - kViewerTopMargin);
+  pdfOpenParams += ',' + Math.round(topLeft.x) + ',' + Math.round(topLeft.y);
+
+  var store = PDFView.store;
+  store.set('exists', true);
+  store.set('page', pageNumber);
+  store.set('zoom', normalizedScaleValue);
+  store.set('scrollLeft', Math.round(topLeft.x));
+  store.set('scrollTop', Math.round(topLeft.y));
+  var href = PDFView.getAnchorUrl(pdfOpenParams);
+  document.getElementById('viewBookmark').href = href;
+}
+
+window.addEventListener('scroll', function webViewerScroll(evt) {
+  updateViewarea();
+}, true);
+
+var thumbnailTimer;
+
+function updateThumbViewArea() {
+  // Only render thumbs after pausing scrolling for this amount of time
+  // (makes UI more responsive)
+  var delay = 50; // in ms
+
+  if (thumbnailTimer)
+    clearTimeout(thumbnailTimer);
+
+  thumbnailTimer = setTimeout(function() {
+    var visibleThumbs = PDFView.getVisibleThumbs();
+    for (var i = 0; i < visibleThumbs.length; i++) {
+      var thumb = visibleThumbs[i];
+      renderingQueue.enqueueDraw(PDFView.thumbnails[thumb.id - 1]);
+    }
+  }, delay);
+}
+
+window.addEventListener('transitionend', updateThumbViewArea, true);
+window.addEventListener('webkitTransitionEnd', updateThumbViewArea, true);
+
+window.addEventListener('resize', function webViewerResize(evt) {
+  if (document.getElementById('pageWidthOption').selected ||
+      document.getElementById('pageFitOption').selected ||
+      document.getElementById('pageAutoOption').selected)
+      PDFView.parseScale(document.getElementById('scaleSelect').value);
+  updateViewarea();
+});
+
+window.addEventListener('hashchange', function webViewerHashchange(evt) {
+  PDFView.setHash(document.location.hash.substring(1));
+});
+
+window.addEventListener('change', function webViewerChange(evt) {
+  var files = evt.target.files;
+  if (!files || files.length == 0)
+    return;
+
+  // Read the local file into a Uint8Array.
+  var fileReader = new FileReader();
+  fileReader.onload = function webViewerChangeFileReaderOnload(evt) {
+    var data = evt.target.result;
+    var buffer = new ArrayBuffer(data.length);
+    var uint8Array = new Uint8Array(buffer);
+
+    for (var i = 0; i < data.length; i++)
+      uint8Array[i] = data.charCodeAt(i);
+    PDFView.load(uint8Array);
+  };
+
+  // Read as a binary string since "readAsArrayBuffer" is not yet
+  // implemented in Firefox.
+  var file = files[0];
+  fileReader.readAsBinaryString(file);
+  document.title = file.name;
+
+  // URL does not reflect proper document location - hiding some icons.
+  document.getElementById('viewBookmark').setAttribute('hidden', 'true');
+  document.getElementById('download').setAttribute('hidden', 'true');
+}, true);
+
+function selectScaleOption(value) {
+  var options = document.getElementById('scaleSelect').options;
+  var predefinedValueFound = false;
+  for (var i = 0; i < options.length; i++) {
+    var option = options[i];
+    if (option.value != value) {
+      option.selected = false;
+      continue;
+    }
+    option.selected = true;
+    predefinedValueFound = true;
+  }
+  return predefinedValueFound;
+}
+
+window.addEventListener('scalechange', function scalechange(evt) {
+  var customScaleOption = document.getElementById('customScaleOption');
+  customScaleOption.selected = false;
+
+  if (!evt.resetAutoSettings &&
+       (document.getElementById('pageWidthOption').selected ||
+        document.getElementById('pageFitOption').selected ||
+        document.getElementById('pageAutoOption').selected)) {
+      updateViewarea();
+      return;
+  }
+
+  var predefinedValueFound = selectScaleOption('' + evt.scale);
+  if (!predefinedValueFound) {
+    customScaleOption.textContent = Math.round(evt.scale * 10000) / 100 + '%';
+    customScaleOption.selected = true;
+  }
+
+  updateViewarea();
+}, true);
+
+window.addEventListener('pagechange', function pagechange(evt) {
+  var page = evt.pageNumber;
+  if (document.getElementById('pageNumber').value != page)
+    document.getElementById('pageNumber').value = page;
+  document.getElementById('previous').disabled = (page <= 1);
+  document.getElementById('next').disabled = (page >= PDFView.pages.length);
+}, true);
+
+window.addEventListener('keydown', function keydown(evt) {
+  if (evt.ctrlKey || evt.altKey || evt.shiftKey || evt.metaKey)
+    return;
+  var curElement = document.activeElement;
+  if (curElement && curElement.tagName == 'INPUT')
+    return;
+  var controlsElement = document.getElementById('controls');
+  while (curElement) {
+    if (curElement === controlsElement)
+      return; // ignoring if the 'controls' element is focused
+    curElement = curElement.parentNode;
+  }
+  var handled = false;
+  switch (evt.keyCode) {
+    case 61: // FF/Mac '='
+    case 107: // FF '+' and '='
+    case 187: // Chrome '+'
+      PDFView.zoomIn();
+      handled = true;
+      break;
+    case 109: // FF '-'
+    case 189: // Chrome '-'
+      PDFView.zoomOut();
+      handled = true;
+      break;
+    case 48: // '0'
+      PDFView.parseScale(kDefaultScale, true);
+      handled = true;
+      break;
+    case 37: // left arrow
+    case 75: // 'k'
+    case 80: // 'p'
+      PDFView.page--;
+      handled = true;
+      break;
+    case 39: // right arrow
+    case 74: // 'j'
+    case 78: // 'n'
+      PDFView.page++;
+      handled = true;
+      break;
+  }
+
+  if (handled) {
+    evt.preventDefault();
+  }
+});

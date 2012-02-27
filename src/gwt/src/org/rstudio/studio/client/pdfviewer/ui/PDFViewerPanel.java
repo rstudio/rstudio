@@ -12,46 +12,60 @@
  */
 package org.rstudio.studio.client.pdfviewer.ui;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.studio.client.pdfviewer.PDFViewerPresenter;
+import org.rstudio.studio.client.pdfviewer.pdfjs.PdfJs;
 
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.user.client.ui.LayoutPanel;
-import com.google.gwt.user.client.ui.ResizeComposite;
-
-public class PDFViewerPanel extends ResizeComposite 
+public class PDFViewerPanel extends Composite
                             implements PDFViewerPresenter.Display
 {
+   interface Binder extends UiBinder<Widget, PDFViewerPanel>
+   {}
+
    public PDFViewerPanel()
    {
-      panel_ = new LayoutPanel();
-      panel_.getElement().getStyle().setBackgroundColor("white");
-      
-      initWidget(panel_);
+      initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
    }
-   
-  
+
+   @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+
+      if (!once_)
+      {
+         once_ = true;
+         PdfJs.load(new Command()
+         {
+            @Override
+            public void execute()
+            {
+               loaded_ = true;
+               if (initialUrl_ != null)
+                  open(initialUrl_);
+            }
+         });
+      }
+   }
+
    @Override
    public void setURL(String url)
    {
-      // remove existing
-      if (pdfWidget_ != null)
-      {
-         panel_.remove(pdfWidget_);
-         pdfWidget_ = null;
-      }
-      
-      // create new
-      pdfWidget_ = new PDFWidget(url);
-      panel_.add(pdfWidget_);
-      panel_.setWidgetLeftRight(pdfWidget_, 0, Unit.PX, 0, Unit.PX);
-      panel_.setWidgetTopBottom(pdfWidget_, 0, Unit.PX, 0, Unit.PX);
-      
+      if (loaded_)
+         open(url);
+      else
+         initialUrl_ = url;
    }
-   
-   
-   
-   
-   
-   private LayoutPanel panel_;
-   private PDFWidget pdfWidget_ = null;
+
+   private native void open(String url) /*-{
+      $wnd.PDFView.open(url);
+   }-*/;
+
+   private boolean loaded_;
+   private String initialUrl_;
+   private boolean once_;
 }
