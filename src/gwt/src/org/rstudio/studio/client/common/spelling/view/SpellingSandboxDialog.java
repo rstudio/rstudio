@@ -21,9 +21,12 @@ import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -55,10 +58,11 @@ public class SpellingSandboxDialog extends ModalDialogBase
       VerticalPanel mainPanel = new VerticalPanel();
       mainPanel.setWidth("300px");
       
-      txtWord_ = new TextBox();
+      txtWord_ = new TextArea();
+      txtWord_.setVisibleLines(2);
+      txtWord_.setWidth("100px");
       txtWord_.getElement().getStyle().setMarginBottom(7, Unit.PX);
-      mainPanel.add(txtWord_);
-      
+      mainPanel.add(txtWord_);    
       
       ThemedButton btnCheck = new ThemedButton("Check", new ClickHandler() {
          @Override
@@ -77,6 +81,18 @@ public class SpellingSandboxDialog extends ModalDialogBase
          }
       });
       mainPanel.add(btnSuggest); 
+      
+      listBox_ = new ListBox(false);
+      listBox_.setVisibleItemCount(5);
+      listBox_.setWidth("100px");
+      listBox_.getElement().getStyle().setMarginBottom(7, Unit.PX);
+      listBox_.addChangeHandler(new ChangeHandler() {
+         public void onChange(ChangeEvent event) 
+         {
+            txtWord_.setText(listBox_.getValue(listBox_.getSelectedIndex()));
+         }
+      });
+      mainPanel.add(listBox_);
       
       return mainPanel;
    } 
@@ -105,7 +121,11 @@ public class SpellingSandboxDialog extends ModalDialogBase
          @Override
          public void onResponseReceived(JsArrayString suggestions)
          {
-            showResponse("Suggest", suggestions.join());
+        	listBox_.clear();
+        	for (int i = 0; i < suggestions.length(); i++)
+        	{
+        		listBox_.addItem(suggestions.get(i));
+        	}
          }
       });
       
@@ -119,7 +139,8 @@ public class SpellingSandboxDialog extends ModalDialogBase
       txtWord_.setFocus(true);
    }
    
-   private TextBox txtWord_;
+   private TextArea txtWord_;
+   private ListBox listBox_;
    private final GlobalDisplay globalDisplay_;
    private final SpellingServerOperations server_;
   
