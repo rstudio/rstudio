@@ -12,9 +12,6 @@
  */
 package org.rstudio.studio.client.common.spelling.view;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -22,15 +19,12 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.cellview.client.CellList;
-import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -68,11 +62,7 @@ public class SpellingSandboxDialog extends ModalDialogBase
       txtWord_.setVisibleLines(2);
       txtWord_.setWidth("100px");
       txtWord_.getElement().getStyle().setMarginBottom(7, Unit.PX);
-      mainPanel.add(txtWord_);
-      
-
-
-      
+      mainPanel.add(txtWord_);    
       
       ThemedButton btnCheck = new ThemedButton("Check", new ClickHandler() {
          @Override
