@@ -239,6 +239,9 @@ public class SatelliteManager implements CloseHandler<Window>
       ArrayList<JavaScriptObject> events =
                                     pendingEventsBySatelliteName_.remove(name);
 
+      if (events == null || events.size() == 0)
+         return;
+
       for (ActiveSatellite satellite :
                                     new ArrayList<ActiveSatellite>(satellites_))
       {
