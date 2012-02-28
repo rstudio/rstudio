@@ -12,20 +12,23 @@
  */
 package org.rstudio.studio.client.pdfviewer.ui;
 
-import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.satellite.SatelliteWindow;
-import org.rstudio.studio.client.pdfviewer.PDFViewerPresenter;
-import org.rstudio.studio.client.pdfviewer.model.PDFViewerParams;
-import org.rstudio.studio.client.workbench.ui.FontSizeManager;
-
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.satellite.SatelliteWindow;
+import org.rstudio.studio.client.pdfviewer.PDFViewerPresenter;
+import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
+import org.rstudio.studio.client.pdfviewer.model.PDFViewerParams;
+import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 
 @Singleton
 public class PDFViewerApplicationWindow extends SatelliteWindow
@@ -49,6 +52,15 @@ public class PDFViewerApplicationWindow extends SatelliteWindow
       // create the presenter and activate it with the passed params
       PDFViewerParams pdfParams = params.<PDFViewerParams>cast();
       presenter_ = pPresenter_.get();
+      presenter_.addInitCompleteHandler(new InitCompleteEvent.Handler()
+      {
+         @Override
+         public void onInitComplete(InitCompleteEvent event)
+         {
+            initCompleted_ = true;
+            fireEvent(new InitCompleteEvent());
+         }
+      });
       presenter_.onActivated(pdfParams);
       
       // make it fill the containing layout panel
@@ -75,7 +87,26 @@ public class PDFViewerApplicationWindow extends SatelliteWindow
    {
       return this;
    }
-   
+
+   @Override
+   public HandlerRegistration addInitCompleteHandler(
+                                        final InitCompleteEvent.Handler handler)
+   {
+      if (initCompleted_)
+      {
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               handler.onInitComplete(new InitCompleteEvent());
+            }
+         });
+      }
+      return addHandler(handler, InitCompleteEvent.TYPE);
+   }
+
+   private boolean initCompleted_;
    private final Provider<PDFViewerPresenter> pPresenter_;
    private PDFViewerPresenter presenter_;
 

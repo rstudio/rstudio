@@ -12,8 +12,10 @@
  */
 package org.rstudio.studio.client.pdfviewer;
 
+import com.google.gwt.event.shared.HandlerRegistration;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
+import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
 import org.rstudio.studio.client.pdfviewer.model.PDFViewerParams;
 
 import com.google.gwt.user.client.ui.IsWidget;
@@ -25,6 +27,9 @@ public class PDFViewerPresenter implements IsWidget
    public interface Display extends IsWidget
    {     
       void setURL(String url);
+
+      HandlerRegistration addInitCompleteHandler(
+                                             InitCompleteEvent.Handler handler);
    }
    
    @Inject
@@ -57,7 +62,12 @@ public class PDFViewerPresenter implements IsWidget
    {
       return view_.asWidget();
    }
-   
-   
+
+   public HandlerRegistration addInitCompleteHandler(InitCompleteEvent.Handler handler)
+   {
+      return view_.addInitCompleteHandler(handler);
+   }
+
+
    private final Display view_;
 }

@@ -15,6 +15,7 @@ package org.rstudio.studio.client.pdfviewer;
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteApplication;
+import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
 import org.rstudio.studio.client.pdfviewer.ui.PDFViewerApplicationView;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
@@ -35,5 +36,18 @@ public class PDFViewerApplication extends SatelliteApplication
                         ApplicationUncaughtExceptionHandler uncaughtExHandler)
    {
       super(NAME, view, satellite, pAceThemes, uncaughtExHandler);
+      view.addInitCompleteHandler(new InitCompleteEvent.Handler() {
+         @Override
+         public void onInitComplete(InitCompleteEvent event)
+         {
+            flushPendingEvents();
+         }
+      });
+   }
+
+   @Override
+   protected boolean manuallyFlushPendingEvents()
+   {
+      return true;
    }
 }

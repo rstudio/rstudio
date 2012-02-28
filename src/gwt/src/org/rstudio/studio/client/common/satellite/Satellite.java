@@ -43,7 +43,11 @@ public class Satellite
       onReactivated_ = onReactivated;
       initializeNative(name);
    }
-   
+
+   public native final void flushPendingEvents(String name) /*-{
+      $wnd.opener.flushPendingEvents(name);
+   }-*/;
+
    // satellite windows should call this during startup to setup a 
    // communication channel with the main window
    private native void initializeNative(String name) /*-{

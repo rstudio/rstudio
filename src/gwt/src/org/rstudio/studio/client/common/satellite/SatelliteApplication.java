@@ -12,17 +12,16 @@
  */
 package org.rstudio.studio.client.common.satellite;
 
-import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
-import org.rstudio.studio.client.common.satellite.Satellite;
-import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
-
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
+import org.rstudio.studio.client.pdfviewer.PDFViewerApplication;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 public class SatelliteApplication
 {
@@ -39,6 +38,17 @@ public class SatelliteApplication
       pAceThemes_ = pAceThemes;
       uncaughtExHandler_ = uncaughtExHandler;
    }
+
+   /**
+    * Have subclasses override and return true if the satellite application is
+    * not ready to process remote server events until some time after the
+    * satellite window is created.
+    * @return
+    */
+   protected boolean manuallyFlushPendingEvents()
+   {
+      return false;
+   }
    
    public void go(RootLayoutPanel rootPanel, 
                   final Command dismissLoadingProgress)
@@ -52,6 +62,11 @@ public class SatelliteApplication
                                   view_.reactivate(params);                
                                }
                             });
+
+      if (!manuallyFlushPendingEvents())
+      {
+         flushPendingEvents();
+      }
       
       // inject ace themes
       pAceThemes_.get();
@@ -72,8 +87,13 @@ public class SatelliteApplication
       // dismiss loading progress
       dismissLoadingProgress.execute();
    }
-   
-   
+
+   protected void flushPendingEvents()
+   {
+      satellite_.flushPendingEvents(PDFViewerApplication.NAME);
+   }
+
+
    private final String name_;
    private final SatelliteApplicationView view_;
    private final Satellite satellite_;

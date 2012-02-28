@@ -49,6 +49,8 @@ public class PdfJs
                {
                   if (!initialized_)
                   {
+                     PDFView.initializeEvents();
+
                      LinkElement styleLink = Document.get().createLinkElement();
                      styleLink.setType("text/css");
                      styleLink.setRel("stylesheet");

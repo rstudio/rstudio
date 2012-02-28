@@ -14,11 +14,16 @@ package org.rstudio.studio.client.common.satellite;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map.Entry;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.inject.Provider;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.model.Session;
 
@@ -33,9 +38,12 @@ import com.google.inject.Singleton;
 public class SatelliteManager implements CloseHandler<Window>
 {
    @Inject
-   public SatelliteManager(Session session)
+   public SatelliteManager(
+         Session session,
+         Provider<ApplicationUncaughtExceptionHandler> pUncaughtExceptionHandler)
    {
       session_ = session;
+      pUncaughtExceptionHandler_ = pUncaughtExceptionHandler;
    }
    
    // the main window should call this method during startup to set itself
@@ -65,7 +73,9 @@ public class SatelliteManager implements CloseHandler<Window>
          assert false;
          return;
       }
-      
+
+      boolean isNewWindow = true;
+
       // check for a re-activation of an existing window
       for (ActiveSatellite satellite : satellites_)
       {
@@ -74,6 +84,8 @@ public class SatelliteManager implements CloseHandler<Window>
             WindowEx window = satellite.getWindow();
             if (!window.isClosed())
             {
+               isNewWindow = false;
+
                // for web mode  bring the window to the front, notify
                // it that it has been reactivated, then exit
                if (!Desktop.isDesktop())
@@ -94,6 +106,14 @@ public class SatelliteManager implements CloseHandler<Window>
          }
       }
       
+      // Start buffering events sent to this satellite. That way, we won't miss
+      // anything while the satellite is being loaded/reactivated
+      if (isNewWindow && !pendingEventsBySatelliteName_.containsKey(name))
+      {
+         pendingEventsBySatelliteName_.put(name,
+                                           new ArrayList<JavaScriptObject>());
+      }
+
       // record satellite params for subsequent setting (this value is read
       // by the satellite within the call to registerAsSatellite)
       if (params != null)
@@ -129,7 +149,8 @@ public class SatelliteManager implements CloseHandler<Window>
          {
          }
       } 
-      satellites_.clear();  
+      satellites_.clear();
+      pendingEventsBySatelliteName_.clear();
    }
    
    // dispatch an event to all satellites
@@ -147,6 +168,11 @@ public class SatelliteManager implements CloseHandler<Window>
       {
          try
          {
+            // If we're buffering events for this satellite, then don't dispatch
+            // them
+            if (pendingEventsBySatelliteName_.containsKey(satellite.getName()))
+               continue;
+
             WindowEx satelliteWnd = satellite.getWindow();
             if (satelliteWnd.isClosed())
             {
@@ -162,7 +188,13 @@ public class SatelliteManager implements CloseHandler<Window>
          catch(Throwable e)
          {
          }
-      } 
+      }
+
+      for (Entry<String, ArrayList<JavaScriptObject>> entry :
+                                       pendingEventsBySatelliteName_.entrySet())
+      {
+         entry.getValue().add(clientEvent);
+      }
       
       // remove windows if necessary
       if (removeWindows != null)
@@ -182,7 +214,7 @@ public class SatelliteManager implements CloseHandler<Window>
    }
    
    // called by satellites to connect themselves with the main window
-   private void registerAsSatellite(String name, JavaScriptObject wnd)
+   private void registerAsSatellite(final String name, JavaScriptObject wnd)
    {
       // get the satellite and add it to our list. in some cases (such as
       // the Ctrl+R reload of an existing satellite window) we actually
@@ -201,6 +233,35 @@ public class SatelliteManager implements CloseHandler<Window>
       if (params != null)
          callSetParams(satelliteWnd, params);
    }
+
+   private void flushPendingEvents(String name)
+   {
+      ArrayList<JavaScriptObject> events =
+                                    pendingEventsBySatelliteName_.remove(name);
+
+      if (events == null || events.size() == 0)
+         return;
+
+      for (ActiveSatellite satellite :
+                                    new ArrayList<ActiveSatellite>(satellites_))
+      {
+         if (satellite.getName().equals(name)
+             && !satellite.getWindow().isClosed())
+         {
+            for (JavaScriptObject evt : events)
+            {
+               try
+               {
+                  callDispatchEvent(satellite.getWindow(), evt);
+               }
+               catch (Exception e)
+               {
+                  pUncaughtExceptionHandler_.get().onUncaughtException(e);
+               }
+            }
+         }
+      }
+   }
    
    // export the global function requried for satellites to register
    private native void exportSatelliteRegistrationCallback() /*-{
@@ -209,7 +270,12 @@ public class SatelliteManager implements CloseHandler<Window>
          function(name, satelliteWnd) {
             manager.@org.rstudio.studio.client.common.satellite.SatelliteManager::registerAsSatellite(Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;)(name, satelliteWnd);
          }
-      ); 
+      );
+      $wnd.flushPendingEvents = $entry(
+         function(name) {
+            manager.@org.rstudio.studio.client.common.satellite.SatelliteManager::flushPendingEvents(Ljava/lang/String;)(name);
+         }
+      );
    }-*/;
    
    // call setSessionInfo on a satellite
@@ -244,11 +310,15 @@ public class SatelliteManager implements CloseHandler<Window>
    }-*/;
    
    private final Session session_;
+   private final Provider<ApplicationUncaughtExceptionHandler> pUncaughtExceptionHandler_;
    private final ArrayList<ActiveSatellite> satellites_ = 
                                           new ArrayList<ActiveSatellite>();
    
    private final HashMap<String,JavaScriptObject> satelliteParams_ = 
                                 new HashMap<String,JavaScriptObject>();
+
+   private final HashMap<String, ArrayList<JavaScriptObject>>
+         pendingEventsBySatelliteName_ = new HashMap<String, ArrayList<JavaScriptObject>>();
 
    private class ActiveSatellite
    {
