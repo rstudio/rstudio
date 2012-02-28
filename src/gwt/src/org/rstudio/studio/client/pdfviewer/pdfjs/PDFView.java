@@ -14,6 +14,10 @@ package org.rstudio.studio.client.pdfviewer.pdfjs;
 
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
+import org.rstudio.studio.client.pdfviewer.pdfjs.events.PageChangeEvent;
+import org.rstudio.studio.client.pdfviewer.pdfjs.events.ScaleChangeEvent;
 
 public class PDFView extends JavaScriptObject
 {
@@ -48,4 +52,43 @@ public class PDFView extends JavaScriptObject
    public final native void zoomOut() /*-{
       this.zoomIn() ;
    }-*/;
+
+   public final HandlerRegistration addPageChangeHandler(PageChangeEvent.Handler handler)
+   {
+      return handlers_.addHandler(PageChangeEvent.TYPE, handler);
+   }
+
+   public final HandlerRegistration addScaleChangeHandler(ScaleChangeEvent.Handler handler)
+   {
+      return handlers_.addHandler(ScaleChangeEvent.TYPE, handler);
+   }
+
+   public native static void initializeEvents() /*-{
+      $wnd.addEventListener(
+            "pagechange",
+            $entry(function(evt) {
+               @org.rstudio.studio.client.pdfviewer.pdfjs.PDFView::firePageChangeEvent(I)(evt.pageNumber || 0);
+            }),
+            true);
+
+      $wnd.addEventListener(
+            "scalechange",
+            $entry(function(evt) {
+               @org.rstudio.studio.client.pdfviewer.pdfjs.PDFView::fireScaleChangeEvent(D)(evt.scale || 0.0);
+            }),
+            true);
+   }-*/;
+
+   private static void firePageChangeEvent(int pageNum)
+   {
+      handlers_.fireEvent(new PageChangeEvent(pageNum));
+   }
+
+   private static void fireScaleChangeEvent(double scale)
+   {
+      handlers_.fireEvent(new ScaleChangeEvent(scale));
+   }
+
+   private static final HandlerManager handlers_ =
+         new HandlerManager(PDFView.class);
 }
