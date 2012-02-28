@@ -223,9 +223,7 @@ class RnwKnitr : public RnwExternalWeave
 {
 public:
    RnwKnitr()
-      : RnwExternalWeave("knitr",
-                         "knitr",
-                         "require(knitr); knit('%1%')")
+      : RnwExternalWeave("knitr", "knitr", cmdFormat())
    {
    }
 
@@ -237,6 +235,16 @@ public:
                                     core::tex::LogEntries* pLogEntries) const
    {
       return Success();
+   }
+
+private:
+   static std::string cmdFormat()
+   {
+      std::string format = "require(knitr); ";
+      if (userSettings().alwaysEnableRnwCorcordance())
+         format += "opts_knit$set(concordance = TRUE); ";
+      format += "knit('%1%')";
+      return format;
    }
 };
 
