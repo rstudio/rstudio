@@ -11,7 +11,7 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.output.compilepdf.model;
+package org.rstudio.studio.client.common.compilepdf.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;

@@ -41,6 +41,7 @@ import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPa
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
 import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
 import org.rstudio.studio.client.common.StudioResources;
+import org.rstudio.studio.client.common.compilepdf.CompilePdfResources;
 import org.rstudio.studio.client.common.mirrors.ChooseMirrorDialog;
 import org.rstudio.studio.client.common.vcs.CreateKeyDialog;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
@@ -57,7 +58,6 @@ import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.files.ui.FilesListCellTableResources;
 import org.rstudio.studio.client.workbench.views.history.view.HistoryPane;
 import org.rstudio.studio.client.workbench.views.history.view.Shelf;
-import org.rstudio.studio.client.workbench.views.output.compilepdf.CompilePdfOutputResources;
 import org.rstudio.studio.client.workbench.views.packages.ui.CheckForUpdatesDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
@@ -176,7 +176,7 @@ public class RStudio implements EntryPoint
       FilesListCellTableResources.INSTANCE.cellTableStyle().ensureInjected();
       ExportPlotResources.INSTANCE.styles().ensureInjected();
       CodeSearchResources.INSTANCE.styles().ensureInjected();
-      CompilePdfOutputResources.INSTANCE.styles().ensureInjected();
+      CompilePdfResources.INSTANCE.styles().ensureInjected();
 
       ConsoleProgressDialog.ensureStylesInjected();
       SupportPopupMenu.ensureStylesInjected();

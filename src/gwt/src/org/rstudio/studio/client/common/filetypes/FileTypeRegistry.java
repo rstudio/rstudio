@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -21,6 +22,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
+import org.rstudio.studio.client.common.satellite.Satellite;
 
 import java.util.HashMap;
 
@@ -72,9 +74,14 @@ public class FileTypeRegistry
    public static final BrowserType BROWSER = new BrowserType();
    
    @Inject
-   public FileTypeRegistry(EventBus eventBus)
+   public FileTypeRegistry(EventBus eventBus,
+                           Satellite satellite)
    {
       eventBus_ = eventBus;
+      satellite_ = satellite;
+      
+      if (!satellite_.isCurrentWindowSatellite())
+         exportEditFileCallback();
 
       FileIconResources icons = ICONS;
 
@@ -151,13 +158,45 @@ public class FileTypeRegistry
    
    public void editFile(FileSystemItem file, FilePosition position)
    {
-      FileType fileType = getTypeForFile(file);
-      if (!(fileType instanceof TextFileType))
-         fileType = TEXT;
-
-      if (fileType != null)
-         fileType.openFile(file, position, eventBus_);
+      if (satellite_.isCurrentWindowSatellite())
+      {
+         satellite_.focusMainWindow();
+         callSatelliteEditFile(file.cast(), position.cast());
+      }
+      else
+      {
+         FileType fileType = getTypeForFile(file);
+         if (!(fileType instanceof TextFileType))
+            fileType = TEXT;
+   
+         if (fileType != null)
+            fileType.openFile(file, position, eventBus_);
+      }
    }
+   
+   private void satelliteEditFile(JavaScriptObject file, 
+                                  JavaScriptObject position)
+   {
+      FileSystemItem fsi = file.cast();
+      FilePosition pos = position.cast();
+      editFile(fsi, pos);
+   }
+   
+   private final native void exportEditFileCallback()/*-{
+      var registry = this;     
+      $wnd.editFileFromRStudioSatellite = $entry(
+         function(items) {
+            registry.@org.rstudio.studio.client.common.filetypes.FileTypeRegistry::satelliteEditFile(Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/core/client/JavaScriptObject;)(file,position);
+         }
+      ); 
+   }-*/;
+
+   private final native void callSatelliteEditFile(
+                                       JavaScriptObject file,
+                                       JavaScriptObject position)/*-{
+      $wnd.opener.editFileFromRStudioSatellite(file, position);
+   }-*/;
+
 
    public FileType getTypeByTypeName(String name)
    {
@@ -280,4 +319,5 @@ public class FileTypeRegistry
          new HashMap<String, ImageResource>();
    private final FileType defaultType_;
    private final EventBus eventBus_;
+   private final Satellite satellite_;
 }

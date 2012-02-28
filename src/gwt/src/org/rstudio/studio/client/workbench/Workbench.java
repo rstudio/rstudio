@@ -32,6 +32,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.compilepdf.dialog.CompilePdfProgress;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.spelling.view.SpellingSandboxDialog;
 import org.rstudio.studio.client.common.vcs.AskPassManager;
@@ -75,6 +76,7 @@ public class Workbench implements BusyHandler,
                     ChooseFile chooseFile,   // required to force gin to create
                     AskPassManager askPass,  // required to force gin to create
                     PDFViewer pdfViewer,     // required to force gin to create
+                    CompilePdfProgress compilePdfProgress, // force gin
                     Provider<SpellingSandboxDialog> pSpellingSandboxDialog)
   {
       view_ = view;
