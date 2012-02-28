@@ -10,19 +10,19 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.output.compilepdf;
+package org.rstudio.studio.client.common.compilepdf;
 
 import com.google.gwt.dom.client.*;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.HeaderBreaksItemCodec;
-import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfError;
+import org.rstudio.studio.client.common.compilepdf.model.CompilePdfError;
 
 public class CompilePdfErrorItemCodec
       extends HeaderBreaksItemCodec<CompilePdfError, CodeNavigationTarget, CodeNavigationTarget>
 {
-   public CompilePdfErrorItemCodec(CompilePdfOutputResources resources,
+   public CompilePdfErrorItemCodec(CompilePdfResources resources,
                                    boolean showFileHeaders)
    {
       resources_ = resources;
@@ -167,7 +167,7 @@ public class CompilePdfErrorItemCodec
       return showFileHeaders_;
    }
 
-   private final CompilePdfOutputResources resources_;
+   private final CompilePdfResources resources_;
    private boolean showFileHeaders_;
 
    private static final String DATA_PATH = "data-path";

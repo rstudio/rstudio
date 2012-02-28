@@ -1,5 +1,5 @@
 /*
- * CompilePdfOutputResources.java
+ * CompilePdfResources.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.output.compilepdf;
+package org.rstudio.studio.client.common.compilepdf;
 
 
 import com.google.gwt.core.client.GWT;
@@ -18,7 +18,7 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 
-public interface CompilePdfOutputResources extends ClientBundle
+public interface CompilePdfResources extends ClientBundle
 {  
    public static interface Styles extends CssResource
    {
@@ -44,7 +44,7 @@ public interface CompilePdfOutputResources extends ClientBundle
    @Source("images/badbox.png")
    ImageResource badbox();
 
-   @Source("CompilePdfOutput.css")
+   @Source("CompilePdf.css")
    Styles styles();
    
    @Source("images/logContextButton.png")
@@ -54,7 +54,7 @@ public interface CompilePdfOutputResources extends ClientBundle
    ImageResource showLogCommand();
    
    
-   public static CompilePdfOutputResources INSTANCE = 
-      (CompilePdfOutputResources)GWT.create(CompilePdfOutputResources.class) ;
+   public static CompilePdfResources INSTANCE = 
+      (CompilePdfResources)GWT.create(CompilePdfResources.class) ;
   
 }

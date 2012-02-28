@@ -11,7 +11,7 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.output.compilepdf.model;
+package org.rstudio.studio.client.common.compilepdf.model;
 
 import org.rstudio.core.client.files.FileSystemItem;
 

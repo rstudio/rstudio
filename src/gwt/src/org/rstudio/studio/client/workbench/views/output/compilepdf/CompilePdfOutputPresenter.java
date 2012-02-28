@@ -32,6 +32,9 @@ import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEve
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfOutputEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent;
+import org.rstudio.studio.client.common.compilepdf.model.CompilePdfError;
+import org.rstudio.studio.client.common.compilepdf.model.CompilePdfServerOperations;
+import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -40,9 +43,6 @@ import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
-import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfError;
-import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfServerOperations;
-import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfState;
 
 
 public class CompilePdfOutputPresenter extends BasePresenter

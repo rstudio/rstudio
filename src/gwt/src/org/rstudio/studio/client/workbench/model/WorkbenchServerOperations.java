@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
+import org.rstudio.studio.client.common.compilepdf.model.CompilePdfServerOperations;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
@@ -34,7 +35,6 @@ import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperatio
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
-import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;

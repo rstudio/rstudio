@@ -20,6 +20,7 @@ import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEve
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfOutputEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent;
+import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -28,7 +29,6 @@ import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
-import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfState;
 
 public class CompilePdfOutputTab extends DelayLoadWorkbenchTab<CompilePdfOutputPresenter>
 {

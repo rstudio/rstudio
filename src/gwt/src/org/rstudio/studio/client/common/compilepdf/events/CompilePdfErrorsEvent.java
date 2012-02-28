@@ -12,7 +12,7 @@
  */
 package org.rstudio.studio.client.common.compilepdf.events;
 
-import org.rstudio.studio.client.workbench.views.output.compilepdf.model.CompilePdfError;
+import org.rstudio.studio.client.common.compilepdf.model.CompilePdfError;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.EventHandler;
