@@ -298,7 +298,13 @@ FilePath texFilePath(const std::string& logPath, const FilePath& compileDir)
    Error error = core::system::realPath(path.absolutePath(), &realPath);
    if (error)
    {
-      LOG_ERROR(error);
+      // log any error which isn't no such file or directory
+      if (error.code() !=
+          boost::system::errc::no_such_file_or_directory)
+      {
+         LOG_ERROR(error);
+      }
+
       return path;
    }
    else
