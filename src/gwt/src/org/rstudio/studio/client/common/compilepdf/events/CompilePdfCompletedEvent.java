@@ -12,26 +12,47 @@
  */
 package org.rstudio.studio.client.common.compilepdf.events;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class CompilePdfCompletedEvent extends GwtEvent<CompilePdfCompletedEvent.Handler>
 {  
+   public static class Data extends JavaScriptObject
+   {
+      protected Data()
+      {
+      }
+      
+      public final native boolean getSucceeded() /*-{
+         return this.succeeded;
+      }-*/;
+      
+      public final native String getPdfUrl() /*-{
+         return this.pdf_url;
+      }-*/;
+   }
+   
    public interface Handler extends EventHandler
    {
       void onCompilePdfCompleted(CompilePdfCompletedEvent event);
    }
 
-   public CompilePdfCompletedEvent(boolean succeeded)
+   public CompilePdfCompletedEvent(Data data)
    {
-      succeeded_ = succeeded;
+      data_ = data;
    }
 
    public boolean getSucceeded()
    {
-      return succeeded_;
+      return data_.getSucceeded();
    }
     
+   public String getPdfUrl()
+   {
+      return data_.getPdfUrl();
+   }
+   
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -44,7 +65,7 @@ public class CompilePdfCompletedEvent extends GwtEvent<CompilePdfCompletedEvent.
       handler.onCompilePdfCompleted(this);
    }
    
-   private final boolean succeeded_;
+   private final Data data_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

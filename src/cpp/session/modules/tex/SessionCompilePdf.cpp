@@ -174,13 +174,29 @@ void enqueStartedEvent(const std::string& targetFile)
 
 }
 
-void enqueCompletedEvent(bool succeeded)
+void enqueCompletedEvent(bool succeeded,
+                         const FilePath& pdfPath = FilePath())
 {
-    s_compilePdfState.onCompleted();
+   s_compilePdfState.onCompleted();
 
-    ClientEvent event(client_events::kCompilePdfCompletedEvent,
-                      succeeded);
-    module_context::enqueClientEvent(event);
+   json::Object dataJson;
+   dataJson["succeeded"] = succeeded;
+   if (!pdfPath.empty())
+      dataJson["pdf_url"] = module_context::createFileUrl(pdfPath);
+
+   ClientEvent event(client_events::kCompilePdfCompletedEvent,
+                     dataJson);
+   module_context::enqueClientEvent(event);
+}
+
+void enqueCompletedWithFailureEvent()
+{
+   enqueCompletedEvent(false);
+}
+
+void enqueCompletedWithSuccessEvent(const FilePath& pdfPath)
+{
+   enqueCompletedEvent(true, pdfPath);
 }
 
 void enqueErrorsEvent(const json::Array& logEntriesJson)
@@ -608,8 +624,9 @@ private:
 
       if (exitStatus == EXIT_SUCCESS)
       {
+         FilePath pdfPath = ancillaryFilePath(texFilePath, ".pdf");
          std::string pdfFile = module_context::createAliasedPath(
-                                    ancillaryFilePath(texFilePath, ".pdf"));
+                                                          pdfPath);
          std::string completed = "completed\n\nCreated PDF: " + pdfFile + "\n";
          if (!issues.empty())
             completed += "\n" + issues;
@@ -618,7 +635,7 @@ private:
          if (onCompleted_)
             onCompleted_();
 
-         enqueCompletedEvent(true);
+         enqueCompletedWithSuccessEvent(pdfPath);
       }
       else
       {
@@ -637,20 +654,20 @@ private:
             enqueOutputEvent(msg + "\n");
          }
 
-         enqueCompletedEvent(false);
+         enqueCompletedWithFailureEvent();
       }
    }
 
    void terminateWithError(const std::string& message)
    {
       enqueOutputEvent(message + "\n");
-      enqueCompletedEvent(false);
+      enqueCompletedWithFailureEvent();
    }
 
    void terminateWithErrorLogEntries(const core::tex::LogEntries& logEntries)
    {
       showLogEntries(logEntries);
-      enqueCompletedEvent(false);
+      enqueCompletedWithFailureEvent();
    }
 
 private:

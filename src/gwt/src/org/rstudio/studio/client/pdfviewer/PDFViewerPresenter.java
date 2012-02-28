@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.pdfviewer;
 
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
 import org.rstudio.studio.client.pdfviewer.model.PDFViewerParams;
 
 import com.google.gwt.user.client.ui.IsWidget;
@@ -26,9 +28,24 @@ public class PDFViewerPresenter implements IsWidget
    }
    
    @Inject
-   public PDFViewerPresenter(Display view)
+   public PDFViewerPresenter(Display view,
+                             EventBus eventBus)
    {
       view_ = view;
+      
+      eventBus.addHandler(CompilePdfCompletedEvent.TYPE, 
+                          new CompilePdfCompletedEvent.Handler()
+      {   
+         @Override
+         public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
+         {
+            if (event.getSucceeded())
+            {
+               view_.setURL(event.getPdfUrl());
+            }
+            
+         }
+      });
    }
 
    public void onActivated(PDFViewerParams params)

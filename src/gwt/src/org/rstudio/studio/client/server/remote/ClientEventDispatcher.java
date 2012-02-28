@@ -330,8 +330,8 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.CompilePdfCompletedEvent))
          {
-            boolean succeeded = event.<Bool>getData().getValue();
-            eventBus_.fireEvent(new CompilePdfCompletedEvent(succeeded));
+            CompilePdfCompletedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new CompilePdfCompletedEvent(data));
          }
          else if (type.equals(ClientEvent.FindResult))
          {
