@@ -1,5 +1,5 @@
 /*
- * PageChangeEvent.java
+ * InitCompleteEvent.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,20 +10,16 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.pdfviewer.pdfjs.events;
+package org.rstudio.studio.client.pdfviewer.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class PageChangeEvent extends GwtEvent<PageChangeEvent.Handler>
+public class InitCompleteEvent extends GwtEvent<InitCompleteEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onPageChange(PageChangeEvent event);
-   }
-
-   public PageChangeEvent()
-   {
+      void onInitComplete(InitCompleteEvent event);
    }
 
    @Override
@@ -35,7 +31,7 @@ public class PageChangeEvent extends GwtEvent<PageChangeEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onPageChange(this);
+      handler.onInitComplete(this);
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();

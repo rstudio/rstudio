@@ -12,8 +12,11 @@
  */
 package org.rstudio.studio.client.pdfviewer.ui;
 
+import com.google.gwt.event.shared.HandlerRegistration;
 import org.rstudio.studio.client.common.satellite.SatelliteApplicationView;
+import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
 
 public interface PDFViewerApplicationView extends SatelliteApplicationView
 {
+   HandlerRegistration addInitCompleteHandler(InitCompleteEvent.Handler handler);
 }

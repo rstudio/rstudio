@@ -67,26 +67,26 @@ public class PDFView extends JavaScriptObject
       $wnd.addEventListener(
             "pagechange",
             $entry(function(evt) {
-               @org.rstudio.studio.client.pdfviewer.pdfjs.PDFView::firePageChangeEvent(I)(evt.pageNumber || 0);
+               @org.rstudio.studio.client.pdfviewer.pdfjs.PDFView::firePageChangeEvent()();
             }),
             true);
 
       $wnd.addEventListener(
             "scalechange",
             $entry(function(evt) {
-               @org.rstudio.studio.client.pdfviewer.pdfjs.PDFView::fireScaleChangeEvent(D)(evt.scale || 0.0);
+               @org.rstudio.studio.client.pdfviewer.pdfjs.PDFView::fireScaleChangeEvent()();
             }),
             true);
    }-*/;
 
-   private static void firePageChangeEvent(int pageNum)
+   private static void firePageChangeEvent()
    {
-      handlers_.fireEvent(new PageChangeEvent(pageNum));
+      handlers_.fireEvent(new PageChangeEvent());
    }
 
-   private static void fireScaleChangeEvent(double scale)
+   private static void fireScaleChangeEvent()
    {
-      handlers_.fireEvent(new ScaleChangeEvent(scale));
+      handlers_.fireEvent(new ScaleChangeEvent());
    }
 
    private static final HandlerManager handlers_ =

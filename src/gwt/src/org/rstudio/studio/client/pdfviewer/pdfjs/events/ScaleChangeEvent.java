@@ -22,14 +22,8 @@ public class ScaleChangeEvent extends GwtEvent<ScaleChangeEvent.Handler>
       void onScaleChange(ScaleChangeEvent event);
    }
 
-   public ScaleChangeEvent(double scale)
+   public ScaleChangeEvent()
    {
-      scale_ = scale;
-   }
-
-   public double getScale()
-   {
-      return scale_;
    }
 
    @Override
@@ -43,8 +37,6 @@ public class ScaleChangeEvent extends GwtEvent<ScaleChangeEvent.Handler>
    {
       handler.onScaleChange(this);
    }
-
-   private final double scale_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

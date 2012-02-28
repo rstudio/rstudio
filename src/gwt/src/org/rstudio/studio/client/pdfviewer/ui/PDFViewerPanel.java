@@ -15,6 +15,7 @@ package org.rstudio.studio.client.pdfviewer.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
@@ -23,6 +24,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.pdfviewer.PDFViewerPresenter;
+import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.PDFView;
 import org.rstudio.studio.client.pdfviewer.pdfjs.PdfJs;
 
@@ -69,6 +71,8 @@ public class PDFViewerPanel extends Composite
                loaded_ = true;
                if (initialUrl_ != null)
                   open(initialUrl_);
+
+               fireEvent(new InitCompleteEvent());
             }
          });
       }
@@ -81,6 +85,13 @@ public class PDFViewerPanel extends Composite
          open(url);
       else
          initialUrl_ = url;
+   }
+
+   @Override
+   public HandlerRegistration addInitCompleteHandler(
+                                              InitCompleteEvent.Handler handler)
+   {
+      return addHandler(handler, InitCompleteEvent.TYPE);
    }
 
    private native void open(String url) /*-{
