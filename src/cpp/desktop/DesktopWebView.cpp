@@ -176,14 +176,26 @@ void WebView::keyPressEvent(QKeyEvent* pEv)
    // presses resulting in keyCode=0 in the DOM's keydown events.
    // This is due to some missing switch cases in the case
    // where the keypad modifier bit is on, so we turn it off.
+  
+   Qt::KeyboardModifiers modifiers;
+  
+#ifdef Q_WS_MAC
+   if ((pEv->nativeModifiers() & 0x40101) == 0x40101){
+     modifiers = pEv->modifiers() & ~Qt::MetaModifier | Qt::ControlModifier;
+   } else {
+#else
+   {
+#endif     
+     modifiers = pEv->modifiers();
+   }
 
-   QKeyEvent newEv(pEv->type(),
+   QKeyEvent newEv(pEv->type(),    
                    pEv->key(),
-                   pEv->modifiers() & ~Qt::KeypadModifier,
+                   modifiers & ~Qt::KeypadModifier,
                    pEv->text(),
                    pEv->isAutoRepeat(),
                    pEv->count());
-
+  
    this->QWebView::keyPressEvent(&newEv);
 }
 
