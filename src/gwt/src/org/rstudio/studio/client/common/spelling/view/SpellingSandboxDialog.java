@@ -25,6 +25,7 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -58,6 +59,7 @@ public class SpellingSandboxDialog extends ModalDialogBase
       VerticalPanel mainPanel = new VerticalPanel();
       mainPanel.setWidth("300px");
       
+      mainPanel.add(new Label("Not in dictionary"));
       txtWord_ = new TextArea();
       txtWord_.setVisibleLines(2);
       txtWord_.setWidth("100px");
@@ -73,6 +75,7 @@ public class SpellingSandboxDialog extends ModalDialogBase
       });
       mainPanel.add(btnCheck);
       
+ 
       ThemedButton btnSuggest = new ThemedButton("Suggest", new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
@@ -82,6 +85,7 @@ public class SpellingSandboxDialog extends ModalDialogBase
       });
       mainPanel.add(btnSuggest); 
       
+      mainPanel.add(new Label("Suggestions"));
       listBox_ = new ListBox(false);
       listBox_.setVisibleItemCount(5);
       listBox_.setWidth("100px");
