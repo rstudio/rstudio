@@ -393,6 +393,16 @@ Error launchChildProcess(std::string path,
          ::exit(EXIT_FAILURE);
       }
 
+      // get current user (before closing file handles since 
+      // we might be using a PAM module that has open FDs...)
+      util::system::user::User user;
+      error = util::system::user::currentUser(&user);
+      if (error)
+      {
+         LOG_ERROR(error);
+         ::exit(EXIT_FAILURE);
+      }
+
       // close all open file descriptors other than std streams
       error = closeNonStdFileDescriptors();
       if (error)
@@ -417,15 +427,6 @@ Error launchChildProcess(std::string path,
          default:
             // do nothing to inherit the streams
             break;
-      }
-
-      // get current user
-      util::system::user::User user;
-      error = util::system::user::currentUser(&user);
-      if (error)
-      {
-         LOG_ERROR(error);
-         ::exit(EXIT_FAILURE);
       }
 
       // setup environment
