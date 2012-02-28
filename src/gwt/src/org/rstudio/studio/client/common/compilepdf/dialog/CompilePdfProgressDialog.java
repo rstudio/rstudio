@@ -11,7 +11,10 @@
  *
  */
 
-/*   - Satellite subscribes to the CompilePdfStarted event and
+/*   
+ *   - Refactor ConsoleProgressDialog so we can share its UI
+ *  
+ *   - Satellite subscribes to the CompilePdfStarted event and
  *     shows the dialog when that happens -- the dialog then 
  *     subscribes to the Output, Errors, and Completed events
  * 
