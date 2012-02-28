@@ -14,6 +14,7 @@ package org.rstudio.studio.client.common.compilepdf.dialog;
 
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent;
+import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -22,18 +23,22 @@ import com.google.inject.Singleton;
 public class CompilePdfProgress
 {
    @Inject
-   public CompilePdfProgress(EventBus eventBus)
+   public CompilePdfProgress(EventBus eventBus,
+                             Session session)
    {
-      /*
-      eventBus.addHandler(CompilePdfStartedEvent.TYPE, 
-                          new CompilePdfStartedEvent.Handler()
+      if (session.getSessionInfo().isInternalPdfPreviewEnabled())
       {
-         @Override
-         public void onCompilePdfStarted(CompilePdfStartedEvent event)
+         /*
+         eventBus.addHandler(CompilePdfStartedEvent.TYPE, 
+                             new CompilePdfStartedEvent.Handler()
          {
-            new CompilePdfProgressDialog().showModal();
-         }
-      });
-      */
+            @Override
+            public void onCompilePdfStarted(CompilePdfStartedEvent event)
+            {
+               new CompilePdfProgressDialog().showModal();
+            }
+         });
+         */
+      }
    }
 }
