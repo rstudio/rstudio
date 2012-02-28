@@ -1,17 +1,11 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
-             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:r='urn:import:org.rstudio.core.client.widget'>
 
    <g:HTMLPanel>
       <div id="controls">
-        <button id="previous" onclick="PDFView.page--;" oncontextmenu="return false;">
-          <img src="images/go-up.svg" align="top" height="16"/>
-          Previous
-        </button>
-
-        <button id="next" onclick="PDFView.page++;" oncontextmenu="return false;">
-          <img src="images/go-down.svg" align="top" height="16"/>
-          Next
-        </button>
+        <r:ThemedButton ui:field="btnPrevious_" />
+        <r:ThemedButton ui:field="btnNext_" />
 
         <div class="separator"></div>
 
