@@ -32,6 +32,10 @@ public class PDFView extends JavaScriptObject
    public final native void previousPage() /*-{
       this.page-- ;
    }-*/;
+   
+   public final native int currentPage() /*-{
+      return this.page;
+   }-*/;
 
    public final native void goToPage(int page) /*-{
       this.page = page;
