@@ -19,6 +19,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.LayoutPanel;
+import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -62,14 +63,18 @@ public class PDFViewerApplicationWindow extends SatelliteWindow
          }
       });
       presenter_.onActivated(pdfParams);
-      
-      // make it fill the containing layout panel
-      final Widget presWidget = presenter_.asWidget();
-      presWidget.setSize("100%", "100%");
-      mainPanel.setSize("100%", "100%");
-      mainPanel.add(presWidget);
-      mainPanel.setWidgetLeftRight(presWidget, 0, Unit.PX, 0, Unit.PX);
-      mainPanel.setWidgetTopBottom(presWidget, 0, Unit.PX, 0, Unit.PX);
+
+      // PDF.js doesn't work correctly unless the viewer takes its natural
+      // height and the window is allowed to scroll. So get rid of the main
+      // panel and add the PDFViewer directly to the root panel.
+      mainPanel.setVisible(false);
+      RootPanel.get().add(presenter_);
+   }
+
+   @Override
+   protected boolean allowScrolling()
+   {
+      return true;
    }
 
    @Override

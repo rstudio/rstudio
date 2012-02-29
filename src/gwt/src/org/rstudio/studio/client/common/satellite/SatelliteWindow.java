@@ -42,7 +42,8 @@ public abstract class SatelliteWindow extends Composite
       pFontSizeManager_ = pFontSizeManager;
       
       // occupy full client area of the window
-      Window.enableScrolling(false);
+      if (!allowScrolling())
+         Window.enableScrolling(false);
       Window.setMargin("0px");
 
       // create application panel
@@ -51,7 +52,12 @@ public abstract class SatelliteWindow extends Composite
       // init widget
       initWidget(mainPanel_);
    }
-   
+
+   protected boolean allowScrolling()
+   {
+      return false;
+   }
+
    // show the satellite window (subclasses shouldn't override this method,
    // rather they should override the abstract onInitialize method)
    public void show(JavaScriptObject params)
