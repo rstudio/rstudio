@@ -11,11 +11,7 @@
  *
  */
 
-/*   
- *  
- *   - Satellite subscribes to the CompilePdfStarted event and
- *     shows the dialog when that happens -- the dialog then 
- *     subscribes to the Output, Errors, and Completed events
+/*     
  * 
  *   - When hitting the Compile PDF button if a compile is already running
  *     then it is a no-op (reactivate the tab)
@@ -94,6 +90,11 @@ public class CompilePdfProgressDialog extends ProgressDialog
                         SelectionCommitHandler<CodeNavigationTarget> handler)
    {
       return errorList_.addSelectionCommitHandler(handler);
+   }
+   
+   public void dismiss()
+   {
+      closeDialog();
    }
    
    @Override

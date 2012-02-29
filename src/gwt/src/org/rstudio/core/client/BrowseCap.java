@@ -96,6 +96,11 @@ public class BrowseCap
       return isUserAgent("firefox");
    }
    
+   public static boolean isChromeFrame()
+   {
+      return isUserAgent("chromeframe");
+   }
+   
    private static native final boolean isUserAgent(String uaTest) /*-{
       var ua = navigator.userAgent.toLowerCase();
       if (ua.indexOf(uaTest) != -1)
