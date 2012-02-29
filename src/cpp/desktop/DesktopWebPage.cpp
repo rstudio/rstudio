@@ -63,8 +63,10 @@ bool WebPage::acceptNavigationRequest(QWebFrame*,
 
    if (url.scheme() != QString::fromAscii("http")
        && url.scheme() != QString::fromAscii("https")
-       && url.scheme() != QString::fromAscii("mailto"))
+       && url.scheme() != QString::fromAscii("mailto")
+       && url.scheme() != QString::fromAscii("data"))
    {
+      qDebug() << url.toString();
       return false;
    }
 
