@@ -13,6 +13,8 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -22,13 +24,15 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.*;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.command.KeyboardShortcut;
 
-public class ProgressDialog extends ModalDialogBase
+public abstract class ProgressDialog extends ModalDialogBase
 {
    interface Resources extends ClientBundle
    {
@@ -44,6 +48,7 @@ public class ProgressDialog extends ModalDialogBase
       String labelCell();
       String progressCell();
       String buttonCell();
+      String displayWidget();
    }
 
    interface Binder extends UiBinder<Widget, ProgressDialog>
@@ -60,7 +65,14 @@ public class ProgressDialog extends ModalDialogBase
 
       setText(title);
 
-      display_ = new SimplePanel();
+      display_ = createDisplayWidget();
+      display_.addStyleName(resources_.styles().displayWidget());
+      Style style = display_.getElement().getStyle();
+      double skewFactor = (12 + BrowseCap.getFontSkew()) / 12.0;
+      int width = Math.min((int)(skewFactor * 660),
+                            Window.getClientWidth() - 100);
+      style.setWidth(width, Unit.PX);
+      
       progressAnim_ = new Image(resources_.progress().getSafeUri());
       stopButton_ = new ThemedButton("Stop");
       centralWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
@@ -73,6 +85,8 @@ public class ProgressDialog extends ModalDialogBase
    {
       return centralWidget_;
    }
+   
+   protected abstract Widget createDisplayWidget();
 
    @Override
    protected void onUnload()
@@ -105,11 +119,6 @@ public class ProgressDialog extends ModalDialogBase
 
       super.onPreviewNativeEvent(event);
    }
-  
-   protected void setDisplayWidget(Widget widget)
-   {
-      display_.setWidget(widget);
-   }
    
    protected ThemedButton stopButton()
    {
@@ -126,6 +135,11 @@ public class ProgressDialog extends ModalDialogBase
       registrations_.removeHandler();
    }
    
+   protected void setLabel(String text)
+   {
+      label_.setText(text);
+   }
+   
    protected void hideProgress()
    {
       progressAnim_.getElement().getStyle().setVisibility(Visibility.HIDDEN);
@@ -140,7 +154,7 @@ public class ProgressDialog extends ModalDialogBase
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
   
    @UiField(provided = true)
-   SimplePanel display_;
+   Widget display_;
    
    @UiField(provided = true)
    Image progressAnim_;
@@ -149,6 +163,7 @@ public class ProgressDialog extends ModalDialogBase
    @UiField(provided = true)
    ThemedButton stopButton_;
    private Widget centralWidget_;
+   
 
    private static final Resources resources_ = GWT.<Resources>create(Resources.class);
 }

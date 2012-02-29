@@ -14,8 +14,10 @@
 package org.rstudio.studio.client.common.compilepdf.model;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsUtil;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
 public class CompilePdfError extends JavaScriptObject
 {
@@ -55,5 +57,17 @@ public class CompilePdfError extends JavaScriptObject
    {
       FileSystemItem fsi = FileSystemItem.createFile(getPath());
       return fsi.getName() + " (line " + getLine() + "): " + getMessage();
+   }
+   
+   public final static boolean includesErrorType(
+                                          JsArray<CompilePdfError> errors)
+   { 
+      for (CompilePdfError error : JsUtil.asIterable(errors))
+      {  
+         if (error.getType() == CompilePdfError.ERROR)
+           return true;
+      }
+      
+      return false;
    }
 }

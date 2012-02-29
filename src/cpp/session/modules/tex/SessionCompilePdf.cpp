@@ -153,6 +153,11 @@ void onResume(const Settings& settings)
    }
 }
 
+FilePath ancillaryFilePath(const FilePath& texFilePath, const std::string& ext)
+{
+   return texFilePath.parent().childPath(texFilePath.stem() + ext);
+}
+
 void enqueOutputEvent(const std::string& output)
 {
    s_compilePdfState.addOutput(output);
@@ -171,29 +176,33 @@ void enqueStartedEvent(const std::string& targetFile)
 
 }
 
-void enqueCompletedEvent(bool succeeded,
-                         const FilePath& pdfPath = FilePath())
+void enqueCompletedEvent(bool succeeded, const FilePath& texFilePath)
 {
    s_compilePdfState.onCompleted();
 
    json::Object dataJson;
    dataJson["succeeded"] = succeeded;
-   if (!pdfPath.empty())
+   dataJson["target_file"] =
+                  module_context::createAliasedPath(texFilePath);
+   if (!texFilePath.empty())
+   {
+      FilePath pdfPath = ancillaryFilePath(texFilePath, ".pdf");
       dataJson["pdf_url"] = tex::view_pdf::createViewPdfUrl(pdfPath);
+   }
 
    ClientEvent event(client_events::kCompilePdfCompletedEvent,
                      dataJson);
    module_context::enqueClientEvent(event);
 }
 
-void enqueCompletedWithFailureEvent()
+void enqueCompletedWithFailureEvent(const FilePath& texFilePath)
 {
-   enqueCompletedEvent(false);
+   enqueCompletedEvent(false, texFilePath);
 }
 
-void enqueCompletedWithSuccessEvent(const FilePath& pdfPath)
+void enqueCompletedWithSuccessEvent(const FilePath& texFilePath)
 {
-   enqueCompletedEvent(true, pdfPath);
+   enqueCompletedEvent(true, texFilePath);
 }
 
 void enqueErrorsEvent(const json::Array& logEntriesJson)
@@ -229,11 +238,6 @@ void showLogEntries(const core::tex::LogEntries& logEntries,
    }
 
    enqueErrorsEvent(logEntriesJson);
-}
-
-FilePath ancillaryFilePath(const FilePath& texFilePath, const std::string& ext)
-{
-   return texFilePath.parent().childPath(texFilePath.stem() + ext);
 }
 
 FilePath latexLogPath(const FilePath& texFilePath)
@@ -632,7 +636,7 @@ private:
          if (onCompleted_)
             onCompleted_();
 
-         enqueCompletedWithSuccessEvent(pdfPath);
+         enqueCompletedWithSuccessEvent(texFilePath);
       }
       else
       {
@@ -651,20 +655,20 @@ private:
             enqueOutputEvent(msg + "\n");
          }
 
-         enqueCompletedWithFailureEvent();
+         enqueCompletedWithFailureEvent(targetFilePath_);
       }
    }
 
    void terminateWithError(const std::string& message)
    {
       enqueOutputEvent(message + "\n");
-      enqueCompletedWithFailureEvent();
+      enqueCompletedWithFailureEvent(targetFilePath_);
    }
 
    void terminateWithErrorLogEntries(const core::tex::LogEntries& logEntries)
    {
       showLogEntries(logEntries);
-      enqueCompletedWithFailureEvent();
+      enqueCompletedWithFailureEvent(targetFilePath_);
    }
 
 private:

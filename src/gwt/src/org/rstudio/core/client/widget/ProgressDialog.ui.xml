@@ -12,7 +12,7 @@
             <td align="right" width="1%" class="{res.styles.buttonCell}"><r:ThemedButton text="Stop" ui:field="stopButton_" /></td>
          </tr>
          <tr>
-            <td colspan="3"><g:SimplePanel ui:field="display_"/></td>
+            <td colspan="3"><g:Widget ui:field="display_"/></td>
          </tr>
       </table>
    </g:HTMLPanel>

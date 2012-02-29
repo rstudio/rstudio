@@ -27,7 +27,6 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -174,7 +173,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
    {
       errorList_.showErrors(fileName_, errors);
 
-      if (showErrorPane(errors))
+      if (CompilePdfError.includesErrorType(errors))
       {
          panel_.setWidget(errorList_);
          showOutputButton_.setVisible(true);
@@ -233,17 +232,6 @@ public class CompilePdfOutputPane extends WorkbenchPane
    {
       showLogSeparator_.setVisible(visible);
       showLogButton_.setVisible(visible);
-   }
-   
-   private boolean showErrorPane(JsArray<CompilePdfError> errors)
-   {
-      for (CompilePdfError error : JsUtil.asIterable(errors))
-      {  
-         if (error.getType() == CompilePdfError.ERROR)
-           return true;
-      }
-      
-      return false;
    }
    
    private Image fileImage_;

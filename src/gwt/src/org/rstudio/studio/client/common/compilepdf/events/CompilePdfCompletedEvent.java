@@ -28,6 +28,10 @@ public class CompilePdfCompletedEvent extends GwtEvent<CompilePdfCompletedEvent.
          return this.succeeded;
       }-*/;
       
+      public final native String getTargetFile() /*-{
+         return this.target_file;
+      }-*/;
+      
       public final native String getPdfUrl() /*-{
          return this.pdf_url;
       }-*/;
@@ -46,6 +50,11 @@ public class CompilePdfCompletedEvent extends GwtEvent<CompilePdfCompletedEvent.
    public boolean getSucceeded()
    {
       return data_.getSucceeded();
+   }
+   
+   public String getTargetFile()
+   {
+      return data_.getTargetFile();
    }
     
    public String getPdfUrl()

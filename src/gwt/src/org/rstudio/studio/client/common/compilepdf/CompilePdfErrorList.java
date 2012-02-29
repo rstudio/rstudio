@@ -164,6 +164,5 @@ public class CompilePdfErrorList extends Composite
 
    private final CompilePdfErrorItemCodec codec_;
    private final FastSelectTable<CompilePdfError, CodeNavigationTarget, CodeNavigationTarget> errorTable_;
-   private final CompilePdfResources res_ = CompilePdfResources.INSTANCE;
-  
+   private final CompilePdfResources res_ = CompilePdfResources.INSTANCE;  
 }

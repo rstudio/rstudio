@@ -12,9 +12,17 @@
  */
 package org.rstudio.studio.client.common.compilepdf.dialog;
 
+import org.rstudio.core.client.CodeNavigationTarget;
+import org.rstudio.core.client.events.SelectionCommitEvent;
+import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.model.Session;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -23,7 +31,8 @@ public class CompilePdfProgress
 {
    @Inject
    public CompilePdfProgress(EventBus eventBus,
-                             Session session)
+                             Session session,
+                             final FileTypeRegistry fileTypeRegistry)
    {
       if (session.getSessionInfo().isInternalPdfPreviewEnabled())
       {
@@ -34,7 +43,38 @@ public class CompilePdfProgress
             @Override
             public void onCompilePdfStarted(CompilePdfStartedEvent event)
             {
-               new CompilePdfProgressDialog().showModal();
+               final CompilePdfProgressDialog compilePdfDialog 
+                                    = new CompilePdfProgressDialog();
+               
+               
+               compilePdfDialog.addClickHandler(new ClickHandler() {
+
+                  @Override
+                  public void onClick(ClickEvent event)
+                  {
+                      compilePdfDialog.closeDialog();
+                     
+                  }
+                  
+               });
+               
+               compilePdfDialog.addSelectionCommitHandler(
+                           new SelectionCommitHandler<CodeNavigationTarget>() {
+
+                  @Override
+                  public void onSelectionCommit(
+                        SelectionCommitEvent<CodeNavigationTarget> event)
+                  {
+                     CodeNavigationTarget target = event.getSelectedItem();
+                     fileTypeRegistry.editFile(
+                              FileSystemItem.createFile(target.getFile()), 
+                              target.getPosition());
+                     compilePdfDialog.closeDialog();
+                  }
+                  
+               });
+               
+               compilePdfDialog.showModal();
             }
          });
          */

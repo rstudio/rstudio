@@ -69,7 +69,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
-import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.DiffFrame;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ViewFilePanel;
@@ -180,7 +179,6 @@ public class RStudio implements EntryPoint
       CompilePdfResources.INSTANCE.styles().ensureInjected();
 
       ProgressDialog.ensureStylesInjected();
-      ConsoleProgressDialog.ensureStylesInjected();
       SupportPopupMenu.ensureStylesInjected();
       SlideLabel.ensureStylesInjected();
       ThemedButton.ensureStylesInjected();

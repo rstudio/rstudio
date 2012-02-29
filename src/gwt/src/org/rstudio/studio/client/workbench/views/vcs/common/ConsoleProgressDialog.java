@@ -12,20 +12,14 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.common;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.*;
@@ -49,22 +43,6 @@ public class ConsoleProgressDialog extends ProgressDialog
                                               ProcessExitEvent.Handler,
                                               ClickHandler
 {
-   interface Resources extends ClientBundle
-   {
-      @Source("ConsoleProgressDialog.css")
-      Styles styles();
-   }
-
-   interface Styles extends CssResource
-   {
-      String shellDisplay();
-   }
-
-   public static void ensureStylesInjected()
-   {
-      resources_.styles().ensureInjected();
-   }
-
    public ConsoleProgressDialog(ConsoleProcess consoleProcess,
                                 CryptoServerOperations server)
    {
@@ -97,19 +75,6 @@ public class ConsoleProgressDialog extends ProgressDialog
       }
 
       consoleProcess_ = consoleProcess;
-
-      display_ = new ConsoleProgressWidget();
-      display_.addStyleName(resources_.styles().shellDisplay());
-      Style style = display_.getElement().getStyle();
-      double skewFactor = (12 + BrowseCap.getFontSkew()) / 12.0;
-      int width = Math.min((int)(skewFactor * 660),
-                            Window.getClientWidth() - 100);
-      style.setWidth(width, Unit.PX);
-      
-      display_.setMaxOutputLines(getMaxOutputLines());
-      display_.setSuppressPendingInput(true);
-     
-      setDisplayWidget(display_);
       
       if (getInteractionMode() != ConsoleProcessInfo.INTERACTION_NEVER)
       {
@@ -182,6 +147,15 @@ public class ConsoleProgressDialog extends ProgressDialog
          display_.getElement().getStyle().setHeight(height, Unit.PX);
       }
 
+   }
+   
+   @Override
+   protected Widget createDisplayWidget()
+   {
+      display_ = new ConsoleProgressWidget(); 
+      display_.setMaxOutputLines(getMaxOutputLines());
+      display_.setSuppressPendingInput(true);
+      return display_;
    }
 
    public void showOnOutput()
@@ -340,9 +314,5 @@ public class ConsoleProgressDialog extends ProgressDialog
  
    private final ShellOutputWriter outputWriter_;
    
-   @UiField(provided = true)
-   ConsoleProgressWidget display_;
-   
- 
-   private static final Resources resources_ = GWT.<Resources>create(Resources.class);
+   private ConsoleProgressWidget display_;
 }
