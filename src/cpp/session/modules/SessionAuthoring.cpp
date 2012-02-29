@@ -28,6 +28,7 @@
 #include "tex/SessionPdfLatex.hpp"
 #include "tex/SessionCompilePdf.hpp"
 #include "tex/SessionCompilePdfSupervisor.hpp"
+#include "tex/SessionViewPdf.hpp"
 
 using namespace core;
 
@@ -169,6 +170,7 @@ Error initialize()
    initBlock.addFunctions()
       (tex::compile_pdf::initialize)
       (tex::compile_pdf_supervisor::initialize)
+      (tex::view_pdf::initialize)
       (bind(registerRpcMethod, "is_tex_installed", isTexInstalled))
       (bind(registerRpcMethod, "get_tex_capabilities", getTexCapabilities))
       (bind(registerRpcMethod, "compile_pdf", compilePdf))

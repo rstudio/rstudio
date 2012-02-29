@@ -135,6 +135,7 @@ void httpServerAddHandlers()
    uri_handlers::add("/content", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/diff", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/file_show", secureAsyncHttpHandler(proxyContentRequest));
+   uri_handlers::add("/view_pdf", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/agreement", secureAsyncHttpHandler(proxyContentRequest));
 
    // content handlers which might be accessed outside the context of the

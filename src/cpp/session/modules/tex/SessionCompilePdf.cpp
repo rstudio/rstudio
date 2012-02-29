@@ -39,6 +39,7 @@
 #include "SessionRnwWeave.hpp"
 #include "SessionRnwConcordance.hpp"
 #include "SessionCompilePdfSupervisor.hpp"
+#include "SessionViewPdf.hpp"
 
 using namespace core;
 
@@ -48,10 +49,6 @@ namespace tex {
 namespace compile_pdf {
 
 namespace {
-
-// status constants
-const int kStatusStarted  = 0;
-const int kStatusCompleted = 1;
 
 // track compile pdf state so we can send it to the client on client init
 class CompilePdfState : boost::noncopyable
@@ -182,7 +179,7 @@ void enqueCompletedEvent(bool succeeded,
    json::Object dataJson;
    dataJson["succeeded"] = succeeded;
    if (!pdfPath.empty())
-      dataJson["pdf_url"] = module_context::createFileUrl(pdfPath);
+      dataJson["pdf_url"] = tex::view_pdf::createViewPdfUrl(pdfPath);
 
    ClientEvent event(client_events::kCompilePdfCompletedEvent,
                      dataJson);
