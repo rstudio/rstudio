@@ -18,6 +18,8 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
+
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.pdfviewer.PDFViewerPresenter;
 import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.PdfJs;
@@ -63,6 +65,12 @@ public class PDFViewerPanel extends Composite
          open(url);
       else
          initialUrl_ = url;
+   }
+   
+   @Override
+   public void closeWindow()
+   {
+      WindowEx.get().close();
    }
 
    @Override
