@@ -12,17 +12,10 @@
  */
 package org.rstudio.studio.client.common.compilepdf.dialog;
 
-import org.rstudio.core.client.CodeNavigationTarget;
-import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.model.Session;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
