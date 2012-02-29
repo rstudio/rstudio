@@ -23,6 +23,12 @@
  * 
  *   - Attempting to close the satellite window while a compilation
  *     is actively running results in a prompt to terminate the compile
+ *     
+ *   - viewer.js sets the window title to the URL (do custom)
+ *   
+ *   - desktop mode web server returning 404 
+ *   
+ *   - try to take up as much vertical room as we can (detect monitor size)
  */
 
 package org.rstudio.studio.client.common.compilepdf.dialog;
