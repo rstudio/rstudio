@@ -2,6 +2,8 @@
 /* vim: set shiftwidth=4 tabstop=8 autoindent cindent expandtab: */
 
 body {
+  background-color: #87898c !important;
+  background-image: none !important;
   /*
   background-color: #929292;
   font-family: 'Lucida Grande', 'Lucida Sans Unicode', Helvetica, Arial, Verdana, sans-serif;

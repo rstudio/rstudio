@@ -1,8 +1,33 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
-             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:widget="urn:import:org.rstudio.core.client.widget">
+
+   <ui:style>
+      .toolbar {
+         position: fixed;
+         top: 0;
+         height: 23px;
+         left: 0;
+         right: 0;
+         z-index: 100;
+      }
+      .toolbarShadow {
+         position: fixed;
+         top: 0;
+         height: 23px;
+         left: -30px;
+         right: -30px;
+         z-index: 90;
+         box-shadow: 4px 0px 8px #222;
+         -moz-box-shadow: 4px 0px 8px #222;
+         -webkit-box-shadow: 4px 0px 8px #222;
+      }
+   </ui:style>
 
    <g:HTMLPanel>
-      <div id="controls">
+      <widget:Toolbar ui:field="toolbar_" styleName="{style.toolbar}"/>
+      <div class="{style.toolbarShadow}"></div>
+      <div id="controls" style="display: none">
         <button id="previous" onclick="PDFView.page--;" oncontextmenu="return false;">
           <img src="images/go-up.svg" align="top" height="16"/>
           Previous
@@ -96,7 +121,7 @@
           <div id="outlineScrollView" hidden='true'>
             <div id="outlineView"></div>
           </div>
-          <div id="sidebarControls">
+          <div id="sidebarControls" style="display: none">
             <button id="thumbsSwitch" title="Show Thumbnails" onclick="PDFView.switchSidebarView('thumbs')" data-selected="data-selected">
               <img src="images/nav-thumbs.svg" align="top" height="16" alt="Thumbs" />
             </button>
