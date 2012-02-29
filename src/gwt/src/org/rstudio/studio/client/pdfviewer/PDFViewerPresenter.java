@@ -39,7 +39,6 @@ public class PDFViewerPresenter implements IsWidget,
    public interface Display extends IsWidget
    {     
       void setURL(String url);
-      void closeWindow();
       HandlerRegistration addInitCompleteHandler(
                                              InitCompleteEvent.Handler handler);
    }
@@ -74,9 +73,7 @@ public class PDFViewerPresenter implements IsWidget,
             if (!compileIsRunning_)
             {
                fileTypeRegistry_.editFile(
-                           FileSystemItem.createFile(lastTargetFile_));
-               
-               view_.closeWindow();
+                           FileSystemItem.createFile(lastTargetFile_));  
             }
             else
             {
@@ -99,8 +96,6 @@ public class PDFViewerPresenter implements IsWidget,
                   fileTypeRegistry_.editFile(
                         FileSystemItem.createFile(target.getFile()), 
                         target.getPosition());
-                  
-                  view_.closeWindow();
                }
 
             });
