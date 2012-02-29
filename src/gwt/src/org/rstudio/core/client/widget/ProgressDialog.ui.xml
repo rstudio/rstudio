@@ -1,9 +1,8 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
-             xmlns:r='urn:import:org.rstudio.core.client.widget'
-             xmlns:c='urn:import:org.rstudio.studio.client.workbench.views.vcs.common'>
+             xmlns:r='urn:import:org.rstudio.core.client.widget'>
 
-   <ui:with field="res" type="org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog.Resources"/>
+   <ui:with field="res" type="org.rstudio.core.client.widget.ProgressDialog.Resources"/>
 
    <g:HTMLPanel>
       <table>
@@ -13,7 +12,7 @@
             <td align="right" width="1%" class="{res.styles.buttonCell}"><r:ThemedButton text="Stop" ui:field="stopButton_" /></td>
          </tr>
          <tr>
-            <td colspan="3"><c:ConsoleProgressWidget ui:field="display_"/></td>
+            <td colspan="3"><g:SimplePanel ui:field="display_"/></td>
          </tr>
       </table>
    </g:HTMLPanel>

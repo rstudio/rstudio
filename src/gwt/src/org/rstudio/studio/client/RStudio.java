@@ -31,6 +31,7 @@ import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.core.client.widget.ProgressDialog;
 import org.rstudio.core.client.widget.ResizeGripper;
 import org.rstudio.core.client.widget.SlideLabel;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -178,6 +179,7 @@ public class RStudio implements EntryPoint
       CodeSearchResources.INSTANCE.styles().ensureInjected();
       CompilePdfResources.INSTANCE.styles().ensureInjected();
 
+      ProgressDialog.ensureStylesInjected();
       ConsoleProgressDialog.ensureStylesInjected();
       SupportPopupMenu.ensureStylesInjected();
       SlideLabel.ensureStylesInjected();

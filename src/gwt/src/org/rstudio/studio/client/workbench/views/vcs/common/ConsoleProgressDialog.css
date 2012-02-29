@@ -1,32 +1,4 @@
-@external dialogTop, dialogContent;
 
-.labelCell {
-   padding-right: 6px;
-}
-
-.buttonCell button {
-   position: relative;
-   left: 3px;
-   top: 2px;
-   margin-left: 0;
-}
-
-.progressCell img {
-   position: relative;
-   top: 1px;
-}
-
-.consoleProgressDialog .dialogTop {
-   display: none;
-}
-
-.consoleProgressDialog .dialogContent {
-   margin-top: 4px;
-}
-
-.consoleProgressDialog {
-   top: 0 !important;
-}
 
 .shellDisplay {
    background-color: white;

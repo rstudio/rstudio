@@ -15,27 +15,19 @@ package org.rstudio.studio.client.workbench.views.vcs.common;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
@@ -51,7 +43,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 
-public class ConsoleProgressDialog extends ModalDialogBase
+public class ConsoleProgressDialog extends ProgressDialog
                                    implements ConsoleOutputEvent.Handler, 
                                               ConsolePromptEvent.Handler,
                                               ProcessExitEvent.Handler,
@@ -59,23 +51,14 @@ public class ConsoleProgressDialog extends ModalDialogBase
 {
    interface Resources extends ClientBundle
    {
-      ImageResource progress();
-
       @Source("ConsoleProgressDialog.css")
       Styles styles();
    }
 
    interface Styles extends CssResource
    {
-      String consoleProgressDialog();
-      String labelCell();
-      String progressCell();
-      String buttonCell();
       String shellDisplay();
    }
-
-   interface Binder extends UiBinder<Widget, ConsoleProgressDialog>
-   {}
 
    public static void ensureStylesInjected()
    {
@@ -105,17 +88,15 @@ public class ConsoleProgressDialog extends ModalDialogBase
                                 Integer exitCode,
                                 CryptoServerOperations server)
    {
+      super(title);
+      
       if (consoleProcess == null && exitCode == null)
       {
          throw new IllegalArgumentException(
                "Invalid combination of arguments to ConsoleProgressDialog");
       }
 
-      addStyleName(resources_.styles().consoleProgressDialog());
-
       consoleProcess_ = consoleProcess;
-
-      setText(title);
 
       display_ = new ConsoleProgressWidget();
       display_.addStyleName(resources_.styles().shellDisplay());
@@ -128,6 +109,8 @@ public class ConsoleProgressDialog extends ModalDialogBase
       display_.setMaxOutputLines(getMaxOutputLines());
       display_.setSuppressPendingInput(true);
      
+      setDisplayWidget(display_);
+      
       if (getInteractionMode() != ConsoleProcessInfo.INTERACTION_NEVER)
       {
          ShellInteractionManager shellInteractionManager = 
@@ -144,26 +127,18 @@ public class ConsoleProgressDialog extends ModalDialogBase
          outputWriter_ = display_;
       }
 
-      progressAnim_ = new Image(resources_.progress().getSafeUri());
-
-      stopButton_ = new ThemedButton("Stop", this);
-
-      centralWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
-
-      label_.setText(title);
-
+      stopButton().addClickHandler(this);
+      
       if (!StringUtil.isNullOrEmpty(initialOutput))
       {
          outputWriter_.consoleWriteOutput(initialOutput);
       }
 
-
-      registrations_ = new HandlerRegistrations();
       if (consoleProcess != null)
       {
-         registrations_.add(consoleProcess.addConsolePromptHandler(this));
-         registrations_.add(consoleProcess.addConsoleOutputHandler(this));
-         registrations_.add(consoleProcess.addProcessExitHandler(this));
+         addHandlerRegistration(consoleProcess.addConsolePromptHandler(this));
+         addHandlerRegistration(consoleProcess.addConsoleOutputHandler(this));
+         addHandlerRegistration(consoleProcess.addProcessExitHandler(this));
 
          consoleProcess.start(new SimpleRequestCallback<Void>()
          {
@@ -176,7 +151,7 @@ public class ConsoleProgressDialog extends ModalDialogBase
                // if this is showOnOutput_ then we will never get
                // a ProcessExitEvent or an onUnload so we should unsubscribe 
                // from events here
-               registrations_.removeHandler();
+               unregisterHandlers();
                
                closeDialog();
             }
@@ -199,7 +174,7 @@ public class ConsoleProgressDialog extends ModalDialogBase
       // interaction-always mode is a shell -- customize ui accordingly
       if (getInteractionMode() == ConsoleProcessInfo.INTERACTION_ALWAYS)
       {
-         stopButton_.setText("Close");
+         stopButton().setText("Close");
          
          hideProgress();
          
@@ -214,44 +189,18 @@ public class ConsoleProgressDialog extends ModalDialogBase
       showOnOutput_ = true;
    }
    
-   
-   @Override
-   protected Widget createMainWidget()
+   @Override 
+   protected boolean handleEnterKey()
    {
-      return centralWidget_;
-   }
-
-   @Override
-   protected void onUnload()
-   {
-      super.onUnload();
-      registrations_.removeHandler();
-   }
-
-   @Override
-   public void onPreviewNativeEvent(NativePreviewEvent event)
-   {
-      if (event.getTypeInt() == Event.ONKEYDOWN
-          && KeyboardShortcut.getModifierValue(event.getNativeEvent()) == KeyboardShortcut.NONE)
+      if (!running_)
       {
-         if (event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ESCAPE)
-         {
-            stopButton_.click();
-            event.cancel();
-            return;
-         }
-         else if (event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ENTER)
-         {   
-            if (!running_)
-            {
-               stopButton_.click();
-               event.cancel();
-               return;
-            }
-         }
+         stopButton().click();
+         return true;
       }
-
-      super.onPreviewNativeEvent(event);
+      else
+      {
+         return false;
+      }
    }
 
    @Override
@@ -276,23 +225,23 @@ public class ConsoleProgressDialog extends ModalDialogBase
       if (isShowing())
       {
          display_.setReadOnly(true);
-         stopButton_.setFocus(true);
+         stopButton().setFocus(true);
       
          // when a shell exits we close the dialog
          if (getInteractionMode() == ConsoleProcessInfo.INTERACTION_ALWAYS)
-            stopButton_.click();
+            stopButton().click();
          
          // when we were showOnOutput and the process succeeded then
          // we also auto-close
          else if (showOnOutput_ && (event.getExitCode() == 0))
-            stopButton_.click();
+            stopButton().click();
       }
       
       // the dialog was showOnOutput_ but was never shown so just tear
       // down registrations and reap the process
       else if (showOnOutput_)
       {
-         registrations_.removeHandler();
+         unregisterHandlers();
          
          if (consoleProcess_ != null)
             consoleProcess_.reap(new VoidServerRequestCallback());
@@ -303,8 +252,8 @@ public class ConsoleProgressDialog extends ModalDialogBase
    private void setExitCode(int exitCode)
    {
       running_ = false;
-      stopButton_.setText("Close");
-      stopButton_.setDefault(true);
+      stopButton().setText("Close");
+      stopButton().setDefault(true);
       hideProgress();
    }
 
@@ -323,11 +272,11 @@ public class ConsoleProgressDialog extends ModalDialogBase
             @Override
             public void onError(ServerError error)
             {
-               stopButton_.setEnabled(true);
+               stopButton().setEnabled(true);
                super.onError(error);
             }
          });
-         stopButton_.setEnabled(false);
+         stopButton().setEnabled(false);
       }
       else
       {
@@ -357,11 +306,7 @@ public class ConsoleProgressDialog extends ModalDialogBase
 
    };
    
-   private void hideProgress()
-   {
-      progressAnim_.getElement().getStyle().setVisibility(Visibility.HIDDEN);
-   }
-   
+  
    private int getInteractionMode()
    {
       if (consoleProcess_ != null)
@@ -392,20 +337,12 @@ public class ConsoleProgressDialog extends ModalDialogBase
    private boolean showOnOutput_ = false;
    
    private final ConsoleProcess consoleProcess_;
-   private HandlerRegistrations registrations_;
-
+ 
    private final ShellOutputWriter outputWriter_;
    
    @UiField(provided = true)
    ConsoleProgressWidget display_;
    
-   @UiField(provided = true)
-   Image progressAnim_;
-   @UiField
-   Label label_;
-   @UiField(provided = true)
-   ThemedButton stopButton_;
-   private Widget centralWidget_;
-
+ 
    private static final Resources resources_ = GWT.<Resources>create(Resources.class);
 }
