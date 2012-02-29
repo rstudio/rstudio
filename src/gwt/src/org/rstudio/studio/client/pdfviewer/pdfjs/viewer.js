@@ -962,6 +962,10 @@ var PDFView = {
       this.page = 1;
     }
 
+    // Don't let us be past the end of the document--bad things happen
+    if (this.page > this.pages.length)
+      this.page = this.pages.length;
+
     if (PDFView.currentScale === kUnknownScale) {
       // Scale was not initialized: invalid bookmark or scale was not specified.
       // Setting the default one.
