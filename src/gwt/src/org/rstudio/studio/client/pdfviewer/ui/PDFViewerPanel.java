@@ -13,19 +13,13 @@
 package org.rstudio.studio.client.pdfviewer.ui;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
-
-import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.pdfviewer.PDFViewerPresenter;
 import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
-import org.rstudio.studio.client.pdfviewer.pdfjs.PDFView;
 import org.rstudio.studio.client.pdfviewer.pdfjs.PdfJs;
 
 public class PDFViewerPanel extends Composite
@@ -35,23 +29,7 @@ public class PDFViewerPanel extends Composite
    {}
 
    public PDFViewerPanel()
-   {       
-      btnPrevious_ = new ThemedButton("Previous", new ClickHandler() {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            PDFView.get().previousPage();
-         }
-      });
-      
-      btnNext_ = new ThemedButton("Next", new ClickHandler() {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            PDFView.get().nextPage();
-         }
-      });
-      
+   {
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
    }
 
@@ -98,12 +76,6 @@ public class PDFViewerPanel extends Composite
       $wnd.PDFView.open(url, 0);
    }-*/;
 
-   
-   @UiField(provided = true)
-   protected ThemedButton btnNext_;
-   @UiField(provided = true)
-   protected ThemedButton btnPrevious_;
-   
    private boolean loaded_;
    private String initialUrl_;
    private boolean once_;
