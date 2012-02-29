@@ -16,6 +16,7 @@ package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.impl.CodeSplitter2.FragmentPartitioningResult;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsProgramFragment;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
@@ -215,6 +216,7 @@ public class ClosureJsRunner {
   private void computeFragmentMap(JProgram jprogram, JsProgram jsProgram) {
     int fragments = jsProgram.getFragmentCount();
     List<Integer> initSeq = jprogram.getSplitPointInitialSequence();
+    FragmentPartitioningResult partitionResult = jprogram.getFragmentPartitioningResult();
 
     //
     // The fragments are expected in a specific order:
@@ -237,12 +239,20 @@ public class ClosureJsRunner {
 
     // Then come the specified load order sequence
     for (int i = 0; i < initSeq.size(); i++) {
-      closureModuleSequenceMap[initSeq.get(i)] = module++;
+      int initSeqNum = initSeq.get(i);
+      if (partitionResult != null) {
+        initSeqNum = partitionResult.getFragmentFromSplitPoint(initSeqNum);
+      }
+      closureModuleSequenceMap[initSeqNum] = module++;
     }
 
     // Then the leftovers fragments:
     if (fragments > 1) {
-      closureModuleSequenceMap[fragments - 1] = module++;
+      int leftoverIndex = fragments - 1;
+      if (partitionResult != null) {
+        leftoverIndex = partitionResult.getLeftoverFragmentIndex();
+      }
+      closureModuleSequenceMap[leftoverIndex] = module++;
     }
 
     // Finally, the exclusive fragments.
