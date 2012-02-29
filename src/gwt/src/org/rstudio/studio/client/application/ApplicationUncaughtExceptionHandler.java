@@ -41,7 +41,12 @@ public class ApplicationUncaughtExceptionHandler
    }
    
    public void onUncaughtException(Throwable e)
-   {     
+   {
+      logException(e, "Uncaught Exception");
+   }
+
+   private void logException(Throwable e, String label)
+   {
       try
       {
          // call the default handler if there is one
@@ -53,7 +58,7 @@ public class ApplicationUncaughtExceptionHandler
          
          // uncaught exception
          StringBuilder message = new StringBuilder();
-         message.append("Uncaught Exception: ");
+         message.append(label).append(": ");
 
          CsvWriter csv = new CsvWriter();
          csv.writeValue(GWT.getPermutationStrongName());
@@ -70,6 +75,14 @@ public class ApplicationUncaughtExceptionHandler
          server_.log(LogEntryType.ERROR, 
                      message.toString(),
                      new VoidServerRequestCallback());
+
+         if (e instanceof UmbrellaException)
+         {
+            UmbrellaException ue = (UmbrellaException)e;
+            for (Throwable t : ue.getCauses())
+               if (t != null)
+                  logException(t, "Nested Exception");
+         }
       }
       catch(Throwable throwable)
       {
@@ -98,13 +111,6 @@ public class ApplicationUncaughtExceptionHandler
             stackTrace.append("    at ");
             stackTrace.append(stack[i].toString());
          }
-      }
-
-      if (e instanceof UmbrellaException)
-      {
-         UmbrellaException ue = (UmbrellaException)e;
-         for (Throwable t : ue.getCauses())
-            writeStackTrace(t, stackTrace, true);
       }
    }
 
