@@ -90,7 +90,7 @@ public class SatelliteApplication
 
    protected void flushPendingEvents()
    {
-      satellite_.flushPendingEvents(PDFViewerApplication.NAME);
+      satellite_.flushPendingEvents(name_);
    }
 
 
