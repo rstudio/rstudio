@@ -35,6 +35,9 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Window.ClosingEvent;
+import com.google.gwt.user.client.Window.ClosingHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -64,6 +67,17 @@ public class PDFViewerPresenter implements IsWidget,
       
       eventBus.addHandler(CompilePdfStartedEvent.TYPE, this);
       eventBus.addHandler(CompilePdfCompletedEvent.TYPE, this);
+      
+      Window.addWindowClosingHandler(new ClosingHandler() {
+
+         @Override
+         public void onWindowClosing(ClosingEvent event)
+         {
+            if (compileIsRunning_)
+               terminateRunningCompile();
+         }
+         
+      });
    }
    
    @Override
@@ -88,7 +102,10 @@ public class PDFViewerPresenter implements IsWidget,
             // firefox and chrome frame won't allow window re-activation
             // so we close the parent window to force this
             if (BrowseCap.isFirefox() || BrowseCap.isChromeFrame())
+            {
+               compileIsRunning_ = false;
                WindowEx.get().close();
+            }
          }
       };
 
@@ -105,16 +122,7 @@ public class PDFViewerPresenter implements IsWidget,
             }
             else
             {
-               server_.terminateCompilePdf(new ServerRequestCallback<Boolean>() 
-               {
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     globalDisplay_.showErrorMessage("Error", 
-                                                     error.getUserMessage());
-                     
-                  }
-               });
+               terminateRunningCompile();
             }
             
             dismissCommand.execute();
@@ -170,6 +178,19 @@ public class PDFViewerPresenter implements IsWidget,
       return view_.addInitCompleteHandler(handler);
    }
 
+   private void terminateRunningCompile()
+   {
+      server_.terminateCompilePdf(new ServerRequestCallback<Boolean>() 
+      {
+         @Override
+         public void onError(ServerError error)
+         {
+            globalDisplay_.showErrorMessage("Error", 
+                                            error.getUserMessage());
+            
+         }
+      });
+   }
 
    private boolean compileIsRunning_ = false;
    private String lastTargetFile_ = null;

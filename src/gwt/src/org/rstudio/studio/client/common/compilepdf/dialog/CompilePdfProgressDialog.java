@@ -11,18 +11,6 @@
  *
  */
 
-/*     
- * 
- *   - When hitting the Compile PDF button if a compile is already running
- *     then it is a no-op (reactivate the tab)
- * 
- *   - Attempting to close the satellite window while a compilation
- *     is actively running results in a prompt to terminate the compile
- *     
- *   - viewer.js sets the window title to the URL (do custom)
- *   
- */
-
 package org.rstudio.studio.client.common.compilepdf.dialog;
 
 import org.rstudio.core.client.CodeNavigationTarget;

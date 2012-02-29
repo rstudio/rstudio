@@ -230,6 +230,8 @@ public class CompilePdfOutputPresenter extends BasePresenter
    private void compilePdf(final FileSystemItem targetFile,
                            final String completedAction)
    {
+      // attempt to start a compilation (this might not actually work
+      // if there is already a compile running)
       server_.compilePdf(
             targetFile, 
             completedAction, 
@@ -238,19 +240,6 @@ public class CompilePdfOutputPresenter extends BasePresenter
                @Override
                protected void onSuccess(Boolean started)
                {
-                  if (!started)
-                  {
-                     confirmTerminateRunningCompile(
-                           "start a new compilation",
-                           new Command() {
-   
-                              @Override
-                              public void execute()
-                              {
-                                 compilePdf(targetFile, completedAction);
-                              }     
-                           });
-                  }
                }
          });
    }
