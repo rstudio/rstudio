@@ -160,7 +160,7 @@ public class FileTypeRegistry
    {
       if (satellite_.isCurrentWindowSatellite())
       {
-         satellite_.focusMainWindow();
+         satellite_.focusMainWindow();   
          callSatelliteEditFile(file.cast(), position.cast());
       }
       else
@@ -185,7 +185,7 @@ public class FileTypeRegistry
    private final native void exportEditFileCallback()/*-{
       var registry = this;     
       $wnd.editFileFromRStudioSatellite = $entry(
-         function(items) {
+         function(file, position) {
             registry.@org.rstudio.studio.client.common.filetypes.FileTypeRegistry::satelliteEditFile(Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/core/client/JavaScriptObject;)(file,position);
          }
       ); 

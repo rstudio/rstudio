@@ -12,39 +12,49 @@
  */
 package org.rstudio.studio.client.common.compilepdf;
 
-import org.rstudio.studio.client.common.shell.ShellWidget;
-import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.core.client.widget.PreWidget;
+import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
+import org.rstudio.studio.client.workbench.views.console.ConsoleResources.ConsoleStyles;
 
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.ScrollPanel;
 
 public class CompilePdfOutputBuffer extends Composite
 {
    public CompilePdfOutputBuffer()
    {
-      outputWidget_ = new ShellWidget(new AceEditor());
-      outputWidget_.setSize("100%", "100%");
-      outputWidget_.setMaxOutputLines(1000);
-      outputWidget_.setReadOnly(true);
-      outputWidget_.setSuppressPendingInput(true);
+      ConsoleStyles styles = ConsoleResources.INSTANCE.consoleStyles();
+
+      output_ = new PreWidget();
+      output_.setStylePrimaryName(styles.output());
+      FontSizer.applyNormalFontSize(output_);
+    
+      scrollPanel_ = new ScrollPanel();
+      scrollPanel_.addStyleName(
+                CompilePdfResources.INSTANCE.styles().outputScrollPanel());
+      scrollPanel_.setSize("100%", "100%");
+      scrollPanel_.add(output_);
       
-      initWidget(outputWidget_);
+      initWidget(scrollPanel_);
    }
    
    public void append(String output)
    {
-      outputWidget_.consoleWriteOutput(output);    
+      output_.appendText(output); 
+      scrollPanel_.scrollToBottom();
    }
    
    public void scrollToBottom()
    {
-      outputWidget_.scrollToBottom();
+     scrollPanel_.scrollToBottom();
    }
 
    public void clear()
    {
-      outputWidget_.clearOutput(); 
+      output_.setText("");
    }
  
-   
-   private ShellWidget outputWidget_;
+   private PreWidget output_;
+   private ScrollPanel scrollPanel_;
 }

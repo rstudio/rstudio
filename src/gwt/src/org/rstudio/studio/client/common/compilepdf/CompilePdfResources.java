@@ -33,6 +33,7 @@ public interface CompilePdfResources extends ClientBundle
       String lineCell();
       String messageCell();
       String disclosure();
+      String outputScrollPanel();
    }
 
    @Source("images/error.png")

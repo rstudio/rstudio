@@ -68,3 +68,8 @@ div.disclosure {
 @sprite .selectedRow div.disclosure {
    gwt-image: 'logContextButton';
 }
+
+
+.outputScrollPanel {
+   padding-bottom: 10px;	
+}

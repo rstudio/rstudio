@@ -100,6 +100,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
            showOutputButton_.setVisible(false);
            showErrorsButton_.setVisible(true);
            panel_.setWidget(outputBuffer_);
+           outputBuffer_.scrollToBottom();
          }
       });
       toolbar.addRightWidget(showOutputButton_);
