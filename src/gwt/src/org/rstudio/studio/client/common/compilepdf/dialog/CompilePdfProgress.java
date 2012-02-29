@@ -13,7 +13,6 @@
 package org.rstudio.studio.client.common.compilepdf.dialog;
 
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.inject.Inject;

@@ -20,7 +20,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
-import org.rstudio.studio.client.pdfviewer.PDFViewerApplication;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 public class SatelliteApplication
