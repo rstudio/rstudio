@@ -486,7 +486,8 @@ public class HistoryPane extends WorkbenchPane
       setMode(Mode.Recent);
       //searchResults_.clear();
       //contextResults_.clear();
-      searchWidget_.setText("");
+      //searchWidget_.setText("");
+      searchWidget_.clear();
    }
 
    public void showSearchResults(String query,

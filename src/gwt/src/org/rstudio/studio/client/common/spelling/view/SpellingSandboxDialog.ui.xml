@@ -1,0 +1,46 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui"
+	xmlns:r="urn:import:org.rstudio.core.client.widget">
+	<ui:style>
+	.rounded {
+	border: 1px solid black;	
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+     border-radius: 6px;
+	}
+	</ui:style>
+	<g:HTMLPanel>
+	<div class="{style.rounded}">
+		<!-- Add GWT widgets here. Enter < and hit Ctrl-Space to auto-complete 
+			widget names. The ui:field attribute binds an element to a field in the owner 
+			class. See the GWT docs on UI Binder for more details. -->
+		<table>
+		<tr>
+			<td rowspan="2">
+				<g:TextArea ui:field="txtWord_" visibleLines="2" width="100px"></g:TextArea>
+			</td>
+			<td>
+				<r:ThemedButton ui:field="ignoreButton_" text="Ignore" width="100px"/>
+			</td>
+		</tr>
+			<td>
+				<r:ThemedButton ui:field="ignoreAllButton_" text="Ignore All" width="100px"/>
+			</td>
+		<tr>
+			<td rowspan="2">
+				<g:ListBox ui:field="listBox_" visibleItemCount="5" multipleSelect="false" width="100px"></g:ListBox>
+			</td>
+			<td>
+				<r:ThemedButton ui:field="changeButton_" text="Change" width="100px"/>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<r:ThemedButton ui:field="changeAllButton_" text="Change All" width="100px"/>
+			</td>
+		</tr>
+		</table>
+		</div>
+	</g:HTMLPanel>
+</ui:UiBinder> 
