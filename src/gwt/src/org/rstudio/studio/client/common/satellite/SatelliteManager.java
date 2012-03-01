@@ -101,6 +101,7 @@ public class SatelliteManager implements CloseHandler<Window>
                   Desktop.getFrame().activateSatelliteWindow(
                     SatelliteUtils.getSatelliteWindowName(satellite.getName()));
                   callNotifyReactivated(window, params);
+                  return;
                }
             }
          }
