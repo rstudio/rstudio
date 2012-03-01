@@ -13,6 +13,8 @@
 
 #include "SessionCompilePdf.hpp"
 
+#include <set>
+
 #include <boost/format.hpp>
 #include <boost/foreach.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -388,6 +390,15 @@ public:
       cleanLog_ = false;
    }
 
+   void preserveLogReferencedFiles(
+               const core::tex::LogEntries& logEntries)
+   {
+      BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
+      {
+         logRefFiles_.insert(logEntry.filePath());
+      }
+   }
+
    void cleanup()
    {
       if (!basePath_.empty())
@@ -417,16 +428,23 @@ private:
       return FilePath(basePath_ + extension).exists();
    }
 
+   // remove the specified file (but don't if it's referenced
+   // from the log)
    void remove(const std::string& extension)
    {
-      Error error = FilePath(basePath_ + extension).removeIfExists();
-      if (error)
-         LOG_ERROR(error);
+      FilePath filePath(basePath_ + extension);
+      if (logRefFiles_.find(filePath) == logRefFiles_.end())
+      {
+         Error error = filePath.removeIfExists();
+         if (error)
+            LOG_ERROR(error);
+      }
    }
 
 private:
    std::string basePath_;
    bool cleanLog_;
+   std::set<FilePath> logRefFiles_;
 };
 
 // implement pdf compilation within a class so we can maintain state
@@ -615,6 +633,11 @@ private:
       // collect errors from the log, show them, and build the issues string
       core::tex::LogEntries logEntries;
       getLogEntries(texFilePath, concords, &logEntries);
+
+      // notify the cleanp context of log entries (so it can
+      // preserve any referenced files)
+      auxillaryFileCleanupContext_.preserveLogReferencedFiles(
+                                                      logEntries);
 
       // show log entries
       if (!logEntries.empty())
