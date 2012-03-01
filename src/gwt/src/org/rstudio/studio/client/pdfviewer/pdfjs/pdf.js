@@ -7,7 +7,7 @@ var PDFJS = {};
   // Use strict in our context only - users might not want it
   'use strict';
 
-  PDFJS.build = '8624cf0';
+  PDFJS.build = '196c81a';
 
   // Files are inserted below - see Makefile
   /* PDFJSSCRIPT_INCLUDE_ALL */
@@ -14525,13 +14525,10 @@ var Font = (function FontClosure() {
       'Original licence',  // 0.Copyright
       name,                // 1.Font family
       'Unknown',           // 2.Font subfamily (font weight)
-      'uniqueID',          // 3.Unique ID
+      name,                // 3.Unique ID
       name,                // 4.Full font name
       'Version 0.11',      // 5.Version
-      '',                  // 6.Postscript name
-      'Unknown',           // 7.Trademark
-      'Unknown',           // 8.Manufacturer
-      'Unknown'            // 9.Designer
+      name                 // 6.Postscript name
     ];
 
     // Mac want 1-byte per character strings while Windows want
