@@ -24,10 +24,13 @@ public class CompilePdfEvent extends GwtEvent<CompilePdfEvent.Handler>
       void onCompilePdf(CompilePdfEvent event);
    }
 
-   public CompilePdfEvent(FileSystemItem targetFile, String completedAction)
+   public CompilePdfEvent(FileSystemItem targetFile, 
+                          String completedAction,
+                          boolean useInternalPreview)
    {
       targetFile_ = targetFile;
       completedAction_ = completedAction;
+      useInternalPreview_ = useInternalPreview;
    }
    
    public FileSystemItem getTargetFile()
@@ -38,6 +41,11 @@ public class CompilePdfEvent extends GwtEvent<CompilePdfEvent.Handler>
    public String getCompletedAction()
    {
       return completedAction_;
+   }
+   
+   public boolean useInternalPreview()
+   {
+      return useInternalPreview_;
    }
 
    @Override
@@ -53,7 +61,8 @@ public class CompilePdfEvent extends GwtEvent<CompilePdfEvent.Handler>
    }
    
    private final FileSystemItem targetFile_;
-   private String completedAction_;
+   private final String completedAction_;
+   private final boolean useInternalPreview_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

@@ -26,6 +26,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
@@ -36,6 +37,7 @@ import org.rstudio.studio.client.common.compilepdf.model.CompilePdfError;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfServerOperations;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -73,6 +75,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
                                     GlobalDisplay globalDisplay,
                                     CompilePdfServerOperations server,
                                     FileTypeRegistry fileTypeRegistry,
+                                    EventBus eventBus,
                                     Commands commands)
    {
       super(view);
@@ -80,6 +83,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
       globalDisplay_ = globalDisplay;
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
+      eventBus_ = eventBus;
       commands_ = commands;
 
       view_.stopButton().addClickHandler(new ClickHandler() {
@@ -176,10 +180,16 @@ public class CompilePdfOutputPresenter extends BasePresenter
 
    @Override
    public void onCompilePdf(CompilePdfEvent event)
-   {
+   {  
+      // switch back to the console after compile unless the compile pdf
+      // tab was already visible
       switchToConsoleOnSuccessfulCompile_ = !view_.isEffectivelyVisible();
-      view_.ensureVisible(true);
       
+      // activate the compile pdf tab if we aren't using the internal previewer
+      boolean activate = !event.useInternalPreview();
+      view_.ensureVisible(activate);
+      
+      // run the compile
       compilePdf(event.getTargetFile(), event.getCompletedAction());
    }
    
@@ -318,5 +328,6 @@ public class CompilePdfOutputPresenter extends BasePresenter
    private final CompilePdfServerOperations server_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final Commands commands_;
+   private final EventBus eventBus_;
    private boolean switchToConsoleOnSuccessfulCompile_;
 }

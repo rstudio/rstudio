@@ -1723,7 +1723,7 @@ public class TextEditingTarget implements EditingTarget
       });
       
       // send publish to console
-      handlePdfCommand("publish");
+      handlePdfCommand("publish", false);
    }
    
    private void removePublishPdfHandler()
@@ -1738,20 +1738,19 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onCompilePDF()
    {
-      String action = new String();
-      if (prefs_.showPdfAfterCompile().getValue())
-      {
-         if (session_.getSessionInfo().isInternalPdfPreviewEnabled())
-         {
-            events_.fireEvent(new ShowPDFViewerEvent());
-         }
-         else
-         {
-            action = "view_external";
-         }
-      }
+      boolean showPdf = prefs_.showPdfAfterCompile().getValue();
+      boolean useInternalPreview = 
+         showPdf && session_.getSessionInfo().isInternalPdfPreviewEnabled();
       
-      handlePdfCommand(action);
+      if (useInternalPreview)
+         events_.fireEvent(new ShowPDFViewerEvent());
+     
+      
+      String action = new String();
+      if (showPdf && !useInternalPreview)
+         action = "view_external";
+       
+      handlePdfCommand(action, useInternalPreview);
    }
 
    @Handler
@@ -1760,7 +1759,8 @@ public class TextEditingTarget implements EditingTarget
       view_.showFindReplace();
    }
    
-   void handlePdfCommand(final String completedAction)
+   void handlePdfCommand(final String completedAction,
+                         final boolean useInternalPreview)
    {
       if (fileType_.isRnw() && prefs_.alwaysEnableRnwConcordance().getValue())
          compilePdfDependencyChecker_.ensureRnwConcordance(docDisplay_);
@@ -1771,12 +1771,14 @@ public class TextEditingTarget implements EditingTarget
          {
             String path = docUpdateSentinel_.getPath();
             if (path != null)
-               fireCompilePdfEvent(path, completedAction);
+               fireCompilePdfEvent(path, completedAction, useInternalPreview);
          }
       });
    }
    
-   private void fireCompilePdfEvent(String path, String completedAction)
+   private void fireCompilePdfEvent(String path, 
+                                    String completedAction,
+                                    boolean useInternalPreview)
    {
       // first validate the path to make sure it doesn't contain spaces
       FileSystemItem file = FileSystemItem.createFile(path);
@@ -1792,7 +1794,9 @@ public class TextEditingTarget implements EditingTarget
          return;
       }
       
-      CompilePdfEvent event = new CompilePdfEvent(file, completedAction);
+      CompilePdfEvent event = new CompilePdfEvent(file, 
+                                                  completedAction,
+                                                  useInternalPreview);
       events_.fireEvent(event);
    }
    
