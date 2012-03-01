@@ -22,6 +22,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.WindowOpener;
+import org.rstudio.studio.client.common.satellite.SatelliteUtils;
 
 public class WebWindowOpener implements WindowOpener
 {
@@ -58,7 +59,7 @@ public class WebWindowOpener implements WindowOpener
       
       // setup options
       NewWindowOptions options = new NewWindowOptions();
-      options.setName(getSatelliteWindowName(viewName));
+      options.setName(SatelliteUtils.getSatelliteWindowName(viewName));
       options.setFocus(true);
       
       // open window (force web codepath b/c desktop needs this so
@@ -69,12 +70,6 @@ public class WebWindowOpener implements WindowOpener
                            width,
                            height,
                            false);
-   }
-   
-   
-   protected String getSatelliteWindowName(String mode)
-   {
-      return "_rstudio_satellite_" + mode;
    }
    
    protected boolean showPopupBlockedMessage()

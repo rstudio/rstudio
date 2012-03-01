@@ -28,6 +28,12 @@
 
 namespace desktop {
 
+namespace {
+
+WindowTracker s_windowTracker;
+
+} // anonymous namespace
+
 WebView::WebView(QUrl baseUrl, QWidget *parent) :
     QWebView(parent),
     baseUrl_(baseUrl)
@@ -61,6 +67,14 @@ void WebView::setBaseUrl(const QUrl& baseUrl)
    pWebPage_->setBaseUrl(baseUrl_);
 }
 
+
+void WebView::activateSatelliteWindow(QString name)
+{
+   BrowserWindow* pSatellite = s_windowTracker.getWindow(name);
+   if (pSatellite)
+      desktop::raiseAndActivateWindow(pSatellite);
+}
+
 void WebView::prepareForSatelliteWindow(
                               const PendingSatelliteWindow& pendingWnd)
 {
@@ -82,8 +96,7 @@ QWebView* WebView::createWindow(QWebPage::WebWindowType)
       pendingSatelliteWindow_ = PendingSatelliteWindow();
 
       // check for an existing window of this name
-      static WindowTracker windowTracker;
-      BrowserWindow* pSatellite = windowTracker.getWindow(name);
+      BrowserWindow* pSatellite = s_windowTracker.getWindow(name);
       if (pSatellite)
       {
          // activate the browser then return NULL to indicate
@@ -116,7 +129,7 @@ QWebView* WebView::createWindow(QWebPage::WebWindowType)
          pSatellite->move(moveX, moveY);
 
          // add to tracker
-         windowTracker.addWindow(name, pSatellite);
+         s_windowTracker.addWindow(name, pSatellite);
 
          // show and return the browser
          pSatellite->show();

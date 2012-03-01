@@ -58,6 +58,7 @@ public:
 
    void setBaseUrl(const QUrl& baseUrl);
 
+   void activateSatelliteWindow(QString name);
    void prepareForSatelliteWindow(const PendingSatelliteWindow& pendingWnd);
 
 signals:

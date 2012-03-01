@@ -15,6 +15,7 @@ package org.rstudio.studio.client.common.impl;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
+import org.rstudio.studio.client.common.satellite.SatelliteUtils;
 
 public class DesktopWindowOpener extends WebWindowOpener
 {
@@ -57,7 +58,7 @@ public class DesktopWindowOpener extends WebWindowOpener
                                    int width,
                                    int height)
    {  
-      String windowName = getSatelliteWindowName(mode);
+      String windowName = SatelliteUtils.getSatelliteWindowName(mode);
       Desktop.getFrame().prepareForSatelliteWindow(windowName, width, height);
       super.openSatelliteWindow(globalDisplay, mode, width, height);
    }
