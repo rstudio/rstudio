@@ -2,14 +2,14 @@
 /* vim: set shiftwidth=4 tabstop=8 autoindent cindent expandtab: */
 
 body {
-  background-color: #87898c !important;
+  background-color: #87898C !important;
   background-image: none !important;
-  /*
-  background-color: #929292;
-  font-family: 'Lucida Grande', 'Lucida Sans Unicode', Helvetica, Arial, Verdana, sans-serif;
-  */
-  margin: 0px;
+  margin: 0 0 0 200px;
   padding: 0px;
+  transition: margin-left 0.25s ease-in-out 1s;
+  -o-transition: margin-left 0.25s ease-in-out 1s;
+  -moz-transition: margin-left 0.25s ease-in-out 1s;
+  -webkit-transition: margin-left 0.25s ease-in-out 1s;
 }
 
 [hidden] {
@@ -82,24 +82,15 @@ span#info {
 /* === Sidebar === */
 #sidebar {
   position: fixed;
-  width: 350px;
-  top: 62px;
-  bottom: 18px;
-  left: -290px;
+  width: 200px;
+  top: 31px;
+  bottom: 0;
+  left: 0;
   transition: left 0.25s ease-in-out 1s;
   -o-transition: left 0.25s ease-in-out 1s;
   -moz-transition: left 0.25s ease-in-out 1s;
   -webkit-transition: left 0.25s ease-in-out 1s;
   z-index: 1;
-}
-
-#sidebar:hover,
-#sidebar.pinned {
-  left: 0px;
-  transition: left 0.25s ease-in-out 0s;
-  -o-transition: left 0.25s ease-in-out 0s;
-  -moz-transition: left 0.25s ease-in-out 0s;
-  -webkit-transition: left 0.25s ease-in-out 0s;
 }
 
 #pinIcon {
@@ -124,27 +115,18 @@ span#info {
 
 #sidebarBox {
   background-color: rgba(0, 0, 0, 0.7);
-  width: 300px;
+  width: 100%;
   height: 100%;
-  border-top-right-radius: 8px;
-  border-bottom-right-radius: 8px;
-  -moz-border-radius-topright: 8px;
-  -moz-border-radius-bottomright: 8px;
-  -webkit-border-top-right-radius: 8px;
-  -webkit-border-bottom-right-radius: 8px;
-  box-shadow: 0px 2px 8px #000;
-  -moz-box-shadow: 0px 2px 8px #000;
-  -webkit-box-shadow: 0px 2px 8px #000;
 }
 
 #sidebarScrollView {
   position: absolute;
   overflow: hidden;
   overflow-y: auto;
-  top: 20px;
-  bottom: 10px;
-  left: 10px;
-  width: 280px;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
 }
 
 .thumbnail {

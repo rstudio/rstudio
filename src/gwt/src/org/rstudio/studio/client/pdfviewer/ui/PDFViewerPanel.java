@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.pdfviewer.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -36,6 +38,7 @@ public class PDFViewerPanel extends Composite
    public PDFViewerPanel()
    {
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
+      Document.get().getBody().getStyle().setMarginLeft(200, Style.Unit.PX);
 
       toolbar_.addStyleName(ThemeStyles.INSTANCE.toolbar());
    }

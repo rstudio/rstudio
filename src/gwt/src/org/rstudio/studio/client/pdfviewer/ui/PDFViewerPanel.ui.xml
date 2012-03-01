@@ -112,7 +112,7 @@
         <textarea id="errorMoreInfo" hidden='true' readonly="readonly"></textarea>
       </div>
 
-      <div id="sidebar">
+      <div id="sidebar" style="top: 23px">
         <div id="sidebarBox">
           <div id="pinIcon" onClick="PDFView.pinSidebar()"></div>
           <div id="sidebarScrollView">
