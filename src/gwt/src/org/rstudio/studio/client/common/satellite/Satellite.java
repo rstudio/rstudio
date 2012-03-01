@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.common.satellite;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.remote.ClientEventDispatcher;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -105,7 +106,20 @@ public class Satellite
       return params_;
    }
    
-   public native void focusMainWindow() /*-{
+   public void focusMainWindow() 
+   {
+      if (Desktop.isDesktop())
+         focusMainWindowDesktop();
+      else
+         focusMainWindowWeb();
+   }
+   
+   private void focusMainWindowDesktop()
+   {
+      Desktop.getFrame().bringMainFrameToFront();
+   }
+   
+   private native void focusMainWindowWeb() /*-{
       $wnd.opener.focus();
    }-*/;
    
