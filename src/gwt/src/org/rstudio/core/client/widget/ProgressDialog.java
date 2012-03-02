@@ -142,7 +142,7 @@ public abstract class ProgressDialog extends ModalDialogBase
    
    protected void hideProgress()
    {
-      progressAnim_.getElement().getStyle().setVisibility(Visibility.HIDDEN);
+      progressAnim_.getElement().getStyle().setDisplay(Style.Display.NONE);
    }
 
    protected boolean handleEnterKey()
