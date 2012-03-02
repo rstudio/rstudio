@@ -18,14 +18,20 @@ git checkout cc2b62f73e8ac7ff8f309d57b8f69aa054eb70ef
 make
 cd ..
 
-CC_OPTS="--compilation_level SIMPLE_OPTIMIZATIONS --language_in ECMASCRIPT5"
-java -jar "compiler/compiler.jar" $CC_OPTS --js pdfjs/build/pdf.js --js_output_file pdfjs/build/pdf.min.js
+function minify {
+  echo "Minifying $1.js => $1.min.js"
+  CC_OPTS="--compilation_level SIMPLE_OPTIMIZATIONS --language_in ECMASCRIPT5"
+  java -jar "compiler/compiler.jar" $CC_OPTS --js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/$1.js --js_output_file ../src/org/rstudio/studio/client/pdfviewer/pdfjs/$1.min.js
+}
 
-cp pdfjs/build/pdf.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/pdf.js
-cp pdfjs/build/pdf.min.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/pdf.min.js
-
+cp pdfjs/build/pdf.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
 cp pdfjs/web/compatibility.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
 cp pdfjs/web/debugger.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
 # viewer.js uses CustomStyle which is defined in util.js
 cat pdfjs/src/util.js pdfjs/web/viewer.js > ../src/org/rstudio/studio/client/pdfviewer/pdfjs/viewer.js
 cp pdfjs/web/viewer.css ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
+
+minify pdf
+minify compatibility
+minify debugger
+minify viewer
