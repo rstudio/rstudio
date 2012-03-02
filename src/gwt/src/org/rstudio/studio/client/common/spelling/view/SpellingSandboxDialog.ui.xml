@@ -1,46 +1,52 @@
-<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui"
-	xmlns:r="urn:import:org.rstudio.core.client.widget">
-	<ui:style>
-	.rounded {
-	border: 1px solid black;	
-    -moz-border-radius: 6px;
-    -webkit-border-radius: 6px;
-     border-radius: 6px;
-	}
-	</ui:style>
-	<g:HTMLPanel>
-	<div class="{style.rounded}">
-		<!-- Add GWT widgets here. Enter < and hit Ctrl-Space to auto-complete 
-			widget names. The ui:field attribute binds an element to a field in the owner 
-			class. See the GWT docs on UI Binder for more details. -->
-		<table>
-		<tr>
-			<td rowspan="2">
-				<g:TextArea ui:field="txtWord_" visibleLines="2" width="100px"></g:TextArea>
-			</td>
-			<td>
-				<r:ThemedButton ui:field="ignoreButton_" text="Ignore" width="100px"/>
-			</td>
-		</tr>
-			<td>
-				<r:ThemedButton ui:field="ignoreAllButton_" text="Ignore All" width="100px"/>
-			</td>
-		<tr>
-			<td rowspan="2">
-				<g:ListBox ui:field="listBox_" visibleItemCount="5" multipleSelect="false" width="100px"></g:ListBox>
-			</td>
-			<td>
-				<r:ThemedButton ui:field="changeButton_" text="Change" width="100px"/>
-			</td>
-		</tr>
-		<tr>
-			<td>
-				<r:ThemedButton ui:field="changeAllButton_" text="Change All" width="100px"/>
-			</td>
-		</tr>
-		</table>
-		</div>
-	</g:HTMLPanel>
+   xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:rs="urn:import:org.rstudio.core.client.widget">
+   <ui:style>
+      .bottomBorder {
+      	border-bottom: 1px solid #bcc1c5;
+      	padding-bottom: 10px;
+      }
+      .label {
+      	padding: 2px;
+      }
+      .dirtyText {
+         width: 100%;
+         height: 100%;
+         box-sizing: border-box;
+         -moz-box-sizing: border-box;
+         -webkit-box-sizing: border-box;
+         -ms-box-sizing: border-box;
+         resize: none;	
+  		}
+      .textPanel {
+         width: 450px;
+         height: 75px;
+      }
+  	   .buttonPanel {
+  	   	/* width: 100px; */
+      }
+   </ui:style>
+
+   <g:VerticalPanel styleName="{style.bottomBorder}">
+      <g:Label text="Not in dictionary:" styleName="{style.label}"/>
+      <g:HorizontalPanel>
+         <g:HTMLPanel styleName="{style.textPanel}">
+            <g:TextArea ui:field="txtWord_" styleName="{style.dirtyText}" />
+         </g:HTMLPanel>
+         <g:VerticalPanel styleName="{style.buttonPanel}">
+            <rs:ThemedButton ui:field="ignoreButton_" text="Ignore"/>
+            <rs:ThemedButton ui:field="ignoreAllButton_" text="Ignore All" />
+         </g:VerticalPanel>
+      </g:HorizontalPanel>
+      <g:Label text="Suggestions:" styleName="{style.label}"/>
+      <g:HorizontalPanel>
+         <g:HTMLPanel styleName="{style.textPanel}">
+            <g:ListBox ui:field="listBox_" styleName="{style.textPanel}"
+                       visibleItemCount="5" multipleSelect="false" />
+         </g:HTMLPanel>
+         <g:VerticalPanel styleName="{style.buttonPanel}">
+            <rs:ThemedButton ui:field="changeButton_" text="Change" />
+            <rs:ThemedButton ui:field="changeAllButton_" text="Change All" />
+         </g:VerticalPanel>
+      </g:HorizontalPanel>
+   </g:VerticalPanel>
 </ui:UiBinder> 

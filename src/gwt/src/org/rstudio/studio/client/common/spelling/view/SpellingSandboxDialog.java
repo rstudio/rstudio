@@ -83,8 +83,12 @@ public class SpellingSandboxDialog extends ModalDialogBase
       listBox_.addChangeHandler(new ChangeHandler() {
          public void onChange(ChangeEvent event) 
          {
-            txtWord_.setText(listBox_.getValue(listBox_.getSelectedIndex()));
-         }
+            int i = listBox_.getSelectedIndex();
+            if (i >= 0)
+            {
+        	   txtWord_.setText(listBox_.getValue(i));
+            }	
+         }	
       });
       
       return mainPanel;
