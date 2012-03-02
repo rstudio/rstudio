@@ -779,9 +779,7 @@ void close()
 // for the pango cairo init routine (for linking on other platforms)
 #ifndef PANGO_CAIRO_FOUND
 namespace handler {
-namespace cairo {
 void installCairoHandler() {}
-}
 }
 #endif
 

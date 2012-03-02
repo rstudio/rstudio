@@ -16,9 +16,8 @@ project (R_GRAPHICS_HANDLER)
 # include files
 file(GLOB_RECURSE R_GRAPHICS_HANDLER_HEADER_FILES "*.h*")
 
-# platform specific source files
-
-if(UNIX)
+# look for pango cairo on linux
+if(UNIX AND NOT APPLE)
    # detect pangocairo
    pkg_check_modules(PANGO_CAIRO pangocairo>=1.14)
    if(PANGO_CAIRO_FOUND)
