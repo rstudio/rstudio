@@ -58,10 +58,11 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
    {
       codec_ = codec;
       selectedClassName_ = selectedClassName;
+      focusable_ = focusable;
       allowMultiSelect_ = allowMultiSelect;
 
       table_ = Document.get().createTableElement();
-      if (focusable)
+      if (focusable_)
          table_.setTabIndex(0);
       table_.setCellPadding(0);
       table_.setCellSpacing(0);
@@ -313,6 +314,12 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
    {
       table_.setInnerText("");
       selectedRows_.clear();
+   }
+   
+   public void focus()
+   {
+      if (focusable_)
+         table_.focus();
    }
    
    public int getRowCount()
@@ -642,4 +649,5 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
    private final String selectedClassName_;
    private final boolean allowMultiSelect_;
    private ScrollPanel scrollPanel_;
+   private final boolean focusable_;
 }

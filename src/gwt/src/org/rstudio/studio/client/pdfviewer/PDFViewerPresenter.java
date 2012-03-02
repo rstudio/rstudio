@@ -18,7 +18,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CodeNavigationTarget;
-import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -34,7 +34,6 @@ import org.rstudio.studio.client.pdfviewer.model.PDFViewerParams;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ClosingHandler;
@@ -51,6 +50,7 @@ public class PDFViewerPresenter implements IsWidget,
       void setURL(String url);
       HandlerRegistration addInitCompleteHandler(
                                              InitCompleteEvent.Handler handler);
+      void closeWindow();
    }
    
    @Inject
@@ -84,48 +84,24 @@ public class PDFViewerPresenter implements IsWidget,
    public void onCompilePdfStarted(CompilePdfStartedEvent event)
    {
       compileIsRunning_ = true;
-      lastTargetFile_ = event.getTargetFile();
       
-      if (activeProgressDialog_ != null)
-         activeProgressDialog_.dismiss();
+      dismissProgressDialog();
       
       activeProgressDialog_  = new CompilePdfProgressDialog();
       
-      final Command dismissCommand = new Command() {
-
-         @Override
-         public void execute()
-         {
-            activeProgressDialog_.dismiss();
-            activeProgressDialog_ = null;
-            
-            // firefox and chrome frame won't allow window re-activation
-            // so we close the parent window to force this
-            if (BrowseCap.isFirefox() || BrowseCap.isChromeFrame())
-            {
-               compileIsRunning_ = false;
-               WindowEx.get().close();
-            }
-         }
-      };
-
-
       activeProgressDialog_.addClickHandler(new ClickHandler() {
 
          @Override
          public void onClick(ClickEvent event)
          {
-            if (!compileIsRunning_)
-            {
-               fileTypeRegistry_.editFile(
-                           FileSystemItem.createFile(lastTargetFile_));  
-            }
-            else
+            if (compileIsRunning_)
             {
                terminateRunningCompile();
             }
-            
-            dismissCommand.execute();
+            else
+            {
+               dismissProgressDialog();
+            }
          }
 
       });
@@ -139,13 +115,10 @@ public class PDFViewerPresenter implements IsWidget,
                {
                   CodeNavigationTarget target = event.getSelectedItem();
                   
-                  fileTypeRegistry_.editFile(
-                        FileSystemItem.createFile(target.getFile()), 
-                        target.getPosition());
-                  
-                  dismissCommand.execute();
+                  editFile(FileSystemItem.createFile(target.getFile()), 
+                                                     target.getPosition());
+                  dismissProgressDialog();
                }
-
             });
 
       activeProgressDialog_.showModal();
@@ -157,10 +130,7 @@ public class PDFViewerPresenter implements IsWidget,
       compileIsRunning_ = false;
       
       if (event.getSucceeded())
-      {
          view_.setURL(event.getPdfUrl());
-      }
-      
    }
 
    public void onActivated(PDFViewerParams params)
@@ -178,6 +148,25 @@ public class PDFViewerPresenter implements IsWidget,
       return view_.addInitCompleteHandler(handler);
    }
 
+   private void editFile(FileSystemItem file, FilePosition position)
+   {
+      fileTypeRegistry_.editFile(file, position);
+ 
+      // firefox and chrome frame won't allow window re-activation
+      // so we close the parent window to force this
+      if (BrowseCap.isFirefox() || BrowseCap.isChromeFrame())
+         view_.closeWindow();
+   }
+   
+   private void dismissProgressDialog()
+   {
+      if (activeProgressDialog_ != null)
+      {
+         activeProgressDialog_.dismiss();
+         activeProgressDialog_ = null;
+      }
+   }
+   
    private void terminateRunningCompile()
    {
       server_.terminateCompilePdf(new ServerRequestCallback<Boolean>() 
@@ -193,7 +182,6 @@ public class PDFViewerPresenter implements IsWidget,
    }
 
    private boolean compileIsRunning_ = false;
-   private String lastTargetFile_ = null;
    private CompilePdfProgressDialog activeProgressDialog_;
    private final Display view_;
    private final FileTypeRegistry fileTypeRegistry_;

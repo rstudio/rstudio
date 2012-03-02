@@ -22,6 +22,8 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.pdfviewer.PDFViewerPresenter;
@@ -80,6 +82,12 @@ public class PDFViewerPanel extends Composite
                                               InitCompleteEvent.Handler handler)
    {
       return addHandler(handler, InitCompleteEvent.TYPE);
+   }
+   
+   @Override
+   public void closeWindow()
+   {
+      WindowEx.get().close();
    }
 
    private native void open(String url) /*-{

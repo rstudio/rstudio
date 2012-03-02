@@ -123,6 +123,17 @@ public class CompilePdfErrorList extends Composite
       errorTable_.addItems(errorList, false);
    }
    
+   public void selectFirstItem()
+   {
+      if (errorTable_.getRowCount() > 0)
+         errorTable_.setSelected(0, 1, true);
+   }
+   
+   public void focus()
+   {
+      errorTable_.focus();
+   }
+   
    public void clear()
    {
       errorTable_.clear();

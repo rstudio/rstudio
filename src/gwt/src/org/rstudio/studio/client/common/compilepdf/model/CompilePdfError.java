@@ -62,6 +62,9 @@ public class CompilePdfError extends JavaScriptObject
    public final static boolean includesErrorType(
                                           JsArray<CompilePdfError> errors)
    { 
+      if (errors == null)
+         return false;
+      
       for (CompilePdfError error : JsUtil.asIterable(errors))
       {  
          if (error.getType() == CompilePdfError.ERROR)

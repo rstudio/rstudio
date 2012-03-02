@@ -128,6 +128,8 @@ public class CompilePdfProgressDialog extends ProgressDialog
             label +=  " (double-click to view source location of error)";
             errorList_.showErrors(event.getTargetFile(), errors_);
             container_.setWidget(errorList_);
+            errorList_.selectFirstItem();
+            errorList_.focus();
          }
          
          // update the label and stop button
