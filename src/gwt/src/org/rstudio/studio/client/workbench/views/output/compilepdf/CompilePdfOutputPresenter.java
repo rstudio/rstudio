@@ -132,14 +132,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
          view_.showErrors(compilePdfState.getErrors());    
       
       if (!compilePdfState.isRunning())
-         compileCompleted();
-   }
-
-   private void compileCompleted()
-   {
-      view_.compileCompleted();
-      if (!view_.isErrorPanelShowing() && switchToConsoleOnSuccessfulCompile_)
-         commands_.activateConsole().execute();
+         view_.compileCompleted();
    }
 
    public void confirmClose(Command onConfirmed)
@@ -210,7 +203,10 @@ public class CompilePdfOutputPresenter extends BasePresenter
    @Override 
    public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
    {
-      compileCompleted();
+      view_.compileCompleted();
+      
+      if (event.getSucceeded() && switchToConsoleOnSuccessfulCompile_)
+         commands_.activateConsole().execute();
    }
    
    @Override
