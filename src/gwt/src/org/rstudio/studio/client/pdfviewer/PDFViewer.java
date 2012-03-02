@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.pdfviewer;
 
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.dom.NativeScreen;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
@@ -53,7 +54,16 @@ public class PDFViewer
       Size windowBounds = new Size(Window.getClientWidth(),
                                    Window.getClientHeight());
 
-      return new Size(Math.min(windowBounds.width - 100, 1200),
-                      windowBounds.height - 25);
+      int availWidth = Math.max(NativeScreen.get().getAvailWidth() - 135,
+                                windowBounds.width - 25); 
+      int maxWidth = 1100;
+      int width = Math.min(availWidth, maxWidth);
+      
+      int availHeight = Math.max(NativeScreen.get().getAvailHeight() - 135,
+                                 windowBounds.height - 25);
+      int maxHeight = 1200;
+      int height = Math.min(availHeight, maxHeight);
+      
+      return new Size(width, height);
    }
 }
