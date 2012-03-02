@@ -39,7 +39,7 @@ public class PdfJs
             new String[] {
                   res.compatibilityJs().getSafeUri().asString(),
                   res.pdfjs().getSafeUri().asString(),
-                  res.debuggerJs().getSafeUri().asString(),
+                  //res.debuggerJs().getSafeUri().asString(),
                   res.viewerJs().getSafeUri().asString(),
             },
             new Callback()
