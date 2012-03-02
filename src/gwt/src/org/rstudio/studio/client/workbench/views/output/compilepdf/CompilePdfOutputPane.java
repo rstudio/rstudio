@@ -209,6 +209,12 @@ public class CompilePdfOutputPane extends WorkbenchPane
    {
       stopButton_.setVisible(false);
       setShowLogVisible(true);
+      
+      if (isErrorPanelShowing())
+      {
+         errorList_.selectFirstItem();
+         errorList_.focus();
+      }
    }
    
    @Override
