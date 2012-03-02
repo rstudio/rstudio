@@ -4,12 +4,16 @@
 body {
   background-color: #87898C !important;
   background-image: none !important;
-  margin: 0 0 0 200px;
+  margin: 0 0 0 200px !important;
   padding: 0px;
-  transition: margin-left 0.25s ease-in-out 1s;
-  -o-transition: margin-left 0.25s ease-in-out 1s;
-  -moz-transition: margin-left 0.25s ease-in-out 1s;
-  -webkit-transition: margin-left 0.25s ease-in-out 1s;
+  transition: margin-left 0.25s ease-in-out;
+  -o-transition: margin-left 0.25s ease-in-out;
+  -moz-transition: margin-left 0.25s ease-in-out;
+  -webkit-transition: margin-left 0.25s ease-in-out;
+}
+
+body.nosidebar {
+   margin-left: 0 !important;
 }
 
 [hidden] {
@@ -86,11 +90,15 @@ span#info {
   top: 31px;
   bottom: 0;
   left: 0;
-  transition: left 0.25s ease-in-out 1s;
-  -o-transition: left 0.25s ease-in-out 1s;
-  -moz-transition: left 0.25s ease-in-out 1s;
-  -webkit-transition: left 0.25s ease-in-out 1s;
+  transition: left 0.25s ease-in-out;
+  -o-transition: left 0.25s ease-in-out;
+  -moz-transition: left 0.25s ease-in-out;
+  -webkit-transition: left 0.25s ease-in-out;
   z-index: 1;
+}
+
+body.nosidebar #sidebar {
+  left: -200px;
 }
 
 #pinIcon {
