@@ -1,5 +1,6 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-   xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:rs="urn:import:org.rstudio.core.client.widget">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:rs="urn:import:org.rstudio.core.client.widget">
    <ui:style>
       .bottomBorder {
       	border-bottom: 1px solid #bcc1c5;
