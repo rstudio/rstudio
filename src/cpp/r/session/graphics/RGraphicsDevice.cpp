@@ -25,10 +25,13 @@
 #include <r/RFunctionHook.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RErrorCategory.hpp>
+#include <r/RUtil.hpp>
 
 #include "RGraphicsUtils.hpp"
 #include "RGraphicsPlotManager.hpp"
 #include "handler/RGraphicsHandler.hpp"
+
+#include "config.h"
 
 // nix windows definitions
 #undef TRUE
@@ -641,6 +644,16 @@ void onBeforeExecute()
    }
 }
 
+bool usePangoCairoHandler()
+{
+#ifdef PANGO_CAIRO_FOUND
+   // use pango cairo for versions of R < 2.14
+   return !r::util::hasRequiredVersion("2.14");
+#else
+   return false;
+#endif
+}
+
 } // anonymous namespace
     
 const int kDefaultWidth = 500;   
@@ -650,6 +663,12 @@ Error initialize(
             const FilePath& graphicsPath,
             const boost::function<bool(double*,double*)>& locatorFunction)
 {      
+   // initialize appropriate back-end
+   if (usePangoCairoHandler())
+      r::session::graphics::handler::installCairoHandler();
+   else
+      r::session::graphics::handler::installShadowHandler();
+
    // save reference to locator function
    s_locatorFunction = locatorFunction;
    
@@ -755,6 +774,17 @@ void close()
 
  
 } // namespace device
+
+// if we don't have pango cairo then provide a null definition
+// for the pango cairo init routine (for linking on other platforms)
+#ifndef PANGO_CAIRO_FOUND
+namespace handler {
+namespace cairo {
+void installCairoHandler() {}
+}
+}
+#endif
+
 } // namespace graphics
 } // namespace session
 } // namespace r

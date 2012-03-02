@@ -41,6 +41,7 @@ namespace r {
 namespace session {
 namespace graphics {
 namespace handler {
+namespace shadow {
 
 namespace {
 
@@ -151,11 +152,11 @@ void shadowDevSync(DeviceContext* pDC)
 } // anonymous namespace
 
 
-bool initialize(const FilePath& filePath,
-                int width,
-                int height,
-                bool displayListon,
-                DeviceContext* pDC)
+bool initializeWithFile(const FilePath& filePath,
+                        int width,
+                        int height,
+                        bool displayListon,
+                        DeviceContext* pDC)
 {
    // initialize file info
    if (filePath.empty())
@@ -446,7 +447,8 @@ void newPage(const pGEcontext gc, pDevDesc dev)
 void mode(int mode, pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
-   pngDevDesc->mode(mode, pngDevDesc);
+   if (pngDevDesc->mode != NULL)
+      pngDevDesc->mode(mode, pngDevDesc);
 }
 
 void onBeforeExecute(DeviceContext* pDC)
@@ -465,6 +467,36 @@ void onBeforeExecute(DeviceContext* pDC)
          selectDevice(ndevNumber(pDC->dev));
       }
    }
+}
+
+} // namespace shadow
+
+void installShadowHandler()
+{
+   handler::allocate = shadow::allocate;
+   handler::destroy = shadow::destroy;
+   handler::initializeWithFile = shadow::initializeWithFile;
+   handler::setSize = shadow::setSize;
+   handler::setDeviceAttributes = shadow::setDeviceAttributes;
+   handler::onBeforeAddInteractiveDevice = shadow::onBeforeAddInteractiveDevice;
+   handler::onAfterAddInteractiveDevice = shadow::onAfterAddInteractiveDevice;
+   handler::resyncDisplayListBeforeWriteToPNG = shadow::resyncDisplayListBeforeWriteToPNG;
+   handler::writeToPNG = shadow::writeToPNG;
+   handler::circle = shadow::circle;
+   handler::line = shadow::line;
+   handler::polygon = shadow::polygon;
+   handler::polyline = shadow::polyline;
+   handler::rect = shadow::rect;
+   handler::path = shadow::path;
+   handler::raster = shadow::raster;
+   handler::cap = shadow::cap;
+   handler::metricInfo = shadow::metricInfo;
+   handler::strWidth = shadow::strWidth;
+   handler::text = shadow::text;
+   handler::clip = shadow::clip;
+   handler::newPage = shadow::newPage;
+   handler::mode = shadow::mode;
+   handler::onBeforeExecute = shadow::onBeforeExecute;
 }
    
 } // namespace handler

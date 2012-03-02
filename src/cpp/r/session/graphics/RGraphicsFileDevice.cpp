@@ -181,7 +181,11 @@ void createDevice(int width, int height, const FilePath& targetPath)
       // allocate and initialize context
       bool initialized = false;
       DeviceContext* pDC = handler::allocate(pDev);
-      initialized = handler::initialize(targetPath, width, height, false, pDC);
+      initialized = handler::initializeWithFile(targetPath,
+                                                width,
+                                                height,
+                                                false,
+                                                pDC);
       if (!initialized)
       {
          handler::destroy(pDC);

@@ -17,10 +17,8 @@ project (R_GRAPHICS_HANDLER)
 file(GLOB_RECURSE R_GRAPHICS_HANDLER_HEADER_FILES "*.h*")
 
 # platform specific source files
-if(APPLE)
-   # source files
-   set(R_GRAPHICS_HANDLER_SOURCE_FILES RShadowPngGraphicsHandler.cpp)
-elseif(UNIX)
+
+if(UNIX)
    # detect pangocairo
    pkg_check_modules(PANGO_CAIRO pangocairo>=1.14)
    if(PANGO_CAIRO_FOUND)
@@ -32,19 +30,14 @@ elseif(UNIX)
 
       # source files
       set(R_GRAPHICS_HANDLER_SOURCE_FILES RCairoGraphicsHandler.cpp)
-
-   # no pango cairo, use shadow graphics handler (no antialiasing)
-   else()
-      set(R_GRAPHICS_HANDLER_SOURCE_FILES RShadowPngGraphicsHandler.cpp)
    endif()
-else()
-   # source files
-   set(R_GRAPHICS_HANDLER_SOURCE_FILES RShadowPngGraphicsHandler.cpp)
 endif()
 
 # shared source files
 set(R_GRAPHICS_HANDLER_SOURCE_FILES ${R_GRAPHICS_HANDLER_SOURCE_FILES}
    RGraphicsDevDesc.cpp
+   RGraphicsHandler.cpp
+   RShadowPngGraphicsHandler.cpp
 )
 
 # include directories

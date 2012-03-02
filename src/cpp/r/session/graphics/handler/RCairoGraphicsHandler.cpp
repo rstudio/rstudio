@@ -30,6 +30,7 @@ namespace r {
 namespace session {
 namespace graphics {
 namespace handler {
+namespace cairo {
 
 namespace {
    
@@ -232,11 +233,11 @@ bool completeInitialization(CairoDeviceData* pCDD)
 } // anonymous namespace
 
 
-bool initialize(const FilePath& filePath,
-                int width,
-                int height,
-                bool displayListOn,
-                DeviceContext* pDC)
+bool initializeWithFile(const FilePath& filePath,
+                        int width,
+                        int height,
+                        bool displayListOn,
+                        DeviceContext* pDC)
 {
    // initialize file info
    pDC->targetPath = filePath;
@@ -732,6 +733,37 @@ void mode(int mode, pDevDesc dev)
 void onBeforeExecute(DeviceContext* pDC)
 {
 
+}
+
+} // namespace cairo
+
+
+void installCairoHandler()
+{
+   handler::allocate = cairo::allocate;
+   handler::destroy = cairo::destroy;
+   handler::initializeWithFile = cairo::initializeWithFile;
+   handler::setSize = cairo::setSize;
+   handler::setDeviceAttributes = cairo::setDeviceAttributes;
+   handler::onBeforeAddInteractiveDevice = cairo::onBeforeAddInteractiveDevice;
+   handler::onAfterAddInteractiveDevice = cairo::onAfterAddInteractiveDevice;
+   handler::resyncDisplayListBeforeWriteToPNG = cairo::resyncDisplayListBeforeWriteToPNG;
+   handler::writeToPNG = cairo::writeToPNG;
+   handler::circle = cairo::circle;
+   handler::line = cairo::line;
+   handler::polygon = cairo::polygon;
+   handler::polyline = cairo::polyline;
+   handler::rect = cairo::rect;
+   handler::path = cairo::path;
+   handler::raster = cairo::raster;
+   handler::cap = cairo::cap;
+   handler::metricInfo = cairo::metricInfo;
+   handler::strWidth = cairo::strWidth;
+   handler::text = cairo::text;
+   handler::clip = cairo::clip;
+   handler::newPage = cairo::newPage;
+   handler::mode = cairo::mode;
+   handler::onBeforeExecute = cairo::onBeforeExecute;
 }
 
 } // namespace handler

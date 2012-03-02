@@ -12,3 +12,6 @@
  */
 
 
+#cmakedefine PANGO_CAIRO_FOUND
+
+

@@ -69,7 +69,7 @@ else()
 
 endif()
 
-# create a config file for passing the location of R
+# create a config file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
