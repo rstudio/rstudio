@@ -14,8 +14,6 @@ package org.rstudio.studio.client.pdfviewer;
 
 import org.rstudio.core.client.Size;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
-import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerHandler;
@@ -39,33 +37,12 @@ public class PDFViewer
          public void onShowPDFViewer(ShowPDFViewerEvent event)
          {
             // setup params
-            PDFViewerParams params = PDFViewerParams.create(runningTargetFile_);
+            PDFViewerParams params = PDFViewerParams.create();
                          
             // open the window 
             satelliteManager.openSatellite(PDFViewerApplication.NAME,     
                                             params,
                                             getPreferredWindowSize());   
-         }
-      });
-      
-      eventBus.addHandler(CompilePdfStartedEvent.TYPE, 
-                          new CompilePdfStartedEvent.Handler()
-      { 
-         @Override
-         public void onCompilePdfStarted(CompilePdfStartedEvent event)
-         {
-            runningTargetFile_ = event.getTargetFile();
-         }
-      });
-      
-      eventBus.addHandler(CompilePdfCompletedEvent.TYPE,
-                          new CompilePdfCompletedEvent.Handler()
-      {
-         
-         @Override
-         public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
-         {
-            runningTargetFile_ = null;
          }
       });
    }
@@ -79,6 +56,4 @@ public class PDFViewer
       return new Size(Math.min(windowBounds.width - 100, 1200),
                       windowBounds.height - 25);
    }
-   
-   private String runningTargetFile_ = null;
 }

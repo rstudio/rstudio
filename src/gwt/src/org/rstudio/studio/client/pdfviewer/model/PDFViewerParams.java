@@ -20,14 +20,8 @@ public class PDFViewerParams extends JavaScriptObject
    {
    }
    
-   public final static native PDFViewerParams create(
-                                    String runningTargetFile) /*-{
+   public final static native PDFViewerParams create() /*-{
       var params = new Object();
-      params.running_target_file = runningTargetFile;
       return params;
    }-*/; 
-
-   public final native String getRunningTargetFile() /*-{
-      return this.running_target_file;
-   }-*/;
 }
