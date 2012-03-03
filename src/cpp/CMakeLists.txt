@@ -11,6 +11,12 @@
 #
 #
 
+# force gcc on os x (in preference to clang)
+if(APPLE)
+  set(CMAKE_C_COMPILER /usr/bin/gcc)
+  set(CMAKE_CXX_COMPILER /usr/bin/g++)
+endif()
+
 cmake_minimum_required(VERSION 2.6)
 project (RSTUDIO_CPP)
 
