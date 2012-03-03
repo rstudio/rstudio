@@ -56,10 +56,7 @@ then
    # special variation of build for osx (multi-arch, tied to 10.5)
    if [ "$PLATFORM" == "Darwin" ]
    then
-     sudo ./bjam variant=release threading=multi link=static \
-            architecture=x86 address-model=64 \
-            macosx-version=10.6 macosx-version-min=10.6 \
-            install
+     sudo ./bjam variant=release threading=multi link=static install
    else
      sudo ./bjam variant=release install
    fi

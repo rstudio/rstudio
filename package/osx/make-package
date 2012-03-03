@@ -20,10 +20,6 @@ cd build
 rm -f CMakeCache.txt
 rm -rf build/_CPack_Packages
 
-export CMAKE_OSX_ARCHITECTURES="x86_64"
-export CMAKE_OSX_SYSROOT="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.6.sdk"
-export CMAKE_OSX_DEPLOYMENT_TARGET="10.6"
-
 cmake -DRSTUDIO_TARGET=Desktop \
       -DCMAKE_BUILD_TYPE=Release \
       -DRSTUDIO_PACKAGE_BUILD=1 \
