@@ -39,7 +39,7 @@ bool suppressOutput(const std::string& output)
 {
    // tokens to suppress
    const char * const kGlibWarningToken = "GLib-WARNING **: getpwuid_r()";
-   const char * const kAutoreleaseNoPool = "NSAutoreleaseNoPool";
+   const char * const kAutoreleaseNoPool = "utoreleaseNoPool";
    const char * const kSelectInterrupted = "select: Interrupted system call";
    const char * const kNotAGitRepo = "Not a git repository";
    const char * const kIsOutsideRepo = "is outside repository";
