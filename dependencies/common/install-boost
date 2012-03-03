@@ -57,8 +57,8 @@ then
    if [ "$PLATFORM" == "Darwin" ]
    then
      sudo ./bjam variant=release threading=multi link=static \
-            architecture=x86 address-model=32_64 \
-            macosx-version=10.5 macosx-version-min=10.5 \
+            architecture=x86 address-model=64 \
+            macosx-version=10.6 macosx-version-min=10.6 \
             install
    else
      sudo ./bjam variant=release install
