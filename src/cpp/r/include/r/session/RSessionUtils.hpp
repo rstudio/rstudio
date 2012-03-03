@@ -35,6 +35,14 @@ core::FilePath tempFile(const std::string& prefix,
 
 core::FilePath tempDir();
      
+// suppress output in scope
+class SuppressOutputInScope
+{
+public:
+   SuppressOutputInScope();
+   ~SuppressOutputInScope();
+};
+
 } // namespace utils
 } // namespace session
 } // namespace r

@@ -26,6 +26,7 @@
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
+#include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionUserSettings.hpp>
 #include <session/projects/SessionProjects.hpp>
@@ -185,6 +186,8 @@ public:
 
    virtual bool isInstalled() const
    {
+      r::session::utils::SuppressOutputInScope suppressOutput;
+
       bool installed;
       r::exec::RFunction func(".rs.isPackageInstalled", packageName());
       Error error = func.call(&installed);

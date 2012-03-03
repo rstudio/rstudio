@@ -104,12 +104,6 @@ bool s_quitIsInteractive = true;
 
 // temporarily suppress output
 bool s_suppressOuput = false;
-class SuppressOutputInScope
-{
-public:
-   SuppressOutputInScope() { s_suppressOuput = true; }
-   ~SuppressOutputInScope() { s_suppressOuput = false; }
-};
 
 FilePath rHistoryFilePath()
 {
@@ -209,7 +203,7 @@ void deferredRestoreSuspendedSession(
    // print messages to the console indicating they have conflicts -- the
    // has already seen these messages and doesn't expect them now so 
    // we suppress them
-   SuppressOutputInScope suppressOutput;
+   utils::SuppressOutputInScope suppressOutput;
    
    // restore action
    Error error = deferredRestoreAction();
@@ -387,7 +381,7 @@ Error initialize()
       {
          // don't show output during deserialization (packages loaded
          // during deserialization sometimes print messages)
-         SuppressOutputInScope suppressOutput;
+         utils::SuppressOutputInScope suppressOutput;
          
          // deserialize session. if any part of this fails then the errors
          // will be logged and error messages will be returned in the passed
@@ -1345,6 +1339,16 @@ FilePath tempDir()
       LOG_ERROR(error);
    FilePath filePath(r::util::fixPath(tempDir));
    return filePath;
+}
+
+SuppressOutputInScope::SuppressOutputInScope()
+{
+  s_suppressOuput = true;
+}
+
+SuppressOutputInScope::~SuppressOutputInScope()
+{
+   s_suppressOuput = false;
 }
 
 } // namespace utils
