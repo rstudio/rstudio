@@ -30,6 +30,7 @@ import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfServerOperations;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
+import org.rstudio.studio.client.pdfviewer.model.PDFViewerParams;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
@@ -78,6 +79,12 @@ public class PDFViewerPresenter implements IsWidget,
          
       });
    }
+   
+   public void onActivated(PDFViewerParams pdfParams)
+   {
+      
+   }
+  
    
    @Override
    public void onCompilePdfStarted(CompilePdfStartedEvent event)
