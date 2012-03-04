@@ -119,6 +119,9 @@ public abstract class
    public abstract AppCommand activateVcs();
    public abstract AppCommand vcsResolve();
    
+   // PDF
+   public abstract AppCommand showPdfExternal();
+   
    // View
    public abstract AppCommand showToolbar();
    public abstract AppCommand hideToolbar();

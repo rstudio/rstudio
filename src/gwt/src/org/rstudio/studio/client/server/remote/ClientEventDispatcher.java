@@ -29,6 +29,7 @@ import org.rstudio.studio.client.common.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfOutputEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfError;
+import org.rstudio.studio.client.common.compilepdf.model.CompilePdfResult;
 import org.rstudio.studio.client.common.console.ConsoleProcessCreatedEvent;
 import org.rstudio.studio.client.common.console.ServerConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ServerConsolePromptEvent;
@@ -330,8 +331,8 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.CompilePdfCompletedEvent))
          {
-            CompilePdfCompletedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new CompilePdfCompletedEvent(data));
+            CompilePdfResult result = event.getData();
+            eventBus_.fireEvent(new CompilePdfCompletedEvent(result));
          }
          else if (type.equals(ClientEvent.FindResult))
          {

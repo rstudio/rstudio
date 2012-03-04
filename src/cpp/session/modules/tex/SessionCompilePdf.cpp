@@ -186,11 +186,11 @@ void enqueCompletedEvent(bool succeeded, const FilePath& texFilePath)
    dataJson["succeeded"] = succeeded;
    dataJson["target_file"] =
                   module_context::createAliasedPath(texFilePath);
-   if (!texFilePath.empty())
-   {
-      FilePath pdfPath = ancillaryFilePath(texFilePath, ".pdf");
-      dataJson["pdf_url"] = tex::view_pdf::createViewPdfUrl(pdfPath);
-   }
+
+   FilePath pdfPath = ancillaryFilePath(texFilePath, ".pdf");
+   dataJson["pdf_path"] = module_context::createAliasedPath(pdfPath);
+   dataJson["view_pdf_url"] = tex::view_pdf::createViewPdfUrl(pdfPath);
+
 
    ClientEvent event(client_events::kCompilePdfCompletedEvent,
                      dataJson);

@@ -26,6 +26,7 @@ import org.rstudio.studio.client.common.compilepdf.events.CompilePdfOutputEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfError;
+import org.rstudio.studio.client.common.compilepdf.model.CompilePdfResult;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
@@ -115,7 +116,8 @@ public class CompilePdfProgressDialog extends ProgressDialog
    {
       hideProgress();
       
-      if (event.getSucceeded())
+      CompilePdfResult result = event.getResult();
+      if (result.getSucceeded())
       {
          closeDialog();
       }
@@ -126,7 +128,7 @@ public class CompilePdfProgressDialog extends ProgressDialog
          if (CompilePdfError.includesErrorType(errors_))
          {
             label +=  " (double-click to view source location of error)";
-            errorList_.showErrors(event.getTargetFile(), errors_);
+            errorList_.showErrors(result.getTargetFile(), errors_);
             container_.setWidget(errorList_);
             errorList_.selectFirstItem();
             errorList_.focus();

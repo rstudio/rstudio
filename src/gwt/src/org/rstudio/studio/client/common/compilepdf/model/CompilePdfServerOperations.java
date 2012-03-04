@@ -35,4 +35,7 @@ public interface CompilePdfServerOperations
    
    // notify the server that the compile pdf tab was closed
    void compilePdfClosed(ServerRequestCallback<Void> requestCallback);
+   
+   // get a file url (used for showing in external browser)
+   String getFileUrl(FileSystemItem file);
 }

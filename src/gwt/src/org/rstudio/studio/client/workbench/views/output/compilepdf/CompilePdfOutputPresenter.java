@@ -205,8 +205,11 @@ public class CompilePdfOutputPresenter extends BasePresenter
    {
       view_.compileCompleted();
       
-      if (event.getSucceeded() && switchToConsoleOnSuccessfulCompile_)
+      if (event.getResult().getSucceeded() && 
+          switchToConsoleOnSuccessfulCompile_)
+      {
          commands_.activateConsole().execute();
+      }
    }
    
    @Override

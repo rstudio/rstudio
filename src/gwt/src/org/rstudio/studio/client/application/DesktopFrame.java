@@ -39,6 +39,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    String getUriForPath(String path);
    void onWorkbenchInitialized(String scratchDir);
    void showFolder(String path);
+   void showPdf(String path);
    void openMinimalWindow(String name, String url, int width, int height);
    void activateSatelliteWindow(String name);
    void prepareForSatelliteWindow(String name, int width, int height);

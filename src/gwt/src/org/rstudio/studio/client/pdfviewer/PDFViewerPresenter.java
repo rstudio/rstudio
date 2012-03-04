@@ -19,20 +19,26 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.compilepdf.dialog.CompilePdfProgressDialog;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent;
+import org.rstudio.studio.client.common.compilepdf.model.CompilePdfResult;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfServerOperations;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
 import org.rstudio.studio.client.pdfviewer.model.PDFViewerParams;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
@@ -45,6 +51,9 @@ public class PDFViewerPresenter implements IsWidget,
                                            CompilePdfStartedEvent.Handler,
                                            CompilePdfCompletedEvent.Handler
 {
+   public interface Binder extends CommandBinder<Commands, PDFViewerPresenter>
+   {}
+
    public interface Display extends IsWidget
    {     
       void setURL(String url);
@@ -56,6 +65,8 @@ public class PDFViewerPresenter implements IsWidget,
    @Inject
    public PDFViewerPresenter(Display view,
                              EventBus eventBus,
+                             Binder binder,
+                             Commands commands,
                              FileTypeRegistry fileTypeRegistry,
                              CompilePdfServerOperations server,
                              GlobalDisplay globalDisplay)
@@ -64,6 +75,9 @@ public class PDFViewerPresenter implements IsWidget,
       fileTypeRegistry_ = fileTypeRegistry;
       server_ = server;
       globalDisplay_ = globalDisplay;
+      commands_ = commands;
+      
+      binder.bind(commands, this);
       
       eventBus.addHandler(CompilePdfStartedEvent.TYPE, this);
       eventBus.addHandler(CompilePdfCompletedEvent.TYPE, this);
@@ -89,7 +103,7 @@ public class PDFViewerPresenter implements IsWidget,
    @Override
    public void onCompilePdfStarted(CompilePdfStartedEvent event)
    {
-      compileIsRunning_ = true;
+      updateState(true);
       
       dismissProgressDialog();
       
@@ -132,11 +146,34 @@ public class PDFViewerPresenter implements IsWidget,
    
    @Override
    public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
-   {
-      compileIsRunning_ = false;
+   {  
+      CompilePdfResult result = event.getResult();
       
-      if (event.getSucceeded())
-         view_.setURL(event.getPdfUrl());
+      updateState(false, result);
+      
+      if (result.getSucceeded())
+         view_.setURL(result.getViewPdfUrl());
+   }
+   
+   @Handler
+   public void onShowPdfExternal()
+   {
+      String pdfPath = getCompiledPdfPath();
+      if (pdfPath != null)
+      {
+         if (Desktop.isDesktop())
+         {
+            Desktop.getFrame().showPdf(pdfPath);
+         }
+         else
+         {
+            String pdfURL = server_.getFileUrl(
+                                       FileSystemItem.createFile(pdfPath));
+            NewWindowOptions options = new NewWindowOptions();
+            options.setName("_rstudio_compile_pdf");
+            globalDisplay_.openWindow(pdfURL, options);
+         }
+      }
    }
 
    @Override
@@ -158,6 +195,28 @@ public class PDFViewerPresenter implements IsWidget,
       // so we close the parent window to force this
       if (BrowseCap.isFirefox() || BrowseCap.isChromeFrame())
          view_.closeWindow();
+   }
+  
+   private void updateState(boolean running)
+   {
+      updateState(running, null);
+   }
+   
+   private void updateState(boolean running, CompilePdfResult result)
+   {
+      compileIsRunning_ = running;
+      lastResult_ = result;
+      
+      boolean havePdf = getCompiledPdfPath() != null;
+      commands_.showPdfExternal().setEnabled(havePdf);
+   }
+   
+   private String getCompiledPdfPath()
+   {
+      if (lastResult_ != null)
+         return lastResult_.getPdfPath();
+      else
+         return null;
    }
    
    private void dismissProgressDialog()
@@ -184,9 +243,13 @@ public class PDFViewerPresenter implements IsWidget,
    }
 
    private boolean compileIsRunning_ = false;
+  
    private CompilePdfProgressDialog activeProgressDialog_;
+   private CompilePdfResult lastResult_ = null;
+   
    private final Display view_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final CompilePdfServerOperations server_;
-   private GlobalDisplay globalDisplay_;
+   private final GlobalDisplay globalDisplay_;
+   private final Commands commands_; 
 }

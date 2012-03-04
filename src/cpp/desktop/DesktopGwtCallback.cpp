@@ -317,6 +317,17 @@ void GwtCallback::showFolder(QString path)
    }
 }
 
+void GwtCallback::showPdf(QString path)
+{
+   if (path.isNull() || path.isEmpty())
+      return;
+
+   path = resolveAliasedPath(path);
+
+   desktop::openUrl(QUrl::fromLocalFile(path));
+}
+
+
 QString GwtCallback::getRVersion()
 {
 #ifdef Q_OS_WIN32
