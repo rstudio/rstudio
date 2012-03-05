@@ -95,17 +95,13 @@
                                            label="Next"
                                            description=""/>
                <widget:InlineToolbarSeparator />
-               <div class="{style.inlineBlock}"
-                    ui:field="pageBlock_"
-                    style="display: none">
-                  <div class="{style.inlineBlock} {style.padLeft3}">
-                     Page
-                     <widget:NumericTextBox styleName="{style.pageNumber}"
-                                            ui:field="pageNumber_"/>
-                     of <widget:SpanLabel ui:field="pageCountLabel_"/>
-                  </div>
-                  <widget:InlineToolbarSeparator />
+               <div class="{style.inlineBlock} {style.padLeft3}">
+                  Page
+                  <widget:NumericTextBox styleName="{style.pageNumber}"
+                                         ui:field="pageNumber_"/>
+                  of <widget:SpanLabel ui:field="pageCountLabel_" text="1"/>
                </div>
+                  <widget:InlineToolbarSeparator />
                <widget:InlineToolbarButton ui:field="btnThumbnails_"
                                            icon="{res.thumbnailsIcon}"
                                            label="Thumbnails"

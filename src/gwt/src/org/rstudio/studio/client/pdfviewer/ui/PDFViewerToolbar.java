@@ -13,7 +13,6 @@
 package org.rstudio.studio.client.pdfviewer.ui;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -109,7 +108,6 @@ public class PDFViewerToolbar extends Composite
    @Override
    public void setPageCount(int pageCount)
    {
-      pageBlock_.getStyle().clearDisplay();
       pageCountLabel_.setText(pageCount + "");
    }
 
@@ -159,8 +157,6 @@ public class PDFViewerToolbar extends Composite
    Image zoomOut_;
    @UiField
    Image zoomIn_;
-   @UiField
-   DivElement pageBlock_;
    @UiField
    NumericTextBox pageNumber_;
 }
