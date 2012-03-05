@@ -316,8 +316,8 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.CompilePdfStartedEvent))
          {
-            String targetFile = event.getData();
-            eventBus_.fireEvent(new CompilePdfStartedEvent(targetFile));
+            CompilePdfStartedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new CompilePdfStartedEvent(data));
          }
          else if (type.equals(ClientEvent.CompilePdfOutputEvent))
          {

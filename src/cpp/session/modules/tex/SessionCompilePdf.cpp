@@ -168,14 +168,22 @@ void enqueOutputEvent(const std::string& output)
    module_context::enqueClientEvent(event);
 }
 
-void enqueStartedEvent(const std::string& targetFile)
+void enqueStartedEvent(const FilePath& texFilePath)
 {
+   std::string targetFile =
+                module_context::createAliasedPath(texFilePath);
+
    s_compilePdfState.onStarted(targetFile);
 
-   ClientEvent event(client_events::kCompilePdfStartedEvent,
-                     targetFile);
-   module_context::enqueClientEvent(event);
+   json::Object dataJson;
+   dataJson["target_file"] = targetFile;
+   FilePath pdfPath = ancillaryFilePath(texFilePath, ".pdf");
+   dataJson["pdf_path"] = module_context::createAliasedPath(pdfPath);
 
+   ClientEvent event(client_events::kCompilePdfStartedEvent,
+                     dataJson);
+
+   module_context::enqueClientEvent(event);
 }
 
 void enqueCompletedEvent(bool succeeded, const FilePath& texFilePath)
@@ -474,8 +482,7 @@ private:
    void start()
    {
       // enque started event
-      enqueStartedEvent(
-              module_context::createAliasedPath(targetFilePath_));
+      enqueStartedEvent(targetFilePath_);
 
       // ensure no spaces in path
       std::string filename = targetFilePath_.filename();
