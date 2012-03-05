@@ -15,10 +15,14 @@
 
 #include <string>
 
+#include <boost/regex.hpp>
+
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/Exec.hpp>
+#include <core/SafeConvert.hpp>
+
 #include <core/json/JsonRpc.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -127,8 +131,34 @@ Error compilePdfClosed(const json::JsonRpcRequest& request,
    return Success();
 }
 
+
 } // anonymous namespace
 
+
+bool isPdfViewerSupported(const std::string& userAgent)
+{
+   // Qt 4.7 not supported
+   bool isQt47 = userAgent.find("Qt/4.7") != std::string::npos;
+   if (isQt47)
+      return false;
+
+   // Firefox >= 6 required
+   const int kRequiredVersion = 6;
+   int detectedVersion = kRequiredVersion;
+   boost::regex ffRegEx("Firefox/(\\d{1,4})");
+   boost::smatch match;
+   if (boost::regex_search(userAgent, match, ffRegEx))
+   {
+      std::string versionString = match[1];
+      detectedVersion = safe_convert::stringTo<int>(versionString,
+                                                    detectedVersion);
+      if (detectedVersion < kRequiredVersion)
+         return false;
+   }
+
+
+   return true;
+}
 
 json::Array supportedRnwWeaveTypes()
 {
