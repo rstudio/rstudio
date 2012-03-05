@@ -214,6 +214,7 @@ public class PDFViewerPresenter implements IsWidget,
       updateState(true);
       
       dismissProgressDialog();
+      PDFView.setLoadingVisible(false);
       
       activeProgressDialog_  = new CompilePdfProgressDialog();
       
