@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.pdfviewer;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.NativeScreen;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -20,7 +21,6 @@ import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerHandler;
 import org.rstudio.studio.client.pdfviewer.model.PDFViewerParams;
 
-import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -51,19 +51,22 @@ public class PDFViewer
    
    private Size getPreferredWindowSize()
    {
-      Size windowBounds = new Size(Window.getClientWidth(),
-                                   Window.getClientHeight());
-
-      int availWidth = Math.max(NativeScreen.get().getAvailWidth() - 135,
-                                windowBounds.width - 25); 
-      int maxWidth = 1100;
-      int width = Math.min(availWidth, maxWidth);
+      // compute available height (trim to 1200)
+      NativeScreen screen = NativeScreen.get();
+      int height = Math.min(screen.getAvailHeight(), 1200);
       
-      int availHeight = Math.max(NativeScreen.get().getAvailHeight() - 135,
-                                 windowBounds.height - 25);
-      int maxHeight = 1200;
-      int height = Math.min(availHeight, maxHeight);
+      // trim height as needed
+      if (screen.getAvailHeight() >= 1100)
+         height = height - 96;
+      else if (BrowseCap.isLinux() && BrowseCap.isChrome())
+         height = height - 100;
+      else
+         height = height - 5;
       
+      // width always wants to be 1070 if it can be (assumes 200px sidebar)
+      int width = Math.min(1070, screen.getAvailWidth());
+        
+      // return size
       return new Size(width, height);
    }
 }
