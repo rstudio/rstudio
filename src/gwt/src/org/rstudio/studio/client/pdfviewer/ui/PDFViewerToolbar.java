@@ -146,7 +146,6 @@ public class PDFViewerToolbar extends Composite
    InlineToolbarButton btnThumbnails_;
    @UiField
    SpanLabel pageCountLabel_;
-   ListBox scaleSelect_;
    @UiField
    SpanLabel filename_;
    @UiField
