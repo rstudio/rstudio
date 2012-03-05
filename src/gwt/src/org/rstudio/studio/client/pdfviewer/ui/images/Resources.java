@@ -17,16 +17,39 @@ import com.google.gwt.resources.client.ImageResource;
 
 public interface Resources extends ClientBundle
 {
+   @Source("FileOptionsIcon.png")
    ImageResource fileOptionsIcon();
+
+   @Source("NextPageIcon.png")
    ImageResource nextPageIcon();
+
+   @Source("PreviousPageIcon.png")
    ImageResource previousPageIcon();
+
+   @Source("SizeButton.png")
    ImageResource sizeButton();
+
+   @Source("SizeButtonPressed.png")
    ImageResource sizeButtonPressed();
+
+   @Source("ZoomButtonLeft.png")
    ImageResource zoomButtonLeft();
+
+   @Source("ZoomButtonLeftPressed.png")
    ImageResource zoomButtonLeftPressed();
+
+   @Source("ZoomButtonRight.png")
    ImageResource zoomButtonRight();
+
+   @Source("ZoomButtonRightPressed.png")
    ImageResource zoomButtonRightPressed();
+
+   @Source("ZoomInIcon.png")
    ImageResource zoomInIcon();
+
+   @Source("ZoomOutIcon.png")
    ImageResource zoomOutIcon();
+
+   @Source("ThumbnailsIcon.png")
    ImageResource thumbnailsIcon();
 }
