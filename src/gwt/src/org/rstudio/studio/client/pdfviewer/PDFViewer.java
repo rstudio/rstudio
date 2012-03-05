@@ -15,6 +15,7 @@ package org.rstudio.studio.client.pdfviewer;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.NativeScreen;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
@@ -55,13 +56,24 @@ public class PDFViewer
       NativeScreen screen = NativeScreen.get();
       int height = Math.min(screen.getAvailHeight(), 1200);
       
-      // trim height as needed
+      // trim height for large monitors (don't need more than 1104)
       if (screen.getAvailHeight() >= 1100)
+      {
          height = height - 96;
-      else if (BrowseCap.isLinux() && BrowseCap.isChrome())
-         height = height - 100;
+      }
       else
-         height = height - 5;
+      {
+         // adjust for window framing, etc.
+         if (Desktop.isDesktop())
+            height = height - 40;
+         else
+            height = height - 60;
+      }
+      
+      // extra adjustment for chrome on linux (which misreports the 
+      // available height, excluding the menubar/taskbar)
+      if (BrowseCap.isLinux() && BrowseCap.isChrome())
+         height = height - 50;
       
       // width always wants to be 1070 if it can be (assumes 200px sidebar)
       int width = Math.min(1070, screen.getAvailWidth());
