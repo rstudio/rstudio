@@ -1,20 +1,13 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
-             xmlns:widget="urn:import:org.rstudio.core.client.widget">
+             xmlns:widget="urn:import:org.rstudio.core.client.widget"
+             xmlns:pdf="urn:import:org.rstudio.studio.client.pdfviewer.ui">
 
    <ui:style>
-      .toolbar {
-         position: fixed;
-         top: 0;
-         height: 23px;
-         left: 0;
-         right: 0;
-         z-index: 100;
-      }
       .toolbarShadow {
          position: fixed;
          top: 0;
-         height: 23px;
+         height: 30px;
          left: -30px;
          right: -30px;
          z-index: 90;
@@ -23,9 +16,10 @@
          -webkit-box-shadow: 4px 0px 8px #222;
       }
    </ui:style>
+   <ui:with field="res" type="org.rstudio.core.client.theme.res.ThemeResources"/>
 
    <g:HTMLPanel>
-      <widget:Toolbar ui:field="toolbar_" styleName="{style.toolbar}"/>
+      <pdf:PDFViewerToolbar ui:field="toolbar_" />
       <div class="{style.toolbarShadow}"></div>
       <div id="controls" style="display: none">
         <button id="previous" onclick="PDFView.page--;" oncontextmenu="return false;">
@@ -40,7 +34,9 @@
 
         <div class="separator"></div>
 
+<!--
         <input type="number" id="pageNumber" onchange="PDFView.page = this.value;" value="1" size="4" min="1" />
+-->
 
         <span>/</span>
         <span id="numPages">--</span>
@@ -56,6 +52,7 @@
 
         <div class="separator"></div>
 
+<!--
         <select id="scaleSelect" onchange="PDFView.parseScale(this.value);" oncontextmenu="return false;">
           <option id="customScaleOption" value="custom"></option>
           <option value="0.5">50%</option>
@@ -68,6 +65,7 @@
           <option id="pageFitOption" value="page-fit">Page Fit</option>
           <option id="pageAutoOption" value="auto" selected="selected">Auto</option>
         </select>
+-->
 
         <div class="separator"></div>
 
@@ -112,7 +110,7 @@
         <textarea id="errorMoreInfo" hidden='true' readonly="readonly"></textarea>
       </div>
 
-      <div id="sidebar" style="top: 23px">
+      <div id="sidebar" style="top: 30px">
         <div id="sidebarBox">
           <div id="pinIcon" onClick="PDFView.pinSidebar()"></div>
           <div id="sidebarScrollView">

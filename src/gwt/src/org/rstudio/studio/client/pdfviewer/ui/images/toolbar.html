@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style type="text/css">
+            body {
+                font-family: Lucida Grande;
+                font-size: 11px;
+            }
+            .wrapper {
+                height: 30px;
+                border: 1px solid silver;
+                cursor: default;
+            }
+            table {
+                width: 100%;
+                height: 30px;
+            }
+            td {
+                overflow: visible;
+            }
+            .filename {
+                font-weight: bold;
+            }
+            .toolbarButton, .otherWidget {
+                display: inline;
+                margin-right: 8px;
+            }
+            .toolbarButton {
+                cursor: pointer;
+            }
+            .icon {
+                position: relative;
+                top: -2px;
+                vertical-align: middle;
+                margin-right: 3px;
+            }
+            .sepOuter {
+                position: relative;
+                display: inline-block;
+                width: 2px;
+                height: 2px;
+                margin-right: 4px;
+                overflow: visible;
+            }
+            .sepInner {
+                background-image: url(toolbarSeparator.png);
+                height: 20px;
+                width: 2px;
+                position: absolute;
+                top: -11px;
+            }
+            .zoomButton {
+                overflow: visible;
+                display: inline-block;
+                position: relative;
+                width: 61px;
+                height: 8px;
+                margin-right: 4px;
+            }
+            .zoomInner {
+                display: block;
+                position: absolute;
+                top: -7px;
+                left: 0;
+                width: 61px;
+                height: 8px;
+                cursor: pointer;
+            }
+            .zoomLeft {
+                display: inline-block;
+                background-image: url(ZoomButtonLeft.png);
+                width: 31px;
+                height: 24px;
+                text-align: left;
+            }
+            .zoomRight {
+                display: inline-block;
+                background-image: url(ZoomButtonRight.png);
+                width: 30px;
+                height: 24px;
+                text-align: right;
+            }
+            .zoomOut, .zoomIn {
+                display: inline-block;
+                width: 20px;
+                height: 18px;
+                margin-top: 3px;
+            }
+            .zoomOut {
+                background-image: url(ZoomOutIcon.png);
+                margin-left: 6px;
+            }
+            .zoomIn {
+                background-image: url(ZoomInIcon.png);
+                margin-right: 7px;
+            }
+            .outer {
+                display: inline-block;
+                height: 0;
+                background-color: blue;
+                position: relative;
+            }
+            .inner {
+                display: inline-block;
+                position: absolute;
+                left: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrapper">
+            <table cellpadding="0" cellspacing="0">
+                <tr>
+                    <td width="33%" valign="middle">
+                        <span class="filename">Project.Rnw</span>
+                        <div class="outer" style="width: 20px">
+                            <div class="inner" style="bottom: -6px; height: 18px; width: 20px">
+                                <div class="toolbarButton">
+                                    <img class="icon" src="FileOptionsIcon.png"/>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td width="33%" valign="middle" align="center">
+                        <div class="toolbarButton">
+                            <img class="icon" src="PreviousPageIcon.png"/>Previous
+                        </div>
+                        <div class="sepOuter">
+                            <div class="sepInner">
+                            </div>
+                        </div>
+                        <div class="toolbarButton">
+                            <img class="icon" src="NextPageIcon.png"/>Next
+                        </div>
+                        <div class="sepOuter"><div class="sepInner"></div></div>
+                        <div class="otherWidget">
+                            Page <select><option>1</option></select> of 5
+                        </div>
+                    </td>
+                    <td width="33%" valign="middle" align="right">
+                        <div class="zoomButton">
+                            <div class="zoomInner">
+                                <div class="zoomLeft"><div class="zoomOut"></div></div><div class="zoomRight"><div class="zoomIn"></div></div>
+                            </div>
+                        </div>
+                        <div class="otherWidget">
+                            <select><option>100%</option></select>
+                        </div>
+                    </td>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,134 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:widget="urn:import:org.rstudio.core.client.widget"
+             xmlns:pdfviewer="urn:import:org.rstudio.studio.client.pdfviewer.ui">
+
+   <ui:with field="res"
+            type="org.rstudio.studio.client.pdfviewer.ui.images.Resources"/>
+   <ui:style>
+      .wrapper {
+         position: fixed;
+         top: 0;
+         height: 30px;
+         left: 0;
+         right: 0;
+         z-index: 100;
+         cursor: default;
+         font-size: 12px;
+         padding: 0 6px 0 4px;
+         border-bottom: 1px solid #777;
+         border-top: 1px solid #fff;
+         background: #f1f1f5; /* Old browsers */
+         background: -moz-linear-gradient(top, #f1f1f5 1%, #eeeff3 100%); /* FF3.6+ */
+         background: -webkit-gradient(linear, left top, left bottom, color-stop(1%, #f1f1f5), color-stop(100%, #eeeff3)); /* Chrome,Safari4+ */
+         background: -webkit-linear-gradient(top, #f1f1f5 1%, #eeeff3 100%); /* Chrome10+,Safari5.1+ */
+         background: -o-linear-gradient(top, #f1f1f5 1%, #eeeff3 100%); /* Opera 11.10+ */
+         background: -ms-linear-gradient(top, #f1f1f5 1%, #eeeff3 100%); /* IE10+ */
+         background: literal("linear-gradient(top, #f1f1f5 1%,#eeeff3 100%)"); /* W3C */
+         filter: literal("progid:DXImageTransform.Microsoft.gradient( startColorstr='#f1f1f5', endColorstr='#eeeff3',GradientType=0 )"); /* IE6-9 */
+      }
+
+      .alignTable {
+         width: 100%;
+         height: 30px;
+      }
+
+      td.alignCell {
+         overflow: visible;
+         white-space: nowrap;
+      }
+
+      .filename {
+         font-weight: bold;
+      }
+
+      .inlineBlock {
+         display: inline;
+      }
+
+      .zoomButton {
+         cursor: pointer;
+      }
+
+      .pageNumber {
+         outline: none;
+      }
+
+      .padLeft3 {
+         margin-left: 2px;
+      }
+
+   </ui:style>
+   
+   <g:HTMLPanel styleName="{style.wrapper}">
+      <table class="{style.alignTable}" cellpadding="0" cellspacing="0">
+         <tr>
+            <td class="{style.alignCell}" width="33%" valign="middle">
+               <widget:SpanLabel ui:field="filename_" styleName="{style.filename}" />
+               <widget:ZeroHeightPanel yOffset="4" height="18" width="20">
+                  <widget:child>
+                     <g:Image resource="{res.fileOptionsIcon}" ui:field="fileOptions_"/>
+                     <!-- TODO: This should be a menu -->
+                  </widget:child>
+               </widget:ZeroHeightPanel>
+            </td>
+            <td class="{style.alignCell}" width="33%" valign="middle" align="center">
+               <widget:InlineToolbarButton ui:field="btnPrevious_"
+                                           icon="{res.previousPageIcon}"
+                                           label="Previous"
+                                           description=""/>
+               <widget:InlineToolbarSeparator />
+               <widget:InlineToolbarButton ui:field="btnNext_"
+                                           icon="{res.nextPageIcon}"
+                                           label="Next"
+                                           description=""/>
+               <widget:InlineToolbarSeparator />
+               <div class="{style.inlineBlock}"
+                    ui:field="pageBlock_"
+                    style="display: none">
+                  <div class="{style.inlineBlock} {style.padLeft3}">
+                     Page
+                     <input class="{style.pageNumber}" type="number" id="pageNumber" onchange="PDFView.page = this.value;" value="1" size="3" min="1" />
+                     <pdfviewer:PageNumberListBox ui:field="pageSelect_" visible="false"/>
+                     of <widget:SpanLabel ui:field="pageCountLabel_"/>
+                  </div>
+                  <widget:InlineToolbarSeparator />
+               </div>
+               <widget:InlineToolbarButton ui:field="btnThumbnails_"
+                                           icon="{res.thumbnailsIcon}"
+                                           label="Thumbnails"
+                                           description="Show/hide page thumbnails"/>
+            </td>
+            <td class="{style.alignCell}" width="33%" valign="middle" align="right">
+               <widget:ZeroHeightPanel yOffset="9" height="24" width="61">
+                  <widget:child>
+                     <g:Image resource="{res.zoomButtonLeft}"
+                              ui:field="zoomOut_"
+                              styleName="{style.zoomButton}"/>
+                  </widget:child>
+                  <widget:child>
+                     <g:Image resource="{res.zoomButtonRight}"
+                              ui:field="zoomIn_"
+                              styleName="{style.zoomButton}"/>
+                  </widget:child>
+               </widget:ZeroHeightPanel>
+               <div class="{style.inlineBlock}">
+                  <select id="scaleSelect" onchange="PDFView.parseScale(this.value);" oncontextmenu="return false;">
+                    <option id="customScaleOption" value="custom"></option>
+                    <option value="0.5">50%</option>
+                    <option value="0.75">75%</option>
+                    <option value="1">100%</option>
+                    <option value="1.25">125%</option>
+                    <option value="1.5">150%</option>
+                    <option value="2">200%</option>
+                    <option id="pageWidthOption" value="page-width">Page Width</option>
+                    <option id="pageFitOption" value="page-fit">Page Fit</option>
+                    <option id="pageAutoOption" value="auto" selected="selected">Auto</option>
+                  </select>
+               </div>
+            </td>
+         </tr>
+      </table>
+   </g:HTMLPanel>
+
+</ui:UiBinder>

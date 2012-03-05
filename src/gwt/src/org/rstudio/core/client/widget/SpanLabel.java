@@ -15,9 +15,14 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.ui.Label;
 
-class SpanLabel extends Label
+public class SpanLabel extends Label
 {
-   SpanLabel(String label, boolean wordWrap)
+   public SpanLabel()
+   {
+      this("", true);
+   }
+
+   public SpanLabel(String label, boolean wordWrap)
    {
       super(Document.get().createSpanElement());
       setText(label);

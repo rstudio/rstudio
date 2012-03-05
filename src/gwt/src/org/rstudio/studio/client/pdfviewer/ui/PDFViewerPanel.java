@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.pdfviewer.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -22,10 +23,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-
 import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.pdfviewer.PDFViewerPresenter;
 import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.PdfJs;
@@ -41,8 +39,22 @@ public class PDFViewerPanel extends Composite
    {
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
       Document.get().getBody().getStyle().setMarginLeft(200, Style.Unit.PX);
+   }
 
-      toolbar_.addStyleName(ThemeStyles.INSTANCE.toolbar());
+   @Override
+   public PDFViewerToolbarDisplay getToolbarDisplay()
+   {
+      return toolbar_;
+   }
+
+   @Override
+   public void toggleThumbnails()
+   {
+      BodyElement body = Document.get().getBody();
+      if (body.getClassName().contains("nosidebar"))
+         body.removeClassName("nosidebar");
+      else
+         body.addClassName("nosidebar");
    }
 
    @Override
@@ -97,6 +109,7 @@ public class PDFViewerPanel extends Composite
    private boolean loaded_;
    private String initialUrl_;
    private boolean once_;
+
    @UiField
-   Toolbar toolbar_;
+   PDFViewerToolbar toolbar_;
 }

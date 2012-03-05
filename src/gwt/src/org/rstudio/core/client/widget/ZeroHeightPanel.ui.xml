@@ -1,0 +1,23 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:widget="urn:import:org.rstudio.core.client.widget">
+
+   <ui:style>
+      .outer {
+         display: inline-block;
+         height: 0;
+         position: relative;
+         overflow: visible;
+      }
+      .inner {
+         display: inline-block;
+         position: absolute;
+         left: 0;
+      }
+   </ui:style>
+
+   <g:HTMLPanel ui:field="outer_" styleName="{style.outer}">
+      <g:FlowPanel ui:field="inner_" styleName="{style.inner}"/>
+   </g:HTMLPanel>
+
+</ui:UiBinder>

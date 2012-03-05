@@ -16,6 +16,7 @@ package org.rstudio.studio.client.pdfviewer.pdfjs;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import org.rstudio.studio.client.pdfviewer.pdfjs.events.PDFLoadEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PageChangeEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.ScaleChangeEvent;
 
@@ -24,46 +25,62 @@ public class PDFView extends JavaScriptObject
    protected PDFView()
    {
    }
-   
-   public static native PDFView get() /*-{
-      return $wnd.PDFView;
+
+   public static native void nextPage() /*-{
+      $wnd.PDFView.page++;
    }-*/;
 
-   public final native void nextPage() /*-{
-      this.page++;
-   }-*/;
-
-   public final native void previousPage() /*-{
-      this.page-- ;
+   public static native void previousPage() /*-{
+      $wnd.PDFView.page-- ;
    }-*/;
    
-   public final native int currentPage() /*-{
-      return this.page;
+   public static native int currentPage() /*-{
+      return $wnd.PDFView.page;
    }-*/;
 
-   public final native void goToPage(int page) /*-{
-      this.page = page;
+   public static native int pageCount() /*-{
+      return $wnd.PDFView.pages.length;
    }-*/;
 
-   public final native void zoomIn() /*-{
-      this.zoomIn() ;
+   public static native void goToPage(int page) /*-{
+      $wnd.PDFView.page = page;
+   }-*/;
+
+   public static native void zoomIn() /*-{
+      $wnd.PDFView.zoomIn() ;
    }-*/;
    
-   public final native void zoomOut() /*-{
-      this.zoomIn() ;
+   public static native void zoomOut() /*-{
+      $wnd.PDFView.zoomOut() ;
    }-*/;
 
-   public final HandlerRegistration addPageChangeHandler(PageChangeEvent.Handler handler)
+   public native static void parseScale(String value) /*-{
+      $wnd.PDFView.parseScale(value);
+   }-*/;
+
+   public static HandlerRegistration addPageChangeHandler(PageChangeEvent.Handler handler)
    {
       return handlers_.addHandler(PageChangeEvent.TYPE, handler);
    }
 
-   public final HandlerRegistration addScaleChangeHandler(ScaleChangeEvent.Handler handler)
+   public static HandlerRegistration addScaleChangeHandler(ScaleChangeEvent.Handler handler)
    {
       return handlers_.addHandler(ScaleChangeEvent.TYPE, handler);
    }
 
+   public static HandlerRegistration addPDFLoadHandler(PDFLoadEvent.Handler handler)
+   {
+      return handlers_.addHandler(PDFLoadEvent.TYPE, handler);
+   }
+
    public native static void initializeEvents() /*-{
+
+      var _load = $wnd.PDFView.load;
+      $wnd.PDFView.load = $entry(function(data, scale) {
+         _load.call($wnd.PDFView, data, scale);
+         @org.rstudio.studio.client.pdfviewer.pdfjs.PDFView::firePDFLoadEvent()();
+      });
+
       $wnd.addEventListener(
             "pagechange",
             $entry(function(evt) {
@@ -87,6 +104,11 @@ public class PDFView extends JavaScriptObject
    private static void fireScaleChangeEvent()
    {
       handlers_.fireEvent(new ScaleChangeEvent());
+   }
+
+   private static void firePDFLoadEvent()
+   {
+      handlers_.fireEvent(new PDFLoadEvent());
    }
 
    private static final HandlerManager handlers_ =
