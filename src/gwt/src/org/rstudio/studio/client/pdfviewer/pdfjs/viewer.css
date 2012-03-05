@@ -2,7 +2,7 @@
 /* vim: set shiftwidth=4 tabstop=8 autoindent cindent expandtab: */
 
 body {
-  background-color: #87898C !important;
+  background-color: rgb(135, 137, 140) !important;
   background-image: none !important;
   margin: 0 0 0 200px !important;
   padding: 0px;
@@ -122,7 +122,7 @@ body.nosidebar #sidebar {
 }
 
 #sidebarBox {
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgb(100, 102, 104);
   width: 100%;
   height: 100%;
 }
@@ -130,7 +130,7 @@ body.nosidebar #sidebar {
 #sidebarScrollView {
   position: absolute;
   overflow: hidden;
-  overflow-y: auto;
+  overflow-y: scroll;
   top: 0;
   bottom: 0;
   left: 0;
