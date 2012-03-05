@@ -56,10 +56,13 @@ public class PDFViewer
       NativeScreen screen = NativeScreen.get();
       int height = Math.min(screen.getAvailHeight(), 1200);
       
-      // trim height for large monitors (don't need more than 1104)
+      // trim height for large monitors
       if (screen.getAvailHeight() >= 1100)
       {
-         height = height - 96;
+         if (BrowseCap.isMacintosh())
+            height = height - 123;
+         else
+            height = height - 96;
       }
       else
       {
