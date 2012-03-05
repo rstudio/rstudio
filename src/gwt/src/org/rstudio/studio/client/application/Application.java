@@ -32,7 +32,6 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
@@ -41,7 +40,6 @@ import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.ScreenUtils;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.projects.Projects;
@@ -279,15 +277,8 @@ public class Application implements ApplicationEventHandlers
    @Handler
    public void onLogFocusedElement()
    {
-      Size size = ScreenUtils.getAvailableScreenSize();
-      
-      String msg = size.width + "x" + size.height;
-      
-      globalDisplay_.showErrorMessage("Screen Size", msg);
-         
-      
-      //Element el = DomUtils.getActiveElement();
-      //DomUtils.dump(el, "Focused Element: ");
+      Element el = DomUtils.getActiveElement();
+      DomUtils.dump(el, "Focused Element: ");
    }
  
    
