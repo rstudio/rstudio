@@ -73,13 +73,17 @@ public class PDFViewer
             height = height - 40;
          else
             height = height - 60;
+
+         // extra adjustment for firefox on windows (extra chrome in url bar)
+         if (BrowseCap.isWindows() && BrowseCap.isFirefox())
+            height = height - 25;
       }
       
       // extra adjustment for chrome on linux (which misreports the 
       // available height, excluding the menubar/taskbar)
       if (BrowseCap.isLinux() && BrowseCap.isChrome())
          height = height - 50;
-      
+
       // width always wants to be 1070 if it can be (assumes 200px sidebar)
       int width = Math.min(1070, screen.getAvailWidth());
         
