@@ -112,7 +112,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
    @Override
    public String getName()
    {
-      return "Compile PDF";
+      return "Sweave";
    }
 
    @Override
