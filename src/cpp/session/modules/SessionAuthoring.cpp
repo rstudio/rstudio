@@ -131,6 +131,24 @@ Error compilePdfClosed(const json::JsonRpcRequest& request,
    return Success();
 }
 
+bool isBrowserSupported(const std::string& userAgent,
+                        const boost::regex& versionRegEx,
+                        double requiredVersion)
+{
+   double detectedVersion = requiredVersion;
+   boost::smatch match;
+   if (boost::regex_search(userAgent, match, versionRegEx))
+   {
+      std::string versionString = match[1];
+      detectedVersion = safe_convert::stringTo<double>(versionString,
+                                                       detectedVersion);
+      if (detectedVersion < requiredVersion)
+         return false;
+   }
+
+   return true;
+}
+
 
 } // anonymous namespace
 
@@ -143,19 +161,19 @@ bool isPdfViewerSupported(const std::string& userAgent)
       return false;
 
    // Firefox >= 6 required
-   const int kRequiredVersion = 6;
-   int detectedVersion = kRequiredVersion;
    boost::regex ffRegEx("Firefox/(\\d{1,4})");
-   boost::smatch match;
-   if (boost::regex_search(userAgent, match, ffRegEx))
+   if (!isBrowserSupported(userAgent, ffRegEx, 6.0))
+      return false;
+
+   // Safari >= 5.1 required (look for both Safari and not Chrome in the UA
+   // since Chrome also includes Safari in its UA)
+   if ( userAgent.find("Safari") != std::string::npos &&
+        userAgent.find("Chrome") == std::string::npos)
    {
-      std::string versionString = match[1];
-      detectedVersion = safe_convert::stringTo<int>(versionString,
-                                                    detectedVersion);
-      if (detectedVersion < kRequiredVersion)
+      boost::regex safariRegEx("Version/(\\d{1,4}\\.\\d)");
+      if (!isBrowserSupported(userAgent, safariRegEx, 5.1))
          return false;
    }
-
 
    return true;
 }
