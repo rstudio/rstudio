@@ -5,6 +5,8 @@
 
    <ui:with field="res"
             type="org.rstudio.studio.client.pdfviewer.ui.images.Resources"/>
+   <ui:with field="fileIconRes"
+            type="org.rstudio.studio.client.common.filetypes.FileIconResources"/>
    <ui:style>
       .wrapper {
          position: fixed;
@@ -15,7 +17,7 @@
          z-index: 100;
          cursor: default;
          font-size: 12px;
-         padding: 0 6px 0 4px;
+         padding: 0 6px 0 6px;
          border-bottom: 1px solid #777;
          border-top: 1px solid #fff;
          background: #f1f1f5; /* Old browsers */
@@ -46,6 +48,14 @@
 
       .filename {
          font-weight: bold;
+         color: #838994;
+         margin-right: 20px;
+         text-decoration: none;
+         cursor: pointer;
+      }
+
+      .filename:hover {
+         text-decoration: underline;
       }
 
       .inlineBlock {
@@ -62,6 +72,7 @@
          width: 30px;
          text-align: right;
       }
+
       .pageNumber:focus {
          outline: none;
       }
@@ -70,14 +81,25 @@
          margin-left: 2px;
       }
 
+      .fileIcon {
+         cursor: pointer;
+      }
+
    </ui:style>
    
    <g:HTMLPanel styleName="{style.wrapper}">
       <table class="{style.alignTable}" cellpadding="0" cellspacing="0">
          <tr>
             <td class="{style.alignCell}">
-               <widget:SpanLabel ui:field="filename_" styleName="{style.filename}" />
-               <widget:ZeroHeightPanel yOffset="4" height="18" width="20">
+               <widget:ZeroHeightPanel yOffset="3" height="16" width="16">
+                  <widget:child>
+                     <g:Image resource="{fileIconRes.iconPdf}"
+                              styleName="{style.fileIcon}"
+                              ui:field="fileIcon_"/>
+                  </widget:child>
+               </widget:ZeroHeightPanel>
+               <g:Anchor ui:field="filename_" styleName="{style.filename}" />
+               <widget:ZeroHeightPanel yOffset="4" height="18" width="20" visible="false">
                   <widget:child>
                      <g:Image resource="{res.fileOptionsIcon}" ui:field="fileOptions_"/>
                      <!-- TODO: This should be a menu -->

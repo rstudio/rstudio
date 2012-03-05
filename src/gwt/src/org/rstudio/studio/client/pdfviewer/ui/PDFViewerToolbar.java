@@ -16,10 +16,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HasValue;
-import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.widget.InlineToolbarButton;
 import org.rstudio.core.client.widget.NumericTextBox;
 import org.rstudio.core.client.widget.SpanLabel;
@@ -88,6 +85,18 @@ public class PDFViewerToolbar extends Composite
    }
 
    @Override
+   public HasClickHandlers getFileIcon()
+   {
+      return fileIcon_;
+   }
+
+   @Override
+   public HasClickHandlers getFilenameLabel()
+   {
+      return filename_;
+   }
+
+   @Override
    public HasClickHandlers getPrevButton()
    {
       return btnPrevious_;
@@ -152,11 +161,13 @@ public class PDFViewerToolbar extends Composite
    @UiField
    SpanLabel pageCountLabel_;
    @UiField
-   SpanLabel filename_;
+   Anchor filename_;
    @UiField
    Image zoomOut_;
    @UiField
    Image zoomIn_;
    @UiField
    NumericTextBox pageNumber_;
+   @UiField
+   Image fileIcon_;
 }

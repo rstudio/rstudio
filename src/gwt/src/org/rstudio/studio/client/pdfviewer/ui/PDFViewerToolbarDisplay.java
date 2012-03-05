@@ -17,6 +17,8 @@ import com.google.gwt.user.client.ui.HasValue;
 
 public interface PDFViewerToolbarDisplay
 {
+   HasClickHandlers getFileIcon();
+   HasClickHandlers getFilenameLabel();
    HasClickHandlers getPrevButton();
    HasClickHandlers getNextButton();
    HasClickHandlers getThumbnailsButton();

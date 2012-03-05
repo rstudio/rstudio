@@ -100,7 +100,8 @@ public class PDFViewerPresenter implements IsWidget,
          }
       });
 
-      view_.getToolbarDisplay().getPrevButton().addClickHandler(new ClickHandler()
+      final PDFViewerToolbarDisplay toolbar = view_.getToolbarDisplay();
+      toolbar.getPrevButton().addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
@@ -108,7 +109,7 @@ public class PDFViewerPresenter implements IsWidget,
             PDFView.previousPage();
          }
       });
-      view_.getToolbarDisplay().getNextButton().addClickHandler(new ClickHandler()
+      toolbar.getNextButton().addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
@@ -116,7 +117,7 @@ public class PDFViewerPresenter implements IsWidget,
             PDFView.nextPage();
          }
       });
-      view_.getToolbarDisplay().getThumbnailsButton().addClickHandler(new ClickHandler()
+      toolbar.getThumbnailsButton().addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
@@ -126,7 +127,7 @@ public class PDFViewerPresenter implements IsWidget,
       });
 
       final HasValue<String> pageNumber =
-                                      view_.getToolbarDisplay().getPageNumber();
+                                      toolbar.getPageNumber();
       pageNumber.addValueChangeHandler(new ValueChangeHandler<String>()
       {
          @Override
@@ -140,7 +141,7 @@ public class PDFViewerPresenter implements IsWidget,
                    && intVal >= 1 && intVal <= PDFView.pageCount())
                {
                   PDFView.goToPage(intVal);
-                  view_.getToolbarDisplay().selectPageNumber();
+                  toolbar.selectPageNumber();
                   return;
                }
             }
@@ -154,7 +155,7 @@ public class PDFViewerPresenter implements IsWidget,
             pageNumber.setValue(PDFView.currentPage() + "", false);
          }
       });
-      view_.getToolbarDisplay().getZoomIn().addClickHandler(new ClickHandler()
+      toolbar.getZoomIn().addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
@@ -162,7 +163,7 @@ public class PDFViewerPresenter implements IsWidget,
             PDFView.zoomIn();
          }
       });
-      view_.getToolbarDisplay().getZoomOut().addClickHandler(new ClickHandler()
+      toolbar.getZoomOut().addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
@@ -170,6 +171,9 @@ public class PDFViewerPresenter implements IsWidget,
             PDFView.zoomOut();
          }
       });
+
+      toolbar.getFileIcon().addClickHandler(commands.showPdfExternal());
+      toolbar.getFilenameLabel().addClickHandler(commands.showPdfExternal());
 
       releaseOnDismiss_.add(PDFView.addPageChangeHandler(new PageChangeEvent.Handler()
       {
@@ -184,7 +188,7 @@ public class PDFViewerPresenter implements IsWidget,
          @Override
          public void onPDFLoad(PDFLoadEvent event)
          {
-            view_.getToolbarDisplay().setPageCount(PDFView.pageCount());
+            toolbar.setPageCount(PDFView.pageCount());
          }
       }));
    }
@@ -204,6 +208,9 @@ public class PDFViewerPresenter implements IsWidget,
    @Override
    public void onCompilePdfStarted(CompilePdfStartedEvent event)
    {
+      view_.getToolbarDisplay().setFilename(
+                         FileSystemItem.getNameFromPath(event.getTargetFile()));
+
       updateState(true);
       
       dismissProgressDialog();
