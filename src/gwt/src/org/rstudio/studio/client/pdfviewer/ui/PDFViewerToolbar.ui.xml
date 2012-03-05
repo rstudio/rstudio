@@ -35,6 +35,12 @@
 
       td.alignCell {
          overflow: visible;
+         vertical-align: middle;
+         white-space: nowrap;
+         width: 33%;
+      }
+
+      td.alignCell * {
          white-space: nowrap;
       }
 
@@ -63,7 +69,7 @@
    <g:HTMLPanel styleName="{style.wrapper}">
       <table class="{style.alignTable}" cellpadding="0" cellspacing="0">
          <tr>
-            <td class="{style.alignCell}" width="33%" valign="middle">
+            <td class="{style.alignCell}">
                <widget:SpanLabel ui:field="filename_" styleName="{style.filename}" />
                <widget:ZeroHeightPanel yOffset="4" height="18" width="20">
                   <widget:child>
@@ -72,7 +78,7 @@
                   </widget:child>
                </widget:ZeroHeightPanel>
             </td>
-            <td class="{style.alignCell}" width="33%" valign="middle" align="center">
+            <td class="{style.alignCell}" align="center" nowrap="nowrap" style="min-width: 400px">
                <widget:InlineToolbarButton ui:field="btnPrevious_"
                                            icon="{res.previousPageIcon}"
                                            label="Previous"
@@ -99,7 +105,7 @@
                                            label="Thumbnails"
                                            description="Show/hide page thumbnails"/>
             </td>
-            <td class="{style.alignCell}" width="33%" valign="middle" align="right">
+            <td class="{style.alignCell}" align="right">
                <widget:ZeroHeightPanel yOffset="9" height="24" width="61">
                   <widget:child>
                      <g:Image resource="{res.zoomButtonLeft}"
