@@ -14,6 +14,9 @@ package org.rstudio.studio.client.pdfviewer.pdfjs;
 
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PDFLoadEvent;
@@ -109,6 +112,15 @@ public class PDFView extends JavaScriptObject
    private static void firePDFLoadEvent()
    {
       handlers_.fireEvent(new PDFLoadEvent());
+   }
+
+   public static void setLoadingVisible(boolean visible)
+   {
+      Element el = Document.get().getElementById("loading");
+      if (visible)
+         el.removeAttribute("hidden");
+      else
+         el.setAttribute("hidden", "hidden");
    }
 
    private static final HandlerManager handlers_ =

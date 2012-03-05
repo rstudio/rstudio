@@ -26,6 +26,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.pdfviewer.PDFViewerPresenter;
 import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
+import org.rstudio.studio.client.pdfviewer.pdfjs.PDFView;
 import org.rstudio.studio.client.pdfviewer.pdfjs.PdfJs;
 
 public class PDFViewerPanel extends Composite
@@ -83,6 +84,8 @@ public class PDFViewerPanel extends Composite
    @Override
    public void setURL(String url)
    {
+      PDFView.setLoadingVisible(true);
+
       if (loaded_)
          open(url);
       else
