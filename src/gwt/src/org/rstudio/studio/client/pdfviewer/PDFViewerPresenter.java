@@ -20,6 +20,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ClosingHandler;
+import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -123,13 +124,34 @@ public class PDFViewerPresenter implements IsWidget,
             view_.toggleThumbnails();
          }
       });
-      view_.getToolbarDisplay().getPageNumber().addValueChangeHandler(new ValueChangeHandler<Integer>()
+
+      final HasValue<String> pageNumber =
+                                      view_.getToolbarDisplay().getPageNumber();
+      pageNumber.addValueChangeHandler(new ValueChangeHandler<String>()
       {
          @Override
-         public void onValueChange(ValueChangeEvent<Integer> event)
+         public void onValueChange(ValueChangeEvent<String> event)
          {
-            if (event.getValue() != null)
-               PDFView.goToPage(event.getValue());
+            String value = pageNumber.getValue();
+            try
+            {
+               int intVal = Integer.parseInt(value);
+               if (intVal != PDFView.currentPage()
+                   && intVal >= 1 && intVal <= PDFView.pageCount())
+               {
+                  PDFView.goToPage(intVal);
+                  view_.getToolbarDisplay().selectPageNumber();
+                  return;
+               }
+            }
+            catch (NullPointerException ignored)
+            {
+            }
+            catch (NumberFormatException ignored)
+            {
+            }
+
+            pageNumber.setValue(PDFView.currentPage() + "", false);
          }
       });
       view_.getToolbarDisplay().getZoomIn().addClickHandler(new ClickHandler()
@@ -169,8 +191,8 @@ public class PDFViewerPresenter implements IsWidget,
 
    private void updatePageNumber()
    {
-      view_.getToolbarDisplay().getPageNumber().setValue(PDFView.currentPage(),
-                                                         false);
+      view_.getToolbarDisplay().getPageNumber().setValue(
+                                             PDFView.currentPage() + "", false);
    }
    
    public void onActivated(PDFViewerParams pdfParams)

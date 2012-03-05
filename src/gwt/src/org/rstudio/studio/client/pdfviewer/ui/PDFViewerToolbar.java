@@ -17,8 +17,12 @@ import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HasValue;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.widget.InlineToolbarButton;
+import org.rstudio.core.client.widget.NumericTextBox;
 import org.rstudio.core.client.widget.SpanLabel;
 import org.rstudio.studio.client.pdfviewer.ui.images.Resources;
 
@@ -106,7 +110,6 @@ public class PDFViewerToolbar extends Composite
    public void setPageCount(int pageCount)
    {
       pageBlock_.getStyle().clearDisplay();
-      pageSelect_.setPageCount(pageCount);
       pageCountLabel_.setText(pageCount + "");
    }
 
@@ -129,9 +132,15 @@ public class PDFViewerToolbar extends Composite
    }
 
    @Override
-   public HasValue<Integer> getPageNumber()
+   public HasValue<String> getPageNumber()
    {
-      return pageSelect_;
+      return pageNumber_;
+   }
+
+   @Override
+   public void selectPageNumber()
+   {
+      pageNumber_.selectAll();
    }
 
    @UiField
@@ -140,8 +149,6 @@ public class PDFViewerToolbar extends Composite
    InlineToolbarButton btnPrevious_;
    @UiField
    InlineToolbarButton btnNext_;
-   @UiField
-   PageNumberListBox pageSelect_;
    @UiField
    InlineToolbarButton btnThumbnails_;
    @UiField
@@ -154,4 +161,6 @@ public class PDFViewerToolbar extends Composite
    Image zoomIn_;
    @UiField
    DivElement pageBlock_;
+   @UiField
+   NumericTextBox pageNumber_;
 }

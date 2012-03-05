@@ -57,6 +57,12 @@
       }
 
       .pageNumber {
+         border: 1px solid rgb(153, 153, 153);
+         outline: none;
+         width: 30px;
+         text-align: right;
+      }
+      .pageNumber:focus {
          outline: none;
       }
 
@@ -94,8 +100,8 @@
                     style="display: none">
                   <div class="{style.inlineBlock} {style.padLeft3}">
                      Page
-                     <input class="{style.pageNumber}" type="number" id="pageNumber" onchange="PDFView.page = this.value;" value="1" size="3" min="1" />
-                     <pdfviewer:PageNumberListBox ui:field="pageSelect_" visible="false"/>
+                     <widget:NumericTextBox styleName="{style.pageNumber}"
+                                            ui:field="pageNumber_"/>
                      of <widget:SpanLabel ui:field="pageCountLabel_"/>
                   </div>
                   <widget:InlineToolbarSeparator />

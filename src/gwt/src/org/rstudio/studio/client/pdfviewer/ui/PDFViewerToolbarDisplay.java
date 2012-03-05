@@ -22,7 +22,8 @@ public interface PDFViewerToolbarDisplay
    HasClickHandlers getThumbnailsButton();
    HasClickHandlers getZoomOut();
    HasClickHandlers getZoomIn();
-   HasValue<Integer> getPageNumber();
+   HasValue<String> getPageNumber();
+   void selectPageNumber();
    void setPageCount(int pageCount);
    void setFilename(String filename);
 }

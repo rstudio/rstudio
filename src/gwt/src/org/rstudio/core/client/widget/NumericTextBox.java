@@ -13,9 +13,9 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.KeyPressEvent;
-import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.*;
 import com.google.gwt.user.client.ui.TextBox;
+import org.rstudio.core.client.command.KeyboardShortcut;
 
 public class NumericTextBox extends TextBox
 {
@@ -33,6 +33,42 @@ public class NumericTextBox extends TextBox
 
    private void init()
    {
+      addFocusHandler(new FocusHandler()
+      {
+         @Override
+         public void onFocus(FocusEvent event)
+         {
+            selectAll();
+         }
+      });
+
+      addKeyDownHandler(new KeyDownHandler()
+      {
+         @Override
+         public void onKeyDown(KeyDownEvent event)
+         {
+            int modifiers = KeyboardShortcut.getModifierValue(event.getNativeEvent());
+            if (modifiers == KeyboardShortcut.NONE
+                && (event.isUpArrow() || event.isDownArrow()))
+            {
+               event.preventDefault();
+               event.stopPropagation();
+
+               try
+               {
+                  int value = Integer.parseInt(getText());
+                  value += event.isUpArrow() ? 1 : -1;
+                  setValue(value + "", true);
+                  selectAll();
+               }
+               catch (NumberFormatException nfe)
+               {
+                  // just ignore
+               }
+            }
+         }
+      });
+
       addKeyPressHandler(new KeyPressHandler()
       {
          @Override
