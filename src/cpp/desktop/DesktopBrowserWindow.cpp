@@ -44,11 +44,11 @@ BrowserWindow::BrowserWindow(bool showToolbar,
 
    QGraphicsScene* pScene = new QGraphicsScene(this);
    pScene->addItem(pView_);
-   pGraphicsView_ = new QGraphicsView(pScene, this);
-   pGraphicsView_->setFrameShape(QFrame::NoFrame);
-   pGraphicsView_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-   pGraphicsView_->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-   setCentralWidget(pGraphicsView_);
+   QGraphicsView* pGraphicsView = new QGraphicsView(pScene, this);
+   pGraphicsView->setFrameShape(QFrame::NoFrame);
+   pGraphicsView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+   pGraphicsView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+   setCentralWidget(pGraphicsView);
 
    setUnifiedTitleAndToolBarOnMac(true);
 
