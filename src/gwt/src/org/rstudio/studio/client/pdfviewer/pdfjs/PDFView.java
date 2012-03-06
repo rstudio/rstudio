@@ -16,7 +16,6 @@ package org.rstudio.studio.client.pdfviewer.pdfjs;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PDFLoadEvent;
