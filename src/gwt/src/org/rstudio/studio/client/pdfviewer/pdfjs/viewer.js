@@ -195,7 +195,8 @@ var PDFView = {
     }
 
     var currentPage = this.pages[this.page - 1];
-    var pageWidthScale = (window.innerWidth - kScrollbarPadding) /
+    // The 200 is to account for the fixed sidebar
+    var pageWidthScale = (window.innerWidth - 200 - kScrollbarPadding) /
                           currentPage.width / kCssUnits;
     var pageHeightScale = (window.innerHeight - kScrollbarPadding) /
                            currentPage.height / kCssUnits;
