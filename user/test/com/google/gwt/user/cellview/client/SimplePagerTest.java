@@ -15,6 +15,14 @@
  */
 package com.google.gwt.user.cellview.client;
 
+import com.google.gwt.aria.client.Property;
+import com.google.gwt.aria.client.Role;
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.aria.client.State;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.user.cellview.client.SimplePager.ImageButtonsConstants;
 import com.google.gwt.view.client.HasRows;
 import com.google.gwt.view.client.MockHasData;
 
@@ -22,10 +30,35 @@ import com.google.gwt.view.client.MockHasData;
  * Tests for {@link SimplePager}.
  */
 public class SimplePagerTest extends AbstractPagerTest {
+  private ImageButtonsConstants imageButtonConstants; 
+  
+  @Override
+  protected void gwtSetUp() throws Exception {
+    super.gwtSetUp();
+    imageButtonConstants = GWT.create(ImageButtonsConstants.class);
+  }
 
+  public void testAriaAttributesAdded_firstLoad() {
+    SimplePager pager = createPager();
+    NodeList<Element> nodeList = pager.getElement().getElementsByTagName("img");
+    for (int i = 0; i < nodeList.getLength(); i++) {
+      Element imgElem = nodeList.getItem(i);
+      assertEquals(Roles.getButtonRole().getName(), imgElem.getAttribute(Role.ATTR_NAME_ROLE));
+      String label = imgElem.getAttribute(Property.LABEL.getName());
+      assertNotNull(label);
+      if (label.equals(imageButtonConstants.firstPage()) 
+          || label.equals(imageButtonConstants.prevPage()) 
+          || label.equals(imageButtonConstants.nextPage())) {
+        assertEquals("true", imgElem.getAttribute(State.DISABLED.getName()));  
+      } else {
+        assertEquals("", imgElem.getAttribute(State.DISABLED.getName()));
+      }
+    }
+  }
+  
   public void testNextButtonsDisabled() {
     SimplePager pager = createPager();
-
+    
     // Buttons are disabled by default.
     assertTrue(pager.isPreviousButtonDisabled());
     assertTrue(pager.isNextButtonDisabled());

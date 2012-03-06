@@ -15,9 +15,12 @@
  */
 package com.google.gwt.user.cellview.client;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.i18n.client.Constants;
+import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
@@ -42,6 +45,22 @@ import com.google.gwt.view.client.Range;
  * </p>
  */
 public class SimplePager extends AbstractPager {
+  /**
+   * Constant for labeling the simple pager navigational {@link ImageButton}s  
+   */
+  @DefaultLocale("en_US")
+  public interface ImageButtonsConstants extends Constants {
+    @DefaultStringValue("Fast forward")
+    String fastForward();
+    @DefaultStringValue("First page")
+    String firstPage();
+    @DefaultStringValue("Last page")
+    String lastPage();
+    @DefaultStringValue("Next page")
+    String nextPage();
+    @DefaultStringValue("Previous page")
+    String prevPage();
+  }
 
   /**
    * A ClientBundle that provides images for this widget.
@@ -153,11 +172,13 @@ public class SimplePager extends AbstractPager {
     private final String styleDisabled;
 
     public ImageButton(ImageResource resEnabled, ImageResource resDiabled,
-        String disabledStyle) {
+        String disabledStyle, String label) {
       super(resEnabled);
       this.resEnabled = resEnabled;
       this.resDisabled = resDiabled;
       this.styleDisabled = disabledStyle;
+      Roles.getButtonRole().set(getElement());
+      Roles.getButtonRole().setAriaLabelProperty(getElement(), label);
     }
 
     public boolean isDisabled() {
@@ -187,6 +208,7 @@ public class SimplePager extends AbstractPager {
         setResource(resEnabled);
         getElement().getParentElement().removeClassName(styleDisabled);
       }
+      Roles.getButtonRole().setAriaDisabledState(getElement(), disabled);
     }
   }
 
@@ -253,33 +275,35 @@ public class SimplePager extends AbstractPager {
    *          advances by a larger increment than a single page
    * @param fastForwardRows the number of rows to jump when fast forwarding
    * @param showLastPageButton if true, show a button to go the the last page
+   * @param imageButtonConstants Constants that contain the image button names
    */
   public SimplePager(TextLocation location, Resources resources,
       boolean showFastForwardButton, final int fastForwardRows,
-      boolean showLastPageButton) {
+      boolean showLastPageButton, ImageButtonsConstants imageButtonConstants) {
     this.resources = resources;
     this.fastForwardRows = fastForwardRows;
     this.style = resources.simplePagerStyle();
     this.style.ensureInjected();
-
+    
     // Create the buttons.
     String disabledStyle = style.disabledButton();
     firstPage = new ImageButton(resources.simplePagerFirstPage(),
-        resources.simplePagerFirstPageDisabled(), disabledStyle);
+        resources.simplePagerFirstPageDisabled(), disabledStyle, imageButtonConstants.firstPage());
     firstPage.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
         firstPage();
       }
     });
     nextPage = new ImageButton(resources.simplePagerNextPage(),
-        resources.simplePagerNextPageDisabled(), disabledStyle);
+        resources.simplePagerNextPageDisabled(), disabledStyle, imageButtonConstants.nextPage());
     nextPage.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
         nextPage();
       }
     });
     prevPage = new ImageButton(resources.simplePagerPreviousPage(),
-        resources.simplePagerPreviousPageDisabled(), disabledStyle);
+        resources.simplePagerPreviousPageDisabled(), disabledStyle, 
+        imageButtonConstants.prevPage());
     prevPage.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
         previousPage();
@@ -287,7 +311,7 @@ public class SimplePager extends AbstractPager {
     });
     if (showLastPageButton) {
       lastPage = new ImageButton(resources.simplePagerLastPage(),
-          resources.simplePagerLastPageDisabled(), disabledStyle);
+          resources.simplePagerLastPageDisabled(), disabledStyle, imageButtonConstants.lastPage());
       lastPage.addClickHandler(new ClickHandler() {
         public void onClick(ClickEvent event) {
           lastPage();
@@ -298,7 +322,8 @@ public class SimplePager extends AbstractPager {
     }
     if (showFastForwardButton) {
       fastForward = new ImageButton(resources.simplePagerFastForward(),
-          resources.simplePagerFastForwardDisabled(), disabledStyle);
+          resources.simplePagerFastForwardDisabled(), disabledStyle, 
+          imageButtonConstants.fastForward());
       fastForward.addClickHandler(new ClickHandler() {
         public void onClick(ClickEvent event) {
           setPage(getPage() + getFastForwardPages());
@@ -346,7 +371,24 @@ public class SimplePager extends AbstractPager {
     // Disable the buttons by default.
     setDisplay(null);
   }
-
+  
+  /**
+   * Construct a {@link SimplePager} with the specified resources and default image button names.
+   * 
+   * @param location the location of the text relative to the buttons
+   * @param resources the {@link Resources} to use
+   * @param showFastForwardButton if true, show a fast-forward button that
+   *          advances by a larger increment than a single page
+   * @param fastForwardRows the number of rows to jump when fast forwarding
+   * @param showLastPageButton if true, show a button to go the the last page
+   */
+  public SimplePager(TextLocation location, Resources resources,
+      boolean showFastForwardButton, final int fastForwardRows,
+      boolean showLastPageButton) {
+    this(location, resources, showFastForwardButton, fastForwardRows, showLastPageButton,
+        GWT.<ImageButtonsConstants>create(ImageButtonsConstants.class));
+  }
+  
   @Override
   public void firstPage() {
     super.firstPage();
