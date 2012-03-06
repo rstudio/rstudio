@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.Duration;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
@@ -101,6 +102,9 @@ public class SplitLayoutPanel extends DockLayoutPanel {
     private int minSize;
 
     private double centerSize, syncedCenterSize;
+    
+    private boolean toggleDisplayAllowed = false;
+    private double lastClick = 0;
 
     public Splitter(Widget target, boolean reverse) {
       this.target = target;
@@ -138,6 +142,29 @@ public class SplitLayoutPanel extends DockLayoutPanel {
           mouseDown = false;
 
           glassElem.removeFromParent();
+          
+          // Handle double-clicks.
+          // Fake them since the double-click event aren't fired.
+          if (this.toggleDisplayAllowed) {
+            double now = Duration.currentTimeMillis();
+            if (now - this.lastClick < DOUBLE_CLICK_TIMEOUT) {
+              now = 0;
+              LayoutData layout = (LayoutData) target.getLayoutData();
+              if (layout.size == 0) {
+                // Restore the old size.
+                setAssociatedWidgetSize(layout.oldSize);
+              } else {
+                /*
+                 * Collapse to size 0. We change the size instead of hiding the
+                 * widget because hiding the widget can cause issues if the
+                 * widget contains a flash component.
+                 */
+                layout.oldSize = layout.size;
+                setAssociatedWidgetSize(0);
+              }
+            }
+            this.lastClick = now;
+          }
 
           Event.releaseCapture(getElement());
           event.preventDefault();
@@ -152,6 +179,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
             } else {
               size = getEventPosition(event) - getTargetPosition() - offset;
             }
+            ((LayoutData) target.getLayoutData()).hidden = false;
             setAssociatedWidgetSize(size);
             event.preventDefault();
           }
@@ -166,6 +194,10 @@ public class SplitLayoutPanel extends DockLayoutPanel {
       // Try resetting the associated widget's size, which will enforce the new
       // minSize value.
       setAssociatedWidgetSize((int) layout.size);
+    }
+    
+    public void setToggleDisplayAllowed(boolean allowed) {
+      this.toggleDisplayAllowed = allowed;
     }
 
     protected abstract int getAbsolutePosition();
@@ -215,6 +247,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
       // mouse events before layout/paint occurs, we'll only update once.
       if (layoutCommand == null) {
         layoutCommand = new Command() {
+          @Override
           public void execute() {
             layoutCommand = null;
             forceLayout();
@@ -259,6 +292,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
   }
 
   private static final int DEFAULT_SPLITTER_SIZE = 8;
+  private static final int DOUBLE_CLICK_TIMEOUT = 500;
 
   /**
    * The element that masks the screen so we can catch mouse events over
@@ -356,6 +390,22 @@ public class SplitLayoutPanel extends DockLayoutPanel {
     // The splitter is null for the center element.
     if (splitter != null) {
       splitter.setMinSize(minSize);
+    }
+  }
+  
+  /**
+   * Sets whether or not double-clicking on the splitter should toggle the
+   * display of the widget.
+   * 
+   * @param child the child whose display toggling will be allowed or not.
+   * @param allowed whether or not display toggling is allowed for this widget
+   */
+  public void setWidgetToggleDisplayAllowed(Widget child, boolean allowed) {
+    assertIsChild(child);
+    Splitter splitter = getAssociatedSplitter(child);
+    // The splitter is null for the center element.
+    if (splitter != null) {
+      splitter.setToggleDisplayAllowed(allowed);
     }
   }
 

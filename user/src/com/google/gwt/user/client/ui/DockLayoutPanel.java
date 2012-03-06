@@ -396,6 +396,24 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
 
     return removed;
   }
+  
+  /**
+   * Sets whether or not the given widget should be hidden.
+   * 
+   * @param widget the widget to hide or display
+   * @param hidden true to hide the widget, false to display it
+   */
+  public void setWidgetHidden(Widget widget, boolean hidden) {
+    assertIsChild(widget);
+    
+    LayoutData data = (LayoutData) widget.getLayoutData();
+    if (data.hidden == hidden) {
+      return;
+    }
+    
+    data.hidden = hidden;
+    animate(0);
+  }
 
   /**
    * Updates the size of the widget passed in as long as it is not the center
@@ -532,6 +550,11 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
       LayoutData data = (LayoutData) child.getLayoutData();
       Layer layer = data.layer;
 
+      if (data.hidden) {
+        layer.setVisible(false);
+        continue;
+      }
+
       switch (getResolvedDirection(data.direction)) {
         case NORTH:
           layer.setLeftRight(left, unit, right, unit);
@@ -562,6 +585,9 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
           layer.setTopBottom(top, unit, bottom, unit);
           break;
       }
+
+      // First set the size, then ensure it's visible
+      layer.setVisible(true);
     }
 
     filledWidth = left + right;
