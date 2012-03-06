@@ -13,9 +13,13 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
@@ -25,7 +29,10 @@ import com.google.gwt.uibinder.client.UiConstructor;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
+
 import org.rstudio.core.client.StringUtil;
 
 public class InlineToolbarButton extends Composite
@@ -59,6 +66,64 @@ public class InlineToolbarButton extends Composite
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
       setTitle(description);
+   }
+   
+   public void setMenu(final ToolbarPopupMenu menu)
+   {
+      /*
+       * We want clicks on this button to toggle the visibility of the menu,
+       * as well as having the menu auto-hide itself as it normally does.
+       * It's necessary to manually track the visibility (menuShowing) because
+       * in the case where the menu is showing, clicking on this button first
+       * causes the menu to auto-hide and then our mouseDown handler is called
+       * (so we can't rely on menu.isShowing(), it'll always be false by the
+       * time you get into the mousedown handler).
+       */
+
+      final boolean[] menuShowing = new boolean[1];
+
+      addDomHandler(new MouseDownHandler()
+      {
+         public void onMouseDown(MouseDownEvent event)
+         {
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (menuShowing[0])
+            {
+               menu.hide();
+            }
+            else
+            {
+               menu.setPopupPositionAndShow(new PositionCallback() {
+                  @Override
+                  public void setPosition(int offsetWidth, int offsetHeight)
+                  {
+                     menu.setPopupPosition(
+                        InlineToolbarButton.this.getAbsoluteLeft(), 
+                        InlineToolbarButton.this.getAbsoluteTop() +
+                        InlineToolbarButton.this.getOffsetHeight() + 
+                        8 /* toolbar area under botton */);
+                  } 
+               });
+            }
+            menuShowing[0] = true;
+         }
+      }, MouseDownEvent.getType());
+
+      menu.addCloseHandler(new CloseHandler<PopupPanel>()
+      {
+         public void onClose(CloseEvent<PopupPanel> popupPanelCloseEvent)
+         {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               public void execute()
+               {
+                  menuShowing[0] = false;               
+               }
+            });
+         }
+      });
    }
 
 

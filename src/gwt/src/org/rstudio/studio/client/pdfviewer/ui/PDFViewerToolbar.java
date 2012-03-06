@@ -22,6 +22,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.InlineToolbarButton;
 import org.rstudio.core.client.widget.NumericTextBox;
 import org.rstudio.core.client.widget.SpanLabel;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.pdfviewer.ui.images.Resources;
 
 public class PDFViewerToolbar extends Composite
@@ -139,6 +140,12 @@ public class PDFViewerToolbar extends Composite
    public void selectPageNumber()
    {
       pageNumber_.selectAll();
+   }
+   
+   @Override
+   public void setActionsMenu(ToolbarPopupMenu menu)
+   {
+      btnActions_.setMenu(menu);
    }
 
    @UiField
