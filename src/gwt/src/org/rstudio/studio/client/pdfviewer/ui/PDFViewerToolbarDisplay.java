@@ -12,13 +12,13 @@
  */
 package org.rstudio.studio.client.pdfviewer.ui;
 
+import org.rstudio.core.client.files.FileSystemItem;
+
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.ui.HasValue;
 
 public interface PDFViewerToolbarDisplay
 {
-   HasClickHandlers getFileIcon();
-   HasClickHandlers getFilenameLabel();
    HasClickHandlers getPrevButton();
    HasClickHandlers getNextButton();
    HasClickHandlers getThumbnailsButton();
@@ -27,5 +27,5 @@ public interface PDFViewerToolbarDisplay
    HasValue<String> getPageNumber();
    void selectPageNumber();
    void setPageCount(int pageCount);
-   void setFilename(String filename);
+   void setPdfFile(FileSystemItem pdfFile);
 }

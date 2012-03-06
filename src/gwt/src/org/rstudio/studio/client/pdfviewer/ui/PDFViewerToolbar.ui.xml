@@ -51,11 +51,6 @@
          color: #838994;
          margin-right: 20px;
          text-decoration: none;
-         cursor: pointer;
-      }
-
-      .filename:hover {
-         text-decoration: underline;
       }
 
       .inlineBlock {
@@ -99,12 +94,10 @@
                   </widget:child>
                </widget:ZeroHeightPanel>
                <g:Anchor ui:field="filename_" styleName="{style.filename}" />
-               <widget:ZeroHeightPanel yOffset="4" height="18" width="20" visible="false">
-                  <widget:child>
-                     <g:Image resource="{res.fileOptionsIcon}" ui:field="fileOptions_"/>
-                     <!-- TODO: This should be a menu -->
-                  </widget:child>
-               </widget:ZeroHeightPanel>
+               <widget:InlineToolbarButton ui:field="btnActions_"
+                                           icon="{res.fileActionsIcon}"
+                                           label=""
+                                           description=""/>
             </td>
             <td class="{style.alignCell}" align="center" nowrap="nowrap" style="min-width: 400px">
                <widget:InlineToolbarButton ui:field="btnPrevious_"

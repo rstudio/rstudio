@@ -17,6 +17,8 @@ import com.google.gwt.event.dom.client.*;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
+
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.InlineToolbarButton;
 import org.rstudio.core.client.widget.NumericTextBox;
 import org.rstudio.core.client.widget.SpanLabel;
@@ -85,18 +87,6 @@ public class PDFViewerToolbar extends Composite
    }
 
    @Override
-   public HasClickHandlers getFileIcon()
-   {
-      return fileIcon_;
-   }
-
-   @Override
-   public HasClickHandlers getFilenameLabel()
-   {
-      return filename_;
-   }
-
-   @Override
    public HasClickHandlers getPrevButton()
    {
       return btnPrevious_;
@@ -121,9 +111,10 @@ public class PDFViewerToolbar extends Composite
    }
 
    @Override
-   public void setFilename(String filename)
+   public void setPdfFile(FileSystemItem pdfFile)
    {
-      filename_.setText(filename);
+      filename_.setText(pdfFile.getName());
+      filename_.setTitle(pdfFile.getPath());
    }
 
    @Override
@@ -151,7 +142,7 @@ public class PDFViewerToolbar extends Composite
    }
 
    @UiField
-   Image fileOptions_;
+   InlineToolbarButton btnActions_;
    @UiField
    InlineToolbarButton btnPrevious_;
    @UiField

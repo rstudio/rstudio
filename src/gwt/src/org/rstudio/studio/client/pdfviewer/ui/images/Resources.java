@@ -17,8 +17,8 @@ import com.google.gwt.resources.client.ImageResource;
 
 public interface Resources extends ClientBundle
 {
-   @Source("FileOptionsIcon.png")
-   ImageResource fileOptionsIcon();
+   @Source("FileActionsIcon.png")
+   ImageResource fileActionsIcon();
 
    @Source("NextPageIcon.png")
    ImageResource nextPageIcon();

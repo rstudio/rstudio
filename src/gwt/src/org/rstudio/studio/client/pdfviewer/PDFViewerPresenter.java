@@ -172,9 +172,6 @@ public class PDFViewerPresenter implements IsWidget,
          }
       });
 
-      toolbar.getFileIcon().addClickHandler(commands.showPdfExternal());
-      toolbar.getFilenameLabel().addClickHandler(commands.showPdfExternal());
-
       releaseOnDismiss_.add(PDFView.addPageChangeHandler(new PageChangeEvent.Handler()
       {
          @Override
@@ -218,8 +215,8 @@ public class PDFViewerPresenter implements IsWidget,
    @Override
    public void onCompilePdfStarted(CompilePdfStartedEvent event)
    {
-      view_.getToolbarDisplay().setFilename(
-                         FileSystemItem.getNameFromPath(event.getTargetFile()));
+      view_.getToolbarDisplay().setPdfFile(
+                        FileSystemItem.createFile(event.getPdfPath()));
 
       updateState(true);
       
