@@ -20,10 +20,11 @@
 #include <QLineEdit>
 
 #include "DesktopWebView.hpp"
+#include "DesktopGwtCallbackOwner.hpp"
 
 namespace desktop {
 
-class BrowserWindow : public QMainWindow
+class BrowserWindow : public QMainWindow, public GwtCallbackOwner
 {
     Q_OBJECT
 public:
@@ -43,6 +44,12 @@ protected slots:
 
 protected:
      void avoidMoveCursorIfNecessary();
+
+     // implement GwtCallbackOwner
+     virtual QWidget* asWidget();
+     virtual WebPage* webPage();
+     virtual void postWebViewEvent(QEvent *event);
+     virtual void triggerPageAction(QWebPage::WebAction action);
 
 protected:
      WebView* pView_;

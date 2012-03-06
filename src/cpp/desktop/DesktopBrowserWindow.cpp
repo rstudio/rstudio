@@ -90,4 +90,24 @@ void BrowserWindow::avoidMoveCursorIfNecessary()
 #endif
 }
 
+QWidget* BrowserWindow::asWidget()
+{
+   return this;
+}
+
+WebPage* BrowserWindow::webPage()
+{
+   return webView()->webPage();
+}
+
+void BrowserWindow::postWebViewEvent(QEvent *keyEvent)
+{
+   QCoreApplication::postEvent(webView(), keyEvent);
+}
+
+void BrowserWindow::triggerPageAction(QWebPage::WebAction action)
+{
+   webView()->triggerPageAction(action);
+}
+
 } // namespace desktop

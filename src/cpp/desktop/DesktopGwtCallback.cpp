@@ -146,11 +146,11 @@ QString GwtCallback::getOpenFileName(const QString& caption,
                                     const QString& filter)
 {
    QString resolvedDir = resolveAliasedPath(dir);
-   QString result = QFileDialog::getOpenFileName(pOwnerWindow_,
+   QString result = QFileDialog::getOpenFileName(pOwner_->asWidget(),
                                                  caption,
                                                  resolvedDir,
                                                  filter);
-   webView()->page()->mainFrame()->setFocus();
+   pOwner_->webPage()->mainFrame()->setFocus();
    return createAliasedPath(result);
 }
 
@@ -163,8 +163,8 @@ QString GwtCallback::getSaveFileName(const QString& caption,
 
    while (true)
    {
-      QString result = QFileDialog::getSaveFileName(pOwnerWindow_, caption, resolvedDir);
-      webView()->page()->mainFrame()->setFocus();
+      QString result = QFileDialog::getSaveFileName(pOwner_->asWidget(), caption, resolvedDir);
+      pOwner_->webPage()->mainFrame()->setFocus();
       if (result.isEmpty())
          return result;
 
@@ -181,7 +181,8 @@ QString GwtCallback::getSaveFileName(const QString& caption,
             {
                std::string message = "\"" + newExtPath.filename() + "\" already "
                                      "exists. Do you want to overwrite it?";
-               if (QMessageBox::Cancel == QMessageBox::warning(pOwnerWindow_,
+               if (QMessageBox::Cancel == QMessageBox::warning(
+                                        pOwner_->asWidget(),
                                         QString::fromUtf8("Save File"),
                                         QString::fromUtf8(message.c_str()),
                                         QMessageBox::Ok | QMessageBox::Cancel,
@@ -226,13 +227,13 @@ QString GwtCallback::getExistingDirectory(const QString& caption,
    }
    else
    {
-      result = QFileDialog::getExistingDirectory(pOwnerWindow_, caption, resolvedDir);
+      result = QFileDialog::getExistingDirectory(pOwner_->asWidget(), caption, resolvedDir);
    }
 #else
-   result = QFileDialog::getExistingDirectory(pOwnerWindow_, caption, resolvedDir);
+   result = QFileDialog::getExistingDirectory(pOwner_->asWidget(), caption, resolvedDir);
 #endif
 
-   webView()->page()->mainFrame()->setFocus();
+   pOwner_->webPage()->mainFrame()->setFocus();
    return createAliasedPath(result);
 }
 
@@ -249,12 +250,7 @@ void GwtCallback::doAction(QKeySequence::StandardKey key)
    keyCode &= ~Qt::KeyboardModifierMask;
 
    QKeyEvent* keyEvent = new QKeyEvent(QKeyEvent::KeyPress, keyCode, modifiers);
-   QCoreApplication::postEvent(webView(), keyEvent);
-}
-
-QWebView* GwtCallback::webView()
-{
-   return pOwnerWindow_->webView();
+   pOwner_->postWebViewEvent(keyEvent);
 }
 
 void GwtCallback::undo()
@@ -395,20 +391,20 @@ void GwtCallback::prepareForSatelliteWindow(QString name,
                                             int width,
                                             int height)
 {
-   pOwnerWindow_->webView()->prepareForSatelliteWindow(
+   pOwner_->webPage()->prepareForSatelliteWindow(
                 PendingSatelliteWindow(name, pMainWindow_, width, height));
 }
 
 void GwtCallback::activateSatelliteWindow(QString name)
 {
-   pOwnerWindow_->webView()->activateSatelliteWindow(name);
+   pOwner_->webPage()->activateSatelliteWindow(name);
 }
 
 void GwtCallback::copyImageToClipboard(int left, int top, int width, int height)
 {
-   pOwnerWindow_->webView()->page()->updatePositionDependentActions(
+   pOwner_->webPage()->updatePositionDependentActions(
          QPoint(left + (width/2), top + (height/2)));
-   pOwnerWindow_->webView()->triggerPageAction(QWebPage::CopyImageToClipboard);
+   pOwner_->triggerPageAction(QWebPage::CopyImageToClipboard);
 }
 
 bool GwtCallback::supportsClipboardMetafile()
@@ -451,7 +447,7 @@ int GwtCallback::showMessageBox(int type,
                        caption,
                        message,
                        QMessageBox::NoButton,
-                       pOwnerWindow_,
+                       pOwner_->asWidget(),
                        Qt::Dialog | Qt::Sheet);
    msgBox.setWindowModality(Qt::WindowModal);
    msgBox.setTextFormat(Qt::PlainText);
@@ -489,7 +485,7 @@ QVariant GwtCallback::promptForText(QString title,
                                    int selectionStart,
                                    int selectionLength)
 {
-   InputDialog dialog(pOwnerWindow_);
+   InputDialog dialog(pOwner_->asWidget());
    dialog.setWindowTitle(title);
    dialog.setCaption(caption);
 
@@ -506,9 +502,9 @@ QVariant GwtCallback::promptForText(QString title,
    {
       // password prompts are shown higher up (because they relate to
       // console progress dialogs which are at the top of the screen)
-      QRect parentGeom = pOwnerWindow_->geometry();
+      QRect parentGeom = pOwner_->asWidget()->geometry();
       int x = parentGeom.left() + (parentGeom.width() / 2) - (dialog.width() / 2);
-      dialog.move(x, pOwnerWindow_->geometry().top() + 75);
+      dialog.move(x, parentGeom.top() + 75);
    }
 
    if (numbersOnly)
@@ -547,7 +543,7 @@ void GwtCallback::checkForUpdates()
 void GwtCallback::showAboutDialog()
 {
    // WA_DeleteOnClose
-   AboutDialog* about = new AboutDialog(pOwnerWindow_);
+   AboutDialog* about = new AboutDialog(pOwner_->asWidget());
    about->setAttribute(Qt::WA_DeleteOnClose);
    about->show();
 }

@@ -17,6 +17,8 @@
 #include <QObject>
 #include <QtWebKit>
 
+#include "DesktopGwtCallbackOwner.hpp"
+
 namespace desktop {
 
 class MainWindow;
@@ -29,9 +31,9 @@ class GwtCallback : public QObject
    Q_PROPERTY(QString fixedWidthFont READ fixedWidthFont)
 
 public:
-   GwtCallback(MainWindow* pMainWindow, BrowserWindow* pOwnerWindow)
+   GwtCallback(MainWindow* pMainWindow, GwtCallbackOwner* pOwner)
       : pMainWindow_(pMainWindow),
-        pOwnerWindow_(pOwnerWindow),
+        pOwner_(pOwner),
         switchToProjectPending_(false)
    {
    }
@@ -118,9 +120,8 @@ public slots:
 
 private:
    void doAction(QKeySequence::StandardKey key);
-   QWebView* webView();
    MainWindow* pMainWindow_;
-   BrowserWindow* pOwnerWindow_;
+   GwtCallbackOwner* pOwner_;
    bool switchToProjectPending_;
 
 };
