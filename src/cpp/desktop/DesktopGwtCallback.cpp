@@ -211,7 +211,7 @@ QString GwtCallback::getExistingDirectory(const QString& caption,
       // Bug
       wchar_t szDir[MAX_PATH];
       BROWSEINFOW bi;
-      bi.hwndOwner = pOwnerWindow_->winId();
+      bi.hwndOwner = pOwner_->asWidget()->winId();
       bi.pidlRoot = NULL;
       bi.pszDisplayName = szDir;
       bi.lpszTitle = L"Select a folder:";
@@ -340,7 +340,7 @@ QString GwtCallback::getRVersion()
 QString GwtCallback::chooseRVersion()
 {
 #ifdef Q_OS_WIN32
-   RVersion rVersion = desktop::detectRVersion(true, pOwnerWindow_);
+   RVersion rVersion = desktop::detectRVersion(true, pOwner_->asWidget());
    if (rVersion.isValid())
       return getRVersion();
    else
