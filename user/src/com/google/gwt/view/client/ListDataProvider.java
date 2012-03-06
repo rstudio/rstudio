@@ -28,12 +28,23 @@ import java.util.NoSuchElementException;
 /**
  * A concrete subclass of {@link AbstractDataProvider} that is backed by an
  * in-memory list.
- *
+ * 
  * <p>
- * <h3>Example</h3>
- * {@example com.google.gwt.examples.view.ListDataProviderExample}
+ * Modifications (inserts, removes, sets, etc.) to the list returned by
+ * {@link #getList()} will be reflected in the model. However, mutations to the
+ * items contained within the list will NOT be reflected in the model. You must
+ * call {@link List#set(int, Object)} to update the item within the list and
+ * push the change to the display, or call {@link #refresh()} to push all rows
+ * to the displays. {@link List#set(int, Object)} performs better because it
+ * allows the data provider to push only those rows which have changed, and
+ * usually allows the display to re-render only a subset of the rows.
  * </p>
- *
+ * 
+ * <p>
+ * <h3>Example</h3> {@example
+ * com.google.gwt.examples.view.ListDataProviderExample}
+ * </p>
+ * 
  * @param <T> the data type of the list
  */
 public class ListDataProvider<T> extends AbstractDataProvider<T> {
@@ -79,6 +90,7 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
         i = start;
       }
 
+      @Override
       public void add(T o) {
         if (last < 0) {
           throw new IllegalStateException(IMPERMEABLE_EXCEPTION);
@@ -87,14 +99,17 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
         last = -1;
       }
 
+      @Override
       public boolean hasNext() {
         return i < ListWrapper.this.size();
       }
 
+      @Override
       public boolean hasPrevious() {
         return i > 0;
       }
 
+      @Override
       public T next() {
         if (!hasNext()) {
           throw new NoSuchElementException();
@@ -102,10 +117,12 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
         return ListWrapper.this.get(last = i++);
       }
 
+      @Override
       public int nextIndex() {
         return i;
       }
 
+      @Override
       public T previous() {
         if (!hasPrevious()) {
           throw new NoSuchElementException();
@@ -113,10 +130,12 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
         return ListWrapper.this.get(last = --i);
       }
 
+      @Override
       public int previousIndex() {
         return i - 1;
       }
 
+      @Override
       public void remove() {
         if (last < 0) {
           throw new IllegalStateException(IMPERMEABLE_EXCEPTION);
@@ -126,6 +145,7 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
         last = -1;
       }
 
+      @Override
       public void set(T o) {
         if (last == -1) {
           throw new IllegalStateException();
@@ -155,6 +175,7 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
      * replace all of the data without forcing the display back to page 0.
      */
     private ScheduledCommand flushCommand = new ScheduledCommand() {
+      @Override
       public void execute() {
         flushPending = false;
         if (flushCancelled) {
@@ -216,6 +237,7 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
       this.offset = offset;
     }
 
+    @Override
     public void add(int index, T element) {
       try {
         list.add(index, element);
@@ -228,6 +250,7 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
       }
     }
 
+    @Override
     public boolean add(T e) {
       boolean toRet = list.add(e);
       minModified = Math.min(minModified, size() - 1);
@@ -237,6 +260,7 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
       return toRet;
     }
 
+    @Override
     public boolean addAll(Collection<? extends T> c) {
       minModified = Math.min(minModified, size());
       boolean toRet = list.addAll(c);
@@ -246,6 +270,7 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
       return toRet;
     }
 
+    @Override
     public boolean addAll(int index, Collection<? extends T> c) {
       try {
         boolean toRet = list.addAll(index, c);
@@ -259,6 +284,7 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
       }
     }
 
+    @Override
     public void clear() {
       list.clear();
       minModified = maxModified = 0;
@@ -266,10 +292,12 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
       flush();
     }
 
+    @Override
     public boolean contains(Object o) {
       return list.contains(o);
     }
 
+    @Override
     public boolean containsAll(Collection<?> c) {
       return list.containsAll(c);
     }
@@ -279,6 +307,7 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
       return list.equals(o);
     }
 
+    @Override
     public T get(int index) {
       return list.get(index);
     }
@@ -288,30 +317,37 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
       return list.hashCode();
     }
 
+    @Override
     public int indexOf(Object o) {
       return list.indexOf(o);
     }
 
+    @Override
     public boolean isEmpty() {
       return list.isEmpty();
     }
 
+    @Override
     public Iterator<T> iterator() {
       return listIterator();
     }
 
+    @Override
     public int lastIndexOf(Object o) {
       return list.lastIndexOf(o);
     }
 
+    @Override
     public ListIterator<T> listIterator() {
       return new WrappedListIterator();
     }
 
+    @Override
     public ListIterator<T> listIterator(int index) {
       return new WrappedListIterator(index);
     }
 
+    @Override
     public T remove(int index) {
       try {
         T toRet = list.remove(index);
@@ -325,6 +361,7 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
       }
     }
 
+    @Override
     public boolean remove(Object o) {
       int index = indexOf(o);
       if (index == -1) {
@@ -334,6 +371,7 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
       return true;
     }
 
+    @Override
     public boolean removeAll(Collection<?> c) {
       boolean toRet = list.removeAll(c);
       minModified = 0;
@@ -343,6 +381,7 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
       return toRet;
     }
 
+    @Override
     public boolean retainAll(Collection<?> c) {
       boolean toRet = list.retainAll(c);
       minModified = 0;
@@ -352,6 +391,7 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
       return toRet;
     }
 
+    @Override
     public T set(int index, T element) {
       T toRet = list.set(index, element);
       minModified = Math.min(minModified, index);
@@ -361,18 +401,22 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
       return toRet;
     }
 
+    @Override
     public int size() {
       return list.size();
     }
 
+    @Override
     public List<T> subList(int fromIndex, int toIndex) {
       return new ListWrapper(list.subList(fromIndex, toIndex), this, fromIndex);
     }
 
+    @Override
     public Object[] toArray() {
       return list.toArray();
     }
 
+    @Override
     public <C> C[] toArray(C[] a) {
       return list.toArray(a);
     }
@@ -441,8 +485,12 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
   }
 
   /**
-   * Creates a list model that wraps the given list. Changes to the
-   * wrapped list must be made via this model in order to be correctly applied
+   * Creates a list model that wraps the given list.
+   * 
+   * <p>
+   * The wrapped list should no longer be modified as the data provider cannot
+   * detect changes to the wrapped list. Instead, call {@link #getList()} to
+   * retrieve a wrapper that can be modified and will correctly forward changes
    * to displays.
    * 
    * @param listToWrap the List to be wrapped
@@ -462,8 +510,12 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
   }
 
   /**
-   * Creates a list model that wraps the given list. Changes to the
-   * wrapped list must be made via this model in order to be correctly applied
+   * Creates a list model that wraps the given list.
+   * 
+   * <p>
+   * The wrapped list should no longer be modified as the data provider cannot
+   * detect changes to the wrapped list. Instead, call {@link #getList()} to
+   * retrieve a wrapper that can be modified and will correctly forward changes
    * to displays.
    * 
    * @param listToWrap the List to be wrapped
@@ -490,9 +542,18 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
   /**
    * Get the list that backs this model. Changes to the list will be reflected
    * in the model.
-   *
+   * 
+   * <p>
+   * NOTE: Mutations to the items contained within the list will NOT be
+   * reflected in the model. You must call {@link List#set(int, Object)} to
+   * update the item within the list and push the change to the display, or call
+   * {@link #refresh()} to push all rows to the displays.
+   * {@link List#set(int, Object)} performs better because it allows the data
+   * provider to push only those rows which have changed, and usually allows the
+   * display to re-render only a subset of the rows.
+   * 
    * @return the list
-   *
+   * 
    * @see #setList(List)
    */
   public List<T> getList() {
@@ -501,16 +562,33 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
 
   /**
    * Refresh all of the displays listening to this adapter.
+   * 
+   * <p>
+   * Use {@link #refresh()} to push mutations to the underlying data items
+   * contained within the list. The data provider cannot detect changes to data
+   * objects within the list, so you must call this method if you modify items.
+   * 
+   * <p>
+   * This is a shortcut for calling {@link List#set(int, Object)} on every item
+   * that you modify, but note that calling {@link List#set(int, Object)}
+   * performs better because the data provider knows which rows were modified
+   * and can push only the modified rows the the displays.
    */
   public void refresh() {
     updateRowData(0, listWrapper);
   }
 
   /**
-   * Replace this model's list.
-   *
+   * Replace this model's list with the specified list.
+   * 
+   * <p>
+   * The wrapped list should no longer be modified as the data provider cannot
+   * detect changes to the wrapped list. Instead, call {@link #getList()} to
+   * retrieve a wrapper that can be modified and will correctly forward changes
+   * to displays.
+   * 
    * @param listToWrap the model's new list
-   *
+   * 
    * @see #getList()
    */
   public void setList(List<T> listToWrap) {
