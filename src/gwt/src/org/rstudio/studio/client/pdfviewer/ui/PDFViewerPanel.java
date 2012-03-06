@@ -64,14 +64,14 @@ public class PDFViewerPanel extends Composite
    public void updateSelectedPage(int pageNumber)
    {
       if (selectedPageLabel_ != null)
-         selectedPageLabel_.removeAttribute("selected");
+         selectedPageLabel_.removeClassName("selected");
 
       selectedPageLabel_ =
                    Document.get().getElementById("thumbnailLabel" + pageNumber);
 
       if (selectedPageLabel_ != null)
       {
-         selectedPageLabel_.setAttribute("selected", "selected");
+         selectedPageLabel_.addClassName("selected");
 
          Element scroller = Document.get().getElementById("sidebarScrollView");
          Element page =

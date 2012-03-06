@@ -177,7 +177,7 @@ body.nosidebar #sidebar {
   margin-bottom: 12px;
   text-shadow: 1px 1px 1px #000;
 }
-.thumbnailLabelContainer[selected] .thumbnailLabel {
+.thumbnailLabelContainer.selected .thumbnailLabel {
   background-color: #AAA;
   border-radius: 10px;
   padding: 1px 7px;
