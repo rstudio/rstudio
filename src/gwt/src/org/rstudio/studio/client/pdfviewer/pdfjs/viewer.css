@@ -170,17 +170,17 @@ body.nosidebar #sidebar {
 }
 
 .thumbnailLabelContainer {
-  font-size: 10px;
-  font-weight: bold;
+  font-size: 11px;
   text-align: center;
-  color: white;
+  color: #444;
+  margin-top: 7px;
   margin-bottom: 12px;
-  text-shadow: 1px 1px 1px #000;
 }
 .thumbnailLabelContainer.selected .thumbnailLabel {
-  background-color: #AAA;
+  background-color: #1a7ad8;
   border-radius: 10px;
   padding: 1px 7px;
+  color: white;
 }
 
 #outlineScrollView {
