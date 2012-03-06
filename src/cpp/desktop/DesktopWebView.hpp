@@ -71,19 +71,15 @@ protected:
    QString promptForFilename(const QNetworkRequest& request,
                              QNetworkReply* pReply);
    void keyPressEvent(QKeyEvent* pEv);
-   void wheelEvent (QWheelEvent* event);
 
 protected slots:
    void downloadRequested(const QNetworkRequest&);
    void unsupportedContent(QNetworkReply*);
    void openFile(QString file);
-   void mouseWheelTimerFired();
 
 private:
    PendingSatelliteWindow pendingSatelliteWindow_;
    QUrl baseUrl_;
-   QTimer* pMouseWheelTimer_;
-   QList<QWheelEvent> mouseWheelEvents_;
    WebPage* pWebPage_;
 };
 
