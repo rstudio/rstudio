@@ -42,6 +42,7 @@ public class CellWidgetTest extends GWTTestCase {
 
     private String lastEventValue;
     private Object lastEventKey;
+    private String lastRenderedValue = "never_rendered";
 
     public CustomCell() {
       super("change");
@@ -57,6 +58,11 @@ public class CellWidgetTest extends GWTTestCase {
       lastEventValue = null;
     }
 
+    public void assertLastRenderedValue(String expected) {
+      assertEquals(expected, lastRenderedValue);
+      lastRenderedValue = null;
+    }
+
     @Override
     public void onBrowserEvent(Context context, Element parent, String value, NativeEvent event,
         ValueUpdater<String> valueUpdater) {
@@ -69,6 +75,7 @@ public class CellWidgetTest extends GWTTestCase {
 
     @Override
     public void render(Context context, String value, SafeHtmlBuilder sb) {
+      lastRenderedValue = value;
       if (value != null) {
         sb.appendEscaped(value);
       }
@@ -96,6 +103,7 @@ public class CellWidgetTest extends GWTTestCase {
       onValueChangeCalled = false;
     }
 
+    @Override
     public void onValueChange(ValueChangeEvent<C> event) {
       assertFalse("ValueChangeEvent fired twice", onValueChangeCalled);
       onValueChangeCalled = true;
@@ -106,6 +114,16 @@ public class CellWidgetTest extends GWTTestCase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.cellview.CellView";
+  }
+
+  /**
+   * Tests that the cell widget will render correctly with an initial value of null.
+   */
+  public void testInitialValueNull() {
+    CustomCell cell = new CustomCell();
+    CellWidget<String> cw = new CellWidget<String>(cell);
+    assertNull(cw.getValue());
+    cell.assertLastRenderedValue(null);
   }
 
   public void testOnBrowserEvent() {
@@ -122,6 +140,7 @@ public class CellWidgetTest extends GWTTestCase {
 
   public void testOnBrowserEventWithKeyProvider() {
     ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
+      @Override
       public Object getKey(String item) {
         // Return the first character as the key.
         return (item == null) ? null : item.substring(0, 1);
@@ -165,8 +184,10 @@ public class CellWidgetTest extends GWTTestCase {
       @Override
       public void render(com.google.gwt.cell.client.Cell.Context context, String value,
           SafeHtmlBuilder sb) {
-        sb.appendHtmlConstant("<div>").appendEscaped(value).appendHtmlConstant("</div>");
-        sb.appendHtmlConstant("<div>child2</div>");
+        if (value != null) {
+          sb.appendHtmlConstant("<div>").appendEscaped(value).appendHtmlConstant("</div>");
+          sb.appendHtmlConstant("<div>child2</div>");
+        }
       }
     };
     CellWidget<String> cw = new CellWidget<String>(cell);
@@ -225,11 +246,13 @@ public class CellWidgetTest extends GWTTestCase {
     // Check the intial value.
     assertEquals("initial", cw.getValue());
     assertEquals("initial", cw.getElement().getInnerText());
+    cell.assertLastRenderedValue("initial");
 
     // Set value without firing events.
     cw.setValue("test0");
     assertEquals("test0", cw.getValue());
     assertEquals("test0", cw.getElement().getInnerText());
+    cell.assertLastRenderedValue("test0");
     handler.assertOnValueChangeNotCalled();
 
     // Set value to the existing value, shouldn't fire events.
@@ -240,6 +263,7 @@ public class CellWidgetTest extends GWTTestCase {
     cw.setValue("test1", true);
     assertEquals("test1", cw.getValue());
     assertEquals("test1", cw.getElement().getInnerText());
+    cell.assertLastRenderedValue("test1");
     handler.assertLastValue("test1");
 
     // Set value, fire events, but do not redraw.

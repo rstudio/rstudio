@@ -79,6 +79,7 @@ public class CellWidget<C> extends Widget implements HasKeyProvider<C>, HasValue
    * The {@link ValueUpdater} used to trigger value update events.
    */
   private final ValueUpdater<C> valueUpdater = new ValueUpdater<C>() {
+    @Override
     public void update(C value) {
       // no need to redraw, the Cell took care of it
       setValue(value, true, false);
@@ -143,13 +144,22 @@ public class CellWidget<C> extends Widget implements HasKeyProvider<C>, HasValue
     this.keyProvider = keyProvider;
     setElement(elem);
     CellBasedWidgetImpl.get().sinkEvents(this, cell.getConsumedEvents());
-    setValue(initialValue);
+
+    /*
+     * Skip the equality check. If initialValue is null, it will be equal to
+     * this.value, but that doesn't mean that we don't want to render the
+     * initialValue.
+     */
+    this.value = initialValue;
+    redraw();
   }
 
+  @Override
   public HandlerRegistration addValueChangeHandler(ValueChangeHandler<C> handler) {
     return addHandler(handler, ValueChangeEvent.getType());
   }
 
+  @Override
   public LeafValueEditor<C> asEditor() {
     if (editor == null) {
       editor = TakesValueEditor.of(this);
@@ -166,10 +176,12 @@ public class CellWidget<C> extends Widget implements HasKeyProvider<C>, HasValue
     return cell;
   }
 
+  @Override
   public ProvidesKey<C> getKeyProvider() {
     return keyProvider;
   }
 
+  @Override
   public C getValue() {
     return value;
   }
@@ -213,6 +225,7 @@ public class CellWidget<C> extends Widget implements HasKeyProvider<C>, HasValue
    * existing value.
    * </p>
    */
+  @Override
   public void setValue(C value) {
     setValue(value, false, true);
   }
@@ -224,6 +237,7 @@ public class CellWidget<C> extends Widget implements HasKeyProvider<C>, HasValue
    * existing value.
    * </p>
    */
+  @Override
   public void setValue(C value, boolean fireEvents) {
     setValue(value, fireEvents, true);
   }
