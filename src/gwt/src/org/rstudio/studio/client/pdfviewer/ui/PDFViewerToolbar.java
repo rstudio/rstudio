@@ -18,12 +18,14 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
 
+import com.google.inject.Inject;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.InlineToolbarButton;
 import org.rstudio.core.client.widget.NumericTextBox;
 import org.rstudio.core.client.widget.SpanLabel;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.pdfviewer.ui.images.Resources;
+import org.rstudio.studio.client.workbench.commands.Commands;
 
 public class PDFViewerToolbar extends Composite
       implements PDFViewerToolbarDisplay
@@ -31,11 +33,16 @@ public class PDFViewerToolbar extends Composite
    interface Binder extends UiBinder<Widget, PDFViewerToolbar>
    {}
 
-   public PDFViewerToolbar()
+   @Inject
+   public PDFViewerToolbar(Commands commands)
    {
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
       final Resources resources = GWT.create(Resources.class);
+
+      ToolbarPopupMenu menu = new ToolbarPopupMenu();
+      menu.addItem(commands.showPdfExternal().createMenuItem(false));
+      btnActions_.setMenu(menu);
 
       zoomOut_.addMouseDownHandler(new MouseDownHandler()
       {
@@ -142,12 +149,6 @@ public class PDFViewerToolbar extends Composite
       pageNumber_.selectAll();
    }
    
-   @Override
-   public void setActionsMenu(ToolbarPopupMenu menu)
-   {
-      btnActions_.setMenu(menu);
-   }
-
    @UiField
    InlineToolbarButton btnActions_;
    @UiField

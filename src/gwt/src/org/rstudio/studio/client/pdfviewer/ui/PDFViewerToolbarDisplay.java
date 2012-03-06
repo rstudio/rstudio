@@ -29,5 +29,4 @@ public interface PDFViewerToolbarDisplay
    void selectPageNumber();
    void setPageCount(int pageCount);
    void setPdfFile(FileSystemItem pdfFile);
-   void setActionsMenu(ToolbarPopupMenu menu);
 }

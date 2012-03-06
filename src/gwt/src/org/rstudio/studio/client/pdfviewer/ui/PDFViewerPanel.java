@@ -38,8 +38,10 @@ public class PDFViewerPanel extends Composite
    {}
 
    @Inject
-   public PDFViewerPanel()
+   public PDFViewerPanel(PDFViewerToolbar toolbar)
    {
+      toolbar_ = toolbar;
+
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
       Document.get().getBody().getStyle().setMarginLeft(200, Style.Unit.PX);
    }
@@ -135,7 +137,7 @@ public class PDFViewerPanel extends Composite
    private String initialUrl_;
    private boolean once_;
 
-   @UiField
+   @UiField(provided = true)
    PDFViewerToolbar toolbar_;
 
    private Element selectedPageLabel_;

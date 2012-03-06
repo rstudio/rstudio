@@ -198,10 +198,6 @@ public class PDFViewerPresenter implements IsWidget,
             }
          }
       }));
-      
-      ToolbarPopupMenu menu = new ToolbarPopupMenu();
-      menu.addItem(commands_.showPdfExternal().createMenuItem(false));
-      toolbar.setActionsMenu(menu);
    }
 
    private void updatePageNumber()
