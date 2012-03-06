@@ -134,14 +134,17 @@ public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
     insert(widget, getWidgetCount());
   }
 
+  @Override
   public void animate(int duration) {
     animate(duration, null);
   }
 
+  @Override
   public void animate(final int duration, final AnimationCallback callback) {
     layoutCmd.schedule(duration, callback);
   }
 
+  @Override
   public void forceLayout() {
     layoutCmd.cancel();
     layout.layout();
@@ -197,6 +200,7 @@ public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
     animate(0);
   }
 
+  @Override
   public void onResize() {
     for (Widget child : getChildren()) {
       if (child instanceof RequiresResize) {
@@ -410,12 +414,14 @@ public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
   }
 
   @Override
-  protected void onLoad() {
+  protected void onAttach() {
+    super.onAttach();
     layout.onAttach();
   }
 
   @Override
-  protected void onUnload() {
+  protected void onDetach() {
+    super.onDetach();
     layout.onDetach();
   }
 

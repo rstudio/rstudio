@@ -54,6 +54,7 @@ public class DeckLayoutPanel extends ComplexPanel implements AnimatedLayout,
     @Override
     public void schedule(int duration, final AnimationCallback callback) {
       super.schedule(duration, new AnimationCallback() {
+        @Override
         public void onAnimationComplete() {
           DeckLayoutPanel.this.doAfterLayout();
           if (callback != null) {
@@ -61,6 +62,7 @@ public class DeckLayoutPanel extends ComplexPanel implements AnimatedLayout,
           }
         }
 
+        @Override
         public void onLayout(Layer layer, double progress) {
           if (callback != null) {
             callback.onLayout(layer, progress);
@@ -97,14 +99,17 @@ public class DeckLayoutPanel extends ComplexPanel implements AnimatedLayout,
     insert(w, getWidgetCount());
   }
 
+  @Override
   public void animate(int duration) {
     animate(duration, null);
   }
 
+  @Override
   public void animate(int duration, AnimationCallback callback) {
     layoutCmd.schedule(duration, callback);
   }
 
+  @Override
   public void forceLayout() {
     layoutCmd.cancel();
     doBeforeLayout();
@@ -140,10 +145,12 @@ public class DeckLayoutPanel extends ComplexPanel implements AnimatedLayout,
     return getWidgetIndex(visibleWidget);
   }
 
+  @Override
   public void insert(IsWidget w, int beforeIndex) {
     insert(asWidgetOrNull(w), beforeIndex);
   }
 
+  @Override
   public void insert(Widget widget, int beforeIndex) {
     Widget before = (beforeIndex < getWidgetCount()) ? getWidget(beforeIndex)
         : null;
@@ -197,6 +204,7 @@ public class DeckLayoutPanel extends ComplexPanel implements AnimatedLayout,
     return isAnimationVertical;
   }
 
+  @Override
   public void onResize() {
     for (Widget child : getChildren()) {
       if (child instanceof RequiresResize) {
@@ -251,6 +259,7 @@ public class DeckLayoutPanel extends ComplexPanel implements AnimatedLayout,
    * 
    * @param w the widget to show, and add if not a child
    */
+  @Override
   public void setWidget(IsWidget w) {
     // Hide the currently visible widget.
     if (w == null) {
@@ -292,6 +301,18 @@ public class DeckLayoutPanel extends ComplexPanel implements AnimatedLayout,
     assertIsChild(widget);
     visibleWidget = widget;
     animate((widget == null) ? 0 : animationDuration);
+  }
+
+  @Override
+  protected void onAttach() {
+    super.onAttach();
+    layout.onAttach();
+  }
+
+  @Override
+  protected void onDetach() {
+    super.onDetach();
+    layout.onDetach();
   }
 
   /**

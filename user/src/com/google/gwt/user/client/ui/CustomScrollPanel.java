@@ -435,17 +435,18 @@ public class CustomScrollPanel extends ScrollPanel {
   protected void onAttach() {
     super.onAttach();
     containerResizeImpl.onAttach();
+    layout.onAttach();
   }
 
   @Override
   protected void onDetach() {
     super.onDetach();
     containerResizeImpl.onDetach();
+    layout.onDetach();
   }
 
   @Override
   protected void onLoad() {
-    layout.onAttach();
     hideNativeScrollbars();
     Scheduler.get().scheduleDeferred(new ScheduledCommand() {
       @Override
@@ -453,11 +454,6 @@ public class CustomScrollPanel extends ScrollPanel {
         maybeUpdateScrollbars();
       }
     });
-  }
-
-  @Override
-  protected void onUnload() {
-    layout.onDetach();
   }
 
   /**

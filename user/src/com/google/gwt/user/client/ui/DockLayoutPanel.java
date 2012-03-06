@@ -248,14 +248,17 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
     this.addWest(widget.asWidget(), size);
   }
 
+  @Override
   public void animate(int duration) {
     animate(duration, null);
   }
 
+  @Override
   public void animate(int duration, final Layout.AnimationCallback callback) {
     layoutCmd.schedule(duration, callback);
   }
 
+  @Override
   public void forceLayout() {
     layoutCmd.cancel();
     doLayout();
@@ -369,6 +372,7 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
     insert(widget, Direction.WEST, size, before);
   }
 
+  @Override
   public void onResize() {
     for (Widget child : getChildren()) {
       if (child instanceof RequiresResize) {
@@ -503,12 +507,14 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
   }
 
   @Override
-  protected void onLoad() {
+  protected void onAttach() {
+    super.onAttach();
     layout.onAttach();
   }
 
   @Override
-  protected void onUnload() {
+  protected void onDetach() {
+    super.onDetach();
     layout.onDetach();
   }
 

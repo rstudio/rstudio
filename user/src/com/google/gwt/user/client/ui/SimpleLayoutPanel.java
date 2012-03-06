@@ -32,6 +32,7 @@ public class SimpleLayoutPanel extends SimplePanel implements RequiresResize,
     layout = new Layout(getElement());
   }
 
+  @Override
   public void onResize() {
     if (widget instanceof RequiresResize) {
       ((RequiresResize) widget).onResize();
@@ -94,12 +95,14 @@ public class SimpleLayoutPanel extends SimplePanel implements RequiresResize,
   }
 
   @Override
-  protected void onLoad() {
+  protected void onAttach() {
+    super.onAttach();
     layout.onAttach();
   }
 
   @Override
-  protected void onUnload() {
+  protected void onDetach() {
+    super.onDetach();
     layout.onDetach();
   }
 }
