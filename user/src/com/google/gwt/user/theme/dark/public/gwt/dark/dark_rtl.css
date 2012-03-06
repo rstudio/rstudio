@@ -228,6 +228,7 @@ a, a:visited, a:hover {
 }
 
 .gwt-Hyperlink {
+  cursor: pointer;
 }
 
 .gwt-Image {

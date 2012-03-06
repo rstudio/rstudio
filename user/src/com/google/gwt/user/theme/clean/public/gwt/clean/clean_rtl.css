@@ -285,6 +285,7 @@ select {
 }
 
 .gwt-Hyperlink {
+  cursor: pointer;
 }
 
 .gwt-Image {
