@@ -24,6 +24,14 @@ public interface GeneratedUnit {
   String getSource();
 
   /**
+   * Returns the path to this resource as it should appear in a source map. This should be a
+   * path that's relative to either an entry in the classpath, or start with some fixed prefix such
+   * as "gen/" for generated files. (It can't be an absolute path because that would make the GWT
+   * compiler output unstable and defeat caching.)
+   */
+  String getSourceMapPath();
+
+  /**
    * Returns the source code as a token for {@link DiskCache#INSTANCE}, or -1 if
    * the source is not cached.
    */
@@ -33,5 +41,9 @@ public interface GeneratedUnit {
 
   String getTypeName();
 
+  /**
+   * If the generated file was saved to a directory using the -gen option, returns the file's
+   * location on disk. Otherwise null.
+   */
   String optionalFileLocation();
 }

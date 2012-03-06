@@ -59,7 +59,7 @@ public class RunAsyncNameTest extends JJSTestBase {
     {
       UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
       builder.setLowestLogLevel(TreeLogger.ERROR);
-      builder.expectError("Errors in '/mock/test/EntryPoint.java'", null);
+      builder.expectError("Errors in 'test/EntryPoint.java'", null);
       builder.expectError(
           "Line 5: Only class literals may be used to name a call to GWT.runAsync()", null);
       logger = builder.createLogger();

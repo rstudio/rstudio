@@ -128,6 +128,11 @@ public class StandardGeneratorContext implements GeneratorContext {
     }
 
     @Override
+    public String getSourceMapPath() {
+      return "gen/" + getTypeName().replace('.', '/') + ".java";
+    }
+
+    @Override
     public long getSourceToken() {
       if (sw != null) {
         throw new IllegalStateException("source not committed");

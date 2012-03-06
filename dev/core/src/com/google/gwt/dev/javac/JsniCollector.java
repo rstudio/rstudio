@@ -56,19 +56,6 @@ import java.util.Map;
  */
 public class JsniCollector {
 
-  /**
-   * Represents a logical interval of text.
-   */
-  public static class Interval {
-    public final int end;
-    public final int start;
-
-    public Interval(int start, int end) {
-      this.start = start;
-      this.end = end;
-    }
-  }
-
   private static final class JsniMethodImpl extends JsniMethod implements
       Serializable {
     private final JsFunction func;
@@ -152,10 +139,9 @@ public class JsniCollector {
     }
 
     @Override
-    public void collect(CompilationUnitDeclaration cud) {
-      cudInfo = correlator.makeSourceInfo(SourceOrigin.create(0, String
-          .valueOf(cud.getFileName())));
-      super.collect(cud);
+    public void collect(CompilationUnitDeclaration cud, String sourceMapPath) {
+      cudInfo = correlator.makeSourceInfo(SourceOrigin.create(0, sourceMapPath));
+      super.collect(cud, sourceMapPath);
     }
 
     @Override
@@ -181,10 +167,11 @@ public class JsniCollector {
   public static final String JSNI_BLOCK_START = "/*-{";
 
   public static Map<MethodDeclaration, JsniMethod> collectJsniMethods(
-      CompilationUnitDeclaration cud, String source, JsScope scope,
+      CompilationUnitDeclaration cud, String sourceMapPath,
+      String source, JsScope scope,
       CorrelationFactory correlator) {
     Map<MethodDeclaration, JsniMethod> jsniMethods = new IdentityHashMap<MethodDeclaration, JsniMethod>();
-    new Visitor(source, scope, correlator, jsniMethods).collect(cud);
+    new Visitor(source, scope, correlator, jsniMethods).collect(cud, sourceMapPath);
     return IdentityMaps.normalizeUnmodifiable(jsniMethods);
   }
 

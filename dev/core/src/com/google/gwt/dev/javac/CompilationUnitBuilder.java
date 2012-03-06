@@ -50,6 +50,11 @@ public abstract class CompilationUnitBuilder {
     }
 
     @Override
+    public String getSourceMapPath() {
+      return generatedUnit.getSourceMapPath();
+    }
+
+    @Override
     public String getTypeName() {
       return generatedUnit.getTypeName();
     }
@@ -115,6 +120,11 @@ public abstract class CompilationUnitBuilder {
 
     public Resource getResource() {
       return resource;
+    }
+
+    @Override
+    public String getSourceMapPath() {
+      return getSourceMapPathFor(resource);
     }
 
     @Override
@@ -217,6 +227,13 @@ public abstract class CompilationUnitBuilder {
     return new ResourceCompilationUnitBuilder(resource);
   }
 
+  /**
+   * Given a resource, returns the filename that will appear in the source map.
+   */
+  public static String getSourceMapPathFor(Resource resource) {
+    return resource.getPathPrefix() + resource.getPath();
+  }
+
   public static String makeContentId(String typeName, String strongHash) {
     return typeName + ':' + strongHash;
   }
@@ -259,6 +276,9 @@ public abstract class CompilationUnitBuilder {
 
   public abstract ContentId getContentId();
 
+  /**
+   * Returns the location that should appear in JDT error messages.
+   */
   public abstract String getLocation();
 
   public String getSource() {
@@ -267,6 +287,16 @@ public abstract class CompilationUnitBuilder {
     }
     return source;
   }
+
+  /**
+   * Returns the location for this resource as it should appear in a sourcemap.
+   * For a regular source file, it should be a path relative to one of the classpath entries
+   * from the ResourceLoader. For generated files, it should be "gen/" followed by the path where
+   * the source file would show up in the generated files directory if the "-gen" compiler option
+   * were enabled.
+   */
+  public abstract String getSourceMapPath();
+
 
   public abstract String getTypeName();
 

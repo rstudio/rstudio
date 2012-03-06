@@ -2901,12 +2901,25 @@ public class GwtAstBuilder {
 
   private List<JDeclaredType> newTypes;
 
-  public List<JDeclaredType> process(CompilationUnitDeclaration cud,
+  private String sourceMapPath;
+
+  /**
+   * Builds all the GWT AST nodes that correspond to one Java source file.
+   *
+   * @param cud The compiled form of the Java source from the JDT.
+   * @param sourceMapPath the path that should be included in a sourcemap.
+   * @param artificialRescues Used to decorate the AST.
+   * @param jsniMethods Native methods to add to the AST.
+   * @param jsniRefs Map from JSNI references to their JDT definitions.
+   * @return All the types seen in this source file.
+   */
+  public List<JDeclaredType> process(CompilationUnitDeclaration cud, String sourceMapPath,
       Map<TypeDeclaration, Binding[]> artificialRescues,
       Map<MethodDeclaration, JsniMethod> jsniMethods, Map<String, Binding> jsniRefs) {
     if (cud.types == null) {
       return Collections.emptyList();
     }
+    this.sourceMapPath = sourceMapPath;
     this.artificialRescues = artificialRescues;
     this.jsniRefs = jsniRefs;
     this.jsniMethods = jsniMethods;
@@ -2954,14 +2967,14 @@ public class GwtAstBuilder {
     int startLine =
         Util.getLineNumber(x.sourceStart, curCud.separatorPositions, 0,
             curCud.separatorPositions.length - 1);
-    return SourceOrigin.create(x.sourceStart, x.bodyEnd, startLine, curCud.fileName);
+    return SourceOrigin.create(x.sourceStart, x.bodyEnd, startLine, sourceMapPath);
   }
 
   SourceInfo makeSourceInfo(ASTNode x) {
     int startLine =
         Util.getLineNumber(x.sourceStart, curCud.separatorPositions, 0,
             curCud.separatorPositions.length - 1);
-    return SourceOrigin.create(x.sourceStart, x.sourceEnd, startLine, curCud.fileName);
+    return SourceOrigin.create(x.sourceStart, x.sourceEnd, startLine, sourceMapPath);
   }
 
   InternalCompilerException translateException(ASTNode node, Throwable e) {

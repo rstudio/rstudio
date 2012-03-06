@@ -70,8 +70,8 @@ public class CompilationStateBuilder {
         Event event = SpeedTracerLogger.start(DevModeEventType.CSB_PROCESS);
         try {
           Map<MethodDeclaration, JsniMethod> jsniMethods =
-              JsniCollector.collectJsniMethods(cud, builder.getSource(), JsRootScope.INSTANCE,
-                  DummyCorrelationFactory.INSTANCE);
+              JsniCollector.collectJsniMethods(cud, builder.getSourceMapPath(),
+                  builder.getSource(), JsRootScope.INSTANCE, DummyCorrelationFactory.INSTANCE);
 
           JSORestrictionsChecker.check(jsoState, cud);
 
@@ -94,7 +94,8 @@ public class CompilationStateBuilder {
           ArtificialRescueChecker.check(cud, builder.isGenerated(), artificialRescues);
           BinaryTypeReferenceRestrictionsChecker.check(cud);
 
-          MethodArgNamesLookup methodArgs = MethodParamCollector.collect(cud);
+          MethodArgNamesLookup methodArgs = MethodParamCollector.collect(cud,
+              builder.getSourceMapPath());
 
           StringInterner interner = StringInterner.get();
           String packageName = interner.intern(Shared.getPackageName(builder.getTypeName()));
@@ -119,7 +120,8 @@ public class CompilationStateBuilder {
           List<JDeclaredType> types = Collections.emptyList();
           if (!cud.compilationResult().hasErrors()) {
             // Make a GWT AST.
-            types = astBuilder.process(cud, artificialRescues, jsniMethods, jsniRefs);
+            types = astBuilder.process(cud, builder.getSourceMapPath(), artificialRescues,
+                jsniMethods, jsniRefs);
           }
 
           for (CompiledClass cc : compiledClasses) {

@@ -59,13 +59,12 @@ public class MethodParamCollector {
   /**
    * Returns an unmodifiable MethodArgNamesLookup containing the method argument
    * names for the supplied compilation unit.
-   * 
-   * @param cud
+   *
    * @return MethodArgNamesLookup instance
    */
-  public static MethodArgNamesLookup collect(CompilationUnitDeclaration cud) {
+  public static MethodArgNamesLookup collect(CompilationUnitDeclaration cud, String sourceMapPath) {
     MethodArgNamesLookup methodArgs = new MethodArgNamesLookup();
-    new Visitor(methodArgs).collect(cud);
+    new Visitor(methodArgs).collect(cud, sourceMapPath);
     methodArgs.freeze();
     return methodArgs;
   }

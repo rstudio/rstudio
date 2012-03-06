@@ -51,10 +51,8 @@ public abstract class MethodVisitor {
 
   /**
    * Collect data about interesting methods in one compilation unit.
-   * 
-   * @param cud
    */
-  public void collect(final CompilationUnitDeclaration cud) {
+  public void collect(final CompilationUnitDeclaration cud, String sourceMapPath) {
     cud.traverse(new SafeASTVisitor() {
       @Override
       public void endVisit(TypeDeclaration type, ClassScope scope) {

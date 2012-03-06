@@ -37,9 +37,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
     private final long createTime = System.currentTimeMillis();
 
     public String optionalFileLocation() {
-      // The named file location requires a non-Java extension,
-      // or else the file won't get compiled correctly.
-      return "myPackage/InsertedClass.notjava";
+      return null; // not used
     }
 
     public String getStrongHash() {
@@ -60,11 +58,17 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
           "}";
       return classSource;
     }
+
+    @Override
+    public String getSourceMapPath() {
+      // The named file location requires a non-Java extension,
+      // or else the file won't get compiled correctly.
+      return "myPackage/InsertedClass.notjava";
+    }
    
     public String getTypeName() {
       return "myPackage.InsertedClass";
     }
-    
     public long getSourceToken() {
       return -1;
     }

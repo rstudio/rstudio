@@ -24,7 +24,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * A compilation unit that was generated.
+ * A compilation unit that was created from a source file in the ResourceLoader's classpath.
  */
 class SourceFileCompilationUnit extends CompilationUnitImpl {
 

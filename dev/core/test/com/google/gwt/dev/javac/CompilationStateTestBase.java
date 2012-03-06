@@ -66,6 +66,10 @@ public abstract class CompilationStateTestBase extends TestCase {
           return sourceFile.getString();
         }
 
+        public String getSourceMapPath() {
+          return getTypeName().replace(".", "/") + ".java";
+        }
+
         public long getSourceToken() {
           return -1;
         }

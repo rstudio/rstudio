@@ -53,8 +53,8 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
 
     addSnippetImport("test.SplitPoint3");
     expectError("Line 8: Multiple runAsync calls are named test.SplitPoint1");
-    expectError("One call is at '/mock/test/SplitPoint1.java:5'");
-    expectError("One call is at '/mock/test/SplitPoint3.java:5'");
+    expectError("One call is at 'test/SplitPoint1.java:5'");
+    expectError("One call is at 'test/SplitPoint3.java:5'");
     testSnippet("RunAsyncCode.runAsyncCode(SplitPoint1.class);");
   }
 
@@ -111,7 +111,7 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
   private void initializeTestLoggerBuilder() {
     testLoggerBuilder = new UnitTestTreeLogger.Builder();
     testLoggerBuilder.setLowestLogLevel(TreeLogger.ERROR);
-    expectError("Errors in '/mock/test/EntryPoint.java'");
+    expectError("Errors in 'test/EntryPoint.java'");
   }
 
   private void testSnippet(String codeSnippet) {
