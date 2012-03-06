@@ -7,7 +7,7 @@ var PDFJS = {};
   // Use strict in our context only - users might not want it
   'use strict';
 
-  PDFJS.build = '6ab67d4';
+  PDFJS.build = '6b1d823';
 
   // Files are inserted below - see Makefile
   /* PDFJSSCRIPT_INCLUDE_ALL */
@@ -28225,9 +28225,6 @@ var WorkerMessageHandler = {
         });
         return;
       }
-
-      console.log('page=%d - getIRQueue: time=%dms, len=%d', pageNum,
-                                  Date.now() - start, IRQueue.fnArray.length);
 
       // Filter the dependecies for fonts.
       var fonts = {};

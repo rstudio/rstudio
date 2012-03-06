@@ -13,7 +13,7 @@ cd pdfjs
 git clean -dfx
 
 # Use this commit
-git checkout a9e6866
+git checkout 6b1d823
 
 make
 cd ..
