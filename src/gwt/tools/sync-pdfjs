@@ -13,7 +13,7 @@ cd pdfjs
 git clean -dfx
 
 # Use this commit
-git checkout f897e9e
+git checkout 1ad73f19fced9d46f30041cdd1da91fc92a419a2
 
 make
 cd ..
@@ -27,8 +27,7 @@ function minify {
 cp pdfjs/build/pdf.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
 cp pdfjs/web/compatibility.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
 cp pdfjs/web/debugger.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
-# viewer.js uses CustomStyle which is defined in util.js
-cat pdfjs/src/util.js pdfjs/web/viewer.js > ../src/org/rstudio/studio/client/pdfviewer/pdfjs/viewer.js
+cp pdfjs/web/viewer.js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/viewer.js
 cp pdfjs/web/viewer.css ../src/org/rstudio/studio/client/pdfviewer/pdfjs/
 
 minify pdf
