@@ -135,6 +135,11 @@ body.nosidebar #sidebar {
   bottom: 0;
   left: 0;
   right: 0;
+  padding-top: 15px;
+}
+
+#sidebarScrollView a {
+  text-decoration: none;
 }
 
 .thumbnail {
@@ -149,13 +154,33 @@ body.nosidebar #sidebar {
   overflow: hidden;
 }
 
+.thumbnail[data-loaded] {
+  box-shadow: 0px 2px 4px #333;
+  -moz-box-shadow: 0px 2px 4px #333;
+  -webkit-box-shadow: 0px 2px 4px #333;
+}
+
 .thumbnail:not([data-loaded]) {
-  background-color: gray;
+  background-color: rgb(100, 102, 104);
 }
 
 .thumbnail > canvas {
   vertical-align: middle;
   display: inline-block;
+}
+
+.thumbnailLabelContainer {
+  font-size: 10px;
+  font-weight: bold;
+  text-align: center;
+  color: white;
+  margin-bottom: 12px;
+  text-shadow: 1px 1px 1px #000;
+}
+.thumbnailLabelContainer[selected] .thumbnailLabel {
+  background-color: #AAA;
+  border-radius: 10px;
+  padding: 1px 7px;
 }
 
 #outlineScrollView {

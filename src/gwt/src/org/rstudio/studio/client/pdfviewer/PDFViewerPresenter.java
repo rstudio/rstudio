@@ -68,6 +68,8 @@ public class PDFViewerPresenter implements IsWidget,
                                              InitCompleteEvent.Handler handler);
       void closeWindow();
       void toggleThumbnails();
+
+      void updateSelectedPage(int pageNumber);
    }
    
    @Inject
@@ -197,6 +199,7 @@ public class PDFViewerPresenter implements IsWidget,
    {
       view_.getToolbarDisplay().getPageNumber().setValue(
                                              PDFView.currentPage() + "", false);
+      view_.updateSelectedPage(PDFView.currentPage());
    }
    
    public void onActivated(PDFViewerParams pdfParams)

@@ -1401,7 +1401,16 @@ var ThumbnailView = function thumbnailView(container, page, id, pageRatio) {
   div.id = 'thumbnailContainer' + id;
   div.className = 'thumbnail';
 
+  var labelDiv = document.createElement('div');
+  labelDiv.id = 'thumbnailLabel' + id;
+  labelDiv.className = 'thumbnailLabelContainer';
+  var labelSpan = document.createElement('span');
+  labelSpan.innerHTML = id;
+  labelSpan.className = 'thumbnailLabel';
+  labelDiv.appendChild(labelSpan);
+
   anchor.appendChild(div);
+  anchor.appendChild(labelDiv);
   container.appendChild(anchor);
 
   this.hasImage = false;

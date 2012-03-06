@@ -15,6 +15,7 @@ package org.rstudio.studio.client.pdfviewer.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -23,6 +24,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.pdfviewer.PDFViewerPresenter;
 import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
@@ -56,6 +58,26 @@ public class PDFViewerPanel extends Composite
          body.removeClassName("nosidebar");
       else
          body.addClassName("nosidebar");
+   }
+
+   @Override
+   public void updateSelectedPage(int pageNumber)
+   {
+      if (selectedPageLabel_ != null)
+         selectedPageLabel_.removeAttribute("selected");
+
+      selectedPageLabel_ =
+                   Document.get().getElementById("thumbnailLabel" + pageNumber);
+
+      if (selectedPageLabel_ != null)
+      {
+         selectedPageLabel_.setAttribute("selected", "selected");
+
+         Element scroller = Document.get().getElementById("sidebarScrollView");
+         Element page =
+               Document.get().getElementById("thumbnailContainer" + pageNumber);
+         DomUtils.ensureVisibleVert(scroller, page, 30);
+      }
    }
 
    @Override
@@ -115,4 +137,6 @@ public class PDFViewerPanel extends Composite
 
    @UiField
    PDFViewerToolbar toolbar_;
+
+   private Element selectedPageLabel_;
 }
