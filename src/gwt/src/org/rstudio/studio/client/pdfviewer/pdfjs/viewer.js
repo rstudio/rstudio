@@ -938,13 +938,6 @@ var PDFView = {
     this.pagesRefMap = pagesRefMap;
     this.destinations = pdf.catalog.destinations;
 
-    if (pdf.catalog.documentOutline) {
-      this.outline = new DocumentOutlineView(pdf.catalog.documentOutline);
-      var outlineSwitchButton = document.getElementById('outlineSwitch');
-      outlineSwitchButton.removeAttribute('disabled');
-      this.switchSidebarView('outline');
-    }
-
     // Reset the current scale, as otherwise the page's scale might not get
     // updated if the zoom level stayed the same.
     this.currentScale = 0;
