@@ -13,17 +13,12 @@
 
 project(DESKTOP)
 
-# require Qt 4.8 (although note carve-out for OSX until we can address
-# the glass trackpad webkit scrolling issue)
+# require Qt 4.8
 set(QT_VERSION 4.8.0)
 
 # on unix prefer qtsdk installs over system-level libraries. note this
 # can be overriden by defining QT_QMAKE_EXECUTABLE when invoking cmake
 if(NOT WIN32)
-   # temporary Qt 4.7 carve-out for OSX
-   if(APPLE)
-      set(QT_VERSION 4.7.0)
-   endif()
    # prefer rstudio qtsdk install then home qtsdk install
    if(NOT QT_QMAKE_EXECUTABLE)
       set(QMAKE_QT48_SDK "/opt/RStudio-QtSDK/Desktop/Qt/4.8.0/gcc/bin/qmake")
