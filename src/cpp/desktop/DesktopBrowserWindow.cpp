@@ -42,12 +42,26 @@ BrowserWindow::BrowserWindow(bool showToolbar,
    pToolbar_ = showToolbar ? addToolBar(tr("Navigation")) : new QToolBar();
    pToolbar_->setMovable(false);
 
-   setCentralWidget(pView_);
+   QGraphicsScene* pScene = new QGraphicsScene(this);
+   pScene->addItem(pView_);
+   pGraphicsView_ = new QGraphicsView(pScene, this);
+   pGraphicsView_->setFrameShape(QFrame::NoFrame);
+   pGraphicsView_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+   pGraphicsView_->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+   setCentralWidget(pGraphicsView_);
+
    setUnifiedTitleAndToolBarOnMac(true);
 
    QShortcut* copyShortcut = new QShortcut(QKeySequence::Copy, this);
    connect(copyShortcut, SIGNAL(activated()),
            pView_->pageAction(QWebPage::Copy), SLOT(trigger()));
+}
+
+void BrowserWindow::resizeEvent (QResizeEvent *event)
+{
+   QMainWindow::resizeEvent(event);
+
+   pView_->resize(event->size().width(), event->size().height());
 }
 
 void BrowserWindow::printRequested(QWebFrame* frame)

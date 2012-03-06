@@ -26,14 +26,14 @@
 namespace desktop {
 
 WebView::WebView(QUrl baseUrl, QWidget *parent) :
-    QWebView(parent),
+    QGraphicsWebView(),
     baseUrl_(baseUrl)
 {
 #ifdef Q_WS_X11
    if (!core::system::getenv("KDE_FULL_SESSION").empty())
       setStyle(new QPlastiqueStyle());
 #endif
-   pWebPage_ = new WebPage(baseUrl, this);
+   pWebPage_ = new WebPage(baseUrl, parent);
    setPage(pWebPage_);
 
    page()->setForwardUnsupportedContent(true);
@@ -81,7 +81,7 @@ QString WebView::promptForFilename(const QNetworkRequest& request,
       }
    }
 
-   QString fileName = QFileDialog::getSaveFileName(this,
+   QString fileName = QFileDialog::getSaveFileName(NULL,
                                                    tr("Download File"),
                                                    defaultFileName);
    return fileName;
@@ -129,7 +129,7 @@ void WebView::keyPressEvent(QKeyEvent* pEv)
                    pEv->isAutoRepeat(),
                    pEv->count());
   
-   this->QWebView::keyPressEvent(&newEv);
+   this->QGraphicsWebView::keyPressEvent(&newEv);
 }
 
 void WebView::downloadRequested(const QNetworkRequest& request)

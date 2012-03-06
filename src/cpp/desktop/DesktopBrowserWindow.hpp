@@ -51,6 +51,9 @@ protected:
      virtual void postWebViewEvent(QEvent *event);
      virtual void triggerPageAction(QWebPage::WebAction action);
 
+     // resize web view
+     virtual void	resizeEvent (QResizeEvent* event);
+
 protected:
      WebView* pView_;
      QToolBar* pToolbar_;

@@ -15,7 +15,7 @@
 #define DESKTOP_WEB_VIEW_HPP
 
 #include <QtGui>
-#include <QWebView>
+#include <QGraphicsWebView>
 
 #include "DesktopWebPage.hpp"
 
@@ -23,7 +23,7 @@ namespace desktop {
 
 class MainWindow;
 
-class WebView : public ::QWebView
+class WebView : public ::QGraphicsWebView
 {
    Q_OBJECT
 
