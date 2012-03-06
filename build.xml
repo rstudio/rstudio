@@ -1,4 +1,3 @@
-<!-- I am making a white space change -->
 <project name="GWT" default="dist" basedir=".">
   <property name="gwt.root" location="." />
   <property name="project.tail" value="" />
