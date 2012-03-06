@@ -233,6 +233,9 @@ public class PDFViewerPresenter implements IsWidget,
             else
             {
                dismissProgressDialog();
+               
+               if (PDFView.pageCount() == 0)
+                  view_.closeWindow();
             }
          }
 
