@@ -17,22 +17,13 @@
 #include <QTemporaryFile>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
-#include "DesktopSecondaryWindow.hpp"
-#include "DesktopSatelliteWindow.hpp"
 #include "DesktopDownloadHelper.hpp"
 #include "DesktopOptions.hpp"
 #include "DesktopWebPage.hpp"
-#include "DesktopWindowTracker.hpp"
 #include "DesktopUtils.hpp"
-#include "DesktopMainWindow.hpp"
+
 
 namespace desktop {
-
-namespace {
-
-WindowTracker s_windowTracker;
-
-} // anonymous namespace
 
 WebView::WebView(QUrl baseUrl, QWidget *parent) :
     QWebView(parent),
@@ -70,83 +61,13 @@ void WebView::setBaseUrl(const QUrl& baseUrl)
 
 void WebView::activateSatelliteWindow(QString name)
 {
-   BrowserWindow* pSatellite = s_windowTracker.getWindow(name);
-   if (pSatellite)
-      desktop::raiseAndActivateWindow(pSatellite);
+   pWebPage_->activateSatelliteWindow(name);
 }
 
 void WebView::prepareForSatelliteWindow(
                               const PendingSatelliteWindow& pendingWnd)
 {
-   pendingSatelliteWindow_ = pendingWnd;
-}
-
-
-
-QWebView* WebView::createWindow(QWebPage::WebWindowType)
-{
-   // check if this is a satellite window
-   if (!pendingSatelliteWindow_.isEmpty())
-   {
-      // capture pending window params then clear them (one time only)
-      QString name = pendingSatelliteWindow_.name;
-      MainWindow* pMainWindow = pendingSatelliteWindow_.pMainWindow;
-      int width = pendingSatelliteWindow_.width;
-      int height = pendingSatelliteWindow_.height;
-      pendingSatelliteWindow_ = PendingSatelliteWindow();
-
-      // check for an existing window of this name
-      BrowserWindow* pSatellite = s_windowTracker.getWindow(name);
-      if (pSatellite)
-      {
-         // activate the browser then return NULL to indicate
-         // we didn't create a new WebView
-         desktop::raiseAndActivateWindow(pSatellite);
-         return NULL;
-      }
-      // create a new window if we didn't find one
-      else
-      {
-         // create and size
-         pSatellite = new SatelliteWindow(pMainWindow);
-         pSatellite->resize(width, height);
-
-         // try to tile the window (but leave pdf window alone
-         // since it is so large)
-         if (name != QString::fromAscii("pdf"))
-         {
-            // calculate location to move to
-
-            // y always attempts to be 25 pixels above then faults back
-            // to 25 pixels below if that would be offscreen
-            const int OVERLAP = 25;
-            int moveY = pMainWindow->y() - OVERLAP;
-            if (moveY < 0)
-               moveY = pMainWindow->y() + OVERLAP;
-
-            // x is based on centering over main window
-            int moveX = pMainWindow->x() +
-                        (pMainWindow->width() / 2) -
-                        (width / 2);
-
-            // perform movve
-            pSatellite->move(moveX, moveY);
-         }
-
-         // add to tracker
-         s_windowTracker.addWindow(name, pSatellite);
-
-         // show and return the browser
-         pSatellite->show();
-         return pSatellite->webView();
-      }
-   }
-   else
-   {
-      SecondaryWindow* pWindow = new SecondaryWindow(baseUrl_);
-      pWindow->show();
-      return pWindow->webView();
-   }
+   pWebPage_->prepareForSatelliteWindow(pendingWnd);
 }
 
 QString WebView::promptForFilename(const QNetworkRequest& request,

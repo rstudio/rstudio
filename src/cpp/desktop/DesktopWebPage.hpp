@@ -19,6 +19,34 @@
 
 namespace desktop {
 
+class MainWindow;
+
+struct PendingSatelliteWindow
+{
+   PendingSatelliteWindow()
+      : name(), pMainWindow(NULL), width(-1), height(-1)
+   {
+   }
+
+   PendingSatelliteWindow(QString name,
+                          MainWindow* pMainWindow,
+                          int width,
+                          int height)
+      : name(name), pMainWindow(pMainWindow), width(width), height(height)
+   {
+   }
+
+   bool isEmpty() const { return name.isEmpty(); }
+
+   QString name;
+
+   MainWindow* pMainWindow;
+
+   int width;
+   int height;
+};
+
+
 class WebPage : public QWebPage
 {
    Q_OBJECT
@@ -28,10 +56,14 @@ public:
 
    void setBaseUrl(const QUrl& baseUrl);
 
+   void activateSatelliteWindow(QString name);
+   void prepareForSatelliteWindow(const PendingSatelliteWindow& pendingWnd);
+
 public slots:
    bool shouldInterruptJavaScript();
 
 protected:
+   QWebPage* createWindow(QWebPage::WebWindowType type);
    void javaScriptConsoleMessage(const QString& message, int lineNumber, const QString& sourceID);
    QString userAgentForUrl(const QUrl &url) const;
    bool acceptNavigationRequest(QWebFrame* frame,
@@ -41,6 +73,7 @@ protected:
 private:
    QUrl baseUrl_;
    bool navigated_;
+   PendingSatelliteWindow pendingSatelliteWindow_;
 };
 
 } // namespace desktop

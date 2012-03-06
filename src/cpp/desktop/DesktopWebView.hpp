@@ -23,31 +23,6 @@ namespace desktop {
 
 class MainWindow;
 
-struct PendingSatelliteWindow
-{
-   PendingSatelliteWindow()
-      : name(), pMainWindow(NULL), width(-1), height(-1)
-   {
-   }
-
-   PendingSatelliteWindow(QString name,
-                          MainWindow* pMainWindow,
-                          int width,
-                          int height)
-      : name(name), pMainWindow(pMainWindow), width(width), height(height)
-   {
-   }
-
-   bool isEmpty() const { return name.isEmpty(); }
-
-   QString name;
-
-   MainWindow* pMainWindow;
-
-   int width;
-   int height;
-};
-
 class WebView : public ::QWebView
 {
    Q_OBJECT
@@ -61,13 +36,14 @@ public:
    void activateSatelliteWindow(QString name);
    void prepareForSatelliteWindow(const PendingSatelliteWindow& pendingWnd);
 
+   WebPage* webPage() const { return pWebPage_; }
+
 signals:
   void onCloseWindowShortcut();
 
 public slots:
 
 protected:
-   QWebView* createWindow(QWebPage::WebWindowType type);
    QString promptForFilename(const QNetworkRequest& request,
                              QNetworkReply* pReply);
    void keyPressEvent(QKeyEvent* pEv);
@@ -80,7 +56,6 @@ protected slots:
    void mouseWheelTimerFired();
 
 private:
-   PendingSatelliteWindow pendingSatelliteWindow_;
    QUrl baseUrl_;
    QTimer* pMouseWheelTimer_;
    QList<QWheelEvent> mouseWheelEvents_;
