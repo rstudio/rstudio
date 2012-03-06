@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.pdfviewer;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -24,10 +25,7 @@ import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.CodeNavigationTarget;
-import org.rstudio.core.client.FilePosition;
-import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.*;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -191,6 +189,15 @@ public class PDFViewerPresenter implements IsWidget,
          public void onPDFLoad(PDFLoadEvent event)
          {
             toolbar.setPageCount(PDFView.pageCount());
+            if (navigateHereOnLoad_ != null)
+            {
+               PDFView.navigateTo(navigateHereOnLoad_);
+               navigateHereOnLoad_ = null;
+            }
+            else
+            {
+               PDFView.scrollToTop();
+            }
          }
       }));
    }
@@ -267,7 +274,14 @@ public class PDFViewerPresenter implements IsWidget,
       updateState(false, result);
       
       if (result.getSucceeded())
+      {
+         navigateHereOnLoad_ = result.getPdfPath().equals(StringUtil.notNull(lastSuccessfulPdfPath_))
+                               ? PDFView.getNavigateDest()
+                               : null;
+         lastSuccessfulPdfPath_ = result.getPdfPath();
+
          view_.setURL(result.getViewPdfUrl());
+      }
    }
    
    @Handler
@@ -369,4 +383,7 @@ public class PDFViewerPresenter implements IsWidget,
    private final Commands commands_; 
 
    private HandlerRegistrations releaseOnDismiss_ = new HandlerRegistrations();
+
+   private String lastSuccessfulPdfPath_;
+   private JavaScriptObject navigateHereOnLoad_;
 }

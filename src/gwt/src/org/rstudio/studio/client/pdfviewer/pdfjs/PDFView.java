@@ -122,6 +122,28 @@ public class PDFView extends JavaScriptObject
          el.setAttribute("hidden", "hidden");
    }
 
+   public static native void navigateTo(JavaScriptObject dest) /*-{
+      if (dest == null)
+         return;
+
+      $wnd.PDFView.parseScale(dest.scale);
+      $wnd.scrollTo(dest.x, dest.y);
+   }-*/;
+
+   public static native JavaScriptObject getNavigateDest() /*-{
+      if ($wnd.PDFView.pages.length == 0)
+         return null;
+      return {
+         scale: $wnd.PDFView.currentScale,
+         x: $wnd.scrollX,
+         y: $wnd.scrollY
+      };
+   }-*/;
+
+   public static native void scrollToTop() /*-{
+      $wnd.scrollTo($wnd.scrollX, 32); // a little padding on top
+   }-*/;
+
    private static final HandlerManager handlers_ =
          new HandlerManager(PDFView.class);
 }
