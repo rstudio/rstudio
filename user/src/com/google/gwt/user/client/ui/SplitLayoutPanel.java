@@ -100,9 +100,9 @@ public class SplitLayoutPanel extends DockLayoutPanel {
 
     private final boolean reverse;
     private int minSize;
-
+    private int snapClosedSize = -1;
     private double centerSize, syncedCenterSize;
-    
+
     private boolean toggleDisplayAllowed = false;
     private double lastClick = 0;
 
@@ -195,7 +195,11 @@ public class SplitLayoutPanel extends DockLayoutPanel {
       // minSize value.
       setAssociatedWidgetSize((int) layout.size);
     }
-    
+
+    public void setSnapClosedSize(int snapClosedSize) {
+      this.snapClosedSize = snapClosedSize;
+    }
+
     public void setToggleDisplayAllowed(boolean allowed) {
       this.toggleDisplayAllowed = allowed;
     }
@@ -230,7 +234,9 @@ public class SplitLayoutPanel extends DockLayoutPanel {
         size = maxSize;
       }
 
-      if (size < minSize) {
+      if (snapClosedSize > 0 && size < snapClosedSize) {
+        size = 0;
+      } else if (size < minSize) {
         size = minSize;
       }
 
@@ -392,11 +398,35 @@ public class SplitLayoutPanel extends DockLayoutPanel {
       splitter.setMinSize(minSize);
     }
   }
-  
+
+  /**
+   * Sets a size below which the slider will close completely. This can be used
+   * in conjunction with {@link #setWidgetMinSize} to provide a speed-bump
+   * effect where the slider will stick to a preferred minimum size before
+   * closing completely.
+   *
+   * <p>
+   * This method has no effect for the {@link DockLayoutPanel.Direction#CENTER}
+   * widget.
+   * </p>
+   *
+   * @param child the child whose slider should snap closed
+   * @param snapClosedSize the width below which the widget will close or
+   *        -1 to disable.
+   */
+  public void setWidgetSnapClosedSize(Widget child, int snapClosedSize) {
+    assertIsChild(child);
+    Splitter splitter = getAssociatedSplitter(child);
+    // The splitter is null for the center element.
+    if (splitter != null) {
+      splitter.setSnapClosedSize(snapClosedSize);
+    }
+  }
+
   /**
    * Sets whether or not double-clicking on the splitter should toggle the
    * display of the widget.
-   * 
+   *
    * @param child the child whose display toggling will be allowed or not.
    * @param allowed whether or not display toggling is allowed for this widget
    */
