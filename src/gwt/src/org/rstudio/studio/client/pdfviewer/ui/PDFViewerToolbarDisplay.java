@@ -13,7 +13,6 @@
 package org.rstudio.studio.client.pdfviewer.ui;
 
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.ToolbarPopupMenu;
 
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.ui.HasValue;
