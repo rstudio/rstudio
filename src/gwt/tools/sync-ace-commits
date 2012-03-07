@@ -5,26 +5,18 @@
 #
 # If you need to run this script, some prerequisites are required.
 # - Install Node.js and npm
-# - Run tools/sync-ace-commit (it will fail)
-# - Go to tools/ace/support/dryice and run "npm link ."
+# - Run "sudo npm install --global dryice"
 #
-# To sync to a more recent commit of Ace:
-# - Clone git@github.com:rstudio/ace.git
-# - From that repo, configure an upstream remote:
-#     git remote add upstream git@github.com:ajaxorg/ace.git
-# == The above steps just need to be performed once, not every time ==
-# - `git fetch upstream`
-# - `git checkout master`       # make sure you're on the master branch
-# - `git reset --hard upstream/master` # go to latest commit
-# - `git push origin master`    # put the latest into GitHub
-# - `git rev-parse HEAD`        # this is the latest commit SHA-1
-# - Paste the SHA-1 from the previous command into the line below that
-#   begins "git reset --hard"
-# - Run sync-ace-commit
+# To sync to a more recent upstream commit of Ace, update the "git checkout"
+# line below with the SHA-1 of the upstream commit. (Do NOT use a branch, for
+# example "upstream/master"; use the SHA-1 as it's the only thing guaranteed
+# never to change.) Then run this script.
 #
 # As upstream Ace evolves, inevitably they introduce changes that conflict
-# with the patches we maintain. To resolve these conflicts, go to the rep
-# you created in the previous set of instructions, and:
+# with the patches we maintain. To resolve these conflicts, go to the ./ace
+# subdirectory that this script creates, and:
+# - `git remote set-url origin git@github.com:rstudio/ace.git`
+#                               # Only need to do set-url once
 # - `git checkout <SHA-1>`      # Go to the upstream commit
 # - `git merge <bugfix-branch>` # Try merging
 # - If previous step SUCCEEDS, start at the top but try the next branch.
@@ -33,18 +25,33 @@
 # - `git checkout -b <new-bugfix-branch>` # I use the old name plus a number
 # - `git merge <bugfix-branch>`
 # - Resolve the merge conflict as you usually would, and commit
+# - `git push -u origin <new-bugfix-branch>`
 # - Update this sync-ace-commits script to refer to the new bugfix branch
 # - Repeat all of these steps if you still get merge conflicts
 
 set -e
 
-rm -rf ace
-git clone git@github.com:rstudio/ace.git
+if [ ! -d "./ace" ]; then
+    git clone git://github.com/rstudio/ace.git
+    cd ace
+    git remote add upstream git://github.com/ajaxorg/ace.git
+    cd ..
+fi
+
+if [ ! -d "./ace/node_modules" ]; then
+    cd ace
+    npm install uglify-js
+    cd ..
+fi
+
 cd ace
-git checkout master
+make clean
+
+git fetch origin
+git fetch upstream
 
 # Point this to the upstream commit that we've tested
-git reset --hard 26a1af8778178fb2488915a24b3c0d951cf4d8a9
+git checkout 26a1af8778178fb2488915a24b3c0d951cf4d8a9
 
 git submodule update --init --recursive
 
