@@ -24,6 +24,7 @@ import com.google.gwt.dev.util.UnitTestTreeLogger;
 /**
  * This class tests naming of runAsync calls. Mostly it tests names that are
  * invalid.
+ *
  */
 public class RunAsyncNameTest extends JJSTestBase {
   @Override
