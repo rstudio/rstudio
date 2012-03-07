@@ -5902,6 +5902,16 @@ var Editor =function(renderer, session) {
         //this.$mouseHandler = new TouchHandler(this);
     } else {
         this.$mouseHandler = new MouseHandler(this);
+
+        // For RStudio Desktop on Mac, force mouse wheel handler to recognize
+        // that we have a high scroll factor. Otherwise, scrolling will be
+        // bizarrely fast until the mouse wheel handler realizes the correct
+        // scroll factor.
+        if (navigator.platform == 'MacIntel' && navigator.userAgent.match(/RStudio/)) {
+            var evt = document.createEvent('WheelEvent');
+            evt.initWebKitWheelEvent(10000, 10000);
+            this.container.dispatchEvent(evt);
+        }
     }
 
     this.$blockScrolling = 0;
@@ -17086,6 +17096,83 @@ define("text!lib/ace/css/editor.css", [], "@import url(//fonts.googleapis.com/cs
   "\n" +
   ".ace_dragging .ace_content {\n" +
   "  cursor: move;\n" +
+  "}\n" +
+  "");
+
+define("text!node_modules/uglify-js/docstyle.css", [], "html { font-family: \"Lucida Grande\",\"Trebuchet MS\",sans-serif; font-size: 12pt; }\n" +
+  "body { max-width: 60em; }\n" +
+  ".title  { text-align: center; }\n" +
+  ".todo   { color: red; }\n" +
+  ".done   { color: green; }\n" +
+  ".tag    { background-color:lightblue; font-weight:normal }\n" +
+  ".target { }\n" +
+  ".timestamp { color: grey }\n" +
+  ".timestamp-kwd { color: CadetBlue }\n" +
+  "p.verse { margin-left: 3% }\n" +
+  "pre {\n" +
+  "  border: 1pt solid #AEBDCC;\n" +
+  "  background-color: #F3F5F7;\n" +
+  "  padding: 5pt;\n" +
+  "  font-family: monospace;\n" +
+  "  font-size: 90%;\n" +
+  "  overflow:auto;\n" +
+  "}\n" +
+  "pre.src {\n" +
+  "  background-color: #eee; color: #112; border: 1px solid #000;\n" +
+  "}\n" +
+  "table { border-collapse: collapse; }\n" +
+  "td, th { vertical-align: top; }\n" +
+  "dt { font-weight: bold; }\n" +
+  "div.figure { padding: 0.5em; }\n" +
+  "div.figure p { text-align: center; }\n" +
+  ".linenr { font-size:smaller }\n" +
+  ".code-highlighted {background-color:#ffff00;}\n" +
+  ".org-info-js_info-navigation { border-style:none; }\n" +
+  "#org-info-js_console-label { font-size:10px; font-weight:bold;\n" +
+  "  white-space:nowrap; }\n" +
+  ".org-info-js_search-highlight {background-color:#ffff00; color:#000000;\n" +
+  "  font-weight:bold; }\n" +
+  "\n" +
+  "sup {\n" +
+  "  vertical-align: baseline;\n" +
+  "  position: relative;\n" +
+  "  top: -0.5em;\n" +
+  "  font-size: 80%;\n" +
+  "}\n" +
+  "\n" +
+  "sup a:link, sup a:visited {\n" +
+  "  text-decoration: none;\n" +
+  "  color: #c00;\n" +
+  "}\n" +
+  "\n" +
+  "sup a:before { content: \"[\"; color: #999; }\n" +
+  "sup a:after { content: \"]\"; color: #999; }\n" +
+  "\n" +
+  "h1.title { border-bottom: 4px solid #000; padding-bottom: 5px; margin-bottom: 2em; }\n" +
+  "\n" +
+  "#postamble {\n" +
+  "  color: #777;\n" +
+  "  font-size: 90%;\n" +
+  "  padding-top: 1em; padding-bottom: 1em; border-top: 1px solid #999;\n" +
+  "  margin-top: 2em;\n" +
+  "  padding-left: 2em;\n" +
+  "  padding-right: 2em;\n" +
+  "  text-align: right;\n" +
+  "}\n" +
+  "\n" +
+  "#postamble p { margin: 0; }\n" +
+  "\n" +
+  "#footnotes { border-top: 1px solid #000; }\n" +
+  "\n" +
+  "h1 { font-size: 200% }\n" +
+  "h2 { font-size: 175% }\n" +
+  "h3 { font-size: 150% }\n" +
+  "h4 { font-size: 125% }\n" +
+  "\n" +
+  "h1, h2, h3, h4 { font-family: \"Bookman\",Georgia,\"Times New Roman\",serif; font-weight: normal; }\n" +
+  "\n" +
+  "@media print {\n" +
+  "  html { font-size: 11pt; }\n" +
   "}\n" +
   "");
 

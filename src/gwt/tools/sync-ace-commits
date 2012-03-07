@@ -70,6 +70,7 @@ git merge \
     origin/patch/scroll-granularity \
     origin/patch/escape-characters2 \
     origin/bugfix/no-paste-event-on-indent \
+    origin/patch/mousewheel
 
 
 make clean
