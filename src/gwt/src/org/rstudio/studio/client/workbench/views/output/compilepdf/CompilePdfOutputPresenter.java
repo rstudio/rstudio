@@ -210,6 +210,10 @@ public class CompilePdfOutputPresenter extends BasePresenter
       {
          commands_.activateConsole().execute();
       }
+      else if (!event.getResult().getSucceeded())
+      {
+         view_.ensureVisible(true);
+      }
    }
    
    @Override

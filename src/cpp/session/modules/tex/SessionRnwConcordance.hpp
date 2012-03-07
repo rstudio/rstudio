@@ -109,6 +109,8 @@ public:
    ~Concordances() {}
    // COPYING: via compiler
 
+   bool empty() const { return concordances_.empty(); }
+
    void add(Concordance& concordance)
    {
       concordances_.push_back(concordance);

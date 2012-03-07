@@ -250,6 +250,40 @@ void showLogEntries(const core::tex::LogEntries& logEntries,
    enqueErrorsEvent(logEntriesJson);
 }
 
+void writeLogEntriesOutput(const core::tex::LogEntries& logEntries)
+{
+   if (logEntries.empty())
+      return;
+
+   std::string output = "\n";
+   BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
+   {
+      switch(logEntry.type())
+      {
+         case core::tex::LogEntry::Error:
+            output += "Error: ";
+            break;
+         case core::tex::LogEntry::Warning:
+            output += "Warning: ";
+            break;
+         case core::tex::LogEntry::Box:
+            output += "Bad Box: ";
+            break;
+      }
+
+      output += logEntry.filePath().filename();
+      int line = logEntry.line();
+      if (line >= 0)
+         output += ":" + boost::lexical_cast<std::string>(line);
+
+      output += ": " + logEntry.message() + "\n";
+   }
+   output += "\n";
+
+   enqueOutputEvent(output);
+
+}
+
 FilePath latexLogPath(const FilePath& texFilePath)
 {
    return ancillaryFilePath(texFilePath, ".log");
@@ -637,18 +671,26 @@ private:
                                 const FilePath& texFilePath,
                                 const rnw_concordance::Concordances& concords)
    {
-      // collect errors from the log, show them, and build the issues string
+      // collect errors from the log
       core::tex::LogEntries logEntries;
       getLogEntries(texFilePath, concords, &logEntries);
+
+      // determine whether they will be shown in the list
+      // list or within the console
+      bool showIssuesList = !isTargetRnw() || !concords.empty();
 
       // notify the cleanp context of log entries (so it can
       // preserve any referenced files)
       auxillaryFileCleanupContext_.preserveLogReferencedFiles(
                                                       logEntries);
 
-      // show log entries
-      if (!logEntries.empty())
+      // show log entries and build issues message
+      std::string issuesMsg;
+      if (showIssuesList && !logEntries.empty())
+      {
          showLogEntries(logEntries, concords);
+         issuesMsg = buildIssuesMessage(logEntries);
+      }
 
       // build issues mesage
       std::string issues = buildIssuesMessage(logEntries);
@@ -659,9 +701,13 @@ private:
          std::string pdfFile = module_context::createAliasedPath(
                                                           pdfPath);
          std::string completed = "completed\n\nCreated PDF: " + pdfFile + "\n";
-         if (!issues.empty())
-            completed += "\n" + issues;
+         if (!issuesMsg.empty())
+            completed += "\n" + issuesMsg;
          enqueOutputEvent(completed);
+
+         // show issues in console if necessary
+         if (!showIssuesList)
+             writeLogEntriesOutput(logEntries);
 
          if (onCompleted_)
             onCompleted_();
@@ -670,7 +716,10 @@ private:
       }
       else
       {
-         enqueOutputEvent("failed\n\n" + issues);
+         std::string failedMsg = "failed\n";
+         if (!issuesMsg.empty())
+            failedMsg += "\n" + issuesMsg;
+         enqueOutputEvent(failedMsg);
 
          // don't remove the log
          auxillaryFileCleanupContext_.preserveLog();
@@ -684,6 +733,10 @@ private:
                                            % exitStatus));
             enqueOutputEvent(msg + "\n");
          }
+
+         // show issues in console if necessary
+         if (!showIssuesList)
+            writeLogEntriesOutput(logEntries);
 
          enqueCompletedWithFailureEvent(targetFilePath_);
       }
@@ -699,6 +752,11 @@ private:
    {
       showLogEntries(logEntries);
       enqueCompletedWithFailureEvent(targetFilePath_);
+   }
+
+   bool isTargetRnw() const
+   {
+      return targetFilePath_.extensionLowerCase() == ".rnw";
    }
 
 private:
