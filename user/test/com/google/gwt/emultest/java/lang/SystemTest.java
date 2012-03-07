@@ -275,4 +275,8 @@ public class SystemTest extends GWTTestCase {
       assertEquals(src[i + 1], dest[i]);
     }
   }
+
+  public void testGetProperty() {
+    assertEquals("default", System.getProperty("key", "default"));
+  }
 }

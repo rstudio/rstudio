@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -95,10 +95,17 @@ public final class System {
 
   /**
    * Has no effect; just here for source compatibility.
-   * 
+   *
    * @skip
    */
   public static void gc() {
+  }
+
+  /**
+   * Always returns default, used for source compatibility
+   */
+  public static String getProperty(String key, String def) {
+    return def;
   }
 
   public static int identityHashCode(Object o) {
@@ -137,7 +144,7 @@ public final class System {
    * Copy an array using native Javascript. The destination array must be a real
    * Java array (ie, already has the GWT type info on it). No error checking is
    * performed -- the caller is expected to have verified everything first.
-   * 
+   *
    * @param src source array for copy
    * @param srcOfs offset into source array
    * @param dest destination array for copy
