@@ -65,11 +65,15 @@ public class PDFViewerPanel extends Composite
    @Override
    public void updateSelectedPage(int pageNumber)
    {
+      Element pageLabel =
+                   Document.get().getElementById("thumbnailLabel" + pageNumber);
+      if (pageLabel != null && pageLabel.getClassName().contains("selected"))
+         return;
+
       if (selectedPageLabel_ != null)
          selectedPageLabel_.removeClassName("selected");
 
-      selectedPageLabel_ =
-                   Document.get().getElementById("thumbnailLabel" + pageNumber);
+      selectedPageLabel_ = pageLabel;
 
       if (selectedPageLabel_ != null)
       {
