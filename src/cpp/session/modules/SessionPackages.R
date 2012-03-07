@@ -110,26 +110,15 @@
 
 .rs.addFunction("isPackageInstalled", function(name)
 {
-   isLoaded <- name %in% .packages()
-   if (isLoaded)
-   {
-      return (TRUE)
-   }
+   if (getRversion() >= "2.13")
+      packages <- find.package(name, quiet=T, verbose=F)
    else
-   {
-      if (suppressWarnings(require(name,
-                                   quietly = TRUE,
-                                   character.only = TRUE,
-                                   warn.conflicts = FALSE)))
-      {
-         .rs.unloadPackage(name)
-         return (TRUE)
-      }
-      else
-      {
-         return (FALSE)
-      }
-  }
+      packages <- .find.package(name, quiet=T, verbose=F)
+
+   if (length(packages) > 0)
+      return (TRUE)
+   else
+      return (FALSE)
 })
 
 
