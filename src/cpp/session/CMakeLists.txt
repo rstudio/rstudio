@@ -194,9 +194,14 @@ endif()
 add_executable(rsession ${SESSION_SOURCE_FILES} ${SESSION_HEADER_FILES})
 
 # set link dependencies
+if(WIN32)
+   set(RSTUDIO_CORE_ZLIB rstudio-core-zlib)
+endif()
 target_link_libraries(rsession
    rstudio-core
    rstudio-core-hunspell
+   rstudio-core-synctex
+   ${RSTUDIO_CORE_ZLIB}
    rstudio-r
    rstudio-session-workers
    ${SESSION_SYSTEM_LIBRARIES}
