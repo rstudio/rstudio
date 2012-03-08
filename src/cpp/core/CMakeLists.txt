@@ -14,6 +14,7 @@
 project (CORE)
 
 add_subdirectory(spelling/hunspell)
+add_subdirectory(tex/synctex)
 
 # include files
 file(GLOB_RECURSE CORE_HEADER_FILES "*.h*")
@@ -73,6 +74,7 @@ set (CORE_SOURCE_FILES
    system/file_monitor/FileMonitor.cpp
    tex/TexLogParser.cpp
    tex/TexMagicComment.cpp
+   tex/TexSynctex.cpp
    text/DcfParser.cpp
    text/TemplateFilter.cpp
 )
