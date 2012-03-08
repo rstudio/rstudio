@@ -931,6 +931,7 @@ var ThumbnailView = function thumbnailView(container, page, id, pageRatio) {
   labelSpan.innerHTML = id;
   labelSpan.className = 'thumbnailLabel';
   labelDiv.appendChild(labelSpan);
+  labelDiv.style.visibility = 'hidden';
 
   anchor.appendChild(div);
   anchor.appendChild(labelDiv);
@@ -948,6 +949,8 @@ var ThumbnailView = function thumbnailView(container, page, id, pageRatio) {
 
     div.setAttribute('data-loaded', true);
     div.appendChild(canvas);
+
+    labelDiv.style.visibility = 'visible';
 
     var ctx = canvas.getContext('2d');
     ctx.save();
