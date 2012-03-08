@@ -25,6 +25,7 @@ sudo zypper --non-interactive in cmake
 
 # core system libraries
 sudo zypper --non-interactive in libbz2-devel
+sudo zypper --non-interactive in zlib-devel
 sudo zypper --non-interactive in libuuid-devel
 sudo zypper --non-interactive in libopenssl-devel
 sudo zypper --non-interactive in pam-devel

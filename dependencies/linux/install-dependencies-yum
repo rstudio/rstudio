@@ -26,6 +26,7 @@ sudo yum install -y rpmdevtools
 sudo yum install -y libuuid-devel
 sudo yum install -y openssl-devel
 sudo yum install -y bzip2-devel
+sudo yum install -y zlib-devel
 sudo yum install -y pam-devel
 
 # boost

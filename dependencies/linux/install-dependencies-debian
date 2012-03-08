@@ -25,6 +25,7 @@ sudo apt-get -y install cmake
 sudo apt-get -y install uuid-dev
 sudo apt-get -y install libssl-dev
 sudo apt-get -y install libbz2-dev
+sudo apt-get -y install zlib1g-dev
 sudo apt-get -y install libpam-dev
 
 # boost
