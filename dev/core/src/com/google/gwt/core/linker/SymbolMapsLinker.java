@@ -29,6 +29,7 @@ import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.Shardable;
+import com.google.gwt.core.ext.linker.SoftPermutation;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.SyntheticArtifact;
 import com.google.gwt.dev.util.Util;
@@ -40,6 +41,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.SortedMap;
 
 /**
@@ -51,6 +53,7 @@ import java.util.SortedMap;
 @Shardable
 public class SymbolMapsLinker extends AbstractLinker {
 
+  public static final String MAKE_SYMBOL_MAPS = "compiler.useSymbolMaps";
 
   /**
    * Artifact to record insertions or deletions made to Javascript fragments.
@@ -233,19 +236,35 @@ public class SymbolMapsLinker extends AbstractLinker {
   public ArtifactSet link(TreeLogger logger, LinkerContext context,
       ArtifactSet artifacts, boolean onePermutation)
       throws UnableToCompleteException {
+
     if (onePermutation) {
       artifacts = new ArtifactSet(artifacts);
       Map<Integer, String> permMap = new HashMap<Integer, String>();
+
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       for (CompilationResult result : artifacts.find(CompilationResult.class)) {
-        PrintWriter pw = new PrintWriter(out);
-        permMap.put(result.getPermutationId(), result.getStrongName());
-        doWriteSymbolMap(logger, result, pw);
-        pw.close();
+        
+        boolean makeSymbolMaps = true;
 
-        doEmitSymbolMap(logger, artifacts, result, out);
-        out.reset();
+        for (SoftPermutation perm : result.getSoftPermutations()) {
+          for (Entry<SelectionProperty, String> propMapEntry : perm.getPropertyMap().entrySet()) {
+            if (propMapEntry.getKey().getName().equals(MAKE_SYMBOL_MAPS)) {
+              makeSymbolMaps = Boolean.valueOf(propMapEntry.getValue());
+            }
+          }
+        }
+
+        if (makeSymbolMaps) {
+          PrintWriter pw = new PrintWriter(out);
+          permMap.put(result.getPermutationId(), result.getStrongName());
+          doWriteSymbolMap(logger, result, pw);
+          pw.close();
+
+          doEmitSymbolMap(logger, artifacts, result, out);
+          out.reset();
+        }
       }
+
 
       for (SourceMapArtifact se : artifacts.find(SourceMapArtifact.class)) {
         // filename is permutation_id/sourceMap<fragmentNumber>.json

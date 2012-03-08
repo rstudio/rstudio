@@ -81,4 +81,11 @@
   -->
   <define-property name="compiler.useSourceMaps" values="true,false"/>
   <set-property name="compiler.useSourceMaps" value="false"/>
+
+  <!--
+     Specifies whether a given permutation has symbol map support enabled.
+  -->
+  <define-property name="compiler.useSymbolMaps" values="true,false"/>
+  <set-property name="compiler.useSymbolMaps" value="false"/>
+
 </module>
