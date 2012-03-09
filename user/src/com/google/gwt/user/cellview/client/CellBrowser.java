@@ -57,6 +57,7 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.HasData;
+import com.google.gwt.view.client.HasRows;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.gwt.view.client.TreeViewModel;
@@ -780,6 +781,24 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize, Req
   }
 
   /**
+   * Pager factory used to create pagers for each {@link CellList} of the
+   * {@link CellBrowser}.
+   */
+  public static interface PagerFactory {
+    AbstractPager create(HasRows display);
+  }
+
+  /**
+   * Default pager.
+   */
+  private static class PageSizePagerFactory implements PagerFactory {
+    @Override
+    public AbstractPager create(HasRows display) {
+      return new PageSizePager(display.getVisibleRange().getLength());
+    }
+  }
+
+  /**
    * Builder object to create CellBrowser.
    *
    * @param <T> the type of data in the root node
@@ -788,6 +807,8 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize, Req
     private final TreeViewModel viewModel;
     private final T rootValue;
     private Widget loadingIndicator;
+    private PagerFactory pagerFactory = new PageSizePagerFactory();
+    private Integer pageSize;
     private Resources resources;
 
     /**
@@ -818,6 +839,32 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize, Req
      */
     public Builder<T> loadingIndicator(Widget widget) {
       this.loadingIndicator = widget;
+      return this;
+    }
+
+    /**
+     * Set the pager factory used to create pagers for each {@link CellList}.
+     * Defaults to {@link PageSizePagerFactory} if not set.
+     *
+     * Can be set to null if no pager should be used. You should also set pageSize
+     * big enough to hold all your data then.
+     *
+     * @param factory the pager factory
+     * @return this
+     */
+    public Builder<T> pagerFactory(PagerFactory factory) {
+      this.pagerFactory = factory;
+      return this;
+    }
+
+    /**
+     * Set the pager size for each {@link CellList}.
+     *
+     * @param pageSize the page size
+     * @return this
+     */
+    public Builder<T> pageSize(int pageSize) {
+      this.pageSize = pageSize;
       return this;
     }
 
@@ -908,6 +955,16 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize, Req
   private final SafeHtml openImageHtml;
 
   /**
+   * Factory used to create pagers for CellLists.
+   */
+  private final PagerFactory pagerFactory;
+
+  /**
+   * Page size for CellLists.
+   */
+  private final Integer pageSize;
+
+  /**
    * The element used to maintain the scrollbar when columns are removed.
    */
   private Element scrollLock;
@@ -954,6 +1011,8 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize, Req
     this.style.ensureInjected();
     this.cellListResources = new CellListResourcesImpl(resources);
     this.loadingIndicator = builder.loadingIndicator;
+    this.pagerFactory = builder.pagerFactory;
+    this.pageSize = builder.pageSize;
     initWidget(new SplitLayoutPanel());
     getElement().getStyle().setOverflow(Overflow.AUTO);
     setStyleName(this.style.cellBrowserWidget());
@@ -1067,7 +1126,10 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize, Req
    * @return the pager
    */
   protected <C> Widget createPager(HasData<C> display) {
-    PageSizePager pager = new PageSizePager(display.getVisibleRange().getLength());
+    if (pagerFactory == null) {
+      return null;
+    }
+    AbstractPager pager = pagerFactory.create(display);
     pager.setDisplay(display);
     return pager;
   }
@@ -1154,6 +1216,9 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize, Req
         new BrowserCellList<C>(nodeInfo.getCell(), level, nodeInfo.getProvidesKey());
     if (loadingIndicator != null) {
       display.setLoadingIndicator(loadingIndicator);
+    }
+    if (pageSize != null) {
+      display.setPageSize(pageSize);
     }
     display.setValueUpdater(nodeInfo.getValueUpdater());
 
