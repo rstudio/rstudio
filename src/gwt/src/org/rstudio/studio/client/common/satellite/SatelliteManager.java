@@ -130,11 +130,36 @@ public class SatelliteManager implements CloseHandler<Window>
    
    public boolean satelliteWindowExists(String name)
    {
+      return getSatelliteWindowObject(name) != null;
+   }
+   
+   public WindowEx getSatelliteWindowObject(String name)
+   {
       for (ActiveSatellite satellite : satellites_)
          if (satellite.getName().equals(name))
-            return true;
-      
-      return false;
+            return satellite.getWindow();
+            
+      return null;
+   }
+   
+   public void activateSatelliteWindow(String name)
+   {
+      if (Desktop.isDesktop())
+      {
+         Desktop.getFrame().activateSatelliteWindow(
+               SatelliteUtils.getSatelliteWindowName(name));
+      }
+      else
+      {
+         for (ActiveSatellite satellite : satellites_)
+         {
+            if (satellite.getName().equals(name))
+            {
+               satellite.getWindow().focus();
+               break;
+            }
+         }   
+      }
    }
    
    // close all satellite windows

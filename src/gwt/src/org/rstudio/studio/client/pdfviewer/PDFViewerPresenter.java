@@ -41,6 +41,8 @@ import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfResult;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfServerOperations;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.synctex.Synctex;
+import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
 import org.rstudio.studio.client.pdfviewer.model.PDFViewerParams;
 import org.rstudio.studio.client.pdfviewer.pdfjs.PDFView;
@@ -50,6 +52,7 @@ import org.rstudio.studio.client.pdfviewer.ui.PDFViewerToolbarDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 
 public class PDFViewerPresenter implements IsWidget, 
                                            CompilePdfStartedEvent.Handler,
@@ -77,15 +80,21 @@ public class PDFViewerPresenter implements IsWidget,
                              Commands commands,
                              FileTypeRegistry fileTypeRegistry,
                              CompilePdfServerOperations server,
-                             GlobalDisplay globalDisplay)
+                             GlobalDisplay globalDisplay,
+                             Session session,
+                             Synctex synctex)
    {
       view_ = view;
       fileTypeRegistry_ = fileTypeRegistry;
       server_ = server;
       globalDisplay_ = globalDisplay;
       commands_ = commands;
+      session_ = session;
+      synctex_ = synctex;
       
       binder.bind(commands, this);
+      
+      
       
       eventBus.addHandler(CompilePdfStartedEvent.TYPE, this);
       eventBus.addHandler(CompilePdfCompletedEvent.TYPE, this);
@@ -101,6 +110,22 @@ public class PDFViewerPresenter implements IsWidget,
       });
 
       final PDFViewerToolbarDisplay toolbar = view_.getToolbarDisplay();
+      
+      // synctex disabled by default (re-enabled in onActivated )
+      toolbar.getSyncButton().setVisible(false);
+      
+      toolbar.getSyncButton().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            // TODO: must warn that we can't activate on firefox
+            synctex_.inverseSearch(PdfLocation.create());
+         }
+         
+      });
+      
+      
       toolbar.getPrevButton().addClickHandler(new ClickHandler()
       {
          @Override
@@ -208,7 +233,8 @@ public class PDFViewerPresenter implements IsWidget,
    
    public void onActivated(PDFViewerParams pdfParams)
    {
-      
+      view_.getToolbarDisplay().getSyncButton().setVisible(
+                           session_.getSessionInfo().isSynctexEnabled());
    }
   
    
@@ -374,10 +400,12 @@ public class PDFViewerPresenter implements IsWidget,
    private CompilePdfResult lastResult_ = null;
    
    private final Display view_;
+   private final Synctex synctex_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final CompilePdfServerOperations server_;
    private final GlobalDisplay globalDisplay_;
    private final Commands commands_; 
+   private final Session session_;
 
    private HandlerRegistrations releaseOnDismiss_ = new HandlerRegistrations();
 

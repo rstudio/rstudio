@@ -229,4 +229,8 @@ public class SessionInfo extends JavaScriptObject
       return this.internal_pdf_preview_enabled;
    }-*/;
    
+   public final native boolean isSynctexEnabled() /*-{
+      return this.feature_synctex;
+   }-*/;
+   
 }

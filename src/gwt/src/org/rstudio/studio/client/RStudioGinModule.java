@@ -36,6 +36,7 @@ import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
+import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.vcs.AskPassManager;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
@@ -159,6 +160,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ChooseFile.class).in(Singleton.class);
       bind(ConsoleDispatcher.class).in(Singleton.class);
       bind(FileTypeCommands.class).in(Singleton.class);
+      bind(Synctex.class).in(Singleton.class);
       bind(PDFViewer.class).in(Singleton.class);
       
 

@@ -98,6 +98,11 @@
                                            icon="{res.fileActionsIcon}"
                                            label=""
                                            description=""/>
+               <widget:InlineToolbarSeparator />
+               <widget:InlineToolbarButton ui:field="btnSync_"
+                                           icon="{res.thumbnailsIcon}"
+                                           label="Sync"
+                                           description=""/>
             </td>
             <td class="{style.alignCell}" align="center" nowrap="nowrap" style="min-width: 400px">
                <widget:InlineToolbarButton ui:field="btnPrevious_"

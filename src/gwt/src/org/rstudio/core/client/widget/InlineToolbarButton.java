@@ -35,8 +35,7 @@ import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
 import org.rstudio.core.client.StringUtil;
 
-public class InlineToolbarButton extends Composite
-   implements HasClickHandlers
+public class InlineToolbarButton extends Composite implements HasButtonMethods
 {
    private class SimpleHasHandlers extends HandlerManager implements HasHandlers
    {

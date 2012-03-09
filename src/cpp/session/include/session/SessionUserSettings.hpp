@@ -141,6 +141,8 @@ public:
    bool enableLaTeXShellEscape() const;
    void setEnableLaTeXShellEscape(bool enableShellEscape);
 
+   bool featureSynctex() const;
+
 private:
 
    void onSettingsFileChanged(

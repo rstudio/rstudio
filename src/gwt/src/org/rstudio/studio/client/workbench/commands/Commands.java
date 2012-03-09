@@ -49,6 +49,7 @@ public abstract class
    public abstract AppCommand sourceNavigateForward();
    public abstract AppCommand compilePDF();
    public abstract AppCommand publishPDF();
+   public abstract AppCommand syncToPDF();
    public abstract AppCommand activateSource();
    public abstract AppCommand printSourceDoc();
    public abstract AppCommand vcsFileLog();

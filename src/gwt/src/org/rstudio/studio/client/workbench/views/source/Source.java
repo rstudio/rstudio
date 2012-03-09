@@ -192,6 +192,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.sourceActiveDocumentWithEcho());
       dynamicCommands_.add(commands.compilePDF());
       dynamicCommands_.add(commands.publishPDF());
+      dynamicCommands_.add(commands.syncToPDF());
       dynamicCommands_.add(commands.popoutDoc());
       dynamicCommands_.add(commands.find());
       dynamicCommands_.add(commands.findReplace());
@@ -211,6 +212,10 @@ public class Source implements InsertSourceHandler,
          command.setVisible(false);
          command.setEnabled(false);
       }
+      
+      // remove the syncToPDF command if the feature is disabled
+      if (!session_.getSessionInfo().isSynctexEnabled())
+         commands.syncToPDF().remove();
       
       // fake shortcuts for commands which we handle at a lower level
       int mod = BrowseCap.hasMetaKey() ? KeyboardShortcut.META : 

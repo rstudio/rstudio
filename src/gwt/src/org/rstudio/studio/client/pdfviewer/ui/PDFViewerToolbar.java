@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.*;
 
 import com.google.inject.Inject;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.HasButtonMethods;
 import org.rstudio.core.client.widget.InlineToolbarButton;
 import org.rstudio.core.client.widget.NumericTextBox;
 import org.rstudio.core.client.widget.SpanLabel;
@@ -95,19 +96,25 @@ public class PDFViewerToolbar extends Composite
    }
 
    @Override
-   public HasClickHandlers getPrevButton()
+   public HasButtonMethods getSyncButton()
+   {
+      return btnSync_;
+   }
+   
+   @Override
+   public HasButtonMethods getPrevButton()
    {
       return btnPrevious_;
    }
 
    @Override
-   public HasClickHandlers getNextButton()
+   public HasButtonMethods getNextButton()
    {
       return btnNext_;
    }
 
    @Override
-   public HasClickHandlers getThumbnailsButton()
+   public HasButtonMethods getThumbnailsButton()
    {
       return btnThumbnails_;
    }
@@ -151,6 +158,8 @@ public class PDFViewerToolbar extends Composite
    
    @UiField
    InlineToolbarButton btnActions_;
+   @UiField
+   InlineToolbarButton btnSync_;
    @UiField
    InlineToolbarButton btnPrevious_;
    @UiField

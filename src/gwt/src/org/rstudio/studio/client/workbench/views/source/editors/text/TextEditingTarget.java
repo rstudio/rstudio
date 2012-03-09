@@ -54,6 +54,8 @@ import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.synctex.Synctex;
+import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -204,6 +206,7 @@ public class TextEditingTarget implements EditingTarget
                             WorkbenchContext workbenchContext,
                             Provider<PublishPdf> pPublishPdf,
                             Session session,
+                            Synctex synctex,
                             FontSizeManager fontSizeManager,
                             DocDisplay docDisplay,
                             UIPrefs prefs,
@@ -218,6 +221,7 @@ public class TextEditingTarget implements EditingTarget
       consoleDispatcher_ = consoleDispatcher;
       workbenchContext_ = workbenchContext;
       session_ = session;
+      synctex_ = synctex;
       fontSizeManager_ = fontSizeManager;
       pPublishPdf_ = pPublishPdf;
 
@@ -1752,6 +1756,12 @@ public class TextEditingTarget implements EditingTarget
        
       handlePdfCommand(action, useInternalPreview);
    }
+   
+   @Handler
+   void onSyncToPDF()
+   {
+      synctex_.forwardSearch(SourceLocation.create());
+   }
 
    @Handler
    void onFindReplace()
@@ -2047,6 +2057,7 @@ public class TextEditingTarget implements EditingTarget
    private final ConsoleDispatcher consoleDispatcher_;
    private final WorkbenchContext workbenchContext_;
    private final Session session_;
+   private final Synctex synctex_;
    private final FontSizeManager fontSizeManager_;
    private DocUpdateSentinel docUpdateSentinel_;
    private Value<String> name_ = new Value<String>(null);

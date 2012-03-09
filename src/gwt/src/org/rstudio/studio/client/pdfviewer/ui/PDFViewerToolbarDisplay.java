@@ -13,15 +13,17 @@
 package org.rstudio.studio.client.pdfviewer.ui;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.HasButtonMethods;
 
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.ui.HasValue;
 
 public interface PDFViewerToolbarDisplay
 {
-   HasClickHandlers getPrevButton();
-   HasClickHandlers getNextButton();
-   HasClickHandlers getThumbnailsButton();
+   HasButtonMethods getSyncButton();
+   HasButtonMethods getPrevButton();
+   HasButtonMethods getNextButton();
+   HasButtonMethods getThumbnailsButton();
    HasClickHandlers getZoomOut();
    HasClickHandlers getZoomIn();
    HasValue<String> getPageNumber();
