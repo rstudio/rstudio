@@ -122,6 +122,7 @@ public:
 
 private:
    std::string synctexNameForInputFile(const FilePath& inputFile);
+   std::string normalizeSynctexName(const std::string& name);
 
 private:
    struct Impl;
