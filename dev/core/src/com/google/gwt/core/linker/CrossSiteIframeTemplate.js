@@ -18,8 +18,6 @@ function __MODULE_FUNC__() {
   var $wnd = __WINDOW_DEF__;
   var $doc = __DOCUMENT_DEF__;
 
-  __DEV_MODE_REDIRECT_HOOK__
-
   sendStats('bootstrap', 'begin');
 
   /****************************************************************************
@@ -120,6 +118,8 @@ function __MODULE_FUNC__() {
   /****************************************************************************
    * Bootstrap startup code
    ***************************************************************************/
+  __DEV_MODE_REDIRECT_HOOK__
+
   // Must be called before computeScriptBase() and getCompiledFilename()
   processMetas();
 

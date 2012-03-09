@@ -27,6 +27,10 @@ var devModeUrl = $wnd.sessionStorage[devModeKey];
 if (devModeUrl && !$wnd[devModeKey]) {
   $wnd[devModeKey] = true; // Don't try to redirect more than once,
   var script = $doc.createElement('script');
+
+  // save original module base
+  $wnd[devModeKey + ':moduleBase'] = computeScriptBase();
+
   script.src = devModeUrl;
   var head = $doc.getElementsByTagName('head')[0];
 

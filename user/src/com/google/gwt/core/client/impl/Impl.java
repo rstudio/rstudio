@@ -114,6 +114,14 @@ public final class Impl {
   }-*/;
 
   public static native String getModuleBaseURL() /*-{
+    // Check to see if DevModeRedirectHook has set an alternate value.
+    // The key should match DevModeRedirectHook.js.
+    var key = "__gwtDevModeHook:" + $moduleName + ":moduleBase";
+    var global = $wnd || self;
+    return global[key] || $moduleBase;
+  }-*/;
+
+  public static native String getModuleBaseURLForStaticFiles() /*-{
     return $moduleBase;
   }-*/;
 
