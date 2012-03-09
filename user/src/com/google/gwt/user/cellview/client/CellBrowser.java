@@ -779,6 +779,67 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize, Req
     }
   }
 
+  /**
+   * Builder object to create CellBrowser.
+   *
+   * @param <T> the type of data in the root node
+   */
+  public static class Builder<T> {
+    private final TreeViewModel viewModel;
+    private final T rootValue;
+    private Widget loadingIndicator;
+    private Resources resources;
+
+    /**
+    * Construct a new {@link Builder}.
+    *
+    * @param viewModel the {@link TreeViewModel} that backs the tree
+    * @param rootValue the hidden root value of the tree
+    */
+    public Builder(TreeViewModel viewModel, T rootValue) {
+      this.viewModel = viewModel;
+      this.rootValue = rootValue;
+    }
+
+    /**
+     * Creates a new {@link CellBrowser}.
+     *
+     * @return new {@link CellBrowser}
+     */
+    public CellBrowser build() {
+      return new CellBrowser(this);
+    }
+
+    /**
+     * Set the widget to display when the data is loading.
+     *
+     * @param widget the loading indicator
+     * @return this
+     */
+    public Builder<T> loadingIndicator(Widget widget) {
+      this.loadingIndicator = widget;
+      return this;
+    }
+
+    /**
+     * Set resources used for images.
+     *
+     * @param resources the {@link Resources} used for images
+     * @return this
+     */
+    public Builder<T> resources(Resources resources) {
+      this.resources = resources;
+      return this;
+    }
+
+    private Resources resources() {
+      if (resources == null) {
+        resources = getDefaultResources();
+      }
+      return resources;
+    }
+  }
+
   private static Resources DEFAULT_RESOURCES;
 
   /**
@@ -832,6 +893,11 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize, Req
   private boolean isAnimationEnabled;
 
   /**
+   * Widget passed to CellLists.
+   */
+  private final Widget loadingIndicator;
+
+  /**
    * The minimum width of new columns.
    */
   private int minWidth;
@@ -857,9 +923,11 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize, Req
    * @param <T> the type of data in the root node
    * @param viewModel the {@link TreeViewModel} that backs the tree
    * @param rootValue the hidden root value of the tree
+   *
+   * @deprecated please use {@link Builder}
    */
   public <T> CellBrowser(TreeViewModel viewModel, T rootValue) {
-    this(viewModel, rootValue, getDefaultResources());
+    this(new Builder<T>(viewModel, rootValue));
   }
 
   /**
@@ -869,15 +937,23 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize, Req
    * @param viewModel the {@link TreeViewModel} that backs the tree
    * @param rootValue the hidden root value of the tree
    * @param resources the {@link Resources} used for images
+   *
+   * @deprecated please use {@link Builder}
    */
   public <T> CellBrowser(TreeViewModel viewModel, T rootValue, Resources resources) {
-    super(viewModel);
+    this(new Builder<T>(viewModel, rootValue).resources(resources));
+  }
+
+  protected <T> CellBrowser(Builder<T> builder) {
+    super(builder.viewModel);
     if (template == null) {
       template = GWT.create(Template.class);
     }
+    Resources resources = builder.resources();
     this.style = resources.cellBrowserStyle();
     this.style.ensureInjected();
     this.cellListResources = new CellListResourcesImpl(resources);
+    this.loadingIndicator = builder.loadingIndicator;
     initWidget(new SplitLayoutPanel());
     getElement().getStyle().setOverflow(Overflow.AUTO);
     setStyleName(this.style.cellBrowserWidget());
@@ -906,7 +982,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize, Req
     getElement().appendChild(scrollLock);
 
     // Associate the first view with the rootValue.
-    appendTreeNode(getNodeInfo(rootValue), rootValue);
+    appendTreeNode(getNodeInfo(builder.rootValue), builder.rootValue);
 
     // Catch scroll events.
     sinkEvents(Event.ONSCROLL);
@@ -1076,6 +1152,9 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize, Req
   private <C> BrowserCellList<C> createDisplay(NodeInfo<C> nodeInfo, int level) {
     BrowserCellList<C> display =
         new BrowserCellList<C>(nodeInfo.getCell(), level, nodeInfo.getProvidesKey());
+    if (loadingIndicator != null) {
+      display.setLoadingIndicator(loadingIndicator);
+    }
     display.setValueUpdater(nodeInfo.getValueUpdater());
 
     /*
