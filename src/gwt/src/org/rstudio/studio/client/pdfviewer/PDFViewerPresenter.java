@@ -42,6 +42,7 @@ import org.rstudio.studio.client.common.compilepdf.model.CompilePdfResult;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfServerOperations;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.synctex.Synctex;
+import org.rstudio.studio.client.common.synctex.events.SynctexViewPdfEvent;
 import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
 import org.rstudio.studio.client.pdfviewer.model.PDFViewerParams;
@@ -56,7 +57,8 @@ import org.rstudio.studio.client.workbench.model.Session;
 
 public class PDFViewerPresenter implements IsWidget, 
                                            CompilePdfStartedEvent.Handler,
-                                           CompilePdfCompletedEvent.Handler
+                                           CompilePdfCompletedEvent.Handler,
+                                           SynctexViewPdfEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, PDFViewerPresenter>
    {}
@@ -98,6 +100,7 @@ public class PDFViewerPresenter implements IsWidget,
       
       eventBus.addHandler(CompilePdfStartedEvent.TYPE, this);
       eventBus.addHandler(CompilePdfCompletedEvent.TYPE, this);
+      eventBus.addHandler(SynctexViewPdfEvent.TYPE, this);
       
       Window.addWindowClosingHandler(new ClosingHandler() {
 
@@ -118,9 +121,11 @@ public class PDFViewerPresenter implements IsWidget,
       {
          @Override
          public void onClick(ClickEvent event)
-         {
-            // TODO: must warn that we can't activate on firefox
-            synctex_.inverseSearch(PdfLocation.create());
+         { 
+            Debug.log("Inverse search page: " + PDFView.currentPage() );
+            synctex_.inverseSearch(PdfLocation.create(lastSuccessfulPdfPath_,
+                                                      PDFView.currentPage(),
+                                                      120, 120, 0, 0));
          }
          
       });
@@ -305,6 +310,12 @@ public class PDFViewerPresenter implements IsWidget,
 
          view_.setURL(result.getViewPdfUrl());
       }
+   }
+   
+   @Override
+   public void onSynctexViewPdf(SynctexViewPdfEvent event)
+   {
+      PDFView.goToPage(event.getPdfLocation().getPage());
    }
    
    @Handler

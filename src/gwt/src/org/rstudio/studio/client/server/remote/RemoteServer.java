@@ -38,6 +38,8 @@ import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.shell.ShellInput;
+import org.rstudio.studio.client.common.synctex.model.PdfLocation;
+import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.common.vcs.*;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
@@ -2423,6 +2425,20 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, COMPILE_PDF_CLOSED, requestCallback);
    }
    
+   @Override
+   public void synctexForwardSearch(SourceLocation sourceLocation,
+                                    ServerRequestCallback<PdfLocation> callback)
+   {
+      sendRequest(RPC_SCOPE, SYNCTEX_FORWARD_SEARCH, sourceLocation, callback);
+   }
+
+   @Override
+   public void synctexInverseSearch(PdfLocation pdfLocation,
+                                    ServerRequestCallback<SourceLocation> callback)
+   {
+      sendRequest(RPC_SCOPE, SYNCTEX_INVERSE_SEARCH, pdfLocation, callback);
+   }
+   
    public void checkSpelling(String word,
                              ServerRequestCallback<Boolean> requestCallback)
    {
@@ -2672,6 +2688,9 @@ public class RemoteServer implements Server
    private static final String IS_COMPILE_PDF_RUNNING = "is_compile_pdf_running";
    private static final String TERMINATE_COMPILE_PDF = "terminate_compile_pdf";
    private static final String COMPILE_PDF_CLOSED = "compile_pdf_closed";
+   
+   private static final String SYNCTEX_FORWARD_SEARCH = "synctex_forward_search";
+   private static final String SYNCTEX_INVERSE_SEARCH = "synctex_inverse_search";
    
    private static final String CHECK_SPELLING = "check_spelling";
    private static final String SUGGESTION_LIST = "suggestion_list";

@@ -23,6 +23,8 @@
 #include <core/Exec.hpp>
 #include <core/SafeConvert.hpp>
 
+#include <core/tex/TexSynctex.hpp>
+
 #include <core/json/JsonRpc.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -131,6 +133,92 @@ Error compilePdfClosed(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error synctexForwardSearch(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   std::string file;
+   int line, column;
+   Error error = json::readObjectParam(request.params, 0,
+                                       "file", &file,
+                                       "line", &line,
+                                       "column", &column);
+   if (error)
+      return error;
+   FilePath inputFilePath = module_context::resolveAliasedPath(file);
+   FilePath pdfPath = pdfFilePath(inputFilePath);
+
+   core::tex::Synctex synctex;
+   if (synctex.parse(pdfPath))
+   {
+      core::tex::SourceLocation srcLoc(inputFilePath, line, column);
+      core::tex::PdfLocation pdfLoc = synctex.forwardSearch(srcLoc);
+      if (!pdfLoc.empty())
+      {
+         json::Object pdfJson;
+         pdfJson["file"] = module_context::createAliasedPath(pdfPath);
+         pdfJson["page"] = pdfLoc.page();
+         pdfJson["x"] = pdfLoc.x();
+         pdfJson["y"] = pdfLoc.y();
+         pdfJson["width"] = pdfLoc.height();
+         pdfJson["height"] = pdfLoc.width();
+         pResponse->setResult(pdfJson);
+      }
+      else
+      {
+         pResponse->setResult(json::Value());
+      }
+   }
+   else
+   {
+      pResponse->setResult(json::Value());
+   }
+
+   return Success();
+}
+
+Error synctexInverseSearch(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   std::string file;
+   int page;
+   double x, y, width, height;
+   Error error = json::readObjectParam(request.params, 0,
+                                       "file", &file,
+                                       "page", &page,
+                                       "x", &x,
+                                       "y", &y,
+                                       "width", &width,
+                                       "height", &height);
+   if (error)
+      return error;
+   FilePath pdfPath = module_context::resolveAliasedPath(file);
+
+   core::tex::Synctex synctex;
+   if (synctex.parse(pdfPath))
+   {
+      core::tex::PdfLocation pdfLocation(page, x, y, width, height);
+      core::tex::SourceLocation srcLoc = synctex.inverseSearch(pdfLocation);
+      if (!srcLoc.empty())
+      {
+         json::Object srcJson;
+         srcJson["file"] = module_context::createAliasedPath(srcLoc.file());
+         srcJson["line"] = srcLoc.line();
+         srcJson["column"] = srcLoc.column();
+         pResponse->setResult(srcJson);
+      }
+      else
+      {
+         pResponse->setResult(json::Value());
+      }
+   }
+   else
+   {
+      pResponse->setResult(json::Value());
+   }
+
+   return Success();
+}
+
 bool isBrowserSupported(const std::string& userAgent,
                         const boost::regex& versionRegEx,
                         double requiredVersion)
@@ -225,6 +313,8 @@ Error initialize()
       (bind(registerRpcMethod, "is_compile_pdf_running", isCompilePdfRunning))
       (bind(registerRpcMethod, "terminate_compile_pdf", terminateCompilePdf))
       (bind(registerRpcMethod, "compile_pdf_closed", compilePdfClosed))
+      (bind(registerRpcMethod, "synctex_forward_search", synctexForwardSearch))
+      (bind(registerRpcMethod, "synctex_inverse_search", synctexInverseSearch))
    ;
   return initBlock.execute();
 }

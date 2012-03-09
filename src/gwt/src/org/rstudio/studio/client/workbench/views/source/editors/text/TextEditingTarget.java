@@ -1760,7 +1760,11 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onSyncToPDF()
    {
-      synctex_.forwardSearch(SourceLocation.create());
+      String file = docUpdateSentinel_.getPath();
+      Position selPos = docDisplay_.getSelectionStart();
+      int line = selPos.getRow() + 1;
+      int column = selPos.getColumn() + 1;
+      synctex_.forwardSearch(SourceLocation.create(file, line, column));
    }
 
    @Handler

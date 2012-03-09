@@ -37,6 +37,7 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
 import org.rstudio.studio.client.common.synctex.Synctex;
+import org.rstudio.studio.client.common.synctex.model.SynctexServerOperations;
 import org.rstudio.studio.client.common.vcs.AskPassManager;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
@@ -248,6 +249,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(SpellingServerOperations.class).to(RemoteServer.class);
       bind(CompilePdfServerOperations.class).to(RemoteServer.class);
       bind(FindInFilesServerOperations.class).to(RemoteServer.class);
+      bind(SynctexServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

@@ -20,9 +20,44 @@ public class PdfLocation extends JavaScriptObject
    protected PdfLocation()
    {
    }
-
-   public final static native PdfLocation create() /*-{
+   
+   public final static native PdfLocation create(String file,
+                                                 int page,
+                                                 double x,
+                                                 double y,
+                                                 double width,
+                                                 double height) /*-{
       var location = new Object();
+      location.file = file;
+      location.page = page;
+      location.x = x;
+      location.y = y;
+      location.width = width;
+      location.height = height;
       return location;
+   }-*/;
+   
+   public final native String getFile() /*-{
+      return this.file;
+   }-*/;
+   
+   public native final int getPage() /*-{
+      return this.page;
+   }-*/;
+
+   public native final double getX() /*-{
+      return this.x;
+   }-*/;
+   
+   public native final double getY() /*-{
+      return this.y;
+   }-*/;
+   
+   public native final double getWidth() /*-{
+      return this.width;
+   }-*/;
+   
+   public native final double getHeight() /*-{
+      return this.height;
    }-*/;
 }

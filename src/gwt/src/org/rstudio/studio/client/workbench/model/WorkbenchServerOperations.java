@@ -19,6 +19,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
+import org.rstudio.studio.client.common.synctex.model.SynctexServerOperations;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
@@ -61,7 +62,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    WorkbenchListsServerOperations,
                                                    SpellingServerOperations,
                                                    CompilePdfServerOperations,
-                                                   FindInFilesServerOperations
+                                                   FindInFilesServerOperations,
+                                                   SynctexServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();

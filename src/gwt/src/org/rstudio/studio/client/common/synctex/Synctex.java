@@ -13,27 +13,56 @@
 
 package org.rstudio.studio.client.common.synctex;
 
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.GlobalProgressDelayer;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.synctex.events.SynctexViewPdfEvent;
 import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
+import org.rstudio.studio.client.common.synctex.model.SynctexServerOperations;
 import org.rstudio.studio.client.pdfviewer.PDFViewerApplication;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
+// TODO: rnw concordance
+
+// TODO: caching of synctex info
+
+// TODO: consider dedicated synctex module
+
+// TODO: synctex operations return empty or null
+// TODO: where to get the pdf path from in presenter (last successful?)
+// TODO: warn user that firefox satellite can't activate main
+// TODO: enable/disable/errors for synctex from wrong source or target or
+// from empty/unsaved source or target
+// TODO: figure out when we need to do a compile before synctex
 
 @Singleton
 public class Synctex
 {
    @Inject
    public Synctex(GlobalDisplay globalDisplay,
+                  EventBus eventBus,
+                  SynctexServerOperations server,
+                  FileTypeRegistry fileTypeRegistry,
                   Satellite satellite, 
                   SatelliteManager satelliteManager)
    {
       globalDisplay_ = globalDisplay;
+      eventBus_ = eventBus;
+      server_ = server;
+      fileTypeRegistry_ = fileTypeRegistry;
       satellite_ = satellite;
       satelliteManager_ = satelliteManager;
       
@@ -70,25 +99,73 @@ public class Synctex
    
    private void doForwardSearch(JavaScriptObject sourceLocationObject)
    {
-      //SourceLocation sourceLocation = sourceLocationObject.cast();
+      SourceLocation sourceLocation = sourceLocationObject.cast();
       
-      globalDisplay_.showErrorMessage("Synctex", "Forward Search");
-      
-      // TODO: fire an event which is handled by PDFViewerPresenter
+      final ProgressIndicator indicator = getSyncProgress();
+      server_.synctexForwardSearch(
+         sourceLocation,
+         new ServerRequestCallback<PdfLocation>() {
+
+            @Override
+            public void onResponseReceived(PdfLocation location)
+            {
+               indicator.onCompleted();
+               
+               if (location != null)
+                  eventBus_.fireEvent(new SynctexViewPdfEvent(location));
+            }
+            
+            @Override
+            public void onError(ServerError error)
+            {
+               indicator.onError(error.getUserMessage());     
+            }
+               
+       });
    }
    
    private void doInverseSearch(JavaScriptObject pdfLocationObject)
    {
-      //PdfLocation pdfLocation = pdfLocationObject.cast();
+      PdfLocation pdfLocation = pdfLocationObject.cast();
       
-      globalDisplay_.showErrorMessage("Synctex", "Invsere Search");
-      
-      
-      // TODO: fire an event which is handled by Source
-      
-      
+      final ProgressIndicator indicator = getSyncProgress();  
+      server_.synctexInverseSearch(
+          pdfLocation,
+          new ServerRequestCallback<SourceLocation>() {
+
+             @Override
+             public void onResponseReceived(SourceLocation location)
+             {
+                indicator.onCompleted();
+                
+                if (location != null)
+                {
+                   // create file position
+                   FilePosition position = FilePosition.create(
+                         location.getLine(), 
+                         Math.min(1, location.getColumn()));
+                   
+                   fileTypeRegistry_.editFile(
+                                  FileSystemItem.createFile(location.getFile()), 
+                                  position);
+                }
+             }
+             
+             @Override
+             public void onError(ServerError error)
+             {
+                indicator.onError(error.getUserMessage());     
+             }     
+        });   
    }   
 
+   private ProgressIndicator getSyncProgress()
+   {
+      return new GlobalProgressDelayer(globalDisplay_, 
+                                       500, 
+                                       "Syncing...").getIndicator();
+   }
+   
    private native void registerMainWindowCallbacks() /*-{
       var synctex = this;     
       $wnd.synctexInverseSearch = $entry(
@@ -117,6 +194,10 @@ public class Synctex
    }-*/;
    
    private final GlobalDisplay globalDisplay_;
+   private final EventBus eventBus_;
+   private final SynctexServerOperations server_;
+   private final FileTypeRegistry fileTypeRegistry_;
    private final Satellite satellite_;
    private final SatelliteManager satelliteManager_;
+ 
 }

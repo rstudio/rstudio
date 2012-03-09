@@ -22,9 +22,26 @@ public class SourceLocation extends JavaScriptObject
    }
    
 
-   public final static native SourceLocation create() /*-{
+   public final static native SourceLocation create(String file,
+                                                    int line,
+                                                    int column) /*-{
       var location = new Object();
+      location.file = file;
+      location.line = line;
+      location.column = column;
       return location;
+   }-*/;
+   
+   public native final String getFile() /*-{
+      return this.file;
+   }-*/;
+   
+   public native final int getLine() /*-{
+      return this.line;
+   }-*/;
+
+   public native final int getColumn() /*-{
+      return this.column;
    }-*/;
 
 }
