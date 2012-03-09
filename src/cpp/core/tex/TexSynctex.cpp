@@ -173,7 +173,7 @@ std::string Synctex::synctexNameForInputFile(const FilePath& inputFile)
       // complete the name against the parent path -- if it is equal to
       // the input file that that's the one we are looking for
       FilePath synctexPath = parentPath.complete(adjustedName);
-      if (synctexPath.isEquivilantTo(inputFile))
+      if (synctexPath.isEquivalentTo(inputFile))
          return name;
 
       // next node

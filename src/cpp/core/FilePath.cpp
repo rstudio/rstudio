@@ -937,8 +937,8 @@ Error FilePath::open_w(boost::shared_ptr<std::ostream>* pStream, bool truncate) 
    return Success();
 }
 
-// check for equivilance (point to the same file-system entity)
-bool FilePath::isEquivilantTo(const FilePath& filePath) const
+// check for equivalence (point to the same file-system entity)
+bool FilePath::isEquivalentTo(const FilePath& filePath) const
 {
    if (!exists() || !filePath.exists())
       return false;
