@@ -160,6 +160,9 @@ public:
    Error open_r(boost::shared_ptr<std::istream>* pStream) const;
    Error open_w(boost::shared_ptr<std::ostream>* pStream, bool truncate = true) const;
 
+   // check for equivilance (point to the same file-system entity)
+   bool isEquivilantTo(const FilePath& filePath) const;
+
    // compare two instances (equal if absolutePath == absolutePath)
    bool operator== (const FilePath& filePath) const ;
    bool operator!= (const FilePath& filePath) const ;

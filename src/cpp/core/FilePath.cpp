@@ -937,6 +937,29 @@ Error FilePath::open_w(boost::shared_ptr<std::ostream>* pStream, bool truncate) 
    return Success();
 }
 
+// check for equivilance (point to the same file-system entity)
+bool FilePath::isEquivilantTo(const FilePath& filePath) const
+{
+   if (!exists() || !filePath.exists())
+      return false;
+
+   try
+   {
+      return boost::filesystem::equivalent(pImpl_->path, filePath.pImpl_->path);
+   }
+   catch(const boost::filesystem::filesystem_error& e)
+   {
+      Error error(e.code(), ERROR_LOCATION) ;
+      addErrorProperties(pImpl_->path, &error) ;
+      error.addProperty("equivilant-to", filePath);
+      return error ;
+   }
+
+   // keep compiler happy
+   return false;
+}
+
+
 bool FilePath::operator== (const FilePath& filePath) const 
 {
    return pImpl_->path == filePath.pImpl_->path ;

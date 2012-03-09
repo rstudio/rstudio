@@ -13,6 +13,8 @@
 
 #include <core/tex/TexSynctex.hpp>
 
+
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Error.hpp>
@@ -133,10 +135,12 @@ SourceLocation Synctex::inverseSearch(const PdfLocation& location)
       synctex_node_t node = synctex_next_result(pImpl_->scanner);
       if (node != NULL)
       {
-         // get the filename
+         // get the filename (then trim it to adjust for embedded whitespace
+         // which we've seen in synctex on windows)
          std::string filename = ::synctex_scanner_get_name(
                                                    pImpl_->scanner,
                                                    ::synctex_node_tag(node));
+         boost::algorithm::trim(filename);
 
          // might be relative or might be absolute, complete it against the
          // pdf's parent directory to cover both cases
@@ -166,14 +170,18 @@ std::string Synctex::synctexNameForInputFile(const FilePath& inputFile)
       std::string name = ::synctex_scanner_get_name(pImpl_->scanner,
                                                     ::synctex_node_tag(node));
 
+      // trim it (on windows if it's the last available name it can include
+      // some additional whitespace at the end)
+      std::string adjustedName = boost::algorithm::trim_copy(name);
+
       // if it starts with a ./ then trim that for the purposes of comparison
-      std::string adjustedName = name;
       if (boost::algorithm::starts_with(name, "./") && (name.length() > 2))
          adjustedName = name.substr(2);
 
       // complete the name against the parent path -- if it is equal to
       // the input file that that's the one we are looking for
-      if (parentPath.complete(adjustedName) == inputFile)
+      FilePath synctexPath = parentPath.complete(adjustedName);
+      if (synctexPath.isEquivilantTo(inputFile))
          return name;
 
       // next node
