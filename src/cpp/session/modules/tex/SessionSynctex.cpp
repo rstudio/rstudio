@@ -32,6 +32,42 @@ namespace synctex {
 
 namespace {
 
+json::Value toJson(const FilePath& pdfFile,
+                   const core::tex::PdfLocation& pdfLoc)
+{
+   if (!pdfLoc.empty())
+   {
+      json::Object pdfJson;
+      pdfJson["file"] = module_context::createAliasedPath(pdfFile);
+      pdfJson["page"] = pdfLoc.page();
+      pdfJson["x"] = pdfLoc.x();
+      pdfJson["y"] = pdfLoc.y();
+      pdfJson["width"] = pdfLoc.height();
+      pdfJson["height"] = pdfLoc.width();
+      return pdfJson;
+   }
+   else
+   {
+      return json::Value();
+   }
+}
+
+json::Value toJson(const core::tex::SourceLocation& srcLoc)
+{
+   if (!srcLoc.empty())
+   {
+      json::Object srcJson;
+      srcJson["file"] = module_context::createAliasedPath(srcLoc.file());
+      srcJson["line"] = srcLoc.line();
+      srcJson["column"] = srcLoc.column();
+      return srcJson;
+   }
+   else
+   {
+      return json::Value();
+   }
+}
+
 Error synctexForwardSearch(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
@@ -51,21 +87,7 @@ Error synctexForwardSearch(const json::JsonRpcRequest& request,
    {
       core::tex::SourceLocation srcLoc(inputFile, line, column);
       core::tex::PdfLocation pdfLoc = synctex.forwardSearch(srcLoc);
-      if (!pdfLoc.empty())
-      {
-         json::Object pdfJson;
-         pdfJson["file"] = module_context::createAliasedPath(pdfFile);
-         pdfJson["page"] = pdfLoc.page();
-         pdfJson["x"] = pdfLoc.x();
-         pdfJson["y"] = pdfLoc.y();
-         pdfJson["width"] = pdfLoc.height();
-         pdfJson["height"] = pdfLoc.width();
-         pResponse->setResult(pdfJson);
-      }
-      else
-      {
-         pResponse->setResult(json::Value());
-      }
+      pResponse->setResult(toJson(pdfFile, pdfLoc));
    }
    else
    {
@@ -74,6 +96,7 @@ Error synctexForwardSearch(const json::JsonRpcRequest& request,
 
    return Success();
 }
+
 
 Error synctexInverseSearch(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
@@ -97,18 +120,7 @@ Error synctexInverseSearch(const json::JsonRpcRequest& request,
    {
       core::tex::PdfLocation pdfLocation(page, x, y, width, height);
       core::tex::SourceLocation srcLoc = synctex.inverseSearch(pdfLocation);
-      if (!srcLoc.empty())
-      {
-         json::Object srcJson;
-         srcJson["file"] = module_context::createAliasedPath(srcLoc.file());
-         srcJson["line"] = srcLoc.line();
-         srcJson["column"] = srcLoc.column();
-         pResponse->setResult(srcJson);
-      }
-      else
-      {
-         pResponse->setResult(json::Value());
-      }
+      pResponse->setResult(toJson(srcLoc));
    }
    else
    {
