@@ -39,9 +39,6 @@ import com.google.inject.Singleton;
 
 // TODO: caching of synctex info
 
-// TODO: consider dedicated synctex module
-
-// TODO: synctex operations return empty or null
 // TODO: where to get the pdf path from in presenter (last successful?)
 // TODO: warn user that firefox satellite can't activate main
 // TODO: enable/disable/errors for synctex from wrong source or target or

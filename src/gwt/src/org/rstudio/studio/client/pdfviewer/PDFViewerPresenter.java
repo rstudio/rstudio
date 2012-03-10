@@ -122,7 +122,6 @@ public class PDFViewerPresenter implements IsWidget,
          @Override
          public void onClick(ClickEvent event)
          { 
-            Debug.log("Inverse search page: " + PDFView.currentPage() );
             synctex_.inverseSearch(PdfLocation.create(lastSuccessfulPdfPath_,
                                                       PDFView.currentPage(),
                                                       120, 120, 0, 0));
