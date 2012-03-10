@@ -1758,7 +1758,7 @@ public class TextEditingTarget implements EditingTarget
    }
    
    @Handler
-   void onSyncToPDF()
+   void onSynctexForwardSearch()
    {
       String file = docUpdateSentinel_.getPath();
       Position selPos = docDisplay_.getSelectionStart();

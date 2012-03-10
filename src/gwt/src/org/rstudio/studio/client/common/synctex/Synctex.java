@@ -40,6 +40,7 @@ import com.google.inject.Singleton;
 // TODO: enable/disable/errors for synctex from wrong source or target or
 // from empty/unsaved source or target
 // TODO: figure out when we need to do a compile before synctex
+// TODO: deal with window closing
 
 //TODO: warn user that firefox satellite can't activate main
 

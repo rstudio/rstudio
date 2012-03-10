@@ -36,4 +36,8 @@ public class CompilePdfResult extends JavaScriptObject
    public final native String getViewPdfUrl() /*-{
       return this.view_pdf_url;
    }-*/;
+   
+   public final native boolean isSynctexAvailable() /*-{
+      return this.synctex_available;
+   }-*/;
 }

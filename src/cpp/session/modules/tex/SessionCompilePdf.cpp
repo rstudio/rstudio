@@ -160,6 +160,12 @@ FilePath ancillaryFilePath(const FilePath& texFilePath, const std::string& ext)
    return texFilePath.parent().childPath(texFilePath.stem() + ext);
 }
 
+bool isSynctexAvailable(const FilePath& texFilePath)
+{
+   return ancillaryFilePath(texFilePath, ".synctex.gz").exists() ||
+          ancillaryFilePath(texFilePath, ".synctex").exists();
+}
+
 void enqueOutputEvent(const std::string& output)
 {
    s_compilePdfState.addOutput(output);
@@ -198,7 +204,7 @@ void enqueCompletedEvent(bool succeeded, const FilePath& texFilePath)
    FilePath pdfPath = ancillaryFilePath(texFilePath, ".pdf");
    dataJson["pdf_path"] = module_context::createAliasedPath(pdfPath);
    dataJson["view_pdf_url"] = tex::view_pdf::createViewPdfUrl(pdfPath);
-
+   dataJson["synctex_available"] = isSynctexAvailable(texFilePath);
 
    ClientEvent event(client_events::kCompilePdfCompletedEvent,
                      dataJson);
@@ -284,15 +290,6 @@ void writeLogEntriesOutput(const core::tex::LogEntries& logEntries)
 
 }
 
-FilePath latexLogPath(const FilePath& texFilePath)
-{
-   return ancillaryFilePath(texFilePath, ".log");
-}
-
-FilePath bibtexLogPath(const FilePath& texFilePath)
-{
-   return ancillaryFilePath(texFilePath, ".blg");
-}
 
 bool includeLogEntry(const core::tex::LogEntry& logEntry)
 {
@@ -314,7 +311,7 @@ void getLogEntries(const FilePath& texPath,
                    core::tex::LogEntries* pLogEntries)
 {
    // latex log file
-   FilePath logPath = latexLogPath(texPath);
+   FilePath logPath = ancillaryFilePath(texPath, ".log");
    if (logPath.exists())
    {
       core::tex::LogEntries logEntries;
@@ -327,7 +324,7 @@ void getLogEntries(const FilePath& texPath,
 
    // bibtex log file
    core::tex::LogEntries bibtexLogEntries;
-   logPath = bibtexLogPath(texPath);
+   logPath = ancillaryFilePath(texPath, ".blg");
    if (logPath.exists())
    {
       Error error = core::tex::parseBibtexLog(logPath, &bibtexLogEntries);
@@ -341,26 +338,20 @@ void getLogEntries(const FilePath& texPath,
              std::back_inserter(*pLogEntries));
 }
 
-void removeExistingLogs(const FilePath& texFilePath)
+void removeExistingAncillary(const FilePath& texFilePath,
+                             const std::string& extension)
 {
-   Error error = latexLogPath(texFilePath).removeIfExists();
-   if (error)
-      LOG_ERROR(error);
-
-   error = bibtexLogPath(texFilePath).removeIfExists();
+   Error error = ancillaryFilePath(texFilePath, extension).removeIfExists();
    if (error)
       LOG_ERROR(error);
 }
 
-void removeExistingSynctex(const FilePath& texFilePath)
+void removeExistingLatexAncillaryFiles(const FilePath& texFilePath)
 {
-   Error error = ancillaryFilePath(texFilePath, ".synctex").removeIfExists();
-   if (error)
-      LOG_ERROR(error);
-
-   error = ancillaryFilePath(texFilePath, ".synctex.gz").removeIfExists();
-   if (error)
-      LOG_ERROR(error);
+   removeExistingAncillary(texFilePath, ".log");
+   removeExistingAncillary(texFilePath, ".blg");
+   removeExistingAncillary(texFilePath, ".synctex");
+   removeExistingAncillary(texFilePath, ".synctex.gz");
  }
 
 std::string buildIssuesMessage(const core::tex::LogEntries& logEntries)
@@ -470,7 +461,7 @@ public:
             remove(".blg");
          }
 
-         // reset base path so we only do this one
+         // reset base path so we only do this once
          basePath_.clear();
       }
    }
@@ -559,6 +550,10 @@ private:
       bool isRnw = ext == ".rnw" || ext == ".snw" || ext == ".nw";
       if (isRnw)
       {
+         // remove existing ancillary files + concordance
+         removeExistingLatexAncillaryFiles(targetFilePath_);
+         removeExistingAncillary(targetFilePath_, "-concordance.tex");
+
          // attempt to weave the rnw
          rnw_weave::runWeave(targetFilePath_,
                              magicComments_,
@@ -592,7 +587,8 @@ private:
       // configure pdflatex options
       pdflatex::PdfLatexOptions options;
       options.fileLineError = false;
-      options.syncTex = !isTargetRnw() || !concordances.empty();
+      options.syncTex = userSettings().featureSynctex() &&
+                        (!isTargetRnw() || !concordances.empty());
       options.shellEscape = userSettings().enableLaTeXShellEscape();
 
       // get back-end version info
@@ -615,13 +611,9 @@ private:
                                                 targetFilePath_.stem() +
                                                 ".tex");
 
-      // remove synctex files if synctex is disabled
-      if (!options.syncTex)
-         removeExistingSynctex(texFilePath);
-
       // remove log files if they exist (avoids confusion created by parsing
       // old log files for errors)
-      removeExistingLogs(texFilePath);
+      removeExistingLatexAncillaryFiles(texFilePath);
 
       // setup cleanup context if clean was specified
       if (userSettings().cleanTexi2DviOutput())
