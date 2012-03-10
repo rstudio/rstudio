@@ -19,6 +19,9 @@ public interface Resources extends ClientBundle
 {
    @Source("FileActionsIcon.png")
    ImageResource fileActionsIcon();
+   
+   @Source("SyncIcon.png")
+   ImageResource syncIcon();
 
    @Source("NextPageIcon.png")
    ImageResource nextPageIcon();

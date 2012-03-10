@@ -100,7 +100,7 @@
                                            description=""/>
                <widget:InlineToolbarSeparator />
                <widget:InlineToolbarButton ui:field="btnSync_"
-                                           icon="{res.thumbnailsIcon}"
+                                           icon="{res.syncIcon}"
                                            label="Sync"
                                            description=""/>
             </td>

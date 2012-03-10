@@ -53,7 +53,6 @@ import org.rstudio.studio.client.pdfviewer.ui.PDFViewerToolbarDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.Session;
 
 public class PDFViewerPresenter implements IsWidget, 
                                            CompilePdfStartedEvent.Handler,
@@ -83,7 +82,6 @@ public class PDFViewerPresenter implements IsWidget,
                              FileTypeRegistry fileTypeRegistry,
                              CompilePdfServerOperations server,
                              GlobalDisplay globalDisplay,
-                             Session session,
                              Synctex synctex)
    {
       view_ = view;
@@ -91,7 +89,6 @@ public class PDFViewerPresenter implements IsWidget,
       server_ = server;
       globalDisplay_ = globalDisplay;
       commands_ = commands;
-      session_ = session;
       synctex_ = synctex;
       
       binder.bind(commands, this);
@@ -114,7 +111,7 @@ public class PDFViewerPresenter implements IsWidget,
 
       final PDFViewerToolbarDisplay toolbar = view_.getToolbarDisplay();
       
-      // synctex disabled by default (re-enabled in onActivated )
+      // synctex disabled by default (enabled after compile w/ synctex)
       toolbar.getSyncButton().setVisible(false);
       
       toolbar.getSyncButton().addClickHandler(new ClickHandler()
@@ -122,13 +119,9 @@ public class PDFViewerPresenter implements IsWidget,
          @Override
          public void onClick(ClickEvent event)
          { 
-            synctex_.inverseSearch(PdfLocation.create(lastSuccessfulPdfPath_,
-                                                      PDFView.currentPage(),
-                                                      120, 120, 0, 0));
+            commands_.synctexInverseSearch().execute();
          }
-         
       });
-      
       
       toolbar.getPrevButton().addClickHandler(new ClickHandler()
       {
@@ -237,8 +230,6 @@ public class PDFViewerPresenter implements IsWidget,
    
    public void onActivated(PDFViewerParams pdfParams)
    {
-      view_.getToolbarDisplay().getSyncButton().setVisible(
-                           session_.getSessionInfo().isSynctexEnabled());
    }
   
    
@@ -318,6 +309,14 @@ public class PDFViewerPresenter implements IsWidget,
    }
    
    @Handler
+   public void onSynctexInverseSearch()
+   {
+      synctex_.inverseSearch(PdfLocation.create(lastSuccessfulPdfPath_,
+                                                PDFView.currentPage(),
+                                                120, 120, 0, 0));
+   }
+   
+   @Handler
    public void onShowPdfExternal()
    {
       String pdfPath = getCompiledPdfPath();
@@ -371,6 +370,13 @@ public class PDFViewerPresenter implements IsWidget,
       
       boolean havePdf = getCompiledPdfPath() != null;
       commands_.showPdfExternal().setEnabled(havePdf);
+      
+      if (result != null)
+      {
+         boolean haveSynctex = result.isSynctexAvailable();
+         commands_.synctexInverseSearch().setVisible(haveSynctex);
+         view_.getToolbarDisplay().getSyncButton().setVisible(haveSynctex);
+      }
    }
    
    private String getCompiledPdfPath()
@@ -415,7 +421,6 @@ public class PDFViewerPresenter implements IsWidget,
    private final CompilePdfServerOperations server_;
    private final GlobalDisplay globalDisplay_;
    private final Commands commands_; 
-   private final Session session_;
 
    private HandlerRegistrations releaseOnDismiss_ = new HandlerRegistrations();
 
