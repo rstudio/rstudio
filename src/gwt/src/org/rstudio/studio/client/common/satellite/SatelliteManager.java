@@ -136,7 +136,8 @@ public class SatelliteManager implements CloseHandler<Window>
    public WindowEx getSatelliteWindowObject(String name)
    {
       for (ActiveSatellite satellite : satellites_)
-         if (satellite.getName().equals(name))
+         if (satellite.getName().equals(name) && 
+             !satellite.getWindow().isClosed())
             return satellite.getWindow();
             
       return null;
@@ -153,7 +154,8 @@ public class SatelliteManager implements CloseHandler<Window>
       {
          for (ActiveSatellite satellite : satellites_)
          {
-            if (satellite.getName().equals(name))
+            if (satellite.getName().equals(name) && 
+                !satellite.getWindow().isClosed())
             {
                satellite.getWindow().focus();
                break;

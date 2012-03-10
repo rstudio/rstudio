@@ -1760,7 +1760,11 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onSynctexForwardSearch()
    {
+      // get doc path (bail if the document is unsaved)
       String file = docUpdateSentinel_.getPath();
+      if (file == null)
+         return;
+      
       Position selPos = docDisplay_.getSelectionStart();
       int line = selPos.getRow() + 1;
       int column = selPos.getColumn() + 1;
