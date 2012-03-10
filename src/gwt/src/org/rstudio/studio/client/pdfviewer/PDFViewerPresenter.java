@@ -311,9 +311,13 @@ public class PDFViewerPresenter implements IsWidget,
    @Handler
    public void onSynctexInverseSearch()
    {
-      synctex_.inverseSearch(PdfLocation.create(lastSuccessfulPdfPath_,
-                                                PDFView.currentPage(),
-                                                120, 120, 0, 0));
+      String pdfPath = lastResult_.getPdfPath();
+      if (pdfPath != null)
+      {
+         synctex_.inverseSearch(PdfLocation.create(pdfPath,
+                                                   PDFView.currentPage(),
+                                                   120, 120, 0, 0));
+      }
    }
    
    @Handler
