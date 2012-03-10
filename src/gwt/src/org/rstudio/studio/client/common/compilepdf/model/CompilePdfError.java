@@ -13,7 +13,6 @@
 
 package org.rstudio.studio.client.common.compilepdf.model;
 
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsUtil;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -37,6 +36,9 @@ public class CompilePdfError extends JavaScriptObject
       return this.path;
    }-*/;
    
+   /*
+    * Can return -1 for unknown line
+    */
    public final native int getLine() /*-{
       return this.line;
    }-*/;
@@ -52,13 +54,7 @@ public class CompilePdfError extends JavaScriptObject
    public final native int getLogLine() /*-{
       return this.log_line;
    }-*/;
-
-   public final String asString()
-   {
-      FileSystemItem fsi = FileSystemItem.createFile(getPath());
-      return fsi.getName() + " (line " + getLine() + "): " + getMessage();
-   }
-   
+ 
    public final static boolean includesErrorType(
                                           JsArray<CompilePdfError> errors)
    { 

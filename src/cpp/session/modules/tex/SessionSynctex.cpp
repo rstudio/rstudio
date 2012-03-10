@@ -23,6 +23,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include "SessionRnwConcordance.hpp"
+
 using namespace core;
 
 namespace session {
@@ -68,6 +70,33 @@ json::Value toJson(const core::tex::SourceLocation& srcLoc)
    }
 }
 
+void applyForwardConcordance(core::tex::SourceLocation* pLoc)
+{
+   // skip if this isn't an Rnw
+   if (pLoc->file().extensionLowerCase() != ".rnw")
+      return;
+
+   // try to read concordance
+   using namespace tex::rnw_concordance;
+   Concordances concordances;
+   Error error = readIfExists(pLoc->file(), &concordances);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // try to find a match
+   FileAndLine texLine = concordances.texLine(FileAndLine(pLoc->file(),
+                                                          pLoc->line()));
+   if (!texLine.empty())
+   {
+      *pLoc = core::tex::SourceLocation(texLine.filePath(),
+                                        texLine.line(),
+                                        pLoc->column());
+   }
+}
+
 Error synctexForwardSearch(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
@@ -86,6 +115,8 @@ Error synctexForwardSearch(const json::JsonRpcRequest& request,
    if (synctex.parse(pdfFile))
    {
       core::tex::SourceLocation srcLoc(inputFile, line, column);
+      applyForwardConcordance(&srcLoc);
+
       core::tex::PdfLocation pdfLoc = synctex.forwardSearch(srcLoc);
       pResponse->setResult(toJson(pdfFile, pdfLoc));
    }
@@ -97,6 +128,29 @@ Error synctexForwardSearch(const json::JsonRpcRequest& request,
    return Success();
 }
 
+
+void applyInverseConcordance(core::tex::SourceLocation* pLoc)
+{
+    // try to read concordance
+   using namespace tex::rnw_concordance;
+   Concordances concordances;
+   Error error = readIfExists(pLoc->file(), &concordances);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // try to find a match
+   FileAndLine rnwLine = concordances.rnwLine(FileAndLine(pLoc->file(),
+                                                          pLoc->line()));
+   if (!rnwLine.empty())
+   {
+      *pLoc = core::tex::SourceLocation(rnwLine.filePath(),
+                                        rnwLine.line(),
+                                        pLoc->column());
+   }
+}
 
 Error synctexInverseSearch(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
@@ -119,7 +173,10 @@ Error synctexInverseSearch(const json::JsonRpcRequest& request,
    if (synctex.parse(pdfPath))
    {
       core::tex::PdfLocation pdfLocation(page, x, y, width, height);
+
       core::tex::SourceLocation srcLoc = synctex.inverseSearch(pdfLocation);
+      applyInverseConcordance(&srcLoc);
+
       pResponse->setResult(toJson(srcLoc));
    }
    else

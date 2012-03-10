@@ -177,17 +177,35 @@ Error Concordance::parse(const FilePath& sourceFile,
 }
 
 
-FileAndLine Concordances::lookup(const FileAndLine& texFileAndLine) const
+FileAndLine Concordances::rnwLine(const FileAndLine& texLine) const
 {
-   if (texFileAndLine.filePath().empty())
+   if (texLine.filePath().empty())
       return FileAndLine();
 
    BOOST_FOREACH(const Concordance& concordance, concordances_)
    {
-      if (concordance.outputFile() ==  texFileAndLine.filePath())
+      if (concordance.outputFile().isEquivalentTo(texLine.filePath()))
       {
          return FileAndLine(concordance.inputFile(),
-                            concordance.rnwLine(texFileAndLine.line()));
+                            concordance.rnwLine(texLine.line()));
+      }
+   }
+
+   return FileAndLine();
+}
+
+
+FileAndLine Concordances::texLine(const FileAndLine& rnwLine) const
+{
+  if (rnwLine.filePath().empty())
+      return FileAndLine();
+
+   BOOST_FOREACH(const Concordance& concordance, concordances_)
+   {
+      if (concordance.inputFile().isEquivalentTo(rnwLine.filePath()))
+      {
+         return FileAndLine(concordance.outputFile(),
+                            concordance.texLine(rnwLine.line()));
       }
    }
 
@@ -205,7 +223,7 @@ std::string fixup_formatter(const Concordances& concordances,
       if (what[i].matched)
       {
          int inputLine = core::safe_convert::stringTo<int>(what[i], 1);
-         FileAndLine dest = concordances.lookup(
+         FileAndLine dest = concordances.rnwLine(
                                            FileAndLine(sourceFile, inputLine));
          if (!dest.empty())
          {
@@ -227,7 +245,7 @@ core::tex::LogEntry Concordances::fixup(const core::tex::LogEntry &entry,
    // TeX line numbers (e.g. "Line 102: Error at line 192")
    static boost::regex regexLines("\\blines? (\\d+)(?:-{1,3}(\\d+))?\\b");
 
-   FileAndLine mapped = lookup(FileAndLine(entry.filePath(), entry.line()));
+   FileAndLine mapped = rnwLine(FileAndLine(entry.filePath(), entry.line()));
    if (!mapped.empty())
    {
       boost::function<std::string(boost::smatch)> formatter =
@@ -261,10 +279,10 @@ void removePrevious(const core::FilePath& rnwFile)
 }
 
 
-Error readIfExists(const core::FilePath& rnwFile, Concordances* pConcordances)
+Error readIfExists(const core::FilePath& srcFile, Concordances* pConcordances)
 {
    // return success if the file doesn't exist
-   FilePath concordanceFile = concordanceFilePath(rnwFile);
+   FilePath concordanceFile = concordanceFilePath(srcFile);
    if (!concordanceFile.exists())
       return Success();
 
@@ -289,7 +307,7 @@ Error readIfExists(const core::FilePath& rnwFile, Concordances* pConcordances)
          Concordance concord;
          Error error = concord.parse(concordanceFile,
                                      kConcordance + entry,
-                                     rnwFile.parent());
+                                     srcFile.parent());
          if (error)
             LOG_ERROR(error);
          else

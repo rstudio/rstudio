@@ -35,8 +35,6 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-// TODO: rnw concordance
-
 // TODO: caching of synctex info
 
 // TODO: where to get the pdf path from in presenter (last successful?)
