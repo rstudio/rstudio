@@ -35,18 +35,6 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-// TODO: caching of synctex info
-
-// TODO: warn user that firefox satellite can't activate main
-
-// TODO: figure out when we need to do a compile before synctex?
-
-// TODO: enable/disable/errors for synctex from wrong source or target or
-// from empty/unsaved source or target
-
-// TODO: deal with window closing
-
-
 @Singleton
 public class Synctex
 {
