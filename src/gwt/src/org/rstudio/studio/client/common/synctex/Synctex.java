@@ -20,6 +20,8 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
+import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
+import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
@@ -30,17 +32,23 @@ import org.rstudio.studio.client.common.synctex.model.SynctexServerOperations;
 import org.rstudio.studio.client.pdfviewer.PDFViewerApplication;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Window.ClosingEvent;
+import com.google.gwt.user.client.Window.ClosingHandler;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class Synctex
+public class Synctex implements CompilePdfStartedEvent.Handler,
+                                CompilePdfCompletedEvent.Handler
 {
    @Inject
    public Synctex(GlobalDisplay globalDisplay,
                   EventBus eventBus,
+                  Commands commands,
                   SynctexServerOperations server,
                   FileTypeRegistry fileTypeRegistry,
                   Satellite satellite, 
@@ -48,6 +56,7 @@ public class Synctex
    {
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
+      commands_ = commands;
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
       satellite_ = satellite;
@@ -55,9 +64,57 @@ public class Synctex
       
       // main window and satellite export callbacks to eachother
       if (!satellite.isCurrentWindowSatellite())
+      {
          registerMainWindowCallbacks();
-      else if (satellite.getSatelliteName().equals(PDFViewerApplication.NAME))
+      }
+      else if (isCurrentWindowPdfViewerSatellite())
+      {
          registerSatelliteCallbacks();
+         
+         Window.addWindowClosingHandler(new ClosingHandler() {
+            @Override
+            public void onWindowClosing(ClosingEvent event)
+            {
+               callNotifyPdfViewerClosed();
+            }
+         });
+      }
+      
+      // disable commands at the start
+      setSynctexCommandsEnabled(false);
+      
+      // subscribe to compile pdf status event so we can update command status
+      eventBus_.addHandler(CompilePdfStartedEvent.TYPE, this);
+      eventBus_.addHandler(CompilePdfCompletedEvent.TYPE, this);
+   }
+   
+   @Override
+   public void onCompilePdfStarted(CompilePdfStartedEvent event)
+   {
+      setSynctexCommandsEnabled(false);
+   }
+
+   @Override
+   public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
+   {
+      // if there is no synctex then we are done
+      boolean synctexAvailable = false;
+      
+      if (event.getResult().isSynctexAvailable())
+      {
+         // main window -- we have synctex only if the preview is alive
+         if (!satellite_.isCurrentWindowSatellite())
+         {
+            synctexAvailable = satelliteManager_.satelliteWindowExists(
+                                                   PDFViewerApplication.NAME);
+         }
+         else if (isCurrentWindowPdfViewerSatellite())
+         {
+            synctexAvailable = true;
+         }
+      }
+      
+      setSynctexCommandsEnabled(synctexAvailable);
    }
 
    public boolean forwardSearch(SourceLocation sourceLocation)
@@ -144,13 +201,31 @@ public class Synctex
                 indicator.onError(error.getUserMessage());     
              }     
         });   
-   }   
+   }  
+   
+   private void notifyPdfViewerClosed()
+   {
+      setSynctexCommandsEnabled(false);
+   }
+   
+   private boolean isCurrentWindowPdfViewerSatellite()
+   {
+      return satellite_.isCurrentWindowSatellite() && 
+             satellite_.getSatelliteName().equals(PDFViewerApplication.NAME);
+            
+   }
 
    private ProgressIndicator getSyncProgress()
    {
       return new GlobalProgressDelayer(globalDisplay_, 
                                        500, 
                                        "Syncing...").getIndicator();
+   }
+   
+   private void setSynctexCommandsEnabled(boolean enabled)
+   {
+      commands_.synctexForwardSearch().setEnabled(enabled);
+      commands_.synctexInverseSearch().setEnabled(enabled);
    }
    
    private native void registerMainWindowCallbacks() /*-{
@@ -160,10 +235,21 @@ public class Synctex
             synctex.@org.rstudio.studio.client.common.synctex.Synctex::doInverseSearch(Lcom/google/gwt/core/client/JavaScriptObject;)(pdfLocation);
          }
       ); 
+      
+      $wnd.synctexNotifyPdfViewerClosed = $entry(
+         function() {
+            synctex.@org.rstudio.studio.client.common.synctex.Synctex::notifyPdfViewerClosed()();
+         }
+      ); 
+      
    }-*/;
    
    private final native void callInverseSearch(JavaScriptObject pdfLocation)/*-{
       $wnd.opener.synctexInverseSearch(pdfLocation);
+   }-*/;
+   
+   private final native void callNotifyPdfViewerClosed() /*-{
+      $wnd.opener.synctexNotifyPdfViewerClosed();
    }-*/;
    
    private native void registerSatelliteCallbacks() /*-{
@@ -182,9 +268,11 @@ public class Synctex
    
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
+   private final Commands commands_;
    private final SynctexServerOperations server_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final Satellite satellite_;
    private final SatelliteManager satelliteManager_;
+   
  
 }
