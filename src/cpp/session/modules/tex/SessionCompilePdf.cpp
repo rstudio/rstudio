@@ -352,6 +352,17 @@ void removeExistingLogs(const FilePath& texFilePath)
       LOG_ERROR(error);
 }
 
+void removeExistingSynctex(const FilePath& texFilePath)
+{
+   Error error = ancillaryFilePath(texFilePath, ".synctex").removeIfExists();
+   if (error)
+      LOG_ERROR(error);
+
+   error = ancillaryFilePath(texFilePath, ".synctex.gz").removeIfExists();
+   if (error)
+      LOG_ERROR(error);
+ }
+
 std::string buildIssuesMessage(const core::tex::LogEntries& logEntries)
 {
    if (logEntries.empty())
@@ -581,7 +592,7 @@ private:
       // configure pdflatex options
       pdflatex::PdfLatexOptions options;
       options.fileLineError = false;
-      options.syncTex = true;
+      options.syncTex = !isTargetRnw() || !concordances.empty();
       options.shellEscape = userSettings().enableLaTeXShellEscape();
 
       // get back-end version info
@@ -603,6 +614,10 @@ private:
       FilePath texFilePath = targetFilePath_.parent().complete(
                                                 targetFilePath_.stem() +
                                                 ".tex");
+
+      // remove synctex files if synctex is disabled
+      if (!options.syncTex)
+         removeExistingSynctex(texFilePath);
 
       // remove log files if they exist (avoids confusion created by parsing
       // old log files for errors)
