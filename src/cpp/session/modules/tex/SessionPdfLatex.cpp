@@ -248,7 +248,7 @@ const char * const kFileLineErrorOption = "-file-line-error";
 const char * const kCStyleErrorsOption = "-c-style-errors";
 const char * const kShellEscapeOption = "-shell-escape";
 const char * const kEnableWrite18Option = "–enable-write18";
-const char * const kSynctexOption = "-synctex=-1";
+const char * const kSynctexOption = "-synctex=1";
 
 bool isInstalled()
 {
