@@ -42,6 +42,7 @@ import org.rstudio.studio.client.common.compilepdf.model.CompilePdfResult;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfServerOperations;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.synctex.Synctex;
+import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
 import org.rstudio.studio.client.common.synctex.events.SynctexViewPdfEvent;
 import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
@@ -113,6 +114,15 @@ public class PDFViewerPresenter implements IsWidget,
       
       // synctex disabled by default (enabled after compile w/ synctex)
       toolbar.getSyncButton().setVisible(false);
+      eventBus.addHandler(SynctexStatusChangedEvent.TYPE, 
+                          new SynctexStatusChangedEvent.Handler()
+      {
+         @Override
+         public void onSynctexStatusChanged(SynctexStatusChangedEvent event)
+         {
+            toolbar.getSyncButton().setVisible(event.isAvailable());   
+         }
+      });
       
       toolbar.getSyncButton().addClickHandler(new ClickHandler()
       {
@@ -374,13 +384,6 @@ public class PDFViewerPresenter implements IsWidget,
       
       boolean havePdf = getCompiledPdfPath() != null;
       commands_.showPdfExternal().setEnabled(havePdf);
-      
-      if (result != null)
-      {
-         boolean haveSynctex = result.isSynctexAvailable();
-         commands_.synctexInverseSearch().setVisible(haveSynctex);
-         view_.getToolbarDisplay().getSyncButton().setVisible(haveSynctex);
-      }
    }
    
    private String getCompiledPdfPath()

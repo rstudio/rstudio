@@ -14,6 +14,7 @@
 package org.rstudio.studio.client.common.synctex;
 
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -25,6 +26,7 @@ import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
 import org.rstudio.studio.client.common.synctex.events.SynctexViewPdfEvent;
 import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
@@ -33,6 +35,7 @@ import org.rstudio.studio.client.pdfviewer.PDFViewerApplication;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Window;
@@ -51,6 +54,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
                   Commands commands,
                   SynctexServerOperations server,
                   FileTypeRegistry fileTypeRegistry,
+                  Session session,
                   Satellite satellite, 
                   SatelliteManager satelliteManager)
    {
@@ -59,6 +63,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       commands_ = commands;
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
+      session_ = session;
       satellite_ = satellite;
       satelliteManager_ = satelliteManager;
       
@@ -81,7 +86,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       }
       
       // disable commands at the start
-      setSynctexCommandsEnabled(false);
+      setSynctexStatus(null);
       
       // subscribe to compile pdf status event so we can update command status
       eventBus_.addHandler(CompilePdfStartedEvent.TYPE, this);
@@ -91,30 +96,20 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    @Override
    public void onCompilePdfStarted(CompilePdfStartedEvent event)
    {
-      setSynctexCommandsEnabled(false);
+      setSynctexStatus(null);
    }
 
    @Override
    public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
    {
-      // if there is no synctex then we are done
-      boolean synctexAvailable = false;
-      
-      if (event.getResult().isSynctexAvailable())
-      {
-         // main window -- we have synctex only if the preview is alive
-         if (!satellite_.isCurrentWindowSatellite())
-         {
-            synctexAvailable = satelliteManager_.satelliteWindowExists(
-                                                   PDFViewerApplication.NAME);
-         }
-         else if (isCurrentWindowPdfViewerSatellite())
-         {
-            synctexAvailable = true;
-         }
-      }
-      
-      setSynctexCommandsEnabled(synctexAvailable);
+      boolean synctexAvailable =
+            event.getResult().isSynctexAvailable() &&
+            session_.getSessionInfo().isInternalPdfPreviewEnabled();
+       
+      if (synctexAvailable)
+         setSynctexStatus(event.getResult().getPdfPath());
+      else
+         setSynctexStatus(null);
    }
 
    public boolean forwardSearch(SourceLocation sourceLocation)
@@ -205,7 +200,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    
    private void notifyPdfViewerClosed()
    {
-      setSynctexCommandsEnabled(false);
+      setSynctexStatus(null);
    }
    
    private boolean isCurrentWindowPdfViewerSatellite()
@@ -222,10 +217,19 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
                                        "Syncing...").getIndicator();
    }
    
-   private void setSynctexCommandsEnabled(boolean enabled)
+   private void setSynctexStatus(String pdfPath)
    {
-      commands_.synctexForwardSearch().setEnabled(enabled);
-      commands_.synctexInverseSearch().setEnabled(enabled);
+      // set flag and fire event
+      if (!StringUtil.notNull(synctexActivePdfPath_).equals(
+          StringUtil.notNull(pdfPath)))
+      {
+         synctexActivePdfPath_ = pdfPath;
+         eventBus_.fireEvent(new SynctexStatusChangedEvent(pdfPath));
+      }
+      
+      // set commands
+      commands_.synctexForwardSearch().setEnabled(pdfPath != null);
+      commands_.synctexInverseSearch().setEnabled(pdfPath != null);
    }
    
    private native void registerMainWindowCallbacks() /*-{
@@ -271,8 +275,10 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    private final Commands commands_;
    private final SynctexServerOperations server_;
    private final FileTypeRegistry fileTypeRegistry_;
+   private final Session session_;
    private final Satellite satellite_;
    private final SatelliteManager satelliteManager_;
+   private String synctexActivePdfPath_ = null;
    
  
 }
