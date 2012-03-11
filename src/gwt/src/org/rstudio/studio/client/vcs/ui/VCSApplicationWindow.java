@@ -58,7 +58,7 @@ public class VCSApplicationWindow extends SatelliteWindow
                                JavaScriptObject params)
    {
       // set our window title
-      Window.setTitle("Review Changes");
+      Window.setTitle("RStudio: Review Changes");
             
       // show the vcs ui in our main panel
       VCSApplicationParams vcsParams = params.<VCSApplicationParams>cast();
