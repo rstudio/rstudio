@@ -509,7 +509,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="lastTab"
         menuLabel="_Last Tab"/>
    <cmd id="goToLine"
-        menuLabel="Jump to Line..."/>
+        menuLabel="Jump to L_ine..."/>
 
    <cmd id="find"
         menuLabel="_Find..."/>
@@ -570,7 +570,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Reindent Lines"
         desc="Reindent the current line/selection"/>
    <cmd id="reflowComment"
-        menuLabel="Re_flow Comment"
+        menuLabel="Reflow Co_mment"
         desc="Reflow selected comment lines so they wrap evenly"/>
 
    <cmd id="compilePDF"
