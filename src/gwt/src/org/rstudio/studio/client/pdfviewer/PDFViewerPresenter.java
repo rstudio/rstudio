@@ -101,6 +101,8 @@ public class PDFViewerPresenter implements IsWidget,
       eventBus.addHandler(CompilePdfCompletedEvent.TYPE, this);
       
       eventBus.addHandler(SynctexViewPdfEvent.TYPE, this);
+      
+      synctex_.enableCommands(false);
       eventBus.addHandler(SynctexStatusChangedEvent.TYPE, this);
       
       Window.addWindowClosingHandler(new ClosingHandler() {
