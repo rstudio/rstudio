@@ -453,8 +453,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["feature_find_in_files"] = options.featureFindInFiles();
 
-   sessionInfo["feature_synctex"] = userSettings().featureSynctex();
-
    // is internal preview supported by the client browser
    std::string userAgent = ptrConnection->request().userAgent();
    sessionInfo["internal_pdf_preview_enabled"] =

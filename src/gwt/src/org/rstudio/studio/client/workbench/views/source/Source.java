@@ -45,6 +45,8 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileHandler;
+import org.rstudio.studio.client.common.synctex.Synctex;
+import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -149,6 +151,7 @@ public class Source implements InsertSourceHandler,
                  RemoteFileSystemContext fileContext,
                  EventBus events,
                  Session session,
+                 Synctex synctex,
                  WorkbenchContext workbenchContext,
                  Provider<FileMRUList> pMruList,
                  UIPrefs uiPrefs)
@@ -163,6 +166,7 @@ public class Source implements InsertSourceHandler,
       fileContext_ = fileContext;
       events_ = events;
       session_ = session;
+      synctex_ = synctex;
       workbenchContext_ = workbenchContext;
       pMruList_ = pMruList;
       uiPrefs_ = uiPrefs;
@@ -212,11 +216,7 @@ public class Source implements InsertSourceHandler,
          command.setVisible(false);
          command.setEnabled(false);
       }
-      
-      // remove the syncToPDF command if the feature is disabled
-      if (!session_.getSessionInfo().isSynctexEnabled())
-         commands.synctexForwardSearch().remove();
-      
+          
       // fake shortcuts for commands which we handle at a lower level
       int mod = BrowseCap.hasMetaKey() ? KeyboardShortcut.META : 
                                          KeyboardShortcut.CTRL;
@@ -298,6 +298,16 @@ public class Source implements InsertSourceHandler,
          public void onChange(ChangeEvent event)
          {
             manageSourceNavigationCommands();
+         }
+      });
+      
+      events.addHandler(SynctexStatusChangedEvent.TYPE, 
+                        new SynctexStatusChangedEvent.Handler()
+      {
+         @Override
+         public void onSynctexStatusChanged(SynctexStatusChangedEvent event)
+         {
+            manageSynctexCommands();
          }
       });
 
@@ -1316,12 +1326,14 @@ public class Source implements InsertSourceHandler,
          command.setVisible(false);
       }
       
-      
       // commands which should always be visible even when disabled
       commands_.saveSourceDoc().setVisible(true);
       commands_.saveSourceDocAs().setVisible(true);
       commands_.printSourceDoc().setVisible(true);
       commands_.setWorkingDirToActiveDoc().setVisible(true);
+      
+      // manage synctex commands
+      manageSynctexCommands();
       
       // manage vcs commands
       manageVcsCommands();
@@ -1336,6 +1348,29 @@ public class Source implements InsertSourceHandler,
 
       assert verifyNoUnsupportedCommands(newCommands)
             : "Unsupported commands detected (please add to Source.dynamicCommands_)";
+   }
+   
+   private void manageSynctexCommands()
+   {
+      // synctex commands are enabled if we have synctex for the active editor
+      boolean synctexAvailable = synctex_.isSynctexAvailable();
+      if (synctexAvailable)
+      {
+         if (activeEditor_ != null && (activeEditor_.getPath() != null))
+         {
+            FileSystemItem file = FileSystemItem.createFile(
+                                                activeEditor_.getPath());
+            String pdfPath = file.getParentPath().completePath(
+                                                      file.getStem() + ".pdf");
+            synctexAvailable = pdfPath.equals(synctex_.getPdfPath());
+         }
+         else
+         {
+            synctexAvailable = false;
+         }
+      }
+     
+      synctex_.enableCommands(synctexAvailable);
    }
    
    private void manageVcsCommands()
@@ -1626,6 +1661,7 @@ public class Source implements InsertSourceHandler,
    private final RemoteFileSystemContext fileContext_;
    private final EventBus events_;
    private final Session session_;
+   private final Synctex synctex_;
    private final Provider<FileMRUList> pMruList_;
    private final UIPrefs uiPrefs_;
    private HashSet<AppCommand> activeCommands_ = new HashSet<AppCommand>();

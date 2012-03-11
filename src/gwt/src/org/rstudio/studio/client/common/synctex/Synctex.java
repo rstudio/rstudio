@@ -111,6 +111,24 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       else
          setSynctexStatus(null);
    }
+   
+   public boolean isSynctexAvailable()
+   {
+      return pdfPath_ != null;
+   }
+   
+   public String getPdfPath()
+   {
+      return pdfPath_;
+   }
+   
+   public void enableCommands(boolean enabled)
+   {
+      commands_.synctexForwardSearch().setVisible(enabled);
+      commands_.synctexForwardSearch().setEnabled(enabled);
+      commands_.synctexInverseSearch().setVisible(enabled);
+      commands_.synctexInverseSearch().setEnabled(enabled);
+   }
 
    public boolean forwardSearch(SourceLocation sourceLocation)
    {
@@ -220,16 +238,11 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    private void setSynctexStatus(String pdfPath)
    {
       // set flag and fire event
-      if (!StringUtil.notNull(synctexActivePdfPath_).equals(
-          StringUtil.notNull(pdfPath)))
+      if (!StringUtil.notNull(pdfPath_).equals(StringUtil.notNull(pdfPath)))
       {
-         synctexActivePdfPath_ = pdfPath;
+         pdfPath_ = pdfPath;
          eventBus_.fireEvent(new SynctexStatusChangedEvent(pdfPath));
       }
-      
-      // set commands
-      commands_.synctexForwardSearch().setEnabled(pdfPath != null);
-      commands_.synctexInverseSearch().setEnabled(pdfPath != null);
    }
    
    private native void registerMainWindowCallbacks() /*-{
@@ -278,7 +291,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    private final Session session_;
    private final Satellite satellite_;
    private final SatelliteManager satelliteManager_;
-   private String synctexActivePdfPath_ = null;
+   private String pdfPath_ = null;
    
  
 }

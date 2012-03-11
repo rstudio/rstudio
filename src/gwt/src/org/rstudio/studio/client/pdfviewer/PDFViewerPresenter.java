@@ -42,8 +42,8 @@ import org.rstudio.studio.client.common.compilepdf.model.CompilePdfResult;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfServerOperations;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.synctex.Synctex;
-import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
 import org.rstudio.studio.client.common.synctex.events.SynctexViewPdfEvent;
+import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
 import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
 import org.rstudio.studio.client.pdfviewer.model.PDFViewerParams;
@@ -58,7 +58,8 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 public class PDFViewerPresenter implements IsWidget, 
                                            CompilePdfStartedEvent.Handler,
                                            CompilePdfCompletedEvent.Handler,
-                                           SynctexViewPdfEvent.Handler
+                                           SynctexViewPdfEvent.Handler,
+                                           SynctexStatusChangedEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, PDFViewerPresenter>
    {}
@@ -98,7 +99,9 @@ public class PDFViewerPresenter implements IsWidget,
       
       eventBus.addHandler(CompilePdfStartedEvent.TYPE, this);
       eventBus.addHandler(CompilePdfCompletedEvent.TYPE, this);
+      
       eventBus.addHandler(SynctexViewPdfEvent.TYPE, this);
+      eventBus.addHandler(SynctexStatusChangedEvent.TYPE, this);
       
       Window.addWindowClosingHandler(new ClosingHandler() {
 
@@ -111,28 +114,7 @@ public class PDFViewerPresenter implements IsWidget,
       });
 
       final PDFViewerToolbarDisplay toolbar = view_.getToolbarDisplay();
-      
-      // synctex disabled by default (enabled after compile w/ synctex)
-      toolbar.getSyncButton().setVisible(false);
-      eventBus.addHandler(SynctexStatusChangedEvent.TYPE, 
-                          new SynctexStatusChangedEvent.Handler()
-      {
-         @Override
-         public void onSynctexStatusChanged(SynctexStatusChangedEvent event)
-         {
-            toolbar.getSyncButton().setVisible(event.isAvailable());   
-         }
-      });
-      
-      toolbar.getSyncButton().addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         { 
-            commands_.synctexInverseSearch().execute();
-         }
-      });
-      
+         
       toolbar.getPrevButton().addClickHandler(new ClickHandler()
       {
          @Override
@@ -316,6 +298,12 @@ public class PDFViewerPresenter implements IsWidget,
    public void onSynctexViewPdf(SynctexViewPdfEvent event)
    {
       PDFView.goToPage(event.getPdfLocation().getPage());
+   }
+   
+   @Override
+   public void onSynctexStatusChanged(SynctexStatusChangedEvent event)
+   {
+      synctex_.enableCommands(synctex_.isSynctexAvailable());
    }
    
    @Handler

@@ -76,6 +76,8 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="findReplace"/>
          <cmd refid="findInFiles"/>
          <separator/>
+         <cmd refid="synctexForwardSearch"/>
+         <separator/>
          <cmd refid="sourceNavigateBack"/>
          <cmd refid="sourceNavigateForward"/>
          <separator/>
@@ -582,14 +584,12 @@ well as menu structures (for main menu and popup menus).
         desc="Publish PDF to Google Docs"/>
         
    <cmd id="synctexForwardSearch"
-        buttonLabel="Sync"
-        menuLabel="Sync to PDF"
-        desc="Sync to PDF"/>
+        menuLabel="_View PDF at Current Page"
+        desc="View the PDF at the current page "/>
         
-     <cmd id="synctexInverseSearch"
-        buttonLabel="Sync"
-        menuLabel="Sync to Source"
-        desc="Sync to Source"/>
+   <cmd id="synctexInverseSearch"
+        menuLabel="_Edit Current Page"
+        desc="Edit the source for the current page"/>
 
    <cmd id="newFolder"
         menuLabel="Folder..."
@@ -686,7 +686,6 @@ well as menu structures (for main menu and popup menus).
    <!-- PDF Viewer -->
    <cmd id="showPdfExternal"
         menuLabel="Show PDF in External Viewer"
-        buttonLabel="Show External"
         desc="Show in an external PDF viewer window"/>
         
    <cmd id="historySendToSource"

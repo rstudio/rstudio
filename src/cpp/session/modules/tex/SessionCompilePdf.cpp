@@ -587,8 +587,7 @@ private:
       // configure pdflatex options
       pdflatex::PdfLatexOptions options;
       options.fileLineError = false;
-      options.syncTex = userSettings().featureSynctex() &&
-                        (!isTargetRnw() || !concordances.empty());
+      options.syncTex = !isTargetRnw() || !concordances.empty();
       options.shellEscape = userSettings().enableLaTeXShellEscape();
 
       // get back-end version info

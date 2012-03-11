@@ -227,10 +227,5 @@ public class SessionInfo extends JavaScriptObject
    
    public final native boolean isInternalPdfPreviewEnabled() /*-{
       return this.internal_pdf_preview_enabled;
-   }-*/;
-   
-   public final native boolean isSynctexEnabled() /*-{
-      return this.feature_synctex;
-   }-*/;
-   
+   }-*/; 
 }

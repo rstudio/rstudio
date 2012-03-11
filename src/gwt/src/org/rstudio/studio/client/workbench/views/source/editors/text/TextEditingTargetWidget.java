@@ -107,8 +107,6 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(commands_.compilePDF().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.publishPDF().createToolbarButton());
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.synctexForwardSearch().createToolbarButton());
 
       toolbar.addRightWidget(commands_.executeCode().createToolbarButton());
       toolbar.addRightSeparator();

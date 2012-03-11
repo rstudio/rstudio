@@ -42,6 +42,8 @@ public class PDFViewerToolbar extends Composite
       final Resources resources = GWT.create(Resources.class);
 
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
+      menu.addItem(commands.synctexInverseSearch().createMenuItem(false));
+      menu.addSeparator();
       menu.addItem(commands.showPdfExternal().createMenuItem(false));
       btnActions_.setMenu(menu);
 
@@ -93,12 +95,6 @@ public class PDFViewerToolbar extends Composite
             zoomIn_.setResource(resources.zoomButtonRight());
          }
       });
-   }
-
-   @Override
-   public HasButtonMethods getSyncButton()
-   {
-      return btnSync_;
    }
    
    @Override
@@ -158,8 +154,6 @@ public class PDFViewerToolbar extends Composite
    
    @UiField
    InlineToolbarButton btnActions_;
-   @UiField
-   InlineToolbarButton btnSync_;
    @UiField
    InlineToolbarButton btnPrevious_;
    @UiField

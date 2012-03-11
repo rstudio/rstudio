@@ -465,12 +465,6 @@ void UserSettings::setEnableLaTeXShellEscape(bool enableShellEscape)
    settings_.set("enableLaTeXShellEscape", enableShellEscape);
 }
 
-bool UserSettings::featureSynctex() const
-{
-   return settings_.getBool("synctexEnabled", false);
-}
-
-
 bool UserSettings::alwaysSaveHistory() const
 {
    return settings_.getBool(kAlwaysSaveHistory, true);
