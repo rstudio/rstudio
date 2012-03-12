@@ -55,6 +55,7 @@ import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.synctex.Synctex;
+import org.rstudio.studio.client.common.synctex.SynctexUtils;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
 import org.rstudio.studio.client.server.ServerError;
@@ -270,6 +271,27 @@ public class TextEditingTarget implements EditingTarget
                event.preventDefault();
                event.stopPropagation();
                jumpToNextFunction();
+            }
+         }
+      });
+      
+      docDisplay_.addCommandClickHandler(new CommandClickEvent.Handler()
+      {
+         @Override
+         public void onCommandClick(CommandClickEvent event)
+         {
+            if (fileType_.canCompilePDF() && 
+                commands_.synctexForwardSearch().isEnabled())
+            {
+               // warn firefox users that this doesn't really work in Firefox
+               if (BrowseCap.isFirefox())
+                  SynctexUtils.showFirefoxWarning("PDF preview");
+               
+               commands_.synctexForwardSearch().execute();
+            }
+            else
+            {
+               docDisplay_.goToFunctionDefinition();
             }
          }
       });

@@ -62,6 +62,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
@@ -259,7 +260,7 @@ public class AceEditor implements DocDisplay,
                setCursorPosition(event.getDocumentPosition());
                
                // go to function definition
-               completionManager_.goToFunctionDefinition();
+               fireEvent(new CommandClickEvent());
             }
          }
       });
@@ -1086,6 +1087,13 @@ public class AceEditor implements DocDisplay,
       return handlers_.addHandler(RecordNavigationPositionEvent.TYPE, handler);
    }
 
+   @Override
+   public HandlerRegistration addCommandClickHandler(
+                                             CommandClickEvent.Handler handler)
+   {
+      return handlers_.addHandler(CommandClickEvent.TYPE, handler);
+   }
+   
    public void setFontSize(double size)
    {
       // No change needed--the AceEditorWidget uses the "normalSize" style

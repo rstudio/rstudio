@@ -20,7 +20,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
 
@@ -86,7 +86,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setShowPrintMargin(boolean on);
    void setPrintMarginColumn(int column);
 
-   HandlerRegistration addAceClickHandler(Handler handler);
+   HandlerRegistration addCommandClickHandler(CommandClickEvent.Handler handler);
    
    HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
    Position getCursorPosition();
