@@ -20,6 +20,8 @@ import com.google.gwt.dom.client.*;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.*;
 import com.google.gwt.user.client.ui.UIObject;
+
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Rectangle;
@@ -694,5 +696,13 @@ public class DomUtils
    public static boolean isSelectionAsynchronous()
    {
       return impl.isSelectionAsynchronous();
+   }
+   
+   public static boolean isCommandClick(NativeEvent nativeEvt)
+   {
+      boolean commandKey = BrowseCap.hasMetaKey() ? nativeEvt.getMetaKey() :
+                                                    nativeEvt.getCtrlKey();
+      
+      return (nativeEvt.getButton() == NativeEvent.BUTTON_LEFT) && commandKey;
    }
 }

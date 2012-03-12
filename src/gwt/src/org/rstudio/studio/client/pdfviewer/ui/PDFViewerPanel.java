@@ -23,7 +23,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import org.rstudio.core.client.Point;
+
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
@@ -59,8 +59,9 @@ public class PDFViewerPanel extends Composite
                @Override
                public void onPreviewNativeEvent(Event.NativePreviewEvent event)
                {
-                  if (event.getTypeInt() == Event.ONCLICK)
-                  {
+                  if ( (event.getTypeInt() == Event.ONCLICK) &&
+                        DomUtils.isCommandClick(event.getNativeEvent()))
+                  { 
                      EventTarget target =
                                         event.getNativeEvent().getEventTarget();
 

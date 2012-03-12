@@ -33,7 +33,6 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
@@ -246,11 +245,7 @@ public class AceEditor implements DocDisplay,
          @Override
          public void onClick(AceClickEvent event)
          {    
-            // check for Cmd/Ctrl
-            NativeEvent nativeEvt = event.getNativeEvent();
-            boolean cmdClick = BrowseCap.hasMetaKey() ? nativeEvt.getMetaKey() :
-                                                        nativeEvt.getCtrlKey();
-            if (cmdClick)
+            if (DomUtils.isCommandClick(event.getNativeEvent()))
             {     
                // eat the event so ace doesn't do anything with it
                event.preventDefault();
