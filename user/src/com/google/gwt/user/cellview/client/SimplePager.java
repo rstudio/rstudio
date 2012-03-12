@@ -290,6 +290,7 @@ public class SimplePager extends AbstractPager {
     firstPage = new ImageButton(resources.simplePagerFirstPage(),
         resources.simplePagerFirstPageDisabled(), disabledStyle, imageButtonConstants.firstPage());
     firstPage.addClickHandler(new ClickHandler() {
+      @Override
       public void onClick(ClickEvent event) {
         firstPage();
       }
@@ -297,6 +298,7 @@ public class SimplePager extends AbstractPager {
     nextPage = new ImageButton(resources.simplePagerNextPage(),
         resources.simplePagerNextPageDisabled(), disabledStyle, imageButtonConstants.nextPage());
     nextPage.addClickHandler(new ClickHandler() {
+      @Override
       public void onClick(ClickEvent event) {
         nextPage();
       }
@@ -305,6 +307,7 @@ public class SimplePager extends AbstractPager {
         resources.simplePagerPreviousPageDisabled(), disabledStyle, 
         imageButtonConstants.prevPage());
     prevPage.addClickHandler(new ClickHandler() {
+      @Override
       public void onClick(ClickEvent event) {
         previousPage();
       }
@@ -313,6 +316,7 @@ public class SimplePager extends AbstractPager {
       lastPage = new ImageButton(resources.simplePagerLastPage(),
           resources.simplePagerLastPageDisabled(), disabledStyle, imageButtonConstants.lastPage());
       lastPage.addClickHandler(new ClickHandler() {
+        @Override
         public void onClick(ClickEvent event) {
           lastPage();
         }
@@ -325,6 +329,7 @@ public class SimplePager extends AbstractPager {
           resources.simplePagerFastForwardDisabled(), disabledStyle, 
           imageButtonConstants.fastForward());
       fastForward.addClickHandler(new ClickHandler() {
+        @Override
         public void onClick(ClickEvent event) {
           setPage(getPage() + getFastForwardPages());
         }
@@ -337,7 +342,7 @@ public class SimplePager extends AbstractPager {
     HorizontalPanel layout = new HorizontalPanel();
     layout.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
     initWidget(layout);
-    if (location == TextLocation.RIGHT) {
+    if (location == TextLocation.LEFT) {
       layout.add(label);
     }
     layout.add(firstPage);
@@ -352,7 +357,7 @@ public class SimplePager extends AbstractPager {
     if (showLastPageButton) {
       layout.add(lastPage);
     }
-    if (location == TextLocation.LEFT) {
+    if (location == TextLocation.RIGHT) {
       layout.add(label);
     }
 
