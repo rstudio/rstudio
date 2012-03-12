@@ -48,6 +48,10 @@ public class PDFView extends JavaScriptObject
       $wnd.PDFView.page = page;
    }-*/;
 
+   public static native double currentScale() /*-{
+      return $wnd.PDFView.currentScale;
+   }-*/;
+
    public static native void zoomIn() /*-{
       $wnd.PDFView.zoomIn() ;
    }-*/;

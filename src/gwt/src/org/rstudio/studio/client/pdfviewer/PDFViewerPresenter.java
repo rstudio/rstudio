@@ -42,14 +42,15 @@ import org.rstudio.studio.client.common.compilepdf.model.CompilePdfResult;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfServerOperations;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.synctex.Synctex;
-import org.rstudio.studio.client.common.synctex.events.SynctexViewPdfEvent;
 import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
+import org.rstudio.studio.client.common.synctex.events.SynctexViewPdfEvent;
 import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
 import org.rstudio.studio.client.pdfviewer.model.PDFViewerParams;
 import org.rstudio.studio.client.pdfviewer.pdfjs.PDFView;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PDFLoadEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PageChangeEvent;
+import org.rstudio.studio.client.pdfviewer.pdfjs.events.PageClickEvent;
 import org.rstudio.studio.client.pdfviewer.ui.PDFViewerToolbarDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -64,7 +65,8 @@ public class PDFViewerPresenter implements IsWidget,
    public interface Binder extends CommandBinder<Commands, PDFViewerPresenter>
    {}
 
-   public interface Display extends IsWidget
+   public interface Display extends IsWidget,
+                                    PageClickEvent.HasPageClickHandlers
    {     
       void setURL(String url);
       PDFViewerToolbarDisplay getToolbarDisplay();
@@ -230,6 +232,15 @@ public class PDFViewerPresenter implements IsWidget,
             }
          }
       }));
+
+      view_.addPageClickHandler(new PageClickEvent.Handler()
+      {
+         @Override
+         public void onPageClick(PageClickEvent event)
+         {
+            // TODO: Invoke synctex
+         }
+      });
    }
 
    private void updatePageNumber()

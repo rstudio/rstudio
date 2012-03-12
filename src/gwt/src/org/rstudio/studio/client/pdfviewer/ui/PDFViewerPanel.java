@@ -13,23 +13,25 @@
 package org.rstudio.studio.client.pdfviewer.ui;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.BodyElement;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.core.client.Point;
+import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.pdfviewer.PDFViewerPresenter;
 import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.PDFView;
 import org.rstudio.studio.client.pdfviewer.pdfjs.PdfJs;
+import org.rstudio.studio.client.pdfviewer.pdfjs.events.PageClickEvent;
 
 public class PDFViewerPanel extends Composite
                             implements PDFViewerPresenter.Display
@@ -43,7 +45,71 @@ public class PDFViewerPanel extends Composite
       toolbar_ = toolbar;
 
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
+      viewer_.getElement().setId("viewer");
       Document.get().getBody().getStyle().setMarginLeft(200, Style.Unit.PX);
+
+      new WidgetHandlerRegistration(this)
+      {
+         @Override
+         protected HandlerRegistration doRegister()
+         {
+            return Event.addNativePreviewHandler(new Event.NativePreviewHandler()
+            {
+               @Override
+               public void onPreviewNativeEvent(Event.NativePreviewEvent event)
+               {
+                  if (event.getTypeInt() == Event.ONCLICK)
+                  {
+                     EventTarget target =
+                                        event.getNativeEvent().getEventTarget();
+
+                     if (Element.is(target))
+                     {
+                        Element el = Element.as(target);
+                        if (viewer_.getElement().isOrHasChild(el))
+                        {
+                           fireClickEvent(event.getNativeEvent(), el);
+                        }
+                     }
+                  }
+               }
+            });
+         }
+      };
+   }
+
+   private void fireClickEvent(NativeEvent nativeEvent, Element el)
+   {
+      Element pageEl = el;
+      while (pageEl != null)
+      {
+         if (pageEl.getId().matches("^pageContainer([\\d]+)$"))
+         {
+            break;
+         }
+
+         pageEl = pageEl.getParentElement();
+      }
+
+      if (pageEl == null)
+         return;
+
+      String containerId = pageEl.getId();
+      int page =
+            Integer.parseInt(containerId.substring("pageContainer".length()));
+
+      int pageX = nativeEvent.getClientX() +
+                  Document.get().getDocumentElement().getScrollLeft() +
+                  Document.get().getBody().getScrollLeft() -
+                  pageEl.getAbsoluteLeft();
+      int pageY = nativeEvent.getClientY() +
+                  Document.get().getDocumentElement().getScrollTop() +
+                  Document.get().getBody().getScrollTop() -
+                  pageEl.getAbsoluteTop();
+
+      fireEvent(new PageClickEvent(page, new Point(
+            (int) ((pageX / PDFView.currentScale() / 96) * 72),
+            (int) ((pageY / PDFView.currentScale() / 96) * 72))));
    }
 
    @Override
@@ -137,12 +203,20 @@ public class PDFViewerPanel extends Composite
       $wnd.PDFView.open(url, 0);
    }-*/;
 
+   @Override
+   public HandlerRegistration addPageClickHandler(PageClickEvent.Handler handler)
+   {
+      return addHandler(handler, PageClickEvent.TYPE);
+   }
+
    private boolean loaded_;
    private String initialUrl_;
    private boolean once_;
 
    @UiField(provided = true)
    PDFViewerToolbar toolbar_;
+   @UiField
+   FlowPanel viewer_;
 
    private Element selectedPageLabel_;
 }
