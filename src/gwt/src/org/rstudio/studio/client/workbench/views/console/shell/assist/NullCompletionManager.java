@@ -20,6 +20,10 @@ public class NullCompletionManager implements CompletionManager
    {
    }
    
+   public void commandClick()
+   {
+   }
+   
    public void goToFunctionDefinition()
    {
    }
