@@ -34,6 +34,9 @@ public class Mode extends JavaScriptObject
 
    public native final FunctionStart findFunctionDefinitionFromUsage(
          Position usagePos, String functionName) /*-{
-      return this.findFunctionDefinitionFromUsage(usagePos, functionName);
+      if (this.findFunctionDefinitionFromUsage != null)
+         return this.findFunctionDefinitionFromUsage(usagePos, functionName);
+      else
+         return null;
    }-*/;
 }
