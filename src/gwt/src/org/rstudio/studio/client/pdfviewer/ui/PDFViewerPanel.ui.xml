@@ -129,7 +129,7 @@
       </div>
 
       <div id="loading" hidden="hidden">Loading... 0%</div>
-      <div id="viewer"></div>
+      <g:FlowPanel ui:field="viewer_"/>
 
    </g:HTMLPanel>
 
