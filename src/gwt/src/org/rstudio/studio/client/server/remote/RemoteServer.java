@@ -2468,9 +2468,8 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(searchString));
       params.set(1, JSONBoolean.getInstance(regex));
       params.set(2, JSONBoolean.getInstance(ignoreCase));
-      params.set(3, directory.getPath() == null ?
-                    JSONNull.getInstance() :
-                    new JSONString(directory.getPath()));
+      params.set(3, new JSONString(directory == null ? ""
+                                                     : directory.getPath()));
       params.set(4, new JSONArray(filePatterns));
       sendRequest(RPC_SCOPE, BEGIN_FIND, params, requestCallback);
    }

@@ -285,7 +285,8 @@ core::Error beginFind(const json::JsonRpcRequest& request,
       return error;
 
    core::system::ProcessOptions options;
-   options.workingDir = module_context::resolveAliasedPath(directory);
+   if (!directory.empty())
+      options.workingDir = module_context::resolveAliasedPath(directory);
 
 #ifdef _WIN32
    core::system::Options childEnv;
