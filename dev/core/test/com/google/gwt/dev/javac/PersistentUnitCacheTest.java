@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Unit test for {@link PersistentUnitCache}.
@@ -50,6 +51,7 @@ public class PersistentUnitCacheTest extends TestCase {
 
   File lastCacheDir = null;
 
+  @Override
   public void tearDown() {
     if (lastCacheDir != null) {
       Util.recursiveDelete(lastCacheDir, false);
@@ -62,7 +64,7 @@ public class PersistentUnitCacheTest extends TestCase {
    * the cache log is stale and remove it.
    */
   public void testClassNotFoundException() throws IOException, UnableToCompleteException,
-      InterruptedException {
+      InterruptedException, ExecutionException {
     checkInvalidObjectInCache(new ThrowsClassNotFoundException());
   }
 
@@ -88,7 +90,8 @@ public class PersistentUnitCacheTest extends TestCase {
    * stale cache file), then the exception should be ignored and the cache file
    * removed.
    */
-  public void testIOException() throws IOException, UnableToCompleteException, InterruptedException {
+  public void testIOException() throws IOException, UnableToCompleteException,
+      InterruptedException, ExecutionException {
     checkInvalidObjectInCache(new ThrowsIOException());
   }
 
@@ -107,7 +110,7 @@ public class PersistentUnitCacheTest extends TestCase {
   }
 
   public void testPersistentCache() throws IOException, InterruptedException,
-      UnableToCompleteException {
+      UnableToCompleteException, ExecutionException {
     TreeLogger logger = TreeLogger.NULL;
 
     File cacheDir = lastCacheDir = File.createTempFile("persistentCacheTest", "");
@@ -190,7 +193,7 @@ public class PersistentUnitCacheTest extends TestCase {
     // keep making more files
     MockCompilationUnit lastUnit = null;
     assertTrue(PersistentUnitCache.CACHE_FILE_THRESHOLD > 3);
-    for (int i = 2; i < PersistentUnitCache.CACHE_FILE_THRESHOLD; ++i) {
+    for (int i = 2; i <= PersistentUnitCache.CACHE_FILE_THRESHOLD - 1; i++) {
       cache = new PersistentUnitCache(logger, cacheDir);
       lastUnit = new MockCompilationUnit("com.example.Foo", "Foo Source" + i);
       cache.add(lastUnit);
@@ -236,7 +239,7 @@ public class PersistentUnitCacheTest extends TestCase {
   }
 
   private void checkInvalidObjectInCache(Object toSerialize) throws IOException,
-      FileNotFoundException, UnableToCompleteException, InterruptedException {
+      FileNotFoundException, UnableToCompleteException, InterruptedException, ExecutionException {
     TreeLogger logger = TreeLogger.NULL;
     File cacheDir = lastCacheDir = File.createTempFile("PersistentUnitTest-CNF", "");
     File unitCacheDir = mkCacheDir(cacheDir);

@@ -87,8 +87,6 @@ public class CachedCompilationUnit extends CompilationUnit {
    * {@link CompilationUnit}.
    *
    * @param unit A unit to copy
-   * @param sourceToken A valid {@DiskCache} token for this unit's
-   *          source code.
    * @param astToken A valid {@DiskCache} token for this unit's
    *          serialized AST types.
    */

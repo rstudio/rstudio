@@ -17,6 +17,7 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -35,11 +36,14 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A class that manages a persistent cache of {@link CompilationUnit} instances.
@@ -90,345 +94,43 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 
  */
 class PersistentUnitCache extends MemoryUnitCache {
-  /**
-   * A thread used when the cache is instantiated to load up cached units from
-   * the persistent store in the background. The
-   * {@link UnitCacheFactory#addUnit(CompilationUnit)} and
-   * {@link UnitCacheFactory#findUnit(String)} methods block if invoked before
-   * this thread finishes.
-   */
-  private class UnitCacheMapLoader extends Thread {
-    private final CountDownLatch loadCompleteLatch = new CountDownLatch(1);
-    private final TreeLogger logger;
-
-    public UnitCacheMapLoader(TreeLogger logger) {
-      this.logger = logger;
-      setDaemon(true);
-      setName("UnitCacheLoader");
-      setPriority(Thread.NORM_PRIORITY);
-    }
-
-    public void await() {
-      try {
-        loadCompleteLatch.await();
-      } catch (InterruptedException ex) {
-        logger.log(TreeLogger.ERROR, "Interrupted waiting for PersistentUnitCache to load.", ex);
-      }
-    }
-
-    @Override
-    public void run() {
-      try {
-        loadUnitMap(logger);
-      } finally {
-        loadCompleteLatch.countDown();
-        if (logger.isLoggable(TreeLogger.TRACE)) {
-          logger
-              .log(TreeLogger.TRACE, "Loaded " + unitMap.size() + " units from persistent store.");
-        }
-      }
-    }
-  }
-
-  /**
-   * Used to pass messages to the unitWriteThread.
-   */
-  private static class UnitWriteMessage {
-    private static final UnitWriteMessage DELETE_OLD_CACHE_FILES = new UnitWriteMessage();
-    private static final UnitWriteMessage SHUTDOWN_THREAD = new UnitWriteMessage();
-    private final UnitCacheEntry unitCacheEntry;
-
-    public UnitWriteMessage() {
-      unitCacheEntry = null;
-    }
-
-    public UnitWriteMessage(UnitCacheEntry unitCacheEntry) {
-      this.unitCacheEntry = unitCacheEntry;
-    }
-  }
-
-  /**
-   * Thread that reads units from a queue and writes out to a cache file for
-   * this session.
-   */
-  private class UnitWriter extends Thread {
-    private final CountDownLatch shutDownLatch = new CountDownLatch(1);
-    private final TreeLogger logger;
-    private boolean errorLogged = false;
-    private Thread shutdownHook = new Thread() {
-      @Override
-      public void run() {
-        try {
-          doShutdown();
-        } catch (InterruptedException ex) {
-          // ignore
-        }
-      }
-    };
-
-    public UnitWriter(TreeLogger logger) {
-      this.logger = logger;
-      setDaemon(true);
-      setName("UnitWriteThread");
-      setPriority(Thread.MIN_PRIORITY);
-
-      Runtime.getRuntime().addShutdownHook(shutdownHook);
-    }
-
-    @Override
-    public void run() {
-      logger.log(TreeLogger.TRACE, "Starting UnitWriteThread.");
-
-      FileOutputStream fstream = null;
-      BufferedOutputStream bstream = null;
-      ObjectOutputStream stream = null;
-      try {
-        fstream = new FileOutputStream(currentCacheFile);
-        bstream = new BufferedOutputStream(fstream);
-        stream = new ObjectOutputStream(bstream);
-      } catch (IOException ex) {
-        logger.log(TreeLogger.ERROR, "Error creating cache " + currentCacheFile
-            + ". Disabling cache.", ex);
-      }
-      int recentUnitsWritten = 0;
-      int totalUnitsWritten = 0;
-      try {
-        while (true) {
-          UnitWriteMessage msg = null;
-          try {
-            msg = unitWriteQueue.take();
-          } catch (InterruptedException e) {
-            // Allow shutdown to interrupt
-            break;
-          }
-          if (stream == null) {
-            // if there is no output stream, just ignore the unit
-            continue;
-          }
-
-          try {
-            if (msg != null) {
-              if (msg == UnitWriteMessage.DELETE_OLD_CACHE_FILES) {
-                if (logger.isLoggable(TreeLogger.TRACE)) {
-                  logger.log(TreeLogger.TRACE, "Wrote " + recentUnitsWritten
-                      + " units to persistent cache.");
-                }
-                recentUnitsWritten = 0;
-                deleteOldCacheFiles(logger, currentCacheFile);
-              } else if (msg == UnitWriteMessage.SHUTDOWN_THREAD) {
-                stream.flush();
-                assert unitWriteQueue.size() == 0;
-                break;
-              } else {
-                assert msg.unitCacheEntry.getOrigin() != UnitOrigin.ARCHIVE;
-                CompilationUnit unit = msg.unitCacheEntry.getUnit();
-                assert unit != null;
-                stream.writeObject(unit);
-                recentUnitsWritten++;
-                totalUnitsWritten++;
-              }
-            }
-
-            if (unitWriteQueue.isEmpty()) {
-              stream.flush();
-            }
-          } catch (IOException ex) {
-            if (!errorLogged) {
-              errorLogged = true;
-              if (logger.isLoggable(TreeLogger.TRACE)) {
-                logger.log(TreeLogger.TRACE, "Error saving unit to file: "
-                    + currentCacheFile.getAbsolutePath(), ex);
-              }
-            }
-          }
-        }
-      } finally {
-        Utility.close(stream);
-        // Paranoia - close all streams
-        Utility.close(bstream);
-        Utility.close(fstream);
-        if (totalUnitsWritten == 0) {
-          // Remove useless empty output.
-          currentCacheFile.delete();
-        }
-        shutDownLatch.countDown();
-        logger.log(TreeLogger.TRACE, "Shutting down PersistentUnitCache thread");
-      }
-    }
-
-    /**
-     * Shutdown the thread and wait for it.
-     */
-    private void doShutdown() throws InterruptedException {
-      // force the shutdown to finish after 5 seconds
-      unitWriteQueue.add(UnitWriteMessage.SHUTDOWN_THREAD);
-      // wait for shutdown
-      shutDownLatch.await(5000, TimeUnit.MILLISECONDS);
-      try {
-        Runtime.getRuntime().removeShutdownHook(shutdownHook);
-      } catch (IllegalStateException ex) {
-        // ignore.
-      }
-    }
-  }
-
-  /**
-   * Common prefix for creating directories and cache files.
-   */
-  static final String UNIT_CACHE_PREFIX = "gwt-unitCache";
-
-  static final String CACHE_FILE_PREFIX = UNIT_CACHE_PREFIX + "-";
 
   /**
    * If there are more than this many files in the cache, clean up the old
    * files.
    */
-  static final int CACHE_FILE_THRESHOLD = 10;
+  static final int CACHE_FILE_THRESHOLD = 40;
+  
+  /**
+   * Common prefix for creating directories and cache files.
+   */
+  static final String UNIT_CACHE_PREFIX = "gwt-unitCache";
+  static final String CACHE_FILE_PREFIX = UNIT_CACHE_PREFIX + "-";
 
   /**
-   * Used for communication to the unit write thread.
+   * Creates a new file with a name based on the current system time.
    */
-  private final BlockingQueue<UnitWriteMessage> unitWriteQueue =
-      new LinkedBlockingQueue<UnitWriteMessage>();
-  private final AtomicInteger addCount = new AtomicInteger(0);
-  private final UnitCacheMapLoader unitCacheMapLoader;
-  private final UnitWriter unitWriter;
-  private boolean cleanupHasRun = false;
-
-  /**
-   * A directory that ideally persists between invocations.
-   */
-  private final File cacheDirectory;
-
-  /**
-   * Cache log file currently being written to.
-   */
-  private File currentCacheFile;
-
-  PersistentUnitCache(TreeLogger logger, File cacheDir) throws UnableToCompleteException {
-    assert cacheDir != null;
-
-    this.cacheDirectory = new File(cacheDir, UNIT_CACHE_PREFIX);
-    if (logger.isLoggable(TreeLogger.TRACE)) {
-      logger.log(TreeLogger.TRACE, "Persistent unit cache dir set to: "
-          + this.cacheDirectory.getAbsolutePath());
-    }
-
-    if (!cacheDirectory.isDirectory() && !cacheDirectory.mkdirs()) {
-      logger.log(TreeLogger.WARN, "Unable to initialize cache. Couldn't create directory "
-          + cacheDirectory.getAbsolutePath() + ".");
-      throw new UnableToCompleteException();
-    }
-
+  private static File createCacheFile(TreeLogger logger, File cacheDirectory)
+      throws UnableToCompleteException {
+    File newFile = null;
     long timestamp = System.currentTimeMillis();
-    do {
-      currentCacheFile =
-          new File(cacheDirectory, CACHE_FILE_PREFIX + String.format("%016X", timestamp++));
-    } while (currentCacheFile.exists());
-
-    // This isn't 100% reliable if multiple processes are in contention
     try {
-      currentCacheFile.createNewFile();
+      do {
+        newFile = new File(cacheDirectory, CACHE_FILE_PREFIX + String.format("%016X", timestamp++));
+      } while (!newFile.createNewFile());
     } catch (IOException ex) {
       logger.log(TreeLogger.WARN, "Unable to create new cache log file "
-          + currentCacheFile.getAbsolutePath() + ".", ex);
+          + (newFile == null ? "<not created>" : newFile.getAbsolutePath()) + ".", ex);
       throw new UnableToCompleteException();
     }
 
-    unitCacheMapLoader = new UnitCacheMapLoader(logger);
-    unitCacheMapLoader.start();
-    unitWriter = new UnitWriter(logger);
-    unitWriter.start();
-  }
-
-  /**
-   * Enqueue a unit to be written by the background thread.
-   */
-  @Override
-  public void add(CompilationUnit newUnit) {
-    unitCacheMapLoader.await();
-    super.add(newUnit);
-    UnitCacheEntry entry = unitMap.get(newUnit.getResourcePath());
-    addCount.getAndIncrement();
-    unitWriteQueue.add(new UnitWriteMessage(entry));
-  }
-
-  /**
-   * Cleans up old cache files in the directory, migrating everything previously
-   * loaded in them to the current cache file.
-   * 
-   * Normally, only newly compiled units are written to the current log, but
-   * when it is time to cleanup, valid units from older log files need to be
-   * re-written.
-   */
-  @Override
-  public void cleanup(TreeLogger logger) {
-    if (logger.isLoggable(TreeLogger.TRACE)) {
-      logger.log(TreeLogger.TRACE, "Added " + addCount.intValue() + " units to persistent cache.");
-    }
-    addCount.set(0);
-
-    if (cleanupHasRun) {
-      return;
+    if (!newFile.canWrite()) {
+      logger.log(TreeLogger.WARN, "Unable to write to new cache log file "
+          + newFile.getAbsolutePath() + ".");
+      throw new UnableToCompleteException();
     }
 
-    cleanupHasRun = true;
-    unitCacheMapLoader.await();
-    File[] cacheFiles = getCacheFiles();
-
-    if (cacheFiles.length < CACHE_FILE_THRESHOLD) {
-      return;
-    }
-
-    /*
-     * Resend all units read in from the in-memory cache to the writer thread.
-     * They will be re-written out and the old cache files removed.
-     */
-    synchronized (unitMap) {
-      for (UnitCacheEntry unitCacheEntry : unitMap.values()) {
-        if (unitCacheEntry.getOrigin() == UnitOrigin.PERSISTENT) {
-          unitWriteQueue.add(new UnitWriteMessage(unitCacheEntry));
-        }
-      }
-    }
-    unitWriteQueue.add(UnitWriteMessage.DELETE_OLD_CACHE_FILES);
-  }
-
-  @Override
-  public CompilationUnit find(ContentId contentId) {
-    unitCacheMapLoader.await();
-    return super.find(contentId);
-  }
-
-  @Override
-  public CompilationUnit find(String resourcePath) {
-    unitCacheMapLoader.await();
-    return super.find(resourcePath);
-  }
-
-  /**
-   * Delete all cache files in the directory except for the currently open file.
-   * 
-   * @param current Specifies the currently open cache file which will not be
-   *          deleted.
-   */
-  void deleteOldCacheFiles(TreeLogger logger, File current) {
-    assert current != null;
-
-    SpeedTracerLogger.Event deleteEvent = SpeedTracerLogger.start(DevModeEventType.DELETE_CACHE);
-    File[] filesToDelete = getCacheFiles();
-    if (filesToDelete == null) {
-      return;
-    }
-    if (logger.isLoggable(TreeLogger.INFO)) {
-      logger.log(TreeLogger.TRACE, "Purging cache files from " + cacheDirectory);
-    }
-    for (File toDelete : filesToDelete) {
-      if (!current.equals(toDelete)) {
-        toDelete.delete();
-      }
-    }
-    deleteEvent.end();
+    return newFile;
   }
 
   /**
@@ -437,7 +139,7 @@ class PersistentUnitCache extends MemoryUnitCache {
    * @return an array of sorted filenames. The file name pattern is such that
    *         sorting them alphabetically also sorts the files by age.
    */
-  File[] getCacheFiles() {
+  private static File[] getCacheFiles(File cacheDirectory) {
     if (cacheDirectory.isDirectory()) {
       File[] files = cacheDirectory.listFiles();
       List<File> cacheFiles = new ArrayList<File>();
@@ -454,16 +156,338 @@ class PersistentUnitCache extends MemoryUnitCache {
   }
 
   /**
-   * For Unit testing - shutdown the persistent cache.
+   * There is no significance in the return value, we just want to be able
+   * to tell if the purgeOldCacheFilesTask has completed.
    */
-  void shutdown() throws InterruptedException {
-    unitWriter.doShutdown();
+  private Future<Boolean> purgeTaskStatus;
+  private AtomicBoolean purgeInProgress = new AtomicBoolean(false);
+  
+  private final Runnable purgeOldCacheFilesTask = new Runnable() {
+    @Override
+    public void run() {
+      try {
+        // Delete all cache files in the directory except for the currently open
+        // file.
+        SpeedTracerLogger.Event deleteEvent = SpeedTracerLogger.start(DevModeEventType.DELETE_CACHE);
+        File[] filesToDelete = getCacheFiles(cacheDirectory);
+        logger.log(TreeLogger.TRACE, "Purging cache files from " + cacheDirectory);
+        for (File toDelete : filesToDelete) {
+          if (!currentCacheFile.equals(toDelete)) {
+            if (!toDelete.delete()) {
+              logger.log(TreeLogger.WARN, "Couldn't delete file: " + toDelete);
+            }
+          }
+        }
+        deleteEvent.end();
+        
+        rotateCurrentCacheFile();
+      } catch (UnableToCompleteException e) {
+        backgroundService.shutdownNow();
+      } finally {
+        purgeInProgress.set(false);
+      }
+    }      
+  };
+
+  private final Runnable rotateCacheFilesTask = new Runnable() {
+    @Override
+    public void run() {
+      try {
+        rotateCurrentCacheFile();
+      } catch (UnableToCompleteException e) {
+        backgroundService.shutdownNow();
+      }
+      assert (currentCacheFile != null);
+    }
+  };
+
+  private final Runnable shutdownThreadTask = new Runnable() {
+    @Override
+    public void run() {
+      assert (currentCacheFile != null);
+      closeCurrentCacheFile(currentCacheFile, currentCacheFileStream);
+      logger.log(TreeLogger.TRACE, "Shutting down PersistentUnitCache thread");
+      backgroundService.shutdownNow();
+    }
+  };
+
+  /**
+   * Saved to be able to wait for UNIT_MAP_LOAD_TASK to complete.
+   */
+  private Future<Boolean> unitMapLoadStatus;
+  
+  private final Runnable unitMapLoadTask = new Runnable() {
+    @Override
+    public void run() {
+      loadUnitMap(logger, currentCacheFile);
+    }
+  };
+
+  /**
+   * Used to execute the above Runnables in a background thread.
+   */
+  private final ExecutorService backgroundService;
+  
+  private int unitsWritten = 0;
+
+  private int addedSinceLastCleanup = 0;
+
+  /**
+   * A directory to store the cache files that should persist between
+   * invocations.
+   */
+  private final File cacheDirectory;
+
+  /**
+   * Current file and stream being written to.
+   */
+  private File currentCacheFile;
+  private ObjectOutputStream currentCacheFileStream;
+
+  private final TreeLogger logger;
+
+  PersistentUnitCache(final TreeLogger logger, File cacheDir) throws UnableToCompleteException {
+    assert cacheDir != null;
+    this.logger = logger;
+    this.cacheDirectory = new File(cacheDir, UNIT_CACHE_PREFIX);
+    if (logger.isLoggable(TreeLogger.TRACE)) {
+      logger.log(TreeLogger.TRACE, "Persistent unit cache dir set to: "
+          + this.cacheDirectory.getAbsolutePath());
+    }
+
+    if (!cacheDirectory.isDirectory() && !cacheDirectory.mkdirs()) {
+      logger.log(TreeLogger.WARN, "Unable to initialize cache. Couldn't create directory "
+          + cacheDirectory.getAbsolutePath() + ".");
+      throw new UnableToCompleteException();
+    }
+
+    currentCacheFile = createCacheFile(logger, cacheDirectory);
+
+    backgroundService = Executors.newSingleThreadExecutor();
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      @Override
+      public void run() {
+        try {
+          Future<Boolean> status = backgroundService.submit(shutdownThreadTask, Boolean.TRUE);
+          // Don't let the shutdown hang more than 5 seconds
+          status.get(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+          // ignore
+        } catch (RejectedExecutionException e) {
+          // already shutdown, ignore
+        } catch (ExecutionException e) {
+          logger.log(TreeLogger.ERROR, "Error during shutdown", e);
+        } catch (TimeoutException e) {
+          // ignore
+        } finally {
+          backgroundService.shutdownNow();
+        }
+      }
+    });
+    
+    /**
+     * Load up cached units from the persistent store in the background. The
+     * {@link #add(CompilationUnit)} and {@link #find(String)} methods block if
+     * invoked before this thread finishes.
+     */
+    unitMapLoadStatus = backgroundService.submit(unitMapLoadTask, Boolean.TRUE);
+
+    FileOutputStream fstream = null;
+    BufferedOutputStream bstream = null;
+
+    try {
+      fstream = new FileOutputStream(currentCacheFile);
+      bstream = new BufferedOutputStream(fstream);
+      currentCacheFileStream = new ObjectOutputStream(bstream);
+    } catch (IOException ex) {
+      closeCurrentCacheFile(currentCacheFile, currentCacheFileStream);
+      logger.log(TreeLogger.ERROR, "Error creating cache " + currentCacheFile
+          + ". Disabling cache.", ex);
+      backgroundService.shutdownNow();
+      throw new UnableToCompleteException();
+    }
+  }
+
+  /**
+   * Enqueue a unit to be written by the background thread.
+   */
+  @Override
+  public void add(CompilationUnit newUnit) {
+    awaitUnitCacheMapLoad();
+    addedSinceLastCleanup++;
+    super.add(newUnit);
+    addImpl(unitMap.get(newUnit.getResourcePath()));
+  }
+
+  /**
+   * Cleans up old cache files in the directory, migrating everything previously
+   * loaded in them to the current cache file.
+   * 
+   * Normally, only newly compiled units are written to the current log, but
+   * when it is time to cleanup, valid units from older log files need to be
+   * re-written.
+   */
+  @Override
+  public void cleanup(TreeLogger logger) {
+    awaitUnitCacheMapLoad();
+
+    if (backgroundService.isShutdown()) {
+      return;
+    }
+    boolean shouldRotate = addedSinceLastCleanup > 0;
+    logger.log(TreeLogger.TRACE, "Added " + addedSinceLastCleanup + " units to cache since last cleanup.");
+    addedSinceLastCleanup = 0;
+    try {
+      File[] cacheFiles = getCacheFiles(cacheDirectory);
+      if (cacheFiles.length < CACHE_FILE_THRESHOLD) {
+        if (shouldRotate) {
+          backgroundService.execute(rotateCacheFilesTask);
+        }
+        return;
+      }
+
+      // Check to see if the previous purge task finished.
+      boolean inProgress = purgeInProgress.getAndSet(true);
+      if (inProgress) {
+        try {
+          purgeTaskStatus.get(0, TimeUnit.NANOSECONDS);
+        } catch (InterruptedException ex) {
+          Thread.currentThread().interrupt();
+        } catch (TimeoutException ex) {
+          // purge is currently in progress.
+          return;
+        }
+      }
+      
+      /*
+       * Resend all units read in from the in-memory cache to the background
+       * thread. They will be re-written out and the old cache files removed.
+       */
+      synchronized (unitMap) {
+        for (UnitCacheEntry unitCacheEntry : unitMap.values()) {
+          if (unitCacheEntry.getOrigin() == UnitOrigin.PERSISTENT) {
+            addImpl(unitCacheEntry);
+          }
+        }
+      }
+
+      purgeTaskStatus = backgroundService.submit(purgeOldCacheFilesTask, Boolean.TRUE);
+
+    } catch (ExecutionException ex) {
+      throw new InternalCompilerException("Error purging cache", ex);
+    } catch (RejectedExecutionException ex) {
+      // Cache background thread is not running - ignore
+    }
+  }
+
+  @Override
+  public CompilationUnit find(ContentId contentId) {
+    awaitUnitCacheMapLoad();
+    return super.find(contentId);
+  }
+
+  @Override
+  public CompilationUnit find(String resourcePath) {
+    awaitUnitCacheMapLoad();
+    return super.find(resourcePath);
+  }
+
+  public void rotateCurrentCacheFile() throws UnableToCompleteException {
+    if (logger.isLoggable(TreeLogger.TRACE)) {
+      logger.log(TreeLogger.TRACE, "Wrote " + unitsWritten + " units to persistent cache.");
+    }
+
+    // Close and re-open a new log file to drop object references kept
+    // alive in the existing file by Java serialization.
+    closeCurrentCacheFile(currentCacheFile, currentCacheFileStream);
+    unitsWritten = 0;
+    currentCacheFile = createCacheFile(logger, cacheDirectory);
+    FileOutputStream fstream = null;
+    BufferedOutputStream bstream = null;
+    try {
+      fstream = new FileOutputStream(currentCacheFile);
+      bstream = new BufferedOutputStream(fstream);
+      currentCacheFileStream = new ObjectOutputStream(bstream);
+    } catch (IOException ex) {
+      // Close all 3 streams, not sure where the exception occurred.
+      Utility.close(bstream);
+      Utility.close(fstream);
+      closeCurrentCacheFile(currentCacheFile, currentCacheFileStream);
+      logger.log(TreeLogger.ERROR, "Error rotating file.  Shutting down cache thread.", ex);
+      throw new UnableToCompleteException();
+    }
+  }
+
+  /**
+   * For Unit testing - shutdown the persistent cache.
+   * 
+   * @throws ExecutionException
+   * @throws InterruptedException
+   */
+  void shutdown() throws InterruptedException, ExecutionException {
+    try {
+      Future<Runnable> future = backgroundService.submit(shutdownThreadTask, shutdownThreadTask);
+      backgroundService.shutdown();
+      future.get();
+    } catch (RejectedExecutionException ex) {
+      // background thread is not running - ignore
+    }
+  }
+
+  private void addImpl(final UnitCacheEntry entry) {
+    try {
+      backgroundService.execute(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            assert entry.getOrigin() != UnitOrigin.ARCHIVE;
+            CompilationUnit unit = entry.getUnit();
+            assert unit != null;
+            currentCacheFileStream.writeObject(unit);
+            unitsWritten++;
+          } catch (IOException ex) {
+            backgroundService.shutdownNow();
+            if (logger.isLoggable(TreeLogger.TRACE)) {
+              logger.log(TreeLogger.TRACE, "Error saving unit to cache in: "
+                  + cacheDirectory.getAbsolutePath(), ex);
+            }
+          }
+        }
+      });
+    } catch (RejectedExecutionException ex) {
+      // background thread is not running, ignore
+    }
+  }
+
+  private synchronized void awaitUnitCacheMapLoad() {
+    // wait on initial load of unit map to complete.
+    try {
+      if (unitMapLoadStatus != null) {
+        unitMapLoadStatus.get();
+        // no need to check any more.
+        unitMapLoadStatus = null;
+      }
+    } catch (InterruptedException e) {
+      throw new InternalCompilerException("Interrupted waiting for unit cache map to load.", e);
+    } catch (ExecutionException e) {
+      logger.log(TreeLogger.ERROR, "Failure in unit cache map load.", e);
+      // keep going
+      unitMapLoadStatus = null;
+    }
+  }
+
+  private void closeCurrentCacheFile(File openFile, ObjectOutputStream stream) {
+    Utility.close(stream);
+    if (unitsWritten == 0) {
+      // Remove useless empty file.
+      openFile.delete();
+    }
   }
 
   /**
    * Load everything cached on disk into memory.
    */
-  private void loadUnitMap(TreeLogger logger) {
+  private void loadUnitMap(TreeLogger logger, File currentCacheFile) {
     Event loadPersistentUnitEvent =
         SpeedTracerLogger.start(DevModeEventType.LOAD_PERSISTENT_UNIT_CACHE);
     if (logger.isLoggable(TreeLogger.TRACE)) {
@@ -472,7 +496,7 @@ class PersistentUnitCache extends MemoryUnitCache {
     }
     try {
       if (cacheDirectory.isDirectory() && cacheDirectory.canRead()) {
-        File[] files = getCacheFiles();
+        File[] files = getCacheFiles(cacheDirectory);
         for (File cacheFile : files) {
           FileInputStream fis = null;
           BufferedInputStream bis = null;
@@ -507,7 +531,8 @@ class PersistentUnitCache extends MemoryUnitCache {
                * out to be stale, it will be recompiled and the updated unit
                * will win this test the next time the session starts.
                */
-              if (existingEntry != null && unit.getLastModified() >= existingEntry.getUnit().getLastModified()) {
+              if (existingEntry != null
+                  && unit.getLastModified() >= existingEntry.getUnit().getLastModified()) {
                 super.remove(existingEntry.getUnit());
                 unitMap.put(unit.getResourcePath(), entry);
                 unitMapByContentId.put(unit.getContentId(), entry);
