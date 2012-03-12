@@ -79,7 +79,7 @@ public class CompilePdfDependencyChecker
             if (doc != null)
             {  
                InputEditorPosition pos = doc.getEnd().moveToNextLine();
-               docDisplay.insertCode(pos, "\n\\SweaveOpts{concordance=TRUE}\n");
+               docDisplay.insertCode(pos, "\\SweaveOpts{concordance=TRUE}\n");
             }
          }
       }
