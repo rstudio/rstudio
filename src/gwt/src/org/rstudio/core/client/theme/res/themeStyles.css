@@ -112,6 +112,9 @@ body {
 input[type=text] {
    font-family: proportionalFont;
 }
+input[type=text][disabled] {
+   background-color: transparent;
+}
 .fixedWidthFont {
    font-family: fixedWidthFont !important;
 }

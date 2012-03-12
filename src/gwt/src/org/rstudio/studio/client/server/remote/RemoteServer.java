@@ -2461,7 +2461,7 @@ public class RemoteServer implements Server
                          boolean regex,
                          boolean ignoreCase,
                          FileSystemItem directory,
-                         String filePattern,
+                         JsArrayString filePatterns,
                          ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -2471,7 +2471,7 @@ public class RemoteServer implements Server
       params.set(3, directory.getPath() == null ?
                     JSONNull.getInstance() :
                     new JSONString(directory.getPath()));
-      params.set(4, new JSONString(filePattern));
+      params.set(4, new JSONArray(filePatterns));
       sendRequest(RPC_SCOPE, BEGIN_FIND, params, requestCallback);
    }
 

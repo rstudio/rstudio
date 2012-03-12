@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.output.find.model;
 
+import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
@@ -22,7 +23,7 @@ public interface FindInFilesServerOperations
                   boolean regex,
                   boolean ignoreCase,
                   FileSystemItem directory,
-                  String filePattern,
+                  JsArrayString filePatterns,
                   ServerRequestCallback<String> requestCallback);
 
    void stopFind(String findOperationHandle,

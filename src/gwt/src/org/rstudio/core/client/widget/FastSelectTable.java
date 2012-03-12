@@ -547,6 +547,11 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
          return null;
    }
 
+   public ArrayList<TableRowElement> getSelectedRows()
+   {
+      return new ArrayList<TableRowElement>(selectedRows_);
+   }
+
    public Rectangle getSelectionRect()
    {
       if (selectedRows_.size() == 0)

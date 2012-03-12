@@ -12,25 +12,31 @@
  */
 package org.rstudio.studio.client.workbench.views.output.find;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
-import com.google.gwt.event.logical.shared.HasSelectionHandlers;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.events.*;
+import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
+import org.rstudio.core.client.events.HasSelectionCommitHandlers;
+import org.rstudio.core.client.events.SelectionCommitEvent;
+import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.events.SelectionChangedEvent;
+import org.rstudio.core.client.widget.events.SelectionChangedHandler;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.output.find.FindInFilesDialog.Result;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
@@ -40,7 +46,6 @@ import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
 public class FindOutputPresenter extends BasePresenter
 {
    public interface Display extends WorkbenchView,
-                                    HasSelectionHandlers<CodeNavigationTarget>,
                                     HasSelectionCommitHandlers<CodeNavigationTarget>,
                                     HasEnsureHiddenHandlers
    {
@@ -51,21 +56,32 @@ public class FindOutputPresenter extends BasePresenter
       HasText getSearchLabel();
       HasClickHandlers getStopSearchButton();
       void setStopSearchButtonVisible(boolean visible);
+
+      void ensureSelectedRowIsVisible();
+
+      HandlerRegistration addSelectionChangedHandler(SelectionChangedHandler handler);
    }
 
    @Inject
    public FindOutputPresenter(Display view,
                               EventBus events,
                               FindInFilesServerOperations server,
-                              GlobalDisplay globalDisplay,
                               final FileTypeRegistry ftr, Session session)
    {
       super(view);
       view_ = view;
       events_ = events;
       server_ = server;
-      globalDisplay_ = globalDisplay;
       session_ = session;
+
+      view_.addSelectionChangedHandler(new SelectionChangedHandler()
+      {
+         @Override
+         public void onSelectionChanged(SelectionChangedEvent e)
+         {
+            view_.ensureSelectedRowIsVisible();
+         }
+      });
 
       view_.addSelectionCommitHandler(new SelectionCommitHandler<CodeNavigationTarget>()
       {
@@ -133,18 +149,32 @@ public class FindOutputPresenter extends BasePresenter
    @Handler
    public void onFindInFiles()
    {
-      globalDisplay_.promptForText("Find", "Find:", "", new OperationWithInput<String>()
+      String defaultScopeLabel =
+            session_.getSessionInfo().getActiveProjectDir() == null
+            ? "(Current working directory)"
+            : "(Entire project)";
+
+      new FindInFilesDialog(new OperationWithInput<Result>()
       {
          @Override
-         public void execute(final String input)
+         public void execute(final Result input)
          {
             stopAndClear();
 
-            server_.beginFind(input,
-                              false,
-                              true,
-                              session_.getSessionInfo().getActiveProjectDir(),
-                              "",
+            FileSystemItem searchPath =
+                  input.getPath() != null
+                  ? input.getPath()
+                  : session_.getSessionInfo().getActiveProjectDir();
+
+            JsArrayString filePatterns = JsArrayString.createArray().cast();
+            for (String pattern : input.getFilePatterns())
+               filePatterns.push(pattern);
+
+            server_.beginFind(input.getQuery(),
+                              input.isRegex(),
+                              !input.isCaseSensitive(),
+                              searchPath,
+                              filePatterns,
                               new SimpleRequestCallback<String>()
                               {
                                  @Override
@@ -152,7 +182,7 @@ public class FindOutputPresenter extends BasePresenter
                                  {
                                     currentFindHandle_ = handle;
                                     view_.getSearchLabel().setText(
-                                          "Find results: " + input);
+                                          "Find results: " + input.getQuery());
                                     view_.setStopSearchButtonVisible(true);
 
                                     super.onResponseReceived(handle);
@@ -161,7 +191,7 @@ public class FindOutputPresenter extends BasePresenter
                                  }
                               });
          }
-      });
+      }, defaultScopeLabel).showModal();
    }
 
    public void onDismiss()
@@ -192,7 +222,6 @@ public class FindOutputPresenter extends BasePresenter
 
    private final Display view_;
    private final FindInFilesServerOperations server_;
-   private final GlobalDisplay globalDisplay_;
    private final Session session_;
    private EventBus events_;
 }

@@ -273,14 +273,14 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    std::string searchString;
    bool asRegex, ignoreCase;
    std::string directory;
-   std::string filePattern;
+   json::Array filePatterns;
 
    Error error = json::readParams(request.params,
                                   &searchString,
                                   &asRegex,
                                   &ignoreCase,
                                   &directory,
-                                  &filePattern);
+                                  &filePatterns);
    if (error)
       return error;
 
@@ -328,11 +328,12 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    if (!asRegex)
       cmd << "-F";
 
-   cmd << "--";
-   if (filePattern.empty())
-      cmd << shell_utils::EscapeFilesOnly << "*" << shell_utils::EscapeAll;
-   else
-      cmd << filePattern;
+   BOOST_FOREACH(json::Value filePattern, filePatterns)
+   {
+      cmd << "--include=" + filePattern.get_str();
+   }
+
+   cmd << shell_utils::EscapeFilesOnly << "--" << "." << shell_utils::EscapeAll;
 
    // Clear existing results
    findResults().clear();

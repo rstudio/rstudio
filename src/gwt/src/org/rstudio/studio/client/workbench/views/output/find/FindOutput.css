@@ -2,6 +2,12 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 .findOutput {
+   width: 100%;
+   height: 100%;
+}
+
+.findOutput tr {
+   height: 20px;
 }
 
 .headerRow td {

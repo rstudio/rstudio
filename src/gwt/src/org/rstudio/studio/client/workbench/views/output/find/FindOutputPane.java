@@ -14,19 +14,28 @@ package org.rstudio.studio.client.workbench.views.output.find;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.HasText;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.*;
+import org.rstudio.core.client.widget.events.SelectionChangedHandler;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
@@ -36,7 +45,6 @@ import java.util.ArrayList;
 
 public class FindOutputPane extends WorkbenchPane
       implements FindOutputPresenter.Display,
-                 HasSelectionHandlers<CodeNavigationTarget>,
                  HasSelectionCommitHandlers<CodeNavigationTarget>
 {
    @Inject
@@ -108,7 +116,9 @@ public class FindOutputPane extends WorkbenchPane
          }
       });
 
-      return new ScrollPanel(table_);
+      scrollPanel_ = new ScrollPanel(table_);
+      scrollPanel_.setSize("100%", "100%");
+      return scrollPanel_;
    }
 
    private void fireSelectionCommitted()
@@ -156,9 +166,21 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
-   public HandlerRegistration addSelectionHandler(SelectionHandler<CodeNavigationTarget> handler)
+   public void ensureSelectedRowIsVisible()
    {
-      return addHandler(handler, SelectionEvent.getType());
+      ArrayList<TableRowElement> rows = table_.getSelectedRows();
+      if (rows.size() > 0)
+      {
+         DomUtils.ensureVisibleVert(scrollPanel_.getElement(),
+                                    rows.get(0),
+                                    20);
+      }
+   }
+
+   @Override
+   public HandlerRegistration addSelectionChangedHandler(SelectionChangedHandler handler)
+   {
+      return table_.addSelectionChangedHandler(handler);
    }
 
    @Override
@@ -172,4 +194,5 @@ public class FindOutputPane extends WorkbenchPane
    private final Commands commands_;
    private Label searchLabel_;
    private ToolbarButton stopSearch_;
+   private ScrollPanel scrollPanel_;
 }
