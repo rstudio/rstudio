@@ -10,12 +10,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.pdfviewer.pdfjs.events;
+package org.rstudio.studio.client.pdfviewer.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
-import org.rstudio.core.client.Point;
+import org.rstudio.studio.client.pdfviewer.model.SyncTexCoordinates;
 
 public class PageClickEvent extends GwtEvent<PageClickEvent.Handler>
 {
@@ -29,20 +29,14 @@ public class PageClickEvent extends GwtEvent<PageClickEvent.Handler>
       void onPageClick(PageClickEvent event);
    }
 
-   public PageClickEvent(int pageNum, Point point)
+   public PageClickEvent(SyncTexCoordinates coordinates)
    {
-      pageNum_ = pageNum;
-      point_ = point;
+      coordinates_ = coordinates;
    }
 
-   public int getPageNum()
+   public SyncTexCoordinates getCoordinates()
    {
-      return pageNum_;
-   }
-
-   public Point getPoint()
-   {
-      return point_;
+      return coordinates_;
    }
 
    @Override
@@ -57,8 +51,7 @@ public class PageClickEvent extends GwtEvent<PageClickEvent.Handler>
       handler.onPageClick(this);
    }
 
-   private final int pageNum_;
-   private final Point point_;
+   private final SyncTexCoordinates coordinates_;
 
    public static Type<Handler> TYPE = new Type<Handler>();
 }

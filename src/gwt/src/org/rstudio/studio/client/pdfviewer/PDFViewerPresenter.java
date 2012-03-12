@@ -46,11 +46,12 @@ import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent
 import org.rstudio.studio.client.common.synctex.events.SynctexViewPdfEvent;
 import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
+import org.rstudio.studio.client.pdfviewer.events.PageClickEvent;
 import org.rstudio.studio.client.pdfviewer.model.PDFViewerParams;
+import org.rstudio.studio.client.pdfviewer.model.SyncTexCoordinates;
 import org.rstudio.studio.client.pdfviewer.pdfjs.PDFView;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PDFLoadEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PageChangeEvent;
-import org.rstudio.studio.client.pdfviewer.pdfjs.events.PageClickEvent;
 import org.rstudio.studio.client.pdfviewer.ui.PDFViewerToolbarDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -76,6 +77,13 @@ public class PDFViewerPresenter implements IsWidget,
       void toggleThumbnails();
 
       void updateSelectedPage(int pageNumber);
+
+      /**
+       * @return Coordinates of the page area that's at the top of the viewer,
+       * or null if no pages loaded (or no page is currently onscreen for some
+       * other reason).
+       */
+      SyncTexCoordinates getTopCoordinates();
    }
    
    @Inject

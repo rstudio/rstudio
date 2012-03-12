@@ -14,11 +14,11 @@ package org.rstudio.studio.client.pdfviewer.ui;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.*;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.*;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -29,9 +29,10 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.pdfviewer.PDFViewerPresenter;
 import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
+import org.rstudio.studio.client.pdfviewer.events.PageClickEvent;
+import org.rstudio.studio.client.pdfviewer.model.SyncTexCoordinates;
 import org.rstudio.studio.client.pdfviewer.pdfjs.PDFView;
 import org.rstudio.studio.client.pdfviewer.pdfjs.PdfJs;
-import org.rstudio.studio.client.pdfviewer.pdfjs.events.PageClickEvent;
 
 public class PDFViewerPanel extends Composite
                             implements PDFViewerPresenter.Display
@@ -94,9 +95,7 @@ public class PDFViewerPanel extends Composite
       if (pageEl == null)
          return;
 
-      String containerId = pageEl.getId();
-      int page =
-            Integer.parseInt(containerId.substring("pageContainer".length()));
+      int page = getContainerPageNum(pageEl);
 
       int pageX = nativeEvent.getClientX() +
                   Document.get().getDocumentElement().getScrollLeft() +
@@ -107,9 +106,16 @@ public class PDFViewerPanel extends Composite
                   Document.get().getBody().getScrollTop() -
                   pageEl.getAbsoluteTop();
 
-      fireEvent(new PageClickEvent(page, new Point(
+      fireEvent(new PageClickEvent(new SyncTexCoordinates(
+            page,
             (int) ((pageX / PDFView.currentScale() / 96) * 72),
             (int) ((pageY / PDFView.currentScale() / 96) * 72))));
+   }
+
+   private int getContainerPageNum(Element container)
+   {
+      return Integer.parseInt(
+            container.getId().substring("pageContainer".length()));
    }
 
    @Override
@@ -150,6 +156,37 @@ public class PDFViewerPanel extends Composite
                Document.get().getElementById("thumbnailContainer" + pageNumber);
          DomUtils.ensureVisibleVert(scroller, page, 30);
       }
+   }
+
+   @Override
+   public SyncTexCoordinates getTopCoordinates()
+   {
+      int scrollY = Document.get().getScrollTop() + toolbar_.getOffsetHeight();
+
+      // linear probe our way to the current page
+      Element viewerEl = viewer_.getElement();
+      for (int i = 1; i < viewerEl.getChildCount(); i+=2)
+      {
+         Node childNode = viewerEl.getChild(i);
+         if (Element.is(childNode))
+         {
+            Element el = Element.as(childNode);
+
+            if (el.getAbsoluteBottom() > scrollY)
+            {
+               int pageNum = getContainerPageNum(el);
+               int pageY = scrollY - el.getAbsoluteTop();
+               if (pageY < 0)
+                  pageY = 0;
+
+               return new SyncTexCoordinates(
+                     pageNum,
+                     0,
+                     (int) ((pageY / PDFView.currentScale() / 96) * 72));
+            }
+         }
+      }
+      return null;
    }
 
    @Override
