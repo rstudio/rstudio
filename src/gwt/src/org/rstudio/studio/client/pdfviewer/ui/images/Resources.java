@@ -17,8 +17,11 @@ import com.google.gwt.resources.client.ImageResource;
 
 public interface Resources extends ClientBundle
 {
-   @Source("FileActionsIcon.png")
-   ImageResource fileActionsIcon();
+   @Source("OpenPdfExternalIcon.png")
+   ImageResource openPdfExternalIcon();
+   
+   @Source("JumpToSourceIcon.png")
+   ImageResource jumpToSourceIcon();
 
    @Source("NextPageIcon.png")
    ImageResource nextPageIcon();

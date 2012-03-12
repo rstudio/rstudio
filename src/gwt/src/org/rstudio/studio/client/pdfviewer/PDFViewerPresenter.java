@@ -116,7 +116,24 @@ public class PDFViewerPresenter implements IsWidget,
       });
 
       final PDFViewerToolbarDisplay toolbar = view_.getToolbarDisplay();
-         
+     
+      toolbar.getViewPdfExternal().addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            commands_.showPdfExternal().execute();
+         }
+      });
+      
+      toolbar.getJumpToSource().setVisible(false);
+      toolbar.getJumpToSource().addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            commands_.synctexInverseSearch().execute();
+         }
+      });
+      
       toolbar.getPrevButton().addClickHandler(new ClickHandler()
       {
          @Override
@@ -306,6 +323,9 @@ public class PDFViewerPresenter implements IsWidget,
    public void onSynctexStatusChanged(SynctexStatusChangedEvent event)
    {
       synctex_.enableCommands(synctex_.isSynctexAvailable());
+      
+      view_.getToolbarDisplay().getJumpToSource().setVisible(
+                                             synctex_.isSynctexAvailable());
    }
    
    @Handler

@@ -20,6 +20,8 @@ import com.google.gwt.user.client.ui.HasValue;
 
 public interface PDFViewerToolbarDisplay
 {
+   HasButtonMethods getViewPdfExternal();
+   HasButtonMethods getJumpToSource();
    HasButtonMethods getPrevButton();
    HasButtonMethods getNextButton();
    HasButtonMethods getThumbnailsButton();

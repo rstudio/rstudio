@@ -24,7 +24,6 @@ import org.rstudio.core.client.widget.HasButtonMethods;
 import org.rstudio.core.client.widget.InlineToolbarButton;
 import org.rstudio.core.client.widget.NumericTextBox;
 import org.rstudio.core.client.widget.SpanLabel;
-import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.pdfviewer.ui.images.Resources;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
@@ -40,12 +39,6 @@ public class PDFViewerToolbar extends Composite
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
       final Resources resources = GWT.create(Resources.class);
-
-      ToolbarPopupMenu menu = new ToolbarPopupMenu();
-      menu.addItem(commands.synctexInverseSearch().createMenuItem(false));
-      menu.addSeparator();
-      menu.addItem(commands.showPdfExternal().createMenuItem(false));
-      btnActions_.setMenu(menu);
 
       zoomOut_.addMouseDownHandler(new MouseDownHandler()
       {
@@ -95,6 +88,18 @@ public class PDFViewerToolbar extends Composite
             zoomIn_.setResource(resources.zoomButtonRight());
          }
       });
+   }
+   
+   @Override
+   public HasButtonMethods getViewPdfExternal()
+   {
+      return btnViewExternal_;
+   }
+
+   @Override
+   public HasButtonMethods getJumpToSource()
+   {
+      return btnJumpToSource_;
    }
    
    @Override
@@ -153,7 +158,9 @@ public class PDFViewerToolbar extends Composite
    }
    
    @UiField
-   InlineToolbarButton btnActions_;
+   InlineToolbarButton btnViewExternal_;
+   @UiField
+   InlineToolbarButton btnJumpToSource_;
    @UiField
    InlineToolbarButton btnPrevious_;
    @UiField
@@ -172,4 +179,5 @@ public class PDFViewerToolbar extends Composite
    NumericTextBox pageNumber_;
    @UiField
    Image fileIcon_;
+  
 }
