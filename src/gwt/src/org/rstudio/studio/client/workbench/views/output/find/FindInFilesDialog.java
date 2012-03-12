@@ -25,8 +25,6 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.GlobalDisplay;
 
 import java.util.ArrayList;
 
@@ -173,7 +171,4 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.Result>
    @UiField
    TextBox txtFilePattern_;
    private Widget mainWidget_;
-
-   private static final GlobalDisplay globalDisplay_ =
-                                   RStudioGinjector.INSTANCE.getGlobalDisplay();
 }
