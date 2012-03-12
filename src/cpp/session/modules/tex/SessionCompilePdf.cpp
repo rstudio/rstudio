@@ -306,6 +306,12 @@ void filterLatexLog(const core::tex::LogEntries& logEntries,
                             includeLogEntry);
 }
 
+bool isLogEntryFromTargetFile(const core::tex::LogEntry& logEntry,
+                              const FilePath& texPath)
+{
+   return logEntry.filePath() == texPath;
+}
+
 void getLogEntries(const FilePath& texPath,
                    const rnw_concordance::Concordances& concordances,
                    core::tex::LogEntries* pLogEntries)
@@ -320,6 +326,12 @@ void getLogEntries(const FilePath& texPath,
          LOG_ERROR(error);
 
       filterLatexLog(logEntries, pLogEntries);
+
+      // re-arrange so that issues in the target file always end up at the top
+      // of the error display
+      std::partition(pLogEntries->begin(),
+                     pLogEntries->end(),
+                     boost::bind(isLogEntryFromTargetFile, _1, texPath));
    }
 
    // bibtex log file
