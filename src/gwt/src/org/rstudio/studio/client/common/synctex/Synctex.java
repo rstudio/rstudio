@@ -13,10 +13,12 @@
 
 package org.rstudio.studio.client.common.synctex;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -149,7 +151,24 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    
    public void inverseSearch(PdfLocation pdfLocation)
    {
+      // switch back to the main window 
       satellite_.focusMainWindow();
+      
+      // warn firefox users that this doesn't really work in Firefox
+      if (BrowseCap.isFirefox())
+      {
+         globalDisplay_.showMessage(
+            MessageDialog.INFO,
+            "Source Editor Updated",
+            "The source editor was updated to sync to the PDF location " +
+            "however Firefox has disallowed switching windows back to " +
+            "the source editor.\n\n" +
+            "To prevent this problem in the future you may want to use " +
+            "Google Chrome rather than Firefox when compiling and " +
+            "previewing PDFs.");
+      }
+      
+      // do the inverse search
       callInverseSearch(pdfLocation);
    }
    
