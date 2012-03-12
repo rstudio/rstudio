@@ -134,12 +134,6 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
          }
          
          @Override
-         public void commandClick()
-         {
-            goToFunctionDefinition();
-         }
-         
-         @Override
          public void goToFunctionDefinition()
          {
             // determine current line and cursor position

@@ -258,8 +258,8 @@ public class AceEditor implements DocDisplay,
                // set the cursor position
                setCursorPosition(event.getDocumentPosition());
                
-               // notify completion manager of a command click
-               completionManager_.commandClick();
+               // go to function definition
+               completionManager_.goToFunctionDefinition();
             }
          }
       });

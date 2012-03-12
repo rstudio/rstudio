@@ -24,8 +24,6 @@ public interface CompletionManager extends KeyDownPreviewHandler,
       boolean shouldComplete(NativeEvent keyDownEvent) ;
    }
    
-   void commandClick();
-   
    void goToFunctionDefinition();
    
    void close();

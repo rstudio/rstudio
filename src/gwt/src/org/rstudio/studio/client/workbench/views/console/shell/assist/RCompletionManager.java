@@ -149,11 +149,6 @@ public class RCompletionManager implements CompletionManager
       popup_.hide();
    }
    
-   public void commandClick()
-   {
-      goToFunctionDefinition()
-;   }
-   
    public void goToFunctionDefinition()
    {   
       // determine current line and cursor position
