@@ -102,7 +102,7 @@ class StaticResourceContext extends AbstractResourceContext {
     }
 
     // Return a Java expression
-    return "GWT.getModuleBaseURL() + \"" + outputName + "\"";
+    return "GWT.getModuleBaseForStaticFiles() + \"" + outputName + "\"";
   }
 
   public boolean supportsDataUrls() {
