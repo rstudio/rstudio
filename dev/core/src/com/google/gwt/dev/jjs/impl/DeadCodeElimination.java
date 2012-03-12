@@ -120,6 +120,8 @@ public class DeadCodeElimination {
      */
     private final Set<JExpression> ignoringExpressionOutput = new HashSet<JExpression>();
 
+    private final JMethod isScriptMethod = program.getIndexedMethod("GWT.isScript");
+
     /**
      * Expressions being used as lvalues.
      */
@@ -414,6 +416,9 @@ public class DeadCodeElimination {
           // Tighten the target.
           ctx.replaceMe(createClinitCall(x.getSourceInfo(), targetType.getClinitTarget()));
         }
+      } else if (target == isScriptMethod) {
+        // optimize out in draftCompiles that don't do inlining
+        ctx.replaceMe(JBooleanLiteral.TRUE);
       }
     }
 

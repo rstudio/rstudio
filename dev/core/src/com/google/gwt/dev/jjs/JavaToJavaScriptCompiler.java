@@ -693,7 +693,10 @@ public class JavaToJavaScriptCompiler {
     Finalizer.exec(jprogram);
     MakeCallsStatic.exec(jprogram);
     jprogram.typeOracle.recomputeAfterOptimizations();
+    // needed for certain libraries that depend on dead stripping to work
     DeadCodeElimination.exec(jprogram);
+    Pruner.exec(jprogram, true);
+    jprogram.typeOracle.recomputeAfterOptimizations();
     draftOptimizeEvent.end();
   }
 
