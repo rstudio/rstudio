@@ -13,6 +13,8 @@
 
 #include "SessionFind.hpp"
 
+#include <algorithm>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -34,6 +36,9 @@ namespace find {
 
 namespace {
 
+// This must be the same as MAX_COUNT in FindOutputPane.java
+const size_t MAX_COUNT = 1000;
+
 // Reflects the current set of Find results that are being
 // displayed, in case they need to be re-fetched (i.e. browser
 // refresh)
@@ -50,6 +55,11 @@ public:
       return handle_;
    }
 
+   size_t resultCount() const
+   {
+      return files_.size();
+   }
+
    bool isRunning() const
    {
       return running_;
@@ -58,7 +68,9 @@ public:
    bool addResult(const std::string& handle,
                   const json::Array& files,
                   const json::Array& lineNums,
-                  const json::Array& contents)
+                  const json::Array& contents,
+                  const json::Array& matchOns,
+                  const json::Array& matchOffs)
    {
       if (handle_.empty())
          handle_ = handle;
@@ -68,6 +80,8 @@ public:
       std::copy(files.begin(), files.end(), std::back_inserter(files_));
       std::copy(lineNums.begin(), lineNums.end(), std::back_inserter(lineNums_));
       std::copy(contents.begin(), contents.end(), std::back_inserter(contents_));
+      std::copy(matchOns.begin(), matchOns.end(), std::back_inserter(matchOns_));
+      std::copy(matchOffs.begin(), matchOffs.end(), std::back_inserter(matchOffs_));
       return true;
    }
 
@@ -91,6 +105,8 @@ public:
       files_.clear();
       lineNums_.clear();
       contents_.clear();
+      matchOns_.clear();
+      matchOffs_.clear();
    }
 
    Error readFromJson(const json::Object& asJson)
@@ -107,7 +123,9 @@ public:
       error = json::readObject(results,
                                "file", &files_,
                                "line", &lineNums_,
-                               "lineValue", &contents_);
+                               "lineValue", &contents_,
+                               "matchOn", &matchOns_,
+                               "matchOff", &matchOffs_);
       if (error)
          return error;
 
@@ -131,6 +149,8 @@ public:
       results["file"] = files_;
       results["line"] = lineNums_;
       results["lineValue"] = contents_;
+      results["matchOn"] = matchOns_;
+      results["matchOff"] = matchOffs_;
       obj["results"] = results;
 
       obj["running"] = running_;
@@ -144,6 +164,8 @@ private:
    json::Array files_;
    json::Array lineNums_;
    json::Array contents_;
+   json::Array matchOns_;
+   json::Array matchOffs_;
    bool running_;
 };
 
@@ -163,7 +185,7 @@ public:
 
 private:
    GrepOperation(const FilePath& tempFile)
-      : stopped_(false), tempFile_(tempFile)
+      : tempFile_(tempFile)
    {
       handle_ = core::system::generateUuid(false);
    }
@@ -198,16 +220,45 @@ private:
       return findResults().isRunning() && findResults().handle() == handle();
    }
 
+   void processContents(std::string* pContent,
+                        json::Array* pMatchOn,
+                        json::Array* pMatchOff)
+   {
+      using namespace boost;
+
+      smatch match;
+      while (regex_search(*pContent, match, regex("\x1B\\[(\\d\\d)m")))
+      {
+         int pos = static_cast<int>(match.position());
+         if (match[1] == "01")
+            pMatchOn->push_back(pos);
+         else
+            pMatchOff->push_back(pos);
+
+         *pContent = pContent->erase(pos, match.length());
+      }
+
+      *pContent = pContent->erase(
+            std::min(pContent->size(), static_cast<size_t>(100)));
+   }
+
    void onStdout(const core::system::ProcessOperations& ops, const std::string& data)
    {
       json::Array files;
       json::Array lineNums;
       json::Array contents;
+      json::Array matchOns;
+      json::Array matchOffs;
+
+      size_t recordsToProcess = MAX_COUNT + 1 - findResults().resultCount();
+      if (recordsToProcess < 0)
+         recordsToProcess = 0;
 
       stdOutBuf_.append(data);
       size_t nextLineStart = 0;
       size_t pos = -1;
-      while (std::string::npos != (pos = stdOutBuf_.find('\n', pos + 1)))
+      while (recordsToProcess &&
+             std::string::npos != (pos = stdOutBuf_.find('\n', pos + 1)))
       {
          std::string line = stdOutBuf_.substr(nextLineStart, pos - nextLineStart);
          nextLineStart = pos + 1;
@@ -215,14 +266,21 @@ private:
          boost::smatch match;
          if (boost::regex_match(line, match, boost::regex("^([^:]+):(\\d+):(.*)")))
          {
-            std::string file = match[1];
+            std::string file = module_context::createAliasedPath(
+                  FilePath(string_utils::systemToUtf8(match[1])));
             int lineNum = safe_convert::stringTo<int>(std::string(match[2]), -1);
             std::string lineContents = match[3];
             boost::algorithm::trim(lineContents);
+            json::Array matchOn, matchOff;
+            processContents(&lineContents, &matchOn, &matchOff);
 
             files.push_back(file);
             lineNums.push_back(lineNum);
             contents.push_back(lineContents);
+            matchOns.push_back(matchOn);
+            matchOffs.push_back(matchOff);
+
+            recordsToProcess--;
          }
       }
 
@@ -237,12 +295,22 @@ private:
       results["file"] = files;
       results["line"] = lineNums;
       results["lineValue"] = contents;
+      results["matchOn"] = matchOns;
+      results["matchOff"] = matchOffs;
       result["results"] = results;
 
-      findResults().addResult(handle(), files, lineNums, contents);
+      findResults().addResult(handle(),
+                              files,
+                              lineNums,
+                              contents,
+                              matchOns,
+                              matchOffs);
 
       module_context::enqueClientEvent(
             ClientEvent(client_events::kFindResult, result));
+
+      if (recordsToProcess <= 0)
+         findResults().onFindEnd(handle());
    }
 
    void onStderr(const core::system::ProcessOperations& ops, const std::string& data)
@@ -259,7 +327,6 @@ private:
          tempFile_.removeIfExists();
    }
 
-   bool stopped_;
    FilePath tempFile_;
    std::string stdOutBuf_;
    std::string handle_;
@@ -285,18 +352,17 @@ core::Error beginFind(const json::JsonRpcRequest& request,
       return error;
 
    core::system::ProcessOptions options;
-   if (!directory.empty())
-      options.workingDir = module_context::resolveAliasedPath(directory);
 
-#ifdef _WIN32
    core::system::Options childEnv;
    core::system::environment(&childEnv);
+   core::system::setenv(&childEnv, "GREP_COLOR", "01");
+#ifdef _WIN32
    core::system::addToPath(
             &childEnv,
             string_utils::utf8ToSystem(
                session::options().gnugrepPath().absolutePath()));
-   options.environment = childEnv;
 #endif
+   options.environment = childEnv;
 
    // TODO: Encode the pattern using the project encoding
 
@@ -314,7 +380,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
                                        ptrGrepOp->createProcessCallbacks();
 
    shell_utils::ShellCommand cmd("grep");
-   cmd << "-rHn" << "--binary-files=without-match";
+   cmd << "-rHn" << "--binary-files=without-match" << "--color=always";
 #ifndef _WIN32
    cmd << "--devices=skip";
 #endif
@@ -334,7 +400,8 @@ core::Error beginFind(const json::JsonRpcRequest& request,
       cmd << "--include=" + filePattern.get_str();
    }
 
-   cmd << shell_utils::EscapeFilesOnly << "--" << "." << shell_utils::EscapeAll;
+   cmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
+   cmd << module_context::resolveAliasedPath(directory);
 
    // Clear existing results
    findResults().clear();

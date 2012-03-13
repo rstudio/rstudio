@@ -56,7 +56,7 @@ public class FindOutputCodec
 
       TableCellElement td2 = Document.get().createTDElement();
       td2.setClassName(styles_.lineValue());
-      td2.setInnerText(entry.getLineValue());
+      td2.setInnerHTML(entry.getLineHTML().asString());
       tr.appendChild(td2);
 
       return tr;

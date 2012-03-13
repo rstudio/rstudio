@@ -48,3 +48,8 @@
    background-color: #900;
    color: white;
 }
+
+.findOutput strong {
+   font-weight: normal;
+   color: #66A;
+}
