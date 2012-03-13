@@ -168,6 +168,14 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.Result>
       return mainWidget_;
    }
 
+   @Override
+   protected void onDialogShown()
+   {
+      super.onDialogShown();
+
+      txtSearchPattern_.setFocus(true);
+   }
+
    @UiField
    TextBox txtSearchPattern_;
    @UiField

@@ -44,7 +44,7 @@ public class FindOutputTab extends DelayLoadWorkbenchTab<FindOutputPresenter>
                         Commands commands,
                         final Session session)
    {
-      super("Find", shim);
+      super("Find in Files", shim);
       shim_ = shim;
 
       if (!session.getSessionInfo().isFindInFilesEnabled())
