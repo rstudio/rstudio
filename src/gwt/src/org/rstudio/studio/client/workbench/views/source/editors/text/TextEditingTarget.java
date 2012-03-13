@@ -284,7 +284,7 @@ public class TextEditingTarget implements EditingTarget
                 commands_.synctexForwardSearch().isEnabled())
             {
                // warn firefox users that this doesn't really work in Firefox
-               if (BrowseCap.isFirefox())
+               if (BrowseCap.isFirefox() && !BrowseCap.isMacintosh())
                   SynctexUtils.showFirefoxWarning("PDF preview");
                
                commands_.synctexForwardSearch().execute();
