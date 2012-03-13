@@ -21,9 +21,16 @@
       
       @sprite .statusBar {
          gwt-image: 'StatusBarTile';
+         background-repeat: repeat-x;
          width: 100%;
          font-size: 11px;
          color: #3c474d;
+         position: fixed;
+         bottom: 0;
+         left: 0;
+         right: 0;
+         height: 16px;
+         z-index: 90;
       }
       .statusBar div {
          display: inline;
