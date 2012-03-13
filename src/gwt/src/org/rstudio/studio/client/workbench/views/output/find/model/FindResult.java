@@ -14,11 +14,9 @@ package org.rstudio.studio.client.workbench.views.output.find.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayInteger;
-import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import org.rstudio.core.client.Pair;
-import org.rstudio.core.client.js.JsObject;
 
 import java.util.ArrayList;
 
