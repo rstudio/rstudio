@@ -84,8 +84,6 @@ public:
    virtual std::vector<std::string> commandArgs(
                                     const std::string& file) const = 0;
 
-   virtual bool parseForErrorsOnSuccess() { return false; }
-
    virtual core::Error parseOutputForErrors(
                                     const std::string& output,
                                     const core::FilePath& rnwFilePath,
@@ -234,14 +232,12 @@ public:
 
    virtual bool injectConcordance() const { return false; }
 
-   virtual bool parseForErrorsOnSuccess() { return true; }
-
    virtual core::Error parseOutputForErrors(
                                     const std::string& output,
                                     const core::FilePath& rnwFilePath,
                                     core::tex::LogEntries* pLogEntries) const
    {
-      boost::regex errRe("^Quitting from lines ([0-9]+)-([0-9]+): "
+      boost::regex errRe("^\\s*Quitting from lines ([0-9]+)-([0-9]+): "
                           "(?:Error in [a-z]+\\([a-z=, ]+\\) : \n?)?"
                           "([^\n]+)$");
       boost::smatch match;
@@ -365,19 +361,6 @@ void onWeaveProcessExit(boost::shared_ptr<RnwWeave> pRnwWeave,
                         const FilePath& rnwPath,
                         const CompletedFunction& onCompleted)
 {
-   // if requested parse the log for errors even on success (knitr doesn't
-   // return a failure exit code when it encounters errors)
-   core::tex::LogEntries entries;
-   if (pRnwWeave->parseForErrorsOnSuccess())
-   {
-      Error error = pRnwWeave->parseOutputForErrors(output, rnwPath, &entries);
-      if (error)
-         LOG_ERROR(error);
-
-      if (!entries.empty())
-         exitCode = EXIT_FAILURE;
-   }
-
    if (exitCode == EXIT_SUCCESS)
    {
       // pickup concordance if there is any
@@ -391,16 +374,11 @@ void onWeaveProcessExit(boost::shared_ptr<RnwWeave> pRnwWeave,
    }
    else
    {
-      // see if we can pick up errors from the output (only do this if we
-      // haven't already parsed for errors)
-      if (entries.empty())
-      {
-         Error error = pRnwWeave->parseOutputForErrors(output,
-                                                       rnwPath,
-                                                       &entries);
-         if (error)
-            LOG_ERROR(error);
-       }
+      // parse for errors
+      core::tex::LogEntries entries;
+      Error error = pRnwWeave->parseOutputForErrors(output, rnwPath, &entries);
+      if (error)
+         LOG_ERROR(error);
 
       if (!entries.empty())
       {
