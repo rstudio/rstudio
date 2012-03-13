@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -30,6 +31,8 @@ import com.google.gwt.user.client.ui.MenuItem;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.BrowseCap;
+
 public class StatusBarElementWidget extends FlowPanel
       implements StatusBarElement, HasSelectionHandlers<String>
 {
@@ -43,6 +46,11 @@ public class StatusBarElementWidget extends FlowPanel
       options_ = new ArrayList<String>();
       label_ = new Label();
       add(label_);
+      
+      // tweak font baseline for ubuntu mono on chrome
+      if (BrowseCap.hasUbuntuFonts() && BrowseCap.isChrome())
+         label_.getElement().getStyle().setTop(-1, Unit.PX);
+
 
       addDomHandler(new MouseDownHandler()
       {
@@ -104,6 +112,8 @@ public class StatusBarElementWidget extends FlowPanel
          {
             Resources res = GWT.create(Resources.class);
             arrows_ = new Image(res.upDownArrow());
+            if (BrowseCap.hasUbuntuFonts() && BrowseCap.isChrome())
+               arrows_.getElement().getStyle().setTop(0, Unit.PX);
             add(arrows_);
          }
          else

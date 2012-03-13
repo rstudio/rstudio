@@ -15,15 +15,18 @@ package org.rstudio.studio.client.pdfviewer.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.*;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
@@ -48,6 +51,10 @@ public class PDFViewerPanel extends Composite
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
       viewer_.getElement().setId("viewer");
       Document.get().getBody().getStyle().setMarginLeft(200, Style.Unit.PX);
+      
+      // tweak font baseline for ubuntu mono on chrome
+      if (BrowseCap.hasUbuntuFonts() && BrowseCap.isChrome())
+         lblStatus_.getElement().getStyle().setTop(-1, Unit.PX);
 
       new WidgetHandlerRegistration(this)
       {
@@ -160,6 +167,12 @@ public class PDFViewerPanel extends Composite
    }
 
    @Override
+   public void setStatusText(String text)
+   {
+      lblStatus_.setText(text);
+   }
+   
+   @Override
    public SyncTexCoordinates getTopCoordinates()
    {
       int scrollY = Document.get().getScrollTop() + toolbar_.getOffsetHeight();
@@ -255,6 +268,8 @@ public class PDFViewerPanel extends Composite
    PDFViewerToolbar toolbar_;
    @UiField
    FlowPanel viewer_;
+   @UiField
+   Label lblStatus_;
 
    private Element selectedPageLabel_;
 }

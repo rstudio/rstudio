@@ -75,6 +75,8 @@ public class PDFViewerPresenter implements IsWidget,
                                              InitCompleteEvent.Handler handler);
       void closeWindow();
       void toggleThumbnails();
+      
+      void setStatusText(String text);
 
       void updateSelectedPage(int pageNumber);
 
@@ -349,6 +351,17 @@ public class PDFViewerPresenter implements IsWidget,
       
       view_.getToolbarDisplay().getJumpToSource().setVisible(
                                              synctex_.isSynctexAvailable());
+      
+      if (synctex_.isSynctexAvailable())
+      {
+         String mod = BrowseCap.isMacintosh() ? "Cmd" : "Ctrl";
+         view_.setStatusText("Source: " + event.getTargetFile() + 
+                             " (" + mod + "+Click to sync to source editor)");
+      }
+      else
+      {
+         view_.setStatusText("");
+      }
    }
    
    @Handler

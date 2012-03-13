@@ -92,7 +92,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
          fixupSynctexCommandDescription(commands_.synctexSearch());
       
       // disable commands at the start
-      setSynctexStatus(null);
+      setNoSynctexStatus();
       
       // subscribe to compile pdf status event so we can update command status
       eventBus_.addHandler(CompilePdfStartedEvent.TYPE, this);
@@ -102,7 +102,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    @Override
    public void onCompilePdfStarted(CompilePdfStartedEvent event)
    {
-      setSynctexStatus(null);
+      setNoSynctexStatus();
    }
 
    @Override
@@ -113,9 +113,10 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
             session_.getSessionInfo().isInternalPdfPreviewEnabled();
        
       if (synctexAvailable)
-         setSynctexStatus(event.getResult().getPdfPath());
+         setSynctexStatus(event.getResult().getTargetFile(),
+                          event.getResult().getPdfPath());
       else
-         setSynctexStatus(null);
+         setNoSynctexStatus();
    }
    
    public boolean isSynctexAvailable()
@@ -243,7 +244,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    
    private void notifyPdfViewerClosed()
    {
-      setSynctexStatus(null);
+      setNoSynctexStatus();
    }
    
    private boolean isCurrentWindowPdfViewerSatellite()
@@ -260,13 +261,19 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
                                        "Syncing...").getIndicator();
    }
    
-   private void setSynctexStatus(String pdfPath)
+   private void setNoSynctexStatus()
+   {
+      setSynctexStatus(null, null);
+   }
+   
+   private void setSynctexStatus(String targetFile, String pdfPath)
    {
       // set flag and fire event
       if (!StringUtil.notNull(pdfPath_).equals(StringUtil.notNull(pdfPath)))
       {
          pdfPath_ = pdfPath;
-         eventBus_.fireEvent(new SynctexStatusChangedEvent(pdfPath));
+         eventBus_.fireEvent(new SynctexStatusChangedEvent(targetFile, 
+                                                           pdfPath));
       }
    }
    

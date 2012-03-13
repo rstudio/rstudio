@@ -60,11 +60,11 @@ public class PDFViewer
       if (screen.getAvailHeight() >= 1100)
       {
          if (BrowseCap.isMacintosh())
-            height = height - 123;
+            height = height - 107;
          else if (BrowseCap.isWindows())
-            height = height - 105;
+            height = height - 89;
          else
-            height = height - 96;
+            height = height - 80;
       }
       else
       {
