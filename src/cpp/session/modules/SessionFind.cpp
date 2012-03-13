@@ -227,7 +227,7 @@ private:
       using namespace boost;
 
       smatch match;
-      while (regex_search(*pContent, match, regex("\x1B\\[(\\d\\d)m")))
+      while (regex_search(*pContent, match, regex("\x1B\\[(\\d\\d)?m")))
       {
          int pos = static_cast<int>(match.position());
          if (match[1] == "01")
@@ -267,7 +267,7 @@ private:
          nextLineStart = pos + 1;
 
          boost::smatch match;
-         if (boost::regex_match(line, match, boost::regex("^([^:]+):(\\d+):(.*)")))
+         if (boost::regex_match(line, match, boost::regex("^((?:[a-zA-Z]:)?[^:]+):(\\d+):(.*)")))
          {
             std::string file = module_context::createAliasedPath(
                   FilePath(string_utils::systemToUtf8(match[1])));
@@ -300,25 +300,28 @@ private:
          stdOutBuf_.erase(0, nextLineStart);
       }
 
-      json::Object result;
-      result["handle"] = handle();
-      json::Object results;
-      results["file"] = files;
-      results["line"] = lineNums;
-      results["lineValue"] = contents;
-      results["matchOn"] = matchOns;
-      results["matchOff"] = matchOffs;
-      result["results"] = results;
+      if (files.size() > 0)
+      {
+         json::Object result;
+         result["handle"] = handle();
+         json::Object results;
+         results["file"] = files;
+         results["line"] = lineNums;
+         results["lineValue"] = contents;
+         results["matchOn"] = matchOns;
+         results["matchOff"] = matchOffs;
+         result["results"] = results;
 
-      findResults().addResult(handle(),
-                              files,
-                              lineNums,
-                              contents,
-                              matchOns,
-                              matchOffs);
+         findResults().addResult(handle(),
+                                 files,
+                                 lineNums,
+                                 contents,
+                                 matchOns,
+                                 matchOffs);
 
-      module_context::enqueClientEvent(
-            ClientEvent(client_events::kFindResult, result));
+         module_context::enqueClientEvent(
+                  ClientEvent(client_events::kFindResult, result));
+      }
 
       if (recordsToProcess <= 0)
          findResults().onFindEnd(handle());
@@ -367,6 +370,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    core::system::Options childEnv;
    core::system::environment(&childEnv);
    core::system::setenv(&childEnv, "GREP_COLOR", "01");
+   core::system::setenv(&childEnv, "GREP_COLORS", "ne:fn=:ln=:se=:mt=01");
 #ifdef _WIN32
    core::system::addToPath(
             &childEnv,
