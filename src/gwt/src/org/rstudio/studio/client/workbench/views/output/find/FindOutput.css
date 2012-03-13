@@ -41,3 +41,10 @@
       background-color: rgb(146, 193, 240)
    }
 }
+
+.overflowWarning {
+   font-weight: bold;
+   padding-left: 2px;
+   background-color: #900;
+   color: white;
+}

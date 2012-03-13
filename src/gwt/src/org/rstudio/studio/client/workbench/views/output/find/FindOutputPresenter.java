@@ -43,13 +43,15 @@ import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesSe
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
 
+import java.util.ArrayList;
+
 public class FindOutputPresenter extends BasePresenter
 {
    public interface Display extends WorkbenchView,
                                     HasSelectionCommitHandlers<CodeNavigationTarget>,
                                     HasEnsureHiddenHandlers
    {
-      void addMatches(Iterable<FindResult> findResults);
+      void addMatches(ArrayList<FindResult> findResults);
       void clearMatches();
       void ensureVisible(boolean activate);
 
@@ -60,6 +62,8 @@ public class FindOutputPresenter extends BasePresenter
       void ensureSelectedRowIsVisible();
 
       HandlerRegistration addSelectionChangedHandler(SelectionChangedHandler handler);
+
+      void showOverflow();
    }
 
    @Inject

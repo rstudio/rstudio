@@ -6,14 +6,21 @@
       .panel input[type=checkbox] {
          margin-left: 0;
       }
+
       .panel input:focus {
          outline: none;
       }
+
       .pattern, .filePattern {
          width: 375px;
       }
+
       .example {
          color: #999;
+      }
+
+      .presetFilePatterns {
+         width: 100%;
       }
    </ui:style>
 
@@ -31,11 +38,18 @@
          <widget:DirectoryChooserTextBox ui:field="dirChooser_"/>
       </p>
 
-      <p><g:CheckBox text="Filter by filename:" ui:field="checkboxFilePattern_"/>
-         <br/>
-         <g:TextBox ui:field="txtFilePattern_" styleName="{style.filePattern}"/>
-         <br/>
-         <span class="{style.example}">Example: *.R, *.r, *.csv. Separate multiple types with commas.</span>
+      <p><g:Label text="Search these files:"/>
+         <g:ListBox ui:field="listPresetFilePatterns_"
+                    styleName="{style.presetFilePatterns}">
+            <g:item value="">All files</g:item>
+            <g:item value="*.r, *.R, *.Rnw, *.Rd">Common R source files (R, Rnw, Rd)</g:item>
+            <g:item value="custom">Custom</g:item>
+         </g:ListBox>
+         <div ui:field="divCustomFilter_">
+            <g:TextBox ui:field="txtFilePattern_" styleName="{style.filePattern}"/>
+            <br/>
+            <span class="{style.example}">Example: *.R, *.r, *.csv. Separate multiple types with commas.</span>
+         </div>
       </p>
    </g:HTMLPanel>
 

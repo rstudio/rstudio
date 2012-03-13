@@ -32,6 +32,19 @@ public class FindOutputCodec
    @Override
    public TableRowElement getRowForItem(FindResult entry)
    {
+      if (entry == null)
+      {
+         // Overflow message
+         TableRowElement tr = Document.get().createTRElement();
+         TableCellElement td = Document.get().createTDElement();
+         td.setClassName(styles_.overflowWarning());
+         td.setColSpan(2);
+         td.setInnerText("More than 1000 matching lines were found. " +
+                         "Only the first 1000 lines are shown.");
+         tr.appendChild(td);
+         return tr;
+      }
+
       TableRowElement tr = Document.get().createTRElement();
       tr.setAttribute(DATA_FILE, entry.getFile());
       tr.setAttribute(DATA_LINE, entry.getLine() + "");
@@ -52,6 +65,9 @@ public class FindOutputCodec
    @Override
    protected boolean needsBreak(TableRowElement prevRow, TableRowElement row)
    {
+      if (!row.hasAttribute(DATA_FILE))
+         return false;
+
       return prevRow == null ||
              !prevRow.getAttribute(DATA_FILE).equals(row.getAttribute(DATA_FILE));
    }

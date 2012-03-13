@@ -13,11 +13,14 @@
 package org.rstudio.studio.client.workbench.views.output.find;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.StringUtil;
@@ -94,10 +97,10 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.Result>
 
       setOkButtonCaption("Find");
 
-      checkboxFilePattern_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      listPresetFilePatterns_.addChangeHandler(new ChangeHandler()
       {
          @Override
-         public void onValueChange(ValueChangeEvent<Boolean> booleanValueChangeEvent)
+         public void onChange(ChangeEvent event)
          {
             manageFilePattern();
          }
@@ -107,16 +110,21 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.Result>
 
    private void manageFilePattern()
    {
-      txtFilePattern_.setEnabled(checkboxFilePattern_.getValue());
+      divCustomFilter_.getStyle().setDisplay(
+            listPresetFilePatterns_.getSelectedIndex() == 2
+            ? Style.Display.BLOCK
+            : Style.Display.NONE);
    }
 
    @Override
    protected Result collectInput()
    {
-      String filePatterns = checkboxFilePattern_.getValue()
-                            ? txtFilePattern_.getText()
-                            : "";
-      filePatterns = filePatterns.trim();
+      String filePatterns =
+            listPresetFilePatterns_.getValue(
+                  listPresetFilePatterns_.getSelectedIndex());
+      if (filePatterns.equals("custom"))
+         filePatterns = txtFilePattern_.getText();
+
       ArrayList<String> list = new ArrayList<String>();
       for (String pattern : filePatterns.split(","))
       {
@@ -167,8 +175,10 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.Result>
    @UiField(provided = true)
    DirectoryChooserTextBox dirChooser_;
    @UiField
-   CheckBox checkboxFilePattern_;
-   @UiField
    TextBox txtFilePattern_;
+   @UiField
+   ListBox listPresetFilePatterns_;
+   @UiField
+   DivElement divCustomFilter_;
    private Widget mainWidget_;
 }

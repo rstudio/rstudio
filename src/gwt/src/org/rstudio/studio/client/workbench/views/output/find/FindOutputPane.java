@@ -123,9 +123,18 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
-   public void addMatches(Iterable<FindResult> findResults)
+   public void addMatches(ArrayList<FindResult> findResults)
    {
-      table_.addItems(findResults, false);
+      int matchesToAdd = Math.min(findResults.size(), MAX_COUNT - matchCount_);
+
+      if (matchesToAdd > 0)
+      {
+         matchCount_ += matchesToAdd;
+         table_.addItems(findResults.subList(0, matchesToAdd), false);
+      }
+
+      if (matchesToAdd != findResults.size())
+         showOverflow();
    }
 
    @Override
@@ -133,6 +142,8 @@ public class FindOutputPane extends WorkbenchPane
    {
       context_.reset();
       table_.clear();
+      overflow_ = false;
+      matchCount_ = 0;
    }
 
    @Override
@@ -178,6 +189,17 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
+   public void showOverflow()
+   {
+      if (overflow_)
+         return;
+      overflow_ = true;
+      ArrayList<FindResult> items = new ArrayList<FindResult>();
+      items.add(null);
+      table_.addItems(items, false);
+   }
+
+   @Override
    public HandlerRegistration addSelectionCommitHandler(SelectionCommitHandler<CodeNavigationTarget> handler)
    {
       return addHandler(handler, SelectionCommitEvent.getType());
@@ -189,4 +211,9 @@ public class FindOutputPane extends WorkbenchPane
    private Label searchLabel_;
    private ToolbarButton stopSearch_;
    private ScrollPanel scrollPanel_;
+   private boolean overflow_ = false;
+   private int matchCount_;
+
+   // This must be the same as MAX_COUNT in SessionFind.cpp
+   private static final int MAX_COUNT = 1000;
 }

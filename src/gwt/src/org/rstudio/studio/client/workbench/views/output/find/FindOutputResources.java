@@ -24,6 +24,7 @@ public interface FindOutputResources extends ClientBundle
       String line();
       String lineValue();
       String selectedRow();
+      String overflowWarning();
    }
 
    @Source("FindOutput.css")
