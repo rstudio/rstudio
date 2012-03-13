@@ -129,8 +129,10 @@ public class BrowseCap
          
          // in desktop mode we'll get an exact match whereas in web mode
          // we'll get a list of fonts so we need to do an additional probe
-         return (StringUtil.notNull(fixedWidthFont).equals("\"Ubuntu Mono\"") ||
-                 FontDetector.isFontSupported("Ubuntu Mono"));
+         if (Desktop.isDesktop())
+            return StringUtil.notNull(fixedWidthFont).equals("\"Ubuntu Mono\"");
+         else
+            return FontDetector.isFontSupported("Ubuntu Mono");
       }
       else
       {

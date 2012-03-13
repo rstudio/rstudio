@@ -10,8 +10,9 @@
    height: 20px;
 }
 
-.headerRow td {
+.findOutput .headerRow td {
    font-weight: bold;
+   font-size: 12px !important;
    padding: 2px 2px 2px 3px;
 }
 
