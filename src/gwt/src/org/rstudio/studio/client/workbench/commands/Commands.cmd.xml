@@ -79,7 +79,6 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="sourceNavigateBack"/>
          <cmd refid="sourceNavigateForward"/>
          <separator/>
-         <cmd refid="synctexForwardSearch"/>
          <cmd refid="goToFunctionDefinition"/>
          <cmd refid="goToLine"/>
          <cmd refid="jumpToFunction"/>
@@ -132,6 +131,8 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activatePackages"/>
          <cmd refid="activateHelp"/>
          <cmd refid="activateVcs"/>
+         <separator/>
+         <cmd refid="synctexSearch"/>
       </menu>
 
       <separator/>
@@ -334,7 +335,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="vcsFileDiff" value="Cmd+Shift+D" />
       <shortcut refid="vcsCommit" value="Cmd+Shift+T" />
       <shortcut refid="showShellDialog" value="Cmd+Shift+H" />
-      <shortcut refid="showPdfViewer" value="Cmd+Shift+F6" />
+      <shortcut refid="synctexSearch" value="Cmd+F9" />
    </shortcuts>
 
    <!--
@@ -582,14 +583,11 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Publish PDF..."
         desc="Publish PDF to Google Docs"/>
         
-   <cmd id="synctexForwardSearch"
-        menuLabel="Jump to PDF Pre_view"
-        desc="Jump to PDF preview at current source location (Ctrl+Click)"/>
+   <cmd id="synctexSearch"
+        menuLabel="S_ync PDF View to Editor"
+        buttonLabel="Sync"
+        desc="Sync PDF view to editor location (Ctrl+Click)"/>
         
-   <cmd id="synctexInverseSearch"
-        menuLabel="Jump to Source Editor"
-        desc="Jump to source editor at current PDF location (Ctrl+Click)"/>
-
    <cmd id="newFolder"
         menuLabel="Folder..."
         buttonLabel="New Folder"
@@ -859,8 +857,6 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Request Log"/>
    <cmd id="spellingSandbox"
         menuLabel="Spelling Sandbox..."/>
-   <cmd id="showPdfViewer"
-        menuLabel="PDF Viewer (test)..."/>
    <cmd id="logFocusedElement"
         menuLabel="Log focused element"/>
    <cmd id="debugForceTopsToZero"

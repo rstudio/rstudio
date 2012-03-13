@@ -67,6 +67,12 @@ public class InlineToolbarButton extends Composite implements HasButtonMethods
       setTitle(description);
    }
    
+   public void setLabel(String text)
+   {
+      label_.setText(text);
+      label_.setVisible(!StringUtil.isNullOrEmpty(text));
+   }
+   
    public void setMenu(final ToolbarPopupMenu menu)
    {
       /*

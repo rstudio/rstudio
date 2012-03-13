@@ -281,13 +281,13 @@ public class TextEditingTarget implements EditingTarget
          public void onCommandClick(CommandClickEvent event)
          {
             if (fileType_.canCompilePDF() && 
-                commands_.synctexForwardSearch().isEnabled())
+                commands_.synctexSearch().isEnabled())
             {
                // warn firefox users that this doesn't really work in Firefox
                if (BrowseCap.isFirefox() && !BrowseCap.isMacintosh())
                   SynctexUtils.showFirefoxWarning("PDF preview");
                
-               commands_.synctexForwardSearch().execute();
+               commands_.synctexSearch().execute();
             }
             else
             {
@@ -1780,7 +1780,7 @@ public class TextEditingTarget implements EditingTarget
    }
    
    @Handler
-   void onSynctexForwardSearch()
+   void onSynctexSearch()
    {
       // get doc path (bail if the document is unsaved)
       String file = docUpdateSentinel_.getPath();

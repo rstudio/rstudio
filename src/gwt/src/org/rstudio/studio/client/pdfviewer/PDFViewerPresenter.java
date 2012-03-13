@@ -140,7 +140,7 @@ public class PDFViewerPresenter implements IsWidget,
          @Override
          public void onClick(ClickEvent event)
          {
-            commands_.synctexInverseSearch().execute();
+            commands_.synctexSearch().execute();
          }
       });
       
@@ -352,7 +352,7 @@ public class PDFViewerPresenter implements IsWidget,
    }
    
    @Handler
-   public void onSynctexInverseSearch()
+   public void onSynctexSearch()
    {
       synctexInverseSearch(120,120);
    }

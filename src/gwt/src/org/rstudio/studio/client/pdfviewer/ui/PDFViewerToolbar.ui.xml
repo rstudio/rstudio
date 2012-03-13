@@ -102,8 +102,8 @@
                <widget:InlineToolbarSeparator />
                <widget:InlineToolbarButton ui:field="btnJumpToSource_"
                                            icon="{res.jumpToSourceIcon}"
-                                           label=""
-                                           description="Jump to source editor at current PDF location (Ctrl+Click)"/> 
+                                           label="Sync"
+                                           description="Sync editor location to PDF view (Ctrl+Click) (Ctrl+F9)"/> 
                           
             </td>
             <td class="{style.alignCell}" align="center" nowrap="nowrap" style="min-width: 400px">

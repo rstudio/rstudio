@@ -49,8 +49,7 @@ public abstract class
    public abstract AppCommand sourceNavigateForward();
    public abstract AppCommand compilePDF();
    public abstract AppCommand publishPDF();
-   public abstract AppCommand synctexForwardSearch();
-   public abstract AppCommand synctexInverseSearch();
+   public abstract AppCommand synctexSearch();
    public abstract AppCommand activateSource();
    public abstract AppCommand printSourceDoc();
    public abstract AppCommand vcsFileLog();
@@ -219,8 +218,7 @@ public abstract class
 
    public abstract AppCommand showWarningBar();
    public abstract AppCommand spellingSandbox();
-   public abstract AppCommand showPdfViewer();
-
+ 
    // Clipboard placeholders
    public abstract AppCommand undoDummy();
    public abstract AppCommand redoDummy();

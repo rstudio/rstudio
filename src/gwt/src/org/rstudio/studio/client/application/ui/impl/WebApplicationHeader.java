@@ -160,10 +160,11 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
            if (sessionInfo.getMode().equals(SessionInfo.SERVER_MODE))
                initCommandsPanel(sessionInfo);
 
-            // enable/disable google docs commands
+            // enable/disable google docs commands (publish pdf doesn't seem
+            // to work with the latest google apis so always disable it)
+            commands.publishPDF().remove();
             if (!sessionInfo.isGoogleDocsIntegrationEnabled())
             {
-               commands.publishPDF().remove();
                commands.importDatasetFromGoogleSpreadsheet().remove();
             }
             

@@ -89,10 +89,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       
       // fixup synctex tooltips for macos
       if (BrowseCap.isMacintosh())
-      {
-         fixupSynctexCommandDescription(commands_.synctexForwardSearch());
-         fixupSynctexCommandDescription(commands_.synctexInverseSearch());
-      }
+         fixupSynctexCommandDescription(commands_.synctexSearch());
       
       // disable commands at the start
       setSynctexStatus(null);
@@ -133,10 +130,8 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    
    public void enableCommands(boolean enabled)
    {
-      commands_.synctexForwardSearch().setVisible(enabled);
-      commands_.synctexForwardSearch().setEnabled(enabled);
-      commands_.synctexInverseSearch().setVisible(enabled);
-      commands_.synctexInverseSearch().setEnabled(enabled);
+      commands_.synctexSearch().setVisible(enabled);
+      commands_.synctexSearch().setEnabled(enabled);
    }
 
    public boolean forwardSearch(SourceLocation sourceLocation)
