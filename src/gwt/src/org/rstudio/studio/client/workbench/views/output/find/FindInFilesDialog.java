@@ -13,10 +13,14 @@
 package org.rstudio.studio.client.workbench.views.output.find;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -25,66 +29,67 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.GlobalDisplay;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
-public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.Result>
+public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 {
    public interface Binder extends UiBinder<Widget, FindInFilesDialog>
    {
    }
 
-   public static class Result
+   public static class State extends JavaScriptObject
    {
-      public Result(String query,
-                    FileSystemItem path,
-                    boolean regex,
-                    boolean caseSensitive,
-                    String[] filePatterns)
+      public static native State createState(String query,
+                                             String path,
+                                             boolean regex,
+                                             boolean caseSensitive,
+                                             JsArrayString filePatterns) /*-{
+         return {
+            query: query,
+            path: path,
+            regex: regex,
+            caseSensitive: caseSensitive,
+            filePatterns: filePatterns
+         };
+      }-*/;
+
+      protected State() {}
+
+      public native final String getQuery() /*-{
+         return this.query;
+      }-*/;
+
+      public native final String getPath() /*-{
+         return this.path;
+      }-*/;
+
+      public native final boolean isRegex() /*-{
+         return this.regex;
+      }-*/;
+
+      public native final boolean isCaseSensitive() /*-{
+         return this.caseSensitive;
+      }-*/;
+
+      public final String[] getFilePatterns()
       {
-         query_ = query;
-         path_ = path;
-         regex_ = regex;
-         caseSensitive_ = caseSensitive;
-         filePatterns_ = filePatterns;
+         return JsUtil.toStringArray(getFilePatternsNative());
       }
 
-      public String getQuery()
-      {
-         return query_;
-      }
-
-      public FileSystemItem getPath()
-      {
-         return path_;
-      }
-
-      public boolean isRegex()
-      {
-         return regex_;
-      }
-
-      public boolean isCaseSensitive()
-      {
-         return caseSensitive_;
-      }
-
-      public String[] getFilePatterns()
-      {
-         return filePatterns_;
-      }
-
-      private final String query_;
-      private final FileSystemItem path_;
-      private final boolean regex_;
-      private final boolean caseSensitive_;
-      private final String[] filePatterns_;
+      private native JsArrayString getFilePatternsNative() /*-{
+         return this.filePatterns;
+      }-*/;
    }
 
-   public FindInFilesDialog(OperationWithInput<Result> operation)
+   public FindInFilesDialog(OperationWithInput<State> operation)
    {
       super("Find in Files", operation);
 
@@ -103,6 +108,15 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.Result>
          }
       });
       manageFilePattern();
+
+      txtSearchPattern_.addKeyUpHandler(new KeyUpHandler()
+      {
+         @Override
+         public void onKeyUp(KeyUpEvent event)
+         {
+            enableOkButton(txtSearchPattern_.getText().trim().length() > 0);
+         }
+      });
    }
 
    public void setDirectory(FileSystemItem directory)
@@ -119,7 +133,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.Result>
    }
 
    @Override
-   protected Result collectInput()
+   protected State collectInput()
    {
       String filePatterns =
             listPresetFilePatterns_.getValue(
@@ -135,11 +149,11 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.Result>
             list.add(trimmedPattern);
       }
 
-      return new Result(txtSearchPattern_.getText(),
-                        getEffectivePath(),
-                        checkboxRegex_.getValue(),
-                        checkboxCaseSensitive_.getValue(),
-                        list.toArray(new String[list.size()]));
+      return State.createState(txtSearchPattern_.getText(),
+                               getEffectivePath().getPath(),
+                               checkboxRegex_.getValue(),
+                               checkboxCaseSensitive_.getValue(),
+                               JsUtil.toJsArrayString(list));
    }
 
    private FileSystemItem getEffectivePath()
@@ -150,12 +164,20 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.Result>
    }
 
    @Override
-   protected boolean validate(Result input)
+   protected boolean validate(State input)
    {
-      if (StringUtil.isNullOrEmpty(input.getQuery()))
+      if (StringUtil.isNullOrEmpty(input.getQuery().trim()))
       {
          // TODO: Show an error message here? Or disable Find button until there
          // is something to search for?
+         return false;
+      }
+
+      if (StringUtil.isNullOrEmpty(input.getPath().trim()))
+      {
+         globalDisplay_.showErrorMessage(
+               "Error", "You must specify a directory to search.");
+
          return false;
       }
 
@@ -174,6 +196,24 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.Result>
       super.onDialogShown();
 
       txtSearchPattern_.setFocus(true);
+      txtSearchPattern_.selectAll();
+   }
+
+   public void setState(State dialogState)
+   {
+      txtSearchPattern_.setText(dialogState.getQuery());
+      checkboxCaseSensitive_.setValue(dialogState.isCaseSensitive());
+      checkboxRegex_.setValue(dialogState.isRegex());
+      dirChooser_.setText(dialogState.getPath());
+
+      String filePatterns = StringUtil.join(
+            Arrays.asList(dialogState.getFilePatterns()), ", ");
+      if (listPresetFilePatterns_.getValue(0).equals(filePatterns))
+         listPresetFilePatterns_.setSelectedIndex(0);
+      else if (listPresetFilePatterns_.getValue(1).equals(filePatterns))
+         listPresetFilePatterns_.setSelectedIndex(1);
+      txtFilePattern_.setText(filePatterns);
+      manageFilePattern();
    }
 
    @UiField
@@ -191,4 +231,5 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.Result>
    @UiField
    DivElement divCustomFilter_;
    private Widget mainWidget_;
+   private GlobalDisplay globalDisplay_ = RStudioGinjector.INSTANCE.getGlobalDisplay();
 }

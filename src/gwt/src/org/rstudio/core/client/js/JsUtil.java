@@ -16,6 +16,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 
 public class JsUtil
@@ -92,6 +93,14 @@ public class JsUtil
       String[] result = new String[strings.length()];
       for (int i = 0; i < strings.length(); i++)
          result[i] = strings.get(i);
+      return result;
+   }
+
+   public static JsArrayString toJsArrayString(Iterable<String> strings)
+   {
+      JsArrayString result = JsArrayString.createArray().cast();
+      for (String s : strings)
+         result.push(s);
       return result;
    }
 }
