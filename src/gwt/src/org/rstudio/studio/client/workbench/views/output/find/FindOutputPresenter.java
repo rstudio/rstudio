@@ -26,6 +26,7 @@ import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.events.SelectionChangedEvent;
 import org.rstudio.core.client.widget.events.SelectionChangedHandler;
@@ -35,9 +36,11 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
+import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
-import org.rstudio.studio.client.workbench.views.output.find.FindInFilesDialog.Result;
+import org.rstudio.studio.client.workbench.views.output.find.FindInFilesDialog.State;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
@@ -138,6 +141,26 @@ public class FindOutputPresenter extends BasePresenter
             }
          }
       });
+
+      new JSObjectStateValue(GROUP_FIND_IN_FILES, KEY_DIALOG_STATE,
+                             ClientState.TEMPORARY,
+                             session.getSessionInfo().getClientState(),
+                             false)
+      {
+         @Override
+         protected void onInit(JsObject value)
+         {
+            dialogState_ = value == null
+                           ? null
+                           : value.<FindInFilesDialog.State>cast();
+         }
+
+         @Override
+         protected JsObject getValue()
+         {
+            return dialogState_.cast();
+         }
+      };
    }
 
    public void initialize(FindInFilesState state)
@@ -157,17 +180,17 @@ public class FindOutputPresenter extends BasePresenter
    @Handler
    public void onFindInFiles()
    {
-      FindInFilesDialog dialog = new FindInFilesDialog(new OperationWithInput<Result>()
+      FindInFilesDialog dialog = new FindInFilesDialog(new OperationWithInput<FindInFilesDialog.State>()
       {
          @Override
-         public void execute(final Result input)
+         public void execute(final FindInFilesDialog.State input)
          {
+            dialogState_ = input;
+
             stopAndClear();
 
             FileSystemItem searchPath =
-                  input.getPath() != null
-                  ? input.getPath()
-                  : session_.getSessionInfo().getActiveProjectDir();
+                                      FileSystemItem.createDir(input.getPath());
 
             JsArrayString filePatterns = JsArrayString.createArray().cast();
             for (String pattern : input.getFilePatterns())
@@ -196,10 +219,17 @@ public class FindOutputPresenter extends BasePresenter
          }
       });
 
-      dialog.setDirectory(
-            session_.getSessionInfo().getActiveProjectDir() != null ?
-            session_.getSessionInfo().getActiveProjectDir() :
-            workbenchContext_.getCurrentWorkingDir());
+      if (dialogState_ == null)
+      {
+         dialog.setDirectory(
+               session_.getSessionInfo().getActiveProjectDir() != null ?
+               session_.getSessionInfo().getActiveProjectDir() :
+               workbenchContext_.getCurrentWorkingDir());
+      }
+      else
+      {
+         dialog.setState(dialogState_);
+      }
 
       dialog.showModal();
    }
@@ -230,9 +260,14 @@ public class FindOutputPresenter extends BasePresenter
 
    private String currentFindHandle_;
 
+   private FindInFilesDialog.State dialogState_;
+
    private final Display view_;
    private final FindInFilesServerOperations server_;
    private final Session session_;
    private final WorkbenchContext workbenchContext_;
    private EventBus events_;
+
+   private static final String GROUP_FIND_IN_FILES = "findInFiles";
+   private static final String KEY_DIALOG_STATE = "dialogState";
 }
