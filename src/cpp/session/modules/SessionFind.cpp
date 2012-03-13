@@ -445,12 +445,12 @@ void onSuspend(core::Settings* pSettings)
 {
    std::ostringstream os;
    json::write(findResults().asJson(), os);
-   pSettings->set("find_in_files_state", os.str());
+   pSettings->set("find-in-files-state", os.str());
 }
 
 void onResume(const core::Settings& settings)
 {
-   std::string state = settings.get("find_in_files_state");
+   std::string state = settings.get("find-in-files-state");
    if (!state.empty())
    {
       json::Value stateJson;
