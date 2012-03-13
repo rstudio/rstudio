@@ -33,6 +33,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
@@ -70,13 +71,16 @@ public class FindOutputPresenter extends BasePresenter
    public FindOutputPresenter(Display view,
                               EventBus events,
                               FindInFilesServerOperations server,
-                              final FileTypeRegistry ftr, Session session)
+                              final FileTypeRegistry ftr,
+                              Session session,
+                              WorkbenchContext workbenchContext)
    {
       super(view);
       view_ = view;
       events_ = events;
       server_ = server;
       session_ = session;
+      workbenchContext_ = workbenchContext;
 
       view_.addSelectionChangedHandler(new SelectionChangedHandler()
       {
@@ -153,12 +157,7 @@ public class FindOutputPresenter extends BasePresenter
    @Handler
    public void onFindInFiles()
    {
-      String defaultScopeLabel =
-            session_.getSessionInfo().getActiveProjectDir() == null
-            ? "(Current working directory)"
-            : "(Entire project)";
-
-      new FindInFilesDialog(new OperationWithInput<Result>()
+      FindInFilesDialog dialog = new FindInFilesDialog(new OperationWithInput<Result>()
       {
          @Override
          public void execute(final Result input)
@@ -195,7 +194,14 @@ public class FindOutputPresenter extends BasePresenter
                                  }
                               });
          }
-      }, defaultScopeLabel).showModal();
+      });
+
+      dialog.setDirectory(
+            session_.getSessionInfo().getActiveProjectDir() != null ?
+            session_.getSessionInfo().getActiveProjectDir() :
+            workbenchContext_.getCurrentWorkingDir());
+
+      dialog.showModal();
    }
 
    public void onDismiss()
@@ -227,5 +233,6 @@ public class FindOutputPresenter extends BasePresenter
    private final Display view_;
    private final FindInFilesServerOperations server_;
    private final Session session_;
+   private final WorkbenchContext workbenchContext_;
    private EventBus events_;
 }

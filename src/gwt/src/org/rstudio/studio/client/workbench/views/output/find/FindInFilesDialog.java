@@ -84,14 +84,11 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.Result>
       private final String[] filePatterns_;
    }
 
-   public FindInFilesDialog(OperationWithInput<Result> operation,
-                            String defaultScopeLabel)
+   public FindInFilesDialog(OperationWithInput<Result> operation)
    {
       super("Find in Files", operation);
 
-      dirChooser_ = new DirectoryChooserTextBox("Search in:",
-                                                defaultScopeLabel,
-                                                null);
+      dirChooser_ = new DirectoryChooserTextBox("Search in:", null);
       dirChooser_.setText("");
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
 
@@ -106,6 +103,11 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.Result>
          }
       });
       manageFilePattern();
+   }
+
+   public void setDirectory(FileSystemItem directory)
+   {
+      dirChooser_.setText(directory.getPath());
    }
 
    private void manageFilePattern()

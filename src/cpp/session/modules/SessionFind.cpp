@@ -238,8 +238,11 @@ private:
          *pContent = pContent->erase(pos, match.length());
       }
 
-      *pContent = pContent->erase(
-            std::min(pContent->size(), static_cast<size_t>(100)));
+      if (pContent->size() > 100)
+      {
+         *pContent = pContent->erase(100);
+         pContent->append("...");
+      }
    }
 
    void onStdout(const core::system::ProcessOperations& ops, const std::string& data)
