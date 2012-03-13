@@ -3,6 +3,9 @@
              xmlns:widget="urn:import:org.rstudio.core.client.widget"
              xmlns:pdf="urn:import:org.rstudio.studio.client.pdfviewer.ui">
 
+  
+   <ui:image field='StatusBarTile' src='images/StatusBarTile.png' />        
+   
    <ui:style>
       .toolbarShadow {
          position: fixed;
@@ -15,6 +18,24 @@
          -moz-box-shadow: 4px 0px 8px #222;
          -webkit-box-shadow: 4px 0px 8px #222;
       }
+      
+      @sprite .statusBar {
+         gwt-image: 'StatusBarTile';
+         width: 100%;
+         font-size: 11px;
+         color: #3c474d;
+      }
+      .statusBar div {
+         display: inline;
+         height: 16px;
+         white-space: nowrap;
+      }
+      
+      .statusBar .gwt-Label {
+        position: relative;
+        top: 1px;
+      }
+      
    </ui:style>
    <ui:with field="res" type="org.rstudio.core.client.theme.res.ThemeResources"/>
 
@@ -131,6 +152,9 @@
       <div id="loading" hidden="hidden">Loading... 0%</div>
       <g:FlowPanel ui:field="viewer_"/>
 
+      <g:HorizontalPanel styleName="{style.statusBar}">
+         <g:Label>Status Bar</g:Label>
+      </g:HorizontalPanel>
    </g:HTMLPanel>
 
 </ui:UiBinder>
