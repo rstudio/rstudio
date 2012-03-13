@@ -16,6 +16,7 @@ package org.rstudio.studio.client.common.synctex;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -86,6 +87,13 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
          });
       }
       
+      // fixup synctex tooltips for macos
+      if (BrowseCap.isMacintosh())
+      {
+         fixupSynctexCommandDescription(commands_.synctexForwardSearch());
+         fixupSynctexCommandDescription(commands_.synctexInverseSearch());
+      }
+      
       // disable commands at the start
       setSynctexStatus(null);
       
@@ -93,7 +101,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       eventBus_.addHandler(CompilePdfStartedEvent.TYPE, this);
       eventBus_.addHandler(CompilePdfCompletedEvent.TYPE, this);
    }
-   
+    
    @Override
    public void onCompilePdfStarted(CompilePdfStartedEvent event)
    {
@@ -251,6 +259,12 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
          pdfPath_ = pdfPath;
          eventBus_.fireEvent(new SynctexStatusChangedEvent(pdfPath));
       }
+   }
+   
+   private void fixupSynctexCommandDescription(AppCommand command)
+   {
+      String desc = command.getDesc().replace("Ctrl+", "Cmd+");
+      command.setDesc(desc);
    }
    
    private native void registerMainWindowCallbacks() /*-{
