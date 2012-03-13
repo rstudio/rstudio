@@ -242,18 +242,30 @@ public:
                                     core::tex::LogEntries* pLogEntries) const
    {
       boost::regex errRe("^Quitting from lines ([0-9]+)-([0-9]+): "
-                          "(?:Error in eval\\(expr, envir, enclos\\) : )?"
+                          "(?:Error in [a-z]+\\([a-z=, ]+\\) : \n?)?"
                           "([^\n]+)$");
       boost::smatch match;
       if (boost::regex_search(output, match, errRe))
       {
+         // extract error info
          int lineBegin = safe_convert::stringTo<int>(match[1], -1);
+         std::string message = match[3];
+
+         // check to see if there is a parse error which provides more
+         // precise pinpointing of the line
+         boost::regex parseRe("^\\s*<text>:([0-9]+):[0-9]+: (.+)$");
+         if (boost::regex_match(message, match, parseRe))
+         {
+            lineBegin += safe_convert::stringTo<int>(match[1], -1);
+            message = match[2];
+         }
+
          core::tex::LogEntry logEntry(FilePath(),
                                       -1,
                                       core::tex::LogEntry::Error,
                                       rnwFilePath,
                                       lineBegin,
-                                      match[3]);
+                                      message);
          pLogEntries->push_back(logEntry);
       }
 
