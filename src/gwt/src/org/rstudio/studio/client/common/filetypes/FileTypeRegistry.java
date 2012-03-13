@@ -48,11 +48,9 @@ public class FileTypeRegistry
                        false, false, false, false, false, false);
 
    public static final TextFileType SWEAVE =
-         new TextFileType("sweave", "Sweave Document", EditorLanguage.LANG_SWEAVE, ".Rnw",
-                          ICONS.iconRsweave(),
-                          true,
-                          false, true, true, false, true, false);
-
+      new SweaveFileType("sweave", "Sweave Document", 
+          EditorLanguage.LANG_SWEAVE, ".Rnw",ICONS.iconRsweave());
+        
    public static final TextFileType TEX =
          new TextFileType("tex", "TeX Document", EditorLanguage.LANG_TEX, ".tex",
                           ICONS.iconTex(),
