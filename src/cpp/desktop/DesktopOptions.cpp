@@ -184,7 +184,7 @@ QString Options::fixedWidthFont() const
 #if defined(Q_WS_MACX)
            QString::fromAscii("Monaco")
 #elif defined (Q_WS_X11)
-           QString::fromAscii("Ubuntu Mono") << QString::fromAscii("Monospace") << QString::fromAscii("Droid Sans Mono") << QString::fromAscii("DejaVu Sans Mono")
+           QString::fromAscii("Ubuntu Mono") << QString::fromAscii("Droid Sans Mono") << QString::fromAscii("DejaVu Sans Mono") << QString::fromAscii("Monospace")
 #else
            QString::fromAscii("Lucida Console") << QString::fromAscii("Consolas")   // Windows;
 #endif

@@ -64,7 +64,7 @@ public class ThemeFonts
          if (BrowseCap.isMacintosh())
             return "Monaco, monospace";
          else if (BrowseCap.isLinux())
-            return "\"Ubuntu Mono\", Monospace, \"Droid Sans Mono\", \"DejaVu Sans Mono\", monospace";
+            return "\"Ubuntu Mono\", \"Droid Sans Mono\", \"DejaVu Sans Mono\", monospace";
          else
             return "Consolas, \"Lucida Console\", monospace";
       }
