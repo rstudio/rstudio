@@ -19,6 +19,8 @@ import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -31,6 +33,8 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.GlobalDisplay;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -104,6 +108,15 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
          }
       });
       manageFilePattern();
+
+      txtSearchPattern_.addKeyUpHandler(new KeyUpHandler()
+      {
+         @Override
+         public void onKeyUp(KeyUpEvent event)
+         {
+            enableOkButton(txtSearchPattern_.getText().trim().length() > 0);
+         }
+      });
    }
 
    public void setDirectory(FileSystemItem directory)
@@ -153,10 +166,18 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    @Override
    protected boolean validate(State input)
    {
-      if (StringUtil.isNullOrEmpty(input.getQuery()))
+      if (StringUtil.isNullOrEmpty(input.getQuery().trim()))
       {
          // TODO: Show an error message here? Or disable Find button until there
          // is something to search for?
+         return false;
+      }
+
+      if (StringUtil.isNullOrEmpty(input.getPath().trim()))
+      {
+         globalDisplay_.showErrorMessage(
+               "Error", "You must specify a directory to search.");
+
          return false;
       }
 
@@ -210,4 +231,5 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    @UiField
    DivElement divCustomFilter_;
    private Widget mainWidget_;
+   private GlobalDisplay globalDisplay_ = RStudioGinjector.INSTANCE.getGlobalDisplay();
 }
