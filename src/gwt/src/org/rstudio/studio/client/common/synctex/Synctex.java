@@ -123,6 +123,20 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       return pdfPath_ != null;
    }
    
+   public boolean isSynctexAvailable(String editorFile)
+   {
+      if (editorFile == null)
+         return false;
+      
+      if (!isSynctexAvailable())
+         return false;
+      
+      FileSystemItem file = FileSystemItem.createFile(editorFile); 
+      String pdfPath = file.getParentPath().completePath(
+                                                    file.getStem() + ".pdf");
+      return pdfPath.equals(getPdfPath());
+   }
+   
    public String getPdfPath()
    {
       return pdfPath_;

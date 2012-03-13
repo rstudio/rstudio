@@ -1358,11 +1358,8 @@ public class Source implements InsertSourceHandler,
       {
          if (activeEditor_ != null && (activeEditor_.getPath() != null))
          {
-            FileSystemItem file = FileSystemItem.createFile(
-                                                activeEditor_.getPath());
-            String pdfPath = file.getParentPath().completePath(
-                                                      file.getStem() + ".pdf");
-            synctexAvailable = pdfPath.equals(synctex_.getPdfPath());
+            synctexAvailable = synctex_.isSynctexAvailable(
+                                                      activeEditor_.getPath());
          }
          else
          {
