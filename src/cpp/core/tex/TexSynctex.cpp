@@ -21,6 +21,8 @@
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 
+#include <core/system/System.hpp>
+
 #include "synctex/synctex_parser.h"
 
 namespace core {
@@ -144,6 +146,14 @@ SourceLocation Synctex::inverseSearch(const PdfLocation& location)
          // might be relative or might be absolute, complete it against the
          // pdf's parent directory to cover both cases
          FilePath filePath = pImpl_->pdfPath.parent().complete(adjustedName);
+
+         // on posix also do a realpath to fully normalize
+#ifndef _WIN32
+         Error error = core::system::realPath(filePath.absolutePath(),
+                                              &filePath);
+         if (error)
+            LOG_ERROR(error);
+#endif
 
          // return source location
          sourceLocation = SourceLocation(filePath,
