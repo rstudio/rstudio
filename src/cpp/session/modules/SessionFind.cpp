@@ -271,6 +271,14 @@ private:
          {
             std::string file = module_context::createAliasedPath(
                   FilePath(string_utils::systemToUtf8(match[1])));
+
+            if (file.find("/.Rproj.user/") != std::string::npos)
+               continue;
+            if (file.find("/.git/") != std::string::npos)
+               continue;
+            if (file.find("/.svn/") != std::string::npos)
+               continue;
+
             int lineNum = safe_convert::stringTo<int>(std::string(match[2]), -1);
             std::string lineContents = match[3];
             boost::algorithm::trim(lineContents);
