@@ -53,8 +53,10 @@ inline bool isConnectionTerminatedError(const core::Error& error)
    bool reset = error.code() == boost::system::errc::connection_reset;
    
    bool brokenPipe = error.code() == boost::system::errc::broken_pipe;
+
+   bool noFile = boost::system::errc::no_such_file_or_directory;
    
-   return timedOut || sysTimedOut || eof || reset || brokenPipe;
+   return timedOut || sysTimedOut || eof || reset || brokenPipe || noFile;
 }
 
 inline bool isConnectionUnavailableError(const Error& error)
