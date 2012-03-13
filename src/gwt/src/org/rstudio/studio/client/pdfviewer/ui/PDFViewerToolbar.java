@@ -19,6 +19,8 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
 
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.HasButtonMethods;
 import org.rstudio.core.client.widget.InlineToolbarButton;
@@ -38,6 +40,12 @@ public class PDFViewerToolbar extends Composite
    {
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
+      if (BrowseCap.isMacintosh())
+      {
+         btnJumpToSource_.setTitle(
+                  btnJumpToSource_.getTitle().replace("Ctrl+", "Cmd+"));
+      }
+      
       final Resources resources = GWT.create(Resources.class);
 
       zoomOut_.addMouseDownHandler(new MouseDownHandler()

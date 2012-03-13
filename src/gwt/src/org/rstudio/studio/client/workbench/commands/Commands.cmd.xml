@@ -588,7 +588,7 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="synctexInverseSearch"
         menuLabel="Jump to Source Editor"
-        desc="Jump to source editor at current PDF location (Cntl+Click)"/>
+        desc="Jump to source editor at current PDF location (Ctrl+Click)"/>
 
    <cmd id="newFolder"
         menuLabel="Folder..."
