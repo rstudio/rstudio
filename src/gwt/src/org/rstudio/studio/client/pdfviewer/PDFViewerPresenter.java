@@ -249,10 +249,7 @@ public class PDFViewerPresenter implements IsWidget,
          public void onPageClick(PageClickEvent event)
          {
             if (synctex_.isSynctexAvailable())
-            {
-               SyncTexCoordinates coord = event.getCoordinates();
-               synctexInverseSearch(coord.getX(), coord.getY());
-            }
+               synctexInverseSearch(event.getCoordinates(), true);
          }
       });
    }
@@ -367,20 +364,22 @@ public class PDFViewerPresenter implements IsWidget,
    @Handler
    public void onSynctexSearch()
    {
-      synctexInverseSearch(120,120);
+      synctexInverseSearch(view_.getTopCoordinates(), false);
    }
    
-   private void synctexInverseSearch(int x, int y)
+   private void synctexInverseSearch(SyncTexCoordinates coord, 
+                                     boolean fromClick)
    {
       String pdfPath = lastResult_.getPdfPath();
       if (pdfPath != null)
       {
          synctex_.inverseSearch(PdfLocation.create(pdfPath,
-                                                   PDFView.currentPage(),
-                                                   x, 
-                                                   y, 
+                                                   coord.getPageNum(),
+                                                   coord.getX(), 
+                                                   coord.getY(), 
                                                    0, 
-                                                   0));
+                                                   0,
+                                                   fromClick));
       }
    }
    

@@ -13,6 +13,7 @@
 
 #include <core/tex/TexSynctex.hpp>
 
+#include <iostream>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -27,6 +28,24 @@
 
 namespace core {
 namespace tex {
+
+namespace {
+
+PdfLocation pdfLocationFromNode(synctex_node_t node)
+{
+   int page = ::synctex_node_page(node);
+
+   float x = ::synctex_node_box_visible_h(node);
+   float y = ::synctex_node_box_visible_v(node) -
+             ::synctex_node_box_visible_height(node);
+   float w = ::synctex_node_box_visible_width(node);
+   float h = ::synctex_node_box_visible_depth(node) +
+             ::synctex_node_box_visible_height(node);
+
+   return PdfLocation(page, x, y, w, h);
+}
+
+} // anonymous namespace
 
 std::ostream& operator << (std::ostream& stream, const SourceLocation& loc)
 {
@@ -107,18 +126,7 @@ PdfLocation Synctex::forwardSearch(const SourceLocation& location)
    {
       synctex_node_t node = synctex_next_result(pImpl_->scanner);
       if (node != NULL)
-      {
-         int page = ::synctex_node_page(node);
-
-         float x = ::synctex_node_box_visible_h(node);
-         float y = ::synctex_node_box_visible_v(node) -
-                   ::synctex_node_box_visible_height(node);
-         float w = ::synctex_node_box_visible_width(node);
-         float h = ::synctex_node_box_visible_depth(node) +
-                   ::synctex_node_box_visible_height(node);
-
-         pdfLocation = PdfLocation(page, x, y, w, h);
-      }
+         pdfLocation = pdfLocationFromNode(node);
    }
 
    return pdfLocation;
@@ -165,6 +173,27 @@ SourceLocation Synctex::inverseSearch(const PdfLocation& location)
    return sourceLocation;
 }
 
+
+PdfLocation Synctex::topOfPageContent(int page)
+{
+   // get the sheet contents
+   synctex_node_t sheetNode = ::synctex_sheet_content(pImpl_->scanner, page);
+   if (sheetNode == NULL)
+      return PdfLocation();
+
+   // iterate through the nodes looking for a box
+   synctex_node_t node = sheetNode;
+   while((node = ::synctex_node_next(node)))
+   {
+      // look for the first hbox
+      synctex_node_type_t nodeType = ::synctex_node_type(node);
+      if (nodeType == synctex_node_type_hbox)
+         return pdfLocationFromNode(node);
+   }
+
+   // couldn't find a box, just return the sheet
+   return pdfLocationFromNode(sheetNode);
+}
 
 std::string Synctex::synctexNameForInputFile(const FilePath& inputFile)
 {

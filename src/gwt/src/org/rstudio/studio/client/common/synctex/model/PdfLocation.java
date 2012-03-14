@@ -26,7 +26,8 @@ public class PdfLocation extends JavaScriptObject
                                                  double x,
                                                  double y,
                                                  double width,
-                                                 double height) /*-{
+                                                 double height,
+                                                 boolean fromClick) /*-{
       var location = new Object();
       location.file = file;
       location.page = page;
@@ -34,6 +35,7 @@ public class PdfLocation extends JavaScriptObject
       location.y = y;
       location.width = width;
       location.height = height;
+      location.from_click = fromClick;
       return location;
    }-*/;
    
@@ -59,5 +61,9 @@ public class PdfLocation extends JavaScriptObject
    
    public native final double getHeight() /*-{
       return this.height;
+   }-*/;
+   
+   public native final boolean isFromClick() /*-{
+      return this.from_click;
    }-*/;
 }

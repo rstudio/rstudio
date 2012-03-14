@@ -120,6 +120,8 @@ public:
    PdfLocation forwardSearch(const SourceLocation& location);
    SourceLocation inverseSearch(const PdfLocation& location);
 
+   PdfLocation topOfPageContent(int page);
+
 private:
    std::string synctexNameForInputFile(const FilePath& inputFile);
    std::string normalizeSynctexName(const std::string& name);

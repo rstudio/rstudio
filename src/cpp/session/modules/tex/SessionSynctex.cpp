@@ -46,6 +46,7 @@ json::Value toJson(const FilePath& pdfFile,
       pdfJson["y"] = pdfLoc.y();
       pdfJson["width"] = pdfLoc.height();
       pdfJson["height"] = pdfLoc.width();
+      pdfJson["from_click"] = false;
       return pdfJson;
    }
    else
@@ -158,13 +159,15 @@ Error synctexInverseSearch(const json::JsonRpcRequest& request,
    std::string file;
    int page;
    double x, y, width, height;
+   bool fromClick;
    Error error = json::readObjectParam(request.params, 0,
                                        "file", &file,
                                        "page", &page,
                                        "x", &x,
                                        "y", &y,
                                        "width", &width,
-                                       "height", &height);
+                                       "height", &height,
+                                       "from_click", &fromClick);
    if (error)
       return error;
    FilePath pdfPath = module_context::resolveAliasedPath(file);
@@ -172,6 +175,14 @@ Error synctexInverseSearch(const json::JsonRpcRequest& request,
    core::tex::Synctex synctex;
    if (synctex.parse(pdfPath))
    {
+      if (!fromClick)
+      {
+         core::tex::PdfLocation contLoc = synctex.topOfPageContent(page);
+         x = std::max((float)x, contLoc.x());
+         y = std::max((float)y, contLoc.y());
+
+      }
+
       core::tex::PdfLocation pdfLocation(page, x, y, width, height);
 
       core::tex::SourceLocation srcLoc = synctex.inverseSearch(pdfLocation);
