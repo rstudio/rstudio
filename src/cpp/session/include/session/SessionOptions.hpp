@@ -248,11 +248,6 @@ public:
          return core::FilePath();
    }
 
-   bool featureFindInFiles()
-   {
-      return featureFindInFiles_;
-   }
-
    void clearInitialContextSettings()
    {
       initialWorkingDirOverride_.clear();
@@ -337,9 +332,6 @@ private:
 
    // initial project
    std::string initialProjectPath_;
-
-   // feature flags
-   bool featureFindInFiles_;
 };
   
 } // namespace session

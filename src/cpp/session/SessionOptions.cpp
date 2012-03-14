@@ -256,13 +256,6 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
        value<std::string>(&hunspellDictionariesPath_)->default_value("resources/dictionaries"),
        "Path to hunspell dictionaries");
 
-   // feature flags
-   options_description feature("feature");
-   feature.add_options()
-      ("feature-find-in-files",
-       value<bool>(&featureFindInFiles_)->default_value(false),
-       "True to enable Find In Files");
-   
    // user options (default user identity to current username)
    std::string currentUsername = core::system::username();
    options_description user("user") ;
@@ -288,7 +281,6 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    optionsDesc.commandLine.add(limits);
    optionsDesc.commandLine.add(external);
    optionsDesc.commandLine.add(user);
-   optionsDesc.commandLine.add(feature);
 
    // define groups included in config-file processing
    optionsDesc.configFile.add(program);
@@ -300,7 +292,6 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    optionsDesc.configFile.add(limits);
    optionsDesc.configFile.add(external);
    optionsDesc.configFile.add(user);
-   optionsDesc.configFile.add(feature);
 
    // read configuration
    ProgramStatus status = core::program_options::read(optionsDesc, argc,argv);

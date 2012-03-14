@@ -16,7 +16,6 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 
 public class JsUtil
