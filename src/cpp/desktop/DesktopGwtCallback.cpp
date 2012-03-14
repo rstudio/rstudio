@@ -838,4 +838,13 @@ void GwtCallback::setFixedWidthFont(QString font)
    options().setFixedWidthFont(font);
 }
 
+bool GwtCallback::forceFastScrollFactor()
+{
+#ifdef Q_WS_MACX
+   return true;
+#else
+   return false;
+#endif
+}
+
 } // namespace desktop
