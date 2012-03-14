@@ -25,7 +25,10 @@
 #include <core/system/Process.hpp>
 #include <core/system/ShellUtils.hpp>
 
+#include <r/RUtil.hpp>
+
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionUserSettings.hpp>
 #include <session/projects/SessionProjects.hpp>
 
 using namespace core;
@@ -188,14 +191,17 @@ FindInFilesState& findResults()
 class GrepOperation : public boost::enable_shared_from_this<GrepOperation>
 {
 public:
-   static boost::shared_ptr<GrepOperation> create(const FilePath& tempFile)
+   static boost::shared_ptr<GrepOperation> create(const std::string& encoding,
+                                                  const FilePath& tempFile)
    {
-      return boost::shared_ptr<GrepOperation>(new GrepOperation(tempFile));
+      return boost::shared_ptr<GrepOperation>(new GrepOperation(encoding,
+                                                                tempFile));
    }
 
 private:
-   GrepOperation(const FilePath& tempFile)
-      : tempFile_(tempFile)
+   GrepOperation(const std::string& encoding,
+                 const FilePath& tempFile)
+      : firstDecodeError_(true), encoding_(encoding), tempFile_(tempFile)
    {
       handle_ = core::system::generateUuid(false);
    }
@@ -230,29 +236,68 @@ private:
       return findResults().isRunning() && findResults().handle() == handle();
    }
 
+   std::string decode(const std::string& encoded)
+   {
+      if (encoded.empty())
+         return encoded;
+
+      std::string decoded;
+      Error error = r::util::iconvstr(encoded, encoding_, "UTF-8", true,
+                                      &decoded);
+
+      // Log error, but only once per grep operation
+      if (error && firstDecodeError_)
+      {
+         firstDecodeError_ = false;
+         LOG_ERROR(error);
+      }
+
+      return decoded;
+   }
+
    void processContents(std::string* pContent,
                         json::Array* pMatchOn,
                         json::Array* pMatchOff)
    {
       using namespace boost;
 
+      std::string decodedLine;
+
+      std::string::iterator inputPos = pContent->begin();
+
       smatch match;
-      while (regex_search(*pContent, match, regex("\x1B\\[(\\d\\d)?m")))
+      while (regex_search(std::string(inputPos, pContent->end()), match,
+                          regex("\x1B\\[(\\d\\d)?m")))
       {
-         int pos = static_cast<int>(match.position());
-         if (match[1] == "01")
-            pMatchOn->push_back(pos);
+         std::string match1 = match[1];
+
+         decodedLine.append(decode(
+               std::string(inputPos, inputPos + match.position())));
+
+         inputPos += match.position() + match.length();
+
+         size_t charSize;
+         Error error = string_utils::utf8Distance(decodedLine.begin(),
+                                                  decodedLine.end(),
+                                                  &charSize);
+         if (error)
+            charSize = decodedLine.size();
+
+         if (match1 == "01")
+            pMatchOn->push_back(static_cast<int>(charSize));
          else
-            pMatchOff->push_back(pos);
-
-         *pContent = pContent->erase(pos, match.length());
+            pMatchOff->push_back(static_cast<int>(charSize));
       }
+      if (inputPos != pContent->end())
+         decodedLine.append(decode(std::string(inputPos, pContent->end())));
 
-      if (pContent->size() > 100)
+      if (decodedLine.size() > 300)
       {
-         *pContent = pContent->erase(100);
-         pContent->append("...");
+         decodedLine = decodedLine.erase(300);
+         decodedLine.append("...");
       }
+
+      *pContent = decodedLine;
    }
 
    void onStdout(const core::system::ProcessOperations& ops, const std::string& data)
@@ -351,6 +396,8 @@ private:
          tempFile_.removeIfExists();
    }
 
+   bool firstDecodeError_;
+   std::string encoding_;
    FilePath tempFile_;
    std::string stdOutBuf_;
    std::string handle_;
@@ -389,18 +436,32 @@ core::Error beginFind(const json::JsonRpcRequest& request,
 #endif
    options.environment = childEnv;
 
-   // TODO: Encode the pattern using the project encoding
-
    // Put the grep pattern in a file
    FilePath tempFile = module_context::tempFile("rs_grep", "txt");
    boost::shared_ptr<std::ostream> pStream;
    error = tempFile.open_w(&pStream);
    if (error)
       return error;
-   *pStream << searchString << std::endl;
+   std::string encoding = projects::projectContext().hasProject() ?
+                          projects::projectContext().defaultEncoding() :
+                          userSettings().defaultEncoding();
+   std::string encodedString;
+   error = r::util::iconvstr(searchString,
+                             "UTF-8",
+                             encoding,
+                             false,
+                             &encodedString);
+   if (error)
+   {
+      LOG_ERROR(error);
+      encodedString = searchString;
+   }
+
+   *pStream << encodedString << std::endl;
    pStream.reset(); // release file handle
 
-   boost::shared_ptr<GrepOperation> ptrGrepOp = GrepOperation::create(tempFile);
+   boost::shared_ptr<GrepOperation> ptrGrepOp = GrepOperation::create(encoding,
+                                                                      tempFile);
    core::system::ProcessCallbacks callbacks =
                                        ptrGrepOp->createProcessCallbacks();
 

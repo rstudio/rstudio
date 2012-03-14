@@ -118,6 +118,8 @@ public slots:
    QString getFixedWidthFont();
    void setFixedWidthFont(QString font);
 
+   bool forceFastScrollFactor();
+
 private:
    void doAction(QKeySequence::StandardKey key);
    MainWindow* pMainWindow_;

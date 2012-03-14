@@ -140,6 +140,25 @@ Error utf8Advance(InputIterator begin,
    return Success();
 }
 
+template <typename InputIterator>
+Error utf8Distance(InputIterator begin,
+                   InputIterator end,
+                   size_t* pResult)
+{
+   *pResult = 0;
+   Error error;
+   while (begin != end)
+   {
+      error = utf8Advance(begin, 1, end, &begin);
+      if (error)
+         return error;
+      (*pResult)++;
+   }
+
+   return Success();
+}
+
+
 bool isalpha(wchar_t c);
 bool isalnum(wchar_t c);
 
