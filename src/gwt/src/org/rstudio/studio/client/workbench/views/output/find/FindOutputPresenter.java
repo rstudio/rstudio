@@ -40,7 +40,6 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
-import org.rstudio.studio.client.workbench.views.output.find.FindInFilesDialog.State;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
@@ -59,7 +58,6 @@ public class FindOutputPresenter extends BasePresenter
       void clearMatches();
       void ensureVisible(boolean activate);
 
-      HasText getSearchLabel();
       HasClickHandlers getStopSearchButton();
       void setStopSearchButtonVisible(boolean visible);
 
@@ -68,6 +66,9 @@ public class FindOutputPresenter extends BasePresenter
       HandlerRegistration addSelectionChangedHandler(SelectionChangedHandler handler);
 
       void showOverflow();
+
+      void updateSearchLabel(String query, String path);
+      void clearSearchLabel();
    }
 
    @Inject
@@ -169,7 +170,7 @@ public class FindOutputPresenter extends BasePresenter
 
       currentFindHandle_ = state.getHandle();
       view_.addMatches(state.getResults().toArrayList());
-      view_.getSearchLabel().setText("Find results: " + state.getInput());
+      updateSearchLabel(state.getInput(), state.getPath(), state.isRegex());
 
       if (state.isRunning())
          view_.setStopSearchButtonVisible(true);
@@ -207,8 +208,9 @@ public class FindOutputPresenter extends BasePresenter
                                  public void onResponseReceived(String handle)
                                  {
                                     currentFindHandle_ = handle;
-                                    view_.getSearchLabel().setText(
-                                          "Find results: " + input.getQuery());
+                                    updateSearchLabel(input.getQuery(),
+                                                      input.getPath(),
+                                                      input.isRegex());
                                     view_.setStopSearchButtonVisible(true);
 
                                     super.onResponseReceived(handle);
@@ -240,11 +242,21 @@ public class FindOutputPresenter extends BasePresenter
       server_.clearFindResults(new VoidServerRequestCallback());
    }
 
+   private void updateSearchLabel(String query, String path, boolean regex)
+   {
+      if (regex)
+         query = "/" + query + "/";
+      else
+         query = "\"" + query + "\"";
+
+      view_.updateSearchLabel(query, path);
+   }
+
    private void stopAndClear()
    {
       stop();
       view_.clearMatches();
-      view_.getSearchLabel().setText("");
+      view_.clearSearchLabel();
    }
 
    private void stop()

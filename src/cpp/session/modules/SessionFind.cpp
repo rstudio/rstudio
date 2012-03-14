@@ -86,10 +86,14 @@ public:
    }
 
    void onFindBegin(const std::string& handle,
-                    const std::string& input)
+                    const std::string& input,
+                    const std::string& path,
+                    bool asRegex)
    {
       handle_ = handle;
       input_ = input;
+      path_ = path;
+      regex_ = asRegex;
       running_ = true;
    }
 
@@ -115,6 +119,8 @@ public:
       Error error = json::readObject(asJson,
                                      "handle", &handle_,
                                      "input", &input_,
+                                     "path", &path_,
+                                     "regex", &regex_,
                                      "results", &results,
                                      "running", &running_);
       if (error)
@@ -144,6 +150,8 @@ public:
       json::Object obj;
       obj["handle"] = handle_;
       obj["input"] = input_;
+      obj["path"] = path_;
+      obj["regex"] = regex_;
 
       json::Object results;
       results["file"] = files_;
@@ -161,6 +169,8 @@ public:
 private:
    std::string handle_;
    std::string input_;
+   std::string path_;
+   bool regex_;
    json::Array files_;
    json::Array lineNums_;
    json::Array contents_;
@@ -427,7 +437,10 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   findResults().onFindBegin(ptrGrepOp->handle(), searchString);
+   findResults().onFindBegin(ptrGrepOp->handle(),
+                             searchString,
+                             directory,
+                             asRegex);
    pResponse->setResult(ptrGrepOp->handle());
 
    return Success();

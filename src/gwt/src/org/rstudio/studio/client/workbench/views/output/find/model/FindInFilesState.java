@@ -43,4 +43,12 @@ public class FindInFilesState extends JavaScriptObject
    public native final String getInput() /*-{
       return this.input;
    }-*/;
+
+   public native final String getPath() /*-{
+      return this.path;
+   }-*/;
+
+   public native final boolean isRegex() /*-{
+      return this.regex;
+   }-*/;
 }

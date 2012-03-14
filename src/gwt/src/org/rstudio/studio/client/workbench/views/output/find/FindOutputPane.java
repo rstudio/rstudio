@@ -17,6 +17,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -153,12 +154,6 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
-   public HasText getSearchLabel()
-   {
-      return searchLabel_;
-   }
-
-   @Override
    public HasClickHandlers getStopSearchButton()
    {
       return stopSearch_;
@@ -197,6 +192,25 @@ public class FindOutputPane extends WorkbenchPane
       ArrayList<FindResult> items = new ArrayList<FindResult>();
       items.add(null);
       table_.addItems(items, false);
+   }
+
+   @Override
+   public void updateSearchLabel(String query, String path)
+   {
+      SafeHtmlBuilder builder = new SafeHtmlBuilder();
+      builder.appendEscaped("Results for ")
+            .appendHtmlConstant("<strong>")
+            .appendEscaped(query)
+            .appendHtmlConstant("</strong>")
+            .appendEscaped(" in ")
+            .appendEscaped(path);
+      searchLabel_.getElement().setInnerHTML(builder.toSafeHtml().asString());
+   }
+
+   @Override
+   public void clearSearchLabel()
+   {
+      searchLabel_.setText("");
    }
 
    @Override
