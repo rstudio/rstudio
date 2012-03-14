@@ -103,34 +103,19 @@ Error synctexForwardSearch(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
    // read params
-   std::string file;
-   int line, column;
-   bool fromClick;
-   Error error = json::readObjectParam(request.params, 0,
-                                       "file", &file,
-                                       "line", &line,
-                                       "column", &column,
-                                       "from_click", &fromClick);
+   json::Object sourceLocation;
+   Error error = json::readParam(request.params, 0, &sourceLocation);
    if (error)
       return error;
 
-   // convert paths
-   FilePath inputFile = module_context::resolveAliasedPath(file);
-   FilePath pdfFile = inputFile.parent().complete(inputFile.stem() + ".pdf");
+   // do the search
+   json::Value pdfLocation;
+   error = forwardSearch(sourceLocation, &pdfLocation);
+   if (error)
+      return error;
 
-   core::tex::Synctex synctex;
-   if (synctex.parse(pdfFile))
-   {
-      core::tex::SourceLocation srcLoc(inputFile, line, column);
-      applyForwardConcordance(&srcLoc);
-
-      core::tex::PdfLocation pdfLoc = synctex.forwardSearch(srcLoc);
-      pResponse->setResult(toJson(pdfFile, pdfLoc, fromClick));
-   }
-   else
-   {
-      pResponse->setResult(json::Value());
-   }
+   // return the results
+   pResponse->setResult(pdfLocation);
 
    return Success();
 }
@@ -209,6 +194,43 @@ Error synctexInverseSearch(const json::JsonRpcRequest& request,
 
 
 } // anonymous namespace
+
+
+Error forwardSearch(const json::Object& sourceLocation,
+                    json::Value* pPdfLocation)
+{
+   // read params
+   std::string file;
+   int line, column;
+   bool fromClick;
+   Error error = json::readObject(sourceLocation,
+                                  "file", &file,
+                                  "line", &line,
+                                  "column", &column,
+                                  "from_click", &fromClick);
+   if (error)
+      return error;
+
+   // convert paths
+   FilePath inputFile = module_context::resolveAliasedPath(file);
+   FilePath pdfFile = inputFile.parent().complete(inputFile.stem() + ".pdf");
+
+   core::tex::Synctex synctex;
+   if (synctex.parse(pdfFile))
+   {
+      core::tex::SourceLocation srcLoc(inputFile, line, column);
+      applyForwardConcordance(&srcLoc);
+
+      core::tex::PdfLocation pdfLoc = synctex.forwardSearch(srcLoc);
+      *pPdfLocation = toJson(pdfFile, pdfLoc, fromClick);
+   }
+   else
+   {
+      *pPdfLocation = json::Value();
+   }
+
+   return Success();
+}
 
 Error initialize()
 {

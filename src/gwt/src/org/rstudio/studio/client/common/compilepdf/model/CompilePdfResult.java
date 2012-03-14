@@ -13,6 +13,8 @@
 
 package org.rstudio.studio.client.common.compilepdf.model;
 
+import org.rstudio.studio.client.common.synctex.model.PdfLocation;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class CompilePdfResult extends JavaScriptObject
@@ -39,5 +41,9 @@ public class CompilePdfResult extends JavaScriptObject
    
    public final native boolean isSynctexAvailable() /*-{
       return this.synctex_available;
+   }-*/;
+   
+   public final native PdfLocation getPdfLocation() /*-{
+      return this.pdf_location;
    }-*/;
 }

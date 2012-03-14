@@ -1787,18 +1787,25 @@ public class TextEditingTarget implements EditingTarget
    
    private void doSynctexSearch(boolean fromClick)
    {
+      SourceLocation sourceLocation = getSelectionAsSourceLocation(fromClick);
+      if (sourceLocation == null)
+         return;
+      
+      synctex_.forwardSearch(sourceLocation);
+   }
+   
+   
+   private SourceLocation getSelectionAsSourceLocation(boolean fromClick)
+   {
       // get doc path (bail if the document is unsaved)
       String file = docUpdateSentinel_.getPath();
       if (file == null)
-         return;
+         return null;
       
       Position selPos = docDisplay_.getSelectionStart();
       int line = selPos.getRow() + 1;
       int column = selPos.getColumn() + 1;
-      synctex_.forwardSearch(SourceLocation.create(file, 
-                                                   line, 
-                                                   column, 
-                                                   fromClick));
+      return SourceLocation.create(file, line, column, fromClick);
    }
 
    @Handler
@@ -1842,9 +1849,11 @@ public class TextEditingTarget implements EditingTarget
          return;
       }
       
-      CompilePdfEvent event = new CompilePdfEvent(file, 
-                                                  completedAction,
-                                                  useInternalPreview);
+      CompilePdfEvent event = new CompilePdfEvent(
+                                         file, 
+                                         getSelectionAsSourceLocation(false),
+                                         completedAction,
+                                         useInternalPreview);
       events_.fireEvent(event);
    }
    

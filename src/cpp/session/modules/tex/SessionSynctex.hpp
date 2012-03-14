@@ -14,6 +14,8 @@
 #ifndef SESSION_MODULES_TEX_SYNCTEX_HPP
 #define SESSION_MODULES_TEX_SYNCTEX_HPP
 
+#include <core/json/Json.hpp>
+
 namespace core {
    class Error;
 }
@@ -22,6 +24,11 @@ namespace session {
 namespace modules { 
 namespace tex {
 namespace synctex {
+
+// returns an object suitable for jnsi binding back into a PdfLocation
+// (or null if the search didn't succeed)
+core::Error forwardSearch(const core::json::Object& sourceLocation,
+                          core::json::Value* pPdfLocation);
 
 core::Error initialize();
 

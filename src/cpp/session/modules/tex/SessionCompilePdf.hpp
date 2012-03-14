@@ -29,6 +29,7 @@ namespace tex {
 namespace compile_pdf {
 
 bool startCompile(const core::FilePath& targetFilePath,
+                  const core::json::Object& sourceLocation,
                   const boost::function<void()>& onCompleted);
 
 bool compileIsRunning();

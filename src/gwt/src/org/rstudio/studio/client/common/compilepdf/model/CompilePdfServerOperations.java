@@ -14,6 +14,7 @@
 package org.rstudio.studio.client.common.compilepdf.model;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
@@ -24,6 +25,7 @@ public interface CompilePdfServerOperations
    // compile is currently in progress. pass the terminateExisting flag
    // to terminate a running compile
    void compilePdf(FileSystemItem targetFile, 
+                   SourceLocation sourceLocation,
                    String completedAction,
                    ServerRequestCallback<Boolean> requestCallback);
    

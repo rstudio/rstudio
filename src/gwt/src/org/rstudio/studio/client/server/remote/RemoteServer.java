@@ -2399,13 +2399,15 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SVN_SET_IGNORES, params, requestCallback);
    }
    
-   public void compilePdf(FileSystemItem targetFile, 
+   public void compilePdf(FileSystemItem targetFile,
+                          SourceLocation sourceLocation,
                           String completedAction,
                           ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(targetFile.getPath()));
-      params.set(1, new JSONString(completedAction));
+      params.set(1, new JSONObject(sourceLocation));
+      params.set(2, new JSONString(completedAction));
       sendRequest(RPC_SCOPE, COMPILE_PDF, params, requestCallback);
    }
    

@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.output.compilepdf.events;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -24,11 +25,13 @@ public class CompilePdfEvent extends GwtEvent<CompilePdfEvent.Handler>
       void onCompilePdf(CompilePdfEvent event);
    }
 
-   public CompilePdfEvent(FileSystemItem targetFile, 
+   public CompilePdfEvent(FileSystemItem targetFile,
+                          SourceLocation sourceLocation,
                           String completedAction,
                           boolean useInternalPreview)
    {
       targetFile_ = targetFile;
+      sourceLocation_ = sourceLocation;
       completedAction_ = completedAction;
       useInternalPreview_ = useInternalPreview;
    }
@@ -36,6 +39,11 @@ public class CompilePdfEvent extends GwtEvent<CompilePdfEvent.Handler>
    public FileSystemItem getTargetFile()
    {
       return targetFile_;
+   }
+   
+   public SourceLocation getSourceLocation()
+   {
+      return sourceLocation_;
    }
    
    public String getCompletedAction()
@@ -61,6 +69,7 @@ public class CompilePdfEvent extends GwtEvent<CompilePdfEvent.Handler>
    }
    
    private final FileSystemItem targetFile_;
+   private final SourceLocation sourceLocation_;
    private final String completedAction_;
    private final boolean useInternalPreview_;
 

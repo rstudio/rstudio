@@ -36,6 +36,7 @@ import org.rstudio.studio.client.common.compilepdf.model.CompilePdfError;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfServerOperations;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -179,7 +180,9 @@ public class CompilePdfOutputPresenter extends BasePresenter
       view_.ensureVisible(activate);
       
       // run the compile
-      compilePdf(event.getTargetFile(), event.getCompletedAction());
+      compilePdf(event.getTargetFile(), 
+                 event.getSourceLocation(),
+                 event.getCompletedAction());
    }
    
    @Override
@@ -236,13 +239,15 @@ public class CompilePdfOutputPresenter extends BasePresenter
       view_.compileStarted(targetFile);
    }
    
-   private void compilePdf(final FileSystemItem targetFile,
-                           final String completedAction)
+   private void compilePdf(FileSystemItem targetFile,
+                           SourceLocation sourceLocation,
+                           String completedAction)
    {
       // attempt to start a compilation (this might not actually work
       // if there is already a compile running)
       server_.compilePdf(
             targetFile, 
+            sourceLocation,
             completedAction, 
             new RequestCallback<Boolean>("Compiling PDF...") 
             {

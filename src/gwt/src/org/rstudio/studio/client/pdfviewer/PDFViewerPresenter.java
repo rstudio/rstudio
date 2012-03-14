@@ -326,9 +326,19 @@ public class PDFViewerPresenter implements IsWidget,
       
       if (result.getSucceeded())
       {
+         // JOE: the result contains a PdfLocation object (which will only
+         // be available when synctex is enabled). seems like when this
+         // is available we can skip the navigateHereOnLoad_ codepath, however
+         // it also occurred to me that this won't necessarily preserve
+         // zoom level and other settings the way PDFVIew.getNavigateDest does
+         PdfLocation pdfLocation = result.getPdfLocation();
+         if (pdfLocation != null)
+            Debug.log(pdfLocation.toDebugString());
+         
          navigateHereOnLoad_ = result.getPdfPath().equals(StringUtil.notNull(lastSuccessfulPdfPath_))
                                ? PDFView.getNavigateDest()
                                : null;
+                       
          lastSuccessfulPdfPath_ = result.getPdfPath();
 
          view_.setURL(result.getViewPdfUrl());
