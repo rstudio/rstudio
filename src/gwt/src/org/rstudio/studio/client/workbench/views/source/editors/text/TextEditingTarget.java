@@ -287,7 +287,7 @@ public class TextEditingTarget implements EditingTarget
                if (BrowseCap.isFirefox() && !BrowseCap.isMacintosh())
                   SynctexUtils.showFirefoxWarning("PDF preview");
                
-               commands_.synctexSearch().execute();
+               doSynctexSearch(true);
             }
             else
             {
@@ -1782,6 +1782,11 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onSynctexSearch()
    {
+      doSynctexSearch(false);
+   }
+   
+   private void doSynctexSearch(boolean fromClick)
+   {
       // get doc path (bail if the document is unsaved)
       String file = docUpdateSentinel_.getPath();
       if (file == null)
@@ -1790,7 +1795,10 @@ public class TextEditingTarget implements EditingTarget
       Position selPos = docDisplay_.getSelectionStart();
       int line = selPos.getRow() + 1;
       int column = selPos.getColumn() + 1;
-      synctex_.forwardSearch(SourceLocation.create(file, line, column));
+      synctex_.forwardSearch(SourceLocation.create(file, 
+                                                   line, 
+                                                   column, 
+                                                   fromClick));
    }
 
    @Handler

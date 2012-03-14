@@ -338,7 +338,7 @@ public class PDFViewerPresenter implements IsWidget,
    @Override
    public void onSynctexViewPdf(SynctexViewPdfEvent event)
    {
-      PDFView.goToPage(event.getPdfLocation().getPage());
+      navigateToLocation(event.getPdfLocation());
    }
    
    @Override
@@ -468,6 +468,16 @@ public class PDFViewerPresenter implements IsWidget,
             
          }
       });
+   }
+   
+   private void navigateToLocation(PdfLocation location)
+   {   
+      // JOE: the passed location has the x, y, width, and height 
+      // of the box containing the source editor cursor. it also has
+      // an isFromClick boolean which you can use to determine whether
+      // you should display the highlight effect
+      
+      PDFView.goToPage(location.getPage());
    }
 
    private boolean compileIsRunning_ = false;

@@ -35,7 +35,8 @@ namespace synctex {
 namespace {
 
 json::Value toJson(const FilePath& pdfFile,
-                   const core::tex::PdfLocation& pdfLoc)
+                   const core::tex::PdfLocation& pdfLoc,
+                   bool fromClick)
 {
    if (!pdfLoc.empty())
    {
@@ -44,9 +45,9 @@ json::Value toJson(const FilePath& pdfFile,
       pdfJson["page"] = pdfLoc.page();
       pdfJson["x"] = pdfLoc.x();
       pdfJson["y"] = pdfLoc.y();
-      pdfJson["width"] = pdfLoc.height();
-      pdfJson["height"] = pdfLoc.width();
-      pdfJson["from_click"] = false;
+      pdfJson["width"] = pdfLoc.width();
+      pdfJson["height"] = pdfLoc.height();
+      pdfJson["from_click"] = fromClick;
       return pdfJson;
    }
    else
@@ -101,14 +102,19 @@ void applyForwardConcordance(core::tex::SourceLocation* pLoc)
 Error synctexForwardSearch(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
+   // read params
    std::string file;
    int line, column;
+   bool fromClick;
    Error error = json::readObjectParam(request.params, 0,
                                        "file", &file,
                                        "line", &line,
-                                       "column", &column);
+                                       "column", &column,
+                                       "from_click", &fromClick);
    if (error)
       return error;
+
+   // convert paths
    FilePath inputFile = module_context::resolveAliasedPath(file);
    FilePath pdfFile = inputFile.parent().complete(inputFile.stem() + ".pdf");
 
@@ -119,7 +125,7 @@ Error synctexForwardSearch(const json::JsonRpcRequest& request,
       applyForwardConcordance(&srcLoc);
 
       core::tex::PdfLocation pdfLoc = synctex.forwardSearch(srcLoc);
-      pResponse->setResult(toJson(pdfFile, pdfLoc));
+      pResponse->setResult(toJson(pdfFile, pdfLoc, fromClick));
    }
    else
    {
@@ -177,10 +183,13 @@ Error synctexInverseSearch(const json::JsonRpcRequest& request,
    {
       if (!fromClick)
       {
+         // find the top of the page content, however override it with
+         // the passed x and y coordinates since they represent the
+         // top of the user-visible content (in case the page is
+         // scrolled down from the top)
          core::tex::PdfLocation contLoc = synctex.topOfPageContent(page);
          x = std::max((float)x, contLoc.x());
          y = std::max((float)y, contLoc.y());
-
       }
 
       core::tex::PdfLocation pdfLocation(page, x, y, width, height);

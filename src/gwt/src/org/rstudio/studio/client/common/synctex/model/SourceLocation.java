@@ -24,11 +24,13 @@ public class SourceLocation extends JavaScriptObject
 
    public final static native SourceLocation create(String file,
                                                     int line,
-                                                    int column) /*-{
+                                                    int column,
+                                                    boolean fromClick) /*-{
       var location = new Object();
       location.file = file;
       location.line = line;
       location.column = column;
+      location.from_click = fromClick;
       return location;
    }-*/;
    
@@ -42,6 +44,10 @@ public class SourceLocation extends JavaScriptObject
 
    public native final int getColumn() /*-{
       return this.column;
+   }-*/;
+   
+   public native final boolean fromClick() /*-{
+      return this.from_click;
    }-*/;
 
 }

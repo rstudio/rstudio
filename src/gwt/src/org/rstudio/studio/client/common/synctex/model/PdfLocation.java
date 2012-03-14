@@ -66,4 +66,18 @@ public class PdfLocation extends JavaScriptObject
    public native final boolean isFromClick() /*-{
       return this.from_click;
    }-*/;
+   
+   public final String toDebugString() 
+   {
+      StringBuilder str = new StringBuilder();
+      str.append(getFile());
+      str.append("; Page ");
+      str.append(getPage());
+      str.append(" {" + (int)getX() + ", " + (int)getY() + ", " + 
+                 (int)getWidth() + ", " + (int)getHeight() + "}");
+      if (isFromClick())
+         str.append(" [From Click]");
+      return str.toString();
+      
+   }
 }
