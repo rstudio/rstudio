@@ -13,23 +13,25 @@
 package org.rstudio.studio.client.pdfviewer.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.*;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.*;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.pdfviewer.PDFViewerPresenter;
 import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
 import org.rstudio.studio.client.pdfviewer.events.PageClickEvent;
@@ -201,6 +203,50 @@ public class PDFViewerPanel extends Composite
          }
       }
       return null;
+   }
+
+   @Override
+   public void navigateTo(PdfLocation pdfLocation)
+   {
+      double factor = PDFView.currentScale() * 96 / 72;
+
+      double x = pdfLocation.getX() * factor;
+      double y = pdfLocation.getY() * factor;
+      double w = pdfLocation.getWidth() * factor;
+      double h = pdfLocation.getHeight() * factor;
+
+      Element pageContainer = Document.get().getElementById(
+            "pageContainer" + pdfLocation.getPage());
+
+      if (pdfLocation.isFromClick())
+      {
+         final DivElement div = Document.get().createDivElement();
+         div.getStyle().setPosition(Style.Position.ABSOLUTE);
+         div.getStyle().setTop(y, Unit.PX);
+         div.getStyle().setLeft(x, Unit.PX);
+         div.getStyle().setWidth(w, Unit.PX);
+         div.getStyle().setHeight(h, Unit.PX);
+         div.getStyle().setBackgroundColor("rgba(0, 126, 246, 0.1)");
+         div.getStyle().setProperty("transition", "opacity 4s");
+         div.getStyle().setProperty("-moz-transition", "opacity 4s");
+         div.getStyle().setProperty("-webkit-transition", "opacity 4s");
+
+         pageContainer.appendChild(div);
+
+         Scheduler.get().scheduleFixedDelay(new Scheduler.RepeatingCommand()
+         {
+            @Override
+            public boolean execute()
+            {
+               div.getStyle().setOpacity(0.0);
+               return false;
+            }
+         }, 2000);
+      }
+
+      Window.scrollTo(
+            Window.getScrollLeft(),
+            Math.max(0, pageContainer.getAbsoluteTop() + (int) y - 180));
    }
 
    @Override

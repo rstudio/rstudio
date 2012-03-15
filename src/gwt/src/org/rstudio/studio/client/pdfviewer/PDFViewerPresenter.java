@@ -18,6 +18,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ClosingHandler;
@@ -86,6 +87,8 @@ public class PDFViewerPresenter implements IsWidget,
        * other reason).
        */
       SyncTexCoordinates getTopCoordinates();
+
+      void navigateTo(PdfLocation pdfLocation);
    }
    
    @Inject
@@ -231,10 +234,10 @@ public class PDFViewerPresenter implements IsWidget,
          public void onPDFLoad(PDFLoadEvent event)
          {
             toolbar.setPageCount(PDFView.pageCount());
-            if (navigateHereOnLoad_ != null)
+            if (executeOnLoad_ != null)
             {
-               PDFView.navigateTo(navigateHereOnLoad_);
-               navigateHereOnLoad_ = null;
+               executeOnLoad_.execute();
+               executeOnLoad_ = null;
             }
             else
             {
@@ -326,21 +329,27 @@ public class PDFViewerPresenter implements IsWidget,
       
       if (result.getSucceeded())
       {
-         // JOE: the result contains a PdfLocation object (which will only
-         // be available when synctex is enabled). seems like when this
-         // is available we can skip the navigateHereOnLoad_ codepath, however
-         // it also occurred to me that this won't necessarily preserve
-         // zoom level and other settings the way PDFVIew.getNavigateDest does
-         PdfLocation pdfLocation = result.getPdfLocation();
-         if (pdfLocation != null)
-            Debug.log(pdfLocation.toDebugString());
-         
-         navigateHereOnLoad_ = result.getPdfPath().equals(StringUtil.notNull(lastSuccessfulPdfPath_))
-                               ? PDFView.getNavigateDest()
-                               : null;
-                       
-         lastSuccessfulPdfPath_ = result.getPdfPath();
+         final JavaScriptObject navigateDest =
+               result.getPdfPath().equals(StringUtil.notNull(lastSuccessfulPdfPath_))
+               ? PDFView.getNavigateDest()
+               : null;
+         final PdfLocation pdfLocation = result.getPdfLocation();
+         executeOnLoad_ = new Command()
+         {
+            @Override
+            public void execute()
+            {
+               // Even if we're going to navigate to a pdfLocation, we need to
+               // first navigate to navigateDest if available so that we can
+               // restore the scale and scrollLeft.
+               if (navigateDest != null)
+                  PDFView.navigateTo(navigateDest);
+               if (pdfLocation != null)
+                  view_.navigateTo(pdfLocation);
+            }
+         };
 
+         lastSuccessfulPdfPath_ = result.getPdfPath();
          view_.setURL(result.getViewPdfUrl());
       }
    }
@@ -482,12 +491,7 @@ public class PDFViewerPresenter implements IsWidget,
    
    private void navigateToLocation(PdfLocation location)
    {   
-      // JOE: the passed location has the x, y, width, and height 
-      // of the box containing the source editor cursor. it also has
-      // an isFromClick boolean which you can use to determine whether
-      // you should display the highlight effect
-      
-      PDFView.goToPage(location.getPage());
+      view_.navigateTo(location);
    }
 
    private boolean compileIsRunning_ = false;
@@ -505,5 +509,6 @@ public class PDFViewerPresenter implements IsWidget,
    private HandlerRegistrations releaseOnDismiss_ = new HandlerRegistrations();
 
    private String lastSuccessfulPdfPath_;
-   private JavaScriptObject navigateHereOnLoad_;
+
+   private Command executeOnLoad_;
 }
