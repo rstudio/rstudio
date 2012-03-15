@@ -705,4 +705,10 @@ public class DomUtils
       
       return (nativeEvt.getButton() == NativeEvent.BUTTON_LEFT) && commandKey;
    }
+   
+   public static final native void setStyle(Element element, 
+                                            String name, 
+                                            String value) /*-{
+      element.style[name] = value;
+   }-*/;
 }

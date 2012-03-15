@@ -228,8 +228,10 @@ public class PDFViewerPanel extends Composite
          div.getStyle().setHeight(h, Unit.PX);
          div.getStyle().setBackgroundColor("rgba(0, 126, 246, 0.1)");
          div.getStyle().setProperty("transition", "opacity 4s");
-         div.getStyle().setProperty("-moz-transition", "opacity 4s");
-         div.getStyle().setProperty("-webkit-transition", "opacity 4s");
+         // use DomUtils to set transition styles so gwt doesn't assert
+         // an invalid style name (no camelCase) in debug mode
+         DomUtils.setStyle(div, "-moz-transition", "opacity 4s");
+         DomUtils.setStyle(div, "-webkit-transition", "opacity 4s");
 
          pageContainer.appendChild(div);
 
