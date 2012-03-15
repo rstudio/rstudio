@@ -139,6 +139,7 @@ public class SVNCommitDialog extends ModalDialogBase
    @Override
    protected void onUnload()
    {
+      super.onUnload();
       commitDraft_ = message_.getText();
       session_.persistClientState();
    }
