@@ -137,11 +137,7 @@ public class PDFViewerPanel extends Composite
    @Override
    public void toggleThumbnails()
    {
-      BodyElement body = Document.get().getBody();
-      if (body.getClassName().contains("nosidebar"))
-         body.removeClassName("nosidebar");
-      else
-         body.addClassName("nosidebar");
+      PDFView.toggleSidebar();
    }
 
    @Override
