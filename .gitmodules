@@ -1,3 +1,0 @@
-[submodule "src/gwt/tools/ace"]
-	path = src/gwt/tools/ace
-	url = git@github.com:jcheng5/ace.git
