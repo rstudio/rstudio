@@ -138,6 +138,10 @@ body.nosidebar #sidebar {
   padding-top: 15px;
 }
 
+body.nosidebar #sidebarScrollView {
+  overflow-y: hidden;
+}
+
 #sidebarScrollView a {
   text-decoration: none;
 }

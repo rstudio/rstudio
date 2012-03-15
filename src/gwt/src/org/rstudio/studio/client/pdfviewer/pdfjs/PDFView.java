@@ -142,7 +142,7 @@ public class PDFView extends JavaScriptObject
       if ($wnd.PDFView.pages.length == 0)
          return null;
       return {
-         scale: $wnd.PDFView.currentScale,
+         scale: $wnd.PDFView.currentScaleValue,
          x: $wnd.scrollX,
          y: $wnd.scrollY
       };
