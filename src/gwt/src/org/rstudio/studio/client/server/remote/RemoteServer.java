@@ -2440,6 +2440,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SUGGESTION_LIST, params, requestCallback);
    }
 
+   public void addToDictionary(String word,
+         ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(word));
+      sendRequest(RPC_SCOPE, ADD_TO_DICTIONARY, params, requestCallback);
+   }
+
    @Override
    public void beginFind(String searchString,
                          boolean regex,
@@ -2675,6 +2683,7 @@ public class RemoteServer implements Server
    
    private static final String CHECK_SPELLING = "check_spelling";
    private static final String SUGGESTION_LIST = "suggestion_list";
+   private static final String ADD_TO_DICTIONARY = "add_to_dictionary";
 
    private static final String BEGIN_FIND = "begin_find";
    private static final String STOP_FIND = "stop_find";

@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.common.spelling.view;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -22,8 +21,6 @@ import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -72,6 +69,15 @@ public class SpellingSandboxDialog extends ModalDialogBase
          }
       });
       
+      stopCheckButton_.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            stopSpellChecking(false);
+         }
+      });
+      stopCheckButton_.setEnabled(false);
+      
       changeButton_.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
@@ -99,21 +105,16 @@ public class SpellingSandboxDialog extends ModalDialogBase
       });
       ignoreButton_.setEnabled(false);
 
-      ignoreAllButton_.addClickHandler(new ClickHandler() {
+      addWordButton_.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
          {
-            findMisSpelledWord();
+            addWordToDictionary();
          }
       });
-      ignoreAllButton_.setEnabled(false);
+      addWordButton_.setEnabled(false);
 
-      listBox_.addChangeHandler(new ChangeHandler() {
-         public void onChange(ChangeEvent event) 
-         {
-            // txtWord_.setText(listBox_.getValue(listBox_.getSelectedIndex()));
-         }
-      });
+      txtWord_.setEnabled(false);
       listBox_.setEnabled(false);
             
       return mainPanel;
@@ -125,7 +126,8 @@ public class SpellingSandboxDialog extends ModalDialogBase
       {
          showResponse("Spell Checker", "Nothing to SpellCheck!");
          return;
-      } else
+      } 
+      else
       {
     	  debugTxt_.startSpellChecking();
       }
@@ -136,9 +138,11 @@ public class SpellingSandboxDialog extends ModalDialogBase
       findMisSpelledWord();
       
    }
-   private void stopSpellChecking()
+   private void stopSpellChecking(boolean complete)
    {
-      showResponse("Spell Check", "Complete!");
+      if (complete)
+         showResponse("Spell Checker", "Complete!");
+      
       debugTxt_.spellCheckComplete();
       
       spellCheckButton_.setEnabled(true);
@@ -153,10 +157,12 @@ public class SpellingSandboxDialog extends ModalDialogBase
    
    private void toggleDialog(boolean onOff)
    {
+      stopCheckButton_.setEnabled(onOff);
       changeButton_.setEnabled(onOff);
       changeAllButton_.setEnabled(onOff);
       ignoreButton_.setEnabled(onOff);
-      ignoreAllButton_.setEnabled(onOff);
+      addWordButton_.setEnabled(onOff);
+      txtWord_.setEnabled(onOff);
       listBox_.setEnabled(onOff);
    }
    
@@ -168,10 +174,11 @@ public class SpellingSandboxDialog extends ModalDialogBase
    
    private void findMisSpelledWord()
    {
+      toggleDialog(false);
       currentWord_ = debugTxt_.getNextWord();
       if (currentWord_.isEmpty())
       {
-         stopSpellChecking();
+         stopSpellChecking(true);
          return;
       }
       server_.checkSpelling(currentWord_, new SimpleRequestCallback<Boolean>() {
@@ -179,9 +186,11 @@ public class SpellingSandboxDialog extends ModalDialogBase
          public void onResponseReceived(Boolean isCorrect)
          {
             if (!isCorrect){
+               toggleDialog(true);
                txtWord_.setText(currentWord_);
                suggestionList(currentWord_);
-            } else
+            } 
+            else
             {
                findMisSpelledWord();
             }
@@ -191,15 +200,42 @@ public class SpellingSandboxDialog extends ModalDialogBase
    
    private void changeWord()
    {
-      debugTxt_.changeWord(currentWord_,
-                           listBox_.getValue(listBox_.getSelectedIndex()));
-      findMisSpelledWord();
+      int i = listBox_.getSelectedIndex();
+      if (i >= 0)
+      {
+         debugTxt_.changeWord(currentWord_,listBox_.getValue(i));
+         findMisSpelledWord();
+      } 
+      else if (currentWord_.compareTo(txtWord_.getText()) != 0)
+      {
+         debugTxt_.changeWord(currentWord_,txtWord_.getText());
+         findMisSpelledWord();
+      } 
+      else
+      {
+         showResponse("Spell Checker", 
+                      "Please choose a word from the Suggestion List!");
+      }
    }
    
    private void changeAllWords()
    {
-      debugTxt_.changeAllWords(currentWord_,txtWord_.getText());
-      findMisSpelledWord();
+      int i = listBox_.getSelectedIndex();
+      if (i >= 0)
+      {
+         debugTxt_.changeAllWords(currentWord_,listBox_.getValue(i));
+         findMisSpelledWord();
+      } 
+      else if (currentWord_.compareTo(txtWord_.getText()) != 0)
+      {
+         debugTxt_.changeAllWords(currentWord_,txtWord_.getText());
+         findMisSpelledWord();
+      } 
+      else
+      {
+         showResponse("Spell Checker", 
+                      "Please choose a word from the Suggestion List!");
+      }
    }
    
    private void suggestionList(String word)
@@ -208,14 +244,32 @@ public class SpellingSandboxDialog extends ModalDialogBase
          @Override
          public void onResponseReceived(JsArrayString suggestions)
          {
-        	listBox_.clear();
-        	for (int i = 0; i < suggestions.length(); i++)
-        	{
-        		listBox_.addItem(suggestions.get(i));
-        	}
+           	listBox_.clear();
+           	for (int i = 0; i < suggestions.length(); i++)
+           	{
+           		listBox_.addItem(suggestions.get(i));
+           	}
          }
       });
       
+   }
+   
+   private void addWordToDictionary()
+   {
+      server_.addToDictionary(txtWord_.getText(), 
+                              new SimpleRequestCallback<Boolean>() {
+         @Override
+         public void onResponseReceived(Boolean added)
+         {
+            if (!added){
+               showResponse("Spell Checker", "Server Error!");
+            } 
+            else
+            {
+               findMisSpelledWord();
+            }
+         }
+      });
    }
    
    private void showResponse(String request, String response)
@@ -235,8 +289,9 @@ public class SpellingSandboxDialog extends ModalDialogBase
    @UiField ThemedButton changeButton_;
    @UiField ThemedButton changeAllButton_;
    @UiField ThemedButton ignoreButton_;
-   @UiField ThemedButton ignoreAllButton_;
+   @UiField ThemedButton addWordButton_;
    @UiField ThemedButton spellCheckButton_;
+   @UiField ThemedButton stopCheckButton_;
    @UiField VerticalPanel sandboxPanel_;
    private final GlobalDisplay globalDisplay_;
    private final SpellingServerOperations server_;

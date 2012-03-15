@@ -23,4 +23,7 @@ public interface SpellingServerOperations
    
    void suggestionList(String word,
                        ServerRequestCallback<JsArrayString> requestCallback);
+   
+   void addToDictionary(String word,
+                   ServerRequestCallback<Boolean> requestCallback);
 }

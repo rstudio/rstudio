@@ -176,6 +176,23 @@ Error suggestionList(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error addToDictionary(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string word;
+   Error error = json::readParams(request.params, &word);
+   if (error)
+      return error;
+
+   bool added;
+   error = s_pSpellChecker->addWord(word,&added);
+   if (error)
+      return error;
+
+   pResponse->setResult(added);
+   return Success();
+}
+
 
 } // anonymous namespace
 
@@ -237,7 +254,8 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "check_spelling", checkSpelling))
-      (bind(registerRpcMethod, "suggestion_list", suggestionList));
+      (bind(registerRpcMethod, "suggestion_list", suggestionList))
+      (bind(registerRpcMethod, "add_to_dictionary", addToDictionary));
    return initBlock.execute();
 }
 
