@@ -29,6 +29,11 @@ import com.google.inject.Provider;
 
 public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOptions>
 {
+   public static final int GENERAL = 0;
+   public static final int EDITING = 1;
+   public static final int SWEAVE = 2;
+   public static final int VCS = 3;
+   
    @Inject
    public ProjectPreferencesDialog(ProjectsServerOperations server,
                                    Provider<UIPrefs> pUIPrefs,
@@ -46,12 +51,6 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       server_ = server;
       pUIPrefs_ = pUIPrefs;  
    }
-   
-   public void activateSourceControl()
-   {
-      activatePane(3);
-   }
-   
    
    @Override
    protected RProjectOptions createEmptyPrefs()

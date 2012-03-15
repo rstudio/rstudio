@@ -469,6 +469,11 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Project Options..."
         buttonLabel=""
         desc="Edit options for the current project"/>
+        
+    <cmd id="projectSweaveOptions"
+        menuLabel=""
+        buttonLabel=""
+        desc=""/>
 
    <cmd id="showToolbar"
         menuLabel="Show _Toolbar"/>

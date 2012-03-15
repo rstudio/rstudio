@@ -82,6 +82,7 @@ public abstract class
    public abstract AppCommand clearRecentProjects();
    public abstract AppCommand closeProject();
    public abstract AppCommand projectOptions();
+   public abstract AppCommand projectSweaveOptions();
 
    // Console
    public abstract AppCommand consoleClear();

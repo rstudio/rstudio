@@ -128,6 +128,11 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
          pane.initialize(prefs);
    }
    
+   public void activatePane(int index)
+   {
+      sectionChooser_.select(index);
+   }
+   
    private void setPaneVisibility(PreferencesDialogPaneBase<T> pane, boolean visible)
    {
       pane.getElement().getStyle().setDisplay(visible
@@ -139,11 +144,6 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
    protected Widget createMainWidget()
    {
       return panel_;
-   }
-   
-   protected void activatePane(int index)
-   {
-      sectionChooser_.select(index);
    }
    
    protected void hidePane(int index)

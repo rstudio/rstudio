@@ -466,9 +466,15 @@ public class Projects implements OpenProjectFileHandler,
    @Handler
    public void onProjectOptions()
    {
-      showProjectOptions(false);
+      showProjectOptions(ProjectPreferencesDialog.GENERAL);
    }
 
+   @Handler
+   public void onProjectSweaveOptions()
+   {
+      showProjectOptions(ProjectPreferencesDialog.SWEAVE);
+   }
+   
    @Handler
    public void onVersionControlProjectSetup()
    {
@@ -486,11 +492,11 @@ public class Projects implements OpenProjectFileHandler,
       }
       else
       {
-         showProjectOptions(true);
+         showProjectOptions(ProjectPreferencesDialog.VCS);
       }
    }
    
-   private void showProjectOptions(final boolean activateSourceControl)
+   private void showProjectOptions(final int initialPane)
    {
       final ProgressIndicator indicator = globalDisplay_.getProgressIndicator(
                                                       "Error Reading Options");
@@ -505,8 +511,7 @@ public class Projects implements OpenProjectFileHandler,
 
             ProjectPreferencesDialog dlg = pPrefDialog_.get();
             dlg.initialize(options);
-            if (activateSourceControl)
-               dlg.activateSourceControl();
+            dlg.activatePane(initialPane);
             dlg.showModal(); 
          }});
    }
