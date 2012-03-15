@@ -140,8 +140,6 @@ public class WebWindowOpener implements WindowOpener
                                                  focus);
                   if (window != null)
                   {
-                     if (width > 0 && height > 0)
-                        window.resizeInnerTo(width, height);
                      if (openOperation != null)
                         openOperation.execute(window);
                   }
@@ -151,8 +149,6 @@ public class WebWindowOpener implements WindowOpener
       }
       else
       {
-         if (width > 0 && height > 0)
-            window.resizeInnerTo(width, height);
          if (openOperation != null)
             openOperation.execute(window);
       }

@@ -107,11 +107,6 @@ public class WindowEx extends JavaScriptObject
       this.resizeTo(width, height);
    }-*/;
 
-   public final native void resizeInnerTo(int width, int height) /*-{
-      this.innerWidth = width;
-      this.innerHeight = height;
-   }-*/;
-
    public final native Document getDocument() /*-{
       return this.document;
    }-*/;
