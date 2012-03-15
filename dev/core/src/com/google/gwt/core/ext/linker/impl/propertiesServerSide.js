@@ -23,5 +23,21 @@
   // properties being selected on the server.  Just return false for now.
   __gwt_isKnownPropertyValue = function(propName, propValue) {
     return false;
-  }
+  };
   __MODULE_FUNC__.__computePropValue = computePropValue;
+
+  // Gets a map of the non-constant, non-derived binding properties
+  __MODULE_FUNC__.__getPropMap = function() {
+    var result = {};
+    for (var key in properties) {
+      result[key] = properties[key];
+    }
+    return result;
+  };
+
+  // make properties available to super dev mode hook
+  var global = self || window;
+  var activeModules = (global.__gwt_activeModules =
+      global.__gwt_activeModules || {});
+  activeModules["__MODULE_NAME__"] = {moduleName: "__MODULE_NAME__",
+    bindings: __MODULE_FUNC__.__getPropMap};
