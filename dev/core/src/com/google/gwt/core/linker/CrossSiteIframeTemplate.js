@@ -118,7 +118,6 @@ function __MODULE_FUNC__() {
   /****************************************************************************
    * Bootstrap startup code
    ***************************************************************************/
-  __DEV_MODE_REDIRECT_HOOK__
 
   // Must be called before computeScriptBase() and getCompiledFilename()
   processMetas();
@@ -128,6 +127,8 @@ function __MODULE_FUNC__() {
 
   // Must be done right before the "bootstrap" "end" stat is sent
   var filename = getCompiledCodeFilename();
+
+  __DEV_MODE_REDIRECT_HOOK__
 
   loadExternalStylesheets();
 

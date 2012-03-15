@@ -16,6 +16,12 @@
 
 // A snippet of code that loads a different script if dev mode is enabled.
 
+// Declare our existence.
+// (This assumes that properties.js has already set up the map.)
+if ($wnd) {
+  $wnd.__gwt_activeModules["__MODULE_NAME__"].canRedirect = true;
+}
+
 // We use a different key for each module so that we can turn on dev mode
 // independently for each.
 var devModeKey = '__gwtDevModeHook:__MODULE_NAME__';
