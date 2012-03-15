@@ -227,7 +227,7 @@ public class SchedulerImpl extends Scheduler {
         } else {
           t.executeScheduled();
         }
-      } catch (RuntimeException e) {
+      } catch (Throwable e) {
         if (GWT.getUncaughtExceptionHandler() != null) {
           GWT.getUncaughtExceptionHandler().onUncaughtException(e);
         }
