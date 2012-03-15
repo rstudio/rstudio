@@ -265,10 +265,11 @@ Error writeToPNG(const FilePath& targetPath,
    Error error;
    if (targetPath != pDC->targetPath)
    {
+      // the target path would not exist if R failed to write the PNG
+      // (e.g. because the graphics device was too small for the content)
       if (!pDC->targetPath.exists())
       {
          error = pathNotFoundError(ERROR_LOCATION);
-         LOG_ERROR(error);
       }
       else
       {

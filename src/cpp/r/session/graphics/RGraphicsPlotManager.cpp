@@ -428,9 +428,7 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
       {
          // no such file error expected in the case of an invalid graphics
          // context (because generation of the PNG would have failed)
-         bool pngNotFound =
-          error.cause() &&
-          (error.cause().code() == boost::system::errc::no_such_file_or_directory);
+         bool pngNotFound = error.cause() && isPathNotFoundError(error.cause());
 
          // only log if this wasn't png not found
          if (!pngNotFound)
