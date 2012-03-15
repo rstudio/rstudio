@@ -21,7 +21,11 @@ public class SynctexUtils
 {
    public static void showFirefoxWarning(String target)
    {
-      RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
+      if (!messageShown_)
+      {
+         messageShown_ = true;
+         
+         RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
             MessageDialog.POPUP_BLOCKED,
             "Unable to Switch Windows",
             "The " + target + " was updated to sync to the current location " +
@@ -30,5 +34,8 @@ public class SynctexUtils
             "To avoid this problem in the future you may want to use " +
             "Google Chrome rather than Firefox when compiling and " +
             "previewing PDFs.");
+      }
    }
+   
+   private static boolean messageShown_ = false;
 }
