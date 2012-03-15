@@ -1782,7 +1782,7 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onSynctexSearch()
    {
-      doSynctexSearch(false);
+      doSynctexSearch(true);
    }
    
    private void doSynctexSearch(boolean fromClick)

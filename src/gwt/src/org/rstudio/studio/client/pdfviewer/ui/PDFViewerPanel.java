@@ -177,6 +177,17 @@ public class PDFViewerPanel extends Composite
    @Override
    public SyncTexCoordinates getTopCoordinates()
    {
+      return getBoundaryCoordinates(true);
+   }
+   
+   @Override
+   public SyncTexCoordinates getBottomCoordinates()
+   {
+      return getBoundaryCoordinates(false);
+   }
+   
+   private SyncTexCoordinates getBoundaryCoordinates(boolean top)
+   {
       int scrollY = Document.get().getScrollTop() + toolbar_.getOffsetHeight();
 
       // linear probe our way to the current page
@@ -195,6 +206,12 @@ public class PDFViewerPanel extends Composite
                if (pageY < 0)
                   pageY = 0;
 
+               if (!top)
+               {
+                  final int kStatusBarHeight = 16;
+                  pageY += Document.get().getClientHeight() - kStatusBarHeight;
+               }
+               
                return new SyncTexCoordinates(
                      pageNum,
                      0,
@@ -246,9 +263,16 @@ public class PDFViewerPanel extends Composite
          }, 2000);
       }
 
-      Window.scrollTo(
+      // scroll to the page
+      PDFView.goToPage(pdfLocation.getPage());
+            
+      // if the target isn't on-screen then scroll to it
+      if (pdfLocation.getY() > getBottomCoordinates().getY())
+      {
+         Window.scrollTo(
             Window.getScrollLeft(),
             Math.max(0, pageContainer.getAbsoluteTop() + (int) y - 180));
+      }
    }
 
    @Override

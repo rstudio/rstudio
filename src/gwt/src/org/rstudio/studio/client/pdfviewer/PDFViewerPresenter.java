@@ -87,6 +87,13 @@ public class PDFViewerPresenter implements IsWidget,
        * other reason).
        */
       SyncTexCoordinates getTopCoordinates();
+      
+      /**
+       * @return Coordinates of the page area that's at the bottom of the viewer,
+       * or null if no pages loaded (or no page is currently onscreen for some
+       * other reason).
+       */
+      SyncTexCoordinates getBottomCoordinates();
 
       void navigateTo(PdfLocation pdfLocation);
    }
