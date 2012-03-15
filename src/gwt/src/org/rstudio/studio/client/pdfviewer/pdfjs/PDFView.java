@@ -79,6 +79,10 @@ public class PDFView extends JavaScriptObject
       return handlers_.addHandler(PDFLoadEvent.TYPE, handler);
    }
 
+   public static native void toggleSidebar() /*-{
+      $wnd.PDFView.toggleSidebar();
+   }-*/;
+
    public native static void initializeEvents() /*-{
 
       var _load = $wnd.PDFView.load;

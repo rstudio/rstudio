@@ -13,12 +13,12 @@ cd pdfjs
 git clean -dfx
 
 # Use this commit
-git checkout 105cb13
+git checkout 4ad8473
 
 make
 cd ..
 
-function minify {
+minify () {
   echo "Minifying $1.js => $1.min.js"
   CC_OPTS="--compilation_level SIMPLE_OPTIMIZATIONS --language_in ECMASCRIPT5"
   java -jar "compiler/compiler.jar" $CC_OPTS --js ../src/org/rstudio/studio/client/pdfviewer/pdfjs/$1.js --js_output_file ../src/org/rstudio/studio/client/pdfviewer/pdfjs/$1.min.js

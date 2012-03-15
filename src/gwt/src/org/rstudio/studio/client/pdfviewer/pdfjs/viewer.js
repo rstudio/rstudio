@@ -157,12 +157,28 @@ var cache = new Cache(kCacheSize);
 var renderingQueue = new RenderingQueue();
 var currentPageNumber = 1;
 
+var kSidebarWidth = 200;
 var PDFView = {
   pages: [],
   thumbnails: [],
   currentScale: kUnknownScale,
   currentScaleValue: null,
   initialBookmark: document.location.hash.substring(1),
+  sidebarWidth: kSidebarWidth,
+
+  toggleSidebar: function() {
+    if (document.body.className.match(/\bnosidebar\b/)) {
+      document.body.className = document.body.className.replace(/ ?nosidebar\b/, '');
+      // The sidebar is going to appear, so immediately shrink the view area
+      this.sidebarWidth = kSidebarWidth;
+      this.parseScale(this.currentScaleValue);
+    }
+    else {
+      // The sidebar is hiding, don't enlarge the view area yet, but wait for
+      // the transition to end first
+      document.body.className = document.body.className + ' nosidebar';
+    }
+  },
 
   setScale: function pdfViewSetScale(val, resetAutoSettings) {
     if (val == this.currentScale)
@@ -195,8 +211,7 @@ var PDFView = {
     }
 
     var currentPage = this.pages[this.page - 1];
-    // The 200 is to account for the fixed sidebar
-    var pageWidthScale = (window.innerWidth - 200 - kScrollbarPadding) /
+    var pageWidthScale = (window.innerWidth - this.sidebarWidth - kScrollbarPadding) /
                           currentPage.width / kCssUnits;
     var pageHeightScale = (window.innerHeight - kScrollbarPadding) /
                            currentPage.height / kCssUnits;
@@ -1218,6 +1233,16 @@ window.addEventListener('load', function webViewerLoad(evt) {
 window.addEventListener('unload', function webViewerUnload(evt) {
   window.scrollTo(0, 0);
 }, true);
+
+var sidebarHideListener = function(evt) {
+  PDFView.sidebarWidth = document.body.className.match(/\bnosidebar\b/)
+                         ? 0
+                         : kSidebarWidth;
+  PDFView.parseScale(PDFView.currentScaleValue);
+};
+document.body.addEventListener('transitionend', sidebarHideListener, false);
+document.body.addEventListener('oTransitionEnd', sidebarHideListener, false);
+document.body.addEventListener('webkitTransitionEnd', sidebarHideListener, false);
 
 /**
  * Render the next not yet visible page already such that it is
