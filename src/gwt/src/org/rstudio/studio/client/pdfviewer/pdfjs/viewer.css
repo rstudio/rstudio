@@ -144,6 +144,7 @@ body.nosidebar #sidebarScrollView {
 
 #sidebarScrollView a {
   text-decoration: none;
+  outline: none !important;
 }
 
 .thumbnail {
@@ -212,11 +213,6 @@ body.nosidebar #sidebarScrollView {
 .outlineItem > a {
   text-decoration: none;
   color: black;
-}
-
-.outlineItem > a:hover {
-  background: #ff0;
-  box-shadow: 0px 2px 10px #ff0;
 }
 
 #sidebarControls {
