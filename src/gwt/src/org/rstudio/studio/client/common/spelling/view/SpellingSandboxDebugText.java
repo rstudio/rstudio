@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.common.spelling.view;
 
+import org.rstudio.core.client.Debug;
 import com.google.gwt.user.client.ui.TextArea;
 
 public class SpellingSandboxDebugText extends TextArea
@@ -21,13 +22,15 @@ public class SpellingSandboxDebugText extends TextArea
    public SpellingSandboxDebugText()
    {
       setCharacterWidth(80);
-      setVisibleLines(25);
+      setVisibleLines(20);
    }
 
    public void changeWord(String fromWord,String toWord)
    {
-      if (wordIdx_ > 0 && words_[wordIdx_-1].compareTo(fromWord) == 0)
+      if (wordIdx_ > 0 && words_[wordIdx_-1].compareTo(fromWord) == 0){
          words_[wordIdx_-1] = toWord;
+         isDirty_ = true;
+      }
    }
    
    public void changeAllWords(String fromWord,String toWord)
@@ -37,6 +40,7 @@ public class SpellingSandboxDebugText extends TextArea
          if (words_[i].compareTo(fromWord) == 0)
          {
             words_[i] = toWord;
+            isDirty_ = true;
          }
       }
    }
@@ -45,6 +49,7 @@ public class SpellingSandboxDebugText extends TextArea
    {
       if (wordIdx_ < words_.length)
       {
+         Debug.log(new String("getNextWord("+words_[wordIdx_] + ")\n"));
          return words_[wordIdx_++];
       } else 
       {
@@ -58,13 +63,18 @@ public class SpellingSandboxDebugText extends TextArea
    
    public void startSpellChecking()
    {
-      words_ = getText().split("\\w");
-      whiteSpace_ = getText().split("[^\\w]");
+      words_ = getText().split("[ \n\t]+");
+      Debug.log("words_[0] is: " + words_[0]);
+      whiteSpace_ = getText().split("[^ \n\t]+");
       wordIdx_ = 0;
+      isDirty_ = false;
    }
    
    public void spellCheckComplete()
    {
+      if (!isDirty_)
+         return;
+      
       // Replace textarea with current words and whitespace
       String[] ary1, ary2;
       if (getText().matches("\\w.*"))
@@ -78,24 +88,28 @@ public class SpellingSandboxDebugText extends TextArea
       }
       int len = (ary1.length <= ary2.length)? ary1.length : ary2.length;
       
-      String replace = "";
+      StringBuilder replace = new StringBuilder();
       for (int i = 0; i < len; i++){
-         replace.concat(ary1[i]);
-         replace.concat(ary2[i]);
+         Debug.log("ary1["+String.valueOf(i)+"] is" + ary1[i] + "\n");
+         Debug.log("ary2["+String.valueOf(i)+"] is" + ary2[i] + "\n");
+         replace.append(ary1[i]);
+         replace.append(ary2[i]);
+         Debug.log("replace is" + replace + "\n");
       }
       if (ary1.length <= ary2.length)
       {
          for (int i = ary1.length; i < ary2.length; i++)
-            replace.concat(ary2[i]);
+            replace.append(ary2[i]);
       } else 
       {
          for (int i = ary2.length; i < ary1.length; i++)
-            replace.concat(ary1[i]);
+            replace.append(ary1[i]);
          
       }
-      setText(replace);
+      setText(replace.toString());
    }
    
+   boolean isDirty_;
    int wordIdx_;
    private String[] words_;
    private String[] whiteSpace_;
