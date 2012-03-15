@@ -33,7 +33,7 @@ public final class CommonAttributeTypes {
   // This class cannot be instanted
   private CommonAttributeTypes() {
   }
-  
+
   /**
    * Interface that is and needs to be implemented by ALL non primitive attribute types
    */
@@ -46,6 +46,10 @@ public final class CommonAttributeTypes {
    */
   public static enum Tristate implements AriaAttributeType {
     TRUE(TRUE_VALUE), FALSE(FALSE_VALUE), MIXED(MIXED_TRISTATE_VALUE);
+
+    public static Tristate of(boolean value) {
+      return value ? TRUE : FALSE;
+    }
 
     private final String value;
 
@@ -65,6 +69,10 @@ public final class CommonAttributeTypes {
   public static enum BooleanAndUndefined implements AriaAttributeType {
     TRUE(TRUE_VALUE), FALSE(FALSE_VALUE), UNDEFINED(UNDEFINED_VALUE);
 
+    public static BooleanAndUndefined of(boolean value) {
+      return value ? TRUE : FALSE;
+    }
+
     private final String value;
 
     private BooleanAndUndefined(String value) {
@@ -81,6 +89,10 @@ public final class CommonAttributeTypes {
    * Id reference type
    */
   public static class IdReference implements AriaAttributeType {
+    public static IdReference of(String value) {
+      return new IdReference(value);
+    }
+
     private final String id;
 
     /**
@@ -88,7 +100,7 @@ public final class CommonAttributeTypes {
      *
      * @param value String id value
      */
-    public IdReference(String value) {
+    private IdReference(String value) {
       this.id = value;
     }
 
@@ -102,6 +114,10 @@ public final class CommonAttributeTypes {
    * Id reference list type
    */
   public static class IdReferenceList implements AriaAttributeType {
+    public static IdReferenceList of(String... values) {
+      return new IdReferenceList(values);
+    }
+
     private final String ids;
 
     /**
@@ -109,7 +125,7 @@ public final class CommonAttributeTypes {
      *
      * @param values String ids array
      */
-    public IdReferenceList(String... values) {
+    private IdReferenceList(String... values) {
       assert values.length > 0 : "The ids cannot be empty";
       StringBuffer ariaValue = new StringBuffer();
       for (String value : values) {

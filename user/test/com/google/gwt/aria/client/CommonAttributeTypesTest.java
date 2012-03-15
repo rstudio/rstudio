@@ -23,15 +23,13 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class CommonAttributeTypesTest extends GWTTestCase {
   public void testIdReference() {
-    IdReference idReference = new IdReference("test1");
-    assertEquals("test1", idReference.getAriaValue());
+    assertEquals("test1", IdReference.of("test1").getAriaValue());
   }
-  
+
   public void testIdReferenceList() {
-    IdReferenceList idReferenceList = new IdReferenceList("test1", "test2");
-    assertEquals("test1 test2", idReferenceList.getAriaValue());
+    assertEquals("test1 test2", IdReferenceList.of("test1", "test2").getAriaValue());
   }
-  
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.aria.Aria";

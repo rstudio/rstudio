@@ -23,12 +23,12 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Tests {@link Role} ARIA classes 
+ * Tests {@link Role} ARIA classes
  */
 public class RoleTest extends GWTTestCase {
   private Element div;
   private RegionRole regionRole;
-  
+
   public void testSetGetRemoveRole() {
     assertEquals("", regionRole.get(div));
     regionRole.set(div);
@@ -36,35 +36,35 @@ public class RoleTest extends GWTTestCase {
     regionRole.remove(div);
     assertEquals("", regionRole.get(div));
   }
-  
+
   public void testSetGetRemoveProperty() {
-    IdReferenceList idRefs = new IdReferenceList("test1");
+    IdReferenceList idRefs = IdReferenceList.of("test1");
     assertEquals("", regionRole.getAriaLabelledbyProperty(div));
     regionRole.setAriaLabelledbyProperty(div, idRefs);
     assertEquals("test1", regionRole.getAriaLabelledbyProperty(div));
     regionRole.removeAriaLabelledbyProperty(div);
     assertEquals("", regionRole.getAriaLabelledbyProperty(div));
   }
-  
+
   public void testSetGetRemoveNmtokensProperty() {
     ButtonRole buttonRole = Roles.getButtonRole();
     assertEquals("", buttonRole.getAriaDropeffectProperty(div));
-    regionRole.setAriaDropeffectProperty(div, new DropeffectTokenList(DropeffectToken.COPY, 
+    regionRole.setAriaDropeffectProperty(div, new DropeffectTokenList(DropeffectToken.COPY,
         DropeffectToken.MOVE));
     assertEquals("copy move", regionRole.getAriaDropeffectProperty(div));
     regionRole.removeAriaDropeffectProperty(div);
     assertEquals("", regionRole.getAriaDropeffectProperty(div));
   }
-  
+
   public void testSetGetRemoveState() {
     assertEquals("", regionRole.getAriaInvalidState(div));
     regionRole.setAriaInvalidState(div, StateTokenTypes.InvalidToken.GRAMMAR);
-    assertEquals(StateTokenTypes.InvalidToken.GRAMMAR.getAriaValue(), 
+    assertEquals(StateTokenTypes.InvalidToken.GRAMMAR.getAriaValue(),
         regionRole.getAriaInvalidState(div));
     regionRole.removeAriaInvalidState(div);
     assertEquals("", regionRole.getAriaInvalidState(div));
   }
-  
+
   public void testSetGetRemoveExtraAttributes() {
     // Older versions of IE do not support tabIndex on divs, so use an anchor
     // element instead.
@@ -72,23 +72,23 @@ public class RoleTest extends GWTTestCase {
     Document.get().getBody().appendChild(anchor);
 
     // Some versions of IE default to "0" instead of ""
-    assertTrue("".equals(regionRole.getTabindexExtraAttribute(div)) 
+    assertTrue("".equals(regionRole.getTabindexExtraAttribute(div))
         || "0".equals(regionRole.getTabindexExtraAttribute(div)));
     regionRole.setTabindexExtraAttribute(anchor, 1);
     assertEquals("1", regionRole.getTabindexExtraAttribute(anchor));
     regionRole.removeTabindexExtraAttribute(anchor);
     // Some versions of IE default to "0" instead of ""
-    assertTrue("".equals(regionRole.getTabindexExtraAttribute(div)) 
+    assertTrue("".equals(regionRole.getTabindexExtraAttribute(div))
         || "0".equals(regionRole.getTabindexExtraAttribute(div)));
 
     anchor.removeFromParent();
   }
-  
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.aria.Aria";
   }
-  
+
   @Override
   protected void gwtSetUp() throws Exception {
     super.gwtSetUp();
@@ -97,7 +97,7 @@ public class RoleTest extends GWTTestCase {
     Document.get().getBody().appendChild(div);
     regionRole = Roles.getRegionRole();
   }
-  
+
   @Override
   protected void gwtTearDown() throws Exception {
     super.gwtTearDown();
