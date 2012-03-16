@@ -531,11 +531,15 @@ void onShutdown(bool)
 
 Error initialize()
 {
+   // provision a source database directory
+   Error error = supervisor::attachToSourceDatabase(&s_sourceDBPath);
+   if (error)
+      return error;
+
    // signup for the shutdown event
    module_context::events().onShutdown.connect(onShutdown);
 
-   // provision a source database directory
-   return supervisor::attachToSourceDatabase(&s_sourceDBPath);
+   return Success();
 }
 
 } // namespace source_database
