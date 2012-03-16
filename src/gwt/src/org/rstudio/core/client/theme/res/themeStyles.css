@@ -109,6 +109,9 @@ body {
    font-size: 12px;
 }
 
+select {
+   font-size: 12px;
+}
 input[type=text] {
    font-family: proportionalFont;
 }

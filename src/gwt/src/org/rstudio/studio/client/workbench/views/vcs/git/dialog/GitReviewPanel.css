@@ -29,6 +29,9 @@
    padding-top: 2px;
    font-size: 11px;
 }
+.toolbarWrapper select {
+   font-size: 11px;
+}
 
 /** END SHARED BETWEEN HISTORY AND REVIEW PANELS **/
 
