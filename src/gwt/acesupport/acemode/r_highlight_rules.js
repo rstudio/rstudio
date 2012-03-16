@@ -53,21 +53,13 @@ define("mode/r_highlight_rules", function(require, exports, module)
                regex : "#.*$"
             },
             {
-               token : "string", // single line
-               regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
-            },
-            {
                token : "string", // multi line string start
-               regex : '["].*$',
+               regex : '["]',
                next : "qqstring"
             },
             {
-               token : "string", // single line
-               regex : "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
-            },
-            {
                token : "string", // multi line string start
-               regex : "['].*$",
+               regex : "[']",
                next : "qstring"
             },
             {
