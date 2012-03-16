@@ -36,6 +36,7 @@ var Mode = function(suppressHighlighting, doc, session) {
 
    this.$rCodeModel = new RCodeModel(doc, this.$tokenizer, /^r-/);
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(session);
+   this.$session = session;
 };
 oop.inherits(Mode, TextMode);
 
@@ -64,6 +65,11 @@ oop.inherits(Mode, TextMode);
          };
    this.$reOpen = /^[(["'{]$/;
    this.$reClose = /^[)\]"'}]$/;
+
+   this.getLanguageMode = function(position)
+   {
+      return this.$session.getState(position.row) == 'r-start' ? 'R' : 'TeX';
+   };
 
    this.getNextLineIndent = function(state, line, tab, tabSize, row)
    {

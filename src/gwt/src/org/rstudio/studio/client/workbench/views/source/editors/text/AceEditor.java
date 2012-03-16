@@ -746,6 +746,12 @@ public class AceEditor implements DocDisplay,
       return getSession().getScreenLength();
    }
 
+   @Override
+   public String getLanguageMode(Position position)
+   {
+      return getSession().getMode().getLanguageMode(position);
+   }
+
    public void replaceCode(String code)
    {
       int endRow, endCol;

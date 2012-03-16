@@ -56,6 +56,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void goToFunctionDefinition();
    String getSelectionValue();
    String getCurrentLine();
+   // This returns null for most file types, but for Sweave it returns "R" or
+   // "TeX". Use SweaveFileType constants to test for these values.
+   String getLanguageMode(Position position);
    void replaceSelection(String code);
    boolean moveSelectionToNextLine(boolean skipBlankLines);
    void reindent();
