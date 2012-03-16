@@ -167,6 +167,10 @@ public:
       std::vector<r_util::RSourceItem> sourceItems;
       BOOST_FOREACH(const Entry& entry, entries_)
       {
+         // bail if there is no index
+         if (!entry.hasIndex())
+            continue;
+
          // bail if this is an exluded context
          if (excludeContexts.find(entry.pIndex->context()) !=
              excludeContexts.end())
