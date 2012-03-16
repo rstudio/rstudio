@@ -67,6 +67,7 @@ public class StatusBarWidget extends Composite
 
    public void setFunctionVisible(boolean visible)
    {
+      function_.setClicksEnabled(visible);
       function_.setContentsVisible(visible);
       funcIcon_.setVisible(visible);
    }

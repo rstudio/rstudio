@@ -20,16 +20,33 @@ public class WordWrap
       hardWrapIfNecessary_ = hardWrapIfNecessary;
    }
 
+   public void setWrappingEnabled(boolean wrappingEnabled)
+   {
+      wrappingEnabled_ = wrappingEnabled;
+      if (!wrappingEnabled && !atBeginningOfLine())
+         appendRaw("\n");
+   }
+
    public void appendLine(String line)
    {
-      if (forceWrapBefore(line))
-         if (!atBeginningOfLine())
-            wrap();
+      if (!wrappingEnabled_)
+      {
+         int lastInsertionRow = row_;
+         int lastInsertionPoint = lineLength_;
+         appendRaw(line + "\n");
+         onChunkWritten(line, lastInsertionRow, lastInsertionPoint, 0);
+      }
+      else
+      {
+         if (forceWrapBefore(line))
+            if (!atBeginningOfLine())
+               wrap();
 
-      processLine(line);
+         processLine(line);
 
-      if (forceWrapAfter(line))
-         appendRaw("\n");
+         if (forceWrapAfter(line))
+            appendRaw("\n");
+      }
    }
 
    private boolean atBeginningOfLine()
@@ -187,4 +204,5 @@ public class WordWrap
    private int row_ = 0;
    private final int maxLineLength_;
    private final boolean hardWrapIfNecessary_;
+   private boolean wrappingEnabled_ = true;
 }

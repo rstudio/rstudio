@@ -139,9 +139,17 @@ public class StatusBarElementWidget extends FlowPanel
       return addHandler(handler, SelectionEvent.getType());
    }
 
-   public HandlerRegistration addMouseDownHandler(MouseDownHandler handler)
+   public HandlerRegistration addMouseDownHandler(final MouseDownHandler handler)
    {
-      return addDomHandler(handler, MouseDownEvent.getType());
+      return addDomHandler(new MouseDownHandler()
+      {
+         @Override
+         public void onMouseDown(MouseDownEvent event)
+         {
+            if (clicksEnabled_)
+               handler.onMouseDown(event);
+         }
+      }, MouseDownEvent.getType());
    }
 
    public void setContentsVisible(boolean visible)
@@ -151,7 +159,13 @@ public class StatusBarElementWidget extends FlowPanel
          arrows_.setVisible(visible);
    }
 
+   public void setClicksEnabled(boolean enabled)
+   {
+      clicksEnabled_ = enabled;
+   }
+
    private final ArrayList<String> options_;
    private final Label label_;
    private Image arrows_;
+   private boolean clicksEnabled_ = true;
 }
