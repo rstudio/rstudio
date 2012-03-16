@@ -110,11 +110,11 @@ public:
    template <typename ForwardIterator>
    void enqueFiles(ForwardIterator begin, ForwardIterator end)
    {
-      // add all R source files to the indexing queue
+      // add all source files to the indexing queue
       using namespace core::system;
       for ( ; begin != end; ++begin)
       {
-         if (isRSourceFile(*begin))
+         if (isSourceFile(*begin))
          {
             FileChangeEvent addEvent(FileChangeEvent::FileAdded, *begin);
             indexingQueue_.push(addEvent);
@@ -138,8 +138,8 @@ public:
 
    void enqueFileChange(const core::system::FileChangeEvent& event)
    {
-      // screen out files which aren't R source files
-      if (!isRSourceFile(event.fileInfo()))
+      // screen out files which aren't source files
+      if (!isSourceFile(event.fileInfo()))
          return;
 
       // add to the queue
@@ -200,6 +200,10 @@ public:
    {
       BOOST_FOREACH(const Entry& entry, entries_)
       {
+         // skip if it has no index
+         if (!entry.hasIndex())
+            continue;
+
          // bail if this is an exluded context
          if (excludeContexts.find(entry.pIndex->context()) !=
              excludeContexts.end())
@@ -285,6 +289,11 @@ private:
    // index entries we are managing
    struct Entry
    {
+      explicit Entry(const FileInfo& fileInfo)
+         : fileInfo(fileInfo)
+      {
+      }
+
       Entry(const FileInfo& fileInfo,
             boost::shared_ptr<core::r_util::RSourceIndex> pIndex)
          : fileInfo(fileInfo), pIndex(pIndex)
@@ -294,6 +303,8 @@ private:
       FileInfo fileInfo;
 
       boost::shared_ptr<core::r_util::RSourceIndex> pIndex;
+
+      bool hasIndex() const { return pIndex.get() != NULL; }
 
       bool operator < (const Entry& other) const
       {
@@ -342,25 +353,29 @@ private:
 
    void updateIndexEntry(const FileInfo& fileInfo)
    {
-      // read the file
-      FilePath filePath(fileInfo.absolutePath());
-      std::string code;
-      Error error = module_context::readAndDecodeFile(
-                              filePath,
-                              projects::projectContext().defaultEncoding(),
-                              true,
-                              &code);
-      if (error)
+      // index the source if necessary
+      boost::shared_ptr<r_util::RSourceIndex> pIndex;
+      if (isIndexableSourceFile(fileInfo))
       {
-         error.addProperty("src-file", filePath.absolutePath());
-         LOG_ERROR(error);
-         return;
-      }
+         // read the file
+         FilePath filePath(fileInfo.absolutePath());
+         std::string code;
+         Error error = module_context::readAndDecodeFile(
+                                 filePath,
+                                 projects::projectContext().defaultEncoding(),
+                                 true,
+                                 &code);
+         if (error)
+         {
+            error.addProperty("src-file", filePath.absolutePath());
+            LOG_ERROR(error);
+            return;
+         }
 
-      // index the source
-      std::string context = module_context::createAliasedPath(filePath);
-      boost::shared_ptr<r_util::RSourceIndex> pIndex(
-                new r_util::RSourceIndex(context, code));
+         // add index entry
+         std::string context = module_context::createAliasedPath(filePath);
+         pIndex.reset(new r_util::RSourceIndex(context, code));
+      }
 
       // attempt to add the entry
       Entry entry(fileInfo, pIndex);
@@ -400,7 +415,15 @@ private:
          entries_.erase(it);
    }
 
-   static bool isRSourceFile(const FileInfo& fileInfo)
+   static bool isSourceFile(const FileInfo& fileInfo)
+   {
+      FilePath filePath(fileInfo.absolutePath());
+      std::string ext = filePath.extensionLowerCase();
+      return !filePath.isDirectory() &&
+              (ext == ".r" || ext == ".rnw" || ext == ".rd");
+   }
+
+   static bool isIndexableSourceFile(const FileInfo& fileInfo)
    {
       FilePath filePath(fileInfo.absolutePath());
       return !filePath.isDirectory() &&
