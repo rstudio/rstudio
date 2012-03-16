@@ -55,6 +55,7 @@ import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.SweaveFileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.spelling.SpellChecker;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.SynctexUtils;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
@@ -207,6 +208,7 @@ public class TextEditingTarget implements EditingTarget
                             ConsoleDispatcher consoleDispatcher,
                             WorkbenchContext workbenchContext,
                             Provider<PublishPdf> pPublishPdf,
+                            Provider<SpellChecker> pSpellChecker,
                             Session session,
                             Synctex synctex,
                             FontSizeManager fontSizeManager,
@@ -226,6 +228,7 @@ public class TextEditingTarget implements EditingTarget
       synctex_ = synctex;
       fontSizeManager_ = fontSizeManager;
       pPublishPdf_ = pPublishPdf;
+      pSpellChecker_ = pSpellChecker;
 
       docDisplay_ = docDisplay;
       dirtyState_ = new DirtyState(docDisplay_, false);
@@ -1741,6 +1744,19 @@ public class TextEditingTarget implements EditingTarget
          }
       }
    }
+   
+   @Handler
+   void onCheckSpelling()
+   {
+      saveThenExecute(null, new Command()
+      {
+         public void execute()
+         {
+            pSpellChecker_.get().checkSpelling(docUpdateSentinel_.getPath(), 
+                                               docDisplay_);
+         }
+      });
+   }
 
    @Handler
    void onPublishPDF()
@@ -2157,6 +2173,7 @@ public class TextEditingTarget implements EditingTarget
    private HandlerManager handlers_ = new HandlerManager(this);
    private FileSystemContext fileContext_;
    private final Provider<PublishPdf> pPublishPdf_;
+   private final Provider<SpellChecker> pSpellChecker_;
    private final CompilePdfDependencyChecker compilePdfDependencyChecker_;
    private boolean ignoreDeletes_;
   

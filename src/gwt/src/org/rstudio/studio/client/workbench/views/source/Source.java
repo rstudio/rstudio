@@ -211,6 +211,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.debugDumpContents());
       dynamicCommands_.add(commands.debugImportDump());
       dynamicCommands_.add(commands.goToLine());
+      dynamicCommands_.add(commands.checkSpelling());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);

@@ -33,7 +33,6 @@ import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
-import org.rstudio.studio.client.common.spelling.view.SpellingSandboxDialog;
 import org.rstudio.studio.client.common.vcs.AskPassManager;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
@@ -74,8 +73,7 @@ public class Workbench implements BusyHandler,
                     ConsoleDispatcher consoleDispatcher,
                     ChooseFile chooseFile,   // required to force gin to create
                     AskPassManager askPass,  // required to force gin to create
-                    PDFViewer pdfViewer,     // required to force gin to create
-                    Provider<SpellingSandboxDialog> pSpellingSandboxDialog)
+                    PDFViewer pdfViewer)     // required to force gin to create)
   {
       view_ = view;
       workbenchContext_ = workbenchContext;
@@ -88,7 +86,6 @@ public class Workbench implements BusyHandler,
       fsContext_ = fsContext;
       fileDialogs_ = fileDialogs;
       consoleDispatcher_ = consoleDispatcher;
-      pSpellingSandboxDialog_ = pSpellingSandboxDialog;
       
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
       
@@ -347,12 +344,6 @@ public class Workbench implements BusyHandler,
       }
    }
 
-   @Handler
-   public void onSpellingSandbox()
-   {
-      pSpellingSandboxDialog_.get().showModal();
-   }
-    
    private final Server server_;
    private final EventBus eventBus_;
    private final Session session_;
@@ -364,7 +355,6 @@ public class Workbench implements BusyHandler,
    private final FileDialogs fileDialogs_;
    private final WorkbenchContext workbenchContext_;
    private final ConsoleDispatcher consoleDispatcher_;
-   private final Provider<SpellingSandboxDialog> pSpellingSandboxDialog_;
    private final TimeBufferedCommand metricsChangedCommand_;
    private WorkbenchMetrics lastWorkbenchMetrics_;
    private boolean nearQuotaWarningShown_ = false; 

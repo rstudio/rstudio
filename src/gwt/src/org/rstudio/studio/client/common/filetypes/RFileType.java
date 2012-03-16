@@ -33,7 +33,7 @@ public class RFileType extends TextFileType
             editorLanguage,
             defaultExtension,
             defaultIcon,
-            false, true, true, true, true, false, true);
+            false, true, true, true, true, false, true, false);
    }
 
    @Override

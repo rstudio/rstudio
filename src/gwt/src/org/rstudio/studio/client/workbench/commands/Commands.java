@@ -64,6 +64,7 @@ public abstract class
    public abstract AppCommand reindent();
    public abstract AppCommand reflowComment();
    public abstract AppCommand setWorkingDirToActiveDoc();
+   public abstract AppCommand checkSpelling();
    
    // Projects
    public abstract AppCommand newProject();
@@ -218,7 +219,6 @@ public abstract class
    public abstract AppCommand rstudioLicense();
 
    public abstract AppCommand showWarningBar();
-   public abstract AppCommand spellingSandbox();
  
    // Clipboard placeholders
    public abstract AppCommand undoDummy();

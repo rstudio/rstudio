@@ -37,7 +37,8 @@ public class TextFileType extends EditableFileType
                 boolean canExecuteAllCode,
                 boolean canExecuteToCurrentLine,
                 boolean canCompilePDF,
-                boolean canAutoIndent)
+                boolean canAutoIndent,
+                boolean canCheckSpelling)
    {
       super(id, label, defaultIcon);
       editorLanguage_ = editorLanguage;
@@ -49,6 +50,7 @@ public class TextFileType extends EditableFileType
       canExecuteToCurrentLine_ = canExecuteToCurrentLine;
       canCompilePDF_ = canCompilePDF;
       canAutoIndent_ = canAutoIndent;
+      canCheckSpelling_ = canCheckSpelling;
    }
 
    @Override
@@ -105,6 +107,11 @@ public class TextFileType extends EditableFileType
       return canAutoIndent_;
    }
    
+   public boolean canCheckSpelling()
+   {
+      return canCheckSpelling_;
+   }
+   
    public boolean isRnw()
    {
       return FileTypeRegistry.SWEAVE.getTypeId().equals(getTypeId());
@@ -149,6 +156,10 @@ public class TextFileType extends EditableFileType
          results.add(commands.publishPDF());
          results.add(commands.synctexSearch());
       }
+      if (canCheckSpelling())
+      {
+         results.add(commands.checkSpelling());
+      }
       results.add(commands.findReplace());
       results.add(commands.setWorkingDirToActiveDoc());
       results.add(commands.debugForceTopsToZero());
@@ -170,5 +181,6 @@ public class TextFileType extends EditableFileType
    private final boolean canExecuteToCurrentLine_;
    private final boolean canCompilePDF_;
    private final boolean canAutoIndent_;
+   private final boolean canCheckSpelling_;
    private final String defaultExtension_;
 }
