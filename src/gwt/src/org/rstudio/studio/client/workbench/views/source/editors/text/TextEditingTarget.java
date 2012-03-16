@@ -1277,24 +1277,32 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onCommentUncomment()
    {
+      if (isCursorInTexMode())
+         doCommentUncomment('%');
+      else
+         doCommentUncomment('#');
+   }
+   
+   private void doCommentUncomment(char c)
+   {
       docDisplay_.fitSelectionToLines(true);
       String selection = docDisplay_.getSelectionValue();
 
       // If any line's first non-whitespace character is not #, then the whole
       // selection should be commented. Exception: If the whole selection is
       // whitespace, then we comment out the whitespace.
-      Match match = Pattern.create("^\\s*[^#\\s]").match(selection, 0);
+      Match match = Pattern.create("^\\s*[^" + c + "\\s]").match(selection, 0);
       boolean uncomment = match == null && selection.trim().length() != 0;
       if (uncomment)
-         selection = selection.replaceAll("((^|\\n)\\s*)# ?", "$1");
+         selection = selection.replaceAll("((^|\\n)\\s*)" + c + " ?", "$1");
       else
       {
-         selection = "# " + selection.replaceAll("\\n", "\n# ");
+         selection = c + " " + selection.replaceAll("\\n", "\n" + c + " ");
 
          // If the selection ends at the very start of a line, we don't want
          // to comment out that line. This enables Shift+DownArrow to select
          // one line at a time.
-         if (selection.endsWith("\n# "))
+         if (selection.endsWith("\n" + c + " "))
             selection = selection.substring(0, selection.length() - 2);
       }
 

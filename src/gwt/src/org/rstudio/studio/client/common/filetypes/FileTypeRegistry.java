@@ -51,11 +51,9 @@ public class FileTypeRegistry
       new SweaveFileType("sweave", "Sweave Document", 
           EditorLanguage.LANG_SWEAVE, ".Rnw",ICONS.iconRsweave());
         
-   public static final TextFileType TEX =
-         new TextFileType("tex", "TeX Document", EditorLanguage.LANG_TEX, ".tex",
-                          ICONS.iconTex(),
-                          true,
-                          false, false, false, false, true, false);
+   public static final TexFileType TEX =
+         new TexFileType("tex", "TeX Document", EditorLanguage.LANG_TEX, ".tex",
+                          ICONS.iconTex());
    
    public static final PlainTextFileType RHISTORY =
       new PlainTextFileType("r_history", "R History", ".Rhistory",
