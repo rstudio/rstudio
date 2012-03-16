@@ -1,6 +1,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:rs="urn:import:org.rstudio.core.client.widget">
+             xmlns:rs="urn:import:org.rstudio.core.client.widget"
+             xmlns:rsp="urn:import:org.rstudio.studio.client.common.spelling.view">
    <ui:style>
       .bottomBorder {
       	border-bottom: 1px solid #bcc1c5;
@@ -27,7 +28,11 @@
       }
    </ui:style>
 
-   <g:VerticalPanel styleName="{style.bottomBorder}">
+   <g:VerticalPanel ui:field="sandboxPanel_" styleName="{style.bottomBorder}">
+      <g:Label text="SpellChecker Target:" styleName="{style.label}" />
+      <rsp:SpellingSandboxDebugText ui:field="debugTxt_"/>
+      <rs:ThemedButton ui:field="spellCheckButton_" text="Check Spelling" />
+      <rs:ThemedButton ui:field="stopCheckButton_" text="Stop Check" />
       <g:Label text="Not in dictionary:" styleName="{style.label}"/>
       <g:HorizontalPanel>
          <g:HTMLPanel styleName="{style.textPanel}">
@@ -35,7 +40,7 @@
          </g:HTMLPanel>
          <g:VerticalPanel styleName="{style.buttonPanel}">
             <rs:ThemedButton ui:field="ignoreButton_" text="Ignore"/>
-            <rs:ThemedButton ui:field="ignoreAllButton_" text="Ignore All" />
+            <rs:ThemedButton ui:field="addWordButton_" text="Add To Dictionary" />
          </g:VerticalPanel>
       </g:HorizontalPanel>
       <g:Label text="Suggestions:" styleName="{style.label}"/>
