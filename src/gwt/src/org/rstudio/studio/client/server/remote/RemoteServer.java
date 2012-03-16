@@ -980,12 +980,15 @@ public class RemoteServer implements Server
    }
    
    public void newDocument(String filetype,
+                           String contents,
                            JsObject properties,
                            ServerRequestCallback<SourceDocument> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(filetype));
-      params.set(1, new JSONObject(properties));
+      params.set(1, contents != null ? new JSONString(contents) :
+                                       JSONNull.getInstance()); 
+      params.set(2, new JSONObject(properties));
       sendRequest(RPC_SCOPE, NEW_DOCUMENT, params, requestCallback);
    }
 

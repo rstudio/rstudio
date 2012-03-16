@@ -382,7 +382,7 @@ well as menu structures (for main menu and popup menus).
         desc="Create a new R script"/>
         
    <cmd id="newSweaveDoc"
-        menuLabel="_Sweave..."
+        menuLabel="_Sweave"
         desc="Create a new Sweave document"/>      
         
    <cmd id="openSourceDoc"

@@ -141,15 +141,20 @@ Error newDocument(const json::JsonRpcRequest& request,
 {
    // params
    std::string type;
+   json::Value jsonContents;
    json::Object properties;
    Error error = json::readParams(request.params,
                                   &type,
+                                  &jsonContents,
                                   &properties);
    if (error)
       return error ;
 
    // create the new doc and write it to the database
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument(type)) ;
+
+   if (json::isType<std::string>(jsonContents))
+      pDoc->setContents(jsonContents.get_str());
 
    pDoc->editProperties(properties);
 

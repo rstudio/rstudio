@@ -43,6 +43,7 @@ public interface SourceServerOperations extends FilesServerOperations,
     * have never been saved.
     */
    void newDocument(String fileType,
+                    String contents,
                     JsObject properties,
                     ServerRequestCallback<SourceDocument> requestCallback);
 

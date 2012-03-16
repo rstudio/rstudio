@@ -234,6 +234,7 @@ public class Source implements InsertSourceHandler,
          {
             server_.newDocument(
                   FileTypeRegistry.DATAFRAME.getTypeId(),
+                  null,
                   JsObject.createJsObject(),
                   new SimpleRequestCallback<SourceDocument>("Edit Data Frame") {
                      public void onResponseReceived(SourceDocument response)
@@ -390,6 +391,7 @@ public class Source implements InsertSourceHandler,
       ContentItem content = event.getContent();
       server_.newDocument(
             FileTypeRegistry.URLCONTENT.getTypeId(),
+            null,
             (JsObject) content.cast(),
             new SimpleRequestCallback<SourceDocument>("Show")
             {
@@ -421,6 +423,7 @@ public class Source implements InsertSourceHandler,
       ensureVisible(true);
       server_.newDocument(
             FileTypeRegistry.DATAFRAME.getTypeId(),
+            null,
             (JsObject) data.cast(),
             new SimpleRequestCallback<SourceDocument>("Show Data Frame")
             {
@@ -442,15 +445,40 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewSweaveDoc()
    {
-      newDoc(FileTypeRegistry.SWEAVE, null);
+      String template = null;
+      /*
+      String template = 
+         "\n" +
+         "\\documentclass{article}\n" +
+         "\n" +
+         "\\title{Sweave Example 1}\n" +
+         "\\author{Friedrich Leisch}\n" +
+         "\n" +
+         "\\begin{document}\n" +
+         "\\SweaveOpts{concordance=TRUE}" +
+         "\n\n" +
+         "\\maketitle" +
+         "\n\n\n" +
+         "\\end{document}";
+      */
+      
+      newDoc(FileTypeRegistry.SWEAVE, template, null);
    }
 
    private void newDoc(EditableFileType fileType,
+                       ResultCallback<EditingTarget, ServerError> callback)
+   {
+      newDoc(fileType, null, callback);
+   }
+   
+   private void newDoc(EditableFileType fileType,
+                       String contents,
                        final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
       ensureVisible(true);
       server_.newDocument(
             fileType.getTypeId(),
+            contents,
             JsObject.createJsObject(),
             new SimpleRequestCallback<SourceDocument>(
                   "Error Creating New Document")
