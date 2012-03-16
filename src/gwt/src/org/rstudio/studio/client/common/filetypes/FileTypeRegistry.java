@@ -42,17 +42,17 @@ public class FileTypeRegistry
                        ICONS.iconRdoc());
 
    public static final TextFileType RD =
-      new TextFileType("r_doc", "R Documentation", EditorLanguage.LANG_RDOC, ".Rd",
+      new TextFileType("r_doc", "R Doc", EditorLanguage.LANG_RDOC, ".Rd",
                        ICONS.iconRd(),
                        true,
                        false, false, false, false, false, false, false);
 
    public static final TextFileType SWEAVE =
-      new SweaveFileType("sweave", "Sweave Document", 
+      new SweaveFileType("sweave", "Sweave", 
           EditorLanguage.LANG_SWEAVE, ".Rnw",ICONS.iconRsweave());
         
    public static final TexFileType TEX =
-         new TexFileType("tex", "TeX Document", EditorLanguage.LANG_TEX, ".tex",
+         new TexFileType("tex", "TeX", EditorLanguage.LANG_TEX, ".tex",
                           ICONS.iconTex());
    
    public static final PlainTextFileType RHISTORY =

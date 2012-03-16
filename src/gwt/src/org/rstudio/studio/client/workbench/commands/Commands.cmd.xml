@@ -29,6 +29,8 @@ well as menu structures (for main menu and popup menus).
       <menu label="_File">
          <menu label="_New">
             <cmd refid="newSourceDoc"/>
+            <cmd refid="newSweaveDoc"/>
+            <separator/>
             <dynamic class="org.rstudio.studio.client.common.filetypes.NewFileMenu"/>
          </menu>
          <separator/>
@@ -376,8 +378,13 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="newSourceDoc"
         buttonLabel=""
-        menuLabel="R Script"
-        desc="Create a new R script file"/>
+        menuLabel="_R Script"
+        desc="Create a new R script"/>
+        
+   <cmd id="newSweaveDoc"
+        menuLabel="_Sweave..."
+        desc="Create a new Sweave document"/>      
+        
    <cmd id="openSourceDoc"
         menuLabel="_Open File..."
         buttonLabel=""

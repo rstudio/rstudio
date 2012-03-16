@@ -438,6 +438,12 @@ public class Source implements InsertSourceHandler,
    {
       newDoc(FileTypeRegistry.R, null);
    }
+   
+   @Handler
+   public void onNewSweaveDoc()
+   {
+      newDoc(FileTypeRegistry.SWEAVE, null);
+   }
 
    private void newDoc(EditableFileType fileType,
                        final ResultCallback<EditingTarget, ServerError> resultCallback)

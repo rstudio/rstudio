@@ -26,6 +26,7 @@ public abstract class
    
    // Source
    public abstract AppCommand newSourceDoc();
+   public abstract AppCommand newSweaveDoc();
    public abstract AppCommand openSourceDoc();
    public abstract AppCommand reopenSourceDocWithEncoding();
    public abstract AppCommand saveSourceDoc();

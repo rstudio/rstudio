@@ -44,10 +44,9 @@ public class FileTypeCommands
       eventBus_ = eventBus;
       commands_ = commands;
 
-      addType(FileTypeRegistry.R);
       addType(FileTypeRegistry.TEXT);
-      addType(FileTypeRegistry.SWEAVE);
       addType(FileTypeRegistry.TEX);
+      addType(FileTypeRegistry.RD);
    }
 
    
@@ -55,18 +54,7 @@ public class FileTypeCommands
    {
       return fileTypeCommands_;
    }
-   
-   public ArrayList<CommandWithId> commandsWithIds(FileType excludeType)
-   {
-      String excludedTypeId = commandIdForType(excludeType);
-      ArrayList<CommandWithId> commands = new ArrayList<CommandWithId>();
-      for (CommandWithId cmd : fileTypeCommands_)
-         if (!cmd.commandId.equals(excludedTypeId))
-            commands.add(cmd);
-      return commands;
-   }
-   
-  
+    
    private void addType(final TextFileType fileType)
    {
       AppCommand command = new AppCommand();

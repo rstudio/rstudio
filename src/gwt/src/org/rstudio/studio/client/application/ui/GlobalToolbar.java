@@ -23,7 +23,6 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
-import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -47,13 +46,15 @@ public class GlobalToolbar extends Toolbar
       addStyleName(res.themeStyles().globalToolbar());
       
       
-      // add newSourceDoc command
+      // add new source doc commands
       ToolbarPopupMenu newMenu = new ToolbarPopupMenu();
       newMenu.addItem(commands.newSourceDoc().createMenuItem(false));
-      
+      newMenu.addItem(commands.newSweaveDoc().createMenuItem(false));
+           
       // dynamically add other commands
+      newMenu.addSeparator();
       ArrayList<FileTypeCommands.CommandWithId> fileNewCommands = 
-         fileTypeCommands.commandsWithIds(FileTypeRegistry.R);
+                                       fileTypeCommands.commandsWithIds();
       for (FileTypeCommands.CommandWithId cmd : fileNewCommands)
          newMenu.addItem(cmd.command.createMenuItem(false));
       

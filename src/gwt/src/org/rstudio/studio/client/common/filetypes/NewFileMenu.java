@@ -34,7 +34,7 @@ public class NewFileMenu
    @Inject
    void initialize(FileTypeCommands fileTypeCommands)
    {
-      fileTypeCommands_ = fileTypeCommands.commandsWithIds(FileTypeRegistry.R);
+      fileTypeCommands_ = fileTypeCommands.commandsWithIds();
    }
    
    private ArrayList<FileTypeCommands.CommandWithId> fileTypeCommands_ =

@@ -52,6 +52,8 @@ public class SourceShim extends Composite
       @Handler
       public abstract void onNewSourceDoc();
       @Handler
+      public abstract void onNewSweaveDoc();
+      @Handler
       public abstract void onOpenSourceDoc();
       @Handler
       public abstract void onCloseSourceDoc();
