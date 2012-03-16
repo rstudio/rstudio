@@ -901,6 +901,11 @@ body.ubuntu_mono .searchBox {
    font-size: 11px;
 }
 
+@if rstudio.desktop false {
+@if user.agent safari { .ubuntu_mono .searchBox {
+   margin-top: -2px;
+}}}
+
 /** Workbench **/
 
 .dialogMessage {
