@@ -15,7 +15,6 @@
 
       .label {
          margin-left: -1px;
-         color: #3c474d;
       }
    </ui:style>
 

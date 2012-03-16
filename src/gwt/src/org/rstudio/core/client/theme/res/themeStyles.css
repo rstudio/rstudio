@@ -115,6 +115,9 @@ input[type=text] {
 input[type=text][disabled] {
    background-color: transparent;
 }
+button, input[type="reset"], input[type="button"], input[type="submit"] {
+   color: black;
+}
 .fixedWidthFont {
    font-family: fixedWidthFont !important;
 }
