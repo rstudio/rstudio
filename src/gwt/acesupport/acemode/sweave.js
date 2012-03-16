@@ -68,7 +68,7 @@ oop.inherits(Mode, TextMode);
 
    this.getLanguageMode = function(position)
    {
-      return this.$session.getState(position.row) == 'r-start' ? 'R' : 'TeX';
+      return this.$session.getState(position.row).match(/^r-/) ? 'R' : 'TeX';
    };
 
    this.getNextLineIndent = function(state, line, tab, tabSize, row)
