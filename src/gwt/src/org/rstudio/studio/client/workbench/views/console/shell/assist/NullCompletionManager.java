@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.user.client.Command;
 
 public class NullCompletionManager implements CompletionManager
 {
@@ -20,7 +21,7 @@ public class NullCompletionManager implements CompletionManager
    {
    }
    
-   public void goToFunctionDefinition()
+   public void goToFunctionDefinition(Command onNoFunctionFound)
    {
    }
 

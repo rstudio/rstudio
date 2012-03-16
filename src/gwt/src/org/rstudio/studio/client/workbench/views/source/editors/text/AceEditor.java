@@ -475,9 +475,9 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().focus();
    }
    
-   public void goToFunctionDefinition()
+   public void goToFunctionDefinition(Command onNoFunctionFound)
    {
-      completionManager_.goToFunctionDefinition();
+      completionManager_.goToFunctionDefinition(onNoFunctionFound);
    }
 
    class PrintIFrame extends DynamicIFrame
@@ -749,6 +749,9 @@ public class AceEditor implements DocDisplay,
    @Override
    public String getLanguageMode(Position position)
    {
+      if (position == null)
+         return null;
+      
       return getSession().getMode().getLanguageMode(position);
    }
 

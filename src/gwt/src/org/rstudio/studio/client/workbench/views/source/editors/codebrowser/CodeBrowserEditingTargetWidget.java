@@ -18,6 +18,7 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ResizeComposite;
@@ -126,7 +127,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
                }
                else if (event.getKeyCode() == 113) // F2
                {
-                  goToFunctionDefinition();
+                  goToFunctionDefinition(null);
                }
             }
             
@@ -134,14 +135,14 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
          }
          
          @Override
-         public void goToFunctionDefinition()
+         public void goToFunctionDefinition(Command onNoFunctionFound)
          {
             // determine current line and cursor position
             InputEditorLineWithCursorPosition lineWithPos = 
                       InputEditorUtil.getLineWithCursorPosition(docDisplay);
              
             // navigate to the function at this position (if any)
-            navigateToFunction(lineWithPos);  
+            navigateToFunction(lineWithPos, onNoFunctionFound);  
          }
 
          @Override
@@ -215,21 +216,24 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    }
    
    private void navigateToFunction(
-         InputEditorLineWithCursorPosition lineWithPos)
+         InputEditorLineWithCursorPosition lineWithPos,
+         com.google.gwt.user.client.Command onNoFunctionFound)
    {
       server_.findFunctionInSearchPath(
             lineWithPos.getLine(),
             lineWithPos.getPosition(), 
             currentFunctionNamespace_,
-            new FunctionSearchRequestCallback(true));
+            new FunctionSearchRequestCallback(true, onNoFunctionFound));
    }
    
    private class FunctionSearchRequestCallback
                     extends ServerRequestCallback<SearchPathFunctionDefinition>
    {
-      public FunctionSearchRequestCallback(boolean searchLocally)
+      public FunctionSearchRequestCallback(boolean searchLocally,
+                                           Command onNoFunctionFound)
       {
          searchLocally_ = searchLocally;
+         onNoFunctionFound_ = onNoFunctionFound;
          
          // delayed progress indicator
          progress_ = new GlobalProgressDelayer(
@@ -261,6 +265,11 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
                eventBus_.fireEvent(new CodeBrowserNavigationEvent(
                      def));        
             }
+            else
+            {
+               if (onNoFunctionFound_ != null)
+                  onNoFunctionFound_.execute();
+            }
          }
       }
 
@@ -275,6 +284,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       }
       
       private final boolean searchLocally_;
+      private final Command onNoFunctionFound_;
       private final GlobalProgressDelayer progress_;
    }
    
@@ -304,7 +314,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
          {
             server_.getMethodDefinition(
                               event.getSelectedItem(),
-                              new FunctionSearchRequestCallback(false));
+                              new FunctionSearchRequestCallback(false, null));
          }
          
       });

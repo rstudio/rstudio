@@ -53,6 +53,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.SweaveFileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.SynctexUtils;
@@ -280,18 +281,29 @@ public class TextEditingTarget implements EditingTarget
          @Override
          public void onCommandClick(CommandClickEvent event)
          {
-            if (fileType_.canCompilePDF() && 
-                commands_.synctexSearch().isEnabled())
+            Command synctexSearchCommand = new Command() 
             {
+               @Override
+               public void execute()
+               {
                // warn firefox users that this doesn't really work in Firefox
-               if (BrowseCap.isFirefox() && !BrowseCap.isMacintosh())
-                  SynctexUtils.showFirefoxWarning("PDF preview");
-               
-               doSynctexSearch(true);
+                  if (BrowseCap.isFirefox() && !BrowseCap.isMacintosh())
+                     SynctexUtils.showFirefoxWarning("PDF preview");
+                  
+                  doSynctexSearch(true);  
+               }
+            };
+            
+            if (commands_.synctexSearch().isEnabled())
+            {
+               if (isCursorInTexMode())
+                  synctexSearchCommand.execute();
+               else
+                  docDisplay_.goToFunctionDefinition(synctexSearchCommand);
             }
             else
             {
-               docDisplay_.goToFunctionDefinition();
+               docDisplay_.goToFunctionDefinition(null);
             }
          }
       });
@@ -1587,7 +1599,7 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onGoToFunctionDefinition()
    {
-      docDisplay_.goToFunctionDefinition();
+      docDisplay_.goToFunctionDefinition(null);
    } 
    
    @Handler
@@ -1794,6 +1806,25 @@ public class TextEditingTarget implements EditingTarget
       synctex_.forwardSearch(sourceLocation);
    }
    
+   private boolean isCursorInTexMode()
+   {
+      if (fileType_.canCompilePDF())
+      {
+         if (fileType_.isRnw())
+         {
+            return SweaveFileType.TEX_LANG_MODE.equals(
+               docDisplay_.getLanguageMode(docDisplay_.getCursorPosition()));
+         }
+         else
+         {
+            return true;
+         }
+      }
+      else
+      {
+         return false;
+      }
+   }
    
    private SourceLocation getSelectionAsSourceLocation(boolean fromClick)
    {

@@ -30,6 +30,7 @@ import com.google.gwt.event.dom.client.HasFocusHandlers;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.IsWidget;
 
 public interface DocDisplay extends HasValueChangeHandlers<Void>,
@@ -53,7 +54,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void insertCode(String code, boolean blockMode);
    void focus();
    void print();
-   void goToFunctionDefinition();
+   void goToFunctionDefinition(Command onNoFunctionFound);
    String getSelectionValue();
    String getCurrentLine();
    // This returns null for most file types, but for Sweave it returns "R" or

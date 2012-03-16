@@ -18,6 +18,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
@@ -149,7 +150,7 @@ public class RCompletionManager implements CompletionManager
       popup_.hide();
    }
    
-   public void goToFunctionDefinition()
+   public void goToFunctionDefinition(final Command onNoFunctionFound)
    {   
       // determine current line and cursor position
       InputEditorLineWithCursorPosition lineWithPos = 
@@ -206,6 +207,12 @@ public class RCompletionManager implements CompletionManager
                       eventBus_.fireEvent(new CodeBrowserNavigationEvent(
                                      def.getSearchPathFunctionDefinition()));
                       
+                   }
+                   
+                   else
+                   {
+                      if (onNoFunctionFound != null)
+                         onNoFunctionFound.execute();
                    }
                }
             }
@@ -264,7 +271,7 @@ public class RCompletionManager implements CompletionManager
          else if (event.getKeyCode() == 113 // F2
                   && modifier == KeyboardShortcut.NONE)
          {
-            goToFunctionDefinition();
+            goToFunctionDefinition(null);
          }
       }
       else
@@ -319,7 +326,7 @@ public class RCompletionManager implements CompletionManager
             }
             else if (event.getKeyCode() == 113) // F2
             {
-               goToFunctionDefinition();
+               goToFunctionDefinition(null);
                return true;
             }
          }
