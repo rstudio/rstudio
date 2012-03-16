@@ -204,7 +204,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Handler
    void onGoToFunctionDefinition()
    {
-      docDisplay_.goToFunctionDefinition(null);
+      docDisplay_.goToFunctionDefinition();
    } 
 
    @Handler

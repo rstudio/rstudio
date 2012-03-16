@@ -284,29 +284,18 @@ public class TextEditingTarget implements EditingTarget
          @Override
          public void onCommandClick(CommandClickEvent event)
          {
-            Command synctexSearchCommand = new Command() 
+            if (fileType_.canCompilePDF() && 
+                commands_.synctexSearch().isEnabled())
             {
-               @Override
-               public void execute()
-               {
                // warn firefox users that this doesn't really work in Firefox
-                  if (BrowseCap.isFirefox() && !BrowseCap.isMacintosh())
-                     SynctexUtils.showFirefoxWarning("PDF preview");
-                  
-                  doSynctexSearch(true);  
-               }
-            };
-            
-            if (commands_.synctexSearch().isEnabled())
-            {
-               if (isCursorInTexMode())
-                  synctexSearchCommand.execute();
-               else
-                  docDisplay_.goToFunctionDefinition(synctexSearchCommand);
+               if (BrowseCap.isFirefox() && !BrowseCap.isMacintosh())
+                  SynctexUtils.showFirefoxWarning("PDF preview");
+               
+               doSynctexSearch(true);
             }
             else
             {
-               docDisplay_.goToFunctionDefinition(null);
+               docDisplay_.goToFunctionDefinition();
             }
          }
       });
@@ -1610,7 +1599,7 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onGoToFunctionDefinition()
    {
-      docDisplay_.goToFunctionDefinition(null);
+      docDisplay_.goToFunctionDefinition();
    } 
    
    @Handler
@@ -1830,25 +1819,6 @@ public class TextEditingTarget implements EditingTarget
       synctex_.forwardSearch(sourceLocation);
    }
    
-   private boolean isCursorInTexMode()
-   {
-      if (fileType_.canCompilePDF())
-      {
-         if (fileType_.isRnw())
-         {
-            return SweaveFileType.TEX_LANG_MODE.equals(
-               docDisplay_.getLanguageMode(docDisplay_.getCursorPosition()));
-         }
-         else
-         {
-            return true;
-         }
-      }
-      else
-      {
-         return false;
-      }
-   }
    
    private SourceLocation getSelectionAsSourceLocation(boolean fromClick)
    {
@@ -2042,6 +2012,25 @@ public class TextEditingTarget implements EditingTarget
       return SourcePosition.create(pos.getRow(), pos.getColumn());
    }
    
+   private boolean isCursorInTexMode()
+   {
+      if (fileType_.canCompilePDF())
+      {
+         if (fileType_.isRnw())
+         {
+            return SweaveFileType.TEX_LANG_MODE.equals(
+               docDisplay_.getLanguageMode(docDisplay_.getCursorPosition()));
+         }
+         else
+         {
+            return true;
+         }
+      }
+      else
+      {
+         return false;
+      }
+   }
    
    // these methods are public static so that other editing targets which
    // display source code (but don't inherit from TextEditingTarget) can share
