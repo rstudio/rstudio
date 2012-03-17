@@ -29,6 +29,7 @@ import org.rstudio.core.client.dom.impl.DomUtilsImpl;
 import org.rstudio.core.client.dom.impl.NodeRelativePosition;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.application.Desktop;
 
 /**
  * Helper methods that are mostly useful for interacting with 
@@ -700,8 +701,18 @@ public class DomUtils
    
    public static boolean isCommandClick(NativeEvent nativeEvt)
    {
-      boolean commandKey = BrowseCap.hasMetaKey() ? nativeEvt.getMetaKey() :
-                                                    nativeEvt.getCtrlKey();
+      boolean commandKey;
+      
+      // NOTE: on mac desktop we still check for CtrlKey because under Qt 4.8
+      // on the mac the reporting of Ctrl and Meta keys is inverted)
+      if (BrowseCap.isMacintosh() && !Desktop.isDesktop())
+      {
+         commandKey = nativeEvt.getMetaKey();
+      }
+      else
+      {
+         commandKey = nativeEvt.getCtrlKey();
+      }
       
       return (nativeEvt.getButton() == NativeEvent.BUTTON_LEFT) && commandKey;
    }
