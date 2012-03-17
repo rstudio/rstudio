@@ -817,7 +817,11 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
    
    function isWhitespaceOrComment(token)
    {
-      return /^\s*$/.test(token.value) || token.type === "comment";
+      // virtual-comment is for roxygen content that needs to be highlighted
+      // as TeX, but for the purposes of the code model should be invisible.
+
+      return /^\s*$/.test(token.value) ||
+             token.type.match(/\b(?:virtual-)?comment\b/);
    }
 
    this.$filterWhitespaceAndComments = function(tokens)

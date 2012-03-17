@@ -152,6 +152,13 @@ define("mode/r_highlight_rules", function(require, exports, module)
       };
 
       var rdRules = new TexHighlightRules("comment").getRules();
+
+      // Make all embedded TeX virtual-comment so they don't interfere with
+      // auto-indent.
+      for (var i = 0; i < rdRules["start"].length; i++) {
+         rdRules["start"][i].token += " virtual-comment";
+      }
+
       this.addRules(rdRules, "rd-");
       this.$rules["rd-start"].unshift({
           token: "text",
