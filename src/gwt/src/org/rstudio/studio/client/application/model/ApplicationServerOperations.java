@@ -12,8 +12,6 @@
  */
 package org.rstudio.studio.client.application.model;
 
-import com.google.gwt.core.client.JsArray;
-
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Agreement;
@@ -30,10 +28,7 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    
    // abort the current session
    void abort(ServerRequestCallback<Void> requestCallback);
-   
-   // get the http log
-   void httpLog(ServerRequestCallback<JsArray<HttpLogEntry>> requestCallback);
-   
+     
    // agree to the application agreement
    void acceptAgreement(Agreement agreement, 
                         ServerRequestCallback<Void> requestCallback);

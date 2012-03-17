@@ -37,7 +37,6 @@
 #include <session/SessionHttpConnectionQueue.hpp>
 #include <session/SessionHttpConnectionListener.hpp>
 
-#include "SessionHttpLog.hpp"
 #include "SessionHttpConnectionImpl.hpp"
 
 
@@ -269,10 +268,6 @@ private:
       if (checkForAbort(ptrHttpConnection))
          return;
 
-      // see if this is a special request for our http log
-      if (checkForHttpLog(ptrHttpConnection))
-         return;
-
       // place the connection on the correct queue
       if (isGetEvents(ptrHttpConnection))
          eventsConnectionQueue_.enqueConnection(ptrHttpConnection);
@@ -325,27 +320,6 @@ private:
 
          // abort
          ::abort();
-         return true;
-      }
-      else
-      {
-         return false;
-      }
-   }
-
-   static bool checkForHttpLog(
-                        boost::shared_ptr<HttpConnection> ptrConnection)
-   {
-      if (isMethod(ptrConnection, "http_log"))
-      {
-         // get http log json and send it back
-         core::json::Array httpLogJson;
-         httpLog().asJson(&httpLogJson);
-         core::json::JsonRpcResponse response;
-         response.setResult(httpLogJson);
-         response.setField(kEventsPending, "false");
-         ptrConnection->sendJsonRpcResponse(response);
-
          return true;
       }
       else

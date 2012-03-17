@@ -35,10 +35,13 @@
 #include <core/json/JsonRpc.hpp>
 
 #include <session/SessionHttpConnection.hpp>
-#include "SessionHttpLog.hpp"
-
 
 namespace session {
+
+std::string rstudioRequestIdFromRequest(const core::http::Request& request)
+{
+   return request.headerValue("X-RS-RID");
+}
 
 template <typename ProtocolType>
 class HttpConnectionImpl :
@@ -77,9 +80,6 @@ public:
 
    virtual void sendResponse(const core::http::Response &response)
    {
-      // set log entry type depending upon what happens (default to success)
-      HttpLog::EntryType logEntryType = HttpLog::ConnectionResponded;
-
       try
       {
          // write the response
@@ -94,25 +94,14 @@ public:
          error.addProperty("request-uri", request_.uri());
 
          // log the error if it wasn't connection terminated
-         if (core::http::isConnectionTerminatedError(error))
-         {
-            logEntryType = HttpLog::ConnectionTerminated;
-         }
-         else
-         {
+         if (!core::http::isConnectionTerminatedError(error))
             LOG_ERROR(error);
-            logEntryType = HttpLog::ConnectionError;
-         }
       }
       CATCH_UNEXPECTED_EXCEPTION
 
-      // always log and close connection
+      // always close connection
       try
       {
-         // log it
-         httpLog().addEntry(logEntryType, requestId_);
-
-         // close
          close();
       }
       CATCH_UNEXPECTED_EXCEPTION
@@ -227,9 +216,6 @@ private:
             {
                // establish request id
                requestId_ = rstudioRequestIdFromRequest(request_);
-
-               // log it
-               httpLog().addEntry(HttpLog::ConnectionReceived, requestId_);
 
                // call handler
                handler_(HttpConnectionImpl<ProtocolType>::shared_from_this());

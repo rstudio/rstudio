@@ -28,7 +28,6 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.*;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.*;
-import org.rstudio.studio.client.application.model.HttpLogEntry;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
@@ -415,12 +414,6 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, ABORT, requestCallback);
    }
    
-   public void httpLog(
-         ServerRequestCallback<JsArray<HttpLogEntry>> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, HTTP_LOG, requestCallback);
-   }
-
    public void getCompletions(String line, int cursorPos,
                           ServerRequestCallback<Completions> requestCallback)
    {
@@ -2550,7 +2543,6 @@ public class RemoteServer implements Server
    private static final String RESET_CONSOLE_ACTIONS = "reset_console_actions";
    private static final String INTERRUPT = "interrupt";
    private static final String ABORT = "abort";
-   private static final String HTTP_LOG = "http_log";
    private static final String GET_COMPLETIONS = "get_completions";
    private static final String GET_HELP_AT_CURSOR = "get_help_at_cursor";
 

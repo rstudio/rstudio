@@ -257,8 +257,7 @@ public class Application implements ApplicationEventHandlers
 
          public void onSuccess()
          {
-            final RequestLogVisualization viz = new RequestLogVisualization(
-                  server_);
+            final RequestLogVisualization viz = new RequestLogVisualization();
             final RootLayoutPanel root = RootLayoutPanel.get();
             root.add(viz);
             root.setWidgetTopBottom(viz, 10, Unit.PX, 10, Unit.PX);

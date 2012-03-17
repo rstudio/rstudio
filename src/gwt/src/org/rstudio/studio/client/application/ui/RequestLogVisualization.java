@@ -39,7 +39,6 @@ import org.rstudio.core.client.jsonrpc.RequestLogEntry.ResponseType;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ScrollPanelWithClick;
-import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -80,9 +79,8 @@ public class RequestLogVisualization extends Composite
       private final TextArea textArea_;
    }
 
-   public RequestLogVisualization(ApplicationServerOperations server)
+   public RequestLogVisualization()
    {
-      server_ = server;
       overviewPanel_ = new LayoutPanel();
       overviewPanel_.getElement().getStyle().setProperty("borderRight",
                                                          "2px dashed #888");
@@ -233,7 +231,7 @@ public class RequestLogVisualization extends Composite
          {
             event.stopPropagation();
             detail_.clear();
-            RequestLogDetail entryDetail = new RequestLogDetail(server_, entry);
+            RequestLogDetail entryDetail = new RequestLogDetail(entry);
             entryDetail.setSize("100%", "100%");
             detail_.setWidget(entryDetail);
          }
@@ -348,6 +346,5 @@ public class RequestLogVisualization extends Composite
    private boolean timerIsRunning_;
    private static final int PERIOD_MILLIS = 2000;
    private SimplePanel detail_;
-   private ApplicationServerOperations server_;
    private HTML instructions_;
 }

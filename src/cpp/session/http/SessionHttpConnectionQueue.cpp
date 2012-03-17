@@ -19,8 +19,6 @@
 
 #include <core/http/Request.hpp>
 
-#include "SessionHttpLog.hpp"
-
 using namespace core ;
 
 namespace session {
@@ -67,10 +65,6 @@ boost::shared_ptr<HttpConnection> HttpConnectionQueue::dequeConnection()
 {
    // perform the deque
    boost::shared_ptr<HttpConnection> connection = doDequeConnection();
-
-   // log if we got one
-   if (connection)
-      httpLog().addEntry(HttpLog::ConnectionDequeued, connection->requestId());
 
    // return the connection
    return connection;

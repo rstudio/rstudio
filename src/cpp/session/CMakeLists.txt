@@ -35,7 +35,6 @@ set (SESSION_SOURCE_FILES
    SessionUserSettings.cpp
    SessionWorkerContext.cpp
    http/SessionHttpConnectionQueue.cpp
-   http/SessionHttpLog.cpp
    modules/SessionAgreement.cpp
    modules/SessionAskPass.cpp
    modules/SessionAuthoring.cpp
