@@ -564,7 +564,7 @@ public class TextEditingTarget implements EditingTarget
             JsArray<FunctionStart> tree = docDisplay_.getFunctionTree();
             final StatusBarPopupMenu menu = new StatusBarPopupMenu();
             MenuItem defaultItem = addFunctionsToMenu(
-                  menu, tree, "", docDisplay_.getCurrentFunction());
+                  menu, tree, "", docDisplay_.getCurrentFunction(), true);
             if (defaultItem != null)
             {
                menu.selectItem(defaultItem);
@@ -585,9 +585,20 @@ public class TextEditingTarget implements EditingTarget
    private MenuItem addFunctionsToMenu(StatusBarPopupMenu menu,
                                        final JsArray<FunctionStart> funcs,
                                        String indent,
-                                       FunctionStart defaultFunction)
+                                       FunctionStart defaultFunction,
+                                       boolean includeNoFunctionsMessage)
    {
       MenuItem defaultMenuItem = null;
+
+      if (funcs.length() == 0 && includeNoFunctionsMessage)
+      {
+         MenuItem noFunctions = new MenuItem("(No functions defined)",
+                                             false,
+                                             (Command) null);
+         noFunctions.setEnabled(false);
+         noFunctions.getElement().addClassName("disabled");
+         menu.addItem(noFunctions);
+      }
 
       for (int i = 0; i < funcs.length(); i++)
       {
@@ -620,7 +631,8 @@ public class TextEditingTarget implements EditingTarget
                menu,
                func.getChildren(),
                indent + "&nbsp;&nbsp;",
-               defaultMenuItem == null ? defaultFunction : null);
+               defaultMenuItem == null ? defaultFunction : null,
+               false);
          if (childDefaultMenuItem != null)
             defaultMenuItem = childDefaultMenuItem;
       }
@@ -1413,9 +1425,16 @@ public class TextEditingTarget implements EditingTarget
 
       for (String line : lines)
       {
+         String content = line.substring(Math.min(line.length(),
+                                                  prefix.length()));
+
+         if (content.matches("^\\s*\\@examples\\b"))
+            wordWrap.setWrappingEnabled(false);
+         else if (content.trim().startsWith("@"))
+            wordWrap.setWrappingEnabled(true);
+
          wwct.onBeginInputRow();
-         wordWrap.appendLine(
-                      line.substring(Math.min(line.length(), prefix.length())));
+         wordWrap.appendLine(content);
       }
 
       String wrappedString = wordWrap.getOutput();
