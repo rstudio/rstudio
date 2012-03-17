@@ -45,6 +45,8 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileHandler;
+import org.rstudio.studio.client.common.rnw.RnwWeave;
+import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
@@ -154,7 +156,8 @@ public class Source implements InsertSourceHandler,
                  Synctex synctex,
                  WorkbenchContext workbenchContext,
                  Provider<FileMRUList> pMruList,
-                 UIPrefs uiPrefs)
+                 UIPrefs uiPrefs,
+                 RnwWeaveRegistry rnwWeaveRegistry)
    {
       commands_ = commands;
       view_ = view;
@@ -170,6 +173,7 @@ public class Source implements InsertSourceHandler,
       workbenchContext_ = workbenchContext;
       pMruList_ = pMruList;
       uiPrefs_ = uiPrefs;
+      rnwWeaveRegistry_ = rnwWeaveRegistry;
 
       view_.addTabClosingHandler(this);
       view_.addTabCloseHandler(this);
@@ -445,24 +449,35 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewSweaveDoc()
    {
-      String template = null;
-      /*
-      String template = 
-         "\n" +
-         "\\documentclass{article}\n" +
-         "\n" +
-         "\\title{Sweave Example 1}\n" +
-         "\\author{Friedrich Leisch}\n" +
-         "\n" +
-         "\\begin{document}\n" +
-         "\\SweaveOpts{concordance=TRUE}" +
-         "\n\n" +
-         "\\maketitle" +
-         "\n\n\n" +
-         "\\end{document}";
-      */
+      String concordance = new String();
+      if (uiPrefs_.alwaysEnableRnwConcordance().getValue())
+      {
+         RnwWeave activeWeave = rnwWeaveRegistry_.findTypeIgnoreCase(
+                                    uiPrefs_.defaultSweaveEngine().getValue());
+         if (activeWeave.getInjectConcordance())
+            concordance = "\\SweaveOpts{concordance=TRUE}\n";
+      }
       
-      newDoc(FileTypeRegistry.SWEAVE, template, null);
+      String contents = "\\documentclass{article}\n" +
+                        "\n" +
+                        "\\title{Untitled}\n" +
+                        "\n" +
+                        "\\begin{document}\n" +
+                        concordance +
+                        "\n" +
+                        "\\maketitle\n" +
+                        "\n\n\n\n\n" +
+                        "\\end{document}";
+      
+      newDoc(FileTypeRegistry.SWEAVE, 
+             contents, 
+             new ResultCallback<EditingTarget, ServerError> () {
+                @Override
+                public void onSuccess(EditingTarget target)
+                {
+                   
+                }
+             });
    }
 
    private void newDoc(EditableFileType fileType,
@@ -1696,6 +1711,7 @@ public class Source implements InsertSourceHandler,
    private final Synctex synctex_;
    private final Provider<FileMRUList> pMruList_;
    private final UIPrefs uiPrefs_;
+   private final RnwWeaveRegistry rnwWeaveRegistry_;
    private HashSet<AppCommand> activeCommands_ = new HashSet<AppCommand>();
    private final HashSet<AppCommand> dynamicCommands_;
    private final SourceNavigationHistory sourceNavigationHistory_ = 
