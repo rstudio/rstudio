@@ -323,11 +323,11 @@ void setDeviceAttributes(pDevDesc pDev)
    pDev->gettingEvent = FALSE;
 }
 
-void onBeforeAddInteractiveDevice(DeviceContext* pDC)
+void onBeforeAddDevice(DeviceContext* pDC)
 {
 }
 
-void onAfterAddInteractiveDevice(DeviceContext* pDC)
+void onAfterAddDevice(DeviceContext* pDC)
 {
 }
 
@@ -745,8 +745,8 @@ void installCairoHandler()
    handler::initializeWithFile = cairo::initializeWithFile;
    handler::setSize = cairo::setSize;
    handler::setDeviceAttributes = cairo::setDeviceAttributes;
-   handler::onBeforeAddInteractiveDevice = cairo::onBeforeAddInteractiveDevice;
-   handler::onAfterAddInteractiveDevice = cairo::onAfterAddInteractiveDevice;
+   handler::onBeforeAddDevice = cairo::onBeforeAddDevice;
+   handler::onAfterAddDevice = cairo::onAfterAddDevice;
    handler::resyncDisplayListBeforeWriteToPNG = cairo::resyncDisplayListBeforeWriteToPNG;
    handler::writeToPNG = cairo::writeToPNG;
    handler::circle = cairo::circle;

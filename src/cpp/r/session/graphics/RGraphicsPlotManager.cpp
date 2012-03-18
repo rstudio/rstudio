@@ -25,6 +25,7 @@
 #include <core/FileSerializer.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RUtil.hpp>
 #include <r/RErrorCategory.hpp>
 #include <r/session/RSessionUtils.hpp>
 
@@ -253,14 +254,19 @@ Error PlotManager::savePlotAsImage(const FilePath& filePath,
                                    int widthPx,
                                    int heightPx)
 {
-   if (format == kPngFormat)
+   // use special file device for R < 2.14 (so we can get anti-aliasing
+   // for png text and symbols)
+   if ((format == kPngFormat) && !r::util::hasRequiredVersion("2.14"))
    {
       return savePlotAsFile(boost::bind(file_device::create,
                                         widthPx,
                                         heightPx,
                                         filePath));
    }
-   else if (format == kBmpFormat || format == kJpegFormat || format == kTiffFormat)
+   else if (format == kPngFormat ||
+            format == kBmpFormat ||
+            format == kJpegFormat ||
+            format == kTiffFormat)
    {
       return savePlotAsBitmapFile(filePath, format, widthPx, heightPx);
    }

@@ -203,9 +203,17 @@ void createDevice(int width, int height, const FilePath& targetPath)
       handler::setSize(pDev);
       handler::setDeviceAttributes(pDev);
 
+      // notify handler we are about to add (enables shadow device
+      // to close itself so it doesn't show up in the dev.list()
+      // in front of us
+      handler::onBeforeAddDevice(pDC);
+
       // associate with device description and add it
       pGEDevDesc pDD = GEcreateDevDesc(pDev);
       GEaddDevice2(pDD, kRStudioGraphicsFileDevice);
+
+      // notify handler we have added (so it can regenerate its context)
+      handler::onAfterAddDevice(pDC);
 
       // make us active
       Rf_selectDevice(Rf_ndevNumber(pDD->dev));

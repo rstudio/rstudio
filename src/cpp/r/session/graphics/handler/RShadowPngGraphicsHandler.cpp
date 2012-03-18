@@ -13,10 +13,13 @@
 
 #include <iostream>
 
+#include <boost/bind.hpp>
 #include <boost/format.hpp>
 
 #include <core/system/System.hpp>
 #include <core/StringUtils.hpp>
+
+#include <r/RExec.hpp>
 
 #undef TRUE
 #undef FALSE
@@ -82,14 +85,22 @@ void shadowDevOff(DeviceContext* pDC)
    {
       // kill the deviceF
       pGEDevDesc geDev = desc2GEDesc(pDevData->pShadowPngDevice);
-      GEkillDevice(geDev);
 
+      // only kill it is if is still alive
+      if (ndevNumber(pDevData->pShadowPngDevice) > 0)
+      {
+         // close the device -- don't log R errors because they can happen
+         // in the ordinary course of things for invalid graphics staes
+         Error error = r::exec::executeSafely(boost::bind(GEkillDevice, geDev));
+         if (error && !r::isCodeExecutionError(error))
+            LOG_ERROR(error);
+      }
       // set to null
       pDevData->pShadowPngDevice = NULL;
    }
 }
 
-pDevDesc shadowDevDesc(DeviceContext* pDC)
+Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
 {
    ShadowDeviceData* pDevData = (ShadowDeviceData*)pDC->pDeviceSpecific;
 
@@ -109,23 +120,43 @@ pDevDesc shadowDevDesc(DeviceContext* pDC)
                                     pDC->height);
       Error err = r::exec::executeString(code);
       if (err)
-      {
-         LOG_ERROR(err);
-         Rf_error(("Shadow graphics device error: " + err.summary()).c_str());
-      }
+         return err;
 
       // save reference to shadow device
       pDevData->pShadowPngDevice = GEcurrentDevice()->dev;
    }
 
    // return shadow device
-   return pDevData->pShadowPngDevice;
+   *pDev = pDevData->pShadowPngDevice;
+   return Success();
 }
 
+// this version of the function is called from R graphics primitives
+// so can (and should) throw errors in R longjmp style
 pDevDesc shadowDevDesc(pDevDesc dev)
 {
-   DeviceContext* pDC = (DeviceContext*)dev->deviceSpecific;
-   return shadowDevDesc(pDC);
+   try
+   {
+      DeviceContext* pDC = (DeviceContext*)dev->deviceSpecific;
+
+      pDevDesc shadowDev;
+      Error error = shadowDevDesc(pDC, &shadowDev);
+      if (error)
+      {
+         LOG_ERROR(error);
+         throw r::exec::RErrorException(error.summary());
+      }
+
+      return shadowDev;
+   }
+   catch(const r::exec::RErrorException& e)
+   {
+      r::exec::error("Shadow graphics device error: " +
+                     std::string(e.message()));
+   }
+
+   // keep compiler happy
+   return NULL;
 }
 
 FilePath tempFile(const std::string& extension)
@@ -145,8 +176,22 @@ void shadowDevSync(DeviceContext* pDC)
 
    // copy the rstudio device's display list onto the shadow device
    PreserveCurrentDeviceScope preserveCurrentDevice;
-   selectDevice(ndevNumber(shadowDevDesc(pDC)));
-   GEcopyDisplayList(rsDeviceNumber);
+
+   pDevDesc dev;
+   Error error = shadowDevDesc(pDC, &dev);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   selectDevice(ndevNumber(dev));
+
+   // copy display list (ignore R errors because they can happen in the normal
+   // course of things for invalid graphics states)
+   error = r::exec::executeSafely(boost::bind(GEcopyDisplayList,
+                                              rsDeviceNumber));
+   if (error && !r::isCodeExecutionError(error))
+      LOG_ERROR(error);
 }
 
 } // anonymous namespace
@@ -235,13 +280,16 @@ void setDeviceAttributes(pDevDesc pDev)
 // up in the display list AHEAD of the RStudio device. This is a very
 // bad state because it leaves the shadow device as the default
 // device whenever another device (e.g. png, pdf, x11, etc.) is closed
-void onBeforeAddInteractiveDevice(DeviceContext* pDC)
+void onBeforeAddDevice(DeviceContext* pDC)
 {
    shadowDevOff(pDC);
 }
-void onAfterAddInteractiveDevice(DeviceContext* pDC)
+void onAfterAddDevice(DeviceContext* pDC)
 {
-   shadowDevDesc(pDC);
+   pDevDesc dev;
+   Error error = shadowDevDesc(pDC, &dev);
+   if (error)
+      LOG_ERROR(error);
 }
 
 // we do our own internal re-sync via shadowDevSync so we don't
@@ -479,8 +527,8 @@ void installShadowHandler()
    handler::initializeWithFile = shadow::initializeWithFile;
    handler::setSize = shadow::setSize;
    handler::setDeviceAttributes = shadow::setDeviceAttributes;
-   handler::onBeforeAddInteractiveDevice = shadow::onBeforeAddInteractiveDevice;
-   handler::onAfterAddInteractiveDevice = shadow::onAfterAddInteractiveDevice;
+   handler::onBeforeAddDevice = shadow::onBeforeAddDevice;
+   handler::onAfterAddDevice = shadow::onAfterAddDevice;
    handler::resyncDisplayListBeforeWriteToPNG = shadow::resyncDisplayListBeforeWriteToPNG;
    handler::writeToPNG = shadow::writeToPNG;
    handler::circle = shadow::circle;

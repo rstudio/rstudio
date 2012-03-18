@@ -78,8 +78,8 @@ inline bool initialize(int width,
 extern void (*setSize)(pDevDesc pDev);
 extern void (*setDeviceAttributes)(pDevDesc pDev);
 
-extern void (*onBeforeAddInteractiveDevice)(DeviceContext* pDC);
-extern void (*onAfterAddInteractiveDevice)(DeviceContext* pDC);
+extern void (*onBeforeAddDevice)(DeviceContext* pDC);
+extern void (*onAfterAddDevice)(DeviceContext* pDC);
 
 extern bool (*resyncDisplayListBeforeWriteToPNG)();
 

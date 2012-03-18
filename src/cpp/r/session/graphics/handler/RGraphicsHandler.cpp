@@ -30,8 +30,8 @@ bool (*initializeWithFile)(const core::FilePath& filePath,
 void (*setSize)(pDevDesc pDev);
 void (*setDeviceAttributes)(pDevDesc pDev);
 
-void (*onBeforeAddInteractiveDevice)(DeviceContext* pDC);
-void (*onAfterAddInteractiveDevice)(DeviceContext* pDC);
+void (*onBeforeAddDevice)(DeviceContext* pDC);
+void (*onAfterAddDevice)(DeviceContext* pDC);
 
 bool (*resyncDisplayListBeforeWriteToPNG)();
 
