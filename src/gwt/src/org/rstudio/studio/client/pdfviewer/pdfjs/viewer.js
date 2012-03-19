@@ -211,6 +211,8 @@ var PDFView = {
     }
 
     var currentPage = this.pages[this.page - 1];
+    if (!currentPage)
+      return; // document isn't loaded yet
     var pageWidthScale = (window.innerWidth - this.sidebarWidth - kScrollbarPadding) /
                           currentPage.width / kCssUnits;
     var pageHeightScale = (window.innerHeight - kScrollbarPadding) /
