@@ -1434,7 +1434,7 @@ public class TextEditingTarget implements EditingTarget
          String content = line.substring(Math.min(line.length(),
                                                   prefix.length()));
 
-         if (content.matches("^\\s*\\@examples\\b"))
+         if (content.matches("^\\s*\\@examples\\b.*$"))
             wordWrap.setWrappingEnabled(false);
          else if (content.trim().startsWith("@"))
             wordWrap.setWrappingEnabled(true);
