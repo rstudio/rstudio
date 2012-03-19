@@ -1799,7 +1799,7 @@ public class TextEditingTarget implements EditingTarget
       });
       
       // send publish to console
-      handlePdfCommand("publish", false);
+      handlePdfCommand("publish", false, null);
    }
    
    private void removePublishPdfHandler()
@@ -1818,15 +1818,23 @@ public class TextEditingTarget implements EditingTarget
       boolean useInternalPreview = 
          showPdf && session_.getSessionInfo().isInternalPdfPreviewEnabled();
       
+      Command onBeforeCompile = null;
       if (useInternalPreview)
-         events_.fireEvent(new ShowPDFViewerEvent());
-     
+      {
+         onBeforeCompile = new Command() {
+            @Override
+            public void execute()
+            {
+               events_.fireEvent(new ShowPDFViewerEvent());
+            }
+         };
+      }
       
       String action = new String();
       if (showPdf && !useInternalPreview)
          action = "view_external";
        
-      handlePdfCommand(action, useInternalPreview);
+      handlePdfCommand(action, useInternalPreview, onBeforeCompile);
    }
    
    @Handler
@@ -1865,15 +1873,27 @@ public class TextEditingTarget implements EditingTarget
    }
    
    void handlePdfCommand(final String completedAction,
-                         final boolean useInternalPreview)
+                         final boolean useInternalPreview,
+                         final Command onBeforeCompile)
    {
       if (fileType_.isRnw() && prefs_.alwaysEnableRnwConcordance().getValue())
          compilePdfDependencyChecker_.ensureRnwConcordance(docDisplay_);
+      
+      // if the document has been previously saved then we should execute
+      // the onBeforeCompile command immediately
+      final boolean isNewDoc = docUpdateSentinel_.getPath() == null;
+      if (!isNewDoc && (onBeforeCompile != null))
+         onBeforeCompile.execute();
       
       saveThenExecute(null, new Command()
       {
          public void execute()
          {
+            // if this was a new doc then we still need to execute the
+            // onBeforeCompile command
+            if (isNewDoc && (onBeforeCompile != null))
+               onBeforeCompile.execute();
+            
             String path = docUpdateSentinel_.getPath();
             if (path != null)
                fireCompilePdfEvent(path, completedAction, useInternalPreview);
