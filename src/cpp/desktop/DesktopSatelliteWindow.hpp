@@ -40,6 +40,9 @@ protected slots:
    void finishLoading(bool ok);
    void onJavaScriptWindowObjectCleared();
 
+protected:
+   virtual void closeEvent(QCloseEvent *event);
+
 private:
    virtual void onActivated();
 

@@ -21,13 +21,22 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.logical.shared.HasCloseHandlers;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Window.ClosingEvent;
+import com.google.gwt.user.client.Window.ClosingHandler;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
-public class Satellite
-{  
+public class Satellite implements HasCloseHandlers<Satellite>
+{
    @Inject
    public Satellite(Session session,
                     EventBus eventBus,
@@ -43,6 +52,32 @@ public class Satellite
    {
       onReactivated_ = onReactivated;
       initializeNative(name);
+      
+      // NOTE: Desktop doesn't seem to get onWindowClosing events in Qt 4.8
+      // so we instead rely on an explicit callback from the desktop frame
+      // to notifyRStudioSatelliteClosing
+      if (!Desktop.isDesktop())
+      {
+         Window.addWindowClosingHandler(new ClosingHandler() {
+            @Override
+            public void onWindowClosing(ClosingEvent event)
+            {
+               fireCloseEvent();
+            }
+         });
+      }
+   }
+
+   @Override
+   public HandlerRegistration addCloseHandler(CloseHandler<Satellite> handler)
+   {
+      return handlerManager_.addHandler(CloseEvent.getType(), handler);
+   }
+   
+   @Override
+   public void fireEvent(GwtEvent<?> event)
+   {
+      handlerManager_.fireEvent(event);
    }
 
    public native final void flushPendingEvents(String name) /*-{
@@ -79,6 +114,12 @@ public class Satellite
          }
       ); 
       
+          
+      // export notifyClosing
+      $wnd.notifyRStudioSatelliteClosing = $entry(function() {
+         satellite.@org.rstudio.studio.client.common.satellite.Satellite::fireCloseEvent()();
+      });
+        
       // export event notification callback
       $wnd.dispatchEventToRStudioSatellite = $entry(
          function(clientEvent) {
@@ -149,6 +190,11 @@ public class Satellite
          onReactivated_.execute(params);
    }
    
+   private void fireCloseEvent()
+   {
+      CloseEvent.fire(this, this);
+   }
+
    // called by main window to deliver events
    private void dispatchEvent(JavaScriptObject clientEvent)
    {  
@@ -159,6 +205,7 @@ public class Satellite
    private final Session session_;
    private final Provider<UIPrefs> pUIPrefs_;
    private final ClientEventDispatcher eventDispatcher_;
+   private final HandlerManager handlerManager_ = new HandlerManager(this);
    private JavaScriptObject params_ = null;
    private CommandWithArg<JavaScriptObject> onReactivated_ = null;
 }

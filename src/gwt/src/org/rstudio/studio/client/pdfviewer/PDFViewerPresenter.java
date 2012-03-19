@@ -15,13 +15,12 @@ package org.rstudio.studio.client.pdfviewer;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.Window.ClosingEvent;
-import com.google.gwt.user.client.Window.ClosingHandler;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
@@ -42,6 +41,7 @@ import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfResult;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfServerOperations;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
 import org.rstudio.studio.client.common.synctex.events.SynctexViewPdfEvent;
@@ -106,7 +106,8 @@ public class PDFViewerPresenter implements IsWidget,
                              FileTypeRegistry fileTypeRegistry,
                              CompilePdfServerOperations server,
                              GlobalDisplay globalDisplay,
-                             Synctex synctex)
+                             Synctex synctex,
+                             Satellite satellite)
    {
       view_ = view;
       fileTypeRegistry_ = fileTypeRegistry;
@@ -127,10 +128,9 @@ public class PDFViewerPresenter implements IsWidget,
       synctex_.enableCommands(false);
       eventBus.addHandler(SynctexStatusChangedEvent.TYPE, this);
       
-      Window.addWindowClosingHandler(new ClosingHandler() {
-
+      satellite.addCloseHandler(new CloseHandler<Satellite>() {
          @Override
-         public void onWindowClosing(ClosingEvent event)
+         public void onClose(CloseEvent<Satellite> event)
          {
             if (compileIsRunning_)
                terminateRunningCompile();

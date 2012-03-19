@@ -40,9 +40,8 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.Window.ClosingEvent;
-import com.google.gwt.user.client.Window.ClosingHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -77,10 +76,10 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       else if (isCurrentWindowPdfViewerSatellite())
       {
          registerSatelliteCallbacks();
-         
-         Window.addWindowClosingHandler(new ClosingHandler() {
+        
+         satellite_.addCloseHandler(new CloseHandler<Satellite>() {
             @Override
-            public void onWindowClosing(ClosingEvent event)
+            public void onClose(CloseEvent<Satellite> event)
             {
                callNotifyPdfViewerClosed();
             }
