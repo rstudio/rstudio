@@ -44,9 +44,9 @@ public class FileTypeCommands
       eventBus_ = eventBus;
       commands_ = commands;
 
-      addType(FileTypeRegistry.TEXT);
-      addType(FileTypeRegistry.TEX);
-      addType(FileTypeRegistry.RD);
+      addType(FileTypeRegistry.TEXT, "_Text File");
+      addType(FileTypeRegistry.TEX, "Te_X Document");
+      addType(FileTypeRegistry.RD, "R _Documentation");
    }
 
    
@@ -55,10 +55,10 @@ public class FileTypeCommands
       return fileTypeCommands_;
    }
     
-   private void addType(final TextFileType fileType)
+   private void addType(final TextFileType fileType, String menuLabel)
    {
       AppCommand command = new AppCommand();
-      command.setMenuLabel(fileType.getLabel());
+      command.setMenuLabel(menuLabel);
       command.setImageResource(fileType.getDefaultIcon());
       command.addHandler(new CommandHandler()
       {

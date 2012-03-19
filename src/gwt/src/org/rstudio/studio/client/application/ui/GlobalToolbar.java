@@ -49,10 +49,10 @@ public class GlobalToolbar extends Toolbar
       // add new source doc commands
       ToolbarPopupMenu newMenu = new ToolbarPopupMenu();
       newMenu.addItem(commands.newSourceDoc().createMenuItem(false));
+      newMenu.addSeparator();
       newMenu.addItem(commands.newSweaveDoc().createMenuItem(false));
            
       // dynamically add other commands
-      newMenu.addSeparator();
       ArrayList<FileTypeCommands.CommandWithId> fileNewCommands = 
                                        fileTypeCommands.commandsWithIds();
       for (FileTypeCommands.CommandWithId cmd : fileNewCommands)
