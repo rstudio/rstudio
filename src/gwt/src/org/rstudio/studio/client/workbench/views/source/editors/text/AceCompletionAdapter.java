@@ -24,7 +24,7 @@ public class AceCompletionAdapter
    }
 
    public native final KeyboardHandler getKeyboardHandler() /*-{
-      var event = $wnd.require("pilot/event");
+      var event = $wnd.require("ace/lib/event");
       var self = this;
       var noop = {command: "null"};
       return {

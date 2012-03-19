@@ -17,7 +17,7 @@
  */
 define("mode/r_highlight_rules", function(require, exports, module) {
 
-var oop = require("pilot/oop");
+var oop = require("ace/lib/oop");
 var lang = require("pilot/lang");
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 
@@ -170,7 +170,7 @@ exports.RHighlightRules = RHighlightRules;
 
 define("mode/r", function(require, exports, module) {
 
-var oop = require("pilot/oop");
+var oop = require("ace/lib/oop");
 var TextMode = require("ace/mode/text").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
 var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
@@ -223,7 +223,7 @@ exports.Mode = Mode;
 
 define("mode/tex_highlight_rules", function(require, exports, module) {
 
-var oop = require("pilot/oop");
+var oop = require("ace/lib/oop");
 var lang = require("pilot/lang");
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 
@@ -364,7 +364,7 @@ exports.TexHighlightRules = TexHighlightRules;
 
 define("mode/tex", function(require, exports, module) {
 
-var oop = require("pilot/oop");
+var oop = require("ace/lib/oop");
 var TextMode = require("ace/mode/text").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
 var TexHighlightRules = require("mode/tex_highlight_rules").TexHighlightRules;
@@ -417,7 +417,7 @@ exports.Mode = Mode;
 
 define("mode/sweave_highlight_rules", function(require, exports, module) {
 
-var oop = require("pilot/oop");
+var oop = require("ace/lib/oop");
 var TexHighlightRules = require("mode/tex_highlight_rules").TexHighlightRules;
 var RScriptHighlightRules = require("mode/r_highlight_rules").RScriptHighlightRules;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
@@ -486,7 +486,7 @@ exports.SweaveHighlightRules = SweaveHighlightRules;
 
 define("mode/sweave", function(require, exports, module) {
 
-var oop = require("pilot/oop");
+var oop = require("ace/lib/oop");
 var TextMode = require("ace/mode/text").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
 var SweaveHighlightRules = require("mode/sweave_highlight_rules").SweaveHighlightRules;

@@ -20,9 +20,9 @@
 
 define("rstudio/loader", function(require, exports, module) {
 
-var oop = require("pilot/oop");
-var event = require("pilot/event");
-var EventEmitter = require("pilot/event_emitter").EventEmitter;
+var oop = require("ace/lib/oop");
+var event = require("ace/lib/event");
+var EventEmitter = require("ace/lib/event_emitter").EventEmitter;
 var Editor = require("ace/editor").Editor;
 var EditSession = require("ace/edit_session").EditSession;
 var UndoManager = require("ace/undomanager").UndoManager;
@@ -136,14 +136,7 @@ oop.inherits(RStudioUndoManager, UndoManager);
 
 
 function loadEditor(container) {
-   var catalog = require("pilot/plugin_manager").catalog;
-	var env = null;
-	var loaded = catalog.registerPlugins(["pilot/index"]).isResolved();
-    env = require("pilot/environment").create();
-    loaded = catalog.startupPlugins({ env: env }).isResolved() && loaded;
-
-	if (!loaded)
-		throw new Error("Environment loading was not synchronous");
+   var env = {};
 
 	var Renderer = require("ace/virtual_renderer").VirtualRenderer;
 
@@ -156,9 +149,8 @@ function loadEditor(container) {
 	session.setUndoManager(new RStudioUndoManager());
 
 	// We handle these commands ourselves.
-	var canon = require("pilot/canon");
-   function squelch(cmd) {
-      canon.getCommand(cmd).exec = function() {};
+	function squelch(cmd) {
+      env.editor.commands.removeCommand(cmd);
    }
    squelch("findnext");
    squelch("findprevious");

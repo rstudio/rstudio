@@ -17,6 +17,6 @@
  */
 define("theme/default", function(require, exports, module) {
 
-    var dom = require("pilot/dom");
+    var dom = require("ace/lib/dom");
     exports.cssClass = "ace-rs";
 });

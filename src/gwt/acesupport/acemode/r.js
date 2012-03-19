@@ -20,7 +20,7 @@ define("mode/r", function(require, exports, module)
    var Editor = require("ace/editor").Editor;
    var EditSession = require("ace/edit_session").EditSession;
    var Range = require("ace/range").Range;
-   var oop = require("pilot/oop");
+   var oop = require("ace/lib/oop");
    var TextMode = require("ace/mode/text").Mode;
    var Tokenizer = require("ace/tokenizer").Tokenizer;
    var TextHighlightRules = require("ace/mode/text_highlight_rules")

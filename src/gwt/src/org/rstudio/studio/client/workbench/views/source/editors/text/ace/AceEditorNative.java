@@ -102,7 +102,7 @@ public class AceEditorNative extends JavaScriptObject {
          Element element,
          String eventName,
          HasHandlers hasHandlers) /*-{
-      var event = $wnd.require("pilot/event");
+      var event = $wnd.require("ace/lib/event");
       var listener = $entry(function(e) {
          @com.google.gwt.event.dom.client.DomEvent::fireNativeEvent(Lcom/google/gwt/dom/client/NativeEvent;Lcom/google/gwt/event/shared/HasHandlers;Lcom/google/gwt/dom/client/Element;)(e, hasHandlers, element);
       }); 

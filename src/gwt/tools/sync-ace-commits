@@ -41,17 +41,18 @@ fi
 if [ ! -d "./ace/node_modules" ]; then
     cd ace
     npm install uglify-js
+    npm install dryice
     cd ..
 fi
 
 cd ace
-make clean
+git checkout -- build
 
 git fetch origin
 git fetch upstream
 
 # Point this to the upstream commit that we've tested
-git checkout 26a1af8778178fb2488915a24b3c0d951cf4d8a9
+git checkout 4d024f49758f851423ac69d61ba631590dd4f54d
 
 git submodule update --init --recursive
 
@@ -59,18 +60,17 @@ git submodule update --init --recursive
 git merge \
     origin/bugfix-webkit-paste2 \
     origin/bugfix-updatefontsize2 \
-    origin/bugfix-ctrl-backspace \
     origin/bugfix-active-line-back \
-    origin/patch-advanced-indent3 \
+    origin/patch-advanced-indent4 \
     origin/patch/invisible-colors2 \
-    origin/patch-build-matchingbraceoutdent \
-    origin/patch-normalizeinput2 \
+    origin/patch-normalizeinput3 \
     origin/bugfix/search-regexp \
     origin/bugfix/selected-word-colors2 \
-    origin/patch/scroll-granularity \
-    origin/patch/escape-characters2 \
     origin/bugfix/no-paste-event-on-indent \
-    origin/patch/mousewheel
+    origin/patch/build-matchingbraceoutdent2
+    
+git merge \
+    origin/patch/mousewheel2 \
 
 
 make clean

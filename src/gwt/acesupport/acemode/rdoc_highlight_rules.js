@@ -17,8 +17,8 @@
  */
 define("mode/rdoc_highlight_rules", function(require, exports, module) {
 
-var oop = require("pilot/oop");
-var lang = require("pilot/lang");
+var oop = require("ace/lib/oop");
+var lang = require("ace/lib/lang");
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 
 var RDocHighlightRules = function() {
