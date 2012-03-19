@@ -65,6 +65,7 @@ import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageCont
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
 import org.rstudio.studio.client.workbench.views.source.model.PublishPdfResult;
+import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitCount;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
@@ -1092,6 +1093,13 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE,
                   GET_TEX_CAPABILITIES,
                   requestCallback);
+   }
+   
+   public void getChunkOptions(
+                       String weaveType,
+                       ServerRequestCallback<RnwChunkOptions> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_CHUNK_OPTIONS, weaveType, requestCallback);
    }
    
    public String getProgressUrl(String message)
@@ -2624,6 +2632,7 @@ public class RemoteServer implements Server
    private static final String ICONVLIST = "iconvlist";
    private static final String PUBLISH_PDF = "publish_pdf";
    private static final String GET_TEX_CAPABILITIES = "get_tex_capabilities";
+   private static final String GET_CHUNK_OPTIONS = "get_chunk_options";
 
    private static final String GET_RECENT_HISTORY = "get_recent_history";
    private static final String GET_HISTORY_ITEMS = "get_history_items";

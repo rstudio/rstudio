@@ -19,4 +19,7 @@ public interface TexServerOperations
 {
    void getTexCapabilities(
                   ServerRequestCallback<TexCapabilities> requestCallback);
+   
+   void getChunkOptions(String weaveType,
+                        ServerRequestCallback<RnwChunkOptions> requestCallback);
 }
