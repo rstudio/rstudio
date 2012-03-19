@@ -68,6 +68,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSou
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
@@ -457,16 +458,13 @@ public class Source implements InsertSourceHandler,
          if (activeWeave.getInjectConcordance())
             concordance = "\\SweaveOpts{concordance=TRUE}\n";
       }
+      final boolean hasConcordance = concordance.length() > 0;
       
       String contents = "\\documentclass{article}\n" +
                         "\n" +
-                        "\\title{Untitled}\n" +
-                        "\n" +
                         "\\begin{document}\n" +
                         concordance +
-                        "\n" +
-                        "\\maketitle\n" +
-                        "\n\n\n\n\n" +
+                        "\n\n\n\n" +
                         "\\end{document}";
       
       newDoc(FileTypeRegistry.SWEAVE, 
@@ -475,7 +473,8 @@ public class Source implements InsertSourceHandler,
                 @Override
                 public void onSuccess(EditingTarget target)
                 {
-                   
+                   int startRow = 4 + (hasConcordance ? 1 : 0);
+                   target.setCursorPosition(Position.create(startRow, 0));
                 }
              });
    }

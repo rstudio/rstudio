@@ -39,6 +39,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -174,6 +175,11 @@ public class UrlContentEditingTarget implements EditingTarget
    @Override
    public void restorePosition(SourcePosition position)
    {   
+   }
+   
+   @Override
+   public void setCursorPosition(Position position)
+   {
    }
    
    @Override 

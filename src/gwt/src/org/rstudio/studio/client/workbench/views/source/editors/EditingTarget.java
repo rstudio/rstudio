@@ -25,6 +25,7 @@ import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
@@ -59,6 +60,8 @@ public interface EditingTarget extends IsWidget,
    void navigateToPosition(SourcePosition position, boolean recordCurrent);
    void restorePosition(SourcePosition position);
    boolean isAtSourceRow(SourcePosition position);
+   
+   void setCursorPosition(Position position);
    
    /**
     * @return True if dismissal is allowed, false to cancel.

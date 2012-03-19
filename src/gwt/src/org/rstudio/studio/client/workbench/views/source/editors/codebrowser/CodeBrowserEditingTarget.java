@@ -53,6 +53,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.model.CodeBrowserContents;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -366,6 +367,11 @@ public class CodeBrowserEditingTarget implements EditingTarget
              docDisplay_.isAtSourceRow(position);
    }
    
+   @Override
+   public void setCursorPosition(Position position)
+   {
+      docDisplay_.setCursorPosition(position);
+   }
    
    @Override
    public boolean onBeforeDismiss()

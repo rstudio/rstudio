@@ -326,6 +326,12 @@ public class TextEditingTarget implements EditingTarget
       return docDisplay_.isAtSourceRow(position);
    }
    
+   @Override
+   public void setCursorPosition(Position position)
+   {
+      docDisplay_.setCursorPosition(position);
+   }
+   
    private void jumpToPreviousFunction()
    {
       Position cursor = docDisplay_.getCursorPosition();
