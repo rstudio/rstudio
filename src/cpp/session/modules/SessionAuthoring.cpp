@@ -69,6 +69,18 @@ Error getTexCapabilities(const core::json::JsonRpcRequest& request,
    return Success();
 }
 
+Error getChunkOptions(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   std::string weaveType;
+   Error error = json::readParams(request.params, &weaveType);
+   if (error)
+      return error;
+
+   pResponse->setResult(tex::rnw_weave::chunkOptions(weaveType));
+   return Success();
+}
+
 Error isTexInstalled(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
@@ -220,12 +232,14 @@ Error initialize()
    using namespace module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
+      (bind(sourceModuleRFile, "SessionAuthoring.R"))
       (tex::compile_pdf::initialize)
       (tex::compile_pdf_supervisor::initialize)
       (tex::synctex::initialize)
       (tex::view_pdf::initialize)
       (bind(registerRpcMethod, "is_tex_installed", isTexInstalled))
       (bind(registerRpcMethod, "get_tex_capabilities", getTexCapabilities))
+      (bind(registerRpcMethod, "get_chunk_options", getChunkOptions))
       (bind(registerRpcMethod, "compile_pdf", compilePdf))
       (bind(registerRpcMethod, "is_compile_pdf_running", isCompilePdfRunning))
       (bind(registerRpcMethod, "terminate_compile_pdf", terminateCompilePdf))

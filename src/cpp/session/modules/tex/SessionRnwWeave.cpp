@@ -26,6 +26,7 @@
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RJson.hpp>
 #include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionUserSettings.hpp>
@@ -81,6 +82,8 @@ public:
 
    virtual bool isInstalled() const = 0;
 
+   virtual core::json::Value chunkOptions() const = 0;
+
    virtual std::vector<std::string> commandArgs(
                                     const std::string& file) const = 0;
 
@@ -135,6 +138,27 @@ public:
       return Success();
    }
 
+protected:
+   core::json::Value chunkOptions(const std::string& chunkFunction) const
+   {
+      SEXP optionsSEXP;
+      r::sexp::Protect rProtect;
+      r::exec::RFunction optionsFunc(chunkFunction);
+      Error error = optionsFunc.call(&optionsSEXP, &rProtect);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return json::Value();
+      }
+
+      core::json::Value optionsJson;
+      error = r::json::jsonValueFromList(optionsSEXP, &optionsJson);
+      if (error)
+         LOG_ERROR(error);
+
+      return optionsJson;
+   }
+
 private:
    std::string name_;
    std::string packageName_;
@@ -151,6 +175,11 @@ public:
    virtual bool isInstalled() const { return true; }
 
     virtual bool injectConcordance() const { return true; }
+
+   virtual core::json::Value chunkOptions() const
+   {
+      return RnwWeave::chunkOptions(".rs.sweaveChunkOptions");
+   }
 
 #ifdef _WIN32
    virtual std::vector<std::string> commandArgs(const std::string& file) const
@@ -220,6 +249,11 @@ public:
    }
 
    virtual bool injectConcordance() const { return false; }
+
+   virtual core::json::Value chunkOptions() const
+   {
+      return core::json::Value();
+   }
 };
 
 class RnwKnitr : public RnwExternalWeave
@@ -266,6 +300,11 @@ public:
       }
 
       return Success();
+   }
+
+   virtual core::json::Value chunkOptions() const
+   {
+      return RnwWeave::chunkOptions(".rs.knitrChunkOptions");
    }
 
 private:
@@ -454,7 +493,17 @@ void runWeave(const core::FilePath& rnwPath,
    }
 }
 
-json::Array supportedTypes()
+core::json::Value chunkOptions(const std::string& weaveType)
+{
+   boost::shared_ptr<RnwWeave> pRnwWeave = weaveRegistry()
+                                             .findTypeIgnoreCase(weaveType);
+   if (pRnwWeave)
+      return pRnwWeave->chunkOptions();
+   else
+      return core::json::Value();
+}
+
+core::json::Array supportedTypes()
 {
    // query for list of supported types
    json::Array array;

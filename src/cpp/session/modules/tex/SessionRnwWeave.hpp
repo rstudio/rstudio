@@ -37,6 +37,8 @@ namespace rnw_weave {
 core::json::Array supportedTypes();
 void getTypesInstalledStatus(core::json::Object* pObj);
 
+core::json::Value chunkOptions(const std::string& weaveType);
+
 struct Result
 {
    static Result error(const std::string& errorMessage)
