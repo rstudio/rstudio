@@ -28,37 +28,37 @@
 
 .rs.addFunction( "sweaveChunkOptions", function()
 {
-  sweaveOptions <- list()
-
-  sweaveOptions$label <- "character"
-  sweaveOptions$engine <- list("R", "S")
-  sweaveOptions$echo <- "logical"
-  sweaveOptions$keep.source <- "logical"
-  sweaveOptions$eval <- "logical"
-  sweaveOptions$results <- list("verbatim", "tex", "hide")
-  sweaveOptions$print <- "logical"
-  sweaveOptions$term <- "logical"
-  sweaveOptions$split <- "logical"
-  sweaveOptions$strip.white <- list("true", "all", "false")
-  sweaveOptions$prefix <- "logical"
-  sweaveOptions$prefix.string <- "character"
-  sweaveOptions$include <- "logical"
-  sweaveOptions$fig <- "logical"
-  sweaveOptions$eps <- "logical"
-  sweaveOptions$pdf <- "logical"
-  sweaveOptions$pdf.version <- "character"
-  sweaveOptions$pdf.encoding <- "character"
-  sweaveOptions$pdf.compress <-"logical"
-  if (getRversion() >= "2.13.0") {
-     sweaveOptions$png <- "logical"
-     sweaveOptions$jpeg <- "logical"
-     sweaveOptions$grdevice <- "character"
-  }
-  sweaveOptions$width <- "numeric"
-  sweaveOptions$height <- "numeric"
-  sweaveOptions$resolution <- "numeric"
-  sweaveOptions$figs.only <- "logical"
+   sweaveOptions <- list()
    
-  return (sweaveOptions)
+   sweaveOptions$label <- "character"
+   sweaveOptions$engine <- list("R", "S")
+   sweaveOptions$echo <- "logical"
+   sweaveOptions$keep.source <- "logical"
+   sweaveOptions$eval <- "logical"
+   sweaveOptions$results <- list("verbatim", "tex", "hide")
+   sweaveOptions$print <- "logical"
+   sweaveOptions$term <- "logical"
+   sweaveOptions$split <- "logical"
+   sweaveOptions$strip.white <- list("true", "all", "false")
+   sweaveOptions$prefix <- "logical"
+   sweaveOptions$prefix.string <- "character"
+   sweaveOptions$include <- "logical"
+   sweaveOptions$fig <- "logical"
+   sweaveOptions$eps <- "logical"
+   sweaveOptions$pdf <- "logical"
+   sweaveOptions$pdf.version <- "character"
+   sweaveOptions$pdf.encoding <- "character"
+   sweaveOptions$pdf.compress <-"logical"
+   if (getRversion() >= "2.13.0") {
+      sweaveOptions$png <- "logical"
+      sweaveOptions$jpeg <- "logical"
+      sweaveOptions$grdevice <- "character"
+   }
+   sweaveOptions$width <- "numeric"
+   sweaveOptions$height <- "numeric"
+   sweaveOptions$resolution <- "numeric"
+   sweaveOptions$figs.only <- "logical"
+   
+   return (sweaveOptions)
 })
 
