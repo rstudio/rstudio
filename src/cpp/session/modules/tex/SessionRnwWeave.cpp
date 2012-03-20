@@ -174,7 +174,7 @@ public:
 
    virtual bool isInstalled() const { return true; }
 
-    virtual bool injectConcordance() const { return true; }
+   virtual bool injectConcordance() const { return true; }
 
    virtual core::json::Value chunkOptions() const
    {
@@ -252,7 +252,14 @@ public:
 
    virtual core::json::Value chunkOptions() const
    {
-      return core::json::Value();
+      if (isInstalled())
+      {
+         return core::json::Value();
+      }
+      else
+      {
+         return core::json::Value();
+      }
    }
 };
 
@@ -304,7 +311,10 @@ public:
 
    virtual core::json::Value chunkOptions() const
    {
-      return RnwWeave::chunkOptions(".rs.knitrChunkOptions");
+      if (isInstalled())
+         return RnwWeave::chunkOptions(".rs.knitrChunkOptions");
+      else
+         return json::Value();
    }
 
 private:
