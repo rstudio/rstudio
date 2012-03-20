@@ -74,6 +74,8 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="copyDummy"/>
          <cmd refid="pasteDummy"/>
          <separator/>
+         <cmd refid="goToLine"/>
+         <separator/>
          <cmd refid="find"/>
          <cmd refid="findReplace"/>
          <cmd refid="findInFiles"/>
@@ -89,8 +91,6 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="goToFileFunction"/>
          <cmd refid="goToFunctionDefinition"/>
-         <separator/>
-         <cmd refid="goToLine"/>
          <cmd refid="jumpToFunction"/>
          <separator/>
          <cmd refid="extractFunction"/>
@@ -516,7 +516,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="lastTab"
         menuLabel="_Last Tab"/>
    <cmd id="goToLine"
-        menuLabel="Jump to L_ine..."/>
+        menuLabel="_Jump to Line..."/>
 
    <cmd id="find"
         menuLabel="_Find..."/>
