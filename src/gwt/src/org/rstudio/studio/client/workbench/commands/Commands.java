@@ -39,7 +39,6 @@ public abstract class
    public abstract AppCommand sourceFile();
    public abstract AppCommand sourceActiveDocument();
    public abstract AppCommand sourceActiveDocumentWithEcho();
-   public abstract AppCommand complete();
    public abstract AppCommand executeCode();
    public abstract AppCommand executeToCurrentLine();
    public abstract AppCommand executeFromCurrentLine();

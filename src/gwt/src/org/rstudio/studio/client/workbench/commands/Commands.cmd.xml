@@ -90,8 +90,6 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="reindent"/>
          <cmd refid="reflowComment"/>
          <separator/>
-         <cmd refid="complete"/>
-         <separator/>
          <menu label="Ru_n Code">
             <cmd refid="executeCode"/>
             <cmd refid="executeAllCode"/>
@@ -529,8 +527,6 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Find and Replace..."/>
    <cmd id="findInFiles"
         menuLabel="Find _in Files..."/>
-   <cmd id="complete"
-        menuLabel="Code Completion"/>
    <cmd id="executeAllCode"
         buttonLabel=""
         menuLabel="Run _All"
