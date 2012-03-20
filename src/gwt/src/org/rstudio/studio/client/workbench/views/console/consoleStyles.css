@@ -37,9 +37,6 @@
    display: none;
    width: 0 !important;
 }
-.input .ace_cursor.ace_hidden {
-   display: none;
-}
 
 .console .prompt {
    white-space: pre;
