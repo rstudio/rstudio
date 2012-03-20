@@ -125,7 +125,19 @@ public class TextEditingTargetLatexFormatMenu extends ToolbarPopupMenu
             editor_.collapseSelection(true);
             Position pos = editor_.getCursorPosition();
             
-            String item = "\\item";
+            StringBuilder indent = new StringBuilder();
+            if (prefs_.useSpacesForTab().getValue())
+            {
+               int spaces = prefs_.numSpacesForTab().getValue();
+               for (int i=0; i<spaces; i++)
+                  indent.append(' ');
+            }
+            else
+            {
+               indent.append('\t');
+            }
+           
+            String item = indent.toString() + "\\item";
             String itemElement = item + (isDescription ? "[]" : " ");
             
             String code = "\\begin{" + type + "}\n";
