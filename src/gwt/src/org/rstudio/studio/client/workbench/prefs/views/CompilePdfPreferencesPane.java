@@ -59,7 +59,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       spaced(perProjectLabel);
       add(perProjectLabel);
        
-      Label compilationOptionsLabel = new Label("LaTeX compilation");
+      Label compilationOptionsLabel = new Label("LaTeX editing and compilation");
       compilationOptionsLabel.addStyleName(baseRes.styles().headerLabel());
       nudgeRight(compilationOptionsLabel);
       add(compilationOptionsLabel);
@@ -76,6 +76,12 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       chkEnableShellEscape_ = new CheckBox("Enable shell escape commands");
       spaced(chkEnableShellEscape_);
       add(chkEnableShellEscape_);
+      
+      CheckBox chkNumberedSections = checkboxPref(
+                                  "Insert numbered sections and subsections",
+                                  prefs_.insertNumberedLatexSections());
+      spaced(chkNumberedSections);
+      add(chkNumberedSections);
       
       Label previwingOptionsLabel = new Label("PDF preview");
       previwingOptionsLabel.addStyleName(baseRes.styles().headerLabel());

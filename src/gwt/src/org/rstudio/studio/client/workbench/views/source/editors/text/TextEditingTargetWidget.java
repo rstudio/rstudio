@@ -26,6 +26,7 @@ import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -43,12 +44,14 @@ public class TextEditingTargetWidget
 {
    public TextEditingTargetWidget(Commands commands,
                                   UIPrefs uiPrefs,
+                                  FileTypeRegistry fileTypeRegistry,
                                   DocDisplay editor,
                                   TextFileType fileType,
                                   EventBus events)
    {
       commands_ = commands;
       uiPrefs_ = uiPrefs;
+      fileTypeRegistry_ = fileTypeRegistry;
       editor_ = editor;
       sourceOnSave_ = new CheckBox();
       srcOnSaveLabel_ =
@@ -80,7 +83,7 @@ public class TextEditingTargetWidget
             } 
          });
       
-      panel_ = new PanelWithToolbars(createToolbar(),
+      panel_ = new PanelWithToolbars(createToolbar(fileType),
                                     editor.asWidget(),
                                     statusBar_);
       adaptToFileType(fileType);
@@ -90,9 +93,11 @@ public class TextEditingTargetWidget
 
    private StatusBarWidget statusBar_;
 
-   private Toolbar createToolbar()
+   private Toolbar createToolbar(TextFileType fileType)
    {
-      Toolbar toolbar = new EditingTargetToolbar(commands_);
+      Toolbar toolbar =  fileType.canCompilePDF() ?
+                           new Toolbar() :
+                           new EditingTargetToolbar(commands_);
        
       toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
       sourceOnSave_.getElement().getStyle().setMarginRight(0, Unit.PX);
@@ -103,6 +108,10 @@ public class TextEditingTargetWidget
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(findReplace_.createFindReplaceButton());
       toolbar.addLeftWidget(createCodeTransformMenuButton());
+      
+      texSeparatorWidget_ = toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(texToolbarButton_ = createLatexFormatButton());
+      
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.compilePDF().createToolbarButton());
       toolbar.addLeftSeparator();
@@ -155,7 +164,22 @@ public class TextEditingTargetWidget
             
       return toolbar;
    }
-
+   
+   private ToolbarButton createLatexFormatButton()
+   {
+      ToolbarPopupMenu texMenu = new TextEditingTargetLatexFormatMenu(editor_,
+                                                                      uiPrefs_);
+    
+      ToolbarButton texButton = new ToolbarButton(
+                           "Format", 
+                           fileTypeRegistry_.getIconForFilename("foo.tex"), 
+                           texMenu, 
+                           false);
+      return texButton;
+   }
+   
+  
+  
    private Widget createCodeTransformMenuButton()
    {
       if (codeTransform_ == null)
@@ -183,6 +207,8 @@ public class TextEditingTargetWidget
       codeTransform_.setVisible(fileType.canExecuteCode());
       sourceButton_.setVisible(fileType.canExecuteCode());
       sourceMenuButton_.setVisible(fileType.canExecuteCode());
+      texSeparatorWidget_.setVisible(fileType.canCompilePDF());
+      texToolbarButton_.setVisible(fileType.canCompilePDF());
    }
 
    public HasValue<Boolean> getSourceOnSave()
@@ -193,6 +219,20 @@ public class TextEditingTargetWidget
    public void ensureVisible()
    {
       fireEvent(new EnsureVisibleEvent());
+   }
+   
+   @Override
+   public void onResize() 
+   {
+      super.onResize();
+      
+      // sometimes width is passed in as 0 (not sure why)
+      int width = getOffsetWidth();
+      if (width == 0)
+         return;
+      
+      texToolbarButton_.setText(width < 500 ? "" : "Format");
+      sourceButton_.setText(width < 450 ? "" : "Source");
    }
 
    public void showWarningBar(String warning)
@@ -301,6 +341,7 @@ public class TextEditingTargetWidget
 
    private final Commands commands_;
    private final UIPrefs uiPrefs_;
+   private final FileTypeRegistry fileTypeRegistry_;
    private final DocDisplay editor_;
    private CheckBox sourceOnSave_;
    private PanelWithToolbars panel_;
@@ -309,5 +350,8 @@ public class TextEditingTargetWidget
    private ToolbarButton codeTransform_;
    private ToolbarButton sourceButton_;
    private ToolbarButton sourceMenuButton_;
+   
+   private Widget texSeparatorWidget_;
+   private ToolbarButton texToolbarButton_;
    private Label srcOnSaveLabel_;
 }

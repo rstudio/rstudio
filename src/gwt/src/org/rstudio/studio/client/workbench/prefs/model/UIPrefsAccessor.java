@@ -148,4 +148,9 @@ public class UIPrefsAccessor extends Prefs
    {
       return bool("always_enable_concordance", true);
    }
+   
+   public PrefValue<Boolean> insertNumberedLatexSections()
+   {
+      return bool("insert_numbered_latex_sections", false);
+   }
 }

@@ -402,6 +402,7 @@ public class TextEditingTarget implements EditingTarget
       fileType_ = (TextFileType) type;
       view_ = new TextEditingTargetWidget(commands_,
                                           prefs_,
+                                          fileTypeRegistry_,
                                           docDisplay_,
                                           fileType_,
                                           events_);
