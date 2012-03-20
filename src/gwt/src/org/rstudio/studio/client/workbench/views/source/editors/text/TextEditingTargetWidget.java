@@ -119,7 +119,7 @@ public class TextEditingTargetWidget
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
 
-      toolbar.addRightWidget(commands_.executeCode().createToolbarButton());
+      toolbar.addRightWidget(runButton_ = commands_.executeCode().createToolbarButton());
       toolbar.addRightSeparator();
       toolbar.addRightWidget(commands_.executeLastCode().createToolbarButton());
       toolbar.addRightSeparator();
@@ -231,8 +231,9 @@ public class TextEditingTargetWidget
       if (width == 0)
          return;
       
-      texToolbarButton_.setText(width < 500 ? "" : "Format");
-      sourceButton_.setText(width < 450 ? "" : "Source");
+      texToolbarButton_.setText(width < 520 ? "" : "Format");
+      sourceButton_.setText(width < 470 ? "" : "Source");
+      runButton_.setText(width < 440 ? "" : "Run");
    }
 
    public void showWarningBar(String warning)
@@ -348,6 +349,7 @@ public class TextEditingTargetWidget
    private InfoBar warningBar_;
    private final TextEditingTargetFindReplace findReplace_;
    private ToolbarButton codeTransform_;
+   private ToolbarButton runButton_;
    private ToolbarButton sourceButton_;
    private ToolbarButton sourceMenuButton_;
    

@@ -132,6 +132,7 @@ public class TextFileType extends EditableFileType
       if (canExecuteCode())
       {
          results.add(commands.executeCode());
+         results.add(commands.executeLastCode());
          results.add(commands.extractFunction());
          results.add(commands.commentUncomment());
          results.add(commands.reindent());
@@ -145,7 +146,7 @@ public class TextFileType extends EditableFileType
       }
       if (canExecuteToCurrentLine())
       {
-         results.add(commands.executeLastCode());
+      
       }
       if (canCompilePDF())
       {
