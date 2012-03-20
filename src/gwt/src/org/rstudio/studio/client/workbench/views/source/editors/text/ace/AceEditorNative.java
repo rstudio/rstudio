@@ -176,6 +176,7 @@ public class AceEditorNative extends JavaScriptObject {
       if (!editor.autoHeightAttached) {
          editor.autoHeightAttached = true;
          editor.getSession().getDocument().on("change", updateEditorHeight);
+         editor.renderer.$textLayer.on("changeCharacterSize", updateEditorHeight);
       }
       updateEditorHeight();
    }-*/;
