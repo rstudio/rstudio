@@ -48,6 +48,7 @@ MainWindow::MainWindow(QUrl url) :
    QMenuBar* pMainMenuStub = new QMenuBar(this);
    pMainMenuStub->addMenu(QString::fromUtf8("File"));
    pMainMenuStub->addMenu(QString::fromUtf8("Edit"));
+   pMainMenuStub->addMenu(QString::fromUtf8("Code"));
    pMainMenuStub->addMenu(QString::fromUtf8("View"));
    pMainMenuStub->addMenu(QString::fromUtf8("Project"));
    pMainMenuStub->addMenu(QString::fromUtf8("Workspace"));
