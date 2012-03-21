@@ -101,6 +101,12 @@ public class HTMLPanel extends ComplexPanel {
    * @param html the panel's HTML
    */
   public HTMLPanel(String tag, String html) {
+    // Optimization for when the HTML is empty.
+    if ("".equals(html)) {
+      setElement(Document.get().createElement(tag));
+      return;
+    }
+
     /*
      * IE has very arbitrary rules about what will and will not accept
      * innerHTML. <table> and <tbody> simply won't, the property is read only.

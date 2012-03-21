@@ -358,6 +358,17 @@ public class HTMLPanelTest extends GWTTestCase {
   }
 
   /**
+   * Tests h3 root tag with initially empty HTML contents.
+   */
+  public void testCustomRootTagEmptyHtml() {
+    HTMLPanel hp = new HTMLPanel("h3", "");
+
+    Element element = hp.getElement();
+    assertEquals("h3", element.getTagName().toLowerCase());
+    assertEquals("", element.getInnerText());
+  }
+
+  /**
    * Ensure that {@link HTMLPanel#getElementById(String)} behaves properly in
    * both attached and unattached states.
    */
