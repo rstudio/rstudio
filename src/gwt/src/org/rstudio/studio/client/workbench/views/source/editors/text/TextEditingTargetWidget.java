@@ -113,7 +113,7 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(texToolbarButton_ = createLatexFormatButton());
       
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.compilePDF().createToolbarButton());
+      toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.publishPDF().createToolbarButton());
       toolbar.addLeftSeparator();
@@ -209,6 +209,7 @@ public class TextEditingTargetWidget
       sourceMenuButton_.setVisible(fileType.canExecuteCode());
       texSeparatorWidget_.setVisible(fileType.canCompilePDF());
       texToolbarButton_.setVisible(fileType.canCompilePDF());
+      compilePdfButton_.setVisible(fileType.canCompilePDF());
    }
 
    public HasValue<Boolean> getSourceOnSave()
@@ -232,8 +233,9 @@ public class TextEditingTargetWidget
          return;
       
       texToolbarButton_.setText(width < 520 ? "" : "Format");
-      sourceButton_.setText(width < 470 ? "" : "Source");
-      runButton_.setText(width < 440 ? "" : "Run");
+      runButton_.setText(width < 480 ? "" : "Run");
+      compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
+     
    }
 
    public void showWarningBar(String warning)
@@ -349,6 +351,7 @@ public class TextEditingTargetWidget
    private InfoBar warningBar_;
    private final TextEditingTargetFindReplace findReplace_;
    private ToolbarButton codeTransform_;
+   private ToolbarButton compilePdfButton_;
    private ToolbarButton runButton_;
    private ToolbarButton sourceButton_;
    private ToolbarButton sourceMenuButton_;
