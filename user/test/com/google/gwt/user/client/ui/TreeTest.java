@@ -30,6 +30,7 @@ public class TreeTest extends GWTTestCase {
   private static final String html = "<b>hello</b><i>world</i>";
 
   static class Adder implements HasWidgetsTester.WidgetAdder {
+    @Override
     public void addChild(HasWidgets container, Widget child) {
       ((Tree) container).addItem(child);
     }
@@ -93,7 +94,7 @@ public class TreeTest extends GWTTestCase {
     String text = "Some<br>text";
     TreeItem item = t.addTextItem(text);
     assertEquals(text, item.getText());
-    // Normalize the html for ancient safari 3
+    // Safari 3 leaves > in the HTML
     String html = item.getHTML().replace(">", "&gt;");
     assertEquals("Some&lt;br&gt;text", html);
   }
@@ -176,6 +177,16 @@ public class TreeTest extends GWTTestCase {
     Tree t = createTree();
     TreeItem item = t.insertItem(0, SafeHtmlUtils.fromSafeConstant(html));
     assertEquals(html, item.getHTML().toLowerCase());
+  }
+
+  public void testInsertTextItem() {
+    Tree t = createTree();
+    String text = "Some<br>text";
+    TreeItem item = t.insertTextItem(0, text);
+    assertEquals(text, item.getText());
+    // Safari 3 leaves > in the HTML
+    String html = item.getHTML().replace(">", "&gt;");
+    assertEquals("Some&lt;br&gt;text", html);
   }
 
   public void testIterator() {

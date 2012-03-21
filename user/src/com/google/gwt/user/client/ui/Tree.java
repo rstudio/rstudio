@@ -344,7 +344,9 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * 
    * @param itemHtml the text of the item to be added
    * @return the item that was added
+   * @deprecated use {@link #addItem(SafeHtml)} instead
    */
+  @Deprecated
   public TreeItem addItem(String itemHtml) {
     return root.addItem(itemHtml);
   }
@@ -561,15 +563,17 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
 
   /**
    * Inserts a child tree item at the specified index containing the specified
-   * text.
+   * html.
    * 
    * @param beforeIndex the index where the item will be inserted
-   * @param itemText the text to be added
+   * @param itemHtml the html to be added
    * @return the item that was added
    * @throws IndexOutOfBoundsException if the index is out of range
+   * @deprecated use {@link #insertItem(int, SafeHtml)} instead
    */
-  public TreeItem insertItem(int beforeIndex, String itemText) {
-    return root.insertItem(beforeIndex, itemText);
+  @Deprecated
+  public TreeItem insertItem(int beforeIndex, String itemHtml) {
+    return root.insertItem(beforeIndex, itemHtml);
   }
 
   /**
@@ -607,6 +611,19 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    */
   public TreeItem insertItem(int beforeIndex, Widget widget) {
     return root.insertItem(beforeIndex, widget);
+  }
+
+  /**
+   * Inserts a child tree item at the specified index containing the specified
+   * text.
+   * 
+   * @param beforeIndex the index where the item will be inserted
+   * @param itemText the text of the item to be added
+   * @return the item that was added
+   * @throws IndexOutOfBoundsException if the index is out of range
+   */
+  public TreeItem insertTextItem(int beforeIndex, String itemText) {
+    return root.insertTextItem(beforeIndex, itemText);
   }
 
   @Override

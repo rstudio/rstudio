@@ -288,7 +288,9 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
    * Constructs a tree item with the given HTML.
    * 
    * @param html the item's HTML
+   * @deprecated use {@link #TreeItem(SafeHtml)} instead
    */
+  @Deprecated
   public TreeItem(String html) {
     this();
     setHTML(html);
@@ -336,7 +338,9 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
    * 
    * @param itemHtml the text to be added
    * @return the item that was added
+   * @deprecated use {@link #addItem(SafeHtml)} instead
    */
+  @Deprecated
   public TreeItem addItem(String itemHtml) {
     TreeItem ret = new TreeItem(itemHtml);
     addItem(ret);
@@ -349,6 +353,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
    * @param itemHtml the item's HTML
    * @return the item that was added
    */
+  @Override
   public TreeItem addItem(SafeHtml itemHtml) {
     TreeItem ret = new TreeItem(itemHtml);
     addItem(ret);
@@ -360,6 +365,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
    * 
    * @param item the item to be added
    */
+  @Override
   public void addItem(TreeItem item) {
     // If this is the item's parent, removing the item will affect the child
     // count.
@@ -372,6 +378,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
    * 
    * @param isItem the wrapper of item to be added
    */
+  @Override
   public void addItem(IsTreeItem isItem) {
     TreeItem item = isItem.asTreeItem();
     addItem(item);
@@ -383,6 +390,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
    * @param widget the widget to be added
    * @return the item that was added
    */
+  @Override
   public TreeItem addItem(Widget widget) {
     TreeItem ret = new TreeItem(widget);
     addItem(ret);
@@ -395,6 +403,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
    * @param itemText the text of the item to be added
    * @return the item that was added
    */
+  @Override
   public TreeItem addTextItem(String itemText) {
     TreeItem ret = new TreeItem();
     ret.setText(itemText);
@@ -402,6 +411,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
     return ret;
   }
   
+  @Override
   public TreeItem asTreeItem() {
     return this;
   }
@@ -448,6 +458,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
     return children.indexOf(child);
   }
 
+  @Override
   public String getHTML() {
     return DOM.getInnerHTML(contentElem);
   }
@@ -470,6 +481,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
     return open;
   }
 
+  @Override
   public String getText() {
     return DOM.getInnerText(contentElem);
   }
@@ -503,23 +515,25 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
 
   /**
    * Inserts a child tree item at the specified index containing the specified
-   * text.
+   * html.
    * 
    * @param beforeIndex the index where the item will be inserted
-   * @param itemText the text to be added
+   * @param itemHtml the html that the item will contain
    * @return the item that was added
    * @throws IndexOutOfBoundsException if the index is out of range
+   * @deprecated use {@link #insertItem(int, SafeHtml)} instead
    */
-  public TreeItem insertItem(int beforeIndex, String itemText)
+  @Deprecated
+  public TreeItem insertItem(int beforeIndex, String itemHtml)
       throws IndexOutOfBoundsException {
-    TreeItem ret = new TreeItem(itemText);
+    TreeItem ret = new TreeItem(itemHtml);
     insertItem(beforeIndex, ret);
     return ret;
   }
 
   /**
    * Inserts a child tree item at the specified index containing the specified
-   * text.
+   * html.
    * 
    * @param beforeIndex the index where the item will be inserted
    * @param itemHtml the item's HTML
@@ -603,6 +617,22 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
   }
 
   /**
+   * Inserts a child tree item at the specified index containing the specified
+   * text.
+   * 
+   * @param beforeIndex the index where the item will be inserted
+   * @param itemText the item's text
+   * @return the item that was added
+   * @throws IndexOutOfBoundsException if the index is out of range
+   */
+  public TreeItem insertTextItem(int beforeIndex, String itemText) {
+    TreeItem ret = new TreeItem();
+    ret.setText(itemText);
+    insertItem(beforeIndex, ret);
+    return ret;
+  }
+
+  /**
    * Determines whether this item is currently selected.
    * 
    * @return <code>true</code> if it is selected
@@ -630,6 +660,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
    * 
    * @param item the item to be removed
    */
+  @Override
   public void removeItem(TreeItem item) {
     // Validate.
     if (children == null || !children.contains(item)) {
@@ -661,6 +692,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
    * 
    * @param isItem the wrapper of item to be removed
    */
+  @Override
   public void removeItem(IsTreeItem isItem) {
     if (isItem != null) { 
       TreeItem item = isItem.asTreeItem();
@@ -671,17 +703,20 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
   /**
    * Removes all of this item's children.
    */
+  @Override
   public void removeItems() {
     while (getChildCount() > 0) {
       removeItem(getChild(0));
     }
   }
 
+  @Override
   public void setHTML(String html) {
     setWidget(null);
     DOM.setInnerHTML(contentElem, html);
   }
 
+  @Override
   public void setHTML(SafeHtml html) {
     setHTML(html.asString());
   }
@@ -731,6 +766,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
     }
   }
 
+  @Override
   public void setText(String text) {
     setWidget(null);
     DOM.setInnerText(contentElem, text);

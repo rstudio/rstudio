@@ -164,7 +164,17 @@ public class TreeItemTest extends GWTTestCase {
     TreeItem child = item.insertItem(0, SafeHtmlUtils.fromSafeConstant(HTML));
     assertEquals(HTML, child.getHTML().toLowerCase());
   }
-  
+
+  public void testInsertTextItem() {
+    TreeItem root = new TreeItem("foo");
+    String text = "Some<br>text";
+    TreeItem item = root.insertTextItem(0, text);
+    assertEquals(text, item.getText());
+    // Normalize the html for ancient safari 3
+    String html = item.getHTML().replace(">", "&gt;");
+    assertEquals("Some&lt;br&gt;text", html);
+  }
+
   /**
    * Test for {@link TreeItem#removeItem(IsTreeItem)}.
    */
