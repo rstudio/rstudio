@@ -99,8 +99,14 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="reflowComment"/>
          <separator/>
          <cmd refid="executeCode"/>
-         <cmd refid="executeAllCode"/>
          <cmd refid="executeLastCode"/>
+         <menu label="Run Regi_on">
+            <cmd refid="executeAllCode"/>
+            <cmd refid="executeToCurrentLine"/>
+            <cmd refid="executeFromCurrentLine"/>
+            <cmd refid="executeCurrentFunction"/>
+         </menu>
+         
          <separator/>
          <cmd refid="sourceActiveDocument"/>
          <cmd refid="sourceActiveDocumentWithEcho"/>
@@ -290,7 +296,10 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="closeAllSourceDocs" value="Cmd+Shift+W"/>
       <shortcut refid="compilePDF" value="Cmd+Shift+I"/>
       <shortcut refid="executeCode" value="Cmd+Enter"/>
-      <shortcut refid="executeAllCode" value="Cmd+Shift+R"/>
+      <shortcut refid="executeAllCode" value="Alt+Shift+R"/>
+      <shortcut refid="executeToCurrentLine" value="Alt+Shift+B"/>
+      <shortcut refid="executeFromCurrentLine" value="Alt+Shift+E"/>
+      <shortcut refid="executeCurrentFunction" value="Alt+Shift+F"/>
       <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>
       <shortcut refid="sourceNavigateForward" value="Cmd+F10"/>
       <shortcut refid="sourceFile" value="Cmd+Shift+O"/>
@@ -532,8 +541,17 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Run"
         menuLabel="Run _Line(s)"
         desc="Run the current line or selection"/>
+   <cmd id="executeToCurrentLine"
+        menuLabel="Run From _Beginning To Line"
+        desc="Run from the beginning of the source file up through the current line"/>
+    <cmd id="executeFromCurrentLine"
+        menuLabel="Run From Line to _End"
+        desc="Run from the current line through the end of the source file"/>
+   <cmd id="executeCurrentFunction"
+        menuLabel="Run _Function Definition"
+        desc="Run the top-level function definition, if any, that contains the cursor"/>
    <cmd id="executeLastCode"
-        menuLabel="Re-Run _Previous Region"
+        menuLabel="Re-Run _Previous"
         desc="Re-run the previous code region"/>
    <cmd id ="goToFunctionDefinition"
         menuLabel="_Go To Function Definition"

@@ -1526,6 +1526,65 @@ public class TextEditingTarget implements EditingTarget
       events_.fireEvent(new SendToConsoleEvent(code, true));
    }
 
+   @Handler
+   void onExecuteToCurrentLine()
+   {
+      docDisplay_.focus();
+
+
+      int row = docDisplay_.getSelectionEnd().getRow();
+      int col = docDisplay_.getLength(row);
+
+      Position start = Position.create(0, 0);
+      Position end = Position.create(row, col);
+
+      String code = docDisplay_.getCode(start, end);
+      setLastExecuted(start, end);
+      events_.fireEvent(new SendToConsoleEvent(code, true));
+   }
+   
+   @Handler
+   void onExecuteFromCurrentLine()
+   {
+      docDisplay_.focus();
+
+      int startRow = docDisplay_.getSelectionStart().getRow();
+      int startColumn = 0;
+
+      int endRow = Math.max(0, docDisplay_.getRowCount() - 1);
+      int endColumn = docDisplay_.getLength(endRow);
+
+      Position start = Position.create(startRow, startColumn);
+      Position end = Position.create(endRow, endColumn);
+
+      String code = docDisplay_.getCode(start, end);
+      setLastExecuted(start, end);
+      events_.fireEvent(new SendToConsoleEvent(code, true));
+   }
+
+   @Handler
+   void onExecuteCurrentFunction()
+   {
+      docDisplay_.focus();
+
+      // HACK: This is just to force the entire function tree to be built.
+      // It's the easiest way to make sure getCurrentFunction() returns
+      // a FunctionStart with an end.
+      docDisplay_.getFunctionTree();
+      FunctionStart currentFunction = docDisplay_.getCurrentFunction();
+
+      // Check if we're at the top level (i.e. not in a function), or in
+      // an unclosed function
+      if (currentFunction == null || currentFunction.getEnd() == null)
+         return;
+
+      Position start = currentFunction.getPreamble();
+      Position end = currentFunction.getEnd();
+
+      String code = docDisplay_.getCode(start, end);
+      setLastExecuted(start, end);
+      events_.fireEvent(new SendToConsoleEvent(code.trim(), true));
+   }
 
    @Handler
    void onJumpToFunction()
