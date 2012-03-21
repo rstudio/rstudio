@@ -408,9 +408,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["find_in_files_state"] = modules::find::findInFilesStateAsJson();
 
-   sessionInfo["googleDocsIntegrationEnabled"] =
-         session::module_context::isGoogleDocsIntegrationEnabled();
-
    sessionInfo["rstudio_version"] = std::string(RSTUDIO_VERSION);
 
    sessionInfo["ui_prefs"] = userSettings().uiPrefs();

@@ -295,9 +295,6 @@ void showContent(const std::string& title, const core::FilePath& filePath);
 int saveWorkspaceAction();
 void syncRSaveAction();
 
-bool isGoogleDocsIntegrationEnabled();
-void setGoogleDocsIntegrationEnabled(bool enabled);
-
 struct VcsContext
 {
    std::string detectedVcs;

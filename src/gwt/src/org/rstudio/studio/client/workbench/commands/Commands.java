@@ -158,7 +158,6 @@ public abstract class
    public abstract AppCommand loadDefaultWorkspace();
    public abstract AppCommand importDatasetFromFile();
    public abstract AppCommand importDatasetFromURL();
-   public abstract AppCommand importDatasetFromGoogleSpreadsheet();
    public abstract AppCommand activateWorkspace();
   
    // Plots

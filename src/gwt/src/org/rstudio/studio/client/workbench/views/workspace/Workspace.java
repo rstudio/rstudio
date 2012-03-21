@@ -38,10 +38,8 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportFileSettings;
 import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportFileSettingsDialog;
-import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportGoogleSpreadsheetDialog;
 import org.rstudio.studio.client.workbench.views.workspace.events.*;
 import org.rstudio.studio.client.workbench.views.workspace.model.DownloadInfo;
-import org.rstudio.studio.client.workbench.views.workspace.model.GoogleSpreadsheetImportSpec;
 import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceObjectInfo;
 import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceServerOperations;
 import org.rstudio.studio.client.workbench.views.workspace.table.WorkspaceObjectTable;
@@ -380,34 +378,6 @@ public class Workspace
             }
       });
       
-   }
-
-   void onImportDatasetFromGoogleSpreadsheet()
-   {
-      view_.bringToFront();
-      new ImportGoogleSpreadsheetDialog(
-         server_,
-         globalDisplay_,
-         new ProgressOperationWithInput<GoogleSpreadsheetImportSpec>() {
-
-            public void execute(final GoogleSpreadsheetImportSpec importSpec,
-                                ProgressIndicator progress)
-            {
-               progress.onProgress("Importing Spreadsheet...");
-               
-               server_.importGoogleSpreadsheet(
-                  importSpec, 
-                  new VoidServerRequestCallback(progress) {
-                     @Override
-                     public void onSuccess()
-                     {
-                        String code = "View(" + StringUtil.toRSymbolName(importSpec.getObjectName()) +")"; 
-                        eventBus_.fireEvent(new SendToConsoleEvent(code, true));
-                     }
-                  });
-            }
-            
-         }).showModal();
    }
 
    private void synchronizeView()

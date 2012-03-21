@@ -137,10 +137,6 @@ public class SessionInfo extends JavaScriptObject
       return this.docsURL;
    }-*/;
 
-   public final native boolean isGoogleDocsIntegrationEnabled() /*-{
-      return this.googleDocsIntegrationEnabled;
-   }-*/;
-   
    public final native String getRstudioVersion() /*-{
       return this.rstudio_version;
    }-*/;

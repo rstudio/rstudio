@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.workspace.model;
 
-import com.google.gwt.core.client.JsArray;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -32,14 +31,6 @@ public interface WorkspaceServerOperations
 
    void getObjectValue(String objectName,
                   ServerRequestCallback<RpcObjectList<WorkspaceObjectInfo>> serverRequestCallback);
-
-   void listGoogleSpreadsheets(
-         String titlePattern,             // null for all spreadsheets
-         int maxResults,
-         ServerRequestCallback<JsArray<GoogleSpreadsheetInfo>> requestCallback);
-   
-   void importGoogleSpreadsheet(GoogleSpreadsheetImportSpec importSpec,
-                                ServerRequestCallback<Void> requestCallback);
 
    void downloadDataFile(String dataFileURL,
                          ServerRequestCallback<DownloadInfo> requestCallback);

@@ -180,7 +180,6 @@ well as menu structures (for main menu and popup menus).
          <menu label="_Import Dataset">
             <cmd refid="importDatasetFromFile"/>
             <cmd refid="importDatasetFromURL"/>
-            <cmd refid="importDatasetFromGoogleSpreadsheet"/>
          </menu>
          <separator/>
          <cmd refid="clearWorkspace"/>
@@ -785,14 +784,11 @@ well as menu structures (for main menu and popup menus).
         menuLabel="From _Text File..."/>
    <cmd id="importDatasetFromURL"
         menuLabel="From _Web URL..."/>
-   <cmd id="importDatasetFromGoogleSpreadsheet"
-        menuLabel="From _Google Spreadsheet..."/>
+ 
    <cmd id="refreshWorkspace"
         buttonLabel=""
         menuLabel="Refresh"
         desc="Refresh Workspace"/>
-
-    
 
    <cmd id="installPackage"
         menuLabel="Install _Packages..."

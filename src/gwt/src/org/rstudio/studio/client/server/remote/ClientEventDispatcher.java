@@ -239,11 +239,6 @@ public class ClientEventDispatcher
             QuotaStatus quotaStatus = event.getData();
             eventBus_.fireEvent(new QuotaStatusEvent(quotaStatus));
          }
-         else if (type.equals(ClientEvent.OAuthApproval))
-         {
-            OAuthApproval oauthApproval = event.getData();
-            eventBus_.fireEvent(new OAuthApprovalEvent(oauthApproval));
-         }
          else if (type.equals(ClientEvent.FileEdit))
          {
             FileSystemItem file = event.getData();

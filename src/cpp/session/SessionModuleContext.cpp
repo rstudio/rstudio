@@ -69,8 +69,6 @@ namespace session {
 namespace module_context {
       
 namespace {
-   
-bool s_googleDocsIntegrationEnabled = false;
 
 // enqueClientEvent from R
 SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
@@ -916,17 +914,6 @@ void showContent(const std::string& title, const core::FilePath& filePath)
    ClientEvent event(client_events::kShowContent, contentItem);
    module_context::enqueClientEvent(event);
 }
-
-bool isGoogleDocsIntegrationEnabled()
-{
-   return s_googleDocsIntegrationEnabled;
-}
-
-void setGoogleDocsIntegrationEnabled(bool enabled)
-{
-   s_googleDocsIntegrationEnabled = enabled;
-}
-
 
 FilePath shellWorkingDirectory()
 {

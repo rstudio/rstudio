@@ -21,7 +21,6 @@ import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
@@ -53,7 +52,6 @@ public class Workbench implements BusyHandler,
                                   ShowWarningBarHandler,
                                   BrowseUrlHandler,
                                   QuotaStatusHandler,
-                                  OAuthApprovalHandler,
                                   WorkbenchLoadedHandler,
                                   WorkbenchMetricsChangedHandler
 {
@@ -95,7 +93,6 @@ public class Workbench implements BusyHandler,
       eventBus.addHandler(ShowWarningBarEvent.TYPE, this);
       eventBus.addHandler(BrowseUrlEvent.TYPE, this);
       eventBus.addHandler(QuotaStatusEvent.TYPE, this);
-      eventBus.addHandler(OAuthApprovalEvent.TYPE, this);
       eventBus.addHandler(WorkbenchLoadedEvent.TYPE, this);
       eventBus.addHandler(WorkbenchMetricsChangedEvent.TYPE, this);
 
@@ -188,37 +185,7 @@ public class Workbench implements BusyHandler,
          nearQuotaWarningShown_ = true;
       }
    }
-
-   
-   public void onOAuthApproval(OAuthApprovalEvent event)
-   {
-      final OAuthApproval approval = event.getApproval();
-      
-      String caption = "Approval Required";
-      String message = 
-         "In order to connect to " + approval.getRealm() + " you first " +
-         "need to grant access to RStudio. Do you want to do this now? " +
-         "(you'll be navigated to a form on the " + approval.getRealm() + 
-         " website for confirmation)";
-      
-      globalDisplay_.showYesNoMessage(
-            GlobalDisplay.MSG_QUESTION, 
-            caption, 
-            message, 
-            new Operation()
-            {
-               public void execute()
-               {
-                  globalDisplay_.openMinimalWindow(approval.getLocation(),
-                                                   true,
-                                                   700,
-                                                   550);
-               }   
-            }, 
-            true);
-      
-   }
-   
+  
    @Handler
    public void onSetWorkingDir()
    {

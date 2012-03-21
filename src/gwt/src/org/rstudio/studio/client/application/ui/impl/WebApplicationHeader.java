@@ -159,12 +159,6 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
             // only show the user identity if we are in server mode
            if (sessionInfo.getMode().equals(SessionInfo.SERVER_MODE))
                initCommandsPanel(sessionInfo);
-
-            // enable/disable google docs commands
-            if (!sessionInfo.isGoogleDocsIntegrationEnabled())
-            {
-               commands.importDatasetFromGoogleSpreadsheet().remove();
-            }
             
             // add project tools to toolbar
             toolbar_.addProjectTools(sessionInfo);

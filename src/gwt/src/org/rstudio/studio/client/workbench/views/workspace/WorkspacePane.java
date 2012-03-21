@@ -92,7 +92,6 @@ public class WorkspacePane extends WorkbenchPane
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.addItem(commands_.importDatasetFromFile().createMenuItem(false));
       menu.addItem(commands_.importDatasetFromURL().createMenuItem(false));
-      menu.addItem(commands_.importDatasetFromGoogleSpreadsheet().createMenuItem(false));
       return new ToolbarButton("Import Dataset", 
                                StandardIcons.INSTANCE.import_dataset(),
                                menu);

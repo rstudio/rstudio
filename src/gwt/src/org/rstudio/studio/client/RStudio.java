@@ -72,7 +72,6 @@ import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.DiffFrame;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ViewFilePanel;
 import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportFileSettingsDialog;
-import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportGoogleSpreadsheetDialog;
 
 public class RStudio implements EntryPoint
 {  
@@ -188,7 +187,6 @@ public class RStudio implements EntryPoint
       HistoryPane.ensureStylesInjected();
       Shelf.ensureStylesInjected();
       ImportFileSettingsDialog.ensureStylesInjected();
-      ImportGoogleSpreadsheetDialog.ensureStylesInjected();
       FindReplaceBar.ensureStylesInjected();
       FontSizer.ensureStylesInjected();
       PreferencesDialogBaseResources.INSTANCE.styles().ensureInjected();

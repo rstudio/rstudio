@@ -475,32 +475,6 @@ public class RemoteServer implements Server
                   requestCallback);
    }
 
- 
-   public void listGoogleSpreadsheets(
-         String titlePattern,             // null for all spreadsheets
-         int maxResults,
-         ServerRequestCallback<JsArray<GoogleSpreadsheetInfo>> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, titlePattern != null ? new JSONString(titlePattern) :
-                                           JSONNull.getInstance());
-      params.set(1, new JSONNumber(maxResults));
-      sendRequest(RPC_SCOPE, 
-                  LIST_GOOGLE_SPREADSHEETS, 
-                  params, 
-                  requestCallback) ;
-   }
-   
-   public void importGoogleSpreadsheet(
-                                GoogleSpreadsheetImportSpec importSpec,
-                                ServerRequestCallback<Void> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, 
-                  IMPORT_GOOGLE_SPREADSHEET, 
-                  importSpec, 
-                  requestCallback);
-   }
-   
    public void downloadDataFile(
                   String dataFileUrl,
                   ServerRequestCallback<DownloadInfo> requestCallback)
@@ -2549,8 +2523,6 @@ public class RemoteServer implements Server
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";
    private static final String SET_OBJECT_VALUE = "set_object_value";
    private static final String GET_OBJECT_VALUE = "get_object_value";
-   private static final String LIST_GOOGLE_SPREADSHEETS = "list_google_spreadsheets";
-   private static final String IMPORT_GOOGLE_SPREADSHEET = "import_google_spreadsheet";
    private static final String DOWNLOAD_DATA_FILE = "download_data_file";
    private static final String GET_DATA_PREVIEW = "get_data_preview";
    private static final String GET_OUTPUT_PREVIEW = "get_output_preview";
