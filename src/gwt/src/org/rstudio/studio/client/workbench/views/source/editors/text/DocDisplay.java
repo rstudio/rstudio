@@ -116,6 +116,10 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    FunctionStart getCurrentFunction();
    JsArray<FunctionStart> getFunctionTree();
 
+   void foldAll();
+   void unfoldAll();
+   void toggleFold();
+
    HandlerRegistration addUndoRedoHandler(UndoRedoHandler handler);
    JavaScriptObject getCleanStateToken();
    boolean checkCleanStateToken(JavaScriptObject token);

@@ -40,6 +40,7 @@ define("mode/r", function(require, exports, module)
       this.$outdent = new MatchingBraceOutdent();
 
       this.$rCodeModel = new RCodeModel(doc, this.$tokenizer, null);
+      this.foldingRules = this.$rCodeModel;
    };
    oop.inherits(Mode, TextMode);
 
