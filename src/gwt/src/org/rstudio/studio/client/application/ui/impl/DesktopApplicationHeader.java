@@ -79,8 +79,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
       commands.exportFiles().remove();
       commands.updateCredentials().remove();
       commands.importDatasetFromGoogleSpreadsheet().remove();
-      commands.publishPDF().remove();
-
+   
       commands.checkForUpdates().setVisible(true);
       commands.showLogFiles().setVisible(true);
       commands.showFolder().setVisible(true);

@@ -64,7 +64,6 @@ import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
-import org.rstudio.studio.client.workbench.views.source.model.PublishPdfResult;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitCount;
@@ -1074,19 +1073,6 @@ public class RemoteServer implements Server
                   requestCallback);
    }
    
-   public void publishPdf(String id,
-                          String title,
-                          boolean update,
-                          ServerRequestCallback<PublishPdfResult> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(id));
-      params.set(1, new JSONString(title));
-      params.set(2, JSONBoolean.getInstance(update));
-      
-      sendRequest(RPC_SCOPE, PUBLISH_PDF, params, requestCallback);
-   }
-
    public void getTexCapabilities(
                   ServerRequestCallback<TexCapabilities> requestCallback)
    {
@@ -2630,7 +2616,6 @@ public class RemoteServer implements Server
    private static final String REMOVE_CONTENT_URL = "remove_content_url";
    private static final String DETECT_FREE_VARS = "detect_free_vars";
    private static final String ICONVLIST = "iconvlist";
-   private static final String PUBLISH_PDF = "publish_pdf";
    private static final String GET_TEX_CAPABILITIES = "get_tex_capabilities";
    private static final String GET_CHUNK_OPTIONS = "get_chunk_options";
 

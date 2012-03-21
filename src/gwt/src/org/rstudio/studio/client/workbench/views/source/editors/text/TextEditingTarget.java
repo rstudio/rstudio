@@ -82,7 +82,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
@@ -207,7 +206,6 @@ public class TextEditingTarget implements EditingTarget
                             FileTypeRegistry fileTypeRegistry,
                             ConsoleDispatcher consoleDispatcher,
                             WorkbenchContext workbenchContext,
-                            Provider<PublishPdf> pPublishPdf,
                             Provider<SpellChecker> pSpellChecker,
                             Session session,
                             Synctex synctex,
@@ -227,7 +225,6 @@ public class TextEditingTarget implements EditingTarget
       session_ = session;
       synctex_ = synctex;
       fontSizeManager_ = fontSizeManager;
-      pPublishPdf_ = pPublishPdf;
       pSpellChecker_ = pSpellChecker;
 
       docDisplay_ = docDisplay;
@@ -1031,8 +1028,6 @@ public class TextEditingTarget implements EditingTarget
    {
       docUpdateSentinel_.stop();
       
-      removePublishPdfHandler();
-
       while (releaseOnDismiss_.size() > 0)
          releaseOnDismiss_.remove(0).removeHandler();
 
@@ -1715,45 +1710,6 @@ public class TextEditingTarget implements EditingTarget
    }
 
    @Handler
-   void onPublishPDF()
-   {   
-      // setup handler for PublishPdfEvent
-      removePublishPdfHandler();
-      publishPdfReg_ = events_.addHandler(PublishPdfEvent.TYPE,
-                                          new PublishPdfHandler() {
-         public void onPublishPdf(PublishPdfEvent event)
-         {
-            // if this event applies to our document then handle it
-            if ((docUpdateSentinel_ != null) &&
-                 event.getPath().equals(docUpdateSentinel_.getPath()))
-            {
-               PublishPdfDialog pdfDialog = new PublishPdfDialog();
-               pdfDialog.showModal();
-               PublishPdf publishPdf = pPublishPdf_.get();
-               publishPdf.publish(id_, 
-                                  docDisplay_, 
-                                  docUpdateSentinel_, 
-                                  pdfDialog);
-            }
-
-
-         }
-      });
-      
-      // send publish to console
-      handlePdfCommand("publish", false, null);
-   }
-   
-   private void removePublishPdfHandler()
-   {
-      if (publishPdfReg_ != null)
-      {
-         publishPdfReg_.removeHandler();
-         publishPdfReg_ = null;
-      }
-   }
-
-   @Handler
    void onCompilePDF()
    {
       boolean showPdf = prefs_.showPdfAfterCompile().getValue();
@@ -2142,13 +2098,11 @@ public class TextEditingTarget implements EditingTarget
    private TextFileType fileType_;
    private String id_;
    private HandlerRegistration commandHandlerReg_;
-   private HandlerRegistration publishPdfReg_;
    private ArrayList<HandlerRegistration> releaseOnDismiss_ =
          new ArrayList<HandlerRegistration>();
    private final DirtyState dirtyState_;
    private HandlerManager handlers_ = new HandlerManager(this);
    private FileSystemContext fileContext_;
-   private final Provider<PublishPdf> pPublishPdf_;
    private final Provider<SpellChecker> pSpellChecker_;
    private final CompilePdfDependencyChecker compilePdfDependencyChecker_;
    private boolean ignoreDeletes_;

@@ -53,7 +53,6 @@ extern const int kSessionSerialization;
 extern const int kHistoryEntriesAdded;
 extern const int kQuotaStatus;
 extern const int kOAuthApproval;
-extern const int kPublishPdf;
 extern const int kFileEdit;
 extern const int kShowContent;
 extern const int kShowData;

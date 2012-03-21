@@ -151,7 +151,6 @@ public class TextFileType extends EditableFileType
       if (canCompilePDF())
       {
          results.add(commands.compilePDF());
-         results.add(commands.publishPDF());
          results.add(commands.synctexSearch());
       }
       if (canCheckSpelling())

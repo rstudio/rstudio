@@ -45,7 +45,6 @@ class ClientEvent extends JavaScriptObject
    public static final String HistoryEntriesAdded = "history_entries_added";
    public static final String QuotaStatus = "quota_status";
    public static final String OAuthApproval = "oauth_approval";
-   public static final String PublishPdf = "publish_pdf";
    public static final String FileEdit = "file_edit";
    public static final String ShowContent = "show_content";
    public static final String ShowData = "show_data";

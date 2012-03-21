@@ -61,7 +61,6 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.plots.events.LocatorEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.PublishPdfEvent;
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowContentEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowDataEvent;
@@ -244,11 +243,6 @@ public class ClientEventDispatcher
          {
             OAuthApproval oauthApproval = event.getData();
             eventBus_.fireEvent(new OAuthApprovalEvent(oauthApproval));
-         }
-         else if (type.equals(ClientEvent.PublishPdf))
-         {
-            String path = event.getData();
-            eventBus_.fireEvent(new PublishPdfEvent(path));
          }
          else if (type.equals(ClientEvent.FileEdit))
          {

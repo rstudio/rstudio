@@ -272,7 +272,7 @@ public class ImportGoogleSpreadsheetDialog extends ModalDialog<GoogleSpreadsheet
                // errors are silently ignored -- this is the preferred
                // approach until we upgrade the protocol to return
                // structured OAuth responses which include authentication
-               // challenges (e.g. see PublishPdfResult).
+               // challenges
 
                closeDialog();
             }

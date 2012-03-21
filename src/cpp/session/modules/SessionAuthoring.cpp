@@ -54,14 +54,6 @@ void viewPdfExternal(const FilePath& texPath)
                             "_rstudio_compile_pdf");
 }
 
-void publishPdf(const FilePath& texPath)
-{
-   std::string aliasedPath = module_context::createAliasedPath(texPath);
-   ClientEvent event(client_events::kPublishPdf, aliasedPath);
-   module_context::enqueClientEvent(event);
-}
-
-
 Error getTexCapabilities(const core::json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
@@ -106,8 +98,6 @@ Error compilePdf(const json::JsonRpcRequest& request,
    boost::function<void()> completedFunction;
    if (completedAction == "view_external")
       completedFunction = boost::bind(viewPdfExternal, targetFilePath);
-   else if (completedAction == "publish")
-      completedFunction = boost::bind(publishPdf, targetFilePath);
 
    // attempt to kickoff the compile
    bool started = tex::compile_pdf::startCompile(targetFilePath,

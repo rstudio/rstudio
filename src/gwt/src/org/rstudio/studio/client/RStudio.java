@@ -67,7 +67,6 @@ import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.Manipulato
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTargetWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.DiffFrame;
@@ -184,7 +183,6 @@ public class RStudio implements EntryPoint
       ThemedButton.ensureStylesInjected();
       ThemedPopupPanel.ensureStylesInjected();
       InstallPackageDialog.ensureStylesInjected();
-      PublishPdfDialog.ensureStylesInjected();
       ApplicationEndedPopupPanel.ensureStylesInjected();
       ApplicationSerializationProgress.ensureStylesInjected();
       HistoryPane.ensureStylesInjected();

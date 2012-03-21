@@ -54,7 +54,6 @@ const int kSessionSerialization = 26;
 const int kHistoryEntriesAdded = 27;
 const int kQuotaStatus = 29;
 const int kOAuthApproval = 30;
-const int kPublishPdf = 31;
 const int kFileEdit = 32;
 const int kShowContent = 33;
 const int kShowData = 34;
@@ -155,8 +154,6 @@ std::string ClientEvent::typeName() const
          return "quota_status";
       case client_events::kOAuthApproval:
          return "oauth_approval";
-      case client_events::kPublishPdf:
-         return "publish_pdf";
       case client_events::kFileEdit:
          return "file_edit";
       case client_events::kShowContent:

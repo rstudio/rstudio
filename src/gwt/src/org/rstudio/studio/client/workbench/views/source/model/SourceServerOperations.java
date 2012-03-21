@@ -116,11 +116,6 @@ public interface SourceServerOperations extends FilesServerOperations,
 
    void setSourceDocumentOnSave(String id, boolean shouldSourceOnSave,
                                 ServerRequestCallback<Void> requestCallback);
-         
-   void publishPdf(String id,
-                   String title,
-                   boolean update,
-                   ServerRequestCallback<PublishPdfResult> requestCallback);
 
    void saveActiveDocument(String contents,
                            boolean sweave,

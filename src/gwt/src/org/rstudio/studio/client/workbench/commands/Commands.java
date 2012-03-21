@@ -45,7 +45,6 @@ public abstract class
    public abstract AppCommand sourceNavigateBack();
    public abstract AppCommand sourceNavigateForward();
    public abstract AppCommand compilePDF();
-   public abstract AppCommand publishPDF();
    public abstract AppCommand synctexSearch();
    public abstract AppCommand activateSource();
    public abstract AppCommand printSourceDoc();
