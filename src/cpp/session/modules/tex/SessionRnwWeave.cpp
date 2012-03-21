@@ -241,10 +241,7 @@ class RnwPgfSweave : public RnwExternalWeave
 {
 public:
    RnwPgfSweave()
-      : RnwExternalWeave(
-            "pgfSweave",
-            "pgfSweave",
-            "require(pgfSweave); pgfSweave('%1%', compile.tex = FALSE)")
+      : RnwExternalWeave("pgfSweave", "pgfSweave", cmdFormat())
    {
    }
 
@@ -252,14 +249,40 @@ public:
 
    virtual core::json::Value chunkOptions() const
    {
-      if (isInstalled())
-      {
+      if (isInstalled() && hasChunkOptionsFunction())
+         return RnwWeave::chunkOptions("pgfSweave:::getChunkOptions");
+      else
          return core::json::Value();
+   }
+
+private:
+   static bool hasChunkOptionsFunction()
+   {
+      r::sexp::Protect rProtect;
+      SEXP functionSEXP = R_NilValue;
+      r::exec::RFunction func(".rs.getPackageFunction",
+                              "getChunkOptions",
+                              "pgfSweave");
+      Error error = func.call(&functionSEXP, &rProtect);
+      if (!error && !r::sexp::isNull(functionSEXP))
+      {
+         return true;
       }
       else
       {
-         return core::json::Value();
+         if (error)
+            LOG_ERROR(error);
+         return false;
       }
+   }
+
+   static std::string cmdFormat()
+   {
+      std::string format = "require(pgfSweave); ";
+      if (userSettings().alwaysEnableRnwCorcordance())
+         format += "options('pgfSweaveConcordance' = TRUE); ";
+      format += "pgfSweave('%1%', compile.tex = FALSE)";
+      return format;
    }
 };
 
