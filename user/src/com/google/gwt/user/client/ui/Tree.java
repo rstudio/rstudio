@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,6 +15,9 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.aria.client.CommonAttributeTypes.BooleanAndUndefined;
+import com.google.gwt.aria.client.CommonAttributeTypes.IdReference;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
@@ -89,7 +92,7 @@ import java.util.Map;
  * </p>
  */
 @SuppressWarnings("deprecation")
-public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets.ForIsWidget, 
+public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets.ForIsWidget,
     SourcesTreeEvents, HasFocus, HasAnimation, HasAllKeyHandlers,
     HasAllFocusHandlers, HasSelectionHandlers<TreeItem>,
     HasOpenHandlers<TreeItem>, HasCloseHandlers<TreeItem>, SourcesMouseEvents,
@@ -250,7 +253,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
 
   /**
    * Constructs a tree that uses the specified ClientBundle for images.
-   * 
+   *
    * @param resources a bundle that provides tree specific images
    */
   public Tree(Resources resources) {
@@ -261,7 +264,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * Constructs a tree that uses the specified ClientBundle for images. If this
    * tree does not use leaf images, the width of the Resources's leaf image will
    * control the leaf indent.
-   * 
+   *
    * @param resources a bundle that provides tree specific images
    * @param useLeafImages use leaf images from bundle
    */
@@ -271,7 +274,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
 
   /**
    * Constructs a tree that uses the specified image bundle for images.
-   * 
+   *
    * @param images a bundle that provides tree specific images
    * @deprecated replaced by {@link #Tree(Resources)}
    */
@@ -284,7 +287,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * Constructs a tree that uses the specified image bundle for images. If this
    * tree does not use leaf images, the width of the TreeImage's leaf image will
    * control the leaf indent.
-   * 
+   *
    * @param images a bundle that provides tree specific images
    * @param useLeafImages use leaf images from bundle
    * @deprecated replaced by {@link #Tree(Resources, boolean)}
@@ -296,7 +299,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
 
   /**
    * Adds the widget as a root tree item.
-   * 
+   *
    * @see com.google.gwt.user.client.ui.HasWidgets#add(com.google.gwt.user.client.ui.Widget)
    * @param widget widget to add.
    */
@@ -304,10 +307,10 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
   public void add(Widget widget) {
     addItem(widget);
   }
-  
+
   /**
    * Overloaded version for IsWidget.
-   * 
+   *
    * @see #add(Widget)
    */
   @Override
@@ -338,10 +341,10 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
   public void addFocusListener(FocusListener listener) {
     ListenerWrapper.WrappedFocusListener.add(this, listener);
   }
-  
+
   /**
    * Adds a simple tree item containing the specified html.
-   * 
+   *
    * @param itemHtml the text of the item to be added
    * @return the item that was added
    * @deprecated use {@link #addItem(SafeHtml)} instead
@@ -353,7 +356,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
 
   /**
    * Adds a simple tree item containing the specified html.
-   * 
+   *
    * @param itemHtml the html of the item to be added
    * @return the item that was added
    */
@@ -364,17 +367,17 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
 
   /**
    * Adds an item to the root level of this tree.
-   * 
+   *
    * @param item the item to be added
    */
   @Override
   public void addItem(TreeItem item) {
     root.addItem(item);
   }
-  
+
   /**
    * Adds an item to the root level of this tree.
-   * 
+   *
    * @param isItem the wrapper of item to be added
    */
   @Override
@@ -384,7 +387,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
 
   /**
    * Adds a new tree item containing the specified widget.
-   * 
+   *
    * @param widget the widget to be added
    * @return the new item
    */
@@ -392,10 +395,10 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
   public TreeItem addItem(Widget widget) {
     return root.addItem(widget);
   }
-  
+
   /**
    * Overloaded version for IsWidget.
-   * 
+   *
    * @see #addItem(Widget)
    */
   @Override
@@ -479,10 +482,10 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
       SelectionHandler<TreeItem> handler) {
     return addHandler(handler, SelectionEvent.getType());
   }
-  
+
   /**
    * Adds a simple tree item containing the specified text.
-   * 
+   *
    * @param itemText the text of the item to be added
    * @return the item that was added
    */
@@ -530,7 +533,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
 
   /**
    * Gets the top-level tree item at the specified index.
-   * 
+   *
    * @param index the index to be retrieved
    * @return the item at that index
    */
@@ -540,7 +543,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
 
   /**
    * Gets the number of items contained at the root of this tree.
-   * 
+   *
    * @return this tree's item count
    */
   public int getItemCount() {
@@ -549,7 +552,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
 
   /**
    * Gets the currently selected item.
-   * 
+   *
    * @return the selected item
    */
   public TreeItem getSelectedItem() {
@@ -564,7 +567,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
   /**
    * Inserts a child tree item at the specified index containing the specified
    * html.
-   * 
+   *
    * @param beforeIndex the index where the item will be inserted
    * @param itemHtml the html to be added
    * @return the item that was added
@@ -579,7 +582,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
   /**
    * Inserts a child tree item at the specified index containing the specified
    * html.
-   * 
+   *
    * @param beforeIndex the index where the item will be inserted
    * @param itemHtml the html of the item to be added
    * @return the item that was added
@@ -591,7 +594,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
 
   /**
    * Inserts an item into the root level of this tree.
-   * 
+   *
    * @param beforeIndex the index where the item will be inserted
    * @param item the item to be added
    * @throws IndexOutOfBoundsException if the index is out of range
@@ -603,7 +606,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
   /**
    * Inserts a child tree item at the specified index containing the specified
    * widget.
-   * 
+   *
    * @param beforeIndex the index where the item will be inserted
    * @param widget the widget to be added
    * @return the item that was added
@@ -745,10 +748,10 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
     item.setWidget(null);
     return true;
   }
-  
+
   /**
    * Overloaded version for IsWidget.
-   * 
+   *
    * @see #remove(Widget)
    */
   @Override
@@ -768,22 +771,22 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
 
   /**
    * Removes an item from the root level of this tree.
-   * 
+   *
    * @param item the item to be removed
    */
   @Override
   public void removeItem(TreeItem item) {
     root.removeItem(item);
   }
-  
+
   /**
    * Removes an item from the root level of this tree.
-   * 
+   *
    * @param isItem the wrapper of item to be removed
    */
   @Override
   public void removeItem(IsTreeItem isItem) {
-    if (isItem != null) { 
+    if (isItem != null) {
       TreeItem item = isItem.asTreeItem();
       removeItem(item);
     }
@@ -850,7 +853,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
 
   /**
    * Selects a specified item.
-   * 
+   *
    * @param item the item to be selected, or <code>null</code> to deselect all
    *          items
    */
@@ -860,7 +863,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
 
   /**
    * Selects a specified item.
-   * 
+   *
    * @param item the item to be selected, or <code>null</code> to deselect all
    *          items
    * @param fireEvents <code>true</code> to allow selection events to be fired
@@ -885,7 +888,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
 
   /**
    * Iterator of tree items.
-   * 
+   *
    * @return the iterator
    */
   public Iterator<TreeItem> treeItemIterator() {
@@ -918,7 +921,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * Indicates if keyboard navigation is enabled for the Tree and for a given
    * TreeItem. Subclasses of Tree can override this function to selectively
    * enable or disable keyboard navigation.
-   * 
+   *
    * @param currentItem the currently selected TreeItem
    * @return <code>true</code> if the Tree will response to arrow keys by
    *         changing the currently selected item
@@ -932,7 +935,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * <ul>
    * <li>-root = The root {@link TreeItem}.</li>
    * </ul>
-   * 
+   *
    * @see UIObject#onEnsureDebugId(String)
    */
   @Override
@@ -1005,7 +1008,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
   /**
    * Called only from {@link TreeItem}: Shows the closed image on that tree
    * item.
-   * 
+   *
    * @param treeItem the tree item
    */
   void showClosedImage(TreeItem treeItem) {
@@ -1014,7 +1017,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
 
   /**
    * Called only from {@link TreeItem}: Shows the leaf image on a tree item.
-   * 
+   *
    * @param treeItem the tree item
    */
   void showLeafImage(TreeItem treeItem) {
@@ -1029,7 +1032,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
 
   /**
    * Called only from {@link TreeItem}: Shows the open image on a tree item.
-   * 
+   *
    * @param treeItem the tree item
    */
   void showOpenImage(TreeItem treeItem) {
@@ -1099,7 +1102,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
   /**
    * Get the top parent above this {@link TreeItem} that is in closed state. In
    * other words, get the parent that is guaranteed to be visible.
-   * 
+   *
    * @param item
    * @return the closed parent, or null if all parents are opened
    */
@@ -1149,8 +1152,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
     setStyleName("gwt-Tree");
 
     // Add a11y role "tree"
-    Accessibility.setRole(getElement(), Accessibility.ROLE_TREE);
-    Accessibility.setRole(focusable, Accessibility.ROLE_TREEITEM);
+    Roles.getTreeRole().set(focusable);
   }
 
   private void keyboardNavigation(Event event) {
@@ -1386,8 +1388,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
       ++curSelectionLevel;
     }
 
-    Accessibility.setState(curSelectionContentElem, Accessibility.STATE_LEVEL,
-        String.valueOf(curSelectionLevel + 1));
+    Roles.getTreeitemRole().setAriaLevelProperty(curSelectionContentElem, curSelectionLevel + 1);
 
     // Set the 'aria-setsize' and 'aria-posinset' states. To do this, we need to
     // compute the the number of siblings that the currently selected item has,
@@ -1398,41 +1399,40 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
       curSelectionParent = root;
     }
 
-    Accessibility.setState(curSelectionContentElem,
-        Accessibility.STATE_SETSIZE,
-        String.valueOf(curSelectionParent.getChildCount()));
+    Roles.getTreeitemRole().setAriaSetsizeProperty(curSelectionContentElem,
+        curSelectionParent.getChildCount());
 
     int curSelectionIndex = curSelectionParent.getChildIndex(curSelection);
 
-    Accessibility.setState(curSelectionContentElem,
-        Accessibility.STATE_POSINSET, String.valueOf(curSelectionIndex + 1));
+    Roles.getTreeitemRole().setAriaPosinsetProperty(curSelectionContentElem,
+        curSelectionIndex + 1);
 
     // Set the 'aria-expanded' state. This depends on the state of the currently
     // selected item.
     // If the item has no children, we remove the 'aria-expanded' state.
 
     if (curSelection.getChildCount() == 0) {
-      Accessibility.removeState(curSelectionContentElem,
-          Accessibility.STATE_EXPANDED);
+      Roles.getTreeitemRole().removeAriaExpandedState(curSelectionContentElem);
+
     } else {
       if (curSelection.getState()) {
-        Accessibility.setState(curSelectionContentElem,
-            Accessibility.STATE_EXPANDED, "true");
+        Roles.getTreeitemRole().setAriaExpandedState(curSelectionContentElem,
+            BooleanAndUndefined.of(true));
       } else {
-        Accessibility.setState(curSelectionContentElem,
-            Accessibility.STATE_EXPANDED, "false");
+        Roles.getTreeitemRole().setAriaExpandedState(curSelectionContentElem,
+            BooleanAndUndefined.of(false));
       }
     }
 
     // Make sure that 'aria-selected' is true.
 
-    Accessibility.setState(curSelectionContentElem,
-        Accessibility.STATE_SELECTED, "true");
+    Roles.getTreeitemRole().setAriaSelectedState(curSelectionContentElem,
+        BooleanAndUndefined.of(true));
 
     // Update the 'aria-activedescendant' state for the focusable element to
     // match the id of the currently selected item
 
-    Accessibility.setState(focusable, Accessibility.STATE_ACTIVEDESCENDANT,
-        DOM.getElementAttribute(curSelectionContentElem, "id"));
+    Roles.getTreeRole().setAriaActivedescendantProperty(focusable,
+        IdReference.of(DOM.getElementAttribute(curSelectionContentElem, "id")));
   }
 }

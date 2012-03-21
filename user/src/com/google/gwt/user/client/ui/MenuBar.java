@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.aria.client.CommonAttributeTypes.IdReference;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.EventTarget;
@@ -260,6 +262,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     this(false, resources);
   }
 
+  @Override
   public HandlerRegistration addCloseHandler(CloseHandler<PopupPanel> handler) {
     return addHandler(handler, CloseEvent.getType());
   }
@@ -527,6 +530,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     return separator;
   }
 
+  @Override
   public boolean isAnimationEnabled() {
     return isAnimationEnabled;
   }
@@ -673,6 +677,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    *
    * @deprecated Use {@link #addCloseHandler(CloseHandler)} instead
    */
+  @Override
   @Deprecated
   public void onPopupClosed(PopupPanel sender, boolean autoClosed) {
     // If the menu popup was auto-closed, close all of its parents as well.
@@ -756,14 +761,14 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
         }
       }
 
-      Accessibility.setState(getElement(),
-          Accessibility.STATE_ACTIVEDESCENDANT, DOM.getElementAttribute(
-              item.getElement(), "id"));
+      Roles.getMenubarRole().setAriaActivedescendantProperty(getElement(),
+          IdReference.of(DOM.getElementAttribute(item.getElement(), "id")));
     }
 
     selectedItem = item;
   }
 
+  @Override
   public void setAnimationEnabled(boolean enable) {
     isAnimationEnabled = enable;
   }
@@ -890,6 +895,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
       // loop or popup blockers will prevent popups from opening.
       final Command cmd = item.getCommand();
       Scheduler.get().scheduleFinally(new Scheduler.ScheduledCommand() {
+        @Override
         public void execute() {
           cmd.execute();
         }
@@ -1085,7 +1091,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     DOM.appendChild(outer, table);
     setElement(outer);
 
-    Accessibility.setRole(getElement(), Accessibility.ROLE_MENUBAR);
+    Roles.getMenubarRole().set(getElement());
 
     sinkEvents(Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT
         | Event.ONFOCUS | Event.ONKEYDOWN);
@@ -1105,6 +1111,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
     // Deselect items when blurring without a child menu.
     addDomHandler(new BlurHandler() {
+      @Override
       public void onBlur(BlurEvent event) {
         if (shownChildMenu == null) {
           selectItem(null);
@@ -1234,6 +1241,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     // of the popup's.
     popup.setPopupPositionAndShow(new PopupPanel.PositionCallback() {
 
+      @Override
       public void setPosition(int offsetWidth, int offsetHeight) {
 
         // depending on the bidi direction position a menu on the left or right

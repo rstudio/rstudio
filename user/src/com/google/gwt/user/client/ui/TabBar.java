@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasAllKeyHandlers;
@@ -66,14 +67,14 @@ public class TabBar extends Composite implements SourcesTabEvents,
 
   /**
    * Set of characteristic interfaces supported by {@link TabBar} tabs.
-   * 
+   *
    * Note that this set might expand over time, so implement this interface at
    * your own risk.
    */
   public interface Tab extends HasAllKeyHandlers, HasClickHandlers, HasWordWrap {
     /**
      * Check if the underlying widget implements {@link HasWordWrap}.
-     *  
+     *
      * @return true if the widget implements {@link HasWordWrap}
      */
     boolean hasWordWrap();
@@ -104,18 +105,22 @@ public class TabBar extends Composite implements SourcesTabEvents,
       sinkEvents(Event.ONCLICK | Event.ONKEYDOWN);
     }
 
+    @Override
     public HandlerRegistration addClickHandler(ClickHandler handler) {
       return addHandler(handler, ClickEvent.getType());
     }
 
+    @Override
     public HandlerRegistration addKeyDownHandler(KeyDownHandler handler) {
       return addHandler(handler, KeyDownEvent.getType());
     }
 
+    @Override
     public HandlerRegistration addKeyPressHandler(KeyPressHandler handler) {
       return addDomHandler(handler, KeyPressEvent.getType());
     }
 
+    @Override
     public HandlerRegistration addKeyUpHandler(KeyUpHandler handler) {
       return addDomHandler(handler, KeyUpEvent.getType());
     }
@@ -124,6 +129,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
       return focusablePanel;
     }
 
+    @Override
     public boolean getWordWrap() {
       if (hasWordWrap()) {
         return ((HasWordWrap) focusablePanel.getWidget()).getWordWrap();
@@ -132,6 +138,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
           "Widget does not implement HasWordWrap");
     }
 
+    @Override
     public boolean hasWordWrap() {
       return focusablePanel.getWidget() instanceof HasWordWrap;
     }
@@ -168,6 +175,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
       this.enabled = enabled;
     }
 
+    @Override
     public void setWordWrap(boolean wrap) {
       if (hasWordWrap()) {
         ((HasWordWrap) focusablePanel.getWidget()).setWordWrap(wrap);
@@ -191,7 +199,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
     setStyleName("gwt-TabBar");
 
     // Add a11y role "tablist"
-    Accessibility.setRole(panel.getElement(), Accessibility.ROLE_TABLIST);
+    Roles.getTablistRole().set(panel.getElement());
 
     panel.setVerticalAlignment(HasVerticalAlignment.ALIGN_BOTTOM);
 
@@ -211,28 +219,28 @@ public class TabBar extends Composite implements SourcesTabEvents,
     setStyleName(rest.getElement().getParentElement(), "gwt-TabBarRest-wrapper");
   }
 
-  public HandlerRegistration addBeforeSelectionHandler(
-      BeforeSelectionHandler<Integer> handler) {
+  @Override
+  public HandlerRegistration addBeforeSelectionHandler(BeforeSelectionHandler<Integer> handler) {
     return addHandler(handler, BeforeSelectionEvent.getType());
   }
 
-  public HandlerRegistration addSelectionHandler(
-      SelectionHandler<Integer> handler) {
+  @Override
+  public HandlerRegistration addSelectionHandler(SelectionHandler<Integer> handler) {
     return addHandler(handler, SelectionEvent.getType());
   }
 
   /**
    * Adds a new tab with the specified text.
-   * 
+   *
    * @param html the new tab's html
    */
   public void addTab(SafeHtml html) {
     addTab(html.asString(), true);
   }
-  
+
   /**
    * Adds a new tab with the specified text.
-   * 
+   *
    * @param text the new tab's text
    */
   public void addTab(String text) {
@@ -241,7 +249,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
 
   /**
    * Adds a new tab with the specified text.
-   * 
+   *
    * @param text the new tab's text
    * @param asHTML <code>true</code> to treat the specified text as html
    */
@@ -251,7 +259,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
 
   /**
    * Adds a new tab with the specified widget.
-   * 
+   *
    * @param widget the new tab's widget
    */
   public void addTab(Widget widget) {
@@ -259,9 +267,10 @@ public class TabBar extends Composite implements SourcesTabEvents,
   }
 
   /**
-   * @deprecated Use {@link #addBeforeSelectionHandler(BeforeSelectionHandler)} 
+   * @deprecated Use {@link #addBeforeSelectionHandler(BeforeSelectionHandler)}
    * and {@link #addSelectionHandler(SelectionHandler)} instead
    */
+  @Override
   @Deprecated
   public void addTabListener(TabListener listener) {
     ListenerWrapper.WrappedTabListener.add(this, listener);
@@ -269,7 +278,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
 
   /**
    * Gets the tab that is currently selected.
-   * 
+   *
    * @return the selected tab
    */
   public int getSelectedTab() {
@@ -281,11 +290,11 @@ public class TabBar extends Composite implements SourcesTabEvents,
 
   /**
    * Gets the given tab.
-   * 
+   *
    * This method is final because the Tab interface will expand. Therefore
    * it is highly likely that subclasses which implemented this method would end up
    * breaking.
-   * 
+   *
    * @param index the tab's index
    * @return the tab wrapper
    */
@@ -299,7 +308,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
 
   /**
    * Gets the number of tabs present.
-   * 
+   *
    * @return the tab count
    */
   public int getTabCount() {
@@ -308,7 +317,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
 
   /**
    * Gets the specified tab's HTML.
-   * 
+   *
    * @param index the index of the tab whose HTML is to be retrieved
    * @return the tab's HTML
    */
@@ -331,17 +340,17 @@ public class TabBar extends Composite implements SourcesTabEvents,
 
   /**
    * Inserts a new tab at the specified index.
-   * 
+   *
    * @param html the new tab's html
    * @param beforeIndex the index before which this tab will be inserted
    */
   public void insertTab(SafeHtml html, int beforeIndex) {
     insertTab(html.asString(), true, beforeIndex);
   }
-  
+
   /**
    * Inserts a new tab at the specified index.
-   * 
+   *
    * @param text the new tab's text
    * @param asHTML <code>true</code> to treat the specified text as HTML
    * @param beforeIndex the index before which this tab will be inserted
@@ -362,7 +371,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
 
   /**
    * Inserts a new tab at the specified index.
-   * 
+   *
    * @param text the new tab's text
    * @param beforeIndex the index before which this tab will be inserted
    */
@@ -372,7 +381,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
 
   /**
    * Inserts a new tab at the specified index.
-   * 
+   *
    * @param widget widget to be used in the new tab
    * @param beforeIndex the index before which this tab will be inserted
    */
@@ -383,7 +392,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
   /**
    * Check if a tab is enabled or disabled. If disabled, the user cannot select
    * the tab.
-   * 
+   *
    * @param index the index of the tab
    * @return true if the tab is enabled, false if disabled
    */
@@ -398,6 +407,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
    * you need to access to the individual tabs, add a click handler to each
    * {@link Tab} element instead.
    */
+  @Override
   @Deprecated
   public void onClick(Widget sender) {
   }
@@ -406,6 +416,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
    * @deprecated add a key down handler to the individual {@link Tab} objects
    *  instead.
    */
+  @Override
   @Deprecated
   public void onKeyDown(Widget sender, char keyCode, int modifiers) {
   }
@@ -415,6 +426,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
    * if what you wanted to do was to listen to key press events on tabs, add the
    * key press handler to the individual tab wrappers instead.
    */
+  @Override
   @Deprecated
   public void onKeyPress(Widget sender, char keyCode, int modifiers) {
   }
@@ -423,15 +435,16 @@ public class TabBar extends Composite implements SourcesTabEvents,
    * @deprecated this method has been doing nothing for the entire last release,
    * if what you wanted to do was to listen to key up events on tabs, add the
    * key up handler to the individual tab wrappers instead.
-   * 
+   *
    */
+  @Override
   @Deprecated
   public void onKeyUp(Widget sender, char keyCode, int modifiers) {
   }
 
   /**
    * Removes the tab at the specified index.
-   * 
+   *
    * @param index the index of the tab to be removed
    */
   public void removeTab(int index) {
@@ -449,6 +462,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
    * @deprecated Instead use the {@link HandlerRegistration#removeHandler}
    * call on the object returned by an add*Handler method
    */
+  @Override
   @Deprecated
   public void removeTabListener(TabListener listener) {
     ListenerWrapper.WrappedTabListener.remove(this, listener);
@@ -457,7 +471,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
   /**
    * Programmatically selects the specified tab and fires events. Use index -1
    * to specify that no tab should be selected.
-   * 
+   *
    * @param index the index of the tab to be selected
    * @return <code>true</code> if successful, <code>false</code> if the change
    * is denied by the {@link BeforeSelectionHandler}.
@@ -469,7 +483,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
   /**
    * Programmatically selects the specified tab. Use index -1 to specify that no
    * tab should be selected.
-   * 
+   *
    * @param index the index of the tab to be selected
    * @param fireEvents true to fire events, false not to
    * @return <code>true</code> if successful, <code>false</code> if the change
@@ -502,7 +516,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
 
   /**
    * Enable or disable a tab. When disabled, users cannot select the tab.
-   * 
+   *
    * @param index the index of the tab to enable or disable
    * @param enabled true to enable, false to disable
    */
@@ -519,12 +533,12 @@ public class TabBar extends Composite implements SourcesTabEvents,
 
   /**
    * Sets a tab's contents via HTML.
-   * 
+   *
    * Use care when setting an object's HTML; it is an easy way to expose
    * script-based security problems. Consider using
    * {@link #setTabText(int, String)} or {@link #setTabHTML(int, SafeHtml)}
    * whenever possible.
-   * 
+   *
    * @param index the index of the tab whose HTML is to be set
    * @param html the tab new HTML
    */
@@ -538,17 +552,17 @@ public class TabBar extends Composite implements SourcesTabEvents,
 
   /**
    * Sets a tab's contents via safe html.
-   * 
+   *
    * @param index the index of the tab whose HTML is to be set
    * @param html the tab new HTML
    */
   public void setTabHTML(int index, SafeHtml html) {
     setTabHTML(index, html.asString());
   }
-  
+
   /**
    * Sets a tab's text contents.
-   * 
+   *
    * @param index the index of the tab whose text is to be set
    * @param text the object's new text
    */
@@ -567,7 +581,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
   /**
    * Create a {@link SimplePanel} that will wrap the contents in a tab.
    * Subclasses can use this method to wrap tabs in decorator panels.
-   * 
+   *
    * @return a {@link SimplePanel} to wrap the tab contents, or null to leave
    * tabs unwrapped
    */
@@ -577,7 +591,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
 
   /**
    * Inserts a new tab at the specified index.
-   * 
+   *
    * @param widget widget to be used in the new tab
    * @param beforeIndex the index before which this tab will be inserted
    */
@@ -589,7 +603,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
 
     // Add a11y role "tab"
     SimplePanel focusablePanel = delWidget.getFocusablePanel();
-    Accessibility.setRole(focusablePanel.getElement(), Accessibility.ROLE_TAB);
+    Roles.getTabRole().set(focusablePanel.getElement());
 
     panel.insert(delWidget, beforeIndex + 1);
 
@@ -603,7 +617,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
    * <li>-tab# = The element containing the contents of the tab.</li>
    * <li>-tab-wrapper# = The cell containing the tab at the index.</li>
    * </ul>
-   * 
+   *
    * @see UIObject#onEnsureDebugId(String)
    */
   @Override
@@ -636,7 +650,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
    * Selects the tab corresponding to the widget for the tab. To be clear the
    * widget for the tab is not the widget INSIDE of the tab; it is the widget
    * used to represent the tab itself.
-   * 
+   *
    * @param tabWidget The widget for the tab to be selected
    * @return true if the tab corresponding to the widget for the tab could
    * located and selected, false otherwise

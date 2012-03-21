@@ -39,8 +39,13 @@ import com.google.gwt.user.client.Element;
  * somewhat in flux. As a result, this API is subject to change as the
  * specification stabilizes; we will do our best to keep the community
  * updated on changes.</p>
+ *
+ * @deprecated Use the new GWT ARIA library with the factory class for the ARIA roles
+ * {@link com.google.gwt.aria.client.Roles}. There are getters for all ARIA roles. For each
+ * role there are get/set/remove methods defined for all (own and inherited) supported states
+ * and properties.
  */
-
+@Deprecated
 public final class Accessibility {
 
   public static final String ROLE_TREE = "tree";
@@ -60,7 +65,7 @@ public final class Accessibility {
   public static final String STATE_LEVEL = "aria-level";
   public static final String STATE_HASPOPUP = "aria-haspopup";
   public static final String STATE_PRESSED = "aria-pressed";
-  
+
   private static final String ATTR_NAME_ROLE = "role";
 
   /**

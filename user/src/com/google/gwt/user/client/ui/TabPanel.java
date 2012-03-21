@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
 import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
 import com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers;
@@ -216,7 +217,7 @@ public class TabPanel extends Composite implements TabListener,
     setStyleName("gwt-TabPanel");
     deck.setStyleName("gwt-TabPanelBottom");
     // Add a11y role "tabpanel"
-    Accessibility.setRole(deck.getElement(), Accessibility.ROLE_TABPANEL);
+    Roles.getTabpanelRole().set(deck.getElement());
   }
 
   /**
@@ -240,6 +241,7 @@ public class TabPanel extends Composite implements TabListener,
     add(asWidgetOrNull(w), tabText, asHTML);
   }
 
+  @Override
   public void add(Widget w) {
     throw new UnsupportedOperationException(
         "A tabText parameter must be specified with add().");
@@ -279,11 +281,13 @@ public class TabPanel extends Composite implements TabListener,
     insert(w, tabWidget, getWidgetCount());
   }
 
+  @Override
   public HandlerRegistration addBeforeSelectionHandler(
       BeforeSelectionHandler<Integer> handler) {
     return addHandler(handler, BeforeSelectionEvent.getType());
   }
 
+  @Override
   public HandlerRegistration addSelectionHandler(
       SelectionHandler<Integer> handler) {
     return addHandler(handler, SelectionEvent.getType());
@@ -293,11 +297,13 @@ public class TabPanel extends Composite implements TabListener,
    * @deprecated Use {@link #addBeforeSelectionHandler} and {@link
    * #addSelectionHandler} instead
    */
+  @Override
   @Deprecated
   public void addTabListener(TabListener listener) {
     ListenerWrapper.WrappedTabListener.add(this, listener);
   }
 
+  @Override
   public void clear() {
     while (getWidgetCount() > 0) {
       remove(getWidget(0));
@@ -325,10 +331,12 @@ public class TabPanel extends Composite implements TabListener,
     return tabBar;
   }
 
+  @Override
   public Widget getWidget(int index) {
     return deck.getWidget(index);
   }
 
+  @Override
   public int getWidgetCount() {
     return deck.getWidgetCount();
   }
@@ -336,10 +344,12 @@ public class TabPanel extends Composite implements TabListener,
   /**
    * Convenience overload to allow {@link IsWidget} to be used directly.
    */
+  @Override
   public int getWidgetIndex(IsWidget child) {
     return getWidgetIndex(asWidgetOrNull(child));
   }
 
+  @Override
   public int getWidgetIndex(Widget widget) {
     return deck.getWidgetIndex(widget);
   }
@@ -406,10 +416,12 @@ public class TabPanel extends Composite implements TabListener,
     deck.insertProtected(widget, tabWidget, beforeIndex);
   }
 
+  @Override
   public boolean isAnimationEnabled() {
     return deck.isAnimationEnabled();
   }
 
+  @Override
   public Iterator<Widget> iterator() {
     // The Iterator returned by DeckPanel supports removal and will invoke
     // TabbedDeckPanel.remove(), which is an active function.
@@ -419,6 +431,7 @@ public class TabPanel extends Composite implements TabListener,
   /**
    * @deprecated Use {@link BeforeSelectionHandler#onBeforeSelection} instead
    */
+  @Override
   @Deprecated
   public boolean onBeforeTabSelected(SourcesTabEvents sender, int tabIndex) {
     BeforeSelectionEvent<Integer> event = BeforeSelectionEvent.fire(this, tabIndex);
@@ -428,12 +441,14 @@ public class TabPanel extends Composite implements TabListener,
   /**
    * @deprecated Use {@link SelectionHandler#onSelection} instead
    */
+  @Override
   @Deprecated
   public void onTabSelected(SourcesTabEvents sender, int tabIndex) {
     deck.showWidget(tabIndex);
     SelectionEvent.fire(this, tabIndex);
   }
 
+  @Override
   public boolean remove(int index) {
     // Delegate updates to the TabBar to our DeckPanel implementation
     return deck.remove(index);
@@ -444,6 +459,7 @@ public class TabPanel extends Composite implements TabListener,
    *
    * @param widget the widget to be removed
    */
+  @Override
   public boolean remove(Widget widget) {
     // Delegate updates to the TabBar to our DeckPanel implementation
     return deck.remove(widget);
@@ -453,6 +469,7 @@ public class TabPanel extends Composite implements TabListener,
    * @deprecated Use the {@link HandlerRegistration#removeHandler}
    * method on the object returned by and add*Handler method instead
    */
+  @Override
   @Deprecated
   public void removeTabListener(TabListener listener) {
     ListenerWrapper.WrappedTabListener.remove(this, listener);
@@ -477,6 +494,7 @@ public class TabPanel extends Composite implements TabListener,
     tabBar.selectTab(index, fireEvents);
   }
 
+  @Override
   public void setAnimationEnabled(boolean enable) {
     deck.setAnimationEnabled(enable);
   }

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,13 +15,14 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.safehtml.client.HasSafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 
 /**
- * An entry in a 
+ * An entry in a
  * {@link com.google.gwt.user.client.ui.MenuBar}. Menu items can either fire a
  * {@link com.google.gwt.user.client.Command} when they are clicked, or open a
  * cascading sub-menu.
@@ -40,7 +41,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
 
   /**
    * Constructs a new menu item that fires a command when it is selected.
-   * 
+   *
    * @param html the item's html text
    */
   public MenuItem(SafeHtml html) {
@@ -49,7 +50,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
 
   /**
    * Constructs a new menu item that fires a command when it is selected.
-   * 
+   *
    * @param html the item's text
    * @param cmd the command to be fired when it is selected
    */
@@ -59,7 +60,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
 
   /**
    * Constructs a new menu item that cascades to a sub-menu when it is selected.
-   * 
+   *
    * @param html the item's text
    * @param subMenu the sub-menu to be displayed when it is selected
    */
@@ -69,7 +70,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
 
   /**
    * Constructs a new menu item that fires a command when it is selected.
-   * 
+   *
    * @param text the item's text
    * @param asHTML <code>true</code> to treat the specified text as html
    * @param cmd the command to be fired when it is selected
@@ -81,7 +82,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
 
   /**
    * Constructs a new menu item that cascades to a sub-menu when it is selected.
-   * 
+   *
    * @param text the item's text
    * @param asHTML <code>true</code> to treat the specified text as html
    * @param subMenu the sub-menu to be displayed when it is selected
@@ -93,7 +94,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
 
   /**
    * Constructs a new menu item that fires a command when it is selected.
-   * 
+   *
    * @param text the item's text
    * @param cmd the command to be fired when it is selected
    */
@@ -104,7 +105,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
 
   /**
    * Constructs a new menu item that cascades to a sub-menu when it is selected.
-   * 
+   *
    * @param text the item's text
    * @param subMenu the sub-menu to be displayed when it is selected
    */
@@ -126,25 +127,26 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
 
     DOM.setElementAttribute(getElement(), "id", DOM.createUniqueId());
     // Add a11y role "menuitem"
-    Accessibility.setRole(getElement(), Accessibility.ROLE_MENUITEM);
+    Roles.getMenuitemRole().set(getElement());
   }
 
   /**
    * Gets the command associated with this item.
-   * 
+   *
    * @return this item's command, or <code>null</code> if none exists
    */
   public Command getCommand() {
     return command;
   }
 
+  @Override
   public String getHTML() {
     return DOM.getInnerHTML(getElement());
   }
 
   /**
    * Gets the menu that contains this item.
-   * 
+   *
    * @return the parent menu, or <code>null</code> if none exists.
    */
   public MenuBar getParentMenu() {
@@ -153,30 +155,33 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
 
   /**
    * Gets the sub-menu associated with this item.
-   * 
+   *
    * @return this item's sub-menu, or <code>null</code> if none exists
    */
   public MenuBar getSubMenu() {
     return subMenu;
   }
 
+  @Override
   public String getText() {
     return DOM.getInnerText(getElement());
   }
 
+  @Override
   public boolean isEnabled() {
     return enabled;
   }
 
   /**
    * Sets the command associated with this item.
-   * 
+   *
    * @param cmd the command to be associated with this item
    */
   public void setCommand(Command cmd) {
     command = cmd;
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     if (enabled) {
       removeStyleDependentName(DEPENDENT_STYLENAME_DISABLED_ITEM);
@@ -186,17 +191,19 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
     this.enabled = enabled;
   }
 
+  @Override
   public void setHTML(SafeHtml html) {
     setHTML(html.asString());
   }
 
+  @Override
   public void setHTML(String html) {
     DOM.setInnerHTML(getElement(), html);
   }
 
   /**
    * Sets the sub-menu associated with this item.
-   * 
+   *
    * @param subMenu this item's new sub-menu
    */
   public void setSubMenu(MenuBar subMenu) {
@@ -211,15 +218,14 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
       FocusPanel.impl.setTabIndex(subMenu.getElement(), -1);
 
       // Update a11y role "haspopup"
-      Accessibility.setState(this.getElement(), Accessibility.STATE_HASPOPUP,
-          "true");
+      Roles.getMenuitemRole().setAriaHaspopupProperty(getElement(), true);
     } else {
       // Update a11y role "haspopup"
-      Accessibility.setState(this.getElement(), Accessibility.STATE_HASPOPUP,
-          "false");
+      Roles.getMenuitemRole().setAriaHaspopupProperty(getElement(), false);
     }
   }
 
+  @Override
   public void setText(String text) {
     DOM.setInnerText(getElement(), text);
   }
@@ -227,7 +233,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
   /**
    * Also sets the Debug IDs of MenuItems in the submenu of this
    * {@link MenuItem} if a submenu exists.
-   * 
+   *
    * @see UIObject#onEnsureDebugId(String)
    */
   @Override

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;
@@ -33,17 +34,19 @@ public class MenuItemTest extends GWTTestCase {
 
   public void testSafeHtmlWithCommand() {
     Command command = new Command() {
+      @Override
       public void execute() {
       }
     };
     MenuItem item = new MenuItem(SafeHtmlUtils.fromSafeConstant(html), command);
-    
+
     assertEquals(html, item.getHTML().toLowerCase());
     assertEquals(command, item.getCommand());
   }
 
   public void testSetCommandWithMenuBar() {
     Command command = new Command() {
+      @Override
       public void execute() {
       }
     };
@@ -61,13 +64,14 @@ public class MenuItemTest extends GWTTestCase {
   public void testSafeHtmlWithSubMenu() {
     MenuBar subMenu = new MenuBar();
     MenuItem item = new MenuItem(SafeHtmlUtils.fromSafeConstant(html), subMenu);
-    
+
     assertEquals(html, item.getHTML().toLowerCase());
     assertEquals(subMenu, item.getSubMenu());
   }
 
   public void testSetCommandWithoutMenuBar() {
     Command command = new Command() {
+      @Override
       public void execute() {
       }
     };
@@ -83,12 +87,13 @@ public class MenuItemTest extends GWTTestCase {
 
   public void testSetSafeHtml() {
     Command command = new Command() {
+      @Override
       public void execute() {
       }
     };
     MenuItem item = new MenuItem("foo", command);
     item.setHTML(SafeHtmlUtils.fromSafeConstant(html));
-    
+
     assertEquals(html, item.getHTML().toLowerCase());
     assertEquals(command, item.getCommand());
   }
@@ -99,18 +104,16 @@ public class MenuItemTest extends GWTTestCase {
     MenuItem item = bar.addItem("test", submenu);
     assertEquals(submenu, item.getSubMenu());
     assertEquals(-1, FocusPanel.impl.getTabIndex(submenu.getElement()));
-    assertEquals("true", Accessibility.getState(item.getElement(),
-        Accessibility.STATE_HASPOPUP));
+
+    assertEquals("true", Roles.getMenuitemRole().getAriaHaspopupProperty(item.getElement()));
 
     item.setSubMenu(null);
     assertNull(item.getSubMenu());
-    assertEquals("false", Accessibility.getState(item.getElement(),
-        Accessibility.STATE_HASPOPUP));
+    assertEquals("false", Roles.getMenuitemRole().getAriaHaspopupProperty(item.getElement()));
 
     item.setSubMenu(submenu);
     assertEquals(submenu, item.getSubMenu());
-    assertEquals("true", Accessibility.getState(item.getElement(),
-        Accessibility.STATE_HASPOPUP));
+    assertEquals("true", Roles.getMenuitemRole().getAriaHaspopupProperty(item.getElement()));
   }
 
   public void testSetSubMenuWithoutMenuBar() {
@@ -118,17 +121,14 @@ public class MenuItemTest extends GWTTestCase {
     MenuItem item = new MenuItem("test", submenu);
     assertEquals(submenu, item.getSubMenu());
     assertEquals(-1, FocusPanel.impl.getTabIndex(submenu.getElement()));
-    assertEquals("true", Accessibility.getState(item.getElement(),
-        Accessibility.STATE_HASPOPUP));
+    assertEquals("true", Roles.getMenuitemRole().getAriaHaspopupProperty(item.getElement()));
 
     item.setSubMenu(null);
     assertNull(item.getSubMenu());
-    assertEquals("false", Accessibility.getState(item.getElement(),
-        Accessibility.STATE_HASPOPUP));
+    assertEquals("false", Roles.getMenuitemRole().getAriaHaspopupProperty(item.getElement()));
 
     item.setSubMenu(submenu);
     assertEquals(submenu, item.getSubMenu());
-    assertEquals("true", Accessibility.getState(item.getElement(),
-        Accessibility.STATE_HASPOPUP));
+    assertEquals("true", Roles.getMenuitemRole().getAriaHaspopupProperty(item.getElement()));
   }
 }
