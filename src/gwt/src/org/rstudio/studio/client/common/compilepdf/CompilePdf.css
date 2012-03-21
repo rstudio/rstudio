@@ -1,5 +1,6 @@
 .fileLabel {
    margin-right: 7px;
+   white-space: nowrap;
 }
 
 .iconCell {

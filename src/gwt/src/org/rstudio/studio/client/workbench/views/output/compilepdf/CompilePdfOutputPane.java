@@ -139,7 +139,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
       String shortFileName = StringUtil.shortPathName(
                                  FileSystemItem.createFile(fileName), 
                                  ThemeStyles.INSTANCE.subtitle(), 
-                                 350);
+                                 200);
       
       fileLabel_.setText(shortFileName);
       
