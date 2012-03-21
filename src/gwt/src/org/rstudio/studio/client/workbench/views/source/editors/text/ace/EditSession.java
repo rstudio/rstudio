@@ -91,15 +91,27 @@ public class EditSession extends JavaScriptObject
       return this.getUndoManager();
    }-*/;
 
-  public native final Document getDocument() /*-{
-     return this.getDocument();
-  }-*/;
+   public native final Document getDocument() /*-{
+      return this.getDocument();
+   }-*/;
 
-  public native final void setNewLineMode(String type) /*-{
-     this.setNewLineMode(type);
-  }-*/;
+   public native final void setNewLineMode(String type) /*-{
+      this.setNewLineMode(type);
+   }-*/;
 
    public native final void reindent(Range range) /*-{
       this.reindent(range);
+   }-*/;
+
+   public native final void foldAll() /*-{
+      this.foldAll();
+   }-*/;
+
+   public native final void unfoldAll() /*-{
+      this.unfold();
+   }-*/;
+
+   public native final void toggleFold() /*-{
+      this.toggleFold(false);
    }-*/;
 }

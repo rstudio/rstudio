@@ -158,19 +158,6 @@ pre {
   font-family: fixedWidthFont !important;
 }
 
-.ace_editor .ace_gutter {
-   width: 3.3em !important;
-}
-
-.ace_editor .ace_gutter-layer {
-   position: relative;
-   text-align: right;
-}
-
-.ace_editor .ace_gutter-cell {
-   padding-right: 6px;
-}
-
 .gwt-MenuBar {
    cursor: default;
 }

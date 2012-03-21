@@ -13,6 +13,8 @@
 
 define("mode/r_code_model", function(require, exports, module) {
 
+var Range = require("ace/range").Range;
+
 function comparePoints(pos1, pos2)
 {
    if (pos1.row != pos2.row)
@@ -285,6 +287,83 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
             this.$scopes.onScopeEnd(pos);
          }
       } while (tokenCursor.moveToNextToken(maxRow));
+   };
+
+   this.$getFoldToken = function(session, foldStyle, row) {
+      this.$tokenizeUpToRow(row);
+
+      var rowTokens = this.$tokens[row];
+
+      var depth = 0;
+      var unmatchedOpen = null;
+      var unmatchedClose = null;
+
+      for (var i = 0; i < rowTokens.length; i++) {
+         if (/\bparen\b/.test(rowTokens[i].type)) {
+            switch (rowTokens[i].value) {
+               case '{':
+                  depth++;
+                  if (depth == 1) {
+                     unmatchedOpen = rowTokens[i];
+                  }
+                  break;
+               case '}':
+                  depth--;
+                  if (depth == 0) {
+                     unmatchedOpen = null;
+                  }
+                  if (depth < 0) {
+                     unmatchedClose = rowTokens[i];
+                     depth = 0;
+                  }
+                  break;
+            }
+         }
+      }
+
+      if (unmatchedOpen)
+         return unmatchedOpen;
+
+      if (foldStyle == "markbeginend" && unmatchedClose)
+         return unmatchedClose;
+
+      return null;
+   };
+
+   this.getFoldWidget = function(session, foldStyle, row) {
+      var foldToken = this.$getFoldToken(session, foldStyle, row);
+      if (foldToken == null)
+         return "";
+      if (foldToken.value == '{')
+         return "start";
+      else if (foldToken.value == '}')
+         return "end";
+
+      return "";
+   };
+
+   this.getFoldWidgetRange = function(session, foldStyle, row) {
+      var foldToken = this.$getFoldToken(session, foldStyle, row);
+      if (!foldToken)
+         return;
+
+      var pos = {row: row, column: foldToken.column + 1};
+
+      if (foldToken.value == '{') {
+         var end = session.$findClosingBracket(foldToken.value, pos);
+         if (!end)
+            return;
+         return Range.fromPoints(pos, end);
+      }
+      else if (foldToken.value == '}') {
+         var start = session.$findOpeningBracket(foldToken.value, pos);
+         if (!start)
+            return;
+         return Range.fromPoints({row: start.row, column: start.column+1},
+                                 {row: pos.row, column: pos.column-1});
+      }
+
+      return;
    };
 
    this.getCurrentFunction = function(position)

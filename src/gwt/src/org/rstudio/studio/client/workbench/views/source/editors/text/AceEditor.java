@@ -994,7 +994,25 @@ public class AceEditor implements DocDisplay,
    {
       return getSession().getMode().getFunctionTree();
    }
-   
+
+   @Override
+   public void foldAll()
+   {
+      getSession().foldAll();
+   }
+
+   @Override
+   public void unfoldAll()
+   {
+      getSession().unfoldAll();
+   }
+
+   @Override
+   public void toggleFold()
+   {
+      getSession().toggleFold();
+   }
+
    @Override
    public SourcePosition findFunctionPositionFromCursor(String functionName)
    {
