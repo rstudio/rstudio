@@ -1,5 +1,5 @@
 /*
- * SpellingSandboxDialog.java
+ * SpellingSandboxDebugText.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *

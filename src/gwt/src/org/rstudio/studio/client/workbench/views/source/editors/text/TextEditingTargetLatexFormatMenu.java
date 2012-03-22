@@ -1,5 +1,5 @@
 /*
- * TextEditingTargetFindReplace.java
+ * TextEditingTargetLatexFormatMenu.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
