@@ -20,7 +20,7 @@ public interface AceResources extends ClientBundle
 {
    public static final AceResources INSTANCE = GWT.create(AceResources.class);
 
-   @Source("ace-uncompressed.js")
+   @Source("ace.js")
    StaticDataResource acejs();
 
    @Source("acesupport.js")
