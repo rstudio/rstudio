@@ -1605,6 +1605,10 @@ public class TextEditingTarget implements EditingTarget
       docDisplay_.focus();  
    }
    
+   // TODO: implmeent chunk navigation and execution (note that since they
+   // aren't implemented these commands are currently removed from the system
+   // in the Source constructor)
+   
    @Handler
    void onJumpToChunk()
    {

@@ -20,6 +20,7 @@ public interface StandardIcons extends ClientBundle
 {
    public static final StandardIcons INSTANCE = GWT.create(StandardIcons.class);
    ImageResource stock_new();
+   ImageResource chunk_menu();
    ImageResource go_up();
    ImageResource right_arrow();
    ImageResource click_feedback();

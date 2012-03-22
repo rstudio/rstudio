@@ -28,6 +28,7 @@ import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
@@ -172,7 +173,7 @@ public class TextEditingTargetWidget
       chunksMenu.addItem(commands_.sourceActiveDocumentWithEcho().createMenuItem(false));
       chunksButton_ = new ToolbarButton(
                        "Chunks",  
-                       commands_.sourceActiveDocument().getImageResource(), 
+                       StandardIcons.INSTANCE.chunk_menu(), 
                        chunksMenu, 
                        true);
       toolbar.addRightWidget(chunksButton_);
