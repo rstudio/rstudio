@@ -189,6 +189,10 @@ public class ShortcutsEmitter
          return "192";
       if (val.equals("."))
          return "190";
+      if (val.equals("="))
+         return "187";
+      if (val.equals("<"))
+         return "188";
       return null;
    }
 

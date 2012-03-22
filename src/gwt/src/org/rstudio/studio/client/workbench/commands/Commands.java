@@ -44,6 +44,10 @@ public abstract class
    public abstract AppCommand executeFromCurrentLine();
    public abstract AppCommand executeCurrentFunction();
    public abstract AppCommand executeLastCode();
+   public abstract AppCommand insertChunk();
+   public abstract AppCommand jumpToChunk();
+   public abstract AppCommand executeCurrentChunk();
+   public abstract AppCommand executeNextChunk();
    public abstract AppCommand goToFunctionDefinition();
    public abstract AppCommand sourceNavigateBack();
    public abstract AppCommand sourceNavigateForward();

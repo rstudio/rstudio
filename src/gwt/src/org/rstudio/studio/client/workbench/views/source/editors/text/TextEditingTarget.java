@@ -1585,7 +1585,31 @@ public class TextEditingTarget implements EditingTarget
       setLastExecuted(start, end);
       events_.fireEvent(new SendToConsoleEvent(code.trim(), true));
    }
-
+   
+   @Handler
+   void onInsertChunk()
+   {
+      globalDisplay_.showErrorMessage("Insert Chunk", "Not Yet Implemented");
+   }
+   
+   @Handler
+   void onJumpToChunk()
+   {
+      globalDisplay_.showErrorMessage("Jump to Chunk", "Not Yet Implemented");
+   }
+   
+   @Handler
+   void onExecuteCurrentChunk()
+   {
+      globalDisplay_.showErrorMessage("Execute Current Chunk", "Not Yet Implemented");
+   }
+   
+   @Handler
+   void onExecuteNextChunk()
+   {
+      globalDisplay_.showErrorMessage("Execute Next Chunk", "Not Yet Implemented");
+   }
+   
    @Handler
    void onJumpToFunction()
    {

@@ -37,6 +37,7 @@ public class TextFileType extends EditableFileType
                 boolean canExecuteAllCode,
                 boolean canExecuteToCurrentLine,
                 boolean canCompilePDF,
+                boolean canExecuteChunks,
                 boolean canAutoIndent,
                 boolean canCheckSpelling)
    {
@@ -49,6 +50,7 @@ public class TextFileType extends EditableFileType
       canExecuteAllCode_ = canExecuteAllCode;
       canExecuteToCurrentLine_ = canExecuteToCurrentLine;
       canCompilePDF_ = canCompilePDF;
+      canExecuteChunks_ = canExecuteChunks;
       canAutoIndent_ = canAutoIndent;
       canCheckSpelling_ = canCheckSpelling;
    }
@@ -100,6 +102,11 @@ public class TextFileType extends EditableFileType
    public boolean canCompilePDF()
    {
       return canCompilePDF_;
+   }
+   
+   public boolean canExecuteChunks()
+   {
+      return canExecuteChunks_;
    }
    
    public boolean canAutoIndent()
@@ -155,6 +162,13 @@ public class TextFileType extends EditableFileType
          results.add(commands.compilePDF());
          results.add(commands.synctexSearch());
       }
+      if (canExecuteChunks())
+      {
+         results.add(commands.insertChunk());
+         results.add(commands.jumpToChunk());
+         results.add(commands.executeCurrentChunk());
+         results.add(commands.executeNextChunk());
+      }
       if (canCheckSpelling())
       {
          results.add(commands.checkSpelling());
@@ -179,6 +193,7 @@ public class TextFileType extends EditableFileType
    private final boolean canExecuteAllCode_;
    private final boolean canExecuteToCurrentLine_;
    private final boolean canCompilePDF_;
+   private final boolean canExecuteChunks_;
    private final boolean canAutoIndent_;
    private final boolean canCheckSpelling_;
    private final String defaultExtension_;

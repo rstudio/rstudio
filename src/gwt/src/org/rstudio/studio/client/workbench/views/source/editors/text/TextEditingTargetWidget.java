@@ -158,7 +158,24 @@ public class TextEditingTargetWidget
       sourceMenu.addItem(commands_.sourceActiveDocumentWithEcho().createMenuItem(false));
       
       sourceMenuButton_ = new ToolbarButton(sourceMenu, true);
-      toolbar.addRightWidget(sourceMenuButton_);      
+      toolbar.addRightWidget(sourceMenuButton_);  
+      
+      ToolbarPopupMenu chunksMenu = new ToolbarPopupMenu();
+      chunksMenu.addItem(commands_.insertChunk().createMenuItem(false));
+      chunksMenu.addSeparator();
+      chunksMenu.addItem(commands_.jumpToChunk().createMenuItem(false));
+      chunksMenu.addSeparator();
+      chunksMenu.addItem(commands_.executeCurrentChunk().createMenuItem(false));
+      chunksMenu.addItem(commands_.executeNextChunk().createMenuItem(false));
+      chunksMenu.addSeparator();
+      chunksMenu.addItem(commands_.sourceActiveDocument().createMenuItem(false));
+      chunksMenu.addItem(commands_.sourceActiveDocumentWithEcho().createMenuItem(false));
+      chunksButton_ = new ToolbarButton(
+                       "Chunks",  
+                       commands_.sourceActiveDocument().getImageResource(), 
+                       chunksMenu, 
+                       true);
+      toolbar.addRightWidget(chunksButton_);
             
       return toolbar;
    }
@@ -200,14 +217,20 @@ public class TextEditingTargetWidget
    public void adaptToFileType(TextFileType fileType)
    {
       editor_.setFileType(fileType);
+      boolean canCompilePdf = fileType.canCompilePDF();
+      boolean canExecuteCode = fileType.canExecuteCode();
+      boolean canExecuteChunks = fileType.canExecuteChunks();
+      
       sourceOnSave_.setVisible(fileType.canSourceOnSave());
       srcOnSaveLabel_.setVisible(fileType.canSourceOnSave());
-      codeTransform_.setVisible(fileType.canExecuteCode());
-      sourceButton_.setVisible(fileType.canExecuteCode());
-      sourceMenuButton_.setVisible(fileType.canExecuteCode());
-      texSeparatorWidget_.setVisible(fileType.canCompilePDF());
-      texToolbarButton_.setVisible(fileType.canCompilePDF());
-      compilePdfButton_.setVisible(fileType.canCompilePDF());
+      codeTransform_.setVisible(canExecuteCode);   
+      sourceButton_.setVisible(canExecuteCode && !canExecuteChunks);
+      sourceMenuButton_.setVisible(canExecuteCode && !canExecuteChunks);
+   
+      texSeparatorWidget_.setVisible(canCompilePdf);
+      texToolbarButton_.setVisible(canCompilePdf);
+      compilePdfButton_.setVisible(canCompilePdf);
+      chunksButton_.setVisible(canExecuteChunks);
    }
 
    public HasValue<Boolean> getSourceOnSave()
@@ -353,6 +376,7 @@ public class TextEditingTargetWidget
    private ToolbarButton runButton_;
    private ToolbarButton sourceButton_;
    private ToolbarButton sourceMenuButton_;
+   private ToolbarButton chunksButton_;
    
    private Widget texSeparatorWidget_;
    private ToolbarButton texToolbarButton_;
