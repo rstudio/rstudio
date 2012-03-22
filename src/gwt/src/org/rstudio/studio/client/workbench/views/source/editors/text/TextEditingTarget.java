@@ -1589,7 +1589,20 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onInsertChunk()
    {
-      globalDisplay_.showErrorMessage("Insert Chunk", "Not Yet Implemented");
+      docDisplay_.collapseSelection(true);
+      if (!docDisplay_.moveSelectionToBlankLine())
+      {
+         int lastRow = docDisplay_.getRowCount();
+         int lastCol = docDisplay_.getLength(lastRow);
+         Position endPos = Position.create(lastRow, lastCol);
+         docDisplay_.setCursorPosition(endPos);
+         docDisplay_.insertCode("\n", false);
+      }
+      
+      Position pos = docDisplay_.getCursorPosition();
+      docDisplay_.insertCode("<<>>=\n\n@\n", false);         
+      docDisplay_.setCursorPosition(Position.create(pos.getRow(), 2));
+      docDisplay_.focus();  
    }
    
    @Handler

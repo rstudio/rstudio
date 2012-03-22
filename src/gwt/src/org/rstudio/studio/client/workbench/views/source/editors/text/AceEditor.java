@@ -796,6 +796,24 @@ public class AceEditor implements DocDisplay,
       }
       return false;
    }
+   
+   @Override
+   public boolean moveSelectionToBlankLine()
+   {
+      int curRow = getSession().getSelection().getCursor().getRow();
+      while (curRow < getSession().getLength())
+      {
+         String line = getSession().getLine(curRow);
+         if (line.length() == 0)
+         {
+            getSession().getSelection().moveCursorTo(curRow, 0, false);
+            return true;
+         }
+          
+         curRow++;
+      }
+      return false;
+   }
 
    @Override
    public void reindent()

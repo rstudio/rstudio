@@ -61,6 +61,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    String getLanguageMode(Position position);
    void replaceSelection(String code);
    boolean moveSelectionToNextLine(boolean skipBlankLines);
+   boolean moveSelectionToBlankLine(); 
    void reindent();
    ChangeTracker getChangeTracker();
 
