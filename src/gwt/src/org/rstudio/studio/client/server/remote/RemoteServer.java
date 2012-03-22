@@ -976,6 +976,7 @@ public class RemoteServer implements Server
                             String path,
                             String fileType,
                             String encoding,
+                            String foldSpec,
                             String contents,
                             ServerRequestCallback<String> requestCallback)
    {
@@ -984,7 +985,8 @@ public class RemoteServer implements Server
       params.set(1, path == null ? JSONNull.getInstance() : new JSONString(path));
       params.set(2, fileType == null ? JSONNull.getInstance() : new JSONString(fileType));
       params.set(3, encoding == null ? JSONNull.getInstance() : new JSONString(encoding));
-      params.set(4, new JSONString(contents));
+      params.set(4, new JSONString(StringUtil.notNull(foldSpec)));
+      params.set(5, new JSONString(contents));
       sendRequest(RPC_SCOPE, SAVE_DOCUMENT, params, requestCallback);
    }
 
@@ -992,6 +994,7 @@ public class RemoteServer implements Server
                                 String path,
                                 String fileType,
                                 String encoding,
+                                String foldSpec,
                                 String replacement,
                                 int offset,
                                 int length,
@@ -1003,10 +1006,11 @@ public class RemoteServer implements Server
       params.set(1, path == null ? JSONNull.getInstance() : new JSONString(path));
       params.set(2, fileType == null ? JSONNull.getInstance() : new JSONString(fileType));
       params.set(3, encoding == null ? JSONNull.getInstance() : new JSONString(encoding));
-      params.set(4, new JSONString(replacement));
-      params.set(5, new JSONNumber(offset));
-      params.set(6, new JSONNumber(length));
-      params.set(7, new JSONString(hash));
+      params.set(4, new JSONString(StringUtil.notNull(foldSpec)));
+      params.set(5, new JSONString(replacement));
+      params.set(6, new JSONNumber(offset));
+      params.set(7, new JSONNumber(length));
+      params.set(8, new JSONString(hash));
       sendRequest(RPC_SCOPE, SAVE_DOCUMENT_DIFF, params, requestCallback);
    }
 

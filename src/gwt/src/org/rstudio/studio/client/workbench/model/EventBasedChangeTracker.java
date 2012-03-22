@@ -47,6 +47,6 @@ public class EventBasedChangeTracker<T> implements ChangeTracker
       return ebct;
    }
 
-   private boolean changed_ = false;
+   protected boolean changed_ = false;
    private final HasValueChangeHandlers<T> source_;
 }

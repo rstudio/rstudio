@@ -22,6 +22,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.PreElement;
 import com.google.gwt.dom.client.Style.*;
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -61,13 +62,12 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
+
+import java.util.ArrayList;
 
 public class AceEditor implements DocDisplay, 
                                   InputEditorDisplay,
@@ -151,6 +151,30 @@ public class AceEditor implements DocDisplay,
       private final Anchor end_;
    }
 
+   private class AceEditorChangeTracker extends EventBasedChangeTracker<Void>
+   {
+      private AceEditorChangeTracker()
+      {
+         super(AceEditor.this);
+         AceEditor.this.addFoldChangeHandler(new org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent.Handler()
+         {
+            @Override
+            public void onFoldChange(FoldChangeEvent event)
+            {
+               changed_ = true;
+            }
+         });
+      }
+
+      @Override
+      public ChangeTracker fork()
+      {
+         AceEditorChangeTracker forked = new AceEditorChangeTracker();
+         forked.changed_ = changed_;
+         return forked;
+      }
+   }
+
    public static void preload()
    {
       load(null);
@@ -188,6 +212,14 @@ public class AceEditor implements DocDisplay,
             ValueChangeEvent.fire(AceEditor.this, null);
          }
       });
+      widget_.addFoldChangeHandler(new FoldChangeEvent.Handler()
+      {
+         @Override
+         public void onFoldChange(FoldChangeEvent event)
+         {
+            AceEditor.this.fireEvent(new FoldChangeEvent());
+         }
+      });
 
       addCapturingKeyDownHandler(new KeyDownHandler()
       {
@@ -200,7 +232,7 @@ public class AceEditor implements DocDisplay,
                switch (event.getNativeKeyCode())
                {
                   case 'U':
-                     event.preventDefault() ;
+                     event.preventDefault();
                      InputEditorUtil.yankBeforeCursor(AceEditor.this, true);
                      break;
                   case 'K':
@@ -826,7 +858,7 @@ public class AceEditor implements DocDisplay,
 
    public ChangeTracker getChangeTracker()
    {
-      return new EventBasedChangeTracker<Void>(this);
+      return new AceEditorChangeTracker();
    }
 
    public AnchoredSelection createAnchoredSelection(Position startPos,
@@ -968,6 +1000,18 @@ public class AceEditor implements DocDisplay,
    public void setPrintMarginColumn(int column)
    {
       widget_.getEditor().getRenderer().setPrintMarginColumn(column);
+   }
+
+   @Override
+   public ArrayList<Fold> getFolds()
+   {
+      return Fold.flatten(getSession().getAllFolds());
+   }
+
+   @Override
+   public void addFold(Fold fold)
+   {
+      getSession().addFold(fold.getPlaceholder(), fold.getRange());
    }
 
    public void setReadOnly(boolean readOnly)
@@ -1143,6 +1187,12 @@ public class AceEditor implements DocDisplay,
          ValueChangeHandler<Void> handler)
    {
       return handlers_.addHandler(ValueChangeEvent.getType(), handler);
+   }
+
+   public HandlerRegistration addFoldChangeHandler(
+         FoldChangeEvent.Handler handler)
+   {
+      return handlers_.addHandler(FoldChangeEvent.TYPE, handler);
    }
 
    public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)

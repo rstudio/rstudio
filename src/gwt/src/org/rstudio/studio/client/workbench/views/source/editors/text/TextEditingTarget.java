@@ -414,6 +414,17 @@ public class TextEditingTarget implements EditingTarget
       name_.setValue(getNameFromDocument(document, defaultNameProvider), true);
       docDisplay_.setCode(document.getContents(), false);
 
+      final ArrayList<Fold> folds = Fold.decode(document.getFoldSpec());
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            for (Fold fold : folds)
+               docDisplay_.addFold(fold);
+         }
+      });
+
       registerPrefs(releaseOnDismiss_, prefs_, docDisplay_);
 
       // Initialize sourceOnSave, and keep it in sync

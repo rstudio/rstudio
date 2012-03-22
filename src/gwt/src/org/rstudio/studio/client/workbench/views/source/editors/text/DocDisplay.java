@@ -22,6 +22,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasFoldChangeHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -32,7 +33,10 @@ import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.IsWidget;
 
+import java.util.ArrayList;
+
 public interface DocDisplay extends HasValueChangeHandlers<Void>,
+                                    HasFoldChangeHandlers,
                                     IsWidget,
                                     HasFocusHandlers,
                                     HasKeyDownHandlers,
@@ -89,6 +93,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setTabSize(int tabSize);
    void setShowPrintMargin(boolean on);
    void setPrintMarginColumn(int column);
+
+   ArrayList<Fold> getFolds();
+   void addFold(Fold fold);
 
    HandlerRegistration addCommandClickHandler(CommandClickEvent.Handler handler);
    

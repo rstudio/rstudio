@@ -76,6 +76,13 @@ public class AceEditorNative extends JavaScriptObject {
               }));
    }-*/;
 
+   public native final void onChangeFold(Command command) /*-{
+      this.getSession().on("changeFold",
+              $entry(function () {
+                 command.@com.google.gwt.user.client.Command::execute()();
+              }));
+   }-*/;
+
    public final HandlerRegistration delegateEventsTo(HasHandlers handlers)
    {
       final LinkedList<JavaScriptObject> handles = new LinkedList<JavaScriptObject>();

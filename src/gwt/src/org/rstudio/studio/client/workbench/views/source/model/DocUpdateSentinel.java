@@ -34,13 +34,15 @@ import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveHandler;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.Fold;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class DocUpdateSentinel
-      implements ValueChangeHandler<Void>
+      implements ValueChangeHandler<Void>,FoldChangeEvent.Handler
 {
    private class ReopenFileCallback extends ServerRequestCallback<SourceDocument>
    {
@@ -106,6 +108,7 @@ public class DocUpdateSentinel
       };
 
       docDisplay_.addValueChangeHandler(this);
+      docDisplay_.addFoldChangeHandler(this);
 
       // Web only
       closeHandlerReg_ = Window.addWindowClosingHandler(new ClosingHandler()
@@ -249,12 +252,16 @@ public class DocUpdateSentinel
       String oldContents = sourceDoc_.getContents();
       final String hash = sourceDoc_.getHash();
 
+      final String foldSpec = Fold.encode(docDisplay_.getFolds());
+      String oldFoldSpec = sourceDoc_.getFoldSpec();
+
       //String patch = DiffMatchPatch.diff(oldContents, newContents);
       SubstringDiff diff = new SubstringDiff(oldContents, newContents);
 
       // Don't auto-save when there are no changes. In addition to being
       // wasteful, it causes the server to think the document is dirty.
-      if (path == null && fileType == null && diff.isEmpty())
+      if (path == null && fileType == null && diff.isEmpty()
+          && foldSpec.equals(oldFoldSpec))
       {
          changesPending_ = false;
          return false;
@@ -278,6 +285,7 @@ public class DocUpdateSentinel
             path,
             fileType,
             encoding,
+            foldSpec,
             diff.getReplacement(),
             diff.getOffset(),
             diff.getLength(),
@@ -326,6 +334,7 @@ public class DocUpdateSentinel
                            path,
                            fileType,
                            encoding,
+                           foldSpec,
                            newContents,
                            this);
                   }
@@ -455,6 +464,13 @@ public class DocUpdateSentinel
    }
 
    public void onValueChange(ValueChangeEvent<Void> voidValueChangeEvent)
+   {
+      changesPending_ = true;
+      bufferedCommand_.nudge();
+   }
+
+   @Override
+   public void onFoldChange(FoldChangeEvent event)
    {
       changesPending_ = true;
       bufferedCommand_.nudge();

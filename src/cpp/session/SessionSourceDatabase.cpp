@@ -337,6 +337,9 @@ Error SourceDocument::readFromJson(json::Object* pDocJson)
       json::Value encoding = docJson["encoding"];
       encoding_ = !encoding.is_null() ? encoding.get_str() : std::string();
 
+      json::Value folds = docJson["folds"];
+      folds_ = !folds.is_null() ? folds.get_str() : std::string();
+
       return Success();
    }
    catch(const std::exception& e)
@@ -359,6 +362,7 @@ void SourceDocument::writeToJson(json::Object* pDocJson) const
    jsonDoc["created"] = created();
    jsonDoc["source_on_save"] = sourceOnSave();
    jsonDoc["properties"] = properties();
+   jsonDoc["folds"] = folds();
    jsonDoc["lastKnownWriteTime"] = json::Value(
          static_cast<boost::int64_t>(lastKnownWriteTime_));
    jsonDoc["encoding"] = encoding_;

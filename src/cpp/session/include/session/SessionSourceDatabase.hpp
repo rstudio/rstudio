@@ -49,6 +49,7 @@ public:
    double created() const { return created_; }
    bool sourceOnSave() const { return sourceOnSave_; }
    const core::json::Object& properties() const { return properties_; }
+   const std::string& folds() const { return folds_; }
    std::string getProperty(const std::string& name) const;
 
    // is this an untitled document?
@@ -78,6 +79,11 @@ public:
    void setEncoding(const std::string& encoding)
    {
       encoding_ = encoding;
+   }
+
+   void setFolds(const std::string& folds)
+   {
+      folds_ = folds;
    }
 
    void checkForExternalEdit(std::time_t* pTime);
@@ -111,6 +117,7 @@ private:
    std::string contents_;
    std::string hash_;
    std::string encoding_;
+   std::string folds_;
    std::time_t lastKnownWriteTime_;
    bool dirty_;
    double created_;

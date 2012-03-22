@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.source.model;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.json.client.JSONArray;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -72,6 +73,7 @@ public interface SourceServerOperations extends FilesServerOperations,
                      String path,
                      String fileType,
                      String encoding,
+                     String foldSpec,
                      String contents,
                      ServerRequestCallback<String> requestCallback);
 
@@ -91,6 +93,7 @@ public interface SourceServerOperations extends FilesServerOperations,
                          String path,
                          String fileType,
                          String encoding,
+                         String foldSpec,
                          String replacement,
                          int offset,
                          int length,

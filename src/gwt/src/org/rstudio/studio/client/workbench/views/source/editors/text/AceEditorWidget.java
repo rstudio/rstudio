@@ -36,10 +36,12 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceMouseEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent.Handler;
 
 public class AceEditorWidget extends Composite
       implements RequiresResize,
                  HasValueChangeHandlers<Void>,
+                 HasFoldChangeHandlers,
                  HasKeyDownHandlers,
                  HasKeyPressHandlers
 {
@@ -67,6 +69,14 @@ public class AceEditorWidget extends Composite
          public void execute()
          {
             ValueChangeEvent.fire(AceEditorWidget.this, null);
+         }
+      });
+      editor_.onChangeFold(new Command()
+      {
+         @Override
+         public void execute()
+         {
+            fireEvent(new FoldChangeEvent());
          }
       });
       editor_.getSession().getSelection().addCursorChangeHandler(new CommandWithArg<Position>()
@@ -123,6 +133,12 @@ public class AceEditorWidget extends Composite
          CursorChangedHandler handler)
    {
       return addHandler(handler, CursorChangedEvent.TYPE);
+   }
+
+   @Override
+   public HandlerRegistration addFoldChangeHandler(Handler handler)
+   {
+      return addHandler(handler, FoldChangeEvent.TYPE);
    }
 
    public AceEditorNative getEditor() {

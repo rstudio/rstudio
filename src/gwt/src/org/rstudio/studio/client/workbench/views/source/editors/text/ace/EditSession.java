@@ -13,6 +13,10 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import org.rstudio.studio.client.workbench.views.source.editors.text.Fold;
+
+import java.util.ArrayList;
 
 public class EditSession extends JavaScriptObject
 {
@@ -113,5 +117,13 @@ public class EditSession extends JavaScriptObject
 
    public native final void toggleFold() /*-{
       this.toggleFold(false);
+   }-*/;
+
+   public native final JsArray<AceFold> getAllFolds() /*-{
+      return this.getAllFolds();
+   }-*/;
+
+   public native final void addFold(String placeholder, Range range) /*-{
+      this.addFold(placeholder, range);
    }-*/;
 }

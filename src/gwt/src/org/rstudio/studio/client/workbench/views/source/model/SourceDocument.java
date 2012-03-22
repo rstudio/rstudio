@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.workbench.views.source.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayMixed;
 import org.rstudio.core.client.js.JsObject;
 
 public class SourceDocument extends JavaScriptObject
@@ -103,5 +105,13 @@ public class SourceDocument extends JavaScriptObject
       if (!this.properties)
          this.properties = {};
       return this.properties;
+   }-*/;
+
+   public native final String getFoldSpec() /*-{
+      return this.folds || "";
+   }-*/;
+
+   public native final void setFoldSpec(String foldSpec) /*-{
+      this.folds = foldSpec;
    }-*/;
 }
