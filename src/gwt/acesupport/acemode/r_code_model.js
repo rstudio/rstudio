@@ -14,6 +14,7 @@
 define("mode/r_code_model", function(require, exports, module) {
 
 var Range = require("ace/range").Range;
+var TokenIterator = require("ace/token_iterator").TokenIterator;
 
 function comparePoints(pos1, pos2)
 {
@@ -292,6 +293,9 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
    this.$getFoldToken = function(session, foldStyle, row) {
       this.$tokenizeUpToRow(row);
 
+      if (this.$statePattern && !this.$statePattern.test(this.$endStates[row]))
+         return "";
+
       var rowTokens = this.$tokens[row];
 
       var depth = 0;
@@ -299,12 +303,13 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
       var unmatchedClose = null;
 
       for (var i = 0; i < rowTokens.length; i++) {
-         if (/\bparen\b/.test(rowTokens[i].type)) {
-            switch (rowTokens[i].value) {
+         var token = rowTokens[i];
+         if (/\bparen\b/.test(token.type)) {
+            switch (token.value) {
                case '{':
                   depth++;
                   if (depth == 1) {
-                     unmatchedOpen = rowTokens[i];
+                     unmatchedOpen = token;
                   }
                   break;
                case '}':
@@ -313,7 +318,7 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
                      unmatchedOpen = null;
                   }
                   if (depth < 0) {
-                     unmatchedClose = rowTokens[i];
+                     unmatchedClose = token;
                      depth = 0;
                   }
                   break;
@@ -327,6 +332,13 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
       if (foldStyle == "markbeginend" && unmatchedClose)
          return unmatchedClose;
 
+      if (rowTokens.length >= 1) {
+         if (/\bcodebegin\b/.test(rowTokens[0].type))
+            return rowTokens[0];
+         else if (/\bcodeend\b/.test(rowTokens[0].type))
+            return rowTokens[0];
+      }
+
       return null;
    };
 
@@ -337,6 +349,10 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
       if (foldToken.value == '{')
          return "start";
       else if (foldToken.value == '}')
+         return "end";
+      else if (/\bcodebegin\b/.test(foldToken.type))
+         return "start";
+      else if (/\bcodeend\b/.test(foldToken.type))
          return "end";
 
       return "";
@@ -361,6 +377,35 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
             return;
          return Range.fromPoints({row: start.row, column: start.column+1},
                                  {row: pos.row, column: pos.column-1});
+      }
+      else if (/\bcodebegin\b/.test(foldToken.type)) {
+         // Find next codebegin or codeend
+         var tokenIterator = new TokenIterator(session, row, 0);
+         for (var tok; tok = tokenIterator.stepForward(); ) {
+            if (/\bcode(begin|end)\b/.test(tok.type)) {
+               var begin = /\bcodebegin\b/.test(tok.type);
+               var tokRow = tokenIterator.getCurrentTokenRow();
+               var endPos = begin
+                     ? {row: tokRow-1, column: session.getLine(tokRow-1).length}
+                     : {row: tokRow, column: session.getLine(tokRow).length};
+               return Range.fromPoints(
+                     {row: row, column: foldToken.column + foldToken.value.length},
+                     endPos);
+            }
+         }
+         return;
+      }
+      else if (/\bcodeend\b/.test(foldToken.type)) {
+         var tokenIterator2 = new TokenIterator(session, row, 0);
+         for (var tok2; tok2 = tokenIterator2.stepBackward(); ) {
+            if (/\bcodebegin\b/.test(tok2.type)) {
+               var tokRow2 = tokenIterator2.getCurrentTokenRow();
+               return Range.fromPoints(
+                     {row: tokRow2, column: session.getLine(tokRow2).length},
+                     {row: row, column: session.getLine(row).length});
+            }
+         }
+         return;
       }
 
       return;
@@ -899,8 +944,11 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
       // virtual-comment is for roxygen content that needs to be highlighted
       // as TeX, but for the purposes of the code model should be invisible.
 
+      if (/\bcode(?:begin|end)\b/.test(token.type))
+         return false;
+
       return /^\s*$/.test(token.value) ||
-             token.type.match(/\b(?:virtual-)?comment\b/);
+             token.type.match(/\b(?:ace_virtual-)?comment\b/);
    }
 
    this.$filterWhitespaceAndComments = function(tokens)

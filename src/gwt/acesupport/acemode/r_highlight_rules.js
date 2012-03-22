@@ -156,7 +156,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
       // Make all embedded TeX virtual-comment so they don't interfere with
       // auto-indent.
       for (var i = 0; i < rdRules["start"].length; i++) {
-         rdRules["start"][i].token += " virtual-comment";
+         rdRules["start"][i].token += ".virtual-comment";
       }
 
       this.addRules(rdRules, "rd-");
