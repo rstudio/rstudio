@@ -221,12 +221,34 @@ public abstract class UIObject implements HasVisibility {
     ensureDebugId(elem, "", id);
   }
 
+  /**
+   * Returns whether the given element is visible in a way consistent with
+   * {@link #setVisible(Element, boolean)}.
+   *
+   * <p>
+   * Warning: implemented with a heuristic. The value returned takes into
+   * account only the "display" style, ignoring CSS and Aria roles, thus may not
+   * accurately reflect whether the element is actually visible in the browser.
+   * </p>
+   */
   public static native boolean isVisible(Element elem) /*-{
     return (elem.style.display != 'none');
   }-*/;
 
+  /**
+   * Shows or hides the given element. Also updates the "aria-hidden" attribute.
+   *
+   * <p>
+   * Warning: implemented with a heuristic based on the "display" style:
+   * clears the "display" style to its default value if {@code visible} is true,
+   * else forces the style to "none". If the "display" style is set to "none"
+   * via CSS style sheets, the element remains invisible after a call to
+   * {@code setVisible(elem, true)}.
+   * </p>
+   */
   public static native void setVisible(Element elem, boolean visible) /*-{
     elem.style.display = visible ? '' : 'none';
+    elem.setAttribute('aria-hidden', String(!visible));
   }-*/;
 
   /**

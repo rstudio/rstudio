@@ -15,9 +15,11 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.aria.client.State;
 import com.google.gwt.debug.client.DebugInfo;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.SpanElement;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
@@ -210,6 +212,48 @@ public class UIObjectTest extends GWTTestCase {
 
     // Reset the prefix.
     DebugInfo.setDebugIdPrefix(oldPrefix);
+  }
+
+  public void testIsVisible_defaultDisplay() {
+    Element elem = DOM.createDiv();
+    assertTrue(UIObject.isVisible(elem));
+  }
+
+  public void testIsVisible_customDisplay() {
+    Element elem = DOM.createDiv();
+    elem.getStyle().setDisplay(Style.Display.INLINE_BLOCK);
+    assertTrue(UIObject.isVisible(elem));
+  }
+
+  public void testIsVisible_hidden() {
+    Element elem = DOM.createDiv();
+    elem.getStyle().setDisplay(Style.Display.NONE);
+    assertFalse(UIObject.isVisible(elem));
+  }
+
+  public void testIsVisible_ignoresAria() {
+    Element elem = DOM.createDiv();
+    State.HIDDEN.set(elem, true);
+    assertTrue(UIObject.isVisible(elem));
+  }
+
+  public void testSetVisible() {
+    // Initial state: visible
+    Element elem = DOM.createDiv();
+    assertTrue(UIObject.isVisible(elem));
+    assertFalse(Boolean.valueOf(State.HIDDEN.get(elem)));
+
+    // Hide
+    UIObject.setVisible(elem, false);
+    assertFalse(UIObject.isVisible(elem));
+    assertEquals(Style.Display.NONE.getCssName(), elem.getStyle().getDisplay());
+    assertTrue(Boolean.valueOf(State.HIDDEN.get(elem)));
+
+    // Show again
+    UIObject.setVisible(elem, true);
+    assertTrue(UIObject.isVisible(elem));
+    assertEquals("", elem.getStyle().getDisplay());
+    assertFalse(Boolean.valueOf(State.HIDDEN.get(elem)));
   }
 
   public void testNormal() {
