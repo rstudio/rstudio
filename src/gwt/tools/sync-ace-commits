@@ -71,7 +71,7 @@ git merge \
     
 git merge \
     origin/patch/mousewheel2 \
-    origin/bugfix/resize-freeze \
+    origin/patch/consistent-gutter-width \
 
 
 make clean

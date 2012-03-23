@@ -12620,6 +12620,15 @@ var Gutter = function(parentEl) {
         }
     };
 
+    // Pad this number to the width of the last line number in the session
+    this.pad = function(n) {
+        function countDigits(num) {
+            return (num + "").length;
+        }
+        var delta = countDigits(this.session.getLength()) - countDigits(n);
+        return Array(delta+1).join("\u00A0") + n;
+    };
+
     this.update = function(config) {
         this.$config = config;
 
@@ -12646,7 +12655,7 @@ var Gutter = function(parentEl) {
                 this.$breakpoints[i] ? " ace_breakpoint " : " ",
                 annotation.className,
                 "' title='", annotation.text.join("\n"),
-                "' style='height:", config.lineHeight, "px;'>", (i+1));
+                "' style='height:", config.lineHeight, "px;'>", this.pad(i+1));
 
             if (foldWidgets) {
                 var c = foldWidgets[i];
@@ -13795,7 +13804,7 @@ var RenderLoop = function(onRender, win) {
             event.nextTick(function() {
                 _self.pending = false;
                 var changes;
-                for (var i = 0; i < 5 && (changes = _self.changes); i++) {
+                while (changes = _self.changes) {
                     _self.changes = 0;
                     _self.onRender(changes);
                 }
