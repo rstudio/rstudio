@@ -14,9 +14,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
-import org.rstudio.studio.client.workbench.views.source.editors.text.Fold;
-
-import java.util.ArrayList;
 
 public class EditSession extends JavaScriptObject
 {
@@ -125,5 +122,17 @@ public class EditSession extends JavaScriptObject
 
    public native final void addFold(String placeholder, Range range) /*-{
       this.addFold(placeholder, range);
+   }-*/;
+
+   public native final void unfold(Range range, boolean expandInner) /*-{
+      this.unfold(range, expandInner);
+   }-*/;
+
+   public native final void unfold(Position pos, boolean expandInner) /*-{
+      this.unfold(pos, expandInner);
+   }-*/;
+
+   public native final void unfold(int row, boolean expandInner) /*-{
+      this.unfold(row, expandInner);
    }-*/;
 }

@@ -25,6 +25,7 @@ public class Selection extends JavaScriptObject
    }-*/;
 
    public native final void setSelectionRange(Range range) /*-{
+      this.session.unfold(range, true);
       this.setSelectionRange(range);
    }-*/;
 
@@ -35,6 +36,7 @@ public class Selection extends JavaScriptObject
    public native final void moveCursorTo(int row,
                                          int column,
                                          boolean preventUpdateDesiredColumn) /*-{
+      this.session.unfold({row: row, column: column}, true);
       this.moveCursorTo(row, column, preventUpdateDesiredColumn);
       this.setSelectionAnchor(row, column);
    }-*/;

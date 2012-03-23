@@ -20,9 +20,8 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.PreElement;
-import com.google.gwt.dom.client.Style.*;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
-import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -33,7 +32,6 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
@@ -60,7 +58,6 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
@@ -824,6 +821,7 @@ public class AceEditor implements DocDisplay,
             continue;
          int col =  (match != null) ? match.getIndex() : 0;
          getSession().getSelection().moveCursorTo(curRow, col, false);
+         getSession().unfold(curRow, true);
          return true;
       }
       return false;
@@ -839,6 +837,7 @@ public class AceEditor implements DocDisplay,
          if (line.length() == 0)
          {
             getSession().getSelection().moveCursorTo(curRow, 0, false);
+            getSession().unfold(curRow, true);
             return true;
          }
           
