@@ -13795,7 +13795,7 @@ var RenderLoop = function(onRender, win) {
             event.nextTick(function() {
                 _self.pending = false;
                 var changes;
-                while (changes = _self.changes) {
+                for (var i = 0; i < 5 && (changes = _self.changes); i++) {
                     _self.changes = 0;
                     _self.onRender(changes);
                 }
