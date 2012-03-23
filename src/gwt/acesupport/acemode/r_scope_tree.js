@@ -35,30 +35,56 @@ define('mode/r_scope_tree', function(require, exports, module) {
 
    var ScopeManager = function() {
       this.parsePos = {row: 0, column: 0};
-      this.$root = new ScopeNode("(Top Level)", this.parsePos);
+      this.$root = new ScopeNode("(Top Level)", this.parsePos, null,
+                                 ScopeNode.TYPE_ROOT);
    };
 
    (function() {
 
+      this.onChunkStart = function(label, chunkStartPos, chunkPos) {
+         // Starting a chunk means closing the previous chunk, if any
+         var prev = this.$root.closeScope(chunkStartPos, ScopeNode.TYPE_CHUNK);
+         if (prev)
+            debuglog("chunk-scope implicit end: " + prev.label);
+
+         debuglog("adding chunk-scope " + label);
+         this.$root.addNode(new ScopeNode(label, chunkPos, chunkStartPos,
+                                          ScopeNode.TYPE_CHUNK));
+         this.printScopeTree();
+      };
+
+      this.onChunkEnd = function(pos) {
+         var closed = this.$root.closeScope(pos, ScopeNode.TYPE_CHUNK);
+         if (closed)
+            debuglog("chunk-scope end: " + closed.label);
+         else
+            debuglog("extra chunk-scope end");
+         this.printScopeTree();
+         return closed;
+      };
+
       this.onFunctionScopeStart = function(label, functionStartPos, scopePos) {
-         debuglog("adding function " + label);
-         this.$root.addNode(new ScopeNode(label, scopePos, functionStartPos));
+         debuglog("adding function brace-scope " + label);
+         this.$root.addNode(new ScopeNode(label, scopePos, functionStartPos,
+                                          ScopeNode.TYPE_BRACE));
          this.printScopeTree();
       };
 
       this.onScopeStart = function(pos) {
-         debuglog("adding anon scope");
-         this.$root.addNode(new ScopeNode(null, pos));
+         debuglog("adding anon brace-scope");
+         this.$root.addNode(new ScopeNode(null, pos, null,
+                                          ScopeNode.TYPE_BRACE));
          this.printScopeTree();
       };
 
       this.onScopeEnd = function(pos) {
-         var closed = this.$root.closeScope(pos);
+         var closed = this.$root.closeScope(pos, ScopeNode.TYPE_BRACE);
          if (closed)
-            debuglog("scope end: " + closed.label);
+            debuglog("brace-scope end: " + closed.label);
          else
-            debuglog("extra scope end");
+            debuglog("extra brace-scope end");
          this.printScopeTree();
+         return closed;
       };
 
       this.findFunction = function(pos) {
@@ -84,6 +110,10 @@ define('mode/r_scope_tree', function(require, exports, module) {
          this.printScopeTree();
       };
 
+      this.getTopLevelScopeCount = function() {
+         return this.$root.$children.length;
+      };
+
       this.printScopeTree = function() {
          this.$root.printDebug();
       };
@@ -92,7 +122,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
 
 
 
-   var ScopeNode = function(label, start, preamble) {
+   var ScopeNode = function(label, start, preamble, scopeType) {
       this.label = label;
 
       // The position of the open brace
@@ -105,8 +135,15 @@ define('mode/r_scope_tree', function(require, exports, module) {
       // The position of the close brance (possibly with added whitespace)
       this.end = null;
 
+      // Whether this scope is
+      this.scopeType = scopeType;
+
       this.$children = [];
    };
+
+   ScopeNode.TYPE_ROOT = 1; // document root
+   ScopeNode.TYPE_BRACE = 2; // curly brace
+   ScopeNode.TYPE_CHUNK = 3; // Sweave chunk
 
    (function() {
 
@@ -148,7 +185,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
          }
       };
 
-      this.closeScope = function(pos) {
+      this.closeScope = function(pos, scopeType) {
 
          // NB: This function will never close the "this" node. This is by
          // design as we don't want the top-level node to ever be closed.
@@ -163,15 +200,34 @@ define('mode/r_scope_tree', function(require, exports, module) {
          if (lastNode.end)
             return null;
 
-         // Last child had a descendant that needed to be closed
-         var closedChild = lastNode.closeScope(pos);
+         // Last child had a descendant that needed to be closed and was the
+         // appropriate type
+         var closedChild = lastNode.closeScope(pos, scopeType);
          if (closedChild)
             return closedChild;
 
-         // Close last child
-         lastNode.end = pos;
-         return lastNode;
+         // Close last child, if it's of the type we want to close
+         if (scopeType == lastNode.scopeType) {
+            lastNode.end = pos;
+            // If any descendants are still open, force them closed. This could
+            // be the case for e.g. Sweave chunk being closed while it contains
+            // unclosed brace scopes.
+            lastNode.$forceDescendantsClosed(pos);
+            return lastNode;
+         }
+
+         return null;
       };
+
+      this.$forceDescendantsClosed = function(pos) {
+         if (this.$children.length == 0)
+            return;
+         var lastNode = this.$children[this.$children.length - 1];
+         if (lastNode.end)
+            return;
+         lastNode.$forceDescendantsClosed(pos);
+         lastNode.end = pos;
+      }
 
       this.findNode = function(pos) {
          var index = this.$binarySearch(pos);

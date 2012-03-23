@@ -658,7 +658,7 @@ public class TextEditingTarget implements EditingTarget
    private void updateStatusBarLanguage()
    {
       statusBar_.getLanguage().setValue(fileType_.getLabel());
-      boolean isR = fileType_ == FileTypeRegistry.R;
+      boolean isR = fileType_ == FileTypeRegistry.R || fileType_ == FileTypeRegistry.SWEAVE;
       statusBar_.setFunctionVisible(isR);
       if (isR)
          updateCurrentFunction();

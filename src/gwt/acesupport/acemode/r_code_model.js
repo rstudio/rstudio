@@ -233,6 +233,30 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
 
    this.$buildScopeTreeUpToRow = function(maxrow)
    {
+      function getChunkLabel(comment) {
+         var match = /<<(.*?)>>/.exec(comment);
+         if (!match)
+            return null;
+         var value = match[1];
+         var values = value.split(',');
+         if (values.length == 0)
+            return null;
+
+         // If first arg has no =, it's a label
+         if (!/=/.test(values[0]))
+            return values[0].replace(/(^\s+)|(\s+$)/g, '');
+
+         for (var i = 0; i < values.length; i++)
+         {
+            match = /^\s*label\s*=\s*(.*)$/.exec(values[i]);
+            if (match)
+               return match[1].replace(/(^\s+)|(\s+$)/g, '');
+         }
+
+         return null;
+      }
+
+
       // It's possible that determining the scope at 'position' may require
       // parsing beyond the position itself--for example if the position is
       // on the identifier of a function whose open brace is a few tokens later.
@@ -253,7 +277,30 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
 
          //console.log("                                 Token: " + tokenCursor.currentValue() + " [" + tokenCursor.currentPosition().row + "x" + tokenCursor.currentPosition().column + "]");
 
-         if (tokenCursor.currentValue() === "{")
+         var tokenType = tokenCursor.currentToken().type;
+         if (/\bcodebegin\b/.test(tokenType))
+         {
+            var chunkStartPos = tokenCursor.currentPosition();
+            var chunkPos = {row: chunkStartPos.row + 1, column: 0};
+            var chunkNum = this.$scopes.getTopLevelScopeCount()+1;
+            var chunkLabel = getChunkLabel(tokenCursor.currentValue());
+            var scopeName = "Chunk " + chunkNum;
+            if (chunkLabel)
+               scopeName += ": " + chunkLabel;
+            this.$scopes.onChunkStart(scopeName, chunkStartPos, chunkPos);
+         }
+         else if (/\bcodeend\b/.test(tokenType))
+         {
+            var pos = tokenCursor.currentPosition();
+            // Close any open functions
+            while (this.$scopes.onScopeEnd(pos))
+            {
+            }
+
+            pos.column += tokenCursor.currentValue().length;
+            this.$scopes.onChunkEnd(pos);
+         }
+         else if (tokenCursor.currentValue() === "{")
          {
             var localCursor = tokenCursor.cloneCursor();
             var startPos;
@@ -677,7 +724,7 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
 
          var state = (row === 0) ? 'start' : this.$endStates[row-1];
          var lineTokens = this.$tokenizer.getLineTokens(this.$getLine(row), state);
-         if (!this.$statePattern || this.$statePattern.test(lineTokens.state))
+         if (!this.$statePattern || this.$statePattern.test(lineTokens.state) || this.$statePattern.test(state))
             this.$tokens[row] = this.$filterWhitespaceAndComments(lineTokens.tokens);
          else
             this.$tokens[row] = [];
