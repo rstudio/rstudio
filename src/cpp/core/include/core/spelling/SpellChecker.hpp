@@ -58,6 +58,9 @@ core::Error createHunspell(const core::FilePath& affPath,
                            boost::shared_ptr<SpellChecker>* pHunspell,
                            const IconvstrFunction& iconvstrFunc);
 
+#ifdef __APPLE__
+core::Error createMac(boost::shared_ptr<SpellChecker>* pMac);
+#endif
 
 } // namespace spelling
 } // namespace core 

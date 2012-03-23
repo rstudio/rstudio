@@ -13,8 +13,6 @@
 
 #include <core/spelling/SpellChecker.hpp>
 
-#include <boost/scoped_ptr.hpp>
-
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>

@@ -197,6 +197,12 @@ add_executable(rsession ${SESSION_SOURCE_FILES} ${SESSION_HEADER_FILES})
 if(WIN32)
    set(RSTUDIO_CORE_ZLIB rstudio-core-zlib)
 endif()
+if(APPLE)
+   find_library(MAC_APPKIT_LIBRARY NAMES AppKit)
+   set (SESSION_SYSTEM_LIBRARIES
+        ${SESSION_SYSTEM_LIBRARIES}
+        ${MAC_APPKIT_LIBRARY})
+endif()
 target_link_libraries(rsession
    rstudio-core
    rstudio-core-hunspell
