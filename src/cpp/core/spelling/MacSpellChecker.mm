@@ -13,17 +13,44 @@
 
 #include <core/spelling/SpellChecker.hpp>
 
+#include <iostream>
+
+#include <boost/utility.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include <core/Error.hpp>
 
 #import <Foundation/NSString.h>
+#import <Foundation/NSAutoreleasePool.h>
 #import <AppKit/NSSpellChecker.h>
 
 namespace core {
 namespace spelling {
 
 namespace {
+
+class AutoreleaseContext : boost::noncopyable
+{
+public:
+   AutoreleaseContext()
+   {
+      pool_ = [[NSAutoreleasePool alloc] init];
+   }
+
+   ~AutoreleaseContext()
+   {
+      try
+      {
+         [pool_ release];
+      }
+      catch(...)
+      {
+      }
+   }
+
+private:
+   NSAutoreleasePool* pool_;
+};
 
 class MacSpellChecker : public SpellChecker
 {
@@ -44,11 +71,8 @@ public:
 
 	Error initialize()
 	{
-      if([NSSpellChecker sharedSpellCheckerExists])
-      {
-         // do nothing...we are just executing this to make sure we
-         // are linking to AppKit correctly
-      }
+      AutoreleaseContext arContext;
+
 
 		return Success();
 	}
@@ -56,31 +80,43 @@ public:
 public:
    Error checkSpelling(const std::string& word, bool *pCorrect)
    {
+      AutoreleaseContext arContext;
+
       return Success();
    }
 
    Error suggestionList(const std::string& word, std::vector<std::string>* pSug)
    {
+      AutoreleaseContext arContext;
+
       return Success();
    }
 
    Error analyzeWord(const std::string& word, std::vector<std::string>* pResult)
    {
+      AutoreleaseContext arContext;
+
       return Success();
    }
 
    Error stemWord(const std::string& word, std::vector<std::string>* pResult)
    {
+      AutoreleaseContext arContext;
+
       return Success();
    }
 
    Error addWord(const std::string& word, bool *pAdded)
    {
+      AutoreleaseContext arContext;
+
       return Success();
    }
 
    Error removeWord(const std::string& word, bool *pRemoved)
    {
+      AutoreleaseContext arContext;
+
       return Success();
    }
 
@@ -88,15 +124,24 @@ public:
                        const std::string& key,
                        bool *pAdded)
    {
+      AutoreleaseContext arContext;
+
       return Success();
    }
 
 private:
+
+
    NSString* toNSString(const std::string& str)
    {
       const char* cStr = str.c_str();
-      NSString* nsStr = [[NSString alloc] initWithUTF8String: cStr];
-      return nsStr;
+      return [NSString stringWithUTF8String: cStr];
+   }
+
+   std::string toStdString(NSString* nsString)
+   {
+      const char* cStr = [nsString UTF8String];
+      return std::string(cStr);
    }
 
 };
