@@ -13,8 +13,6 @@
 package org.rstudio.studio.client.workbench.views.source.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayMixed;
 import org.rstudio.core.client.js.JsObject;
 
 public class SourceDocument extends JavaScriptObject
