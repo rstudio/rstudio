@@ -147,6 +147,10 @@ define('mode/r_scope_tree', function(require, exports, module) {
 
    (function() {
 
+      this.isRoot = function() { return this.scopeType == ScopeNode.TYPE_ROOT; };
+      this.isBrace = function() { return this.scopeType == ScopeNode.TYPE_BRACE; };
+      this.isChunk = function() { return this.scopeType == ScopeNode.TYPE_CHUNK; };
+
       this.addNode = function(node) {
          assert(!node.end, "New node is already closed");
          assert(node.$children.length == 0, "New node already had children");

@@ -24,16 +24,14 @@ public class FunctionStart extends JavaScriptObject
    public native final String getLabel() /*-{
       return this.label;
    }-*/;
-   
-   public final boolean isTopLevel()
-   {
-      return getLabel().equals("(Top Level)");
-   }
-   
-   public final boolean isChunk()
-   {
-      return getLabel().startsWith("Chunk ");
-   }
+
+   public native final boolean isTopLevel() /*-{
+      return this.isRoot();
+   }-*/;
+
+   public native final boolean isChunk() /*-{
+      return this.isChunk();
+   }-*/;
 
    public native final Position getPreamble() /*-{
       return this.preamble;
