@@ -14,8 +14,12 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
 public interface StatusBar
 {
+   public static final int SCOPE_CHUNK = 2;
+   public static final int SCOPE_FUNCTION = 1;
+   
    StatusBarElement getPosition();
-   StatusBarElement getFunction();
+   StatusBarElement getScope();
    StatusBarElement getLanguage();
-   void setFunctionVisible(boolean visible);
+   void setScopeVisible(boolean visible);
+   void setScopeType(int type);
 }

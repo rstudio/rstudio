@@ -165,7 +165,6 @@ public class TextFileType extends EditableFileType
       if (canExecuteChunks())
       {
          results.add(commands.insertChunk());
-         results.add(commands.jumpToChunk());
          results.add(commands.executeCurrentChunk());
          results.add(commands.executeNextChunk());
       }

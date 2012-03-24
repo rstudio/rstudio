@@ -570,7 +570,7 @@ public class TextEditingTarget implements EditingTarget
          }
       });
 
-      statusBar_.getFunction().addMouseDownHandler(new MouseDownHandler()
+      statusBar_.getScope().addMouseDownHandler(new MouseDownHandler()
       {
          public void onMouseDown(MouseDownEvent event)
          {
@@ -592,7 +592,7 @@ public class TextEditingTarget implements EditingTarget
                   }
                });
             }
-            menu.showRelativeToUpward((UIObject) statusBar_.getFunction());
+            menu.showRelativeToUpward((UIObject) statusBar_.getScope());
          }
       });
    }
@@ -658,8 +658,8 @@ public class TextEditingTarget implements EditingTarget
    private void updateStatusBarLanguage()
    {
       statusBar_.getLanguage().setValue(fileType_.getLabel());
-      boolean isR = fileType_ == FileTypeRegistry.R || fileType_ == FileTypeRegistry.SWEAVE;
-      statusBar_.setFunctionVisible(isR);
+      boolean isR = fileType_ == FileTypeRegistry.R || fileType_.isRnw();
+      statusBar_.setScopeVisible(isR);
       if (isR)
          updateCurrentFunction();
    }
@@ -683,7 +683,18 @@ public class TextEditingTarget implements EditingTarget
                   String label = function != null
                                 ? function.getLabel()
                                 : null;
-                  statusBar_.getFunction().setValue(label);
+                  statusBar_.getScope().setValue(label);
+                  
+                  if (function != null)
+                  {
+                     boolean useChunk = 
+                                  function.isChunk() || 
+                                  (fileType_.isRnw() && function.isTopLevel());
+                     if (useChunk)
+                        statusBar_.setScopeType(StatusBar.SCOPE_CHUNK);
+                     else
+                        statusBar_.setScopeType(StatusBar.SCOPE_FUNCTION);
+                  }
                }
             });
    }
@@ -1621,12 +1632,6 @@ public class TextEditingTarget implements EditingTarget
    // in the Source constructor)
    
    @Handler
-   void onJumpToChunk()
-   {
-      globalDisplay_.showErrorMessage("Jump to Chunk", "Not Yet Implemented");
-   }
-   
-   @Handler
    void onExecuteCurrentChunk()
    {
       globalDisplay_.showErrorMessage("Execute Current Chunk", "Not Yet Implemented");
@@ -1639,16 +1644,16 @@ public class TextEditingTarget implements EditingTarget
    }
    
    @Handler
-   void onJumpToFunction()
+   void onJumpTo()
    {
-      statusBar_.getFunction().click();
+      statusBar_.getScope().click();
    }
 
    @Handler
    void onGoToLine()
    {
       globalDisplay_.promptForInteger(
-            "Jump to Line",
+            "Go to Line",
             "Enter line number:",
             null,
             new ProgressOperationWithInput<Integer>()

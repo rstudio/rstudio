@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
@@ -55,9 +57,9 @@ public class StatusBarWidget extends Composite
       return position_;
    }
 
-   public StatusBarElement getFunction()
+   public StatusBarElement getScope()
    {
-      return function_;
+      return scope_;
    }
 
    public StatusBarElement getLanguage()
@@ -65,19 +67,34 @@ public class StatusBarWidget extends Composite
       return language_;
    }
 
-   public void setFunctionVisible(boolean visible)
+   public void setScopeVisible(boolean visible)
    {
-      function_.setClicksEnabled(visible);
-      function_.setContentsVisible(visible);
-      funcIcon_.setVisible(visible);
+      scope_.setClicksEnabled(visible);
+      scope_.setContentsVisible(visible);
+      scopeIcon_.setVisible(visible);
+   }
+   
+   public void setScopeType(int type)
+   {
+      if (type == StatusBar.SCOPE_FUNCTION)
+         scopeIcon_.setResource(RES.function());
+      else if (type == StatusBar.SCOPE_CHUNK)
+         scopeIcon_.setResource(RES.chunk());
    }
 
    @UiField
    StatusBarElementWidget position_;
    @UiField
-   StatusBarElementWidget function_;
+   StatusBarElementWidget scope_;
    @UiField
    StatusBarElementWidget language_;
    @UiField
-   Image funcIcon_;
+   Image scopeIcon_;
+   
+   interface Resources extends ClientBundle
+   {
+      ImageResource chunk();
+      ImageResource function();
+   }
+   private static Resources RES = GWT.create(Resources.class);
 }

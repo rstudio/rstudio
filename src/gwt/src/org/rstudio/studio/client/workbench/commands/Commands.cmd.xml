@@ -91,10 +91,10 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="insertChunk"/>
          <separator/>
+         <cmd refid="jumpTo"/>
+         <separator/>
          <cmd refid="goToFileFunction"/>
          <cmd refid="goToFunctionDefinition"/>
-         <cmd refid="jumpToFunction"/>
-         <cmd refid="jumpToChunk"/>
          <separator/>
          <cmd refid="extractFunction"/>
          <cmd refid="commentUncomment"/>
@@ -331,8 +331,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="activatePackages" value="Ctrl+7"/>
       <shortcut refid="activateHelp" value="Ctrl+8"/>
       <shortcut refid="activateVcs" value="Ctrl+9"/>
-      <shortcut refid="jumpToFunction" value="Alt+Shift+F"/>
-      <shortcut refid="jumpToChunk" value="Alt+Shift+C"/>
+      <shortcut refid="jumpTo" value="Shift+Alt+J"/>
       <shortcut refid="switchToTab" value="Ctrl+Alt+Down"/>
       <shortcut refid="previousTab" value="Ctrl+Alt+Left" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
       <shortcut refid="nextTab" value="Ctrl+Alt+Right" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
@@ -522,8 +521,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Show _Help"/>
    <cmd id="activateVcs"
         menuLabel="Show _Vcs"/>
-   <cmd id="jumpToFunction"
-        menuLabel="_Jump to Function..."/>
+   <cmd id="jumpTo"
+        menuLabel="_Jump To..."/>
    <cmd id="switchToTab"
         menuLabel="Switch to Ta_b..."/>
    <cmd id="previousTab"
@@ -535,7 +534,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="lastTab"
         menuLabel="_Last Tab"/>
    <cmd id="goToLine"
-        menuLabel="_Jump to Line..."/>
+        menuLabel="_Go to Line..."/>
 
    <cmd id="find"
         menuLabel="_Find..."/>
@@ -566,9 +565,6 @@ well as menu structures (for main menu and popup menus).
    <cmd id="insertChunk"
         menuLabel="_Insert Chunk"
         desc="Insert a new code chunk"/>
-   <cmd id="jumpToChunk"
-        menuLabel="_Jump to Chunk..."
-        desc="Jump to a code chunk"/>
    <cmd id="executeCurrentChunk"
         menuLabel="Run _Current Chunk"
         desc="Run the current code chunk"/>

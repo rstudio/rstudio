@@ -164,7 +164,7 @@ public class TextEditingTargetWidget
       ToolbarPopupMenu chunksMenu = new ToolbarPopupMenu();
       chunksMenu.addItem(commands_.insertChunk().createMenuItem(false));
       chunksMenu.addSeparator();
-      chunksMenu.addItem(commands_.jumpToChunk().createMenuItem(false));
+      chunksMenu.addItem(commands_.jumpTo().createMenuItem(false));
       chunksMenu.addSeparator();
       chunksMenu.addItem(commands_.executeCurrentChunk().createMenuItem(false));
       chunksMenu.addItem(commands_.executeNextChunk().createMenuItem(false));

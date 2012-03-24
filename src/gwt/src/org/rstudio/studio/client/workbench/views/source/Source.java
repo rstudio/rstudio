@@ -198,7 +198,6 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.executeCurrentFunction());
       dynamicCommands_.add(commands.executeLastCode());
       dynamicCommands_.add(commands.insertChunk());
-      dynamicCommands_.add(commands.jumpToChunk());
       dynamicCommands_.add(commands.executeCurrentChunk());
       dynamicCommands_.add(commands.executeNextChunk());
       dynamicCommands_.add(commands.sourceActiveDocument());
@@ -212,7 +211,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.commentUncomment());
       dynamicCommands_.add(commands.reindent());
       dynamicCommands_.add(commands.reflowComment());
-      dynamicCommands_.add(commands.jumpToFunction());
+      dynamicCommands_.add(commands.jumpTo());
       dynamicCommands_.add(commands.goToFunctionDefinition());
       dynamicCommands_.add(commands.setWorkingDirToActiveDoc());
       dynamicCommands_.add(commands.debugForceTopsToZero());
@@ -227,7 +226,6 @@ public class Source implements InsertSourceHandler,
       }
       
       // temporarily remoove chunk commands until they are implemented
-      commands_.jumpToChunk().remove();
       commands_.executeCurrentChunk().remove();
       commands_.executeNextChunk().remove();
           

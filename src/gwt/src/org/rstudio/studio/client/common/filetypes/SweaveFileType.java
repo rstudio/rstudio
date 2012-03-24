@@ -51,6 +51,7 @@ public class SweaveFileType extends TextFileType
    public HashSet<AppCommand> getSupportedCommands(Commands commands)
    {
       HashSet<AppCommand> result = super.getSupportedCommands(commands);
+      result.add(commands.jumpTo());
       result.add(commands.goToFunctionDefinition());
       return result;
    }

@@ -45,7 +45,6 @@ public abstract class
    public abstract AppCommand executeCurrentFunction();
    public abstract AppCommand executeLastCode();
    public abstract AppCommand insertChunk();
-   public abstract AppCommand jumpToChunk();
    public abstract AppCommand executeCurrentChunk();
    public abstract AppCommand executeNextChunk();
    public abstract AppCommand goToFunctionDefinition();
@@ -131,7 +130,7 @@ public abstract class
    // View
    public abstract AppCommand showToolbar();
    public abstract AppCommand hideToolbar();
-   public abstract AppCommand jumpToFunction();
+   public abstract AppCommand jumpTo();
    public abstract AppCommand goToFileFunction();
    public abstract AppCommand switchToTab();
    public abstract AppCommand previousTab();

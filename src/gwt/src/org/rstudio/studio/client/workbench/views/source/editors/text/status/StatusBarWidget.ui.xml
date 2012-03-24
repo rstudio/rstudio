@@ -30,7 +30,7 @@
          top: 2px;
          margin-left: 6px;
       }
-      .statusBar img.funcIcon {
+      .statusBar img.scopeIcon {
          top: 2px;
          margin-left: 4px;
       }
@@ -56,10 +56,10 @@
       <sb:StatusBarElementWidget ui:field="position_"
                                  styleName="{style.element} {style.pos}"
                                  showArrows="false"/>
-      <g:Image ui:field="funcIcon_"
+      <g:Image ui:field="scopeIcon_"
                resource='{function}'
-               styleName="{style.funcIcon}"/>
-      <sb:StatusBarElementWidget ui:field="function_"
+               styleName="{style.scopeIcon}"/>
+      <sb:StatusBarElementWidget ui:field="scope_"
                                  styleName="{style.element}"
                                  showArrows="true"/>
       <sb:StatusBarElementWidget ui:field="language_"
