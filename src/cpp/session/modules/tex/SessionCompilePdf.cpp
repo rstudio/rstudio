@@ -746,7 +746,7 @@ private:
          if (onCompleted_)
             onCompleted_();
 
-         enqueCompletedWithSuccessEvent(texFilePath, sourceLocation_);
+         enqueCompletedWithSuccessEvent(targetFilePath_, sourceLocation_);
       }
       else
       {
