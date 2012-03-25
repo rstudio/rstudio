@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.Panel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -397,10 +398,17 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       int height = Math.max(300, (int) (ratio * currentPlotSize.height));
       height = Math.min(900, height);
       
+      // determine whether we should scale (see comment in ImageFrame.onLoad
+      // for why we wouldn't want to scale)
+      int scale = 1;
+      if (Desktop.isDesktop() && BrowseCap.isMacintosh())
+         scale = 0;
+      
       // compose url string
       String url = server_.getGraphicsUrl("plot_zoom?" +
                                           "width=" + width + "&" +
-                                          "height=" + height);
+                                          "height=" + height + "&" +
+                                          "scale=" + scale);
 
 
       // open and activate window

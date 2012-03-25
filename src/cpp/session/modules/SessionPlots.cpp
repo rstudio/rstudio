@@ -420,6 +420,9 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
    if (!extractSizeParams(request, 100, 3000, &width, &height, pResponse))
      return ;
 
+   // get the scale parameter
+   int scale = request.queryParamValue("scale", 1);
+
    // define template
    std::stringstream templateStream;
    templateStream <<
@@ -431,7 +434,7 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
                "window.onresize = function() {"
 
                   "var plotEl = document.getElementById('plot');"
-                  "if (plotEl) {"
+                  "if (plotEl && (#scale#==1) ) {"
                      "plotEl.style.width='100%';"
                      "plotEl.style.height='100%';"
                   "}"
@@ -443,7 +446,8 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
 
                      "window.location.href = "
                         "\"plot_zoom?width=\" + document.body.clientWidth "
-                              " + \"&height=\" + document.body.clientHeight; "
+                              " + \"&height=\" + document.body.clientHeight "
+                              " + \"&scale=\" + #scale#;"
                    "}, 300);"
                "}"
             "</script>"
@@ -457,6 +461,7 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
    std::map<std::string,std::string> variables;
    variables["width"] = boost::lexical_cast<std::string>(width);
    variables["height"] = boost::lexical_cast<std::string>(height);
+   variables["scale"] = boost::lexical_cast<std::string>(scale);;
    text::TemplateFilter filter(variables);
 
    pResponse->setNoCacheHeaders();

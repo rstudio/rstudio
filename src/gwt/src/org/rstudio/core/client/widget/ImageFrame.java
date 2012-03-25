@@ -12,6 +12,9 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.BrowseCap;
+import org.rstudio.studio.client.application.Desktop;
+
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Timer;
@@ -41,7 +44,14 @@ public class ImageFrame extends Frame
             }
             else
             {
-               setupContent(getElement());
+               // under Qt 4.8 on the Mac if we set the width and height of
+               // the image in the iframe to 100% then the cpu gets pegged for 
+               // ~3 seconds every time we replace the image url
+               String sizing = "width=\"100%\" height=\"100%\"";
+               if (Desktop.isDesktop() && BrowseCap.isMacintosh())
+                  sizing = "";
+               
+               setupContent(getElement(), sizing);
                replaceLocation(getElement(), url_);
             }
          }
@@ -91,7 +101,7 @@ public class ImageFrame extends Frame
             && el.contentWindow.document != null; 
    }-*/;
 
-   private native void setupContent(Element el) /*-{
+   private native void setupContent(Element el, String sizing) /*-{
       var doc = el.contentWindow.document;
 
       // setupContent can get called multiple times, as progress causes the
@@ -104,7 +114,7 @@ public class ImageFrame extends Frame
       doc.write(
          '<html><head></head>' +
          '<body style="margin: 0; padding: 0; overflow: hidden; border: none">' +
-         '<img id="img" width="100%" height="100%" style="display: none" src="javascript:false">' +
+         '<img id="img" ' + sizing + ' style="display: none" src="javascript:false">' +
          '</body></html>');
       doc.close();
    }-*/;
