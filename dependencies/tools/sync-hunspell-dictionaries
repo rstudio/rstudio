@@ -33,10 +33,10 @@ HUNSPELL_DICTIONARIES=hunspell_dictionaries
 svn co https://src.chromium.org/svn/trunk/deps/third_party/hunspell_dictionaries/ $HUNSPELL_DICTIONARIES
 cd $HUNSPELL_DICTIONARIES
 
-# build the english archive
-ENGLISH_DICTIONARIES=english-dictionaries.zip
-rm -f $ENGLISH_DICTIONARIES
-ls | egrep '^en_(US|GB|CA|AU)\..*$' | zip -@ $ENGLISH_DICTIONARIES
+# build the core archive
+CORE_DICTIONARIES=core-dictionaries.zip
+rm -f $CORE_DICTIONARIES
+ls | egrep '^(en_US|en_GB|en_CA|en_AU)\..*$' | zip -@ $CORE_DICTIONARIES
 
 # build the universal archive
 ALL_DICTIONARIES=all-dictionaries.zip

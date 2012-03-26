@@ -38,11 +38,11 @@ if [ -d "$DICTIONARIES_DIR" ]
 then
    echo "Dictionaries already installed"
 else
-   ENGLISH_DICTIONARIES=english-dictionaries.zip
-   download $ENGLISH_DICTIONARIES
+   CORE_DICTIONARIES=core-dictionaries.zip
+   download $CORE_DICTIONARIES
    mkdir -p $DICTIONARIES_DIR
-   unzip -qd "$DICTIONARIES_DIR" "$ENGLISH_DICTIONARIES"
-   rm $ENGLISH_DICTIONARIES
+   unzip -qd "$DICTIONARIES_DIR" "$CORE_DICTIONARIES"
+   rm $CORE_DICTIONARIES
 fi
 
 # back to install dir
