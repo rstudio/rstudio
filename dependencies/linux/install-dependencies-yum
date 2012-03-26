@@ -40,9 +40,10 @@ sudo yum install -y java-1.6.0-openjdk
 sudo yum install -y ant
 sudo yum install -y xml-commons-apis
 
-# gwt
+# common
 cd ../common
 ./install-gwt
+./install-dictionaries
 cd ../linux
 
 # desktop dependencies (qt)

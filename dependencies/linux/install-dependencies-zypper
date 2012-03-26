@@ -40,9 +40,10 @@ sudo zypper --non-interactive in pango-devel
 sudo zypper --non-interactive in java-1_6_0-openjdk-devel
 sudo zypper --non-interactive in ant
 
-# gwt
+# common
 cd ../common
 ./install-gwt
+./install-dictionaries
 cd ../linux
 
 # desktop dependencies (qt)

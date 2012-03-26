@@ -240,9 +240,9 @@ Error initialize()
    // initialize the spell checker
    using namespace core::spelling;
    session::Options& options = session::options();
-   FilePath enUSPath = options.hunspellDictionariesPath().childPath("en_US");
-   Error error = createHunspell(enUSPath.childPath("en_US.aff"),
-                                enUSPath.childPath("en_US.dic"),
+   FilePath hsPath = options.hunspellDictionariesPath();
+   Error error = createHunspell(hsPath.childPath("en_US.aff"),
+                                hsPath.childPath("en_US.dic"),
                                 &s_pSpellChecker,
                                 &r::util::iconvstr);
    if (error)

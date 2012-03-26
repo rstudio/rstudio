@@ -1,0 +1,48 @@
+#!/bin/bash
+
+#
+# sync-hunspell-dictionaries
+#
+# Copyright (C) 2009-11 by RStudio, Inc.
+#
+# This program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+#
+# This script creates a directory (hunspell_dictionaries) that contains the 
+# latest hunspell dictionaries (and dic_delta files) from chromium. It also
+# builds two archives (english-dictionaries.zip and all-dictionaries.zip) 
+# that can be used as the basis for rstudio dictionaries. Note that after 
+# this script is run by RStudio we upload the files to S3 for subsequent 
+# download to dependencies/common/hunspell_dictionaries as part of the 
+# install-dependencies script
+#
+
+set -e
+
+# install dir
+INSTALL_DIR=`pwd`
+
+# get the latest dictionaries and switch to the dictionary directory
+HUNSPELL_DICTIONARIES=hunspell_dictionaries
+svn co https://src.chromium.org/svn/trunk/deps/third_party/hunspell_dictionaries/ $HUNSPELL_DICTIONARIES
+cd $HUNSPELL_DICTIONARIES
+
+# build the english archive
+ENGLISH_DICTIONARIES=english-dictionaries.zip
+rm -f $ENGLISH_DICTIONARIES
+ls | egrep '^en_(US|GB|CA|AU)\..*$' | zip -@ $ENGLISH_DICTIONARIES
+
+# build the universal archive
+ALL_DICTIONARIES=all-dictionaries.zip
+rm -f $ALL_DICTIONARIES
+ls | egrep '\.aff$|\.dic$|\.dic_delta$' | zip -@ $ALL_DICTIONARIES
+
+# return to install dir
+cd $INSTALL_DIR
+

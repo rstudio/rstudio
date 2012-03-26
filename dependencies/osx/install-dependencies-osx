@@ -23,6 +23,9 @@ cd ../common
 # boost
 ./install-boost
 
+# dictionaries
+./install-dictionaries
+
 cd ../osx
 
 # enable PAM

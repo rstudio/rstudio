@@ -15,6 +15,11 @@ project (SESSION)
 
 add_subdirectory(workers)
 
+# verify that install-dictionaries has been run
+if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries")
+  message(FATAL_ERROR "Dictionaries not found (re-run install-dependencies script to install)")
+endif()
+
 # include files
 file(GLOB_RECURSE SESSION_HEADER_FILES "*.h*")
 
@@ -267,8 +272,8 @@ if (NOT RSTUDIO_SESSION_WIN64)
 endif()
 
 # install hunspell dictionaries
-install(DIRECTORY resources/dictionaries
-        DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries"
+        DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
 
 # add gpl for desktop
 if(RSTUDIO_DESKTOP)

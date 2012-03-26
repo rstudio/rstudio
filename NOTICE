@@ -22,6 +22,7 @@ used by these components are included below):
 - GNU Grep
 - MSYS
 - Hunspell
+- Chromium Hunspell Dictionaries (LGPL 2.1)
 - pdf.js
 - SyncTeX
 - ZLib

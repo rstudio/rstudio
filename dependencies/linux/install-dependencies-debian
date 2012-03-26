@@ -38,10 +38,11 @@ sudo apt-get -y install libpango1.0-dev
 sudo apt-get -y install openjdk-6-jdk 
 sudo apt-get -y install ant
 
-# gwt
+# common
 sudo apt-get -y install unzip
 cd ../common
 ./install-gwt
+./install-dictionaries
 cd ../linux
 
 # desktop dependencies (qt)
