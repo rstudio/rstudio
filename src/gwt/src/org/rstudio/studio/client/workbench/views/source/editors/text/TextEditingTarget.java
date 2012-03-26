@@ -78,6 +78,7 @@ import org.rstudio.studio.client.workbench.views.output.compilepdf.events.Compil
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
@@ -231,6 +232,7 @@ public class TextEditingTarget implements EditingTarget
       dirtyState_ = new DirtyState(docDisplay_, false);
       prefs_ = prefs;
       compilePdfDependencyChecker_ = pCPdfDepCheck.get();
+      sweaveNav_ = new TextEditingTargetSweaveNav(docDisplay_);
       
       addRecordNavigationPositionHandler(releaseOnDismiss_, 
                                          docDisplay_, 
@@ -1593,7 +1595,7 @@ public class TextEditingTarget implements EditingTarget
       // It's the easiest way to make sure getCurrentScope() returns
       // a Scope with an end.
       docDisplay_.getScopeTree();
-      Scope currentFunction = docDisplay_.getCurrentScope();
+      Scope currentFunction = docDisplay_.getCurrentFunction();
 
       // Check if we're at the top level (i.e. not in a function), or in
       // an unclosed function
@@ -1626,21 +1628,29 @@ public class TextEditingTarget implements EditingTarget
       docDisplay_.setCursorPosition(Position.create(pos.getRow(), 2));
       docDisplay_.focus();  
    }
-   
-   // TODO: implmeent chunk navigation and execution (note that since they
-   // aren't implemented these commands are currently removed from the system
-   // in the Source constructor)
-   
+
    @Handler
    void onExecuteCurrentChunk()
    {
-      globalDisplay_.showErrorMessage("Execute Current Chunk", "Not Yet Implemented");
+      executeSweaveChunk(sweaveNav_.getCurrentSweaveChunk());
    }
    
    @Handler
    void onExecuteNextChunk()
    {
-      globalDisplay_.showErrorMessage("Execute Next Chunk", "Not Yet Implemented");
+      executeSweaveChunk(sweaveNav_.getNextSweaveChunk());
+   }
+
+   private void executeSweaveChunk(Scope chunk)
+   {
+      if (chunk == null)
+         return;
+
+      Range range = sweaveNav_.getSweaveChunkInnerRange(chunk);
+      docDisplay_.setSelection(
+            docDisplay_.createSelection(range.getStart(), range.getEnd()));
+      if (!range.isEmpty())
+         onExecuteCode();
    }
    
    @Handler
@@ -2195,7 +2205,7 @@ public class TextEditingTarget implements EditingTarget
    
    private StatusBar statusBar_;
    private TextFileType[] statusBarFileTypes_;
-   private DocDisplay docDisplay_;
+   private final DocDisplay docDisplay_;
    private final UIPrefs prefs_;
    private Display view_;
    private final Commands commands_;
@@ -2222,7 +2232,8 @@ public class TextEditingTarget implements EditingTarget
    private final Provider<SpellChecker> pSpellChecker_;
    private final CompilePdfDependencyChecker compilePdfDependencyChecker_;
    private boolean ignoreDeletes_;
-  
+   private final TextEditingTargetSweaveNav sweaveNav_;
+
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =
          new Invalidation();

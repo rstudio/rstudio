@@ -778,7 +778,7 @@ public class AceEditor implements DocDisplay,
    @Override
    public String getLanguageMode(Position position)
    {
-      return getSession().getMode().getLanguageMode(position);
+      return getSession().getMode().getCodeModel().getLanguageMode(position);
    }
 
    public void replaceCode(String code)
@@ -1025,7 +1025,17 @@ public class AceEditor implements DocDisplay,
 
    public Scope getCurrentScope()
    {
-      return getSession().getMode().getCurrentScope(getCursorPosition());
+      return getSession().getMode().getCodeModel().getCurrentScope(getCursorPosition());
+   }
+
+   public Scope getCurrentChunk()
+   {
+      return getSession().getMode().getCodeModel().getCurrentChunk(getCursorPosition());
+   }
+
+   public Scope getCurrentFunction()
+   {
+      return getSession().getMode().getCodeModel().getCurrentFunction(getCursorPosition());
    }
 
    public Position getCursorPosition()
@@ -1053,7 +1063,7 @@ public class AceEditor implements DocDisplay,
 
    public JsArray<Scope> getScopeTree()
    {
-      return getSession().getMode().getScopeTree();
+      return getSession().getMode().getCodeModel().getScopeTree();
    }
 
    @Override
@@ -1078,8 +1088,8 @@ public class AceEditor implements DocDisplay,
    public SourcePosition findFunctionPositionFromCursor(String functionName)
    {
       Scope func =
-         getSession().getMode().findFunctionDefinitionFromUsage(
-                                                      getCursorPosition(), 
+         getSession().getMode().getCodeModel().findFunctionDefinitionFromUsage(
+                                                      getCursorPosition(),
                                                       functionName);
       if (func != null)
       {

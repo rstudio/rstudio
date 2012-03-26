@@ -117,7 +117,7 @@ define("mode/auto_brace_insert", function(require, exports, module)
          if (pos.column == 0)
             return true;
 
-         var token = this.$rCodeModel.getTokenForPos(pos, false, true);
+         var token = this.codeModel.getTokenForPos(pos, false, true);
          return token &&
                 token.type === 'string' &&
                 token.column === pos.column-1;

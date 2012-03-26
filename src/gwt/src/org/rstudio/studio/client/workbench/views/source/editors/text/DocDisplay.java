@@ -122,6 +122,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void scrollToY(int y);
    
    Scope getCurrentScope();
+   Scope getCurrentChunk();
+   Scope getCurrentFunction();
    JsArray<Scope> getScopeTree();
 
    void foldAll();

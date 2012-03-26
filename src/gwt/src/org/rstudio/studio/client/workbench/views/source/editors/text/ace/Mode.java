@@ -22,27 +22,7 @@ public class Mode extends JavaScriptObject
    {
    }
 
-   public native final String getLanguageMode(Position position) /*-{
-      if (!this.getLanguageMode)
-         return null;
-      return this.getLanguageMode(position);
-   }-*/;
-
-   public native final Scope getCurrentScope(Position position) /*-{
-      if (!this.getCurrentScope)
-         return null;
-      return this.getCurrentScope(position);
-   }-*/;
-
-   public native final JsArray<Scope> getScopeTree() /*-{
-      return this.getScopeTree ? this.getScopeTree() : [];
-   }-*/;
-
-   public native final Scope findFunctionDefinitionFromUsage(
-         Position usagePos, String functionName) /*-{
-      if (this.findFunctionDefinitionFromUsage != null)
-         return this.findFunctionDefinitionFromUsage(usagePos, functionName);
-      else
-         return null;
+   public native final CodeModel getCodeModel() /*-{
+      return this.codeModel || {};
    }-*/;
 }

@@ -225,10 +225,6 @@ public class Source implements InsertSourceHandler,
          command.setEnabled(false);
       }
       
-      // temporarily remoove chunk commands until they are implemented
-      commands_.executeCurrentChunk().remove();
-      commands_.executeNextChunk().remove();
-          
       // fake shortcuts for commands which we handle at a lower level
       int mod = BrowseCap.hasMetaKey() ? KeyboardShortcut.META : 
                                          KeyboardShortcut.CTRL;

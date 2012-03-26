@@ -231,18 +231,23 @@ define('mode/r_scope_tree', function(require, exports, module) {
          lastNode.end = pos;
       }
 
+      // Returns array of nodes that contain the position, from outermost to
+      // innermost; or null if no nodes contain it.
       this.findNode = function(pos) {
          var index = this.$binarySearch(pos);
          if (index >= 0) {
-            var child = this.$children[index].findNode(pos);
-            if (child)
-               return child;
+            var result = this.$children[index].findNode(pos);
+            if (result) {
+               if (this.label)
+                  result.unshift(this);
+               return result;
+            }
             if (this.label)
-               return this;
+               return [this];
             return null;
          }
          else {
-            return this.label ? this : null;
+            return this.label ? [this] : null;
          }
       };
 

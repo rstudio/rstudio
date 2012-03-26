@@ -39,7 +39,7 @@ var RMode = require('mode/r').Mode;
 var mode = new RMode(false, editor.getSession().getDocument());
 editor.getSession().setMode(mode);
 function updateLabel() {
-  var mgr = mode.$rCodeModel;
+  var mgr = mode.codeModel;
   var fname = mgr.getCurrentScope(editor.getSession().getSelection().getCursor()).label;
   document.getElementById('funcName').value = fname;
 }

@@ -34,8 +34,8 @@ var Mode = function(suppressHighlighting, doc, session) {
     	this.$tokenizer = new Tokenizer(new SweaveHighlightRules().getRules());
    this.$outdent = new MatchingBraceOutdent();
 
-   this.$rCodeModel = new RCodeModel(doc, this.$tokenizer, /^r-/);
-   this.foldingRules = this.$rCodeModel;
+   this.codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/);
+   this.foldingRules = this.codeModel;
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(session);
    this.$session = session;
 };
@@ -70,21 +70,6 @@ oop.inherits(Mode, TextMode);
    this.getLanguageMode = function(position)
    {
       return this.$session.getState(position.row).match(/^r-/) ? 'R' : 'TeX';
-   };
-
-   this.getNextLineIndent = function(state, line, tab, tabSize, row)
-   {
-      return this.$rCodeModel.getNextLineIndent(row, line, state, tab, tabSize);
-   };
-
-   this.getCurrentScope = function(position)
-   {
-      return this.$rCodeModel.getCurrentScope(position);
-   };
-
-   this.getScopeTree = function()
-   {
-      return this.$rCodeModel.getScopeTree();
    };
 
    this.checkOutdent = function(state, line, input)

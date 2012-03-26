@@ -39,8 +39,8 @@ define("mode/r", function(require, exports, module)
          this.$tokenizer = new Tokenizer(new RHighlightRules().getRules());
       this.$outdent = new MatchingBraceOutdent();
 
-      this.$rCodeModel = new RCodeModel(doc, this.$tokenizer, null);
-      this.foldingRules = this.$rCodeModel;
+      this.codeModel = new RCodeModel(doc, this.$tokenizer, null);
+      this.foldingRules = this.codeModel;
    };
    oop.inherits(Mode, TextMode);
 
@@ -72,23 +72,7 @@ define("mode/r", function(require, exports, module)
 
       this.getNextLineIndent = function(state, line, tab, tabSize, row)
       {
-         return this.$rCodeModel.getNextLineIndent(row, line, state, tab, tabSize);
-      };
-
-      this.getCurrentScope = function(position)
-      {
-         return this.$rCodeModel.getCurrentScope(position);
-      };
-
-      this.getScopeTree = function()
-      {
-         return this.$rCodeModel.getScopeTree();
-      };
-
-      this.findFunctionDefinitionFromUsage = function(usagePos, functionName)
-      {
-         return this.$rCodeModel.findFunctionDefinitionFromUsage(usagePos,
-                                                                 functionName);
+         return this.codeModel.getNextLineIndent(row, line, state, tab, tabSize);
       };
 
       this.allowAutoInsert = this.smartAllowAutoInsert;
@@ -102,7 +86,7 @@ define("mode/r", function(require, exports, module)
 
       this.getIndentForOpenBrace = function(openBracePos)
       {
-         return this.$rCodeModel.getIndentForOpenBrace(openBracePos);
+         return this.codeModel.getIndentForOpenBrace(openBracePos);
       };
 
       this.autoOutdent = function(state, doc, row) {
@@ -119,7 +103,7 @@ define("mode/r", function(require, exports, module)
 
             if (!openBracePos || openBracePos.row == row) return 0;
 
-            var indent = this.$rCodeModel.getIndentForOpenBrace(openBracePos);
+            var indent = this.codeModel.getIndentForOpenBrace(openBracePos);
             doc.replace(new Range(row, 0, row, column-1), indent);
          }
 
@@ -127,7 +111,7 @@ define("mode/r", function(require, exports, module)
          if (match)
          {
             var column = match[1].length;
-            var indent = this.$rCodeModel.getBraceIndent(row-1);
+            var indent = this.codeModel.getBraceIndent(row-1);
             doc.replace(new Range(row, 0, row, column-1), indent);
          }
       };

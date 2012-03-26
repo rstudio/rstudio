@@ -458,12 +458,25 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
       return;
    };
 
-   this.getCurrentScope = function(position)
+   this.getCurrentScope = function(position, filter)
    {
+      if (!filter)
+         filter = function(scope) { return true; }
+
       if (!position)
          return "";
       this.$buildScopeTreeUpToRow(position.row);
-      return this.$scopes.findScope(position);
+
+      var scopePath = this.$scopes.findScope(position);
+      if (scopePath)
+      {
+         for (var i = scopePath.length-1; i >= 0; i--) {
+            if (filter(scopePath[i]))
+               return scopePath[i];
+         }
+      }
+
+      return null;
    };
 
    this.getScopeTree = function()
