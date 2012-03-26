@@ -87,14 +87,12 @@ define('mode/r_scope_tree', function(require, exports, module) {
          return closed;
       };
 
-      this.findFunction = function(pos) {
+      this.findScope = function(pos) {
          return this.$root.findNode(pos);
       };
 
-      this.getFunctionList = function() {
-         var list = [];
-         this.$root.exportFunctions(list);
-         return list;
+      this.getScopeList = function() {
+         return this.$root.$children;
       };
 
       this.findFunctionDefinitionFromUsage = function(usagePos, functionName) {
@@ -327,6 +325,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
             var here = {
                label: this.label,
                preamble: this.preamble,
+               end: this.end,
                children: []
             };
             list.push(here);

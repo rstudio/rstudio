@@ -332,18 +332,18 @@ public class TextEditingTarget implements EditingTarget
    private void jumpToPreviousFunction()
    {
       Position cursor = docDisplay_.getCursorPosition();
-      JsArray<FunctionStart> functions = docDisplay_.getFunctionTree();
-      FunctionStart jumpTo = findPreviousFunction(functions, cursor);
+      JsArray<Scope> functions = docDisplay_.getScopeTree();
+      Scope jumpTo = findPreviousFunction(functions, cursor);
       if (jumpTo != null)
          docDisplay_.navigateToPosition(toSourcePosition(jumpTo), true);  
    }
 
-   private FunctionStart findPreviousFunction(JsArray<FunctionStart> funcs, Position pos)
+   private Scope findPreviousFunction(JsArray<Scope> funcs, Position pos)
    {
-      FunctionStart result = null;
+      Scope result = null;
       for (int i = 0; i < funcs.length(); i++)
       {
-         FunctionStart child = funcs.get(i);
+         Scope child = funcs.get(i);
          if (child.getPreamble().compareTo(pos) >= 0)
             break;
          result = child;
@@ -352,7 +352,7 @@ public class TextEditingTarget implements EditingTarget
       if (result == null)
          return result;
 
-      FunctionStart descendant = findPreviousFunction(result.getChildren(),
+      Scope descendant = findPreviousFunction(result.getChildren(),
                                                       pos);
       if (descendant != null)
          result = descendant;
@@ -363,20 +363,20 @@ public class TextEditingTarget implements EditingTarget
    private void jumpToNextFunction()
    {
       Position cursor = docDisplay_.getCursorPosition();
-      JsArray<FunctionStart> functions = docDisplay_.getFunctionTree();
-      FunctionStart jumpTo = findNextFunction(functions, cursor);
+      JsArray<Scope> functions = docDisplay_.getScopeTree();
+      Scope jumpTo = findNextFunction(functions, cursor);
       if (jumpTo != null)
          docDisplay_.navigateToPosition(toSourcePosition(jumpTo), true);
    }
 
-   private FunctionStart findNextFunction(JsArray<FunctionStart> funcs, Position pos)
+   private Scope findNextFunction(JsArray<Scope> funcs, Position pos)
    {
       for (int i = 0; i < funcs.length(); i++)
       {
-         FunctionStart child = funcs.get(i);
+         Scope child = funcs.get(i);
          if (child.getPreamble().compareTo(pos) <= 0)
          {
-            FunctionStart descendant = findNextFunction(child.getChildren(), pos);
+            Scope descendant = findNextFunction(child.getChildren(), pos);
             if (descendant != null)
                return descendant;
          }
@@ -576,10 +576,10 @@ public class TextEditingTarget implements EditingTarget
          {
             // Unlike the other status bar elements, the function outliner
             // needs its menu built on demand
-            JsArray<FunctionStart> tree = docDisplay_.getFunctionTree();
+            JsArray<Scope> tree = docDisplay_.getScopeTree();
             final StatusBarPopupMenu menu = new StatusBarPopupMenu();
             MenuItem defaultItem = addFunctionsToMenu(
-                  menu, tree, "", docDisplay_.getCurrentFunction(), true);
+                  menu, tree, "", docDisplay_.getCurrentScope(), true);
             if (defaultItem != null)
             {
                menu.selectItem(defaultItem);
@@ -598,9 +598,9 @@ public class TextEditingTarget implements EditingTarget
    }
 
    private MenuItem addFunctionsToMenu(StatusBarPopupMenu menu,
-                                       final JsArray<FunctionStart> funcs,
+                                       final JsArray<Scope> funcs,
                                        String indent,
-                                       FunctionStart defaultFunction,
+                                       Scope defaultFunction,
                                        boolean includeNoFunctionsMessage)
    {
       MenuItem defaultMenuItem = null;
@@ -617,7 +617,7 @@ public class TextEditingTarget implements EditingTarget
 
       for (int i = 0; i < funcs.length(); i++)
       {
-         final FunctionStart func = funcs.get(i);
+         final Scope func = funcs.get(i);
          SafeHtmlBuilder labelBuilder = new SafeHtmlBuilder();
          labelBuilder.appendHtmlConstant(indent);
          labelBuilder.appendEscaped(func.getLabel());
@@ -661,7 +661,7 @@ public class TextEditingTarget implements EditingTarget
       boolean isR = fileType_ == FileTypeRegistry.R || fileType_.isRnw();
       statusBar_.setScopeVisible(isR);
       if (isR)
-         updateCurrentFunction();
+         updateCurrentScope();
    }
 
    private void updateStatusBarPosition()
@@ -669,17 +669,17 @@ public class TextEditingTarget implements EditingTarget
       Position pos = docDisplay_.getCursorPosition();
       statusBar_.getPosition().setValue((pos.getRow() + 1) + ":" +
                                         (pos.getColumn() + 1));
-      updateCurrentFunction();
+      updateCurrentScope();
    }
   
-   private void updateCurrentFunction()
+   private void updateCurrentScope()
    {
       Scheduler.get().scheduleDeferred(
             new ScheduledCommand()
             {
                public void execute()
                {
-                  FunctionStart function = docDisplay_.getCurrentFunction();
+                  Scope function = docDisplay_.getCurrentScope();
                   String label = function != null
                                 ? function.getLabel()
                                 : null;
@@ -1590,10 +1590,10 @@ public class TextEditingTarget implements EditingTarget
       docDisplay_.focus();
 
       // HACK: This is just to force the entire function tree to be built.
-      // It's the easiest way to make sure getCurrentFunction() returns
-      // a FunctionStart with an end.
-      docDisplay_.getFunctionTree();
-      FunctionStart currentFunction = docDisplay_.getCurrentFunction();
+      // It's the easiest way to make sure getCurrentScope() returns
+      // a Scope with an end.
+      docDisplay_.getScopeTree();
+      Scope currentFunction = docDisplay_.getCurrentScope();
 
       // Check if we're at the top level (i.e. not in a function), or in
       // an unclosed function
@@ -2065,7 +2065,7 @@ public class TextEditingTarget implements EditingTarget
             });
    }
    
-   private SourcePosition toSourcePosition(FunctionStart func)
+   private SourcePosition toSourcePosition(Scope func)
    {
       Position pos = func.getPreamble();
       return SourcePosition.create(pos.getRow(), pos.getColumn());

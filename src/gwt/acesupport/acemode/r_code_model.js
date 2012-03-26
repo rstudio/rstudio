@@ -458,19 +458,18 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
       return;
    };
 
-   this.getCurrentFunction = function(position)
+   this.getCurrentScope = function(position)
    {
       if (!position)
          return "";
       this.$buildScopeTreeUpToRow(position.row);
-      return this.$scopes.findFunction(position);
+      return this.$scopes.findScope(position);
    };
 
-   this.getFunctionTree = function()
+   this.getScopeTree = function()
    {
       this.$buildScopeTreeUpToRow(this.$doc.getLength() - 1);
-      var list = this.$scopes.getFunctionList();
-      return list[0].children;
+      return this.$scopes.getScopeList();
    };
 
    this.findFunctionDefinitionFromUsage = function(usagePos, functionName)

@@ -1,5 +1,5 @@
 /*
- * FunctionStart.java
+ * Scope.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -16,9 +16,9 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
-public class FunctionStart extends JavaScriptObject
+public class Scope extends JavaScriptObject
 {
-   protected FunctionStart()
+   protected Scope()
    {}
 
    public native final String getLabel() /*-{
@@ -41,8 +41,8 @@ public class FunctionStart extends JavaScriptObject
       return this.end;
    }-*/;
 
-   public native final JsArray<FunctionStart> getChildren() /*-{
-      return this.children;
+   public native final JsArray<Scope> getChildren() /*-{
+      return this.$children;
    }-*/;
 
 }

@@ -14,7 +14,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
-import org.rstudio.studio.client.workbench.views.source.editors.text.FunctionStart;
+import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 
 public class Mode extends JavaScriptObject
 {
@@ -28,17 +28,17 @@ public class Mode extends JavaScriptObject
       return this.getLanguageMode(position);
    }-*/;
 
-   public native final FunctionStart getCurrentFunction(Position position) /*-{
-      if (!this.getCurrentFunction)
+   public native final Scope getCurrentScope(Position position) /*-{
+      if (!this.getCurrentScope)
          return null;
-      return this.getCurrentFunction(position);
+      return this.getCurrentScope(position);
    }-*/;
 
-   public native final JsArray<FunctionStart> getFunctionTree() /*-{
-      return this.getFunctionTree ? this.getFunctionTree() : [];
+   public native final JsArray<Scope> getScopeTree() /*-{
+      return this.getScopeTree ? this.getScopeTree() : [];
    }-*/;
 
-   public native final FunctionStart findFunctionDefinitionFromUsage(
+   public native final Scope findFunctionDefinitionFromUsage(
          Position usagePos, String functionName) /*-{
       if (this.findFunctionDefinitionFromUsage != null)
          return this.findFunctionDefinitionFromUsage(usagePos, functionName);

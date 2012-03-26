@@ -77,14 +77,14 @@ oop.inherits(Mode, TextMode);
       return this.$rCodeModel.getNextLineIndent(row, line, state, tab, tabSize);
    };
 
-   this.getCurrentFunction = function(position)
+   this.getCurrentScope = function(position)
    {
-      return this.$rCodeModel.getCurrentFunction(position);
+      return this.$rCodeModel.getCurrentScope(position);
    };
 
-   this.getFunctionTree = function()
+   this.getScopeTree = function()
    {
-      return this.$rCodeModel.getFunctionTree();
+      return this.$rCodeModel.getScopeTree();
    };
 
    this.checkOutdent = function(state, line, input)

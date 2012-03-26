@@ -1023,9 +1023,9 @@ public class AceEditor implements DocDisplay,
       return widget_.addCursorChangedHandler(handler);
    }
 
-   public FunctionStart getCurrentFunction()
+   public Scope getCurrentScope()
    {
-      return getSession().getMode().getCurrentFunction(getCursorPosition());
+      return getSession().getMode().getCurrentScope(getCursorPosition());
    }
 
    public Position getCursorPosition()
@@ -1051,9 +1051,9 @@ public class AceEditor implements DocDisplay,
       navigate(pos, false);
    }
 
-   public JsArray<FunctionStart> getFunctionTree()
+   public JsArray<Scope> getScopeTree()
    {
-      return getSession().getMode().getFunctionTree();
+      return getSession().getMode().getScopeTree();
    }
 
    @Override
@@ -1077,7 +1077,7 @@ public class AceEditor implements DocDisplay,
    @Override
    public SourcePosition findFunctionPositionFromCursor(String functionName)
    {
-      FunctionStart func = 
+      Scope func =
          getSession().getMode().findFunctionDefinitionFromUsage(
                                                       getCursorPosition(), 
                                                       functionName);
