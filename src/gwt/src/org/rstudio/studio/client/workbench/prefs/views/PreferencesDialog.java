@@ -36,7 +36,8 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
                             CompilePdfPreferencesPane compilePdf,
                             AppearancePreferencesPane appearance,
                             PaneLayoutPreferencesPane paneLayout,
-                            SourceControlPreferencesPane sourceControl)
+                            SourceControlPreferencesPane sourceControl,
+                            SpellingPreferencesPane spelling)
    {
       super("Options", 
             res.styles().panelContainer(),
@@ -46,6 +47,7 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
                                    appearance, 
                                    paneLayout,
                                    compilePdf,
+                                   //spelling,
                                    sourceControl}); 
 
       session_ = session;

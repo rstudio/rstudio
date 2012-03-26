@@ -77,4 +77,8 @@ public class RPrefs extends JavaScriptObject
    public native final void setCompilePdfPrefs(CompilePdfPrefs compilePdfPrefs) /*-{
       this.compile_pdf_prefs = compilePdfPrefs;
    }-*/;
+   
+   public native final SpellingPrefsContext getSpellingPrefsContext() /*-{
+      return this.spelling_prefs_context;
+   }-*/;
 }

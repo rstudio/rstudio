@@ -18,6 +18,8 @@ import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
 
+import com.google.gwt.core.client.JsArrayString;
+
 public class UIPrefsAccessor extends Prefs
 {
    public UIPrefsAccessor(JsObject uiPrefs, JsObject projectUiPrefs)
@@ -153,4 +155,37 @@ public class UIPrefsAccessor extends Prefs
    {
       return bool("insert_numbered_latex_sections", false);
    }
+  
+   public PrefValue<String> spellingDictionaryLanguage()
+   {
+      return string("spelling_dictionary_language", "en_US");
+   }
+   
+   public PrefValue<JsArrayString> spellingCustomDictionaries()
+   {
+      return object("spelling_custom_dictionaries", 
+                    JsArrayString.createArray().<JsArrayString>cast());
+   }
+   
+   public PrefValue<Boolean> checkSpellingAsYouType()
+   {
+      return bool("check_spelling_as_you_type", true);
+   }
+   
+   public PrefValue<Boolean> ignoreWordsInUppercase()
+   {
+      return bool("ignore_uppercase_words", true);
+   }
+   
+   public PrefValue<Boolean> ignoreWordsWithNumbers()
+   {
+      return bool("ignore_words_with_numbers", true);
+   }
+   
+   public PrefValue<Boolean> checkSpellingBeforeCompile()
+   {
+      return bool("check_spelling_before_compile_pdf", false);
+   }
+  
+   
 }
