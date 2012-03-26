@@ -80,3 +80,17 @@ if not exist gwt\2.4.0 (
 if not exist %JUNIT_FILE% (
   wget %WGET_ARGS% "%BASEURL%%JUNIT_FILE%"
 )
+
+popd
+
+pushd ..\common
+set CORE_DICTIONARIES=core-dictionaries.zip
+if not exist "dictionaries\en_US.dic" (
+  wget %WGET_ARGS% "https://s3.amazonaws.com/rstudio-dictionaries/%CORE_DICTIONARIES%"
+  if exist "%CORE_DICTIONARIES%" (
+     mkdir dictionaries
+     echo Unzipping %CORE_DICTIONARIES%
+     unzip %UNZIP_ARGS% "%CORE_DICTIONARIES%" -d dictionaries
+     del "%CORE_DICTIONARIES%"
+  )
+)
