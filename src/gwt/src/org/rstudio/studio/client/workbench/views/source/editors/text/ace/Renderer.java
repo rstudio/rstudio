@@ -22,11 +22,11 @@ public class Renderer extends JavaScriptObject
       protected ScreenCoordinates() {}
 
       public native final int getPageX() /*-{
-         return this.pageX;
+         return Math.round(this.pageX);
       }-*/;
 
       public native final int getPageY() /*-{
-         return this.pageY;
+         return Math.round(this.pageY);
       }-*/;
    }
 
