@@ -18,9 +18,8 @@ package com.google.gwt.tools.cldr;
 import com.google.gwt.i18n.shared.GwtLocale;
 
 import org.unicode.cldr.util.CLDRFile;
+import org.unicode.cldr.util.Factory;
 import org.unicode.cldr.util.XPathParts;
-import org.unicode.cldr.util.CLDRFile.DraftStatus;
-import org.unicode.cldr.util.CLDRFile.Factory;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,6 +38,7 @@ public class CurrencyDataProcessor extends Processor {
 
   private Map<String, Integer> currencyFractions = new HashMap<String, Integer>();
   private int defaultCurrencyFraction;
+  private Map<String, Integer> rounding = new HashMap<String, Integer>();
 
   private Set<String> stillInUse = new HashSet<String>();
 
@@ -54,20 +54,24 @@ public class CurrencyDataProcessor extends Processor {
   @Override
   protected void loadData() throws IOException {
     System.out.println("Loading data for currencies");
+    localeData.addVersions(cldrFactory);
     loadLocaleIndependentCurrencyData();
     localeData.addCurrencyEntries("currency", cldrFactory, currencyFractions,
-        defaultCurrencyFraction, stillInUse);
+        defaultCurrencyFraction, stillInUse, rounding);
   }
 
   @Override
   protected void printHeader(PrintWriter pw) {
-    pw.println("# Do not edit - generated from Unicode CLDR data");
+    printPropertiesHeader(pw);
+    pw.println();
     pw.println("#");
     pw.println("# The key is an ISO4217 currency code, and the value is of the " + "form:");
-    pw.println("#   display name|symbol|decimal digits|not-used-flag");
+    pw.println("#   display name|symbol|decimal digits|not-used-flag|rounding");
     pw.println("# If a symbol is not supplied, the currency code will be used");
     pw.println("# If # of decimal digits is omitted, 2 is used");
     pw.println("# If a currency is not generally used, not-used-flag=1");
+    pw.println("# If a currency should be rounded to a multiple of of the least significant");
+    pw.println("#   digit, rounding will be present");
     pw.println("# Trailing empty fields can be omitted");
     pw.println();
   }
@@ -78,6 +82,7 @@ public class CurrencyDataProcessor extends Processor {
       String path = "client/impl/cldr/CurrencyData";
       PrintWriter pw = createOutputFile(path + Processor.localeSuffix(locale) + ".properties");
       printHeader(pw);
+      printVersion(pw, locale, "# ");
       Map<String, String> map = localeData.getEntries("currency", locale);
       String[] keys = new String[map.size()];
       map.keySet().toArray(keys);
@@ -93,10 +98,9 @@ public class CurrencyDataProcessor extends Processor {
   }
 
   private void loadLocaleIndependentCurrencyData() {
-    CLDRFile supp = cldrFactory.make("supplementalData", true, DraftStatus.approved);
+    CLDRFile supp = cldrFactory.getSupplementalData();
 
-    // load the table of default # of decimal places for each currency
-    currencyFractions = new HashMap<String, Integer>();
+    // load the table of default # of decimal places and rounding for each currency
     defaultCurrencyFraction = 0;
     XPathParts parts = new XPathParts();
     Iterator<String> iterator = supp.iterator("//supplementalData/currencyData/fractions/info");
@@ -109,11 +113,14 @@ public class CurrencyDataProcessor extends Processor {
       }
       String curCode = attr.get("iso4217");
       int digits = Integer.valueOf(attr.get("digits"));
-      // TODO(jat): make use of the "rounding" attribute, currently only on CHF
       if ("DEFAULT".equalsIgnoreCase(curCode)) {
         defaultCurrencyFraction = digits;
       } else {
         currencyFractions.put(curCode, digits);
+      }
+      int roundingDigits = Integer.valueOf(attr.get("rounding"));
+      if (roundingDigits != 0) {
+        rounding.put(curCode, roundingDigits);
       }
     }
 

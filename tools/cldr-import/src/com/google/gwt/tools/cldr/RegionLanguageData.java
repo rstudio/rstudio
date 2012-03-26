@@ -16,9 +16,8 @@
 package com.google.gwt.tools.cldr;
 
 import org.unicode.cldr.util.CLDRFile;
+import org.unicode.cldr.util.Factory;
 import org.unicode.cldr.util.XPathParts;
-import org.unicode.cldr.util.CLDRFile.DraftStatus;
-import org.unicode.cldr.util.CLDRFile.Factory;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,6 +46,7 @@ public class RegionLanguageData {
       this.official = official;
     }
 
+    @Override
     public int compareTo(LanguagePopulation other) {
       int c = -Double.compare(literatePopulation, other.literatePopulation);
       if (c == 0) {
@@ -106,6 +106,7 @@ public class RegionLanguageData {
       this.official = official;
     }
 
+    @Override
     public int compareTo(RegionPopulation other) {
       int c = -Double.compare(literatePopulation, other.literatePopulation);
       if (c == 0) {
@@ -184,7 +185,7 @@ public class RegionLanguageData {
     }
     regionMap = new HashMap<String, SortedSet<LanguagePopulation>>();
     languageMap = new HashMap<String, SortedSet<RegionPopulation>>();
-    CLDRFile supp = cldrFactory.make("supplementalData", true, DraftStatus.approved);
+    CLDRFile supp = cldrFactory.getSupplementalData();
     XPathParts parts = new XPathParts();
     Iterator<String> iterator = supp.iterator("//supplementalData/territoryInfo/territory");
     while (iterator.hasNext()) {

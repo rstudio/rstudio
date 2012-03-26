@@ -16,20 +16,21 @@
 package com.google.gwt.tools.cldr;
 
 import com.google.gwt.codegen.server.StringGenerator;
-import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.i18n.client.DateTimeFormatInfo;
-import com.google.gwt.i18n.client.impl.cldr.DateTimeFormatInfoImpl;
 import com.google.gwt.i18n.rebind.DateTimePatternGenerator;
-import com.google.gwt.i18n.rebind.MessageFormatParser;
-import com.google.gwt.i18n.rebind.MessageFormatParser.ArgumentChunk;
-import com.google.gwt.i18n.rebind.MessageFormatParser.DefaultTemplateChunkVisitor;
-import com.google.gwt.i18n.rebind.MessageFormatParser.StringChunk;
-import com.google.gwt.i18n.rebind.MessageFormatParser.TemplateChunk;
+import com.google.gwt.i18n.server.MessageFormatUtils.ArgumentChunk;
+import com.google.gwt.i18n.server.MessageFormatUtils.DefaultTemplateChunkVisitor;
+import com.google.gwt.i18n.server.MessageFormatUtils.MessageStyle;
+import com.google.gwt.i18n.server.MessageFormatUtils.StringChunk;
+import com.google.gwt.i18n.server.MessageFormatUtils.TemplateChunk;
+import com.google.gwt.i18n.server.MessageFormatUtils.VisitorAbortException;
+import com.google.gwt.i18n.shared.DateTimeFormatInfo;
 import com.google.gwt.i18n.shared.GwtLocale;
+import com.google.gwt.i18n.shared.impl.cldr.DateTimeFormatInfoImpl;
 
-import org.unicode.cldr.util.CLDRFile.Factory;
+import org.unicode.cldr.util.Factory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.ParseException;
@@ -38,8 +39,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -204,16 +205,16 @@ public class DateTimeFormatInfoProcessor extends Processor {
       final StringBuilder buf = new StringBuilder();
       final StringGenerator gen = StringGenerator.create(buf, false);
       try {
-        List<TemplateChunk> chunks = MessageFormatParser.parse(value);
+        List<TemplateChunk> chunks = MessageStyle.MESSAGE_FORMAT.parse(value);
         for (TemplateChunk chunk : chunks) {
           chunk.accept(new DefaultTemplateChunkVisitor() {
             @Override
-            public void visit(ArgumentChunk argChunk) throws UnableToCompleteException {
+            public void visit(ArgumentChunk argChunk) {
               gen.appendStringValuedExpression(args[argChunk.getArgumentNumber()]);
             }
 
             @Override
-            public void visit(StringChunk stringChunk) throws UnableToCompleteException {
+            public void visit(StringChunk stringChunk) {
               gen.appendStringLiteral(stringChunk.getString());
             }
           });
@@ -221,7 +222,7 @@ public class DateTimeFormatInfoProcessor extends Processor {
       } catch (ParseException e) {
         throw new RuntimeException("Unable to parse pattern '" + value + "' for locale " + locale
             + " key " + category + "/" + key, e);
-      } catch (UnableToCompleteException e) {
+      } catch (VisitorAbortException e) {
         throw new RuntimeException("Unable to parse pattern '" + value + "' for locale " + locale
             + " key " + category + "/" + key, e);
       }
@@ -382,6 +383,7 @@ public class DateTimeFormatInfoProcessor extends Processor {
   @Override
   protected void loadData() throws IOException {
     System.out.println("Loading data for date/time formats");
+    localeData.addVersions(cldrFactory);
     localeData.addEntries("predef", cldrFactory,
         "//ldml/dates/calendars/calendar[@type=\"gregorian\"]/dateTimeFormats/"
             + "availableFormats", "dateFormatItem", "id");
@@ -411,121 +413,144 @@ public class DateTimeFormatInfoProcessor extends Processor {
     loadFormatPatterns();
   }
 
+  /**
+   * Write an output file.
+   * 
+   * @param locale
+   * @param clientShared "client" or "shared", determines the package names
+   *     being written to
+   * @throws IOException
+   * @throws FileNotFoundException
+   */
+  protected void writeOneOutputFile(GwtLocale locale, String clientShared) throws IOException,
+      FileNotFoundException {
+    // TODO(jat): make uz_UZ inherit from uz_Cyrl rather than uz, for example
+    String myClass;
+    String pathSuffix;
+    if (locale.isDefault()) {
+      if ("client".equals(clientShared)) {
+        // The client default is hand-written code that extends the shared one.
+        return;
+      }
+      myClass = "DefaultDateTimeFormatInfo";
+      pathSuffix = "/";
+    } else {
+      myClass = "DateTimeFormatInfoImpl" + localeSuffix(locale);
+      pathSuffix = "/impl/cldr/";
+    }
+    GwtLocale parent = localeData.inheritsFrom(locale);
+    PrintWriter pw = createOutputFile(clientShared + pathSuffix + myClass + ".java");
+    printHeader(pw);
+    pw.print("package com.google.gwt.i18n." + clientShared);
+    // GWT now requires JDK 1.6, so we always generate @Overrides
+    setOverrides(true);
+    if (!locale.isDefault()) {
+      pw.print(".impl.cldr");
+    }
+    pw.println(";");
+    pw.println();
+    pw.println("// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA");
+    Map<String, String> map = localeData.getEntries("version", locale);
+    for (Map.Entry<String, String> entry : map.entrySet()) {
+      pw.println("//  " + entry.getKey() + "=" + entry.getValue());
+    }
+    pw.println();
+    if (locale.isDefault()) {
+      pw.println("/**");
+      pw.println(" * Default implementation of DateTimeFormatInfo interface, "
+          + "using values from");
+      pw.println(" * the CLDR root locale.");
+      pw.println(" * <p>");
+      pw.println(" * Users who need to create their own DateTimeFormatInfo "
+          + "implementation are");
+      pw.println(" * encouraged to extend this class so their implementation "
+          + "won't break when   ");
+      pw.println(" * new methods are added.");
+      pw.println(" */");
+    } else {
+      pw.println("/**");
+      pw.println(" * Implementation of DateTimeFormatInfo for the \"" + locale + "\" locale.");
+      pw.println(" */");
+    }
+    pw.print("public class " + myClass);
+    if (locale.isDefault()) {
+      pw.print(" implements " + DateTimeFormatInfo.class.getSimpleName());
+    } else {
+      pw.print(" extends ");
+      pw.print(DateTimeFormatInfoImpl.class.getSimpleName());
+      if (!parent.isDefault()) {
+        pw.print('_');
+        pw.print(parent.getAsString());
+      }
+    }
+    pw.println(" {");
+
+    // write AM/PM names
+    generateStringList(pw, "dayPeriod-abbrev", null, locale, "ampms", "am", "pm");
+
+    // write standard date formats
+    generateArgMethod(pw, "date", locale, "dateFormat");
+    generateStringMethod(pw, "date", locale, "full", "dateFormatFull");
+    generateStringMethod(pw, "date", locale, "long", "dateFormatLong");
+    generateStringMethod(pw, "date", locale, "medium", "dateFormatMedium");
+    generateStringMethod(pw, "date", locale, "short", "dateFormatShort");
+
+    // write methods for assembling date/time formats
+    generateArgMethod(pw, "dateTime", locale, "dateTime", "timePattern", "datePattern");
+    generateArgMethodRedirect(pw, "dateTime", locale, "full", "dateTimeFull", "timePattern",
+        "datePattern");
+    generateArgMethodRedirect(pw, "dateTime", locale, "long", "dateTimeLong", "timePattern",
+        "datePattern");
+    generateArgMethodRedirect(pw, "dateTime", locale, "medium", "dateTimeMedium", "timePattern",
+        "datePattern");
+    generateArgMethodRedirect(pw, "dateTime", locale, "short", "dateTimeShort", "timePattern",
+        "datePattern");
+
+    // write era names
+    generateStringList(pw, "era-wide", null, locale, "erasFull", "0", "1");
+    generateStringList(pw, "era-abbrev", null, locale, "erasShort", "0", "1");
+
+    // write firstDayOfTheWeek
+    generateDayNumber(pw, locale, "firstDay", "firstDayOfTheWeek");
+
+    // write predefined date/time formats
+    for (Map.Entry<String, String> entry : FORMAT_BY_METHOD.entrySet()) {
+      generateFormat(locale, pw, entry.getValue(), entry.getKey());
+    }
+
+    // write month names
+    generateFullStringList(pw, "month", locale, "months", "1", "2", "3", "4", "5", "6", "7", "8",
+        "9", "10", "11", "12");
+
+    // write quarter names
+    generateStringList(pw, "quarter-wide", null, locale, "quartersFull", "1", "2", "3", "4");
+    generateStringList(pw, "quarter-abbrev", null, locale, "quartersShort", "1", "2", "3", "4");
+
+    // write standard time formats
+    generateArgMethod(pw, "time", locale, "timeFormat");
+    generateStringMethod(pw, "time", locale, "full", "timeFormatFull");
+    generateStringMethod(pw, "time", locale, "long", "timeFormatLong");
+    generateStringMethod(pw, "time", locale, "medium", "timeFormatMedium");
+    generateStringMethod(pw, "time", locale, "short", "timeFormatShort");
+
+    // write weekday names
+    generateFullStringList(pw, "day", locale, "weekdays", DAYS);
+
+    // write weekend boundaries
+    generateDayNumber(pw, locale, "weekendEnd", "weekendEnd");
+    generateDayNumber(pw, locale, "weekendStart", "weekendStart");
+
+    pw.println("}");
+    pw.close();
+  }
+
   @Override
   protected void writeOutputFiles() throws IOException {
-    // TODO(jat): make uz_UZ inherit from uz_Cyrl rather than uz, for example
     System.out.println("Writing output for date/time formats");
     for (GwtLocale locale : localeData.getNonEmptyLocales()) {
-      String myClass;
-      String path = "client/";
-      String pathSuffix = "";
-      if (locale.isDefault()) {
-        myClass = "DefaultDateTimeFormatInfo";
-      } else {
-        myClass = "DateTimeFormatInfoImpl" + localeSuffix(locale);
-        pathSuffix = "impl/cldr/";
-      }
-      GwtLocale parent = localeData.inheritsFrom(locale);
-      PrintWriter pw = createOutputFile(path + pathSuffix + myClass + ".java");
-      printHeader(pw);
-      pw.print("package com.google.gwt.i18n.client");
-      if (!locale.isDefault()) {
-        pw.print(".impl.cldr");
-        setOverrides(true);
-      } else {
-        setOverrides(false);
-      }
-      pw.println(";");
-      pw.println();
-      pw.println("// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA");
-      pw.println();
-      if (locale.isDefault()) {
-        pw.println("/**");
-        pw.println(" * Default implementation of DateTimeFormatInfo interface, "
-            + "using values from");
-        pw.println(" * the CLDR root locale.");
-        pw.println(" * <p>");
-        pw.println(" * Users who need to create their own DateTimeFormatInfo "
-            + "implementation are");
-        pw.println(" * encouraged to extend this class so their implementation "
-            + "won't break when   ");
-        pw.println(" * new methods are added.");
-        pw.println(" */");
-      } else {
-        pw.println("/**");
-        pw.println(" * Implementation of DateTimeFormatInfo for the \"" + locale + "\" locale.");
-        pw.println(" */");
-      }
-      pw.print("public class " + myClass);
-      if (locale.isDefault()) {
-        pw.print(" implements " + DateTimeFormatInfo.class.getSimpleName());
-      } else {
-        pw.print(" extends ");
-        pw.print(DateTimeFormatInfoImpl.class.getSimpleName());
-        if (!parent.isDefault()) {
-          pw.print('_');
-          pw.print(parent.getAsString());
-        }
-      }
-      pw.println(" {");
-
-      // write AM/PM names
-      generateStringList(pw, "dayPeriod-abbrev", null, locale, "ampms", "am", "pm");
-
-      // write standard date formats
-      generateArgMethod(pw, "date", locale, "dateFormat");
-      generateStringMethod(pw, "date", locale, "full", "dateFormatFull");
-      generateStringMethod(pw, "date", locale, "long", "dateFormatLong");
-      generateStringMethod(pw, "date", locale, "medium", "dateFormatMedium");
-      generateStringMethod(pw, "date", locale, "short", "dateFormatShort");
-
-      // write methods for assembling date/time formats
-      generateArgMethod(pw, "dateTime", locale, "dateTime", "timePattern", "datePattern");
-      generateArgMethodRedirect(pw, "dateTime", locale, "full", "dateTimeFull", "timePattern",
-          "datePattern");
-      generateArgMethodRedirect(pw, "dateTime", locale, "long", "dateTimeLong", "timePattern",
-          "datePattern");
-      generateArgMethodRedirect(pw, "dateTime", locale, "medium", "dateTimeMedium", "timePattern",
-          "datePattern");
-      generateArgMethodRedirect(pw, "dateTime", locale, "short", "dateTimeShort", "timePattern",
-          "datePattern");
-
-      // write era names
-      generateStringList(pw, "era-wide", null, locale, "erasFull", "0", "1");
-      generateStringList(pw, "era-abbrev", null, locale, "erasShort", "0", "1");
-
-      // write firstDayOfTheWeek
-      generateDayNumber(pw, locale, "firstDay", "firstDayOfTheWeek");
-
-      // write predefined date/time formats
-      for (Map.Entry<String, String> entry : FORMAT_BY_METHOD.entrySet()) {
-        generateFormat(locale, pw, entry.getValue(), entry.getKey());
-      }
-
-      // write month names
-      generateFullStringList(pw, "month", locale, "months", "1", "2", "3", "4", "5", "6", "7", "8",
-          "9", "10", "11", "12");
-
-      // write quarter names
-      generateStringList(pw, "quarter-wide", null, locale, "quartersFull", "1", "2", "3", "4");
-      generateStringList(pw, "quarter-abbrev", null, locale, "quartersShort", "1", "2", "3", "4");
-
-      // write standard time formats
-      generateArgMethod(pw, "time", locale, "timeFormat");
-      generateStringMethod(pw, "time", locale, "full", "timeFormatFull");
-      generateStringMethod(pw, "time", locale, "long", "timeFormatLong");
-      generateStringMethod(pw, "time", locale, "medium", "timeFormatMedium");
-      generateStringMethod(pw, "time", locale, "short", "timeFormatShort");
-
-      // write weekday names
-      generateFullStringList(pw, "day", locale, "weekdays", DAYS);
-
-      // write weekend boundaries
-      generateDayNumber(pw, locale, "weekendEnd", "weekendEnd");
-      generateDayNumber(pw, locale, "weekendStart", "weekendStart");
-
-      pw.println("}");
-      pw.close();
+      // TODO(jat): remove client when we no longer need it
+      writeOneOutputFile(locale, "client");
+      writeOneOutputFile(locale, "shared");
     }
   }
 

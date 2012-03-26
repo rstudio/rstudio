@@ -8,8 +8,8 @@
   <property.ensure name="gwt.user.jar" location="${gwt.build.lib}/gwt-user.jar" />
   <property.ensure name="gwt.servlet.jar" location="${gwt.build.lib}/gwt-servlet.jar" />
 
-  <property name="ICU" location="${gwt.tools}/lib/icu4j/4.4.2" />
-  <property name="CLDR_TOOLS" location="${gwt.tools}/lib/cldr/1.8.1" />
+  <property name="CLDR_TOOLS" location="${gwt.tools}/lib/cldr/21" />
+  <property name="ICU" location="${CLDR_TOOLS}" />
 
   <property.ensure name="ICU_CORE_PATH" location="${ICU}/icu4j.jar" />
 
@@ -105,10 +105,12 @@
 
   <target name="gen.temp" depends="build, cldrdata"
     description="Generate GWT classes/property files in a temporary directory">
+    <delete dir="${tmpdir}" quiet="true"/>
     <mkdir dir="${tmpdir}"/>
     <java classname="com.google.gwt.tools.cldr.GenerateGwtCldrData"
       fork="true" maxmemory="2048m" failonerror="true">
       <arg line="--sourcedir ${cldr.data} --outdir ${tmpdir}"/>
+      <sysproperty key="CLDR_DIR" value="${cldr.root}"/>
       <classpath>
         <pathelement location="${javac.out}"/>
         <pathelement location="${gwt.user.jar}"/>
@@ -125,6 +127,7 @@
     <java classname="com.google.gwt.tools.cldr.GenerateGwtCldrData"
       fork="true" maxmemory="2048m" failonerror="true">
       <arg line="--sourcedir ${cldr.data} --outdir ${gwt.root}"/>
+      <sysproperty key="CLDR_DIR" value="${cldr.root}"/>
       <classpath>
         <pathelement location="${javac.out}"/>
         <pathelement location="${gwt.user.jar}"/>

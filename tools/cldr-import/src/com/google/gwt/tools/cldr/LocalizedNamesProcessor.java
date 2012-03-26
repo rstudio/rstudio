@@ -18,7 +18,7 @@ package com.google.gwt.tools.cldr;
 import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.tools.cldr.RegionLanguageData.RegionPopulation;
 
-import org.unicode.cldr.util.CLDRFile.Factory;
+import org.unicode.cldr.util.Factory;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,6 +48,7 @@ public class LocalizedNamesProcessor extends Processor {
       this.key = collator.getCollationKey(value);
     }
 
+    @Override
     public int compareTo(IndexedName o) {
       return key.compareTo(o.key);
     }
@@ -144,6 +145,7 @@ public class LocalizedNamesProcessor extends Processor {
   @Override
   protected void loadData() throws IOException {
     System.out.println("Loading data for localized names");
+    localeData.addVersions(cldrFactory);
     localeData.addEntries("territory", cldrFactory, "//ldml/localeDisplayNames/territories",
         "territory", "type");
     localeData.addEntries("language", cldrFactory, "//ldml/localeDisplayNames/languages",
@@ -152,10 +154,6 @@ public class LocalizedNamesProcessor extends Processor {
         "type");
     localeData.addEntries("variant", cldrFactory, "//ldml/localeDisplayNames/variants", "variant",
         "type");
-    localeData.addEntries("localePattern", cldrFactory, "//ldml/localeDisplayNames/localePattern",
-        "localePattern", "unused");
-    localeData.addEntries("localeSeparator", cldrFactory,
-        "//ldml/localeDisplayNames/localeSeparator", "localeSeparator", "unused");
   }
 
   @Override
@@ -178,19 +176,20 @@ public class LocalizedNamesProcessor extends Processor {
       // sort for deterministic output
       Collections.sort(regionCodesWithNames);
       if (locale.isDefault()) {
-        generateDefaultLocale(namesMap, regionCodesWithNames, sortOrder, likelyOrder);
+        generateDefaultLocale(locale, namesMap, regionCodesWithNames, sortOrder, likelyOrder);
       }
       generateLocale(locale, namesMap, regionCodesWithNames, sortOrder, likelyOrder);
     }
   }
 
   /**
+   * @param locale
    * @param namesMap
    * @param regionCodesWithNames
    * @param sortOrder
    * @param likelyOrder
    */
-  private void generateDefaultLocale(Map<String, String> namesMap,
+  private void generateDefaultLocale(GwtLocale locale, Map<String, String> namesMap,
       List<String> regionCodesWithNames, String[] sortOrder, String[] likelyOrder)
       throws IOException {
     PrintWriter pw = null;
@@ -199,7 +198,7 @@ public class LocalizedNamesProcessor extends Processor {
       printHeader(pw);
       pw.println("package com.google.gwt.i18n.client;");
       pw.println();
-      pw.println("// DO NOT EDIT - GENERATED FROM CLDR DATA");
+      printVersion(pw, locale, "// ");
       pw.println();
       pw.println("/**");
       pw.println(" * Default LocalizedNames implementation.");
@@ -250,7 +249,7 @@ public class LocalizedNamesProcessor extends Processor {
         pw.println("import com.google.gwt.core.client.JavaScriptObject;");
         pw.println();
       }
-      pw.println("// DO NOT EDIT - GENERATED FROM CLDR DATA");
+      printVersion(pw, locale, "// ");
       pw.println();
       pw.println("/**");
       pw.println(" * Localized names for the \"" + locale + "\" locale.");

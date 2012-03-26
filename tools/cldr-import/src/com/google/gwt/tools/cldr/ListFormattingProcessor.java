@@ -17,7 +17,7 @@ package com.google.gwt.tools.cldr;
 
 import com.google.gwt.i18n.shared.GwtLocale;
 
-import org.unicode.cldr.util.CLDRFile.Factory;
+import org.unicode.cldr.util.Factory;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,6 +41,7 @@ public class ListFormattingProcessor extends Processor {
   @Override
   protected void loadData() throws IOException {
     System.out.println("Loading data for list formatting");
+    localeData.addVersions(cldrFactory);
     localeData.addEntries("list", cldrFactory, "//ldml/listPatterns/listPattern",
         "listPatternPart", "type");
   }
@@ -52,6 +53,9 @@ public class ListFormattingProcessor extends Processor {
       for (Map.Entry<String, String> entry : localeData.getEntries("list", locale).entrySet()) {
         if (pw == null) {
           pw = createOutputFile("rebind/cldr/ListPatterns_" + locale.getAsString() + ".properties");
+          printPropertiesHeader(pw);
+          pw.println();
+          printVersion(pw, locale, "# ");
         }
         pw.println(entry.getKey() + "=" + entry.getValue());
       }

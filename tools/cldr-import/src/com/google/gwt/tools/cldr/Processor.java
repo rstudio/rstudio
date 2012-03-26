@@ -15,9 +15,12 @@
  */
 package com.google.gwt.tools.cldr;
 
+import com.google.gwt.codegen.server.AbortablePrintWriter;
+import com.google.gwt.codegen.server.JavaSourceWriterBuilder;
+import com.google.gwt.codegen.server.LoggingCodeGenContext;
 import com.google.gwt.i18n.shared.GwtLocale;
 
-import org.unicode.cldr.util.CLDRFile.Factory;
+import org.unicode.cldr.util.Factory;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -26,11 +29,41 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.util.Calendar;
+import java.util.Map;
 
 /**
  * Base class for CLDR processors that generate GWT i18n resources.
  */
 public abstract class Processor {
+
+  /**
+   * A CodeGenContext implementation that logs to j.u.logging and creates
+   * output files using {@link Processor#createOutputFile(String, String)}.
+   */
+  protected class ProcessorCodeGenContext extends LoggingCodeGenContext {
+    @Override
+    public JavaSourceWriterBuilder addClass(String superPkg, String pkgName, String className) {
+      String pkgPath = superPkg == null ? pkgName : superPkg + '/' + pkgName;
+      if (pkgPath.length() > 0) {
+        pkgPath = pkgPath.replace('.', '/') + '/';
+      }
+      String classPath = className.replace('.', '_');
+      String fileName = pkgPath + classPath + ".java";
+      try {
+        PrintWriter pw = createOutputFile("", fileName);
+        AbortablePrintWriter apw = new AbortablePrintWriter(pw);
+        printHeader(apw);
+        return new JavaSourceWriterBuilder(apw, pkgName, className);
+      } catch (FileNotFoundException e) {
+        error("Unable to create " + fileName, e);
+        return null;
+      } catch (IOException e) {
+        error("Unable to create " + fileName, e);
+        return null;
+      }
+    }
+  }
 
   protected static final String I18N_PACKAGE_PATH = "user/src/com/google/gwt/i18n/";
 
@@ -137,9 +170,8 @@ public abstract class Processor {
       parent.mkdirs();
     }
     f.createNewFile();
-    pw =
-        new PrintWriter(
-            new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f), "UTF-8")), false);
+    pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f),
+        "UTF-8")), false);
     return pw;
   }
 
@@ -190,8 +222,13 @@ public abstract class Processor {
   protected abstract void loadData() throws IOException;
 
   protected void printHeader(PrintWriter pw) {
+    printJavaHeader(pw);
+  }
+
+  protected void printJavaHeader(PrintWriter pw) {
+    int year = Calendar.getInstance().get(Calendar.YEAR);
     pw.println("/*");
-    pw.println(" * Copyright 2010 Google Inc.");
+    pw.println(" * Copyright " + year + " Google Inc.");
     pw.println(" * ");
     pw.println(" * Licensed under the Apache License, Version 2.0 (the "
         + "\"License\"); you may not");
@@ -209,6 +246,36 @@ public abstract class Processor {
         + "limitations under");
     pw.println(" * the License.");
     pw.println(" */");
+  }
+
+  protected void printPropertiesHeader(PrintWriter pw) {
+    int year = Calendar.getInstance().get(Calendar.YEAR);
+    pw.println("# Copyright " + year + " Google Inc.");
+    pw.println("# ");
+    pw.println("# Licensed under the Apache License, Version 2.0 (the "
+        + "\"License\"); you may not");
+    pw.println("# use this file except in compliance with the License. You "
+        + "may obtain a copy of");
+    pw.println("# the License at");
+    pw.println("# ");
+    pw.println("# http://www.apache.org/licenses/LICENSE-2.0");
+    pw.println("# ");
+    pw.println("# Unless required by applicable law or agreed to in writing, " + "software");
+    pw.println("# distributed under the License is distributed on an \"AS "
+        + "IS\" BASIS, WITHOUT");
+    pw.println("# WARRANTIES OR CONDITIONS OF ANY KIND, either express or " + "implied. See the");
+    pw.println("# License for the specific language governing permissions and "
+        + "limitations under");
+    pw.println("# the License.");
+  }
+
+  protected void printVersion(PrintWriter pw, GwtLocale locale, String prefix) {
+    pw.println(prefix + "DO NOT EDIT - GENERATED FROM CLDR DATA:");
+    Map<String, String> map = localeData.getEntries("version", locale);
+    for (Map.Entry<String, String> entry : map.entrySet()) {
+      pw.println(prefix + " " + entry.getKey() + "=" + entry.getValue());
+    }
+    pw.println();
   }
 
   /**
