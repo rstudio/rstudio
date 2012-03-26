@@ -569,7 +569,9 @@ public class ShellWidget extends Composite implements ShellDisplay,
       if (!suppressPendingInput_ && !input_.isPasswordMode())
       {
          SpanElement pendingInput = Document.get().createSpanElement();
-         pendingInput.setInnerText(StringUtil.notNull(commandText).split("\n")[0] + "\n");
+         String[] lines = StringUtil.notNull(commandText).split("\n");
+         String firstLine = lines.length > 0 ? lines[0] : "";
+         pendingInput.setInnerText(firstLine + "\n");
          pendingInput.setClassName(styles_.command() + " " + KEYWORD_CLASS_NAME);
          pendingInput_.getElement().appendChild(pendingPrompt);
          pendingInput_.getElement().appendChild(pendingInput);
