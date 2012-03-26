@@ -13,6 +13,11 @@
 
 .rs.addFunction( "knitrChunkOptions", function()
 {
+   # starting with v0.4.2 this is avavilable directly from knitr
+   if (packageVersion("knitr") >= "0.4.2")
+      return(knitr:::opts_chunk_attr)
+
+   # still try to return correct results for previous versions
    knitrOptions <- knitr:::opts_chunk$get()
    knitrOptions <- as.list(sapply(knitrOptions, class))
    knitrOptions[knitrOptions == "NULL"] <- "character"
