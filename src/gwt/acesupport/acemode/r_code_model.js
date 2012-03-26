@@ -527,6 +527,8 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
          if (this.$statePattern && !this.$statePattern.test(endState))
             return defaultIndent;
 
+         var continuationIndent = "";
+
          var prevToken = this.$findPreviousSignificantToken({row: lastRow, column: this.$getLine(lastRow).length},
                                                             lastRow - 10);
          if (prevToken
@@ -560,12 +562,13 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
          }
          else if (prevToken && /\boperator\b/.test(prevToken.token.type) && !/\bparen\b/.test(prevToken.token.type))
          {
-            // Is the previous line also a continuation line?
-            var prevContToken = this.$findPreviousSignificantToken({row: prevToken.row, column: 0}, 0);
-            if (!prevContToken || !/\boperator\b/.test(prevContToken.token.type) || /\bparen\b/.test(prevContToken.token.type))
-               return this.$getIndent(this.$getLine(prevToken.row)) + tab;
-            else
-               return this.$getIndent(this.$getLine(prevToken.row));
+            continuationIndent = tab;
+//            // Is the previous line also a continuation line?
+//            var prevContToken = this.$findPreviousSignificantToken({row: prevToken.row, column: 0}, 0);
+//            if (!prevContToken || !/\boperator\b/.test(prevContToken.token.type) || /\bparen\b/.test(prevContToken.token.type))
+//               return this.$getIndent(this.$getLine(prevToken.row)) + tab;
+//            else
+//               return this.$getIndent(this.$getLine(prevToken.row));
          }
 
          var openBracePos = this.$walkParensBalanced(
@@ -586,7 +589,8 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
 
             if (!nextTokenPos)
             {
-               return this.getIndentForOpenBrace(openBracePos) + tab;
+               return this.getIndentForOpenBrace(openBracePos) +
+                      tab + continuationIndent;
             }
             else
             {
@@ -612,15 +616,15 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
                   buffer += tab;
                for (var j = 0; j < spacesToAdd; j++)
                   buffer += " ";
-               return leadingIndent + buffer;
+               return leadingIndent + buffer + continuationIndent;
             }
          }
 
          var firstToken = this.$findNextSignificantToken({row: 0, column: 0}, lastRow);
          if (firstToken)
-            return this.$getIndent(this.$getLine(firstToken.row));
+            return this.$getIndent(this.$getLine(firstToken.row)) + continuationIndent;
          else
-            return "";
+            return "" + continuationIndent;
       }
       finally
       {
