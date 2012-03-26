@@ -1,9 +1,10 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-  <script type="text/javascript" src="../tools/ace/build_support/mini_require.js"></script>
-  <script type="text/javascript" src="../tools/ace/build/src/ace.js"></script>
+  <!script type="text/javascript" src="../tools/ace/build_support/mini_require.js"></script>
+  <script type="text/javascript" src="../tools/ace/build/src/ace-uncompressed.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/auto_brace_insert.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/tex_highlight_rules.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r_highlight_rules.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r_code_model.js"></script>
@@ -182,6 +183,15 @@ function() {
 else
   5 +
 </pre></li>
+<li><pre expected="4">
+if (foo())
+  5 +
+</pre></li>
+<li><pre expected="2">
+xyplot(ysim ~ xsim) +
+  layer(panel.ablineq(lm(y ~ x), r.sq = TRUE, rot = TRUE,
+                      at = 0.8, pos = 3), style = 1) +
+</pre></li>
 </ol>
 
 <script type="text/javascript">
@@ -195,7 +205,7 @@ function doIndentTest(el) {
   var mode = new RMode(false, doc);
   var rCodeModel = new RCodeModel(doc, mode.$tokenizer);
 
-  doc.insert({row:0, column:0}, el.innerText.trimRight());
+  doc.insert({row:0, column:0}, (el.innerText || el.textContent).trimRight());
 
   var indent = rCodeModel.getNextLineIndent(doc.getLength() - 1,
                                             doc.getLine(doc.getLength() - 1),
