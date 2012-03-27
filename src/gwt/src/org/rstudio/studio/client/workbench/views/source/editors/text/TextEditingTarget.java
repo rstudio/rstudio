@@ -1597,21 +1597,28 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onExecuteCurrentChunk()
    {
-      executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk());
+      executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(), false);
    }
    
    @Handler
    void onExecuteNextChunk()
    {
-      executeSweaveChunk(scopeHelper_.getNextSweaveChunk());
+      executeSweaveChunk(scopeHelper_.getNextSweaveChunk(), true);
    }
 
-   private void executeSweaveChunk(Scope chunk)
+   private void executeSweaveChunk(Scope chunk, boolean scrollNearTop)
    {
       if (chunk == null)
          return;
 
       Range range = scopeHelper_.getSweaveChunkInnerRange(chunk);
+      if (scrollNearTop)
+      {
+         docDisplay_.navigateToPosition(
+               SourcePosition.create(range.getStart().getRow(),
+                                     range.getStart().getColumn()),
+               true);
+      }
       docDisplay_.setSelection(
             docDisplay_.createSelection(range.getStart(), range.getEnd()));
       if (!range.isEmpty())
