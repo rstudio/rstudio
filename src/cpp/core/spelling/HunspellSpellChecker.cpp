@@ -35,6 +35,73 @@ namespace spelling {
 
 namespace {
 
+// remove morphological description from text
+void removeMorphologicalDescription(std::string* pText)
+{
+   std::size_t tabPos = pText->find('\t');
+   if (tabPos != std::string::npos)
+      *pText = pText->substr(0, tabPos);
+}
+
+// extract the word from the dic_delta line -- remove the
+// optional affix and then replace escaped / chracters
+bool parseDicDeltaLine(std::string line,
+                       std::string* pWord,
+                       std::string* pAffix)
+{
+   // skip empty lines
+   boost::algorithm::trim(line);
+   if (line.empty())
+      return false;
+
+   // find delimiter
+   std::size_t wordEndPos = line.size();
+   for (std::size_t i = 0; i < line.size(); i++)
+   {
+      if (line[i] == '/' && i > 0 && line[i - 1] != '\\')
+      {
+         wordEndPos = i;
+         break;
+      }
+   }
+
+   // extract word and escape forward slashes
+   std::string word = line.substr(0, wordEndPos);
+   *pWord = boost::algorithm::replace_all_copy(word, "\\/", "/");
+
+   // extract affix (if any)
+   if (wordEndPos < line.size() - 1)
+   {
+      *pAffix = line.substr(wordEndPos + 1);
+      removeMorphologicalDescription(pAffix);
+   }
+   else
+   {
+      pAffix->clear();
+      removeMorphologicalDescription(pWord);
+   }
+
+   return true;
+}
+
+// The hunspell api allows you to add words with affixes by providing an
+// example word already in the dictionary that has the same affix. The google
+// english .dic_delta files use the hard-coded integer values 6 and 7 to
+// (respecitvely) indicate possesive (M) and possesive/plural (MS) affixes.
+// Therefore, this function needs to return words that are marked as
+// M or MS consistently in the main dictionaries of the 4 english variations.
+// If we want to extend affix support to other languages we'll need to
+// do a simillar mapping
+std::string exampleWordForEnglishAffix(const std::string& affix)
+{
+   if (affix == "6") // possesive (M)
+      return "Arcadia";
+   else if (affix == "7") // possessive or plural (MS)
+      return "beverage";
+   else
+      return std::string();
+}
+
 class HunspellSpellChecker : public SpellChecker
 {
 public:
@@ -67,11 +134,23 @@ public:
       std::string systemAffPath = string_utils::utf8ToSystem(affPath.absolutePath());
       std::string systemDicPath = string_utils::utf8ToSystem(dicPath.absolutePath());
 
-      // initialize hunspell, iconvstrFunc_, encoding_, and return success
+      // initialize hunspell, iconvstrFunc_, and encoding_
       pHunspell_.reset(new Hunspell(systemAffPath.c_str(),
                                     systemDicPath.c_str()));
       iconvstrFunc_ = iconvstrFunc;
       encoding_ = pHunspell_->get_dic_encoding();
+
+      // add words from dic_delta if available
+      FilePath dicDeltaPath = dicPath.parent().childPath(
+                                                dicPath.stem() + ".dic_delta");
+      if (dicDeltaPath.exists())
+      {
+         Error error = mergeDicDeltaFile(dicDeltaPath);
+         if (error)
+            LOG_ERROR(error);
+      }
+
+      // return success
       return Success();
    }
 
@@ -88,6 +167,56 @@ private:
       }
       pHunspell_->free_list(&wlst, len);
    }
+
+   Error mergeDicDeltaFile(const FilePath& dicDeltaPath)
+   {
+      // determine whether we are going to support affixes -- we do this for
+      // english only right now because we can correctly (by inspection) map
+      // the chromium numeric affix indicators (6 and 7) to the right
+      // hunspell example words. it's worth investigating whether we can do
+      // this for other languages as well
+      bool addAffixes = boost::algorithm::starts_with(dicDeltaPath.stem(),
+                                                      "en_");
+
+      // read the file and strip the BOM
+      std::string contents;
+      Error error = core::readStringFromFile(dicDeltaPath, &contents);
+      if (error)
+         return error;
+      core::stripBOM(&contents);
+
+      // split into lines
+      std::vector<std::string> lines;
+      boost::algorithm::split(lines,
+                              contents,
+                              boost::algorithm::is_any_of("\n"));
+
+      // parse lines for words
+      bool added;
+      std::string word, affix, example;
+      BOOST_FOREACH(const std::string& line, lines)
+      {
+         if (parseDicDeltaLine(line, &word, &affix))
+         {
+            example = exampleWordForEnglishAffix(affix);
+            if (!example.empty() && addAffixes)
+            {
+               Error error = addWordWithAffix(word, example, &added);
+               if (error)
+                  LOG_ERROR(error);
+            }
+            else
+            {
+               Error error = addWord(word, &added);
+               if (error)
+                  LOG_ERROR(error);
+            }
+         }
+      }
+
+      return Success();
+   }
+
 
 public:
    Error checkSpelling(const std::string& word, bool *pCorrect)
@@ -154,6 +283,33 @@ public:
       return Success();
    }
 
+   Error addWordWithAffix(const std::string& word,
+                          const std::string& example,
+                          bool *pAdded)
+   {
+      std::string wordEncoded;
+      Error error = iconvstrFunc_(word,
+                                  "UTF-8",
+                                  encoding_,
+                                  false,
+                                  &wordEncoded);
+      if (error)
+         return error;
+
+      std::string exampleEncoded;
+      error = iconvstrFunc_(example,
+                            "UTF-8",
+                            encoding_,
+                            false,
+                            &exampleEncoded);
+      if (error)
+         return error;
+
+      *pAdded = (pHunspell_->add_with_affix(wordEncoded.c_str(),
+                                            exampleEncoded.c_str()) == 0);
+      return Success();
+   }
+
    Error removeWord(const std::string& word, bool *pRemoved)
    {
       std::string encoded;
@@ -195,66 +351,6 @@ private:
    std::string encoding_;
 };
 
-// extract the word from the dic_delta line -- remove the
-// optional affix and then replace escaped / chracters
-std::string wordFromDicDeltaLine(std::string line)
-{
-   // skip empty lines
-   boost::algorithm::trim(line);
-   if (line.empty())
-      return std::string();
-
-   // find delimiter
-   std::size_t wordEndPos = line.size();
-   for (std::size_t i = 0; i < line.size(); i++)
-   {
-      if (line[i] == '/' && i > 0 && line[i - 1] != '\\')
-      {
-         wordEndPos = i;
-         break;
-      }
-   }
-
-   // extract word
-   std::string word = line.substr(0, wordEndPos);
-
-   // return word with escaped /
-   return boost::algorithm::replace_all_copy(word, "\\/", "/");
-}
-
-Error mergeDicDeltaFile(const FilePath& dicDeltaPath,
-                        boost::shared_ptr<SpellChecker> pHunspell)
-{
-   std::string contents;
-   Error error = core::readStringFromFile(dicDeltaPath, &contents);
-   if (error)
-      return error;
-
-   // get rid of BOM
-   core::stripBOM(&contents);
-
-   // split into lines
-   std::vector<std::string> lines;
-   boost::algorithm::split(lines,
-                           contents,
-                           boost::algorithm::is_any_of("\n"));
-
-   // parse lines for words
-   BOOST_FOREACH(const std::string& line, lines)
-   {
-      std::string word = wordFromDicDeltaLine(line);
-      if (!word.empty())
-      {
-         bool added;
-         Error error = pHunspell->addWord(word, &added);
-         if (error)
-            LOG_ERROR(error);
-      }
-   }
-
-   return Success();
-}
-
 } // anonymous namespace
 
 core::Error createHunspell(const FilePath& languageDicPath,
@@ -270,16 +366,6 @@ core::Error createHunspell(const FilePath& languageDicPath,
    Error error = pNew->initialize(affPath, dicPath, iconvstrFunc);
    if (error)
       return error;
-
-   // add words from dic_delta if available
-   FilePath dicDeltaPath = dicPath.parent().childPath(
-                                          dicPath.stem() + ".dic_delta");
-   if (dicDeltaPath.exists())
-   {
-      Error error = mergeDicDeltaFile(dicDeltaPath, pNew);
-      if (error)
-         LOG_ERROR(error);
-   }
 
    // return
    *ppHunspell = boost::shared_static_cast<SpellChecker>(pNew);
