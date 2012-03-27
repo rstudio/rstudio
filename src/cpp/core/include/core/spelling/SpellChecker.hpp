@@ -99,8 +99,7 @@ typedef boost::function<core::Error(const std::string&,
                                     bool,
                                     std::string*)> IconvstrFunction;
 
-core::Error createHunspell(const core::FilePath& affPath,
-                           const core::FilePath& dicPath,
+core::Error createHunspell(const core::FilePath& languageDicPath,
                            boost::shared_ptr<SpellChecker>* pHunspell,
                            const IconvstrFunction& iconvstrFunc);
 

@@ -60,8 +60,7 @@ public:
                            dictManager_.dictionaryForLanguageId(langId);
          if (!dict.empty())
          {
-            Error error = core::spelling::createHunspell(dict.affPath(),
-                                                         dict.dicPath(),
+            Error error = core::spelling::createHunspell(dict.dicPath(),
                                                          &pSpellChecker_,
                                                          &r::util::iconvstr);
             if (!error)

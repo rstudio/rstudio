@@ -13,9 +13,13 @@
 
 #include <core/spelling/SpellChecker.hpp>
 
+#include <boost/foreach.hpp>
+#include <boost/algorithm/string.hpp>
+
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
+#include <core/FileSerializer.hpp>
 
 // Including the hunspell headers caused compilation errors for Windows 64-bit
 // builds. The trouble seemd to be a 'near' macro defined somewhere in the
@@ -191,10 +195,69 @@ private:
    std::string encoding_;
 };
 
+// extract the word from the dic_delta line -- remove the
+// optional affix and then replace escaped / chracters
+std::string wordFromDicDeltaLine(std::string line)
+{
+   // skip empty lines
+   boost::algorithm::trim(line);
+   if (line.empty())
+      return std::string();
+
+   // find delimiter
+   std::size_t wordEndPos = line.size();
+   for (std::size_t i = 0; i < line.size(); i++)
+   {
+      if (line[i] == '/' && i > 0 && line[i - 1] != '\\')
+      {
+         wordEndPos = i;
+         break;
+      }
+   }
+
+   // extract word
+   std::string word = line.substr(0, wordEndPos);
+
+   // return word with escaped /
+   return boost::algorithm::replace_all_copy(word, "\\/", "/");
+}
+
+Error mergeDicDeltaFile(const FilePath& dicDeltaPath,
+                        boost::shared_ptr<SpellChecker> pHunspell)
+{
+   std::string contents;
+   Error error = core::readStringFromFile(dicDeltaPath, &contents);
+   if (error)
+      return error;
+
+   // get rid of BOM
+   core::stripBOM(&contents);
+
+   // split into lines
+   std::vector<std::string> lines;
+   boost::algorithm::split(lines,
+                           contents,
+                           boost::algorithm::is_any_of("\n"));
+
+   // parse lines for words
+   BOOST_FOREACH(const std::string& line, lines)
+   {
+      std::string word = wordFromDicDeltaLine(line);
+      if (!word.empty())
+      {
+         bool added;
+         Error error = pHunspell->addWord(word, &added);
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+
+   return Success();
+}
+
 } // anonymous namespace
 
-core::Error createHunspell(const FilePath& affPath,
-                           const FilePath& dicPath,
+core::Error createHunspell(const FilePath& languageDicPath,
                            boost::shared_ptr<SpellChecker>* ppHunspell,
                            const IconvstrFunction& iconvstrFunc)
 {
@@ -202,9 +265,21 @@ core::Error createHunspell(const FilePath& affPath,
    boost::shared_ptr<HunspellSpellChecker> pNew(new HunspellSpellChecker());
 
    // initialize it
+   FilePath dicPath = languageDicPath;
+   FilePath affPath = dicPath.parent().childPath(dicPath.stem() + ".aff");
    Error error = pNew->initialize(affPath, dicPath, iconvstrFunc);
    if (error)
       return error;
+
+   // add words from dic_delta if available
+   FilePath dicDeltaPath = dicPath.parent().childPath(
+                                          dicPath.stem() + ".dic_delta");
+   if (dicDeltaPath.exists())
+   {
+      Error error = mergeDicDeltaFile(dicDeltaPath, pNew);
+      if (error)
+         LOG_ERROR(error);
+   }
 
    // return
    *ppHunspell = boost::shared_static_cast<SpellChecker>(pNew);
