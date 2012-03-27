@@ -58,7 +58,7 @@ public class SourcePosition extends JavaScriptObject
    public final boolean isSameRowAs(SourcePosition other) 
    {
       if (getContext() == null && other.getContext() == null)
-         return true;
+         return other.getRow() == getRow();
       else if (getContext() == null && other.getContext() != null)
          return false;
       else if (other.getContext() == null && getContext() != null)
