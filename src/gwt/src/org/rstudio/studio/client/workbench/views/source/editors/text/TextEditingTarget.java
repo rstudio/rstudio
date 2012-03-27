@@ -232,7 +232,7 @@ public class TextEditingTarget implements EditingTarget
       dirtyState_ = new DirtyState(docDisplay_, false);
       prefs_ = prefs;
       compilePdfDependencyChecker_ = pCPdfDepCheck.get();
-      sweaveNav_ = new TextEditingTargetSweaveNav(docDisplay_);
+      scopeHelper_ = new TextEditingTargetScopeHelper(docDisplay_);
       
       addRecordNavigationPositionHandler(releaseOnDismiss_, 
                                          docDisplay_, 
@@ -333,62 +333,20 @@ public class TextEditingTarget implements EditingTarget
    
    private void jumpToPreviousFunction()
    {
-      Position cursor = docDisplay_.getCursorPosition();
-      JsArray<Scope> functions = docDisplay_.getScopeTree();
-      Scope jumpTo = findPreviousFunction(functions, cursor);
+      Scope jumpTo = scopeHelper_.getPreviousFunction(
+            docDisplay_.getCursorPosition());
+
       if (jumpTo != null)
          docDisplay_.navigateToPosition(toSourcePosition(jumpTo), true);  
    }
 
-   private Scope findPreviousFunction(JsArray<Scope> funcs, Position pos)
-   {
-      Scope result = null;
-      for (int i = 0; i < funcs.length(); i++)
-      {
-         Scope child = funcs.get(i);
-         if (child.getPreamble().compareTo(pos) >= 0)
-            break;
-         result = child;
-      }
-
-      if (result == null)
-         return result;
-
-      Scope descendant = findPreviousFunction(result.getChildren(),
-                                                      pos);
-      if (descendant != null)
-         result = descendant;
-
-      return result;
-   }
-
    private void jumpToNextFunction()
    {
-      Position cursor = docDisplay_.getCursorPosition();
-      JsArray<Scope> functions = docDisplay_.getScopeTree();
-      Scope jumpTo = findNextFunction(functions, cursor);
+      Scope jumpTo = scopeHelper_.getNextFunction(
+            docDisplay_.getCursorPosition());
+
       if (jumpTo != null)
          docDisplay_.navigateToPosition(toSourcePosition(jumpTo), true);
-   }
-
-   private Scope findNextFunction(JsArray<Scope> funcs, Position pos)
-   {
-      for (int i = 0; i < funcs.length(); i++)
-      {
-         Scope child = funcs.get(i);
-         if (child.getPreamble().compareTo(pos) <= 0)
-         {
-            Scope descendant = findNextFunction(child.getChildren(), pos);
-            if (descendant != null)
-               return descendant;
-         }
-         else
-         {
-            return child;
-         }
-      }
-
-      return null;
    }
 
    public void initialize(SourceDocument document,
@@ -620,34 +578,41 @@ public class TextEditingTarget implements EditingTarget
       for (int i = 0; i < funcs.length(); i++)
       {
          final Scope func = funcs.get(i);
-         SafeHtmlBuilder labelBuilder = new SafeHtmlBuilder();
-         labelBuilder.appendHtmlConstant(indent);
-         labelBuilder.appendEscaped(func.getLabel());
 
-         final MenuItem menuItem = new MenuItem(
-               labelBuilder.toSafeHtml(),
-               new Command()
-               {
-                  public void execute()
-                  {
-                     docDisplay_.navigateToPosition(toSourcePosition(func), 
-                                                    true);
-                  }
-               });
-         menu.addItem(menuItem);
-
-         if (defaultFunction != null && defaultMenuItem == null &&
-             func.getLabel().equals(defaultFunction.getLabel()) &&
-             func.getPreamble().getRow() == defaultFunction.getPreamble().getRow() &&
-             func.getPreamble().getColumn() == defaultFunction.getPreamble().getColumn())
+         String childIndent = indent;
+         if (!StringUtil.isNullOrEmpty(func.getLabel()))
          {
-            defaultMenuItem = menuItem;
+            SafeHtmlBuilder labelBuilder = new SafeHtmlBuilder();
+            labelBuilder.appendHtmlConstant(indent);
+            labelBuilder.appendEscaped(func.getLabel());
+
+            final MenuItem menuItem = new MenuItem(
+                  labelBuilder.toSafeHtml(),
+                  new Command()
+                  {
+                     public void execute()
+                     {
+                        docDisplay_.navigateToPosition(toSourcePosition(func),
+                                                       true);
+                     }
+                  });
+            menu.addItem(menuItem);
+
+            childIndent = indent + "&nbsp;&nbsp;";
+
+            if (defaultFunction != null && defaultMenuItem == null &&
+                func.getLabel().equals(defaultFunction.getLabel()) &&
+                func.getPreamble().getRow() == defaultFunction.getPreamble().getRow() &&
+                func.getPreamble().getColumn() == defaultFunction.getPreamble().getColumn())
+            {
+               defaultMenuItem = menuItem;
+            }
          }
 
          MenuItem childDefaultMenuItem = addFunctionsToMenu(
                menu,
                func.getChildren(),
-               indent + "&nbsp;&nbsp;",
+               childIndent,
                defaultMenuItem == null ? defaultFunction : null,
                false);
          if (childDefaultMenuItem != null)
@@ -1632,13 +1597,13 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onExecuteCurrentChunk()
    {
-      executeSweaveChunk(sweaveNav_.getCurrentSweaveChunk());
+      executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk());
    }
    
    @Handler
    void onExecuteNextChunk()
    {
-      executeSweaveChunk(sweaveNav_.getNextSweaveChunk());
+      executeSweaveChunk(scopeHelper_.getNextSweaveChunk());
    }
 
    private void executeSweaveChunk(Scope chunk)
@@ -1646,7 +1611,7 @@ public class TextEditingTarget implements EditingTarget
       if (chunk == null)
          return;
 
-      Range range = sweaveNav_.getSweaveChunkInnerRange(chunk);
+      Range range = scopeHelper_.getSweaveChunkInnerRange(chunk);
       docDisplay_.setSelection(
             docDisplay_.createSelection(range.getStart(), range.getEnd()));
       if (!range.isEmpty())
@@ -2232,7 +2197,7 @@ public class TextEditingTarget implements EditingTarget
    private final Provider<SpellChecker> pSpellChecker_;
    private final CompilePdfDependencyChecker compilePdfDependencyChecker_;
    private boolean ignoreDeletes_;
-   private final TextEditingTargetSweaveNav sweaveNav_;
+   private final TextEditingTargetScopeHelper scopeHelper_;
 
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =

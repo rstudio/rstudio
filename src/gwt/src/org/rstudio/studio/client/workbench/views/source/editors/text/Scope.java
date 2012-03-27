@@ -29,6 +29,10 @@ public class Scope extends JavaScriptObject
       return this.isRoot();
    }-*/;
 
+   public native final boolean isBrace() /*-{
+      return this.isBrace();
+   }-*/;
+
    public native final boolean isChunk() /*-{
       return this.isChunk();
    }-*/;
