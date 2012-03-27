@@ -17,6 +17,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.studio.client.common.spelling.ui.SpellingLanguageSelectWidget;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
@@ -27,6 +28,12 @@ public class SpellingPreferencesPane extends PreferencesPane
                                   UIPrefs prefs)
    {
       res_ = res;
+      uiPrefs_ = prefs;
+      
+      languageWidget_ = new SpellingLanguageSelectWidget();
+      spaced(languageWidget_);
+      add(languageWidget_);
+      
 
       add(checkboxPref("Check spelling before compiling PDF",
                        prefs.checkSpellingBeforeCompile()));
@@ -41,11 +48,23 @@ public class SpellingPreferencesPane extends PreferencesPane
    @Override
    protected void initialize(RPrefs rPrefs)
    {
+      languageWidget_.setLanguages(
+                  rPrefs.getSpellingPrefsContext().getAvailableLanguages());
       
-      
-      
+      languageWidget_.setSelectedLanguage(
+                        uiPrefs_.spellingDictionaryLanguage().getValue());
    }
 
+   @Override
+   public boolean onApply(RPrefs rPrefs)
+   {
+      uiPrefs_.spellingDictionaryLanguage().setGlobalValue(
+                                       languageWidget_.getSelectedLanguage());
+      
+      return super.onApply(rPrefs);
+   }
+
+   
    @Override
    public ImageResource getIcon()
    {
@@ -64,16 +83,10 @@ public class SpellingPreferencesPane extends PreferencesPane
       return "Spelling";
    }
 
-   @Override
-   public boolean onApply(RPrefs rPrefs)
-   {
-      return super.onApply(rPrefs);
-     
-    
-   }
-
+  
    @SuppressWarnings("unused")
    private final PreferencesDialogResources res_;
    
-  
+   private final UIPrefs uiPrefs_;
+   private final SpellingLanguageSelectWidget languageWidget_;
 }

@@ -21,10 +21,10 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
 
+#include <core/Error.hpp>
 
 namespace core {
 
-class Error;
 class FilePath;
 
 namespace spelling {
@@ -46,6 +46,52 @@ public:
                                const std::string& key,
                                bool *pAdded) = 0;
 };
+
+class NoSpellChecker : public SpellChecker
+{
+public:
+   virtual Error checkSpelling(const std::string& word, bool *pCorrect)
+   {
+      *pCorrect = true;
+      return Success();
+   }
+
+   virtual Error suggestionList(const std::string& word,
+                                std::vector<std::string>* pSugs)
+   {
+      return Success();
+   }
+
+   virtual Error analyzeWord(const std::string&,
+                             std::vector<std::string>*)
+   {
+      return Success();
+   }
+
+   virtual Error stemWord(const std::string& word,
+                          std::vector<std::string>* pResult)
+   {
+      return Success();
+   }
+
+   virtual Error addWord(const std::string& word, bool *pAdded)
+   {
+      return Success();
+   }
+
+   virtual Error removeWord(const std::string& word, bool *pRemoved)
+   {
+      return Success();
+   }
+
+   virtual Error addDictionary(const FilePath& dicPath,
+                               const std::string& key,
+                               bool *pAdded)
+   {
+      return Success();
+   }
+};
+
 
 typedef boost::function<core::Error(const std::string&,
                                     const std::string&,

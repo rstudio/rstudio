@@ -24,6 +24,8 @@ namespace session {
 namespace modules { 
 namespace spelling {
 
+core::json::Array availableLanguagesAsJson();
+
 core::Error initialize();
                        
 } // namespace spelling

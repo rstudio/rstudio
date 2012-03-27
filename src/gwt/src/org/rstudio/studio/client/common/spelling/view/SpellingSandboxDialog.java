@@ -18,6 +18,7 @@ import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
@@ -39,9 +40,11 @@ public class SpellingSandboxDialog extends ModalDialogBase
    
    @Inject
    public SpellingSandboxDialog(GlobalDisplay globalDisplay, 
+                                UIPrefs uiPrefs,
                                 SpellingServerOperations server)
    {  
       globalDisplay_ = globalDisplay;
+      uiPrefs_ = uiPrefs;
       server_ = server;
     
       setText("Spelling Sandbox");
@@ -181,7 +184,7 @@ public class SpellingSandboxDialog extends ModalDialogBase
          stopSpellChecking(true);
          return;
       }
-      server_.checkSpelling(currentWord_, new SimpleRequestCallback<Boolean>() {
+      server_.checkSpelling(getLangId(), currentWord_, new SimpleRequestCallback<Boolean>() {
          @Override
          public void onResponseReceived(Boolean isCorrect)
          {
@@ -240,7 +243,7 @@ public class SpellingSandboxDialog extends ModalDialogBase
    
    private void suggestionList(String word)
    {
-      server_.suggestionList(word, new SimpleRequestCallback<JsArrayString>() {
+      server_.suggestionList(getLangId(), word, new SimpleRequestCallback<JsArrayString>() {
          @Override
          public void onResponseReceived(JsArrayString suggestions)
          {
@@ -256,7 +259,7 @@ public class SpellingSandboxDialog extends ModalDialogBase
    
    private void addWordToDictionary()
    {
-      server_.addToDictionary(txtWord_.getText(), 
+      server_.addToDictionary(getLangId(), txtWord_.getText(), 
                               new SimpleRequestCallback<Boolean>() {
          @Override
          public void onResponseReceived(Boolean added)
@@ -277,6 +280,11 @@ public class SpellingSandboxDialog extends ModalDialogBase
       globalDisplay_.showMessage(MessageDialog.INFO, request, response);
    }
    
+   private String getLangId()
+   {
+      return uiPrefs_.spellingDictionaryLanguage().getValue();
+   }
+   
    @UiFactory ThemedButton makeThemedButton()
    {
 	   return new ThemedButton("");
@@ -294,6 +302,7 @@ public class SpellingSandboxDialog extends ModalDialogBase
    @UiField ThemedButton stopCheckButton_;
    @UiField VerticalPanel sandboxPanel_;
    private final GlobalDisplay globalDisplay_;
+   private final UIPrefs uiPrefs_;
    private final SpellingServerOperations server_;
    private String currentWord_;
   

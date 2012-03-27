@@ -18,12 +18,15 @@ import com.google.gwt.core.client.JsArrayString;
 
 public interface SpellingServerOperations
 {
-   void checkSpelling(String word, 
+   void checkSpelling(String langId,
+                      String word, 
                       ServerRequestCallback<Boolean> requestCallback);
    
-   void suggestionList(String word,
+   void suggestionList(String langId,
+                       String word,
                        ServerRequestCallback<JsArrayString> requestCallback);
    
-   void addToDictionary(String word,
-                   ServerRequestCallback<Boolean> requestCallback);
+   void addToDictionary(String langId,
+                        String word,
+                        ServerRequestCallback<Boolean> requestCallback);
 }

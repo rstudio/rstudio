@@ -66,6 +66,7 @@ set (CORE_SOURCE_FILES
    r_util/RTokenizer.cpp
    r_util/RSourceIndex.cpp
    r_util/RTokenizerTests.cpp
+   spelling/HunspellDictionaryManager.cpp
    spelling/HunspellSpellChecker.cpp
    system/Environment.cpp
    system/Process.cpp

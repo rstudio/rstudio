@@ -1,5 +1,5 @@
 /*
- * SpellingPrefsContext.java
+ * SpellingLanguage.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,18 +10,21 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.prefs.model;
-
-import org.rstudio.studio.client.common.spelling.model.SpellingLanguage;
+package org.rstudio.studio.client.common.spelling.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 
-public class SpellingPrefsContext extends JavaScriptObject
-{ 
-   protected SpellingPrefsContext() {}
+public class SpellingLanguage extends JavaScriptObject
+{
+   protected SpellingLanguage()
+   {
+   }
+   
+   public native final String getId() /*-{
+      return this.id;
+   }-*/;
 
-   public native final JsArray<SpellingLanguage> getAvailableLanguages() /*-{
-      return this.available_languages;
-   }-*/; 
+   public native final String getName() /*-{
+      return this.name;
+   }-*/;
 }

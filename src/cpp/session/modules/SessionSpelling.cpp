@@ -19,6 +19,7 @@
 #include <core/Exec.hpp>
 
 #include <core/spelling/SpellChecker.hpp>
+#include <core/spelling/HunspellDictionaryManager.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
@@ -34,8 +35,60 @@ namespace spelling {
 
 namespace {
 
-// spell checking engine
-boost::shared_ptr<core::spelling::SpellChecker> s_pSpellChecker;
+class SpellingEngine : boost::noncopyable
+{
+private:
+   friend SpellingEngine& spellingEngine();
+   SpellingEngine()
+      : dictManager_(
+            session::options().hunspellDictionariesPath(),
+            module_context::userScratchPath().complete("dictionaries"))
+   {
+   }
+
+public:
+   core::spelling::hunspell::DictionaryManager& dictionaryManager()
+   {
+      return dictManager_;
+   }
+
+   core::spelling::SpellChecker& spellChecker(const std::string& langId)
+   {
+      if (!pSpellChecker_ || (langId != currentLangId_))
+      {
+         core::spelling::hunspell::Dictionary dict =
+                           dictManager_.dictionaryForLanguageId(langId);
+         if (!dict.empty())
+         {
+            Error error = core::spelling::createHunspell(dict.affPath(),
+                                                         dict.dicPath(),
+                                                         &pSpellChecker_,
+                                                         &r::util::iconvstr);
+            if (!error)
+               currentLangId_ = langId;
+            else
+               pSpellChecker_.reset(new core::spelling::NoSpellChecker());
+         }
+         else
+         {
+            pSpellChecker_.reset(new core::spelling::NoSpellChecker());
+         }
+      }
+      return *pSpellChecker_;
+   }
+
+
+private:
+   core::spelling::hunspell::DictionaryManager dictManager_;
+   boost::shared_ptr<core::spelling::SpellChecker> pSpellChecker_;
+   std::string currentLangId_;
+};
+
+SpellingEngine& spellingEngine()
+{
+   static SpellingEngine instance;
+   return instance;
+}
 
 // R function for testing & debugging
 SEXP rs_checkSpelling(SEXP wordSEXP)
@@ -43,7 +96,9 @@ SEXP rs_checkSpelling(SEXP wordSEXP)
    bool isCorrect;
    std::string word = r::sexp::asString(wordSEXP);
 
-   Error error = s_pSpellChecker->checkSpelling(word,&isCorrect);
+   Error error = spellingEngine().spellChecker("en_US").checkSpelling(
+                                                                   word,
+                                                                   &isCorrect);
 
    // We'll return true here so as not to tie up the front end.
    if (error)
@@ -56,95 +111,16 @@ SEXP rs_checkSpelling(SEXP wordSEXP)
    return r::sexp::create(isCorrect, &rProtect);
 }
 
-SEXP rs_suggestionList(SEXP wordSEXP)
-{
-   std::string word = r::sexp::asString(wordSEXP);
-   std::vector<std::string> sugs;
-
-   Error error = s_pSpellChecker->suggestionList(word,&sugs);
-   if (error)
-      LOG_ERROR(error);
-
-   r::sexp::Protect rProtect;
-   return r::sexp::create(sugs,&rProtect);
-}
-
-SEXP rs_analyzeWord(SEXP wordSEXP)
-{
-   std::string word = r::sexp::asString(wordSEXP);
-   std::vector<std::string> res;
-
-   Error error = s_pSpellChecker->analyzeWord(word,&res);
-   if (error)
-      LOG_ERROR(error);
-
-   r::sexp::Protect rProtect;
-   return r::sexp::create(res,&rProtect);
-}
-
-SEXP rs_stemWord(SEXP wordSEXP)
-{
-   std::string word = r::sexp::asString(wordSEXP);
-   std::vector<std::string> res;
-
-   Error error = s_pSpellChecker->stemWord(word,&res);
-   if (error)
-      LOG_ERROR(error);
-
-   r::sexp::Protect rProtect;
-   return r::sexp::create(res,&rProtect);
-}
-
-SEXP rs_addWord(SEXP wordSEXP)
-{
-   std::string word = r::sexp::asString(wordSEXP);
-   bool added;
-
-   Error error = s_pSpellChecker->addWord(word,&added);
-   if (error)
-      LOG_ERROR(error);
-
-   r::sexp::Protect rProtect;
-   return r::sexp::create(added,&rProtect);
-}
-
-SEXP rs_removeWord(SEXP wordSEXP)
-{
-   std::string word = r::sexp::asString(wordSEXP);
-   bool removed;
-
-   Error error = s_pSpellChecker->removeWord(word,&removed);
-   if (error)
-      LOG_ERROR(error);
-
-   r::sexp::Protect rProtect;
-   return r::sexp::create(removed,&rProtect);
-}
-
-SEXP rs_addDictionary(SEXP dicSEXP, SEXP keySEXP)
-{
-   FilePath dicPath = FilePath(r::sexp::asString(dicSEXP));
-   std::string key = r::sexp::asString(keySEXP);
-   bool added;
-
-   Error error = s_pSpellChecker->addDictionary(dicPath,key,&added);
-   if (error)
-      LOG_ERROR(error);
-
-   r::sexp::Protect rProtect;
-   return r::sexp::create(added,&rProtect);
-}
-
 Error checkSpelling(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
-   std::string word;
-   Error error = json::readParams(request.params, &word);
+   std::string langId, word;
+   Error error = json::readParams(request.params, &langId, &word);
    if (error)
       return error;
 
    bool isCorrect;
-   error = s_pSpellChecker->checkSpelling(word,&isCorrect);
+   error = spellingEngine().spellChecker(langId).checkSpelling(word,&isCorrect);
    if (error)
       return error;
 
@@ -156,13 +132,13 @@ Error checkSpelling(const json::JsonRpcRequest& request,
 Error suggestionList(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   std::string word;
-   Error error = json::readParams(request.params, &word);
+   std::string langId, word;
+   Error error = json::readParams(request.params, &langId, &word);
    if (error)
       return error;
 
    std::vector<std::string> sugs;
-   error = s_pSpellChecker->suggestionList(word,&sugs);
+   error = spellingEngine().spellChecker(langId).suggestionList(word,&sugs);
    if (error)
       return error;
 
@@ -179,13 +155,13 @@ Error suggestionList(const json::JsonRpcRequest& request,
 Error addToDictionary(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   std::string word;
-   Error error = json::readParams(request.params, &word);
+   std::string langId, word;
+   Error error = json::readParams(request.params, &langId, &word);
    if (error)
       return error;
 
    bool added;
-   error = s_pSpellChecker->addWord(word,&added);
+   error = spellingEngine().spellChecker(langId).addWord(word,&added);
    if (error)
       return error;
 
@@ -194,8 +170,42 @@ Error addToDictionary(const json::JsonRpcRequest& request,
 }
 
 
+json::Object dictionaryAsJson(const core::spelling::hunspell::Dictionary& dict)
+{
+   json::Object dictJson;
+   dictJson["id"] = dict.id();
+   dictJson["name"] = dict.name();
+   return dictJson;
+}
+
 } // anonymous namespace
 
+
+core::json::Array availableLanguagesAsJson()
+{
+   using namespace core::spelling::hunspell;
+
+   FilePath userDictionariesDir =
+                  module_context::userScratchPath().complete("dictionaries");
+   DictionaryManager dictManager(options().hunspellDictionariesPath(),
+                                 userDictionariesDir);
+
+   std::vector<Dictionary> dictionaries;
+   Error error = dictManager.availableLanguages(&dictionaries);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return core::json::Array();
+   }
+
+   core::json::Array dictionariesJson;
+   std::transform(dictionaries.begin(),
+                  dictionaries.end(),
+                  std::back_inserter(dictionariesJson),
+                  dictionaryAsJson);
+
+   return dictionariesJson;
+}
 
 Error initialize()
 {
@@ -206,47 +216,6 @@ Error initialize()
    methodDef.fun = (DL_FUNC) rs_checkSpelling ;
    methodDef.numArgs = 1;
    r::routines::addCallMethod(methodDef);
-
-   methodDef.name = "rs_suggestionList" ;
-   methodDef.fun = (DL_FUNC) rs_suggestionList ;
-   methodDef.numArgs = 1;
-   r::routines::addCallMethod(methodDef);
-
-   methodDef.name = "rs_analyzeWord" ;
-   methodDef.fun = (DL_FUNC) rs_analyzeWord ;
-   methodDef.numArgs = 1;
-   r::routines::addCallMethod(methodDef);
-
-   methodDef.name = "rs_stemWord" ;
-   methodDef.fun = (DL_FUNC) rs_stemWord ;
-   methodDef.numArgs = 1;
-   r::routines::addCallMethod(methodDef);
-
-   methodDef.name = "rs_addWord" ;
-   methodDef.fun = (DL_FUNC) rs_addWord ;
-   methodDef.numArgs = 1;
-   r::routines::addCallMethod(methodDef);
-
-   methodDef.name = "rs_removeWord" ;
-   methodDef.fun = (DL_FUNC) rs_removeWord ;
-   methodDef.numArgs = 1;
-   r::routines::addCallMethod(methodDef);
-
-   methodDef.name = "rs_addDictionary" ;
-   methodDef.fun = (DL_FUNC) rs_addDictionary ;
-   methodDef.numArgs = 2;
-   r::routines::addCallMethod(methodDef);
-
-   // initialize the spell checker
-   using namespace core::spelling;
-   session::Options& options = session::options();
-   FilePath hsPath = options.hunspellDictionariesPath();
-   Error error = createHunspell(hsPath.childPath("en_US.aff"),
-                                hsPath.childPath("en_US.dic"),
-                                &s_pSpellChecker,
-                                &r::util::iconvstr);
-   if (error)
-      return error;
 
    // register rpc methods
    using boost::bind;

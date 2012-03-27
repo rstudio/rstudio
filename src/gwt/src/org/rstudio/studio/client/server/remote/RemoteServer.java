@@ -2409,28 +2409,34 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SYNCTEX_INVERSE_SEARCH, pdfLocation, callback);
    }
    
-   public void checkSpelling(String word,
+   public void checkSpelling(String langId,
+                             String word,
                              ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(word));
+      params.set(0, new JSONString(langId));
+      params.set(1, new JSONString(word));
       sendRequest(RPC_SCOPE, CHECK_SPELLING, params, requestCallback);
    }
    
    public void suggestionList(
+                     String langId,
                      String word,
                      ServerRequestCallback<JsArrayString> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(word));
+      params.set(0, new JSONString(langId));
+      params.set(1, new JSONString(word));
       sendRequest(RPC_SCOPE, SUGGESTION_LIST, params, requestCallback);
    }
 
-   public void addToDictionary(String word,
-         ServerRequestCallback<Boolean> requestCallback)
+   public void addToDictionary(String langId,
+                               String word,
+                               ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(word));
+      params.set(0, new JSONString(langId));
+      params.set(1, new JSONString(word));
       sendRequest(RPC_SCOPE, ADD_TO_DICTIONARY, params, requestCallback);
    }
 
