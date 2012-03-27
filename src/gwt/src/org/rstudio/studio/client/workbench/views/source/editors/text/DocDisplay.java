@@ -19,7 +19,9 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasFoldChangeHandlers;
@@ -94,8 +96,12 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setShowPrintMargin(boolean on);
    void setPrintMarginColumn(int column);
 
-   ArrayList<Fold> getFolds();
-   void addFold(Fold fold);
+   JsArray<AceFold> getFolds();
+   void addFold(Range range);
+   void addFoldFromRow(int row);
+   void unfold(AceFold fold);
+   void unfold(int row);
+   void unfold(Range range);
 
    HandlerRegistration addCommandClickHandler(CommandClickEvent.Handler handler);
    

@@ -43,6 +43,7 @@ import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.*;
@@ -77,6 +78,8 @@ import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList.ContainsPredicate;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
@@ -381,7 +384,7 @@ public class TextEditingTarget implements EditingTarget
          public void execute()
          {
             for (Fold fold : folds)
-               docDisplay_.addFold(fold);
+               docDisplay_.addFold(fold.getRange());
          }
       });
 
@@ -1870,7 +1873,113 @@ public class TextEditingTarget implements EditingTarget
    {
       view_.showFindReplace();
    }
+
+   @Handler
+   void onFold()
+   {
+      Range range = Range.fromPoints(docDisplay_.getSelectionStart(),
+                                     docDisplay_.getSelectionEnd());
+      if (range.isEmpty())
+      {
+         // If no selection, fold the innermost non-anonymous scope
+
+         ScopeList scopeList = new ScopeList(docDisplay_);
+         scopeList.removeAll(ScopeList.ANON_BRACE);
+         Scope scope = scopeList.findLast(new ContainsPredicate(
+               Range.fromPoints(docDisplay_.getSelectionStart(),
+                                docDisplay_.getSelectionEnd())));
+
+         if (scope == null)
+            return;
+
+         docDisplay_.addFoldFromRow(scope.getPreamble().getRow());
+      }
+      else
+      {
+         // If selection, fold the selection
+
+         docDisplay_.addFold(range);
+      }
+   }
    
+   @Handler
+   void onUnfold()
+   {
+      Range range = Range.fromPoints(docDisplay_.getSelectionStart(),
+                                     docDisplay_.getSelectionEnd());
+      if (range.isEmpty())
+      {
+         // If no selection, unfold the closest fold on the current row
+
+         Position pos = range.getStart();
+
+         AceFold startCandidate = null;
+         AceFold endCandidate = null;
+
+         for (AceFold f : JsUtil.asIterable(docDisplay_.getFolds()))
+         {
+            if (startCandidate == null
+                && f.getStart().getRow() == pos.getRow()
+                && f.getStart().getColumn() >= pos.getColumn())
+            {
+               startCandidate = f;
+            }
+
+            if (f.getEnd().getRow() == pos.getRow()
+                && f.getEnd().getColumn() <= pos.getColumn())
+            {
+               endCandidate = f;
+            }
+         }
+
+         if (startCandidate == null ^ endCandidate == null)
+         {
+            docDisplay_.unfold(startCandidate != null ? startCandidate
+                                                       : endCandidate);
+         }
+         else if (startCandidate != null)
+         {
+            // Both are candidates; see which is closer
+            int startDelta = startCandidate.getStart().getColumn() - pos.getColumn();
+            int endDelta = pos.getColumn() - endCandidate.getEnd().getColumn();
+            docDisplay_.unfold(startDelta <= endDelta? startCandidate
+                                                     : endCandidate);
+         }
+      }
+      else
+      {
+         // If selection, unfold the selection
+
+         docDisplay_.unfold(range);
+      }
+   }
+
+   @Handler
+   void onFoldAll()
+   {
+      // Fold all except anonymous braces
+
+      HashSet<Integer> rowsFolded = new HashSet<Integer>();
+      for (AceFold f : JsUtil.asIterable(docDisplay_.getFolds()))
+         rowsFolded.add(f.getStart().getRow());
+
+      ScopeList scopeList = new ScopeList(docDisplay_);
+      scopeList.removeAll(ScopeList.ANON_BRACE);
+      for (Scope scope : scopeList.getScopes())
+      {
+         int row = scope.getPreamble().getRow();
+         if (!rowsFolded.contains(row))
+            docDisplay_.addFoldFromRow(row);
+      }
+   }
+
+   @Handler
+   void onUnfoldAll()
+   {
+      for (AceFold f : JsUtil.asIterable(docDisplay_.getFolds()))
+         docDisplay_.unfold(f);
+   }
+
    void handlePdfCommand(final String completedAction,
                          final boolean useInternalPreview,
                          final Command onBeforeCompile)

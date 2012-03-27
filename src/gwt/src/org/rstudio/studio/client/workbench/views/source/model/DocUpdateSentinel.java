@@ -252,7 +252,7 @@ public class DocUpdateSentinel
       String oldContents = sourceDoc_.getContents();
       final String hash = sourceDoc_.getHash();
 
-      final String foldSpec = Fold.encode(docDisplay_.getFolds());
+      final String foldSpec = Fold.encode(Fold.flatten(docDisplay_.getFolds()));
       String oldFoldSpec = sourceDoc_.getFoldSpec();
 
       //String patch = DiffMatchPatch.diff(oldContents, newContents);

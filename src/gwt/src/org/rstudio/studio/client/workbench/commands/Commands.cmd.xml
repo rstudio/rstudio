@@ -74,6 +74,14 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="copyDummy"/>
          <cmd refid="pasteDummy"/>
          <separator/>
+         <menu label="Folding">
+            <cmd refid="fold"/>
+            <cmd refid="unfold"/>
+            <separator/>
+            <cmd refid="foldAll"/>
+            <cmd refid="unfoldAll"/>
+         </menu>
+         <separator/>
          <cmd refid="goToLine"/>
          <separator/>
          <cmd refid="find"/>
@@ -542,6 +550,14 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Find and Replace..."/>
    <cmd id="findInFiles"
         menuLabel="Find _in Files..."/>
+   <cmd id="fold"
+        menuLabel="Collapse"/>
+   <cmd id="unfold"
+        menuLabel="Expand"/>
+   <cmd id="foldAll"
+        menuLabel="Collapse All"/>
+   <cmd id="unfoldAll"
+        menuLabel="Expand All"/>
    <cmd id="executeAllCode"
         buttonLabel=""
         menuLabel="Run _All"

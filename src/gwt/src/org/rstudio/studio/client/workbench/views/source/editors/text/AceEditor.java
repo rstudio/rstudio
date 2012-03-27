@@ -1002,15 +1002,48 @@ public class AceEditor implements DocDisplay,
    }
 
    @Override
-   public ArrayList<Fold> getFolds()
+   public JsArray<AceFold> getFolds()
    {
-      return Fold.flatten(getSession().getAllFolds());
+      return getSession().getAllFolds();
    }
 
    @Override
-   public void addFold(Fold fold)
+   public void addFold(Range range)
    {
-      getSession().addFold(fold.getPlaceholder(), fold.getRange());
+      getSession().addFold("...", range);
+   }
+
+   @Override
+   public void addFoldFromRow(int row)
+   {
+      FoldingRules foldingRules = getSession().getMode().getFoldingRules();
+      if (foldingRules == null)
+         return;
+      Range range = foldingRules.getFoldWidgetRange(getSession(),
+                                                    "markbegin",
+                                                    row);
+
+      if (range != null)
+         addFold(range);
+   }
+
+   @Override
+   public void unfold(AceFold fold)
+   {
+      getSession().unfold(Range.fromPoints(fold.getStart(), fold.getEnd()),
+                          false);
+   }
+
+   @Override
+   public void unfold(int row)
+   {
+      getSession().unfold(row, false);
+   }
+
+   @Override
+   public void unfold(Range range)
+   {
+      getSession().unfold(range, false);
    }
 
    public void setReadOnly(boolean readOnly)

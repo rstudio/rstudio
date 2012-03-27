@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import com.google.gwt.core.client.JsArray;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 import java.util.ArrayList;
 
@@ -23,6 +24,25 @@ public class ScopeList
    public interface ScopePredicate
    {
       boolean test(Scope scope);
+   }
+
+   public static class ContainsPredicate implements ScopePredicate
+   {
+      public ContainsPredicate(Range range)
+      {
+         range_ = range;
+      }
+
+      @Override
+      public boolean test(Scope scope)
+      {
+         return scope.getPreamble().isBeforeOrEqualTo(range_.getStart()) &&
+                scope.getEnd().isAfterOrEqualTo(range_.getStart()) &&
+                scope.getPreamble().isBeforeOrEqualTo(range_.getEnd()) &&
+                scope.getEnd().isAfterOrEqualTo(range_.getEnd());
+      }
+
+      private final Range range_;
    }
 
    public static final ScopePredicate CHUNK = new ScopePredicate()
@@ -55,6 +75,11 @@ public class ScopeList
    public ScopeList(DocDisplay docDisplay)
    {
       addScopes(docDisplay.getScopeTree());
+   }
+
+   public Scope[] getScopes()
+   {
+      return scopes_.toArray(new Scope[scopes_.size()]);
    }
 
    public void removeAll(ScopePredicate shouldRemove)

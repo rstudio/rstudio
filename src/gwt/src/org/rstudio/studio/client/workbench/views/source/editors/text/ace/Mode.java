@@ -23,4 +23,8 @@ public class Mode extends JavaScriptObject
    public native final CodeModel getCodeModel() /*-{
       return this.codeModel || {};
    }-*/;
+
+   public native final FoldingRules getFoldingRules() /*-{
+      return this.foldingRules;
+   }-*/;
 }

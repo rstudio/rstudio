@@ -42,6 +42,26 @@ public class Position extends JavaScriptObject
       return getColumn() - other.getColumn();
    }
 
+   public final boolean isBefore(Position other)
+   {
+      return compareTo(other) < 0;
+   }
+
+   public final boolean isBeforeOrEqualTo(Position other)
+   {
+      return compareTo(other) <= 0;
+   }
+
+   public final boolean isAfter(Position other)
+   {
+      return compareTo(other) > 0;
+   }
+
+   public final boolean isAfterOrEqualTo(Position other)
+   {
+      return compareTo(other) >= 0;
+   }
+
    public native final void setRow(int row) /*-{
       this.row = row;
    }-*/;
