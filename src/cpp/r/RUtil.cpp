@@ -133,7 +133,11 @@ core::Error iconvstr(const std::string& value,
          }
          else
          {
-            return systemError(errno, ERROR_LOCATION);
+            ::Riconv_close(handle);
+            Error error = systemError(errno, ERROR_LOCATION);
+            error.addProperty("str", value);
+            error.addProperty("len", value.length());
+            return error;
          }
       }
    }
