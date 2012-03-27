@@ -1622,7 +1622,10 @@ public class TextEditingTarget implements EditingTarget
       docDisplay_.setSelection(
             docDisplay_.createSelection(range.getStart(), range.getEnd()));
       if (!range.isEmpty())
+      {
          onExecuteCode();
+         docDisplay_.collapseSelection(true);
+      }
    }
    
    @Handler
