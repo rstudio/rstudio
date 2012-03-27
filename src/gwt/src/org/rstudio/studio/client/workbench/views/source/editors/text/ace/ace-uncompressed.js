@@ -4438,8 +4438,7 @@ function DefaultHandlers(editor) {
         var editor = this.editor;
         
         editor.renderer.scrollBy(ev.wheelX * ev.speed, ev.wheelY * ev.speed);
-        if (editor.renderer.isScrollableBy(ev.wheelX * ev.speed, ev.wheelY * ev.speed))
-            return ev.preventDefault();
+        return ev.preventDefault();
     };
     
 }).call(DefaultHandlers.prototype);
