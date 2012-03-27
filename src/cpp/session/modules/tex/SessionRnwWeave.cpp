@@ -237,54 +237,6 @@ private:
    std::string cmdFmt_;
 };
 
-class RnwPgfSweave : public RnwExternalWeave
-{
-public:
-   RnwPgfSweave()
-      : RnwExternalWeave("pgfSweave", "pgfSweave", cmdFormat())
-   {
-   }
-
-   virtual bool injectConcordance() const { return false; }
-
-   virtual core::json::Value chunkOptions() const
-   {
-      if (isInstalled() && hasChunkOptionsFunction())
-         return RnwWeave::chunkOptions("pgfSweave:::getChunkOptions");
-      else
-         return core::json::Value();
-   }
-
-private:
-   static bool hasChunkOptionsFunction()
-   {
-      r::sexp::Protect rProtect;
-      SEXP functionSEXP = R_NilValue;
-      r::exec::RFunction func(".rs.getPackageFunction",
-                              "getChunkOptions",
-                              "pgfSweave");
-      Error error = func.call(&functionSEXP, &rProtect);
-      if (!error && !r::sexp::isNull(functionSEXP))
-      {
-         return true;
-      }
-      else
-      {
-         if (error)
-            LOG_ERROR(error);
-         return false;
-      }
-   }
-
-   static std::string cmdFormat()
-   {
-      std::string format = "require(pgfSweave); ";
-      if (userSettings().alwaysEnableRnwCorcordance())
-         format += "options('pgfSweaveConcordance' = TRUE); ";
-      format += "pgfSweave('%1%', compile.tex = FALSE)";
-      return format;
-   }
-};
 
 class RnwKnitr : public RnwExternalWeave
 {
@@ -359,7 +311,6 @@ private:
    {
       weaveTypes_.push_back(boost::shared_ptr<RnwWeave>(new RnwSweave()));
       weaveTypes_.push_back(boost::shared_ptr<RnwWeave>(new RnwKnitr()));
-      weaveTypes_.push_back(boost::shared_ptr<RnwWeave>(new RnwPgfSweave()));
    }
    friend const RnwWeaveRegistry& weaveRegistry();
 
