@@ -13,8 +13,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 
 public class Mode extends JavaScriptObject
 {
