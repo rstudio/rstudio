@@ -287,7 +287,10 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
             var scopeName = "Chunk " + chunkNum;
             if (chunkLabel)
                scopeName += ": " + chunkLabel;
-            this.$scopes.onChunkStart(scopeName, chunkStartPos, chunkPos);
+            this.$scopes.onChunkStart(chunkLabel,
+                                      scopeName,
+                                      chunkStartPos,
+                                      chunkPos);
          }
          else if (/\bcodeend\b/.test(tokenType))
          {

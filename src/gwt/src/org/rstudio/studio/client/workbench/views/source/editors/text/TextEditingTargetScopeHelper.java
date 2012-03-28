@@ -12,6 +12,10 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.regex.Pattern.ReplaceOperation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList.ScopePredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -26,6 +30,55 @@ public class TextEditingTargetScopeHelper
    public Scope getCurrentSweaveChunk()
    {
       return docDisplay_.getCurrentChunk();
+   }
+
+   private class SweaveIncludeContext
+   {
+      private SweaveIncludeContext()
+      {
+         scopeList_ = new ScopeList(docDisplay_);
+         scopeList_.selectAll(ScopeList.CHUNK);
+      }
+
+      public String getSweaveChunkText(final Scope chunk)
+      {
+         Range range = getSweaveChunkInnerRange(chunk);
+         String text = docDisplay_.getCode(range.getStart(), range.getEnd());
+         return Pattern.create("^<<(.*?)>>.*").replaceAll(text, new ReplaceOperation()
+         {
+            @Override
+            public String replace(Match m)
+            {
+               String label = m.getGroup(1).trim();
+               Scope included = getScopeByChunkLabel(label,
+                                                     chunk.getPreamble());
+               if (included == null)
+                  return m.getValue();
+               else
+                  return getSweaveChunkText(included);
+            }
+         });
+      }
+
+      private Scope getScopeByChunkLabel(String label, Position beforeHere)
+      {
+         for (Scope s : scopeList_.getScopes())
+         {
+            if (beforeHere != null
+                && s.getPreamble().isAfterOrEqualTo(beforeHere))
+               return null;
+            if (StringUtil.notNull(s.getChunkLabel()).equals(label))
+               return s;
+         }
+         return null;
+      }
+
+      private final ScopeList scopeList_;
+   }
+
+   public String getSweaveChunkText(Scope chunk)
+   {
+      return new SweaveIncludeContext().getSweaveChunkText(chunk);
    }
 
    public Range getSweaveChunkInnerRange(Scope chunk)

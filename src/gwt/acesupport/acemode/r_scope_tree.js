@@ -41,15 +41,17 @@ define('mode/r_scope_tree', function(require, exports, module) {
 
    (function() {
 
-      this.onChunkStart = function(label, chunkStartPos, chunkPos) {
+      this.onChunkStart = function(chunkLabel, label, chunkStartPos, chunkPos) {
          // Starting a chunk means closing the previous chunk, if any
          var prev = this.$root.closeScope(chunkStartPos, ScopeNode.TYPE_CHUNK);
          if (prev)
             debuglog("chunk-scope implicit end: " + prev.label);
 
          debuglog("adding chunk-scope " + label);
-         this.$root.addNode(new ScopeNode(label, chunkPos, chunkStartPos,
-                                          ScopeNode.TYPE_CHUNK));
+         var node = new ScopeNode(label, chunkPos, chunkStartPos,
+                                  ScopeNode.TYPE_CHUNK);
+         node.chunkLabel = chunkLabel;
+         this.$root.addNode(node);
          this.printScopeTree();
       };
 

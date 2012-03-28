@@ -1626,7 +1626,10 @@ public class TextEditingTarget implements EditingTarget
             docDisplay_.createSelection(range.getStart(), range.getEnd()));
       if (!range.isEmpty())
       {
-         onExecuteCode();
+         setLastExecuted(range.getStart(), range.getEnd());
+         String code = scopeHelper_.getSweaveChunkText(chunk);
+         events_.fireEvent(new SendToConsoleEvent(code, true));
+
          docDisplay_.collapseSelection(true);
       }
    }

@@ -49,4 +49,8 @@ public class Scope extends JavaScriptObject
       return this.$children;
    }-*/;
 
+   public native final String getChunkLabel() /*-{
+      return this.chunkLabel;
+   }-*/;
+
 }
