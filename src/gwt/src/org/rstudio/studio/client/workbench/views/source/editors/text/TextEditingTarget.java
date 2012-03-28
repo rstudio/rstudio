@@ -109,7 +109,7 @@ public class TextEditingTarget implements EditingTarget
          GWT.create(MyCommandBinder.class);
 
    public interface Display extends TextDisplay, 
-                                    CompilePdfDependencyChecker.Display,
+                                    TextEditingTargetCompilePdfHelper.Display,
                                     HasEnsureVisibleHandlers
    {
       HasValue<Boolean> getSourceOnSave();
@@ -215,8 +215,7 @@ public class TextEditingTarget implements EditingTarget
                             Synctex synctex,
                             FontSizeManager fontSizeManager,
                             DocDisplay docDisplay,
-                            UIPrefs prefs,
-                            Provider<CompilePdfDependencyChecker> pCPdfDepCheck)
+                            UIPrefs prefs)
    {
       commands_ = commands;
       server_ = server;
@@ -234,7 +233,7 @@ public class TextEditingTarget implements EditingTarget
       docDisplay_ = docDisplay;
       dirtyState_ = new DirtyState(docDisplay_, false);
       prefs_ = prefs;
-      compilePdfDependencyChecker_ = pCPdfDepCheck.get();
+      compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
       scopeHelper_ = new TextEditingTargetScopeHelper(docDisplay_);
       
       addRecordNavigationPositionHandler(releaseOnDismiss_, 
@@ -483,10 +482,7 @@ public class TextEditingTarget implements EditingTarget
    
    private void checkCompilePdfDependencies()
    {
-      compilePdfDependencyChecker_.checkCompilers(view_, 
-                                                  fileType_, 
-                                                  docDisplay_.getCode());
-      
+      compilePdfHelper_.checkCompilers(view_, fileType_);
    }
    
    private void initStatusBar()
@@ -1988,7 +1984,7 @@ public class TextEditingTarget implements EditingTarget
                          final Command onBeforeCompile)
    {
       if (fileType_.isRnw() && prefs_.alwaysEnableRnwConcordance().getValue())
-         compilePdfDependencyChecker_.ensureRnwConcordance(docDisplay_);
+         compilePdfHelper_.ensureRnwConcordance();
       
       // if the document has been previously saved then we should execute
       // the onBeforeCompile command immediately
@@ -2317,7 +2313,7 @@ public class TextEditingTarget implements EditingTarget
    private HandlerManager handlers_ = new HandlerManager(this);
    private FileSystemContext fileContext_;
    private final Provider<SpellChecker> pSpellChecker_;
-   private final CompilePdfDependencyChecker compilePdfDependencyChecker_;
+   private final TextEditingTargetCompilePdfHelper compilePdfHelper_;
    private boolean ignoreDeletes_;
    private final TextEditingTargetScopeHelper scopeHelper_;
 

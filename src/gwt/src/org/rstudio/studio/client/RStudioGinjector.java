@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.DocsMenu;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
 
 @GinModules(RStudioGinModule.class)
@@ -55,6 +56,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(CaptionWithHelp captionWithHelp);
    void injectMembers(RnwWeaveSelectWidget selectWidget);
    void injectMembers(CompilePdfProgressDialog compilePdfProgressDialog);
+   void injectMembers(TextEditingTargetCompilePdfHelper compilePdfHelper);
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

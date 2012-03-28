@@ -13,13 +13,17 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.tex.TexMagicComment;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.latex.LatexProgramRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
@@ -33,11 +37,12 @@ import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
+import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.TexServerOperations;
 
 import com.google.inject.Inject;
 
-public class CompilePdfDependencyChecker
+public class TextEditingTargetCompilePdfHelper
 {
    public interface Display
    {
@@ -46,12 +51,18 @@ public class CompilePdfDependencyChecker
    }
    
    
+   public TextEditingTargetCompilePdfHelper(DocDisplay docDisplay)
+   {
+      docDisplay_ = docDisplay;
+      RStudioGinjector.INSTANCE.injectMembers(this);
+   }
+   
    @Inject
-   public CompilePdfDependencyChecker(UIPrefs prefs,
-                                      Session session,
-                                      TexServerOperations server,
-                                      RnwWeaveRegistry rnwWeaveRegistry,
-                                      LatexProgramRegistry latexProgramRegistry)
+   public void initialize(UIPrefs prefs,
+                          Session session,
+                          TexServerOperations server,
+                          RnwWeaveRegistry rnwWeaveRegistry,
+                          LatexProgramRegistry latexProgramRegistry)
    {
       prefs_ = prefs;
       session_ = session;
@@ -60,14 +71,53 @@ public class CompilePdfDependencyChecker
       latexProgramRegistry_ = latexProgramRegistry;
    }
    
-   public void ensureRnwConcordance(DocDisplay docDisplay)
+   // get the chunk options which apply to the current document. when 
+   // the chunk options are ready the callback command is execute (note
+   // that if there are no chunk options available then execute will 
+   // never be called). this method caches the results from the server
+   // so that chunk options are only retreived once per session -- we 
+   // do this not only to save the round-trip but also because knitr takes
+   // over 500ms to load and it may need to be loaded to serve the
+   // request for chunk options
+   public void getChunkOptions(final CommandWithArg<RnwChunkOptions> onReady)
    {
-      RnwWeave rnwWeave = getActiveRnwWeave(docDisplay);
+      // determine the current rnw weave type
+      final RnwWeave rnwWeave = getActiveRnwWeave();
+      if (rnwWeave == null)
+         return;
+      
+      // look it up in the cache
+      RnwChunkOptions options = chunkOptionsCache_.get(rnwWeave.getName());
+      if (options != null)
+      {
+         onReady.execute(options);
+      }
+      else
+      {
+         server_.getChunkOptions(
+            rnwWeave.getName(), 
+            new SimpleRequestCallback<RnwChunkOptions>() {
+               @Override
+               public void onResponseReceived(RnwChunkOptions options)
+               {
+                  if (options != null)
+                  {
+                     chunkOptionsCache_.put(rnwWeave.getName(), options);
+                     onReady.execute(options);
+                  }
+               }
+            });
+      }
+   }
+   
+   public void ensureRnwConcordance()
+   {
+      RnwWeave rnwWeave = getActiveRnwWeave();
       if ( (rnwWeave != null) && rnwWeave.getInjectConcordance())
       {
-         if (!hasConcordanceDirective(docDisplay.getCode()))
+         if (!hasConcordanceDirective(docDisplay_.getCode()))
          {    
-            InputEditorSelection doc = docDisplay.search(
+            InputEditorSelection doc = docDisplay_.search(
                                           "\\\\begin{document}",
                                           false,   // backwards
                                           true,    // wrap
@@ -79,23 +129,21 @@ public class CompilePdfDependencyChecker
             if (doc != null)
             {  
                InputEditorPosition pos = doc.getEnd().moveToNextLine();
-               docDisplay.insertCode(pos, "\\SweaveOpts{concordance=TRUE}\n");
+               docDisplay_.insertCode(pos, "\\SweaveOpts{concordance=TRUE}\n");
             }
          }
       }
    }
    
    
-   public void checkCompilers(final Display display, 
-                              TextFileType fileType, 
-                              String code)
+   public void checkCompilers(final Display display, TextFileType fileType)
    {
       // for all tex files we need to parse magic comments and validate
       // any explict latex proram directive
       ArrayList<TexMagicComment> magicComments = null;
       if (fileType.canCompilePDF())
       {
-         magicComments = TexMagicComment.parseComments(code);
+         magicComments = TexMagicComment.parseComments(docDisplay_.getCode());
          String latexProgramDirective = 
                            detectLatexProgramDirective(magicComments);
            
@@ -233,10 +281,10 @@ public class CompilePdfDependencyChecker
     
    // get the currently active rnw weave method -- note this can return
    // null in the case that there is an embedded directive which is invalid
-   private RnwWeave getActiveRnwWeave(DocDisplay docDisplay)
+   private RnwWeave getActiveRnwWeave()
    {
       RnwWeaveDirective rnwWeaveDirective = detectRnwWeaveDirective(
-                         TexMagicComment.parseComments(docDisplay.getCode()));
+                         TexMagicComment.parseComments(docDisplay_.getCode()));
       if (rnwWeaveDirective != null)
          return rnwWeaveDirective.getRnwWeave();
       else
@@ -245,7 +293,7 @@ public class CompilePdfDependencyChecker
    }
    
    private RnwWeaveDirective detectRnwWeaveDirective(
-         ArrayList<TexMagicComment> magicComments)
+                                    ArrayList<TexMagicComment> magicComments)
    {
       for (TexMagicComment comment : magicComments)
       {
@@ -274,13 +322,17 @@ public class CompilePdfDependencyChecker
       return null;
    }
    
+   private final DocDisplay docDisplay_;
    
-   private final UIPrefs prefs_;
-   private final Session session_;
-   private final TexServerOperations server_;
-   private final RnwWeaveRegistry rnwWeaveRegistry_;
-   private final LatexProgramRegistry latexProgramRegistry_;
+   private UIPrefs prefs_;
+   private Session session_;
+   private TexServerOperations server_;
+   private RnwWeaveRegistry rnwWeaveRegistry_;
+   private LatexProgramRegistry latexProgramRegistry_;
    
    private static final Pattern concordancePattern_ = Pattern.create(
                      "\\\\[\\s]*SweaveOpts[\\s]*{.*concordance[\\s]*=.*}");
+   
+   private HashMap<String, RnwChunkOptions> chunkOptionsCache_ = 
+                                    new HashMap<String, RnwChunkOptions>();
 }

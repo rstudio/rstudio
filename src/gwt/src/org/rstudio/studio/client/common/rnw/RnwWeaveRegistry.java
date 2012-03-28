@@ -47,7 +47,12 @@ public class RnwWeaveRegistry
       {
          str.append(typeNames[i]);
          if (i != (typeNames.length - 1))
-            str.append(", ");
+         {
+            if (typeNames.length > 2)
+               str.append(", ");
+            else
+               str.append(" ");
+         }
          if (i == (typeNames.length - 2))
             str.append("and ");
       }
