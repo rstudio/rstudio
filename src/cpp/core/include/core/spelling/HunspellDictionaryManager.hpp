@@ -64,8 +64,9 @@ private:
 class DictionaryManager
 {
 public:
-   DictionaryManager(const FilePath& languagesDir, const FilePath& userDir)
-      : languagesDir_(languagesDir), userDir_(userDir)
+   DictionaryManager(const FilePath& coreLanguagesDir,
+                     const FilePath& userDir)
+      : coreLanguagesDir_(coreLanguagesDir), userDir_(userDir)
    {
    }
 
@@ -75,17 +76,18 @@ public:
 
    // COPYING: via compiler
 
-   bool userLanguagesInstalled() const { return userLanguagesDir().exists(); }
+   bool allLanguagesInstalled() const { return allLanguagesDir().exists(); }
 
    core::Error availableLanguages(std::vector<Dictionary>* pDictionaries) const;
 
    Dictionary dictionaryForLanguageId(const std::string& langId) const;
 
 private:
+   core::FilePath allLanguagesDir() const;
    core::FilePath userLanguagesDir() const;
 
 private:
-   core::FilePath languagesDir_;
+   core::FilePath coreLanguagesDir_;
    core::FilePath userDir_;
 };
 

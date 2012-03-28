@@ -123,24 +123,35 @@ Error DictionaryManager::availableLanguages(
 {
    // first try the user languages dir
    std::vector<FilePath> dicFiles;
-   Error error = listDicFiles(userLanguagesDir(), &dicFiles);
-   if (error)
-      return error;
 
-   // check the base languages dir if we didn't get any
-   if (dicFiles.empty())
+   if (allLanguagesInstalled())
    {
-      error = listDicFiles(languagesDir_, &dicFiles);
+      Error error = listDicFiles(allLanguagesDir(), &dicFiles);
       if (error)
          return error;
    }
+   else
+   {
+      Error error = listDicFiles(coreLanguagesDir_, &dicFiles);
+      if (error)
+         return error;
+   }
+
+   // always check the languages-extra directory as well (and auto-create
+   // it so users who look for it will see it)
+   FilePath userLangsDir = userLanguagesDir();
+   Error error = userLangsDir.ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
+   error = listDicFiles(userLangsDir, &dicFiles);
+   if (error)
+      LOG_ERROR(error);
 
    // convert to dictionaries
    std::transform(dicFiles.begin(),
                   dicFiles.end(),
                   std::back_inserter(*pDictionaries),
                   fromDicFile);
-
 
    // sort them by name
    std::sort(pDictionaries->begin(), pDictionaries->end(), compareByName);
@@ -152,15 +163,25 @@ Dictionary DictionaryManager::dictionaryForLanguageId(
                                        const std::string& langId) const
 {
    std::string dicFile = langId + ".dic";
-   if (userLanguagesInstalled())
-      return Dictionary(userLanguagesDir().complete(dicFile));
+
+   // first check to see whether it exists in the user languages directory
+   FilePath userLangsDic = userLanguagesDir().complete(dicFile);
+   if (userLangsDic.exists())
+      return Dictionary(userLangsDic);
+   else if (allLanguagesInstalled())
+      return Dictionary(allLanguagesDir().complete(dicFile));
    else
-      return Dictionary(languagesDir_.complete(dicFile));
+      return Dictionary(coreLanguagesDir_.complete(dicFile));
+}
+
+FilePath DictionaryManager::allLanguagesDir() const
+{
+   return userDir_.childPath("languages-system");
 }
 
 FilePath DictionaryManager::userLanguagesDir() const
 {
-   return userDir_.childPath("languages");
+   return userDir_.childPath("languages-user");
 }
 
 } // namespace hunspell

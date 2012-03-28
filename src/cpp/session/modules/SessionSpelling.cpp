@@ -124,9 +124,10 @@ FilePath userDictionariesDir()
    return module_context::userScratchPath().childPath("dictionaries");
 }
 
-FilePath userLanguagesDir()
+FilePath allLanguagesDir()
 {
-   return module_context::userScratchPath().childPath("dictionaries/languages");
+   return module_context::userScratchPath().childPath(
+                                          "dictionaries/languages-system");
 }
 
 
@@ -191,9 +192,9 @@ Error addToDictionary(const json::JsonRpcRequest& request,
 Error installAllDictionaries(const json::JsonRpcRequest& request,
                              json::JsonRpcResponse* pResponse)
 {
-   // form system path to user languages dir
+   // form system path to all languages dir
    std::string targetDir = string_utils::utf8ToSystem(
-                                    userLanguagesDir().absolutePath());
+                                    allLanguagesDir().absolutePath());
 
    // perform the download
    r::exec::RFunction dlFunc(".rs.downloadAllDictionaries", targetDir);
@@ -241,7 +242,7 @@ core::json::Object spellingPrefsContextAsJson()
 
 
    // return json
-   contextJson["all_languages_installed"] = dictManager.userLanguagesInstalled();
+   contextJson["all_languages_installed"] = dictManager.allLanguagesInstalled();
    contextJson["available_languages"] = dictionariesJson;
    return contextJson;
 }
