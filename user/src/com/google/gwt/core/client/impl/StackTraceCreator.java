@@ -266,6 +266,16 @@ public class StackTraceCreator {
    */
   static class CollectorChrome extends CollectorMoz {
 
+    static {
+      increaseChromeStackTraceLimit();
+    }
+
+    // TODO(cromwellian) make this a configurable?
+    private static native void increaseChromeStackTraceLimit() /*-{
+      // 128 seems like a reasonable maximum
+      Error.stackTraceLimit = 128;
+    }-*/;
+
     @Override
     public JsArrayString collect() {
       JsArrayString res = super.collect();
