@@ -24,6 +24,7 @@
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RUtil.hpp>
+#include <r/RExec.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -110,6 +111,25 @@ SEXP rs_checkSpelling(SEXP wordSEXP)
    return r::sexp::create(isCorrect, &rProtect);
 }
 
+json::Object dictionaryAsJson(const core::spelling::hunspell::Dictionary& dict)
+{
+   json::Object dictJson;
+   dictJson["id"] = dict.id();
+   dictJson["name"] = dict.name();
+   return dictJson;
+}
+
+FilePath userDictionariesDir()
+{
+   return module_context::userScratchPath().childPath("dictionaries");
+}
+
+FilePath userLanguagesDir()
+{
+   return module_context::userScratchPath().childPath("dictionaries/languages");
+}
+
+
 Error checkSpelling(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
@@ -168,33 +188,49 @@ Error addToDictionary(const json::JsonRpcRequest& request,
    return Success();
 }
 
-
-json::Object dictionaryAsJson(const core::spelling::hunspell::Dictionary& dict)
+Error installAllDictionaries(const json::JsonRpcRequest& request,
+                             json::JsonRpcResponse* pResponse)
 {
-   json::Object dictJson;
-   dictJson["id"] = dict.id();
-   dictJson["name"] = dict.name();
-   return dictJson;
+   // form system path to user languages dir
+   std::string targetDir = string_utils::utf8ToSystem(
+                                    userLanguagesDir().absolutePath());
+
+   // perform the download
+   r::exec::RFunction dlFunc(".rs.downloadAllDictionaries", targetDir);
+   Error error = dlFunc.call();
+   if (error)
+   {
+      std::string userMessage = r::endUserErrorMessage(error);
+      pResponse->setError(error, json::Value(userMessage));
+      return Success();
+   }
+   else
+   {
+      pResponse->setResult(spelling::spellingPrefsContextAsJson());
+      return Success();
+   }
 }
+
+
 
 } // anonymous namespace
 
 
-core::json::Array availableLanguagesAsJson()
+core::json::Object spellingPrefsContextAsJson()
 {
    using namespace core::spelling::hunspell;
 
-   FilePath userDictionariesDir =
-                  module_context::userScratchPath().complete("dictionaries");
+   core::json::Object contextJson;
+
    DictionaryManager dictManager(options().hunspellDictionariesPath(),
-                                 userDictionariesDir);
+                                 userDictionariesDir());
 
    std::vector<Dictionary> dictionaries;
    Error error = dictManager.availableLanguages(&dictionaries);
    if (error)
    {
       LOG_ERROR(error);
-      return core::json::Array();
+      return core::json::Object();
    }
 
    core::json::Array dictionariesJson;
@@ -203,7 +239,11 @@ core::json::Array availableLanguagesAsJson()
                   std::back_inserter(dictionariesJson),
                   dictionaryAsJson);
 
-   return dictionariesJson;
+
+   // return json
+   contextJson["all_languages_installed"] = dictManager.userLanguagesInstalled();
+   contextJson["available_languages"] = dictionariesJson;
+   return contextJson;
 }
 
 Error initialize()
@@ -223,7 +263,9 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "check_spelling", checkSpelling))
       (bind(registerRpcMethod, "suggestion_list", suggestionList))
-      (bind(registerRpcMethod, "add_to_dictionary", addToDictionary));
+      (bind(registerRpcMethod, "add_to_dictionary", addToDictionary))
+      (bind(registerRpcMethod, "install_all_dictionaries", installAllDictionaries))
+      (bind(sourceModuleRFile, "SessionSpelling.R"));
    return initBlock.execute();
 }
 

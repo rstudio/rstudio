@@ -41,7 +41,7 @@ ls | egrep '^(en_US|en_GB|en_CA|en_AU)\..*$' | zip -@ $CORE_DICTIONARIES
 # build the universal archive
 ALL_DICTIONARIES=all-dictionaries.zip
 rm -f $ALL_DICTIONARIES
-ls | egrep '\.aff$|\.dic$|\.dic_delta$' | zip -@ $ALL_DICTIONARIES
+ls | egrep '^(bg_BG|ca_ES|cs_CZ|da_DK|de_DE|de_DE_neu|el_GR|en_US|en_GB|en_CA|en_AU|es_ES|fr_FR|hr_HR|hu-HU|id_ID|it_IT|lt_LT|lv_LV|nb_NO|nl_NL|pl_PL|pt_BR|pt_PT|ro_RO|ru_RU|sh|sk_SK|sl_SI|sr|sv_SE|uk_UA|vi_VN)\..*$' | zip -@ $ALL_DICTIONARIES
 
 # return to install dir
 cd $INSTALL_DIR

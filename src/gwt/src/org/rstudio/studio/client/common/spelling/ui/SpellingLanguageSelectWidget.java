@@ -12,35 +12,69 @@
  */
 package org.rstudio.studio.client.common.spelling.ui;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.spelling.model.SpellingLanguage;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.user.client.ui.ListBox;
 
 public class SpellingLanguageSelectWidget extends SelectWidget
 {
-   public SpellingLanguageSelectWidget()
+   public SpellingLanguageSelectWidget(
+                     final CommandWithArg<String> onInstallLanguages)
    {
-      super("Spell checking language:", 
+      super("Spelling dictionary language:", 
             new String[0], 
             new String[0], 
             false, 
             true, 
             false);    
+      
+      
+      getListBox().addChangeHandler(new ChangeHandler() {
+
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            if (getListBox().getSelectedIndex() == installIndex_)
+            {
+               setSelectedLanguage(currentLangId_);
+               String progress = allLanguagesInstalled_ ?
+                                    "Updating dictionaries..." :
+                                    "Installing additional languages...";
+               onInstallLanguages.execute(progress);
+            }
+            else
+            {
+               currentLangId_ = getSelectedLanguage();
+            }
+         }
+         
+      });
    }
 
-   public void setLanguages(JsArray<SpellingLanguage> languages)
+   public void setLanguages(boolean allLanguagesInstalled,
+                            JsArray<SpellingLanguage> languages)
    {
       languages_ = languages;
-      String[] choices =  new String[languages.length()];
-      String[] values = new String[languages.length()];
+      installIndex_ = languages.length();
+      allLanguagesInstalled_ = allLanguagesInstalled;
+      String[] choices =  new String[languages.length()+1];
+      String[] values = new String[languages.length()+1];
       for (int i=0; i<languages.length(); i++)
       {
          SpellingLanguage language = languages.get(i);
          choices[i] = language.getName();
          values[i] = language.getId();
       }
+      if (allLanguagesInstalled)
+         choices[installIndex_] = "Update Dictionaries...";
+      else
+         choices[installIndex_] = "Install More Languages...";
+      values[installIndex_] = "";
       
       setChoices(choices, values);
    }
@@ -51,10 +85,15 @@ public class SpellingLanguageSelectWidget extends SelectWidget
       {
          if (langId.equals(languages_.get(i).getId()))
          {
+            currentLangId_ = langId;
             getListBox().setSelectedIndex(i);
-            break;
+            return;
          }
       }
+      
+      // if we couldn't find this lang id then reset
+      getListBox().setSelectedIndex(0);
+      currentLangId_ = getListBox().getValue(0);
    }
    
    public String getSelectedLanguage()
@@ -63,6 +102,9 @@ public class SpellingLanguageSelectWidget extends SelectWidget
       return listBox.getValue(listBox.getSelectedIndex());
    }
    
+   private String currentLangId_ = null;
+   private int installIndex_ = -1;
+   private boolean allLanguagesInstalled_ = false;
    private JsArray<SpellingLanguage> languages_;
   
 }

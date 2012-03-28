@@ -21,6 +21,10 @@ public class SpellingPrefsContext extends JavaScriptObject
 { 
    protected SpellingPrefsContext() {}
 
+   public native final boolean getAllLanguagesInstalled() /*-{
+      return this.all_languages_installed;
+   }-*/;
+   
    public native final JsArray<SpellingLanguage> getAvailableLanguages() /*-{
       return this.available_languages;
    }-*/; 

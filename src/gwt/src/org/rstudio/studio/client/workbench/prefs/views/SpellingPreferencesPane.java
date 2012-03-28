@@ -13,24 +13,36 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.json.client.JSONString;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
 import org.rstudio.studio.client.common.spelling.ui.SpellingLanguageSelectWidget;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 public class SpellingPreferencesPane extends PreferencesPane
 {
    @Inject
-   public SpellingPreferencesPane(PreferencesDialogResources res,
+   public SpellingPreferencesPane(GlobalDisplay globalDisplay,
+                                  PreferencesDialogResources res,
+                                  SpellingServerOperations server,
                                   UIPrefs prefs)
    {
+      globalDisplay_ = globalDisplay;
       res_ = res;
+      server_ = server;
       uiPrefs_ = prefs;
       
-      languageWidget_ = new SpellingLanguageSelectWidget();
+      languageWidget_ = new SpellingLanguageSelectWidget(onInstallLanguages_);
       spaced(languageWidget_);
       add(languageWidget_);
       
@@ -45,11 +57,61 @@ public class SpellingPreferencesPane extends PreferencesPane
                        prefs.ignoreWordsInUppercase()));
    }
 
+   
+   private CommandWithArg<String> onInstallLanguages_ 
+                                                = new CommandWithArg<String>()
+   {
+      @Override
+      public void execute(String progress)
+      {
+         // show progress
+         final ProgressIndicator indicator = getProgressIndicator();
+         indicator.onProgress(progress);
+         
+         // save current selection for restoring
+         final String currentLang = languageWidget_.getSelectedLanguage();
+         
+         server_.installAllDictionaries(
+            new ServerRequestCallback<SpellingPrefsContext> () {
+
+               @Override
+               public void onResponseReceived(SpellingPrefsContext context)
+               {
+                  indicator.onCompleted();
+                  languageWidget_.setLanguages(
+                                       context.getAllLanguagesInstalled(),
+                                       context.getAvailableLanguages());
+                  languageWidget_.setSelectedLanguage(currentLang);
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  JSONString userMessage = error.getClientInfo().isString();
+                  if (userMessage != null)
+                  {
+                     indicator.onCompleted();
+                     globalDisplay_.showErrorMessage(
+                                             "Error Downloading Dictionaries", 
+                                              userMessage.stringValue());
+                  }
+                  else
+                  {
+                     indicator.onError(error.getUserMessage());
+                  }
+               }
+            
+         });
+      }
+      
+   };
+   
    @Override
    protected void initialize(RPrefs rPrefs)
    {
-      languageWidget_.setLanguages(
-                  rPrefs.getSpellingPrefsContext().getAvailableLanguages());
+      SpellingPrefsContext context = rPrefs.getSpellingPrefsContext();
+      languageWidget_.setLanguages(context.getAllLanguagesInstalled(),
+                                   context.getAvailableLanguages());
       
       languageWidget_.setSelectedLanguage(
                         uiPrefs_.spellingDictionaryLanguage().getValue());
@@ -87,6 +149,8 @@ public class SpellingPreferencesPane extends PreferencesPane
    @SuppressWarnings("unused")
    private final PreferencesDialogResources res_;
    
+   private final GlobalDisplay globalDisplay_;
    private final UIPrefs uiPrefs_;
+   private final SpellingServerOperations server_;
    private final SpellingLanguageSelectWidget languageWidget_;
 }

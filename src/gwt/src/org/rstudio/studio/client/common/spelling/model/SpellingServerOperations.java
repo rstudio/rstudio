@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.common.spelling.model;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 
 import com.google.gwt.core.client.JsArrayString;
 
@@ -29,4 +30,7 @@ public interface SpellingServerOperations
    void addToDictionary(String langId,
                         String word,
                         ServerRequestCallback<Boolean> requestCallback);
+   
+   void installAllDictionaries(
+           ServerRequestCallback<SpellingPrefsContext> requestCallback);
 }

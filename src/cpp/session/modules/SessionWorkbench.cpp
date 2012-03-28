@@ -394,12 +394,6 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    compilePdfPrefs["clean_output"] = userSettings().cleanTexi2DviOutput();
    compilePdfPrefs["enable_shell_escape"] = userSettings().enableLaTeXShellEscape();
 
-
-   // get spelling prefs context
-   json::Object spellingPrefsContext;
-   spellingPrefsContext["available_languages"] =
-                  session::modules::spelling::availableLanguagesAsJson();
-
    // initialize and set result object
    json::Object result;
    result["general_prefs"] = generalPrefs;
@@ -408,7 +402,8 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    result["projects_prefs"] = projectsPrefs;
    result["source_control_prefs"] = sourceControlPrefs;
    result["compile_pdf_prefs"] = compilePdfPrefs;
-   result["spelling_prefs_context"] = spellingPrefsContext;
+   result["spelling_prefs_context"] =
+                  session::modules::spelling::spellingPrefsContextAsJson();
 
    pResponse->setResult(result);
 

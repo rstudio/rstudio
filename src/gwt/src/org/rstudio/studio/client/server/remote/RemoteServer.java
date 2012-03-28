@@ -54,6 +54,7 @@ import org.rstudio.studio.client.workbench.model.TerminalOptions;
 import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
@@ -2439,6 +2440,12 @@ public class RemoteServer implements Server
       params.set(1, new JSONString(word));
       sendRequest(RPC_SCOPE, ADD_TO_DICTIONARY, params, requestCallback);
    }
+   
+   public void installAllDictionaries(
+               ServerRequestCallback<SpellingPrefsContext> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, INSTALL_ALL_DICTIONARIES, requestCallback);
+   }
 
    @Override
    public void beginFind(String searchString,
@@ -2675,6 +2682,7 @@ public class RemoteServer implements Server
    private static final String CHECK_SPELLING = "check_spelling";
    private static final String SUGGESTION_LIST = "suggestion_list";
    private static final String ADD_TO_DICTIONARY = "add_to_dictionary";
+   private static final String INSTALL_ALL_DICTIONARIES = "install_all_dictionaries";
 
    private static final String BEGIN_FIND = "begin_find";
    private static final String STOP_FIND = "stop_find";

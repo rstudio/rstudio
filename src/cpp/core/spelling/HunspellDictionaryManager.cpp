@@ -29,11 +29,39 @@ struct KnownDictionary
 
 KnownDictionary s_knownDictionaries[] =
 {
-   { "en_US",   "English (US)" },
-   { "en_GB",   "English (GB)" },
-   { "en_AU",   "English (AU)" },
-   { "en_CA",   "English (CA)" },
-
+   { "bg_BG",     "Bulgarian"                },
+   { "ca_ES",     "Catalan"                  },
+   { "cs_CZ",     "Czech"                    },
+   { "da_DK",     "Danish"                   },
+   { "de_DE",     "German"                   },
+   { "de_DE_neu", "German (New)"             },
+   { "el_GR",     "Greek"                    },
+   { "en_AU",     "English (Australia)"      },
+   { "en_CA",     "English (Canada)"         },
+   { "en_GB",     "English (United Kingdom)" },
+   { "en_US",     "English (United States)"  },
+   { "es_ES",     "Spanish"                  },
+   { "fr_FR",     "French"                   },
+   { "hr_HR",     "Croatian"                 },
+   { "hu-HU",     "Hungarian"                },
+   { "id_ID",     "Indonesian"               },
+   { "it_IT",     "Italian"                  },
+   { "lt_LT",     "Lithuanian"               },
+   { "lv_LV",     "Latvian"                  },
+   { "nb_NO",     "Norwegian"                },
+   { "nl_NL",     "Dutch"                    },
+   { "pl_PL",     "Polish"                   },
+   { "pt_BR",     "Portuguese (Brazil)"      },
+   { "pt_PT",     "Portuguese (Portugal)"    },
+   { "ro_RO",     "Romanian"                 },
+   { "ru_RU",     "Russian"                  },
+   { "sh",        "Serbo-Croatian"           },
+   { "sk_SK",     "Slovak"                   },
+   { "sl_SI",     "Slovenian"                },
+   { "sr",        "Serbian"                  },
+   { "sv_SE",     "Swedish"                  },
+   { "uk_UA",     "Ukrainian"                },
+   { "vi_VN",     "Vietnamese"               },
    { NULL, NULL }
 };
 
@@ -63,6 +91,11 @@ Error listDicFiles(const FilePath& baseDir, std::vector<FilePath>* pDicFiles)
                             isDicFile);
 
    return Success();
+}
+
+bool compareByName(const Dictionary& dict1, const Dictionary& dict2)
+{
+   return dict1.name() < dict2.name();
 }
 
 } // anonymous namespace
@@ -107,6 +140,10 @@ Error DictionaryManager::availableLanguages(
                   dicFiles.end(),
                   std::back_inserter(*pDictionaries),
                   fromDicFile);
+
+
+   // sort them by name
+   std::sort(pDictionaries->begin(), pDictionaries->end(), compareByName);
 
    return Success();
 }
