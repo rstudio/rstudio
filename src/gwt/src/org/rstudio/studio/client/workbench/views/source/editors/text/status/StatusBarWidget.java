@@ -13,11 +13,14 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
+
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.widget.IsWidgetWithHeight;
 
 public class StatusBarWidget extends Composite
@@ -37,6 +40,10 @@ public class StatusBarWidget extends Composite
 
       hpanel.setCellWidth(hpanel.getWidget(2), "100%");
 
+      // tweak image baseline for ubuntu mono on chrome
+      if (BrowseCap.hasUbuntuFonts() && BrowseCap.isChrome())
+         scopeIcon_.getElement().getStyle().setTop(0, Unit.PX);
+      
       initWidget(hpanel);
 
       height_ = 16;
