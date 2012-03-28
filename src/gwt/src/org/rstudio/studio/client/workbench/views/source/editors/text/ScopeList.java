@@ -18,8 +18,14 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
-public class ScopeList
+/**
+ * Represents a flattened list of scopes in the given DocDisplay. It takes a
+ * snapshot at the time of construction, so don't hold onto a ScopeList whose
+ * document is changing.
+ */
+public class ScopeList implements Iterable<Scope>
 {
    public interface ScopePredicate
    {
@@ -75,6 +81,12 @@ public class ScopeList
    public ScopeList(DocDisplay docDisplay)
    {
       addScopes(docDisplay.getScopeTree());
+   }
+
+   @Override
+   public Iterator<Scope> iterator()
+   {
+      return scopes_.iterator();
    }
 
    public Scope[] getScopes()

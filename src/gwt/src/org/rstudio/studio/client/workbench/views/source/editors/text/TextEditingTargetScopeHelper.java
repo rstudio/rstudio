@@ -62,7 +62,7 @@ public class TextEditingTargetScopeHelper
 
       private Scope getScopeByChunkLabel(String label, Position beforeHere)
       {
-         for (Scope s : scopeList_.getScopes())
+         for (Scope s : scopeList_)
          {
             if (beforeHere != null
                 && s.getPreamble().isAfterOrEqualTo(beforeHere))

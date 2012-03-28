@@ -1966,7 +1966,7 @@ public class TextEditingTarget implements EditingTarget
 
       ScopeList scopeList = new ScopeList(docDisplay_);
       scopeList.removeAll(ScopeList.ANON_BRACE);
-      for (Scope scope : scopeList.getScopes())
+      for (Scope scope : scopeList)
       {
          int row = scope.getPreamble().getRow();
          if (!rowsFolded.contains(row))
