@@ -64,8 +64,6 @@ import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationP
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
-import java.util.ArrayList;
-
 public class AceEditor implements DocDisplay, 
                                   InputEditorDisplay,
                                   NavigableSourceEditor

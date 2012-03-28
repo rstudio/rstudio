@@ -35,8 +35,6 @@ import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.IsWidget;
 
-import java.util.ArrayList;
-
 public interface DocDisplay extends HasValueChangeHandlers<Void>,
                                     HasFoldChangeHandlers,
                                     IsWidget,
