@@ -17,11 +17,13 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.latex.LatexProgramSelectWidget;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.CompilePdfPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 
 public class CompilePdfPreferencesPane extends PreferencesPane
 {
@@ -87,11 +89,10 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       previwingOptionsLabel.addStyleName(baseRes.styles().headerLabel());
       nudgeRight(previwingOptionsLabel);
       add(previwingOptionsLabel);
-      
-      CheckBox chkShowPdf = checkboxPref("Show PDF preview after compile",
-                                         prefs_.showPdfAfterCompile());
-      spaced(chkShowPdf);
-      add(chkShowPdf);
+     
+      pdfPreview_ = new PdfPreviewSelectWidget();
+      pdfPreview_.setValue(prefs_.pdfPreview().getValue());
+      add(pdfPreview_);
       
       CheckBox chkConcordance = checkboxPref(
             "Always enable Rnw concordance (required for synctex)",
@@ -100,6 +101,21 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       add(chkConcordance);
    }
 
+   private class PdfPreviewSelectWidget extends SelectWidget
+   {
+      public PdfPreviewSelectWidget()
+      {
+         super(
+            "Preview PDF after compile using:", 
+            new String[] {"(No Preview)", "RStudio Viewer", "System Viewer"}, 
+            new String[] {UIPrefsAccessor.PDF_PREVIEW_NONE, 
+                          UIPrefsAccessor.PDF_PREVIEW_RSTUDIO,
+                          UIPrefsAccessor.PDF_PREVIEW_SYSTEM},
+            false, 
+            true, 
+            false);       
+      }
+   }
   
 
 
@@ -139,6 +155,8 @@ public class CompilePdfPreferencesPane extends PreferencesPane
                                     defaultSweaveEngine_.getValue());
       prefs_.defaultLatexProgram().setGlobalValue(
                                     defaultLatexProgram_.getValue());
+      
+      prefs_.pdfPreview().setGlobalValue(pdfPreview_.getValue());
          
       CompilePdfPrefs prefs = CompilePdfPrefs.create(
                                        chkUseTexi2Dvi_.getValue(), 
@@ -158,5 +176,6 @@ public class CompilePdfPreferencesPane extends PreferencesPane
    private CheckBox chkUseTexi2Dvi_;
    private CheckBox chkCleanTexi2DviOutput_;
    private CheckBox chkEnableShellEscape_;
+   private PdfPreviewSelectWidget pdfPreview_;
    
 }

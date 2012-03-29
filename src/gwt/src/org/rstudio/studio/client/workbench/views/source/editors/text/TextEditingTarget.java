@@ -68,6 +68,7 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
@@ -1815,9 +1816,11 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onCompilePDF()
    {
-      boolean showPdf = prefs_.showPdfAfterCompile().getValue();
+      String pdfPreview = prefs_.pdfPreview().getValue();
+      boolean showPdf = !pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_NONE);
       boolean useInternalPreview = 
-         showPdf && session_.getSessionInfo().isInternalPdfPreviewEnabled();
+            pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_RSTUDIO) && 
+            session_.getSessionInfo().isInternalPdfPreviewEnabled();
       
       Command onBeforeCompile = null;
       if (useInternalPreview)

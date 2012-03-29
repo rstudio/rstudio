@@ -141,9 +141,13 @@ public class UIPrefsAccessor extends Prefs
       return string("default_latex_program", "pdfLaTeX");
    }
    
-   public PrefValue<Boolean> showPdfAfterCompile()
+   public static final String PDF_PREVIEW_NONE = "none";
+   public static final String PDF_PREVIEW_RSTUDIO = "rstudio";
+   public static final String PDF_PREVIEW_SYSTEM = "system";
+   
+   public PrefValue<String> pdfPreview()
    {
-      return bool("show_pdf_after_compile", true);
+      return string("pdf_preview", PDF_PREVIEW_RSTUDIO);
    }
    
    public PrefValue<Boolean> alwaysEnableRnwConcordance()
