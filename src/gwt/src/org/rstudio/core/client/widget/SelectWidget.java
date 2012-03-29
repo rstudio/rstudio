@@ -146,7 +146,7 @@ public class SelectWidget extends Composite
    }
 
    
-   protected void addWidget(Widget widget)
+   public void addWidget(Widget widget)
    {
       if (horizontalPanel_ != null)
       {

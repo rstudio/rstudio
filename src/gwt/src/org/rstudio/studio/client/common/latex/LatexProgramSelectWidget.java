@@ -12,12 +12,9 @@
  */
 package org.rstudio.studio.client.common.latex;
 
-import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
-
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Unit;
+import org.rstudio.studio.client.common.prefs.PrefsWidgetHelper;
 
 public class LatexProgramSelectWidget extends SelectWidget
 {
@@ -25,11 +22,7 @@ public class LatexProgramSelectWidget extends SelectWidget
    {
       super("Typeset LaTeX into PDF using:", latexProgramRegistry_.getTypeNames());
          
-      HelpButton helpButton = new HelpButton("latex_program");
-      Style style = helpButton.getElement().getStyle();
-      style.setMarginTop(3, Unit.PX);
-      style.setMarginLeft(4, Unit.PX);
-      addWidget(helpButton);
+      PrefsWidgetHelper.addHelpButton(this, "latex_program");
    }
    
    

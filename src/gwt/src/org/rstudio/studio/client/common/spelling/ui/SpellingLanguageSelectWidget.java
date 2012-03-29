@@ -14,6 +14,7 @@ package org.rstudio.studio.client.common.spelling.ui;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.studio.client.common.prefs.PrefsWidgetHelper;
 import org.rstudio.studio.client.common.spelling.model.SpellingLanguage;
 
 import com.google.gwt.core.client.JsArray;
@@ -33,6 +34,7 @@ public class SpellingLanguageSelectWidget extends SelectWidget
             true, 
             false);    
       
+      PrefsWidgetHelper.addHelpButton(this, "spelling_dictionaries");
       
       getListBox().addChangeHandler(new ChangeHandler() {
 
