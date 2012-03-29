@@ -14,12 +14,16 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.r.RToken;
 import org.rstudio.studio.client.common.r.RTokenizer;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
+import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions.AsyncProvider;
+import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions.RnwOptionCompletionResult;
 
 import java.util.ArrayList;
 
@@ -27,13 +31,16 @@ import java.util.ArrayList;
 public class CompletionRequester
 {
    private final CodeToolsServerOperations server_ ;
-   
+   private final AsyncProvider pRnwChunkOptions_;
+
    private String cachedLinePrefix_ ;
    private CompletionResult cachedResult_ ;
    
-   public CompletionRequester(CodeToolsServerOperations server)
+   public CompletionRequester(CodeToolsServerOperations server,
+                              RnwChunkOptions.AsyncProvider pRnwChunkOptions)
    {
       server_ = server ;
+      pRnwChunkOptions_ = pRnwChunkOptions;
    }
    
    public void getCompletions(
@@ -70,35 +77,87 @@ public class CompletionRequester
          }
       }
       
-      server_.getCompletions(line, pos, new ServerRequestCallback<Completions>() {
+      doGetCompletions(line, pos, new ServerRequestCallback<Completions>()
+      {
          @Override
          public void onError(ServerError error)
          {
-            callback.onError(error) ;
+            callback.onError(error);
          }
 
          @Override
          public void onResponseReceived(Completions response)
          {
-            cachedLinePrefix_ = line.substring(0, pos) ;
+            cachedLinePrefix_ = line.substring(0, pos);
 
-            JsArrayString comp = response.getCompletions() ;
-            JsArrayString pkgs = response.getPackages() ;
-            ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>() ;
-            
+            JsArrayString comp = response.getCompletions();
+            JsArrayString pkgs = response.getPackages();
+            ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
+
             for (int i = 0; i < comp.length(); i++)
-               newComp.add(new QualifiedName(comp.get(i), pkgs.get(i))) ;
-            
-            cachedResult_ = new CompletionResult(
-                                           response.getToken(),
-                                           newComp,
-                                           response.getGuessedFunctionName()) ;
-            
-            callback.onResponseReceived(cachedResult_) ;
+               newComp.add(new QualifiedName(comp.get(i), pkgs.get(i)));
+
+            CompletionResult result = new CompletionResult(
+                  response.getToken(),
+                  newComp,
+                  response.getGuessedFunctionName());
+
+            cachedResult_ = response.isCacheable() ? result : null;
+
+            callback.onResponseReceived(result);
          }
       }) ;
    }
-   
+
+   private void doGetCompletions(
+         String line,
+         int pos,
+         ServerRequestCallback<Completions> requestCallback)
+   {
+      if (pRnwChunkOptions_ != null && line.matches("^<<.*"))
+      {
+         doGetSweaveCompletions(line, pos, requestCallback);
+      }
+      else
+      {
+         server_.getCompletions(line, pos, requestCallback);
+      }
+   }
+
+   private void doGetSweaveCompletions(
+         final String line,
+         final int pos,
+         final ServerRequestCallback<Completions> requestCallback)
+   {
+      pRnwChunkOptions_.getChunkOptions(new ServerRequestCallback<RnwChunkOptions>()
+      {
+         @Override
+         public void onResponseReceived(RnwChunkOptions options)
+         {
+            RnwOptionCompletionResult result = options.getCompletions(line,
+                                                                      pos);
+
+            Completions response = Completions.createCompletions(
+                  result.token,
+                  result.completions,
+                  JsUtil.createEmptyArray(result.completions.length())
+                        .<JsArrayString>cast(),
+                  null);
+            // Unlike other completion types, Sweave completions are not
+            // guaranteed to narrow the candidate list (in particular
+            // true/false).
+            response.setCacheable(false);
+            requestCallback.onResponseReceived(response);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            requestCallback.onError(error);
+         }
+      });
+   }
+
    public void flushCache()
    {
       cachedLinePrefix_ = null ;

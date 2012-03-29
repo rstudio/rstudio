@@ -12,10 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import org.rstudio.core.client.CommandWithArg;
+import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
@@ -23,7 +20,6 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.tex.TexMagicComment;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.latex.LatexProgramRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
@@ -40,9 +36,11 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.TexServerOperations;
 
-import com.google.inject.Inject;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class TextEditingTargetCompilePdfHelper
+      implements RnwChunkOptions.AsyncProvider
 {
    public interface Display
    {
@@ -79,7 +77,8 @@ public class TextEditingTargetCompilePdfHelper
    // do this not only to save the round-trip but also because knitr takes
    // over 500ms to load and it may need to be loaded to serve the
    // request for chunk options
-   public void getChunkOptions(final CommandWithArg<RnwChunkOptions> onReady)
+   public void getChunkOptions(
+                   final ServerRequestCallback<RnwChunkOptions> requestCallback)
    {
       // determine the current rnw weave type
       final RnwWeave rnwWeave = getActiveRnwWeave();
@@ -87,24 +86,27 @@ public class TextEditingTargetCompilePdfHelper
          return;
       
       // look it up in the cache
-      RnwChunkOptions options = chunkOptionsCache_.get(rnwWeave.getName());
-      if (options != null)
+      if (chunkOptionsCache_.containsKey(rnwWeave.getName()))
       {
-         onReady.execute(options);
+         requestCallback.onResponseReceived(
+                                    chunkOptionsCache_.get(rnwWeave.getName()));
       }
       else
       {
          server_.getChunkOptions(
             rnwWeave.getName(), 
-            new SimpleRequestCallback<RnwChunkOptions>() {
+            new ServerRequestCallback<RnwChunkOptions>() {
                @Override
                public void onResponseReceived(RnwChunkOptions options)
                {
-                  if (options != null)
-                  {
-                     chunkOptionsCache_.put(rnwWeave.getName(), options);
-                     onReady.execute(options);
-                  }
+                  chunkOptionsCache_.put(rnwWeave.getName(), options);
+                  requestCallback.onResponseReceived(options);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  requestCallback.onError(error);
                }
             });
       }

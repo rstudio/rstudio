@@ -17,6 +17,18 @@ import com.google.gwt.core.client.JsArrayString;
 
 public class Completions extends JavaScriptObject
 {
+   public static native Completions createCompletions(String token,
+                                                      JsArrayString completions,
+                                                      JsArrayString packages,
+                                                      String fguess) /*-{
+      return {
+         token: [token],
+         results: completions,
+         packages: packages,
+         fguess: fguess ? [fguess] : null
+      };
+   }-*/;
+
    protected Completions()
    {
    }
@@ -45,5 +57,13 @@ public class Completions extends JavaScriptObject
       if (!this.fguess)
          return null ;
       return this.fguess[0] ;
+   }-*/;
+
+   public final native void setCacheable(boolean cacheable) /*-{
+      this.nocache = !cacheable;
+   }-*/;
+
+   public final native boolean isCacheable() /*-{
+      return !this.nocache;
    }-*/;
 }

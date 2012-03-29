@@ -120,6 +120,7 @@ public class Shell implements ConsoleInputHandler,
                                           null,
                                           new CompletionPopupPanel(), 
                                           server, 
+                                          null,
                                           null) ;
       addKeyDownPreviewHandler(completionManager) ;
       addKeyPressPreviewHandler(completionManager) ;

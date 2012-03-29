@@ -235,6 +235,7 @@ public class TextEditingTarget implements EditingTarget
       dirtyState_ = new DirtyState(docDisplay_, false);
       prefs_ = prefs;
       compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
+      docDisplay_.setRnwChunkOptionsProvider(compilePdfHelper_);
       scopeHelper_ = new TextEditingTargetScopeHelper(docDisplay_);
       
       addRecordNavigationPositionHandler(releaseOnDismiss_, 

@@ -62,6 +62,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Rendere
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
+import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
+import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions.AsyncProvider;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 public class AceEditor implements DocDisplay, 
@@ -333,7 +335,13 @@ public class AceEditor implements DocDisplay,
       fileType_ = fileType;
       updateLanguage(completionManager);
    }
-   
+
+   @Override
+   public void setRnwChunkOptionsProvider(AsyncProvider pRnwChunkOptions)
+   {
+      pRnwChunkOptions_ = pRnwChunkOptions;
+   }
+
    private void updateLanguage(boolean suppressCompletion)
    {
       if (fileType_ == null)
@@ -342,11 +350,13 @@ public class AceEditor implements DocDisplay,
       CompletionManager completionManager = null;
       if (!suppressCompletion && fileType_.getEditorLanguage().useRCompletion())
       {
-         completionManager = new RCompletionManager(this,
-                                                    this,
-                                                    new CompletionPopupPanel(),
-                                                    server_,
-                                                    new Filter());
+         completionManager = new RCompletionManager(
+               this,
+               this,
+               new CompletionPopupPanel(),
+               server_,
+               new Filter(),
+               fileType_.canExecuteChunks() ? pRnwChunkOptions_ : null);
       }
       else
          completionManager = new NullCompletionManager();
@@ -688,7 +698,7 @@ public class AceEditor implements DocDisplay,
             pos.getColumn());
 
       return new Rectangle(start.getPageX(), start.getPageY(),
-                           renderer.getCharacterWidth(),
+                           (int) Math.round(renderer.getCharacterWidth()),
                            (int) (renderer.getLineHeight() * 0.8));
    }
 
@@ -1380,6 +1390,7 @@ public class AceEditor implements DocDisplay,
    private CodeToolsServerOperations server_;
    private TextFileType fileType_;
    private boolean passwordMode_;
+   private RnwChunkOptions.AsyncProvider pRnwChunkOptions_;
 
    private static final ExternalJavaScriptLoader aceLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());

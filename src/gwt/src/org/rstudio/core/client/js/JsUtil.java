@@ -102,4 +102,9 @@ public class JsUtil
          result.push(s);
       return result;
    }
+
+   public native static JavaScriptObject createEmptyArray(int length) /*-{
+      return new Array(length);
+   }-*/;
+
 }
