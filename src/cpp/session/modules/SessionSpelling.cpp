@@ -53,6 +53,28 @@ public:
       return dictManager_;
    }
 
+   Error checkSpelling(const std::string& langId,
+                       const std::string& word,
+                       bool *pCorrect)
+   {
+      return spellChecker(langId).checkSpelling(word, pCorrect);
+   }
+
+   Error suggestionList(const std::string& langId,
+                        const std::string& word,
+                        std::vector<std::string>* pSugs)
+   {
+      return spellChecker(langId).suggestionList(word, pSugs);
+   }
+
+   Error addWord(const std::string& langId,
+                 const std::string& word,
+                 bool* pAdded)
+   {
+      return spellChecker(langId).addWord(word, pAdded);
+   }
+
+private:
    core::spelling::SpellChecker& spellChecker(const std::string& langId)
    {
       if (!pSpellChecker_ || (langId != currentLangId_))
@@ -96,9 +118,7 @@ SEXP rs_checkSpelling(SEXP wordSEXP)
    bool isCorrect;
    std::string word = r::sexp::asString(wordSEXP);
 
-   Error error = spellingEngine().spellChecker("en_US").checkSpelling(
-                                                                   word,
-                                                                   &isCorrect);
+   Error error = spellingEngine().checkSpelling("en_US", word, &isCorrect);
 
    // We'll return true here so as not to tie up the front end.
    if (error)
@@ -140,7 +160,7 @@ Error checkSpelling(const json::JsonRpcRequest& request,
       return error;
 
    bool isCorrect;
-   error = spellingEngine().spellChecker(langId).checkSpelling(word,&isCorrect);
+   error = spellingEngine().checkSpelling(langId, word, &isCorrect);
    if (error)
       return error;
 
@@ -158,7 +178,7 @@ Error suggestionList(const json::JsonRpcRequest& request,
       return error;
 
    std::vector<std::string> sugs;
-   error = spellingEngine().spellChecker(langId).suggestionList(word,&sugs);
+   error = spellingEngine().suggestionList(langId, word, &sugs);
    if (error)
       return error;
 
@@ -181,7 +201,7 @@ Error addToDictionary(const json::JsonRpcRequest& request,
       return error;
 
    bool added;
-   error = spellingEngine().spellChecker(langId).addWord(word,&added);
+   error = spellingEngine().addWord(langId, word, &added);
    if (error)
       return error;
 
