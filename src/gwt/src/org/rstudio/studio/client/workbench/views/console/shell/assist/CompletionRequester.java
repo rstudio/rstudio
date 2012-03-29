@@ -46,6 +46,7 @@ public class CompletionRequester
    public void getCompletions(
                      final String line, 
                      final int pos,
+                     final boolean implicit,
                      final ServerRequestCallback<CompletionResult> callback)
    {
       if (cachedResult_ != null && cachedResult_.guessedFunctionName == null)
@@ -104,7 +105,8 @@ public class CompletionRequester
 
             cachedResult_ = response.isCacheable() ? result : null;
 
-            callback.onResponseReceived(result);
+            if (!implicit || result.completions.size() != 0)
+               callback.onResponseReceived(result);
          }
       }) ;
    }

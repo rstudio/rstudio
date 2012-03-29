@@ -251,7 +251,7 @@ public class RCompletionManager implements CompletionManager
          {
             if (initFilter_ == null || initFilter_.shouldComplete(event))
             {
-               return beginSuggest(true) ;
+               return beginSuggest(true, false) ;
             }
          }
          else if (event.getKeyCode() == 112 // F1
@@ -352,7 +352,7 @@ public class RCompletionManager implements CompletionManager
                @Override
                public void execute()
                {
-                  beginSuggest(false) ;
+                  beginSuggest(false, false) ;
                }
             });
          }
@@ -366,7 +366,7 @@ public class RCompletionManager implements CompletionManager
                @Override
                public void execute()
                {
-                  beginSuggest(true) ;
+                  beginSuggest(true, true) ;
                }
             });
          }
@@ -448,7 +448,7 @@ public class RCompletionManager implements CompletionManager
    /**
     * If false, the suggest operation was aborted
     */
-   private boolean beginSuggest(boolean flushCache)
+   private boolean beginSuggest(boolean flushCache, boolean implicit)
    {
       if (!input_.isSelectionCollapsed())
          return false ;
@@ -481,6 +481,7 @@ public class RCompletionManager implements CompletionManager
                                               canAutoAccept) ;
       requester_.getCompletions(line,
                                 selection.getStart().getPosition(),
+                                implicit,
                                 context_);
 
       return true ;
