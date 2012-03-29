@@ -34,7 +34,7 @@ public class SpellChecker
    }
    
    
-   public void checkSpelling(String path, DocDisplay docDisplay)
+   public void checkSpelling(String docId, DocDisplay docDisplay)
    {
       SpellingSandboxDialog dlg = pSpellingDialog_.get();
       

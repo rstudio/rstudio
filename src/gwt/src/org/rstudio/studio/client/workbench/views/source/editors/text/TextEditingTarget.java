@@ -1807,8 +1807,7 @@ public class TextEditingTarget implements EditingTarget
       {
          public void execute()
          {
-            pSpellChecker_.get().checkSpelling(docUpdateSentinel_.getPath(), 
-                                               docDisplay_);
+            pSpellChecker_.get().checkSpelling(getId(), docDisplay_);
          }
       });
    }
