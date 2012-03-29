@@ -65,17 +65,23 @@ KnownDictionary s_knownDictionaries[] =
    { NULL, NULL }
 };
 
-bool isDicFile(const FilePath& filePath)
+FilePath dicPathForAffPath(const FilePath& affPath)
 {
-   return filePath.extensionLowerCase() == ".dic";
+   return affPath.parent().childPath(affPath.stem() + ".dic");
 }
 
-Dictionary fromDicFile(const FilePath& filePath)
+bool isDictionaryAff(const FilePath& filePath)
+{
+   return (filePath.extensionLowerCase() == ".aff") &&
+          dicPathForAffPath(filePath).exists();
+}
+
+Dictionary fromAffFile(const FilePath& filePath)
 {
    return Dictionary(filePath);
 }
 
-Error listDicFiles(const FilePath& baseDir, std::vector<FilePath>* pDicFiles)
+Error listAffFiles(const FilePath& baseDir, std::vector<FilePath>* pAffFiles)
 {
    if (!baseDir.exists())
       return Success();
@@ -87,8 +93,8 @@ Error listDicFiles(const FilePath& baseDir, std::vector<FilePath>* pDicFiles)
 
    core::algorithm::copy_if(children.begin(),
                             children.end(),
-                            std::back_inserter(*pDicFiles),
-                            isDicFile);
+                            std::back_inserter(*pAffFiles),
+                            isDictionaryAff);
 
    return Success();
 }
@@ -113,26 +119,26 @@ std::string Dictionary::name() const
    return dictId;
 }
 
-FilePath Dictionary::affPath() const
+FilePath Dictionary::dicPath() const
 {
-   return dicPath_.parent().childPath(dicPath_.stem() + ".aff");
+   return dicPathForAffPath(affPath_);
 }
 
 Error DictionaryManager::availableLanguages(
                         std::vector<Dictionary>* pDictionaries) const
 {
    // first try the user languages dir
-   std::vector<FilePath> dicFiles;
+   std::vector<FilePath> affFiles;
 
    if (allLanguagesInstalled())
    {
-      Error error = listDicFiles(allLanguagesDir(), &dicFiles);
+      Error error = listAffFiles(allLanguagesDir(), &affFiles);
       if (error)
          return error;
    }
    else
    {
-      Error error = listDicFiles(coreLanguagesDir_, &dicFiles);
+      Error error = listAffFiles(coreLanguagesDir_, &affFiles);
       if (error)
          return error;
    }
@@ -143,15 +149,15 @@ Error DictionaryManager::availableLanguages(
    Error error = userLangsDir.ensureDirectory();
    if (error)
       LOG_ERROR(error);
-   error = listDicFiles(userLangsDir, &dicFiles);
+   error = listAffFiles(userLangsDir, &affFiles);
    if (error)
       LOG_ERROR(error);
 
    // convert to dictionaries
-   std::transform(dicFiles.begin(),
-                  dicFiles.end(),
+   std::transform(affFiles.begin(),
+                  affFiles.end(),
                   std::back_inserter(*pDictionaries),
-                  fromDicFile);
+                  fromAffFile);
 
    // sort them by name
    std::sort(pDictionaries->begin(), pDictionaries->end(), compareByName);
@@ -162,16 +168,16 @@ Error DictionaryManager::availableLanguages(
 Dictionary DictionaryManager::dictionaryForLanguageId(
                                        const std::string& langId) const
 {
-   std::string dicFile = langId + ".dic";
+   std::string affFile = langId + ".aff";
 
    // first check to see whether it exists in the user languages directory
-   FilePath userLangsDic = userLanguagesDir().complete(dicFile);
-   if (userLangsDic.exists())
-      return Dictionary(userLangsDic);
+   FilePath userLangsAff = userLanguagesDir().complete(affFile);
+   if (userLangsAff.exists())
+      return Dictionary(userLangsAff);
    else if (allLanguagesInstalled())
-      return Dictionary(allLanguagesDir().complete(dicFile));
+      return Dictionary(allLanguagesDir().complete(affFile));
    else
-      return Dictionary(coreLanguagesDir_.complete(dicFile));
+      return Dictionary(coreLanguagesDir_.complete(affFile));
 }
 
 FilePath DictionaryManager::allLanguagesDir() const

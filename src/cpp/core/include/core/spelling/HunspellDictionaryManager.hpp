@@ -33,8 +33,8 @@ public:
    {
    }
 
-   explicit Dictionary(const FilePath& dicPath)
-      : dicPath_(dicPath)
+   explicit Dictionary(const FilePath& affPath)
+      : affPath_(affPath)
    {
    }
 
@@ -44,21 +44,21 @@ public:
 
    // COPYING: via compiler
 
-   bool empty() const { return dicPath_.empty(); }
+   bool empty() const { return affPath_.empty(); }
 
    bool operator==(const Dictionary& other) const
    {
-      return dicPath_ == other.dicPath_;
+      return affPath_ == other.affPath_;
    }
 
-   std::string id() const { return dicPath_.stem(); }
+   std::string id() const { return affPath_.stem(); }
    std::string name() const;
 
-   FilePath dicPath() const { return dicPath_; }
-   FilePath affPath() const;
+   FilePath dicPath() const;
+   FilePath affPath() const { return affPath_; }
 
 private:
-   FilePath dicPath_;
+   FilePath affPath_;
 };
 
 class DictionaryManager
