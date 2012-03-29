@@ -129,6 +129,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    Scope getCurrentScope();
    Scope getCurrentChunk();
+   Scope getCurrentChunk(Position position);
    Scope getCurrentFunction();
    JsArray<Scope> getScopeTree();
 
@@ -142,6 +143,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
 
    Position getSelectionStart();
    Position getSelectionEnd();
+   Range getSelectionRange();
    int getLength(int row);
    int getRowCount();
 

@@ -32,6 +32,11 @@ public class TextEditingTargetScopeHelper
       return docDisplay_.getCurrentChunk();
    }
 
+   public Scope getCurrentSweaveChunk(Position position)
+   {
+      return docDisplay_.getCurrentChunk(position);
+   }
+
    private class SweaveIncludeContext
    {
       private SweaveIncludeContext()
@@ -40,9 +45,8 @@ public class TextEditingTargetScopeHelper
          scopeList_.selectAll(ScopeList.CHUNK);
       }
 
-      public String getSweaveChunkText(final Scope chunk)
+      public String getSweaveChunkText(final Scope chunk, Range range)
       {
-         Range range = getSweaveChunkInnerRange(chunk);
          String text = docDisplay_.getCode(range.getStart(), range.getEnd());
          return Pattern.create("^<<(.*?)>>.*").replaceAll(text, new ReplaceOperation()
          {
@@ -55,7 +59,8 @@ public class TextEditingTargetScopeHelper
                if (included == null)
                   return m.getValue();
                else
-                  return getSweaveChunkText(included);
+                  return getSweaveChunkText(included,
+                                            getSweaveChunkInnerRange(included));
             }
          });
       }
@@ -78,7 +83,18 @@ public class TextEditingTargetScopeHelper
 
    public String getSweaveChunkText(Scope chunk)
    {
-      return new SweaveIncludeContext().getSweaveChunkText(chunk);
+      return getSweaveChunkText(chunk, null);
+   }
+
+   public String getSweaveChunkText(Scope chunk, Range range)
+   {
+      if (range == null)
+         range = getSweaveChunkInnerRange(chunk);
+
+      assert chunk.getPreamble().isBeforeOrEqualTo(range.getStart())
+            && chunk.getEnd().isAfterOrEqualTo(range.getEnd());
+
+      return new SweaveIncludeContext().getSweaveChunkText(chunk, range);
    }
 
    public Range getSweaveChunkInnerRange(Scope chunk)

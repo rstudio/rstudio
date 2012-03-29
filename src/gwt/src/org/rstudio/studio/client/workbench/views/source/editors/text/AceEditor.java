@@ -612,6 +612,12 @@ public class AceEditor implements DocDisplay,
       return getSession().getSelection().getRange().getEnd();
    }
 
+   @Override
+   public Range getSelectionRange()
+   {
+      return Range.fromPoints(getSelectionStart(), getSelectionEnd());
+   }
+
    public int getLength(int row)
    {
       return getSession().getDocument().getLine(row).length();
@@ -1071,7 +1077,13 @@ public class AceEditor implements DocDisplay,
 
    public Scope getCurrentChunk()
    {
-      return getSession().getMode().getCodeModel().getCurrentChunk(getCursorPosition());
+      return getCurrentChunk(getCursorPosition());
+   }
+
+   @Override
+   public Scope getCurrentChunk(Position position)
+   {
+      return getSession().getMode().getCodeModel().getCurrentChunk(position);
    }
 
    public Scope getCurrentFunction()

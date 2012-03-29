@@ -1469,22 +1469,28 @@ public class TextEditingTarget implements EditingTarget
    {
       docDisplay_.focus();
 
-      String code = docDisplay_.getSelectionValue();
-      if (code == null || code.length() == 0)
+      Range selectionRange = docDisplay_.getSelectionRange();
+      if (selectionRange.isEmpty())
       {
          int row = docDisplay_.getSelectionStart().getRow();
-         setLastExecuted(Position.create(row, 0),
-                         Position.create(row, docDisplay_.getLength(row)));
-
-         code = docDisplay_.getCurrentLine();
+         selectionRange = Range.fromPoints(
+               Position.create(row, 0),
+               Position.create(row, docDisplay_.getLength(row)));
+         // TODO: This should skip to next line of R code in Sweave docs
          docDisplay_.moveSelectionToNextLine(true);
       }
-      else
-      {
-         setLastExecuted(docDisplay_.getSelectionStart(),
-                         docDisplay_.getSelectionEnd());
-      }
 
+      executeRange(selectionRange);
+   }
+
+   private void executeRange(Range range)
+   {
+      Scope sweaveChunk = scopeHelper_.getCurrentSweaveChunk(range.getStart());
+
+      String code = sweaveChunk != null
+                    ? scopeHelper_.getSweaveChunkText(sweaveChunk, range)
+                    : docDisplay_.getCode(range.getStart(), range.getEnd());
+      setLastExecuted(range.getStart(), range.getEnd());
       events_.fireEvent(new SendToConsoleEvent(code, true));
    }
 
@@ -1525,12 +1531,8 @@ public class TextEditingTarget implements EditingTarget
       int row = docDisplay_.getSelectionEnd().getRow();
       int col = docDisplay_.getLength(row);
 
-      Position start = Position.create(0, 0);
-      Position end = Position.create(row, col);
-
-      String code = docDisplay_.getCode(start, end);
-      setLastExecuted(start, end);
-      events_.fireEvent(new SendToConsoleEvent(code, true));
+      executeRange(Range.fromPoints(Position.create(0, 0),
+                                    Position.create(row, col)));
    }
    
    @Handler
@@ -1547,9 +1549,7 @@ public class TextEditingTarget implements EditingTarget
       Position start = Position.create(startRow, startColumn);
       Position end = Position.create(endRow, endColumn);
 
-      String code = docDisplay_.getCode(start, end);
-      setLastExecuted(start, end);
-      events_.fireEvent(new SendToConsoleEvent(code, true));
+      executeRange(Range.fromPoints(start, end));
    }
 
    @Handler
@@ -1571,9 +1571,7 @@ public class TextEditingTarget implements EditingTarget
       Position start = currentFunction.getPreamble();
       Position end = currentFunction.getEnd();
 
-      String code = docDisplay_.getCode(start, end);
-      setLastExecuted(start, end);
-      events_.fireEvent(new SendToConsoleEvent(code.trim(), true));
+      executeRange(Range.fromPoints(start, end));
    }
    
    @Handler
@@ -1692,29 +1690,20 @@ public class TextEditingTarget implements EditingTarget
    }
 
 
-   private static String stangle(String sweaveStr)
+   private String stangle(String sweaveStr)
    {
+      ScopeList chunks = new ScopeList(docDisplay_);
+      chunks.selectAll(ScopeList.CHUNK);
+
       StringBuilder code = new StringBuilder();
-      Pattern pStart = Pattern.create("^<<.*>>=", "mg");
-      Pattern pNewLine = Pattern.create("\n");
-      Pattern pEnd = Pattern.create("\n@");
-      int pos = 0;
-      Match mStart;
-      while (null != (mStart = pStart.match(sweaveStr, pos)))
+      for (Scope chunk : chunks)
       {
-         Match mNewLine = pNewLine.match(sweaveStr, mStart.getIndex());
-         if (mNewLine == null)
-            break;
-
-         Match mEnd = pEnd.match(sweaveStr, mNewLine.getIndex() + 1);
-         if (mEnd == null)
-            break;
-
-         code.append(sweaveStr, mNewLine.getIndex() + 1, mEnd.getIndex() + 1);
-         pos = mEnd.getIndex() + 2;
+         String text = scopeHelper_.getSweaveChunkText(chunk);
+         code.append(text);
+         if (text.length() > 0 && text.charAt(text.length()-1) != '\n')
+            code.append('\n');
       }
-      sweaveStr = code.toString();
-      return sweaveStr;
+      return code.toString();
    }
 
    @Handler
