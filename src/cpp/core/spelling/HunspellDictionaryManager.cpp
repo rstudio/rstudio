@@ -17,7 +17,6 @@
 
 namespace core {
 namespace spelling {
-namespace hunspell {
 
 namespace {
 
@@ -76,9 +75,9 @@ bool isDictionaryAff(const FilePath& filePath)
           dicPathForAffPath(filePath).exists();
 }
 
-Dictionary fromAffFile(const FilePath& filePath)
+HunspellDictionary fromAffFile(const FilePath& filePath)
 {
-   return Dictionary(filePath);
+   return HunspellDictionary(filePath);
 }
 
 Error listAffFiles(const FilePath& baseDir, std::vector<FilePath>* pAffFiles)
@@ -99,7 +98,8 @@ Error listAffFiles(const FilePath& baseDir, std::vector<FilePath>* pAffFiles)
    return Success();
 }
 
-bool compareByName(const Dictionary& dict1, const Dictionary& dict2)
+bool compareByName(const HunspellDictionary& dict1,
+                   const HunspellDictionary& dict2)
 {
    return dict1.name() < dict2.name();
 }
@@ -107,7 +107,7 @@ bool compareByName(const Dictionary& dict1, const Dictionary& dict2)
 } // anonymous namespace
 
 
-std::string Dictionary::name() const
+std::string HunspellDictionary::name() const
 {
    std::string dictId = id();
    for (KnownDictionary* dict = s_knownDictionaries; dict->name; ++dict)
@@ -119,13 +119,13 @@ std::string Dictionary::name() const
    return dictId;
 }
 
-FilePath Dictionary::dicPath() const
+FilePath HunspellDictionary::dicPath() const
 {
    return dicPathForAffPath(affPath_);
 }
 
-Error DictionaryManager::availableLanguages(
-                        std::vector<Dictionary>* pDictionaries) const
+Error HunspellDictionaryManager::availableLanguages(
+              std::vector<HunspellDictionary>* pDictionaries) const
 {
    // first try the user languages dir
    std::vector<FilePath> affFiles;
@@ -165,7 +165,7 @@ Error DictionaryManager::availableLanguages(
    return Success();
 }
 
-Dictionary DictionaryManager::dictionaryForLanguageId(
+HunspellDictionary HunspellDictionaryManager::dictionaryForLanguageId(
                                        const std::string& langId) const
 {
    std::string affFile = langId + ".aff";
@@ -173,23 +173,22 @@ Dictionary DictionaryManager::dictionaryForLanguageId(
    // first check to see whether it exists in the user languages directory
    FilePath userLangsAff = userLanguagesDir().complete(affFile);
    if (userLangsAff.exists())
-      return Dictionary(userLangsAff);
+      return HunspellDictionary(userLangsAff);
    else if (allLanguagesInstalled())
-      return Dictionary(allLanguagesDir().complete(affFile));
+      return HunspellDictionary(allLanguagesDir().complete(affFile));
    else
-      return Dictionary(coreLanguagesDir_.complete(affFile));
+      return HunspellDictionary(coreLanguagesDir_.complete(affFile));
 }
 
-FilePath DictionaryManager::allLanguagesDir() const
+FilePath HunspellDictionaryManager::allLanguagesDir() const
 {
    return userDir_.childPath("languages-system");
 }
 
-FilePath DictionaryManager::userLanguagesDir() const
+FilePath HunspellDictionaryManager::userLanguagesDir() const
 {
    return userDir_.childPath("languages-user");
 }
 
-} // namespace hunspell
 } // namespace spelling
 } // namespace core

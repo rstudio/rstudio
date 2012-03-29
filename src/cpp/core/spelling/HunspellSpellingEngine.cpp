@@ -1,5 +1,5 @@
 /*
- * HunspellSpellChecker.cpp
+ * HunspellSpellingEngine.cpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -11,7 +11,7 @@
  *
  */
 
-#include <core/spelling/SpellChecker.hpp>
+#include <core/spelling/HunspellSpellingEngine.hpp>
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
@@ -20,6 +20,8 @@
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
+
+#include <core/spelling/HunspellDictionaryManager.hpp>
 
 // Including the hunspell headers caused compilation errors for Windows 64-bit
 // builds. The trouble seemd to be a 'near' macro defined somewhere in the
@@ -102,6 +104,43 @@ std::string exampleWordForEnglishAffix(const std::string& affix)
       return std::string();
 }
 
+class SpellChecker : boost::noncopyable
+{
+public:
+   virtual ~SpellChecker() {}
+   virtual Error checkSpelling(const std::string& word, bool *pCorrect) = 0;
+   virtual Error suggestionList(const std::string& word,
+                                std::vector<std::string>* pSugs) = 0;
+   virtual Error addWord(const std::string& word, bool *pAdded) = 0;
+   virtual Error removeWord(const std::string& word, bool *pRemoved) = 0;
+};
+
+class NoSpellChecker : public SpellChecker
+{
+public:
+   Error checkSpelling(const std::string& word, bool *pCorrect)
+   {
+      *pCorrect = true;
+      return Success();
+   }
+
+   Error suggestionList(const std::string& word,
+                        std::vector<std::string>* pSugs)
+   {
+      return Success();
+   }
+
+   Error addWord(const std::string& word, bool *pAdded)
+   {
+      return Success();
+   }
+
+   Error removeWord(const std::string& word, bool *pRemoved)
+   {
+      return Success();
+   }
+};
+
 class HunspellSpellChecker : public SpellChecker
 {
 public:
@@ -120,19 +159,20 @@ public:
       }
    }
 
-   Error initialize(const FilePath& affPath,
-                    const FilePath& dicPath,
+   Error initialize(const HunspellDictionary& dictionary,
                     const IconvstrFunction& iconvstrFunc)
    {
       // validate that dictionaries exist
-      if (!affPath.exists())
-         return core::fileNotFoundError(affPath, ERROR_LOCATION);
-      if (!dicPath.exists())
-         return core::fileNotFoundError(dicPath, ERROR_LOCATION);
+      if (!dictionary.affPath().exists())
+         return core::fileNotFoundError(dictionary.affPath(), ERROR_LOCATION);
+      if (!dictionary.dicPath().exists())
+         return core::fileNotFoundError(dictionary.dicPath(), ERROR_LOCATION);
 
       // convert paths to system encoding before sending to external API
-      std::string systemAffPath = string_utils::utf8ToSystem(affPath.absolutePath());
-      std::string systemDicPath = string_utils::utf8ToSystem(dicPath.absolutePath());
+      std::string systemAffPath = string_utils::utf8ToSystem(
+                                    dictionary.affPath().absolutePath());
+      std::string systemDicPath = string_utils::utf8ToSystem(
+                                    dictionary.dicPath().absolutePath());
 
       // initialize hunspell, iconvstrFunc_, and encoding_
       pHunspell_.reset(new Hunspell(systemAffPath.c_str(),
@@ -141,6 +181,7 @@ public:
       encoding_ = pHunspell_->get_dic_encoding();
 
       // add words from dic_delta if available
+      FilePath dicPath = dictionary.dicPath();
       FilePath dicDeltaPath = dicPath.parent().childPath(
                                                 dicPath.stem() + ".dic_delta");
       if (dicDeltaPath.exists())
@@ -243,32 +284,6 @@ public:
       return Success();
    }
 
-   Error analyzeWord(const std::string& word, std::vector<std::string>* pResult)
-   {
-      std::string encoded;
-      Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
-      if (error)
-         return error;
-
-      char ** wlst;
-      int ns = pHunspell_->analyze(&wlst,encoded.c_str());
-      copyAndFreeHunspellVector(pResult,wlst,ns);
-      return Success();
-   }
-
-   Error stemWord(const std::string& word, std::vector<std::string>* pResult)
-   {
-      std::string encoded;
-      Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
-      if (error)
-         return error;
-
-      char ** wlst;
-      int ns = pHunspell_->stem(&wlst,encoded.c_str());
-      copyAndFreeHunspellVector(pResult,wlst,ns);
-      return Success();
-   }
-
    Error addWord(const std::string& word, bool *pAdded)
    {
       std::string encoded;
@@ -353,23 +368,80 @@ private:
 
 } // anonymous namespace
 
-core::Error createHunspell(const FilePath& languageDicPath,
-                           boost::shared_ptr<SpellChecker>* ppHunspell,
-                           const IconvstrFunction& iconvstrFunc)
+struct HunspellSpellingEngine::Impl
 {
-   // create the hunspell engine
-   boost::shared_ptr<HunspellSpellChecker> pNew(new HunspellSpellChecker());
+   Impl(const HunspellDictionaryManager& dictionaryManager,
+        const IconvstrFunction& iconvstrFunction)
+      : dictManager_(dictionaryManager),
+        iconvstrFunction_(iconvstrFunction)
+   {
+   }
 
-   // initialize it
-   FilePath dicPath = languageDicPath;
-   FilePath affPath = dicPath.parent().childPath(dicPath.stem() + ".aff");
-   Error error = pNew->initialize(affPath, dicPath, iconvstrFunc);
-   if (error)
-      return error;
+   SpellChecker& spellChecker(const std::string& langId)
+   {
+      if (!pSpellChecker_ || (langId != currentLangId_))
+      {
+         HunspellDictionary dict = dictManager_.dictionaryForLanguageId(langId);
+         if (!dict.empty())
+         {
+            HunspellSpellChecker* pHunspell = new HunspellSpellChecker();
+            pSpellChecker_.reset(pHunspell);
 
-   // return
-   *ppHunspell = boost::shared_static_cast<SpellChecker>(pNew);
-   return Success();
+            Error error = pHunspell->initialize(dict, iconvstrFunction_);
+            if (!error)
+               currentLangId_ = langId;
+            else
+               pSpellChecker_.reset(new NoSpellChecker());
+         }
+         else
+         {
+            pSpellChecker_.reset(new NoSpellChecker());
+         }
+      }
+      return *pSpellChecker_;
+   }
+
+private:
+   HunspellDictionaryManager dictManager_;
+   IconvstrFunction iconvstrFunction_;
+   boost::shared_ptr<SpellChecker> pSpellChecker_;
+   std::string currentLangId_;
+};
+
+
+HunspellSpellingEngine::HunspellSpellingEngine(
+                           const HunspellDictionaryManager& dictionaryManager,
+                           const IconvstrFunction& iconvstrFunction)
+   : pImpl_(new Impl(dictionaryManager, iconvstrFunction))
+{
+}
+
+Error HunspellSpellingEngine::checkSpelling(const std::string& langId,
+                                            const std::string& word,
+                                            bool *pCorrect)
+{
+   return pImpl_->spellChecker(langId).checkSpelling(word, pCorrect);
+}
+
+Error HunspellSpellingEngine::suggestionList(const std::string& langId,
+                                             const std::string& word,
+                                             std::vector<std::string>* pSugs)
+{
+   return pImpl_->spellChecker(langId).suggestionList(word, pSugs);
+}
+
+Error HunspellSpellingEngine::addWord(const std::string& langId,
+                                      const std::string& word,
+                                      bool* pAdded)
+{
+   return pImpl_->spellChecker(langId).addWord(word, pAdded);
+}
+
+Error HunspellSpellingEngine::removeWord(const std::string& langId,
+                                         const std::string& word,
+                                         bool *pRemoved)
+{
+   return pImpl_->spellChecker(langId).removeWord(word, pRemoved);
 }
 
 

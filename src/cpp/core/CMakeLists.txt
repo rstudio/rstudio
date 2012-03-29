@@ -67,7 +67,7 @@ set (CORE_SOURCE_FILES
    r_util/RSourceIndex.cpp
    r_util/RTokenizerTests.cpp
    spelling/HunspellDictionaryManager.cpp
-   spelling/HunspellSpellChecker.cpp
+   spelling/HunspellSpellingEngine.cpp
    system/Environment.cpp
    system/Process.cpp
    system/ShellUtils.cpp
@@ -151,7 +151,7 @@ if (UNIX)
 
    if(APPLE)
       set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
-         spelling/MacSpellChecker.mm
+         spelling/MacSpellingEngine.mm
          system/file_monitor/MacFileMonitor.cpp
       )
    else()

@@ -24,21 +24,20 @@ namespace core {
 class Error;
 
 namespace spelling {
-namespace hunspell {
 
-class Dictionary
+class HunspellDictionary
 {
 public:
-   Dictionary()
+   HunspellDictionary()
    {
    }
 
-   explicit Dictionary(const FilePath& affPath)
+   explicit HunspellDictionary(const FilePath& affPath)
       : affPath_(affPath)
    {
    }
 
-   ~Dictionary()
+   ~HunspellDictionary()
    {
    }
 
@@ -46,7 +45,7 @@ public:
 
    bool empty() const { return affPath_.empty(); }
 
-   bool operator==(const Dictionary& other) const
+   bool operator==(const HunspellDictionary& other) const
    {
       return affPath_ == other.affPath_;
    }
@@ -61,16 +60,16 @@ private:
    FilePath affPath_;
 };
 
-class DictionaryManager
+class HunspellDictionaryManager
 {
 public:
-   DictionaryManager(const FilePath& coreLanguagesDir,
-                     const FilePath& userDir)
+   HunspellDictionaryManager(const FilePath& coreLanguagesDir,
+                             const FilePath& userDir)
       : coreLanguagesDir_(coreLanguagesDir), userDir_(userDir)
    {
    }
 
-   ~DictionaryManager()
+   ~HunspellDictionaryManager()
    {
    }
 
@@ -78,9 +77,10 @@ public:
 
    bool allLanguagesInstalled() const { return allLanguagesDir().exists(); }
 
-   core::Error availableLanguages(std::vector<Dictionary>* pDictionaries) const;
+   core::Error availableLanguages(
+                     std::vector<HunspellDictionary>* pDictionaries) const;
 
-   Dictionary dictionaryForLanguageId(const std::string& langId) const;
+   HunspellDictionary dictionaryForLanguageId(const std::string& langId) const;
 
 private:
    core::FilePath allLanguagesDir() const;
@@ -91,8 +91,6 @@ private:
    core::FilePath userDir_;
 };
 
-
-} // namespace hunspell
 } // namespace spelling
 } // namespace core 
 

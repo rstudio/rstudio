@@ -18,8 +18,7 @@
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 
-#include <core/spelling/SpellChecker.hpp>
-#include <core/spelling/HunspellDictionaryManager.hpp>
+#include <core/spelling/HunspellSpellingEngine.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
@@ -36,81 +35,8 @@ namespace spelling {
 
 namespace {
 
-class SpellingEngine : boost::noncopyable
-{
-private:
-   friend SpellingEngine& spellingEngine();
-   SpellingEngine()
-      : dictManager_(
-            session::options().hunspellDictionariesPath(),
-            module_context::userScratchPath().complete("dictionaries"))
-   {
-   }
-
-public:
-   core::spelling::hunspell::DictionaryManager& dictionaryManager()
-   {
-      return dictManager_;
-   }
-
-   Error checkSpelling(const std::string& langId,
-                       const std::string& word,
-                       bool *pCorrect)
-   {
-      return spellChecker(langId).checkSpelling(word, pCorrect);
-   }
-
-   Error suggestionList(const std::string& langId,
-                        const std::string& word,
-                        std::vector<std::string>* pSugs)
-   {
-      return spellChecker(langId).suggestionList(word, pSugs);
-   }
-
-   Error addWord(const std::string& langId,
-                 const std::string& word,
-                 bool* pAdded)
-   {
-      return spellChecker(langId).addWord(word, pAdded);
-   }
-
-private:
-   core::spelling::SpellChecker& spellChecker(const std::string& langId)
-   {
-      if (!pSpellChecker_ || (langId != currentLangId_))
-      {
-         core::spelling::hunspell::Dictionary dict =
-                           dictManager_.dictionaryForLanguageId(langId);
-         if (!dict.empty())
-         {
-            Error error = core::spelling::createHunspell(dict.dicPath(),
-                                                         &pSpellChecker_,
-                                                         &r::util::iconvstr);
-            if (!error)
-               currentLangId_ = langId;
-            else
-               pSpellChecker_.reset(new core::spelling::NoSpellChecker());
-         }
-         else
-         {
-            pSpellChecker_.reset(new core::spelling::NoSpellChecker());
-         }
-      }
-      return *pSpellChecker_;
-   }
-
-
-private:
-   core::spelling::hunspell::DictionaryManager dictManager_;
-   boost::shared_ptr<core::spelling::SpellChecker> pSpellChecker_;
-   std::string currentLangId_;
-};
-
-SpellingEngine& spellingEngine()
-{
-   static SpellingEngine instance;
-   return instance;
-}
+// underlying spelling engine (may be hunspell or osx native)
+boost::scoped_ptr<core::spelling::SpellingEngine> s_pSpellingEngine;
 
 // R function for testing & debugging
 SEXP rs_checkSpelling(SEXP wordSEXP)
@@ -118,7 +44,7 @@ SEXP rs_checkSpelling(SEXP wordSEXP)
    bool isCorrect;
    std::string word = r::sexp::asString(wordSEXP);
 
-   Error error = spellingEngine().checkSpelling("en_US", word, &isCorrect);
+   Error error = s_pSpellingEngine->checkSpelling("en_US", word, &isCorrect);
 
    // We'll return true here so as not to tie up the front end.
    if (error)
@@ -131,7 +57,7 @@ SEXP rs_checkSpelling(SEXP wordSEXP)
    return r::sexp::create(isCorrect, &rProtect);
 }
 
-json::Object dictionaryAsJson(const core::spelling::hunspell::Dictionary& dict)
+json::Object dictionaryAsJson(const core::spelling::HunspellDictionary& dict)
 {
    json::Object dictJson;
    dictJson["id"] = dict.id();
@@ -160,7 +86,7 @@ Error checkSpelling(const json::JsonRpcRequest& request,
       return error;
 
    bool isCorrect;
-   error = spellingEngine().checkSpelling(langId, word, &isCorrect);
+   error = s_pSpellingEngine->checkSpelling(langId, word, &isCorrect);
    if (error)
       return error;
 
@@ -178,7 +104,7 @@ Error suggestionList(const json::JsonRpcRequest& request,
       return error;
 
    std::vector<std::string> sugs;
-   error = spellingEngine().suggestionList(langId, word, &sugs);
+   error = s_pSpellingEngine->suggestionList(langId, word, &sugs);
    if (error)
       return error;
 
@@ -201,7 +127,7 @@ Error addToDictionary(const json::JsonRpcRequest& request,
       return error;
 
    bool added;
-   error = spellingEngine().addWord(langId, word, &added);
+   error = s_pSpellingEngine->addWord(langId, word, &added);
    if (error)
       return error;
 
@@ -239,14 +165,14 @@ Error installAllDictionaries(const json::JsonRpcRequest& request,
 
 core::json::Object spellingPrefsContextAsJson()
 {
-   using namespace core::spelling::hunspell;
+   using namespace core::spelling;
 
    core::json::Object contextJson;
 
-   DictionaryManager dictManager(options().hunspellDictionariesPath(),
-                                 userDictionariesDir());
+   HunspellDictionaryManager dictManager(options().hunspellDictionariesPath(),
+                                         userDictionariesDir());
 
-   std::vector<Dictionary> dictionaries;
+   std::vector<HunspellDictionary> dictionaries;
    Error error = dictManager.availableLanguages(&dictionaries);
    if (error)
    {
@@ -276,6 +202,14 @@ Error initialize()
    methodDef.fun = (DL_FUNC) rs_checkSpelling ;
    methodDef.numArgs = 1;
    r::routines::addCallMethod(methodDef);
+
+   // initialize spelling engine
+   using namespace core::spelling;
+   HunspellDictionaryManager dictManager(
+                           session::options().hunspellDictionariesPath(),
+                           userDictionariesDir());
+   s_pSpellingEngine.reset(new HunspellSpellingEngine(dictManager,
+                                                      &r::util::iconvstr));
 
    // register rpc methods
    using boost::bind;
