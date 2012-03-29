@@ -45,8 +45,8 @@ public class SpellingLanguageSelectWidget extends SelectWidget
             {
                setSelectedLanguage(currentLangId_);
                String progress = allLanguagesInstalled_ ?
-                                    "Updating dictionaries..." :
-                                    "Installing additional languages...";
+                                    "Downloading dictionaries..." :
+                                    "Downloading additional languages...";
                onInstallLanguages.execute(progress);
             }
             else
