@@ -41,6 +41,18 @@ define('mode/r_scope_tree', function(require, exports, module) {
 
    (function() {
 
+      this.onSectionHead = function(sectionLabel, sectionPos) {
+         var existingScopes = this.getActiveScopes(sectionPos);
+         if (existingScopes.length == 2 && existingScopes[1].isSection()) {
+            this.$root.closeScope(sectionPos, ScopeNode.TYPE_SECTION);
+         }
+         else if (existingScopes.length != 1)
+            return;
+
+         this.$root.addNode(new ScopeNode(sectionLabel, sectionPos, sectionPos,
+                                          ScopeNode.TYPE_SECTION));
+      };
+
       this.onChunkStart = function(chunkLabel, label, chunkStartPos, chunkPos) {
          // Starting a chunk means closing the previous chunk, if any
          var prev = this.$root.closeScope(chunkStartPos, ScopeNode.TYPE_CHUNK);
@@ -89,7 +101,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
          return closed;
       };
 
-      this.findScope = function(pos) {
+      this.getActiveScopes = function(pos) {
          return this.$root.findNode(pos);
       };
 
@@ -144,12 +156,14 @@ define('mode/r_scope_tree', function(require, exports, module) {
    ScopeNode.TYPE_ROOT = 1; // document root
    ScopeNode.TYPE_BRACE = 2; // curly brace
    ScopeNode.TYPE_CHUNK = 3; // Sweave chunk
+   ScopeNode.TYPE_SECTION = 4; // Section header
 
    (function() {
 
       this.isRoot = function() { return this.scopeType == ScopeNode.TYPE_ROOT; };
       this.isBrace = function() { return this.scopeType == ScopeNode.TYPE_BRACE; };
       this.isChunk = function() { return this.scopeType == ScopeNode.TYPE_CHUNK; };
+      this.isSection = function() { return this.scopeType == ScopeNode.TYPE_SECTION; };
 
       this.addNode = function(node) {
          assert(!node.end, "New node is already closed");

@@ -278,7 +278,18 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
          //console.log("                                 Token: " + tokenCursor.currentValue() + " [" + tokenCursor.currentPosition().row + "x" + tokenCursor.currentPosition().column + "]");
 
          var tokenType = tokenCursor.currentToken().type;
-         if (/\bcodebegin\b/.test(tokenType))
+         if (/\bsectionhead\b/.test(tokenType))
+         {
+            var sectionHeadMatch = /^#+'?[-=#\s]*(.*?)\s*[-=#]+\s*$/.exec(
+                  tokenCursor.currentValue());
+
+            var label = "Section: " + sectionHeadMatch[1];
+            if (label.length > 50)
+               label = label.substring(0, 50) + "...";
+
+            this.$scopes.onSectionHead(label, tokenCursor.currentPosition());
+         }
+         else if (/\bcodebegin\b/.test(tokenType))
          {
             var chunkStartPos = tokenCursor.currentPosition();
             var chunkPos = {row: chunkStartPos.row + 1, column: 0};
@@ -348,6 +359,9 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
 
       var rowTokens = this.$tokens[row];
 
+      if (rowTokens.length == 1 && /\bsectionhead\b/.test(rowTokens[0].type))
+         return rowTokens[0];
+
       var depth = 0;
       var unmatchedOpen = null;
       var unmatchedClose = null;
@@ -404,6 +418,8 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
          return "start";
       else if (/\bcodeend\b/.test(foldToken.type))
          return "end";
+      else if (/\bsectionhead\b/.test(foldToken.type))
+         return "start";
 
       return "";
    };
@@ -457,6 +473,25 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
          }
          return;
       }
+      else if (/\bsectionhead\b/.test(foldToken.type)) {
+         var match = /([-=#])\1+\s*$/.exec(foldToken.value);
+         if (!match)
+            return;  // this would be surprising
+
+         pos.column += match.index - 1; // Not actually sure why -1 is needed
+         var tokenIterator3 = new TokenIterator(session, row, 0);
+         var lastRow = row;
+         for (var tok3; tok3 = tokenIterator3.stepForward(); ) {
+            if (/\bsectionhead\b/.test(tok3.type)) {
+               break;
+            }
+            lastRow = tokenIterator3.getCurrentTokenRow();
+         }
+
+         return Range.fromPoints(
+               pos,
+               {row: lastRow, column: session.getLine(lastRow).length});
+      }
 
       return;
    };
@@ -470,7 +505,7 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
          return "";
       this.$buildScopeTreeUpToRow(position.row);
 
-      var scopePath = this.$scopes.findScope(position);
+      var scopePath = this.$scopes.getActiveScopes(position);
       if (scopePath)
       {
          for (var i = scopePath.length-1; i >= 0; i--) {
@@ -1007,6 +1042,9 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
       // as TeX, but for the purposes of the code model should be invisible.
 
       if (/\bcode(?:begin|end)\b/.test(token.type))
+         return false;
+
+      if (/\bsectionhead\b/.test(token.type))
          return false;
 
       return /^\s*$/.test(token.value) ||

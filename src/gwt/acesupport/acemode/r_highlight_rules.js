@@ -44,6 +44,11 @@ define("mode/r_highlight_rules", function(require, exports, module)
          "start" : [
             {
                // Roxygen
+               token : "comment.sectionhead",
+               regex : "#+(?!').*(?:----|====|####)\\s*$"
+            },
+            {
+               // Roxygen
                token : "comment",
                regex : "#+'",
                next : "rd-start"

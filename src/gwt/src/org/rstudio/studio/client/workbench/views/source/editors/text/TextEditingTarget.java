@@ -660,6 +660,8 @@ public class TextEditingTarget implements EditingTarget
                                   (fileType_.isRnw() && function.isTopLevel());
                      if (useChunk)
                         statusBar_.setScopeType(StatusBar.SCOPE_CHUNK);
+                     else if (function.isSection())
+                        statusBar_.setScopeType(StatusBar.SCOPE_SECTION);
                      else
                         statusBar_.setScopeType(StatusBar.SCOPE_FUNCTION);
                   }

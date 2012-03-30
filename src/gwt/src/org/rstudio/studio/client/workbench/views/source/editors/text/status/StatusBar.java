@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
 public interface StatusBar
 {
+   public static final int SCOPE_SECTION = 3;
    public static final int SCOPE_CHUNK = 2;
    public static final int SCOPE_FUNCTION = 1;
    

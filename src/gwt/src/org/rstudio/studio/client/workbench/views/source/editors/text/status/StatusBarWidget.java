@@ -87,6 +87,8 @@ public class StatusBarWidget extends Composite
          scopeIcon_.setResource(RES.function());
       else if (type == StatusBar.SCOPE_CHUNK)
          scopeIcon_.setResource(RES.chunk());
+      else if (type == StatusBar.SCOPE_SECTION)
+         scopeIcon_.setResource(RES.section());
    }
 
    @UiField

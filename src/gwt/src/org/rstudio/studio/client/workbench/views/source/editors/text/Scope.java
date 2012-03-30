@@ -37,6 +37,10 @@ public class Scope extends JavaScriptObject
       return this.isChunk();
    }-*/;
 
+   public native final boolean isSection() /*-{
+      return this.isSection();
+   }-*/;
+
    public native final Position getPreamble() /*-{
       return this.preamble;
    }-*/;
