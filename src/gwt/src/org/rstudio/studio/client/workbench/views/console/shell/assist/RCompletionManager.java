@@ -550,6 +550,7 @@ public class RCompletionManager implements CompletionManager
                selection_.getStart().movePosition(-token.length(), true));
 
          token_ = token ;
+         suggestOnAccept_ = completions.suggestOnAccept;
 
          if (results.length == 1
              && canAutoAccept_
@@ -609,6 +610,18 @@ public class RCompletionManager implements CompletionManager
          }
 
          applyValue(value);
+
+         if (suggestOnAccept_)
+         {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  beginSuggest(true, true);
+               }
+            });
+         }
       }
 
       private void applyValue(final String value)
@@ -637,6 +650,7 @@ public class RCompletionManager implements CompletionManager
       private InputEditorSelection selection_ ;
       private final boolean canAutoAccept_;
       private HelpStrategy helpStrategy_ ;
+      private boolean suggestOnAccept_;
    }
    
    private GlobalDisplay globalDisplay_;

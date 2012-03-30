@@ -101,7 +101,8 @@ public class CompletionRequester
             CompletionResult result = new CompletionResult(
                   response.getToken(),
                   newComp,
-                  response.getGuessedFunctionName());
+                  response.getGuessedFunctionName(),
+                  response.getSuggestOnAccept());
 
             cachedResult_ = response.isCacheable() ? result : null;
 
@@ -149,6 +150,11 @@ public class CompletionRequester
             // guaranteed to narrow the candidate list (in particular
             // true/false).
             response.setCacheable(false);
+            if (result.completions.length() > 0 &&
+                result.completions.get(0).endsWith("="))
+            {
+               response.setSuggestOnAccept(true);
+            }
             requestCallback.onResponseReceived(response);
          }
 
@@ -176,22 +182,26 @@ public class CompletionRequester
          if (qname.name.startsWith(token))
             newCompletions.add(qname) ;
       
-      return new CompletionResult(token, newCompletions, null) ;
+      return new CompletionResult(token, newCompletions, null,
+                                  cachedResult_.suggestOnAccept) ;
    }
 
    public static class CompletionResult
    {
       public CompletionResult(String token, ArrayList<QualifiedName> completions,
-                              String guessedFunctionName)
+                              String guessedFunctionName,
+                              boolean suggestOnAccept)
       {
          this.token = token ;
          this.completions = completions ;
          this.guessedFunctionName = guessedFunctionName ;
+         this.suggestOnAccept = suggestOnAccept ;
       }
       
       public final String token ;
       public final ArrayList<QualifiedName> completions ;
       public final String guessedFunctionName ;
+      public final boolean suggestOnAccept ;
    }
    
    public static class QualifiedName implements Comparable<QualifiedName>

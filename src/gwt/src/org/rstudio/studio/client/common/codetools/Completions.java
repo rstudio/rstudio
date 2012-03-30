@@ -66,4 +66,12 @@ public class Completions extends JavaScriptObject
    public final native boolean isCacheable() /*-{
       return !this.nocache;
    }-*/;
+
+   public final native void setSuggestOnAccept(boolean suggestOnAccept) /*-{
+      this.suggestOnAccept = suggestOnAccept;
+   }-*/;
+
+   public final native boolean getSuggestOnAccept() /*-{
+      return !!this.suggestOnAccept;
+   }-*/;
 }

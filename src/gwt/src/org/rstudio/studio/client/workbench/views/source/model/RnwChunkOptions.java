@@ -102,7 +102,7 @@ public class RnwChunkOptions extends JavaScriptObject
             for (String option : this.getOptions())
             {
                if (option.startsWith(token))
-                  completions.push(option);
+                  completions.push(option + "=");
             }
          }
          else
@@ -156,7 +156,7 @@ public class RnwChunkOptions extends JavaScriptObject
             {
                for (String optionName : this.getOptions())
                   if (optionName.startsWith(name))
-                     completions.push(optionName);
+                     completions.push(optionName + "=");
             }
          }
       }
