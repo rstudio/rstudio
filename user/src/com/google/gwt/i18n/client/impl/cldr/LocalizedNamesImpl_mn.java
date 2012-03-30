@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 5806 $
+//  date=$Date: 2011-05-02 14:42:02 -0400 (Mon, 02 May 2011) $
+//  type=root
+
 
 /**
  * Localized names for the "mn" locale.
@@ -35,7 +40,6 @@ public class LocalizedNamesImpl_mn extends LocalizedNamesImpl {
         "AI",
         "AL",
         "AM",
-        "AN",
         "AO",
         "AQ",
         "AR",
@@ -58,6 +62,7 @@ public class LocalizedNamesImpl_mn extends LocalizedNamesImpl {
         "BM",
         "BN",
         "BO",
+        "BQ",
         "BS",
         "BT",
         "BV",
@@ -80,6 +85,7 @@ public class LocalizedNamesImpl_mn extends LocalizedNamesImpl {
         "CR",
         "CU",
         "CV",
+        "CW",
         "CX",
         "CY",
         "CZ",
@@ -232,8 +238,10 @@ public class LocalizedNamesImpl_mn extends LocalizedNamesImpl {
         "SN",
         "SO",
         "SR",
+        "SS",
         "ST",
         "SV",
+        "SX",
         "SY",
         "SZ",
         "TA",

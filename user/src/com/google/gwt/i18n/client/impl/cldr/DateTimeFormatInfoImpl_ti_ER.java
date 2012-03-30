@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6459 $
+//  date=$Date: 2012-01-26 18:05:48 -0500 (Thu, 26 Jan 2012) $
+//  type=root
 
 /**
  * Implementation of DateTimeFormatInfo for the "ti_ER" locale.
@@ -25,6 +29,11 @@ public class DateTimeFormatInfoImpl_ti_ER extends DateTimeFormatInfoImpl_ti {
   @Override
   public String dateFormatFull() {
     return "EEEE፡ dd MMMM መዓልቲ y G";
+  }
+
+  @Override
+  public int firstDayOfTheWeek() {
+    return 1;
   }
 
   @Override

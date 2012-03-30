@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
 
 /**
  * Implementation of DateTimeFormatInfo for the "kea" locale.
@@ -32,17 +36,17 @@ public class DateTimeFormatInfoImpl_kea extends DateTimeFormatInfoImpl {
 
   @Override
   public String dateFormatFull() {
-    return "EEEE, d 'de' MMMM 'de' y";
+    return "EEEE, d 'di' MMMM 'di' y";
   }
 
   @Override
   public String dateFormatLong() {
-    return "d 'de' MMMM 'de' y";
+    return "d 'di' MMMM 'di' y";
   }
 
   @Override
   public String dateFormatMedium() {
-    return "d 'de' MMM 'de' y";
+    return "d 'di' MMM 'di' y";
   }
 
   @Override
@@ -73,12 +77,12 @@ public class DateTimeFormatInfoImpl_kea extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatMonthFullDay() {
-    return "d MMMM";
+    return "d 'di' MMMM";
   }
 
   @Override
   public String formatMonthFullWeekdayDay() {
-    return "EEEE, d MMMM";
+    return "EEEE, d 'di' MMMM";
   }
 
   @Override
@@ -88,22 +92,22 @@ public class DateTimeFormatInfoImpl_kea extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthAbbrev() {
-    return "MMM 'de' y";
+    return "MMM 'di' y";
   }
 
   @Override
   public String formatYearMonthAbbrevDay() {
-    return "d 'de' MMM 'de' y";
+    return "d 'di' MMM 'di' y";
   }
 
   @Override
   public String formatYearMonthFull() {
-    return "MMMM 'de' y";
+    return "MMMM 'di' y";
   }
 
   @Override
   public String formatYearMonthFullDay() {
-    return "d 'de' MMMM 'de' y";
+    return "d 'di' MMMM 'di' y";
   }
 
   @Override
@@ -112,13 +116,18 @@ public class DateTimeFormatInfoImpl_kea extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String formatYearMonthNumDay() {
-    return "d/M/y";
+  public String formatYearMonthWeekdayDay() {
+    return "EEE, d 'di' MMM 'di' y";
   }
 
   @Override
-  public String formatYearMonthWeekdayDay() {
-    return "EEE, d 'de' MMM 'de' y";
+  public String formatYearQuarterFull() {
+    return "QQQQ y";
+  }
+
+  @Override
+  public String formatYearQuarterShort() {
+    return "Q y";
   }
 
   @Override

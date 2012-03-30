@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "kln" locale.
@@ -31,9 +36,11 @@ public class LocalizedNamesImpl_kln extends LocalizedNamesImpl {
         "AQ",
         "AX",
         "BL",
+        "BQ",
         "BV",
         "CC",
         "CP",
+        "CW",
         "CX",
         "DG",
         "EA",
@@ -279,6 +286,8 @@ public class LocalizedNamesImpl_kln extends LocalizedNamesImpl {
         "QO",
         "RS",
         "SJ",
+        "SS",
+        "SX",
         "TA",
         "TF",
         "UM",
@@ -393,7 +402,7 @@ public class LocalizedNamesImpl_kln extends LocalizedNamesImpl {
     namesMap.put("KH", "Emetab Cambodia");
     namesMap.put("KI", "Emetab Kiribati");
     namesMap.put("KM", "Emetab Comoros");
-    namesMap.put("KN", "Emetab Saint Kitts  ak  Nevis");
+    namesMap.put("KN", "Emetab Saint Kitts ak Nevis");
     namesMap.put("KP", "Emetab Korea nebo murot katam");
     namesMap.put("KR", "Emetab korea nebo murot tai");
     namesMap.put("KW", "Emetab Kuwait");
@@ -450,7 +459,7 @@ public class LocalizedNamesImpl_kln extends LocalizedNamesImpl {
     namesMap.put("PH", "Emetab Philippines");
     namesMap.put("PK", "Emetab Pakistan");
     namesMap.put("PL", "Emetab Poland");
-    namesMap.put("PM", "Emetab Peter Ne titil  ak Miquelon");
+    namesMap.put("PM", "Emetab Peter Ne titil ak Miquelon");
     namesMap.put("PN", "Emetab Pitcairn");
     namesMap.put("PR", "Emetab Puerto Rico");
     namesMap.put("PS", "Emetab Palestine");
@@ -480,7 +489,7 @@ public class LocalizedNamesImpl_kln extends LocalizedNamesImpl {
     namesMap.put("SV", "Emetab El Salvador");
     namesMap.put("SY", "Emetab Syria");
     namesMap.put("SZ", "Emetab Swaziland");
-    namesMap.put("TC", "Ikwembeiyotab Turks ak  Caicos");
+    namesMap.put("TC", "Ikwembeiyotab Turks ak Caicos");
     namesMap.put("TD", "Emetab Chad");
     namesMap.put("TG", "Emetab Togo");
     namesMap.put("TH", "Emetab Thailand");
@@ -628,7 +637,7 @@ public class LocalizedNamesImpl_kln extends LocalizedNamesImpl {
         "KH": "Emetab Cambodia",
         "KI": "Emetab Kiribati",
         "KM": "Emetab Comoros",
-        "KN": "Emetab Saint Kitts  ak  Nevis",
+        "KN": "Emetab Saint Kitts ak Nevis",
         "KP": "Emetab Korea nebo murot katam",
         "KR": "Emetab korea nebo murot tai",
         "KW": "Emetab Kuwait",
@@ -685,7 +694,7 @@ public class LocalizedNamesImpl_kln extends LocalizedNamesImpl {
         "PH": "Emetab Philippines",
         "PK": "Emetab Pakistan",
         "PL": "Emetab Poland",
-        "PM": "Emetab Peter Ne titil  ak Miquelon",
+        "PM": "Emetab Peter Ne titil ak Miquelon",
         "PN": "Emetab Pitcairn",
         "PR": "Emetab Puerto Rico",
         "PS": "Emetab Palestine",
@@ -715,7 +724,7 @@ public class LocalizedNamesImpl_kln extends LocalizedNamesImpl {
         "SV": "Emetab El Salvador",
         "SY": "Emetab Syria",
         "SZ": "Emetab Swaziland",
-        "TC": "Ikwembeiyotab Turks ak  Caicos",
+        "TC": "Ikwembeiyotab Turks ak Caicos",
         "TD": "Emetab Chad",
         "TG": "Emetab Togo",
         "TH": "Emetab Thailand",

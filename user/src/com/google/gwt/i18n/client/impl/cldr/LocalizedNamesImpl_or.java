@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "or" locale.
@@ -35,10 +40,14 @@ public class LocalizedNamesImpl_or extends LocalizedNamesImpl {
   public String[] loadSortedRegionCodes() {
     return new String[] {
         "AC",
+        "BQ",
         "CP",
+        "CW",
         "DG",
         "EA",
         "IC",
+        "SS",
+        "SX",
         "TA",
         "AT",
         "AU",
@@ -317,7 +326,6 @@ public class LocalizedNamesImpl_or extends LocalizedNamesImpl {
     namesMap.put("054", "ମେଲାନେସିଆ");
     namesMap.put("057", "ମାଇକ୍ରୋନେସିଆନ୍ ଅଞ୍ଚଳ");
     namesMap.put("061", "ପଲିନେସିଆ");
-    namesMap.put("062", "ଦକ୍ଷିଣ-ମଧ୍ୟ ଏସିଆ");
     namesMap.put("142", "ଏସିଆ");
     namesMap.put("143", "ମଧ୍ୟ ଏସିଆ");
     namesMap.put("145", "ପଶ୍ଚିମ ଏସିଆ");
@@ -325,10 +333,7 @@ public class LocalizedNamesImpl_or extends LocalizedNamesImpl {
     namesMap.put("151", "ପୂର୍ବ ୟୁରୋପ୍");
     namesMap.put("154", "ଉତ୍ତର ୟୁରୋପ୍");
     namesMap.put("155", "ପଶ୍ଚିମ ୟୁରୋପ୍");
-    namesMap.put("172", "କମନୱେଲ୍ଥ ଅଫ୍ ଇଣ୍ଡିପେଣ୍ଡେଣ୍ଟ ଷ୍ଟେଟସ୍");
-    namesMap.put("200", "ଚେକୋସ୍ଲୋଭିଆ");
     namesMap.put("419", "ଲାଟିନ୍ ଆମେରିକା ଏବଂ କାରିବିଆନ୍");
-    namesMap.put("830", "ଚାନେଲ୍ ଆଇଲ୍ୟାଣ୍ଡ");
     namesMap.put("AD", "ଆଣ୍ଡୋରା");
     namesMap.put("AE", "ସଂଯୁକ୍ତ ଆରବ ଏମିରେଟସ୍");
     namesMap.put("AF", "ଆଫାଗାନିସ୍ତାନ୍");
@@ -610,7 +615,6 @@ public class LocalizedNamesImpl_or extends LocalizedNamesImpl {
         "054": "ମେଲାନେସିଆ",
         "057": "ମାଇକ୍ରୋନେସିଆନ୍ ଅଞ୍ଚଳ",
         "061": "ପଲିନେସିଆ",
-        "062": "ଦକ୍ଷିଣ-ମଧ୍ୟ ଏସିଆ",
         "142": "ଏସିଆ",
         "143": "ମଧ୍ୟ ଏସିଆ",
         "145": "ପଶ୍ଚିମ ଏସିଆ",
@@ -618,10 +622,7 @@ public class LocalizedNamesImpl_or extends LocalizedNamesImpl {
         "151": "ପୂର୍ବ ୟୁରୋପ୍",
         "154": "ଉତ୍ତର ୟୁରୋପ୍",
         "155": "ପଶ୍ଚିମ ୟୁରୋପ୍",
-        "172": "କମନୱେଲ୍ଥ ଅଫ୍ ଇଣ୍ଡିପେଣ୍ଡେଣ୍ଟ ଷ୍ଟେଟସ୍",
-        "200": "ଚେକୋସ୍ଲୋଭିଆ",
         "419": "ଲାଟିନ୍ ଆମେରିକା ଏବଂ କାରିବିଆନ୍",
-        "830": "ଚାନେଲ୍ ଆଇଲ୍ୟାଣ୍ଡ",
         "AD": "ଆଣ୍ଡୋରା",
         "AE": "ସଂଯୁକ୍ତ ଆରବ ଏମିରେଟସ୍",
         "AF": "ଆଫାଗାନିସ୍ତାନ୍",

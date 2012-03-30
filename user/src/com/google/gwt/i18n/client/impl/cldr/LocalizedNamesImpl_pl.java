@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "pl" locale.
@@ -64,6 +69,7 @@ public class LocalizedNamesImpl_pl extends LocalizedNamesImpl {
         "BO",
         "BA",
         "BW",
+        "BQ",
         "BR",
         "BN",
         "VG",
@@ -75,6 +81,7 @@ public class LocalizedNamesImpl_pl extends LocalizedNamesImpl {
         "CN",
         "HR",
         "CP",
+        "CW",
         "CY",
         "TD",
         "ME",
@@ -231,11 +238,13 @@ public class LocalizedNamesImpl_pl extends LocalizedNamesImpl {
         "SI",
         "SO",
         "LK",
+        "SS",
         "US",
         "SZ",
         "SD",
         "SR",
         "SJ",
+        "SX",
         "SY",
         "CH",
         "SE",
@@ -317,7 +326,6 @@ public class LocalizedNamesImpl_pl extends LocalizedNamesImpl {
     namesMap.put("054", "Melanezja");
     namesMap.put("057", "Mikronezja");
     namesMap.put("061", "Polinezja");
-    namesMap.put("062", "Azja Południowo-Środkowa");
     namesMap.put("142", "Azja");
     namesMap.put("143", "Azja Środkowa");
     namesMap.put("145", "Azja Zachodnia");
@@ -325,9 +333,7 @@ public class LocalizedNamesImpl_pl extends LocalizedNamesImpl {
     namesMap.put("151", "Europa Wschodnia");
     namesMap.put("154", "Europa Północna");
     namesMap.put("155", "Europa Zachodnia");
-    namesMap.put("172", "Wspólnota Niezależnych Państw");
-    namesMap.put("419", "Ameryka Łacińska i Karaiby");
-    namesMap.put("830", "Wyspy Normandzkie");
+    namesMap.put("419", "Ameryka Łacińska");
     namesMap.put("AC", "Wyspa Wniebowstąpienia");
     namesMap.put("AD", "Andora");
     namesMap.put("AE", "Zjednoczone Emiraty Arabskie");
@@ -543,7 +549,6 @@ public class LocalizedNamesImpl_pl extends LocalizedNamesImpl {
         "054": "Melanezja",
         "057": "Mikronezja",
         "061": "Polinezja",
-        "062": "Azja Południowo-Środkowa",
         "142": "Azja",
         "143": "Azja Środkowa",
         "145": "Azja Zachodnia",
@@ -551,9 +556,7 @@ public class LocalizedNamesImpl_pl extends LocalizedNamesImpl {
         "151": "Europa Wschodnia",
         "154": "Europa Północna",
         "155": "Europa Zachodnia",
-        "172": "Wspólnota Niezależnych Państw",
-        "419": "Ameryka Łacińska i Karaiby",
-        "830": "Wyspy Normandzkie",
+        "419": "Ameryka Łacińska",
         "AC": "Wyspa Wniebowstąpienia",
         "AD": "Andora",
         "AE": "Zjednoczone Emiraty Arabskie",

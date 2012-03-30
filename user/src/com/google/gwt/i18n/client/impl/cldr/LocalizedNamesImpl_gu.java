@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "gu" locale.
@@ -34,6 +39,10 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "AO",
         "AZ",
         "AF",
@@ -317,7 +326,6 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
     namesMap.put("054", "મેલાનેશિયા");
     namesMap.put("057", "માઇક્રોનેશિયન રીજન");
     namesMap.put("061", "પોલિનેશિયા");
-    namesMap.put("062", "દક્ષિણ-મધ્ય એશિયા");
     namesMap.put("142", "એશિયા");
     namesMap.put("143", "મધ્ય એશિયા");
     namesMap.put("145", "પશ્ચિમ એશિયા");
@@ -325,10 +333,7 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
     namesMap.put("151", "પૂર્વી યૂરોપ");
     namesMap.put("154", "ઉતરીય યૂરોપ");
     namesMap.put("155", "પશ્ચિમ યૂરોપ");
-    namesMap.put("172", "સ્વતંત્ર રાષ્ટ્રનુ કોમનવેલ્થ");
-    namesMap.put("200", "ચેકોસ્લવાકિયા");
     namesMap.put("419", "લેટિન અમેરિકા અને કેરીબિયન");
-    namesMap.put("830", "ચેનલ આઇલન્ડ્સ");
     namesMap.put("AC", "એસેન્શન આઇલેન્ડ");
     namesMap.put("AD", "ઍંડોરા");
     namesMap.put("AE", "યુનાઇટેડ અરબ એમિરેટ્સ");
@@ -616,7 +621,6 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
         "054": "મેલાનેશિયા",
         "057": "માઇક્રોનેશિયન રીજન",
         "061": "પોલિનેશિયા",
-        "062": "દક્ષિણ-મધ્ય એશિયા",
         "142": "એશિયા",
         "143": "મધ્ય એશિયા",
         "145": "પશ્ચિમ એશિયા",
@@ -624,10 +628,7 @@ public class LocalizedNamesImpl_gu extends LocalizedNamesImpl {
         "151": "પૂર્વી યૂરોપ",
         "154": "ઉતરીય યૂરોપ",
         "155": "પશ્ચિમ યૂરોપ",
-        "172": "સ્વતંત્ર રાષ્ટ્રનુ કોમનવેલ્થ",
-        "200": "ચેકોસ્લવાકિયા",
         "419": "લેટિન અમેરિકા અને કેરીબિયન",
-        "830": "ચેનલ આઇલન્ડ્સ",
         "AC": "એસેન્શન આઇલેન્ડ",
         "AD": "ઍંડોરા",
         "AE": "યુનાઇટેડ અરબ એમિરેટ્સ",

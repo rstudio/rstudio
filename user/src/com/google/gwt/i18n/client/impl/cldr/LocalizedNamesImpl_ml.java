@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "ml" locale.
@@ -34,6 +39,10 @@ public class LocalizedNamesImpl_ml extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "AO",
         "AQ",
         "AD",
@@ -131,8 +140,9 @@ public class LocalizedNamesImpl_ml extends LocalizedNamesImpl {
         "TK",
         "TO",
         "TG",
-        "TT",
         "TA",
+        "TT",
+        "DG",
         "DK",
         "DM",
         "DO",
@@ -145,7 +155,6 @@ public class LocalizedNamesImpl_ml extends LocalizedNamesImpl {
         "KR",
         "GS",
         "ZA",
-        "DG",
         "NA",
         "NI",
         "NL",
@@ -268,12 +277,12 @@ public class LocalizedNamesImpl_ml extends LocalizedNamesImpl {
         "LC",
         "VC",
         "SH",
+        "EA",
         "KN",
         "SC",
         "RS",
         "CS",
         "CY",
-        "EA",
         "SO",
         "SB",
         "ES",
@@ -317,7 +326,6 @@ public class LocalizedNamesImpl_ml extends LocalizedNamesImpl {
     namesMap.put("054", "മെലനേഷ്യ");
     namesMap.put("057", "മൈക്രോനേഷ്യന്‍ പ്രദേശം");
     namesMap.put("061", "പോളിനേഷ്യ");
-    namesMap.put("062", "ദക്ഷിണ-മദ്ധ്യ ഏഷ്യ");
     namesMap.put("142", "ഏഷ്യ");
     namesMap.put("143", "മദ്ധ്യേഷ്യ");
     namesMap.put("145", "പശ്ചിമേഷ്യ");
@@ -325,11 +333,8 @@ public class LocalizedNamesImpl_ml extends LocalizedNamesImpl {
     namesMap.put("151", "കിഴക്കന്‍ യൂറോപ്പ്");
     namesMap.put("154", "വടക്കേ യൂറോപ്പ്");
     namesMap.put("155", "പശ്ചിമ യൂറോപ്പ്");
-    namesMap.put("172", "സ്വതന്ത്രരാഷ്ട്രങ്ങളുടെ കോമണ്‍‌വെല്‍ത്ത്");
-    namesMap.put("200", "ചെക്കോസ്ലോവാക്യ");
     namesMap.put("419", "ലാറ്റിനമേരിക്കയും കരീബിയനും");
-    namesMap.put("830", "ചാനല്‍ ദ്വീപുകള്‍");
-    namesMap.put("AC", "അസന്‍ഷ്യന്‍ ദ്വീപ്");
+    namesMap.put("AC", "അസന്‍ഷന്‍ ദ്വീപ്");
     namesMap.put("AD", "അന്‍റോറ");
     namesMap.put("AE", "സംയുക്ത അറബ് രാഷ്ട്രം");
     namesMap.put("AF", "അഫ്ഗാനിസ്ഥാന്‍");
@@ -379,7 +384,7 @@ public class LocalizedNamesImpl_ml extends LocalizedNamesImpl {
     namesMap.put("CM", "കാമറൂണ്‍");
     namesMap.put("CN", "ചൈന");
     namesMap.put("CO", "കൊളംബിയ");
-    namesMap.put("CP", "ക്ലിപ്പേര്‍ട്ടണ്‍ ദ്വീപ്");
+    namesMap.put("CP", "ക്ലിപ്പെര്‍ട്ടന്‍ ദ്വീപ്");
     namesMap.put("CR", "കോസ്റ്ററിക്ക");
     namesMap.put("CS", "സെര്‍ബിയയും മോണ്ടനേഗ്രോയും");
     namesMap.put("CU", "ക്യൂബ");
@@ -388,13 +393,13 @@ public class LocalizedNamesImpl_ml extends LocalizedNamesImpl {
     namesMap.put("CY", "സൈപ്രസ്സ്");
     namesMap.put("CZ", "ചെക്ക് റിപ്പബ്ലിക്");
     namesMap.put("DE", "ജര്‍മനി");
-    namesMap.put("DG", "ദിയേഗോ ഗാഴ്സിയ");
+    namesMap.put("DG", "ഡീഗോ ഗ്രാഷ്യ");
     namesMap.put("DJ", "ജിബൂട്ടി");
     namesMap.put("DK", "ഡെന്‍മാര്‍ക്ക്");
     namesMap.put("DM", "ഡൊമിനിക്ക");
     namesMap.put("DO", "ഡൊമിനിക്കന്‍ റിപ്പബ്ലിക്");
     namesMap.put("DZ", "അള്‍ജീരിയ");
-    namesMap.put("EA", "സൊയൂട്ടാ ആന്റ് മെലില്ല");
+    namesMap.put("EA", "സെയൂത്ത ആന്‍ഡ് മെലിയ");
     namesMap.put("EC", "ഇക്വഡോര്‍");
     namesMap.put("EE", "എസ്റ്റോണിയ‍");
     namesMap.put("EG", "ഈജിപ്ത്");
@@ -547,7 +552,7 @@ public class LocalizedNamesImpl_ml extends LocalizedNamesImpl {
     namesMap.put("SV", "എല്‍ സാല്‍വദോര്‍");
     namesMap.put("SY", "സിറിയ");
     namesMap.put("SZ", "സ്വാസിലാന്‍റ്");
-    namesMap.put("TA", "ട്രിസ്റ്റന്‍ ഡാ കുനാ");
+    namesMap.put("TA", "ട്രസ്റ്റന്‍ ഡ കൂന");
     namesMap.put("TC", "ടര്‍ക്ക്സും കൈക്കോ ദ്വീപുകളും");
     namesMap.put("TD", "ചാഡ്");
     namesMap.put("TF", "ഫ്രഞ്ച് ദക്ഷിണ ഭൂപ്രദേശം");
@@ -616,7 +621,6 @@ public class LocalizedNamesImpl_ml extends LocalizedNamesImpl {
         "054": "മെലനേഷ്യ",
         "057": "മൈക്രോനേഷ്യന്‍ പ്രദേശം",
         "061": "പോളിനേഷ്യ",
-        "062": "ദക്ഷിണ-മദ്ധ്യ ഏഷ്യ",
         "142": "ഏഷ്യ",
         "143": "മദ്ധ്യേഷ്യ",
         "145": "പശ്ചിമേഷ്യ",
@@ -624,11 +628,8 @@ public class LocalizedNamesImpl_ml extends LocalizedNamesImpl {
         "151": "കിഴക്കന്‍ യൂറോപ്പ്",
         "154": "വടക്കേ യൂറോപ്പ്",
         "155": "പശ്ചിമ യൂറോപ്പ്",
-        "172": "സ്വതന്ത്രരാഷ്ട്രങ്ങളുടെ കോമണ്‍‌വെല്‍ത്ത്",
-        "200": "ചെക്കോസ്ലോവാക്യ",
         "419": "ലാറ്റിനമേരിക്കയും കരീബിയനും",
-        "830": "ചാനല്‍ ദ്വീപുകള്‍",
-        "AC": "അസന്‍ഷ്യന്‍ ദ്വീപ്",
+        "AC": "അസന്‍ഷന്‍ ദ്വീപ്",
         "AD": "അന്‍റോറ",
         "AE": "സംയുക്ത അറബ് രാഷ്ട്രം",
         "AF": "അഫ്ഗാനിസ്ഥാന്‍",
@@ -678,7 +679,7 @@ public class LocalizedNamesImpl_ml extends LocalizedNamesImpl {
         "CM": "കാമറൂണ്‍",
         "CN": "ചൈന",
         "CO": "കൊളംബിയ",
-        "CP": "ക്ലിപ്പേര്‍ട്ടണ്‍ ദ്വീപ്",
+        "CP": "ക്ലിപ്പെര്‍ട്ടന്‍ ദ്വീപ്",
         "CR": "കോസ്റ്ററിക്ക",
         "CS": "സെര്‍ബിയയും മോണ്ടനേഗ്രോയും",
         "CU": "ക്യൂബ",
@@ -687,13 +688,13 @@ public class LocalizedNamesImpl_ml extends LocalizedNamesImpl {
         "CY": "സൈപ്രസ്സ്",
         "CZ": "ചെക്ക് റിപ്പബ്ലിക്",
         "DE": "ജര്‍മനി",
-        "DG": "ദിയേഗോ ഗാഴ്സിയ",
+        "DG": "ഡീഗോ ഗ്രാഷ്യ",
         "DJ": "ജിബൂട്ടി",
         "DK": "ഡെന്‍മാര്‍ക്ക്",
         "DM": "ഡൊമിനിക്ക",
         "DO": "ഡൊമിനിക്കന്‍ റിപ്പബ്ലിക്",
         "DZ": "അള്‍ജീരിയ",
-        "EA": "സൊയൂട്ടാ ആന്റ് മെലില്ല",
+        "EA": "സെയൂത്ത ആന്‍ഡ് മെലിയ",
         "EC": "ഇക്വഡോര്‍",
         "EE": "എസ്റ്റോണിയ‍",
         "EG": "ഈജിപ്ത്",
@@ -846,7 +847,7 @@ public class LocalizedNamesImpl_ml extends LocalizedNamesImpl {
         "SV": "എല്‍ സാല്‍വദോര്‍",
         "SY": "സിറിയ",
         "SZ": "സ്വാസിലാന്‍റ്",
-        "TA": "ട്രിസ്റ്റന്‍ ഡാ കുനാ",
+        "TA": "ട്രസ്റ്റന്‍ ഡ കൂന",
         "TC": "ടര്‍ക്ക്സും കൈക്കോ ദ്വീപുകളും",
         "TD": "ചാഡ്",
         "TF": "ഫ്രഞ്ച് ദക്ഷിണ ഭൂപ്രദേശം",

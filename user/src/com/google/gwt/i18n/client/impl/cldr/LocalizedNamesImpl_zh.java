@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "zh" locale.
@@ -27,6 +32,10 @@ public class LocalizedNamesImpl_zh extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "AL",
         "DZ",
         "AF",
@@ -134,6 +143,7 @@ public class LocalizedNamesImpl_zh extends LocalizedNamesImpl {
         "KY",
         "CC",
         "KM",
+        "CI",
         "KW",
         "CP",
         "HR",
@@ -251,7 +261,6 @@ public class LocalizedNamesImpl_zh extends LocalizedNamesImpl {
         "EH",
         "GR",
         "HK",
-        "CI",
         "SG",
         "NC",
         "NZ",
@@ -310,7 +319,6 @@ public class LocalizedNamesImpl_zh extends LocalizedNamesImpl {
     namesMap.put("054", "美拉尼西亚");
     namesMap.put("057", "密克罗尼西亚");
     namesMap.put("061", "玻利尼西亚");
-    namesMap.put("062", "中南亚");
     namesMap.put("142", "亚洲");
     namesMap.put("143", "中亚");
     namesMap.put("145", "西亚");
@@ -318,9 +326,7 @@ public class LocalizedNamesImpl_zh extends LocalizedNamesImpl {
     namesMap.put("151", "东欧");
     namesMap.put("154", "北欧");
     namesMap.put("155", "西欧");
-    namesMap.put("172", "独联体");
-    namesMap.put("419", "拉丁美洲和加勒比海");
-    namesMap.put("830", "海峡群岛");
+    namesMap.put("419", "拉丁美洲");
     namesMap.put("AC", "阿森松岛");
     namesMap.put("AD", "安道尔");
     namesMap.put("AE", "阿拉伯联合酋长国");
@@ -365,7 +371,7 @@ public class LocalizedNamesImpl_zh extends LocalizedNamesImpl {
     namesMap.put("CF", "中非共和国");
     namesMap.put("CG", "刚果（布）");
     namesMap.put("CH", "瑞士");
-    namesMap.put("CI", "象牙海岸");
+    namesMap.put("CI", "科特迪瓦");
     namesMap.put("CK", "库克群岛");
     namesMap.put("CL", "智利");
     namesMap.put("CM", "喀麦隆");
@@ -507,7 +513,7 @@ public class LocalizedNamesImpl_zh extends LocalizedNamesImpl {
     namesMap.put("PK", "巴基斯坦");
     namesMap.put("PL", "波兰");
     namesMap.put("PM", "圣皮埃尔和密克隆");
-    namesMap.put("PN", "皮特凯恩");
+    namesMap.put("PN", "皮特凯恩群岛");
     namesMap.put("PR", "波多黎各");
     namesMap.put("PS", "巴勒斯坦领土");
     namesMap.put("PT", "葡萄牙");
@@ -576,7 +582,7 @@ public class LocalizedNamesImpl_zh extends LocalizedNamesImpl {
     namesMap.put("ZA", "南非");
     namesMap.put("ZM", "赞比亚");
     namesMap.put("ZW", "津巴布韦");
-    namesMap.put("ZZ", "未知或无效地区");
+    namesMap.put("ZZ", "未知地区");
   }
 
   @Override
@@ -608,7 +614,6 @@ public class LocalizedNamesImpl_zh extends LocalizedNamesImpl {
         "054": "美拉尼西亚",
         "057": "密克罗尼西亚",
         "061": "玻利尼西亚",
-        "062": "中南亚",
         "142": "亚洲",
         "143": "中亚",
         "145": "西亚",
@@ -616,9 +621,7 @@ public class LocalizedNamesImpl_zh extends LocalizedNamesImpl {
         "151": "东欧",
         "154": "北欧",
         "155": "西欧",
-        "172": "独联体",
-        "419": "拉丁美洲和加勒比海",
-        "830": "海峡群岛",
+        "419": "拉丁美洲",
         "AC": "阿森松岛",
         "AD": "安道尔",
         "AE": "阿拉伯联合酋长国",
@@ -663,7 +666,7 @@ public class LocalizedNamesImpl_zh extends LocalizedNamesImpl {
         "CF": "中非共和国",
         "CG": "刚果（布）",
         "CH": "瑞士",
-        "CI": "象牙海岸",
+        "CI": "科特迪瓦",
         "CK": "库克群岛",
         "CL": "智利",
         "CM": "喀麦隆",
@@ -805,7 +808,7 @@ public class LocalizedNamesImpl_zh extends LocalizedNamesImpl {
         "PK": "巴基斯坦",
         "PL": "波兰",
         "PM": "圣皮埃尔和密克隆",
-        "PN": "皮特凯恩",
+        "PN": "皮特凯恩群岛",
         "PR": "波多黎各",
         "PS": "巴勒斯坦领土",
         "PT": "葡萄牙",
@@ -874,7 +877,7 @@ public class LocalizedNamesImpl_zh extends LocalizedNamesImpl {
         "ZA": "南非",
         "ZM": "赞比亚",
         "ZW": "津巴布韦",
-        "ZZ": "未知或无效地区"
+        "ZZ": "未知地区"
     };
   }-*/;
 }

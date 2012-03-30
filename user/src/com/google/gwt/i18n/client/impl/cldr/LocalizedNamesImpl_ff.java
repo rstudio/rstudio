@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "ff" locale.
@@ -59,6 +64,7 @@ public class LocalizedNamesImpl_ff extends LocalizedNamesImpl {
         "BO",
         "BA",
         "BW",
+        "BQ",
         "BG",
         "BF",
         "BN",
@@ -69,6 +75,7 @@ public class LocalizedNamesImpl_ff extends LocalizedNamesImpl {
         "CC",
         "CL",
         "CP",
+        "CW",
         "CX",
         "DK",
         "DG",
@@ -252,11 +259,13 @@ public class LocalizedNamesImpl_ff extends LocalizedNamesImpl {
         "SK",
         "SI",
         "SO",
+        "SS",
         "SD",
         "SR",
         "SE",
         "CH",
         "SZ",
+        "SX",
         "TA",
         "TJ",
         "TZ",
@@ -303,7 +312,7 @@ public class LocalizedNamesImpl_ff extends LocalizedNamesImpl {
     namesMap.put("AU", "Ostaraalii");
     namesMap.put("AW", "Aruuba");
     namesMap.put("AZ", "Ajerbayjaan");
-    namesMap.put("BA", "Bosnii  Hersegowiin");
+    namesMap.put("BA", "Bosnii Hersegowiin");
     namesMap.put("BB", "Barbadoos");
     namesMap.put("BD", "Banglaadees");
     namesMap.put("BE", "Beljik");
@@ -536,7 +545,7 @@ public class LocalizedNamesImpl_ff extends LocalizedNamesImpl {
         "AU": "Ostaraalii",
         "AW": "Aruuba",
         "AZ": "Ajerbayjaan",
-        "BA": "Bosnii  Hersegowiin",
+        "BA": "Bosnii Hersegowiin",
         "BB": "Barbadoos",
         "BD": "Banglaadees",
         "BE": "Beljik",

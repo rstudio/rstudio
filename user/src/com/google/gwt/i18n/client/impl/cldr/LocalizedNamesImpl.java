@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6549 Google $
+//  type=root
+//  date=$Date: 2012-02-08 14:09:21 -0500 (Wed, 08 Feb 2012) $
+
 
 /**
  * Localized names for the "default" locale.
@@ -59,7 +64,7 @@ public class LocalizedNamesImpl extends LocalizedNamesImplBase {
         "155": "Western Europe",
         "172": "Commonwealth of Independent States",
         "200": "Czechoslovakia",
-        "419": "Latin America and the Caribbean",
+        "419": "Latin America",
         "830": "Channel Islands",
         "AC": "Ascension Island",
         "AD": "Andorra",
@@ -92,7 +97,7 @@ public class LocalizedNamesImpl extends LocalizedNamesImplBase {
         "BM": "Bermuda",
         "BN": "Brunei",
         "BO": "Bolivia",
-        "BQ": "British Antarctic Territory",
+        "BQ": "Bonaire, Sint Eustatius, and Saba",
         "BR": "Brazil",
         "BS": "Bahamas",
         "BT": "Bhutan",
@@ -104,7 +109,7 @@ public class LocalizedNamesImpl extends LocalizedNamesImplBase {
         "CC": "Cocos [Keeling] Islands",
         "CD": "Congo [DRC]",
         "CF": "Central African Republic",
-        "CG": "Congo [Republic]",
+        "CG": "Congo - Brazzaville",
         "CH": "Switzerland",
         "CI": "Côte d’Ivoire",
         "CK": "Cook Islands",
@@ -118,6 +123,7 @@ public class LocalizedNamesImpl extends LocalizedNamesImplBase {
         "CT": "Canton and Enderbury Islands",
         "CU": "Cuba",
         "CV": "Cape Verde",
+        "CW": "Curaçao",
         "CX": "Christmas Island",
         "CY": "Cyprus",
         "CZ": "Czech Republic",
@@ -287,9 +293,11 @@ public class LocalizedNamesImpl extends LocalizedNamesImplBase {
         "SN": "Senegal",
         "SO": "Somalia",
         "SR": "Suriname",
+        "SS": "South Sudan",
         "ST": "São Tomé and Príncipe",
         "SU": "Union of Soviet Socialist Republics",
         "SV": "El Salvador",
+        "SX": "Sint Maarten",
         "SY": "Syria",
         "SZ": "Swaziland",
         "TA": "Tristan da Cunha",
@@ -326,13 +334,13 @@ public class LocalizedNamesImpl extends LocalizedNamesImplBase {
         "WF": "Wallis and Futuna",
         "WK": "Wake Island",
         "WS": "Samoa",
-        "YD": "People's Democratic Republic of Yemen",
+        "YD": "People’s Democratic Republic of Yemen",
         "YE": "Yemen",
         "YT": "Mayotte",
         "ZA": "South Africa",
         "ZM": "Zambia",
         "ZW": "Zimbabwe",
-        "ZZ": "Unknown or Invalid Region"
+        "ZZ": "Unknown Region"
     };
   }-*/;
 }

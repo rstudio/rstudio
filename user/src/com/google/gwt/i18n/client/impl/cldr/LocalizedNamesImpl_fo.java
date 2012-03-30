@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "fo" locale.
@@ -55,6 +60,7 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
         "BA",
         "BW",
         "BV",
+        "BQ",
         "BR",
         "IO",
         "BN",
@@ -67,6 +73,7 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
         "EA",
         "CP",
         "CK",
+        "CW",
         "DK",
         "DG",
         "DJ",
@@ -241,6 +248,7 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
         "SO",
         "ES",
         "LK",
+        "SS",
         "GB",
         "VG",
         "SD",
@@ -252,6 +260,7 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
         "SZ",
         "CH",
         "SE",
+        "SX",
         "SY",
         "TJ",
         "TZ",
@@ -306,14 +315,13 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
     namesMap.put("039", "Suðurevropa");
     namesMap.put("053", "Avstralia og Nýsæland");
     namesMap.put("057", "Mikronesiske regionen");
-    namesMap.put("062", "Suðursentralasia");
     namesMap.put("143", "Sentralasia");
     namesMap.put("145", "Vesturasia");
     namesMap.put("150", "Evropa");
     namesMap.put("151", "Eysturevropa");
     namesMap.put("154", "Norðurevropa");
     namesMap.put("155", "Vesturevropa");
-    namesMap.put("419", "Latínamerika og Karibia");
+    namesMap.put("419", "Latínamerika");
     namesMap.put("AC", "Ascensionoyggjin");
     namesMap.put("AE", "Sameindu Emirríkini");
     namesMap.put("AF", "Afganistan");
@@ -504,14 +512,13 @@ public class LocalizedNamesImpl_fo extends LocalizedNamesImpl {
         "039": "Suðurevropa",
         "053": "Avstralia og Nýsæland",
         "057": "Mikronesiske regionen",
-        "062": "Suðursentralasia",
         "143": "Sentralasia",
         "145": "Vesturasia",
         "150": "Evropa",
         "151": "Eysturevropa",
         "154": "Norðurevropa",
         "155": "Vesturevropa",
-        "419": "Latínamerika og Karibia",
+        "419": "Latínamerika",
         "AC": "Ascensionoyggjin",
         "AE": "Sameindu Emirríkini",
         "AF": "Afganistan",

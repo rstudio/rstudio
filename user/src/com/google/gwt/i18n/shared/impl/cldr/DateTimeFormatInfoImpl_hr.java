@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "hr" locale.
@@ -34,12 +38,12 @@ public class DateTimeFormatInfoImpl_hr extends DateTimeFormatInfoImpl {
 
   @Override
   public String dateFormatMedium() {
-    return "d. M. yyyy.";
+    return "d. M. y.";
   }
 
   @Override
   public String dateFormatShort() {
-    return "dd. MM. yyyy.";
+    return "d.M.y.";
   }
 
   @Override
@@ -59,6 +63,11 @@ public class DateTimeFormatInfoImpl_hr extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String formatDay() {
+    return "d.";
+  }
+
+  @Override
   public String formatHour12Minute() {
     return "hh:mm a";
   }
@@ -69,18 +78,8 @@ public class DateTimeFormatInfoImpl_hr extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String formatMonthAbbrev() {
-    return "LLL.";
-  }
-
-  @Override
   public String formatMonthAbbrevDay() {
-    return "d.MMM.";
-  }
-
-  @Override
-  public String formatMonthFull() {
-    return "LLLL.";
+    return "d. MMM";
   }
 
   @Override
@@ -95,12 +94,17 @@ public class DateTimeFormatInfoImpl_hr extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatMonthNumDay() {
-    return "d.M.";
+    return "d. M.";
+  }
+
+  @Override
+  public String formatYear() {
+    return "y.";
   }
 
   @Override
   public String formatYearMonthAbbrev() {
-    return "MMM.y.";
+    return "LLL y.";
   }
 
   @Override
@@ -110,7 +114,7 @@ public class DateTimeFormatInfoImpl_hr extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthFull() {
-    return "MMMM y.";
+    return "LLLL y.";
   }
 
   @Override
@@ -120,7 +124,7 @@ public class DateTimeFormatInfoImpl_hr extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthNum() {
-    return "M.yyyy.";
+    return "M. yyyy.";
   }
 
   @Override
@@ -130,7 +134,7 @@ public class DateTimeFormatInfoImpl_hr extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "EEE, d. MMM. y.";
+    return "EEE, d. MMM y.";
   }
 
   @Override
@@ -250,6 +254,19 @@ public class DateTimeFormatInfoImpl_hr extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] weekdaysNarrow() {
+    return new String[] {
+        "N",
+        "P",
+        "U",
+        "S",
+        "Č",
+        "P",
+        "S"
+    };
+  }
+
+  @Override
+  public String[] weekdaysNarrowStandalone() {
     return new String[] {
         "n",
         "p",

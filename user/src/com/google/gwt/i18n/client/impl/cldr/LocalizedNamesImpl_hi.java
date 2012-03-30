@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "hi" locale.
@@ -34,6 +39,10 @@ public class LocalizedNamesImpl_hi extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "AO",
         "AQ",
         "AZ",
@@ -123,7 +132,6 @@ public class LocalizedNamesImpl_hi extends LocalizedNamesImpl {
         "GE",
         "TO",
         "TG",
-        "TA",
         "DG",
         "DK",
         "DM",
@@ -138,6 +146,7 @@ public class LocalizedNamesImpl_hi extends LocalizedNamesImpl {
         "TV",
         "TK",
         "TT",
+        "TA",
         "TH",
         "ZA",
         "KR",
@@ -260,7 +269,6 @@ public class LocalizedNamesImpl_hi extends LocalizedNamesImpl {
         "ST",
         "SG",
         "SL",
-        "EA",
         "SY",
         "SZ",
         "SR",
@@ -273,6 +281,7 @@ public class LocalizedNamesImpl_hi extends LocalizedNamesImpl {
         "VC",
         "SH",
         "CF",
+        "EA",
         "SN",
         "SC",
         "SM",
@@ -317,7 +326,6 @@ public class LocalizedNamesImpl_hi extends LocalizedNamesImpl {
     namesMap.put("054", "मेलानेशिया");
     namesMap.put("057", "माइक्रोनेशियन रीजन");
     namesMap.put("061", "पोलीनेशिया");
-    namesMap.put("062", "दक्षिण-मध्य एशिया");
     namesMap.put("142", "एशिया");
     namesMap.put("143", "मध्य एशिया");
     namesMap.put("145", "पश्चिमी ऐशिया");
@@ -325,10 +333,7 @@ public class LocalizedNamesImpl_hi extends LocalizedNamesImpl {
     namesMap.put("151", "पूर्वी यूरोप");
     namesMap.put("154", "उत्तरी यूरोप");
     namesMap.put("155", "पश्चिमी यूरोप्");
-    namesMap.put("172", "कॉमनवेल्थ ऑफ इंडिपेंडेंट स्टेट्स");
-    namesMap.put("200", "चेकोस्लवाकिया");
     namesMap.put("419", "लेटिन अमेरिका और कैरिबियन");
-    namesMap.put("830", "चैनल द्वीपसमूह");
     namesMap.put("AC", "असेंशन आइलैंड");
     namesMap.put("AD", "अन्डोरा");
     namesMap.put("AE", "संयुक्त अरब अमीरात");
@@ -388,13 +393,13 @@ public class LocalizedNamesImpl_hi extends LocalizedNamesImpl {
     namesMap.put("CY", "साइप्रस");
     namesMap.put("CZ", "चेक गणराज्य");
     namesMap.put("DE", "जर्मनी");
-    namesMap.put("DG", "डिएगो गार्शिया");
+    namesMap.put("DG", "डिएगो गार्सिया");
     namesMap.put("DJ", "जिबूती");
     namesMap.put("DK", "डेनमार्क");
     namesMap.put("DM", "डोमिनिक");
     namesMap.put("DO", "डोमिनिकन गणराज्य");
     namesMap.put("DZ", "अल्जीरिया");
-    namesMap.put("EA", "सियुटा और मेलिल्ला");
+    namesMap.put("EA", "सेउटा और मेलिला");
     namesMap.put("EC", "इक्वाडोर");
     namesMap.put("EE", "एस्टोनिया");
     namesMap.put("EG", "मिस्र");
@@ -434,7 +439,7 @@ public class LocalizedNamesImpl_hi extends LocalizedNamesImpl {
     namesMap.put("HR", "क्रोशिया");
     namesMap.put("HT", "हाइती");
     namesMap.put("HU", "हंगरी");
-    namesMap.put("IC", "कैनेरी आइलैंड");
+    namesMap.put("IC", "कैनेरी द्वीपसमूह");
     namesMap.put("ID", "इंडोनेशिया");
     namesMap.put("IE", "आयरलैंड");
     namesMap.put("IL", "इसराइल");
@@ -547,7 +552,7 @@ public class LocalizedNamesImpl_hi extends LocalizedNamesImpl {
     namesMap.put("SV", "अल साल्वाडोर");
     namesMap.put("SY", "सीरिया");
     namesMap.put("SZ", "सुआजीलैंड");
-    namesMap.put("TA", "ट्रिस्टन दा कुन्हा");
+    namesMap.put("TA", "त्रिस्टान डा कुना");
     namesMap.put("TC", "तुर्क् और् कैकोज़ द्वीप");
     namesMap.put("TD", "चाड");
     namesMap.put("TF", "फ़्रांसीसी दक्षिणी क्षेत्र");
@@ -616,7 +621,6 @@ public class LocalizedNamesImpl_hi extends LocalizedNamesImpl {
         "054": "मेलानेशिया",
         "057": "माइक्रोनेशियन रीजन",
         "061": "पोलीनेशिया",
-        "062": "दक्षिण-मध्य एशिया",
         "142": "एशिया",
         "143": "मध्य एशिया",
         "145": "पश्चिमी ऐशिया",
@@ -624,10 +628,7 @@ public class LocalizedNamesImpl_hi extends LocalizedNamesImpl {
         "151": "पूर्वी यूरोप",
         "154": "उत्तरी यूरोप",
         "155": "पश्चिमी यूरोप्",
-        "172": "कॉमनवेल्थ ऑफ इंडिपेंडेंट स्टेट्स",
-        "200": "चेकोस्लवाकिया",
         "419": "लेटिन अमेरिका और कैरिबियन",
-        "830": "चैनल द्वीपसमूह",
         "AC": "असेंशन आइलैंड",
         "AD": "अन्डोरा",
         "AE": "संयुक्त अरब अमीरात",
@@ -687,13 +688,13 @@ public class LocalizedNamesImpl_hi extends LocalizedNamesImpl {
         "CY": "साइप्रस",
         "CZ": "चेक गणराज्य",
         "DE": "जर्मनी",
-        "DG": "डिएगो गार्शिया",
+        "DG": "डिएगो गार्सिया",
         "DJ": "जिबूती",
         "DK": "डेनमार्क",
         "DM": "डोमिनिक",
         "DO": "डोमिनिकन गणराज्य",
         "DZ": "अल्जीरिया",
-        "EA": "सियुटा और मेलिल्ला",
+        "EA": "सेउटा और मेलिला",
         "EC": "इक्वाडोर",
         "EE": "एस्टोनिया",
         "EG": "मिस्र",
@@ -733,7 +734,7 @@ public class LocalizedNamesImpl_hi extends LocalizedNamesImpl {
         "HR": "क्रोशिया",
         "HT": "हाइती",
         "HU": "हंगरी",
-        "IC": "कैनेरी आइलैंड",
+        "IC": "कैनेरी द्वीपसमूह",
         "ID": "इंडोनेशिया",
         "IE": "आयरलैंड",
         "IL": "इसराइल",
@@ -846,7 +847,7 @@ public class LocalizedNamesImpl_hi extends LocalizedNamesImpl {
         "SV": "अल साल्वाडोर",
         "SY": "सीरिया",
         "SZ": "सुआजीलैंड",
-        "TA": "ट्रिस्टन दा कुन्हा",
+        "TA": "त्रिस्टान डा कुना",
         "TC": "तुर्क् और् कैकोज़ द्वीप",
         "TD": "चाड",
         "TF": "फ़्रांसीसी दक्षिणी क्षेत्र",

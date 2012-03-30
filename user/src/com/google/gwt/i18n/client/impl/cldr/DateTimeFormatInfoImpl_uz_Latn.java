@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 5882 $
+//  type=root
+//  date=$Date: 2011-05-10 16:26:37 -0400 (Tue, 10 May 2011) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "uz_Latn" locale.
@@ -23,13 +27,21 @@ package com.google.gwt.i18n.client.impl.cldr;
 public class DateTimeFormatInfoImpl_uz_Latn extends DateTimeFormatInfoImpl_uz {
 
   @Override
-  public int firstDayOfTheWeek() {
-    return 0;
-  }
-
-  @Override
-  public String formatYearMonthNumDay() {
-    return "y/M/d";
+  public String[] monthsFull() {
+    return new String[] {
+        "Yanvar",
+        "Fevral",
+        "Mart",
+        "Aprel",
+        "May",
+        "Iyun",
+        "Iyul",
+        "Avgust",
+        "Sentyabr",
+        "Oktyabr",
+        "Noyabr",
+        "Dekabr"
+    };
   }
 
   @Override
@@ -76,7 +88,7 @@ public class DateTimeFormatInfoImpl_uz_Latn extends DateTimeFormatInfoImpl_uz {
         "seshanba",
         "chorshanba",
         "payshanba",
-        "juma",
+        "cuma",
         "shanba"
     };
   }
@@ -89,7 +101,7 @@ public class DateTimeFormatInfoImpl_uz_Latn extends DateTimeFormatInfoImpl_uz {
         "S",
         "C",
         "P",
-        "J",
+        "C",
         "S"
     };
   }
@@ -102,7 +114,7 @@ public class DateTimeFormatInfoImpl_uz_Latn extends DateTimeFormatInfoImpl_uz {
         "Sesh",
         "Chor",
         "Pay",
-        "Jum",
+        "Cum",
         "Shan"
     };
   }

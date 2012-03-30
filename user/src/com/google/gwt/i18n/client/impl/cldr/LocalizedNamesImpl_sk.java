@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "sk" locale.
@@ -47,7 +52,6 @@ public class LocalizedNamesImpl_sk extends LocalizedNamesImpl {
         "AR",
         "AM",
         "AW",
-        "AC",
         "AU",
         "AZ",
         "BS",
@@ -63,6 +67,7 @@ public class LocalizedNamesImpl_sk extends LocalizedNamesImpl {
         "BA",
         "BW",
         "BV",
+        "BQ",
         "BR",
         "VG",
         "IO",
@@ -72,8 +77,8 @@ public class LocalizedNamesImpl_sk extends LocalizedNamesImpl {
         "BI",
         "BT",
         "EA",
-        "CP",
         "CK",
+        "CW",
         "CY",
         "TD",
         "CZ",
@@ -204,6 +209,8 @@ public class LocalizedNamesImpl_sk extends LocalizedNamesImpl {
         "NC",
         "NZ",
         "OM",
+        "AC",
+        "CP",
         "IM",
         "PK",
         "PW",
@@ -244,6 +251,7 @@ public class LocalizedNamesImpl_sk extends LocalizedNamesImpl {
         "RS",
         "CS",
         "LK",
+        "SS",
         "CF",
         "SD",
         "SR",
@@ -254,6 +262,7 @@ public class LocalizedNamesImpl_sk extends LocalizedNamesImpl {
         "MF",
         "ST",
         "VC",
+        "SX",
         "SY",
         "SB",
         "ES",
@@ -298,7 +307,7 @@ public class LocalizedNamesImpl_sk extends LocalizedNamesImpl {
     super.loadNameMapJava();
     namesMap.put("001", "Svet");
     namesMap.put("002", "Afrika");
-    namesMap.put("003", "Severná Amerika (003)");
+    namesMap.put("003", "Severná Amerika [003]");
     namesMap.put("005", "Južná Amerika");
     namesMap.put("009", "Oceánia");
     namesMap.put("011", "Západná Afrika");
@@ -316,9 +325,8 @@ public class LocalizedNamesImpl_sk extends LocalizedNamesImpl {
     namesMap.put("039", "Južná Európa");
     namesMap.put("053", "Austrália a Nový Zéland");
     namesMap.put("054", "Melanézia");
-    namesMap.put("057", "Mikronésia");
+    namesMap.put("057", "Mikronézia – oblasť");
     namesMap.put("061", "Polynézia");
-    namesMap.put("062", "Stredná a južná Ázia");
     namesMap.put("142", "Ázia");
     namesMap.put("143", "Stredná Ázia");
     namesMap.put("145", "Západná Ázia");
@@ -326,11 +334,8 @@ public class LocalizedNamesImpl_sk extends LocalizedNamesImpl {
     namesMap.put("151", "Východná Európa");
     namesMap.put("154", "Severná Európa");
     namesMap.put("155", "Západná Európa");
-    namesMap.put("172", "Spoločenstvo nezávislých štátov");
-    namesMap.put("200", "Československo");
-    namesMap.put("419", "Latinská Amerika a Karibik");
-    namesMap.put("830", "Kanál La Manche");
-    namesMap.put("AC", "Ascension");
+    namesMap.put("419", "Latinská Amerika");
+    namesMap.put("AC", "Ostrov Ascensión");
     namesMap.put("AE", "Spojené arabské emiráty");
     namesMap.put("AF", "Afganistan");
     namesMap.put("AG", "Antigua a Barbados");
@@ -369,7 +374,7 @@ public class LocalizedNamesImpl_sk extends LocalizedNamesImpl {
     namesMap.put("CM", "Kamerun");
     namesMap.put("CN", "Čína");
     namesMap.put("CO", "Kolumbia");
-    namesMap.put("CP", "Clipperton");
+    namesMap.put("CP", "Ostrov Clipperton");
     namesMap.put("CR", "Kostarika");
     namesMap.put("CS", "Srbsko a Čierna Hora");
     namesMap.put("CU", "Kuba");
@@ -538,7 +543,7 @@ public class LocalizedNamesImpl_sk extends LocalizedNamesImpl {
     return {
         "001": "Svet",
         "002": "Afrika",
-        "003": "Severná Amerika (003)",
+        "003": "Severná Amerika [003]",
         "005": "Južná Amerika",
         "009": "Oceánia",
         "011": "Západná Afrika",
@@ -556,9 +561,8 @@ public class LocalizedNamesImpl_sk extends LocalizedNamesImpl {
         "039": "Južná Európa",
         "053": "Austrália a Nový Zéland",
         "054": "Melanézia",
-        "057": "Mikronésia",
+        "057": "Mikronézia – oblasť",
         "061": "Polynézia",
-        "062": "Stredná a južná Ázia",
         "142": "Ázia",
         "143": "Stredná Ázia",
         "145": "Západná Ázia",
@@ -566,11 +570,8 @@ public class LocalizedNamesImpl_sk extends LocalizedNamesImpl {
         "151": "Východná Európa",
         "154": "Severná Európa",
         "155": "Západná Európa",
-        "172": "Spoločenstvo nezávislých štátov",
-        "200": "Československo",
-        "419": "Latinská Amerika a Karibik",
-        "830": "Kanál La Manche",
-        "AC": "Ascension",
+        "419": "Latinská Amerika",
+        "AC": "Ostrov Ascensión",
         "AE": "Spojené arabské emiráty",
         "AF": "Afganistan",
         "AG": "Antigua a Barbados",
@@ -609,7 +610,7 @@ public class LocalizedNamesImpl_sk extends LocalizedNamesImpl {
         "CM": "Kamerun",
         "CN": "Čína",
         "CO": "Kolumbia",
-        "CP": "Clipperton",
+        "CP": "Ostrov Clipperton",
         "CR": "Kostarika",
         "CS": "Srbsko a Čierna Hora",
         "CU": "Kuba",

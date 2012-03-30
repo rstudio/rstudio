@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "ca" locale.
@@ -103,12 +107,12 @@ public class DateTimeFormatInfoImpl_ca extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthAbbrevDay() {
-    return "d MMM 'de' y";
+    return "d MMM y";
   }
 
   @Override
   public String formatYearMonthFull() {
-    return "LLLL 'del' y";
+    return "LLLL 'de' y";
   }
 
   @Override
@@ -123,7 +127,7 @@ public class DateTimeFormatInfoImpl_ca extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthNumDay() {
-    return "d/M/y";
+    return "d/M/yyyy";
   }
 
   @Override
@@ -186,7 +190,7 @@ public class DateTimeFormatInfoImpl_ca extends DateTimeFormatInfoImpl {
         "A",
         "M",
         "J",
-        "J",
+        "G",
         "A",
         "S",
         "O",
@@ -311,7 +315,7 @@ public class DateTimeFormatInfoImpl_ca extends DateTimeFormatInfoImpl {
         "Dimecres",
         "Dijous",
         "Divendres",
-        "dissabte"
+        "Dissabte"
     };
   }
 

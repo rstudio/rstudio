@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "uk" locale.
@@ -34,6 +39,10 @@ public class LocalizedNamesImpl_uk extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "AU",
         "AT",
         "AZ",
@@ -201,6 +210,7 @@ public class LocalizedNamesImpl_uk extends LocalizedNamesImpl {
         "MF",
         "SH",
         "CK",
+        "PN",
         "SJ",
         "HM",
         "PK",
@@ -215,7 +225,6 @@ public class LocalizedNamesImpl_uk extends LocalizedNamesImpl {
         "KR",
         "KP",
         "MP",
-        "PN",
         "PL",
         "PT",
         "PR",
@@ -317,7 +326,6 @@ public class LocalizedNamesImpl_uk extends LocalizedNamesImpl {
     namesMap.put("054", "Меланезія");
     namesMap.put("057", "Мікронезійський регіон");
     namesMap.put("061", "Полінезія");
-    namesMap.put("062", "Південно-Центральна Азія");
     namesMap.put("142", "Азія");
     namesMap.put("143", "Центральна Азія");
     namesMap.put("145", "Західна Азія");
@@ -325,9 +333,7 @@ public class LocalizedNamesImpl_uk extends LocalizedNamesImpl {
     namesMap.put("151", "Східна Європа");
     namesMap.put("154", "Північна Європа");
     namesMap.put("155", "Західна Європа");
-    namesMap.put("172", "Співдружність Незалежних Держав");
-    namesMap.put("419", "Латинська Америка і Карибський басейн");
-    namesMap.put("830", "Нормандські острови");
+    namesMap.put("419", "Латинська Америка");
     namesMap.put("AC", "Острів Вознесіння");
     namesMap.put("AD", "Андорра");
     namesMap.put("AE", "Обʼєднані Арабські Емірати");
@@ -514,7 +520,7 @@ public class LocalizedNamesImpl_uk extends LocalizedNamesImpl {
     namesMap.put("PK", "Пакистан");
     namesMap.put("PL", "Польща");
     namesMap.put("PM", "Сен-Пʼєр і Мікелон");
-    namesMap.put("PN", "Піткерн");
+    namesMap.put("PN", "Острови Піткерн");
     namesMap.put("PR", "Пуерто-Ріко");
     namesMap.put("PS", "Палестина");
     namesMap.put("PT", "Португалія");
@@ -583,7 +589,7 @@ public class LocalizedNamesImpl_uk extends LocalizedNamesImpl {
     namesMap.put("ZA", "ПАР");
     namesMap.put("ZM", "Замбія");
     namesMap.put("ZW", "Зімбабве");
-    namesMap.put("ZZ", "Невідомий або неправильний регіон");
+    namesMap.put("ZZ", "Невідомий регіон");
   }
 
   @Override
@@ -615,7 +621,6 @@ public class LocalizedNamesImpl_uk extends LocalizedNamesImpl {
         "054": "Меланезія",
         "057": "Мікронезійський регіон",
         "061": "Полінезія",
-        "062": "Південно-Центральна Азія",
         "142": "Азія",
         "143": "Центральна Азія",
         "145": "Західна Азія",
@@ -623,9 +628,7 @@ public class LocalizedNamesImpl_uk extends LocalizedNamesImpl {
         "151": "Східна Європа",
         "154": "Північна Європа",
         "155": "Західна Європа",
-        "172": "Співдружність Незалежних Держав",
-        "419": "Латинська Америка і Карибський басейн",
-        "830": "Нормандські острови",
+        "419": "Латинська Америка",
         "AC": "Острів Вознесіння",
         "AD": "Андорра",
         "AE": "Обʼєднані Арабські Емірати",
@@ -812,7 +815,7 @@ public class LocalizedNamesImpl_uk extends LocalizedNamesImpl {
         "PK": "Пакистан",
         "PL": "Польща",
         "PM": "Сен-Пʼєр і Мікелон",
-        "PN": "Піткерн",
+        "PN": "Острови Піткерн",
         "PR": "Пуерто-Ріко",
         "PS": "Палестина",
         "PT": "Португалія",
@@ -881,7 +884,7 @@ public class LocalizedNamesImpl_uk extends LocalizedNamesImpl {
         "ZA": "ПАР",
         "ZM": "Замбія",
         "ZW": "Зімбабве",
-        "ZZ": "Невідомий або неправильний регіон"
+        "ZZ": "Невідомий регіон"
     };
   }-*/;
 }

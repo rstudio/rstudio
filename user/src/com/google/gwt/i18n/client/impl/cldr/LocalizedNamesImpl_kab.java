@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "kab" locale.
@@ -49,6 +54,7 @@ public class LocalizedNamesImpl_kab extends LocalizedNamesImpl {
         "BZ",
         "BJ",
         "BL",
+        "BQ",
         "BR",
         "BN",
         "BG",
@@ -65,6 +71,7 @@ public class LocalizedNamesImpl_kab extends LocalizedNamesImpl {
         "CL",
         "CY",
         "CP",
+        "CW",
         "CX",
         "DK",
         "DG",
@@ -212,6 +219,7 @@ public class LocalizedNamesImpl_kab extends LocalizedNamesImpl {
         "SI",
         "ES",
         "LK",
+        "SS",
         "SD",
         "SO",
         "SR",
@@ -220,6 +228,7 @@ public class LocalizedNamesImpl_kab extends LocalizedNamesImpl {
         "SZ",
         "SE",
         "CH",
+        "SX",
         "TA",
         "ZA",
         "GB",

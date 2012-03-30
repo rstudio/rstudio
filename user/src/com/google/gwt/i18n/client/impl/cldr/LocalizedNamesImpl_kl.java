@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "kl" locale.
@@ -34,7 +39,6 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
         "AX",
         "AL",
         "DZ",
-        "AN",
         "AD",
         "AO",
         "AG",
@@ -56,6 +60,7 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
         "BO",
         "BA",
         "BW",
+        "BQ",
         "BR",
         "BN",
         "BT",
@@ -77,6 +82,7 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
         "CM",
         "CO",
         "CR",
+        "CW",
         "CY",
         "DK",
         "DG",
@@ -238,11 +244,13 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
         "SO",
         "ES",
         "LK",
+        "SS",
         "SD",
         "SR",
         "SJ",
         "SE",
         "SZ",
+        "SX",
         "SY",
         "TW",
         "TJ",
@@ -307,7 +315,7 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
     namesMap.put("151", "Europa Kangilliit");
     namesMap.put("154", "Europa Avannarleq");
     namesMap.put("155", "Europa Killiit");
-    namesMap.put("419", "America Latin aamma Karibia");
+    namesMap.put("419", "America Latin");
     namesMap.put("AG", "Antigua aamma Barbuda");
     namesMap.put("AQ", "Qalasersuaq Kujalleq");
     namesMap.put("AT", "Østrigi");
@@ -421,7 +429,7 @@ public class LocalizedNamesImpl_kl extends LocalizedNamesImpl {
         "151": "Europa Kangilliit",
         "154": "Europa Avannarleq",
         "155": "Europa Killiit",
-        "419": "America Latin aamma Karibia",
+        "419": "America Latin",
         "AG": "Antigua aamma Barbuda",
         "AQ": "Qalasersuaq Kujalleq",
         "AT": "Østrigi",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "kea" locale.
@@ -61,6 +66,7 @@ public class LocalizedNamesImpl_kea extends LocalizedNamesImpl {
         "BO",
         "BA",
         "BW",
+        "BQ",
         "BR",
         "BN",
         "BG",
@@ -70,6 +76,7 @@ public class LocalizedNamesImpl_kea extends LocalizedNamesImpl {
         "BV",
         "CC",
         "CP",
+        "CW",
         "CX",
         "DG",
         "DK",
@@ -103,7 +110,6 @@ public class LocalizedNamesImpl_kea extends LocalizedNamesImpl {
         "GP",
         "GU",
         "GT",
-        "HK",
         "HM",
         "IC",
         "YE",
@@ -199,6 +205,7 @@ public class LocalizedNamesImpl_kea extends LocalizedNamesImpl {
         "NL",
         "OM",
         "HN",
+        "HK",
         "PK",
         "PW",
         "PS",
@@ -242,6 +249,7 @@ public class LocalizedNamesImpl_kea extends LocalizedNamesImpl {
         "SI",
         "ES",
         "LK",
+        "SS",
         "US",
         "EE",
         "SZ",
@@ -250,6 +258,7 @@ public class LocalizedNamesImpl_kea extends LocalizedNamesImpl {
         "CH",
         "SO",
         "SR",
+        "SX",
         "TA",
         "TJ",
         "TH",
@@ -288,6 +297,36 @@ public class LocalizedNamesImpl_kea extends LocalizedNamesImpl {
   @Override
   protected void loadNameMapJava() {
     super.loadNameMapJava();
+    namesMap.put("001", "Mundu");
+    namesMap.put("002", "Afrika");
+    namesMap.put("003", "Merka di Norti");
+    namesMap.put("005", "Merka di Sul");
+    namesMap.put("009", "Oseania");
+    namesMap.put("011", "Afrika Osidental");
+    namesMap.put("013", "Merka Sentral");
+    namesMap.put("014", "Afrika Oriental");
+    namesMap.put("015", "Norti di Afrika");
+    namesMap.put("017", "Afrika Sentral");
+    namesMap.put("018", "Sul di Afrika");
+    namesMap.put("019", "Merkas");
+    namesMap.put("021", "Norti di Merka");
+    namesMap.put("029", "Karaibas");
+    namesMap.put("030", "Azia Oriental");
+    namesMap.put("034", "Sul di Azia");
+    namesMap.put("035", "Sudesti Aziatiku");
+    namesMap.put("039", "Europa di Sul");
+    namesMap.put("053", "Australia y Nova Zelandia");
+    namesMap.put("054", "Melanezia");
+    namesMap.put("057", "Rejiãu di Mikronezia");
+    namesMap.put("061", "Polinezia");
+    namesMap.put("142", "Azia");
+    namesMap.put("143", "Azia Sentral");
+    namesMap.put("145", "Azia Osidental");
+    namesMap.put("150", "Europa");
+    namesMap.put("151", "Europa Oriental");
+    namesMap.put("154", "Europa di Norti");
+    namesMap.put("155", "Europa Osidental");
+    namesMap.put("419", "Merka Latinu");
     namesMap.put("AD", "Andora");
     namesMap.put("AE", "Emiradus Arabi Unidu");
     namesMap.put("AF", "Afeganistãu");
@@ -357,6 +396,7 @@ public class LocalizedNamesImpl_kea extends LocalizedNamesImpl {
     namesMap.put("GT", "Guatimala");
     namesMap.put("GW", "Gine-Bisau");
     namesMap.put("GY", "Giana");
+    namesMap.put("HK", "Ong Kong");
     namesMap.put("HN", "Onduras");
     namesMap.put("HR", "Kroasia");
     namesMap.put("HT", "Aiti");
@@ -469,6 +509,7 @@ public class LocalizedNamesImpl_kea extends LocalizedNamesImpl {
     namesMap.put("YT", "Maiote");
     namesMap.put("ZA", "Afrika di Sul");
     namesMap.put("ZW", "Zimbabui");
+    namesMap.put("ZZ", "rejiãu diskonxedu");
   }
 
   @Override
@@ -478,6 +519,36 @@ public class LocalizedNamesImpl_kea extends LocalizedNamesImpl {
 
   private native JavaScriptObject loadMyNameMap() /*-{
     return {
+        "001": "Mundu",
+        "002": "Afrika",
+        "003": "Merka di Norti",
+        "005": "Merka di Sul",
+        "009": "Oseania",
+        "011": "Afrika Osidental",
+        "013": "Merka Sentral",
+        "014": "Afrika Oriental",
+        "015": "Norti di Afrika",
+        "017": "Afrika Sentral",
+        "018": "Sul di Afrika",
+        "019": "Merkas",
+        "021": "Norti di Merka",
+        "029": "Karaibas",
+        "030": "Azia Oriental",
+        "034": "Sul di Azia",
+        "035": "Sudesti Aziatiku",
+        "039": "Europa di Sul",
+        "053": "Australia y Nova Zelandia",
+        "054": "Melanezia",
+        "057": "Rejiãu di Mikronezia",
+        "061": "Polinezia",
+        "142": "Azia",
+        "143": "Azia Sentral",
+        "145": "Azia Osidental",
+        "150": "Europa",
+        "151": "Europa Oriental",
+        "154": "Europa di Norti",
+        "155": "Europa Osidental",
+        "419": "Merka Latinu",
         "AD": "Andora",
         "AE": "Emiradus Arabi Unidu",
         "AF": "Afeganistãu",
@@ -547,6 +618,7 @@ public class LocalizedNamesImpl_kea extends LocalizedNamesImpl {
         "GT": "Guatimala",
         "GW": "Gine-Bisau",
         "GY": "Giana",
+        "HK": "Ong Kong",
         "HN": "Onduras",
         "HR": "Kroasia",
         "HT": "Aiti",
@@ -658,7 +730,8 @@ public class LocalizedNamesImpl_kea extends LocalizedNamesImpl {
         "YE": "Iemen",
         "YT": "Maiote",
         "ZA": "Afrika di Sul",
-        "ZW": "Zimbabui"
+        "ZW": "Zimbabui",
+        "ZZ": "rejiãu diskonxedu"
     };
   }-*/;
 }

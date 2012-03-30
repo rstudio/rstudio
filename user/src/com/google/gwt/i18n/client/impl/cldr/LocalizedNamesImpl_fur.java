@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "fur" locale.
@@ -58,6 +63,7 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
         "BO",
         "BA",
         "BW",
+        "BQ",
         "BR",
         "BN",
         "BG",
@@ -67,6 +73,7 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
         "KH",
         "CM",
         "CA",
+        "EA",
         "CL",
         "CN",
         "CY",
@@ -77,14 +84,13 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
         "KP",
         "KR",
         "CR",
-        "CP",
         "HR",
         "CU",
         "CI",
+        "CW",
         "DK",
         "DG",
         "DM",
-        "EA",
         "EC",
         "EG",
         "SV",
@@ -99,7 +105,6 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
         "GA",
         "GM",
         "GS",
-        "GG",
         "GH",
         "DJ",
         "JM",
@@ -115,6 +120,7 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
         "GP",
         "GU",
         "GT",
+        "GG",
         "GF",
         "GW",
         "GN",
@@ -122,7 +128,6 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
         "GY",
         "HT",
         "HN",
-        "IC",
         "IN",
         "ID",
         "IR",
@@ -133,9 +138,11 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
         "IL",
         "BV",
         "CX",
+        "CP",
         "IM",
         "HM",
         "AX",
+        "IC",
         "KY",
         "CC",
         "CK",
@@ -177,12 +184,12 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
         "MR",
         "MU",
         "YT",
-        "ME",
         "MX",
         "FM",
         "MD",
         "MC",
         "MN",
+        "ME",
         "MS",
         "MZ",
         "NA",
@@ -232,10 +239,9 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
         "MF",
         "VC",
         "ST",
-        "SD",
         "SN",
-        "CS",
         "RS",
+        "CS",
         "SC",
         "SL",
         "SG",
@@ -245,26 +251,29 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
         "SO",
         "ES",
         "LK",
+        "SS",
         "US",
         "ZA",
+        "SD",
         "SR",
         "SJ",
         "SE",
         "CH",
         "SZ",
-        "TA",
+        "SX",
         "TH",
         "TW",
         "TZ",
         "TJ",
         "IO",
-        "PS",
         "TF",
+        "PS",
         "TL",
         "TG",
         "TK",
         "TO",
         "TT",
+        "TA",
         "TN",
         "TR",
         "TM",
@@ -316,8 +325,7 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
     namesMap.put("151", "Europe orientâl");
     namesMap.put("154", "Europe setentrionâl");
     namesMap.put("155", "Europe ocidentâl");
-    namesMap.put("172", "Commonwealth dai stâts indipendents");
-    namesMap.put("419", "Americhe latine e caraibiche");
+    namesMap.put("419", "Americhe latine");
     namesMap.put("AE", "Emirâts araps unîts");
     namesMap.put("AG", "Antigua e Barbuda");
     namesMap.put("AL", "Albanie");
@@ -342,7 +350,6 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
     namesMap.put("CC", "Isulis Cocos");
     namesMap.put("CD", "Republiche Democratiche dal Congo");
     namesMap.put("CF", "Republiche centri africane");
-    namesMap.put("CG", "Congo");
     namesMap.put("CH", "Svuizare");
     namesMap.put("CI", "Cueste di Avoli");
     namesMap.put("CK", "Isulis Cook");
@@ -350,7 +357,8 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
     namesMap.put("CM", "Camerun");
     namesMap.put("CN", "Cine");
     namesMap.put("CO", "Colombie");
-    namesMap.put("CS", "Serbia e Montenegro");
+    namesMap.put("CP", "Isule Clipperton");
+    namesMap.put("CS", "Serbie e Montenegro");
     namesMap.put("CV", "Cjâf vert");
     namesMap.put("CX", "Isule Christmas");
     namesMap.put("CY", "Cipri");
@@ -361,6 +369,7 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
     namesMap.put("DM", "Dominiche");
     namesMap.put("DO", "Republiche dominicane");
     namesMap.put("DZ", "Alzerie");
+    namesMap.put("EA", "Ceuta e Melilla");
     namesMap.put("EE", "Estonie");
     namesMap.put("EG", "Egjit");
     namesMap.put("EH", "Sahara ocidentâl");
@@ -387,6 +396,7 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
     namesMap.put("HM", "Isule Heard e Isulis McDonald");
     namesMap.put("HR", "Cravuazie");
     namesMap.put("HU", "Ongjarie");
+    namesMap.put("IC", "Isulis Canariis");
     namesMap.put("ID", "Indonesie");
     namesMap.put("IE", "Irlande");
     namesMap.put("IL", "Israêl");
@@ -443,7 +453,7 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
     namesMap.put("PM", "San Pierre e Miquelon");
     namesMap.put("PN", "Pitcairn");
     namesMap.put("PR", "Porto Rico");
-    namesMap.put("PS", "Teritori palestinês");
+    namesMap.put("PS", "Teritoris palestinês");
     namesMap.put("QO", "Oceanie periferiche");
     namesMap.put("RE", "Reunion");
     namesMap.put("RO", "Romanie");
@@ -519,8 +529,7 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
         "151": "Europe orientâl",
         "154": "Europe setentrionâl",
         "155": "Europe ocidentâl",
-        "172": "Commonwealth dai stâts indipendents",
-        "419": "Americhe latine e caraibiche",
+        "419": "Americhe latine",
         "AE": "Emirâts araps unîts",
         "AG": "Antigua e Barbuda",
         "AL": "Albanie",
@@ -545,7 +554,6 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
         "CC": "Isulis Cocos",
         "CD": "Republiche Democratiche dal Congo",
         "CF": "Republiche centri africane",
-        "CG": "Congo",
         "CH": "Svuizare",
         "CI": "Cueste di Avoli",
         "CK": "Isulis Cook",
@@ -553,7 +561,8 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
         "CM": "Camerun",
         "CN": "Cine",
         "CO": "Colombie",
-        "CS": "Serbia e Montenegro",
+        "CP": "Isule Clipperton",
+        "CS": "Serbie e Montenegro",
         "CV": "Cjâf vert",
         "CX": "Isule Christmas",
         "CY": "Cipri",
@@ -564,6 +573,7 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
         "DM": "Dominiche",
         "DO": "Republiche dominicane",
         "DZ": "Alzerie",
+        "EA": "Ceuta e Melilla",
         "EE": "Estonie",
         "EG": "Egjit",
         "EH": "Sahara ocidentâl",
@@ -590,6 +600,7 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
         "HM": "Isule Heard e Isulis McDonald",
         "HR": "Cravuazie",
         "HU": "Ongjarie",
+        "IC": "Isulis Canariis",
         "ID": "Indonesie",
         "IE": "Irlande",
         "IL": "Israêl",
@@ -646,7 +657,7 @@ public class LocalizedNamesImpl_fur extends LocalizedNamesImpl {
         "PM": "San Pierre e Miquelon",
         "PN": "Pitcairn",
         "PR": "Porto Rico",
-        "PS": "Teritori palestinês",
+        "PS": "Teritoris palestinês",
         "QO": "Oceanie periferiche",
         "RE": "Reunion",
         "RO": "Romanie",

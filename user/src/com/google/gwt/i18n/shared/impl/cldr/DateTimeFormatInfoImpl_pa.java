@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "pa" locale.
@@ -25,8 +29,8 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
   @Override
   public String[] ampms() {
     return new String[] {
-        "ਸਵੇਰੇ",
-        "ਸ਼ਾਮ"
+        "ਪੂਰਵ ਦੁਪਹਿਰ",
+        "ਬਾਅਦ ਦੁਪਹਿਰ"
     };
   }
 
@@ -53,16 +57,16 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
   @Override
   public String[] erasFull() {
     return new String[] {
-        "ਈਸਾਪੂਰਵ",
-        "ਸੰਨ"
+        "ਈ. ਪੂ.",
+        "ਸਾਲ"
     };
   }
 
   @Override
   public String[] erasShort() {
     return new String[] {
-        "ਈਸਾਪੂਰਵ",
-        "ਸੰਨ"
+        "ਈ. ਪੂ.",
+        "ਸਾਲ"
     };
   }
 
@@ -77,11 +81,6 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String formatYearMonthAbbrevDay() {
-    return "d MMM y";
-  }
-
-  @Override
   public String formatYearMonthFull() {
     return "MMMM y";
   }
@@ -89,16 +88,6 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
   @Override
   public String formatYearMonthFullDay() {
     return "d MMMM y";
-  }
-
-  @Override
-  public String formatYearMonthNumDay() {
-    return "d/M/y";
-  }
-
-  @Override
-  public String formatYearMonthWeekdayDay() {
-    return "EEE, d MMM y";
   }
 
   @Override
@@ -168,20 +157,20 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
   @Override
   public String[] quartersFull() {
     return new String[] {
-        "ਪਹਿਲਾਂ ਚੌਥਾਈ",
-        "ਦੂਜਾ ਚੌਥਾਈ",
-        "ਤੀਜਾ ਚੌਥਾਈ",
-        "ਚੌਥਾ ਚੌਥਾਈ"
+        "ਇਕ ਚੌਥਾਈ",
+        "ਅੱਧਾ",
+        "ਪੌਣਾ",
+        "ਪੂਰਾ"
     };
   }
 
   @Override
   public String[] quartersShort() {
     return new String[] {
-        "ਪਹਿਲਾਂ ਚੌਥਾਈ",
-        "ਦੂਜਾ ਚੌਥਾਈ",
-        "ਤੀਜਾ ਚੌਥਾਈ",
-        "ਚੌਥਾ ਚੌਥਾਈ"
+        "ਇਕ ਚੌਥਾਈ",
+        "ਅੱਧਾ",
+        "ਪੌਣਾ",
+        "ਪੂਰਾ"
     };
   }
 

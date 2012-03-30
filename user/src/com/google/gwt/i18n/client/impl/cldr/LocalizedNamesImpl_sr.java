@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "sr" locale.
@@ -27,6 +32,10 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "AF",
         "AZ",
         "AX",
@@ -310,7 +319,6 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
     namesMap.put("054", "Меланезија");
     namesMap.put("057", "Микронезијски регион");
     namesMap.put("061", "Полинезија");
-    namesMap.put("062", "Јужно-централна Азија");
     namesMap.put("142", "Азија");
     namesMap.put("143", "Централна Азија");
     namesMap.put("145", "Западна Азија");
@@ -318,9 +326,7 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
     namesMap.put("151", "Источна Европа");
     namesMap.put("154", "Северна Европа");
     namesMap.put("155", "Западна Европа");
-    namesMap.put("172", "Комонвелт независних држава");
-    namesMap.put("419", "Латинска Америка и Кариби");
-    namesMap.put("830", "Каналска острва");
+    namesMap.put("419", "Латинска Америка");
     namesMap.put("AC", "Острво Асенсион");
     namesMap.put("AD", "Андора");
     namesMap.put("AE", "Уједињени Арапски Емирати");
@@ -397,7 +403,7 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
     namesMap.put("EU", "Европска Унија");
     namesMap.put("FI", "Финска");
     namesMap.put("FJ", "Фиџи");
-    namesMap.put("FK", "Фолкландска Острва");
+    namesMap.put("FK", "Фокландска острва");
     namesMap.put("FM", "Микронезија");
     namesMap.put("FO", "Фарска Острва");
     namesMap.put("FR", "Француска");
@@ -608,7 +614,6 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
         "054": "Меланезија",
         "057": "Микронезијски регион",
         "061": "Полинезија",
-        "062": "Јужно-централна Азија",
         "142": "Азија",
         "143": "Централна Азија",
         "145": "Западна Азија",
@@ -616,9 +621,7 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
         "151": "Источна Европа",
         "154": "Северна Европа",
         "155": "Западна Европа",
-        "172": "Комонвелт независних држава",
-        "419": "Латинска Америка и Кариби",
-        "830": "Каналска острва",
+        "419": "Латинска Америка",
         "AC": "Острво Асенсион",
         "AD": "Андора",
         "AE": "Уједињени Арапски Емирати",
@@ -695,7 +698,7 @@ public class LocalizedNamesImpl_sr extends LocalizedNamesImpl {
         "EU": "Европска Унија",
         "FI": "Финска",
         "FJ": "Фиџи",
-        "FK": "Фолкландска Острва",
+        "FK": "Фокландска острва",
         "FM": "Микронезија",
         "FO": "Фарска Острва",
         "FR": "Француска",

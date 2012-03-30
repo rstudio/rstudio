@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=lv
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "lv" locale.
@@ -59,6 +64,7 @@ public class LocalizedNamesImpl_lv extends LocalizedNamesImpl {
         "BO",
         "BA",
         "BW",
+        "BQ",
         "BR",
         "VG",
         "BN",
@@ -68,6 +74,7 @@ public class LocalizedNamesImpl_lv extends LocalizedNamesImpl {
         "BT",
         "BV",
         "CF",
+        "CW",
         "TD",
         "CZ",
         "CL",
@@ -243,11 +250,13 @@ public class LocalizedNamesImpl_lv extends LocalizedNamesImpl {
         "SO",
         "FI",
         "ES",
+        "SS",
         "SD",
         "SR",
         "SH",
         "SJ",
         "SZ",
+        "SX",
         "LK",
         "CH",
         "TJ",
@@ -310,7 +319,6 @@ public class LocalizedNamesImpl_lv extends LocalizedNamesImpl {
     namesMap.put("054", "Melanēzija");
     namesMap.put("057", "Mikronēzijas reģions");
     namesMap.put("061", "Polinēzija");
-    namesMap.put("062", "Centrāldienvidāzija");
     namesMap.put("142", "Āzija");
     namesMap.put("143", "Centrālāzija");
     namesMap.put("145", "Rietumāzija");
@@ -318,8 +326,7 @@ public class LocalizedNamesImpl_lv extends LocalizedNamesImpl {
     namesMap.put("151", "Austrumeiropa");
     namesMap.put("154", "Ziemeļeiropa");
     namesMap.put("155", "Rietumeiropa");
-    namesMap.put("172", "Neatkarīgo Valstu Savienība");
-    namesMap.put("419", "Latīņamerika un Karību jūras reģions");
+    namesMap.put("419", "Latīņamerika");
     namesMap.put("AC", "Debesbraukšanas sala");
     namesMap.put("AD", "Andora");
     namesMap.put("AE", "Apvienotie Arābu Emirāti");
@@ -357,7 +364,7 @@ public class LocalizedNamesImpl_lv extends LocalizedNamesImpl {
     namesMap.put("BZ", "Beliza");
     namesMap.put("CA", "Kanāda");
     namesMap.put("CC", "Kokosu jeb Kīlinga salas");
-    namesMap.put("CD", "Kongo Demokrātiskā Republika");
+    namesMap.put("CD", "Kongo-Kinšasa");
     namesMap.put("CF", "Centrālāfrikas Republika");
     namesMap.put("CG", "Kongo - Brazavila");
     namesMap.put("CH", "Šveice");
@@ -587,7 +594,6 @@ public class LocalizedNamesImpl_lv extends LocalizedNamesImpl {
         "054": "Melanēzija",
         "057": "Mikronēzijas reģions",
         "061": "Polinēzija",
-        "062": "Centrāldienvidāzija",
         "142": "Āzija",
         "143": "Centrālāzija",
         "145": "Rietumāzija",
@@ -595,8 +601,7 @@ public class LocalizedNamesImpl_lv extends LocalizedNamesImpl {
         "151": "Austrumeiropa",
         "154": "Ziemeļeiropa",
         "155": "Rietumeiropa",
-        "172": "Neatkarīgo Valstu Savienība",
-        "419": "Latīņamerika un Karību jūras reģions",
+        "419": "Latīņamerika",
         "AC": "Debesbraukšanas sala",
         "AD": "Andora",
         "AE": "Apvienotie Arābu Emirāti",
@@ -634,7 +639,7 @@ public class LocalizedNamesImpl_lv extends LocalizedNamesImpl {
         "BZ": "Beliza",
         "CA": "Kanāda",
         "CC": "Kokosu jeb Kīlinga salas",
-        "CD": "Kongo Demokrātiskā Republika",
+        "CD": "Kongo-Kinšasa",
         "CF": "Centrālāfrikas Republika",
         "CG": "Kongo - Brazavila",
         "CH": "Šveice",

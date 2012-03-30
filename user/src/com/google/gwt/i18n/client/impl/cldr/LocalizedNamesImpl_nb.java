@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "nb" locale.
@@ -64,6 +69,7 @@ public class LocalizedNamesImpl_nb extends LocalizedNamesImpl {
         "BA",
         "BW",
         "BV",
+        "BQ",
         "BR",
         "IO",
         "BN",
@@ -80,6 +86,7 @@ public class LocalizedNamesImpl_nb extends LocalizedNamesImpl {
         "CK",
         "CR",
         "CU",
+        "CW",
         "DK",
         "VI",
         "VG",
@@ -239,6 +246,7 @@ public class LocalizedNamesImpl_nb extends LocalizedNamesImpl {
         "SO",
         "ES",
         "LK",
+        "SS",
         "SH",
         "KN",
         "LC",
@@ -251,6 +259,7 @@ public class LocalizedNamesImpl_nb extends LocalizedNamesImpl {
         "CH",
         "SE",
         "SZ",
+        "SX",
         "SY",
         "ZA",
         "GS",
@@ -315,15 +324,13 @@ public class LocalizedNamesImpl_nb extends LocalizedNamesImpl {
     namesMap.put("039", "Sør-Europa");
     namesMap.put("053", "Australia og New Zealand");
     namesMap.put("057", "Mikronesia");
-    namesMap.put("062", "Sørsentral-Asia");
     namesMap.put("143", "Sentral-Asia");
     namesMap.put("145", "Vest-Asia");
     namesMap.put("150", "Europa");
     namesMap.put("151", "Øst-Europa");
     namesMap.put("154", "Nord-Europa");
     namesMap.put("155", "Vest-Europa");
-    namesMap.put("172", "Samveldet av uavhengige stater");
-    namesMap.put("419", "Latin-Amerika og Karibia");
+    namesMap.put("419", "Latin-Amerika");
     namesMap.put("AC", "Ascension");
     namesMap.put("AE", "De forente arabiske emirater");
     namesMap.put("AG", "Antigua og Barbuda");
@@ -445,7 +452,7 @@ public class LocalizedNamesImpl_nb extends LocalizedNamesImpl {
     namesMap.put("WF", "Wallis og Futuna");
     namesMap.put("YE", "Jemen");
     namesMap.put("ZA", "Sør-Afrika");
-    namesMap.put("ZZ", "ukjent eller ugyldig område");
+    namesMap.put("ZZ", "ukjent område");
   }
 
   @Override
@@ -475,15 +482,13 @@ public class LocalizedNamesImpl_nb extends LocalizedNamesImpl {
         "039": "Sør-Europa",
         "053": "Australia og New Zealand",
         "057": "Mikronesia",
-        "062": "Sørsentral-Asia",
         "143": "Sentral-Asia",
         "145": "Vest-Asia",
         "150": "Europa",
         "151": "Øst-Europa",
         "154": "Nord-Europa",
         "155": "Vest-Europa",
-        "172": "Samveldet av uavhengige stater",
-        "419": "Latin-Amerika og Karibia",
+        "419": "Latin-Amerika",
         "AC": "Ascension",
         "AE": "De forente arabiske emirater",
         "AG": "Antigua og Barbuda",
@@ -605,7 +610,7 @@ public class LocalizedNamesImpl_nb extends LocalizedNamesImpl {
         "WF": "Wallis og Futuna",
         "YE": "Jemen",
         "ZA": "Sør-Afrika",
-        "ZZ": "ukjent eller ugyldig område"
+        "ZZ": "ukjent område"
     };
   }-*/;
 }

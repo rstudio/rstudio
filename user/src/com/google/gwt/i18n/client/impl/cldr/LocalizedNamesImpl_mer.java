@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "mer" locale.
@@ -71,6 +76,7 @@ public class LocalizedNamesImpl_mer extends LocalizedNamesImpl {
         "BO",
         "BA",
         "BW",
+        "BQ",
         "BR",
         "BN",
         "BF",
@@ -84,6 +90,7 @@ public class LocalizedNamesImpl_mer extends LocalizedNamesImpl {
         "CL",
         "CN",
         "CP",
+        "CW",
         "CX",
         "DK",
         "DG",
@@ -249,11 +256,13 @@ public class LocalizedNamesImpl_mer extends LocalizedNamesImpl {
         "SI",
         "SO",
         "ES",
+        "SS",
         "SD",
         "SR",
         "SZ",
         "SE",
         "CH",
+        "SX",
         "TA",
         "TW",
         "TJ",
@@ -422,7 +431,7 @@ public class LocalizedNamesImpl_mer extends LocalizedNamesImpl {
     namesMap.put("RE", "Riyunioni");
     namesMap.put("RU", "Rashia");
     namesMap.put("SA", "Saudi");
-    namesMap.put("SB", "Airandi Cia  Solomon");
+    namesMap.put("SB", "Airandi Cia Solomon");
     namesMap.put("SC", "Shelisheli");
     namesMap.put("SD", "Sudani");
     namesMap.put("SE", "Swideni");
@@ -452,7 +461,7 @@ public class LocalizedNamesImpl_mer extends LocalizedNamesImpl {
     namesMap.put("VA", "Vatikani");
     namesMap.put("VC", "Santavisenti na Grenadini");
     namesMap.put("VG", "Aĩrandi cia Virgin cia Ngeretha");
-    namesMap.put("VI", "Aĩrandi cia  Virgin cia Amerika");
+    namesMap.put("VI", "Aĩrandi cia Virgin cia Amerika");
     namesMap.put("VN", "Vietinamu");
     namesMap.put("WF", "Walis na Futuna");
     namesMap.put("YE", "Yemeni");
@@ -600,7 +609,7 @@ public class LocalizedNamesImpl_mer extends LocalizedNamesImpl {
         "RE": "Riyunioni",
         "RU": "Rashia",
         "SA": "Saudi",
-        "SB": "Airandi Cia  Solomon",
+        "SB": "Airandi Cia Solomon",
         "SC": "Shelisheli",
         "SD": "Sudani",
         "SE": "Swideni",
@@ -630,7 +639,7 @@ public class LocalizedNamesImpl_mer extends LocalizedNamesImpl {
         "VA": "Vatikani",
         "VC": "Santavisenti na Grenadini",
         "VG": "Aĩrandi cia Virgin cia Ngeretha",
-        "VI": "Aĩrandi cia  Virgin cia Amerika",
+        "VI": "Aĩrandi cia Virgin cia Amerika",
         "VN": "Vietinamu",
         "WF": "Walis na Futuna",
         "YE": "Yemeni",

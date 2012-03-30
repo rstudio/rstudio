@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
 
 /**
  * Implementation of DateTimeFormatInfo for the "fa" locale.
@@ -25,8 +29,8 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
   @Override
   public String[] ampms() {
     return new String[] {
-        "قبل از ظهر",
-        "بعد از ظهر"
+        "قبل‌ازظهر",
+        "بعدازظهر"
     };
   }
 
@@ -37,42 +41,42 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
 
   @Override
   public String dateFormatFull() {
-    return "EEEE, MMMM d, y";
+    return "EEEE d MMMM y";
   }
 
   @Override
   public String dateFormatLong() {
-    return "MMMM d, y";
+    return "d MMMM y";
   }
 
   @Override
   public String dateFormatMedium() {
-    return "MMM d, y";
+    return "d MMM y";
   }
 
   @Override
   public String dateFormatShort() {
-    return "M/d/yy";
+    return "yyyy/M/d";
   }
 
   @Override
   public String dateTimeFull(String timePattern, String datePattern) {
-    return new java.lang.StringBuffer().append(datePattern).append("، ساعت ").append(timePattern).toString();
+    return datePattern + "، ساعت " + timePattern;
   }
 
   @Override
   public String dateTimeLong(String timePattern, String datePattern) {
-    return new java.lang.StringBuffer().append(datePattern).append("، ساعت ").append(timePattern).toString();
+    return datePattern + "، ساعت " + timePattern;
   }
 
   @Override
   public String dateTimeMedium(String timePattern, String datePattern) {
-    return new java.lang.StringBuffer().append(datePattern).append("،‏ ").append(timePattern).toString();
+    return datePattern + "،‏ " + timePattern;
   }
 
   @Override
   public String dateTimeShort(String timePattern, String datePattern) {
-    return new java.lang.StringBuffer().append(datePattern).append("،‏ ").append(timePattern).toString();
+    return datePattern + "،‏ " + timePattern;
   }
 
   @Override
@@ -87,7 +91,7 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
   public String[] erasShort() {
     return new String[] {
         "ق.م.",
-        "ب. م."
+        "م."
     };
   }
 
@@ -133,7 +137,7 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthAbbrevDay() {
-    return "MMM d, y";
+    return "d MMM y";
   }
 
   @Override
@@ -143,32 +147,32 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthFullDay() {
-    return "MMMM d, y";
+    return "d MMMM y";
   }
 
   @Override
   public String formatYearMonthNum() {
-    return "yyyy/M";
+    return "y/M";
   }
 
   @Override
   public String formatYearMonthNumDay() {
-    return "M/d/y";
+    return "y/M/d";
   }
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "E d MMM y";
+    return "EEE d MMM y";
   }
 
   @Override
   public String formatYearQuarterFull() {
-    return "yyyy QQQQ";
+    return "QQQQ y";
   }
 
   @Override
   public String formatYearQuarterShort() {
-    return "yyyy Q";
+    return "Q y";
   }
 
   @Override
@@ -178,10 +182,10 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
         "فوریهٔ",
         "مارس",
         "آوریل",
-        "می",
-        "جون",
-        "جولای",
-        "آگوست",
+        "مهٔ",
+        "ژوئن",
+        "ژوئیهٔ",
+        "اوت",
         "سپتامبر",
         "اکتبر",
         "نوامبر",
@@ -214,7 +218,7 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
         "ف",
         "م",
         "آ",
-        "می",
+        "م",
         "ژ",
         "ژ",
         "ا",
@@ -232,9 +236,27 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
         "فوریهٔ",
         "مارس",
         "آوریل",
-        "می",
-        "جون",
-        "جولای",
+        "مهٔ",
+        "ژوئن",
+        "ژوئیهٔ",
+        "اوت",
+        "سپتامبر",
+        "اکتبر",
+        "نوامبر",
+        "دسامبر"
+    };
+  }
+
+  @Override
+  public String[] monthsShortStandalone() {
+    return new String[] {
+        "ژانویه",
+        "فوریه",
+        "مارس",
+        "آوریل",
+        "مه",
+        "ژوئن",
+        "ژوئیه",
         "اوت",
         "سپتامبر",
         "اکتبر",

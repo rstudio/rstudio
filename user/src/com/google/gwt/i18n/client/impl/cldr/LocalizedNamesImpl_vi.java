@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "vi" locale.
@@ -36,7 +41,6 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
     return new String[] {
         "AR",
         "AM",
-        "AI",
         "EG",
         "AZ",
         "IE",
@@ -44,6 +48,7 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
         "AL",
         "AD",
         "DZ",
+        "AI",
         "AG",
         "AT",
         "AF",
@@ -58,17 +63,18 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
         "KP",
         "GL",
         "BD",
+        "BM",
         "BY",
         "BZ",
         "BJ",
         "BE",
         "BL",
-        "BM",
         "PT",
         "BO",
         "BW",
         "BA",
         "CI",
+        "BQ",
         "BR",
         "BN",
         "BG",
@@ -96,6 +102,7 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
         "HR",
         "CU",
         "KG",
+        "CW",
         "ZM",
         "DG",
         "ZW",
@@ -129,9 +136,9 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
         "DJ",
         "JO",
         "GT",
-        "GP",
         "GD",
         "GE",
+        "GP",
         "GG",
         "GY",
         "HT",
@@ -175,6 +182,7 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
         "MM",
         "FM",
         "ME",
+        "MS",
         "MZ",
         "MC",
         "MD",
@@ -182,11 +190,11 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
         "MR",
         "MU",
         "MQ",
-        "MS",
         "AQ",
         "ID",
         "NA",
         "ZA",
+        "NR",
         "NO",
         "NC",
         "NP",
@@ -196,10 +204,10 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
         "NE",
         "NG",
         "NZ",
-        "NR",
         "NU",
         "OM",
         "PK",
+        "PW",
         "PA",
         "PG",
         "PY",
@@ -208,10 +216,8 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
         "FI",
         "FJ",
         "PH",
-        "PN",
         "PF",
         "PR",
-        "PW",
         "AX",
         "MP",
         "IC",
@@ -222,6 +228,7 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
         "FO",
         "MH",
         "GS",
+        "PN",
         "TC",
         "VI",
         "SB",
@@ -234,7 +241,9 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
         "TD",
         "CS",
         "CY",
+        "SS",
         "SJ",
+        "SX",
         "TZ",
         "TJ",
         "AN",
@@ -315,7 +324,6 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
     namesMap.put("039", "Nam Âu");
     namesMap.put("053", "Úc và New Zealand");
     namesMap.put("057", "Vùng Micronesian");
-    namesMap.put("062", "Trung Nam Á");
     namesMap.put("142", "Châu Á");
     namesMap.put("143", "Trung Á");
     namesMap.put("145", "Tây Á");
@@ -323,7 +331,7 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
     namesMap.put("151", "Đông Âu");
     namesMap.put("154", "Miền Bắc Châu Âu");
     namesMap.put("155", "Tây Âu");
-    namesMap.put("419", "Châu Mỹ La-tinh và Ca-ri-be");
+    namesMap.put("419", "Châu Mỹ La-tinh");
     namesMap.put("AC", "Đảo Ascension");
     namesMap.put("AE", "Các Tiểu Vương quốc A-rập Thống nhất");
     namesMap.put("AF", "Áp-ga-ni-xtan");
@@ -492,6 +500,7 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
     namesMap.put("PK", "Pa-ki-xtan");
     namesMap.put("PL", "Ba Lan");
     namesMap.put("PM", "Saint Pierre và Miquelon");
+    namesMap.put("PN", "Quần đảo Pitcairn");
     namesMap.put("PS", "Lãnh thổ Palestine");
     namesMap.put("PT", "Bồ Đào Nha");
     namesMap.put("PY", "Pa-ra-goay");
@@ -583,7 +592,6 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
         "039": "Nam Âu",
         "053": "Úc và New Zealand",
         "057": "Vùng Micronesian",
-        "062": "Trung Nam Á",
         "142": "Châu Á",
         "143": "Trung Á",
         "145": "Tây Á",
@@ -591,7 +599,7 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
         "151": "Đông Âu",
         "154": "Miền Bắc Châu Âu",
         "155": "Tây Âu",
-        "419": "Châu Mỹ La-tinh và Ca-ri-be",
+        "419": "Châu Mỹ La-tinh",
         "AC": "Đảo Ascension",
         "AE": "Các Tiểu Vương quốc A-rập Thống nhất",
         "AF": "Áp-ga-ni-xtan",
@@ -760,6 +768,7 @@ public class LocalizedNamesImpl_vi extends LocalizedNamesImpl {
         "PK": "Pa-ki-xtan",
         "PL": "Ba Lan",
         "PM": "Saint Pierre và Miquelon",
+        "PN": "Quần đảo Pitcairn",
         "PS": "Lãnh thổ Palestine",
         "PT": "Bồ Đào Nha",
         "PY": "Pa-ra-goay",

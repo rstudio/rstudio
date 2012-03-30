@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "ln" locale.
@@ -23,34 +27,72 @@ package com.google.gwt.i18n.client.impl.cldr;
 public class DateTimeFormatInfoImpl_ln extends DateTimeFormatInfoImpl {
 
   @Override
+  public String[] ampms() {
+    return new String[] {
+        "ntɔ́ngɔ́",
+        "mpókwa"
+    };
+  }
+
+  @Override
+  public String dateFormatFull() {
+    return "EEEE d MMMM y";
+  }
+
+  @Override
+  public String dateFormatLong() {
+    return "d MMMM y";
+  }
+
+  @Override
+  public String dateFormatMedium() {
+    return "d MMM y";
+  }
+
+  @Override
   public String dateFormatShort() {
-    return "yy/MM/dd";
+    return "d/M/yyyy";
   }
 
   @Override
   public String[] erasFull() {
     return new String[] {
-        "libosó ya Y.-K.",
-        "nsima ya Y.-K."
+        "Yambo ya Yézu Krís",
+        "Nsima ya Yézu Krís"
     };
   }
 
   @Override
   public String[] erasShort() {
     return new String[] {
-        "libosó ya Y.-K.",
-        "nsima ya Y.-K."
+        "libóso ya",
+        "nsima ya Y"
     };
   }
 
   @Override
+  public String formatMinuteSecond() {
+    return "m:ss";
+  }
+
+  @Override
+  public String formatMonthAbbrevDay() {
+    return "d MMM";
+  }
+
+  @Override
+  public String formatMonthFullDay() {
+    return "d MMMM";
+  }
+
+  @Override
   public String formatMonthFullWeekdayDay() {
-    return "EEEE, MMMM d";
+    return "EEEE d MMMM";
   }
 
   @Override
   public String formatMonthNumDay() {
-    return "M/d";
+    return "d/M";
   }
 
   @Override
@@ -60,7 +102,7 @@ public class DateTimeFormatInfoImpl_ln extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthAbbrevDay() {
-    return "MMM d, y";
+    return "d MMM y";
   }
 
   @Override
@@ -70,7 +112,7 @@ public class DateTimeFormatInfoImpl_ln extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthFullDay() {
-    return "MMMM d, y";
+    return "d MMMM y";
   }
 
   @Override
@@ -80,12 +122,12 @@ public class DateTimeFormatInfoImpl_ln extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthNumDay() {
-    return "M/d/y";
+    return "d/M/y";
   }
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "EEE, MMM d, y";
+    return "EEE d MMM y";
   }
 
   @Override
@@ -119,36 +161,36 @@ public class DateTimeFormatInfoImpl_ln extends DateTimeFormatInfoImpl {
   @Override
   public String[] monthsNarrow() {
     return new String[] {
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10",
-        "11",
-        "12"
+        "y",
+        "f",
+        "m",
+        "a",
+        "m",
+        "y",
+        "y",
+        "a",
+        "s",
+        "ɔ",
+        "n",
+        "d"
     };
   }
 
   @Override
   public String[] monthsShort() {
     return new String[] {
-        "s1",
-        "s2",
-        "s3",
-        "s4",
-        "s5",
-        "s6",
-        "s7",
-        "s8",
-        "s9",
-        "s10",
-        "s11",
-        "s12"
+        "yan",
+        "fbl",
+        "msi",
+        "apl",
+        "mai",
+        "yun",
+        "yul",
+        "agt",
+        "stb",
+        "ɔtb",
+        "nvb",
+        "dsb"
     };
   }
 
@@ -176,9 +218,9 @@ public class DateTimeFormatInfoImpl_ln extends DateTimeFormatInfoImpl {
   public String[] weekdaysFull() {
     return new String[] {
         "eyenga",
-        "mokɔlɔ ya libosó",
-        "mokɔlɔ ya míbalé",
-        "mokɔlɔ ya mísáto",
+        "mokɔlɔ mwa yambo",
+        "mokɔlɔ mwa míbalé",
+        "mokɔlɔ mwa mísáto",
         "mokɔlɔ ya mínéi",
         "mokɔlɔ ya mítáno",
         "mpɔ́sɔ"
@@ -188,13 +230,13 @@ public class DateTimeFormatInfoImpl_ln extends DateTimeFormatInfoImpl {
   @Override
   public String[] weekdaysNarrow() {
     return new String[] {
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7"
+        "e",
+        "y",
+        "m",
+        "m",
+        "m",
+        "m",
+        "p"
     };
   }
 
@@ -202,11 +244,11 @@ public class DateTimeFormatInfoImpl_ln extends DateTimeFormatInfoImpl {
   public String[] weekdaysShort() {
     return new String[] {
         "eye",
-        "m1",
-        "m2",
-        "m3",
-        "m4",
-        "m5",
+        "ybo",
+        "mbl",
+        "mst",
+        "min",
+        "mtn",
         "mps"
     };
   }

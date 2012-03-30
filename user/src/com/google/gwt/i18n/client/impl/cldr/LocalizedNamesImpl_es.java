@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=es
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "es" locale.
@@ -28,15 +33,15 @@ public class LocalizedNamesImpl_es extends LocalizedNamesImpl {
   public String[] loadLikelyRegionCodes() {
     return new String[] {
         "MX",
+        "ES",
         "AR",
         "CO",
-        "ES",
         "US",
         "PH",
         "VE",
         "PE",
         "CL",
-        "CU",
+        "EC",
     };
   }
 
@@ -72,6 +77,7 @@ public class LocalizedNamesImpl_es extends LocalizedNamesImpl {
         "BO",
         "BA",
         "BW",
+        "BQ",
         "BR",
         "BN",
         "BG",
@@ -97,6 +103,7 @@ public class LocalizedNamesImpl_es extends LocalizedNamesImpl {
         "CR",
         "HR",
         "CU",
+        "CW",
         "DG",
         "DK",
         "DM",
@@ -162,6 +169,7 @@ public class LocalizedNamesImpl_es extends LocalizedNamesImpl {
         "MP",
         "MH",
         "UM",
+        "PN",
         "SB",
         "TC",
         "VG",
@@ -225,7 +233,6 @@ public class LocalizedNamesImpl_es extends LocalizedNamesImpl {
         "PG",
         "PY",
         "PE",
-        "PN",
         "PF",
         "PL",
         "PT",
@@ -261,6 +268,7 @@ public class LocalizedNamesImpl_es extends LocalizedNamesImpl {
         "SY",
         "SO",
         "LK",
+        "SS",
         "SZ",
         "ZA",
         "SD",
@@ -268,6 +276,7 @@ public class LocalizedNamesImpl_es extends LocalizedNamesImpl {
         "CH",
         "SR",
         "SJ",
+        "SX",
         "TH",
         "TW",
         "TZ",
@@ -326,15 +335,13 @@ public class LocalizedNamesImpl_es extends LocalizedNamesImpl {
     namesMap.put("053", "Australia y Nueva Zelanda");
     namesMap.put("057", "Micronesia [057]");
     namesMap.put("061", "Polinesia");
-    namesMap.put("062", "Asia centromeridional");
     namesMap.put("143", "Asia central");
     namesMap.put("145", "Asia occidental");
     namesMap.put("150", "Europa");
     namesMap.put("151", "Europa oriental");
     namesMap.put("154", "Europa septentrional");
     namesMap.put("155", "Europa occidental");
-    namesMap.put("172", "Comunidad de Estados Independientes");
-    namesMap.put("419", "Latinoamérica y el Caribe");
+    namesMap.put("419", "Latinoamérica");
     namesMap.put("AC", "Isla de la Ascensión");
     namesMap.put("AE", "Emiratos Árabes Unidos");
     namesMap.put("AF", "Afganistán");
@@ -362,7 +369,6 @@ public class LocalizedNamesImpl_es extends LocalizedNamesImpl {
     namesMap.put("CC", "Islas Cocos");
     namesMap.put("CD", "República Democrática del Congo");
     namesMap.put("CF", "República Centroafricana");
-    namesMap.put("CG", "Congo - Brazzaville");
     namesMap.put("CH", "Suiza");
     namesMap.put("CI", "Costa de Marfil");
     namesMap.put("CK", "Islas Cook");
@@ -460,7 +466,7 @@ public class LocalizedNamesImpl_es extends LocalizedNamesImpl {
     namesMap.put("PK", "Pakistán");
     namesMap.put("PL", "Polonia");
     namesMap.put("PM", "San Pedro y Miquelón");
-    namesMap.put("PN", "Pitcairn");
+    namesMap.put("PN", "Islas Pitcairn");
     namesMap.put("PS", "Territorios Palestinos");
     namesMap.put("QO", "Territorios alejados de Oceanía");
     namesMap.put("RE", "Reunión");
@@ -503,7 +509,7 @@ public class LocalizedNamesImpl_es extends LocalizedNamesImpl {
     namesMap.put("WF", "Wallis y Futuna");
     namesMap.put("ZA", "Sudáfrica");
     namesMap.put("ZW", "Zimbabue");
-    namesMap.put("ZZ", "Región desconocida o no válida");
+    namesMap.put("ZZ", "Región desconocida");
   }
 
   @Override
@@ -534,15 +540,13 @@ public class LocalizedNamesImpl_es extends LocalizedNamesImpl {
         "053": "Australia y Nueva Zelanda",
         "057": "Micronesia [057]",
         "061": "Polinesia",
-        "062": "Asia centromeridional",
         "143": "Asia central",
         "145": "Asia occidental",
         "150": "Europa",
         "151": "Europa oriental",
         "154": "Europa septentrional",
         "155": "Europa occidental",
-        "172": "Comunidad de Estados Independientes",
-        "419": "Latinoamérica y el Caribe",
+        "419": "Latinoamérica",
         "AC": "Isla de la Ascensión",
         "AE": "Emiratos Árabes Unidos",
         "AF": "Afganistán",
@@ -570,7 +574,6 @@ public class LocalizedNamesImpl_es extends LocalizedNamesImpl {
         "CC": "Islas Cocos",
         "CD": "República Democrática del Congo",
         "CF": "República Centroafricana",
-        "CG": "Congo - Brazzaville",
         "CH": "Suiza",
         "CI": "Costa de Marfil",
         "CK": "Islas Cook",
@@ -668,7 +671,7 @@ public class LocalizedNamesImpl_es extends LocalizedNamesImpl {
         "PK": "Pakistán",
         "PL": "Polonia",
         "PM": "San Pedro y Miquelón",
-        "PN": "Pitcairn",
+        "PN": "Islas Pitcairn",
         "PS": "Territorios Palestinos",
         "QO": "Territorios alejados de Oceanía",
         "RE": "Reunión",
@@ -711,7 +714,7 @@ public class LocalizedNamesImpl_es extends LocalizedNamesImpl {
         "WF": "Wallis y Futuna",
         "ZA": "Sudáfrica",
         "ZW": "Zimbabue",
-        "ZZ": "Región desconocida o no válida"
+        "ZZ": "Región desconocida"
     };
   }-*/;
 }

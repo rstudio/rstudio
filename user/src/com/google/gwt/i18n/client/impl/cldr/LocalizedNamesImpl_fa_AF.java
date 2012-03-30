@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=AF
+
 
 /**
  * Localized names for the "fa_AF" locale.
@@ -27,6 +32,10 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "AW",
         "AU",
         "DE",
@@ -43,6 +52,7 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
         "UZ",
         "EE",
         "IL",
+        "SJ",
         "ZA",
         "CF",
         "AF",
@@ -66,7 +76,6 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
         "QO",
         "BR",
         "BM",
-        "BI",
         "BN",
         "GB",
         "BE",
@@ -77,6 +86,7 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
         "BS",
         "BT",
         "BW",
+        "BI",
         "BF",
         "BA",
         "BO",
@@ -109,22 +119,22 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
         "MP",
         "VI",
         "VG",
+        "PN",
         "CP",
         "UM",
         "CK",
         "CC",
         "KY",
         "BV",
-        "SJ",
         "IM",
         "NF",
         "HM",
         "CX",
-        "GP",
         "AZ",
         "CD",
         "DO",
         "CZ",
+        "AQ",
         "GS",
         "DJ",
         "DK",
@@ -143,6 +153,8 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
         "WS",
         "AS",
         "SM",
+        "EA",
+        "PS",
         "LK",
         "SK",
         "SI",
@@ -172,14 +184,12 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
         "OM",
         "GH",
         "FR",
-        "PS",
         "FI",
         "FJ",
         "PH",
         "CY",
         "KG",
         "KZ",
-        "AQ",
         "QA",
         "LA",
         "LV",
@@ -236,15 +246,14 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
         "VE",
         "VN",
         "PY",
-        "PK",
         "PW",
         "PA",
         "PG",
+        "PK",
         "PT",
         "PF",
         "PR",
         "PL",
-        "PN",
         "PE",
         "TD",
         "CL",
@@ -257,7 +266,6 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
         "HR",
         "KI",
         "KH",
-        "EA",
         "KR",
         "KP",
         "CO",
@@ -273,6 +281,7 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
         "GD",
         "GL",
         "GT",
+        "GP",
         "GU",
         "GF",
         "GY",
@@ -312,7 +321,6 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
     namesMap.put("CR", "کاستریکا");
     namesMap.put("CU", "کیوبا");
     namesMap.put("DK", "دنمارک");
-    namesMap.put("EC", "اکوادور");
     namesMap.put("EE", "استونیا");
     namesMap.put("ER", "اریتریا");
     namesMap.put("ES", "هسپانیه");
@@ -415,7 +423,6 @@ public class LocalizedNamesImpl_fa_AF extends LocalizedNamesImpl_fa {
         "CR": "کاستریکا",
         "CU": "کیوبا",
         "DK": "دنمارک",
-        "EC": "اکوادور",
         "EE": "استونیا",
         "ER": "اریتریا",
         "ES": "هسپانیه",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "mr" locale.
@@ -34,6 +39,10 @@ public class LocalizedNamesImpl_mr extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "AI",
         "AG",
         "AD",
@@ -317,7 +326,6 @@ public class LocalizedNamesImpl_mr extends LocalizedNamesImpl {
     namesMap.put("054", "मेलानेशिया");
     namesMap.put("057", "मायक्रोनेशियन रीजन");
     namesMap.put("061", "पॉलिनेशिया");
-    namesMap.put("062", "दक्षिण-मध्य अशिया");
     namesMap.put("142", "अशिया");
     namesMap.put("143", "मध्य अशिया");
     namesMap.put("145", "पश्चिम अशिया");
@@ -325,10 +333,7 @@ public class LocalizedNamesImpl_mr extends LocalizedNamesImpl {
     namesMap.put("151", "पूर्व युरोप");
     namesMap.put("154", "उत्तर युरोप");
     namesMap.put("155", "पश्चिम युरोप");
-    namesMap.put("172", "स्वतंत्र राष्ट्रांचे कॉमनवेल्थ");
-    namesMap.put("200", "झेकोस्लवाकिया");
     namesMap.put("419", "लॅटिन अमेरिका आणि कॅरीबियन");
-    namesMap.put("830", "चॅनल बेटे");
     namesMap.put("AC", "अ‍ॅसेन्शियम बेट");
     namesMap.put("AD", "अँडोरा");
     namesMap.put("AE", "संयुक्त अरब अमीरात");
@@ -616,7 +621,6 @@ public class LocalizedNamesImpl_mr extends LocalizedNamesImpl {
         "054": "मेलानेशिया",
         "057": "मायक्रोनेशियन रीजन",
         "061": "पॉलिनेशिया",
-        "062": "दक्षिण-मध्य अशिया",
         "142": "अशिया",
         "143": "मध्य अशिया",
         "145": "पश्चिम अशिया",
@@ -624,10 +628,7 @@ public class LocalizedNamesImpl_mr extends LocalizedNamesImpl {
         "151": "पूर्व युरोप",
         "154": "उत्तर युरोप",
         "155": "पश्चिम युरोप",
-        "172": "स्वतंत्र राष्ट्रांचे कॉमनवेल्थ",
-        "200": "झेकोस्लवाकिया",
         "419": "लॅटिन अमेरिका आणि कॅरीबियन",
-        "830": "चॅनल बेटे",
         "AC": "अ‍ॅसेन्शियम बेट",
         "AD": "अँडोरा",
         "AE": "संयुक्त अरब अमीरात",

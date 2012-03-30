@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "pt_PT" locale.
@@ -29,7 +34,6 @@ public class LocalizedNamesImpl_pt_PT extends LocalizedNamesImpl_pt {
     return new String[] {
         "AF",
         "ZA",
-        "AX",
         "AL",
         "DE",
         "AD",
@@ -59,6 +63,7 @@ public class LocalizedNamesImpl_pt_PT extends LocalizedNamesImpl_pt {
         "BO",
         "BA",
         "BW",
+        "BQ",
         "BR",
         "BN",
         "BG",
@@ -69,7 +74,6 @@ public class LocalizedNamesImpl_pt_PT extends LocalizedNamesImpl_pt {
         "CM",
         "KH",
         "CA",
-        "QA",
         "KZ",
         "EA",
         "TD",
@@ -86,10 +90,13 @@ public class LocalizedNamesImpl_pt_PT extends LocalizedNamesImpl_pt {
         "CR",
         "HR",
         "CU",
+        "CW",
         "DG",
         "DK",
+        "DJ",
         "DM",
         "EG",
+        "SV",
         "AE",
         "EC",
         "ER",
@@ -100,7 +107,6 @@ public class LocalizedNamesImpl_pt_PT extends LocalizedNamesImpl_pt {
         "US",
         "EE",
         "ET",
-        "FO",
         "FJ",
         "PH",
         "FI",
@@ -135,11 +141,13 @@ public class LocalizedNamesImpl_pt_PT extends LocalizedNamesImpl_pt {
         "CX",
         "HM",
         "NF",
+        "AX",
         "KY",
         "IC",
         "CC",
         "CK",
         "FK",
+        "FO",
         "MP",
         "MH",
         "UM",
@@ -158,7 +166,6 @@ public class LocalizedNamesImpl_pt_PT extends LocalizedNamesImpl_pt {
         "JM",
         "JP",
         "JE",
-        "DJ",
         "JO",
         "KW",
         "LA",
@@ -215,6 +222,7 @@ public class LocalizedNamesImpl_pt_PT extends LocalizedNamesImpl_pt {
         "PL",
         "PR",
         "PT",
+        "QA",
         "KE",
         "KG",
         "KI",
@@ -228,7 +236,6 @@ public class LocalizedNamesImpl_pt_PT extends LocalizedNamesImpl_pt {
         "RU",
         "KN",
         "PM",
-        "SV",
         "WS",
         "AS",
         "SH",
@@ -248,12 +255,14 @@ public class LocalizedNamesImpl_pt_PT extends LocalizedNamesImpl_pt {
         "SY",
         "SO",
         "LK",
+        "SS",
         "SZ",
         "SD",
         "SE",
         "CH",
         "SR",
         "SJ",
+        "SX",
         "TH",
         "TW",
         "TJ",
@@ -298,38 +307,33 @@ public class LocalizedNamesImpl_pt_PT extends LocalizedNamesImpl_pt {
     namesMap.put("AI", "Anguila");
     namesMap.put("AM", "Arménia");
     namesMap.put("AQ", "Antárctica");
-    namesMap.put("AX", "Alanda");
-    namesMap.put("AZ", "Azerbeijão");
-    namesMap.put("BD", "Bangladeche");
+    namesMap.put("AX", "Ilhas Åland");
     namesMap.put("BF", "Burkina-Faso");
     namesMap.put("BH", "Bahrein");
     namesMap.put("BJ", "Benim");
-    namesMap.put("BS", "Baamas");
+    namesMap.put("BW", "Botswana");
     namesMap.put("BY", "Bielorrússia");
     namesMap.put("CC", "Ilhas Cocos");
     namesMap.put("CG", "Congo-Brazzaville");
     namesMap.put("CM", "Camarões");
     namesMap.put("CX", "Ilha do Natal");
     namesMap.put("CZ", "República Checa");
-    namesMap.put("DJ", "Jibuti");
     namesMap.put("EE", "Estónia");
     namesMap.put("EG", "Egipto");
     namesMap.put("EH", "Sara Ocidental");
     namesMap.put("FK", "Ilhas Falkland");
     namesMap.put("FM", "Estados Federados da Micronésia");
-    namesMap.put("FO", "Faroé");
-    namesMap.put("FX", "França (Írea metropolitana)");
+    namesMap.put("FO", "Ilhas Faroé");
+    namesMap.put("FX", "França (continental)");
     namesMap.put("GL", "Gronelândia");
     namesMap.put("GW", "Guiné-Bissau");
     namesMap.put("IR", "Irão");
     namesMap.put("KE", "Quénia");
     namesMap.put("KG", "Quirguizistão");
     namesMap.put("KN", "Saint Kitts e Nevis");
-    namesMap.put("KW", "Koweit");
     namesMap.put("KY", "Ilhas Caimão");
     namesMap.put("KZ", "Cazaquistão");
     namesMap.put("LA", "Laos, República Popular Democrática do");
-    namesMap.put("LK", "Sri Lanca");
     namesMap.put("LV", "Letónia");
     namesMap.put("MC", "Mónaco");
     namesMap.put("MD", "Moldávia, República da");
@@ -339,25 +343,24 @@ public class LocalizedNamesImpl_pt_PT extends LocalizedNamesImpl_pt {
     namesMap.put("MP", "Ilhas Mariana do Norte");
     namesMap.put("MS", "Monserrate");
     namesMap.put("MU", "Maurícias");
-    namesMap.put("MW", "Malavi");
     namesMap.put("NC", "Nova Caledónia");
     namesMap.put("NL", "Países Baixos");
     namesMap.put("PG", "Papuásia-Nova Guiné");
     namesMap.put("PL", "Polónia");
     namesMap.put("PS", "Território Palestiniano");
+    namesMap.put("QA", "Qatar");
     namesMap.put("QO", "Oceânia Insular");
     namesMap.put("RO", "Roménia");
     namesMap.put("SC", "Seicheles");
     namesMap.put("SG", "Singapura");
     namesMap.put("SI", "Eslovénia");
     namesMap.put("SM", "São Marino");
-    namesMap.put("SV", "Salvador");
     namesMap.put("TC", "Ilhas Turcas e Caicos");
     namesMap.put("TJ", "Tajiquistão");
     namesMap.put("TM", "Turquemenistão");
     namesMap.put("TT", "Trindade e Tobago");
     namesMap.put("UZ", "Usbequistão");
-    namesMap.put("VI", "Ilhas Virgin E.U.A.");
+    namesMap.put("VI", "Ilhas Virgens E.U.A.");
     namesMap.put("VN", "Vietname");
     namesMap.put("YE", "Iémen");
     namesMap.put("ZW", "Zimbabwe");
@@ -379,38 +382,33 @@ public class LocalizedNamesImpl_pt_PT extends LocalizedNamesImpl_pt {
         "AI": "Anguila",
         "AM": "Arménia",
         "AQ": "Antárctica",
-        "AX": "Alanda",
-        "AZ": "Azerbeijão",
-        "BD": "Bangladeche",
+        "AX": "Ilhas Åland",
         "BF": "Burkina-Faso",
         "BH": "Bahrein",
         "BJ": "Benim",
-        "BS": "Baamas",
+        "BW": "Botswana",
         "BY": "Bielorrússia",
         "CC": "Ilhas Cocos",
         "CG": "Congo-Brazzaville",
         "CM": "Camarões",
         "CX": "Ilha do Natal",
         "CZ": "República Checa",
-        "DJ": "Jibuti",
         "EE": "Estónia",
         "EG": "Egipto",
         "EH": "Sara Ocidental",
         "FK": "Ilhas Falkland",
         "FM": "Estados Federados da Micronésia",
-        "FO": "Faroé",
-        "FX": "França (Írea metropolitana)",
+        "FO": "Ilhas Faroé",
+        "FX": "França (continental)",
         "GL": "Gronelândia",
         "GW": "Guiné-Bissau",
         "IR": "Irão",
         "KE": "Quénia",
         "KG": "Quirguizistão",
         "KN": "Saint Kitts e Nevis",
-        "KW": "Koweit",
         "KY": "Ilhas Caimão",
         "KZ": "Cazaquistão",
         "LA": "Laos, República Popular Democrática do",
-        "LK": "Sri Lanca",
         "LV": "Letónia",
         "MC": "Mónaco",
         "MD": "Moldávia, República da",
@@ -420,25 +418,24 @@ public class LocalizedNamesImpl_pt_PT extends LocalizedNamesImpl_pt {
         "MP": "Ilhas Mariana do Norte",
         "MS": "Monserrate",
         "MU": "Maurícias",
-        "MW": "Malavi",
         "NC": "Nova Caledónia",
         "NL": "Países Baixos",
         "PG": "Papuásia-Nova Guiné",
         "PL": "Polónia",
         "PS": "Território Palestiniano",
+        "QA": "Qatar",
         "QO": "Oceânia Insular",
         "RO": "Roménia",
         "SC": "Seicheles",
         "SG": "Singapura",
         "SI": "Eslovénia",
         "SM": "São Marino",
-        "SV": "Salvador",
         "TC": "Ilhas Turcas e Caicos",
         "TJ": "Tajiquistão",
         "TM": "Turquemenistão",
         "TT": "Trindade e Tobago",
         "UZ": "Usbequistão",
-        "VI": "Ilhas Virgin E.U.A.",
+        "VI": "Ilhas Virgens E.U.A.",
         "VN": "Vietname",
         "YE": "Iémen",
         "ZW": "Zimbabwe"

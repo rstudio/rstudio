@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "ta" locale.
@@ -61,8 +65,8 @@ public class DateTimeFormatInfoImpl_ta extends DateTimeFormatInfoImpl {
   @Override
   public String[] erasShort() {
     return new String[] {
-        "கிமு",
-        "கிபி"
+        "கி.மு.",
+        "கி.பி."
     };
   }
 
@@ -79,6 +83,11 @@ public class DateTimeFormatInfoImpl_ta extends DateTimeFormatInfoImpl {
   @Override
   public String formatMonthFullDay() {
     return "d MMMM";
+  }
+
+  @Override
+  public String formatMonthFullWeekdayDay() {
+    return "EEEE, d MMMM";
   }
 
   @Override
@@ -108,12 +117,12 @@ public class DateTimeFormatInfoImpl_ta extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthNum() {
-    return "M-y";
+    return "M/y";
   }
 
   @Override
   public String formatYearMonthNumDay() {
-    return "d-M-y";
+    return "d/M/y";
   }
 
   @Override
@@ -142,7 +151,25 @@ public class DateTimeFormatInfoImpl_ta extends DateTimeFormatInfoImpl {
         "ஜூன்",
         "ஜூலை",
         "ஆகஸ்ட்",
-        "செப்டெம்ப்ர்",
+        "செப்டம்பர்",
+        "அக்டோபர்",
+        "நவம்பர்",
+        "டிசம்பர்"
+    };
+  }
+
+  @Override
+  public String[] monthsFullStandalone() {
+    return new String[] {
+        "ஜனவரி",
+        "பிப்ரவரி",
+        "மார்ச்",
+        "ஏப்ரல்",
+        "மே",
+        "ஜூன்",
+        "ஜூலை",
+        "ஆகஸ்டு",
+        "செப்டம்பர்",
         "அக்டோபர்",
         "நவம்பர்",
         "டிசம்பர்"
@@ -188,10 +215,20 @@ public class DateTimeFormatInfoImpl_ta extends DateTimeFormatInfoImpl {
   @Override
   public String[] quartersFull() {
     return new String[] {
-        "1ஆம் காலாண்டு",
-        "2ஆம் காலாண்டு",
-        "3ஆம் காலாண்டு",
-        "4ஆம் காலாண்டு"
+        "முதல் காலாண்டு",
+        "இரண்டாம் காலாண்டு",
+        "மூன்றாம் காலாண்டு",
+        "நான்காம் காலாண்டு"
+    };
+  }
+
+  @Override
+  public String[] quartersShort() {
+    return new String[] {
+        "காலாண்டு1",
+        "காலாண்டு2",
+        "காலாண்டு3",
+        "காலாண்டு4"
     };
   }
 

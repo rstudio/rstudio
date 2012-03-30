@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "nds" locale.
@@ -69,6 +74,7 @@ public class LocalizedNamesImpl_nds extends LocalizedNamesImpl {
         "BA",
         "BW",
         "BV",
+        "BQ",
         "BR",
         "VG",
         "IO",
@@ -82,6 +88,7 @@ public class LocalizedNamesImpl_nds extends LocalizedNamesImpl {
         "CK",
         "CR",
         "CP",
+        "CW",
         "DK",
         "CD",
         "DG",
@@ -239,6 +246,7 @@ public class LocalizedNamesImpl_nds extends LocalizedNamesImpl {
         "SO",
         "ES",
         "LK",
+        "SS",
         "SH",
         "KN",
         "LC",
@@ -253,6 +261,7 @@ public class LocalizedNamesImpl_nds extends LocalizedNamesImpl {
         "SZ",
         "SE",
         "CH",
+        "SX",
         "SY",
         "TA",
         "TJ",
@@ -314,7 +323,6 @@ public class LocalizedNamesImpl_nds extends LocalizedNamesImpl {
     namesMap.put("053", "Australien un Neeseeland");
     namesMap.put("054", "Melanesien");
     namesMap.put("061", "Polynesien");
-    namesMap.put("062", "Süüd-Zentralasien");
     namesMap.put("142", "Asien");
     namesMap.put("143", "Zentralasien");
     namesMap.put("145", "Westasien");
@@ -322,8 +330,7 @@ public class LocalizedNamesImpl_nds extends LocalizedNamesImpl {
     namesMap.put("151", "Oosteuropa");
     namesMap.put("154", "Noordeuropa");
     namesMap.put("155", "Westeuropa");
-    namesMap.put("172", "Gemeenschop vun Unafhängige Staten");
-    namesMap.put("419", "Latienamerika un Karibik");
+    namesMap.put("419", "Latienamerika");
     namesMap.put("AE", "Vereenigte Araabsche Emiraten");
     namesMap.put("AG", "Antigua un Barbuda");
     namesMap.put("AL", "Albanien");
@@ -511,7 +518,6 @@ public class LocalizedNamesImpl_nds extends LocalizedNamesImpl {
         "053": "Australien un Neeseeland",
         "054": "Melanesien",
         "061": "Polynesien",
-        "062": "Süüd-Zentralasien",
         "142": "Asien",
         "143": "Zentralasien",
         "145": "Westasien",
@@ -519,8 +525,7 @@ public class LocalizedNamesImpl_nds extends LocalizedNamesImpl {
         "151": "Oosteuropa",
         "154": "Noordeuropa",
         "155": "Westeuropa",
-        "172": "Gemeenschop vun Unafhängige Staten",
-        "419": "Latienamerika un Karibik",
+        "419": "Latienamerika",
         "AE": "Vereenigte Araabsche Emiraten",
         "AG": "Antigua un Barbuda",
         "AL": "Albanien",

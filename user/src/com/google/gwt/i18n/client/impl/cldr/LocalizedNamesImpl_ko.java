@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=ko
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "ko" locale.
@@ -35,6 +40,10 @@ public class LocalizedNamesImpl_ko extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "GH",
         "GA",
         "GY",
@@ -300,7 +309,7 @@ public class LocalizedNamesImpl_ko extends LocalizedNamesImpl {
     namesMap.put("002", "아프리카");
     namesMap.put("003", "북아메리카");
     namesMap.put("005", "남아메리카[남미]");
-    namesMap.put("009", "오세아니아, 대양주");
+    namesMap.put("009", "오세아니아");
     namesMap.put("011", "서아프리카");
     namesMap.put("013", "중앙 아메리카");
     namesMap.put("014", "동부 아프리카");
@@ -318,7 +327,6 @@ public class LocalizedNamesImpl_ko extends LocalizedNamesImpl {
     namesMap.put("054", "멜라네시아");
     namesMap.put("057", "미크로네시아 지역");
     namesMap.put("061", "폴리네시아");
-    namesMap.put("062", "중남 아시아");
     namesMap.put("142", "아시아");
     namesMap.put("143", "중앙 아시아");
     namesMap.put("145", "서아시아");
@@ -326,8 +334,7 @@ public class LocalizedNamesImpl_ko extends LocalizedNamesImpl {
     namesMap.put("151", "동유럽");
     namesMap.put("154", "북유럽");
     namesMap.put("155", "서유럽");
-    namesMap.put("172", "독립 국가 연합");
-    namesMap.put("419", "라틴 아메리카 및 카리브 해 제도");
+    namesMap.put("419", "라틴 아메리카");
     namesMap.put("AC", "어센션 섬");
     namesMap.put("AD", "안도라");
     namesMap.put("AE", "아랍에미리트 연합");
@@ -368,7 +375,7 @@ public class LocalizedNamesImpl_ko extends LocalizedNamesImpl {
     namesMap.put("BZ", "벨리즈");
     namesMap.put("CA", "캐나다");
     namesMap.put("CC", "코코스제도");
-    namesMap.put("CD", "콩고 민주공화국");
+    namesMap.put("CD", "콩고-킨샤사");
     namesMap.put("CF", "중앙 아프리카 공화국");
     namesMap.put("CG", "콩고");
     namesMap.put("CH", "스위스");
@@ -378,7 +385,7 @@ public class LocalizedNamesImpl_ko extends LocalizedNamesImpl {
     namesMap.put("CM", "카메룬");
     namesMap.put("CN", "중국");
     namesMap.put("CO", "콜롬비아");
-    namesMap.put("CP", "클리퍼턴 섬");
+    namesMap.put("CP", "클립퍼튼 섬");
     namesMap.put("CR", "코스타리카");
     namesMap.put("CS", "세르비아 및 몬테네그로");
     namesMap.put("CU", "쿠바");
@@ -393,7 +400,7 @@ public class LocalizedNamesImpl_ko extends LocalizedNamesImpl {
     namesMap.put("DM", "도미니카");
     namesMap.put("DO", "도미니카 공화국");
     namesMap.put("DZ", "알제리");
-    namesMap.put("EA", "세우타와 멜리아");
+    namesMap.put("EA", "세우타 및 멜리야");
     namesMap.put("EC", "에콰도르");
     namesMap.put("EE", "에스토니아");
     namesMap.put("EG", "이집트");
@@ -546,7 +553,7 @@ public class LocalizedNamesImpl_ko extends LocalizedNamesImpl {
     namesMap.put("SV", "엘살바도르");
     namesMap.put("SY", "시리아");
     namesMap.put("SZ", "스와질랜드");
-    namesMap.put("TA", "트리스탄 다 쿠냐");
+    namesMap.put("TA", "트리스탄다쿠나");
     namesMap.put("TC", "터크스케이커스제도");
     namesMap.put("TD", "차드");
     namesMap.put("TF", "프랑스 남부 지방");
@@ -597,7 +604,7 @@ public class LocalizedNamesImpl_ko extends LocalizedNamesImpl {
         "002": "아프리카",
         "003": "북아메리카",
         "005": "남아메리카[남미]",
-        "009": "오세아니아, 대양주",
+        "009": "오세아니아",
         "011": "서아프리카",
         "013": "중앙 아메리카",
         "014": "동부 아프리카",
@@ -615,7 +622,6 @@ public class LocalizedNamesImpl_ko extends LocalizedNamesImpl {
         "054": "멜라네시아",
         "057": "미크로네시아 지역",
         "061": "폴리네시아",
-        "062": "중남 아시아",
         "142": "아시아",
         "143": "중앙 아시아",
         "145": "서아시아",
@@ -623,8 +629,7 @@ public class LocalizedNamesImpl_ko extends LocalizedNamesImpl {
         "151": "동유럽",
         "154": "북유럽",
         "155": "서유럽",
-        "172": "독립 국가 연합",
-        "419": "라틴 아메리카 및 카리브 해 제도",
+        "419": "라틴 아메리카",
         "AC": "어센션 섬",
         "AD": "안도라",
         "AE": "아랍에미리트 연합",
@@ -665,7 +670,7 @@ public class LocalizedNamesImpl_ko extends LocalizedNamesImpl {
         "BZ": "벨리즈",
         "CA": "캐나다",
         "CC": "코코스제도",
-        "CD": "콩고 민주공화국",
+        "CD": "콩고-킨샤사",
         "CF": "중앙 아프리카 공화국",
         "CG": "콩고",
         "CH": "스위스",
@@ -675,7 +680,7 @@ public class LocalizedNamesImpl_ko extends LocalizedNamesImpl {
         "CM": "카메룬",
         "CN": "중국",
         "CO": "콜롬비아",
-        "CP": "클리퍼턴 섬",
+        "CP": "클립퍼튼 섬",
         "CR": "코스타리카",
         "CS": "세르비아 및 몬테네그로",
         "CU": "쿠바",
@@ -690,7 +695,7 @@ public class LocalizedNamesImpl_ko extends LocalizedNamesImpl {
         "DM": "도미니카",
         "DO": "도미니카 공화국",
         "DZ": "알제리",
-        "EA": "세우타와 멜리아",
+        "EA": "세우타 및 멜리야",
         "EC": "에콰도르",
         "EE": "에스토니아",
         "EG": "이집트",
@@ -843,7 +848,7 @@ public class LocalizedNamesImpl_ko extends LocalizedNamesImpl {
         "SV": "엘살바도르",
         "SY": "시리아",
         "SZ": "스와질랜드",
-        "TA": "트리스탄 다 쿠냐",
+        "TA": "트리스탄다쿠나",
         "TC": "터크스케이커스제도",
         "TD": "차드",
         "TF": "프랑스 남부 지방",

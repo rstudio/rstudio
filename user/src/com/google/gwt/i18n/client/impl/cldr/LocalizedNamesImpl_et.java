@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "et" locale.
@@ -61,6 +66,7 @@ public class LocalizedNamesImpl_et extends LocalizedNamesImpl {
         "BA",
         "BW",
         "BV",
+        "BQ",
         "BR",
         "IO",
         "VG",
@@ -74,6 +80,7 @@ public class LocalizedNamesImpl_et extends LocalizedNamesImpl {
         "CK",
         "CR",
         "CI",
+        "CW",
         "DG",
         "DJ",
         "DM",
@@ -240,12 +247,14 @@ public class LocalizedNamesImpl_et extends LocalizedNamesImpl {
         "SO",
         "FI",
         "LK",
+        "SS",
         "SD",
         "SR",
         "GB",
         "SZ",
         "SJ",
         "SY",
+        "SX",
         "CH",
         "ZW",
         "DK",
@@ -310,7 +319,6 @@ public class LocalizedNamesImpl_et extends LocalizedNamesImpl {
     namesMap.put("054", "Melaneesia");
     namesMap.put("057", "Mikroneesia");
     namesMap.put("061", "Polüneesia");
-    namesMap.put("062", "Kesk-Aasia lõunaosa");
     namesMap.put("142", "Aasia");
     namesMap.put("143", "Kesk-Aasia");
     namesMap.put("145", "Lääne-Aasia");
@@ -318,8 +326,7 @@ public class LocalizedNamesImpl_et extends LocalizedNamesImpl {
     namesMap.put("151", "Ida-Euroopa");
     namesMap.put("154", "Põhja-Euroopa");
     namesMap.put("155", "Lääne-Euroopa");
-    namesMap.put("172", "Sõltumatute Riikide Ühendus");
-    namesMap.put("419", "Ladina-Ameerika ja Kariibi meri");
+    namesMap.put("419", "Ladina-Ameerika");
     namesMap.put("AC", "Ascensioni saar");
     namesMap.put("AE", "Araabia Ühendemiraadid");
     namesMap.put("AF", "Afganistan");
@@ -516,7 +523,6 @@ public class LocalizedNamesImpl_et extends LocalizedNamesImpl {
         "054": "Melaneesia",
         "057": "Mikroneesia",
         "061": "Polüneesia",
-        "062": "Kesk-Aasia lõunaosa",
         "142": "Aasia",
         "143": "Kesk-Aasia",
         "145": "Lääne-Aasia",
@@ -524,8 +530,7 @@ public class LocalizedNamesImpl_et extends LocalizedNamesImpl {
         "151": "Ida-Euroopa",
         "154": "Põhja-Euroopa",
         "155": "Lääne-Euroopa",
-        "172": "Sõltumatute Riikide Ühendus",
-        "419": "Ladina-Ameerika ja Kariibi meri",
+        "419": "Ladina-Ameerika",
         "AC": "Ascensioni saar",
         "AE": "Araabia Ühendemiraadid",
         "AF": "Afganistan",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "te" locale.
@@ -34,6 +39,10 @@ public class LocalizedNamesImpl_te extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "AO",
         "AQ",
         "AZ",
@@ -317,7 +326,6 @@ public class LocalizedNamesImpl_te extends LocalizedNamesImpl {
     namesMap.put("054", "మెలనేశియ");
     namesMap.put("057", "మైక్రోనేశియ ప్రాంతం");
     namesMap.put("061", "పాలినేషియా");
-    namesMap.put("062", "దక్షిణ మధ్యమ ఆశియా");
     namesMap.put("142", "ఆశియా");
     namesMap.put("143", "మధ్యమ ఆశియా");
     namesMap.put("145", "పడమటి ఆశియా");
@@ -325,10 +333,7 @@ public class LocalizedNamesImpl_te extends LocalizedNamesImpl {
     namesMap.put("151", "తూర్పు ఐరోపా");
     namesMap.put("154", "ఉత్తర ఐరోపా");
     namesMap.put("155", "పడమటి ఐరోపా");
-    namesMap.put("172", "స్వతంత్ర రాష్ట్రాల కామన్ వెల్త్");
-    namesMap.put("200", "చెకస్లొవేకియ");
     namesMap.put("419", "లాటిన్ అమెరికా మరియు కేరబ్బియన్");
-    namesMap.put("830", "చానెల్ దీవులు");
     namesMap.put("AC", "ఎసెషన్ దీవి");
     namesMap.put("AD", "అన్డోరా");
     namesMap.put("AE", "యునైటెడ్ ఆరబ్ ఎమిరేట్స్");
@@ -616,7 +621,6 @@ public class LocalizedNamesImpl_te extends LocalizedNamesImpl {
         "054": "మెలనేశియ",
         "057": "మైక్రోనేశియ ప్రాంతం",
         "061": "పాలినేషియా",
-        "062": "దక్షిణ మధ్యమ ఆశియా",
         "142": "ఆశియా",
         "143": "మధ్యమ ఆశియా",
         "145": "పడమటి ఆశియా",
@@ -624,10 +628,7 @@ public class LocalizedNamesImpl_te extends LocalizedNamesImpl {
         "151": "తూర్పు ఐరోపా",
         "154": "ఉత్తర ఐరోపా",
         "155": "పడమటి ఐరోపా",
-        "172": "స్వతంత్ర రాష్ట్రాల కామన్ వెల్త్",
-        "200": "చెకస్లొవేకియ",
         "419": "లాటిన్ అమెరికా మరియు కేరబ్బియన్",
-        "830": "చానెల్ దీవులు",
         "AC": "ఎసెషన్ దీవి",
         "AD": "అన్డోరా",
         "AE": "యునైటెడ్ ఆరబ్ ఎమిరేట్స్",

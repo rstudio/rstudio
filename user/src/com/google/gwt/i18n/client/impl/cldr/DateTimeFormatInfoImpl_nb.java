@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,23 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
 
 /**
  * Implementation of DateTimeFormatInfo for the "nb" locale.
  */
 public class DateTimeFormatInfoImpl_nb extends DateTimeFormatInfoImpl {
+
+  @Override
+  public String[] ampms() {
+    return new String[] {
+        "a.m.",
+        "p.m."
+    };
+  }
 
   @Override
   public String dateFormatFull() {
@@ -43,6 +55,26 @@ public class DateTimeFormatInfoImpl_nb extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String dateTimeFull(String timePattern, String datePattern) {
+    return timePattern + " " + datePattern;
+  }
+
+  @Override
+  public String dateTimeLong(String timePattern, String datePattern) {
+    return timePattern + " " + datePattern;
+  }
+
+  @Override
+  public String dateTimeMedium(String timePattern, String datePattern) {
+    return timePattern + " " + datePattern;
+  }
+
+  @Override
+  public String dateTimeShort(String timePattern, String datePattern) {
+    return timePattern + " " + datePattern;
+  }
+
+  @Override
   public String[] erasFull() {
     return new String[] {
         "f.Kr.",
@@ -56,6 +88,11 @@ public class DateTimeFormatInfoImpl_nb extends DateTimeFormatInfoImpl {
         "f.Kr.",
         "e.Kr."
     };
+  }
+
+  @Override
+  public String formatDay() {
+    return "d.";
   }
 
   @Override
@@ -80,7 +117,7 @@ public class DateTimeFormatInfoImpl_nb extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatMonthNumDay() {
-    return "d.M";
+    return "d.M.";
   }
 
   @Override
@@ -110,7 +147,7 @@ public class DateTimeFormatInfoImpl_nb extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthNumDay() {
-    return "d.M.y";
+    return "d.M.yyyy";
   }
 
   @Override
@@ -161,6 +198,24 @@ public class DateTimeFormatInfoImpl_nb extends DateTimeFormatInfoImpl {
         "okt.",
         "nov.",
         "des."
+    };
+  }
+
+  @Override
+  public String[] monthsShortStandalone() {
+    return new String[] {
+        "jan",
+        "feb",
+        "mar",
+        "apr",
+        "mai",
+        "jun",
+        "jul",
+        "aug",
+        "sep",
+        "okt",
+        "nov",
+        "des"
     };
   }
 

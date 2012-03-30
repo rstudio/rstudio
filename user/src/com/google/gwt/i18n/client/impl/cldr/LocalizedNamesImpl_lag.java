@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6450 $
+//  type=lag
+//  date=$Date: 2012-01-25 19:20:54 -0500 (Wed, 25 Jan 2012) $
+
 
 /**
  * Localized names for the "lag" locale.
@@ -60,6 +65,7 @@ public class LocalizedNamesImpl_lag extends LocalizedNamesImpl {
         "BO",
         "BA",
         "BW",
+        "BQ",
         "BR",
         "MG",
         "BF",
@@ -73,6 +79,7 @@ public class LocalizedNamesImpl_lag extends LocalizedNamesImpl {
         "CL",
         "CN",
         "CP",
+        "CW",
         "CX",
         "DK",
         "DG",
@@ -226,10 +233,12 @@ public class LocalizedNamesImpl_lag extends LocalizedNamesImpl {
         "LK",
         "SJ",
         "SO",
+        "SS",
         "SD",
         "SK",
         "SI",
         "SR",
+        "SX",
         "TA",
         "TZ",
         "TH",

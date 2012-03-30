@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "mr" locale.
@@ -61,8 +65,8 @@ public class DateTimeFormatInfoImpl_mr extends DateTimeFormatInfoImpl {
   @Override
   public String[] erasShort() {
     return new String[] {
-        "ई.स.पू.",
-        "ई.स."
+        "ईसापूर्व",
+        "सन"
     };
   }
 
@@ -102,6 +106,11 @@ public class DateTimeFormatInfoImpl_mr extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String formatMonthFullWeekdayDay() {
+    return "EEEE, d MMMM";
+  }
+
+  @Override
   public String formatMonthNumDay() {
     return "d-M";
   }
@@ -128,17 +137,17 @@ public class DateTimeFormatInfoImpl_mr extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthNum() {
-    return "M-y";
+    return "M/y";
   }
 
   @Override
   public String formatYearMonthNumDay() {
-    return "d-M-y";
+    return "d/M/y";
   }
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "EEE d MMM y";
+    return "EEE, d MMM y";
   }
 
   @Override
@@ -190,18 +199,18 @@ public class DateTimeFormatInfoImpl_mr extends DateTimeFormatInfoImpl {
   @Override
   public String[] monthsShort() {
     return new String[] {
-        "जानेवारी",
-        "फेब्रुवारी",
+        "जाने",
+        "फेब्रु",
         "मार्च",
-        "एप्रिल",
+        "एप्रि",
         "मे",
         "जून",
         "जुलै",
-        "ऑगस्ट",
-        "सप्टेंबर",
+        "ऑग",
+        "सेप्टें",
         "ऑक्टोबर",
-        "नोव्हेंबर",
-        "डिसेंबर"
+        "नोव्हें",
+        "डिसें"
     };
   }
 
@@ -212,6 +221,16 @@ public class DateTimeFormatInfoImpl_mr extends DateTimeFormatInfoImpl {
         "द्वितीय तिमाही",
         "तृतीय तिमाही",
         "चतुर्थ तिमाही"
+    };
+  }
+
+  @Override
+  public String[] quartersShort() {
+    return new String[] {
+        "ति 1",
+        "2 री तिमाही",
+        "ति 3",
+        "ति 4"
     };
   }
 

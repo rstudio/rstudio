@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 5882 $
+//  type=root
+//  date=$Date: 2011-05-10 16:26:37 -0400 (Tue, 10 May 2011) $
+
 
 /**
  * Localized names for the "uz_Latn" locale.
@@ -42,7 +47,6 @@ public class LocalizedNamesImpl_uz_Latn extends LocalizedNamesImpl_uz {
         "AI",
         "AL",
         "AM",
-        "AN",
         "AO",
         "AQ",
         "AR",
@@ -66,6 +70,7 @@ public class LocalizedNamesImpl_uz_Latn extends LocalizedNamesImpl_uz {
         "BM",
         "BN",
         "BO",
+        "BQ",
         "BR",
         "BS",
         "BT",
@@ -88,6 +93,7 @@ public class LocalizedNamesImpl_uz_Latn extends LocalizedNamesImpl_uz {
         "CR",
         "CU",
         "CV",
+        "CW",
         "CX",
         "CY",
         "CZ",
@@ -247,8 +253,10 @@ public class LocalizedNamesImpl_uz_Latn extends LocalizedNamesImpl_uz {
         "SN",
         "SO",
         "SR",
+        "SS",
         "ST",
         "SV",
+        "SX",
         "SY",
         "SZ",
         "TA",
@@ -294,7 +302,7 @@ public class LocalizedNamesImpl_uz_Latn extends LocalizedNamesImpl_uz {
   @Override
   protected void loadNameMapJava() {
     super.loadNameMapJava();
-    namesMap.put("AF", "Afgʿoniston");
+    namesMap.put("AF", "Afgʼoniston");
     namesMap.put("BR", "Braziliya");
     namesMap.put("CN", "Xitoy");
     namesMap.put("DE", "Olmoniya");
@@ -304,8 +312,8 @@ public class LocalizedNamesImpl_uz_Latn extends LocalizedNamesImpl_uz {
     namesMap.put("IT", "Italiya");
     namesMap.put("JP", "Yaponiya");
     namesMap.put("RU", "Rossiya");
-    namesMap.put("US", "Qo'shma Shtatlar");
-    namesMap.put("UZ", "Oʿzbekiston");
+    namesMap.put("US", "Qoʼshma Shtatlar");
+    namesMap.put("UZ", "Oʼzbekiston");
   }
 
   @Override
@@ -315,7 +323,7 @@ public class LocalizedNamesImpl_uz_Latn extends LocalizedNamesImpl_uz {
 
   private native JavaScriptObject loadMyNameMap() /*-{
     return {
-        "AF": "Afgʿoniston",
+        "AF": "Afgʼoniston",
         "BR": "Braziliya",
         "CN": "Xitoy",
         "DE": "Olmoniya",
@@ -325,8 +333,8 @@ public class LocalizedNamesImpl_uz_Latn extends LocalizedNamesImpl_uz {
         "IT": "Italiya",
         "JP": "Yaponiya",
         "RU": "Rossiya",
-        "US": "Qo'shma Shtatlar",
-        "UZ": "Oʿzbekiston"
+        "US": "Qoʼshma Shtatlar",
+        "UZ": "Oʼzbekiston"
     };
   }-*/;
 }

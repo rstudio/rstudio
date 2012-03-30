@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "is" locale.
@@ -47,6 +52,7 @@ public class LocalizedNamesImpl_is extends LocalizedNamesImpl {
         "BS",
         "US",
         "AS",
+        "VI",
         "BD",
         "BB",
         "BH",
@@ -58,8 +64,10 @@ public class LocalizedNamesImpl_is extends LocalizedNamesImpl {
         "BW",
         "BV",
         "BO",
+        "BQ",
         "BR",
         "IO",
+        "VG",
         "GB",
         "BN",
         "BG",
@@ -71,6 +79,7 @@ public class LocalizedNamesImpl_is extends LocalizedNamesImpl {
         "CL",
         "CP",
         "CK",
+        "CW",
         "DK",
         "DG",
         "DJ",
@@ -128,8 +137,6 @@ public class LocalizedNamesImpl_is extends LocalizedNamesImpl {
         "YE",
         "JE",
         "CX",
-        "VI",
-        "VG",
         "JO",
         "KH",
         "CM",
@@ -214,15 +221,15 @@ public class LocalizedNamesImpl_is extends LocalizedNamesImpl {
         "RW",
         "RO",
         "RU",
+        "BL",
+        "MF",
         "SB",
         "ZM",
         "AE",
         "WS",
-        "BL",
         "SH",
         "KN",
         "LC",
-        "MF",
         "PM",
         "VC",
         "SM",
@@ -241,6 +248,7 @@ public class LocalizedNamesImpl_is extends LocalizedNamesImpl {
         "SO",
         "ES",
         "LK",
+        "SS",
         "ZA",
         "GS",
         "KR",
@@ -252,6 +260,7 @@ public class LocalizedNamesImpl_is extends LocalizedNamesImpl {
         "SZ",
         "CH",
         "SE",
+        "SX",
         "SY",
         "TJ",
         "TH",
@@ -301,7 +310,7 @@ public class LocalizedNamesImpl_is extends LocalizedNamesImpl {
     namesMap.put("018", "Suðurhluti Afríku");
     namesMap.put("019", "Ameríka");
     namesMap.put("021", "Ameríka norðan Mexikó");
-    namesMap.put("029", "Karíbahaf");
+    namesMap.put("029", "Karabíska hafið");
     namesMap.put("030", "Austur-Asía");
     namesMap.put("034", "suðurhluti Asíu");
     namesMap.put("035", "Suðaustur-Asía");
@@ -310,18 +319,15 @@ public class LocalizedNamesImpl_is extends LocalizedNamesImpl {
     namesMap.put("054", "Melanesía");
     namesMap.put("057", "Míkrónesía");
     namesMap.put("061", "Pólýnesía");
-    namesMap.put("062", "Syðri-Mið-Asía");
     namesMap.put("142", "Asía");
     namesMap.put("143", "Mið-Asía");
-    namesMap.put("145", "vestur-Asía");
+    namesMap.put("145", "Vestur-Asía");
     namesMap.put("150", "Evrópa");
     namesMap.put("151", "Austur-Evrópa");
     namesMap.put("154", "Norður-Evrópa");
-    namesMap.put("155", "vestur-Evrópa");
-    namesMap.put("172", "Samveldi sjálfstæðra ríkja");
-    namesMap.put("419", "Latín-Ameríka og Karíbahaf");
-    namesMap.put("830", "Ermasundseyjar");
-    namesMap.put("AC", "Ascension");
+    namesMap.put("155", "Vestur-Evrópa");
+    namesMap.put("419", "Latín-Ameríka");
+    namesMap.put("AC", "Ascension-eyja");
     namesMap.put("AE", "Sameinuðu arabísku furstadæmin");
     namesMap.put("AF", "Afganistan");
     namesMap.put("AG", "Antígva og Barbúda");
@@ -346,7 +352,6 @@ public class LocalizedNamesImpl_is extends LocalizedNamesImpl {
     namesMap.put("BH", "Barein");
     namesMap.put("BI", "Búrúndí");
     namesMap.put("BJ", "Benín");
-    namesMap.put("BL", "Sankti Barthélemy");
     namesMap.put("BM", "Bermúdaeyjar");
     namesMap.put("BN", "Brúnei");
     namesMap.put("BO", "Bólivía");
@@ -369,7 +374,7 @@ public class LocalizedNamesImpl_is extends LocalizedNamesImpl {
     namesMap.put("CM", "Kamerún");
     namesMap.put("CN", "Kína");
     namesMap.put("CO", "Kólumbía");
-    namesMap.put("CP", "Clipperton");
+    namesMap.put("CP", "Clipperton-eyja");
     namesMap.put("CR", "Kostaríka");
     namesMap.put("CS", "Serbía og Svartfjallaland");
     namesMap.put("CU", "Kúba");
@@ -456,7 +461,6 @@ public class LocalizedNamesImpl_is extends LocalizedNamesImpl {
     namesMap.put("MC", "Mónakó");
     namesMap.put("MD", "Moldóva");
     namesMap.put("ME", "Svartfjallaland");
-    namesMap.put("MF", "Sankti Martin");
     namesMap.put("MG", "Madagaskar");
     namesMap.put("MH", "Marshalleyjar");
     namesMap.put("MK", "Makedónía");
@@ -543,8 +547,8 @@ public class LocalizedNamesImpl_is extends LocalizedNamesImpl {
     namesMap.put("VA", "Páfagarður");
     namesMap.put("VC", "Sankti Vinsent og Grenadíneyjar");
     namesMap.put("VE", "Venesúela");
-    namesMap.put("VG", "Jómfrúaeyjar (bresku)");
-    namesMap.put("VI", "Jómfrúaeyjar (bandarísku)");
+    namesMap.put("VG", "Bresku Jómfrúaeyjar");
+    namesMap.put("VI", "Bandarísku Jómfrúaeyjar");
     namesMap.put("VN", "Víetnam");
     namesMap.put("VU", "Vanúatú");
     namesMap.put("WF", "Wallis- og Fútúnaeyjar");
@@ -576,7 +580,7 @@ public class LocalizedNamesImpl_is extends LocalizedNamesImpl {
         "018": "Suðurhluti Afríku",
         "019": "Ameríka",
         "021": "Ameríka norðan Mexikó",
-        "029": "Karíbahaf",
+        "029": "Karabíska hafið",
         "030": "Austur-Asía",
         "034": "suðurhluti Asíu",
         "035": "Suðaustur-Asía",
@@ -585,18 +589,15 @@ public class LocalizedNamesImpl_is extends LocalizedNamesImpl {
         "054": "Melanesía",
         "057": "Míkrónesía",
         "061": "Pólýnesía",
-        "062": "Syðri-Mið-Asía",
         "142": "Asía",
         "143": "Mið-Asía",
-        "145": "vestur-Asía",
+        "145": "Vestur-Asía",
         "150": "Evrópa",
         "151": "Austur-Evrópa",
         "154": "Norður-Evrópa",
-        "155": "vestur-Evrópa",
-        "172": "Samveldi sjálfstæðra ríkja",
-        "419": "Latín-Ameríka og Karíbahaf",
-        "830": "Ermasundseyjar",
-        "AC": "Ascension",
+        "155": "Vestur-Evrópa",
+        "419": "Latín-Ameríka",
+        "AC": "Ascension-eyja",
         "AE": "Sameinuðu arabísku furstadæmin",
         "AF": "Afganistan",
         "AG": "Antígva og Barbúda",
@@ -621,7 +622,6 @@ public class LocalizedNamesImpl_is extends LocalizedNamesImpl {
         "BH": "Barein",
         "BI": "Búrúndí",
         "BJ": "Benín",
-        "BL": "Sankti Barthélemy",
         "BM": "Bermúdaeyjar",
         "BN": "Brúnei",
         "BO": "Bólivía",
@@ -644,7 +644,7 @@ public class LocalizedNamesImpl_is extends LocalizedNamesImpl {
         "CM": "Kamerún",
         "CN": "Kína",
         "CO": "Kólumbía",
-        "CP": "Clipperton",
+        "CP": "Clipperton-eyja",
         "CR": "Kostaríka",
         "CS": "Serbía og Svartfjallaland",
         "CU": "Kúba",
@@ -731,7 +731,6 @@ public class LocalizedNamesImpl_is extends LocalizedNamesImpl {
         "MC": "Mónakó",
         "MD": "Moldóva",
         "ME": "Svartfjallaland",
-        "MF": "Sankti Martin",
         "MG": "Madagaskar",
         "MH": "Marshalleyjar",
         "MK": "Makedónía",
@@ -818,8 +817,8 @@ public class LocalizedNamesImpl_is extends LocalizedNamesImpl {
         "VA": "Páfagarður",
         "VC": "Sankti Vinsent og Grenadíneyjar",
         "VE": "Venesúela",
-        "VG": "Jómfrúaeyjar (bresku)",
-        "VI": "Jómfrúaeyjar (bandarísku)",
+        "VG": "Bresku Jómfrúaeyjar",
+        "VI": "Bandarísku Jómfrúaeyjar",
         "VN": "Víetnam",
         "VU": "Vanúatú",
         "WF": "Wallis- og Fútúnaeyjar",

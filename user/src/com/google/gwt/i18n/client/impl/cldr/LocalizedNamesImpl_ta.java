@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "ta" locale.
@@ -34,6 +39,10 @@ public class LocalizedNamesImpl_ta extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "FK",
         "FJ",
         "FO",
@@ -317,7 +326,6 @@ public class LocalizedNamesImpl_ta extends LocalizedNamesImpl {
     namesMap.put("054", "மெலனேஷியா");
     namesMap.put("057", "மைக்ரோ நேஷியா பிரதேசம்");
     namesMap.put("061", "பாலினேஷியா");
-    namesMap.put("062", "மத்திய-தெற்காசியா");
     namesMap.put("142", "ஆசியா");
     namesMap.put("143", "மத்திய ஆசியா");
     namesMap.put("145", "மேற்கு ஆசியா");
@@ -325,10 +333,7 @@ public class LocalizedNamesImpl_ta extends LocalizedNamesImpl {
     namesMap.put("151", "கிழக்கு ஐரோப்பா");
     namesMap.put("154", "வடக்கு ஐரோப்பா");
     namesMap.put("155", "மேற்கு ஐரோப்பா");
-    namesMap.put("172", "சுதந்திர மாநிலங்களின் காமன்வெல்த்");
-    namesMap.put("200", "செகோஸ்லோவாக்யா");
     namesMap.put("419", "லத்தீன் அமெரிக்கா மற்றும் கரீபியன்");
-    namesMap.put("830", "சேனல் தீவுகள்");
     namesMap.put("AC", "அஷன்ஷியன் தீவு");
     namesMap.put("AD", "அன்டோரா");
     namesMap.put("AE", "ஐக்கிய அரபு கூட்டாட்சி");
@@ -616,7 +621,6 @@ public class LocalizedNamesImpl_ta extends LocalizedNamesImpl {
         "054": "மெலனேஷியா",
         "057": "மைக்ரோ நேஷியா பிரதேசம்",
         "061": "பாலினேஷியா",
-        "062": "மத்திய-தெற்காசியா",
         "142": "ஆசியா",
         "143": "மத்திய ஆசியா",
         "145": "மேற்கு ஆசியா",
@@ -624,10 +628,7 @@ public class LocalizedNamesImpl_ta extends LocalizedNamesImpl {
         "151": "கிழக்கு ஐரோப்பா",
         "154": "வடக்கு ஐரோப்பா",
         "155": "மேற்கு ஐரோப்பா",
-        "172": "சுதந்திர மாநிலங்களின் காமன்வெல்த்",
-        "200": "செகோஸ்லோவாக்யா",
         "419": "லத்தீன் அமெரிக்கா மற்றும் கரீபியன்",
-        "830": "சேனல் தீவுகள்",
         "AC": "அஷன்ஷியன் தீவு",
         "AD": "அன்டோரா",
         "AE": "ஐக்கிய அரபு கூட்டாட்சி",

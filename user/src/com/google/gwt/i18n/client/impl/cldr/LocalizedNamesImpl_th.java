@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "th" locale.
@@ -34,6 +39,10 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "GR",
         "GL",
         "GU",
@@ -318,7 +327,6 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
     namesMap.put("054", "เมลานีเซีย");
     namesMap.put("057", "เขตไมโครนีเซีย");
     namesMap.put("061", "โปลินีเซีย");
-    namesMap.put("062", "เอเชียกลางตอนใต้");
     namesMap.put("142", "เอเชีย");
     namesMap.put("143", "เอเชียกลาง");
     namesMap.put("145", "เอเชียตะวันตก");
@@ -326,9 +334,7 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
     namesMap.put("151", "ยุโรปตะวันออก");
     namesMap.put("154", "ยุโรปเหนือ");
     namesMap.put("155", "ยุโรปตะวันตก");
-    namesMap.put("172", "เครือรัฐอิสระ");
     namesMap.put("419", "ละตินอเมริกาและแคริบเบียน");
-    namesMap.put("830", "หมู่เกาะแชนเนล");
     namesMap.put("AC", "เกาะแอสเซนชัน");
     namesMap.put("AD", "อันดอร์รา");
     namesMap.put("AE", "สหรัฐอาหรับเอมิเรตส์");
@@ -617,7 +623,6 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "054": "เมลานีเซีย",
         "057": "เขตไมโครนีเซีย",
         "061": "โปลินีเซีย",
-        "062": "เอเชียกลางตอนใต้",
         "142": "เอเชีย",
         "143": "เอเชียกลาง",
         "145": "เอเชียตะวันตก",
@@ -625,9 +630,7 @@ public class LocalizedNamesImpl_th extends LocalizedNamesImpl {
         "151": "ยุโรปตะวันออก",
         "154": "ยุโรปเหนือ",
         "155": "ยุโรปตะวันตก",
-        "172": "เครือรัฐอิสระ",
         "419": "ละตินอเมริกาและแคริบเบียน",
-        "830": "หมู่เกาะแชนเนล",
         "AC": "เกาะแอสเซนชัน",
         "AD": "อันดอร์รา",
         "AE": "สหรัฐอาหรับเอมิเรตส์",

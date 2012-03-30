@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "bg" locale.
@@ -34,6 +39,10 @@ public class LocalizedNamesImpl_bg extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "AU",
         "AT",
         "AZ",
@@ -318,7 +327,6 @@ public class LocalizedNamesImpl_bg extends LocalizedNamesImpl {
     namesMap.put("054", "Меланезия");
     namesMap.put("057", "Микронезия");
     namesMap.put("061", "Полинезия");
-    namesMap.put("062", "Южна Азия [062]");
     namesMap.put("142", "Азия");
     namesMap.put("143", "Централна Азия");
     namesMap.put("145", "Западна Азия");
@@ -326,9 +334,7 @@ public class LocalizedNamesImpl_bg extends LocalizedNamesImpl {
     namesMap.put("151", "Източна Европа");
     namesMap.put("154", "Северна Европа");
     namesMap.put("155", "Западна Европа");
-    namesMap.put("172", "Общност на независимите държави");
-    namesMap.put("419", "Латинска Америка и Карибски басейн");
-    namesMap.put("830", "Нормандски о-ви");
+    namesMap.put("419", "Латинска Америка");
     namesMap.put("AC", "Остров Възнесение");
     namesMap.put("AD", "Андора");
     namesMap.put("AE", "Обединени арабски емирства");
@@ -368,7 +374,7 @@ public class LocalizedNamesImpl_bg extends LocalizedNamesImpl {
     namesMap.put("BY", "Беларус");
     namesMap.put("BZ", "Белиз");
     namesMap.put("CA", "Канада");
-    namesMap.put("CC", "Кокосови (Кийлинг) острови");
+    namesMap.put("CC", "Кокосови [Кийлинг] острови");
     namesMap.put("CD", "Демократична република Конго");
     namesMap.put("CF", "Централноафриканска Република");
     namesMap.put("CG", "Конго");
@@ -571,7 +577,7 @@ public class LocalizedNamesImpl_bg extends LocalizedNamesImpl {
     namesMap.put("US", "САЩ");
     namesMap.put("UY", "Уругвай");
     namesMap.put("UZ", "Узбекистан");
-    namesMap.put("VA", "Свещено море (Ватиканска държава)");
+    namesMap.put("VA", "Свещено море [Ватиканска държава]");
     namesMap.put("VC", "Сейнт Винсънт и Гренадини");
     namesMap.put("VE", "Венецуела");
     namesMap.put("VG", "Британски Вирджински острони");
@@ -617,7 +623,6 @@ public class LocalizedNamesImpl_bg extends LocalizedNamesImpl {
         "054": "Меланезия",
         "057": "Микронезия",
         "061": "Полинезия",
-        "062": "Южна Азия [062]",
         "142": "Азия",
         "143": "Централна Азия",
         "145": "Западна Азия",
@@ -625,9 +630,7 @@ public class LocalizedNamesImpl_bg extends LocalizedNamesImpl {
         "151": "Източна Европа",
         "154": "Северна Европа",
         "155": "Западна Европа",
-        "172": "Общност на независимите държави",
-        "419": "Латинска Америка и Карибски басейн",
-        "830": "Нормандски о-ви",
+        "419": "Латинска Америка",
         "AC": "Остров Възнесение",
         "AD": "Андора",
         "AE": "Обединени арабски емирства",
@@ -667,7 +670,7 @@ public class LocalizedNamesImpl_bg extends LocalizedNamesImpl {
         "BY": "Беларус",
         "BZ": "Белиз",
         "CA": "Канада",
-        "CC": "Кокосови (Кийлинг) острови",
+        "CC": "Кокосови [Кийлинг] острови",
         "CD": "Демократична република Конго",
         "CF": "Централноафриканска Република",
         "CG": "Конго",
@@ -870,7 +873,7 @@ public class LocalizedNamesImpl_bg extends LocalizedNamesImpl {
         "US": "САЩ",
         "UY": "Уругвай",
         "UZ": "Узбекистан",
-        "VA": "Свещено море (Ватиканска държава)",
+        "VA": "Свещено море [Ватиканска държава]",
         "VC": "Сейнт Винсънт и Гренадини",
         "VE": "Венецуела",
         "VG": "Британски Вирджински острони",

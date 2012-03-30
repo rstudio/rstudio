@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "bo" locale.
@@ -28,18 +33,18 @@ public class LocalizedNamesImpl_bo extends LocalizedNamesImpl {
   public String[] loadSortedRegionCodes() {
     return new String[] {
         "AC",
-        "AN",
         "AS",
         "AX",
         "BL",
+        "BQ",
         "BV",
         "CC",
         "CD",
         "CF",
         "CG",
-        "CH",
         "CP",
         "CV",
+        "CW",
         "CX",
         "DG",
         "EA",
@@ -77,8 +82,9 @@ public class LocalizedNamesImpl_bo extends LocalizedNamesImpl {
         "PS",
         "QO",
         "RE",
-        "SE",
         "SJ",
+        "SS",
+        "SX",
         "SY",
         "SZ",
         "TA",
@@ -145,7 +151,6 @@ public class LocalizedNamesImpl_bo extends LocalizedNamesImpl {
         "NZ",
         "NU",
         "WS",
-        "NL",
         "NO",
         "NR",
         "PA",
@@ -168,6 +173,7 @@ public class LocalizedNamesImpl_bo extends LocalizedNamesImpl {
         "BF",
         "BB",
         "BJ",
+        "VN",
         "BN",
         "BI",
         "BG",
@@ -200,7 +206,6 @@ public class LocalizedNamesImpl_bo extends LocalizedNamesImpl {
         "VU",
         "VA",
         "VE",
-        "VN",
         "DE",
         "MM",
         "BT",
@@ -246,9 +251,12 @@ public class LocalizedNamesImpl_bo extends LocalizedNamesImpl {
         "MN",
         "SA",
         "HU",
+        "NL",
         "HT",
         "HK",
         "HN",
+        "CH",
+        "SE",
         "US",
         "IE",
         "AE",
@@ -326,6 +334,7 @@ public class LocalizedNamesImpl_bo extends LocalizedNamesImpl {
     namesMap.put("BY", "བེ་ལུ་རུ་སུ།");
     namesMap.put("BZ", "བེ་ལིཛ།");
     namesMap.put("CA", "ཁེ་ན་ཌ།");
+    namesMap.put("CH", "ཧྲུད་ཧྲི།");
     namesMap.put("CI", "ཀོ་ཊེ་ཌི། ཨི་ཝོ་རེ།");
     namesMap.put("CK", "ཀཱུག གླིང་ཕྲེན་རྒྱལ་ཁབ།");
     namesMap.put("CL", "ཅི་ལི།");
@@ -393,7 +402,7 @@ public class LocalizedNamesImpl_bo extends LocalizedNamesImpl {
     namesMap.put("LB", "ལེབ་ནོན།");
     namesMap.put("LC", "སེནྚ། ལུ་ཤི་ཡ།");
     namesMap.put("LI", "ལེག་ཏེན་ཚིན།");
-    namesMap.put("LK", "ཤྲཱི་ལང་ཀ།");
+    namesMap.put("LK", "ཤྲཱི་ལངྐ་།");
     namesMap.put("LR", "ལི་བེ་རི་ཡ།");
     namesMap.put("LS", "ལེ་སོ་ཐོ།");
     namesMap.put("LT", "ལི་ཐུ་ཨེ་ནི་ཡ།");
@@ -420,7 +429,7 @@ public class LocalizedNamesImpl_bo extends LocalizedNamesImpl {
     namesMap.put("NE", "ནའི་ཇར།");
     namesMap.put("NG", "ནཱའི་ཇི་རི་ཡ།");
     namesMap.put("NI", "ནི་ཀ་ར་གུ་ཨ།");
-    namesMap.put("NL", "ནེ་ཐར་ལནྜ།");
+    namesMap.put("NL", "ཧའོ་ལན།");
     namesMap.put("NO", "ནོར་ཝེ།");
     namesMap.put("NP", "བར་ཡུལ་");
     namesMap.put("NR", "ནཽ་རུ།");
@@ -445,6 +454,7 @@ public class LocalizedNamesImpl_bo extends LocalizedNamesImpl {
     namesMap.put("SB", "སོ་ལོ་མོན། གླིང་ཕྲན་ཚོ་ཁག།");
     namesMap.put("SC", "སཱ་ཤཻལ།");
     namesMap.put("SD", "སུ་དཱན།");
+    namesMap.put("SE", "ཧྲུའི་ཏན།");
     namesMap.put("SG", "སིངྒ་པུར།");
     namesMap.put("SH", "སེནྚ། ཧེ་ལི་ན།");
     namesMap.put("SI", "ས་ལཽ་ཝེ་ནི་ཡ།");
@@ -459,7 +469,7 @@ public class LocalizedNamesImpl_bo extends LocalizedNamesImpl {
     namesMap.put("TD", "ཅཻཌ།");
     namesMap.put("TR", "ཏུརཀི།");
     namesMap.put("TV", "ཐུ་ཝ་ལུ།");
-    namesMap.put("UA", "ཡུ་ཀརེན།");
+    namesMap.put("UA", "ཡུ་ཀྲན།");
     namesMap.put("UG", "ཡུ་གན་ཌ།");
     namesMap.put("US", "ཨ་མེ་རི་ཀ་");
     namesMap.put("UY", "ཨུ་རུ་གྷེ།");
@@ -467,7 +477,7 @@ public class LocalizedNamesImpl_bo extends LocalizedNamesImpl {
     namesMap.put("VA", "ཝེ་ཊི་ཀན།");
     namesMap.put("VC", "སེནྚ། ཝིན་སན། དང༌། གྷིརིན་ཌིན།");
     namesMap.put("VE", "ཝེ་ནི་ཛུའེ་ལ།");
-    namesMap.put("VN", "ཝེད་ནམ།");
+    namesMap.put("VN", "བི་དི་ནམ།");
     namesMap.put("VU", "ཝ་ནུ་ཨ་ཐུ།");
     namesMap.put("WS", "ནུ་བ་ས་མོ་འ།");
     namesMap.put("YE", "ཡེ་མེན།");
@@ -523,6 +533,7 @@ public class LocalizedNamesImpl_bo extends LocalizedNamesImpl {
         "BY": "བེ་ལུ་རུ་སུ།",
         "BZ": "བེ་ལིཛ།",
         "CA": "ཁེ་ན་ཌ།",
+        "CH": "ཧྲུད་ཧྲི།",
         "CI": "ཀོ་ཊེ་ཌི། ཨི་ཝོ་རེ།",
         "CK": "ཀཱུག གླིང་ཕྲེན་རྒྱལ་ཁབ།",
         "CL": "ཅི་ལི།",
@@ -590,7 +601,7 @@ public class LocalizedNamesImpl_bo extends LocalizedNamesImpl {
         "LB": "ལེབ་ནོན།",
         "LC": "སེནྚ། ལུ་ཤི་ཡ།",
         "LI": "ལེག་ཏེན་ཚིན།",
-        "LK": "ཤྲཱི་ལང་ཀ།",
+        "LK": "ཤྲཱི་ལངྐ་།",
         "LR": "ལི་བེ་རི་ཡ།",
         "LS": "ལེ་སོ་ཐོ།",
         "LT": "ལི་ཐུ་ཨེ་ནི་ཡ།",
@@ -617,7 +628,7 @@ public class LocalizedNamesImpl_bo extends LocalizedNamesImpl {
         "NE": "ནའི་ཇར།",
         "NG": "ནཱའི་ཇི་རི་ཡ།",
         "NI": "ནི་ཀ་ར་གུ་ཨ།",
-        "NL": "ནེ་ཐར་ལནྜ།",
+        "NL": "ཧའོ་ལན།",
         "NO": "ནོར་ཝེ།",
         "NP": "བར་ཡུལ་",
         "NR": "ནཽ་རུ།",
@@ -642,6 +653,7 @@ public class LocalizedNamesImpl_bo extends LocalizedNamesImpl {
         "SB": "སོ་ལོ་མོན། གླིང་ཕྲན་ཚོ་ཁག།",
         "SC": "སཱ་ཤཻལ།",
         "SD": "སུ་དཱན།",
+        "SE": "ཧྲུའི་ཏན།",
         "SG": "སིངྒ་པུར།",
         "SH": "སེནྚ། ཧེ་ལི་ན།",
         "SI": "ས་ལཽ་ཝེ་ནི་ཡ།",
@@ -656,7 +668,7 @@ public class LocalizedNamesImpl_bo extends LocalizedNamesImpl {
         "TD": "ཅཻཌ།",
         "TR": "ཏུརཀི།",
         "TV": "ཐུ་ཝ་ལུ།",
-        "UA": "ཡུ་ཀརེན།",
+        "UA": "ཡུ་ཀྲན།",
         "UG": "ཡུ་གན་ཌ།",
         "US": "ཨ་མེ་རི་ཀ་",
         "UY": "ཨུ་རུ་གྷེ།",
@@ -664,7 +676,7 @@ public class LocalizedNamesImpl_bo extends LocalizedNamesImpl {
         "VA": "ཝེ་ཊི་ཀན།",
         "VC": "སེནྚ། ཝིན་སན། དང༌། གྷིརིན་ཌིན།",
         "VE": "ཝེ་ནི་ཛུའེ་ལ།",
-        "VN": "ཝེད་ནམ།",
+        "VN": "བི་དི་ནམ།",
         "VU": "ཝ་ནུ་ཨ་ཐུ།",
         "WS": "ནུ་བ་ས་མོ་འ།",
         "YE": "ཡེ་མེན།",

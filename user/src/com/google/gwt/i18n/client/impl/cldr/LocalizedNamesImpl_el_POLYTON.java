@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6444 $
+//  type=root
+//  date=$Date: 2012-01-25 16:40:58 -0500 (Wed, 25 Jan 2012) $
+
 
 /**
  * Localized names for the "el_POLYTON" locale.
@@ -27,6 +32,10 @@ public class LocalizedNamesImpl_el_POLYTON extends LocalizedNamesImpl_el {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "VA",
         "SH",
         "LC",
@@ -69,7 +78,6 @@ public class LocalizedNamesImpl_el_POLYTON extends LocalizedNamesImpl_el {
         "IO",
         "VG",
         "FR",
-        "FX",
         "TF",
         "GF",
         "PF",
@@ -161,6 +169,7 @@ public class LocalizedNamesImpl_el_POLYTON extends LocalizedNamesImpl_el {
         "MR",
         "ME",
         "MX",
+        "FX",
         "MM",
         "FM",
         "MN",
@@ -325,7 +334,7 @@ public class LocalizedNamesImpl_el_POLYTON extends LocalizedNamesImpl_el {
     namesMap.put("ER", "Ἐρυθραία");
     namesMap.put("ES", "Ἱσπανία");
     namesMap.put("ET", "Αἰθιοπία");
-    namesMap.put("EU", "Εὐρωπαϊκὴ  ᾿Ένωση");
+    namesMap.put("EU", "Εὐρωπαϊκὴ ᾿Ένωση");
     namesMap.put("FM", "Μικρονησία, Ὁμόσπονδες Πολιτεῖες τῆς");
     namesMap.put("FO", "Νῆσοι Φερόες");
     namesMap.put("GB", "Ἡνωμένο Βασίλειο");
@@ -437,7 +446,7 @@ public class LocalizedNamesImpl_el_POLYTON extends LocalizedNamesImpl_el {
         "ER": "Ἐρυθραία",
         "ES": "Ἱσπανία",
         "ET": "Αἰθιοπία",
-        "EU": "Εὐρωπαϊκὴ  ᾿Ένωση",
+        "EU": "Εὐρωπαϊκὴ ᾿Ένωση",
         "FM": "Μικρονησία, Ὁμόσπονδες Πολιτεῖες τῆς",
         "FO": "Νῆσοι Φερόες",
         "GB": "Ἡνωμένο Βασίλειο",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,14 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+import com.google.gwt.core.client.JavaScriptObject;
+
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6465 $
+//  type=root
+//  date=$Date: 2012-01-27 12:47:35 -0500 (Fri, 27 Jan 2012) $
+
 
 /**
  * Localized names for the "zh_Hans_HK" locale.
@@ -25,6 +32,10 @@ public class LocalizedNamesImpl_zh_Hans_HK extends LocalizedNamesImpl_zh_Hans {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "GN",
         "GW",
         "YE",
@@ -146,6 +157,7 @@ public class LocalizedNamesImpl_zh_Hans_HK extends LocalizedNamesImpl_zh_Hans {
         "BO",
         "KW",
         "CC",
+        "CI",
         "KM",
         "TN",
         "US",
@@ -193,7 +205,6 @@ public class LocalizedNamesImpl_zh_Hans_HK extends LocalizedNamesImpl_zh_Hans {
         "CL",
         "KP",
         "PH",
-        "CI",
         "VN",
         "ME",
         "SC",
@@ -282,4 +293,31 @@ public class LocalizedNamesImpl_zh_Hans_HK extends LocalizedNamesImpl_zh_Hans {
         "MG",
     };
   }
+
+  @Override
+  protected void loadNameMapJava() {
+    super.loadNameMapJava();
+    namesMap.put("CC", "科科斯（基林）群岛");
+    namesMap.put("LA", "老挝");
+    namesMap.put("ME", "黑山");
+    namesMap.put("MQ", "马提尼克");
+    namesMap.put("MS", "蒙特塞拉特");
+    namesMap.put("SC", "塞舌尔");
+  }
+
+  @Override
+  protected JavaScriptObject loadNameMapNative() {
+    return overrideMap(super.loadNameMapNative(), loadMyNameMap());
+  }
+
+  private native JavaScriptObject loadMyNameMap() /*-{
+    return {
+        "CC": "科科斯（基林）群岛",
+        "LA": "老挝",
+        "ME": "黑山",
+        "MQ": "马提尼克",
+        "MS": "蒙特塞拉特",
+        "SC": "塞舌尔"
+    };
+  }-*/;
 }

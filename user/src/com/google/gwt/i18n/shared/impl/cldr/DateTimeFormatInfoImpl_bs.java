@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6472 Google $
+//  type=root
+//  date=$Date: 2012-01-27 18:53:35 -0500 (Fri, 27 Jan 2012) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "bs" locale.
@@ -23,124 +27,170 @@ package com.google.gwt.i18n.shared.impl.cldr;
 public class DateTimeFormatInfoImpl_bs extends DateTimeFormatInfoImpl {
 
   @Override
+  public String[] ampms() {
+    return new String[] {
+        "pre podne",
+        "popodne"
+    };
+  }
+
+  @Override
+  public String dateFormatFull() {
+    return "EEEE, dd. MMMM y.";
+  }
+
+  @Override
+  public String dateFormatLong() {
+    return "dd. MMMM y.";
+  }
+
+  @Override
+  public String dateFormatMedium() {
+    return "dd.MM.y.";
+  }
+
+  @Override
   public String dateFormatShort() {
-    return "yy/MM/dd";
+    return "dd.MM.yy.";
   }
 
   @Override
   public String[] erasFull() {
     return new String[] {
-        "BC",
-        "AD"
+        "Pre nove ere",
+        "Nove ere"
     };
   }
 
   @Override
+  public String[] erasShort() {
+    return new String[] {
+        "p. n. e.",
+        "n. e"
+    };
+  }
+
+  @Override
+  public String formatHour12Minute() {
+    return "hh:mm a";
+  }
+
+  @Override
+  public String formatHour12MinuteSecond() {
+    return "hh:mm:ss a";
+  }
+
+  @Override
+  public String formatMonthAbbrevDay() {
+    return "dd. MMM";
+  }
+
+  @Override
+  public String formatMonthFullDay() {
+    return "dd. MMMM";
+  }
+
+  @Override
   public String formatMonthFullWeekdayDay() {
-    return "EEEE, MMMM d";
+    return "EEEE, dd. MMMM";
   }
 
   @Override
   public String formatMonthNumDay() {
-    return "M/d";
+    return "dd.MM.";
+  }
+
+  @Override
+  public String formatYear() {
+    return "y.";
   }
 
   @Override
   public String formatYearMonthAbbrev() {
-    return "MMM y";
+    return "MMM y.";
   }
 
   @Override
   public String formatYearMonthAbbrevDay() {
-    return "MMM d, y";
+    return "dd. MMM y.";
   }
 
   @Override
   public String formatYearMonthFull() {
-    return "MMMM y";
+    return "MMMM y.";
   }
 
   @Override
   public String formatYearMonthFullDay() {
-    return "MMMM d, y";
+    return "d. MMMM y.";
   }
 
   @Override
   public String formatYearMonthNum() {
-    return "M/y";
+    return "MM.y.";
   }
 
   @Override
   public String formatYearMonthNumDay() {
-    return "M/d/y";
+    return "dd.MM.y.";
   }
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "E, dd. MMM y.";
-  }
-
-  @Override
-  public String formatYearQuarterFull() {
-    return "QQQQ y";
-  }
-
-  @Override
-  public String formatYearQuarterShort() {
-    return "Q y";
+    return "EEE, dd. MMM y.";
   }
 
   @Override
   public String[] monthsFull() {
     return new String[] {
-        "Januar",
-        "Februar",
-        "Mart",
-        "April",
-        "Maj",
-        "Juni",
-        "Juli",
-        "Avgust",
-        "Septembar",
-        "Oktobar",
-        "Novembar",
-        "Decembar"
+        "januar",
+        "februar",
+        "mart",
+        "april",
+        "maj",
+        "juni",
+        "juli",
+        "avgust",
+        "septembar",
+        "oktobar",
+        "novembar",
+        "decembar"
     };
   }
 
   @Override
   public String[] monthsNarrow() {
     return new String[] {
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10",
-        "11",
-        "12"
+        "j",
+        "f",
+        "m",
+        "a",
+        "m",
+        "j",
+        "j",
+        "a",
+        "s",
+        "o",
+        "n",
+        "d"
     };
   }
 
   @Override
   public String[] monthsShort() {
     return new String[] {
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "Maj",
-        "Jun",
-        "Jul",
-        "Avg",
-        "Sep",
-        "Okt",
-        "Nov",
-        "Dec"
+        "jan",
+        "feb",
+        "mar",
+        "apr",
+        "maj",
+        "jun",
+        "jul",
+        "avg",
+        "sep",
+        "okt",
+        "nov",
+        "dec"
     };
   }
 
@@ -167,13 +217,13 @@ public class DateTimeFormatInfoImpl_bs extends DateTimeFormatInfoImpl {
   @Override
   public String[] weekdaysFull() {
     return new String[] {
-        "Nedjelja",
-        "Ponedjeljak",
-        "Utorak",
-        "Srijeda",
-        "Četvrtak",
-        "Petak",
-        "Subota"
+        "nedjelja",
+        "ponedjeljak",
+        "utorak",
+        "srijeda",
+        "četvrtak",
+        "petak",
+        "subota"
     };
   }
 
@@ -193,13 +243,13 @@ public class DateTimeFormatInfoImpl_bs extends DateTimeFormatInfoImpl {
   @Override
   public String[] weekdaysShort() {
     return new String[] {
-        "Ned",
-        "Pon",
-        "Uto",
-        "Sri",
-        "Čet",
-        "Pet",
-        "Sub"
+        "ned",
+        "pon",
+        "uto",
+        "sri",
+        "čet",
+        "pet",
+        "sub"
     };
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
 
 /**
  * Implementation of DateTimeFormatInfo for the "nn" locale.
@@ -42,7 +46,7 @@ public class DateTimeFormatInfoImpl_nn extends DateTimeFormatInfoImpl {
 
   @Override
   public String dateFormatMedium() {
-    return "d. MMM. y";
+    return "d. MMM y";
   }
 
   @Override
@@ -67,6 +71,11 @@ public class DateTimeFormatInfoImpl_nn extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String formatDay() {
+    return "d.";
+  }
+
+  @Override
   public String formatMonthAbbrevDay() {
     return "d. MMM";
   }
@@ -74,6 +83,11 @@ public class DateTimeFormatInfoImpl_nn extends DateTimeFormatInfoImpl {
   @Override
   public String formatMonthFullDay() {
     return "d. MMMM";
+  }
+
+  @Override
+  public String formatMonthFullWeekdayDay() {
+    return "EEEE d. MMMM";
   }
 
   @Override
@@ -103,12 +117,12 @@ public class DateTimeFormatInfoImpl_nn extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthNum() {
-    return "M.y";
+    return "M y";
   }
 
   @Override
   public String formatYearMonthNumDay() {
-    return "d.M.y";
+    return "d.M.yyyy";
   }
 
   @Override
@@ -146,6 +160,24 @@ public class DateTimeFormatInfoImpl_nn extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsShort() {
+    return new String[] {
+        "jan.",
+        "feb.",
+        "mars",
+        "apr.",
+        "mai",
+        "juni",
+        "juli",
+        "aug.",
+        "sep.",
+        "okt.",
+        "nov.",
+        "des."
+    };
+  }
+
+  @Override
+  public String[] monthsShortStandalone() {
     return new String[] {
         "jan",
         "feb",
@@ -223,6 +255,19 @@ public class DateTimeFormatInfoImpl_nn extends DateTimeFormatInfoImpl {
         "to.",
         "fr.",
         "la."
+    };
+  }
+
+  @Override
+  public String[] weekdaysShortStandalone() {
+    return new String[] {
+        "søn",
+        "mån",
+        "tys",
+        "ons",
+        "tor",
+        "fre",
+        "lau"
     };
   }
 }

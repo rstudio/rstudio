@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6443 $
+//  date=$Date: 2012-01-25 14:51:07 -0500 (Wed, 25 Jan 2012) $
+//  type=root
 
 /**
  * Implementation of DateTimeFormatInfo for the "gaa" locale.
@@ -199,7 +203,7 @@ public class DateTimeFormatInfoImpl_gaa extends DateTimeFormatInfoImpl {
   @Override
   public String[] weekdaysShort() {
     return new String[] {
-        "Ho",
+        "Hog",
         "Dzu",
         "Dzf",
         "Sho",

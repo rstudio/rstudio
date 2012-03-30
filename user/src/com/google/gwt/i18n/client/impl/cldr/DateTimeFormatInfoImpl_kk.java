@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "kk" locale.
@@ -59,23 +63,8 @@ public class DateTimeFormatInfoImpl_kk extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String formatYearMonthAbbrevDay() {
-    return "d MMM y 'ж'.";
-  }
-
-  @Override
   public String formatYearMonthFullDay() {
     return "d MMMM y 'ж'.";
-  }
-
-  @Override
-  public String formatYearMonthNumDay() {
-    return "d.M.y";
-  }
-
-  @Override
-  public String formatYearMonthWeekdayDay() {
-    return "EEE, d MMM y 'ж'.";
   }
 
   @Override
@@ -83,6 +72,24 @@ public class DateTimeFormatInfoImpl_kk extends DateTimeFormatInfoImpl {
     return new String[] {
         "қаңтар",
         "ақпан",
+        "наурыз",
+        "сәуір",
+        "мамыр",
+        "маусым",
+        "шілде",
+        "тамыз",
+        "қыркүйек",
+        "қазан",
+        "қараша",
+        "желтоқсан"
+    };
+  }
+
+  @Override
+  public String[] monthsFullStandalone() {
+    return new String[] {
+        "қаңтар",
+        "Ақпан",
         "наурыз",
         "сәуір",
         "мамыр",
@@ -137,8 +144,18 @@ public class DateTimeFormatInfoImpl_kk extends DateTimeFormatInfoImpl {
     return new String[] {
         "Q1",
         "Q2",
-        "Q3",
-        "Q4"
+        "3-інші тоқсан",
+        "4-інші тоқсан"
+    };
+  }
+
+  @Override
+  public String[] quartersShort() {
+    return new String[] {
+        "Q1",
+        "Q2",
+        "3-інші тоқсан",
+        "4-інші тоқсан"
     };
   }
 
@@ -149,6 +166,19 @@ public class DateTimeFormatInfoImpl_kk extends DateTimeFormatInfoImpl {
         "дуйсенбі",
         "сейсенбі",
         "сәренбі",
+        "бейсенбі",
+        "жұма",
+        "сенбі"
+    };
+  }
+
+  @Override
+  public String[] weekdaysFullStandalone() {
+    return new String[] {
+        "жексенбі",
+        "дүйсенбі",
+        "сейсенбі",
+        "сәрсенбі",
         "бейсенбі",
         "жұма",
         "сенбі"
@@ -178,6 +208,19 @@ public class DateTimeFormatInfoImpl_kk extends DateTimeFormatInfoImpl {
         "бс.",
         "жм.",
         "сһ."
+    };
+  }
+
+  @Override
+  public String[] weekdaysShortStandalone() {
+    return new String[] {
+        "жс.",
+        "дс.",
+        "сс.",
+        "ср.",
+        "бс.",
+        "жм.",
+        "сн."
     };
   }
 }

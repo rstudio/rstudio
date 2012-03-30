@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6465 $
+//  type=GB
+//  date=$Date: 2012-01-27 12:47:35 -0500 (Fri, 27 Jan 2012) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "en_MT" locale.
@@ -43,8 +47,28 @@ public class DateTimeFormatInfoImpl_en_MT extends DateTimeFormatInfoImpl_en {
   }
 
   @Override
+  public String formatMonthAbbrevDay() {
+    return "dd MMM";
+  }
+
+  @Override
+  public String formatMonthFullDay() {
+    return "dd MMMM";
+  }
+
+  @Override
+  public String formatMonthFullWeekdayDay() {
+    return "EEEE, d MMMM";
+  }
+
+  @Override
+  public String formatMonthNumDay() {
+    return "dd/MM";
+  }
+
+  @Override
   public String formatYearMonthAbbrevDay() {
-    return "d MMM y";
+    return "dd MMM y";
   }
 
   @Override
@@ -54,12 +78,12 @@ public class DateTimeFormatInfoImpl_en_MT extends DateTimeFormatInfoImpl_en {
 
   @Override
   public String formatYearMonthNumDay() {
-    return "d/M/y";
+    return "dd/MM/yyyy";
   }
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "EEE, d MMM y";
+    return "EEE, dd MMM y";
   }
 
   @Override

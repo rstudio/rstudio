@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "mk" locale.
@@ -27,6 +32,10 @@ public class LocalizedNamesImpl_mk extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "AF",
         "AU",
         "AT",
@@ -310,7 +319,6 @@ public class LocalizedNamesImpl_mk extends LocalizedNamesImpl {
     namesMap.put("054", "Меланезија");
     namesMap.put("057", "Микронезиски регион");
     namesMap.put("061", "Полинезија");
-    namesMap.put("062", "Јужно-централна Азија");
     namesMap.put("142", "Азија");
     namesMap.put("143", "Централна Азија");
     namesMap.put("145", "Западна Азија");
@@ -318,8 +326,7 @@ public class LocalizedNamesImpl_mk extends LocalizedNamesImpl {
     namesMap.put("151", "Источна Европа");
     namesMap.put("154", "Северна Европа");
     namesMap.put("155", "Западна Европа");
-    namesMap.put("172", "Комонвелт на независни држави");
-    namesMap.put("419", "Латинска Америка и Карибите");
+    namesMap.put("419", "Латинска Америка");
     namesMap.put("AC", "Остров Асенсион");
     namesMap.put("AD", "Андора");
     namesMap.put("AE", "Обединети Арапски Емирати");
@@ -607,7 +614,6 @@ public class LocalizedNamesImpl_mk extends LocalizedNamesImpl {
         "054": "Меланезија",
         "057": "Микронезиски регион",
         "061": "Полинезија",
-        "062": "Јужно-централна Азија",
         "142": "Азија",
         "143": "Централна Азија",
         "145": "Западна Азија",
@@ -615,8 +621,7 @@ public class LocalizedNamesImpl_mk extends LocalizedNamesImpl {
         "151": "Источна Европа",
         "154": "Северна Европа",
         "155": "Западна Европа",
-        "172": "Комонвелт на независни држави",
-        "419": "Латинска Америка и Карибите",
+        "419": "Латинска Америка",
         "AC": "Остров Асенсион",
         "AD": "Андора",
         "AE": "Обединети Арапски Емирати",

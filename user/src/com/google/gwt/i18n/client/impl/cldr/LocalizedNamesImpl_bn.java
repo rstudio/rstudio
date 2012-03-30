@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "bn" locale.
@@ -35,8 +40,13 @@ public class LocalizedNamesImpl_bn extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "AT",
         "AU",
+        "AC",
         "CI",
         "IS",
         "QO",
@@ -69,7 +79,6 @@ public class LocalizedNamesImpl_bn extends LocalizedNamesImpl {
         "AG",
         "DZ",
         "SV",
-        "AC",
         "EE",
         "AI",
         "AO",
@@ -86,6 +95,7 @@ public class LocalizedNamesImpl_bn extends LocalizedNamesImpl {
         "CU",
         "KI",
         "KG",
+        "EA",
         "CK",
         "KW",
         "KE",
@@ -132,7 +142,7 @@ public class LocalizedNamesImpl_bn extends LocalizedNamesImpl {
         "TK",
         "TG",
         "TO",
-        "DG",
+        "TA",
         "DK",
         "DM",
         "DO",
@@ -142,12 +152,12 @@ public class LocalizedNamesImpl_bn extends LocalizedNamesImpl {
         "TR",
         "TM",
         "TC",
-        "TA",
         "TT",
         "TH",
         "ZA",
         "KR",
         "GS",
+        "DG",
         "NO",
         "NE",
         "NG",
@@ -262,7 +272,6 @@ public class LocalizedNamesImpl_bn extends LocalizedNamesImpl {
         "WS",
         "RS",
         "CS",
-        "EA",
         "SG",
         "SL",
         "SY",
@@ -318,7 +327,6 @@ public class LocalizedNamesImpl_bn extends LocalizedNamesImpl {
     namesMap.put("054", "ম্যালেনেশিয়া");
     namesMap.put("057", "ম্যালেনিশা অঞ্চল");
     namesMap.put("061", "পলিনেশিয়া");
-    namesMap.put("062", "দক্ষিন মধ্য এশিয়া");
     namesMap.put("142", "এশিয়া");
     namesMap.put("143", "মধ্য এশিয়া");
     namesMap.put("145", "পশ্চিমাঞ্চলীয় এশিয়া");
@@ -326,11 +334,8 @@ public class LocalizedNamesImpl_bn extends LocalizedNamesImpl {
     namesMap.put("151", "পূর্ব ইউরোপ");
     namesMap.put("154", "উত্তরাঞ্চলীয় ইউরোপ");
     namesMap.put("155", "পশ্চিমাঞ্চলীয় ইউরোপ");
-    namesMap.put("172", "স্বাধীন রাষ্ট্রের কমনওয়েলথ");
-    namesMap.put("200", "চেকোস্লোভাকিয়া");
     namesMap.put("419", "ল্যাটিন আমেরিকা এবং ক্যারাবিয়ান");
-    namesMap.put("830", "চ্যানেল দ্বীপপুঞ্জ");
-    namesMap.put("AC", "এসেসিয়ন দ্বীপ");
+    namesMap.put("AC", "অ্যাসসেনশন আইল্যান্ড");
     namesMap.put("AD", "এ্যান্ডোরা");
     namesMap.put("AE", "সংযুক্ত আরব আমিরাত");
     namesMap.put("AF", "আফগানিস্তান");
@@ -380,7 +385,7 @@ public class LocalizedNamesImpl_bn extends LocalizedNamesImpl {
     namesMap.put("CM", "ক্যামেরুন");
     namesMap.put("CN", "চীন");
     namesMap.put("CO", "কোলোম্বিয়া");
-    namesMap.put("CP", "ক্লিপারটন দ্বীপ");
+    namesMap.put("CP", "ক্লিপারটন আইল্যান্ড");
     namesMap.put("CR", "কোস্টারিকা");
     namesMap.put("CS", "সারবিয়ান এবং মন্টেনিগ্রো");
     namesMap.put("CU", "কিউবা");
@@ -389,13 +394,13 @@ public class LocalizedNamesImpl_bn extends LocalizedNamesImpl {
     namesMap.put("CY", "সাইপ্রাস");
     namesMap.put("CZ", "চেক প্রজাতন্ত্র");
     namesMap.put("DE", "জার্মানি");
-    namesMap.put("DG", "ডিয়েগো গারশিয়া");
+    namesMap.put("DG", "দিয়েগো গার্সিয়া");
     namesMap.put("DJ", "জিবুতি");
     namesMap.put("DK", "ডেনমার্ক");
     namesMap.put("DM", "ডোমিনিকা");
     namesMap.put("DO", "ডোমেনিকান প্রজাতন্ত্র");
     namesMap.put("DZ", "এলজিরিয়া");
-    namesMap.put("EA", "সিউটা এবং মেলিল্লা");
+    namesMap.put("EA", "কুউটা এবং মেলিলা");
     namesMap.put("EC", "ইকুয়েডর");
     namesMap.put("EE", "এস্তোনিয়া");
     namesMap.put("EG", "মিশর");
@@ -548,7 +553,7 @@ public class LocalizedNamesImpl_bn extends LocalizedNamesImpl {
     namesMap.put("SV", "এল সালভেদর");
     namesMap.put("SY", "সিরিয়া");
     namesMap.put("SZ", "সোয়াজিল্যান্ড");
-    namesMap.put("TA", "তৃস্তান দ্য কন্হা");
+    namesMap.put("TA", "ট্রিস্টান ডা কুনা");
     namesMap.put("TC", "তুর্কস ও কাইকোস দ্বীপপুঞ্জ");
     namesMap.put("TD", "চাদ");
     namesMap.put("TF", "ফরাসী দক্ষিণাঞ্চল");
@@ -617,7 +622,6 @@ public class LocalizedNamesImpl_bn extends LocalizedNamesImpl {
         "054": "ম্যালেনেশিয়া",
         "057": "ম্যালেনিশা অঞ্চল",
         "061": "পলিনেশিয়া",
-        "062": "দক্ষিন মধ্য এশিয়া",
         "142": "এশিয়া",
         "143": "মধ্য এশিয়া",
         "145": "পশ্চিমাঞ্চলীয় এশিয়া",
@@ -625,11 +629,8 @@ public class LocalizedNamesImpl_bn extends LocalizedNamesImpl {
         "151": "পূর্ব ইউরোপ",
         "154": "উত্তরাঞ্চলীয় ইউরোপ",
         "155": "পশ্চিমাঞ্চলীয় ইউরোপ",
-        "172": "স্বাধীন রাষ্ট্রের কমনওয়েলথ",
-        "200": "চেকোস্লোভাকিয়া",
         "419": "ল্যাটিন আমেরিকা এবং ক্যারাবিয়ান",
-        "830": "চ্যানেল দ্বীপপুঞ্জ",
-        "AC": "এসেসিয়ন দ্বীপ",
+        "AC": "অ্যাসসেনশন আইল্যান্ড",
         "AD": "এ্যান্ডোরা",
         "AE": "সংযুক্ত আরব আমিরাত",
         "AF": "আফগানিস্তান",
@@ -679,7 +680,7 @@ public class LocalizedNamesImpl_bn extends LocalizedNamesImpl {
         "CM": "ক্যামেরুন",
         "CN": "চীন",
         "CO": "কোলোম্বিয়া",
-        "CP": "ক্লিপারটন দ্বীপ",
+        "CP": "ক্লিপারটন আইল্যান্ড",
         "CR": "কোস্টারিকা",
         "CS": "সারবিয়ান এবং মন্টেনিগ্রো",
         "CU": "কিউবা",
@@ -688,13 +689,13 @@ public class LocalizedNamesImpl_bn extends LocalizedNamesImpl {
         "CY": "সাইপ্রাস",
         "CZ": "চেক প্রজাতন্ত্র",
         "DE": "জার্মানি",
-        "DG": "ডিয়েগো গারশিয়া",
+        "DG": "দিয়েগো গার্সিয়া",
         "DJ": "জিবুতি",
         "DK": "ডেনমার্ক",
         "DM": "ডোমিনিকা",
         "DO": "ডোমেনিকান প্রজাতন্ত্র",
         "DZ": "এলজিরিয়া",
-        "EA": "সিউটা এবং মেলিল্লা",
+        "EA": "কুউটা এবং মেলিলা",
         "EC": "ইকুয়েডর",
         "EE": "এস্তোনিয়া",
         "EG": "মিশর",
@@ -847,7 +848,7 @@ public class LocalizedNamesImpl_bn extends LocalizedNamesImpl {
         "SV": "এল সালভেদর",
         "SY": "সিরিয়া",
         "SZ": "সোয়াজিল্যান্ড",
-        "TA": "তৃস্তান দ্য কন্হা",
+        "TA": "ট্রিস্টান ডা কুনা",
         "TC": "তুর্কস ও কাইকোস দ্বীপপুঞ্জ",
         "TD": "চাদ",
         "TF": "ফরাসী দক্ষিণাঞ্চল",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "to" locale.
@@ -29,6 +34,8 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
     return new String[] {
         "AI",
         "AG",
+        "BQ",
+        "CW",
         "FR",
         "GF",
         "PH",
@@ -200,11 +207,13 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "JO",
         "SO",
         "GE",
+        "SS",
         "SZ",
         "SE",
         "CH",
         "SR",
         "SD",
+        "SX",
         "TH",
         "TW",
         "TJ",
@@ -309,7 +318,6 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
     namesMap.put("054", "Melanisia");
     namesMap.put("057", "Potu fonua Mikolonisia");
     namesMap.put("061", "Polinīsia");
-    namesMap.put("062", "ʻĒsia tongalotoloto");
     namesMap.put("142", "ʻĒsia");
     namesMap.put("143", "ʻĒsia lotoloto");
     namesMap.put("145", "ʻĒsia hihifo");
@@ -317,8 +325,7 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
     namesMap.put("151", "ʻIulope hahake");
     namesMap.put("154", "ʻIulope tokelau");
     namesMap.put("155", "ʻIulope hihifo");
-    namesMap.put("172", "Kominiueli");
-    namesMap.put("419", "ʻAmelika fakalatina mo Kalipeane");
+    namesMap.put("419", "ʻAmelika fakalatina");
     namesMap.put("AC", "Motu ʻAsenisini");
     namesMap.put("AD", "ʻEnitola");
     namesMap.put("AE", "ʻAlepea Fakatahataha");
@@ -600,7 +607,6 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "054": "Melanisia",
         "057": "Potu fonua Mikolonisia",
         "061": "Polinīsia",
-        "062": "ʻĒsia tongalotoloto",
         "142": "ʻĒsia",
         "143": "ʻĒsia lotoloto",
         "145": "ʻĒsia hihifo",
@@ -608,8 +614,7 @@ public class LocalizedNamesImpl_to extends LocalizedNamesImpl {
         "151": "ʻIulope hahake",
         "154": "ʻIulope tokelau",
         "155": "ʻIulope hihifo",
-        "172": "Kominiueli",
-        "419": "ʻAmelika fakalatina mo Kalipeane",
+        "419": "ʻAmelika fakalatina",
         "AC": "Motu ʻAsenisini",
         "AD": "ʻEnitola",
         "AE": "ʻAlepea Fakatahataha",

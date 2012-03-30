@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "he" locale.
@@ -34,6 +39,10 @@ public class LocalizedNamesImpl_he extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "UG",
         "UZ",
         "AT",
@@ -317,7 +326,6 @@ public class LocalizedNamesImpl_he extends LocalizedNamesImpl {
     namesMap.put("054", "מלנסיה");
     namesMap.put("057", "אזור מיקרונזיה");
     namesMap.put("061", "פולינזיה");
-    namesMap.put("062", "דרום־מרכז אסיה");
     namesMap.put("142", "אסיה");
     namesMap.put("143", "מרכז אסיה");
     namesMap.put("145", "מערב אסיה");
@@ -325,9 +333,7 @@ public class LocalizedNamesImpl_he extends LocalizedNamesImpl {
     namesMap.put("151", "מזרח אירופה");
     namesMap.put("154", "צפון אירופה");
     namesMap.put("155", "מערב אירופה");
-    namesMap.put("172", "חבר המדינות העצמאיות");
-    namesMap.put("419", "אמריקה הלטינית והקריביים");
-    namesMap.put("830", "איי התעלה");
+    namesMap.put("419", "אמריקה הלטינית");
     namesMap.put("AC", "האי אסנשן");
     namesMap.put("AD", "אנדורה");
     namesMap.put("AE", "איחוד האמירויות הערביות");
@@ -615,7 +621,6 @@ public class LocalizedNamesImpl_he extends LocalizedNamesImpl {
         "054": "מלנסיה",
         "057": "אזור מיקרונזיה",
         "061": "פולינזיה",
-        "062": "דרום־מרכז אסיה",
         "142": "אסיה",
         "143": "מרכז אסיה",
         "145": "מערב אסיה",
@@ -623,9 +628,7 @@ public class LocalizedNamesImpl_he extends LocalizedNamesImpl {
         "151": "מזרח אירופה",
         "154": "צפון אירופה",
         "155": "מערב אירופה",
-        "172": "חבר המדינות העצמאיות",
-        "419": "אמריקה הלטינית והקריביים",
-        "830": "איי התעלה",
+        "419": "אמריקה הלטינית",
         "AC": "האי אסנשן",
         "AD": "אנדורה",
         "AE": "איחוד האמירויות הערביות",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=lt
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "lt" locale.
@@ -66,6 +71,7 @@ public class LocalizedNamesImpl_lt extends LocalizedNamesImpl {
         "BA",
         "BW",
         "BV",
+        "BQ",
         "BR",
         "BN",
         "BG",
@@ -75,6 +81,7 @@ public class LocalizedNamesImpl_lt extends LocalizedNamesImpl {
         "CF",
         "EA",
         "CP",
+        "CW",
         "TD",
         "CZ",
         "CL",
@@ -248,11 +255,13 @@ public class LocalizedNamesImpl_lt extends LocalizedNamesImpl {
         "SK",
         "SI",
         "SO",
+        "SS",
         "SD",
         "FI",
         "SR",
         "SJ",
         "SZ",
+        "SX",
         "KP",
         "LK",
         "SE",
@@ -318,7 +327,6 @@ public class LocalizedNamesImpl_lt extends LocalizedNamesImpl {
     namesMap.put("054", "Melanezija");
     namesMap.put("057", "Mikronezijos regionas");
     namesMap.put("061", "Polinezija");
-    namesMap.put("062", "Pietų vidurio Azija");
     namesMap.put("142", "Azija");
     namesMap.put("143", "Centrinė Azija");
     namesMap.put("145", "Vakarų Azija");
@@ -326,9 +334,7 @@ public class LocalizedNamesImpl_lt extends LocalizedNamesImpl {
     namesMap.put("151", "Rytų Europa");
     namesMap.put("154", "Šiaurės Europa");
     namesMap.put("155", "Vakarų Europa");
-    namesMap.put("172", "Nepriklausomų Valstybių Sandrauga");
-    namesMap.put("200", "Čekoslovakija");
-    namesMap.put("419", "Lotynų Amerika ir Karibai");
+    namesMap.put("419", "Lotynų Amerika");
     namesMap.put("AC", "Ascension sala");
     namesMap.put("AD", "Andora");
     namesMap.put("AE", "Jungtiniai Arabų Emyratai");
@@ -565,7 +571,7 @@ public class LocalizedNamesImpl_lt extends LocalizedNamesImpl {
     namesMap.put("ZA", "Pietų Afrika");
     namesMap.put("ZM", "Zambija");
     namesMap.put("ZW", "Zimbabvė");
-    namesMap.put("ZZ", "Nežinoma ar neteisinga sritis");
+    namesMap.put("ZZ", "nežinoma sritis");
   }
 
   @Override
@@ -597,7 +603,6 @@ public class LocalizedNamesImpl_lt extends LocalizedNamesImpl {
         "054": "Melanezija",
         "057": "Mikronezijos regionas",
         "061": "Polinezija",
-        "062": "Pietų vidurio Azija",
         "142": "Azija",
         "143": "Centrinė Azija",
         "145": "Vakarų Azija",
@@ -605,9 +610,7 @@ public class LocalizedNamesImpl_lt extends LocalizedNamesImpl {
         "151": "Rytų Europa",
         "154": "Šiaurės Europa",
         "155": "Vakarų Europa",
-        "172": "Nepriklausomų Valstybių Sandrauga",
-        "200": "Čekoslovakija",
-        "419": "Lotynų Amerika ir Karibai",
+        "419": "Lotynų Amerika",
         "AC": "Ascension sala",
         "AD": "Andora",
         "AE": "Jungtiniai Arabų Emyratai",
@@ -844,7 +847,7 @@ public class LocalizedNamesImpl_lt extends LocalizedNamesImpl {
         "ZA": "Pietų Afrika",
         "ZM": "Zambija",
         "ZW": "Zimbabvė",
-        "ZZ": "Nežinoma ar neteisinga sritis"
+        "ZZ": "nežinoma sritis"
     };
   }-*/;
 }

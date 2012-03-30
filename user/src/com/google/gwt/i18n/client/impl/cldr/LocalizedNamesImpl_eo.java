@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 5806 $
+//  type=root
+//  date=$Date: 2011-05-02 14:42:02 -0400 (Mon, 02 May 2011) $
+
 
 /**
  * Localized names for the "eo" locale.
@@ -58,6 +63,7 @@ public class LocalizedNamesImpl_eo extends LocalizedNamesImpl {
         "BW",
         "BO",
         "BA",
+        "BQ",
         "BR",
         "IO",
         "VG",
@@ -75,6 +81,7 @@ public class LocalizedNamesImpl_eo extends LocalizedNamesImpl {
         "CL",
         "CN",
         "CP",
+        "CW",
         "CX",
         "DK",
         "DG",
@@ -241,6 +248,7 @@ public class LocalizedNamesImpl_eo extends LocalizedNamesImpl {
         "SI",
         "SO",
         "LK",
+        "SS",
         "ZA",
         "SD",
         "GS",
@@ -250,6 +258,7 @@ public class LocalizedNamesImpl_eo extends LocalizedNamesImpl {
         "SZ",
         "SE",
         "CH",
+        "SX",
         "TA",
         "TJ",
         "TH",

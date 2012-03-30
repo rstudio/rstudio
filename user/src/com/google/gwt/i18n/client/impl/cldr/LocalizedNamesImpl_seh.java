@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "seh" locale.
@@ -60,6 +65,7 @@ public class LocalizedNamesImpl_seh extends LocalizedNamesImpl {
         "BO",
         "BA",
         "BW",
+        "BQ",
         "BR",
         "BN",
         "BG",
@@ -89,6 +95,7 @@ public class LocalizedNamesImpl_seh extends LocalizedNamesImpl {
         "CP",
         "HR",
         "CU",
+        "CW",
         "CX",
         "DG",
         "DK",
@@ -98,13 +105,13 @@ public class LocalizedNamesImpl_seh extends LocalizedNamesImpl {
         "EG",
         "EH",
         "SV",
-        "UA",
+        "AE",
         "EC",
         "ER",
         "SK",
         "SI",
         "ES",
-        "UY",
+        "US",
         "EE",
         "ET",
         "EU",
@@ -138,7 +145,7 @@ public class LocalizedNamesImpl_seh extends LocalizedNamesImpl {
         "HN",
         "HU",
         "IC",
-        "WF",
+        "YE",
         "KY",
         "CK",
         "FK",
@@ -146,9 +153,9 @@ public class LocalizedNamesImpl_seh extends LocalizedNamesImpl {
         "MH",
         "NF",
         "SB",
-        "TM",
+        "TC",
         "VG",
-        "TV",
+        "VI",
         "IM",
         "IN",
         "ID",
@@ -221,7 +228,7 @@ public class LocalizedNamesImpl_seh extends LocalizedNamesImpl {
         "KE",
         "KG",
         "KI",
-        "AE",
+        "GB",
         "CF",
         "DO",
         "CM",
@@ -248,38 +255,40 @@ public class LocalizedNamesImpl_seh extends LocalizedNamesImpl {
         "SJ",
         "SO",
         "LK",
+        "SS",
         "SZ",
         "SD",
         "SE",
         "CH",
         "SR",
+        "SX",
         "TA",
         "TJ",
-        "TZ",
+        "TH",
         "TW",
         "IO",
         "PS",
         "TF",
         "TL",
-        "TH",
         "TG",
         "TK",
         "TO",
         "TT",
-        "TR",
         "TN",
-        "TC",
+        "TM",
+        "TR",
+        "TV",
+        "TZ",
+        "UA",
         "UG",
-        "VI",
         "UM",
-        "GB",
-        "US",
+        "UY",
         "UZ",
         "VU",
         "VA",
         "VE",
         "VN",
-        "YE",
+        "WF",
         "ZM",
         "ZW",
     };
@@ -288,7 +297,7 @@ public class LocalizedNamesImpl_seh extends LocalizedNamesImpl {
   @Override
   protected void loadNameMapJava() {
     super.loadNameMapJava();
-    namesMap.put("AE", "Reino Unido");
+    namesMap.put("AE", "Emirados Árabes Unidos");
     namesMap.put("AF", "Afeganistão");
     namesMap.put("AG", "Antígua e Barbuda");
     namesMap.put("AL", "Albânia");
@@ -336,7 +345,7 @@ public class LocalizedNamesImpl_seh extends LocalizedNamesImpl {
     namesMap.put("FM", "Micronésia");
     namesMap.put("FR", "França");
     namesMap.put("GA", "Gabão");
-    namesMap.put("GB", "Uruguai");
+    namesMap.put("GB", "Reino Unido");
     namesMap.put("GD", "Granada");
     namesMap.put("GE", "Geórgia");
     namesMap.put("GF", "Guiana Francesa");
@@ -433,36 +442,29 @@ public class LocalizedNamesImpl_seh extends LocalizedNamesImpl {
     namesMap.put("ST", "São Tomé e Príncipe");
     namesMap.put("SY", "Síria");
     namesMap.put("SZ", "Suazilândia");
-    namesMap.put("TC", "Tuvalu");
+    namesMap.put("TC", "Ilhas Turks e Caicos");
     namesMap.put("TD", "Chade");
-    namesMap.put("TG", "Tokelau");
-    namesMap.put("TH", "Togo");
+    namesMap.put("TH", "Tailândia");
     namesMap.put("TJ", "Tadjiquistão");
-    namesMap.put("TK", "Tonga");
     namesMap.put("TL", "Timor Leste");
-    namesMap.put("TM", "Ilhas Turks e Caicos");
-    namesMap.put("TN", "Turquia");
-    namesMap.put("TO", "Trinidad e Tobago");
-    namesMap.put("TR", "Turcomenistão");
-    namesMap.put("TT", "Tunísia");
-    namesMap.put("TV", "Ilhas Virgens dos EUA");
-    namesMap.put("TZ", "Tailândia");
-    namesMap.put("UA", "Emirados Árabes Unidos");
-    namesMap.put("UG", "Ucrânia");
-    namesMap.put("US", "Uzbequistão");
-    namesMap.put("UY", "Estados Unidos");
-    namesMap.put("UZ", "Vanuatu");
-    namesMap.put("VA", "Venezuela");
+    namesMap.put("TM", "Turcomenistão");
+    namesMap.put("TN", "Tunísia");
+    namesMap.put("TR", "Turquia");
+    namesMap.put("TT", "Trinidad e Tobago");
+    namesMap.put("UA", "Ucrânia");
+    namesMap.put("US", "Estados Unidos");
+    namesMap.put("UY", "Uruguai");
+    namesMap.put("UZ", "Uzbequistão");
+    namesMap.put("VA", "Vaticano");
     namesMap.put("VC", "São Vicente e Granadinas");
-    namesMap.put("VE", "Vietnã");
     namesMap.put("VG", "Ilhas Virgens Britânicas");
-    namesMap.put("VI", "Uganda");
-    namesMap.put("VN", "Wallis e Futuna");
-    namesMap.put("VU", "Vaticano");
-    namesMap.put("WF", "Iêmen");
-    namesMap.put("YE", "Zâmbia");
+    namesMap.put("VI", "Ilhas Virgens dos EUA");
+    namesMap.put("VN", "Vietnã");
+    namesMap.put("WF", "Wallis e Futuna");
+    namesMap.put("YE", "Iêmen");
     namesMap.put("ZA", "África do Sul");
-    namesMap.put("ZM", "Zimbábue");
+    namesMap.put("ZM", "Zâmbia");
+    namesMap.put("ZW", "Zimbábue");
   }
 
   @Override
@@ -472,7 +474,7 @@ public class LocalizedNamesImpl_seh extends LocalizedNamesImpl {
 
   private native JavaScriptObject loadMyNameMap() /*-{
     return {
-        "AE": "Reino Unido",
+        "AE": "Emirados Árabes Unidos",
         "AF": "Afeganistão",
         "AG": "Antígua e Barbuda",
         "AL": "Albânia",
@@ -520,7 +522,7 @@ public class LocalizedNamesImpl_seh extends LocalizedNamesImpl {
         "FM": "Micronésia",
         "FR": "França",
         "GA": "Gabão",
-        "GB": "Uruguai",
+        "GB": "Reino Unido",
         "GD": "Granada",
         "GE": "Geórgia",
         "GF": "Guiana Francesa",
@@ -617,36 +619,29 @@ public class LocalizedNamesImpl_seh extends LocalizedNamesImpl {
         "ST": "São Tomé e Príncipe",
         "SY": "Síria",
         "SZ": "Suazilândia",
-        "TC": "Tuvalu",
+        "TC": "Ilhas Turks e Caicos",
         "TD": "Chade",
-        "TG": "Tokelau",
-        "TH": "Togo",
+        "TH": "Tailândia",
         "TJ": "Tadjiquistão",
-        "TK": "Tonga",
         "TL": "Timor Leste",
-        "TM": "Ilhas Turks e Caicos",
-        "TN": "Turquia",
-        "TO": "Trinidad e Tobago",
-        "TR": "Turcomenistão",
-        "TT": "Tunísia",
-        "TV": "Ilhas Virgens dos EUA",
-        "TZ": "Tailândia",
-        "UA": "Emirados Árabes Unidos",
-        "UG": "Ucrânia",
-        "US": "Uzbequistão",
-        "UY": "Estados Unidos",
-        "UZ": "Vanuatu",
-        "VA": "Venezuela",
+        "TM": "Turcomenistão",
+        "TN": "Tunísia",
+        "TR": "Turquia",
+        "TT": "Trinidad e Tobago",
+        "UA": "Ucrânia",
+        "US": "Estados Unidos",
+        "UY": "Uruguai",
+        "UZ": "Uzbequistão",
+        "VA": "Vaticano",
         "VC": "São Vicente e Granadinas",
-        "VE": "Vietnã",
         "VG": "Ilhas Virgens Britânicas",
-        "VI": "Uganda",
-        "VN": "Wallis e Futuna",
-        "VU": "Vaticano",
-        "WF": "Iêmen",
-        "YE": "Zâmbia",
+        "VI": "Ilhas Virgens dos EUA",
+        "VN": "Vietnã",
+        "WF": "Wallis e Futuna",
+        "YE": "Iêmen",
         "ZA": "África do Sul",
-        "ZM": "Zimbábue"
+        "ZM": "Zâmbia",
+        "ZW": "Zimbábue"
     };
   }-*/;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "cy" locale.
@@ -27,7 +32,6 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
-        "AC",
         "AF",
         "AL",
         "DZ",
@@ -53,6 +57,7 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
         "BO",
         "BA",
         "BW",
+        "BQ",
         "BR",
         "BN",
         "BF",
@@ -69,12 +74,12 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
         "CU",
         "CO",
         "KM",
-        "CG",
         "CR",
         "CI",
         "KW",
         "CP",
         "HR",
+        "CW",
         "CY",
         "ZA",
         "KR",
@@ -111,10 +116,10 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
         "GW",
         "GY",
         "CF",
-        "CD",
         "CZ",
         "BE",
         "GR",
+        "JO",
         "PL",
         "TH",
         "IS",
@@ -155,13 +160,13 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
         "MU",
         "MR",
         "YT",
-        "ME",
         "MX",
         "MF",
         "FM",
         "MD",
         "MC",
         "MN",
+        "ME",
         "MS",
         "MA",
         "MZ",
@@ -216,10 +221,12 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
         "SI",
         "SO",
         "LK",
+        "SS",
         "SJ",
         "SZ",
         "SE",
         "SR",
+        "SX",
         "SY",
         "TA",
         "TW",
@@ -247,6 +254,8 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
         "UZ",
         "BS",
         "CM",
+        "CG",
+        "CD",
         "YE",
         "VA",
         "FI",
@@ -269,12 +278,12 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
         "SB",
         "TC",
         "FK",
+        "AC",
         "CX",
         "EG",
         "DE",
         "AR",
         "IT",
-        "JO",
         "NL",
         "US",
         "GL",
@@ -289,6 +298,7 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
     super.loadNameMapJava();
     namesMap.put("001", "Y Byd");
     namesMap.put("002", "Affrica");
+    namesMap.put("003", "Gogledd America");
     namesMap.put("005", "De America");
     namesMap.put("011", "Gorllewin Affrica");
     namesMap.put("013", "Canolbarth America");
@@ -296,20 +306,20 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
     namesMap.put("015", "Gogledd Affrica");
     namesMap.put("017", "Canol Affrica");
     namesMap.put("018", "De Affrica [018]");
-    namesMap.put("021", "Gogledd America");
+    namesMap.put("021", "America i'r Gogledd o Mecsico");
     namesMap.put("029", "Y Caribî");
     namesMap.put("030", "Dwyrain Asia");
     namesMap.put("035", "De ddwyrain Asia");
     namesMap.put("039", "De Ewrop");
     namesMap.put("053", "Awstralia a Seland Newydd");
     namesMap.put("057", "Micronesia [057]");
-    namesMap.put("062", "De Canol Asia");
     namesMap.put("145", "Gorllewin Asia");
     namesMap.put("150", "Ewrop");
     namesMap.put("151", "Dwyrain Ewrop");
     namesMap.put("154", "Gogledd Ewrop");
     namesMap.put("155", "Gorllewin Ewrop");
-    namesMap.put("830", "Ynysoedd y Sianel");
+    namesMap.put("419", "America Ladin");
+    namesMap.put("AC", "Ynys y Dyrchafael");
     namesMap.put("AE", "Emiraethau Arabaidd Unedig");
     namesMap.put("AF", "Affganistan");
     namesMap.put("AG", "Antigwa a Barbuda");
@@ -329,10 +339,10 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
     namesMap.put("BT", "Bhwtan");
     namesMap.put("BV", "Ynys Bouvet");
     namesMap.put("BY", "Belarws");
-    namesMap.put("CC", "Ynysoedd Cocos (Keeling)");
-    namesMap.put("CD", "Gweriniaeth Ddemocrataidd y Congo");
+    namesMap.put("CC", "Ynysoedd Cocos [Keeling]");
+    namesMap.put("CD", "Y Congo - Kinshasa");
     namesMap.put("CF", "Gweriniaeth Canol Affrica");
-    namesMap.put("CG", "Congo");
+    namesMap.put("CG", "Y Congo - Brazzaville");
     namesMap.put("CH", "Y Swistir");
     namesMap.put("CK", "Ynysoedd Cook");
     namesMap.put("CM", "Y Camerŵn");
@@ -345,7 +355,7 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
     namesMap.put("DO", "Y Weriniaeth Ddominicaidd");
     namesMap.put("EC", "Ecwador");
     namesMap.put("EG", "Yr Aifft");
-    namesMap.put("EH", "Gorllewin Sahara");
+    namesMap.put("EH", "Gorllewin y Sahara");
     namesMap.put("ES", "Sbaen");
     namesMap.put("FI", "Y Ffindir");
     namesMap.put("FK", "Ynysoedd y Falkland");
@@ -368,7 +378,7 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
     namesMap.put("IQ", "Irac");
     namesMap.put("IS", "Gwlad yr Iâ");
     namesMap.put("IT", "Yr Eidal");
-    namesMap.put("JO", "Yr Iorddonen");
+    namesMap.put("JO", "Gwlad Iorddonen");
     namesMap.put("JP", "Siapan");
     namesMap.put("KE", "Cenia");
     namesMap.put("KG", "Cirgistan");
@@ -444,6 +454,7 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
     namesMap.put("ZA", "De Affrica");
     namesMap.put("ZM", "Sambia");
     namesMap.put("ZW", "Simbabwe");
+    namesMap.put("ZZ", "ardal anhysbys");
   }
 
   @Override
@@ -455,6 +466,7 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
     return {
         "001": "Y Byd",
         "002": "Affrica",
+        "003": "Gogledd America",
         "005": "De America",
         "011": "Gorllewin Affrica",
         "013": "Canolbarth America",
@@ -462,20 +474,20 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
         "015": "Gogledd Affrica",
         "017": "Canol Affrica",
         "018": "De Affrica [018]",
-        "021": "Gogledd America",
+        "021": "America i'r Gogledd o Mecsico",
         "029": "Y Caribî",
         "030": "Dwyrain Asia",
         "035": "De ddwyrain Asia",
         "039": "De Ewrop",
         "053": "Awstralia a Seland Newydd",
         "057": "Micronesia [057]",
-        "062": "De Canol Asia",
         "145": "Gorllewin Asia",
         "150": "Ewrop",
         "151": "Dwyrain Ewrop",
         "154": "Gogledd Ewrop",
         "155": "Gorllewin Ewrop",
-        "830": "Ynysoedd y Sianel",
+        "419": "America Ladin",
+        "AC": "Ynys y Dyrchafael",
         "AE": "Emiraethau Arabaidd Unedig",
         "AF": "Affganistan",
         "AG": "Antigwa a Barbuda",
@@ -495,10 +507,10 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
         "BT": "Bhwtan",
         "BV": "Ynys Bouvet",
         "BY": "Belarws",
-        "CC": "Ynysoedd Cocos (Keeling)",
-        "CD": "Gweriniaeth Ddemocrataidd y Congo",
+        "CC": "Ynysoedd Cocos [Keeling]",
+        "CD": "Y Congo - Kinshasa",
         "CF": "Gweriniaeth Canol Affrica",
-        "CG": "Congo",
+        "CG": "Y Congo - Brazzaville",
         "CH": "Y Swistir",
         "CK": "Ynysoedd Cook",
         "CM": "Y Camerŵn",
@@ -511,7 +523,7 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
         "DO": "Y Weriniaeth Ddominicaidd",
         "EC": "Ecwador",
         "EG": "Yr Aifft",
-        "EH": "Gorllewin Sahara",
+        "EH": "Gorllewin y Sahara",
         "ES": "Sbaen",
         "FI": "Y Ffindir",
         "FK": "Ynysoedd y Falkland",
@@ -534,7 +546,7 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
         "IQ": "Irac",
         "IS": "Gwlad yr Iâ",
         "IT": "Yr Eidal",
-        "JO": "Yr Iorddonen",
+        "JO": "Gwlad Iorddonen",
         "JP": "Siapan",
         "KE": "Cenia",
         "KG": "Cirgistan",
@@ -609,7 +621,8 @@ public class LocalizedNamesImpl_cy extends LocalizedNamesImpl {
         "WF": "Wallis a Futuna",
         "ZA": "De Affrica",
         "ZM": "Sambia",
-        "ZW": "Simbabwe"
+        "ZW": "Simbabwe",
+        "ZZ": "ardal anhysbys"
     };
   }-*/;
 }

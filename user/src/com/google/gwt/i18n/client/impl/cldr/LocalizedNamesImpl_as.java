@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "as" locale.
@@ -42,7 +47,6 @@ public class LocalizedNamesImpl_as extends LocalizedNamesImpl {
         "AI",
         "AL",
         "AM",
-        "AN",
         "AO",
         "AR",
         "AS",
@@ -64,6 +68,7 @@ public class LocalizedNamesImpl_as extends LocalizedNamesImpl {
         "BM",
         "BN",
         "BO",
+        "BQ",
         "BS",
         "BT",
         "BW",
@@ -84,6 +89,7 @@ public class LocalizedNamesImpl_as extends LocalizedNamesImpl {
         "CR",
         "CU",
         "CV",
+        "CW",
         "CX",
         "CY",
         "CZ",
@@ -233,8 +239,10 @@ public class LocalizedNamesImpl_as extends LocalizedNamesImpl {
         "SN",
         "SO",
         "SR",
+        "SS",
         "ST",
         "SV",
+        "SX",
         "SY",
         "SZ",
         "TA",
@@ -301,10 +309,10 @@ public class LocalizedNamesImpl_as extends LocalizedNamesImpl {
     namesMap.put("DE", "জাৰ্মানি");
     namesMap.put("FR", "ফ্ৰান্স");
     namesMap.put("GB", "সংযুক্ত ৰাজ্য");
-    namesMap.put("GS", "দক্ষিণ জৰ্জিয়া আৰু দক্ষিণ চেণ্ডৱিচ্‌ দ্বীপ");
+    namesMap.put("GS", "দক্ষিণ জৰ্জিয়া আৰু দক্ষিণ চেণ্ডৱিচ্‌ দ্বীপ");
     namesMap.put("HM", "হাৰ্ড দ্বীপ আৰু মেক্‌ডোনাল্ড দ্বীপ");
     namesMap.put("IN", "ভাৰত");
-    namesMap.put("IO", "ব্ৰিটিশ্ব ইণ্ডিয়ান মহাসাগৰৰ অঞ্চল");
+    namesMap.put("IO", "ব্ৰিটিশ্ব ইণ্ডিয়ান মহাসাগৰৰ অঞ্চল");
     namesMap.put("IT", "ইটালি");
     namesMap.put("JP", "জাপান");
     namesMap.put("RU", "ৰুচ");
@@ -327,10 +335,10 @@ public class LocalizedNamesImpl_as extends LocalizedNamesImpl {
         "DE": "জাৰ্মানি",
         "FR": "ফ্ৰান্স",
         "GB": "সংযুক্ত ৰাজ্য",
-        "GS": "দক্ষিণ জৰ্জিয়া আৰু দক্ষিণ চেণ্ডৱিচ্‌ দ্বীপ",
+        "GS": "দক্ষিণ জৰ্জিয়া আৰু দক্ষিণ চেণ্ডৱিচ্‌ দ্বীপ",
         "HM": "হাৰ্ড দ্বীপ আৰু মেক্‌ডোনাল্ড দ্বীপ",
         "IN": "ভাৰত",
-        "IO": "ব্ৰিটিশ্ব ইণ্ডিয়ান মহাসাগৰৰ অঞ্চল",
+        "IO": "ব্ৰিটিশ্ব ইণ্ডিয়ান মহাসাগৰৰ অঞ্চল",
         "IT": "ইটালি",
         "JP": "জাপান",
         "RU": "ৰুচ",

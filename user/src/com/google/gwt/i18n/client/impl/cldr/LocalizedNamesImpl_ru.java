@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "ru" locale.
@@ -28,8 +33,8 @@ public class LocalizedNamesImpl_ru extends LocalizedNamesImpl {
   public String[] loadLikelyRegionCodes() {
     return new String[] {
         "RU",
-        "KZ",
         "UA",
+        "KZ",
         "UZ",
     };
   }
@@ -37,6 +42,10 @@ public class LocalizedNamesImpl_ru extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "AU",
         "AT",
         "AZ",
@@ -271,8 +280,8 @@ public class LocalizedNamesImpl_ru extends LocalizedNamesImpl {
         "FI",
         "FK",
         "FR",
-        "FX",
         "GF",
+        "FX",
         "PF",
         "TF",
         "HR",
@@ -309,9 +318,9 @@ public class LocalizedNamesImpl_ru extends LocalizedNamesImpl {
     namesMap.put("014", "Восточная Африка");
     namesMap.put("015", "Северная Африка");
     namesMap.put("017", "Центральная Африка");
-    namesMap.put("018", "Южная Африка [018]");
+    namesMap.put("018", "Южная Африка");
     namesMap.put("019", "Центральная и Южная Америка");
-    namesMap.put("021", "Северная Америка (021)");
+    namesMap.put("021", "Северная Америка - США и Канада");
     namesMap.put("029", "Карибы");
     namesMap.put("030", "Восточная Азия");
     namesMap.put("034", "Южная Азия");
@@ -321,7 +330,6 @@ public class LocalizedNamesImpl_ru extends LocalizedNamesImpl {
     namesMap.put("054", "Меланезия");
     namesMap.put("057", "Микронезия");
     namesMap.put("061", "Полинезия");
-    namesMap.put("062", "Юг Средней Азии");
     namesMap.put("142", "Азия");
     namesMap.put("143", "Средняя Азия");
     namesMap.put("145", "Ближний и Средний Восток");
@@ -329,12 +337,10 @@ public class LocalizedNamesImpl_ru extends LocalizedNamesImpl {
     namesMap.put("151", "Восточная Европа");
     namesMap.put("154", "Северная Европа");
     namesMap.put("155", "Западная Европа");
-    namesMap.put("172", "СНГ");
-    namesMap.put("419", "Латинская Америка и Карибские о-ва");
-    namesMap.put("830", "Нормандские о-ва");
+    namesMap.put("419", "Латинская Америка");
     namesMap.put("AC", "Остров Вознесения");
     namesMap.put("AD", "Андорра");
-    namesMap.put("AE", "Объединенные Арабские Эмираты");
+    namesMap.put("AE", "ОАЭ");
     namesMap.put("AF", "Афганистан");
     namesMap.put("AG", "Антигуа и Барбуда");
     namesMap.put("AI", "Ангилья");
@@ -373,7 +379,7 @@ public class LocalizedNamesImpl_ru extends LocalizedNamesImpl {
     namesMap.put("CA", "Канада");
     namesMap.put("CC", "Кокосовые о-ва");
     namesMap.put("CD", "Демократическая Республика Конго");
-    namesMap.put("CF", "Центральноафриканская Республика");
+    namesMap.put("CF", "ЦАР");
     namesMap.put("CG", "Конго");
     namesMap.put("CH", "Швейцария");
     namesMap.put("CI", "Кот д’Ивуар");
@@ -412,7 +418,7 @@ public class LocalizedNamesImpl_ru extends LocalizedNamesImpl {
     namesMap.put("FM", "Федеративные Штаты Микронезии");
     namesMap.put("FO", "Фарерские о-ва");
     namesMap.put("FR", "Франция");
-    namesMap.put("FX", "Франция (метрополия)");
+    namesMap.put("FX", "Французская метрополия");
     namesMap.put("GA", "Габон");
     namesMap.put("GB", "Великобритания");
     namesMap.put("GD", "Гренада");
@@ -608,9 +614,9 @@ public class LocalizedNamesImpl_ru extends LocalizedNamesImpl {
         "014": "Восточная Африка",
         "015": "Северная Африка",
         "017": "Центральная Африка",
-        "018": "Южная Африка [018]",
+        "018": "Южная Африка",
         "019": "Центральная и Южная Америка",
-        "021": "Северная Америка (021)",
+        "021": "Северная Америка - США и Канада",
         "029": "Карибы",
         "030": "Восточная Азия",
         "034": "Южная Азия",
@@ -620,7 +626,6 @@ public class LocalizedNamesImpl_ru extends LocalizedNamesImpl {
         "054": "Меланезия",
         "057": "Микронезия",
         "061": "Полинезия",
-        "062": "Юг Средней Азии",
         "142": "Азия",
         "143": "Средняя Азия",
         "145": "Ближний и Средний Восток",
@@ -628,12 +633,10 @@ public class LocalizedNamesImpl_ru extends LocalizedNamesImpl {
         "151": "Восточная Европа",
         "154": "Северная Европа",
         "155": "Западная Европа",
-        "172": "СНГ",
-        "419": "Латинская Америка и Карибские о-ва",
-        "830": "Нормандские о-ва",
+        "419": "Латинская Америка",
         "AC": "Остров Вознесения",
         "AD": "Андорра",
-        "AE": "Объединенные Арабские Эмираты",
+        "AE": "ОАЭ",
         "AF": "Афганистан",
         "AG": "Антигуа и Барбуда",
         "AI": "Ангилья",
@@ -672,7 +675,7 @@ public class LocalizedNamesImpl_ru extends LocalizedNamesImpl {
         "CA": "Канада",
         "CC": "Кокосовые о-ва",
         "CD": "Демократическая Республика Конго",
-        "CF": "Центральноафриканская Республика",
+        "CF": "ЦАР",
         "CG": "Конго",
         "CH": "Швейцария",
         "CI": "Кот д’Ивуар",
@@ -711,7 +714,7 @@ public class LocalizedNamesImpl_ru extends LocalizedNamesImpl {
         "FM": "Федеративные Штаты Микронезии",
         "FO": "Фарерские о-ва",
         "FR": "Франция",
-        "FX": "Франция (метрополия)",
+        "FX": "Французская метрополия",
         "GA": "Габон",
         "GB": "Великобритания",
         "GD": "Гренада",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "hu" locale.
@@ -39,7 +44,6 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "AL",
         "DZ",
         "UM",
-        "US",
         "AS",
         "VI",
         "AD",
@@ -66,6 +70,7 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "BA",
         "BW",
         "BV",
+        "BQ",
         "BR",
         "IO",
         "VG",
@@ -80,6 +85,7 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "KM",
         "CK",
         "CR",
+        "CW",
         "TD",
         "CZ",
         "DK",
@@ -92,6 +98,7 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "DJ",
         "EC",
         "GQ",
+        "US",
         "AE",
         "GB",
         "EG",
@@ -245,9 +252,11 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "ES",
         "SJ",
         "LK",
+        "SS",
         "SR",
         "CH",
         "SE",
+        "SX",
         "WS",
         "SA",
         "SN",
@@ -317,7 +326,6 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
     namesMap.put("054", "Melanézia");
     namesMap.put("057", "Mikronéziai régió");
     namesMap.put("061", "Polinézia");
-    namesMap.put("062", "Délközép-Ázsia");
     namesMap.put("142", "Ázsia");
     namesMap.put("143", "Közép-Ázsia");
     namesMap.put("145", "Nyugat-Ázsia");
@@ -325,9 +333,7 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
     namesMap.put("151", "Kelet-Európa");
     namesMap.put("154", "Észak-Európa");
     namesMap.put("155", "Nyugat-Európa");
-    namesMap.put("172", "Független Államok Közössége");
-    namesMap.put("419", "Latin-Amerika és a Karib-térség");
-    namesMap.put("830", "Csatorna-szigetek");
+    namesMap.put("419", "Latin-Amerika");
     namesMap.put("AC", "Ascension-sziget");
     namesMap.put("AE", "Egyesült Arab Emirátus");
     namesMap.put("AF", "Afganisztán");
@@ -502,7 +508,7 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
     namesMap.put("TZ", "Tanzánia");
     namesMap.put("UA", "Ukrajna");
     namesMap.put("UM", "Amerikai Csendes-óceáni Szigetek");
-    namesMap.put("US", "Amerikai Egyesült Államok");
+    namesMap.put("US", "Egyesült Államok");
     namesMap.put("UZ", "Üzbegisztán");
     namesMap.put("VA", "Vatikán");
     namesMap.put("VC", "Saint Vincent és a Grenadine-szigetek");
@@ -544,7 +550,6 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "054": "Melanézia",
         "057": "Mikronéziai régió",
         "061": "Polinézia",
-        "062": "Délközép-Ázsia",
         "142": "Ázsia",
         "143": "Közép-Ázsia",
         "145": "Nyugat-Ázsia",
@@ -552,9 +557,7 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "151": "Kelet-Európa",
         "154": "Észak-Európa",
         "155": "Nyugat-Európa",
-        "172": "Független Államok Közössége",
-        "419": "Latin-Amerika és a Karib-térség",
-        "830": "Csatorna-szigetek",
+        "419": "Latin-Amerika",
         "AC": "Ascension-sziget",
         "AE": "Egyesült Arab Emirátus",
         "AF": "Afganisztán",
@@ -729,7 +732,7 @@ public class LocalizedNamesImpl_hu extends LocalizedNamesImpl {
         "TZ": "Tanzánia",
         "UA": "Ukrajna",
         "UM": "Amerikai Csendes-óceáni Szigetek",
-        "US": "Amerikai Egyesült Államok",
+        "US": "Egyesült Államok",
         "UZ": "Üzbegisztán",
         "VA": "Vatikán",
         "VC": "Saint Vincent és a Grenadine-szigetek",

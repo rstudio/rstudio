@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6472 Google $
+//  type=root
+//  date=$Date: 2012-01-27 18:53:35 -0500 (Fri, 27 Jan 2012) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "ar" locale.
@@ -118,7 +122,7 @@ public class DateTimeFormatInfoImpl_ar extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthNumDay() {
-    return "d‏/M‏/y";
+    return "d‏/M‏/yyyy";
   }
 
   @Override
@@ -234,7 +238,7 @@ public class DateTimeFormatInfoImpl_ar extends DateTimeFormatInfoImpl {
   public String[] weekdaysFull() {
     return new String[] {
         "الأحد",
-        "الإثنين",
+        "الاثنين",
         "الثلاثاء",
         "الأربعاء",
         "الخميس",
@@ -259,13 +263,13 @@ public class DateTimeFormatInfoImpl_ar extends DateTimeFormatInfoImpl {
   @Override
   public String[] weekdaysShort() {
     return new String[] {
-        "أحد",
-        "إثنين",
-        "ثلاثاء",
-        "أربعاء",
-        "خميس",
-        "جمعة",
-        "سبت"
+        "الأحد",
+        "الاثنين",
+        "الثلاثاء",
+        "الأربعاء",
+        "الخميس",
+        "الجمعة",
+        "السبت"
     };
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 5953 $
+//  date=$Date: 2011-07-04 19:22:55 -0400 (Mon, 04 Jul 2011) $
+//  type=IN
 
 /**
  * Implementation of DateTimeFormatInfo for the "ne_IN" locale.
@@ -28,11 +32,6 @@ public class DateTimeFormatInfoImpl_ne_IN extends DateTimeFormatInfoImpl_ne {
         "पूर्वाह्न",
         "अपराह्न"
     };
-  }
-
-  @Override
-  public int firstDayOfTheWeek() {
-    return 0;
   }
 
   @Override

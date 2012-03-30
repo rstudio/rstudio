@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "eu" locale.
@@ -35,32 +39,62 @@ public class DateTimeFormatInfoImpl_eu extends DateTimeFormatInfoImpl {
   @Override
   public String[] erasFull() {
     return new String[] {
-        "BCE",
-        "CE"
+        "K.a.",
+        "K.o."
     };
   }
 
   @Override
   public String[] erasShort() {
     return new String[] {
-        "BCE",
-        "CE"
+        "K.a.",
+        "K.o."
     };
   }
 
   @Override
+  public String formatMonthFullWeekdayDay() {
+    return "EEEE, MMMM d";
+  }
+
+  @Override
+  public String formatMonthNumDay() {
+    return "M/d";
+  }
+
+  @Override
+  public String formatYearMonthAbbrev() {
+    return "MMM y";
+  }
+
+  @Override
   public String formatYearMonthAbbrevDay() {
-    return "y'eko' MMM'ren' d'a'";
+    return "MMM d, y";
+  }
+
+  @Override
+  public String formatYearMonthFull() {
+    return "MMMM y";
   }
 
   @Override
   public String formatYearMonthFullDay() {
-    return "y'eko' MMMM'ren' d'a'";
+    return "MMMM d, y";
+  }
+
+  @Override
+  public String formatYearMonthNum() {
+    return "M/y";
+  }
+
+  @Override
+  public String formatYearMonthNumDay() {
+    return "M/d/y";
   }
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "EEE, y'eko' MMM'ren' d'a'";
+    return "EEE, MMM d, y";
   }
 
   @Override
@@ -163,13 +197,26 @@ public class DateTimeFormatInfoImpl_eu extends DateTimeFormatInfoImpl {
   @Override
   public String[] weekdaysNarrow() {
     return new String[] {
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7"
+        "I",
+        "M",
+        "A",
+        "A",
+        "A",
+        "O",
+        "I"
+    };
+  }
+
+  @Override
+  public String[] weekdaysNarrowStandalone() {
+    return new String[] {
+        "I",
+        "M",
+        "A",
+        "L",
+        "A",
+        "O",
+        "I"
     };
   }
 

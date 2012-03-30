@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "da" locale.
@@ -62,6 +67,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "BA",
         "BW",
         "BV",
+        "BQ",
         "BR",
         "BN",
         "BG",
@@ -83,11 +89,11 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "CK",
         "CR",
         "CU",
+        "CW",
         "CY",
         "DK",
         "VI",
         "VG",
-        "UM",
         "DO",
         "PS",
         "IO",
@@ -183,6 +189,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "YT",
         "MX",
         "FM",
+        "UM",
         "MC",
         "MN",
         "ME",
@@ -242,6 +249,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "GS",
         "ES",
         "LK",
+        "SS",
         "SH",
         "VC",
         "GB",
@@ -250,6 +258,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "SJ",
         "SE",
         "SZ",
+        "SX",
         "ZA",
         "KR",
         "SY",
@@ -318,7 +327,6 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
     namesMap.put("054", "Melanesien");
     namesMap.put("057", "Mikronesien");
     namesMap.put("061", "Polynesien");
-    namesMap.put("062", "Sydcentralasien");
     namesMap.put("142", "Asien");
     namesMap.put("143", "Centralasien");
     namesMap.put("145", "Vestasien");
@@ -326,8 +334,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
     namesMap.put("151", "Østeuropa");
     namesMap.put("154", "Nordeuropa");
     namesMap.put("155", "Vesteuropa");
-    namesMap.put("172", "Sammenslutningen af uafhængige stater");
-    namesMap.put("419", "Latinamerika og Caribien");
+    namesMap.put("419", "Latinamerika");
     namesMap.put("AC", "Ascensionøen");
     namesMap.put("AE", "Forenede Arabiske Emirater");
     namesMap.put("AG", "Antigua og Barbuda");
@@ -350,7 +357,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
     namesMap.put("CC", "Cocosøerne");
     namesMap.put("CD", "Congo-Kinshasa");
     namesMap.put("CF", "Centralafrikanske Republik");
-    namesMap.put("CG", "Congo");
+    namesMap.put("CG", "Congo – Brazzaville");
     namesMap.put("CH", "Schweiz");
     namesMap.put("CI", "Elfenbenskysten");
     namesMap.put("CK", "Cook-øerne");
@@ -453,7 +460,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
     namesMap.put("TN", "Tunesien");
     namesMap.put("TR", "Tyrkiet");
     namesMap.put("TT", "Trinidad og Tobago");
-    namesMap.put("UM", "De Mindre Amerikanske Oversøiske Øer");
+    namesMap.put("UM", "Mindre amerikanske oversøiske øer");
     namesMap.put("US", "USA");
     namesMap.put("UZ", "Usbekistan");
     namesMap.put("VA", "Vatikanstaten");
@@ -462,7 +469,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
     namesMap.put("VI", "De amerikanske jomfruøer");
     namesMap.put("WF", "Wallis og Futunaøerne");
     namesMap.put("ZA", "Sydafrika");
-    namesMap.put("ZZ", "Ukendt eller ugyldigt område");
+    namesMap.put("ZZ", "Ukendt område");
   }
 
   @Override
@@ -494,7 +501,6 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "054": "Melanesien",
         "057": "Mikronesien",
         "061": "Polynesien",
-        "062": "Sydcentralasien",
         "142": "Asien",
         "143": "Centralasien",
         "145": "Vestasien",
@@ -502,8 +508,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "151": "Østeuropa",
         "154": "Nordeuropa",
         "155": "Vesteuropa",
-        "172": "Sammenslutningen af uafhængige stater",
-        "419": "Latinamerika og Caribien",
+        "419": "Latinamerika",
         "AC": "Ascensionøen",
         "AE": "Forenede Arabiske Emirater",
         "AG": "Antigua og Barbuda",
@@ -526,7 +531,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "CC": "Cocosøerne",
         "CD": "Congo-Kinshasa",
         "CF": "Centralafrikanske Republik",
-        "CG": "Congo",
+        "CG": "Congo – Brazzaville",
         "CH": "Schweiz",
         "CI": "Elfenbenskysten",
         "CK": "Cook-øerne",
@@ -629,7 +634,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "TN": "Tunesien",
         "TR": "Tyrkiet",
         "TT": "Trinidad og Tobago",
-        "UM": "De Mindre Amerikanske Oversøiske Øer",
+        "UM": "Mindre amerikanske oversøiske øer",
         "US": "USA",
         "UZ": "Usbekistan",
         "VA": "Vatikanstaten",
@@ -638,7 +643,7 @@ public class LocalizedNamesImpl_da extends LocalizedNamesImpl {
         "VI": "De amerikanske jomfruøer",
         "WF": "Wallis og Futunaøerne",
         "ZA": "Sydafrika",
-        "ZZ": "Ukendt eller ugyldigt område"
+        "ZZ": "Ukendt område"
     };
   }-*/;
 }

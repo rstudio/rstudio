@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
 
 /**
  * Implementation of DateTimeFormatInfo for the "pt_PT" locale.
@@ -31,23 +35,58 @@ public class DateTimeFormatInfoImpl_pt_PT extends DateTimeFormatInfoImpl_pt {
   }
 
   @Override
-  public String dateFormatMedium() {
-    return "d 'de' MMM 'de' yyyy";
-  }
-
-  @Override
   public int firstDayOfTheWeek() {
     return 1;
   }
 
   @Override
-  public String formatHour12Minute() {
-    return "h:mm";
+  public String formatHour24Minute() {
+    return "HH:mm";
   }
 
   @Override
-  public String formatHour12MinuteSecond() {
-    return "h:mm:ss";
+  public String formatHour24MinuteSecond() {
+    return "HH:mm:ss";
+  }
+
+  @Override
+  public String formatMinuteSecond() {
+    return "mm:ss";
+  }
+
+  @Override
+  public String formatMonthAbbrevDay() {
+    return "d/MM";
+  }
+
+  @Override
+  public String formatMonthFullDay() {
+    return "d/MM";
+  }
+
+  @Override
+  public String formatMonthFullWeekdayDay() {
+    return "EEEE, d/MM";
+  }
+
+  @Override
+  public String formatYearMonthAbbrev() {
+    return "MM/y";
+  }
+
+  @Override
+  public String formatYearMonthAbbrevDay() {
+    return "d/MM/y";
+  }
+
+  @Override
+  public String formatYearMonthFull() {
+    return "MM/y";
+  }
+
+  @Override
+  public String formatYearMonthWeekdayDay() {
+    return "EEE, d/MM/y";
   }
 
   @Override
@@ -104,6 +143,16 @@ public class DateTimeFormatInfoImpl_pt_PT extends DateTimeFormatInfoImpl_pt {
         "3.º trimestre",
         "4.º trimestre"
     };
+  }
+
+  @Override
+  public String timeFormatFull() {
+    return "H:mm:ss zzzz";
+  }
+
+  @Override
+  public String timeFormatLong() {
+    return "H:mm:ss z";
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "nl_BE" locale.
@@ -31,7 +36,6 @@ public class LocalizedNamesImpl_nl_BE extends LocalizedNamesImpl_nl {
         "AX",
         "AL",
         "DZ",
-        "UM",
         "VI",
         "AS",
         "AD",
@@ -58,6 +62,7 @@ public class LocalizedNamesImpl_nl_BE extends LocalizedNamesImpl_nl {
         "BA",
         "BW",
         "BV",
+        "BQ",
         "BR",
         "IO",
         "VG",
@@ -83,6 +88,7 @@ public class LocalizedNamesImpl_nl_BE extends LocalizedNamesImpl_nl {
         "CK",
         "CR",
         "CU",
+        "CW",
         "CY",
         "DK",
         "DG",
@@ -149,6 +155,7 @@ public class LocalizedNamesImpl_nl_BE extends LocalizedNamesImpl_nl {
         "KE",
         "KG",
         "KI",
+        "UM",
         "KW",
         "HR",
         "LA",
@@ -198,13 +205,13 @@ public class LocalizedNamesImpl_nl_BE extends LocalizedNamesImpl_nl {
         "KP",
         "NO",
         "NF",
-        "QO",
         "UG",
         "UA",
         "UZ",
         "OM",
         "AT",
         "TL",
+        "QO",
         "PK",
         "PW",
         "PS",
@@ -238,6 +245,7 @@ public class LocalizedNamesImpl_nl_BE extends LocalizedNamesImpl_nl {
         "SL",
         "SG",
         "SH",
+        "SX",
         "MF",
         "SI",
         "SK",
@@ -245,6 +253,7 @@ public class LocalizedNamesImpl_nl_BE extends LocalizedNamesImpl_nl {
         "SO",
         "ES",
         "LK",
+        "SS",
         "SR",
         "SJ",
         "SZ",

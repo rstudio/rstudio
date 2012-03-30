@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 5717 $
+//  type=root
+//  date=$Date: 2011-04-27 23:37:06 -0400 (Wed, 27 Apr 2011) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "aa_DJ" locale.
@@ -23,12 +27,17 @@ package com.google.gwt.i18n.shared.impl.cldr;
 public class DateTimeFormatInfoImpl_aa_DJ extends DateTimeFormatInfoImpl_aa {
 
   @Override
+  public int firstDayOfTheWeek() {
+    return 6;
+  }
+
+  @Override
   public String[] monthsFull() {
     return new String[] {
         "Qunxa Garablu",
-        "Naharsi Kudo",
+        "Kudo",
         "Ciggilta Kudo",
-        "Agda Baxisso",
+        "Agda Baxis",
         "Caxah Alsa",
         "Qasa Dirri",
         "Qado Dirri",

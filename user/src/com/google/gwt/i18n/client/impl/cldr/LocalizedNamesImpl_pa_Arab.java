@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6177 $
+//  date=$Date: 2011-09-27 11:37:06 -0400 (Tue, 27 Sep 2011) $
+//  type=root
+
 
 /**
  * Localized names for the "pa_Arab" locale.
@@ -42,7 +47,6 @@ public class LocalizedNamesImpl_pa_Arab extends LocalizedNamesImpl_pa {
         "AI",
         "AL",
         "AM",
-        "AN",
         "AO",
         "AQ",
         "AR",
@@ -65,6 +69,7 @@ public class LocalizedNamesImpl_pa_Arab extends LocalizedNamesImpl_pa {
         "BM",
         "BN",
         "BO",
+        "BQ",
         "BR",
         "BS",
         "BT",
@@ -88,6 +93,7 @@ public class LocalizedNamesImpl_pa_Arab extends LocalizedNamesImpl_pa {
         "CR",
         "CU",
         "CV",
+        "CW",
         "CX",
         "CY",
         "CZ",
@@ -143,6 +149,7 @@ public class LocalizedNamesImpl_pa_Arab extends LocalizedNamesImpl_pa {
         "IE",
         "IL",
         "IM",
+        "IN",
         "IO",
         "IQ",
         "IR",
@@ -245,8 +252,10 @@ public class LocalizedNamesImpl_pa_Arab extends LocalizedNamesImpl_pa {
         "SN",
         "SO",
         "SR",
+        "SS",
         "ST",
         "SV",
+        "SX",
         "SY",
         "SZ",
         "TA",
@@ -287,7 +296,6 @@ public class LocalizedNamesImpl_pa_Arab extends LocalizedNamesImpl_pa {
         "ZM",
         "ZW",
         "PK",
-        "IN",
     };
   }
 

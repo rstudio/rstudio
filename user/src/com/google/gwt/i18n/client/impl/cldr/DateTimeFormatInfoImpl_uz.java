@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 5912 $
+//  type=root
+//  date=$Date: 2011-06-19 12:53:49 -0400 (Sun, 19 Jun 2011) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "uz" locale.
@@ -46,18 +50,18 @@ public class DateTimeFormatInfoImpl_uz extends DateTimeFormatInfoImpl {
   @Override
   public String[] monthsFull() {
     return new String[] {
-        "Муҳаррам",
-        "Сафар",
-        "Рабиул-аввал",
-        "Рабиул-охир",
-        "Жумодиул-уло",
-        "Жумодиул-ухро",
-        "Ражаб",
-        "Шаъбон",
-        "Рамазон",
-        "Шаввол",
-        "Зил-қаъда",
-        "Зил-ҳижжа"
+        "Январ",
+        "Феврал",
+        "Март",
+        "Апрел",
+        "Май",
+        "Июн",
+        "Июл",
+        "Август",
+        "Сентябр",
+        "Октябр",
+        "Ноябр",
+        "Декабр"
     };
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "cgg" locale.
@@ -27,7 +32,6 @@ public class LocalizedNamesImpl_cgg extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
-        "PS",
         "AC",
         "AF",
         "IS",
@@ -60,6 +64,7 @@ public class LocalizedNamesImpl_cgg extends LocalizedNamesImpl {
         "BO",
         "BW",
         "BA",
+        "BQ",
         "BE",
         "FR",
         "FI",
@@ -79,6 +84,7 @@ public class LocalizedNamesImpl_cgg extends LocalizedNamesImpl {
         "CN",
         "CP",
         "CU",
+        "CW",
         "CX",
         "DK",
         "CD",
@@ -217,6 +223,7 @@ public class LocalizedNamesImpl_cgg extends LocalizedNamesImpl {
         "PT",
         "PF",
         "PL",
+        "PS",
         "PR",
         "QO",
         "DO",
@@ -250,11 +257,13 @@ public class LocalizedNamesImpl_cgg extends LocalizedNamesImpl {
         "SL",
         "SJ",
         "SO",
+        "SS",
         "SD",
         "SR",
         "SZ",
         "SE",
         "CH",
+        "SX",
         "TA",
         "TH",
         "TJ",
@@ -430,7 +439,6 @@ public class LocalizedNamesImpl_cgg extends LocalizedNamesImpl {
     namesMap.put("PM", "Senti Piyerre na Mikweron");
     namesMap.put("PN", "Pitkaini");
     namesMap.put("PR", "Pwetoriko");
-    namesMap.put("PS", "");
     namesMap.put("PT", "Pocugo");
     namesMap.put("PW", "Palaawu");
     namesMap.put("PY", "Paragwai");
@@ -634,7 +642,6 @@ public class LocalizedNamesImpl_cgg extends LocalizedNamesImpl {
         "PM": "Senti Piyerre na Mikweron",
         "PN": "Pitkaini",
         "PR": "Pwetoriko",
-        "PS": "",
         "PT": "Pocugo",
         "PW": "Palaawu",
         "PY": "Paragwai",

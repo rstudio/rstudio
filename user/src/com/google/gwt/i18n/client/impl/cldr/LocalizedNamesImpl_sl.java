@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "sl" locale.
@@ -59,6 +64,7 @@ public class LocalizedNamesImpl_sl extends LocalizedNamesImpl {
         "BA",
         "BV",
         "CX",
+        "BQ",
         "BR",
         "VG",
         "IO",
@@ -70,6 +76,7 @@ public class LocalizedNamesImpl_sl extends LocalizedNamesImpl {
         "EA",
         "CY",
         "CK",
+        "CW",
         "TD",
         "CZ",
         "CL",
@@ -94,7 +101,6 @@ public class LocalizedNamesImpl_sl extends LocalizedNamesImpl {
         "PH",
         "FI",
         "FR",
-        "FX",
         "GF",
         "PF",
         "TF",
@@ -176,6 +182,7 @@ public class LocalizedNamesImpl_sl extends LocalizedNamesImpl {
         "MR",
         "YT",
         "MX",
+        "FX",
         "FM",
         "MM",
         "MD",
@@ -244,11 +251,13 @@ public class LocalizedNamesImpl_sl extends LocalizedNamesImpl {
         "SO",
         "RS",
         "CS",
+        "SS",
         "SD",
         "SR",
         "SJ",
         "SZ",
         "SH",
+        "SX",
         "ES",
         "LK",
         "SE",
@@ -311,7 +320,6 @@ public class LocalizedNamesImpl_sl extends LocalizedNamesImpl {
     namesMap.put("054", "Melanezija");
     namesMap.put("057", "mikronezijska regija");
     namesMap.put("061", "Polinezija");
-    namesMap.put("062", "Južna osrednja Azija");
     namesMap.put("142", "Azija");
     namesMap.put("143", "Osrednja Azija");
     namesMap.put("145", "Zahodna Azija");
@@ -319,9 +327,7 @@ public class LocalizedNamesImpl_sl extends LocalizedNamesImpl {
     namesMap.put("151", "Vzhodna Evropa");
     namesMap.put("154", "Severna Evropa");
     namesMap.put("155", "Zahodna Evropa");
-    namesMap.put("172", "Skupnost neodvisnih držav");
-    namesMap.put("419", "Latinska Amerika in Karibi");
-    namesMap.put("830", "Kanalski otoki");
+    namesMap.put("419", "Latinska Amerika");
     namesMap.put("AC", "Otok Ascension");
     namesMap.put("AD", "Andora");
     namesMap.put("AE", "Združeni arabski emirati");
@@ -393,7 +399,7 @@ public class LocalizedNamesImpl_sl extends LocalizedNamesImpl {
     namesMap.put("FM", "Mikronezija");
     namesMap.put("FO", "Ferski otoki");
     namesMap.put("FR", "Francija");
-    namesMap.put("FX", "Francija (metropolitanska)");
+    namesMap.put("FX", "Metropolitanska Francija");
     namesMap.put("GB", "Velika Britanija");
     namesMap.put("GE", "Gruzija");
     namesMap.put("GF", "Francoska Gvajana");
@@ -558,7 +564,6 @@ public class LocalizedNamesImpl_sl extends LocalizedNamesImpl {
         "054": "Melanezija",
         "057": "mikronezijska regija",
         "061": "Polinezija",
-        "062": "Južna osrednja Azija",
         "142": "Azija",
         "143": "Osrednja Azija",
         "145": "Zahodna Azija",
@@ -566,9 +571,7 @@ public class LocalizedNamesImpl_sl extends LocalizedNamesImpl {
         "151": "Vzhodna Evropa",
         "154": "Severna Evropa",
         "155": "Zahodna Evropa",
-        "172": "Skupnost neodvisnih držav",
-        "419": "Latinska Amerika in Karibi",
-        "830": "Kanalski otoki",
+        "419": "Latinska Amerika",
         "AC": "Otok Ascension",
         "AD": "Andora",
         "AE": "Združeni arabski emirati",
@@ -640,7 +643,7 @@ public class LocalizedNamesImpl_sl extends LocalizedNamesImpl {
         "FM": "Mikronezija",
         "FO": "Ferski otoki",
         "FR": "Francija",
-        "FX": "Francija (metropolitanska)",
+        "FX": "Metropolitanska Francija",
         "GB": "Velika Britanija",
         "GE": "Gruzija",
         "GF": "Francoska Gvajana",

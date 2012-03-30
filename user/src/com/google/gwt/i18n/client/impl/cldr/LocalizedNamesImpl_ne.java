@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6472 Google $
+//  date=$Date: 2012-01-27 18:53:35 -0500 (Fri, 27 Jan 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "ne" locale.
@@ -36,11 +41,15 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
   public String[] loadSortedRegionCodes() {
     return new String[] {
         "AC",
+        "BQ",
         "CP",
+        "CW",
         "DG",
         "EA",
         "GS",
         "IC",
+        "SS",
+        "SX",
         "TA",
         "AO",
         "AZ",
@@ -317,7 +326,6 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
     namesMap.put("054", "मेलानेसिया");
     namesMap.put("057", "माइक्रोनेसियाली क्षेत्र");
     namesMap.put("061", "पोलिनेशिया");
-    namesMap.put("062", "दक्षिण मध्य एशिया");
     namesMap.put("142", "एशिया");
     namesMap.put("143", "केन्द्रीय एशिया");
     namesMap.put("145", "पश्चिमी एशिया");
@@ -325,7 +333,6 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
     namesMap.put("151", "पूर्वी युरोप");
     namesMap.put("154", "उत्तरी युरोप");
     namesMap.put("155", "पश्चिमी युरोप");
-    namesMap.put("172", "कमनवेल्थका स्वतन्त्र राज्यहरू");
     namesMap.put("419", "ल्याटिन अमेरिका तथा क्यारिबियन");
     namesMap.put("AD", "अन्डोर्रा");
     namesMap.put("AE", "संयुक्त अरब इमिराट्स");
@@ -606,7 +613,6 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "054": "मेलानेसिया",
         "057": "माइक्रोनेसियाली क्षेत्र",
         "061": "पोलिनेशिया",
-        "062": "दक्षिण मध्य एशिया",
         "142": "एशिया",
         "143": "केन्द्रीय एशिया",
         "145": "पश्चिमी एशिया",
@@ -614,7 +620,6 @@ public class LocalizedNamesImpl_ne extends LocalizedNamesImpl {
         "151": "पूर्वी युरोप",
         "154": "उत्तरी युरोप",
         "155": "पश्चिमी युरोप",
-        "172": "कमनवेल्थका स्वतन्त्र राज्यहरू",
         "419": "ल्याटिन अमेरिका तथा क्यारिबियन",
         "AD": "अन्डोर्रा",
         "AE": "संयुक्त अरब इमिराट्स",

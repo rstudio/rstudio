@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "se" locale.
@@ -33,7 +38,6 @@ public class LocalizedNamesImpl_se extends LocalizedNamesImpl {
         "DZ",
         "US",
         "AS",
-        "AN",
         "AD",
         "AO",
         "AI",
@@ -58,6 +62,7 @@ public class LocalizedNamesImpl_se extends LocalizedNamesImpl {
         "BA",
         "BW",
         "BV",
+        "BQ",
         "BR",
         "BN",
         "BG",
@@ -72,6 +77,7 @@ public class LocalizedNamesImpl_se extends LocalizedNamesImpl {
         "CC",
         "CK",
         "CR",
+        "CW",
         "CX",
         "DK",
         "KP",
@@ -241,6 +247,7 @@ public class LocalizedNamesImpl_se extends LocalizedNamesImpl {
         "SO",
         "ES",
         "LK",
+        "SS",
         "GB",
         "SD",
         "FI",
@@ -248,6 +255,7 @@ public class LocalizedNamesImpl_se extends LocalizedNamesImpl {
         "SJ",
         "SZ",
         "CH",
+        "SX",
         "SY",
         "TW",
         "TZ",
@@ -307,7 +315,6 @@ public class LocalizedNamesImpl_se extends LocalizedNamesImpl {
     namesMap.put("039", "mátta-Eurohpá");
     namesMap.put("053", "Austrália ja Ođđa-Selánda");
     namesMap.put("057", "Mikronesia guovllus");
-    namesMap.put("062", "mátta-gaska-Ásia");
     namesMap.put("142", "Ásia");
     namesMap.put("143", "gaska-Ásia");
     namesMap.put("145", "oarji-Ásia");
@@ -315,7 +322,7 @@ public class LocalizedNamesImpl_se extends LocalizedNamesImpl {
     namesMap.put("151", "nuorta-Eurohpá");
     namesMap.put("154", "davvi-Eurohpá");
     namesMap.put("155", "oarji-Eurohpá");
-    namesMap.put("419", "Lulli-Amerihkká ja Karibia");
+    namesMap.put("419", "Lulli-Amerihkká");
     namesMap.put("AC", "Ascension");
     namesMap.put("AE", "Ovttastuvvan Arábaemiráhtat");
     namesMap.put("AG", "Antigua ja Barbuda");
@@ -481,7 +488,6 @@ public class LocalizedNamesImpl_se extends LocalizedNamesImpl {
         "039": "mátta-Eurohpá",
         "053": "Austrália ja Ođđa-Selánda",
         "057": "Mikronesia guovllus",
-        "062": "mátta-gaska-Ásia",
         "142": "Ásia",
         "143": "gaska-Ásia",
         "145": "oarji-Ásia",
@@ -489,7 +495,7 @@ public class LocalizedNamesImpl_se extends LocalizedNamesImpl {
         "151": "nuorta-Eurohpá",
         "154": "davvi-Eurohpá",
         "155": "oarji-Eurohpá",
-        "419": "Lulli-Amerihkká ja Karibia",
+        "419": "Lulli-Amerihkká",
         "AC": "Ascension",
         "AE": "Ovttastuvvan Arábaemiráhtat",
         "AG": "Antigua ja Barbuda",

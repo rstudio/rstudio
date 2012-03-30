@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "tr" locale.
@@ -70,6 +75,7 @@ public class LocalizedNamesImpl_tr extends LocalizedNamesImpl {
         "BA",
         "BW",
         "BV",
+        "BQ",
         "BR",
         "BN",
         "BG",
@@ -86,6 +92,7 @@ public class LocalizedNamesImpl_tr extends LocalizedNamesImpl {
         "CP",
         "CC",
         "CK",
+        "CW",
         "TD",
         "CZ",
         "CN",
@@ -251,12 +258,14 @@ public class LocalizedNamesImpl_tr extends LocalizedNamesImpl {
         "SB",
         "SO",
         "LK",
+        "SS",
         "SD",
         "SR",
         "SY",
         "SA",
         "SJ",
         "SZ",
+        "SX",
         "CL",
         "TJ",
         "TZ",
@@ -318,7 +327,6 @@ public class LocalizedNamesImpl_tr extends LocalizedNamesImpl {
     namesMap.put("054", "Melanezya");
     namesMap.put("057", "Mikronezya");
     namesMap.put("061", "Polinezya");
-    namesMap.put("062", "Güney Orta Asya");
     namesMap.put("142", "Asya");
     namesMap.put("143", "Orta Asya");
     namesMap.put("145", "Batı Asya");
@@ -326,9 +334,7 @@ public class LocalizedNamesImpl_tr extends LocalizedNamesImpl {
     namesMap.put("151", "Doğu Avrupa");
     namesMap.put("154", "Kuzey Avrupa");
     namesMap.put("155", "Batı Avrupa");
-    namesMap.put("172", "Bağımsız Devletler Topluluğu");
-    namesMap.put("419", "Latin Amerika ve Karayipler");
-    namesMap.put("830", "Kanal Adaları");
+    namesMap.put("419", "Latin Amerika");
     namesMap.put("AC", "Ascension Adası");
     namesMap.put("AE", "Birleşik Arap Emirlikleri");
     namesMap.put("AF", "Afganistan");
@@ -482,7 +488,7 @@ public class LocalizedNamesImpl_tr extends LocalizedNamesImpl {
     namesMap.put("RE", "Reunion");
     namesMap.put("RO", "Romanya");
     namesMap.put("RS", "Sırbistan");
-    namesMap.put("RU", "Rusya Federasyonu");
+    namesMap.put("RU", "Rusya");
     namesMap.put("RW", "Ruanda");
     namesMap.put("SA", "Suudi Arabistan");
     namesMap.put("SB", "Solomon Adaları");
@@ -520,7 +526,7 @@ public class LocalizedNamesImpl_tr extends LocalizedNamesImpl {
     namesMap.put("ZA", "Güney Afrika");
     namesMap.put("ZM", "Zambiya");
     namesMap.put("ZW", "Zimbabve");
-    namesMap.put("ZZ", "Bilinmeyen veya Geçersiz Bölge");
+    namesMap.put("ZZ", "Bilinmeyen Bölge");
   }
 
   @Override
@@ -552,7 +558,6 @@ public class LocalizedNamesImpl_tr extends LocalizedNamesImpl {
         "054": "Melanezya",
         "057": "Mikronezya",
         "061": "Polinezya",
-        "062": "Güney Orta Asya",
         "142": "Asya",
         "143": "Orta Asya",
         "145": "Batı Asya",
@@ -560,9 +565,7 @@ public class LocalizedNamesImpl_tr extends LocalizedNamesImpl {
         "151": "Doğu Avrupa",
         "154": "Kuzey Avrupa",
         "155": "Batı Avrupa",
-        "172": "Bağımsız Devletler Topluluğu",
-        "419": "Latin Amerika ve Karayipler",
-        "830": "Kanal Adaları",
+        "419": "Latin Amerika",
         "AC": "Ascension Adası",
         "AE": "Birleşik Arap Emirlikleri",
         "AF": "Afganistan",
@@ -716,7 +719,7 @@ public class LocalizedNamesImpl_tr extends LocalizedNamesImpl {
         "RE": "Reunion",
         "RO": "Romanya",
         "RS": "Sırbistan",
-        "RU": "Rusya Federasyonu",
+        "RU": "Rusya",
         "RW": "Ruanda",
         "SA": "Suudi Arabistan",
         "SB": "Solomon Adaları",
@@ -754,7 +757,7 @@ public class LocalizedNamesImpl_tr extends LocalizedNamesImpl {
         "ZA": "Güney Afrika",
         "ZM": "Zambiya",
         "ZW": "Zimbabve",
-        "ZZ": "Bilinmeyen veya Geçersiz Bölge"
+        "ZZ": "Bilinmeyen Bölge"
     };
   }-*/;
 }

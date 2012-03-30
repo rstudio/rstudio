@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "de" locale.
@@ -72,6 +77,7 @@ public class LocalizedNamesImpl_de extends LocalizedNamesImpl {
         "BA",
         "BW",
         "BV",
+        "BQ",
         "BR",
         "VG",
         "IO",
@@ -86,6 +92,7 @@ public class LocalizedNamesImpl_de extends LocalizedNamesImpl {
         "CK",
         "CR",
         "CI",
+        "CW",
         "DK",
         "KP",
         "DE",
@@ -245,6 +252,7 @@ public class LocalizedNamesImpl_de extends LocalizedNamesImpl {
         "SO",
         "ES",
         "LK",
+        "SS",
         "BL",
         "SH",
         "KN",
@@ -258,6 +266,7 @@ public class LocalizedNamesImpl_de extends LocalizedNamesImpl {
         "SR",
         "SJ",
         "SZ",
+        "SX",
         "SY",
         "TJ",
         "TW",
@@ -320,7 +329,6 @@ public class LocalizedNamesImpl_de extends LocalizedNamesImpl {
     namesMap.put("054", "Melanesien");
     namesMap.put("057", "Mikronesisches Inselgebiet");
     namesMap.put("061", "Polynesien");
-    namesMap.put("062", "Süd-Zentralasien");
     namesMap.put("142", "Asien");
     namesMap.put("143", "Zentralasien");
     namesMap.put("145", "Westasien");
@@ -328,9 +336,7 @@ public class LocalizedNamesImpl_de extends LocalizedNamesImpl {
     namesMap.put("151", "Osteuropa");
     namesMap.put("154", "Nordeuropa");
     namesMap.put("155", "Westeuropa");
-    namesMap.put("172", "Gemeinschaft Unabhängiger Staaten");
-    namesMap.put("419", "Lateinamerika und Karibik");
-    namesMap.put("830", "Kanalinseln");
+    namesMap.put("419", "Lateinamerika");
     namesMap.put("AC", "Ascension");
     namesMap.put("AE", "Vereinigte Arabische Emirate");
     namesMap.put("AG", "Antigua und Barbuda");
@@ -491,7 +497,7 @@ public class LocalizedNamesImpl_de extends LocalizedNamesImpl {
     namesMap.put("ZA", "Südafrika");
     namesMap.put("ZM", "Sambia");
     namesMap.put("ZW", "Simbabwe");
-    namesMap.put("ZZ", "Unbekannte oder ungültige Region");
+    namesMap.put("ZZ", "Unbekannte Region");
   }
 
   @Override
@@ -523,7 +529,6 @@ public class LocalizedNamesImpl_de extends LocalizedNamesImpl {
         "054": "Melanesien",
         "057": "Mikronesisches Inselgebiet",
         "061": "Polynesien",
-        "062": "Süd-Zentralasien",
         "142": "Asien",
         "143": "Zentralasien",
         "145": "Westasien",
@@ -531,9 +536,7 @@ public class LocalizedNamesImpl_de extends LocalizedNamesImpl {
         "151": "Osteuropa",
         "154": "Nordeuropa",
         "155": "Westeuropa",
-        "172": "Gemeinschaft Unabhängiger Staaten",
-        "419": "Lateinamerika und Karibik",
-        "830": "Kanalinseln",
+        "419": "Lateinamerika",
         "AC": "Ascension",
         "AE": "Vereinigte Arabische Emirate",
         "AG": "Antigua und Barbuda",
@@ -694,7 +697,7 @@ public class LocalizedNamesImpl_de extends LocalizedNamesImpl {
         "ZA": "Südafrika",
         "ZM": "Sambia",
         "ZW": "Simbabwe",
-        "ZZ": "Unbekannte oder ungültige Region"
+        "ZZ": "Unbekannte Region"
     };
   }-*/;
 }

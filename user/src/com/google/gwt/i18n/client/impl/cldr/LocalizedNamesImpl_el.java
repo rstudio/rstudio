@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "el" locale.
@@ -34,6 +39,10 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "SH",
         "LC",
         "BL",
@@ -77,7 +86,6 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "IO",
         "VG",
         "FR",
-        "FX",
         "TF",
         "GF",
         "PF",
@@ -169,6 +177,7 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "MR",
         "ME",
         "MX",
+        "FX",
         "MM",
         "FM",
         "MN",
@@ -318,7 +327,6 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
     namesMap.put("054", "Μελανησία");
     namesMap.put("057", "Περιοχή Μικρονησίας");
     namesMap.put("061", "Πολυνησία");
-    namesMap.put("062", "Νότια Κεντρική Ασία");
     namesMap.put("142", "Ασία");
     namesMap.put("143", "Κεντρική Ασία");
     namesMap.put("145", "Δυτική Ασία");
@@ -326,9 +334,7 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
     namesMap.put("151", "Ανατολική Ευρώπη");
     namesMap.put("154", "Βόρεια Ευρώπη");
     namesMap.put("155", "Δυτική Ευρώπη");
-    namesMap.put("172", "Κοινοπολιτεία Ανεξαρτήτων Πολιτειών");
-    namesMap.put("419", "Λατινική Αμερική και Καραϊβική");
-    namesMap.put("830", "Νησιά Τσάνελ");
+    namesMap.put("419", "Λατινική Αμερική");
     namesMap.put("AC", "Νήσος Ασενσιόν");
     namesMap.put("AD", "Ανδόρα");
     namesMap.put("AE", "Ηνωμένα Αραβικά Εμιράτα");
@@ -409,7 +415,7 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
     namesMap.put("FM", "Μικρονησία");
     namesMap.put("FO", "Νήσοι Φερόε");
     namesMap.put("FR", "Γαλλία");
-    namesMap.put("FX", "Γαλλία, Μητροπολιτική");
+    namesMap.put("FX", "Μητροπολιτική Γαλλία");
     namesMap.put("GA", "Γκαμπόν");
     namesMap.put("GB", "Ηνωμένο Βασίλειο");
     namesMap.put("GD", "Γρενάδα");
@@ -617,7 +623,6 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "054": "Μελανησία",
         "057": "Περιοχή Μικρονησίας",
         "061": "Πολυνησία",
-        "062": "Νότια Κεντρική Ασία",
         "142": "Ασία",
         "143": "Κεντρική Ασία",
         "145": "Δυτική Ασία",
@@ -625,9 +630,7 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "151": "Ανατολική Ευρώπη",
         "154": "Βόρεια Ευρώπη",
         "155": "Δυτική Ευρώπη",
-        "172": "Κοινοπολιτεία Ανεξαρτήτων Πολιτειών",
-        "419": "Λατινική Αμερική και Καραϊβική",
-        "830": "Νησιά Τσάνελ",
+        "419": "Λατινική Αμερική",
         "AC": "Νήσος Ασενσιόν",
         "AD": "Ανδόρα",
         "AE": "Ηνωμένα Αραβικά Εμιράτα",
@@ -708,7 +711,7 @@ public class LocalizedNamesImpl_el extends LocalizedNamesImpl {
         "FM": "Μικρονησία",
         "FO": "Νήσοι Φερόε",
         "FR": "Γαλλία",
-        "FX": "Γαλλία, Μητροπολιτική",
+        "FX": "Μητροπολιτική Γαλλία",
         "GA": "Γκαμπόν",
         "GB": "Ηνωμένο Βασίλειο",
         "GD": "Γρενάδα",

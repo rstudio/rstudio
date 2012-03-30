@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "my" locale.
@@ -38,7 +43,6 @@ public class LocalizedNamesImpl_my extends LocalizedNamesImpl {
         "AD",
         "AG",
         "AL",
-        "AN",
         "AW",
         "AX",
         "BB",
@@ -46,11 +50,13 @@ public class LocalizedNamesImpl_my extends LocalizedNamesImpl {
         "BI",
         "BJ",
         "BL",
+        "BQ",
         "BV",
         "CD",
         "CG",
         "CP",
         "CV",
+        "CW",
         "DG",
         "DJ",
         "EA",
@@ -93,7 +99,9 @@ public class LocalizedNamesImpl_my extends LocalizedNamesImpl {
         "SL",
         "SM",
         "SR",
+        "SS",
         "ST",
+        "SX",
         "SZ",
         "TA",
         "TC",
@@ -313,7 +321,6 @@ public class LocalizedNamesImpl_my extends LocalizedNamesImpl {
     namesMap.put("035", "အ‌ရှေ့တောင်ပိုင်း အာရှ");
     namesMap.put("039", "တောင်ပိုင်း ဥရောပ");
     namesMap.put("053", "ဩစတြေးလျှ နှင့် နယူးဇီလန်");
-    namesMap.put("062", "တောင်-အလယ် အာရှ");
     namesMap.put("142", "အာရှ");
     namesMap.put("143", "အလယ် အာရှ");
     namesMap.put("145", "အနောက် အာရှ");
@@ -321,7 +328,6 @@ public class LocalizedNamesImpl_my extends LocalizedNamesImpl {
     namesMap.put("151", "အရှေ့ပိုင်း ဥရောပ");
     namesMap.put("154", "မြောက်ပိုင်း ဥရောပ");
     namesMap.put("155", "အနောက်ပိုင်း ဥရောပ");
-    namesMap.put("172", "လွတ်လပ်သော ပြည်ထောင်စုများ၏ ဓနသဟာယအဖွဲ့");
     namesMap.put("419", "လက်တင် အမေရိက နှင့် ကာရီဘီယန်");
     namesMap.put("AE", "ယူအေအီး");
     namesMap.put("AF", "အာဖဂန်နစ္စတန်");
@@ -533,7 +539,6 @@ public class LocalizedNamesImpl_my extends LocalizedNamesImpl {
         "035": "အ‌ရှေ့တောင်ပိုင်း အာရှ",
         "039": "တောင်ပိုင်း ဥရောပ",
         "053": "ဩစတြေးလျှ နှင့် နယူးဇီလန်",
-        "062": "တောင်-အလယ် အာရှ",
         "142": "အာရှ",
         "143": "အလယ် အာရှ",
         "145": "အနောက် အာရှ",
@@ -541,7 +546,6 @@ public class LocalizedNamesImpl_my extends LocalizedNamesImpl {
         "151": "အရှေ့ပိုင်း ဥရောပ",
         "154": "မြောက်ပိုင်း ဥရောပ",
         "155": "အနောက်ပိုင်း ဥရောပ",
-        "172": "လွတ်လပ်သော ပြည်ထောင်စုများ၏ ဓနသဟာယအဖွဲ့",
         "419": "လက်တင် အမေရိက နှင့် ကာရီဘီယန်",
         "AE": "ယူအေအီး",
         "AF": "အာဖဂန်နစ္စတန်",

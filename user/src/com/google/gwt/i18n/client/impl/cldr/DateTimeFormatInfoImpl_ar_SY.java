@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,15 +16,19 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "ar_SY" locale.
  */
-public class DateTimeFormatInfoImpl_ar_SY extends DateTimeFormatInfoImpl_ar {
+public class DateTimeFormatInfoImpl_ar_SY extends DateTimeFormatInfoImpl_ar_001 {
 
   @Override
   public int firstDayOfTheWeek() {
-    return 0;
+    return 6;
   }
 
   @Override
@@ -34,7 +38,7 @@ public class DateTimeFormatInfoImpl_ar_SY extends DateTimeFormatInfoImpl_ar {
         "شباط",
         "آذار",
         "نيسان",
-        "نوار",
+        "أيار",
         "حزيران",
         "تموز",
         "آب",
@@ -52,7 +56,7 @@ public class DateTimeFormatInfoImpl_ar_SY extends DateTimeFormatInfoImpl_ar {
         "شباط",
         "آذار",
         "نيسان",
-        "نوار",
+        "أيار",
         "حزيران",
         "تموز",
         "آب",
@@ -64,15 +68,12 @@ public class DateTimeFormatInfoImpl_ar_SY extends DateTimeFormatInfoImpl_ar {
   }
 
   @Override
-  public String[] weekdaysShort() {
-    return new String[] {
-        "الأحد",
-        "الاثنين",
-        "الثلاثاء",
-        "الأربعاء",
-        "الخميس",
-        "الجمعة",
-        "السبت"
-    };
+  public int weekendEnd() {
+    return 6;
+  }
+
+  @Override
+  public int weekendStart() {
+    return 5;
   }
 }

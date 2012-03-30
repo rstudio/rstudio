@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "ln" locale.
@@ -28,358 +33,476 @@ public class LocalizedNamesImpl_ln extends LocalizedNamesImpl {
   public String[] loadSortedRegionCodes() {
     return new String[] {
         "AC",
-        "AE",
         "AF",
-        "AI",
-        "AL",
-        "AX",
+        "ZA",
+        "SA",
         "DE",
+        "AL",
         "DZ",
+        "US",
         "AM",
-        "AN",
         "AD",
+        "AI",
         "AO",
+        "GB",
         "AG",
+        "AN",
         "AQ",
         "AR",
-        "AS",
-        "AT",
-        "AU",
         "AW",
+        "AX",
+        "HT",
         "AZ",
-        "BD",
-        "BB",
+        "BS",
         "BH",
-        "BY",
+        "BB",
+        "BE",
+        "BZ",
+        "BD",
         "BJ",
-        "BL",
         "BM",
-        "BN",
+        "BG",
+        "CV",
+        "KY",
+        "CK",
+        "FK",
+        "MP",
+        "MH",
+        "TC",
+        "VI",
+        "VG",
+        "SB",
+        "BL",
         "BO",
         "BA",
         "BW",
+        "BQ",
         "BR",
-        "BS",
-        "BG",
+        "BN",
         "BF",
         "BI",
         "BT",
         "BV",
-        "BZ",
-        "BE",
+        "BY",
         "CC",
-        "CI",
-        "CK",
-        "CL",
-        "CO",
         "CP",
-        "CR",
-        "CU",
-        "CV",
+        "CW",
         "CX",
-        "CY",
-        "DG",
-        "DJ",
         "DK",
+        "DG",
         "DM",
-        "DO",
+        "DJ",
         "EA",
+        "EH",
         "EC",
-        "EE",
-        "EG",
         "ER",
+        "NF",
         "ES",
-        "US",
+        "EE",
         "ET",
         "EU",
+        "EG",
         "FR",
-        "FI",
         "FJ",
-        "FK",
-        "FM",
+        "FI",
+        "PH",
         "FO",
         "GA",
         "GM",
-        "GD",
-        "GE",
-        "GF",
-        "GG",
         "GH",
-        "GI",
+        "GR",
+        "GD",
+        "GG",
         "GN",
         "GW",
-        "GL",
-        "GP",
         "GQ",
-        "GR",
-        "GS",
-        "GT",
-        "GU",
         "GY",
+        "GF",
+        "GL",
+        "GS",
+        "GP",
+        "GU",
+        "GT",
         "HK",
         "HM",
-        "HN",
-        "NL",
-        "HT",
         "IC",
-        "IL",
+        "UA",
         "IM",
         "ID",
-        "GB",
-        "IO",
-        "IQ",
+        "IN",
         "IR",
+        "IQ",
         "IE",
+        "UY",
         "IS",
+        "IL",
         "IT",
         "JE",
-        "JM",
+        "NC",
+        "KH",
         "CM",
         "CA",
+        "QA",
         "KZ",
         "KE",
-        "KH",
-        "KI",
+        "CU",
         "KG",
+        "KI",
+        "CO",
         "KM",
-        "KN",
         "CG",
-        "CD",
         "KP",
         "KR",
-        "HR",
+        "CR",
+        "CI",
         "KW",
-        "KY",
+        "HR",
         "LA",
-        "LC",
+        "RE",
+        "LS",
         "LV",
-        "LI",
         "LB",
         "LR",
         "LY",
-        "LT",
-        "LK",
-        "LS",
         "LU",
-        "MA",
-        "MV",
-        "MO",
-        "ML",
-        "MK",
-        "MC",
-        "MD",
-        "ME",
-        "MF",
+        "LI",
+        "LT",
+        "AE",
+        "IO",
         "MG",
-        "MH",
-        "MM",
-        "MN",
-        "MZ",
-        "MP",
-        "MQ",
-        "MR",
-        "MS",
-        "MT",
-        "MU",
+        "MV",
         "MW",
-        "MX",
         "MY",
+        "ML",
+        "MT",
+        "MA",
+        "MQ",
+        "MK",
+        "YT",
+        "ME",
+        "MX",
+        "MF",
+        "FM",
+        "MM",
+        "MO",
+        "MD",
+        "MC",
+        "MN",
+        "MU",
+        "MR",
+        "MZ",
+        "MS",
         "NA",
-        "NC",
-        "NP",
-        "NF",
-        "NI",
-        "NE",
-        "NG",
-        "NO",
         "NR",
+        "NP",
+        "NI",
+        "NG",
+        "NE",
+        "NO",
         "NU",
-        "NZ",
+        "NL",
         "OM",
-        "PA",
+        "HN",
+        "HU",
+        "AU",
+        "AT",
         "PK",
-        "PE",
-        "PF",
-        "PG",
-        "PH",
-        "PM",
-        "PN",
-        "PL",
-        "PR",
-        "PS",
-        "PT",
-        "PW",
         "PY",
-        "QA",
+        "PW",
+        "PS",
+        "PA",
+        "PG",
+        "PE",
+        "PN",
+        "PF",
+        "PL",
+        "PT",
+        "PR",
         "QO",
-        "RE",
+        "CD",
         "CZ",
-        "RS",
-        "RO",
-        "RU",
-        "RW",
-        "SA",
-        "EH",
         "CF",
+        "DO",
+        "RU",
+        "RO",
+        "RS",
+        "RW",
+        "WS",
+        "AS",
         "SH",
+        "KN",
+        "LC",
         "SM",
+        "PM",
+        "VC",
         "ST",
-        "SB",
-        "SC",
-        "SG",
-        "SI",
-        "ZA",
-        "CN",
-        "SY",
-        "SJ",
-        "SK",
-        "SL",
-        "SN",
-        "SO",
-        "SR",
-        "SD",
         "SV",
+        "SN",
+        "CS",
+        "SL",
+        "CL",
+        "SK",
+        "SI",
+        "SG",
+        "CN",
+        "CY",
+        "SY",
+        "LK",
+        "SJ",
+        "SO",
+        "SS",
+        "SD",
+        "SR",
+        "SZ",
         "SE",
         "CH",
-        "SZ",
+        "SX",
+        "SC",
         "TA",
-        "TW",
-        "TJ",
-        "TC",
-        "TD",
-        "TF",
         "TH",
-        "TK",
+        "TW",
+        "TZ",
+        "TJ",
+        "TF",
+        "TM",
+        "TR",
         "TL",
-        "TO",
-        "TG",
         "TT",
         "TN",
-        "TR",
-        "TM",
+        "TG",
+        "TK",
+        "TO",
+        "TD",
         "TV",
-        "TZ",
-        "UA",
         "UG",
         "UM",
-        "HU",
-        "UY",
         "UZ",
-        "VA",
-        "VC",
-        "VE",
-        "VG",
-        "VI",
-        "VN",
         "VU",
+        "VA",
+        "VE",
+        "VN",
         "WF",
-        "WS",
-        "JP",
         "YE",
-        "YT",
+        "JM",
         "ZM",
+        "JP",
+        "NZ",
+        "GI",
         "ZW",
+        "GE",
         "JO",
-        "IN",
     };
   }
 
   @Override
   protected void loadNameMapJava() {
     super.loadNameMapJava();
-    namesMap.put("001", "mokili mobimba");
-    namesMap.put("002", "Afríka");
-    namesMap.put("005", "Ameríka ya Sídi");
-    namesMap.put("011", "Afríka ya límbe");
-    namesMap.put("015", "Afríka ya Nola");
-    namesMap.put("018", "Afríka ya Sídi");
-    namesMap.put("142", "Azía");
-    namesMap.put("150", "Erópa");
-    namesMap.put("154", "Erópa ya Nola");
-    namesMap.put("155", "Erópa ya límbe");
-    namesMap.put("AD", "Andora");
-    namesMap.put("AF", "Afganistáni");
-    namesMap.put("AG", "Antigua mpé Barbuda");
+    namesMap.put("AD", "Andorɛ");
+    namesMap.put("AE", "Lɛmila alabo");
+    namesMap.put("AF", "Afiganisitá");
+    namesMap.put("AG", "Antiga mpé Barbuda");
+    namesMap.put("AI", "Angiyɛ");
+    namesMap.put("AL", "Alibani");
+    namesMap.put("AM", "Amɛni");
+    namesMap.put("AN", "Antiyɛ ya Olandɛ");
     namesMap.put("AO", "Angóla");
-    namesMap.put("AX", "Albania");
-    namesMap.put("BA", "Bosnia na Erzegovina");
-    namesMap.put("BD", "Bángaladɛ́si");
-    namesMap.put("BE", "Bɛ́ljika");
-    namesMap.put("BR", "Bresíli");
+    namesMap.put("AR", "Arizantinɛ");
+    namesMap.put("AS", "Samoa ya Ameriki");
+    namesMap.put("AT", "Otilisi");
+    namesMap.put("AU", "Ositáli");
+    namesMap.put("AZ", "Azɛlɛbaizá");
+    namesMap.put("BA", "Bosini mpé Hezegovine");
+    namesMap.put("BB", "Barɛbadɛ");
+    namesMap.put("BD", "Bengalidɛsi");
+    namesMap.put("BE", "Beleziki");
+    namesMap.put("BF", "Bukina Faso");
+    namesMap.put("BG", "Biligari");
+    namesMap.put("BH", "Bahrɛnɛ");
+    namesMap.put("BJ", "Benɛ");
+    namesMap.put("BN", "Brineyi");
+    namesMap.put("BO", "Bolivi");
+    namesMap.put("BR", "Brezílɛ");
+    namesMap.put("BS", "Bahamasɛ");
     namesMap.put("BT", "Butáni");
-    namesMap.put("BY", "Bielorusia");
-    namesMap.put("CA", "Kanadá");
-    namesMap.put("CD", "Kongó-Kinsásá");
-    namesMap.put("CF", "Santrafríka");
-    namesMap.put("CG", "Kongó-Brazzaville");
-    namesMap.put("CH", "Swisi");
-    namesMap.put("CM", "Kamerun");
-    namesMap.put("CN", "Sína");
-    namesMap.put("CZ", "Republiki Sheki");
-    namesMap.put("DE", "Alémani");
-    namesMap.put("DJ", "Djibuti");
-    namesMap.put("DZ", "Aljeria");
-    namesMap.put("EG", "Ejipti");
-    namesMap.put("EH", "Sahara ya límbe");
-    namesMap.put("ES", "Espania");
-    namesMap.put("ET", "Etiopya");
-    namesMap.put("FI", "Finilanda");
-    namesMap.put("FR", "Falansia");
-    namesMap.put("GB", "Ingɛlɛ́tɛlɛ");
-    namesMap.put("GN", "Gine");
-    namesMap.put("GR", "Gresi");
-    namesMap.put("GW", "Gine-Bisau");
-    namesMap.put("HR", "Kroasia");
-    namesMap.put("HU", "Ungri");
-    namesMap.put("ID", "Indoneziá");
-    namesMap.put("IE", "Irlandí");
-    namesMap.put("IN", "Ɛndɛ");
-    namesMap.put("IS", "Islandi");
-    namesMap.put("IT", "Italia");
-    namesMap.put("JO", "Zordaní");
-    namesMap.put("JP", "Yapan");
-    namesMap.put("KG", "Kirghizistáni");
-    namesMap.put("KP", "Kore ya Nola");
-    namesMap.put("KR", "Kore ya Sidi");
-    namesMap.put("KZ", "Kazakstáni");
-    namesMap.put("LB", "Liban");
+    namesMap.put("BY", "Byelorisi");
+    namesMap.put("BZ", "Belizɛ");
+    namesMap.put("CA", "Kanada");
+    namesMap.put("CD", "Repibiki demokratiki ya Kongó");
+    namesMap.put("CF", "Repibiki ya Afríka ya Káti");
+    namesMap.put("CG", "Kongo");
+    namesMap.put("CH", "Swisɛ");
+    namesMap.put("CI", "Kotídivualɛ");
+    namesMap.put("CK", "Bisanga bya Kookɛ");
+    namesMap.put("CL", "Síli");
+    namesMap.put("CM", "Kamɛrune");
+    namesMap.put("CN", "Sinɛ");
+    namesMap.put("CO", "Kolombi");
+    namesMap.put("CR", "Kositarika");
+    namesMap.put("CS", "Serebi mpé Monténegro");
+    namesMap.put("CU", "Kiba");
+    namesMap.put("CV", "Bisanga bya Kapevɛrɛ");
+    namesMap.put("CY", "Sípɛlɛ");
+    namesMap.put("CZ", "Repibiki Tsekɛ");
+    namesMap.put("DE", "Alemani");
+    namesMap.put("DJ", "Dzibuti");
+    namesMap.put("DK", "Danɛmarike");
+    namesMap.put("DM", "Domínike");
+    namesMap.put("DO", "Repibiki ya Domínikɛ");
+    namesMap.put("DZ", "Alizɛri");
+    namesMap.put("EC", "Ekwatɛ́lɛ");
+    namesMap.put("EE", "Esitoni");
+    namesMap.put("EG", "Ezípite");
+    namesMap.put("ER", "Elitelɛ");
+    namesMap.put("ES", "Esipanye");
+    namesMap.put("ET", "Etsíopi");
+    namesMap.put("FI", "Filandɛ");
+    namesMap.put("FJ", "Fidzi");
+    namesMap.put("FK", "Bisanga bya Maluni");
+    namesMap.put("FM", "Mikronezi");
+    namesMap.put("FR", "Falánsɛ");
+    namesMap.put("GA", "Gabɔ");
+    namesMap.put("GB", "Angɛlɛtɛ́lɛ");
+    namesMap.put("GD", "Gelenadɛ");
+    namesMap.put("GE", "Zorzi");
+    namesMap.put("GF", "Giyanɛ ya Falánsɛ");
+    namesMap.put("GH", "Gana");
+    namesMap.put("GI", "Zibatalɛ");
+    namesMap.put("GL", "Gowelande");
+    namesMap.put("GM", "Gambi");
+    namesMap.put("GN", "Ginɛ");
+    namesMap.put("GP", "Gwadɛlupɛ");
+    namesMap.put("GQ", "Ginɛ́kwatɛ́lɛ");
+    namesMap.put("GR", "Geleki");
+    namesMap.put("GT", "Gwatémala");
+    namesMap.put("GU", "Gwamɛ");
+    namesMap.put("GW", "Ginɛbisau");
+    namesMap.put("GY", "Giyane");
+    namesMap.put("HN", "Ondurasɛ");
+    namesMap.put("HR", "Krowasi");
+    namesMap.put("HT", "Ayiti");
+    namesMap.put("HU", "Ongili");
+    namesMap.put("ID", "Indonezi");
+    namesMap.put("IE", "Irelandɛ");
+    namesMap.put("IL", "Isirayelɛ");
+    namesMap.put("IN", "Índɛ");
+    namesMap.put("IO", "Mabelé ya Angɛlɛtɛ́lɛ na mbú ya Indiya");
+    namesMap.put("IQ", "Iraki");
+    namesMap.put("IR", "Irâ");
+    namesMap.put("IS", "Isilandɛ");
+    namesMap.put("IT", "Itali");
+    namesMap.put("JM", "Zamaiki");
+    namesMap.put("JO", "Zɔdani");
+    namesMap.put("JP", "Zapɔ");
+    namesMap.put("KG", "Kigizisitá");
+    namesMap.put("KH", "Kambodza");
+    namesMap.put("KM", "Komorɛ");
+    namesMap.put("KN", "Sántu krístofe mpé Nevɛ̀s");
+    namesMap.put("KP", "Korɛ ya nɔ́rdi");
+    namesMap.put("KR", "Korɛ ya súdi");
+    namesMap.put("KW", "Koweti");
+    namesMap.put("KY", "Bisanga bya Kayíma");
+    namesMap.put("KZ", "Kazakisitá");
+    namesMap.put("LA", "Lawosi");
+    namesMap.put("LB", "Libá");
+    namesMap.put("LC", "Sántu lisi");
+    namesMap.put("LI", "Lishɛteni");
+    namesMap.put("LK", "Sirilanka");
+    namesMap.put("LR", "Libériya");
+    namesMap.put("LS", "Lesoto");
     namesMap.put("LT", "Litwani");
-    namesMap.put("LU", "Luksamburg");
+    namesMap.put("LU", "Likisambulu");
     namesMap.put("LV", "Letoni");
-    namesMap.put("LY", "Libíya");
-    namesMap.put("MK", "Masedoni");
+    namesMap.put("LY", "Libí");
+    namesMap.put("MA", "Marokɛ");
+    namesMap.put("MC", "Monako");
+    namesMap.put("MD", "Molidavi");
+    namesMap.put("MG", "Madagasikari");
+    namesMap.put("MH", "Bisanga bya Marishalɛ");
+    namesMap.put("MK", "Masedwanɛ");
+    namesMap.put("ML", "Malí");
     namesMap.put("MN", "Mongolí");
-    namesMap.put("MO", "Makau");
-    namesMap.put("MV", "Madívi");
+    namesMap.put("MP", "Bisanga bya Marianɛ ya nɔ́rdi");
+    namesMap.put("MQ", "Martiniki");
+    namesMap.put("MR", "Moritani");
+    namesMap.put("MS", "Mɔsera");
+    namesMap.put("MT", "Malitɛ");
+    namesMap.put("MU", "Morisɛ");
+    namesMap.put("MV", "Madívɛ");
+    namesMap.put("MX", "Meksike");
+    namesMap.put("MY", "Malezi");
     namesMap.put("MZ", "Mozambíki");
-    namesMap.put("NE", "Nijé");
-    namesMap.put("NG", "Nijeria");
-    namesMap.put("NL", "Holanda");
-    namesMap.put("NO", "Norvej");
-    namesMap.put("NP", "Nepáli");
-    namesMap.put("PK", "Pakistáni");
+    namesMap.put("NA", "Namibi");
+    namesMap.put("NC", "Kaledoni ya sika");
+    namesMap.put("NE", "Nizɛrɛ");
+    namesMap.put("NF", "Esanga Norfokɛ");
+    namesMap.put("NG", "Nizerya");
+    namesMap.put("NI", "Nikaragwa");
+    namesMap.put("NL", "Olandɛ");
+    namesMap.put("NO", "Norivezɛ");
+    namesMap.put("NP", "Nepálɛ");
+    namesMap.put("NU", "Nyué");
+    namesMap.put("NZ", "Zelandɛ ya sika");
+    namesMap.put("OM", "Ománɛ");
+    namesMap.put("PE", "Péru");
+    namesMap.put("PF", "Polinezi ya Falánsɛ");
+    namesMap.put("PG", "Papwazi Ginɛ ya sika");
+    namesMap.put("PH", "Filipinɛ");
+    namesMap.put("PK", "Pakisitá");
     namesMap.put("PL", "Poloni");
-    namesMap.put("PT", "Pulutugal");
-    namesMap.put("RO", "Rumania");
-    namesMap.put("RU", "Rusí");
-    namesMap.put("SD", "Sudani");
-    namesMap.put("SE", "Swési");
-    namesMap.put("SH", "Santu Helena");
-    namesMap.put("SM", "Santu Marino");
-    namesMap.put("ST", "Sǎo Tomé na Principe");
+    namesMap.put("PM", "Sántu pététo mpé Mikelɔ");
+    namesMap.put("PN", "Pikairni");
+    namesMap.put("PR", "Pɔtoriko");
+    namesMap.put("PS", "Palɛsine");
+    namesMap.put("PT", "Putúlugɛsi");
+    namesMap.put("PY", "Palagwei");
+    namesMap.put("QA", "Katari");
+    namesMap.put("RE", "Lenyo");
+    namesMap.put("RO", "Romani");
+    namesMap.put("RU", "Risí");
+    namesMap.put("SA", "Alabi Sawuditɛ");
+    namesMap.put("SB", "Bisanga Solomɔ");
+    namesMap.put("SC", "Sɛshɛlɛ");
+    namesMap.put("SD", "Sudá");
+    namesMap.put("SE", "Swédɛ");
+    namesMap.put("SG", "Singapurɛ");
+    namesMap.put("SH", "Sántu eleni");
+    namesMap.put("SI", "Siloveni");
+    namesMap.put("SK", "Silovaki");
+    namesMap.put("SL", "Siera Leonɛ");
+    namesMap.put("SM", "Sántu Marinɛ");
+    namesMap.put("SN", "Senegalɛ");
+    namesMap.put("SO", "Somali");
+    namesMap.put("SR", "Surinamɛ");
+    namesMap.put("ST", "Sao Tomé mpé Presipɛ");
+    namesMap.put("SV", "Savadɔrɛ");
     namesMap.put("SY", "Sirí");
-    namesMap.put("TJ", "Tazikistáni");
-    namesMap.put("TM", "Turkmenistáni");
-    namesMap.put("TN", "Tunizia");
-    namesMap.put("TR", "Turkí");
-    namesMap.put("TT", "Trinidad mpé Tobago");
-    namesMap.put("US", "Etazíni");
-    namesMap.put("UZ", "Uzbekistáni");
-    namesMap.put("VA", "Vatikáni");
-    namesMap.put("VN", "Vietnami");
-    namesMap.put("YE", "Yeméni");
-    namesMap.put("ZA", "Sidafríka");
-    namesMap.put("ZZ", "Esíká eyébámí tɛ́");
+    namesMap.put("SZ", "Swazilandi");
+    namesMap.put("TC", "Bisanga bya Turki mpé Kaiko");
+    namesMap.put("TD", "Tsádi");
+    namesMap.put("TH", "Tailandɛ");
+    namesMap.put("TJ", "Tazikisitá");
+    namesMap.put("TL", "Timorɛ ya Moniɛlɛ");
+    namesMap.put("TM", "Tikɛménisitá");
+    namesMap.put("TN", "Tinizi");
+    namesMap.put("TR", "Tiliki");
+    namesMap.put("TT", "Tinidadɛ mpé Tobago");
+    namesMap.put("TW", "Taiwanin");
+    namesMap.put("TZ", "Tanzani");
+    namesMap.put("UA", "Ikrɛni");
+    namesMap.put("US", "Ameriki");
+    namesMap.put("UY", "Irigwei");
+    namesMap.put("UZ", "Uzibɛkisitá");
+    namesMap.put("VA", "Vatiká");
+    namesMap.put("VC", "Sántu vesá mpé Gelenadinɛ");
+    namesMap.put("VE", "Venézuela");
+    namesMap.put("VG", "Bisanga bya Vierzi ya Angɛlɛtɛ́lɛ");
+    namesMap.put("VI", "Bisanga bya Vierzi ya Ameriki");
+    namesMap.put("VN", "Viyetinamɛ");
+    namesMap.put("WF", "Walisɛ mpé Futuna");
+    namesMap.put("YE", "Yemɛnɛ");
+    namesMap.put("YT", "Mayotɛ");
+    namesMap.put("ZA", "Afríka ya Súdi");
+    namesMap.put("ZM", "Zambi");
   }
 
   @Override
@@ -389,99 +512,212 @@ public class LocalizedNamesImpl_ln extends LocalizedNamesImpl {
 
   private native JavaScriptObject loadMyNameMap() /*-{
     return {
-        "001": "mokili mobimba",
-        "002": "Afríka",
-        "005": "Ameríka ya Sídi",
-        "011": "Afríka ya límbe",
-        "015": "Afríka ya Nola",
-        "018": "Afríka ya Sídi",
-        "142": "Azía",
-        "150": "Erópa",
-        "154": "Erópa ya Nola",
-        "155": "Erópa ya límbe",
-        "AD": "Andora",
-        "AF": "Afganistáni",
-        "AG": "Antigua mpé Barbuda",
+        "AD": "Andorɛ",
+        "AE": "Lɛmila alabo",
+        "AF": "Afiganisitá",
+        "AG": "Antiga mpé Barbuda",
+        "AI": "Angiyɛ",
+        "AL": "Alibani",
+        "AM": "Amɛni",
+        "AN": "Antiyɛ ya Olandɛ",
         "AO": "Angóla",
-        "AX": "Albania",
-        "BA": "Bosnia na Erzegovina",
-        "BD": "Bángaladɛ́si",
-        "BE": "Bɛ́ljika",
-        "BR": "Bresíli",
+        "AR": "Arizantinɛ",
+        "AS": "Samoa ya Ameriki",
+        "AT": "Otilisi",
+        "AU": "Ositáli",
+        "AZ": "Azɛlɛbaizá",
+        "BA": "Bosini mpé Hezegovine",
+        "BB": "Barɛbadɛ",
+        "BD": "Bengalidɛsi",
+        "BE": "Beleziki",
+        "BF": "Bukina Faso",
+        "BG": "Biligari",
+        "BH": "Bahrɛnɛ",
+        "BJ": "Benɛ",
+        "BN": "Brineyi",
+        "BO": "Bolivi",
+        "BR": "Brezílɛ",
+        "BS": "Bahamasɛ",
         "BT": "Butáni",
-        "BY": "Bielorusia",
-        "CA": "Kanadá",
-        "CD": "Kongó-Kinsásá",
-        "CF": "Santrafríka",
-        "CG": "Kongó-Brazzaville",
-        "CH": "Swisi",
-        "CM": "Kamerun",
-        "CN": "Sína",
-        "CZ": "Republiki Sheki",
-        "DE": "Alémani",
-        "DJ": "Djibuti",
-        "DZ": "Aljeria",
-        "EG": "Ejipti",
-        "EH": "Sahara ya límbe",
-        "ES": "Espania",
-        "ET": "Etiopya",
-        "FI": "Finilanda",
-        "FR": "Falansia",
-        "GB": "Ingɛlɛ́tɛlɛ",
-        "GN": "Gine",
-        "GR": "Gresi",
-        "GW": "Gine-Bisau",
-        "HR": "Kroasia",
-        "HU": "Ungri",
-        "ID": "Indoneziá",
-        "IE": "Irlandí",
-        "IN": "Ɛndɛ",
-        "IS": "Islandi",
-        "IT": "Italia",
-        "JO": "Zordaní",
-        "JP": "Yapan",
-        "KG": "Kirghizistáni",
-        "KP": "Kore ya Nola",
-        "KR": "Kore ya Sidi",
-        "KZ": "Kazakstáni",
-        "LB": "Liban",
+        "BY": "Byelorisi",
+        "BZ": "Belizɛ",
+        "CA": "Kanada",
+        "CD": "Repibiki demokratiki ya Kongó",
+        "CF": "Repibiki ya Afríka ya Káti",
+        "CG": "Kongo",
+        "CH": "Swisɛ",
+        "CI": "Kotídivualɛ",
+        "CK": "Bisanga bya Kookɛ",
+        "CL": "Síli",
+        "CM": "Kamɛrune",
+        "CN": "Sinɛ",
+        "CO": "Kolombi",
+        "CR": "Kositarika",
+        "CS": "Serebi mpé Monténegro",
+        "CU": "Kiba",
+        "CV": "Bisanga bya Kapevɛrɛ",
+        "CY": "Sípɛlɛ",
+        "CZ": "Repibiki Tsekɛ",
+        "DE": "Alemani",
+        "DJ": "Dzibuti",
+        "DK": "Danɛmarike",
+        "DM": "Domínike",
+        "DO": "Repibiki ya Domínikɛ",
+        "DZ": "Alizɛri",
+        "EC": "Ekwatɛ́lɛ",
+        "EE": "Esitoni",
+        "EG": "Ezípite",
+        "ER": "Elitelɛ",
+        "ES": "Esipanye",
+        "ET": "Etsíopi",
+        "FI": "Filandɛ",
+        "FJ": "Fidzi",
+        "FK": "Bisanga bya Maluni",
+        "FM": "Mikronezi",
+        "FR": "Falánsɛ",
+        "GA": "Gabɔ",
+        "GB": "Angɛlɛtɛ́lɛ",
+        "GD": "Gelenadɛ",
+        "GE": "Zorzi",
+        "GF": "Giyanɛ ya Falánsɛ",
+        "GH": "Gana",
+        "GI": "Zibatalɛ",
+        "GL": "Gowelande",
+        "GM": "Gambi",
+        "GN": "Ginɛ",
+        "GP": "Gwadɛlupɛ",
+        "GQ": "Ginɛ́kwatɛ́lɛ",
+        "GR": "Geleki",
+        "GT": "Gwatémala",
+        "GU": "Gwamɛ",
+        "GW": "Ginɛbisau",
+        "GY": "Giyane",
+        "HN": "Ondurasɛ",
+        "HR": "Krowasi",
+        "HT": "Ayiti",
+        "HU": "Ongili",
+        "ID": "Indonezi",
+        "IE": "Irelandɛ",
+        "IL": "Isirayelɛ",
+        "IN": "Índɛ",
+        "IO": "Mabelé ya Angɛlɛtɛ́lɛ na mbú ya Indiya",
+        "IQ": "Iraki",
+        "IR": "Irâ",
+        "IS": "Isilandɛ",
+        "IT": "Itali",
+        "JM": "Zamaiki",
+        "JO": "Zɔdani",
+        "JP": "Zapɔ",
+        "KG": "Kigizisitá",
+        "KH": "Kambodza",
+        "KM": "Komorɛ",
+        "KN": "Sántu krístofe mpé Nevɛ̀s",
+        "KP": "Korɛ ya nɔ́rdi",
+        "KR": "Korɛ ya súdi",
+        "KW": "Koweti",
+        "KY": "Bisanga bya Kayíma",
+        "KZ": "Kazakisitá",
+        "LA": "Lawosi",
+        "LB": "Libá",
+        "LC": "Sántu lisi",
+        "LI": "Lishɛteni",
+        "LK": "Sirilanka",
+        "LR": "Libériya",
+        "LS": "Lesoto",
         "LT": "Litwani",
-        "LU": "Luksamburg",
+        "LU": "Likisambulu",
         "LV": "Letoni",
-        "LY": "Libíya",
-        "MK": "Masedoni",
+        "LY": "Libí",
+        "MA": "Marokɛ",
+        "MC": "Monako",
+        "MD": "Molidavi",
+        "MG": "Madagasikari",
+        "MH": "Bisanga bya Marishalɛ",
+        "MK": "Masedwanɛ",
+        "ML": "Malí",
         "MN": "Mongolí",
-        "MO": "Makau",
-        "MV": "Madívi",
+        "MP": "Bisanga bya Marianɛ ya nɔ́rdi",
+        "MQ": "Martiniki",
+        "MR": "Moritani",
+        "MS": "Mɔsera",
+        "MT": "Malitɛ",
+        "MU": "Morisɛ",
+        "MV": "Madívɛ",
+        "MX": "Meksike",
+        "MY": "Malezi",
         "MZ": "Mozambíki",
-        "NE": "Nijé",
-        "NG": "Nijeria",
-        "NL": "Holanda",
-        "NO": "Norvej",
-        "NP": "Nepáli",
-        "PK": "Pakistáni",
+        "NA": "Namibi",
+        "NC": "Kaledoni ya sika",
+        "NE": "Nizɛrɛ",
+        "NF": "Esanga Norfokɛ",
+        "NG": "Nizerya",
+        "NI": "Nikaragwa",
+        "NL": "Olandɛ",
+        "NO": "Norivezɛ",
+        "NP": "Nepálɛ",
+        "NU": "Nyué",
+        "NZ": "Zelandɛ ya sika",
+        "OM": "Ománɛ",
+        "PE": "Péru",
+        "PF": "Polinezi ya Falánsɛ",
+        "PG": "Papwazi Ginɛ ya sika",
+        "PH": "Filipinɛ",
+        "PK": "Pakisitá",
         "PL": "Poloni",
-        "PT": "Pulutugal",
-        "RO": "Rumania",
-        "RU": "Rusí",
-        "SD": "Sudani",
-        "SE": "Swési",
-        "SH": "Santu Helena",
-        "SM": "Santu Marino",
-        "ST": "Sǎo Tomé na Principe",
+        "PM": "Sántu pététo mpé Mikelɔ",
+        "PN": "Pikairni",
+        "PR": "Pɔtoriko",
+        "PS": "Palɛsine",
+        "PT": "Putúlugɛsi",
+        "PY": "Palagwei",
+        "QA": "Katari",
+        "RE": "Lenyo",
+        "RO": "Romani",
+        "RU": "Risí",
+        "SA": "Alabi Sawuditɛ",
+        "SB": "Bisanga Solomɔ",
+        "SC": "Sɛshɛlɛ",
+        "SD": "Sudá",
+        "SE": "Swédɛ",
+        "SG": "Singapurɛ",
+        "SH": "Sántu eleni",
+        "SI": "Siloveni",
+        "SK": "Silovaki",
+        "SL": "Siera Leonɛ",
+        "SM": "Sántu Marinɛ",
+        "SN": "Senegalɛ",
+        "SO": "Somali",
+        "SR": "Surinamɛ",
+        "ST": "Sao Tomé mpé Presipɛ",
+        "SV": "Savadɔrɛ",
         "SY": "Sirí",
-        "TJ": "Tazikistáni",
-        "TM": "Turkmenistáni",
-        "TN": "Tunizia",
-        "TR": "Turkí",
-        "TT": "Trinidad mpé Tobago",
-        "US": "Etazíni",
-        "UZ": "Uzbekistáni",
-        "VA": "Vatikáni",
-        "VN": "Vietnami",
-        "YE": "Yeméni",
-        "ZA": "Sidafríka",
-        "ZZ": "Esíká eyébámí tɛ́"
+        "SZ": "Swazilandi",
+        "TC": "Bisanga bya Turki mpé Kaiko",
+        "TD": "Tsádi",
+        "TH": "Tailandɛ",
+        "TJ": "Tazikisitá",
+        "TL": "Timorɛ ya Moniɛlɛ",
+        "TM": "Tikɛménisitá",
+        "TN": "Tinizi",
+        "TR": "Tiliki",
+        "TT": "Tinidadɛ mpé Tobago",
+        "TW": "Taiwanin",
+        "TZ": "Tanzani",
+        "UA": "Ikrɛni",
+        "US": "Ameriki",
+        "UY": "Irigwei",
+        "UZ": "Uzibɛkisitá",
+        "VA": "Vatiká",
+        "VC": "Sántu vesá mpé Gelenadinɛ",
+        "VE": "Venézuela",
+        "VG": "Bisanga bya Vierzi ya Angɛlɛtɛ́lɛ",
+        "VI": "Bisanga bya Vierzi ya Ameriki",
+        "VN": "Viyetinamɛ",
+        "WF": "Walisɛ mpé Futuna",
+        "YE": "Yemɛnɛ",
+        "YT": "Mayotɛ",
+        "ZA": "Afríka ya Súdi",
+        "ZM": "Zambi"
     };
   }-*/;
 }

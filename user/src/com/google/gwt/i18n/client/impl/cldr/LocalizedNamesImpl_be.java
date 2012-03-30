@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=be
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "be" locale.
@@ -36,8 +41,10 @@ public class LocalizedNamesImpl_be extends LocalizedNamesImpl {
     return new String[] {
         "AC",
         "BL",
+        "BQ",
         "CI",
         "CP",
+        "CW",
         "DG",
         "EA",
         "FO",
@@ -51,6 +58,8 @@ public class LocalizedNamesImpl_be extends LocalizedNamesImpl {
         "PN",
         "PR",
         "SM",
+        "SS",
+        "SX",
         "TA",
         "UM",
         "YT",
@@ -314,7 +323,6 @@ public class LocalizedNamesImpl_be extends LocalizedNamesImpl {
     namesMap.put("039", "Паўднёвая Еўропа");
     namesMap.put("053", "Аўстралія і Новая Зэландыя");
     namesMap.put("061", "Палінезія");
-    namesMap.put("062", "Паўднёва-Цэнтральная Азія");
     namesMap.put("142", "Азія");
     namesMap.put("143", "Цэнтральная Азія");
     namesMap.put("145", "Заходняя Азія");
@@ -322,7 +330,6 @@ public class LocalizedNamesImpl_be extends LocalizedNamesImpl {
     namesMap.put("151", "Усходняя Еўропа");
     namesMap.put("154", "Паўночная Еўропа");
     namesMap.put("155", "Заходняя Еўропа");
-    namesMap.put("172", "Садружнасць Незалежных Дзяржаў");
     namesMap.put("AD", "Андора");
     namesMap.put("AE", "Аб'яднаныя Арабскія Эміраты");
     namesMap.put("AF", "Афганістан");
@@ -587,7 +594,6 @@ public class LocalizedNamesImpl_be extends LocalizedNamesImpl {
         "039": "Паўднёвая Еўропа",
         "053": "Аўстралія і Новая Зэландыя",
         "061": "Палінезія",
-        "062": "Паўднёва-Цэнтральная Азія",
         "142": "Азія",
         "143": "Цэнтральная Азія",
         "145": "Заходняя Азія",
@@ -595,7 +601,6 @@ public class LocalizedNamesImpl_be extends LocalizedNamesImpl {
         "151": "Усходняя Еўропа",
         "154": "Паўночная Еўропа",
         "155": "Заходняя Еўропа",
-        "172": "Садружнасць Незалежных Дзяржаў",
         "AD": "Андора",
         "AE": "Аб'яднаныя Арабскія Эміраты",
         "AF": "Афганістан",

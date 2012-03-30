@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
 
 /**
  * Implementation of DateTimeFormatInfo for the "tr" locale.
@@ -24,17 +28,17 @@ public class DateTimeFormatInfoImpl_tr extends DateTimeFormatInfoImpl {
 
   @Override
   public String dateFormatFull() {
-    return "dd MMMM y EEEE";
+    return "d MMMM y EEEE";
   }
 
   @Override
   public String dateFormatLong() {
-    return "dd MMMM y";
+    return "d MMMM y";
   }
 
   @Override
   public String dateFormatMedium() {
-    return "dd MMM y";
+    return "d MMM y";
   }
 
   @Override
@@ -60,7 +64,7 @@ public class DateTimeFormatInfoImpl_tr extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatMonthAbbrevDay() {
-    return "dd MMM";
+    return "d MMMM";
   }
 
   @Override
@@ -85,7 +89,7 @@ public class DateTimeFormatInfoImpl_tr extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthAbbrevDay() {
-    return "d MMM y";
+    return "dd MMM y";
   }
 
   @Override
@@ -100,27 +104,27 @@ public class DateTimeFormatInfoImpl_tr extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthNum() {
-    return "M/yyyy";
+    return "MM/yy";
   }
 
   @Override
   public String formatYearMonthNumDay() {
-    return "d M y";
+    return "dd.MM.yyyy";
   }
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "dd MMM y EEE";
+    return "d MMM y EEE";
   }
 
   @Override
   public String formatYearQuarterFull() {
-    return "QQQQ yyyy";
+    return "y-QQQQ";
   }
 
   @Override
   public String formatYearQuarterShort() {
-    return "Q yyyy";
+    return "y-Q";
   }
 
   @Override

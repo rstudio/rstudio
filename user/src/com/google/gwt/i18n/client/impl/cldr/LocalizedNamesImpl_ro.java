@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "ro" locale.
@@ -64,6 +69,7 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "BO",
         "BA",
         "BW",
+        "BQ",
         "BR",
         "BN",
         "BG",
@@ -87,14 +93,15 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "CR",
         "HR",
         "CU",
+        "CW",
         "DK",
         "DG",
         "DJ",
         "DM",
         "EC",
         "EG",
-        "CH",
         "SV",
+        "CH",
         "AE",
         "ER",
         "EE",
@@ -253,12 +260,14 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "SO",
         "ES",
         "LK",
+        "SS",
         "US",
         "SD",
         "SE",
         "SR",
         "SJ",
         "SZ",
+        "SX",
         "TJ",
         "TW",
         "TZ",
@@ -316,16 +325,13 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
     namesMap.put("054", "Melanezia");
     namesMap.put("057", "Regiunea Micronezia");
     namesMap.put("061", "Polinezia");
-    namesMap.put("062", "Asia Centrală de Sud");
     namesMap.put("143", "Asia Centrală");
     namesMap.put("145", "Asia Occidentală");
     namesMap.put("150", "Europa");
     namesMap.put("151", "Europa Orientală");
     namesMap.put("154", "Europa Septentrională");
     namesMap.put("155", "Europa Occidentală");
-    namesMap.put("172", "Comunitatea Statelor Independente");
-    namesMap.put("419", "America Latină și Caraibe");
-    namesMap.put("830", "Insulele Anglo-Normande");
+    namesMap.put("419", "America Latină");
     namesMap.put("AC", "Insula Ascension");
     namesMap.put("AE", "Emiratele Arabe Unite");
     namesMap.put("AF", "Afganistan");
@@ -344,7 +350,7 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
     namesMap.put("CD", "Republica Democrată Congo");
     namesMap.put("CF", "Republica Centrafricană");
     namesMap.put("CG", "Congo");
-    namesMap.put("CH", "Eleveția");
+    namesMap.put("CH", "Elveția");
     namesMap.put("CI", "Coasta de Fildeș");
     namesMap.put("CK", "Insulele Cook");
     namesMap.put("CM", "Camerun");
@@ -466,7 +472,7 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
     namesMap.put("VI", "Insulele Virgine S.U.A.");
     namesMap.put("WF", "Wallis și Futuna");
     namesMap.put("ZA", "Africa de Sud");
-    namesMap.put("ZZ", "Regiune necunoscută sau nevalidă");
+    namesMap.put("ZZ", "Regiune necunoscută");
   }
 
   @Override
@@ -496,16 +502,13 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "054": "Melanezia",
         "057": "Regiunea Micronezia",
         "061": "Polinezia",
-        "062": "Asia Centrală de Sud",
         "143": "Asia Centrală",
         "145": "Asia Occidentală",
         "150": "Europa",
         "151": "Europa Orientală",
         "154": "Europa Septentrională",
         "155": "Europa Occidentală",
-        "172": "Comunitatea Statelor Independente",
-        "419": "America Latină și Caraibe",
-        "830": "Insulele Anglo-Normande",
+        "419": "America Latină",
         "AC": "Insula Ascension",
         "AE": "Emiratele Arabe Unite",
         "AF": "Afganistan",
@@ -524,7 +527,7 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "CD": "Republica Democrată Congo",
         "CF": "Republica Centrafricană",
         "CG": "Congo",
-        "CH": "Eleveția",
+        "CH": "Elveția",
         "CI": "Coasta de Fildeș",
         "CK": "Insulele Cook",
         "CM": "Camerun",
@@ -646,7 +649,7 @@ public class LocalizedNamesImpl_ro extends LocalizedNamesImpl {
         "VI": "Insulele Virgine S.U.A.",
         "WF": "Wallis și Futuna",
         "ZA": "Africa de Sud",
-        "ZZ": "Regiune necunoscută sau nevalidă"
+        "ZZ": "Regiune necunoscută"
     };
   }-*/;
 }

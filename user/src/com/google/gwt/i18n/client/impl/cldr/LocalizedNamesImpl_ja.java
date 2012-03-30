@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "ja" locale.
@@ -34,13 +39,16 @@ public class LocalizedNamesImpl_ja extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "IS",
         "IE",
         "AZ",
         "AC",
         "AF",
         "US",
-        "VI",
         "AE",
         "DZ",
         "AR",
@@ -210,7 +218,6 @@ public class LocalizedNamesImpl_ja extends LocalizedNamesImpl {
         "FK",
         "BR",
         "FR",
-        "TF",
         "BG",
         "BF",
         "BN",
@@ -286,6 +293,8 @@ public class LocalizedNamesImpl_ja extends LocalizedNamesImpl {
         "JP",
         "GF",
         "PF",
+        "TF",
+        "VI",
         "AS",
         "UM",
         "MP",
@@ -297,7 +306,7 @@ public class LocalizedNamesImpl_ja extends LocalizedNamesImpl {
     super.loadNameMapJava();
     namesMap.put("001", "世界");
     namesMap.put("002", "アフリカ");
-    namesMap.put("003", "北米");
+    namesMap.put("003", "北アメリカ大陸");
     namesMap.put("005", "南アメリカ");
     namesMap.put("009", "オセアニア");
     namesMap.put("011", "西アフリカ");
@@ -308,16 +317,15 @@ public class LocalizedNamesImpl_ja extends LocalizedNamesImpl {
     namesMap.put("018", "南部アフリカ");
     namesMap.put("019", "アメリカ大陸");
     namesMap.put("021", "北アメリカ");
-    namesMap.put("029", "カリブ海");
+    namesMap.put("029", "カリブ");
     namesMap.put("030", "東アジア");
     namesMap.put("034", "南アジア");
     namesMap.put("035", "東南アジア");
     namesMap.put("039", "南ヨーロッパ");
     namesMap.put("053", "オーストラリア・ニュージーランド");
     namesMap.put("054", "メラネシア");
-    namesMap.put("057", "ミクロネシア地域");
+    namesMap.put("057", "ミクロネシア");
     namesMap.put("061", "ポリネシア");
-    namesMap.put("062", "南中央アジア");
     namesMap.put("142", "アジア");
     namesMap.put("143", "中央アジア");
     namesMap.put("145", "西アジア");
@@ -325,9 +333,7 @@ public class LocalizedNamesImpl_ja extends LocalizedNamesImpl {
     namesMap.put("151", "東ヨーロッパ");
     namesMap.put("154", "北ヨーロッパ");
     namesMap.put("155", "西ヨーロッパ");
-    namesMap.put("172", "独立国家共同体");
-    namesMap.put("419", "ラテンアメリカ・カリブ地域");
-    namesMap.put("830", "チャネル諸島");
+    namesMap.put("419", "ラテンアメリカ");
     namesMap.put("AC", "アセンション島");
     namesMap.put("AD", "アンドラ");
     namesMap.put("AE", "アラブ首長国連邦");
@@ -338,7 +344,7 @@ public class LocalizedNamesImpl_ja extends LocalizedNamesImpl {
     namesMap.put("AM", "アルメニア");
     namesMap.put("AN", "オランダ領アンティル諸島");
     namesMap.put("AO", "アンゴラ");
-    namesMap.put("AQ", "南極大陸");
+    namesMap.put("AQ", "南極");
     namesMap.put("AR", "アルゼンチン");
     namesMap.put("AS", "米領サモア");
     namesMap.put("AT", "オーストリア");
@@ -367,10 +373,10 @@ public class LocalizedNamesImpl_ja extends LocalizedNamesImpl {
     namesMap.put("BY", "ベラルーシ");
     namesMap.put("BZ", "ベリーズ");
     namesMap.put("CA", "カナダ");
-    namesMap.put("CC", "ココス (キーリング) 諸島");
-    namesMap.put("CD", "コンゴ民主共和国 (キンシャサ)");
+    namesMap.put("CC", "ココス[キーリング]諸島");
+    namesMap.put("CD", "コンゴ民主共和国[キンシャサ]");
     namesMap.put("CF", "中央アフリカ共和国");
-    namesMap.put("CG", "コンゴ共和国 (ブラザビル)");
+    namesMap.put("CG", "コンゴ共和国[ブラザビル]");
     namesMap.put("CH", "スイス");
     namesMap.put("CI", "コートジボワール");
     namesMap.put("CK", "クック諸島");
@@ -405,7 +411,7 @@ public class LocalizedNamesImpl_ja extends LocalizedNamesImpl {
     namesMap.put("FI", "フィンランド");
     namesMap.put("FJ", "フィジー");
     namesMap.put("FK", "フォークランド諸島");
-    namesMap.put("FM", "ミクロネシア");
+    namesMap.put("FM", "ミクロネシア連邦");
     namesMap.put("FO", "フェロー諸島");
     namesMap.put("FR", "フランス");
     namesMap.put("GA", "ガボン");
@@ -549,7 +555,7 @@ public class LocalizedNamesImpl_ja extends LocalizedNamesImpl {
     namesMap.put("TA", "トリスタン・ダ・クーニャ");
     namesMap.put("TC", "タークス諸島・カイコス諸島");
     namesMap.put("TD", "チャド");
-    namesMap.put("TF", "フランス領極南諸島");
+    namesMap.put("TF", "仏領極南諸島");
     namesMap.put("TG", "トーゴ");
     namesMap.put("TH", "タイ");
     namesMap.put("TJ", "タジキスタン");
@@ -573,7 +579,7 @@ public class LocalizedNamesImpl_ja extends LocalizedNamesImpl {
     namesMap.put("VC", "セントビンセント・グレナディーン諸島");
     namesMap.put("VE", "ベネズエラ");
     namesMap.put("VG", "英領ヴァージン諸島");
-    namesMap.put("VI", "アメリカ領ヴァージン諸島");
+    namesMap.put("VI", "米領ヴァージン諸島");
     namesMap.put("VN", "ベトナム");
     namesMap.put("VU", "バヌアツ");
     namesMap.put("WF", "ウォリス・フツナ");
@@ -595,7 +601,7 @@ public class LocalizedNamesImpl_ja extends LocalizedNamesImpl {
     return {
         "001": "世界",
         "002": "アフリカ",
-        "003": "北米",
+        "003": "北アメリカ大陸",
         "005": "南アメリカ",
         "009": "オセアニア",
         "011": "西アフリカ",
@@ -606,16 +612,15 @@ public class LocalizedNamesImpl_ja extends LocalizedNamesImpl {
         "018": "南部アフリカ",
         "019": "アメリカ大陸",
         "021": "北アメリカ",
-        "029": "カリブ海",
+        "029": "カリブ",
         "030": "東アジア",
         "034": "南アジア",
         "035": "東南アジア",
         "039": "南ヨーロッパ",
         "053": "オーストラリア・ニュージーランド",
         "054": "メラネシア",
-        "057": "ミクロネシア地域",
+        "057": "ミクロネシア",
         "061": "ポリネシア",
-        "062": "南中央アジア",
         "142": "アジア",
         "143": "中央アジア",
         "145": "西アジア",
@@ -623,9 +628,7 @@ public class LocalizedNamesImpl_ja extends LocalizedNamesImpl {
         "151": "東ヨーロッパ",
         "154": "北ヨーロッパ",
         "155": "西ヨーロッパ",
-        "172": "独立国家共同体",
-        "419": "ラテンアメリカ・カリブ地域",
-        "830": "チャネル諸島",
+        "419": "ラテンアメリカ",
         "AC": "アセンション島",
         "AD": "アンドラ",
         "AE": "アラブ首長国連邦",
@@ -636,7 +639,7 @@ public class LocalizedNamesImpl_ja extends LocalizedNamesImpl {
         "AM": "アルメニア",
         "AN": "オランダ領アンティル諸島",
         "AO": "アンゴラ",
-        "AQ": "南極大陸",
+        "AQ": "南極",
         "AR": "アルゼンチン",
         "AS": "米領サモア",
         "AT": "オーストリア",
@@ -665,10 +668,10 @@ public class LocalizedNamesImpl_ja extends LocalizedNamesImpl {
         "BY": "ベラルーシ",
         "BZ": "ベリーズ",
         "CA": "カナダ",
-        "CC": "ココス (キーリング) 諸島",
-        "CD": "コンゴ民主共和国 (キンシャサ)",
+        "CC": "ココス[キーリング]諸島",
+        "CD": "コンゴ民主共和国[キンシャサ]",
         "CF": "中央アフリカ共和国",
-        "CG": "コンゴ共和国 (ブラザビル)",
+        "CG": "コンゴ共和国[ブラザビル]",
         "CH": "スイス",
         "CI": "コートジボワール",
         "CK": "クック諸島",
@@ -703,7 +706,7 @@ public class LocalizedNamesImpl_ja extends LocalizedNamesImpl {
         "FI": "フィンランド",
         "FJ": "フィジー",
         "FK": "フォークランド諸島",
-        "FM": "ミクロネシア",
+        "FM": "ミクロネシア連邦",
         "FO": "フェロー諸島",
         "FR": "フランス",
         "GA": "ガボン",
@@ -847,7 +850,7 @@ public class LocalizedNamesImpl_ja extends LocalizedNamesImpl {
         "TA": "トリスタン・ダ・クーニャ",
         "TC": "タークス諸島・カイコス諸島",
         "TD": "チャド",
-        "TF": "フランス領極南諸島",
+        "TF": "仏領極南諸島",
         "TG": "トーゴ",
         "TH": "タイ",
         "TJ": "タジキスタン",
@@ -871,7 +874,7 @@ public class LocalizedNamesImpl_ja extends LocalizedNamesImpl {
         "VC": "セントビンセント・グレナディーン諸島",
         "VE": "ベネズエラ",
         "VG": "英領ヴァージン諸島",
-        "VI": "アメリカ領ヴァージン諸島",
+        "VI": "米領ヴァージン諸島",
         "VN": "ベトナム",
         "VU": "バヌアツ",
         "WF": "ウォリス・フツナ",

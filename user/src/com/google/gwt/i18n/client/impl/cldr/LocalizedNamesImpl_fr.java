@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "fr" locale.
@@ -35,8 +40,8 @@ public class LocalizedNamesImpl_fr extends LocalizedNamesImpl {
         "CI",
         "DZ",
         "BE",
-        "MA",
         "BI",
+        "MA",
     };
   }
 
@@ -74,6 +79,7 @@ public class LocalizedNamesImpl_fr extends LocalizedNamesImpl {
         "BO",
         "BA",
         "BW",
+        "BQ",
         "BR",
         "BN",
         "BG",
@@ -96,12 +102,12 @@ public class LocalizedNamesImpl_fr extends LocalizedNamesImpl {
         "CI",
         "HR",
         "CU",
+        "CW",
         "DK",
         "DG",
         "DJ",
         "DM",
         "EG",
-        "SV",
         "AE",
         "EC",
         "ER",
@@ -251,6 +257,7 @@ public class LocalizedNamesImpl_fr extends LocalizedNamesImpl {
         "MF",
         "PM",
         "VC",
+        "SV",
         "WS",
         "AS",
         "ST",
@@ -265,11 +272,13 @@ public class LocalizedNamesImpl_fr extends LocalizedNamesImpl {
         "SO",
         "SD",
         "LK",
+        "SS",
         "SE",
         "CH",
         "SR",
         "SJ",
         "SZ",
+        "SX",
         "SY",
         "TJ",
         "TW",
@@ -327,16 +336,13 @@ public class LocalizedNamesImpl_fr extends LocalizedNamesImpl {
     namesMap.put("054", "Mélanésie");
     namesMap.put("057", "région micronésienne");
     namesMap.put("061", "Polynésie");
-    namesMap.put("062", "Asie centrale et du Sud");
     namesMap.put("142", "Asie");
     namesMap.put("143", "Asie centrale");
     namesMap.put("145", "Asie occidentale");
     namesMap.put("151", "Europe orientale");
     namesMap.put("154", "Europe septentrionale");
     namesMap.put("155", "Europe occidentale");
-    namesMap.put("172", "Communauté des États indépendants");
-    namesMap.put("419", "Amérique latine et Caraïbes");
-    namesMap.put("830", "Îles Anglo-normandes");
+    namesMap.put("419", "Amérique latine");
     namesMap.put("AC", "Île de l'Ascension");
     namesMap.put("AD", "Andorre");
     namesMap.put("AE", "Émirats arabes unis");
@@ -493,6 +499,7 @@ public class LocalizedNamesImpl_fr extends LocalizedNamesImpl {
     namesMap.put("SN", "Sénégal");
     namesMap.put("SO", "Somalie");
     namesMap.put("ST", "Sao Tomé-et-Principe");
+    namesMap.put("SV", "Salvador");
     namesMap.put("SY", "Syrie");
     namesMap.put("TC", "Îles Turks et Caïques");
     namesMap.put("TD", "Tchad");
@@ -551,16 +558,13 @@ public class LocalizedNamesImpl_fr extends LocalizedNamesImpl {
         "054": "Mélanésie",
         "057": "région micronésienne",
         "061": "Polynésie",
-        "062": "Asie centrale et du Sud",
         "142": "Asie",
         "143": "Asie centrale",
         "145": "Asie occidentale",
         "151": "Europe orientale",
         "154": "Europe septentrionale",
         "155": "Europe occidentale",
-        "172": "Communauté des États indépendants",
-        "419": "Amérique latine et Caraïbes",
-        "830": "Îles Anglo-normandes",
+        "419": "Amérique latine",
         "AC": "Île de l'Ascension",
         "AD": "Andorre",
         "AE": "Émirats arabes unis",
@@ -717,6 +721,7 @@ public class LocalizedNamesImpl_fr extends LocalizedNamesImpl {
         "SN": "Sénégal",
         "SO": "Somalie",
         "ST": "Sao Tomé-et-Principe",
+        "SV": "Salvador",
         "SY": "Syrie",
         "TC": "Îles Turks et Caïques",
         "TD": "Tchad",

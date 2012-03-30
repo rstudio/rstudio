@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "so" locale.
@@ -61,6 +66,7 @@ public class LocalizedNamesImpl_so extends LocalizedNamesImpl {
         "PT",
         "BA",
         "BW",
+        "BQ",
         "BR",
         "IO",
         "VG",
@@ -75,6 +81,7 @@ public class LocalizedNamesImpl_so extends LocalizedNamesImpl {
         "IQ",
         "CP",
         "OM",
+        "CW",
         "CX",
         "DK",
         "DG",
@@ -250,10 +257,12 @@ public class LocalizedNamesImpl_so extends LocalizedNamesImpl {
         "SI",
         "SB",
         "SO",
+        "SS",
         "SR",
         "SD",
         "SY",
         "CH",
+        "SX",
         "TA",
         "TJ",
         "IT",
@@ -337,7 +346,7 @@ public class LocalizedNamesImpl_so extends LocalizedNamesImpl {
     namesMap.put("DE", "Jarmal");
     namesMap.put("DJ", "Jabuuti");
     namesMap.put("DM", "Domeenika");
-    namesMap.put("DO", "Jamhuuriyadda  Domeenika");
+    namesMap.put("DO", "Jamhuuriyadda Domeenika");
     namesMap.put("DZ", "Aljeeriya");
     namesMap.put("EC", "Ikuwadoor");
     namesMap.put("EE", "Estooniya");
@@ -508,7 +517,7 @@ public class LocalizedNamesImpl_so extends LocalizedNamesImpl {
         "DE": "Jarmal",
         "DJ": "Jabuuti",
         "DM": "Domeenika",
-        "DO": "Jamhuuriyadda  Domeenika",
+        "DO": "Jamhuuriyadda Domeenika",
         "DZ": "Aljeeriya",
         "EC": "Ikuwadoor",
         "EE": "Estooniya",

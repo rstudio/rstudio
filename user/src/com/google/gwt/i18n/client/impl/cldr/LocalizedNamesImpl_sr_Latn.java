@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6472 Google $
+//  type=root
+//  date=$Date: 2012-01-27 18:53:35 -0500 (Fri, 27 Jan 2012) $
+
 
 /**
  * Localized names for the "sr_Latn" locale.
@@ -63,6 +68,7 @@ public class LocalizedNamesImpl_sr_Latn extends LocalizedNamesImpl_sr {
         "BO",
         "BA",
         "CX",
+        "BQ",
         "BR",
         "VG",
         "IO",
@@ -77,6 +83,7 @@ public class LocalizedNamesImpl_sr_Latn extends LocalizedNamesImpl_sr {
         "CZ",
         "CL",
         "ME",
+        "CW",
         "DK",
         "CD",
         "DG",
@@ -252,6 +259,7 @@ public class LocalizedNamesImpl_sr_Latn extends LocalizedNamesImpl_sr {
         "RS",
         "CS",
         "LK",
+        "SS",
         "SD",
         "SR",
         "BL",
@@ -261,6 +269,7 @@ public class LocalizedNamesImpl_sr_Latn extends LocalizedNamesImpl_sr {
         "SZ",
         "SE",
         "SH",
+        "SX",
         "TJ",
         "TH",
         "TW",
@@ -317,7 +326,6 @@ public class LocalizedNamesImpl_sr_Latn extends LocalizedNamesImpl_sr {
     namesMap.put("054", "Melanezija");
     namesMap.put("057", "Micronezija");
     namesMap.put("061", "Polinezija");
-    namesMap.put("062", "Južno-centralna Azija");
     namesMap.put("142", "Azija");
     namesMap.put("143", "Centralna Azija");
     namesMap.put("145", "Zapadna Azija");
@@ -325,9 +333,7 @@ public class LocalizedNamesImpl_sr_Latn extends LocalizedNamesImpl_sr {
     namesMap.put("151", "Istočna Evropa");
     namesMap.put("154", "Severna Evropa");
     namesMap.put("155", "Zapadna Evropa");
-    namesMap.put("172", "Komonvelt nezavisnih država");
-    namesMap.put("419", "Latinska Amerika i Karibi");
-    namesMap.put("830", "Kanalska ostrva");
+    namesMap.put("419", "Latinska Amerika");
     namesMap.put("AC", "Ostrvo Asension");
     namesMap.put("AD", "Andora");
     namesMap.put("AE", "Ujedinjeni Arapski Emirati");
@@ -615,7 +621,6 @@ public class LocalizedNamesImpl_sr_Latn extends LocalizedNamesImpl_sr {
         "054": "Melanezija",
         "057": "Micronezija",
         "061": "Polinezija",
-        "062": "Južno-centralna Azija",
         "142": "Azija",
         "143": "Centralna Azija",
         "145": "Zapadna Azija",
@@ -623,9 +628,7 @@ public class LocalizedNamesImpl_sr_Latn extends LocalizedNamesImpl_sr {
         "151": "Istočna Evropa",
         "154": "Severna Evropa",
         "155": "Zapadna Evropa",
-        "172": "Komonvelt nezavisnih država",
-        "419": "Latinska Amerika i Karibi",
-        "830": "Kanalska ostrva",
+        "419": "Latinska Amerika",
         "AC": "Ostrvo Asension",
         "AD": "Andora",
         "AE": "Ujedinjeni Arapski Emirati",

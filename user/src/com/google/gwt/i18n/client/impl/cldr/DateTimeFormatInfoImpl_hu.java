@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
 
 /**
  * Implementation of DateTimeFormatInfo for the "hu" locale.
@@ -67,6 +71,16 @@ public class DateTimeFormatInfoImpl_hu extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String formatHour12Minute() {
+    return "a h:mm";
+  }
+
+  @Override
+  public String formatHour12MinuteSecond() {
+    return "a h:mm:ss";
+  }
+
+  @Override
   public String formatHour24Minute() {
     return "H:mm";
   }
@@ -84,6 +98,11 @@ public class DateTimeFormatInfoImpl_hu extends DateTimeFormatInfoImpl {
   @Override
   public String formatMonthFullDay() {
     return "MMMM d.";
+  }
+
+  @Override
+  public String formatMonthFullWeekdayDay() {
+    return "MMMM d., EEEE";
   }
 
   @Override
@@ -113,27 +132,27 @@ public class DateTimeFormatInfoImpl_hu extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthNum() {
-    return "y.M";
+    return "y.M.";
   }
 
   @Override
   public String formatYearMonthNumDay() {
-    return "y.M.d.";
+    return "yyyy.MM.dd.";
   }
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "y. MMM d., E";
+    return "y. MMM d., EEE";
   }
 
   @Override
   public String formatYearQuarterFull() {
-    return "y/QQQQ";
+    return "y. QQQQ";
   }
 
   @Override
   public String formatYearQuarterShort() {
-    return "y/Q";
+    return "y. Q";
   }
 
   @Override
@@ -156,6 +175,24 @@ public class DateTimeFormatInfoImpl_hu extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsNarrow() {
+    return new String[] {
+        "J",
+        "F",
+        "M",
+        "Á",
+        "M",
+        "J",
+        "J",
+        "Á",
+        "Sz",
+        "O",
+        "N",
+        "D"
+    };
+  }
+
+  @Override
+  public String[] monthsNarrowStandalone() {
     return new String[] {
         "J",
         "F",

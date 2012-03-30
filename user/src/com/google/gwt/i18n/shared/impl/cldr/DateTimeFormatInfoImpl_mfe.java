@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6450 $
+//  type=mfe
+//  date=$Date: 2012-01-25 19:20:54 -0500 (Wed, 25 Jan 2012) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "mfe" locale.
@@ -100,7 +104,7 @@ public class DateTimeFormatInfoImpl_mfe extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthAbbrevDay() {
-    return "d MMM y";
+    return "d MMM, y";
   }
 
   @Override
@@ -116,11 +120,6 @@ public class DateTimeFormatInfoImpl_mfe extends DateTimeFormatInfoImpl {
   @Override
   public String formatYearMonthNum() {
     return "M/y";
-  }
-
-  @Override
-  public String formatYearMonthNumDay() {
-    return "d/M/y";
   }
 
   @Override

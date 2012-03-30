@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,80 +16,84 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6465 $
+//  type=root
+//  date=$Date: 2012-01-27 12:47:35 -0500 (Fri, 27 Jan 2012) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "zh_Hans_HK" locale.
  */
-public class DateTimeFormatInfoImpl_zh_Hans_HK extends DateTimeFormatInfoImpl_zh_HK {
+public class DateTimeFormatInfoImpl_zh_Hans_HK extends DateTimeFormatInfoImpl_zh_Hans {
 
   @Override
   public String dateFormatMedium() {
-    return "yyyy-M-d";
+    return "y年M月d日";
   }
 
   @Override
   public String dateFormatShort() {
-    return "yy-M-d";
+    return "d/M/yy";
   }
 
   @Override
-  public String dateTimeMedium(String timePattern, String datePattern) {
-    return new java.lang.StringBuffer().append(datePattern).append(" ").append(timePattern).toString();
-  }
-
-  @Override
-  public String dateTimeShort(String timePattern, String datePattern) {
-    return new java.lang.StringBuffer().append(datePattern).append(" ").append(timePattern).toString();
-  }
-
-  @Override
-  public String[] erasFull() {
-    return new String[] {
-        "公元前",
-        "公元"
-    };
-  }
-
-  @Override
-  public String[] erasShort() {
-    return new String[] {
-        "公元前",
-        "公元"
-    };
-  }
-
-  @Override
-  public String formatHour12MinuteSecond() {
-    return "ah:mm:ss";
-  }
-
-  @Override
-  public String formatMonthNumDay() {
-    return "M-d";
-  }
-
-  @Override
-  public String formatYearMonthAbbrev() {
-    return "y年MMM";
-  }
-
-  @Override
-  public String formatYearMonthFull() {
-    return "y年MMMM";
+  public String formatHour24Minute() {
+    return "HH:mm";
   }
 
   @Override
   public String formatYearMonthNum() {
-    return "yyyy-M";
+    return "y年M月";
   }
 
   @Override
-  public String formatYearMonthWeekdayDay() {
-    return "y年MMMd日EEE";
+  public String formatYearQuarterFull() {
+    return "y年第QQQQ季度";
   }
 
   @Override
-  public String[] monthsNarrow() {
+  public String formatYearQuarterShort() {
+    return "y年第Q季度";
+  }
+
+  @Override
+  public String[] monthsFull() {
+    return new String[] {
+        "一月",
+        "二月",
+        "三月",
+        "四月",
+        "五月",
+        "六月",
+        "七月",
+        "八月",
+        "九月",
+        "十月",
+        "十一月",
+        "十二月"
+    };
+  }
+
+  @Override
+  public String[] monthsNarrowStandalone() {
+    return new String[] {
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12"
+    };
+  }
+
+  @Override
+  public String[] monthsShortStandalone() {
     return new String[] {
         "1月",
         "2月",
@@ -109,38 +113,30 @@ public class DateTimeFormatInfoImpl_zh_Hans_HK extends DateTimeFormatInfoImpl_zh
   @Override
   public String[] quartersFull() {
     return new String[] {
-        "第1季度",
-        "第2季度",
-        "第3季度",
-        "第4季度"
+        "第一季度",
+        "第二季度",
+        "第三季度",
+        "第四季度"
+    };
+  }
+
+  @Override
+  public String[] quartersShort() {
+    return new String[] {
+        "1季度",
+        "2季度",
+        "3季度",
+        "4季度"
     };
   }
 
   @Override
   public String timeFormatFull() {
-    return "zzzzah时mm分ss秒";
+    return "zzzzah:mm:ss";
   }
 
   @Override
   public String timeFormatLong() {
-    return "zah时mm分ss秒";
-  }
-
-  @Override
-  public String timeFormatMedium() {
-    return "ah:mm:ss";
-  }
-
-  @Override
-  public String[] weekdaysShort() {
-    return new String[] {
-        "周日",
-        "周一",
-        "周二",
-        "周三",
-        "周四",
-        "周五",
-        "周六"
-    };
+    return "zah:mm:ss";
   }
 }

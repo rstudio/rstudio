@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "az" locale.
@@ -62,6 +67,7 @@ public class LocalizedNamesImpl_az extends LocalizedNamesImpl {
         "BA",
         "BW",
         "BV",
+        "BQ",
         "BR",
         "IO",
         "VG",
@@ -78,6 +84,7 @@ public class LocalizedNamesImpl_az extends LocalizedNamesImpl {
         "JE",
         "CP",
         "CX",
+        "CW",
         "ZA",
         "GS",
         "KR",
@@ -242,10 +249,12 @@ public class LocalizedNamesImpl_az extends LocalizedNamesImpl {
         "SB",
         "SO",
         "LK",
+        "SS",
         "SD",
         "SR",
         "SJ",
         "SZ",
+        "SX",
         "TL",
         "TA",
         "TJ",
@@ -307,7 +316,6 @@ public class LocalizedNamesImpl_az extends LocalizedNamesImpl {
     namesMap.put("054", "Melanesya");
     namesMap.put("057", "Mikronesiya reqionu");
     namesMap.put("061", "Polineziya");
-    namesMap.put("062", "Cənub Orta Asiya");
     namesMap.put("142", "Aziya");
     namesMap.put("143", "Orta Aziya");
     namesMap.put("145", "Qərb Asiya");
@@ -315,7 +323,7 @@ public class LocalizedNamesImpl_az extends LocalizedNamesImpl {
     namesMap.put("151", "Şərq Avropa");
     namesMap.put("154", "Şimal Avropa");
     namesMap.put("155", "Qərb Avropa");
-    namesMap.put("419", "Latın Amerikası və Kariblər");
+    namesMap.put("419", "Latın Amerikası");
     namesMap.put("AE", "Birləşmiş Ərəb Emiratları");
     namesMap.put("AF", "Əfqənistan");
     namesMap.put("AG", "Antiqua və Barbuda");
@@ -561,7 +569,6 @@ public class LocalizedNamesImpl_az extends LocalizedNamesImpl {
         "054": "Melanesya",
         "057": "Mikronesiya reqionu",
         "061": "Polineziya",
-        "062": "Cənub Orta Asiya",
         "142": "Aziya",
         "143": "Orta Aziya",
         "145": "Qərb Asiya",
@@ -569,7 +576,7 @@ public class LocalizedNamesImpl_az extends LocalizedNamesImpl {
         "151": "Şərq Avropa",
         "154": "Şimal Avropa",
         "155": "Qərb Avropa",
-        "419": "Latın Amerikası və Kariblər",
+        "419": "Latın Amerikası",
         "AE": "Birləşmiş Ərəb Emiratları",
         "AF": "Əfqənistan",
         "AG": "Antiqua və Barbuda",

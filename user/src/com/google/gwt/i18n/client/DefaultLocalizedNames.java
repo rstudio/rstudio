@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,12 @@
  */
 package com.google.gwt.i18n.client;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6549 Google $
+//  type=root
+//  date=$Date: 2012-02-08 14:09:21 -0500 (Wed, 08 Feb 2012) $
+
 
 /**
  * Default LocalizedNames implementation.
@@ -56,7 +61,7 @@ public class DefaultLocalizedNames extends DefaultLocalizedNamesBase {
     namesMap.put("155", "Western Europe");
     namesMap.put("172", "Commonwealth of Independent States");
     namesMap.put("200", "Czechoslovakia");
-    namesMap.put("419", "Latin America and the Caribbean");
+    namesMap.put("419", "Latin America");
     namesMap.put("830", "Channel Islands");
     namesMap.put("AC", "Ascension Island");
     namesMap.put("AD", "Andorra");
@@ -89,7 +94,7 @@ public class DefaultLocalizedNames extends DefaultLocalizedNamesBase {
     namesMap.put("BM", "Bermuda");
     namesMap.put("BN", "Brunei");
     namesMap.put("BO", "Bolivia");
-    namesMap.put("BQ", "British Antarctic Territory");
+    namesMap.put("BQ", "Bonaire, Sint Eustatius, and Saba");
     namesMap.put("BR", "Brazil");
     namesMap.put("BS", "Bahamas");
     namesMap.put("BT", "Bhutan");
@@ -101,7 +106,7 @@ public class DefaultLocalizedNames extends DefaultLocalizedNamesBase {
     namesMap.put("CC", "Cocos [Keeling] Islands");
     namesMap.put("CD", "Congo [DRC]");
     namesMap.put("CF", "Central African Republic");
-    namesMap.put("CG", "Congo [Republic]");
+    namesMap.put("CG", "Congo - Brazzaville");
     namesMap.put("CH", "Switzerland");
     namesMap.put("CI", "Côte d’Ivoire");
     namesMap.put("CK", "Cook Islands");
@@ -115,6 +120,7 @@ public class DefaultLocalizedNames extends DefaultLocalizedNamesBase {
     namesMap.put("CT", "Canton and Enderbury Islands");
     namesMap.put("CU", "Cuba");
     namesMap.put("CV", "Cape Verde");
+    namesMap.put("CW", "Curaçao");
     namesMap.put("CX", "Christmas Island");
     namesMap.put("CY", "Cyprus");
     namesMap.put("CZ", "Czech Republic");
@@ -284,9 +290,11 @@ public class DefaultLocalizedNames extends DefaultLocalizedNamesBase {
     namesMap.put("SN", "Senegal");
     namesMap.put("SO", "Somalia");
     namesMap.put("SR", "Suriname");
+    namesMap.put("SS", "South Sudan");
     namesMap.put("ST", "São Tomé and Príncipe");
     namesMap.put("SU", "Union of Soviet Socialist Republics");
     namesMap.put("SV", "El Salvador");
+    namesMap.put("SX", "Sint Maarten");
     namesMap.put("SY", "Syria");
     namesMap.put("SZ", "Swaziland");
     namesMap.put("TA", "Tristan da Cunha");
@@ -323,13 +331,13 @@ public class DefaultLocalizedNames extends DefaultLocalizedNamesBase {
     namesMap.put("WF", "Wallis and Futuna");
     namesMap.put("WK", "Wake Island");
     namesMap.put("WS", "Samoa");
-    namesMap.put("YD", "People's Democratic Republic of Yemen");
+    namesMap.put("YD", "People’s Democratic Republic of Yemen");
     namesMap.put("YE", "Yemen");
     namesMap.put("YT", "Mayotte");
     namesMap.put("ZA", "South Africa");
     namesMap.put("ZM", "Zambia");
     namesMap.put("ZW", "Zimbabwe");
-    namesMap.put("ZZ", "Unknown or Invalid Region");
+    namesMap.put("ZZ", "Unknown Region");
   }
 
   @Override
@@ -363,11 +371,11 @@ public class DefaultLocalizedNames extends DefaultLocalizedNamesBase {
         "BM",
         "BT",
         "BO",
+        "BQ",
         "BA",
         "BW",
         "BV",
         "BR",
-        "BQ",
         "IO",
         "VG",
         "BN",
@@ -398,6 +406,7 @@ public class DefaultLocalizedNames extends DefaultLocalizedNamesBase {
         "CI",
         "HR",
         "CU",
+        "CW",
         "CY",
         "CZ",
         "DK",
@@ -554,6 +563,7 @@ public class DefaultLocalizedNames extends DefaultLocalizedNamesBase {
         "SC",
         "SL",
         "SG",
+        "SX",
         "SK",
         "SI",
         "SB",
@@ -561,6 +571,7 @@ public class DefaultLocalizedNames extends DefaultLocalizedNamesBase {
         "ZA",
         "GS",
         "KR",
+        "SS",
         "ES",
         "LK",
         "SD",

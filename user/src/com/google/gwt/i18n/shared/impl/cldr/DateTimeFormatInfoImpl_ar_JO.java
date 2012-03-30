@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,20 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 5695 $
+//  type=root
+//  date=$Date: 2011-04-26 14:39:31 -0400 (Tue, 26 Apr 2011) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "ar_JO" locale.
  */
-public class DateTimeFormatInfoImpl_ar_JO extends DateTimeFormatInfoImpl_ar {
+public class DateTimeFormatInfoImpl_ar_JO extends DateTimeFormatInfoImpl_ar_001 {
+
+  @Override
+  public int firstDayOfTheWeek() {
+    return 6;
+  }
 
   @Override
   public String[] monthsFull() {
@@ -59,15 +68,12 @@ public class DateTimeFormatInfoImpl_ar_JO extends DateTimeFormatInfoImpl_ar {
   }
 
   @Override
-  public String[] weekdaysShort() {
-    return new String[] {
-        "الأحد",
-        "الاثنين",
-        "الثلاثاء",
-        "الأربعاء",
-        "الخميس",
-        "الجمعة",
-        "السبت"
-    };
+  public int weekendEnd() {
+    return 6;
+  }
+
+  @Override
+  public int weekendStart() {
+    return 5;
   }
 }

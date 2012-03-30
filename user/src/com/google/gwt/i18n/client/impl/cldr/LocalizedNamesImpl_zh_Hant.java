@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "zh_Hant" locale.
@@ -36,6 +41,10 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "AF",
         "AR",
         "AE",
@@ -169,7 +178,6 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "JP",
         "SE",
         "CH",
-        "EA",
         "SC",
         "SN",
         "RS",
@@ -203,6 +211,7 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "SG",
         "NC",
         "HU",
+        "EA",
         "JM",
         "IQ",
         "IR",
@@ -297,8 +306,10 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
   @Override
   protected void loadNameMapJava() {
     super.loadNameMapJava();
+    namesMap.put("013", "中美");
     namesMap.put("014", "東非");
     namesMap.put("018", "非洲南部");
+    namesMap.put("021", "北美");
     namesMap.put("030", "東亞");
     namesMap.put("034", "南亞");
     namesMap.put("035", "東南亞");
@@ -307,7 +318,6 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
     namesMap.put("054", "美拉尼西亞");
     namesMap.put("057", "密克羅尼西亞");
     namesMap.put("061", "玻里尼西亞");
-    namesMap.put("062", "中南亞");
     namesMap.put("142", "亞洲");
     namesMap.put("143", "中亞");
     namesMap.put("145", "西亞");
@@ -315,8 +325,6 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
     namesMap.put("151", "東歐");
     namesMap.put("154", "北歐");
     namesMap.put("155", "西歐");
-    namesMap.put("172", "獨立國協");
-    namesMap.put("830", "海峽群島");
     namesMap.put("AC", "阿森松島");
     namesMap.put("AD", "安道爾");
     namesMap.put("AE", "阿拉伯聯合大公國");
@@ -353,7 +361,6 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
     namesMap.put("CD", "剛果（金夏沙）");
     namesMap.put("CF", "中非共和國");
     namesMap.put("CG", "剛果（布拉薩）");
-    namesMap.put("CI", "科特迪瓦");
     namesMap.put("CK", "庫克群島");
     namesMap.put("CM", "喀麥隆");
     namesMap.put("CN", "中華人民共和國");
@@ -372,7 +379,7 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
     namesMap.put("DM", "多明尼加");
     namesMap.put("DO", "多明尼加共和國");
     namesMap.put("DZ", "阿爾及利亞");
-    namesMap.put("EA", "塞晤達與美利亞");
+    namesMap.put("EA", "休達與梅利利亞");
     namesMap.put("EC", "厄瓜多");
     namesMap.put("EE", "愛沙尼亞");
     namesMap.put("ER", "厄利垂亞");
@@ -542,8 +549,10 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
 
   private native JavaScriptObject loadMyNameMap() /*-{
     return {
+        "013": "中美",
         "014": "東非",
         "018": "非洲南部",
+        "021": "北美",
         "030": "東亞",
         "034": "南亞",
         "035": "東南亞",
@@ -552,7 +561,6 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "054": "美拉尼西亞",
         "057": "密克羅尼西亞",
         "061": "玻里尼西亞",
-        "062": "中南亞",
         "142": "亞洲",
         "143": "中亞",
         "145": "西亞",
@@ -560,8 +568,6 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "151": "東歐",
         "154": "北歐",
         "155": "西歐",
-        "172": "獨立國協",
-        "830": "海峽群島",
         "AC": "阿森松島",
         "AD": "安道爾",
         "AE": "阿拉伯聯合大公國",
@@ -598,7 +604,6 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "CD": "剛果（金夏沙）",
         "CF": "中非共和國",
         "CG": "剛果（布拉薩）",
-        "CI": "科特迪瓦",
         "CK": "庫克群島",
         "CM": "喀麥隆",
         "CN": "中華人民共和國",
@@ -617,7 +622,7 @@ public class LocalizedNamesImpl_zh_Hant extends LocalizedNamesImpl_zh {
         "DM": "多明尼加",
         "DO": "多明尼加共和國",
         "DZ": "阿爾及利亞",
-        "EA": "塞晤達與美利亞",
+        "EA": "休達與梅利利亞",
         "EC": "厄瓜多",
         "EE": "愛沙尼亞",
         "ER": "厄利垂亞",

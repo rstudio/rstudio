@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "mt" locale.
@@ -58,6 +63,7 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
         "BW",
         "BV",
         "BA",
+        "BQ",
         "BR",
         "IO",
         "VG",
@@ -74,6 +80,7 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
         "CC",
         "CK",
         "CP",
+        "CW",
         "DK",
         "CD",
         "DG",
@@ -241,12 +248,14 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
         "GS",
         "ES",
         "LK",
+        "SS",
         "US",
         "SD",
         "SR",
         "SJ",
         "CH",
         "SZ",
+        "SX",
         "TA",
         "TJ",
         "TH",
@@ -317,9 +326,7 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
     namesMap.put("151", "Ewropa tal-Lvant");
     namesMap.put("154", "Ewropa ta’ Fuq");
     namesMap.put("155", "Ewropa tal-Punent");
-    namesMap.put("172", "Commonwealth tal-Istati Independenti");
-    namesMap.put("419", "Amerika Latina u l-Karibew");
-    namesMap.put("830", "Gżejjer tal-Kanal Ingliż");
+    namesMap.put("419", "Amerika Latina");
     namesMap.put("AE", "Emirati Għarab Maqgħuda");
     namesMap.put("AF", "Afganistan");
     namesMap.put("AI", "Angwilla");
@@ -533,9 +540,7 @@ public class LocalizedNamesImpl_mt extends LocalizedNamesImpl {
         "151": "Ewropa tal-Lvant",
         "154": "Ewropa ta’ Fuq",
         "155": "Ewropa tal-Punent",
-        "172": "Commonwealth tal-Istati Independenti",
-        "419": "Amerika Latina u l-Karibew",
-        "830": "Gżejjer tal-Kanal Ingliż",
+        "419": "Amerika Latina",
         "AE": "Emirati Għarab Maqgħuda",
         "AF": "Afganistan",
         "AI": "Angwilla",

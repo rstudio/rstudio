@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "dz" locale.
@@ -33,7 +38,6 @@ public class LocalizedNamesImpl_dz extends LocalizedNamesImpl {
         "AI",
         "AL",
         "AM",
-        "AN",
         "AO",
         "AS",
         "AW",
@@ -49,6 +53,7 @@ public class LocalizedNamesImpl_dz extends LocalizedNamesImpl {
         "BM",
         "BN",
         "BO",
+        "BQ",
         "BS",
         "BV",
         "BW",
@@ -66,6 +71,7 @@ public class LocalizedNamesImpl_dz extends LocalizedNamesImpl {
         "CP",
         "CR",
         "CV",
+        "CW",
         "CX",
         "CY",
         "DG",
@@ -179,8 +185,10 @@ public class LocalizedNamesImpl_dz extends LocalizedNamesImpl {
         "SN",
         "SO",
         "SR",
+        "SS",
         "ST",
         "SV",
+        "SX",
         "SY",
         "SZ",
         "TA",

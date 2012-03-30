@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "pt" locale.
@@ -66,6 +71,7 @@ public class LocalizedNamesImpl_pt extends LocalizedNamesImpl {
         "BO",
         "BA",
         "BW",
+        "BQ",
         "BR",
         "BN",
         "BG",
@@ -93,6 +99,7 @@ public class LocalizedNamesImpl_pt extends LocalizedNamesImpl {
         "CR",
         "HR",
         "CU",
+        "CW",
         "DG",
         "DK",
         "DJ",
@@ -256,12 +263,14 @@ public class LocalizedNamesImpl_pt extends LocalizedNamesImpl {
         "SY",
         "SO",
         "LK",
+        "SS",
         "SZ",
         "SD",
         "SE",
         "CH",
         "SR",
         "SJ",
+        "SX",
         "TJ",
         "TH",
         "TW",
@@ -318,7 +327,6 @@ public class LocalizedNamesImpl_pt extends LocalizedNamesImpl {
     namesMap.put("054", "Melanésia");
     namesMap.put("057", "Região da Micronésia");
     namesMap.put("061", "Polinésia");
-    namesMap.put("062", "Ásia Centro-Meridional");
     namesMap.put("142", "Ásia");
     namesMap.put("143", "Ásia Central");
     namesMap.put("145", "Ásia Ocidental");
@@ -326,8 +334,7 @@ public class LocalizedNamesImpl_pt extends LocalizedNamesImpl {
     namesMap.put("151", "Europa Oriental");
     namesMap.put("154", "Europa Setentrional");
     namesMap.put("155", "Europa Ocidental");
-    namesMap.put("172", "Comunidade dos Estados Independentes");
-    namesMap.put("419", "América Latina e Caribe");
+    namesMap.put("419", "América Latina");
     namesMap.put("AC", "Ilha de Ascensão");
     namesMap.put("AE", "Emirados Árabes Unidos");
     namesMap.put("AF", "Afeganistão");
@@ -356,7 +363,6 @@ public class LocalizedNamesImpl_pt extends LocalizedNamesImpl {
     namesMap.put("CC", "Ilhas Coco");
     namesMap.put("CD", "Congo-Kinshasa");
     namesMap.put("CF", "República Centro-Africana");
-    namesMap.put("CG", "Congo - Brazzaville");
     namesMap.put("CH", "Suíça");
     namesMap.put("CI", "Costa do Marfim");
     namesMap.put("CK", "Ilhas Cook");
@@ -551,7 +557,6 @@ public class LocalizedNamesImpl_pt extends LocalizedNamesImpl {
         "054": "Melanésia",
         "057": "Região da Micronésia",
         "061": "Polinésia",
-        "062": "Ásia Centro-Meridional",
         "142": "Ásia",
         "143": "Ásia Central",
         "145": "Ásia Ocidental",
@@ -559,8 +564,7 @@ public class LocalizedNamesImpl_pt extends LocalizedNamesImpl {
         "151": "Europa Oriental",
         "154": "Europa Setentrional",
         "155": "Europa Ocidental",
-        "172": "Comunidade dos Estados Independentes",
-        "419": "América Latina e Caribe",
+        "419": "América Latina",
         "AC": "Ilha de Ascensão",
         "AE": "Emirados Árabes Unidos",
         "AF": "Afeganistão",
@@ -589,7 +593,6 @@ public class LocalizedNamesImpl_pt extends LocalizedNamesImpl {
         "CC": "Ilhas Coco",
         "CD": "Congo-Kinshasa",
         "CF": "República Centro-Africana",
-        "CG": "Congo - Brazzaville",
         "CH": "Suíça",
         "CI": "Costa do Marfim",
         "CK": "Ilhas Cook",

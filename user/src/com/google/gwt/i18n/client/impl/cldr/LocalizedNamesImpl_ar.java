@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6472 Google $
+//  type=root
+//  date=$Date: 2012-01-27 18:53:35 -0500 (Fri, 27 Jan 2012) $
+
 
 /**
  * Localized names for the "ar" locale.
@@ -43,11 +48,18 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
+        "ET",
         "AZ",
         "AM",
         "AW",
+        "ER",
         "ES",
         "AU",
+        "EE",
         "IL",
         "AF",
         "AL",
@@ -61,17 +73,16 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
         "UG",
         "QO",
         "UA",
+        "IR",
         "IE",
         "IS",
-        "ET",
-        "ER",
-        "EE",
+        "IT",
         "AR",
         "JO",
         "IO",
         "EC",
-        "EU",
         "AE",
+        "EU",
         "BS",
         "BH",
         "BR",
@@ -95,6 +106,7 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
         "AQ",
         "CM",
         "CG",
+        "CD",
         "KW",
         "MA",
         "TF",
@@ -110,14 +122,11 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
         "YE",
         "GR",
         "ID",
-        "IR",
-        "IT",
         "PG",
         "PY",
         "PK",
         "PW",
         "BW",
-        "PN",
         "BB",
         "BM",
         "BN",
@@ -151,7 +160,6 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
         "TL",
         "JM",
         "GI",
-        "GD",
         "AX",
         "AN",
         "TC",
@@ -161,6 +169,7 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
         "MH",
         "MV",
         "UM",
+        "PN",
         "SB",
         "FO",
         "VI",
@@ -180,9 +189,7 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
         "CF",
         "CZ",
         "DO",
-        "CD",
         "ZA",
-        "GT",
         "GP",
         "GE",
         "GS",
@@ -228,7 +235,9 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
         "OM",
         "GM",
         "GH",
+        "GD",
         "GL",
+        "GT",
         "GU",
         "GF",
         "GY",
@@ -306,16 +315,16 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
   protected void loadNameMapJava() {
     super.loadNameMapJava();
     namesMap.put("001", "العالم");
-    namesMap.put("002", "افريقيا");
+    namesMap.put("002", "أفريقيا");
     namesMap.put("003", "أمريكا الشمالية");
     namesMap.put("005", "أمريكا الجنوبية");
     namesMap.put("009", "أوقيانوسيا");
-    namesMap.put("011", "غرب افريقيا");
+    namesMap.put("011", "غرب أفريقيا");
     namesMap.put("013", "أمريكا الوسطى");
-    namesMap.put("014", "شرق افريقيا");
-    namesMap.put("015", "شمال افريقيا");
-    namesMap.put("017", "وسط افريقيا");
-    namesMap.put("018", "جنوب افريقيا");
+    namesMap.put("014", "شرق أفريقيا");
+    namesMap.put("015", "شمال أفريقيا");
+    namesMap.put("017", "وسط أفريقيا");
+    namesMap.put("018", "أفريقيا الجنوبية");
     namesMap.put("019", "الأمريكتين");
     namesMap.put("021", "شمال أمريكا");
     namesMap.put("029", "الكاريبي");
@@ -327,7 +336,6 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
     namesMap.put("054", "ميلانيزيا");
     namesMap.put("057", "الجزر الميكرونيزية");
     namesMap.put("061", "بولينيزيا");
-    namesMap.put("062", "جنوب وسط آسيا");
     namesMap.put("142", "آسيا");
     namesMap.put("143", "وسط آسيا");
     namesMap.put("145", "غرب آسيا");
@@ -335,11 +343,10 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
     namesMap.put("151", "شرق أوروبا");
     namesMap.put("154", "شمال أوروبا");
     namesMap.put("155", "غرب أوروبا");
-    namesMap.put("172", "كومنولث الدول المستقلة");
-    namesMap.put("419", "أمريكا اللاتينية و الكاريبي");
+    namesMap.put("419", "أمريكا اللاتينية");
     namesMap.put("AC", "جزيرة أسينشيون");
     namesMap.put("AD", "أندورا");
-    namesMap.put("AE", "الامارات العربية المتحدة");
+    namesMap.put("AE", "الإمارات العربية المتحدة");
     namesMap.put("AF", "أفغانستان");
     namesMap.put("AG", "أنتيغوا وبربودا");
     namesMap.put("AI", "أنغويلا");
@@ -377,8 +384,8 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
     namesMap.put("BZ", "بليز");
     namesMap.put("CA", "كندا");
     namesMap.put("CC", "جزر كوكوس");
-    namesMap.put("CD", "جمهورية الكونغو الديمقراطية");
-    namesMap.put("CF", "جمهورية افريقيا الوسطى");
+    namesMap.put("CD", "الكونغو - كينشاسا");
+    namesMap.put("CF", "جمهورية أفريقيا الوسطى");
     namesMap.put("CG", "الكونغو - برازافيل");
     namesMap.put("CH", "سويسرا");
     namesMap.put("CI", "ساحل العاج");
@@ -404,13 +411,13 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
     namesMap.put("DZ", "الجزائر");
     namesMap.put("EA", "سيوتا وميليلا");
     namesMap.put("EC", "الإكوادور");
-    namesMap.put("EE", "استونيا");
+    namesMap.put("EE", "أستونيا");
     namesMap.put("EG", "مصر");
     namesMap.put("EH", "الصحراء الغربية");
-    namesMap.put("ER", "اريتريا");
-    namesMap.put("ES", "أسبانيا");
-    namesMap.put("ET", "اثيوبيا");
-    namesMap.put("EU", "الاتحاد الاوروبي");
+    namesMap.put("ER", "أريتريا");
+    namesMap.put("ES", "إسبانيا");
+    namesMap.put("ET", "إثيوبيا");
+    namesMap.put("EU", "الاتحاد الأوروبي");
     namesMap.put("FI", "فنلندا");
     namesMap.put("FJ", "فيجي");
     namesMap.put("FK", "جزر فوكلاند");
@@ -420,9 +427,9 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
     namesMap.put("FX", "ميتروبولويتان فرنسا");
     namesMap.put("GA", "الجابون");
     namesMap.put("GB", "المملكة المتحدة");
-    namesMap.put("GD", "جرينادا");
+    namesMap.put("GD", "غرينادا");
     namesMap.put("GE", "جورجيا");
-    namesMap.put("GF", "غويانا");
+    namesMap.put("GF", "غويانا الفرنسية");
     namesMap.put("GG", "غيرنزي");
     namesMap.put("GH", "غانا");
     namesMap.put("GI", "جبل طارق");
@@ -433,12 +440,12 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
     namesMap.put("GQ", "غينيا الاستوائية");
     namesMap.put("GR", "اليونان");
     namesMap.put("GS", "جورجيا الجنوبية وجزر ساندويتش الجنوبية");
-    namesMap.put("GT", "جواتيمالا");
+    namesMap.put("GT", "غواتيمالا");
     namesMap.put("GU", "غوام");
     namesMap.put("GW", "غينيا بيساو");
     namesMap.put("GY", "غيانا");
-    namesMap.put("HK", "هونج كونج");
-    namesMap.put("HM", "جزيرة هيرد وماكدونالد");
+    namesMap.put("HK", "هونغ كونغ");
+    namesMap.put("HM", "جزيرة هيرد وجزر ماكدونالد");
     namesMap.put("HN", "هندوراس");
     namesMap.put("HR", "كرواتيا");
     namesMap.put("HT", "هايتي");
@@ -451,9 +458,9 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
     namesMap.put("IN", "الهند");
     namesMap.put("IO", "الإقليم البريطاني في المحيط الهندي");
     namesMap.put("IQ", "العراق");
-    namesMap.put("IR", "ايران");
+    namesMap.put("IR", "إيران");
     namesMap.put("IS", "أيسلندا");
-    namesMap.put("IT", "ايطاليا");
+    namesMap.put("IT", "إيطاليا");
     namesMap.put("JE", "جيرسي");
     namesMap.put("JM", "جامايكا");
     namesMap.put("JO", "الأردن");
@@ -477,7 +484,7 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
     namesMap.put("LR", "ليبيريا");
     namesMap.put("LS", "ليسوتو");
     namesMap.put("LT", "ليتوانيا");
-    namesMap.put("LU", "لوكسمبورج");
+    namesMap.put("LU", "لوكسمبورغ");
     namesMap.put("LV", "لاتفيا");
     namesMap.put("LY", "ليبيا");
     namesMap.put("MA", "المغرب");
@@ -498,7 +505,7 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
     namesMap.put("MS", "مونتسرات");
     namesMap.put("MT", "مالطا");
     namesMap.put("MU", "موريشيوس");
-    namesMap.put("MV", "جزر الملديف");
+    namesMap.put("MV", "جزر المالديف");
     namesMap.put("MW", "ملاوي");
     namesMap.put("MX", "المكسيك");
     namesMap.put("MY", "ماليزيا");
@@ -524,7 +531,7 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
     namesMap.put("PK", "باكستان");
     namesMap.put("PL", "بولندا");
     namesMap.put("PM", "سانت بيير وميكولون");
-    namesMap.put("PN", "بتكايرن");
+    namesMap.put("PN", "جزر بيتكيرن");
     namesMap.put("PR", "بورتوريكو");
     namesMap.put("PS", "فلسطين");
     namesMap.put("PT", "البرتغال");
@@ -590,10 +597,10 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
     namesMap.put("WS", "ساموا");
     namesMap.put("YE", "اليمن");
     namesMap.put("YT", "مايوت");
-    namesMap.put("ZA", "جمهورية جنوب افريقيا");
+    namesMap.put("ZA", "جنوب أفريقيا");
     namesMap.put("ZM", "زامبيا");
     namesMap.put("ZW", "زيمبابوي");
-    namesMap.put("ZZ", "منطقة غير معرفة");
+    namesMap.put("ZZ", "منطقة غير معروفة");
   }
 
   @Override
@@ -604,16 +611,16 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
   private native JavaScriptObject loadMyNameMap() /*-{
     return {
         "001": "العالم",
-        "002": "افريقيا",
+        "002": "أفريقيا",
         "003": "أمريكا الشمالية",
         "005": "أمريكا الجنوبية",
         "009": "أوقيانوسيا",
-        "011": "غرب افريقيا",
+        "011": "غرب أفريقيا",
         "013": "أمريكا الوسطى",
-        "014": "شرق افريقيا",
-        "015": "شمال افريقيا",
-        "017": "وسط افريقيا",
-        "018": "جنوب افريقيا",
+        "014": "شرق أفريقيا",
+        "015": "شمال أفريقيا",
+        "017": "وسط أفريقيا",
+        "018": "أفريقيا الجنوبية",
         "019": "الأمريكتين",
         "021": "شمال أمريكا",
         "029": "الكاريبي",
@@ -625,7 +632,6 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
         "054": "ميلانيزيا",
         "057": "الجزر الميكرونيزية",
         "061": "بولينيزيا",
-        "062": "جنوب وسط آسيا",
         "142": "آسيا",
         "143": "وسط آسيا",
         "145": "غرب آسيا",
@@ -633,11 +639,10 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
         "151": "شرق أوروبا",
         "154": "شمال أوروبا",
         "155": "غرب أوروبا",
-        "172": "كومنولث الدول المستقلة",
-        "419": "أمريكا اللاتينية و الكاريبي",
+        "419": "أمريكا اللاتينية",
         "AC": "جزيرة أسينشيون",
         "AD": "أندورا",
-        "AE": "الامارات العربية المتحدة",
+        "AE": "الإمارات العربية المتحدة",
         "AF": "أفغانستان",
         "AG": "أنتيغوا وبربودا",
         "AI": "أنغويلا",
@@ -675,8 +680,8 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
         "BZ": "بليز",
         "CA": "كندا",
         "CC": "جزر كوكوس",
-        "CD": "جمهورية الكونغو الديمقراطية",
-        "CF": "جمهورية افريقيا الوسطى",
+        "CD": "الكونغو - كينشاسا",
+        "CF": "جمهورية أفريقيا الوسطى",
         "CG": "الكونغو - برازافيل",
         "CH": "سويسرا",
         "CI": "ساحل العاج",
@@ -702,13 +707,13 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
         "DZ": "الجزائر",
         "EA": "سيوتا وميليلا",
         "EC": "الإكوادور",
-        "EE": "استونيا",
+        "EE": "أستونيا",
         "EG": "مصر",
         "EH": "الصحراء الغربية",
-        "ER": "اريتريا",
-        "ES": "أسبانيا",
-        "ET": "اثيوبيا",
-        "EU": "الاتحاد الاوروبي",
+        "ER": "أريتريا",
+        "ES": "إسبانيا",
+        "ET": "إثيوبيا",
+        "EU": "الاتحاد الأوروبي",
         "FI": "فنلندا",
         "FJ": "فيجي",
         "FK": "جزر فوكلاند",
@@ -718,9 +723,9 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
         "FX": "ميتروبولويتان فرنسا",
         "GA": "الجابون",
         "GB": "المملكة المتحدة",
-        "GD": "جرينادا",
+        "GD": "غرينادا",
         "GE": "جورجيا",
-        "GF": "غويانا",
+        "GF": "غويانا الفرنسية",
         "GG": "غيرنزي",
         "GH": "غانا",
         "GI": "جبل طارق",
@@ -731,12 +736,12 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
         "GQ": "غينيا الاستوائية",
         "GR": "اليونان",
         "GS": "جورجيا الجنوبية وجزر ساندويتش الجنوبية",
-        "GT": "جواتيمالا",
+        "GT": "غواتيمالا",
         "GU": "غوام",
         "GW": "غينيا بيساو",
         "GY": "غيانا",
-        "HK": "هونج كونج",
-        "HM": "جزيرة هيرد وماكدونالد",
+        "HK": "هونغ كونغ",
+        "HM": "جزيرة هيرد وجزر ماكدونالد",
         "HN": "هندوراس",
         "HR": "كرواتيا",
         "HT": "هايتي",
@@ -749,9 +754,9 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
         "IN": "الهند",
         "IO": "الإقليم البريطاني في المحيط الهندي",
         "IQ": "العراق",
-        "IR": "ايران",
+        "IR": "إيران",
         "IS": "أيسلندا",
-        "IT": "ايطاليا",
+        "IT": "إيطاليا",
         "JE": "جيرسي",
         "JM": "جامايكا",
         "JO": "الأردن",
@@ -775,7 +780,7 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
         "LR": "ليبيريا",
         "LS": "ليسوتو",
         "LT": "ليتوانيا",
-        "LU": "لوكسمبورج",
+        "LU": "لوكسمبورغ",
         "LV": "لاتفيا",
         "LY": "ليبيا",
         "MA": "المغرب",
@@ -796,7 +801,7 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
         "MS": "مونتسرات",
         "MT": "مالطا",
         "MU": "موريشيوس",
-        "MV": "جزر الملديف",
+        "MV": "جزر المالديف",
         "MW": "ملاوي",
         "MX": "المكسيك",
         "MY": "ماليزيا",
@@ -822,7 +827,7 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
         "PK": "باكستان",
         "PL": "بولندا",
         "PM": "سانت بيير وميكولون",
-        "PN": "بتكايرن",
+        "PN": "جزر بيتكيرن",
         "PR": "بورتوريكو",
         "PS": "فلسطين",
         "PT": "البرتغال",
@@ -888,10 +893,10 @@ public class LocalizedNamesImpl_ar extends LocalizedNamesImpl {
         "WS": "ساموا",
         "YE": "اليمن",
         "YT": "مايوت",
-        "ZA": "جمهورية جنوب افريقيا",
+        "ZA": "جنوب أفريقيا",
         "ZM": "زامبيا",
         "ZW": "زيمبابوي",
-        "ZZ": "منطقة غير معرفة"
+        "ZZ": "منطقة غير معروفة"
     };
   }-*/;
 }

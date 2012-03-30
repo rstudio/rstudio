@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.client.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6465 $
+//  date=$Date: 2012-01-27 12:47:35 -0500 (Fri, 27 Jan 2012) $
+//  type=GB
 
 /**
  * Implementation of DateTimeFormatInfo for the "en_AU" locale.
@@ -40,11 +44,6 @@ public class DateTimeFormatInfoImpl_en_AU extends DateTimeFormatInfoImpl_en {
   @Override
   public String dateFormatShort() {
     return "d/MM/yy";
-  }
-
-  @Override
-  public int firstDayOfTheWeek() {
-    return 1;
   }
 
   @Override
@@ -75,10 +74,5 @@ public class DateTimeFormatInfoImpl_en_AU extends DateTimeFormatInfoImpl_en {
   @Override
   public String formatYearMonthNumDay() {
     return "d/M/y";
-  }
-
-  @Override
-  public String formatYearMonthWeekdayDay() {
-    return "EEE, d MMM y";
   }
 }

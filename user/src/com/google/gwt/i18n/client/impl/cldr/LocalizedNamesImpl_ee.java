@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "ee" locale.
@@ -27,23 +32,28 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
-        "AC",
         "AF",
         "IS",
+        "IM",
+        "AX",
         "AL",
         "DZ",
         "AS",
         "AD",
         "AO",
         "AI",
-        "AG",
         "AQ",
+        "AG",
+        "ZA",
+        "TF",
+        "GS",
+        "KR",
         "AR",
         "AM",
         "AW",
+        "AC",
         "AU",
         "AT",
-        "AX",
         "AZ",
         "BS",
         "BH",
@@ -55,10 +65,11 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "BJ",
         "BM",
         "BT",
-        "BL",
         "BO",
         "BA",
         "BW",
+        "BV",
+        "BQ",
         "BR",
         "IO",
         "VG",
@@ -66,19 +77,18 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "BG",
         "BF",
         "BI",
-        "BV",
-        "CC",
-        "CP",
-        "CX",
+        "CW",
         "DK",
         "DG",
         "DM",
         "DO",
+        "JM",
+        "JP",
         "DJ",
-        "EA",
-        "TL",
+        "KP",
+        "MP",
+        "JE",
         "EG",
-        "EH",
         "EC",
         "GQ",
         "SV",
@@ -87,9 +97,10 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "ET",
         "EU",
         "FK",
-        "FJ",
-        "FI",
         "FO",
+        "FJ",
+        "PH",
+        "FI",
         "FR",
         "GF",
         "PF",
@@ -97,67 +108,67 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "GM",
         "GE",
         "DE",
-        "GG",
         "GH",
         "GI",
         "GW",
+        "GD",
         "GL",
         "GR",
-        "GD",
-        "GS",
         "GP",
         "GU",
         "GT",
+        "GG",
         "GN",
         "GY",
-        "JM",
-        "JP",
-        "JO",
         "HT",
-        "HK",
         "HM",
         "HN",
         "HU",
-        "IC",
-        "IM",
-        "ID",
+        "HK",
         "IN",
-        "IQ",
+        "ID",
         "IR",
+        "IQ",
         "IE",
-        "IT",
         "IL",
-        "JE",
+        "IT",
         "KH",
         "CM",
         "CA",
+        "IC",
         "CV",
         "QA",
         "KY",
         "KZ",
         "KE",
+        "EA",
+        "KG",
         "KI",
+        "CP",
+        "CC",
         "CO",
         "KM",
-        "CD",
         "CG",
+        "CD",
         "CK",
         "CR",
         "CI",
+        "CX",
         "HR",
         "CU",
         "KW",
-        "KG",
         "LA",
         "LV",
+        "LU",
         "LB",
         "LR",
         "LY",
         "LI",
         "LT",
-        "LU",
         "LS",
+        "MO",
         "MG",
+        "MK",
         "MW",
         "MY",
         "MV",
@@ -165,22 +176,19 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "MT",
         "MH",
         "MQ",
-        "MK",
+        "MR",
+        "MU",
         "YT",
-        "ME",
         "MX",
-        "MF",
         "FM",
-        "MO",
         "MD",
         "MC",
         "MN",
+        "ME",
         "MS",
         "MA",
         "MZ",
         "MM",
-        "MR",
-        "MU",
         "NA",
         "NR",
         "AN",
@@ -188,15 +196,14 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "NP",
         "NC",
         "NZ",
-        "NE",
-        "NG",
         "NI",
+        "NG",
+        "NE",
         "NU",
         "NF",
-        "MP",
-        "KP",
         "NO",
         "OM",
+        "QO",
         "PK",
         "PW",
         "PS",
@@ -204,71 +211,71 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "PG",
         "PY",
         "PE",
-        "PH",
         "PN",
         "PL",
         "PT",
         "PR",
-        "QO",
         "RE",
         "RO",
         "RS",
         "RU",
         "RW",
+        "BL",
         "SH",
         "KN",
         "LC",
+        "MF",
         "PM",
         "VC",
+        "CY",
         "WS",
         "SM",
         "ST",
         "SA",
         "SN",
-        "CF",
         "CS",
         "SC",
         "SL",
         "SG",
-        "SJ",
+        "SY",
         "SK",
         "SI",
         "SB",
         "SO",
-        "ZA",
-        "KR",
         "ES",
         "LK",
+        "SS",
         "SD",
         "SR",
+        "SJ",
         "SZ",
         "SE",
         "CH",
-        "CY",
-        "SY",
-        "TA",
-        "TJ",
-        "TW",
-        "TZ",
-        "TF",
+        "SX",
         "TH",
+        "TW",
+        "TJ",
+        "TZ",
+        "TL",
+        "CF",
         "TG",
         "TK",
         "TO",
         "TT",
+        "TA",
         "TD",
-        "CZ",
-        "CL",
         "CN",
+        "CL",
+        "CZ",
         "TN",
+        "TV",
         "TR",
         "TM",
         "TC",
-        "TV",
+        "UM",
         "VI",
         "UG",
         "UA",
-        "UM",
         "AE",
         "GB",
         "UY",
@@ -280,240 +287,301 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
         "VN",
         "WF",
         "YE",
+        "JO",
         "ZM",
         "ZW",
+        "EH",
     };
   }
 
   @Override
   protected void loadNameMapJava() {
     super.loadNameMapJava();
-    namesMap.put("AD", "Andorradu");
-    namesMap.put("AE", "United Arab Emiratesdu");
-    namesMap.put("AF", "Afghanistadu");
-    namesMap.put("AG", "Antigua kplɛ Barbudadukɔwo");
-    namesMap.put("AI", "Anguilladu");
-    namesMap.put("AL", "Albaniadu");
-    namesMap.put("AM", "Armeniadu");
-    namesMap.put("AN", "Nedalands Antilisdu");
-    namesMap.put("AO", "Angoladu");
-    namesMap.put("AR", "Argentinadu");
-    namesMap.put("AS", "Amerika Samoadu");
-    namesMap.put("AT", "Austriadu");
-    namesMap.put("AU", "Australiadu");
-    namesMap.put("AW", "Arubadu");
-    namesMap.put("AZ", "Azerbaigyandu");
-    namesMap.put("BA", "Bosnia kplɛ Herzegovinadukɔwo");
-    namesMap.put("BB", "Barbadosdu");
-    namesMap.put("BD", "Bangladesidu");
-    namesMap.put("BE", "Belgiumdu");
-    namesMap.put("BF", "Burkina Fasodu");
-    namesMap.put("BG", "Bulgaridu");
-    namesMap.put("BH", "Bahraindu");
-    namesMap.put("BI", "Burundidu");
-    namesMap.put("BJ", "Benindu");
-    namesMap.put("BM", "Bermudadu");
-    namesMap.put("BN", "Bruneidu");
-    namesMap.put("BO", "Boliviadu");
-    namesMap.put("BR", "Brazildu");
-    namesMap.put("BS", "Bahamasdu");
-    namesMap.put("BT", "Bhutandu");
-    namesMap.put("BW", "Botswanadu");
-    namesMap.put("BY", "Belarusdu");
-    namesMap.put("BZ", "Belizidu");
-    namesMap.put("CA", "Kanadadu");
-    namesMap.put("CD", "Kongo Demokratik Repɔblikdu");
-    namesMap.put("CF", "Sentral Afrikan Republikdu");
-    namesMap.put("CG", "Kongodu");
-    namesMap.put("CH", "Switzerland-du");
-    namesMap.put("CI", "Kote d'ivoiredu");
-    namesMap.put("CK", "Kook Ailandsdukɔwo");
-    namesMap.put("CL", "Tsilidu");
-    namesMap.put("CM", "Kamerundu");
-    namesMap.put("CN", "Tsinadu");
-    namesMap.put("CO", "Kolombiadu");
-    namesMap.put("CR", "Kosta Rikadu");
-    namesMap.put("CS", "Serbia kplɛ Montenegrodukɔwo");
-    namesMap.put("CU", "kubadu");
-    namesMap.put("CV", "Kape Verde Ailandsdukɔwo");
-    namesMap.put("CY", "Syprusdu");
-    namesMap.put("CZ", "Tsek Repɔblikdu");
-    namesMap.put("DE", "Germanidu");
-    namesMap.put("DJ", "Dzibutidu");
-    namesMap.put("DK", "Denmarkdu");
-    namesMap.put("DM", "Dominikadu");
-    namesMap.put("DO", "Dominika Repɔblikdu");
-    namesMap.put("DZ", "Algeriadu");
-    namesMap.put("EC", "Ekuadɔdu");
-    namesMap.put("EE", "Estoniadu");
-    namesMap.put("EG", "Egyptdu");
-    namesMap.put("ER", "Eritreadu");
-    namesMap.put("ES", "Spaindu");
-    namesMap.put("ET", "Etiopiadu");
-    namesMap.put("FI", "Finland-du");
-    namesMap.put("FJ", "Fidzidu");
-    namesMap.put("FK", "Falklanɖ Ailandsdukɔwo");
-    namesMap.put("FM", "Mikronesiadu");
-    namesMap.put("FR", "Fransdu");
-    namesMap.put("GA", "Gabɔndu");
-    namesMap.put("GB", "United Kingdomdu");
-    namesMap.put("GD", "Grenadadu");
-    namesMap.put("GE", "Georgiadu");
-    namesMap.put("GF", "Frentsi Guianadu");
-    namesMap.put("GH", "Ghanadu");
-    namesMap.put("GI", "Gibraltadu");
-    namesMap.put("GL", "Greenland-du");
-    namesMap.put("GM", "Gambiadu");
-    namesMap.put("GN", "Guinidu");
-    namesMap.put("GP", "Guadelupedu");
-    namesMap.put("GQ", "Ekuatorial Ginidu");
-    namesMap.put("GR", "Greesidu");
-    namesMap.put("GT", "Guatemayadu");
-    namesMap.put("GU", "Guamdu");
-    namesMap.put("GW", "Gini-Bisaodu");
+    namesMap.put("001", "xexeme");
+    namesMap.put("002", "Afrika nutome");
+    namesMap.put("003", "Dziehe Amerika nutome");
+    namesMap.put("005", "Anyiehe Amerika nutome");
+    namesMap.put("009", "Oceania nutome");
+    namesMap.put("011", "Ɣetoɖoƒelɔƒo Afrika nutome");
+    namesMap.put("013", "Titina Amerika nutome");
+    namesMap.put("014", "Ɣedzeƒe Afrika nutome");
+    namesMap.put("015", "Dziehe Afrika nutome");
+    namesMap.put("017", "Titina Afrika nutome");
+    namesMap.put("018", "Anyiehelɔƒo Afrika nutome");
+    namesMap.put("019", "Amerika nutome");
+    namesMap.put("021", "Dziehelɔƒo Amerika nutome");
+    namesMap.put("029", "Karibbea nutome");
+    namesMap.put("030", "Ɣedzeƒe Asia nutome");
+    namesMap.put("034", "Anyiehelɔƒo Asia nutome");
+    namesMap.put("035", "Anyiehe Ɣedzeƒe Afrika nutome");
+    namesMap.put("039", "Anyiehelɔƒo Europa nutome");
+    namesMap.put("053", "Australia kple New Zealand nutome");
+    namesMap.put("054", "Melanesia nutome");
+    namesMap.put("057", "Mikronesia");
+    namesMap.put("061", "Pɔlinesia nutome");
+    namesMap.put("142", "Asia nutome");
+    namesMap.put("143", "Titina Asia nutome");
+    namesMap.put("145", "Ɣetoɖoƒelɔƒo Asia nutome");
+    namesMap.put("150", "Europa nutome");
+    namesMap.put("151", "Ɣedzeƒe Europa nutome");
+    namesMap.put("154", "Dziehelɔƒo Europa nutome");
+    namesMap.put("155", "Ɣetoɖoƒelɔƒo Europa nutome");
+    namesMap.put("419", "Latin Amerika nutome");
+    namesMap.put("AC", "Ascension ƒudomekpo nutome");
+    namesMap.put("AD", "Andorra nutome");
+    namesMap.put("AE", "United Arab Emirates nutome");
+    namesMap.put("AF", "Afghanistan nutome");
+    namesMap.put("AG", "́Antigua kple Barbuda nutome");
+    namesMap.put("AI", "Anguilla nutome");
+    namesMap.put("AL", "Albania nutome");
+    namesMap.put("AM", "Armenia nutome");
+    namesMap.put("AN", "Nedalands Antilis nutome");
+    namesMap.put("AO", "Angola nutome");
+    namesMap.put("AQ", "Antartica nutome");
+    namesMap.put("AR", "Argentina nutome");
+    namesMap.put("AS", "Amerika Samoa nutome");
+    namesMap.put("AT", "Austria nutome");
+    namesMap.put("AU", "Australia nutome");
+    namesMap.put("AW", "Aruba nutome");
+    namesMap.put("AX", "Åland ƒudomekpo nutome");
+    namesMap.put("AZ", "Azerbaijan nutome");
+    namesMap.put("BA", "Bosnia kple Herzergovina nutome");
+    namesMap.put("BB", "Barbados nutome");
+    namesMap.put("BD", "Bangladesh nutome");
+    namesMap.put("BE", "Belgium nutome");
+    namesMap.put("BF", "Burkina Faso nutome");
+    namesMap.put("BG", "Bulgaria nutome");
+    namesMap.put("BH", "Bahrain nutome");
+    namesMap.put("BI", "Burundi nutome");
+    namesMap.put("BJ", "Benin nutome");
+    namesMap.put("BL", "Saint Barthélemy nutome");
+    namesMap.put("BM", "Bermuda nutome");
+    namesMap.put("BN", "Brunei nutome");
+    namesMap.put("BO", "Bolivia nutome");
+    namesMap.put("BR", "Brazil nutome");
+    namesMap.put("BS", "Bahamas nutome");
+    namesMap.put("BT", "Bhutan nutome");
+    namesMap.put("BV", "Bouvet ƒudomekpo nutome");
+    namesMap.put("BW", "Botswana nutome");
+    namesMap.put("BY", "Belarus nutome");
+    namesMap.put("BZ", "Belize nutome");
+    namesMap.put("CA", "Kanada nutome");
+    namesMap.put("CC", "Kokos [Kiling] fudomekpo nutome");
+    namesMap.put("CD", "Kongo Kinshasa nutome");
+    namesMap.put("CF", "Titina Afrika repɔblik nutome");
+    namesMap.put("CG", "Kongo Brazzaville nutome");
+    namesMap.put("CH", "Switzerland nutome");
+    namesMap.put("CI", "Kote d’Ivoire nutome");
+    namesMap.put("CK", "Kook ƒudomekpo nutome");
+    namesMap.put("CL", "Tsile nutome");
+    namesMap.put("CM", "Kamerun nutome");
+    namesMap.put("CN", "Tsaina nutome");
+    namesMap.put("CO", "Kolombia nutome");
+    namesMap.put("CP", "Klipaton ƒudomekpo nutome");
+    namesMap.put("CR", "Kosta Rika nutome");
+    namesMap.put("CS", "Serbia kple Montenegro nutome");
+    namesMap.put("CU", "Kuba nutome");
+    namesMap.put("CV", "Kape Verde nutome");
+    namesMap.put("CX", "Kristmas ƒudomekpo nutome");
+    namesMap.put("CY", "Saiprus nutome");
+    namesMap.put("CZ", "Tsɛk repɔblik nutome");
+    namesMap.put("DE", "Germania nutome");
+    namesMap.put("DG", "Diego Garsia nutome");
+    namesMap.put("DJ", "Dzibuti nutome");
+    namesMap.put("DK", "Denmark nutome");
+    namesMap.put("DM", "Dominika nutome");
+    namesMap.put("DO", "Dominika repɔblik nutome");
+    namesMap.put("DZ", "Algeria nutome");
+    namesMap.put("EA", "Keuta and Melilla nutome");
+    namesMap.put("EC", "Ekuadɔ nutome");
+    namesMap.put("EE", "Estonia nutome");
+    namesMap.put("EG", "Egypte nutome");
+    namesMap.put("EH", "Ɣetoɖoƒe Sahara nutome");
+    namesMap.put("ER", "Eritrea nutome");
+    namesMap.put("ES", "Spania nutome");
+    namesMap.put("ET", "Etiopia nutome");
+    namesMap.put("EU", "Europa Wɔɖeka nutome");
+    namesMap.put("FI", "Finland nutome");
+    namesMap.put("FJ", "Fidzi nutome");
+    namesMap.put("FK", "Falkland ƒudomekpowo nutome");
+    namesMap.put("FM", "Mikronesia nutome");
+    namesMap.put("FO", "Faroe ƒudomekpowo nutome");
+    namesMap.put("FR", "Frans nutome");
+    namesMap.put("GA", "Gabɔn nutome");
+    namesMap.put("GB", "United Kingdom nutome");
+    namesMap.put("GD", "Grenada nutome");
+    namesMap.put("GE", "Georgia nutome");
+    namesMap.put("GF", "Frentsi Gayana nutome");
+    namesMap.put("GG", "Guernse nutome");
+    namesMap.put("GH", "Ghana nutome");
+    namesMap.put("GI", "Gibraltar nutome");
+    namesMap.put("GL", "Grinland nutome");
+    namesMap.put("GM", "Gambia nutome");
+    namesMap.put("GN", "Guini nutome");
+    namesMap.put("GP", "Guadelupe nutome");
+    namesMap.put("GQ", "Ekuatorial Guini nutome");
+    namesMap.put("GR", "Grisi nutome");
+    namesMap.put("GS", "Anyiehe Georgia kple Anyiehe Sandwich ƒudomekpowo nutome");
+    namesMap.put("GT", "Guatemala nutome");
+    namesMap.put("GU", "Guam nutome");
+    namesMap.put("GW", "Gini-Bisao nutome");
     namesMap.put("GY", "Guyanadu");
+    namesMap.put("HK", "Hɔng Kɔng SAR Tsaina nutome");
+    namesMap.put("HM", "Heard kple Mcdonald ƒudomekpowo nutome");
     namesMap.put("HN", "Hondurasdu");
-    namesMap.put("HR", "Kroashiadu");
-    namesMap.put("HT", "Haitidu");
-    namesMap.put("HU", "Hungaridu");
-    namesMap.put("ID", "Indonesiadu");
-    namesMap.put("IE", "Ireland-du");
-    namesMap.put("IL", "Izraldu");
-    namesMap.put("IN", "Inɖiadu");
-    namesMap.put("IO", "British India Oshiin Territorydu");
-    namesMap.put("IQ", "Irakdu");
-    namesMap.put("IR", "Irandu");
-    namesMap.put("IS", "Aiselanddu");
-    namesMap.put("IT", "Italidu");
-    namesMap.put("JM", "Gyamaikadu");
-    namesMap.put("JO", "Gyɔdandu");
-    namesMap.put("JP", "Gyapandu");
-    namesMap.put("KE", "Kenyadu");
-    namesMap.put("KG", "Kyrgyzstandu");
-    namesMap.put("KH", "Kambodiadu");
-    namesMap.put("KI", "Kiribatidu");
-    namesMap.put("KM", "Komorosdu");
-    namesMap.put("KN", "Saint Kitis kplɛ Nevisdukɔwo");
-    namesMap.put("KP", "North Koreadu");
-    namesMap.put("KR", "South Koreadu");
-    namesMap.put("KW", "Kuwaitdu");
-    namesMap.put("KY", "Kayman Ailandsdukɔwo");
-    namesMap.put("KZ", "Kazakstandu");
-    namesMap.put("LA", "Laosdu");
-    namesMap.put("LB", "Lebanɔndu");
-    namesMap.put("LC", "Saint Lusiadu");
-    namesMap.put("LI", "Litsensteindu");
-    namesMap.put("LK", "Sri Lankadu");
-    namesMap.put("LR", "Liberiadu");
-    namesMap.put("LS", "Lɛsotodu");
-    namesMap.put("LT", "Lituaniadu");
-    namesMap.put("LU", "Luxembɔgdu");
-    namesMap.put("LV", "Latviadu");
-    namesMap.put("LY", "Libyadu");
-    namesMap.put("MA", "Morokodu");
-    namesMap.put("MC", "Monakodu");
-    namesMap.put("MD", "Moldovadu");
-    namesMap.put("MG", "Madagaskadu");
-    namesMap.put("MH", "Marshal Aislandsdu");
-    namesMap.put("MK", "Masedoniadu");
-    namesMap.put("ML", "Malidu");
-    namesMap.put("MM", "Myanmardu");
-    namesMap.put("MN", "Mongoliadu");
-    namesMap.put("MP", "Norh Mariana Ailandukɔwo");
-    namesMap.put("MQ", "Martinikidu");
-    namesMap.put("MR", "Mɔritaniadu");
-    namesMap.put("MS", "Montserratdu");
-    namesMap.put("MT", "Maltadu");
-    namesMap.put("MU", "Mɔritiusdu");
-    namesMap.put("MV", "Maldivisdu");
-    namesMap.put("MW", "Malawidu");
-    namesMap.put("MX", "Mesikodu");
-    namesMap.put("MY", "Malaysiadu");
-    namesMap.put("MZ", "Mozambikidu");
-    namesMap.put("NA", "Namibiadu");
-    namesMap.put("NC", "New Kaledoniadu");
-    namesMap.put("NE", "Nigerdu");
-    namesMap.put("NF", "Norfolk Ailanddu");
-    namesMap.put("NG", "Nigeriadu");
-    namesMap.put("NI", "Nikaraguadu");
-    namesMap.put("NL", "Nedalandsdu");
-    namesMap.put("NO", "Norwaydu");
-    namesMap.put("NP", "Nepaldu");
-    namesMap.put("NR", "Naurudu");
-    namesMap.put("NU", "Niuedu");
-    namesMap.put("NZ", "New Zealand-du");
-    namesMap.put("OM", "Omandu");
-    namesMap.put("PA", "Panamadu");
-    namesMap.put("PE", "Perudu");
-    namesMap.put("PF", "Frentsi Polynesiadu");
-    namesMap.put("PG", "Papua New Guineadu");
-    namesMap.put("PH", "Philipinsdu");
-    namesMap.put("PK", "Pakistandu");
-    namesMap.put("PL", "Polandu");
-    namesMap.put("PM", "Saint Pierre kplɛ Mikelɔndukɔwo");
-    namesMap.put("PN", "Pitkairndu");
-    namesMap.put("PR", "Puerto Rikodu");
-    namesMap.put("PS", "Palestinia West Bank kplɛ Gazadukɔwo");
-    namesMap.put("PT", "Portugaldu");
-    namesMap.put("PW", "Palaudu");
-    namesMap.put("PY", "Paraguadu");
-    namesMap.put("QA", "Katadu");
-    namesMap.put("RE", "Reuniondu");
-    namesMap.put("RO", "Romaniadu");
-    namesMap.put("RU", "Russiadu");
-    namesMap.put("RW", "Rwandadu");
-    namesMap.put("SA", "Saudi Arabiadu");
-    namesMap.put("SB", "Solomon Ailandukɔwo");
-    namesMap.put("SC", "Seyshɛlsdu");
-    namesMap.put("SD", "Sudandu");
-    namesMap.put("SE", "Swedendu");
-    namesMap.put("SG", "Singapɔrdu");
-    namesMap.put("SH", "Saint Helenadu");
-    namesMap.put("SI", "Sloveniadu");
-    namesMap.put("SK", "Slovakiadu");
-    namesMap.put("SL", "Sierra Leonedu");
-    namesMap.put("SM", "San Marinodu");
-    namesMap.put("SN", "Senegaldu");
-    namesMap.put("SO", "Somaliadu");
-    namesMap.put("SR", "Surinamedu");
-    namesMap.put("ST", "Sao Tome kplɛ Prinsipidukɔwo");
-    namesMap.put("SV", "El Savadɔdu");
-    namesMap.put("SY", "Syriadu");
-    namesMap.put("SZ", "Swaziland-du");
-    namesMap.put("TC", "Turks kplɛ kaikos Islandsdukɔwo");
-    namesMap.put("TD", "Tsad-du");
-    namesMap.put("TG", "Togodu");
-    namesMap.put("TH", "Thailand-du");
-    namesMap.put("TJ", "Taghikistandu");
-    namesMap.put("TK", "Tokelaudu");
-    namesMap.put("TL", "East Timordu");
-    namesMap.put("TM", "Turkmenistandu");
-    namesMap.put("TN", "Tunisiadu");
-    namesMap.put("TO", "Tongadu");
-    namesMap.put("TR", "Turkeedu");
-    namesMap.put("TT", "Trinidad kplɛ Tobagodukɔwo");
-    namesMap.put("TV", "Tuvaludu");
-    namesMap.put("TW", "Taiwandu");
-    namesMap.put("TZ", "Tanzaniadu");
-    namesMap.put("UA", "Ukrainedu");
-    namesMap.put("UG", "Ugandadu");
-    namesMap.put("US", "USA-dukɔwo");
-    namesMap.put("UY", "Uruguaydu");
-    namesMap.put("UZ", "Uzbekistandu");
-    namesMap.put("VA", "Vatikan Statedu");
-    namesMap.put("VC", "Saint Vinsent kplɛ Grenadinisdukɔwo");
-    namesMap.put("VE", "Venezueladu");
-    namesMap.put("VG", "British Virgin Islandsdukɔwo");
-    namesMap.put("VI", "U.S Virgin Islandsdukɔwo");
-    namesMap.put("VN", "Vietnamdu");
-    namesMap.put("VU", "Vanuatudu");
-    namesMap.put("WF", "Wallis kplɛ Futunadu");
-    namesMap.put("WS", "Samoadu");
-    namesMap.put("YE", "Yemendu");
-    namesMap.put("YT", "Mayotidu");
-    namesMap.put("ZA", "South Afrikadu");
-    namesMap.put("ZM", "Zambiadu");
-    namesMap.put("ZW", "Zimbabwedu");
+    namesMap.put("HR", "Kroatsia nutome");
+    namesMap.put("HT", "Haiti nutome");
+    namesMap.put("HU", "Hungari nutome");
+    namesMap.put("IC", "Kanari ƒudomekpowo nutome");
+    namesMap.put("ID", "Indonesia nutome");
+    namesMap.put("IE", "Ireland nutome");
+    namesMap.put("IL", "Israel nutome");
+    namesMap.put("IM", "Aisle of Man nutome");
+    namesMap.put("IN", "India nutome");
+    namesMap.put("IO", "Britaintɔwo ƒe india ƒudome nutome");
+    namesMap.put("IQ", "iraqdukɔ");
+    namesMap.put("IR", "Iran nutome");
+    namesMap.put("IS", "Aiseland nutome");
+    namesMap.put("IT", "Italia nutome");
+    namesMap.put("JE", "Dzɛse nutome");
+    namesMap.put("JM", "Dzamaika nutome");
+    namesMap.put("JO", "Yordan nutome");
+    namesMap.put("JP", "Dzapan nutome");
+    namesMap.put("KE", "Kenya nutome");
+    namesMap.put("KG", "Kirgizstan nutome");
+    namesMap.put("KH", "Kambodia nutome");
+    namesMap.put("KI", "Kiribati nutome");
+    namesMap.put("KM", "Komoros nutome");
+    namesMap.put("KN", "Saint Kitis kple Nevis nutome");
+    namesMap.put("KP", "Dziehe Korea nutome");
+    namesMap.put("KR", "Anyiehe Korea nutome");
+    namesMap.put("KW", "Kuwait nutome");
+    namesMap.put("KY", "Kayman ƒudomekpowo nutome");
+    namesMap.put("KZ", "Kazakstan nutome");
+    namesMap.put("LA", "Laos nutome");
+    namesMap.put("LB", "Lebanɔn nutome");
+    namesMap.put("LC", "Saint Lusia nutome");
+    namesMap.put("LI", "Litsenstein nutome");
+    namesMap.put("LK", "Sri Lanka nutome");
+    namesMap.put("LR", "Liberia nutome");
+    namesMap.put("LS", "Lɛsoto nutome");
+    namesMap.put("LT", "Lituania nutome");
+    namesMap.put("LU", "Lazembɔg nutome");
+    namesMap.put("LV", "Latvia nutome");
+    namesMap.put("LY", "Libya nutome");
+    namesMap.put("MA", "Moroko nutome");
+    namesMap.put("MC", "Monako nutome");
+    namesMap.put("MD", "Moldova nutome");
+    namesMap.put("ME", "Montenegro nutome");
+    namesMap.put("MF", "Saint Martin nutome");
+    namesMap.put("MG", "Madagaska nutome");
+    namesMap.put("MH", "Marshal ƒudomekpowo nutome");
+    namesMap.put("MK", "Makedonia nutome");
+    namesMap.put("ML", "Mali nutome");
+    namesMap.put("MM", "Myanmar [Burma] nutome");
+    namesMap.put("MN", "Mongolia nutome");
+    namesMap.put("MO", "Macau SAR Tsaina nutome");
+    namesMap.put("MP", "Dziehe Marina ƒudomekpowo nutome");
+    namesMap.put("MQ", "Martiniki nutome");
+    namesMap.put("MR", "Mauritania nutome");
+    namesMap.put("MS", "Montserrat nutome");
+    namesMap.put("MT", "Malta nutome");
+    namesMap.put("MU", "mauritiusdukɔ");
+    namesMap.put("MV", "maldivesdukɔ");
+    namesMap.put("MW", "Malawi nutome");
+    namesMap.put("MX", "Meksico nutome");
+    namesMap.put("MY", "Malaysia nutome");
+    namesMap.put("MZ", "Mozambiki nutome");
+    namesMap.put("NA", "Namibia nutome");
+    namesMap.put("NC", "New Kaledonia nutome");
+    namesMap.put("NE", "Niger nutome");
+    namesMap.put("NF", "Norfolk ƒudomekpo nutome");
+    namesMap.put("NG", "Nigeria nutome");
+    namesMap.put("NI", "Nicaraguadukɔ");
+    namesMap.put("NL", "Nedalands nutome");
+    namesMap.put("NO", "Norway nutome");
+    namesMap.put("NP", "Nepal nutome");
+    namesMap.put("NR", "Nauru nutome");
+    namesMap.put("NU", "Niue nutome");
+    namesMap.put("NZ", "New Zealand nutome");
+    namesMap.put("OM", "Oman nutome");
+    namesMap.put("PA", "Panama nutome");
+    namesMap.put("PE", "Peru nutome");
+    namesMap.put("PF", "Frentsi Pɔlinesia nutome");
+    namesMap.put("PG", "Papua New Gini nutome");
+    namesMap.put("PH", "Filipini nutome");
+    namesMap.put("PK", "Pakistan nutome");
+    namesMap.put("PL", "Poland nutome");
+    namesMap.put("PM", "Saint Pierre kple Mikelɔn nutome");
+    namesMap.put("PN", "Pitkairn ƒudomekpo nutome");
+    namesMap.put("PR", "Puerto Riko nutome");
+    namesMap.put("PS", "Palestinia nutome");
+    namesMap.put("PT", "Portugal nutome");
+    namesMap.put("PW", "Palau nutome");
+    namesMap.put("PY", "Paragua nutome");
+    namesMap.put("QA", "Katar nutome");
+    namesMap.put("QO", "Outlaying Oceania nutome");
+    namesMap.put("RE", "Réunion nutome");
+    namesMap.put("RO", "Romania nutome");
+    namesMap.put("RU", "Russia nutome");
+    namesMap.put("RW", "Rwanda nutome");
+    namesMap.put("SA", "Saudi Arabia nutome");
+    namesMap.put("SB", "Solomon ƒudomekpowo nutome");
+    namesMap.put("SC", "Seshɛls nutome");
+    namesMap.put("SD", "Sudan nutome");
+    namesMap.put("SE", "Sweden nutome");
+    namesMap.put("SG", "Singapɔr nutome");
+    namesMap.put("SH", "Saint Helena nutome");
+    namesMap.put("SI", "Slovenia nutome");
+    namesMap.put("SJ", "Svalbard kple Yan Mayen nutome");
+    namesMap.put("SK", "Slovakia nutome");
+    namesMap.put("SL", "Sierra Leone nutome");
+    namesMap.put("SM", "San Marino nutome");
+    namesMap.put("SN", "Senegal nutome");
+    namesMap.put("SO", "Somalia nutome");
+    namesMap.put("SR", "Suriname nutome");
+    namesMap.put("ST", "São Tomé kple Príncipe nutome");
+    namesMap.put("SV", "El Salvadɔ nutome");
+    namesMap.put("SY", "Siria nutome");
+    namesMap.put("SZ", "Swaziland nutome");
+    namesMap.put("TA", "Tristan da Kunha nutome");
+    namesMap.put("TC", "Tɛks kple Kaikos ƒudomekpowo nutome");
+    namesMap.put("TD", "Tsad nutome");
+    namesMap.put("TF", "Anyiehe Franseme nutome");
+    namesMap.put("TG", "Togo nutome");
+    namesMap.put("TH", "Tailand nutome");
+    namesMap.put("TJ", "Tajikistan nutome");
+    namesMap.put("TK", "Tokelau nutome");
+    namesMap.put("TL", "Timor-Leste nutome");
+    namesMap.put("TM", "Tɛkmenistan nutome");
+    namesMap.put("TN", "Tunisia nutome");
+    namesMap.put("TO", "Tonga nutome");
+    namesMap.put("TR", "Tɛki nutome");
+    namesMap.put("TT", "Trinidad kple Tobago nutome");
+    namesMap.put("TV", "Tuvalu nutome");
+    namesMap.put("TW", "Taiwan nutome");
+    namesMap.put("TZ", "Tanzania nutome");
+    namesMap.put("UA", "Ukraine nutome");
+    namesMap.put("UG", "Uganda nutome");
+    namesMap.put("UM", "U.S. Minor Outlaying ƒudomekpowo nutome");
+    namesMap.put("US", "USA nutome");
+    namesMap.put("UY", "uruguaydukɔ");
+    namesMap.put("UZ", "Uzbekistan nutome");
+    namesMap.put("VA", "Vatikandu nutome");
+    namesMap.put("VC", "Saint Vincent kple Grenadine nutome");
+    namesMap.put("VE", "Venezuela nutome");
+    namesMap.put("VG", "Britaintɔwo ƒe Virgin ƒudomekpowo nutome");
+    namesMap.put("VI", "U.S. Vɛrgin ƒudomekpowo nutome");
+    namesMap.put("VN", "Vietnam nutome");
+    namesMap.put("VU", "Vanuatu nutome");
+    namesMap.put("WF", "Wallis kple Futuna nutome");
+    namesMap.put("WS", "Samoa nutome");
+    namesMap.put("YE", "Yemen nutome");
+    namesMap.put("YT", "Mayotte nutome");
+    namesMap.put("ZA", "Anyiehe Afrika nutome");
+    namesMap.put("ZM", "Zambia nutome");
+    namesMap.put("ZW", "Zimbabwe nutome");
+    namesMap.put("ZZ", "nutome manya");
   }
 
   @Override
@@ -523,232 +591,291 @@ public class LocalizedNamesImpl_ee extends LocalizedNamesImpl {
 
   private native JavaScriptObject loadMyNameMap() /*-{
     return {
-        "AD": "Andorradu",
-        "AE": "United Arab Emiratesdu",
-        "AF": "Afghanistadu",
-        "AG": "Antigua kplɛ Barbudadukɔwo",
-        "AI": "Anguilladu",
-        "AL": "Albaniadu",
-        "AM": "Armeniadu",
-        "AN": "Nedalands Antilisdu",
-        "AO": "Angoladu",
-        "AR": "Argentinadu",
-        "AS": "Amerika Samoadu",
-        "AT": "Austriadu",
-        "AU": "Australiadu",
-        "AW": "Arubadu",
-        "AZ": "Azerbaigyandu",
-        "BA": "Bosnia kplɛ Herzegovinadukɔwo",
-        "BB": "Barbadosdu",
-        "BD": "Bangladesidu",
-        "BE": "Belgiumdu",
-        "BF": "Burkina Fasodu",
-        "BG": "Bulgaridu",
-        "BH": "Bahraindu",
-        "BI": "Burundidu",
-        "BJ": "Benindu",
-        "BM": "Bermudadu",
-        "BN": "Bruneidu",
-        "BO": "Boliviadu",
-        "BR": "Brazildu",
-        "BS": "Bahamasdu",
-        "BT": "Bhutandu",
-        "BW": "Botswanadu",
-        "BY": "Belarusdu",
-        "BZ": "Belizidu",
-        "CA": "Kanadadu",
-        "CD": "Kongo Demokratik Repɔblikdu",
-        "CF": "Sentral Afrikan Republikdu",
-        "CG": "Kongodu",
-        "CH": "Switzerland-du",
-        "CI": "Kote d'ivoiredu",
-        "CK": "Kook Ailandsdukɔwo",
-        "CL": "Tsilidu",
-        "CM": "Kamerundu",
-        "CN": "Tsinadu",
-        "CO": "Kolombiadu",
-        "CR": "Kosta Rikadu",
-        "CS": "Serbia kplɛ Montenegrodukɔwo",
-        "CU": "kubadu",
-        "CV": "Kape Verde Ailandsdukɔwo",
-        "CY": "Syprusdu",
-        "CZ": "Tsek Repɔblikdu",
-        "DE": "Germanidu",
-        "DJ": "Dzibutidu",
-        "DK": "Denmarkdu",
-        "DM": "Dominikadu",
-        "DO": "Dominika Repɔblikdu",
-        "DZ": "Algeriadu",
-        "EC": "Ekuadɔdu",
-        "EE": "Estoniadu",
-        "EG": "Egyptdu",
-        "ER": "Eritreadu",
-        "ES": "Spaindu",
-        "ET": "Etiopiadu",
-        "FI": "Finland-du",
-        "FJ": "Fidzidu",
-        "FK": "Falklanɖ Ailandsdukɔwo",
-        "FM": "Mikronesiadu",
-        "FR": "Fransdu",
-        "GA": "Gabɔndu",
-        "GB": "United Kingdomdu",
-        "GD": "Grenadadu",
-        "GE": "Georgiadu",
-        "GF": "Frentsi Guianadu",
-        "GH": "Ghanadu",
-        "GI": "Gibraltadu",
-        "GL": "Greenland-du",
-        "GM": "Gambiadu",
-        "GN": "Guinidu",
-        "GP": "Guadelupedu",
-        "GQ": "Ekuatorial Ginidu",
-        "GR": "Greesidu",
-        "GT": "Guatemayadu",
-        "GU": "Guamdu",
-        "GW": "Gini-Bisaodu",
+        "001": "xexeme",
+        "002": "Afrika nutome",
+        "003": "Dziehe Amerika nutome",
+        "005": "Anyiehe Amerika nutome",
+        "009": "Oceania nutome",
+        "011": "Ɣetoɖoƒelɔƒo Afrika nutome",
+        "013": "Titina Amerika nutome",
+        "014": "Ɣedzeƒe Afrika nutome",
+        "015": "Dziehe Afrika nutome",
+        "017": "Titina Afrika nutome",
+        "018": "Anyiehelɔƒo Afrika nutome",
+        "019": "Amerika nutome",
+        "021": "Dziehelɔƒo Amerika nutome",
+        "029": "Karibbea nutome",
+        "030": "Ɣedzeƒe Asia nutome",
+        "034": "Anyiehelɔƒo Asia nutome",
+        "035": "Anyiehe Ɣedzeƒe Afrika nutome",
+        "039": "Anyiehelɔƒo Europa nutome",
+        "053": "Australia kple New Zealand nutome",
+        "054": "Melanesia nutome",
+        "057": "Mikronesia",
+        "061": "Pɔlinesia nutome",
+        "142": "Asia nutome",
+        "143": "Titina Asia nutome",
+        "145": "Ɣetoɖoƒelɔƒo Asia nutome",
+        "150": "Europa nutome",
+        "151": "Ɣedzeƒe Europa nutome",
+        "154": "Dziehelɔƒo Europa nutome",
+        "155": "Ɣetoɖoƒelɔƒo Europa nutome",
+        "419": "Latin Amerika nutome",
+        "AC": "Ascension ƒudomekpo nutome",
+        "AD": "Andorra nutome",
+        "AE": "United Arab Emirates nutome",
+        "AF": "Afghanistan nutome",
+        "AG": "́Antigua kple Barbuda nutome",
+        "AI": "Anguilla nutome",
+        "AL": "Albania nutome",
+        "AM": "Armenia nutome",
+        "AN": "Nedalands Antilis nutome",
+        "AO": "Angola nutome",
+        "AQ": "Antartica nutome",
+        "AR": "Argentina nutome",
+        "AS": "Amerika Samoa nutome",
+        "AT": "Austria nutome",
+        "AU": "Australia nutome",
+        "AW": "Aruba nutome",
+        "AX": "Åland ƒudomekpo nutome",
+        "AZ": "Azerbaijan nutome",
+        "BA": "Bosnia kple Herzergovina nutome",
+        "BB": "Barbados nutome",
+        "BD": "Bangladesh nutome",
+        "BE": "Belgium nutome",
+        "BF": "Burkina Faso nutome",
+        "BG": "Bulgaria nutome",
+        "BH": "Bahrain nutome",
+        "BI": "Burundi nutome",
+        "BJ": "Benin nutome",
+        "BL": "Saint Barthélemy nutome",
+        "BM": "Bermuda nutome",
+        "BN": "Brunei nutome",
+        "BO": "Bolivia nutome",
+        "BR": "Brazil nutome",
+        "BS": "Bahamas nutome",
+        "BT": "Bhutan nutome",
+        "BV": "Bouvet ƒudomekpo nutome",
+        "BW": "Botswana nutome",
+        "BY": "Belarus nutome",
+        "BZ": "Belize nutome",
+        "CA": "Kanada nutome",
+        "CC": "Kokos [Kiling] fudomekpo nutome",
+        "CD": "Kongo Kinshasa nutome",
+        "CF": "Titina Afrika repɔblik nutome",
+        "CG": "Kongo Brazzaville nutome",
+        "CH": "Switzerland nutome",
+        "CI": "Kote d’Ivoire nutome",
+        "CK": "Kook ƒudomekpo nutome",
+        "CL": "Tsile nutome",
+        "CM": "Kamerun nutome",
+        "CN": "Tsaina nutome",
+        "CO": "Kolombia nutome",
+        "CP": "Klipaton ƒudomekpo nutome",
+        "CR": "Kosta Rika nutome",
+        "CS": "Serbia kple Montenegro nutome",
+        "CU": "Kuba nutome",
+        "CV": "Kape Verde nutome",
+        "CX": "Kristmas ƒudomekpo nutome",
+        "CY": "Saiprus nutome",
+        "CZ": "Tsɛk repɔblik nutome",
+        "DE": "Germania nutome",
+        "DG": "Diego Garsia nutome",
+        "DJ": "Dzibuti nutome",
+        "DK": "Denmark nutome",
+        "DM": "Dominika nutome",
+        "DO": "Dominika repɔblik nutome",
+        "DZ": "Algeria nutome",
+        "EA": "Keuta and Melilla nutome",
+        "EC": "Ekuadɔ nutome",
+        "EE": "Estonia nutome",
+        "EG": "Egypte nutome",
+        "EH": "Ɣetoɖoƒe Sahara nutome",
+        "ER": "Eritrea nutome",
+        "ES": "Spania nutome",
+        "ET": "Etiopia nutome",
+        "EU": "Europa Wɔɖeka nutome",
+        "FI": "Finland nutome",
+        "FJ": "Fidzi nutome",
+        "FK": "Falkland ƒudomekpowo nutome",
+        "FM": "Mikronesia nutome",
+        "FO": "Faroe ƒudomekpowo nutome",
+        "FR": "Frans nutome",
+        "GA": "Gabɔn nutome",
+        "GB": "United Kingdom nutome",
+        "GD": "Grenada nutome",
+        "GE": "Georgia nutome",
+        "GF": "Frentsi Gayana nutome",
+        "GG": "Guernse nutome",
+        "GH": "Ghana nutome",
+        "GI": "Gibraltar nutome",
+        "GL": "Grinland nutome",
+        "GM": "Gambia nutome",
+        "GN": "Guini nutome",
+        "GP": "Guadelupe nutome",
+        "GQ": "Ekuatorial Guini nutome",
+        "GR": "Grisi nutome",
+        "GS": "Anyiehe Georgia kple Anyiehe Sandwich ƒudomekpowo nutome",
+        "GT": "Guatemala nutome",
+        "GU": "Guam nutome",
+        "GW": "Gini-Bisao nutome",
         "GY": "Guyanadu",
+        "HK": "Hɔng Kɔng SAR Tsaina nutome",
+        "HM": "Heard kple Mcdonald ƒudomekpowo nutome",
         "HN": "Hondurasdu",
-        "HR": "Kroashiadu",
-        "HT": "Haitidu",
-        "HU": "Hungaridu",
-        "ID": "Indonesiadu",
-        "IE": "Ireland-du",
-        "IL": "Izraldu",
-        "IN": "Inɖiadu",
-        "IO": "British India Oshiin Territorydu",
-        "IQ": "Irakdu",
-        "IR": "Irandu",
-        "IS": "Aiselanddu",
-        "IT": "Italidu",
-        "JM": "Gyamaikadu",
-        "JO": "Gyɔdandu",
-        "JP": "Gyapandu",
-        "KE": "Kenyadu",
-        "KG": "Kyrgyzstandu",
-        "KH": "Kambodiadu",
-        "KI": "Kiribatidu",
-        "KM": "Komorosdu",
-        "KN": "Saint Kitis kplɛ Nevisdukɔwo",
-        "KP": "North Koreadu",
-        "KR": "South Koreadu",
-        "KW": "Kuwaitdu",
-        "KY": "Kayman Ailandsdukɔwo",
-        "KZ": "Kazakstandu",
-        "LA": "Laosdu",
-        "LB": "Lebanɔndu",
-        "LC": "Saint Lusiadu",
-        "LI": "Litsensteindu",
-        "LK": "Sri Lankadu",
-        "LR": "Liberiadu",
-        "LS": "Lɛsotodu",
-        "LT": "Lituaniadu",
-        "LU": "Luxembɔgdu",
-        "LV": "Latviadu",
-        "LY": "Libyadu",
-        "MA": "Morokodu",
-        "MC": "Monakodu",
-        "MD": "Moldovadu",
-        "MG": "Madagaskadu",
-        "MH": "Marshal Aislandsdu",
-        "MK": "Masedoniadu",
-        "ML": "Malidu",
-        "MM": "Myanmardu",
-        "MN": "Mongoliadu",
-        "MP": "Norh Mariana Ailandukɔwo",
-        "MQ": "Martinikidu",
-        "MR": "Mɔritaniadu",
-        "MS": "Montserratdu",
-        "MT": "Maltadu",
-        "MU": "Mɔritiusdu",
-        "MV": "Maldivisdu",
-        "MW": "Malawidu",
-        "MX": "Mesikodu",
-        "MY": "Malaysiadu",
-        "MZ": "Mozambikidu",
-        "NA": "Namibiadu",
-        "NC": "New Kaledoniadu",
-        "NE": "Nigerdu",
-        "NF": "Norfolk Ailanddu",
-        "NG": "Nigeriadu",
-        "NI": "Nikaraguadu",
-        "NL": "Nedalandsdu",
-        "NO": "Norwaydu",
-        "NP": "Nepaldu",
-        "NR": "Naurudu",
-        "NU": "Niuedu",
-        "NZ": "New Zealand-du",
-        "OM": "Omandu",
-        "PA": "Panamadu",
-        "PE": "Perudu",
-        "PF": "Frentsi Polynesiadu",
-        "PG": "Papua New Guineadu",
-        "PH": "Philipinsdu",
-        "PK": "Pakistandu",
-        "PL": "Polandu",
-        "PM": "Saint Pierre kplɛ Mikelɔndukɔwo",
-        "PN": "Pitkairndu",
-        "PR": "Puerto Rikodu",
-        "PS": "Palestinia West Bank kplɛ Gazadukɔwo",
-        "PT": "Portugaldu",
-        "PW": "Palaudu",
-        "PY": "Paraguadu",
-        "QA": "Katadu",
-        "RE": "Reuniondu",
-        "RO": "Romaniadu",
-        "RU": "Russiadu",
-        "RW": "Rwandadu",
-        "SA": "Saudi Arabiadu",
-        "SB": "Solomon Ailandukɔwo",
-        "SC": "Seyshɛlsdu",
-        "SD": "Sudandu",
-        "SE": "Swedendu",
-        "SG": "Singapɔrdu",
-        "SH": "Saint Helenadu",
-        "SI": "Sloveniadu",
-        "SK": "Slovakiadu",
-        "SL": "Sierra Leonedu",
-        "SM": "San Marinodu",
-        "SN": "Senegaldu",
-        "SO": "Somaliadu",
-        "SR": "Surinamedu",
-        "ST": "Sao Tome kplɛ Prinsipidukɔwo",
-        "SV": "El Savadɔdu",
-        "SY": "Syriadu",
-        "SZ": "Swaziland-du",
-        "TC": "Turks kplɛ kaikos Islandsdukɔwo",
-        "TD": "Tsad-du",
-        "TG": "Togodu",
-        "TH": "Thailand-du",
-        "TJ": "Taghikistandu",
-        "TK": "Tokelaudu",
-        "TL": "East Timordu",
-        "TM": "Turkmenistandu",
-        "TN": "Tunisiadu",
-        "TO": "Tongadu",
-        "TR": "Turkeedu",
-        "TT": "Trinidad kplɛ Tobagodukɔwo",
-        "TV": "Tuvaludu",
-        "TW": "Taiwandu",
-        "TZ": "Tanzaniadu",
-        "UA": "Ukrainedu",
-        "UG": "Ugandadu",
-        "US": "USA-dukɔwo",
-        "UY": "Uruguaydu",
-        "UZ": "Uzbekistandu",
-        "VA": "Vatikan Statedu",
-        "VC": "Saint Vinsent kplɛ Grenadinisdukɔwo",
-        "VE": "Venezueladu",
-        "VG": "British Virgin Islandsdukɔwo",
-        "VI": "U.S Virgin Islandsdukɔwo",
-        "VN": "Vietnamdu",
-        "VU": "Vanuatudu",
-        "WF": "Wallis kplɛ Futunadu",
-        "WS": "Samoadu",
-        "YE": "Yemendu",
-        "YT": "Mayotidu",
-        "ZA": "South Afrikadu",
-        "ZM": "Zambiadu",
-        "ZW": "Zimbabwedu"
+        "HR": "Kroatsia nutome",
+        "HT": "Haiti nutome",
+        "HU": "Hungari nutome",
+        "IC": "Kanari ƒudomekpowo nutome",
+        "ID": "Indonesia nutome",
+        "IE": "Ireland nutome",
+        "IL": "Israel nutome",
+        "IM": "Aisle of Man nutome",
+        "IN": "India nutome",
+        "IO": "Britaintɔwo ƒe india ƒudome nutome",
+        "IQ": "iraqdukɔ",
+        "IR": "Iran nutome",
+        "IS": "Aiseland nutome",
+        "IT": "Italia nutome",
+        "JE": "Dzɛse nutome",
+        "JM": "Dzamaika nutome",
+        "JO": "Yordan nutome",
+        "JP": "Dzapan nutome",
+        "KE": "Kenya nutome",
+        "KG": "Kirgizstan nutome",
+        "KH": "Kambodia nutome",
+        "KI": "Kiribati nutome",
+        "KM": "Komoros nutome",
+        "KN": "Saint Kitis kple Nevis nutome",
+        "KP": "Dziehe Korea nutome",
+        "KR": "Anyiehe Korea nutome",
+        "KW": "Kuwait nutome",
+        "KY": "Kayman ƒudomekpowo nutome",
+        "KZ": "Kazakstan nutome",
+        "LA": "Laos nutome",
+        "LB": "Lebanɔn nutome",
+        "LC": "Saint Lusia nutome",
+        "LI": "Litsenstein nutome",
+        "LK": "Sri Lanka nutome",
+        "LR": "Liberia nutome",
+        "LS": "Lɛsoto nutome",
+        "LT": "Lituania nutome",
+        "LU": "Lazembɔg nutome",
+        "LV": "Latvia nutome",
+        "LY": "Libya nutome",
+        "MA": "Moroko nutome",
+        "MC": "Monako nutome",
+        "MD": "Moldova nutome",
+        "ME": "Montenegro nutome",
+        "MF": "Saint Martin nutome",
+        "MG": "Madagaska nutome",
+        "MH": "Marshal ƒudomekpowo nutome",
+        "MK": "Makedonia nutome",
+        "ML": "Mali nutome",
+        "MM": "Myanmar [Burma] nutome",
+        "MN": "Mongolia nutome",
+        "MO": "Macau SAR Tsaina nutome",
+        "MP": "Dziehe Marina ƒudomekpowo nutome",
+        "MQ": "Martiniki nutome",
+        "MR": "Mauritania nutome",
+        "MS": "Montserrat nutome",
+        "MT": "Malta nutome",
+        "MU": "mauritiusdukɔ",
+        "MV": "maldivesdukɔ",
+        "MW": "Malawi nutome",
+        "MX": "Meksico nutome",
+        "MY": "Malaysia nutome",
+        "MZ": "Mozambiki nutome",
+        "NA": "Namibia nutome",
+        "NC": "New Kaledonia nutome",
+        "NE": "Niger nutome",
+        "NF": "Norfolk ƒudomekpo nutome",
+        "NG": "Nigeria nutome",
+        "NI": "Nicaraguadukɔ",
+        "NL": "Nedalands nutome",
+        "NO": "Norway nutome",
+        "NP": "Nepal nutome",
+        "NR": "Nauru nutome",
+        "NU": "Niue nutome",
+        "NZ": "New Zealand nutome",
+        "OM": "Oman nutome",
+        "PA": "Panama nutome",
+        "PE": "Peru nutome",
+        "PF": "Frentsi Pɔlinesia nutome",
+        "PG": "Papua New Gini nutome",
+        "PH": "Filipini nutome",
+        "PK": "Pakistan nutome",
+        "PL": "Poland nutome",
+        "PM": "Saint Pierre kple Mikelɔn nutome",
+        "PN": "Pitkairn ƒudomekpo nutome",
+        "PR": "Puerto Riko nutome",
+        "PS": "Palestinia nutome",
+        "PT": "Portugal nutome",
+        "PW": "Palau nutome",
+        "PY": "Paragua nutome",
+        "QA": "Katar nutome",
+        "QO": "Outlaying Oceania nutome",
+        "RE": "Réunion nutome",
+        "RO": "Romania nutome",
+        "RU": "Russia nutome",
+        "RW": "Rwanda nutome",
+        "SA": "Saudi Arabia nutome",
+        "SB": "Solomon ƒudomekpowo nutome",
+        "SC": "Seshɛls nutome",
+        "SD": "Sudan nutome",
+        "SE": "Sweden nutome",
+        "SG": "Singapɔr nutome",
+        "SH": "Saint Helena nutome",
+        "SI": "Slovenia nutome",
+        "SJ": "Svalbard kple Yan Mayen nutome",
+        "SK": "Slovakia nutome",
+        "SL": "Sierra Leone nutome",
+        "SM": "San Marino nutome",
+        "SN": "Senegal nutome",
+        "SO": "Somalia nutome",
+        "SR": "Suriname nutome",
+        "ST": "São Tomé kple Príncipe nutome",
+        "SV": "El Salvadɔ nutome",
+        "SY": "Siria nutome",
+        "SZ": "Swaziland nutome",
+        "TA": "Tristan da Kunha nutome",
+        "TC": "Tɛks kple Kaikos ƒudomekpowo nutome",
+        "TD": "Tsad nutome",
+        "TF": "Anyiehe Franseme nutome",
+        "TG": "Togo nutome",
+        "TH": "Tailand nutome",
+        "TJ": "Tajikistan nutome",
+        "TK": "Tokelau nutome",
+        "TL": "Timor-Leste nutome",
+        "TM": "Tɛkmenistan nutome",
+        "TN": "Tunisia nutome",
+        "TO": "Tonga nutome",
+        "TR": "Tɛki nutome",
+        "TT": "Trinidad kple Tobago nutome",
+        "TV": "Tuvalu nutome",
+        "TW": "Taiwan nutome",
+        "TZ": "Tanzania nutome",
+        "UA": "Ukraine nutome",
+        "UG": "Uganda nutome",
+        "UM": "U.S. Minor Outlaying ƒudomekpowo nutome",
+        "US": "USA nutome",
+        "UY": "uruguaydukɔ",
+        "UZ": "Uzbekistan nutome",
+        "VA": "Vatikandu nutome",
+        "VC": "Saint Vincent kple Grenadine nutome",
+        "VE": "Venezuela nutome",
+        "VG": "Britaintɔwo ƒe Virgin ƒudomekpowo nutome",
+        "VI": "U.S. Vɛrgin ƒudomekpowo nutome",
+        "VN": "Vietnam nutome",
+        "VU": "Vanuatu nutome",
+        "WF": "Wallis kple Futuna nutome",
+        "WS": "Samoa nutome",
+        "YE": "Yemen nutome",
+        "YT": "Mayotte nutome",
+        "ZA": "Anyiehe Afrika nutome",
+        "ZM": "Zambia nutome",
+        "ZW": "Zimbabwe nutome",
+        "ZZ": "nutome manya"
     };
   }-*/;
 }

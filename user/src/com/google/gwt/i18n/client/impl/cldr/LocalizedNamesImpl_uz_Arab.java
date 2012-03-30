@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "uz_Arab" locale.
@@ -34,7 +39,6 @@ public class LocalizedNamesImpl_uz_Arab extends LocalizedNamesImpl_uz {
         "AI",
         "AL",
         "AM",
-        "AN",
         "AO",
         "AQ",
         "AR",
@@ -57,6 +61,8 @@ public class LocalizedNamesImpl_uz_Arab extends LocalizedNamesImpl_uz {
         "BM",
         "BN",
         "BO",
+        "BQ",
+        "BR",
         "BS",
         "BT",
         "BV",
@@ -73,14 +79,17 @@ public class LocalizedNamesImpl_uz_Arab extends LocalizedNamesImpl_uz {
         "CK",
         "CL",
         "CM",
+        "CN",
         "CO",
         "CP",
         "CR",
         "CU",
         "CV",
+        "CW",
         "CX",
         "CY",
         "CZ",
+        "DE",
         "DG",
         "DJ",
         "DK",
@@ -101,7 +110,9 @@ public class LocalizedNamesImpl_uz_Arab extends LocalizedNamesImpl_uz {
         "FK",
         "FM",
         "FO",
+        "FR",
         "GA",
+        "GB",
         "GD",
         "GE",
         "GF",
@@ -130,13 +141,16 @@ public class LocalizedNamesImpl_uz_Arab extends LocalizedNamesImpl_uz {
         "IE",
         "IL",
         "IM",
+        "IN",
         "IO",
         "IQ",
         "IR",
         "IS",
+        "IT",
         "JE",
         "JM",
         "JO",
+        "JP",
         "KE",
         "KG",
         "KH",
@@ -214,6 +228,7 @@ public class LocalizedNamesImpl_uz_Arab extends LocalizedNamesImpl_uz {
         "RE",
         "RO",
         "RS",
+        "RU",
         "RW",
         "SA",
         "SB",
@@ -230,8 +245,10 @@ public class LocalizedNamesImpl_uz_Arab extends LocalizedNamesImpl_uz {
         "SN",
         "SO",
         "SR",
+        "SS",
         "ST",
         "SV",
+        "SX",
         "SY",
         "SZ",
         "TA",
@@ -254,7 +271,9 @@ public class LocalizedNamesImpl_uz_Arab extends LocalizedNamesImpl_uz {
         "UA",
         "UG",
         "UM",
+        "US",
         "UY",
+        "UZ",
         "VA",
         "VC",
         "VE",
@@ -269,17 +288,6 @@ public class LocalizedNamesImpl_uz_Arab extends LocalizedNamesImpl_uz {
         "ZA",
         "ZM",
         "ZW",
-        "UZ",
-        "GB",
-        "BR",
-        "IT",
-        "DE",
-        "RU",
-        "FR",
-        "CN",
-        "JP",
-        "US",
-        "IN",
         "AF",
     };
   }

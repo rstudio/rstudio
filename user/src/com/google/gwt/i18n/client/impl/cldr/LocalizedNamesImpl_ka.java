@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "ka" locale.
@@ -36,8 +41,10 @@ public class LocalizedNamesImpl_ka extends LocalizedNamesImpl {
     return new String[] {
         "AC",
         "BL",
+        "BQ",
         "CC",
         "CP",
+        "CW",
         "DG",
         "EA",
         "GF",
@@ -48,6 +55,8 @@ public class LocalizedNamesImpl_ka extends LocalizedNamesImpl {
         "NU",
         "PN",
         "SJ",
+        "SS",
+        "SX",
         "TA",
         "TC",
         "TK",
@@ -317,7 +326,6 @@ public class LocalizedNamesImpl_ka extends LocalizedNamesImpl {
     namesMap.put("054", "მელანეზია");
     namesMap.put("057", "მირონეზია");
     namesMap.put("061", "პოლინეზია");
-    namesMap.put("062", "სამხრეთ-ცენტრალური აზია");
     namesMap.put("142", "აზია");
     namesMap.put("143", "ცენტრალური აზია");
     namesMap.put("145", "დასავლეთი აზია");
@@ -325,7 +333,6 @@ public class LocalizedNamesImpl_ka extends LocalizedNamesImpl {
     namesMap.put("151", "აღმოსავლეთი ევროპა");
     namesMap.put("154", "ჩრდილოეთი ევროპა");
     namesMap.put("155", "დასავლეთი ევროპა");
-    namesMap.put("172", "დამოუკიდებელ სახელმწიფოთა თანამეგობრობა");
     namesMap.put("419", "ლათინური ამერიკა და კარიბი");
     namesMap.put("AD", "ანდორა");
     namesMap.put("AE", "არაბეთის გაერთიანებული ემირატები");
@@ -594,7 +601,6 @@ public class LocalizedNamesImpl_ka extends LocalizedNamesImpl {
         "054": "მელანეზია",
         "057": "მირონეზია",
         "061": "პოლინეზია",
-        "062": "სამხრეთ-ცენტრალური აზია",
         "142": "აზია",
         "143": "ცენტრალური აზია",
         "145": "დასავლეთი აზია",
@@ -602,7 +608,6 @@ public class LocalizedNamesImpl_ka extends LocalizedNamesImpl {
         "151": "აღმოსავლეთი ევროპა",
         "154": "ჩრდილოეთი ევროპა",
         "155": "დასავლეთი ევროპა",
-        "172": "დამოუკიდებელ სახელმწიფოთა თანამეგობრობა",
         "419": "ლათინური ამერიკა და კარიბი",
         "AD": "ანდორა",
         "AE": "არაბეთის გაერთიანებული ემირატები",

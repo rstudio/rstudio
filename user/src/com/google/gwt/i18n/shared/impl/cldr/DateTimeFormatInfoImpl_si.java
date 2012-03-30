@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
 
 /**
  * Implementation of DateTimeFormatInfo for the "si" locale.
@@ -32,7 +36,7 @@ public class DateTimeFormatInfoImpl_si extends DateTimeFormatInfoImpl {
 
   @Override
   public String dateFormatFull() {
-    return "EEEE, y MMMM d";
+    return "y MMMM d, EEEE";
   }
 
   @Override
@@ -57,19 +61,39 @@ public class DateTimeFormatInfoImpl_si extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String formatYearMonthNumDay() {
-    return "y/M/d";
+  public String formatHour12Minute() {
+    return "a h.mm";
+  }
+
+  @Override
+  public String formatHour12MinuteSecond() {
+    return "a h.mm.ss";
+  }
+
+  @Override
+  public String formatMinuteSecond() {
+    return "mm.ss";
+  }
+
+  @Override
+  public String formatMonthFullWeekdayDay() {
+    return "MMMM d EEEE";
+  }
+
+  @Override
+  public String formatYearMonthWeekdayDay() {
+    return "y MMM d, EEE";
   }
 
   @Override
   public String[] monthsFull() {
     return new String[] {
-        "ජනවාර",
-        "පෙබරවාර",
-        "මාර්ත",
+        "ජනවාරි",
+        "පෙබරවාරි",
+        "මාර්තු",
         "අප්‍රේල්",
         "මැයි",
-        "ජූන",
+        "ජූනි",
         "ජූලි",
         "අගෝස්තු",
         "සැප්තැම්බර්",
@@ -102,14 +126,32 @@ public class DateTimeFormatInfoImpl_si extends DateTimeFormatInfoImpl {
     return new String[] {
         "ජන",
         "පෙබ",
-        "මාර්ත",
-        "අප්‍රේල",
-        "මැය",
-        "ජූන",
-        "ජූල",
+        "මාර්තු",
+        "අප්‍රේල්",
+        "මැයි",
+        "ජූනි",
+        "ජූලි",
         "අගෝ",
-        "සැප",
-        "ඔක",
+        "සැප්",
+        "ඔක්",
+        "නොවැ",
+        "දෙසැ"
+    };
+  }
+
+  @Override
+  public String[] monthsShortStandalone() {
+    return new String[] {
+        "ජන",
+        "පෙබ",
+        "මාර්",
+        "අප්‍රේල්",
+        "මැයි",
+        "ජූනි",
+        "ජූලි",
+        "අගෝ",
+        "සැප්",
+        "ඔක්",
         "නොවැ",
         "දෙසැ"
     };
@@ -147,12 +189,12 @@ public class DateTimeFormatInfoImpl_si extends DateTimeFormatInfoImpl {
 
   @Override
   public String timeFormatMedium() {
-    return "h:mm:ss a";
+    return "a h.mm.ss";
   }
 
   @Override
   public String timeFormatShort() {
-    return "h:mm a";
+    return "a h.mm";
   }
 
   @Override

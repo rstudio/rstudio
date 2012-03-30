@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "ga" locale.
@@ -157,6 +162,7 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
         "BJ",
         "BM",
         "BL",
+        "BQ",
         "BN",
         "BF",
         "CM",
@@ -170,6 +176,7 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
         "TF",
         "KW",
         "CU",
+        "CW",
         "DG",
         "DJ",
         "DM",
@@ -267,9 +274,11 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
         "SL",
         "SG",
         "LK",
+        "SS",
         "US",
         "SR",
         "SJ",
+        "SX",
         "TA",
         "TL",
         "TK",
@@ -301,7 +310,6 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
     namesMap.put("142", "An Áise");
     namesMap.put("143", "An Áise Láir");
     namesMap.put("150", "An Eoraip");
-    namesMap.put("172", "Comhlathas na Stát Neamhspleácha");
     namesMap.put("419", "Meiriceá Laidineach agus an Mhuir Chairib");
     namesMap.put("AD", "Andóra");
     namesMap.put("AE", "Aontas na nÉimíríochtaí Arabacha");
@@ -562,7 +570,6 @@ public class LocalizedNamesImpl_ga extends LocalizedNamesImpl {
         "142": "An Áise",
         "143": "An Áise Láir",
         "150": "An Eoraip",
-        "172": "Comhlathas na Stát Neamhspleácha",
         "419": "Meiriceá Laidineach agus an Mhuir Chairib",
         "AD": "Andóra",
         "AE": "Aontas na nÉimíríochtaí Arabacha",

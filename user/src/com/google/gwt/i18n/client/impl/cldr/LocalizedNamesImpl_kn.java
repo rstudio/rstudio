@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "kn" locale.
@@ -34,6 +39,10 @@ public class LocalizedNamesImpl_kn extends LocalizedNamesImpl {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "AO",
         "AQ",
         "AD",
@@ -87,13 +96,13 @@ public class LocalizedNamesImpl_kn extends LocalizedNamesImpl {
         "CK",
         "KW",
         "CA",
-        "IC",
         "CV",
         "KY",
         "CC",
         "KM",
         "CO",
         "CR",
+        "IC",
         "CM",
         "CU",
         "CX",
@@ -135,13 +144,13 @@ public class LocalizedNamesImpl_kn extends LocalizedNamesImpl {
         "TK",
         "TG",
         "TT",
-        "TA",
-        "DG",
         "DK",
+        "DG",
         "DM",
         "DO",
         "TJ",
         "TM",
+        "TA",
         "TH",
         "TW",
         "ZA",
@@ -262,6 +271,7 @@ public class LocalizedNamesImpl_kn extends LocalizedNamesImpl {
         "SR",
         "SD",
         "SN",
+        "EA",
         "RS",
         "CS",
         "KN",
@@ -277,7 +287,6 @@ public class LocalizedNamesImpl_kn extends LocalizedNamesImpl {
         "SA",
         "ES",
         "SM",
-        "EA",
         "SK",
         "SI",
         "SZ",
@@ -317,7 +326,6 @@ public class LocalizedNamesImpl_kn extends LocalizedNamesImpl {
     namesMap.put("054", "ಮೇಲಿನೇಶಿಯಾ");
     namesMap.put("057", "ಮೈಕ್ರೋನೇಶಿಯನ್ ಪ್ರದೇಶ");
     namesMap.put("061", "ಪೋಲಿನೇಶಿಯಾ");
-    namesMap.put("062", "ದಕ್ಷಿಣ-ಮಧ್ಯ ಏಷ್ಯಾ");
     namesMap.put("142", "ಏಷ್ಯಾ");
     namesMap.put("143", "ಮಧ್ಯ ಏಷ್ಯಾ");
     namesMap.put("145", "ಪಶ್ಚಿಮ ಏಷ್ಯಾ");
@@ -325,10 +333,7 @@ public class LocalizedNamesImpl_kn extends LocalizedNamesImpl {
     namesMap.put("151", "ಪೂರ್ವ ಯೂರೋಪ್");
     namesMap.put("154", "ಉತ್ತರ ಯೂರೋಪ್");
     namesMap.put("155", "ಪಶ್ಚಿಮ ಯೂರೋಪ್");
-    namesMap.put("172", "ಸ್ವಂತಂತ್ರ್ಯ ರಾಷ್ಟ್ರಗಳ ಕಾಮನ್‌ವೆಲ್ತ್");
-    namesMap.put("200", "ಜೆಕೊಸ್ಲೋವಾಕಿಯಾ");
     namesMap.put("419", "ಲ್ಯಾಟಿನ್ ಅಮೇರಿಕಾ ಮತ್ತು ಕೆರಿಬಿಯನ್");
-    namesMap.put("830", "ಛಾನೆಲ್ ದ್ವೀಪಗಳು");
     namesMap.put("AC", "ಅಸೆನ್ಶನ್ ದ್ವೀಪ");
     namesMap.put("AD", "ಅಂಡೋರಾ");
     namesMap.put("AE", "ಸಂಯುಕ್ತ ಅರಬ್ ಎಮಿರೇಟಸ್");
@@ -379,7 +384,7 @@ public class LocalizedNamesImpl_kn extends LocalizedNamesImpl {
     namesMap.put("CM", "ಕ್ಯಾಮರೋನ್");
     namesMap.put("CN", "ಚೀನ");
     namesMap.put("CO", "ಕೊಲಂಬಿಯಾ");
-    namesMap.put("CP", "ಕ್ಲಿಪ್ಪರ್‌ಟನ್ ದ್ವೀಪ");
+    namesMap.put("CP", "ಕ್ಲಿಪರ್ಟನ್‌ ಐಲ್ಯಾಂಡ್‌");
     namesMap.put("CR", "ಕೊಸ್ಟಾ ರಿಕಾ");
     namesMap.put("CS", "ಸೆರ್ಬಿಯಾ ಮತ್ತು ಮೊಂಟೊನೆಗ್ರೋ");
     namesMap.put("CU", "ಕ್ಯೂಬಾ");
@@ -388,13 +393,13 @@ public class LocalizedNamesImpl_kn extends LocalizedNamesImpl {
     namesMap.put("CY", "ಸೈಪ್ರಸ್");
     namesMap.put("CZ", "ಚೆಕ್ ರಿಪಬ್ಲಿಕ್");
     namesMap.put("DE", "ಜರ್ಮನಿ");
-    namesMap.put("DG", "ಡಿಯೇಗೋ ಗಾರ್ಸಿಯಾ");
+    namesMap.put("DG", "ಡೈಗೋ ಗಾರ್ಸಿಯ");
     namesMap.put("DJ", "ಜಿಬೋಟಿ");
     namesMap.put("DK", "ಡೆನ್ಮಾರ್ಕ್");
     namesMap.put("DM", "ಡೊಮಿನಿಕಾ");
     namesMap.put("DO", "ಡೊಮೆನಿಕ್ ರಿಪಬ್ಲಿಕ್");
     namesMap.put("DZ", "ಅಲ್ಗೇರಿಯಾ");
-    namesMap.put("EA", "ಸ್ಯೂಟಾ ಮತ್ತು ಮೆಲಿಲ್ಲಾ");
+    namesMap.put("EA", "ಸೆಯುಟಾ ಹಾಗೂ ಮೆಲಿಲ್ಲಾ");
     namesMap.put("EC", "ಈಕ್ವೆಡಾರ್");
     namesMap.put("EE", "ಎಸ್ತೊನಿಯ");
     namesMap.put("EG", "ಈಜಿಪ್ಟ್");
@@ -403,7 +408,7 @@ public class LocalizedNamesImpl_kn extends LocalizedNamesImpl {
     namesMap.put("ES", "ಸ್ಪೈನ್");
     namesMap.put("ET", "ಇಥಿಯೋಪಿಯಾ");
     namesMap.put("EU", "ಯುರೋಪಿಯನ್ ಯೂನಿಯನ್");
-    namesMap.put("FI", "ಫಿನ್‍‍ಲ್ಯಾಂಡ್");
+    namesMap.put("FI", "ಫಿನ್‌ಲ್ಯಾಂಡ್");
     namesMap.put("FJ", "ಫಿಜಿ");
     namesMap.put("FK", "ಫ್ಹಾಕ್‌ಲ್ಯಾಂಡ್ ದ್ವೀಪಗಳು");
     namesMap.put("FM", "ಮೈಕ್ರೋನೇಶಿಯಾ");
@@ -434,7 +439,7 @@ public class LocalizedNamesImpl_kn extends LocalizedNamesImpl {
     namesMap.put("HR", "ಕ್ರೋಯೇಶಿಯಾ");
     namesMap.put("HT", "ಹೈಟಿ");
     namesMap.put("HU", "ಹಂಗೇರಿ");
-    namesMap.put("IC", "ಕೆನರಿ ದ್ವೀಪಗಳು");
+    namesMap.put("IC", "ಕ್ಯಾನರಿ ದ್ವೀಪಗಳು");
     namesMap.put("ID", "ಇಂಡೋನೇಶಿಯಾ");
     namesMap.put("IE", "ಐರ್ಲೆಂಡ್");
     namesMap.put("IL", "ಇಸ್ರೇಲ್");
@@ -482,7 +487,7 @@ public class LocalizedNamesImpl_kn extends LocalizedNamesImpl {
     namesMap.put("ML", "ಮಾಲಿ");
     namesMap.put("MM", "ಮಯನ್ಮಾರ್");
     namesMap.put("MN", "ಮೊಂಗೋಲಿಯಾ");
-    namesMap.put("MO", "ಮಕಾವ್");
+    namesMap.put("MO", "ಮಖಾವ್");
     namesMap.put("MP", "ಉತ್ತರ ಮರಿಯಾನಾ ದ್ವೀಪಗಳು");
     namesMap.put("MQ", "ಮಾರ್ಟಿನಿಕ್");
     namesMap.put("MR", "ಮಾರಿಟಾನಿಯಾ");
@@ -547,7 +552,7 @@ public class LocalizedNamesImpl_kn extends LocalizedNamesImpl {
     namesMap.put("SV", "ಎಲ್ ಸಾಲ್ವೇಡಾರ್");
     namesMap.put("SY", "ಸಿರಿಯಾ");
     namesMap.put("SZ", "ಸ್ವಾಜಿಲ್ಯಾಂಡ್");
-    namesMap.put("TA", "ಟ್ರಿಸ್ಟನ್ ಡ ಕುನ್ಹಾ");
+    namesMap.put("TA", "ತ್ರಿಸ್ತಾನ್‌ ದ ಕುನ್ಹಾ");
     namesMap.put("TC", "ಟರ್ಕ್ಸ್ ಮತ್ತು ಕೈಕೋಸ್ ದ್ವೀಪಗಳು");
     namesMap.put("TD", "ಚಾಡ್");
     namesMap.put("TF", "ಫ್ರೆಂಚ್ ದಕ್ಷಿಣ ಪ್ರದೇಶಗಳು");
@@ -616,7 +621,6 @@ public class LocalizedNamesImpl_kn extends LocalizedNamesImpl {
         "054": "ಮೇಲಿನೇಶಿಯಾ",
         "057": "ಮೈಕ್ರೋನೇಶಿಯನ್ ಪ್ರದೇಶ",
         "061": "ಪೋಲಿನೇಶಿಯಾ",
-        "062": "ದಕ್ಷಿಣ-ಮಧ್ಯ ಏಷ್ಯಾ",
         "142": "ಏಷ್ಯಾ",
         "143": "ಮಧ್ಯ ಏಷ್ಯಾ",
         "145": "ಪಶ್ಚಿಮ ಏಷ್ಯಾ",
@@ -624,10 +628,7 @@ public class LocalizedNamesImpl_kn extends LocalizedNamesImpl {
         "151": "ಪೂರ್ವ ಯೂರೋಪ್",
         "154": "ಉತ್ತರ ಯೂರೋಪ್",
         "155": "ಪಶ್ಚಿಮ ಯೂರೋಪ್",
-        "172": "ಸ್ವಂತಂತ್ರ್ಯ ರಾಷ್ಟ್ರಗಳ ಕಾಮನ್‌ವೆಲ್ತ್",
-        "200": "ಜೆಕೊಸ್ಲೋವಾಕಿಯಾ",
         "419": "ಲ್ಯಾಟಿನ್ ಅಮೇರಿಕಾ ಮತ್ತು ಕೆರಿಬಿಯನ್",
-        "830": "ಛಾನೆಲ್ ದ್ವೀಪಗಳು",
         "AC": "ಅಸೆನ್ಶನ್ ದ್ವೀಪ",
         "AD": "ಅಂಡೋರಾ",
         "AE": "ಸಂಯುಕ್ತ ಅರಬ್ ಎಮಿರೇಟಸ್",
@@ -678,7 +679,7 @@ public class LocalizedNamesImpl_kn extends LocalizedNamesImpl {
         "CM": "ಕ್ಯಾಮರೋನ್",
         "CN": "ಚೀನ",
         "CO": "ಕೊಲಂಬಿಯಾ",
-        "CP": "ಕ್ಲಿಪ್ಪರ್‌ಟನ್ ದ್ವೀಪ",
+        "CP": "ಕ್ಲಿಪರ್ಟನ್‌ ಐಲ್ಯಾಂಡ್‌",
         "CR": "ಕೊಸ್ಟಾ ರಿಕಾ",
         "CS": "ಸೆರ್ಬಿಯಾ ಮತ್ತು ಮೊಂಟೊನೆಗ್ರೋ",
         "CU": "ಕ್ಯೂಬಾ",
@@ -687,13 +688,13 @@ public class LocalizedNamesImpl_kn extends LocalizedNamesImpl {
         "CY": "ಸೈಪ್ರಸ್",
         "CZ": "ಚೆಕ್ ರಿಪಬ್ಲಿಕ್",
         "DE": "ಜರ್ಮನಿ",
-        "DG": "ಡಿಯೇಗೋ ಗಾರ್ಸಿಯಾ",
+        "DG": "ಡೈಗೋ ಗಾರ್ಸಿಯ",
         "DJ": "ಜಿಬೋಟಿ",
         "DK": "ಡೆನ್ಮಾರ್ಕ್",
         "DM": "ಡೊಮಿನಿಕಾ",
         "DO": "ಡೊಮೆನಿಕ್ ರಿಪಬ್ಲಿಕ್",
         "DZ": "ಅಲ್ಗೇರಿಯಾ",
-        "EA": "ಸ್ಯೂಟಾ ಮತ್ತು ಮೆಲಿಲ್ಲಾ",
+        "EA": "ಸೆಯುಟಾ ಹಾಗೂ ಮೆಲಿಲ್ಲಾ",
         "EC": "ಈಕ್ವೆಡಾರ್",
         "EE": "ಎಸ್ತೊನಿಯ",
         "EG": "ಈಜಿಪ್ಟ್",
@@ -702,7 +703,7 @@ public class LocalizedNamesImpl_kn extends LocalizedNamesImpl {
         "ES": "ಸ್ಪೈನ್",
         "ET": "ಇಥಿಯೋಪಿಯಾ",
         "EU": "ಯುರೋಪಿಯನ್ ಯೂನಿಯನ್",
-        "FI": "ಫಿನ್‍‍ಲ್ಯಾಂಡ್",
+        "FI": "ಫಿನ್‌ಲ್ಯಾಂಡ್",
         "FJ": "ಫಿಜಿ",
         "FK": "ಫ್ಹಾಕ್‌ಲ್ಯಾಂಡ್ ದ್ವೀಪಗಳು",
         "FM": "ಮೈಕ್ರೋನೇಶಿಯಾ",
@@ -733,7 +734,7 @@ public class LocalizedNamesImpl_kn extends LocalizedNamesImpl {
         "HR": "ಕ್ರೋಯೇಶಿಯಾ",
         "HT": "ಹೈಟಿ",
         "HU": "ಹಂಗೇರಿ",
-        "IC": "ಕೆನರಿ ದ್ವೀಪಗಳು",
+        "IC": "ಕ್ಯಾನರಿ ದ್ವೀಪಗಳು",
         "ID": "ಇಂಡೋನೇಶಿಯಾ",
         "IE": "ಐರ್ಲೆಂಡ್",
         "IL": "ಇಸ್ರೇಲ್",
@@ -781,7 +782,7 @@ public class LocalizedNamesImpl_kn extends LocalizedNamesImpl {
         "ML": "ಮಾಲಿ",
         "MM": "ಮಯನ್ಮಾರ್",
         "MN": "ಮೊಂಗೋಲಿಯಾ",
-        "MO": "ಮಕಾವ್",
+        "MO": "ಮಖಾವ್",
         "MP": "ಉತ್ತರ ಮರಿಯಾನಾ ದ್ವೀಪಗಳು",
         "MQ": "ಮಾರ್ಟಿನಿಕ್",
         "MR": "ಮಾರಿಟಾನಿಯಾ",
@@ -846,7 +847,7 @@ public class LocalizedNamesImpl_kn extends LocalizedNamesImpl {
         "SV": "ಎಲ್ ಸಾಲ್ವೇಡಾರ್",
         "SY": "ಸಿರಿಯಾ",
         "SZ": "ಸ್ವಾಜಿಲ್ಯಾಂಡ್",
-        "TA": "ಟ್ರಿಸ್ಟನ್ ಡ ಕುನ್ಹಾ",
+        "TA": "ತ್ರಿಸ್ತಾನ್‌ ದ ಕುನ್ಹಾ",
         "TC": "ಟರ್ಕ್ಸ್ ಮತ್ತು ಕೈಕೋಸ್ ದ್ವೀಪಗಳು",
         "TD": "ಚಾಡ್",
         "TF": "ಫ್ರೆಂಚ್ ದಕ್ಷಿಣ ಪ್ರದೇಶಗಳು",

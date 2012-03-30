@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,14 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+import com.google.gwt.core.client.JavaScriptObject;
+
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "zh_Hant_HK" locale.
@@ -25,6 +32,10 @@ public class LocalizedNamesImpl_zh_Hant_HK extends LocalizedNamesImpl_zh_Hant {
   @Override
   public String[] loadSortedRegionCodes() {
     return new String[] {
+        "BQ",
+        "CW",
+        "SS",
+        "SX",
         "TT",
         "TR",
         "TC",
@@ -220,7 +231,6 @@ public class LocalizedNamesImpl_zh_Hant_HK extends LocalizedNamesImpl_zh_Hant {
         "KY",
         "SN",
         "SC",
-        "EA",
         "RS",
         "CS",
         "TJ",
@@ -230,6 +240,7 @@ public class LocalizedNamesImpl_zh_Hant_HK extends LocalizedNamesImpl_zh_Hant {
         "SG",
         "NC",
         "SL",
+        "EA",
         "CH",
         "SE",
         "VU",
@@ -282,4 +293,27 @@ public class LocalizedNamesImpl_zh_Hant_HK extends LocalizedNamesImpl_zh_Hant {
         "SR",
     };
   }
+
+  @Override
+  protected void loadNameMapJava() {
+    super.loadNameMapJava();
+    namesMap.put("013", "中美洲");
+    namesMap.put("019", "美洲地區");
+    namesMap.put("029", "加勒比");
+    namesMap.put("EA", "瑟塔與梅利拉");
+  }
+
+  @Override
+  protected JavaScriptObject loadNameMapNative() {
+    return overrideMap(super.loadNameMapNative(), loadMyNameMap());
+  }
+
+  private native JavaScriptObject loadMyNameMap() /*-{
+    return {
+        "013": "中美洲",
+        "019": "美洲地區",
+        "029": "加勒比",
+        "EA": "瑟塔與梅利拉"
+    };
+  }-*/;
 }

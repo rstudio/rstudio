@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+//  type=root
+
 
 /**
  * Localized names for the "sg" locale.
@@ -64,6 +69,7 @@ public class LocalizedNamesImpl_sg extends LocalizedNamesImpl {
         "BO",
         "BA",
         "BW",
+        "BQ",
         "BR",
         "BN",
         "BG",
@@ -73,6 +79,7 @@ public class LocalizedNamesImpl_sg extends LocalizedNamesImpl {
         "BV",
         "CC",
         "CP",
+        "CW",
         "CX",
         "DK",
         "DG",
@@ -240,11 +247,13 @@ public class LocalizedNamesImpl_sg extends LocalizedNamesImpl {
         "SK",
         "SI",
         "SO",
+        "SS",
         "SD",
         "SE",
         "CH",
         "SR",
         "SZ",
+        "SX",
         "TA",
         "TJ",
         "TH",
@@ -394,7 +403,7 @@ public class LocalizedNamesImpl_sg extends LocalizedNamesImpl {
     namesMap.put("KP", "Korëe tî Banga");
     namesMap.put("KR", "Korëe tî Mbongo");
     namesMap.put("KW", "Köwêti");
-    namesMap.put("KY", "Âzûâ Ngundë,  Kaimäni");
+    namesMap.put("KY", "Âzûâ Ngundë, Kaimäni");
     namesMap.put("KZ", "Kazakisitäan");
     namesMap.put("LA", "Lùaôsi");
     namesMap.put("LB", "Libùaan");
@@ -620,7 +629,7 @@ public class LocalizedNamesImpl_sg extends LocalizedNamesImpl {
         "KP": "Korëe tî Banga",
         "KR": "Korëe tî Mbongo",
         "KW": "Köwêti",
-        "KY": "Âzûâ Ngundë,  Kaimäni",
+        "KY": "Âzûâ Ngundë, Kaimäni",
         "KZ": "Kazakisitäan",
         "LA": "Lùaôsi",
         "LB": "Libùaan",

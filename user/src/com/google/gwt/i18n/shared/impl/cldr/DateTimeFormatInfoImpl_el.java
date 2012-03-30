@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,10 @@
 package com.google.gwt.i18n.shared.impl.cldr;
 
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
 
 /**
  * Implementation of DateTimeFormatInfo for the "el" locale.
@@ -88,7 +92,7 @@ public class DateTimeFormatInfoImpl_el extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthAbbrev() {
-    return "MMM y";
+    return "LLL y";
   }
 
   @Override
@@ -113,7 +117,7 @@ public class DateTimeFormatInfoImpl_el extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthNumDay() {
-    return "d/M/y";
+    return "d/M/yyyy";
   }
 
   @Override
@@ -194,6 +198,24 @@ public class DateTimeFormatInfoImpl_el extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String[] monthsShortStandalone() {
+    return new String[] {
+        "Ιαν",
+        "Φεβ",
+        "Μάρ",
+        "Απρ",
+        "Μάι",
+        "Ιούν",
+        "Ιούλ",
+        "Αυγ",
+        "Σεπ",
+        "Οκτ",
+        "Νοέ",
+        "Δεκ"
+    };
+  }
+
+  @Override
   public String[] quartersFull() {
     return new String[] {
         "1ο τρίμηνο",
@@ -269,6 +291,19 @@ public class DateTimeFormatInfoImpl_el extends DateTimeFormatInfoImpl {
         "Πεμ",
         "Παρ",
         "Σαβ"
+    };
+  }
+
+  @Override
+  public String[] weekdaysShortStandalone() {
+    return new String[] {
+        "Κυρ",
+        "Δευ",
+        "Τρί",
+        "Τετ",
+        "Πέμ",
+        "Παρ",
+        "Σάβ"
     };
   }
 }

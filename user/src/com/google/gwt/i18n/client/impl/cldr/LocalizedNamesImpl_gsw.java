@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,19 +17,17 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "gsw" locale.
  */
 public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
-
-  @Override
-  public String[] loadLikelyRegionCodes() {
-    return new String[] {
-        "CH",
-    };
-  }
 
   @Override
   public String[] loadSortedRegionCodes() {
@@ -69,6 +67,7 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "BA",
         "BW",
         "BV",
+        "BQ",
         "BR",
         "VG",
         "IO",
@@ -82,6 +81,7 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "CP",
         "CK",
         "CR",
+        "CW",
         "KP",
         "DG",
         "JM",
@@ -235,6 +235,7 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "SK",
         "SI",
         "SO",
+        "SS",
         "BL",
         "SH",
         "KN",
@@ -247,6 +248,7 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "SY",
         "SJ",
         "SZ",
+        "SX",
         "TJ",
         "TW",
         "DK",
@@ -317,7 +319,6 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
     namesMap.put("054", "Melaneesie");
     namesMap.put("057", "Mikroneesischs Inselgebiet");
     namesMap.put("061", "Polineesie");
-    namesMap.put("062", "Süüd-Zentraalaasie");
     namesMap.put("142", "Aasie");
     namesMap.put("143", "Zentraalaasie");
     namesMap.put("145", "Weschtaasie");
@@ -325,9 +326,7 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
     namesMap.put("151", "Oschteuroopa");
     namesMap.put("154", "Nordeuroopa");
     namesMap.put("155", "Weschteuroopa");
-    namesMap.put("172", "Gmäinschaft vo Unabhängige Schtaate");
-    namesMap.put("419", "Latiinameerika und Karibik");
-    namesMap.put("830", "Kanaalinsle");
+    namesMap.put("419", "Latiinameerika");
     namesMap.put("AC", "Ascension");
     namesMap.put("AE", "Veräinigti Arabischi Emiräät");
     namesMap.put("AF", "Afganischtan");
@@ -576,7 +575,6 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "054": "Melaneesie",
         "057": "Mikroneesischs Inselgebiet",
         "061": "Polineesie",
-        "062": "Süüd-Zentraalaasie",
         "142": "Aasie",
         "143": "Zentraalaasie",
         "145": "Weschtaasie",
@@ -584,9 +582,7 @@ public class LocalizedNamesImpl_gsw extends LocalizedNamesImpl {
         "151": "Oschteuroopa",
         "154": "Nordeuroopa",
         "155": "Weschteuroopa",
-        "172": "Gmäinschaft vo Unabhängige Schtaate",
-        "419": "Latiinameerika und Karibik",
-        "830": "Kanaalinsle",
+        "419": "Latiinameerika",
         "AC": "Ascension",
         "AE": "Veräinigti Arabischi Emiräät",
         "AF": "Afganischtan",

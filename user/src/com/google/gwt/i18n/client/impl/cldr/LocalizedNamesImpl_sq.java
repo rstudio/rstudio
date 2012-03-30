@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,19 +17,17 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "sq" locale.
  */
 public class LocalizedNamesImpl_sq extends LocalizedNamesImpl {
-
-  @Override
-  public String[] loadLikelyRegionCodes() {
-    return new String[] {
-        "AL",
-    };
-  }
 
   @Override
   public String[] loadSortedRegionCodes() {
@@ -39,7 +37,6 @@ public class LocalizedNamesImpl_sq extends LocalizedNamesImpl {
         "ZA",
         "AI",
         "DZ",
-        "AN",
         "AD",
         "AO",
         "AG",
@@ -65,6 +62,7 @@ public class LocalizedNamesImpl_sq extends LocalizedNamesImpl {
         "BO",
         "BA",
         "BW",
+        "BQ",
         "BR",
         "CI",
         "BN",
@@ -78,6 +76,7 @@ public class LocalizedNamesImpl_sq extends LocalizedNamesImpl {
         "CD",
         "CK",
         "CP",
+        "CW",
         "CX",
         "DK",
         "DG",
@@ -249,9 +248,11 @@ public class LocalizedNamesImpl_sq extends LocalizedNamesImpl {
         "SO",
         "ES",
         "SR",
+        "SS",
         "SE",
         "SV",
         "SZ",
+        "SX",
         "TA",
         "TH",
         "TW",
@@ -449,7 +450,7 @@ public class LocalizedNamesImpl_sq extends LocalizedNamesImpl {
     namesMap.put("ZA", "Afrika e Jugut");
     namesMap.put("ZM", "Zambi");
     namesMap.put("ZW", "Zimbabve");
-    namesMap.put("ZZ", "Rajon i panjohur ose i pavlefshëm");
+    namesMap.put("ZZ", "Rajon i panjohur");
   }
 
   @Override
@@ -613,7 +614,7 @@ public class LocalizedNamesImpl_sq extends LocalizedNamesImpl {
         "ZA": "Afrika e Jugut",
         "ZM": "Zambi",
         "ZW": "Zimbabve",
-        "ZZ": "Rajon i panjohur ose i pavlefshëm"
+        "ZZ": "Rajon i panjohur"
     };
   }-*/;
 }

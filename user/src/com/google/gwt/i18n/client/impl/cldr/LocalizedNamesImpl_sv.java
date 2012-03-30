@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR DATA:
+//  cldrVersion=21.0
+//  number=$Revision: 6546 Google $
+//  type=root
+//  date=$Date: 2012-02-07 13:32:35 -0500 (Tue, 07 Feb 2012) $
+
 
 /**
  * Localized names for the "sv" locale.
@@ -63,6 +68,7 @@ public class LocalizedNamesImpl_sv extends LocalizedNamesImpl {
         "BA",
         "BW",
         "BV",
+        "BQ",
         "BR",
         "IO",
         "VG",
@@ -78,6 +84,7 @@ public class LocalizedNamesImpl_sv extends LocalizedNamesImpl {
         "CO",
         "CK",
         "CR",
+        "CW",
         "CY",
         "DK",
         "DG",
@@ -243,12 +250,14 @@ public class LocalizedNamesImpl_sv extends LocalizedNamesImpl {
         "SO",
         "ES",
         "LK",
+        "SS",
         "GB",
         "SD",
         "SR",
         "SJ",
         "SZ",
         "SE",
+        "SX",
         "ZA",
         "GS",
         "KR",
@@ -318,7 +327,6 @@ public class LocalizedNamesImpl_sv extends LocalizedNamesImpl {
     namesMap.put("054", "Melanesien");
     namesMap.put("057", "Mikronesiska öarna");
     namesMap.put("061", "Polynesien");
-    namesMap.put("062", "södra Centralasien");
     namesMap.put("142", "Asien");
     namesMap.put("143", "Centralasien");
     namesMap.put("145", "Västasien");
@@ -326,9 +334,7 @@ public class LocalizedNamesImpl_sv extends LocalizedNamesImpl {
     namesMap.put("151", "Östeuropa");
     namesMap.put("154", "Nordeuropa");
     namesMap.put("155", "Västeuropa");
-    namesMap.put("172", "Oberoende staters samvälde");
-    namesMap.put("419", "Latinamerika och Karibien");
-    namesMap.put("830", "Kanalöarna");
+    namesMap.put("419", "Latinamerika");
     namesMap.put("AC", "Ascension");
     namesMap.put("AE", "Förenade Arabemiraten");
     namesMap.put("AG", "Antigua och Barbuda");
@@ -387,7 +393,7 @@ public class LocalizedNamesImpl_sv extends LocalizedNamesImpl {
     namesMap.put("GL", "Grönland");
     namesMap.put("GQ", "Ekvatorialguinea");
     namesMap.put("GR", "Grekland");
-    namesMap.put("GS", "Sydgeorgien och Södra Sandwichöarna");
+    namesMap.put("GS", "Sydgeorgien och Sydsandwichöarna");
     namesMap.put("HK", "Hongkong");
     namesMap.put("HM", "Heard- och McDonaldöarna");
     namesMap.put("HR", "Kroatien");
@@ -506,7 +512,6 @@ public class LocalizedNamesImpl_sv extends LocalizedNamesImpl {
         "054": "Melanesien",
         "057": "Mikronesiska öarna",
         "061": "Polynesien",
-        "062": "södra Centralasien",
         "142": "Asien",
         "143": "Centralasien",
         "145": "Västasien",
@@ -514,9 +519,7 @@ public class LocalizedNamesImpl_sv extends LocalizedNamesImpl {
         "151": "Östeuropa",
         "154": "Nordeuropa",
         "155": "Västeuropa",
-        "172": "Oberoende staters samvälde",
-        "419": "Latinamerika och Karibien",
-        "830": "Kanalöarna",
+        "419": "Latinamerika",
         "AC": "Ascension",
         "AE": "Förenade Arabemiraten",
         "AG": "Antigua och Barbuda",
@@ -575,7 +578,7 @@ public class LocalizedNamesImpl_sv extends LocalizedNamesImpl {
         "GL": "Grönland",
         "GQ": "Ekvatorialguinea",
         "GR": "Grekland",
-        "GS": "Sydgeorgien och Södra Sandwichöarna",
+        "GS": "Sydgeorgien och Sydsandwichöarna",
         "HK": "Hongkong",
         "HM": "Heard- och McDonaldöarna",
         "HR": "Kroatien",
