@@ -140,6 +140,9 @@ public:
    bool enableLaTeXShellEscape() const;
    void setEnableLaTeXShellEscape(bool enableShellEscape);
 
+   std::string spellingLanguage() const;
+   std::vector<std::string> spellingCustomDictionaries() const;
+
 private:
 
    void onSettingsFileChanged(
@@ -171,6 +174,8 @@ private:
    mutable boost::scoped_ptr<std::string> pDefaultSweaveEngine_;
    mutable boost::scoped_ptr<std::string> pDefaultLatexProgram_;
    mutable boost::scoped_ptr<bool> pAlwaysEnableRnwConcordance_;
+   mutable boost::scoped_ptr<std::string> pSpellingLanguage_;
+   mutable boost::scoped_ptr<core::json::Array> pSpellingCustomDicts_;
 };
    
 } // namespace session

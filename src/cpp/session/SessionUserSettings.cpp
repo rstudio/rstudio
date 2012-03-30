@@ -15,6 +15,8 @@
 
 #include <iostream>
 
+#include <boost/foreach.hpp>
+
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/system/System.hpp>
@@ -247,6 +249,12 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
 
    bool alwaysEnableRnwConcordance = readPref<bool>(prefs, "always_enable_concordance", true);
    pAlwaysEnableRnwConcordance_.reset(new bool(alwaysEnableRnwConcordance));
+
+   std::string spellingLanguage = readPref<std::string>(prefs, "spelling_language", "en_US");
+   pSpellingLanguage_.reset(new std::string(spellingLanguage));
+
+   json::Array spellingCustomDicts = readPref<core::json::Array>(prefs, "spelling_custom_dictionaries", core::json::Array());
+   pSpellingCustomDicts_.reset(new json::Array(spellingCustomDicts));
 }
 
 
@@ -281,6 +289,24 @@ bool UserSettings::alwaysEnableRnwCorcordance() const
 {
    return readUiPref<bool>(pAlwaysEnableRnwConcordance_);
 }
+
+std::string UserSettings::spellingLanguage() const
+{
+   return readUiPref<std::string>(pSpellingLanguage_);
+}
+
+std::vector<std::string> UserSettings::spellingCustomDictionaries() const
+{
+   json::Array dictsJson = readUiPref<json::Array>(pSpellingCustomDicts_);
+   std::vector<std::string> dicts;
+   BOOST_FOREACH(const json::Value& dictJson, dictsJson)
+   {
+      if (json::isType<std::string>(dictJson))
+         dicts.push_back(dictJson.get_str());
+   }
+   return dicts;
+}
+
 
 bool UserSettings::alwaysRestoreLastProject() const
 {
