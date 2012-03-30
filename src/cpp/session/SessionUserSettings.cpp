@@ -250,7 +250,7 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    bool alwaysEnableRnwConcordance = readPref<bool>(prefs, "always_enable_concordance", true);
    pAlwaysEnableRnwConcordance_.reset(new bool(alwaysEnableRnwConcordance));
 
-   std::string spellingLanguage = readPref<std::string>(prefs, "spelling_language", "en_US");
+   std::string spellingLanguage = readPref<std::string>(prefs, "spelling_dictionary_language", "en_US");
    pSpellingLanguage_.reset(new std::string(spellingLanguage));
 
    json::Array spellingCustomDicts = readPref<core::json::Array>(prefs, "spelling_custom_dictionaries", core::json::Array());

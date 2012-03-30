@@ -25,6 +25,7 @@
 #include <r/RUtil.hpp>
 #include <r/RExec.hpp>
 
+#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 
 using namespace core;
@@ -44,7 +45,8 @@ SEXP rs_checkSpelling(SEXP wordSEXP)
    bool isCorrect;
    std::string word = r::sexp::asString(wordSEXP);
 
-   Error error = s_pSpellingEngine->checkSpelling("en_US", word, &isCorrect);
+   std::string langId = userSettings().spellingLanguage();
+   Error error = s_pSpellingEngine->checkSpelling(langId, word, &isCorrect);
 
    // We'll return true here so as not to tie up the front end.
    if (error)
@@ -80,12 +82,13 @@ FilePath allLanguagesDir()
 Error checkSpelling(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
-   std::string langId, word;
-   Error error = json::readParams(request.params, &langId, &word);
+   std::string docId, word;
+   Error error = json::readParams(request.params, &docId, &word);
    if (error)
       return error;
 
    bool isCorrect;
+   std::string langId = userSettings().spellingLanguage();
    error = s_pSpellingEngine->checkSpelling(langId, word, &isCorrect);
    if (error)
       return error;
@@ -98,12 +101,13 @@ Error checkSpelling(const json::JsonRpcRequest& request,
 Error suggestionList(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   std::string langId, word;
-   Error error = json::readParams(request.params, &langId, &word);
+   std::string docId, word;
+   Error error = json::readParams(request.params, &docId, &word);
    if (error)
       return error;
 
    std::vector<std::string> sugs;
+   std::string langId = userSettings().spellingLanguage();
    error = s_pSpellingEngine->suggestionList(langId, word, &sugs);
    if (error)
       return error;
@@ -121,12 +125,13 @@ Error suggestionList(const json::JsonRpcRequest& request,
 Error addToDictionary(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   std::string langId, word;
-   Error error = json::readParams(request.params, &langId, &word);
+   std::string docId, word;
+   Error error = json::readParams(request.params, &docId, &word);
    if (error)
       return error;
 
    bool added;
+   std::string langId = userSettings().spellingLanguage();
    error = s_pSpellingEngine->addWord(langId, word, &added);
    if (error)
       return error;

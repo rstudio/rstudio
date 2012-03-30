@@ -15,7 +15,6 @@ package org.rstudio.studio.client.common.spelling;
 
 import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.inject.Inject;
@@ -25,39 +24,31 @@ import com.google.inject.Singleton;
 public class SpellingService
 {
    @Inject
-   public SpellingService(SpellingServerOperations server,
-                          UIPrefs uiPrefs)
+   public SpellingService(SpellingServerOperations server)
    {
       server_ = server;
-      uiPrefs_ = uiPrefs;
    }
 
    public void checkSpelling(String docId,
                              String word, 
                              ServerRequestCallback<Boolean> callback)
    {
-      server_.checkSpelling(getLangId(), word, callback);
+      server_.checkSpelling(docId, word, callback);
    }
 
    public void suggestionList(String docId,
                               String word,
                               ServerRequestCallback<JsArrayString> callback)
    {
-      server_.suggestionList(getLangId(), word, callback);
+      server_.suggestionList(docId, word, callback);
    }
 
    public void addToDictionary(String docId,
                                String word,
                                ServerRequestCallback<Boolean> callback)
    {
-      server_.addToDictionary(getLangId(), word, callback);
+      server_.addToDictionary(docId, word, callback);
    }
-   
-   private String getLangId()
-   {
-      return uiPrefs_.spellingDictionaryLanguage().getValue();
-   }
-   
-   private final UIPrefs uiPrefs_;
+
    private final SpellingServerOperations server_;
 }
