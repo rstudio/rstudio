@@ -174,11 +174,6 @@ QString Options::fixedWidthFont() const
    if (!detectedFont.isEmpty())
       return detectedFont;
 
-   // NB: Windows has "Lucida Console" and "Consolas" reversed vs.
-   // the list in WebThemeFontLoader (in the GWT codebase). This is
-   // because Consolas is more attractive but has a spacing issue
-   // in Win/Desktop mode (U+200B shows up as a space, and we use it
-   // in the History pane).
    QStringList fontList;
    fontList <<
 #if defined(Q_WS_MACX)
@@ -186,7 +181,7 @@ QString Options::fixedWidthFont() const
 #elif defined (Q_WS_X11)
            QString::fromAscii("Ubuntu Mono") << QString::fromAscii("Droid Sans Mono") << QString::fromAscii("DejaVu Sans Mono") << QString::fromAscii("Monospace")
 #else
-           QString::fromAscii("Lucida Console") << QString::fromAscii("Consolas")   // Windows;
+           QString::fromAscii("Consolas") << QString::fromAscii("Lucida Console")  // Windows;
 #endif
            ;
 
