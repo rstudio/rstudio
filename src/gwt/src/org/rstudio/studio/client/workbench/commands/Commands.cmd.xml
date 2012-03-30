@@ -98,6 +98,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="sourceNavigateForward"/>
          <separator/>
          <cmd refid="insertChunk"/>
+         <cmd refid="insertSection"/>
          <separator/>
          <cmd refid="jumpTo"/>
          <separator/>
@@ -309,6 +310,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="closeSourceDoc" value="Cmd+W"/>
       <shortcut refid="closeAllSourceDocs" value="Cmd+Shift+W"/>
       <shortcut refid="insertChunk" value="Cmd+Shift+&lt;"/>
+      <shortcut refid="insertSection" value="Cmd+Shift+T"/>
       <shortcut refid="compilePDF" value="Cmd+Shift+I"/>
       <shortcut refid="executeCode" value="Cmd+Enter"/>
       <shortcut refid="executeAllCode" value="Cmd+Alt+R"/>
@@ -350,12 +352,11 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="goToLine" value="Cmd+G"/>
       <shortcut refid="previousPlot" value="Cmd+Shift+PageUp" />
       <shortcut refid="nextPlot" value="Cmd+Shift+PageDown" />
-      <shortcut refid="showManipulator" value="Cmd+Shift+M"/>
       <shortcut refid="showRequestLog" value="Ctrl+`" />
       <shortcut refid="logFocusedElement" value="Ctrl+Shift+`" />
       <shortcut refid="setWorkingDir" value="Ctrl+Shift+K" />
       <shortcut refid="vcsFileDiff" value="Cmd+Shift+D" />
-      <shortcut refid="vcsCommit" value="Cmd+Shift+T" />
+      <shortcut refid="vcsCommit" value="Cmd+Shift+M" />
       <shortcut refid="showShellDialog" value="Cmd+Shift+H" />
       <shortcut refid="synctexSearch" value="Cmd+F8" />
       <shortcut refid="checkSpelling" value="Cmd+F11" />
@@ -581,6 +582,9 @@ well as menu structures (for main menu and popup menus).
    <cmd id="insertChunk"
         menuLabel="_Insert Chunk"
         desc="Insert a new code chunk"/>
+   <cmd id="insertSection"
+        menuLabel="_Insert Section..."
+        desc="Insert a new code section"/>
    <cmd id="executeCurrentChunk"
         menuLabel="Run _Current Chunk"
         desc="Run the current code chunk"/>

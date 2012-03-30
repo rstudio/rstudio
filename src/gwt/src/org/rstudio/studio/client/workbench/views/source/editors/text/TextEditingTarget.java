@@ -1577,6 +1577,63 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onInsertChunk()
    {
+      Position pos = moveCursorToNextInsertLocation();
+      docDisplay_.insertCode("<<>>=\n\n@\n", false);         
+      docDisplay_.setCursorPosition(Position.create(pos.getRow(), 2));
+      docDisplay_.focus();  
+   }
+   
+   @Handler
+   void onInsertSection()
+   {
+      globalDisplay_.promptForText(
+         "Insert Section", 
+         "Section label:", 
+         "", 
+         new OperationWithInput<String>() {
+            @Override
+            public void execute(String label)
+            {
+               // move cursor to next insert location
+               Position pos = moveCursorToNextInsertLocation();
+               
+               // truncate length to print margin - 5
+               int printMarginColumn = prefs_.printMarginColumn().getValue();
+               int length = printMarginColumn - 5;
+               
+               // truncate label to maxLength - 10 (but always allow at 
+               // least 20 chars for the label)
+               int maxLabelLength = length - 10;
+               maxLabelLength = Math.max(maxLabelLength, 20);
+               if (label.length() > maxLabelLength)
+                  label = label.substring(0, maxLabelLength-1);
+               
+               // prefix 
+               String prefix = "# " + label + " ";
+               
+               // fill to maxLength (bit ensure at least 4 fill characters
+               // so the section parser is sure to pick it up)
+               StringBuffer sectionLabel = new StringBuffer();
+               sectionLabel.append("\n");
+               sectionLabel.append(prefix);
+               int fillChars = length - prefix.length();
+               fillChars = Math.max(fillChars, 4);
+               for (int i=0; i<fillChars; i++)
+                  sectionLabel.append("-");
+               sectionLabel.append("\n\n");
+               
+               // insert code and move cursor
+               docDisplay_.insertCode(sectionLabel.toString(), false);
+               docDisplay_.setCursorPosition(Position.create(pos.getRow() + 3,
+                                                             0));
+               docDisplay_.focus();
+               
+            }
+         });
+   }
+   
+   private Position moveCursorToNextInsertLocation()
+   {
       docDisplay_.collapseSelection(true);
       if (!docDisplay_.moveSelectionToBlankLine())
       {
@@ -1586,13 +1643,10 @@ public class TextEditingTarget implements EditingTarget
          docDisplay_.setCursorPosition(endPos);
          docDisplay_.insertCode("\n", false);
       }
+      return docDisplay_.getCursorPosition();
       
-      Position pos = docDisplay_.getCursorPosition();
-      docDisplay_.insertCode("<<>>=\n\n@\n", false);         
-      docDisplay_.setCursorPosition(Position.create(pos.getRow(), 2));
-      docDisplay_.focus();  
    }
-
+   
    @Handler
    void onExecuteCurrentChunk()
    {

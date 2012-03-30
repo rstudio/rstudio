@@ -102,6 +102,7 @@ public class StatusBarWidget extends Composite
    {
       ImageResource chunk();
       ImageResource function();
+      ImageResource section();
    }
    private static Resources RES = GWT.create(Resources.class);
 }

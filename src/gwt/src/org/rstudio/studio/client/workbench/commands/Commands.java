@@ -45,6 +45,7 @@ public abstract class
    public abstract AppCommand executeCurrentFunction();
    public abstract AppCommand executeLastCode();
    public abstract AppCommand insertChunk();
+   public abstract AppCommand insertSection();
    public abstract AppCommand executeCurrentChunk();
    public abstract AppCommand executeNextChunk();
    public abstract AppCommand goToFunctionDefinition();
