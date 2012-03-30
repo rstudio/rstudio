@@ -358,7 +358,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="vcsCommit" value="Cmd+Shift+T" />
       <shortcut refid="showShellDialog" value="Cmd+Shift+H" />
       <shortcut refid="synctexSearch" value="Cmd+F8" />
-      <shortcut refid="checkSpelling" value="Cmd+F10" />
+      <shortcut refid="checkSpelling" value="Cmd+F11" />
    </shortcuts>
 
    <!--
