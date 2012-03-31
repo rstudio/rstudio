@@ -310,7 +310,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="closeSourceDoc" value="Cmd+W"/>
       <shortcut refid="closeAllSourceDocs" value="Cmd+Shift+W"/>
       <shortcut refid="insertChunk" value="Cmd+Shift+&lt;"/>
-      <shortcut refid="insertSection" value="Cmd+Shift+T"/>
+      <shortcut refid="insertSection" value="Cmd+Shift+R"/>
       <shortcut refid="compilePDF" value="Cmd+Shift+I"/>
       <shortcut refid="executeCode" value="Cmd+Enter"/>
       <shortcut refid="executeAllCode" value="Cmd+Alt+R"/>
