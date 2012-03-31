@@ -283,7 +283,9 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
             var sectionHeadMatch = /^#+'?[-=#\s]*(.*?)\s*[-=#]+\s*$/.exec(
                   tokenCursor.currentValue());
 
-            var label = "Section: " + sectionHeadMatch[1];
+            var label = "" + sectionHeadMatch[1];
+            if (label.length == 0)
+               label = "(Untitled)";
             if (label.length > 50)
                label = label.substring(0, 50) + "...";
 
