@@ -87,6 +87,28 @@ public class JsUtil
       };
    }
 
+   public static boolean areEqual(JsArrayString a, JsArrayString b)
+   {
+      if (a == null && b == null)
+         return true;
+      else if (a == null && b != null)
+         return false;
+      else if (a != null && b == null)
+         return false;
+      else if (a.length() != b.length())
+         return false;
+      else
+      {
+         for (int i=0; i<a.length(); i++)
+         {
+            if (!a.get(i).equals(b.get(i)))
+               return false; 
+         }
+         
+         return true;
+      }
+   }
+   
    public static String[] toStringArray(JsArrayString strings)
    {
       String[] result = new String[strings.length()];

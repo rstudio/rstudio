@@ -17,6 +17,7 @@ import com.google.inject.Singleton;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -130,7 +131,6 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          sourceWithEcho().setGlobalValue(
                                  newUiPrefs.sourceWithEcho().getGlobalValue());
          
-         
          // export plot options
          if (!ExportPlotOptions.areEqual(
                newUiPrefs.exportPlotOptions().getGlobalValue(),
@@ -152,6 +152,53 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // default sweave engine
          defaultSweaveEngine().setGlobalValue(
                            newUiPrefs.defaultSweaveEngine().getGlobalValue());
+         
+         // default latex program
+         defaultLatexProgram().setGlobalValue(
+                           newUiPrefs.defaultLatexProgram().getGlobalValue());
+        
+         // pdf preview
+         pdfPreview().setGlobalValue(
+                           newUiPrefs.pdfPreview().getGlobalValue());
+         
+         // always enable rnw concordance
+         alwaysEnableRnwConcordance().setGlobalValue(
+                    newUiPrefs.alwaysEnableRnwConcordance().getGlobalValue());
+         
+         // insert numbered latex sections
+         insertNumberedLatexSections().setGlobalValue(
+                    newUiPrefs.insertNumberedLatexSections().getGlobalValue());
+         
+         // spelling dictionary language
+         spellingDictionaryLanguage().setGlobalValue(
+                    newUiPrefs.spellingDictionaryLanguage().getGlobalValue());
+         
+         // spelling custom dictionaries
+         if (!JsUtil.areEqual(
+                     spellingCustomDictionaries().getGlobalValue(),
+                     newUiPrefs.spellingCustomDictionaries().getGlobalValue()))
+         {
+            spellingCustomDictionaries().setGlobalValue(
+                     newUiPrefs.spellingCustomDictionaries().getGlobalValue());
+         }
+         
+         // check spelling as you type
+         checkSpellingAsYouType().setGlobalValue(
+                    newUiPrefs.checkSpellingAsYouType().getGlobalValue());
+         
+         // ignore words in uppercase
+         ignoreWordsInUppercase().setGlobalValue(
+                    newUiPrefs.ignoreWordsInUppercase().getGlobalValue());
+         
+         // ignore words with numbers
+         ignoreWordsWithNumbers().setGlobalValue(
+                    newUiPrefs.ignoreWordsWithNumbers().getGlobalValue());
+         
+         // check spelling before compile
+         checkSpellingBeforeCompile().setGlobalValue(
+                    newUiPrefs.checkSpellingBeforeCompile().getGlobalValue());
+         
+         
       }
       else if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
       {
@@ -175,6 +222,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // default sweave engine
          defaultSweaveEngine().setProjectValue(
                                  newUiPrefs.defaultSweaveEngine().getValue());
+         
+         // default latex program
+         defaultLatexProgram().setProjectValue(
+                            newUiPrefs.defaultLatexProgram().getValue());
  
       }
       else
