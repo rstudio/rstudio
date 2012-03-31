@@ -44,6 +44,7 @@ public class WorkbenchListManager
       listContexts_.put(FILE_MRU, new ListContext(FILE_MRU));
       listContexts_.put(PROJECT_MRU, new ListContext(PROJECT_MRU));
       listContexts_.put(HELP_HISTORY, new ListContext(HELP_HISTORY));
+      listContexts_.put(USER_DICTIONARY, new ListContext(USER_DICTIONARY));
       
       events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
          @Override
@@ -53,6 +54,7 @@ public class WorkbenchListManager
             updateList(FILE_MRU, lists);
             updateList(PROJECT_MRU, lists);
             updateList(HELP_HISTORY, lists);
+            updateList(USER_DICTIONARY, lists);
          }  
       });
       
@@ -79,6 +81,11 @@ public class WorkbenchListManager
    public WorkbenchList getHelpHistoryList()
    {
       return listContexts_.get(HELP_HISTORY);
+   }
+   
+   public WorkbenchList getUserDictionaryList()
+   {
+      return listContexts_.get(USER_DICTIONARY);
    }
    
    
@@ -162,5 +169,5 @@ public class WorkbenchListManager
    private static final String FILE_MRU = "file_mru";
    private static final String PROJECT_MRU = "project_mru";
    private static final String HELP_HISTORY = "help_history_links";
-   
+   private static final String USER_DICTIONARY = "user_dictionary";
 }

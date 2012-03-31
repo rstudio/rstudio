@@ -38,6 +38,7 @@ namespace {
 const char * const kFileMru = "file_mru";
 const char * const kProjectMru = "project_mru";
 const char * const kHelpHistory = "help_history_links";
+const char * const kUserDictioanry = "user_dictionary";
 
 // path to lists dir
 FilePath s_listsPath;
@@ -299,6 +300,7 @@ Error initialize()
    s_lists[kFileMru] = 10;
    s_lists[kProjectMru] = 10;
    s_lists[kHelpHistory] = 15;
+   s_lists[kUserDictioanry] = 10000;
 
    // monitor the lists directory
    s_listsPath = module_context::registerMonitoredUserScratchDir(
