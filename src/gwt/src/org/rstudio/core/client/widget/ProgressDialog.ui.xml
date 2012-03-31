@@ -7,7 +7,7 @@
    <g:HTMLPanel>
       <table>
          <tr>
-            <td width="100%" class="{res.styles.labelCell}"><g:Label ui:field="label_" /></td>
+            <td width="100%" class="{res.styles.labelCell}" ui:field="labelCell_"><g:Label ui:field="label_" /></td>
             <td align="right" width="1%" class="{res.styles.progressCell}"><g:Image ui:field="progressAnim_" /></td>
             <td align="right" width="1%" class="{res.styles.buttonCell}"><r:ThemedButton text="Stop" ui:field="stopButton_" /></td>
          </tr>

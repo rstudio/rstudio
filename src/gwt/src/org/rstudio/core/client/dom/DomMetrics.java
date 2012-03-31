@@ -21,6 +21,10 @@ import org.rstudio.core.client.widget.FontSizer;
 
 public class DomMetrics
 { 
+   public static Size measureHTML(String html)
+   {
+      return measureHTML(html, "gwt-Label");
+   }
    public static Size measureHTML(String html, String styleName)
    {
       // create HTML widget which matches the specified style

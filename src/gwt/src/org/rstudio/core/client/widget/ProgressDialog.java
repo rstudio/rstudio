@@ -15,6 +15,7 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
@@ -29,7 +30,9 @@ import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.dom.DomMetrics;
 
 public abstract class ProgressDialog extends ModalDialogBase
 {
@@ -76,7 +79,7 @@ public abstract class ProgressDialog extends ModalDialogBase
       stopButton_ = new ThemedButton("Stop");
       centralWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
 
-      label_.setText(title);
+      setLabel(title);
    } 
    
    @Override
@@ -136,6 +139,11 @@ public abstract class ProgressDialog extends ModalDialogBase
    
    protected void setLabel(String text)
    {
+      if (BrowseCap.isChrome())
+      {
+         Size labelSize = DomMetrics.measureHTML(text);
+         labelCell_.getStyle().setWidth(labelSize.width + 10, Unit.PX);
+      }
       label_.setText(text);
    }
    
@@ -159,6 +167,8 @@ public abstract class ProgressDialog extends ModalDialogBase
    Image progressAnim_;
    @UiField
    Label label_;
+   @UiField
+   TableCellElement labelCell_;
    @UiField(provided = true)
    ThemedButton stopButton_;
    private Widget centralWidget_;
