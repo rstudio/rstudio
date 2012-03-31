@@ -163,25 +163,6 @@ Error MacSpellingEngine::suggestionList(const std::string& langId,
    return Success();
 }
 
-Error MacSpellingEngine::addWord(const std::string& langId,
-                                 const std::string& word,
-                                 bool *pAdded)
-{
-   AutoreleaseContext arContext;
-
-   return Success();
-}
-
-Error MacSpellingEngine::removeWord(const std::string& langId,
-                                    const std::string& word,
-                                    bool *pRemoved)
-{
-   AutoreleaseContext arContext;
-
-   return Success();
-}
-
-
 } // namespace spelling
 } // namespace core 
 

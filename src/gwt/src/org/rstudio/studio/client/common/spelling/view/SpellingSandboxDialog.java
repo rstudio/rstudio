@@ -181,7 +181,7 @@ public class SpellingSandboxDialog extends ModalDialogBase
          stopSpellChecking(true);
          return;
       }
-      spellingService_.checkSpelling("", currentWord_, new SimpleRequestCallback<Boolean>() {
+      spellingService_.checkSpelling(currentWord_, new SimpleRequestCallback<Boolean>() {
          @Override
          public void onResponseReceived(Boolean isCorrect)
          {
@@ -240,7 +240,7 @@ public class SpellingSandboxDialog extends ModalDialogBase
    
    private void suggestionList(String word)
    {
-      spellingService_.suggestionList("", word, new SimpleRequestCallback<JsArrayString>() {
+      spellingService_.suggestionList(word, new SimpleRequestCallback<JsArrayString>() {
          @Override
          public void onResponseReceived(JsArrayString suggestions)
          {
@@ -256,20 +256,7 @@ public class SpellingSandboxDialog extends ModalDialogBase
    
    private void addWordToDictionary()
    {
-      spellingService_.addToDictionary("", txtWord_.getText(), 
-                              new SimpleRequestCallback<Boolean>() {
-         @Override
-         public void onResponseReceived(Boolean added)
-         {
-            if (!added){
-               showResponse("Spell Checker", "Server Error!");
-            } 
-            else
-            {
-               findMisSpelledWord();
-            }
-         }
-      });
+     
    }
    
    private void showResponse(String request, String response)

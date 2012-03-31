@@ -29,25 +29,16 @@ public class SpellingService
       server_ = server;
    }
 
-   public void checkSpelling(String docId,
-                             String word, 
+   public void checkSpelling(String word, 
                              ServerRequestCallback<Boolean> callback)
    {
-      server_.checkSpelling(docId, word, callback);
+      server_.checkSpelling(word, callback);
    }
 
-   public void suggestionList(String docId,
-                              String word,
+   public void suggestionList(String word,
                               ServerRequestCallback<JsArrayString> callback)
    {
-      server_.suggestionList(docId, word, callback);
-   }
-
-   public void addToDictionary(String docId,
-                               String word,
-                               ServerRequestCallback<Boolean> callback)
-   {
-      server_.addToDictionary(docId, word, callback);
+      server_.suggestionList(word, callback);
    }
 
    private final SpellingServerOperations server_;

@@ -48,14 +48,6 @@ public:
                         const std::string& word,
                         std::vector<std::string>* pSugs);
 
-   Error addWord(const std::string& langId,
-                 const std::string& word,
-                 bool *pAdded);
-
-   Error removeWord(const std::string& langId,
-                    const std::string& word,
-                    bool *pRemoved);
-
 private:
    struct Impl;
    boost::scoped_ptr<Impl> pImpl_;

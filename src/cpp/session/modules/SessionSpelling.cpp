@@ -82,8 +82,8 @@ FilePath allLanguagesDir()
 Error checkSpelling(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
-   std::string docId, word;
-   Error error = json::readParams(request.params, &docId, &word);
+   std::string word;
+   Error error = json::readParams(request.params, &word);
    if (error)
       return error;
 
@@ -101,8 +101,8 @@ Error checkSpelling(const json::JsonRpcRequest& request,
 Error suggestionList(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   std::string docId, word;
-   Error error = json::readParams(request.params, &docId, &word);
+   std::string word;
+   Error error = json::readParams(request.params, &word);
    if (error)
       return error;
 
@@ -119,24 +119,6 @@ Error suggestionList(const json::JsonRpcRequest& request,
                   json::toJsonString);
    pResponse->setResult(sugsJson);
 
-   return Success();
-}
-
-Error addToDictionary(const json::JsonRpcRequest& request,
-                     json::JsonRpcResponse* pResponse)
-{
-   std::string docId, word;
-   Error error = json::readParams(request.params, &docId, &word);
-   if (error)
-      return error;
-
-   bool added;
-   std::string langId = userSettings().spellingLanguage();
-   error = s_pSpellingEngine->addWord(langId, word, &added);
-   if (error)
-      return error;
-
-   pResponse->setResult(added);
    return Success();
 }
 
@@ -223,7 +205,6 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "check_spelling", checkSpelling))
       (bind(registerRpcMethod, "suggestion_list", suggestionList))
-      (bind(registerRpcMethod, "add_to_dictionary", addToDictionary))
       (bind(registerRpcMethod, "install_all_dictionaries", installAllDictionaries))
       (bind(sourceModuleRFile, "SessionSpelling.R"));
    return initBlock.execute();

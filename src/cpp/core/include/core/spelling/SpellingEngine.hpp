@@ -36,14 +36,6 @@ public:
    virtual Error suggestionList(const std::string& langId,
                                 const std::string& word,
                                 std::vector<std::string>* pSugs) = 0;
-
-   virtual Error addWord(const std::string& langId,
-                         const std::string& word,
-                         bool *pAdded) = 0;
-
-   virtual Error removeWord(const std::string& langId,
-                            const std::string& word,
-                            bool *pRemoved) = 0;
 };
 
 } // namespace spelling

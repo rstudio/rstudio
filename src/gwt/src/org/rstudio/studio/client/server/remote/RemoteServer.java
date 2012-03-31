@@ -2410,37 +2410,23 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SYNCTEX_INVERSE_SEARCH, pdfLocation, callback);
    }
    
-   public void checkSpelling(String langId,
-                             String word,
+   public void checkSpelling(String word,
                              ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(langId));
-      params.set(1, new JSONString(word));
+      params.set(0, new JSONString(word));
       sendRequest(RPC_SCOPE, CHECK_SPELLING, params, requestCallback);
    }
    
    public void suggestionList(
-                     String langId,
                      String word,
                      ServerRequestCallback<JsArrayString> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(langId));
-      params.set(1, new JSONString(word));
+      params.set(0, new JSONString(word));
       sendRequest(RPC_SCOPE, SUGGESTION_LIST, params, requestCallback);
    }
 
-   public void addToDictionary(String langId,
-                               String word,
-                               ServerRequestCallback<Boolean> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(langId));
-      params.set(1, new JSONString(word));
-      sendRequest(RPC_SCOPE, ADD_TO_DICTIONARY, params, requestCallback);
-   }
-   
    public void installAllDictionaries(
                ServerRequestCallback<SpellingPrefsContext> requestCallback)
    {
@@ -2681,7 +2667,6 @@ public class RemoteServer implements Server
    
    private static final String CHECK_SPELLING = "check_spelling";
    private static final String SUGGESTION_LIST = "suggestion_list";
-   private static final String ADD_TO_DICTIONARY = "add_to_dictionary";
    private static final String INSTALL_ALL_DICTIONARIES = "install_all_dictionaries";
 
    private static final String BEGIN_FIND = "begin_find";

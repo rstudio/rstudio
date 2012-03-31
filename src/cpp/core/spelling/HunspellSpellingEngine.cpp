@@ -111,8 +111,6 @@ public:
    virtual Error checkSpelling(const std::string& word, bool *pCorrect) = 0;
    virtual Error suggestionList(const std::string& word,
                                 std::vector<std::string>* pSugs) = 0;
-   virtual Error addWord(const std::string& word, bool *pAdded) = 0;
-   virtual Error removeWord(const std::string& word, bool *pRemoved) = 0;
 };
 
 class NoSpellChecker : public SpellChecker
@@ -126,16 +124,6 @@ public:
 
    Error suggestionList(const std::string& word,
                         std::vector<std::string>* pSugs)
-   {
-      return Success();
-   }
-
-   Error addWord(const std::string& word, bool *pAdded)
-   {
-      return Success();
-   }
-
-   Error removeWord(const std::string& word, bool *pRemoved)
    {
       return Success();
    }
@@ -325,18 +313,6 @@ public:
       return Success();
    }
 
-   Error removeWord(const std::string& word, bool *pRemoved)
-   {
-      std::string encoded;
-      Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
-      if (error)
-         return error;
-
-      // Always returns 0?
-      *pRemoved = (pHunspell_->remove(encoded.c_str()) == 0);
-      return Success();
-   }
-
    // Hunspell dictionary files are simple: the first line is an integer
    // indicating the number of entries (one per line), and each line contains
    // a word followed by '/' plus modifier flags. Example user.dic:
@@ -428,20 +404,6 @@ Error HunspellSpellingEngine::suggestionList(const std::string& langId,
                                              std::vector<std::string>* pSugs)
 {
    return pImpl_->spellChecker(langId).suggestionList(word, pSugs);
-}
-
-Error HunspellSpellingEngine::addWord(const std::string& langId,
-                                      const std::string& word,
-                                      bool* pAdded)
-{
-   return pImpl_->spellChecker(langId).addWord(word, pAdded);
-}
-
-Error HunspellSpellingEngine::removeWord(const std::string& langId,
-                                         const std::string& word,
-                                         bool *pRemoved)
-{
-   return pImpl_->spellChecker(langId).removeWord(word, pRemoved);
 }
 
 
