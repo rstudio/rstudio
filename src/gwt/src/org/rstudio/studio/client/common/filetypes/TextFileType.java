@@ -170,7 +170,7 @@ public class TextFileType extends EditableFileType
       }
       if (canCheckSpelling())
       {
-         results.add(commands.checkSpelling());
+      
       }
       results.add(commands.findReplace());
       results.add(commands.setWorkingDirToActiveDoc());

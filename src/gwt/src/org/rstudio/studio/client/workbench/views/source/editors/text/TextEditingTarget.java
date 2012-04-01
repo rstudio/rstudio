@@ -56,7 +56,6 @@ import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.SweaveFileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.common.spelling.SpellChecker;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.SynctexUtils;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
@@ -211,7 +210,6 @@ public class TextEditingTarget implements EditingTarget
                             FileTypeRegistry fileTypeRegistry,
                             ConsoleDispatcher consoleDispatcher,
                             WorkbenchContext workbenchContext,
-                            Provider<SpellChecker> pSpellChecker,
                             Session session,
                             Synctex synctex,
                             FontSizeManager fontSizeManager,
@@ -229,7 +227,6 @@ public class TextEditingTarget implements EditingTarget
       session_ = session;
       synctex_ = synctex;
       fontSizeManager_ = fontSizeManager;
-      pSpellChecker_ = pSpellChecker;
 
       docDisplay_ = docDisplay;
       dirtyState_ = new DirtyState(docDisplay_, false);
@@ -1847,18 +1844,6 @@ public class TextEditingTarget implements EditingTarget
    }
    
    @Handler
-   void onCheckSpelling()
-   {
-      saveThenExecute(null, new Command()
-      {
-         public void execute()
-         {
-            pSpellChecker_.get().checkSpelling(getId(), docDisplay_);
-         }
-      });
-   }
-
-   @Handler
    void onCompilePDF()
    {
       String pdfPreview = prefs_.pdfPreview().getValue();
@@ -2360,7 +2345,6 @@ public class TextEditingTarget implements EditingTarget
    private final DirtyState dirtyState_;
    private HandlerManager handlers_ = new HandlerManager(this);
    private FileSystemContext fileContext_;
-   private final Provider<SpellChecker> pSpellChecker_;
    private final TextEditingTargetCompilePdfHelper compilePdfHelper_;
    private boolean ignoreDeletes_;
    private final TextEditingTargetScopeHelper scopeHelper_;
