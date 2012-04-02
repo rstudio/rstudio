@@ -35,8 +35,7 @@ public:
                         const std::string& word,
                         std::vector<std::string>* pSugs);
 
-private:
-   Error initialize();
+   Error currentLanguage(std::string* pLanguage);
 
 private:
    struct Impl;

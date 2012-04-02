@@ -93,28 +93,14 @@ struct MacSpellingEngine::Impl
 MacSpellingEngine::MacSpellingEngine()
    : pImpl_(new Impl())
 {
-   Error error = initialize();
-   if (error)
-      LOG_ERROR(error);
-}
-
-
-Error MacSpellingEngine::initialize()
-{
-   AutoreleaseContext arContext;
-
    // ensure the spell checker is available (and not damaged in some way)
-   // by checking for its language within an exception block
-   @try
-   {
-      [[NSSpellChecker sharedSpellChecker] language];
+   // by checking for its language
+   std::string language;
+   Error error = currentLanguage(&language);
+   if (!error)
       pImpl_->available = true;
-      return Success();
-   }
-   CATCH_NS_EXCEPTION
-
-   // keep compiler happy
-   return Success();
+   else
+      LOG_ERROR(error);
 }
 
 Error MacSpellingEngine::checkSpelling(const std::string&, // use system lang
@@ -177,6 +163,24 @@ Error MacSpellingEngine::suggestionList(const std::string&, // use system lang
       for (NSString* result in results)
          pSug->push_back(toStdString(result));
 
+      return Success();
+   }
+   CATCH_NS_EXCEPTION
+
+   // keep compiler happy
+   return Success();
+}
+
+Error MacSpellingEngine::currentLanguage(std::string* pLanguage)
+{
+   AutoreleaseContext arContext;
+
+   // ensure the spell checker is available (and not damaged in some way)
+   // by checking for its language within an exception block
+   @try
+   {
+      NSString* language =[[NSSpellChecker sharedSpellChecker] language];
+      *pLanguage = toStdString(language);
       return Success();
    }
    CATCH_NS_EXCEPTION
