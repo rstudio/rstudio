@@ -15,12 +15,15 @@ package org.rstudio.studio.client.common.spelling.model;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 
+import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
 
 public interface SpellingServerOperations
 {
-   void checkSpelling(String word, 
-                      ServerRequestCallback<Boolean> requestCallback);
+   // check the specified array of words, returning an array of integer
+   // indexes for mis-spelled words
+   void checkSpelling(JsArrayString words, 
+                      ServerRequestCallback<JsArrayInteger> requestCallback);
    
    void suggestionList(String word,
                        ServerRequestCallback<JsArrayString> requestCallback);

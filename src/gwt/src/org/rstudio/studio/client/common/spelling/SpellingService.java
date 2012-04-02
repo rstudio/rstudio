@@ -13,13 +13,18 @@
 
 package org.rstudio.studio.client.common.spelling;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
+import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
 import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
+import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -62,25 +67,69 @@ public class SpellingService implements HasChangeHandlers
       });
    }
 
-   public void checkSpelling(final String word, 
-                             final ServerRequestCallback<Boolean> callback)
+   public void checkSpelling(
+                     List<String> words, 
+                     final ServerRequestCallback<SpellCheckerResult> callback)
    {
-      // check the cache
-      Boolean correct = previousResults_.get(word);
-      if (correct != null)
+      // results to return
+      final SpellCheckerResult spellCheckerResult = new SpellCheckerResult();
+      
+      // only send words to the server that aren't in the cache
+      final ArrayList<String> wordsToCheck = new ArrayList<String>();
+      for (int i = 0; i<words.size(); i++)
       {
-         callback.onResponseReceived(correct);
+         String word = words.get(i);
+         Boolean isCorrect = previousResults_.get(word);
+         if (isCorrect != null)
+         {
+            if (isCorrect)
+               spellCheckerResult.getCorrect().add(word);
+            else
+               spellCheckerResult.getIncorrect().add(word);
+         }
+         else
+         {
+            wordsToCheck.add(word);
+         }
+      }
+      
+      // if there are no words to check then return
+      if (wordsToCheck.size() == 0)
+      {
+         callback.onResponseReceived(spellCheckerResult);
          return;
       }
       
       // hit the server
-      server_.checkSpelling(word, new ServerRequestCallback<Boolean>() {
+      server_.checkSpelling(JsUtil.toJsArrayString(wordsToCheck), 
+                            new ServerRequestCallback<JsArrayInteger>() {
 
          @Override
-         public void onResponseReceived(Boolean correct)
+         public void onResponseReceived(JsArrayInteger result)
          {
-            previousResults_.put(word, correct);
-            callback.onResponseReceived(correct);
+            // get misspelled indexes
+            ArrayList<Integer> misspelledIndexes = new ArrayList<Integer>();
+            for (int i=0; i<result.length(); i++)
+               misspelledIndexes.add(result.get(i));
+            
+            // determine correct/incorrect status and populate result & cache
+            for (int i=0; i<wordsToCheck.size(); i++)
+            {
+               String word = wordsToCheck.get(i);
+               if (misspelledIndexes.contains(i))
+               {
+                  spellCheckerResult.getIncorrect().add(word);
+                  previousResults_.put(word, false);
+               }
+               else
+               {
+                  spellCheckerResult.getCorrect().add(word);
+                  previousResults_.put(word,  true);
+               }
+            }
+            
+            // return result
+            callback.onResponseReceived(spellCheckerResult);     
          }
          
          @Override
@@ -88,7 +137,6 @@ public class SpellingService implements HasChangeHandlers
          {
             callback.onError(error);
          }
-         
       });
    }
 

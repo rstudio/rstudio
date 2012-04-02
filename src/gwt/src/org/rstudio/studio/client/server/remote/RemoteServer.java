@@ -2410,11 +2410,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SYNCTEX_INVERSE_SEARCH, pdfLocation, callback);
    }
    
-   public void checkSpelling(String word,
-                             ServerRequestCallback<Boolean> requestCallback)
+   public void checkSpelling(
+                         JsArrayString words,
+                         ServerRequestCallback<JsArrayInteger> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(word));
+      params.set(0, new JSONArray(words));
       sendRequest(RPC_SCOPE, CHECK_SPELLING, params, requestCallback);
    }
    

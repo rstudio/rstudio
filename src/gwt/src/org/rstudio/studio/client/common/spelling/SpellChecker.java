@@ -14,8 +14,11 @@ package org.rstudio.studio.client.common.spelling;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
+import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchList;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
@@ -100,13 +103,44 @@ public class SpellChecker
       uiPrefs_ = uiPrefs;
    }
    
-   public void checkSpelling(String word, 
-                             ServerRequestCallback<Boolean> callback)
+   public void checkSpelling(
+                  List<String> words, 
+                  final ServerRequestCallback<SpellCheckerResult> callback)
    {
-      if (isWordIgnored(word))
-         callback.onResponseReceived(true);
+      // allocate results
+      final SpellCheckerResult spellCheckerResult = new SpellCheckerResult();
       
-      spellingService_.checkSpelling(word, callback);
+      // only send words to the server that aren't ignored
+      final ArrayList<String> wordsToCheck = new ArrayList<String>();
+      for (int i = 0; i<words.size(); i++)
+      {
+         String word = words.get(i);
+         if (isWordIgnored(word))
+            spellCheckerResult.getCorrect().add(word);
+         else
+            wordsToCheck.add(word);
+      }
+      
+      // call the service to check the non-ignored words
+      spellingService_.checkSpelling(
+         wordsToCheck,
+         new ServerRequestCallback<SpellCheckerResult>() {
+
+            @Override
+            public void onResponseReceived(SpellCheckerResult result)
+            {
+               spellCheckerResult.getCorrect().addAll(result.getCorrect());
+               spellCheckerResult.getIncorrect().addAll(result.getIncorrect());
+               callback.onResponseReceived(spellCheckerResult);
+            }
+            
+            @Override
+            public void onError(ServerError error)
+            {
+               callback.onError(error);
+            }
+            
+         });
    }
    
    public void suggestionList(String word,

@@ -82,18 +82,32 @@ FilePath allLanguagesDir()
 Error checkSpelling(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
-   std::string word;
-   Error error = json::readParams(request.params, &word);
+   json::Array words;
+   Error error = json::readParams(request.params, &words);
    if (error)
       return error;
 
-   bool isCorrect;
    std::string langId = userSettings().spellingLanguage();
-   error = s_pSpellingEngine->checkSpelling(langId, word, &isCorrect);
-   if (error)
-      return error;
+   json::Array misspelledIndexes;
+   for (std::size_t i=0; i<words.size(); i++)
+   {
+      if (!json::isType<std::string>(words[i]))
+      {
+         BOOST_ASSERT(false);
+         continue;
+      }
 
-   pResponse->setResult(isCorrect);
+      std::string word = words[i].get_str();
+      bool isCorrect = true;
+      error = s_pSpellingEngine->checkSpelling(langId, word, &isCorrect);
+      if (error)
+         return error;
+
+      if (!isCorrect)
+         misspelledIndexes.push_back(i);
+   }
+
+   pResponse->setResult(misspelledIndexes);
 
    return Success();
 }
