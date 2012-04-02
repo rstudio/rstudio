@@ -104,7 +104,7 @@ Error checkSpelling(const json::JsonRpcRequest& request,
          return error;
 
       if (!isCorrect)
-         misspelledIndexes.push_back(i);
+         misspelledIndexes.push_back(static_cast<int>(i));
    }
 
    pResponse->setResult(misspelledIndexes);
