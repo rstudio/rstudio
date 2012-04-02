@@ -475,6 +475,9 @@ public class TextEditingTarget implements EditingTarget
             }
          }
       }));
+      
+      spelling_ = new TextEditingTargetSpelling(docDisplay_, 
+                                                docUpdateSentinel_);
 
       initStatusBar();
    }
@@ -1016,6 +1019,9 @@ public class TextEditingTarget implements EditingTarget
    public void onDismiss()
    {
       docUpdateSentinel_.stop();
+      
+      if (spelling_ != null)
+         spelling_.onDismiss();
       
       while (releaseOnDismiss_.size() > 0)
          releaseOnDismiss_.remove(0).removeHandler();
@@ -2348,6 +2354,7 @@ public class TextEditingTarget implements EditingTarget
    private final TextEditingTargetCompilePdfHelper compilePdfHelper_;
    private boolean ignoreDeletes_;
    private final TextEditingTargetScopeHelper scopeHelper_;
+   private TextEditingTargetSpelling spelling_;
 
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =

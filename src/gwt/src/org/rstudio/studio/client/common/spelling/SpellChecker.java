@@ -18,44 +18,50 @@ import java.util.HashSet;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchList;
+import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.events.ListChangedEvent;
 import org.rstudio.studio.client.workbench.events.ListChangedHandler;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 
 public class SpellChecker
 { 
-   public SpellChecker(SpellingDocument spellingDocument,
-                       WorkbenchList userDictionary)
+   public interface Context
+   {  
+      ArrayList<String> readDictionary();
+      void writeDictionary(ArrayList<String> words);
+      
+      void releaseOnDismiss(HandlerRegistration handler);
+   }
+
+   public SpellChecker(Context context)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      // save reference to document
-      spellingDocument_ = spellingDocument;
-      
-      // get ignored words for this document
-      docDictionary_ = spellingDocument.readDictionary();
-      
-      // TODO: need to unsubscribe from this event when we 
-      // are unloaded (also for uiprefs events)
-      
-      // get global user dictionary (and subscribe to changes)
-      userDictionary_ = userDictionary;
-      userDictionary_.addListChangedHandler(new ListChangedHandler() {
+      // save reference to context and read its dictionary
+      context_ = context;
+      contextDictionary_ = context_.readDictionary();
+          
+      // subscribe to user dictionary changes
+      context_.releaseOnDismiss(userDictionary_.addListChangedHandler(
+                                                   new ListChangedHandler() {
          @Override
          public void onListChanged(ListChangedEvent event)
          {
             userDictionaryWords_ = event.getList();
             updateIgnoredWordsIndex();
          }
-      });
+      }));
    }
    
    @Inject
-   void intialize(SpellingService spellingService)
+   void intialize(SpellingService spellingService,
+                  WorkbenchListManager workbenchListManager)
    {
       spellingService_ = spellingService;
+      userDictionary_ = workbenchListManager.getUserDictionaryList();
    }
    
    public void checkSpelling(String word, 
@@ -83,16 +89,16 @@ public class SpellChecker
    
    public void addToUserDictionary(String word)
    {
-      // NOTE: we don't fire the change event because this will occur later 
+      // NOTE: we don't fire the change event dicectly b/c it will occur later 
       // within the onListChannged handler 
       userDictionary_.append(word);
    }
    
    public void addIgnoredWord(String word)
    {
-      docDictionary_.add(word);
+      contextDictionary_.add(word);
       
-      spellingDocument_.writeDictionary(docDictionary_);
+      context_.writeDictionary(contextDictionary_);
       
       updateIgnoredWordsIndex();
    }
@@ -107,17 +113,17 @@ public class SpellChecker
    {
       allIgnoredWords_.clear();
       allIgnoredWords_.addAll(userDictionaryWords_);
-      allIgnoredWords_.addAll(docDictionary_);
+      allIgnoredWords_.addAll(contextDictionary_);
       
       // TODO: fire event to container notifying it that rescanning
       // may be necessary
    }
    
-   private final SpellingDocument spellingDocument_;
+   private final Context context_;
    
-   private final WorkbenchList userDictionary_;
+   private WorkbenchList userDictionary_;
    private ArrayList<String> userDictionaryWords_;
-   private ArrayList<String> docDictionary_ = new ArrayList<String>();
+   private ArrayList<String> contextDictionary_ = new ArrayList<String>();
    private final HashSet<String> allIgnoredWords_ = new HashSet<String>(); 
    
    private SpellingService spellingService_;
