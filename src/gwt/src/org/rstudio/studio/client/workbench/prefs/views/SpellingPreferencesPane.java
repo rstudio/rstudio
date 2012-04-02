@@ -15,13 +15,17 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
+import org.rstudio.studio.client.common.spelling.ui.MacSpellingLanguageWidget;
 import org.rstudio.studio.client.common.spelling.ui.SpellingLanguageSelectWidget;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -46,15 +50,28 @@ public class SpellingPreferencesPane extends PreferencesPane
       spaced(languageWidget_);
       add(languageWidget_);
       
-
-      add(checkboxPref("Check spelling before compiling PDF",
-                       prefs.checkSpellingBeforeCompile()));
+      // for Mac desktop we hide the language widget and show an alternate
+      // widget indicating we are using the system default default language
+      if (Desktop.isDesktop() && BrowseCap.isMacintosh())
+      {
+         languageWidget_.setVisible(false);
+         Widget macLanguageWidget = new MacSpellingLanguageWidget();
+         spaced(macLanguageWidget);
+         add(macLanguageWidget);
+      }
+         
+      add(checkboxPref("Check spelling as you type",
+                       prefs.checkSpellingAsYouType()));
       
       add(checkboxPref("Ignore words in UPPERCASE",
                         prefs.ignoreWordsInUppercase()));
       
       add(checkboxPref("Ignore words with numbers",
                        prefs.ignoreWordsInUppercase()));
+      
+      add(checkboxPref("Check spelling before compiling PDF",
+                       prefs.checkSpellingBeforeCompile()));
+
    }
 
    

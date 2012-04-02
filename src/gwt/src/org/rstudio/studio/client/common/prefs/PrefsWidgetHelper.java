@@ -23,10 +23,15 @@ public class PrefsWidgetHelper
    public static void addHelpButton(SelectWidget selectWidget, 
                                     String rstudioLinkName)
    {
+      selectWidget.addWidget(createHelpButton(rstudioLinkName));
+   }
+  
+   public static HelpButton createHelpButton(String rstudioLinkName)
+   {
       HelpButton helpButton = new HelpButton(rstudioLinkName);
       Style style = helpButton.getElement().getStyle();
       style.setMarginTop(3, Unit.PX);
       style.setMarginLeft(4, Unit.PX);
-      selectWidget.addWidget(helpButton);
+      return helpButton;
    }
 }
