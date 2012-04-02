@@ -939,6 +939,15 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   }
 
   /**
+   * Refreshes the current list of suggestions.
+   */
+  public void refreshSuggestionList() {
+    if (isAttached()) {
+      refreshSuggestions();
+    }
+  }
+
+  /**
    * @deprecated Use the {@link HandlerRegistration#removeHandler} method on the
    *             object returned by {@link #getTextBox}().addChangeHandler
    *             instead
