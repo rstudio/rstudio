@@ -19,6 +19,9 @@
 #include <core/Exec.hpp>
 
 #include <core/spelling/HunspellSpellingEngine.hpp>
+#ifdef __APPLE__
+#include <core/spelling/MacSpellingEngine.hpp>
+#endif
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
@@ -206,11 +209,15 @@ Error initialize()
 
    // initialize spelling engine
    using namespace core::spelling;
+#ifdef __APPLE__
+   s_pSpellingEngine.reset(new MacSpellingEngine());
+#else
    HunspellDictionaryManager dictManager(
                            session::options().hunspellDictionariesPath(),
                            userDictionariesDir());
    s_pSpellingEngine.reset(new HunspellSpellingEngine(dictManager,
                                                       &r::util::iconvstr));
+#endif
 
    // register rpc methods
    using boost::bind;

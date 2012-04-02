@@ -27,8 +27,6 @@ public:
    MacSpellingEngine();
 
 public:
-   Error initialize();
-
    Error checkSpelling(const std::string& langId,
                        const std::string& word,
                        bool *pCorrect);
@@ -36,6 +34,9 @@ public:
    Error suggestionList(const std::string& langId,
                         const std::string& word,
                         std::vector<std::string>* pSugs);
+
+private:
+   Error initialize();
 
 private:
    struct Impl;

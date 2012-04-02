@@ -18,6 +18,7 @@
 #include <boost/utility.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include <core/Log.hpp>
 #include <core/Error.hpp>
 
 #import <Foundation/NSString.h>
@@ -85,12 +86,18 @@ std::string toStdString(NSString* nsString)
 
 struct MacSpellingEngine::Impl
 {
+   Impl() : available(false) {}
+   bool available;
 };
 
 MacSpellingEngine::MacSpellingEngine()
    : pImpl_(new Impl())
 {
+   Error error = initialize();
+   if (error)
+      LOG_ERROR(error);
 }
+
 
 Error MacSpellingEngine::initialize()
 {
@@ -101,6 +108,7 @@ Error MacSpellingEngine::initialize()
    @try
    {
       [[NSSpellChecker sharedSpellChecker] language];
+      pImpl_->available = true;
       return Success();
    }
    CATCH_NS_EXCEPTION
@@ -109,12 +117,19 @@ Error MacSpellingEngine::initialize()
    return Success();
 }
 
-Error MacSpellingEngine::checkSpelling(const std::string& langId,
+Error MacSpellingEngine::checkSpelling(const std::string&, // use system lang
                                        const std::string& word,
                                        bool *pCorrect)
 {
-   AutoreleaseContext arContext;
+   // always return true if the spelling engine isn't available
+   if (!pImpl_->available)
+   {
+      *pCorrect = true;
+      return Success();
+   }
 
+   // check spelling
+   AutoreleaseContext arContext;   
    @try
    {
       NSSpellChecker* spellChecker = [NSSpellChecker sharedSpellChecker];
@@ -136,12 +151,19 @@ Error MacSpellingEngine::checkSpelling(const std::string& langId,
    return Success();
 }
 
-Error MacSpellingEngine::suggestionList(const std::string& langId,
+Error MacSpellingEngine::suggestionList(const std::string&, // use system lang
                                         const std::string& word,
                                         std::vector<std::string>* pSug)
 {
-   AutoreleaseContext arContext;
+   // always return empty list if the spelling engine isn't available
+   if (!pImpl_->available)
+   {
+      pSug->clear();
+      return Success();
+   }
 
+   // get suggestions
+   AutoreleaseContext arContext;
    @try
    {
       NSSpellChecker* spellChecker = [NSSpellChecker sharedSpellChecker];
