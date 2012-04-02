@@ -14,6 +14,8 @@ package org.rstudio.studio.client.common.spelling.ui;
 
 import org.rstudio.studio.client.common.prefs.PrefsWidgetHelper;
 
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -24,8 +26,13 @@ public class MacSpellingLanguageWidget extends Composite
    {
       HorizontalPanel panel = new HorizontalPanel();
       
-      panel.add(
-           new Label("Using Mac OS X spell-checker and language preferences"));
+      Label label = 
+            new Label("Using Mac OS X spell-checker and language preferences");
+      Style labelStyle = label.getElement().getStyle();
+      labelStyle.setMarginTop(2, Unit.PX);
+      labelStyle.setMarginLeft(2, Unit.PX);
+      
+      panel.add(label);
       
       panel.add(PrefsWidgetHelper.createHelpButton("spelling_dictionaries"));
       
