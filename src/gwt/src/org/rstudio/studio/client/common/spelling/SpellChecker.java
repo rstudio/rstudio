@@ -21,8 +21,13 @@ import org.rstudio.studio.client.workbench.WorkbenchList;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.events.ListChangedEvent;
 import org.rstudio.studio.client.workbench.events.ListChangedHandler;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 
@@ -32,6 +37,9 @@ public class SpellChecker
    {  
       ArrayList<String> readDictionary();
       void writeDictionary(ArrayList<String> words);
+      
+      void invalidateAllWords();
+      void invalidateMisspelledWords();
       
       void releaseOnDismiss(HandlerRegistration handler);
    }
@@ -44,37 +52,57 @@ public class SpellChecker
       context_ = context;
       contextDictionary_ = context_.readDictionary();
           
+              
+      // subscribe to spelling service changes (these occur when when the
+      // spelling dictionaries are changed)
+      context_.releaseOnDismiss(spellingService_.addChangeHandler(
+                                                   new ChangeHandler() {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            context_.invalidateAllWords();
+         }
+      }));
+      
+      // subscribe to spelling prefs changes (invalidateAll on changes)
+      uiPrefs_.ignoreWordsInUppercase().addValueChangeHandler(
+                                                         prefChangedHandler_);
+      uiPrefs_.ignoreWordsWithNumbers().addValueChangeHandler(
+                                                         prefChangedHandler_);
+      
       // subscribe to user dictionary changes
       context_.releaseOnDismiss(userDictionary_.addListChangedHandler(
                                                    new ListChangedHandler() {
          @Override
          public void onListChanged(ListChangedEvent event)
          {
+            // if we don't yet have a userDictionaryWords_ then we don't need
+            // to fire an invalidation event
+            boolean invalidateMisspelled = userDictionaryWords_ != null;
+                 
             userDictionaryWords_ = event.getList();
+            
             updateIgnoredWordsIndex();
+            
+            if (invalidateMisspelled)
+               context_.invalidateMisspelledWords();
          }
       }));
    }
    
    @Inject
    void intialize(SpellingService spellingService,
-                  WorkbenchListManager workbenchListManager)
+                  WorkbenchListManager workbenchListManager,
+                  UIPrefs uiPrefs)
    {
       spellingService_ = spellingService;
       userDictionary_ = workbenchListManager.getUserDictionaryList();
+      uiPrefs_ = uiPrefs;
    }
    
    public void checkSpelling(String word, 
                              ServerRequestCallback<Boolean> callback)
    {
-      // TODO: filter on uppercase, words with numbers, etc. note  that when
-      // those prefs change we need to fire an event to the container 
-      // indicating to invalidate
-      
-      // TODO: when spelling service dictionary changes it invalidates its
-      // cache. we also need to propagate this to the container indicating
-      // to invalidate
-      
       if (isWordIgnored(word))
          callback.onResponseReceived(true);
       
@@ -97,28 +125,67 @@ public class SpellChecker
    public void addIgnoredWord(String word)
    {
       contextDictionary_.add(word);
-      
       context_.writeDictionary(contextDictionary_);
       
       updateIgnoredWordsIndex();
+
+      context_.invalidateMisspelledWords();
    }
   
    private boolean isWordIgnored(String word)
    {
-      return allIgnoredWords_.contains(word);
+      if (allIgnoredWords_.contains(word))
+         return true;
+      else if (ignoreUppercaseWord(word))
+         return true;
+      else if (ignoreWordWithNumbers(word))
+         return true;
+      else
+         return false;
    }
    
+   private boolean ignoreUppercaseWord(String word)
+   {
+      if (!uiPrefs_.ignoreWordsInUppercase().getValue())
+         return false;
+     
+      for (char c: word.toCharArray())
+      {
+         if(!Character.isUpperCase(c))
+            return false;
+      }
+      return true;
+   }
    
+   private boolean ignoreWordWithNumbers(String word)
+   {
+      if (!uiPrefs_.ignoreWordsWithNumbers().getValue())
+         return false;
+      
+      for (char c: word.toCharArray())
+      {
+         if(Character.isDigit(c))
+            return true;
+      }
+      return false;
+   }
+  
    private void updateIgnoredWordsIndex()
    {
       allIgnoredWords_.clear();
       allIgnoredWords_.addAll(userDictionaryWords_);
       allIgnoredWords_.addAll(contextDictionary_);
-      
-      // TODO: fire event to container notifying it that rescanning
-      // may be necessary
    }
-   
+    
+   private ValueChangeHandler<Boolean> prefChangedHandler_ = 
+                                       new ValueChangeHandler<Boolean>() {
+      @Override
+      public void onValueChange(ValueChangeEvent<Boolean> event)
+      {
+         context_.invalidateAllWords();
+      }  
+   };
+
    private final Context context_;
    
    private WorkbenchList userDictionary_;
@@ -127,4 +194,5 @@ public class SpellChecker
    private final HashSet<String> allIgnoredWords_ = new HashSet<String>(); 
    
    private SpellingService spellingService_;
+   private UIPrefs uiPrefs_;
 }

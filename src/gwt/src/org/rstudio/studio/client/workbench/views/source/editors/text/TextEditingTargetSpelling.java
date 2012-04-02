@@ -24,55 +24,59 @@ import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 
-public class TextEditingTargetSpelling 
+public class TextEditingTargetSpelling implements SpellChecker.Context
 {
    public TextEditingTargetSpelling(DocDisplay docDisplay,
-                                    final DocUpdateSentinel docUpdateSentinel)
+                                    DocUpdateSentinel docUpdateSentinel)
    {
       docDisplay_ = docDisplay;
+      docUpdateSentinel_ = docUpdateSentinel;
+      spellChecker_ = new SpellChecker(this);
       
-      spellChecker_ = new SpellChecker(new SpellChecker.Context() {
-         
-         @Override
-         public ArrayList<String> readDictionary()
-         {
-            ArrayList<String> ignoredWords = new ArrayList<String>();
-            String ignored = docUpdateSentinel.getProperty(IGNORED_WORDS);
-            if (ignored != null)
-            {
-               Iterator<String[]> iterator = new CsvReader(ignored).iterator();
-               if (iterator.hasNext())
-               {
-                  String[] words = iterator.next();
-                  for (String word : words)
-                     ignoredWords.add(word);
-               }
-            }
-            return ignoredWords;
-         }
-
-         @Override
-         public void writeDictionary(ArrayList<String> ignoredWords)
-         {
-            CsvWriter csvWriter = new CsvWriter();
-            for (String ignored : ignoredWords)
-               csvWriter.writeValue(ignored);
-            csvWriter.endLine();
-            docUpdateSentinel.setProperty(IGNORED_WORDS, 
-                                          csvWriter.getValue(), 
-                                          new NullProgressIndicator());   
-         }
-
-         @Override
-         public void releaseOnDismiss(HandlerRegistration handler)
-         {
-            releaseOnDismiss_.add(handler);      
-         }
-         
-         private final static String IGNORED_WORDS = "ignored_words";  
-         
-      });
+   }
+   
+ 
+ 
+   @Override
+   public void invalidateAllWords()
+   {
       
+   }
+
+   @Override
+   public void invalidateMisspelledWords()
+   {
+      
+   }  
+   
+   @Override
+   public ArrayList<String> readDictionary()
+   {
+      ArrayList<String> ignoredWords = new ArrayList<String>();
+      String ignored = docUpdateSentinel_.getProperty(IGNORED_WORDS);
+      if (ignored != null)
+      {
+         Iterator<String[]> iterator = new CsvReader(ignored).iterator();
+         if (iterator.hasNext())
+         {
+            String[] words = iterator.next();
+            for (String word : words)
+               ignoredWords.add(word);
+         }
+      }
+      return ignoredWords;
+   }
+
+   @Override
+   public void writeDictionary(ArrayList<String> ignoredWords)
+   {
+      CsvWriter csvWriter = new CsvWriter();
+      for (String ignored : ignoredWords)
+         csvWriter.writeValue(ignored);
+      csvWriter.endLine();
+      docUpdateSentinel_.setProperty(IGNORED_WORDS, 
+                                     csvWriter.getValue(), 
+                                     new NullProgressIndicator());   
    }
    
    void onDismiss()
@@ -81,9 +85,18 @@ public class TextEditingTargetSpelling
          releaseOnDismiss_.remove(0).removeHandler();
    }
    
- 
+
+   @Override
+   public void releaseOnDismiss(HandlerRegistration handler)
+   {
+      releaseOnDismiss_.add(handler);      
+   }
+   
+   private final static String IGNORED_WORDS = "ignored_words"; 
+   
    @SuppressWarnings("unused")
    private final DocDisplay docDisplay_;
+   private final DocUpdateSentinel docUpdateSentinel_;
    
    @SuppressWarnings("unused")
    private final SpellChecker spellChecker_;
