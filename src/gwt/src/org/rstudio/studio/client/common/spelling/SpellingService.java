@@ -54,7 +54,7 @@ public class SpellingService implements HasChangeHandlers
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
          {
-            onSpellingDictionariesChanged();
+            invalidateCache();
          }
       });
       
@@ -63,7 +63,7 @@ public class SpellingService implements HasChangeHandlers
          @Override
          public void onValueChange(ValueChangeEvent<JsArrayString> event)
          {
-            onSpellingDictionariesChanged();
+            invalidateCache();
          }
       });
    }
@@ -153,6 +153,13 @@ public class SpellingService implements HasChangeHandlers
       server_.learnWord(word,  requestCallback);
    }
    
+   public void invalidateCache()
+   {
+      previousResults_.clear();
+      DomEvent.fireNativeEvent(Document.get().createChangeEvent(),
+                               handlerManager_);
+   }
+   
    @Override
    public HandlerRegistration addChangeHandler(ChangeHandler handler)
    {
@@ -163,13 +170,6 @@ public class SpellingService implements HasChangeHandlers
    public void fireEvent(GwtEvent<?> event)
    {
       handlerManager_.fireEvent(event);
-   }
-   
-   private void onSpellingDictionariesChanged()
-   {
-      previousResults_.clear();
-      DomEvent.fireNativeEvent(Document.get().createChangeEvent(),
-                               handlerManager_);
    }
    
    private final SpellingServerOperations server_;

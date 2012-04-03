@@ -82,16 +82,33 @@ public class SpellChecker
          @Override
          public void onListChanged(ListChangedEvent event)
          {
-            // if we don't yet have a userDictionaryWords_ then we don't need
-            // to fire an invalidation event
-            boolean invalidateMisspelled = userDictionaryWords_ != null;
+            // detect whether this is the first delivery of the list
+            // or if it is an update
+            boolean isUpdate = userDictionaryWords_ != null;
                  
             userDictionaryWords_ = event.getList();
             
             updateIgnoredWordsIndex();
             
-            if (invalidateMisspelled)
-               context_.invalidateMisspelledWords();
+            if (isUpdate)
+            {
+               // for Mac Desktop any change to the user dictionary is
+               // effectively also a change to the underlying spelling
+               // service. In this case we need to fully invalidate the
+               // spelling service cache (which will result in our calling
+               // context.invalidateAllWords).
+               if (BrowseCap.isMacintoshDesktop())
+               {
+                  spellingService_.invalidateCache();
+               }
+               // For other configurations a change to the user dictionary
+               // can only be an added word so we just need to invalidate
+               // any misspelled words
+               else
+               {
+                  context_.invalidateMisspelledWords(); 
+               }
+            }
          }
       }));
    }
