@@ -103,8 +103,13 @@ MacSpellingEngine::MacSpellingEngine()
       LOG_ERROR(error);
 }
 
-Error MacSpellingEngine::checkSpelling(const std::string&, // use system lang
-                                       const std::string& word,
+void MacSpellingEngine::useDictionary(const std::string& langId)
+{
+   // currently not implement on the mac -- we just use the system
+   // default dictionary
+}
+
+Error MacSpellingEngine::checkSpelling(const std::string& word,
                                        bool *pCorrect)
 {
    // always return true if the spelling engine isn't available
@@ -137,8 +142,7 @@ Error MacSpellingEngine::checkSpelling(const std::string&, // use system lang
    return Success();
 }
 
-Error MacSpellingEngine::suggestionList(const std::string&, // use system lang
-                                        const std::string& word,
+Error MacSpellingEngine::suggestionList(const std::string& word,
                                         std::vector<std::string>* pSug)
 {
    // always return empty list if the spelling engine isn't available

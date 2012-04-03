@@ -353,9 +353,9 @@ struct HunspellSpellingEngine::Impl
    {
    }
 
-   SpellChecker& spellChecker(const std::string& langId)
+   void useDictionary(const std::string& langId)
    {
-      if (!pSpellChecker_ || (langId != currentLangId_))
+      if (langId != currentLangId_)
       {
          HunspellDictionary dict = dictManager_.dictionaryForLanguageId(langId);
          if (!dict.empty())
@@ -374,6 +374,10 @@ struct HunspellSpellingEngine::Impl
             pSpellChecker_.reset(new NoSpellChecker());
          }
       }
+   }
+
+   SpellChecker& spellChecker()
+   {
       return *pSpellChecker_;
    }
 
@@ -392,18 +396,22 @@ HunspellSpellingEngine::HunspellSpellingEngine(
 {
 }
 
-Error HunspellSpellingEngine::checkSpelling(const std::string& langId,
-                                            const std::string& word,
-                                            bool *pCorrect)
+
+void HunspellSpellingEngine::useDictionary(const std::string& langId)
 {
-   return pImpl_->spellChecker(langId).checkSpelling(word, pCorrect);
+   pImpl_->useDictionary(langId);
 }
 
-Error HunspellSpellingEngine::suggestionList(const std::string& langId,
-                                             const std::string& word,
+Error HunspellSpellingEngine::checkSpelling(const std::string& word,
+                                            bool *pCorrect)
+{
+   return pImpl_->spellChecker().checkSpelling(word, pCorrect);
+}
+
+Error HunspellSpellingEngine::suggestionList(const std::string& word,
                                              std::vector<std::string>* pSugs)
 {
-   return pImpl_->spellChecker(langId).suggestionList(word, pSugs);
+   return pImpl_->spellChecker().suggestionList(word, pSugs);
 }
 
 Error HunspellSpellingEngine::learnWord(const std::string&)

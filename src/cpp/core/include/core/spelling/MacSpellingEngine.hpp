@@ -27,17 +27,19 @@ public:
    MacSpellingEngine();
 
 public:
-   Error checkSpelling(const std::string& langId,
-                       const std::string& word,
+
+   Error currentLanguage(std::string* pLanguage);
+
+   void useDictionary(const std::string& langId);
+
+   Error checkSpelling(const std::string& word,
+
                        bool *pCorrect);
 
-   Error suggestionList(const std::string& langId,
-                        const std::string& word,
+   Error suggestionList(const std::string& word,
                         std::vector<std::string>* pSugs);
 
    Error learnWord(const std::string& word);
-
-   Error currentLanguage(std::string* pLanguage);
 
 private:
    struct Impl;

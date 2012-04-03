@@ -40,12 +40,13 @@ public:
                           const IconvstrFunction& iconvstrFunction);
 
 public:
-   Error checkSpelling(const std::string& langId,
-                       const std::string& word,
+
+   void useDictionary(const std::string& langId);
+
+   Error checkSpelling(const std::string& word,
                        bool *pCorrect);
 
-   Error suggestionList(const std::string& langId,
-                        const std::string& word,
+   Error suggestionList(const std::string& word,
                         std::vector<std::string>* pSugs);
 
    Error learnWord(const std::string& word);

@@ -48,8 +48,7 @@ SEXP rs_checkSpelling(SEXP wordSEXP)
    bool isCorrect;
    std::string word = r::sexp::asString(wordSEXP);
 
-   std::string langId = userSettings().spellingLanguage();
-   Error error = s_pSpellingEngine->checkSpelling(langId, word, &isCorrect);
+   Error error = s_pSpellingEngine->checkSpelling(word, &isCorrect);
 
    // We'll return true here so as not to tie up the front end.
    if (error)
@@ -100,7 +99,6 @@ Error checkSpelling(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   std::string langId = userSettings().spellingLanguage();
    json::Array misspelledIndexes;
    for (std::size_t i=0; i<words.size(); i++)
    {
@@ -112,7 +110,7 @@ Error checkSpelling(const json::JsonRpcRequest& request,
 
       std::string word = words[i].get_str();
       bool isCorrect = true;
-      error = s_pSpellingEngine->checkSpelling(langId, word, &isCorrect);
+      error = s_pSpellingEngine->checkSpelling(word, &isCorrect);
       if (error)
          return error;
 
@@ -134,8 +132,7 @@ Error suggestionList(const json::JsonRpcRequest& request,
       return error;
 
    std::vector<std::string> sugs;
-   std::string langId = userSettings().spellingLanguage();
-   error = s_pSpellingEngine->suggestionList(langId, word, &sugs);
+   error = s_pSpellingEngine->suggestionList(word, &sugs);
    if (error)
       return error;
 
@@ -184,6 +181,11 @@ Error installAllDictionaries(const json::JsonRpcRequest& request,
 }
 
 
+// reset dictionary on user settings changed
+void onUserSettingsChanged()
+{
+   s_pSpellingEngine->useDictionary(userSettings().spellingLanguage());
+}
 
 } // anonymous namespace
 
@@ -241,9 +243,17 @@ Error initialize()
    HunspellDictionaryManager dictManager(
                            session::options().hunspellDictionariesPath(),
                            userDictionariesDir());
-   s_pSpellingEngine.reset(new HunspellSpellingEngine(dictManager,
-                                                      &r::util::iconvstr));
+   HunspellSpellingEngine* pHunspell = new HunspellSpellingEngine(
+                                                      dictManager,
+                                                      &r::util::iconvstr);
+   s_pSpellingEngine.reset(pHunspell);
 #endif
+
+   // set dictionary
+   s_pSpellingEngine->useDictionary(userSettings().spellingLanguage());
+
+   // connect to user settings changed
+   userSettings().onChanged.connect(onUserSettingsChanged);
 
    // register rpc methods
    using boost::bind;

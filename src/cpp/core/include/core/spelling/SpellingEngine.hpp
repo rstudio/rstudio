@@ -29,12 +29,13 @@ class SpellingEngine : boost::noncopyable
 {
 public:
    virtual ~SpellingEngine() {}
-   virtual Error checkSpelling(const std::string& langId,
-                               const std::string& word,
+
+   virtual void useDictionary(const std::string& langId) = 0;
+
+   virtual Error checkSpelling(const std::string& word,
                                bool *pCorrect) = 0;
 
-   virtual Error suggestionList(const std::string& langId,
-                                const std::string& word,
+   virtual Error suggestionList(const std::string& word,
                                 std::vector<std::string>* pSugs) = 0;
 
    virtual Error learnWord(const std::string& word) = 0;
