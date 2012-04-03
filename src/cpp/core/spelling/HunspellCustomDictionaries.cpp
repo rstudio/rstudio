@@ -54,6 +54,30 @@ FilePath HunspellCustomDictionaries::dictionaryPath(
    return customDictionariesDir_.childPath(name + ".dic");
 }
 
+Error HunspellCustomDictionaries::add(const FilePath& dicPath)
+{
+   // validate .dic extension
+   if (!dicPath.hasExtensionLowerCase(".dic"))
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         ERROR_LOCATION);
+   }
+
+   // remove existing with same name
+   std::string name = dicPath.stem();
+   Error error = remove(name);
+   if (error)
+      LOG_ERROR(error);
+
+   // add it
+   return dicPath.copy(dictionaryPath(name));
+}
+
+Error HunspellCustomDictionaries::remove(const std::string& name)
+{
+   return dictionaryPath(name).removeIfExists();
+}
+
 
 } // namespace spelling
 } // namespace core
