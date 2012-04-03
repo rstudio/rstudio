@@ -72,6 +72,14 @@ FilePath userDictionariesDir()
    return module_context::userScratchPath().childPath("dictionaries");
 }
 
+core::spelling::HunspellDictionaryManager hunspellDictionaryManager()
+{
+   core::spelling::HunspellDictionaryManager dictManager(
+                                         options().hunspellDictionariesPath(),
+                                         userDictionariesDir());
+   return dictManager;
+}
+
 FilePath allLanguagesDir()
 {
    return module_context::userScratchPath().childPath(
@@ -134,6 +142,60 @@ Error suggestionList(const json::JsonRpcRequest& request,
    return Success();
 }
 
+
+
+Error addCustomDictionary(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   // get the argument
+   std::string dict;
+   Error error = json::readParams(request.params, &dict);
+   if (error)
+      return error;
+   FilePath dictPath = module_context::resolveAliasedPath(dict);
+
+   // verify .dic extension
+   if (!dictPath.hasExtensionLowerCase(".dic"))
+   {
+      std::string msg = "Dictionary files must have a .dic extension";
+      Error error(json::errc::ParamInvalid, ERROR_LOCATION);
+      pResponse->setError(error, json::Value(msg));
+      return Success();
+   }
+
+   // perform the add
+   using namespace core::spelling;
+   HunspellDictionaryManager dictManager = hunspellDictionaryManager();
+   error = dictManager.custom().add(dictPath);
+   if (error)
+      return error;
+
+   // return
+   pResponse->setResult(json::toJsonArray(dictManager.custom().dictionaries()));
+   return Success();
+}
+
+Error removeCustomDictionary(const json::JsonRpcRequest& request,
+                             json::JsonRpcResponse* pResponse)
+{
+   // get the argument
+   std::string name;
+   Error error = json::readParams(request.params, &name);
+   if (error)
+      return error;
+
+   // perform the remove
+   using namespace core::spelling;
+   HunspellDictionaryManager dictManager = hunspellDictionaryManager();
+   error = dictManager.custom().remove(name);
+   if (error)
+      return error;
+
+   // return
+   pResponse->setResult(json::toJsonArray(dictManager.custom().dictionaries()));
+   return Success();
+}
+
 Error installAllDictionaries(const json::JsonRpcRequest& request,
                              json::JsonRpcResponse* pResponse)
 {
@@ -173,9 +235,7 @@ core::json::Object spellingPrefsContextAsJson()
 
    core::json::Object contextJson;
 
-   HunspellDictionaryManager dictManager(options().hunspellDictionariesPath(),
-                                         userDictionariesDir());
-
+   HunspellDictionaryManager dictManager = hunspellDictionaryManager();
    std::vector<HunspellDictionary> dictionaries;
    Error error = dictManager.availableLanguages(&dictionaries);
    if (error)
@@ -203,9 +263,7 @@ core::json::Object spellingPrefsContextAsJson()
 
 Error initialize()
 {
-   // register rs_ensureFileHidden with R
    R_CallMethodDef methodDef;
-
    methodDef.name = "rs_checkSpelling" ;
    methodDef.fun = (DL_FUNC) rs_checkSpelling ;
    methodDef.numArgs = 1;
@@ -213,12 +271,9 @@ Error initialize()
 
    // initialize spelling engine
    using namespace core::spelling;
-   HunspellDictionaryManager dictManager(
-                           session::options().hunspellDictionariesPath(),
-                           userDictionariesDir());
    HunspellSpellingEngine* pHunspell = new HunspellSpellingEngine(
-                                                      dictManager,
-                                                      &r::util::iconvstr);
+                                                   hunspellDictionaryManager(),
+                                                   &r::util::iconvstr);
    s_pSpellingEngine.reset(pHunspell);
    s_pSpellingEngine->useDictionary(userSettings().spellingLanguage());
 
@@ -232,6 +287,8 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "check_spelling", checkSpelling))
       (bind(registerRpcMethod, "suggestion_list", suggestionList))
+      (bind(registerRpcMethod, "add_custom_dictionary", addCustomDictionary))
+      (bind(registerRpcMethod, "remove_custom_dictionary", removeCustomDictionary))
       (bind(registerRpcMethod, "install_all_dictionaries", installAllDictionaries))
       (bind(sourceModuleRFile, "SessionSpelling.R"));
    return initBlock.execute();

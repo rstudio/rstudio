@@ -21,7 +21,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
+import org.rstudio.studio.client.common.spelling.SpellingService;
 import org.rstudio.studio.client.common.spelling.ui.SpellingLanguageSelectWidget;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -34,12 +34,12 @@ public class SpellingPreferencesPane extends PreferencesPane
    @Inject
    public SpellingPreferencesPane(GlobalDisplay globalDisplay,
                                   PreferencesDialogResources res,
-                                  SpellingServerOperations server,
+                                  SpellingService spellingService,
                                   UIPrefs prefs)
    {
       globalDisplay_ = globalDisplay;
       res_ = res;
-      server_ = server;
+      spellingService_ = spellingService;
       uiPrefs_ = prefs;
       
       languageWidget_ = new SpellingLanguageSelectWidget(onInstallLanguages_);
@@ -74,7 +74,7 @@ public class SpellingPreferencesPane extends PreferencesPane
          // save current selection for restoring
          final String currentLang = languageWidget_.getSelectedLanguage();
          
-         server_.installAllDictionaries(
+         spellingService_.installAllDictionaries(
             new ServerRequestCallback<SpellingPrefsContext> () {
 
                @Override
@@ -154,6 +154,6 @@ public class SpellingPreferencesPane extends PreferencesPane
    
    private final GlobalDisplay globalDisplay_;
    private final UIPrefs uiPrefs_;
-   private final SpellingServerOperations server_;
+   private final SpellingService spellingService_;
    private final SpellingLanguageSelectWidget languageWidget_;
 }

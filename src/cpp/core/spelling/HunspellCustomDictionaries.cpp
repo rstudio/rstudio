@@ -54,7 +54,7 @@ FilePath HunspellCustomDictionaries::dictionaryPath(
    return customDictionariesDir_.childPath(name + ".dic");
 }
 
-Error HunspellCustomDictionaries::add(const FilePath& dicPath)
+Error HunspellCustomDictionaries::add(const FilePath& dicPath) const
 {
    // validate .dic extension
    if (!dicPath.hasExtensionLowerCase(".dic"))
@@ -73,7 +73,7 @@ Error HunspellCustomDictionaries::add(const FilePath& dicPath)
    return dicPath.copy(dictionaryPath(name));
 }
 
-Error HunspellCustomDictionaries::remove(const std::string& name)
+Error HunspellCustomDictionaries::remove(const std::string& name) const
 {
    return dictionaryPath(name).removeIfExists();
 }

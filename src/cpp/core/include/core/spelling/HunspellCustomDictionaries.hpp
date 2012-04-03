@@ -42,8 +42,8 @@ public:
    std::vector<std::string> dictionaries() const;
    FilePath dictionaryPath(const std::string& name) const;
 
-   Error add(const FilePath& dicPath);
-   Error remove(const std::string& name);
+   Error add(const FilePath& dicPath) const;
+   Error remove(const std::string& name) const;
 
 private:
    core::FilePath customDictionariesDir_;

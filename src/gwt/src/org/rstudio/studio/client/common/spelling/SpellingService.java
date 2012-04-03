@@ -22,6 +22,7 @@ import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
 import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JsArrayInteger;
@@ -47,6 +48,7 @@ public class SpellingService implements HasChangeHandlers
                           UIPrefs uiPrefs)
    {
       server_ = server;
+      uiPrefs_ = uiPrefs;
       
       uiPrefs.spellingDictionaryLanguage().addValueChangeHandler(
                                            new ValueChangeHandler<String>(){
@@ -146,6 +148,26 @@ public class SpellingService implements HasChangeHandlers
       server_.suggestionList(word, callback);
    }
    
+   public void addCustomDictionary(
+                         String dictPath,
+                         final ServerRequestCallback<JsArrayString> callback)
+   {
+      server_.addCustomDictionary(dictPath, new CustomDictCallback(callback));
+   }
+
+   public void removeCustomDictionary(
+                              String name,
+                              ServerRequestCallback<JsArrayString> callback)
+   {
+      server_.removeCustomDictionary(name,  new CustomDictCallback(callback));
+   }
+   
+   public void installAllDictionaries(
+                  ServerRequestCallback<SpellingPrefsContext> requestCallback)
+   {
+      server_.installAllDictionaries(requestCallback);
+   }
+   
    public void invalidateCache()
    {
       previousResults_.clear();
@@ -165,7 +187,43 @@ public class SpellingService implements HasChangeHandlers
       handlerManager_.fireEvent(event);
    }
    
+   private class CustomDictCallback extends ServerRequestCallback<JsArrayString>
+   {
+      public CustomDictCallback(ServerRequestCallback<JsArrayString> callback)
+      {
+         clientCallback_ = callback;
+      }
+      
+      @Override
+      public void onResponseReceived(JsArrayString customDicts)
+      {
+         // the underlying spelling dictionaries have changed so we need
+         // to update the ui-pref -- this will result in an invalidation
+         // of our results cache. the server will re-load the spelling
+         // dictionaries when the user presses OK or Apply, causing the
+         // user_settings file to be written and the spelling user settings
+         // changed sink to be fired. note that there is the possiblity
+         // that if the user doesn't press OK that the server-side change
+         // will not occur (and the updated dictionary state won't be 
+         // reflected until the user restarts RStudio)
+         uiPrefs_.spellingCustomDictionaries().setGlobalValue(customDicts);
+         
+         // pass through to the caller
+         clientCallback_.onResponseReceived(customDicts);
+      }
+      
+      @Override
+      public void onError(ServerError error)
+      {
+         clientCallback_.onError(error);
+      }
+     
+      private final ServerRequestCallback<JsArrayString> clientCallback_;
+   };
+         
+   
    private final SpellingServerOperations server_;
+   private final UIPrefs uiPrefs_;
    
    private HashMap<String,Boolean> previousResults_ = 
                                              new HashMap<String,Boolean>();

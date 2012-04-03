@@ -2440,6 +2440,21 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(word));
       sendRequest(RPC_SCOPE, SUGGESTION_LIST, params, requestCallback);
    }
+   
+   public void addCustomDictionary(
+                              String dictPath,
+                              ServerRequestCallback<JsArrayString> callback)
+   {
+      sendRequest(RPC_SCOPE, ADD_CUSTOM_DICTIONARY, dictPath, callback);
+   }
+
+   public void removeCustomDictionary(
+                              String name,
+                              ServerRequestCallback<JsArrayString> callback)
+   {
+      sendRequest(RPC_SCOPE, REMOVE_CUSTOM_DICTIONARY, name, callback);
+   }
+
 
    public void installAllDictionaries(
                ServerRequestCallback<SpellingPrefsContext> requestCallback)
@@ -2682,6 +2697,8 @@ public class RemoteServer implements Server
    
    private static final String CHECK_SPELLING = "check_spelling";
    private static final String SUGGESTION_LIST = "suggestion_list";
+   private static final String ADD_CUSTOM_DICTIONARY = "add_custom_dictionary";
+   private static final String REMOVE_CUSTOM_DICTIONARY = "remove_custom_dictionary";
    private static final String INSTALL_ALL_DICTIONARIES = "install_all_dictionaries";
 
    private static final String BEGIN_FIND = "begin_find";

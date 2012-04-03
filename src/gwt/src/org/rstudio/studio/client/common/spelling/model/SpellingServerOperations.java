@@ -28,7 +28,12 @@ public interface SpellingServerOperations
    void suggestionList(String word,
                        ServerRequestCallback<JsArrayString> requestCallback);
    
-   // NOTE: only used for Hunspell back-end
+   void addCustomDictionary(String dictPath,
+                            ServerRequestCallback<JsArrayString> callback);
+   
+   void removeCustomDictionary(String name,
+                               ServerRequestCallback<JsArrayString> callback);
+
    void installAllDictionaries(
            ServerRequestCallback<SpellingPrefsContext> requestCallback);
 }
