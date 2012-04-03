@@ -27,7 +27,7 @@ public class SpellingLanguageSelectWidget extends SelectWidget
    public SpellingLanguageSelectWidget(
                      final CommandWithArg<String> onInstallLanguages)
    {
-      super("Spelling dictionary language:", 
+      super("Main dictionary language:", 
             new String[0], 
             new String[0], 
             false, 

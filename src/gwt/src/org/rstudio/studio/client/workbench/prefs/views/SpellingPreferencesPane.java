@@ -22,6 +22,7 @@ import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.spelling.SpellingService;
+import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.common.spelling.ui.SpellingLanguageSelectWidget;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -45,6 +46,11 @@ public class SpellingPreferencesPane extends PreferencesPane
       languageWidget_ = new SpellingLanguageSelectWidget(onInstallLanguages_);
       spaced(languageWidget_);
       add(languageWidget_);
+      
+      customDictsWidget_ =  new SpellingCustomDictionariesWidget();
+      spaced(customDictsWidget_);
+      nudgeRight(customDictsWidget_);
+      add(customDictsWidget_);
          
       add(checkboxPref("Check spelling as you type",
                        prefs.checkSpellingAsYouType()));
@@ -118,6 +124,9 @@ public class SpellingPreferencesPane extends PreferencesPane
       
       languageWidget_.setSelectedLanguage(
                         uiPrefs_.spellingDictionaryLanguage().getValue());
+      
+      customDictsWidget_.setDictionaries(context.getCustomDictionaries());
+      customDictsWidget_.setProgressIndicator(getProgressIndicator());
    }
 
    @Override
@@ -156,4 +165,5 @@ public class SpellingPreferencesPane extends PreferencesPane
    private final UIPrefs uiPrefs_;
    private final SpellingService spellingService_;
    private final SpellingLanguageSelectWidget languageWidget_;
+   private final SpellingCustomDictionariesWidget customDictsWidget_;
 }

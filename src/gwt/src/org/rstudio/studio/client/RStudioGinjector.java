@@ -31,6 +31,7 @@ import org.rstudio.studio.client.common.latex.LatexProgramRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.common.spelling.SpellChecker;
+import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.pdfviewer.PDFViewerApplication;
 import org.rstudio.studio.client.vcs.VCSApplication;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -59,6 +60,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(CompilePdfProgressDialog compilePdfProgressDialog);
    void injectMembers(TextEditingTargetCompilePdfHelper compilePdfHelper);
    void injectMembers(SpellChecker spellChecker);
+   void injectMembers(SpellingCustomDictionariesWidget widget);
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
