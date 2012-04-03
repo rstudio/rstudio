@@ -22,7 +22,6 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
 import org.rstudio.studio.client.common.spelling.ui.MacSpellingLanguageWidget;
@@ -52,7 +51,7 @@ public class SpellingPreferencesPane extends PreferencesPane
       
       // for Mac desktop we hide the language widget and show an alternate
       // widget indicating we are using the system default default language
-      if (Desktop.isDesktop() && BrowseCap.isMacintosh())
+      if (BrowseCap.isMacintoshDesktop())
       {
          languageWidget_.setVisible(false);
          Widget macLanguageWidget = new MacSpellingLanguageWidget();

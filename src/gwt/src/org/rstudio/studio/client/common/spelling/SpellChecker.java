@@ -16,8 +16,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchList;
@@ -96,11 +99,13 @@ public class SpellChecker
    @Inject
    void intialize(SpellingService spellingService,
                   WorkbenchListManager workbenchListManager,
-                  UIPrefs uiPrefs)
+                  UIPrefs uiPrefs,
+                  GlobalDisplay globalDisplay)
    {
       spellingService_ = spellingService;
       userDictionary_ = workbenchListManager.getUserDictionaryList();
       uiPrefs_ = uiPrefs;
+      globalDisplay_ = globalDisplay;
    }
    
    public void checkSpelling(
@@ -149,11 +154,47 @@ public class SpellChecker
       spellingService_.suggestionList(word, callback);
    }
    
-   public void addToUserDictionary(String word)
+   public void addToUserDictionary(final String word)
    {
-      // NOTE: we don't fire the change event dicectly b/c it will occur later 
-      // within the onListChannged handler 
-      userDictionary_.append(word);
+      // On Mac desktop we want to allow the OS X spell checker to maintain
+      // the user dictionary. To make this work we do the following:
+      //
+      //  (1) On adding to the user dictionary we make a call to the server
+      //      to add it to the OSX user dictionary
+      //
+      //  (2) We still need to signal other tabs and even other IDE instances
+      //      that previously misspelled words may now be correct. To do
+      //      this we re-write the user dictionary to have a single entry
+      //      (the newly added word). This will cause a list changed event
+      //      to propagate and other contexts will now display the word as
+      //      correct. We limit the contents of the user dictionary to a
+      //      single word because we don't want to get out of sync with the
+      //      OSX user dictionary (if we kept our own list and one of the
+      //      words was removed from the OSX user dictionary then we'd fail
+      //      to remove it from our list)
+      if (BrowseCap.isMacintoshDesktop())
+      {
+         spellingService_.learnWord(word, new ServerRequestCallback<Void>() 
+         {
+            @Override
+            public void onResponseReceived(Void response)
+            {
+               ArrayList<String> wordList = new ArrayList<String>();
+               wordList.add(word);
+               userDictionary_.setContents(wordList);
+            }
+            
+            @Override
+            public void onError(ServerError error)
+            {
+               globalDisplay_.showErrorMessage("Error", error.getUserMessage());
+            }
+         });
+      }
+      else
+      {
+         userDictionary_.append(word);
+      }
    }
    
    public void addIgnoredWord(String word)
@@ -229,4 +270,5 @@ public class SpellChecker
    
    private SpellingService spellingService_;
    private UIPrefs uiPrefs_;
+   private GlobalDisplay globalDisplay_;
 }

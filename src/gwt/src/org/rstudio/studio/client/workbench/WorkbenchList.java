@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.workbench;
 
+import java.util.ArrayList;
+
 import org.rstudio.studio.client.workbench.events.ListChangedHandler;
 
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -24,6 +26,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 public interface WorkbenchList
 {
    // mutating operations
+   void setContents(ArrayList<String> list);
    void append(String item);
    void prepend(String item);
    void remove(String item);

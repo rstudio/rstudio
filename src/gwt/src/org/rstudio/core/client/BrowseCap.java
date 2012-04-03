@@ -71,6 +71,11 @@ public class BrowseCap
       return OPERATING_SYSTEM.equals("macintosh");
    }
    
+   public static boolean isMacintoshDesktop()
+   {
+      return Desktop.isDesktop() && isMacintosh();
+   }
+   
    public static boolean isWindows()
    {
       return OPERATING_SYSTEM.equals("windows");

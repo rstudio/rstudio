@@ -35,6 +35,8 @@ public:
                         const std::string& word,
                         std::vector<std::string>* pSugs);
 
+   Error learnWord(const std::string& word);
+
    Error currentLanguage(std::string* pLanguage);
 
 private:

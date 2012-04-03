@@ -113,6 +113,12 @@ public class WorkbenchListManager
       }
       
       @Override
+      public void setContents(ArrayList<String> list)
+      {
+         server_.listSetContents(name_, list, new ListRequestCallback());
+      }
+      
+      @Override
       public void append(String item)
       {
          server_.listAppendItem(name_, item, new ListRequestCallback());

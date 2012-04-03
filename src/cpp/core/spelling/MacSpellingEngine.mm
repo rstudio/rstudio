@@ -171,6 +171,29 @@ Error MacSpellingEngine::suggestionList(const std::string&, // use system lang
    return Success();
 }
 
+Error MacSpellingEngine::learnWord(const std::string& word)
+{
+   // always return success if the engine is not available
+   if (!pImpl_->available)
+   {
+      return Success();
+   }
+
+   // learn the word
+   AutoreleaseContext arContext;
+   @try
+   {
+      NSSpellChecker* spellChecker = [NSSpellChecker sharedSpellChecker];
+      NSString* nsWord = toNSString(word);
+      [spellChecker learnWord: nsWord]
+      return Success();
+   }
+   CATCH_NS_EXCEPTION
+
+   // keep compiler happy
+   return Success();
+}
+
 Error MacSpellingEngine::currentLanguage(std::string* pLanguage)
 {
    AutoreleaseContext arContext;

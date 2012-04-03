@@ -406,6 +406,10 @@ Error HunspellSpellingEngine::suggestionList(const std::string& langId,
    return pImpl_->spellChecker(langId).suggestionList(word, pSugs);
 }
 
+Error HunspellSpellingEngine::learnWord(const std::string&)
+{
+   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+}
 
 } // namespace spelling
 } // namespace core 

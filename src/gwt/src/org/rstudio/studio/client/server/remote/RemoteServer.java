@@ -25,6 +25,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.jsonrpc.*;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.*;
@@ -1539,7 +1540,19 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, LIST_GET, listName, requestCallback);
    }
-
+   
+   @Override
+   public void listSetContents(String listName,
+                               ArrayList<String> list,
+                               ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(listName));
+      params.set(1, new JSONArray(JsUtil.toJsArrayString(list)));
+      
+      sendRequest(RPC_SCOPE, LIST_SET_CONTENTS, params, requestCallback);  
+   }
+   
    @Override
    public void listPrependItem(String listName,
                                String value,
@@ -2427,6 +2440,13 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(word));
       sendRequest(RPC_SCOPE, SUGGESTION_LIST, params, requestCallback);
    }
+   
+   public void learnWord(String word,
+                         ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, LEARN_WORD, word, requestCallback);
+   }
+
 
    public void installAllDictionaries(
                ServerRequestCallback<SpellingPrefsContext> requestCallback)
@@ -2653,6 +2673,7 @@ public class RemoteServer implements Server
    private static final String GET_PUBLIC_KEY = "get_public_key";
    
    private static final String LIST_GET = "list_get";
+   private static final String LIST_SET_CONTENTS = "list_set_contents";
    private static final String LIST_PREPEND_ITEM = "list_prepend_item";
    private static final String LIST_APPEND_ITEM = "list_append_item";
    private static final String LIST_REMOVE_ITEM = "list_remove_item";
@@ -2668,6 +2689,7 @@ public class RemoteServer implements Server
    
    private static final String CHECK_SPELLING = "check_spelling";
    private static final String SUGGESTION_LIST = "suggestion_list";
+   private static final String LEARN_WORD = "learn_word";
    private static final String INSTALL_ALL_DICTIONARIES = "install_all_dictionaries";
 
    private static final String BEGIN_FIND = "begin_find";

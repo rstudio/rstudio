@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.model;
 
+import java.util.ArrayList;
+
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
@@ -23,6 +25,10 @@ public interface WorkbenchListsServerOperations
 {   
    void listGet(String listName, 
                 ServerRequestCallback<JsArrayString> requestCallback);
+   
+   void listSetContents(String listName,
+                        ArrayList<String> list,
+                        ServerRequestCallback<Void> requestCallback);
    
    void listPrependItem(String listName,
                         String value,

@@ -48,6 +48,8 @@ public:
                         const std::string& word,
                         std::vector<std::string>* pSugs);
 
+   Error learnWord(const std::string& word);
+
 private:
    struct Impl;
    boost::scoped_ptr<Impl> pImpl_;

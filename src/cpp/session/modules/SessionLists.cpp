@@ -188,6 +188,30 @@ Error listGet(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error listSetContents(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   std::string name;
+   json::Array jsonList;
+   Error error = json::readParams(request.params, &name, &jsonList);
+   if (error)
+      return error;
+
+   std::list<std::string> list;
+   BOOST_FOREACH(const json::Value& val, jsonList)
+   {
+      if (!json::isType<std::string>(val))
+      {
+         BOOST_ASSERT(false);
+         continue;
+      }
+
+      list.push_back(val.get_str());
+   }
+
+   return writeList(name, list);
+}
+
 Error listInsertItem(bool prepend,
                      const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
@@ -312,6 +336,7 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "list_get", listGet))
+      (bind(registerRpcMethod, "list_set_contents", listSetContents))
       (bind(registerRpcMethod, "list_prepend_item", listPrependItem))
       (bind(registerRpcMethod, "list_append_item", listAppendItem))
       (bind(registerRpcMethod, "list_remove_item", listRemoveItem))
