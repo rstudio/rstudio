@@ -185,7 +185,7 @@ Error MacSpellingEngine::learnWord(const std::string& word)
    {
       NSSpellChecker* spellChecker = [NSSpellChecker sharedSpellChecker];
       NSString* nsWord = toNSString(word);
-      [spellChecker learnWord: nsWord]
+      [spellChecker learnWord: nsWord];
       return Success();
    }
    CATCH_NS_EXCEPTION
