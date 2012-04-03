@@ -152,7 +152,6 @@ if (UNIX)
 
    if(APPLE)
       set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
-         spelling/MacSpellingEngine.mm
          system/file_monitor/MacFileMonitor.cpp
       )
    else()

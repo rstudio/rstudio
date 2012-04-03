@@ -19,9 +19,6 @@
 #include <core/Exec.hpp>
 
 #include <core/spelling/HunspellSpellingEngine.hpp>
-#ifdef __APPLE__
-#include <core/spelling/MacSpellingEngine.hpp>
-#endif
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
@@ -39,7 +36,7 @@ namespace spelling {
 
 namespace {
 
-// underlying spelling engine (may be hunspell or osx native)
+// underlying spelling engine
 boost::scoped_ptr<core::spelling::SpellingEngine> s_pSpellingEngine;
 
 // R function for testing & debugging
@@ -237,9 +234,6 @@ Error initialize()
 
    // initialize spelling engine
    using namespace core::spelling;
-#ifdef __APPLE__
-   s_pSpellingEngine.reset(new MacSpellingEngine());
-#else
    HunspellDictionaryManager dictManager(
                            session::options().hunspellDictionariesPath(),
                            userDictionariesDir());
@@ -247,9 +241,6 @@ Error initialize()
                                                       dictManager,
                                                       &r::util::iconvstr);
    s_pSpellingEngine.reset(pHunspell);
-#endif
-
-   // set dictionary
    s_pSpellingEngine->useDictionary(userSettings().spellingLanguage());
 
    // connect to user settings changed
