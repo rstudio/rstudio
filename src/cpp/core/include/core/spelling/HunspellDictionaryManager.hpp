@@ -19,6 +19,8 @@
 
 #include <core/FilePath.hpp>
 
+#include <core/spelling/HunspellCustomDictionaries.hpp>
+
 namespace core {
 
 class Error;
@@ -65,7 +67,9 @@ class HunspellDictionaryManager
 public:
    HunspellDictionaryManager(const FilePath& coreLanguagesDir,
                              const FilePath& userDir)
-      : coreLanguagesDir_(coreLanguagesDir), userDir_(userDir)
+      : coreLanguagesDir_(coreLanguagesDir),
+        userDir_(userDir),
+        customDicts_(userDir_.childPath("custom"))
    {
    }
 
@@ -82,6 +86,8 @@ public:
 
    HunspellDictionary dictionaryForLanguageId(const std::string& langId) const;
 
+   const HunspellCustomDictionaries& custom() const;
+
 private:
    core::FilePath allLanguagesDir() const;
    core::FilePath userLanguagesDir() const;
@@ -89,6 +95,7 @@ private:
 private:
    core::FilePath coreLanguagesDir_;
    core::FilePath userDir_;
+   HunspellCustomDictionaries customDicts_;
 };
 
 } // namespace spelling

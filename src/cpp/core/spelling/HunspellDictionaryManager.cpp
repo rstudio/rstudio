@@ -13,6 +13,9 @@
 
 #include <core/spelling/HunspellDictionaryManager.hpp>
 
+#include <boost/bind.hpp>
+#include <boost/foreach.hpp>
+
 #include <core/Algorithm.hpp>
 
 namespace core {
@@ -180,6 +183,11 @@ HunspellDictionary HunspellDictionaryManager::dictionaryForLanguageId(
       return HunspellDictionary(coreLanguagesDir_.complete(affFile));
 }
 
+const HunspellCustomDictionaries&  HunspellDictionaryManager::custom() const
+{
+   return customDicts_;
+}
+
 FilePath HunspellDictionaryManager::allLanguagesDir() const
 {
    return userDir_.childPath("languages-system");
@@ -189,6 +197,7 @@ FilePath HunspellDictionaryManager::userLanguagesDir() const
 {
    return userDir_.childPath("languages-user");
 }
+
 
 } // namespace spelling
 } // namespace core

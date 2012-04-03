@@ -343,6 +343,16 @@ std::string FilePath::extensionLowerCase() const
 {
    return string_utils::toLower(extension());
 }
+
+bool FilePath::hasExtension(const std::string& ext) const
+{
+   return extension() == ext;
+}
+
+bool FilePath::hasExtensionLowerCase(const std::string& ext) const
+{
+   return extensionLowerCase() == ext;
+}
    
 namespace {
 

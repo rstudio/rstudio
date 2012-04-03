@@ -87,6 +87,8 @@ public:
    // file extensions
    std::string extension() const ;
    std::string extensionLowerCase() const;
+   bool hasExtension(const std::string& ext) const;
+   bool hasExtensionLowerCase(const std::string& ext) const;
    
    // mime types
    std::string mimeContentType(
@@ -181,7 +183,7 @@ private:
 std::ostream& operator << (std::ostream& stream, const FilePath& fp) ;
 
 bool compareAbsolutePathNoCase(const FilePath& file1, const FilePath& file2);
-   
+
 class RestoreCurrentPathScope : boost::noncopyable
 {
 public:

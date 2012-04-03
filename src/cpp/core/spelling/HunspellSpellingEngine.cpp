@@ -355,25 +355,8 @@ struct HunspellSpellingEngine::Impl
 
    void useDictionary(const std::string& langId)
    {
-      if (langId != currentLangId_)
-      {
-         HunspellDictionary dict = dictManager_.dictionaryForLanguageId(langId);
-         if (!dict.empty())
-         {
-            HunspellSpellChecker* pHunspell = new HunspellSpellChecker();
-            pSpellChecker_.reset(pHunspell);
-
-            Error error = pHunspell->initialize(dict, iconvstrFunction_);
-            if (!error)
-               currentLangId_ = langId;
-            else
-               pSpellChecker_.reset(new NoSpellChecker());
-         }
-         else
-         {
-            pSpellChecker_.reset(new NoSpellChecker());
-         }
-      }
+      if (dictionaryContextChanged(langId))
+         resetDictionaries(langId);
    }
 
    SpellChecker& spellChecker()
@@ -382,10 +365,57 @@ struct HunspellSpellingEngine::Impl
    }
 
 private:
+   bool dictionaryContextChanged(const std::string& langId)
+   {
+      return(langId != currentLangId_ ||
+             dictManager_.custom().dictionaries() != currentCustomDicts_);
+   }
+
+   void resetDictionaries(const std::string& langId)
+   {
+      HunspellDictionary dict = dictManager_.dictionaryForLanguageId(langId);
+      if (!dict.empty())
+      {
+         HunspellSpellChecker* pHunspell = new HunspellSpellChecker();
+         pSpellChecker_.reset(pHunspell);
+
+         Error error = pHunspell->initialize(dict, iconvstrFunction_);
+         if (!error)
+         {
+            currentLangId_ = langId;
+            currentCustomDicts_ = dictManager_.custom().dictionaries();
+            BOOST_FOREACH(const std::string& dict, currentCustomDicts_)
+            {
+               bool added;
+               FilePath dicPath = dictManager_.custom().dictionaryPath(dict);
+               Error error = pHunspell->addDictionary(dicPath,
+                                                      dicPath.stem(),
+                                                      &added);
+               if (error)
+                  LOG_ERROR(error);
+            }
+         }
+         else
+         {
+            LOG_ERROR(error);
+
+            pSpellChecker_.reset(new NoSpellChecker());
+         }
+      }
+      else
+      {
+         pSpellChecker_.reset(new NoSpellChecker());
+      }
+   }
+
+
+
+private:
    HunspellDictionaryManager dictManager_;
    IconvstrFunction iconvstrFunction_;
    boost::shared_ptr<SpellChecker> pSpellChecker_;
    std::string currentLangId_;
+   std::vector<std::string> currentCustomDicts_;
 };
 
 
