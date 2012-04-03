@@ -329,6 +329,13 @@ SEXP posixQuitHook(SEXP call, SEXP op, SEXP args, SEXP rho);
 // one-time per session initialization
 Error initialize()
 {
+   // ensure that the utils package is loaded (it might not be loaded
+   // if R is attempting to recover from a library loading error which
+   // occurs during .Rprofile)
+   Error libError = r::exec::RFunction("library", "utils").call();
+   if (libError)
+      LOG_ERROR(libError);
+
    // initialize console history capacity
    r::session::consoleHistory().setCapacityFromRHistsize();
 
