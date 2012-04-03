@@ -342,7 +342,7 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
 {
    rpcHandlers <- objects("tools:rstudio", 
                           all.names=TRUE, 
-                          pattern=glob2rx(".rs.rpc.*"))
+                          pattern=utils:::glob2rx(".rs.rpc.*"))
    return (rpcHandlers)
 })
 
