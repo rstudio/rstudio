@@ -20,7 +20,6 @@ import java.util.List;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
 import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -145,12 +144,6 @@ public class SpellingService implements HasChangeHandlers
                               ServerRequestCallback<JsArrayString> callback)
    {
       server_.suggestionList(word, callback);
-   }
-   
-   public void learnWord(String word, 
-                         ServerRequestCallback<Void> requestCallback)
-   {
-      server_.learnWord(word,  requestCallback);
    }
    
    public void invalidateCache()

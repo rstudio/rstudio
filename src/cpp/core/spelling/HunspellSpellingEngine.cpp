@@ -444,11 +444,6 @@ Error HunspellSpellingEngine::suggestionList(const std::string& word,
    return pImpl_->spellChecker().suggestionList(word, pSugs);
 }
 
-Error HunspellSpellingEngine::learnWord(const std::string&)
-{
-   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
-}
-
 } // namespace spelling
 } // namespace core 
 

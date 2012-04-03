@@ -37,8 +37,6 @@ public:
 
    virtual Error suggestionList(const std::string& word,
                                 std::vector<std::string>* pSugs) = 0;
-
-   virtual Error learnWord(const std::string& word) = 0;
 };
 
 } // namespace spelling

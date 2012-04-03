@@ -58,15 +58,6 @@ SEXP rs_checkSpelling(SEXP wordSEXP)
    return r::sexp::create(isCorrect, &rProtect);
 }
 
-SEXP rs_learnWord(SEXP wordSEXP)
-{
-   std::string word = r::sexp::asString(wordSEXP);
-   Error error = s_pSpellingEngine->learnWord(word);
-   if (error)
-      LOG_ERROR(error);
-
-   return R_NilValue;
-}
 
 json::Object dictionaryAsJson(const core::spelling::HunspellDictionary& dict)
 {
@@ -141,17 +132,6 @@ Error suggestionList(const json::JsonRpcRequest& request,
    pResponse->setResult(sugsJson);
 
    return Success();
-}
-
-Error learnWord(const json::JsonRpcRequest& request,
-                json::JsonRpcResponse*)
-{
-   std::string word;
-   Error error = json::readParams(request.params, &word);
-   if (error)
-      return error;
-
-   return s_pSpellingEngine->learnWord(word);
 }
 
 Error installAllDictionaries(const json::JsonRpcRequest& request,
@@ -231,11 +211,6 @@ Error initialize()
    methodDef.numArgs = 1;
    r::routines::addCallMethod(methodDef);
 
-   methodDef.name = "rs_learnWord" ;
-   methodDef.fun = (DL_FUNC) rs_learnWord ;
-   methodDef.numArgs = 1;
-   r::routines::addCallMethod(methodDef);
-
    // initialize spelling engine
    using namespace core::spelling;
    HunspellDictionaryManager dictManager(
@@ -257,7 +232,6 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "check_spelling", checkSpelling))
       (bind(registerRpcMethod, "suggestion_list", suggestionList))
-      (bind(registerRpcMethod, "learn_word", learnWord))
       (bind(registerRpcMethod, "install_all_dictionaries", installAllDictionaries))
       (bind(sourceModuleRFile, "SessionSpelling.R"));
    return initBlock.execute();

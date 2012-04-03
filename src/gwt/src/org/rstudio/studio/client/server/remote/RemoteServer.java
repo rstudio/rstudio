@@ -2440,13 +2440,6 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(word));
       sendRequest(RPC_SCOPE, SUGGESTION_LIST, params, requestCallback);
    }
-   
-   public void learnWord(String word,
-                         ServerRequestCallback<Void> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, LEARN_WORD, word, requestCallback);
-   }
-
 
    public void installAllDictionaries(
                ServerRequestCallback<SpellingPrefsContext> requestCallback)
@@ -2689,7 +2682,6 @@ public class RemoteServer implements Server
    
    private static final String CHECK_SPELLING = "check_spelling";
    private static final String SUGGESTION_LIST = "suggestion_list";
-   private static final String LEARN_WORD = "learn_word";
    private static final String INSTALL_ALL_DICTIONARIES = "install_all_dictionaries";
 
    private static final String BEGIN_FIND = "begin_find";

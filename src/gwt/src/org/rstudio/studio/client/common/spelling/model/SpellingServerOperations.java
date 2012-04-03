@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.common.spelling.model;
 
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 
@@ -28,9 +27,6 @@ public interface SpellingServerOperations
    
    void suggestionList(String word,
                        ServerRequestCallback<JsArrayString> requestCallback);
-   
-   // NOTE: only used for OSX back-end
-   void learnWord(String word, ServerRequestCallback<Void> requestCallback);
    
    // NOTE: only used for Hunspell back-end
    void installAllDictionaries(
