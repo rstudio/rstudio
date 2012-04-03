@@ -211,9 +211,13 @@ core::json::Object spellingPrefsContextAsJson()
                   dictionaryAsJson);
 
 
+   std::vector<std::string> customDicts = dictManager.custom().dictionaries();
+   core::json::Array customDictsJson = json::toJsonArray(customDicts);
+
    // return json
    contextJson["all_languages_installed"] = dictManager.allLanguagesInstalled();
    contextJson["available_languages"] = dictionariesJson;
+   contextJson["custom_dictionaries"] = customDictsJson;
    return contextJson;
 }
 

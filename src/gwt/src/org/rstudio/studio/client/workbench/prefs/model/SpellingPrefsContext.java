@@ -16,6 +16,7 @@ import org.rstudio.studio.client.common.spelling.model.SpellingLanguage;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 public class SpellingPrefsContext extends JavaScriptObject
 { 
@@ -28,4 +29,9 @@ public class SpellingPrefsContext extends JavaScriptObject
    public native final JsArray<SpellingLanguage> getAvailableLanguages() /*-{
       return this.available_languages;
    }-*/; 
+   
+   public native final JsArrayString getCustomDictionaries() /*-{
+      return this.custom_dictionaries;
+   }-*/; 
+   
 }
