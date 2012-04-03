@@ -272,10 +272,10 @@ Error initialize()
    // initialize spelling engine
    using namespace core::spelling;
    HunspellSpellingEngine* pHunspell = new HunspellSpellingEngine(
-                                                   hunspellDictionaryManager(),
-                                                   &r::util::iconvstr);
+                                             userSettings().spellingLanguage(),
+                                             hunspellDictionaryManager(),
+                                             &r::util::iconvstr);
    s_pSpellingEngine.reset(pHunspell);
-   s_pSpellingEngine->useDictionary(userSettings().spellingLanguage());
 
    // connect to user settings changed
    userSettings().onChanged.connect(onUserSettingsChanged);

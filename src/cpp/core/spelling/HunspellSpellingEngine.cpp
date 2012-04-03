@@ -346,9 +346,11 @@ private:
 
 struct HunspellSpellingEngine::Impl
 {
-   Impl(const HunspellDictionaryManager& dictionaryManager,
+   Impl(const std::string& langId,
+        const HunspellDictionaryManager& dictionaryManager,
         const IconvstrFunction& iconvstrFunction)
-      : dictManager_(dictionaryManager),
+      : currentLangId_(langId),
+        dictManager_(dictionaryManager),
         iconvstrFunction_(iconvstrFunction)
    {
    }
@@ -361,6 +363,9 @@ struct HunspellSpellingEngine::Impl
 
    SpellChecker& spellChecker()
    {
+      if (!pSpellChecker_)
+         resetDictionaries(currentLangId_);
+
       return *pSpellChecker_;
    }
 
@@ -411,18 +416,19 @@ private:
 
 
 private:
+   std::string currentLangId_;
+   std::vector<std::string> currentCustomDicts_;
    HunspellDictionaryManager dictManager_;
    IconvstrFunction iconvstrFunction_;
    boost::shared_ptr<SpellChecker> pSpellChecker_;
-   std::string currentLangId_;
-   std::vector<std::string> currentCustomDicts_;
 };
 
 
 HunspellSpellingEngine::HunspellSpellingEngine(
+                           const std::string& langId,
                            const HunspellDictionaryManager& dictionaryManager,
                            const IconvstrFunction& iconvstrFunction)
-   : pImpl_(new Impl(dictionaryManager, iconvstrFunction))
+   : pImpl_(new Impl(langId, dictionaryManager, iconvstrFunction))
 {
 }
 

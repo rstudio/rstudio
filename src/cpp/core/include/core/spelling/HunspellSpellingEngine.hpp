@@ -36,7 +36,8 @@ typedef boost::function<core::Error(const std::string&,
 class HunspellSpellingEngine : public SpellingEngine
 {
 public:
-   HunspellSpellingEngine(const HunspellDictionaryManager& dictionaryManager,
+   HunspellSpellingEngine(const std::string& langId,
+                          const HunspellDictionaryManager& dictionaryManager,
                           const IconvstrFunction& iconvstrFunction);
 
 public:
