@@ -725,13 +725,12 @@ int RChooseFile (int newFile, char *buf, int len)
 }
          
 // method called from browseUrl
-extern "C" void RBrowseURL(char ** url)
+SEXP rs_browseURL(SEXP urlSEXP)
 {
    try
    {
-      // copy to std::string
-      std::string URL(url[0]);
-      
+      std::string URL = r::sexp::asString(urlSEXP);
+
       // file urls require special dispatching
       std::string filePrefix("file://");
       if (URL.find(filePrefix) == 0)
@@ -749,6 +748,8 @@ extern "C" void RBrowseURL(char ** url)
       }
    }
    CATCH_UNEXPECTED_EXCEPTION
+
+   return R_NilValue;
 }
 
 SEXP rs_createUUID()
@@ -1121,14 +1122,11 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    s_suspendedSessionPath = userScratchPath.complete("suspended-session");  
    
    // register browseURL method
-   R_CMethodDef browseURLMethod ;
+   R_CallMethodDef browseURLMethod ;
    browseURLMethod.name = "rs_browseURL";
-   browseURLMethod.fun = (DL_FUNC)&RBrowseURL;
+   browseURLMethod.fun = (DL_FUNC)rs_browseURL;
    browseURLMethod.numArgs = 1;
-   R_NativePrimitiveArgType types[1] = {STRSXP} ;
-   browseURLMethod.types = types;
-   browseURLMethod.styles = NULL;
-   r::routines::addCMethod(browseURLMethod);
+   r::routines::addCallMethod(browseURLMethod);
 
    // register createUUID method
    R_CallMethodDef createUUIDMethodDef ;

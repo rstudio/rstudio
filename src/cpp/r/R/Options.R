@@ -14,7 +14,7 @@
 # custom browseURL implementation
 options(browser = function(url)
 {
-   .C("rs_browseURL", url) ;
+   .Call("rs_browseURL", url) ;
 })
 
 # never allow graphical menus
