@@ -199,13 +199,11 @@ public class SpellingService implements HasChangeHandlers
       {
          // the underlying spelling dictionaries have changed so we need
          // to update the ui-pref -- this will result in an invalidation
-         // of our results cache. the server will re-load the spelling
-         // dictionaries when the user presses OK or Apply, causing the
-         // user_settings file to be written and the spelling user settings
-         // changed sink to be fired. note that there is the possiblity
-         // that if the user doesn't press OK that the server-side change
-         // will not occur (and the updated dictionary state won't be 
-         // reflected until the user restarts RStudio)
+         // of our results cache. note that if for some reason the user
+         // does not press the OK or Apply button in the dialog then cross
+         // process notification of the new custom dictionary state won't 
+         // occur and other IDE instances will have invalid dictionary
+         // results caches until they are restarted.
          uiPrefs_.spellingCustomDictionaries().setGlobalValue(customDicts);
          
          // pass through to the caller

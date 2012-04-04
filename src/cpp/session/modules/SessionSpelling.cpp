@@ -72,6 +72,13 @@ FilePath userDictionariesDir()
    return module_context::userScratchPath().childPath("dictionaries");
 }
 
+
+void syncSpellingEngineDictionaries()
+{
+   s_pSpellingEngine->useDictionary(userSettings().spellingLanguage());
+}
+
+
 core::spelling::HunspellDictionaryManager hunspellDictionaryManager()
 {
    core::spelling::HunspellDictionaryManager dictManager(
@@ -170,6 +177,9 @@ Error addCustomDictionary(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   // sync spelling engine
+   syncSpellingEngineDictionaries();
+
    // return
    pResponse->setResult(json::toJsonArray(dictManager.custom().dictionaries()));
    return Success();
@@ -190,6 +200,9 @@ Error removeCustomDictionary(const json::JsonRpcRequest& request,
    error = dictManager.custom().remove(name);
    if (error)
       return error;
+
+   // sync spelling engine
+   syncSpellingEngineDictionaries();
 
    // return
    pResponse->setResult(json::toJsonArray(dictManager.custom().dictionaries()));
@@ -219,11 +232,10 @@ Error installAllDictionaries(const json::JsonRpcRequest& request,
    }
 }
 
-
 // reset dictionary on user settings changed
 void onUserSettingsChanged()
 {
-   s_pSpellingEngine->useDictionary(userSettings().spellingLanguage());
+   syncSpellingEngineDictionaries();
 }
 
 } // anonymous namespace
