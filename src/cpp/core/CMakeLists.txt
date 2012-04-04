@@ -62,6 +62,15 @@ set (CORE_SOURCE_FILES
    http/URL.cpp
    http/UriHandler.cpp
    http/Util.cpp
+   markdown/Markdown.cpp
+   markdown/sundown/autolink.c
+   markdown/sundown/buffer.c
+   markdown/sundown/houdini_href_e.c
+   markdown/sundown/houdini_html_e.c
+   markdown/sundown/html.c
+   markdown/sundown/html_smartypants.c
+   markdown/sundown/markdown.c
+   markdown/sundown/stack.c
    r_util/RProjectFile.cpp
    r_util/RTokenizer.cpp
    r_util/RSourceIndex.cpp
