@@ -36,6 +36,7 @@ public class TextFileType extends EditableFileType
                 boolean canExecuteCode,
                 boolean canExecuteAllCode,
                 boolean canExecuteToCurrentLine,
+                boolean canPreviewHTML,
                 boolean canCompilePDF,
                 boolean canExecuteChunks,
                 boolean canAutoIndent,
@@ -49,6 +50,7 @@ public class TextFileType extends EditableFileType
       canExecuteCode_ = canExecuteCode;
       canExecuteAllCode_ = canExecuteAllCode;
       canExecuteToCurrentLine_ = canExecuteToCurrentLine;
+      canPreviewHTML_ = canPreviewHTML;
       canCompilePDF_ = canCompilePDF;
       canExecuteChunks_ = canExecuteChunks;
       canAutoIndent_ = canAutoIndent;
@@ -97,6 +99,11 @@ public class TextFileType extends EditableFileType
    public boolean canExecuteToCurrentLine()
    {
       return canExecuteToCurrentLine_;
+   }
+   
+   public boolean canPreviewHTML()
+   {
+      return canPreviewHTML_;
    }
 
    public boolean canCompilePDF()
@@ -157,6 +164,10 @@ public class TextFileType extends EditableFileType
          results.add(commands.executeFromCurrentLine());
          results.add(commands.executeCurrentFunction());
       }
+      if (canPreviewHTML())
+      {
+         results.add(commands.previewHTML());
+      }
       if (canCompilePDF())
       {
          results.add(commands.compilePDF());
@@ -191,6 +202,7 @@ public class TextFileType extends EditableFileType
    private final boolean canExecuteCode_;
    private final boolean canExecuteAllCode_;
    private final boolean canExecuteToCurrentLine_;
+   private final boolean canPreviewHTML_;
    private final boolean canCompilePDF_;
    private final boolean canExecuteChunks_;
    private final boolean canAutoIndent_;

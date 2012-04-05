@@ -624,6 +624,11 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Reflow Co_mment"
         desc="Reflow selected comment lines so they wrap evenly"/>
  
+   <cmd id="previewHTML"
+        buttonLabel="Preview"
+        menuLabel="Preview HTML"
+        desc="Show a preview of the current document as HTML"/>
+ 
    <cmd id="compilePDF"
         buttonLabel="Compile PDF"
         menuLabel="Compile PDF"

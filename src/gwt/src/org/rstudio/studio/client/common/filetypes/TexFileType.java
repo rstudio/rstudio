@@ -37,6 +37,7 @@ public class TexFileType extends TextFileType
             false, 
             false, 
             false, 
+            false,
             true, 
             false,
             false,

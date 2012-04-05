@@ -13,11 +13,7 @@
 package org.rstudio.studio.client.common.filetypes;
 
 import com.google.gwt.resources.client.ImageResource;
-import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
-import org.rstudio.studio.client.workbench.commands.Commands;
-
-import java.util.HashSet;
 
 public class MarkdownFileType extends TextFileType
 {
@@ -36,19 +32,11 @@ public class MarkdownFileType extends TextFileType
             false, 
             false, 
             false, 
-            false, 
+            false,
+            true,
             false, 
             false,
             false,
             false);
-   }
-
-
-   @Override
-   public HashSet<AppCommand> getSupportedCommands(Commands commands)
-   {
-      HashSet<AppCommand> result = super.getSupportedCommands(commands);
-      
-      return result;
    }
 }

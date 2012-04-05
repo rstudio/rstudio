@@ -1851,6 +1851,14 @@ public class TextEditingTarget implements EditingTarget
    }
    
    @Handler
+   void onPreviewHTML()
+   {
+      globalDisplay_.showMessage(MessageDisplay.MSG_INFO,
+                                 "Preview HTML",
+                                 "Not yet implemented");
+   }
+   
+   @Handler
    void onCompilePDF()
    {
       String pdfPreview = prefs_.pdfPreview().getValue();
