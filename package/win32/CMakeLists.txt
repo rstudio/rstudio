@@ -35,6 +35,9 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    WriteRegStr HKCR '.Rnw\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.Rproj\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.tex\\\\OpenWithList\\\\rstudio.exe' '' ''
+   WriteRegStr HKCR '.md\\\\OpenWithList\\\\rstudio.exe' '' ''
+   WriteRegStr HKCR '.mdtxt\\\\OpenWithList\\\\rstudio.exe' '' ''
+   WriteRegStr HKCR '.markdown\\\\OpenWithList\\\\rstudio.exe' '' ''
    
    WriteRegStr HKCR '.Rproj' '' 'RStudio.Rproj'
    WriteRegStr HKCR 'RStudio.Rproj' '' 'R Project'
@@ -54,6 +57,9 @@ set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
    DeleteRegKey HKCR '.Rnw\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.Rproj\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.tex\\\\OpenWithList\\\\rstudio.exe'
+   DeleteRegKey HKCR '.md\\\\OpenWithList\\\\rstudio.exe'
+   DeleteRegKey HKCR '.mdtxt\\\\OpenWithList\\\\rstudio.exe'
+   DeleteRegKey HKCR '.markdown\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR 'RStudio.Rproj'
 #")
 

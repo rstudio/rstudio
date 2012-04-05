@@ -37,6 +37,8 @@ public class EditorLanguage
          "mode/sweave", true);
    public static final EditorLanguage LANG_PLAIN = new EditorLanguage(
          "ace/mode/text", false);
+   public static final EditorLanguage LANG_MARKDOWN = new EditorLanguage(
+         "mode/markdown", false);
 
    /**
     *

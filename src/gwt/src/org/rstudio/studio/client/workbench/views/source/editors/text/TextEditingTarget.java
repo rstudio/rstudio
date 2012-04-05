@@ -502,10 +502,11 @@ public class TextEditingTarget implements EditingTarget
 
       statusBarFileTypes_ = new TextFileType[] {
             FileTypeRegistry.R,
-            FileTypeRegistry.TEXT,
             FileTypeRegistry.SWEAVE,
-            FileTypeRegistry.RD,
+            FileTypeRegistry.TEXT,
+            FileTypeRegistry.MARKDOWN,
             FileTypeRegistry.TEX,
+            FileTypeRegistry.RD
       };
 
       for (TextFileType fileType : statusBarFileTypes_)

@@ -45,6 +45,7 @@ public class FileTypeCommands
       commands_ = commands;
 
       addType(FileTypeRegistry.TEXT, "_Text File");
+      addType(FileTypeRegistry.MARKDOWN, "_Markdown File");
       addType(FileTypeRegistry.TEX, "Te_X Document");
       addType(FileTypeRegistry.RD, "R _Documentation");
    }

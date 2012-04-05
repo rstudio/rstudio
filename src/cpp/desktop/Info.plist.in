@@ -101,6 +101,20 @@
          <key>CFBundleTypeRole</key>
          <string>Editor</string>
       </dict>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
+             <string>md</string>
+             <string>mdtxt</string>
+             <string>markdown</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>Markdown.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>Markdown File</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+      </dict>
    </array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>

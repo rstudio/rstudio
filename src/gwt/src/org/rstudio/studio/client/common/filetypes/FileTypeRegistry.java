@@ -60,6 +60,10 @@ public class FileTypeRegistry
                             ICONS.iconRhistory(),
                             true);
 
+   public static final MarkdownFileType MARKDOWN =
+      new MarkdownFileType("markdown", "Markdown", EditorLanguage.LANG_MARKDOWN,
+                           ".md", ICONS.iconMarkdown());
+   
    public static final RDataType RDATA = new RDataType();
    public static final RProjectType RPROJECT = new RProjectType();
    
@@ -98,6 +102,9 @@ public class FileTypeRegistry
       register("*.sty", TEX, icons.iconTex());
       register("*.cls", TEX, icons.iconTex());
       register("*.bbl", TEX, icons.iconTex());
+      register("*.md", MARKDOWN, icons.iconMarkdown());
+      register("*.mdtxt", MARKDOWN, icons.iconMarkdown());
+      register("*.markdown", MARKDOWN, icons.iconMarkdown());
       register("*.bib", TEXT, icons.iconText());
       register("*.c", TEXT, icons.iconText());
       register("*.cpp", TEXT, icons.iconText());
