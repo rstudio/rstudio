@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,6 +23,7 @@ import junit.framework.TestCase;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
@@ -30,7 +31,6 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * Tests some of the methods in {@link RPCServletUtils}.
- * 
  */
 public class RPCServletUtilsTest extends TestCase {
 
@@ -69,7 +69,7 @@ public class RPCServletUtilsTest extends TestCase {
     public String getHeader(String name) {
       return null;
     }
-      
+
     @SuppressWarnings("unused")
     @Override
     public ServletInputStream getInputStream() throws IOException {
@@ -162,6 +162,31 @@ public class RPCServletUtilsTest extends TestCase {
     String content = UnicodeEscapingTest.getStringContainingCharacterRange(0, contentLength);
     String result = readContentAsUtf8(content);
     assertEquals(content, result);
+  }
+
+  /**
+   * RPCServletUtils#getCharset() should return the same instance for
+   * every invocation of a given encoding.
+   */
+  public void testGetCharsetInstances() {
+    // Default UTF-8 character set.
+    assertSame(RPCServletUtils.getCharset(null),
+        RPCServletUtils.getCharset(null));
+    assertSame(RPCServletUtils.getCharset("UTF-8"),
+        RPCServletUtils.getCharset("UTF-8"));
+    assertSame(RPCServletUtils.getCharset("US-ASCII"),
+        RPCServletUtils.getCharset("US-ASCII"));
+    assertSame(RPCServletUtils.getCharset("ISO-8859-1"),
+        RPCServletUtils.getCharset("ISO-8859-1"));
+  }
+
+  /**
+   * Test that RPCServletUtils#getCharset() returns the correct
+   * default UTF-8 charachter set when passed a null encoding value.
+   */
+  public void testGetDefaultCharset() {
+    assertEquals(Charset.forName("UTF-8"), RPCServletUtils.CHARSET_UTF8);
+    assertSame(RPCServletUtils.CHARSET_UTF8, RPCServletUtils.getCharset(null));
   }
 
   /**

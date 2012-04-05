@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,6 +19,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.ServletContext;
@@ -31,6 +33,16 @@ import javax.servlet.http.HttpServletResponse;
  * the RPC system.
  */
 public class RPCServletUtils {
+  
+  public static final String CHARSET_UTF8_NAME = "UTF-8";
+  
+  /**
+   * The UTF-8 Charset. Use this to avoid concurrency bottlenecks when
+   * converting between byte arrays and Strings.
+   * See http://code.google.com/p/google-web-toolkit/issues/detail?id=6398
+   */
+  public static final Charset CHARSET_UTF8 = Charset.forName(CHARSET_UTF8_NAME);
+
   /**
    * Package protected for use in tests.
    */
@@ -39,11 +51,6 @@ public class RPCServletUtils {
   private static final String ACCEPT_ENCODING = "Accept-Encoding";
 
   private static final String ATTACHMENT = "attachment";
-
-  /**
-   * Used both as expected request charset and encoded response charset.
-   */
-  private static final String CHARSET_UTF8 = "UTF-8";
 
   private static final String CONTENT_DISPOSITION = "Content-Disposition";
 
@@ -64,10 +71,24 @@ public class RPCServletUtils {
   private static final int UNCOMPRESSED_BYTE_SIZE_LIMIT = 256;
 
   /**
+   * Contains cached mappings from character set name to Charset. The
+   * null key maps to the default UTF-8 character set.
+   */
+  private static final ConcurrentHashMap<String, Charset> CHARSET_CACHE =
+      new ConcurrentHashMap<String, Charset>();
+
+  /**
+   * Pre-populate the character set cache with UTF-8.
+   */
+  static {
+    CHARSET_CACHE.put(CHARSET_UTF8_NAME, CHARSET_UTF8);
+  }
+
+  /**
    * Returns <code>true</code> if the {@link HttpServletRequest} accepts Gzip
    * encoding. This is done by checking that the accept-encoding header
    * specifies gzip as a supported encoding.
-   * 
+   *
    * @param request the request instance to test for gzip encoding acceptance
    * @return <code>true</code> if the {@link HttpServletRequest} accepts Gzip
    *         encoding
@@ -86,7 +107,7 @@ public class RPCServletUtils {
   /**
    * Returns <code>true</code> if the response content's estimated UTF-8 byte
    * length exceeds 256 bytes.
-   * 
+   *
    * @param content the contents of the response
    * @return <code>true</code> if the response content's estimated UTF-8 byte
    *         length exceeds 256 bytes
@@ -96,12 +117,38 @@ public class RPCServletUtils {
   }
 
   /**
+   * Get the Charset for a named character set. Caches Charsets to work around
+   * a concurrency bottleneck in FastCharsetProvider.
+   * See http://code.google.com/p/google-web-toolkit/issues/detail?id=6398
+   * @see {@link Charset#forName(String)}
+   *
+   * @param encoding the name of the Charset to get. If this is null
+   *                 the default UTF-8 character set will be returned.
+   * @return the named Charset.
+   */
+  public static Charset getCharset(String encoding) {
+        
+    if (encoding == null) {
+      return CHARSET_UTF8;
+    }
+    
+    Charset charset = CHARSET_CACHE.get(encoding);
+
+    if (charset == null) {
+      charset = Charset.forName(encoding);
+      CHARSET_CACHE.put(encoding, charset);
+    }
+
+    return charset;
+  }
+
+  /**
    * Returns true if the {@link java.lang.reflect.Method Method} definition on
    * the service is specified to throw the exception contained in the
    * InvocationTargetException or false otherwise. NOTE we do not check that the
    * type is serializable here. We assume that it must be otherwise the
    * application would never have been allowed to run.
-   * 
+   *
    * @param serviceIntfMethod the method from the RPC request
    * @param cause the exception that the method threw
    * @return true if the exception's type is in the method's signature
@@ -135,7 +182,7 @@ public class RPCServletUtils {
    * Returns the content of an {@link HttpServletRequest} by decoding it using
    * <code>expectedCharSet</code>, or <code>UTF-8</code> if
    * <code>expectedCharSet</code> is <code>null</null>.
-   * 
+   *
    * @param request the servlet request whose content we want to read
    * @param expectedContentType the expected content (i.e. 'type/subtype' only)
    *          in the Content-Type request header, or <code>null</code> if no
@@ -178,20 +225,18 @@ public class RPCServletUtils {
         }
         out.write(buffer, 0, byteCount);
       }
-      String contentCharSet = expectedCharSet != null
-          ? expectedCharSet : CHARSET_UTF8;
-      return out.toString(contentCharSet);
+      return new String(out.toByteArray(), getCharset(expectedCharSet));
     } finally {
       if (in != null) {
         in.close();
       }
     }
   }
-  
+
   /**
    * Returns the content of an {@link HttpServletRequest}, after verifying a
    * <code>gwt/x-gwt-rpc; charset=utf-8</code> content type.
-   * 
+   *
    * @param request the servlet request whose content we want to read
    * @return the content of an {@link HttpServletRequest} by decoding it using
    *         <code>UTF-8</code>
@@ -202,13 +247,13 @@ public class RPCServletUtils {
    */
   public static String readContentAsGwtRpc(HttpServletRequest request)
       throws IOException, ServletException {
-      return readContent(request, GWT_RPC_CONTENT_TYPE, CHARSET_UTF8);
+      return readContent(request, GWT_RPC_CONTENT_TYPE, CHARSET_UTF8_NAME);
   }
 
  /**
    * Returns the content of an {@link HttpServletRequest} by decoding it using
    * the UTF-8 charset.
-   * 
+   *
    * @param request the servlet request whose content we want to read
    * @return the content of an {@link HttpServletRequest} by decoding it using
    *         the UTF-8 charset
@@ -228,7 +273,7 @@ public class RPCServletUtils {
   /**
    * Returns the content of an {@link HttpServletRequest} by decoding it using
    * the UTF-8 charset.
-   * 
+   *
    * @param request the servlet request whose content we want to read
    * @param checkHeaders Specify 'true' to check the Content-Type header to see
    *          that it matches the expected value 'text/x-gwt-rpc' and the
@@ -246,7 +291,7 @@ public class RPCServletUtils {
   @Deprecated
   public static String readContentAsUtf8(HttpServletRequest request,
       boolean checkHeaders) throws IOException, ServletException {
-    return readContent(request, GWT_RPC_CONTENT_TYPE, CHARSET_UTF8);
+    return readContent(request, GWT_RPC_CONTENT_TYPE, CHARSET_UTF8_NAME);
   }
 
   /**
@@ -259,7 +304,7 @@ public class RPCServletUtils {
   /**
    * Returns <code>true</code> if the request accepts gzip encoding and the the
    * response content's estimated UTF-8 byte length exceeds 256 bytes.
-   * 
+   *
    * @param request the request associated with the response content
    * @param responseContent a string that will be
    * @return <code>true</code> if the request accepts gzip encoding and the the
@@ -275,7 +320,7 @@ public class RPCServletUtils {
    * Write the response content into the {@link HttpServletResponse}. If
    * <code>gzipResponse</code> is <code>true</code>, the response content will
    * be gzipped prior to being written into the response.
-   * 
+   *
    * @param servletContext servlet context for this response
    * @param response response instance
    * @param responseContent a string containing the response content
@@ -333,7 +378,7 @@ public class RPCServletUtils {
   /**
    * Called when the servlet itself has a problem, rather than the invoked
    * third-party method. It writes a simple 500 message back to the client.
-   * 
+   *
    * @param servletContext
    * @param response
    * @param failure
@@ -349,7 +394,7 @@ public class RPCServletUtils {
       response.setContentType("text/plain");
       response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
       try {
-        response.getOutputStream().write(GENERIC_FAILURE_MSG.getBytes("UTF-8"));
+        response.getOutputStream().write(GENERIC_FAILURE_MSG.getBytes(CHARSET_UTF8));
       } catch (IllegalStateException e) {
         // Handle the (unexpected) case where getWriter() was previously used
         response.getWriter().write(GENERIC_FAILURE_MSG);
@@ -363,7 +408,7 @@ public class RPCServletUtils {
 
   /**
    * Performs validation of the character encoding, ignoring case.
-   * 
+   *
    * @param request the incoming request
    * @param expectedCharSet the expected charset of the request
    * @throws ServletException if requests encoding is not <code>null</code> and
@@ -372,6 +417,8 @@ public class RPCServletUtils {
   private static void checkCharacterEncodingIgnoreCase(
       HttpServletRequest request, String expectedCharSet)
       throws ServletException {
+    
+    assert (expectedCharSet != null);
     boolean encodingOkay = false;
     String characterEncoding = request.getCharacterEncoding();
     if (characterEncoding != null) {
@@ -409,6 +456,8 @@ public class RPCServletUtils {
   private static void checkContentTypeIgnoreCase(
       HttpServletRequest request, String expectedContentType)
       throws ServletException {
+    
+    assert (expectedContentType != null);
     String contentType = request.getContentType();
     boolean contentTypeIsOkay = false;
 

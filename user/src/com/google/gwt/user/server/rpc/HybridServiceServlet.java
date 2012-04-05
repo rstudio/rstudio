@@ -114,7 +114,7 @@ public class HybridServiceServlet extends RpcServlet implements
       onAfterResponseSerialized(toReturn);
 
       try {
-        stream.write(toReturn.getBytes("UTF-8"));
+        stream.write(toReturn.getBytes(RPCServletUtils.CHARSET_UTF8));
       } catch (IOException e) {
         throw new SerializationException("Unable to commit bytes", e);
       }

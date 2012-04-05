@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,6 +21,7 @@ import com.google.gwt.user.client.rpc.GwtTransient;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
+import com.google.gwt.user.server.rpc.RPCServletUtils;
 import com.google.gwt.user.server.rpc.SerializationPolicy;
 import com.google.gwt.user.server.rpc.ServerCustomFieldSerializer;
 
@@ -47,9 +48,6 @@ import java.util.zip.CRC32;
  * Serialization utility class used by the server-side RPC code.
  */
 public class SerializabilityUtil {
-
-  public static final String DEFAULT_ENCODING = "UTF-8";
-
   /**
    * Comparator used to sort fields.
    */
@@ -222,7 +220,7 @@ public class SerializabilityUtil {
 
   /**
    * Return the concrete type that a generic type maps to, if known.
-   * 
+   *
    * @param genericType The generic type to resolve.
    * @param resolvedTypes A map of generic types to actual types.
    * @return The actual type, which may be of any subclass of Type.
@@ -244,11 +242,11 @@ public class SerializabilityUtil {
 
   /**
    * Determine the expected types for any instance type parameters.
-   * 
+   *
    * This method also determines whether or not the instance can be assigned to
    * the expected type. We combine the tasks because they require traversing the
    * same data structures.
-   * 
+   *
    * @param instanceClass The instance for which we want generic parameter types
    * @param expectedType The type we are expecting this instance to be
    * @param resolvedTypes The types that have been resolved to actual values
@@ -269,14 +267,14 @@ public class SerializabilityUtil {
       if (resolvedTypes != null) {
         findInstanceParameters(instanceClass, resolvedTypes, expectedParameterTypes);
       }
-      
+
       // With no expected type, the instance is assignable and we fall through
     } else {
       // First determine what type we are really expecting. The type may still
       // be a TypeVariable<?> at this time when we are deserializing class
       // fields or components of another data structure.
       Type actualType = findActualType(expectedType, resolvedTypes);
-      
+
       // Try to match the instanceClass to the expected type, updating the
       // expectedParameterTypes so that we can track them back to the resolved
       // types once we determine what class to treat the instance as. In
@@ -294,7 +292,7 @@ public class SerializabilityUtil {
         // and we are done.
         return null;
       }
-      
+
       // Now that we know what class the instance should be,
       // get any remaining parameters using resolved types.
       if (resolvedTypes != null) {
@@ -309,7 +307,7 @@ public class SerializabilityUtil {
 
   /**
    * Find the Class that a given type refers to.
-   * 
+   *
    * @param type The type of interest
    * @return The Class that type represents
    */
@@ -353,7 +351,7 @@ public class SerializabilityUtil {
   /**
    * Returns the {@link Class} which can serialize the given instance type, or
    * <code>null</code> if this class has no custom field serializer.
-   * 
+   *
    * Note that arrays never have custom field serializers.
    */
   public static Class<?> hasCustomFieldSerializer(Class<?> instanceType) {
@@ -384,7 +382,7 @@ public class SerializabilityUtil {
    * Returns the server-side {@link Class} which can serialize the given
    * instance type, or <code>null</code> if this class has no type-checking
    * custom field serializer.
-   * 
+   *
    * Note that arrays never have custom field serializers.
    */
   public static Class<?> hasServerCustomFieldSerializer(Class<?> instanceType) {
@@ -413,10 +411,10 @@ public class SerializabilityUtil {
 
   /**
    * Remove all of the actual types that arose from the the given type.
-   * 
+   *
    * This method should always be called after a corresponding call to
    * resolveTypes.
-   * 
+   *
    * @param methodType The type we wish to assign this instance to
    * @param resolvedTypes The types that have been resolved to actual values
    */
@@ -428,10 +426,10 @@ public class SerializabilityUtil {
    * Find all the actual types we can from the information in the given type,
    * and put the mapping from TypeVariable objects to actual types into the
    * resolved types map.
-   * 
+   *
    * The method releaseTypes should always be called after a call to this
    * method, unless the resolved types map is about to be discarded.
-   * 
+   *
    * @param methodType The type we wish to assign this instance to
    * @param resolvedTypes The types that have been resolved to actual values
    */
@@ -464,12 +462,12 @@ public class SerializabilityUtil {
   /**
    * Loads a {@link CustomFieldSerializer} from a class that may implement that
    * interface.
-   * 
+   *
    * @param customSerializerClass the Custom Field Serializer class
-   * 
+   *
    * @return an instance the class provided if it implements
    *         {@link CustomFieldSerializer} or {@code null} if it does not
-   * 
+   *
    * @throws SerializationException if the load process encounters an unexpected
    *           problem
    */
@@ -567,7 +565,7 @@ public class SerializabilityUtil {
     if (Throwable.class == field.getDeclaringClass()) {
       /**
        * Only serialize Throwable's detailMessage field; all others are ignored.
-       * 
+       *
        * NOTE: Changing the set of fields that we serialize for Throwable will
        * necessitate a change to our JRE emulation's version of Throwable.
        */
@@ -612,7 +610,7 @@ public class SerializabilityUtil {
       }
     } else if (expectedType instanceof WildcardType) {
       WildcardType wildcardType = (WildcardType) expectedType;
-      
+
       Type[] lowerBounds = wildcardType.getLowerBounds();
       for (Type type : lowerBounds) {
         /* Require instance to be a superclass of type, or type itself. */
@@ -625,7 +623,7 @@ public class SerializabilityUtil {
           }
           boundClass = boundClass.getSuperclass();
         }
-        
+
         // We fail if the class does not meet any bound, as we should.
         if (boundClass == null) {
           return false;
@@ -672,7 +670,7 @@ public class SerializabilityUtil {
         return true;
       }
     }
-    
+
     Type[] interfaces = instanceClass.getGenericInterfaces();
     for (Type interfaceType : interfaces) {
       Type[] localTypes = expectedParameterTypes.clone();
@@ -691,7 +689,7 @@ public class SerializabilityUtil {
   private static boolean findExpectedInstanceClassFromSuper(
       Type superType, Type expectedType, DequeMap<TypeVariable<?>, Type> resolvedTypes,
       Set<Class<?>> expectedInstanceClasses, Type[] expectedParameterTypes) {
-    
+
     if (superType instanceof GenericArrayType) {
       // Can't use array types as supertypes or interfaces
       return false;
@@ -723,18 +721,18 @@ public class SerializabilityUtil {
       Type[] upperBounds = wildcardType.getUpperBounds();
       for (Type boundType : upperBounds) {
         if (findExpectedInstanceClassFromSuper(boundType, expectedType,
-            resolvedTypes, expectedInstanceClasses, expectedParameterTypes)) { 
+            resolvedTypes, expectedInstanceClasses, expectedParameterTypes)) {
           return true;
         }
       }
     }
-    
+
     return false;
   }
 
     /**
    * Attempt to find known type for TypeVariable type from an instance.
-   * 
+   *
    * @param foundParameter The currently known parameter, which must be of type
    *          TypeVariable
    * @param instanceType The instance that we need to check for information
@@ -802,7 +800,7 @@ public class SerializabilityUtil {
    * Attempt to find the actual types for the generic parameters of an instance,
    * given the types we have resolved from the method signature or class field
    * declaration.
-   * 
+   *
    * @param instanceClass The instance for which we want actual generic
    *          parameter types.
    * @param resolvedTypes The types that have been resolved to actual values
@@ -861,7 +859,7 @@ public class SerializabilityUtil {
 
   private static void generateSerializationSignature(Class<?> instanceType, CRC32 crc,
       SerializationPolicy policy) throws UnsupportedEncodingException {
-    crc.update(getSerializedTypeName(instanceType).getBytes(DEFAULT_ENCODING));
+    crc.update(getSerializedTypeName(instanceType).getBytes(RPCServletUtils.CHARSET_UTF8));
 
     if (excludeImplementationFromSerializationSignature(instanceType)) {
       return;
@@ -882,8 +880,8 @@ public class SerializabilityUtil {
          * generate the signature. Otherwise, use all known fields.
          */
         if ((clientFieldNames == null) || clientFieldNames.contains(field.getName())) {
-          crc.update(field.getName().getBytes(DEFAULT_ENCODING));
-          crc.update(getSerializedTypeName(field.getType()).getBytes(DEFAULT_ENCODING));
+          crc.update(field.getName().getBytes(RPCServletUtils.CHARSET_UTF8));
+          crc.update(getSerializedTypeName(field.getType()).getBytes(RPCServletUtils.CHARSET_UTF8));
         }
       }
 
@@ -954,7 +952,7 @@ public class SerializabilityUtil {
       }
     } else if (methodType instanceof Class) {
       Class<?> classType = (Class<?>) methodType;
-      
+
       // A type that is of instance Class, with TypeParameters, must be a raw
       // class, so strip off any parameters in the map.
       TypeVariable<?>[] classParams = classType.getTypeParameters();
