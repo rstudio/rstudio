@@ -14,6 +14,7 @@
 #ifndef CORE_MARKDOWN_MARKDOWN_HPP
 #define CORE_MARKDOWN_MARKDOWN_HPP
 
+#include <string>
 
 namespace core {
 
@@ -22,7 +23,74 @@ class FilePath;
 
 namespace markdown {
 
-Error markdownToHTML(const FilePath& markdownFile, const FilePath& outputFile);
+struct Extensions
+{
+   Extensions()
+      : noIntraEmphasis(true),
+        tables(true),
+        fencedCode(true),
+        autolink(true),
+        strikethrough(true),
+        laxHTMLBlocks(true),
+        spaceHeaders(true),
+        superscript(true)
+   {
+   }
+
+   bool noIntraEmphasis;
+   bool tables;
+   bool fencedCode;
+   bool autolink;
+   bool strikethrough;
+   bool laxHTMLBlocks;
+   bool spaceHeaders;
+   bool superscript;
+};
+
+struct HTMLOptions
+{
+   HTMLOptions()
+      : useXHTML(true),
+        hardWrap(true),
+        smartypants(true),
+        toc(false),
+        safelink(false),
+        skipHTML(false),
+        skipStyle(false),
+        skipImages(false),
+        skipLinks(false),
+        escape(false)
+   {
+   }
+   bool useXHTML;
+   bool hardWrap;
+   bool smartypants;
+   bool toc;
+   bool safelink;
+   bool skipHTML;
+   bool skipStyle;
+   bool skipImages;
+   bool skipLinks;
+   bool escape;
+};
+
+// render markdown to HTML -- assumes UTF-8 encoding
+Error markdownToHTML(const FilePath& markdownFile,
+                     const Extensions& extensions,
+                     const HTMLOptions& htmlOptions,
+                     const FilePath& htmlFile);
+
+// render markdown to HTML -- assumes UTF-8 encoding
+Error markdownToHTML(const FilePath& markdownFile,
+                     const Extensions& extensions,
+                     const HTMLOptions& htmlOptions,
+                     std::string* pHTMLOutput);
+
+// render markdown to HTML -- assumes UTF-8 encoding
+Error markdownToHTML(const std::string& markdownInput,
+                     const Extensions& extensions,
+                     const HTMLOptions& htmlOptions,
+                     std::string* pHTMLOutput);
 
 } // namespace markdown
 } // namespace core 
