@@ -92,6 +92,7 @@ public class FileTypeRegistry
       register(".gitignore", TEXT, icons.iconText());
       register("*.r", R, icons.iconRdoc());
       register(".rprofile", R, icons.iconRprofile());
+      register("Rprofile.site", R, icons.iconRprofile());
       register("*.rhistory", RHISTORY, icons.iconRhistory());
       register("*.rproj", RPROJECT, icons.iconRproject());
       register("*.rnw", SWEAVE, icons.iconRsweave());
