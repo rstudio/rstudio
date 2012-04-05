@@ -77,7 +77,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
      *
      * @return the handler hook
      */
-    static Type<SubmitCompleteHandler> getType() {
+    public static Type<SubmitCompleteHandler> getType() {
       if (TYPE == null) {
         TYPE = new Type<SubmitCompleteHandler>();
       }
@@ -97,7 +97,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
 
     @Override
     public final Type<SubmitCompleteHandler> getAssociatedType() {
-      return TYPE;
+      return getType();
     }
 
     /**
@@ -137,14 +137,14 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
     /**
      * The event type.
      */
-    private static Type<SubmitHandler> TYPE = new Type<SubmitHandler>();
+    private static Type<SubmitHandler> TYPE;
 
     /**
      * Handler hook.
      *
      * @return the handler hook
      */
-    static Type<SubmitHandler> getType() {
+    public static Type<SubmitHandler> getType() {
       if (TYPE == null) {
         TYPE = new Type<SubmitHandler>();
       }
@@ -163,7 +163,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
 
     @Override
     public final Type<FormPanel.SubmitHandler> getAssociatedType() {
-      return TYPE;
+      return getType();
     }
 
     /**
