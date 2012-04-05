@@ -20,6 +20,7 @@
 #include "markdown.h"
 #include "stack.h"
 
+#include <assert.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -2350,6 +2351,8 @@ sd_markdown_new(
 {
 	struct sd_markdown *md = NULL;
 
+	assert(max_nesting > 0 && callbacks);
+
 	md = malloc(sizeof(struct sd_markdown));
 	if (!md)
 		return NULL;
@@ -2469,6 +2472,9 @@ sd_markdown_render(struct buf *ob, const uint8_t *document, size_t doc_size, str
 	/* clean-up */
 	bufrelease(text);
 	free_link_refs(md->refs);
+
+	assert(md->work_bufs[BUFFER_SPAN].size == 0);
+	assert(md->work_bufs[BUFFER_BLOCK].size == 0);
 }
 
 void

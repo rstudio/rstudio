@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 /* MSVC compat */
 #if defined(_MSC_VER)
@@ -34,6 +35,7 @@ int
 bufprefix(const struct buf *buf, const char *prefix)
 {
 	size_t i;
+	assert(buf && buf->unit);
 
 	for (i = 0; i < buf->size; ++i) {
 		if (prefix[i] == 0)
@@ -52,6 +54,8 @@ bufgrow(struct buf *buf, size_t neosz)
 {
 	size_t neoasz;
 	void *neodata;
+
+	assert(buf && buf->unit);
 
 	if (neosz > BUFFER_MAX_ALLOC_SIZE)
 		return BUF_ENOMEM;
@@ -92,6 +96,8 @@ bufnew(size_t unit)
 const char *
 bufcstr(struct buf *buf)
 {
+	assert(buf && buf->unit);
+
 	if (buf->size < buf->asize && buf->data[buf->size] == 0)
 		return (char *)buf->data;
 
@@ -109,6 +115,8 @@ bufprintf(struct buf *buf, const char *fmt, ...)
 {
 	va_list ap;
 	int n;
+
+	assert(buf && buf->unit);
 
 	if (buf->size >= buf->asize && bufgrow(buf, buf->size + 1) < 0)
 		return;
@@ -144,6 +152,8 @@ bufprintf(struct buf *buf, const char *fmt, ...)
 void
 bufput(struct buf *buf, const void *data, size_t len)
 {
+	assert(buf && buf->unit);
+
 	if (buf->size + len > buf->asize && bufgrow(buf, buf->size + len) < 0)
 		return;
 
@@ -163,6 +173,8 @@ bufputs(struct buf *buf, const char *str)
 void
 bufputc(struct buf *buf, int c)
 {
+	assert(buf && buf->unit);
+
 	if (buf->size + 1 > buf->asize && bufgrow(buf, buf->size + 1) < 0)
 		return;
 
@@ -198,6 +210,8 @@ bufreset(struct buf *buf)
 void
 bufslurp(struct buf *buf, size_t len)
 {
+	assert(buf && buf->unit);
+
 	if (len >= buf->size) {
 		buf->size = 0;
 		return;

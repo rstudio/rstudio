@@ -1,0 +1,32 @@
+#!/bin/sh
+
+set -e
+
+if [ ! -d "./sundown" ]; then
+    git clone git://github.com/rstudio/sundown.git sundown
+    cd sundown
+    git remote add upstream git://github.com/tanoku/sundown.git
+    cd ..
+fi
+
+cd sundown
+git clean -dfx
+
+# Use the branch with rstudio-specific changes 
+git checkout rstudio
+git pull
+VERSION=`git rev-parse HEAD`
+
+# copy files
+TARGET_DIR=../../core/markdown/sundown
+echo "#define RSTUDIO_SUNDOWN_VERSION $VERSION" > $TARGET_DIR/sundown_version.h
+cp src/autolink.h $TARGET_DIR
+cp src/buffer.h $TARGET_DIR
+cp src/markdown.h $TARGET_DIR
+cp src/*.h $TARGET_DIR
+cp src/*.c $TARGET_DIR
+cp html/*.h $TARGET_DIR
+cp html/*.c $TARGET_DIR
+
+# return to tools dir
+cd ..
