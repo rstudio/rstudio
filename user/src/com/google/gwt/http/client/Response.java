@@ -34,7 +34,7 @@ public abstract class Response {
   public static final int SC_CREATED = 201;
   public static final int SC_EXPECTATION_FAILED = 417;
   public static final int SC_FORBIDDEN = 403;
-  public static final int SC_GATEWAY_TIMEOUT = 405;
+  public static final int SC_GATEWAY_TIMEOUT = 504;
   public static final int SC_GONE = 410;
   public static final int SC_HTTP_VERSION_NOT_SUPPORTED = 505;
   public static final int SC_INTERNAL_SERVER_ERROR = 500;
