@@ -1856,6 +1856,9 @@ public class TextEditingTarget implements EditingTarget
       globalDisplay_.showMessage(MessageDisplay.MSG_INFO,
                                  "Preview HTML",
                                  "Not yet implemented");
+      
+      //HTMLPreviewParams params = HTMLPreviewParams.create();
+      //events_.fireEvent(new ShowHTMLPreviewEvent(params));
    }
    
    @Handler

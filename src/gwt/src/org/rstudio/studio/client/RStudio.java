@@ -49,6 +49,7 @@ import org.rstudio.studio.client.common.vcs.CreateKeyDialog;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
 import org.rstudio.studio.client.common.vcs.SshKeyWidget;
 import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
+import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.impl.BrowserFence;
 import org.rstudio.studio.client.pdfviewer.PDFViewerApplication;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
@@ -149,6 +150,12 @@ public class RStudio implements EntryPoint
                   {
                      RStudioGinjector.INSTANCE.getPDFViewerApplication().go(
                            RootLayoutPanel.get(), 
+                           dismissProgressAnimation);
+                  }
+                  else if (HTMLPreviewApplication.NAME.equals(view))
+                  {
+                     RStudioGinjector.INSTANCE.getHTMLPreviewApplication().go(
+                           RootLayoutPanel.get(),
                            dismissProgressAnimation);
                   }
                   else

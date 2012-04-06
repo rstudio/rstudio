@@ -34,6 +34,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.vcs.AskPassManager;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
+import org.rstudio.studio.client.htmlpreview.HTMLPreview;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
@@ -71,7 +72,8 @@ public class Workbench implements BusyHandler,
                     ConsoleDispatcher consoleDispatcher,
                     ChooseFile chooseFile,   // required to force gin to create
                     AskPassManager askPass,  // required to force gin to create
-                    PDFViewer pdfViewer)     // required to force gin to create)
+                    PDFViewer pdfViewer,     // required to force gin to create
+                    HTMLPreview htmlPreview) // required to force gin to create
   {
       view_ = view;
       workbenchContext_ = workbenchContext;

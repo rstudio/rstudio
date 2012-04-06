@@ -44,6 +44,11 @@ import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.common.vcs.ignore.Ignore;
 import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
+import org.rstudio.studio.client.htmlpreview.HTMLPreview;
+import org.rstudio.studio.client.htmlpreview.HTMLPreviewPresenter;
+import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewApplicationView;
+import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewApplicationWindow;
+import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewPanel;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.pdfviewer.PDFViewerPresenter;
 import org.rstudio.studio.client.pdfviewer.ui.PDFViewerApplicationView;
@@ -163,7 +168,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(FileTypeCommands.class).in(Singleton.class);
       bind(Synctex.class).in(Singleton.class);
       bind(PDFViewer.class).in(Singleton.class);
-      
+      bind(HTMLPreview.class).in(Singleton.class);      
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;
@@ -173,6 +178,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ReviewPresenter.class).to(ReviewPresenterImpl.class);
       
       bind(PDFViewerApplicationView.class).to(PDFViewerApplicationWindow.class);
+      bind(HTMLPreviewApplicationView.class).to(HTMLPreviewApplicationWindow.class);
       
       bind(Server.class).to(RemoteServer.class) ;
       bind(WorkbenchServerOperations.class).to(RemoteServer.class) ;
@@ -218,6 +224,7 @@ public class RStudioGinModule extends AbstractGinModule
                                                     HistoryPanel.Builder.class);
       
       bind(PDFViewerPresenter.Display.class).to(PDFViewerPanel.class);
+      bind(HTMLPreviewPresenter.Display.class).to(HTMLPreviewPanel.class);
       
       bind(GlobalDisplay.class)
             .to(DefaultGlobalDisplay.class)

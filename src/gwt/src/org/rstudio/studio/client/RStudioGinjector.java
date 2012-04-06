@@ -32,6 +32,7 @@ import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.common.spelling.SpellChecker;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
+import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.pdfviewer.PDFViewerApplication;
 import org.rstudio.studio.client.vcs.VCSApplication;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -67,6 +68,7 @@ public interface RStudioGinjector extends Ginjector
    Application getApplication() ;
    VCSApplication getVCSApplication();
    PDFViewerApplication getPDFViewerApplication();
+   HTMLPreviewApplication getHTMLPreviewApplication();
    EventBus getEventBus() ;
    GlobalDisplay getGlobalDisplay();
    RemoteFileSystemContext getRemoteFileSystemContext();
