@@ -19,7 +19,8 @@
   define-property | extend-property | set-property | set-property-fallback |
   clear-configuration-property | define-configuration-property |
   extend-configuration-property | set-configuration-property |
-  property-provider | define-linker | add-linker | collapse-all-properties)*>
+  property-provider | define-linker | add-linker | collapse-all-properties |
+  collapse-property)*>
 <!ATTLIST module
 	rename-to CDATA #IMPLIED
 >
@@ -147,7 +148,7 @@
 <!ELEMENT collapse-property EMPTY>
 <!ATTLIST collapse-property
 	name CDATA #REQUIRED
-	value CDATA #REQUIRED
+	values CDATA #REQUIRED
 >
 <!-- Collapse all deferred-binding properties to produce a single permutation -->
 <!ELEMENT collapse-all-properties EMPTY>
