@@ -55,6 +55,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionGit.cpp
    modules/SessionHelp.cpp
    modules/SessionHistory.cpp
+   modules/SessionHTMLPreview.cpp
    modules/SessionLimits.cpp
    modules/SessionLists.cpp
    modules/SessionPackages.cpp
@@ -238,8 +239,13 @@ if (NOT RSTUDIO_SESSION_WIN64)
    # rspdflatex
    add_subdirectory(rspdflatex)
 
-   # Resources
-   install(FILES resources/R.css
+   # HTML resources
+   file(GLOB HTML_RESOURCE_FILES "resources/*.htm")
+   install(FILES ${HTML_RESOURCE_FILES}
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+   # CSS resources
+   file(GLOB CSS_RESOURCE_FILES "resources/*.css")
+   install(FILES ${CSS_RESOURCE_FILES}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # R scripts

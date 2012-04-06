@@ -18,6 +18,7 @@ import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -50,7 +51,9 @@ public class HTMLPreviewPresenter implements IsWidget
    
    public void onActivated(HTMLPreviewParams params)
    {
-      view_.showPreview(server_.getApplicationURL("offline.htm"));
+      String url = "html_preview/?source_file=" +  
+                   URL.encodeQueryString(params.getSourceFile());
+      view_.showPreview(server_.getApplicationURL(url));
    }
   
    

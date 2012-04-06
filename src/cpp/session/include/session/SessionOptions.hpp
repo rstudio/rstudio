@@ -142,9 +142,9 @@ public:
       return rCompatibleGraphicsEngineVersion_;
    }
 
-   core::FilePath rHelpCssFilePath() const
+   core::FilePath rResourcesPath() const
    {
-      return core::FilePath(rHelpCssFilePath_.c_str());
+      return core::FilePath(rResourcesPath_.c_str());
    }
 
    std::string rHomeDirOverride()
@@ -302,7 +302,7 @@ private:
    std::string rCRANRepos_;
    bool autoReloadSource_ ;
    int rCompatibleGraphicsEngineVersion_;
-   std::string rHelpCssFilePath_;
+   std::string rResourcesPath_;
    std::string rHomeDirOverride_;
    std::string rDocDirOverride_;
    

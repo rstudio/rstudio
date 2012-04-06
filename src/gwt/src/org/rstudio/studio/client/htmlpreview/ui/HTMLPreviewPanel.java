@@ -49,7 +49,6 @@ public class HTMLPreviewPanel extends ResizeComposite
       
       public void navigate(final String url)
       {
-         navigated_ = true;
          RepeatingCommand navigateCommand = new RepeatingCommand() {
             @Override
             public boolean execute()
@@ -68,22 +67,16 @@ public class HTMLPreviewPanel extends ResizeComposite
          };
 
          if (navigateCommand.execute())
-            Scheduler.get().scheduleFixedDelay(navigateCommand, 100);      
+            Scheduler.get().scheduleFixedDelay(navigateCommand, 50);      
       }
 
       @Override
       protected void onFrameLoaded()
       {
-         if (!navigated_)
-         {
-            BodyElement body = getDocument().getBody();
-            body.getStyle().setMargin(0, Unit.PX);
-            body.getStyle().setBackgroundColor("white");
-         }
+         BodyElement body = getDocument().getBody();
+         body.getStyle().setMargin(0, Unit.PX);
+         body.getStyle().setBackgroundColor("white");  
       }
-
-      private boolean navigated_ = false;
-      
    }
  
    private final PreviewFrame previewFrame_;

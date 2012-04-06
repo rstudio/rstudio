@@ -20,8 +20,13 @@ public class HTMLPreviewParams extends JavaScriptObject
    {
    }
    
-   public final static native HTMLPreviewParams create() /*-{
+   public final static native HTMLPreviewParams create(String sourceFile) /*-{
       var params = new Object();
+      params.source_file = sourceFile;
       return params;
    }-*/; 
+   
+   public final native String getSourceFile() /*-{
+      return this.source_file;
+   }-*/;
 }

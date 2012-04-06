@@ -27,6 +27,8 @@ class Error;
 
 namespace http {
       
+class Request;
+
 typedef std::pair<std::string,std::string> Field;
 typedef std::vector<Field> Fields;
    
@@ -142,6 +144,9 @@ boost::posix_time::ptime parseAtomDate(const std::string& date);
 std::string httpDate(const boost::posix_time::ptime& datetime = 
                            boost::posix_time::second_clock::universal_time());
 
+
+std::string pathAfterPrefix(const Request& request,
+                            const std::string& pathPrefix);
 
 } // namespace util
 

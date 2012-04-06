@@ -1855,14 +1855,14 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onPreviewHTML()
    {
-      globalDisplay_.showMessage(MessageDisplay.MSG_INFO,
-                                 "Preview HTML",
-                                 "Not yet implemented");
-      
-      /*
-      HTMLPreviewParams params = HTMLPreviewParams.create();
-      events_.fireEvent(new ShowHTMLPreviewEvent(params));
-      */
+      saveThenExecute(null, new Command() {
+         @Override
+         public void execute()
+         {
+            HTMLPreviewParams params = HTMLPreviewParams.create(getPath());
+            events_.fireEvent(new ShowHTMLPreviewEvent(params));  
+         }
+      });
    }
    
    @Handler

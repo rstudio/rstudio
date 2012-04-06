@@ -205,9 +205,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("r-compatible-graphics-engine-version",
          value<int>(&rCompatibleGraphicsEngineVersion_)->default_value(9),
          "Maximum graphics engine version we are compatible with")
-      ("r-css-file",
-         value<std::string>(&rHelpCssFilePath_)->default_value("resources/R.css"),
-         "Custom R.css file")
+      ("r-resources-path",
+         value<std::string>(&rResourcesPath_)->default_value("resources"),
+         "Directory containing external resources")
       ("r-shell-escape",
          value<bool>(&rShellEscape)->default_value(false),
          "Support shell escape (deprecated, no longer works)")
@@ -349,7 +349,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    }
 
    // convert relative paths by completing from the app resource path
-   resolvePath(resourcePath, &rHelpCssFilePath_);
+   resolvePath(resourcePath, &rResourcesPath_);
    resolvePath(resourcePath, &agreementFilePath_);
    resolvePath(resourcePath, &wwwLocalPath_);
    resolvePath(resourcePath, &coreRSourcePath_);

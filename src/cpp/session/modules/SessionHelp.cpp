@@ -559,24 +559,13 @@ void handleHttpdRequest(const std::string& location,
                         const Filter& filter,
                         http::Response* pResponse)
 {
-   // get the raw uri & strip its location prefix
-   std::string uri = request.uri();
-   if (!location.empty() && !uri.compare(0, location.length(), location))
-      uri = uri.substr(location.length());
-
-   // strip query string, will be passed separately
-   size_t pos = uri.find("?");
-   if (pos != std::string::npos)
-      uri.erase(pos);
-   
-   // uri has now been reduced to path. url decode it (we noted that R
-   // was url encoding dashes in e.g. help for memory-limits)
-   std::string path = http::util::urlDecode(uri);
+   // get the requested path
+   std::string path = http::util::pathAfterPrefix(request, location);
 
    // server custom css file if necessary
    if (boost::algorithm::ends_with(path, "/R.css"))
    {
-      core::FilePath cssFile = options().rHelpCssFilePath();
+      core::FilePath cssFile = options().rResourcesPath().childPath("R.css");
       if (cssFile.exists())
       {
          pResponse->setFile(cssFile, request, filter);

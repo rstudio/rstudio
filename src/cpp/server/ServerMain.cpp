@@ -145,6 +145,7 @@ void httpServerAddHandlers()
    uri_handlers::add("/custom", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/session", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/docs", secureAsyncHttpHandler(secureAsyncFileHandler(), true));
+   uri_handlers::add("/html_preview", secureAsyncHttpHandler(proxyContentRequest, true));
 
    // establish logging handler
    uri_handlers::addBlocking("/log", secureJsonRpcHandler(gwt::handleLogRequest));

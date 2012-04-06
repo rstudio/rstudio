@@ -85,6 +85,7 @@
 #include "modules/SessionAgreement.hpp"
 #include "modules/SessionAskPass.hpp"
 #include "modules/SessionAuthoring.hpp"
+#include "modules/SessionHTMLPreview.hpp"
 #include "modules/SessionCodeSearch.hpp"
 #include "modules/SessionConsole.hpp"
 #include "modules/SessionConsoleProcess.hpp"
@@ -1316,6 +1317,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::source::initialize)
       (modules::source_control::initialize)
       (modules::authoring::initialize)
+      (modules::html_preview::initialize)
       (modules::history::initialize)
       (modules::code_search::initialize)
 

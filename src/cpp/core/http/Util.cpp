@@ -23,6 +23,7 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 
 #include <core/http/Header.hpp>
+#include <core/http/Request.hpp>
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 
@@ -329,7 +330,26 @@ std::string httpDate(const boost::posix_time::ptime& datetime)
    dateStream << datetime;
    return dateStream.str();
 }
- 
+
+
+std::string pathAfterPrefix(const Request& request,
+                            const std::string& pathPrefix)
+{
+   // get the raw uri & strip its location prefix
+   std::string uri = request.uri();
+   if (!pathPrefix.empty() && !uri.compare(0, pathPrefix.length(), pathPrefix))
+      uri = uri.substr(pathPrefix.length());
+
+   // strip query string
+   size_t pos = uri.find("?");
+   if (pos != std::string::npos)
+      uri.erase(pos);
+
+   // uri has now been reduced to path. url decode it (we noted that R
+   // was url encoding dashes in e.g. help for memory-limits)
+   return  http::util::urlDecode(uri);
+}
+
 } // namespace util
 
 } // namespace http
