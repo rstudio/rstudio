@@ -46,6 +46,7 @@ import org.rstudio.studio.client.common.vcs.ignore.Ignore;
 import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
 import org.rstudio.studio.client.htmlpreview.HTMLPreview;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewPresenter;
+import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
 import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewApplicationView;
 import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewApplicationWindow;
 import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewPanel;
@@ -257,6 +258,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(CompilePdfServerOperations.class).to(RemoteServer.class);
       bind(FindInFilesServerOperations.class).to(RemoteServer.class);
       bind(SynctexServerOperations.class).to(RemoteServer.class);
+      bind(HTMLPreviewServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

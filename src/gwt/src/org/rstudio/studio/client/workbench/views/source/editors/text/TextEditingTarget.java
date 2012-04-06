@@ -59,6 +59,8 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.SynctexUtils;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
+import org.rstudio.studio.client.htmlpreview.events.ShowHTMLPreviewEvent;
+import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -1857,8 +1859,10 @@ public class TextEditingTarget implements EditingTarget
                                  "Preview HTML",
                                  "Not yet implemented");
       
-      //HTMLPreviewParams params = HTMLPreviewParams.create();
-      //events_.fireEvent(new ShowHTMLPreviewEvent(params));
+      /*
+      HTMLPreviewParams params = HTMLPreviewParams.create();
+      events_.fireEvent(new ShowHTMLPreviewEvent(params));
+      */
    }
    
    @Handler

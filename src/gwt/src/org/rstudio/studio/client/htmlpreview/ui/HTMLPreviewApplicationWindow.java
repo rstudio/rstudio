@@ -54,8 +54,6 @@ public class HTMLPreviewApplicationWindow extends SatelliteWindow
       
       // make it fill the containing layout panel
       Widget presWidget = presenter_.asWidget();
-      presWidget.setSize("100%", "100%");
-      mainPanel.setSize("100%", "100%");
       mainPanel.add(presWidget);
       mainPanel.setWidgetLeftRight(presWidget, 0, Unit.PX, 0, Unit.PX);
       mainPanel.setWidgetTopBottom(presWidget, 0, Unit.PX, 0, Unit.PX);

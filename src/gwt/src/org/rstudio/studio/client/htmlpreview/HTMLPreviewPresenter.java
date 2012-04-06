@@ -15,6 +15,7 @@ package org.rstudio.studio.client.htmlpreview;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
+import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.user.client.ui.IsWidget;
@@ -29,17 +30,19 @@ public class HTMLPreviewPresenter implements IsWidget
    
    public interface Display extends IsWidget
    {
-      
+      void showPreview(String url);
    }
    
    @Inject
    public HTMLPreviewPresenter(Display view,
                                Binder binder,
                                Commands commands,
-                               GlobalDisplay globalDisplay)
+                               GlobalDisplay globalDisplay,
+                               HTMLPreviewServerOperations server)
    {
       view_ = view;
       globalDisplay_ = globalDisplay;
+      server_ = server;
       
       binder.bind(commands, this);
    }
@@ -47,6 +50,7 @@ public class HTMLPreviewPresenter implements IsWidget
    
    public void onActivated(HTMLPreviewParams params)
    {
+      view_.showPreview(server_.getApplicationURL("offline.htm"));
    }
   
    
@@ -60,4 +64,5 @@ public class HTMLPreviewPresenter implements IsWidget
    
    @SuppressWarnings("unused")
    private final GlobalDisplay globalDisplay_;
+   private final HTMLPreviewServerOperations server_;
 }
