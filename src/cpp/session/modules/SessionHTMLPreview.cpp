@@ -41,13 +41,17 @@ FilePath s_currentPreviewDir;
 void setDocumentResponse(const std::string& htmlOutput,
                          http::Response* pResponse)
 {
+   // apply our own filters
+   std::string filteredHtml = boost::algorithm::replace_all_copy(
+         htmlOutput, "<pre><code>", "<pre class=\"verbatim\"><code>");
+
    // determine location of template
    FilePath resourcesPath = session::options().rResourcesPath();
    FilePath htmlPreviewFile = resourcesPath.childPath("html_preview.htm");
 
    // setup template filter
    std::map<std::string,std::string> vars;
-   vars["html_output"] = htmlOutput;
+   vars["html_output"] = filteredHtml;
    text::TemplateFilter filter(vars);
 
    // send response
