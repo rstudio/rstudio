@@ -44,6 +44,15 @@ class DOMImplIE8 extends DOMImplTrident {
   }-*/;
 
   @Override
+  public void cssClearOpacity(Style style) {
+    if (isIE8()) {
+      cssClearOpacityImpl(style);
+    } else {
+      super.cssClearOpacity(style);
+    }
+  }
+
+  @Override
   public void cssSetOpacity(Style style, double value) {
     if (isIE8()) {
       cssSetOpacityImpl(style, value);
@@ -81,6 +90,10 @@ class DOMImplIE8 extends DOMImplTrident {
     }
     super.setScrollLeft(elem, left);
   }
+
+  private native void cssClearOpacityImpl(Style style) /*-{
+    style.filter = '';
+  }-*/;
 
   private native void cssSetOpacityImpl(Style style, double value) /*-{
     style.filter = 'alpha(opacity=' + (value * 100) + ')';
