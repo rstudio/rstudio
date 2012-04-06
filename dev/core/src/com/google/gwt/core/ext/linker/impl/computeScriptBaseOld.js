@@ -117,7 +117,13 @@ function computeScriptBase() {
     }
     return '';
   }
-  
+
+  function isLocationOk() {
+    var loc = $doc.location;
+    return loc.href ==
+        (loc.protocol + "//" + loc.host + loc.pathname + loc.search + loc.hash);
+  }
+
 // ================ Inline Code =============================================
   var tempBase = tryMetaTag();
   if (tempBase == '') {
@@ -129,7 +135,7 @@ function computeScriptBase() {
   if (tempBase == '') {
     tempBase = tryBaseTag();
   }
-  if (tempBase == '') {
+  if (tempBase == '' && isLocationOk()) {
     // last resort
     tempBase = getDirectoryOfFile($doc.location.href);
   }  
