@@ -523,6 +523,14 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       show();
     }
 
+    // If left/top are set from a previous center() call, and our content
+    // has changed, we may get a bogus getOffsetWidth because our new content
+    // is wrapping (giving a lower offset width) then it would without the
+    // previous left. Setting left/top back to 0 avoids this.
+    Element elem = getElement();
+    elem.getStyle().setPropertyPx("left", 0);
+    elem.getStyle().setPropertyPx("top", 0);
+
     int left = (Window.getClientWidth() - getOffsetWidth()) >> 1;
     int top = (Window.getClientHeight() - getOffsetHeight()) >> 1;
     setPopupPosition(Math.max(Window.getScrollLeft() + left, 0), Math.max(
