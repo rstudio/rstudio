@@ -16,7 +16,6 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
@@ -201,18 +200,9 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
       // open the window 
       satelliteManager_.openSatellite("review_changes",     
                                       params,
-                                      getPreferredReviewPanelSize()); 
+                                      new Size(1000,1200)); 
    }
    
-   private Size getPreferredReviewPanelSize()
-   { 
-      Size windowBounds = new Size(Window.getClientWidth(),
-                                   Window.getClientHeight());
-      
-      return new Size(Math.min(windowBounds.width - 100, 1000), 
-                      windowBounds.height - 25);
-   }
-
    @Handler
    void onVcsRevert()
    {

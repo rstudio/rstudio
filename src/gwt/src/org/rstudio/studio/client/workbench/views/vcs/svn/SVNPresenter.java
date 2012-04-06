@@ -117,19 +117,8 @@ public class SVNPresenter extends BaseVcsPresenter
       // open the window 
       satelliteManager_.openSatellite("review_changes",     
                                       params,
-                                      getPreferredReviewPanelSize()); 
+                                      new Size(1000,1200)); 
    }
-
-   private Size getPreferredReviewPanelSize()
-   {
-      Size windowBounds = new Size(Window.getClientWidth(),
-                                   Window.getClientHeight());
-
-      return new Size(Math.min(windowBounds.width - 100, 1000),
-                      windowBounds.height - 25);
-   }
- 
-
 
    @Override
    public Widget asWidget()
