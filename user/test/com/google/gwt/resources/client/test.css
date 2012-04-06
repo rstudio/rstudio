@@ -234,3 +234,13 @@ ns\:tag::-webkit-scrollbar {
 @dontIgnoreThis;
 @dontIgnoreThis { /* the space between the name and the { is important */ }
 @dontIgnoreThisToo{ some { random : content } }
+
+/*
+ * Check font-face declarations. See discussion at
+ * http://paulirish.com/2010/font-face-gotchas/
+ */
+@font-face {
+  font-family: 'Foo Web';
+  src: url('Foo.eot');
+  src: local('☺'), url('Foo.otf') format('opentype');
+}

@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.resources.css.ast.CssDef;
 import com.google.gwt.resources.css.ast.CssEval;
 import com.google.gwt.resources.css.ast.CssExternalSelectors;
+import com.google.gwt.resources.css.ast.CssFontFace;
 import com.google.gwt.resources.css.ast.CssIf;
 import com.google.gwt.resources.css.ast.CssMediaRule;
 import com.google.gwt.resources.css.ast.CssNoFlip;
@@ -297,6 +298,9 @@ public class GenerateCssAst {
     }
 
     public void startFontFace() throws CSSException {
+      CssFontFace rule = new CssFontFace();
+      addNode(rule);
+      currentRule = rule;
     }
 
     public void startMedia(SACMediaList media) throws CSSException {

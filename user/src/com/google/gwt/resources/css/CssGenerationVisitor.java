@@ -20,6 +20,7 @@ import com.google.gwt.resources.css.ast.Context;
 import com.google.gwt.resources.css.ast.CssDef;
 import com.google.gwt.resources.css.ast.CssEval;
 import com.google.gwt.resources.css.ast.CssExternalSelectors;
+import com.google.gwt.resources.css.ast.CssFontFace;
 import com.google.gwt.resources.css.ast.CssIf;
 import com.google.gwt.resources.css.ast.CssMediaRule;
 import com.google.gwt.resources.css.ast.CssNoFlip;
@@ -44,11 +45,11 @@ import java.util.TreeMap;
  * inject dynamic expressions.
  */
 public class CssGenerationVisitor extends CssVisitor {
+  private boolean needsOpenBrace;
+  private boolean needsComma;
+
   private final TextOutput out;
 
-  private boolean needsOpenBrace;
-
-  private boolean needsComma;
   private final boolean substituteDots;
   private final SortedMap<Integer, List<CssSubstitution>> substitutionPositions = new TreeMap<Integer, List<CssSubstitution>>();
 
@@ -73,6 +74,11 @@ public class CssGenerationVisitor extends CssVisitor {
   public CssGenerationVisitor(TextOutput out, boolean substituteDots) {
     this.out = out;
     this.substituteDots = substituteDots;
+  }
+
+  @Override
+  public void endVisit(CssFontFace x, Context ctx) {
+    closeBrace();
   }
 
   @Override
@@ -119,6 +125,13 @@ public class CssGenerationVisitor extends CssVisitor {
 
   public SortedMap<Integer, List<CssSubstitution>> getSubstitutionPositions() {
     return substitutionPositions;
+  }
+
+  @Override
+  public boolean visit(CssFontFace x, Context ctx) {
+    out.print("@font-face");
+    openBrace();
+    return true;
   }
 
   @Override

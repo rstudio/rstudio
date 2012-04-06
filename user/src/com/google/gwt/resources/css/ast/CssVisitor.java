@@ -88,6 +88,13 @@ public class CssVisitor {
    * @param x the node being visited
    * @param ctx the context for the visit
    */
+  public void endVisit(CssFontFace x, Context ctx) {
+  }
+
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   */
   public void endVisit(CssIf x, Context ctx) {
   }
 
@@ -182,6 +189,14 @@ public class CssVisitor {
    * @param ctx the context for the visit
    */
   public boolean visit(CssExternalSelectors x, Context ctx) {
+    return true;
+  }
+
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   */
+  public boolean visit(CssFontFace x, Context ctx) {
     return true;
   }
 

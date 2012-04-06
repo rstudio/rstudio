@@ -209,6 +209,13 @@ public class CssNodeCloner extends CssVisitor {
   }
 
   @Override
+  public boolean visit(CssFontFace x, Context ctx) {
+    CssFontFace newRule = new CssFontFace();
+    addToNodes(newRule);
+    return true;
+  }
+
+  @Override
   public boolean visit(CssRule x, Context ctx) {
     CssRule newRule = new CssRule();
     addToNodes(newRule);
