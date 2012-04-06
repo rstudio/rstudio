@@ -15,4 +15,16 @@
 <module>
 	<inherits name='com.google.gwt.core.ext.LinkerTest' />
 	<add-linker name='sso' />
+
+	<define-property name='sso.test' values='one,two,three'/>
+	<property-provider name='sso.test'><![CDATA[
+		return "two";
+	]]></property-provider>
+
+	<replace-with class='com.google.gwt.core.ext.test.SingleScriptLinkerTest.Alternate'>
+		<when-type-is class='com.google.gwt.core.ext.test.SingleScriptLinkerTest.Default'/>
+		<when-property-is name='sso.test' value='two'/>
+	</replace-with>
+
+	<collapse-all-properties/>
 </module>

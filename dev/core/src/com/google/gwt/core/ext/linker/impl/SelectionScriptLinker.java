@@ -265,6 +265,31 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     return toReturn;
   }
 
+  protected List<Artifact<?>> emitSelectionInformation(String strongName,
+      CompilationResult result) {
+    List<Artifact<?>> emitted = new ArrayList<Artifact<?>>();
+
+    for (SortedMap<SelectionProperty, String> propertyMap : result.getPropertyMap()) {
+      TreeMap<String, String> propMap = new TreeMap<String, String>();
+      for (Map.Entry<SelectionProperty, String> entry : propertyMap.entrySet()) {
+        propMap.put(entry.getKey().getName(), entry.getValue());
+      }
+
+      // The soft properties may not be a subset of the existing set
+      for (SoftPermutation soft : result.getSoftPermutations()) {
+        // Make a copy we can add add more properties to
+        TreeMap<String, String> softMap = new TreeMap<String, String>(propMap);
+        // Make sure this SelectionInformation contains the soft properties
+        for (Map.Entry<SelectionProperty, String> entry : soft.getPropertyMap().entrySet()) {
+          softMap.put(entry.getKey().getName(), entry.getValue());
+        }
+        emitted.add(new SelectionInformation(strongName, soft.getId(), softMap));
+      }
+    }
+
+    return emitted;
+  }
+
   protected EmittedArtifact emitSelectionScript(TreeLogger logger,
       LinkerContext context, ArtifactSet artifacts)
       throws UnableToCompleteException {
@@ -539,30 +564,4 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
       CompilationResult result) throws UnableToCompleteException {
     return script;
   }
-
-  private List<Artifact<?>> emitSelectionInformation(String strongName,
-      CompilationResult result) {
-    List<Artifact<?>> emitted = new ArrayList<Artifact<?>>();
-
-    for (SortedMap<SelectionProperty, String> propertyMap : result.getPropertyMap()) {
-      TreeMap<String, String> propMap = new TreeMap<String, String>();
-      for (Map.Entry<SelectionProperty, String> entry : propertyMap.entrySet()) {
-        propMap.put(entry.getKey().getName(), entry.getValue());
-      }
-
-      // The soft properties may not be a subset of the existing set
-      for (SoftPermutation soft : result.getSoftPermutations()) {
-        // Make a copy we can add add more properties to
-        TreeMap<String, String> softMap = new TreeMap<String, String>(propMap);
-        // Make sure this SelectionInformation contains the soft properties
-        for (Map.Entry<SelectionProperty, String> entry : soft.getPropertyMap().entrySet()) {
-          softMap.put(entry.getKey().getName(), entry.getValue());
-        }
-        emitted.add(new SelectionInformation(strongName, soft.getId(), softMap));
-      }
-    }
-
-    return emitted;
-  }
-
 }

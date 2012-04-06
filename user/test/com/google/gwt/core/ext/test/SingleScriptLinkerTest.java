@@ -15,12 +15,21 @@
  */
 package com.google.gwt.core.ext.test;
 
+import com.google.gwt.core.client.GWT;
+
 /**
  * Tests the single-script linker.
  */
 public class SingleScriptLinkerTest extends LinkerTest {
+  static class Default { }
+  static class Alternate extends Default { }
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.core.ext.SingleScriptLinkerTest";
+  }
+
+  public void testSoftPermutationsWork() {
+    assertTrue(GWT.create(Default.class) instanceof Alternate);
   }
 }

@@ -23,12 +23,14 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.LinkerOrder;
-import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
+import com.google.gwt.core.ext.linker.Shardable;
+import com.google.gwt.core.ext.linker.Transferable;
 import com.google.gwt.core.ext.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.About;
 import com.google.gwt.dev.util.DefaultTextOutput;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 
@@ -45,17 +47,47 @@ public class SingleScriptLinker extends SelectionScriptLinker {
     return "Single Script";
   }
 
-  @Override
-  public ArtifactSet link(TreeLogger logger, LinkerContext context,
-      ArtifactSet artifacts, boolean onePermutation)
-      throws UnableToCompleteException {
-    if (onePermutation) {
-      permutationsUtil.setupPermutationsMap(artifacts);
-      ArtifactSet toReturn = new ArtifactSet(artifacts);
-      toReturn.add(emitSelectionScript(logger, context, artifacts));
-      return toReturn;
-    } else {
-      return artifacts;
+  @Transferable
+  private static class Script extends Artifact<Script> {
+    private final String javaScript;
+    private final String strongName;
+
+    public Script(String strongName, String javaScript) {
+      super(SingleScriptLinker.class);
+      this.strongName = strongName;
+      this.javaScript = javaScript;
+    }
+
+    @Override
+    public int compareToComparableArtifact(Script that) {
+      int res = strongName.compareTo(that.strongName);
+      if (res == 0) {
+        res = javaScript.compareTo(that.javaScript);
+      }
+      return res;
+    }
+
+    @Override
+    public Class<Script> getComparableArtifactType() {
+      return Script.class;
+    }
+
+    public String getJavaScript() {
+      return javaScript;
+    }
+
+    public String getStrongName() {
+      return strongName;
+    }
+
+    @Override
+    public int hashCode() {
+      return strongName.hashCode() ^ javaScript.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return "Script " + strongName;
     }
   }
 
@@ -63,19 +95,35 @@ public class SingleScriptLinker extends SelectionScriptLinker {
   protected Collection<Artifact<?>> doEmitCompilation(TreeLogger logger,
       LinkerContext context, CompilationResult result, ArtifactSet artifacts)
       throws UnableToCompleteException {
-    if (result.getJavaScript().length != 1) {
+
+    String[] js = result.getJavaScript();
+    if (js.length != 1) {
       logger.branch(TreeLogger.ERROR,
           "The module must not have multiple fragments when using the "
               + getDescription() + " Linker.", null);
       throw new UnableToCompleteException();
     }
-    return super.doEmitCompilation(logger, context, result, artifacts);
+
+    Collection<Artifact<?>> toReturn = new ArrayList<Artifact<?>>();
+    toReturn.add(new Script(result.getStrongName(), js[0]));
+    toReturn.addAll(emitSelectionInformation(result.getStrongName(), result));
+    return toReturn;
   }
 
   @Override
   protected EmittedArtifact emitSelectionScript(TreeLogger logger,
       LinkerContext context, ArtifactSet artifacts)
       throws UnableToCompleteException {
+
+    // Find the single Script result
+    Set<Script> results = artifacts.find(Script.class);
+    if (results.size() != 1) {
+      logger.log(TreeLogger.ERROR, "The module must have exactly one distinct"
+          + " permutation when using the " + getDescription() + " Linker; found " + results.size(),
+          null);
+      throw new UnableToCompleteException();
+    }
+    Script result = results.iterator().next();
 
     DefaultTextOutput out = new DefaultTextOutput(true);
     
@@ -99,27 +147,10 @@ public class SingleScriptLinker extends SelectionScriptLinker {
     out.print("var $stats = $wnd.__gwtStatsEvent ? function(a) {$wnd.__gwtStatsEvent(a)} : null;");
     out.newlineOpt();
 
-    // Find the single CompilationResult
-    Set<CompilationResult> results = artifacts.find(CompilationResult.class);
-    if (results.size() != 1) {
-      logger.log(TreeLogger.ERROR, "The module must have exactly one distinct"
-          + " permutation when using the " + getDescription() + " Linker.",
-          null);
-      throw new UnableToCompleteException();
-    }
-    CompilationResult result = results.iterator().next();
-
     out.print("var $strongName = '" + result.getStrongName() + "';");
     out.newlineOpt();
 
-    String[] js = result.getJavaScript();
-    if (js.length != 1) {
-      logger.log(TreeLogger.ERROR,
-          "The module must not have multiple fragments when using the "
-              + getDescription() + " Linker.", null);
-      throw new UnableToCompleteException();
-    }
-    out.print(js[0]);
+    out.print(result.getJavaScript());
 
     // Generate the call to tell the bootstrap code that we're ready to go.
     out.newlineOpt();

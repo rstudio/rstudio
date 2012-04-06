@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.linker.impl.SelectionScriptJavaScriptTest;
 import com.google.gwt.core.ext.linker.impl.SelectionScriptLinkerUnitTest;
 import com.google.gwt.core.ext.test.CrossSiteIframeLinkerTest;
 import com.google.gwt.core.ext.test.IFrameLinkerTest;
+import com.google.gwt.core.ext.test.SingleScriptLinkerTest;
 import com.google.gwt.core.ext.test.XSLinkerTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
@@ -40,11 +41,7 @@ public class LinkerSuite {
     suite.addTestSuite(SelectionScriptJavaScriptTest.class);
     suite.addTestSuite(SelectionScriptLinkerUnitTest.class);
     suite.addTestSuite(XSLinkerTest.class);
-    /*
-     * Note: Single-script linking is disabled by default, because it only works
-     * when the test is run for a single permutation.
-     */
-    // suite.addTestSuite(SingleScriptLinkerTest.class);
+    suite.addTestSuite(SingleScriptLinkerTest.class);
     // $JUnit-END$
     return suite;
   }

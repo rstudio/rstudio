@@ -40,6 +40,9 @@ function __MODULE_FUNC__() {
   // the strong name of the cache.js file to load.
   ,answers = []
 
+  // Provides the module with the soft permutation id
+  ,softPermutationId = 0
+
   // Error functions.  Default unset in compiled mode, may be set by meta props.
   ,onLoadErrorFunc, propertyErrorFunc
   
@@ -77,7 +80,7 @@ function __MODULE_FUNC__() {
   function maybeStartModule() {
     // TODO: it may not be necessary to check gwtOnLoad here.
     if (gwtOnLoad && bodyDone) {
-      gwtOnLoad(onLoadErrorFunc, '__MODULE_NAME__', base);
+      gwtOnLoad(onLoadErrorFunc, '__MODULE_NAME__', base, softPermutationId);
     }
   }
 
@@ -215,6 +218,44 @@ function __MODULE_FUNC__() {
     return (value == null) ? null : value;
   }
   
+  // Deferred-binding mapper function.  Sets a value into the several-level-deep
+  // answers map. The keys are specified by a non-zero-length propValArray,
+  // which should be a flat array target property values. Used by the generated
+  // PERMUTATIONS code.
+  //
+  function unflattenKeylistIntoAnswers(propValArray, value) {
+    var answer = answers;
+    for (var i = 0, n = propValArray.length - 1; i < n; ++i) {
+      // lazy initialize an empty object for the current key if needed
+      answer = answer[propValArray[i]] || (answer[propValArray[i]] = []);
+    }
+    // set the final one to the value
+    answer[propValArray[n]] = value;
+  }
+
+  // Computes the value of a given property.  propName must be a valid property
+  // name. Used by the generated PERMUTATIONS code.
+  //
+  function computePropValue(propName) {
+    var value = providers[propName](), allowedValuesMap = values[propName];
+    if (value in allowedValuesMap) {
+      return value;
+    }
+    var allowedValuesList = [];
+    for (var k in allowedValuesMap) {
+      allowedValuesList[allowedValuesMap[k]] = k;
+    }
+    if (propertyErrorFunc) {
+      propertyErrorFunc(propName, allowedValuesList, value);
+    }
+    throw null;
+  }
+
+  // --------------- PROPERTY PROVIDERS --------------- 
+
+// __PROPERTIES_BEGIN__
+// __PROPERTIES_END__
+
   // --------------- EXPOSED FUNCTIONS ----------------
 
   // Called when the compiled script identified by moduleName is done loading.
@@ -239,6 +280,20 @@ function __MODULE_FUNC__() {
   processMetas();
   
   // --------------- WINDOW ONLOAD HOOK ---------------
+
+    try {
+      var strongName;
+// __PERMUTATIONS_BEGIN__
+      // Permutation logic
+// __PERMUTATIONS_END__
+      var idx = strongName.indexOf(':');
+      if (idx != -1) {
+        softPermutationId = Number(strongName.substring(idx + 1));
+      }
+    } catch (e) {
+      // intentionally silent on property failure
+      return;
+    }
 
   var onBodyDoneTimerId;
   function onBodyDone() {
