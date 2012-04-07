@@ -45,6 +45,7 @@ public class HTMLPreviewPanel extends ResizeComposite
       public PreviewFrame()
       {
          setStylePrimaryName("rstudio-HelpFrame");
+         this.getElement().setAttribute("sandbox", "allow-scripts");
       }
       
       public void navigate(final String url)
