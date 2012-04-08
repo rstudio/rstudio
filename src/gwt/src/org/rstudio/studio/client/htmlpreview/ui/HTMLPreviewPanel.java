@@ -46,7 +46,17 @@ public class HTMLPreviewPanel extends ResizeComposite
       public PreviewFrame()
       {
          setStylePrimaryName("rstudio-HelpFrame");
-         this.getElement().setAttribute("sandbox", "allow-scripts");
+         
+         // setup an iframe sandbox which disallows scripts (by not specifying
+         // the allow-scripts value) but which allows the iframe to be 
+         // treated as same-origin. we want the sandbox in the first place
+         // to avoid javascript escaping from the iframe however if we don't
+         // set allow-same-origin then the iframe does not retain its scroll
+         // position on reload. there is basically a zero-sum choice as to 
+         // whether we allow scripts or preserve scroll position on reload,
+         // and the latter is considered very generally useful and the former
+         // a fairly narrow/rare scenario.
+         getElement().setAttribute("sandbox", "allow-same-origin");
       }
       
       public void navigate(final String url)
