@@ -68,6 +68,10 @@ public class WindowEx extends JavaScriptObject
       return 'https:' == this.location.protocol;
    }-*/;
 
+   public final native void reload() /*-{
+      this.location.reload();
+   }-*/;
+  
    public final native void setLocationHref(String helpURL) /*-{
       this.location.href = helpURL ;
    }-*/;

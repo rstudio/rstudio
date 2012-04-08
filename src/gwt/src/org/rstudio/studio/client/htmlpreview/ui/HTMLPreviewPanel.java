@@ -2,12 +2,13 @@ package org.rstudio.studio.client.htmlpreview.ui;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
-import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
 
-import org.rstudio.core.client.widget.DynamicIFrame;
+import org.rstudio.core.client.dom.IFrameElementEx;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewPresenter;
 
@@ -40,7 +41,7 @@ public class HTMLPreviewPanel extends ResizeComposite
    }
    
    
-   private class PreviewFrame extends DynamicIFrame
+   private class PreviewFrame extends Frame
    {
       public PreviewFrame()
       {
@@ -56,8 +57,14 @@ public class HTMLPreviewPanel extends ResizeComposite
             {
                if (getIFrame() != null && getWindow() != null)
                {
-                  getWindow().replaceLocationHref(url);
-                  setUrl(url);
+                  if (url.equals(getWindow().getLocationHref()))
+                  {
+                     getWindow().reload();
+                  }
+                  else
+                  {
+                     getWindow().replaceLocationHref(url);
+                  }
                   return false;
                }
                else
@@ -70,14 +77,17 @@ public class HTMLPreviewPanel extends ResizeComposite
          if (navigateCommand.execute())
             Scheduler.get().scheduleFixedDelay(navigateCommand, 50);      
       }
-
-      @Override
-      protected void onFrameLoaded()
+      
+      private IFrameElementEx getIFrame()
       {
-         BodyElement body = getDocument().getBody();
-         body.getStyle().setMargin(0, Unit.PX);
-         body.getStyle().setBackgroundColor("white");  
+         return getElement().cast();
       }
+      
+      protected WindowEx getWindow()
+      {
+         return getIFrame().getContentWindow();
+      }
+
    }
  
    private final PreviewFrame previewFrame_;

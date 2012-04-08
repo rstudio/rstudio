@@ -1855,14 +1855,19 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onPreviewHTML()
    {
-      saveThenExecute(null, new Command() {
+      Command previewCommand = new Command() {
          @Override
          public void execute()
          {
             HTMLPreviewParams params = HTMLPreviewParams.create(getPath());
             events_.fireEvent(new ShowHTMLPreviewEvent(params));  
          }
-      });
+      };
+      
+      if (dirtyState().getValue())
+         saveThenExecute(null, previewCommand);
+      else
+         previewCommand.execute();
    }
    
    @Handler
