@@ -26,12 +26,10 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
    */
 
   // CHECKSTYLE_OFF: These have to be created somewhere.
-  public static final Boolean FALSE = new Boolean(false);
-  public static final Boolean TRUE = new Boolean(true);
+  public static Boolean FALSE = new Boolean(false);
+  public static Boolean TRUE = new Boolean(true);
 
   // CHECKSTYLE_ON
-
-  public static final Class<Boolean> TYPE = boolean.class;
 
   public static boolean parseBoolean(String s) {
     return "true".equalsIgnoreCase(s);

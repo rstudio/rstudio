@@ -31,7 +31,6 @@ public final class Double extends Number implements Comparable<Double> {
   public static final double NEGATIVE_INFINITY = -1d / 0d;
   public static final double POSITIVE_INFINITY = 1d / 0d;
   public static final int SIZE = 64;
-  public static final Class<Double> TYPE = double.class;
 
   // 2^512, 2^-512
   private static final double POWER_512 = 1.3407807929942597E154;

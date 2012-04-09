@@ -50,7 +50,6 @@ public final class Long extends Number implements Comparable<Long> {
   public static final long MAX_VALUE = 0x7fffffffffffffffL;
   public static final long MIN_VALUE = 0x8000000000000000L;
   public static final int SIZE = 64;
-  public static final Class<Long> TYPE = long.class;
 
   public static int bitCount(long i) {
     int high = (int) (i >> 32);
