@@ -36,6 +36,7 @@ public class DefaultProxyStore implements ProxyStore {
   private static final String EXPECTED_VERSION = "211";
   private final AutoBean<OperationMessage> messageBean;
   private final Map<String, Splittable> map;
+  private int nextId;
 
   /**
    * Construct an empty DefaultProxyStore.
@@ -66,6 +67,8 @@ public class DefaultProxyStore implements ProxyStore {
           + message.getVersion());
     }
     map = message.getPropertyMap();
+    // Note: this only works because the store is append-only!
+    nextId = map.size();
   }
 
   /**
@@ -80,7 +83,7 @@ public class DefaultProxyStore implements ProxyStore {
   }
 
   public int nextId() {
-    return map.size();
+    return nextId++;
   }
 
   public void put(String key, Splittable value) {

@@ -2600,14 +2600,18 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         SimpleFooRequest req = simpleFooRequest();
 
         // Create
-        final SimpleValueProxy created = req.create(SimpleValueProxy.class);
-        created.setNumber(42);
-        created.setString("Hello world!");
-        created.setSimpleFoo(response);
+        final SimpleValueProxy created1 = req.create(SimpleValueProxy.class);
+        created1.setNumber(42);
+        created1.setString("Able");
+        created1.setSimpleFoo(response);
+        final SimpleValueProxy created2 = req.create(SimpleValueProxy.class);
+        created2.setNumber(43);
+        created2.setString("Baker");
+        created2.setSimpleFoo(response);
 
         // Set
         response = req.edit(response);
-        response.setSimpleValues(Arrays.asList(created));
+        response.setSimpleValues(Arrays.asList(created1, created2));
 
         // Retrieve
         req.persistAndReturnSelf().using(response).with("simpleValues").to(
@@ -2615,12 +2619,19 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
               @Override
               public void onSuccess(SimpleFooProxy response) {
                 response = checkSerialization(response);
-                SimpleValueProxy value = response.getSimpleValues().get(0);
-                assertEquals(42, value.getNumber());
+                assertEquals(2, response.getSimpleValues().size());
+                SimpleValueProxy value1 = response.getSimpleValues().get(0);
+                assertEquals(42, value1.getNumber());
+                assertEquals("Able", value1.getString());
+                assertSame(response, value1.getSimpleFoo());
+                SimpleValueProxy value2 = response.getSimpleValues().get(1);
+                assertEquals(43, value2.getNumber());
+                assertEquals("Baker", value2.getString());
+                assertSame(response, value2.getSimpleFoo());
 
                 try {
                   // Require owning object to be editable
-                  response.getSimpleValues().get(0).setNumber(43);
+                  response.getSimpleValues().get(0).setNumber(44);
                   fail("Should have thrown exception");
                 } catch (IllegalStateException expected) {
                 }
@@ -2628,13 +2639,13 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                 // Update
                 SimpleFooRequest req = simpleFooRequest();
                 response = req.edit(response);
-                response.getSimpleValues().get(0).setNumber(43);
+                response.getSimpleValues().get(0).setNumber(44);
                 req.persistAndReturnSelf().using(response).with("simpleValues").to(
                     new Receiver<SimpleFooProxy>() {
                       @Override
                       public void onSuccess(SimpleFooProxy response) {
                         response = checkSerialization(response);
-                        assertEquals(43, response.getSimpleValues().get(0).getNumber());
+                        assertEquals(44, response.getSimpleValues().get(0).getNumber());
                         finishTestAndReset();
                       }
                     }).fire();
