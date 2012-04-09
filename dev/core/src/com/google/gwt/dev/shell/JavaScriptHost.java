@@ -23,6 +23,19 @@ public class JavaScriptHost {
 
   private static ShellJavaScriptHost sHost;
 
+  /**
+   * Throws {@code NullPointerException} if {@code o} is null.
+   *<p>
+   * Used by {@code RewriteJsniMethods} to ensure JSO instance methods
+   * are not called against null instances.
+   */
+  public static Object checkNotNull(Object o) {
+    if (o == null) {
+      throw new NullPointerException("JSO instance was null");
+    }
+    return o;
+  }
+
   public static void exceptionCaught(Object exception) {
     sHost.exceptionCaught(exception);
   }
