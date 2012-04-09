@@ -122,6 +122,7 @@ public final class Character implements Comparable<Character>, Serializable {
   public static final int MAX_CODE_POINT = 0x10FFFF;
 
   public static final int SIZE = 16;
+  public static final Class<Character> TYPE = char.class;
 
   public static int charCount(int codePoint) {
     return codePoint >= MIN_SUPPLEMENTARY_CODE_POINT ? 2 : 1;
