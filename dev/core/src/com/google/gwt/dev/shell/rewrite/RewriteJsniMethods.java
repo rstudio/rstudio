@@ -255,13 +255,6 @@ public class RewriteJsniMethods extends ClassAdapter {
         visitInsn(Opcodes.ACONST_NULL);
       } else {
         loadThis();
-        // Ensure the instance method is not invoked against null, otherwise
-        // JS's apply will turn it into the window object. See Issue 3069.
-        visitMethodInsn(
-            Opcodes.INVOKESTATIC,
-            "com/google/gwt/dev/shell/JavaScriptHost",
-            "checkNotNull",
-            "(Ljava/lang/Object;)Ljava/lang/Object;");
       }
       // Stack is at 2
 
