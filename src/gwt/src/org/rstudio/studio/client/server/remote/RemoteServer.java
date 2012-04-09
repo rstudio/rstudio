@@ -2381,6 +2381,25 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SVN_SET_IGNORES, params, requestCallback);
    }
    
+   public void previewHTML(String targetFile, 
+                           String fileContents,
+                           boolean isMarkdown,
+                           boolean knit,
+                           ServerRequestCallback<Boolean> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(targetFile));
+      params.set(1, new JSONString(fileContents));
+      params.set(2, JSONBoolean.getInstance(isMarkdown));
+      params.set(3, JSONBoolean.getInstance(knit));
+      sendRequest(RPC_SCOPE, PREVIEW_HTML, params, callback);
+   }
+
+   public void terminatePreviewHTML(ServerRequestCallback<Void> callback)
+   {
+      sendRequest(RPC_SCOPE, TERMINATE_PREVIEW_HTML, callback);
+   }
+   
    public void compilePdf(FileSystemItem targetFile,
                           SourceLocation sourceLocation,
                           String completedAction,
@@ -2686,6 +2705,9 @@ public class RemoteServer implements Server
    private static final String LIST_APPEND_ITEM = "list_append_item";
    private static final String LIST_REMOVE_ITEM = "list_remove_item";
    private static final String LIST_CLEAR = "list_clear";
+   
+   private static final String PREVIEW_HTML = "preview_html";
+   private static final String TERMINATE_PREVIEW_HTML = "terminate_preview_html";
    
    private static final String COMPILE_PDF = "compile_pdf";
    private static final String IS_COMPILE_PDF_RUNNING = "is_compile_pdf_running";

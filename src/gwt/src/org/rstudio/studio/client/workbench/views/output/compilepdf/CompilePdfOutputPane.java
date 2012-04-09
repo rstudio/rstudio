@@ -30,8 +30,8 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.OutputBuffer;
 import org.rstudio.studio.client.common.compilepdf.CompilePdfErrorList;
-import org.rstudio.studio.client.common.compilepdf.CompilePdfOutputBuffer;
 import org.rstudio.studio.client.common.compilepdf.CompilePdfResources;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfError;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -54,7 +54,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
    protected Widget createMainWidget()
    {
       panel_ = new SimplePanel();
-      outputBuffer_ = new CompilePdfOutputBuffer();
+      outputBuffer_ = new OutputBuffer();
       panel_.setWidget(outputBuffer_);
 
       errorList_ = new CompilePdfErrorList();
@@ -254,6 +254,6 @@ public class CompilePdfOutputPane extends WorkbenchPane
    private CompilePdfResources res_;
    private String fileName_;
    
-   private CompilePdfOutputBuffer outputBuffer_;
+   private OutputBuffer outputBuffer_;
    private CompilePdfErrorList errorList_;
 }

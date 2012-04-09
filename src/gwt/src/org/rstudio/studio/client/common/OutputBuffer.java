@@ -1,5 +1,5 @@
 /*
- * CompilePdfOutputBuffer.java
+ * OutputBuffer.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,30 +10,28 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.compilepdf;
+package org.rstudio.studio.client.common;
 
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
-import org.rstudio.studio.client.workbench.views.console.ConsoleResources.ConsoleStyles;
 
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ScrollPanel;
 
-public class CompilePdfOutputBuffer extends Composite
+public class OutputBuffer extends Composite
 {
-   public CompilePdfOutputBuffer()
+   public OutputBuffer()
    {
-      ConsoleStyles styles = ConsoleResources.INSTANCE.consoleStyles();
+      StudioStyles styles = StudioResources.INSTANCE.styles();
 
       output_ = new PreWidget();
-      output_.setStylePrimaryName(styles.output());
+      output_.setStylePrimaryName(
+                        ConsoleResources.INSTANCE.consoleStyles().output());
       FontSizer.applyNormalFontSize(output_);
     
       scrollPanel_ = new ScrollPanel();
-      scrollPanel_.addStyleName(
-                CompilePdfResources.INSTANCE.styles().outputScrollPanel());
-      scrollPanel_.setSize("100%", "100%");
+      scrollPanel_.addStyleName(styles.outputBufferScrollPanel());
       scrollPanel_.add(output_);
       
       initWidget(scrollPanel_);

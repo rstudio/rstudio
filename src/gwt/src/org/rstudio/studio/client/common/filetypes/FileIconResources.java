@@ -35,6 +35,7 @@ public interface FileIconResources extends ClientBundle
    ImageResource iconTex();
    ImageResource iconText();
    ImageResource iconMarkdown();
+   ImageResource iconHTML();
    ImageResource iconRsweave();
    ImageResource iconRd();
    ImageResource iconSourceViewer();

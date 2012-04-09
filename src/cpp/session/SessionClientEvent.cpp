@@ -72,12 +72,15 @@ const int kUiPrefsChanged = 47;
 const int kHandleUnsavedChanges = 48;
 const int kConsoleProcessPrompt = 49;
 const int kShowConsoleProcessDialog = 50;
-const int kCompilePdfStartedEvent = 51;
-const int kCompilePdfOutputEvent = 52;
-const int kCompilePdfErrorsEvent = 53;
-const int kCompilePdfCompletedEvent = 54;
-const int kFindResult = 55;
-const int kFindOperationEnded = 56;
+const int kHTMLPreviewStartedEvent = 51;
+const int kHTMLPreviewOutputEvent = 52;
+const int kHTMLPreviewCompletedEvent = 53;
+const int kCompilePdfStartedEvent = 54;
+const int kCompilePdfOutputEvent = 55;
+const int kCompilePdfErrorsEvent = 56;
+const int kCompilePdfCompletedEvent = 57;
+const int kFindResult = 58;
+const int kFindOperationEnded = 59;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -187,6 +190,12 @@ std::string ClientEvent::typeName() const
          return "console_process_prompt";
       case client_events::kConsoleProcessCreated:
          return "console_process_created";
+      case client_events::kHTMLPreviewStartedEvent:
+         return "html_preview_started_event";
+      case client_events::kHTMLPreviewOutputEvent:
+         return "html_preview_output_event";
+      case client_events::kHTMLPreviewCompletedEvent:
+         return "html_preview_completed_event";
       case client_events::kCompilePdfStartedEvent:
          return "compile_pdf_started_event";
       case client_events::kCompilePdfOutputEvent:

@@ -34,6 +34,10 @@ import org.rstudio.studio.client.common.console.ConsoleProcessCreatedEvent;
 import org.rstudio.studio.client.common.console.ServerConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ServerConsolePromptEvent;
 import org.rstudio.studio.client.common.console.ServerProcessExitEvent;
+import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
+import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
+import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
+import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
 import org.rstudio.studio.client.server.Bool;
@@ -302,6 +306,21 @@ public class ClientEventDispatcher
             ServerProcessExitEvent.Data data = event.getData();
             eventBus_.fireEvent(new ServerProcessExitEvent(data.getHandle(),
                                                           data.getExitCode()));
+         }
+         else if (type.equals(ClientEvent.HTMLPreviewStartedEvent))
+         {
+            HTMLPreviewStartedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new HTMLPreviewStartedEvent(data));
+         }
+         else if (type.equals(ClientEvent.HTMLPreviewOutputEvent))
+         {
+            String output = event.getData();
+            eventBus_.fireEvent(new HTMLPreviewOutputEvent(output));
+         }
+         else if (type.equals(ClientEvent.HTMLPreviewCompletedEvent))
+         {
+            HTMLPreviewResult result = event.getData();
+            eventBus_.fireEvent(new HTMLPreviewCompletedEvent(result));
          }
          else if (type.equals(ClientEvent.CompilePdfStartedEvent))
          {

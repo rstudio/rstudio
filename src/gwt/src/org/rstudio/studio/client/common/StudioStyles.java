@@ -16,4 +16,5 @@ import com.google.gwt.resources.client.CssResource;
 
 public interface StudioStyles extends CssResource
 {
+   String outputBufferScrollPanel();
 }

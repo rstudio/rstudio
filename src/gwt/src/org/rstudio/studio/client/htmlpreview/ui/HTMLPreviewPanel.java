@@ -3,6 +3,8 @@ package org.rstudio.studio.client.htmlpreview.ui;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
@@ -35,28 +37,73 @@ public class HTMLPreviewPanel extends ResizeComposite
    }
    
    @Override
-   public void showPreview(String url)
+   public void showProgress(String caption)
    {
-      previewFrame_.navigate(url);
+      closeProgress();
+      activeProgressDialog_ = new HTMLPreviewProgressDialog(caption);
    }
    
+   @Override
+   public void setProgressCaption(String caption)
+   {
+      activeProgressDialog_.setCaption(caption);
+      
+   }
+   
+   @Override
+   public HandlerRegistration addProgressClickHandler(ClickHandler handler)
+   {
+      return activeProgressDialog_.addClickHandler(handler);
+   }
+   
+   @Override
+   public void showProgressOutput(String output)
+   {
+      activeProgressDialog_.showOutput(output);
+   }
+
+   @Override
+   public void stopProgress()
+   {
+      activeProgressDialog_.stopProgress();
+   }
+   
+   @Override
+   public void closeProgress()
+   {
+      if (activeProgressDialog_ != null)
+      {
+         activeProgressDialog_.dismiss();
+         activeProgressDialog_ = null;
+      }
+   }
+   
+   @Override
+   public void showPreview(String url, boolean enableScripts)
+   {
+      previewFrame_.setScriptsEnabled(enableScripts);
+      previewFrame_.navigate(url);
+   }
    
    private class PreviewFrame extends Frame
    {
       public PreviewFrame()
       {
          setStylePrimaryName("rstudio-HelpFrame");
-         
-         // setup an iframe sandbox which disallows scripts (by not specifying
-         // the allow-scripts value) but which allows the iframe to be 
-         // treated as same-origin. we want the sandbox in the first place
-         // to avoid javascript escaping from the iframe however if we don't
-         // set allow-same-origin then the iframe does not retain its scroll
-         // position on reload. there is basically a zero-sum choice as to 
-         // whether we allow scripts or preserve scroll position on reload,
-         // and the latter is considered very generally useful and the former
-         // a fairly narrow/rare scenario.
-         getElement().setAttribute("sandbox", "allow-same-origin");
+         setScriptsEnabled(false);
+      }
+      
+      public void setScriptsEnabled(boolean scriptsEnabled)
+      {
+         // enable scripts for the iframe sandbox if requested. note that
+         // if we do allow scripts we need to make sure that same-origin
+         // is not allowed (so the scripts are confined to this frame). 
+         // however if scripts are not allowed we explicitly allow same-origin
+         // so that reloading will preseve scroll position. 
+         if (scriptsEnabled)
+            getElement().setAttribute("sandbox", "allow-scripts");
+         else
+            getElement().setAttribute("sandbox", "allow-same-origin");
       }
       
       public void navigate(final String url)
@@ -101,6 +148,5 @@ public class HTMLPreviewPanel extends ResizeComposite
    }
  
    private final PreviewFrame previewFrame_;
-
- 
+   private HTMLPreviewProgressDialog activeProgressDialog_;
 }

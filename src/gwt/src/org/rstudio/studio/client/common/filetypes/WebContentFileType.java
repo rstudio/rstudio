@@ -1,5 +1,5 @@
 /*
- * MarkdownFileType.java
+ * WebContentFileType.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -15,13 +15,13 @@ package org.rstudio.studio.client.common.filetypes;
 import com.google.gwt.resources.client.ImageResource;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 
-public class MarkdownFileType extends TextFileType
+public class WebContentFileType extends TextFileType
 {
-   MarkdownFileType(String id,
-                    String label,
-                    EditorLanguage editorLanguage,
-                    String defaultExtension,
-                    ImageResource icon)
+   WebContentFileType(String id,
+                      String label,
+                      EditorLanguage editorLanguage,
+                      String defaultExtension,
+                      ImageResource icon)
    {
       super(id, 
             label, 
@@ -33,7 +33,7 @@ public class MarkdownFileType extends TextFileType
             false, 
             false, 
             false,
-            true,
+            true,    // preview-html
             false, 
             false,
             false,

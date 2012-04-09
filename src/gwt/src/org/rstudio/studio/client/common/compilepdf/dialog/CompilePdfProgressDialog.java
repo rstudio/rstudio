@@ -20,8 +20,8 @@ import org.rstudio.core.client.widget.ProgressDialog;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 
+import org.rstudio.studio.client.common.OutputBuffer;
 import org.rstudio.studio.client.common.compilepdf.CompilePdfErrorList;
-import org.rstudio.studio.client.common.compilepdf.CompilePdfOutputBuffer;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfOutputEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
@@ -94,7 +94,7 @@ public class CompilePdfProgressDialog extends ProgressDialog
       int height = Math.min(500, maxHeight);
       container_.getElement().getStyle().setHeight(height, Unit.PX);
            
-      output_ = new CompilePdfOutputBuffer();
+      output_ = new OutputBuffer();
       container_.setWidget(output_);
       return container_;
    }
@@ -143,7 +143,7 @@ public class CompilePdfProgressDialog extends ProgressDialog
    private EventBus eventBus_;
    
    private SimplePanel container_;
-   private CompilePdfOutputBuffer output_;
+   private OutputBuffer output_;
    private CompilePdfErrorList errorList_;
    private JsArray<CompilePdfError> errors_;
 }

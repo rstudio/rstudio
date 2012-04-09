@@ -506,6 +506,7 @@ public class TextEditingTarget implements EditingTarget
             FileTypeRegistry.R,
             FileTypeRegistry.SWEAVE,
             FileTypeRegistry.TEXT,
+            FileTypeRegistry.HTML,
             FileTypeRegistry.MARKDOWN,
             FileTypeRegistry.TEX,
             FileTypeRegistry.RD
@@ -1855,19 +1856,37 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onPreviewHTML()
    {
-      Command previewCommand = new Command() {
+      // command to show the preview
+      final Command showPreviewCommand = new Command() {
          @Override
          public void execute()
          {
             HTMLPreviewParams params = HTMLPreviewParams.create(getPath());
             events_.fireEvent(new ShowHTMLPreviewEvent(params));  
+            
+            boolean isMarkdown = FileTypeRegistry.MARKDOWN.getTypeId().equals(
+                                                         fileType_.getTypeId());
+            server_.previewHTML(docUpdateSentinel_.getPath(), 
+                  docDisplay_.getCode(),
+                  isMarkdown, 
+                  false, 
+                  new SimpleRequestCallback<Boolean>()); 
          }
       };
       
-      if (dirtyState().getValue())
-         saveThenExecute(null, previewCommand);
-      else
-         previewCommand.execute();
+      // if the document is new and unsaved, then resolve that and then
+      // show the preview window -- it won't activate in web mode
+      // due to popup activation rules but at least it will show up
+      if (isNewDoc())
+      {
+         saveThenExecute(null, showPreviewCommand);
+      }
+      
+      // otherewise kick it off straight away
+      else 
+      {
+         showPreviewCommand.execute();
+      }
    }
    
    @Handler
@@ -2048,8 +2067,7 @@ public class TextEditingTarget implements EditingTarget
       
       // if the document has been previously saved then we should execute
       // the onBeforeCompile command immediately
-      final boolean isNewDoc = docUpdateSentinel_.getPath() == null;
-      if (!isNewDoc && (onBeforeCompile != null))
+      if (!isNewDoc() && (onBeforeCompile != null))
          onBeforeCompile.execute();
       
       saveThenExecute(null, new Command()
@@ -2058,7 +2076,7 @@ public class TextEditingTarget implements EditingTarget
          {
             // if this was a new doc then we still need to execute the
             // onBeforeCompile command
-            if (isNewDoc && (onBeforeCompile != null))
+            if (isNewDoc() && (onBeforeCompile != null))
                onBeforeCompile.execute();
             
             String path = docUpdateSentinel_.getPath();
@@ -2242,6 +2260,11 @@ public class TextEditingTarget implements EditingTarget
       {
          return false;
       }
+   }
+   
+   private boolean isNewDoc()
+   {
+      return docUpdateSentinel_.getPath() == null;
    }
    
    // these methods are public static so that other editing targets which

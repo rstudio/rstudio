@@ -12,7 +12,18 @@
  */
 package org.rstudio.studio.client.htmlpreview.model;
 
+import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+
 public interface HTMLPreviewServerOperations
 {
+   void previewHTML(String targetFile, 
+                    String fileContents,
+                    boolean isMarkdown,
+                    boolean knit,
+                    ServerRequestCallback<Boolean> requestCallback);
+   
+   void terminatePreviewHTML(ServerRequestCallback<Void> requestCallback);
+   
    String getApplicationURL(String pathName);
 }
