@@ -22,7 +22,6 @@ import com.google.web.bindery.requestfactory.shared.ProxyFor;
     @Expect(method = "domainGetIdStatic"),
     @Expect(method = "domainGetVersionStatic"),
     @Expect(method = "domainFindNotStatic", args = "Domain"),
-    @Expect(method = "domainMethodWrongModifier", args = {"false", "getFoo"}),
     @Expect(method = "domainNoDefaultConstructor", args = {
         "Domain", "EntityProxyCheckDomainMapping", "RequestContext"}, warning = true)})
 @ProxyFor(EntityProxyCheckDomainMapping.Domain.class)
@@ -47,12 +46,20 @@ interface EntityProxyCheckDomainMapping extends EntityProxy {
     public Domain findDomain(@SuppressWarnings("unused") String id) {
       return null;
     }
+
+    String getNotPublic() {
+      return null;
+    }
   }
 
+  @Expect(method = "domainMethodWrongModifier", args = {"false", "getFoo"})
   String getFoo();
 
   @Expect(method = "domainMissingMethod", args = "java.lang.String getMissingProperty()")
   String getMissingProperty();
+
+  @Expect(method = "domainMethodNotPublic", args = "getNotPublic")
+  String getNotPublic();
 
   @Expected({
       @Expect(method = "methodNoDomainPeer", args = {"java.lang.Object", "false"}, warning = true),

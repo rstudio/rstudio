@@ -193,8 +193,14 @@ class DomainChecker extends ScannerBase<Void> {
       state.poison(clientMethodElement, Messages.domainMissingMethod(sb));
       return null;
     }
-    
-     /*
+
+    // Check if the method is public
+    if (!domainMethod.getModifiers().contains(Modifier.PUBLIC)) {
+      state.poison(clientMethodElement, Messages.domainMethodNotPublic(
+          domainMethod.getSimpleName()));
+    }
+
+    /*
      * Check the domain method for any requirements for it to be static.
      * InstanceRequests assume instance methods on the domain type.
      */
@@ -203,12 +209,12 @@ class DomainChecker extends ScannerBase<Void> {
 
     if ((isInstanceRequest || requireInstanceDomainMethods)
         && domainMethod.getModifiers().contains(Modifier.STATIC)) {
-      state.poison(checkedElement, Messages.domainMethodWrongModifier(false, domainMethod
+      state.poison(clientMethodElement, Messages.domainMethodWrongModifier(false, domainMethod
           .getSimpleName()));
     }
     if (!isInstanceRequest && requireStaticDomainMethods
         && !domainMethod.getModifiers().contains(Modifier.STATIC)) {
-      state.poison(checkedElement, Messages.domainMethodWrongModifier(true, domainMethod
+      state.poison(clientMethodElement, Messages.domainMethodWrongModifier(true, domainMethod
           .getSimpleName()));
     }
 

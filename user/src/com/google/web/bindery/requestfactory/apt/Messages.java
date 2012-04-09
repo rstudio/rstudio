@@ -74,6 +74,10 @@ class Messages {
     return "The domain type's getVersion() method must not be static";
   }
 
+  public static String domainMethodNotPublic(Object domainMethodName) {
+    return String.format("Domain method %s must be public", domainMethodName);
+  }
+
   public static String domainMethodWrongModifier(boolean expectStatic, Object domainMethodName) {
     return String.format("Found %s domain method %s when %s method required", expectStatic
         ? "instance" : "static", domainMethodName, expectStatic ? "static" : "instance");

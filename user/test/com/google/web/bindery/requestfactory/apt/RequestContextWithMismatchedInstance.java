@@ -26,9 +26,6 @@ import com.google.web.bindery.requestfactory.shared.Service;
  * Tests Request and InstanceRequest methods bound to methods with the wrong
  * static modifier.
  */
-@Expected({
-    @Expect(method = "domainMethodWrongModifier", args = {"true", "instanceMethod"}),
-    @Expect(method = "domainMethodWrongModifier", args = {"false", "staticMethod"})})
 @Service(RequestContextWithMismatchedInstance.Domain.class)
 interface RequestContextWithMismatchedInstance extends RequestContext {
   static class Domain {
@@ -55,7 +52,9 @@ interface RequestContextWithMismatchedInstance extends RequestContext {
   interface Proxy extends EntityProxy {
   }
 
+  @Expect(method = "domainMethodWrongModifier", args = {"true", "instanceMethod"})
   Request<Void> instanceMethod();
 
+  @Expect(method = "domainMethodWrongModifier", args = {"false", "staticMethod"})
   InstanceRequest<Proxy, Void> staticMethod();
 }
