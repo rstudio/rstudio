@@ -256,8 +256,8 @@ Error markdownToHTML(const std::string& markdownInput,
                                    &tocOutput);
       if (error)
          return error;
-      pHTMLOutput->append("<div id=\"table_of_contents\">\n");
-      pHTMLOutput->append("<h1>Table of Contents</h1>\n");
+      pHTMLOutput->append("<div id=\"toc\">\n");
+      pHTMLOutput->append("<div id=\"toc_header\">Table of Contents</div>\n");
       pHTMLOutput->append(tocOutput);
       pHTMLOutput->append("</div>\n");
       pHTMLOutput->append("\n");
