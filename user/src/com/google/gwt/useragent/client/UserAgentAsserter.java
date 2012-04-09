@@ -33,11 +33,32 @@ public class UserAgentAsserter implements EntryPoint {
    * <code>user.agent</code> selection property value.
    */
   interface UserAgentProperty {
-    boolean getUserAgentRuntimeWarning();
-    
     String getCompileTimeValue();
 
     String getRuntimeValue();
+
+    boolean getUserAgentRuntimeWarning();
+  }
+
+  /**
+   * Default {@link UserAgentProperty} implementation used when
+   * {@code user.agent.runtimeWarning} is {@code false}.
+   */
+  static class UserAgentPropertyDisabled implements UserAgentProperty {
+    @Override
+    public String getCompileTimeValue() {
+      return null;
+    }
+
+    @Override
+    public String getRuntimeValue() {
+      return null;
+    }
+
+    @Override
+    public boolean getUserAgentRuntimeWarning() {
+      return false;
+    }
   }
 
   @Override

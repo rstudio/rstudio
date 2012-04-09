@@ -72,6 +72,10 @@ public class UserAgentGenerator extends Generator {
           + PROPERTY_USER_AGENT_RUNTIME_WARNING + "'", e);
     }
 
+    if (!userAgentRuntimeWarning) {
+      return "com.google.gwt.useragent.client.UserAgentAsserter.UserAgentPropertyDisabled";
+    }
+
     String userAgentValue;
     SelectionProperty selectionProperty;
     try {
