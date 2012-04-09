@@ -44,10 +44,6 @@ public class JField implements com.google.gwt.core.ext.typeinfo.JField {
     this.type = srcField.type;
   }
 
-  JField(JClassType enclosingType, String name) {
-    this(enclosingType, name, null);
-  }
-
   JField(JClassType enclosingType, String name,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
     assert (enclosingType != null);

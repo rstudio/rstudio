@@ -36,10 +36,6 @@ public class JMethod extends JAbstractMethod implements
     this.returnType = srcMethod.returnType;
   }
 
-  JMethod(JClassType enclosingType, String name) {
-    this(enclosingType, name, null, null);
-  }
-
   JMethod(JClassType enclosingType, String name,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
       JTypeParameter[] jtypeParameters) {

@@ -43,10 +43,6 @@ public class JParameter implements com.google.gwt.core.ext.typeinfo.JParameter {
     this.annotations = new Annotations(srcParam.annotations);
   }
 
-  JParameter(JAbstractMethod enclosingMethod, JType type, String name) {
-    this(enclosingMethod, type, name, null);
-  }
-
   JParameter(JAbstractMethod enclosingMethod, JType type, String name,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
     this(enclosingMethod, type, name, declaredAnnotations, true);
