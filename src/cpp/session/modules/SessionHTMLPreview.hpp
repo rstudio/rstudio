@@ -14,6 +14,8 @@
 #ifndef SESSION_HTML_PREVIEW_HPP
 #define SESSION_HTML_PREVIEW_HPP
 
+#include <core/json/Json.hpp>
+
 namespace core {
    class Error;
 }
@@ -21,7 +23,9 @@ namespace core {
 namespace session {
 namespace modules { 
 namespace html_preview {
-   
+
+core::json::Object capabilitiesAsJson();
+
 core::Error initialize();
                        
 } // namespace html_preview

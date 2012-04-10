@@ -22,12 +22,14 @@
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/http/Util.hpp>
+#include <core/PerformanceTimer.hpp>
 #include <core/text/TemplateFilter.hpp>
 #include <core/system/Process.hpp>
 
 #include <core/markdown/Markdown.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RJson.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -433,6 +435,35 @@ void handlePreviewRequest(const http::Request& request,
 
    
 } // anonymous namespace
+
+core::json::Object capabilitiesAsJson()
+{
+   // default to unsupported
+   json::Object capsJson;
+   capsJson["r_html_supported"] = false;
+   capsJson["r_markdown_supported"] = false;
+
+   r::sexp::Protect rProtect;
+   SEXP capsSEXP;
+   r::exec::RFunction func(".rs.getHTMLCapabilities");
+   Error error = func.call(&capsSEXP, &rProtect);
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+   else
+   {
+      json::Value valJson;
+      error = r::json::jsonValueFromList(capsSEXP, &valJson);
+      if (error)
+         LOG_ERROR(error);
+      else if (core::json::isType<core::json::Object>(valJson))
+         capsJson = valJson.get_obj();
+   }
+
+   return capsJson;
+}
+
 
 Error initialize()
 {  

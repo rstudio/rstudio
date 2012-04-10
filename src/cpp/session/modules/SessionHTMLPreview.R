@@ -28,4 +28,17 @@
            checkPattern(lines, fileType, "inline.code"))
 })
 
+.rs.addFunction( "getHTMLCapabilities", function()
+{
+   caps <- list()
+   caps$r_html_supported = FALSE
+   caps$r_markdown_supported = FALSE
+   if (.rs.isPackageInstalled("knitr"))
+   {
+      knitrVersion <- packageVersion("knitr")
+      caps$r_html_supported = knitrVersion >= "0.4.0"
+      caps$r_markdown_supported = knitrVersion >= "0.4.6"
+   }
+   return (caps)
+})
 
