@@ -45,19 +45,19 @@ class HTMLPreview : boost::noncopyable,
 public:
    static boost::shared_ptr<HTMLPreview> create(
                      const FilePath& targetFile,
-                     const std::string& fileContents,
+                     const std::string& encoding,
                      bool isMarkdown,
                      bool knit)
    {
       return boost::shared_ptr<HTMLPreview>(new HTMLPreview(targetFile,
-                                                            fileContents,
+                                                            encoding,
                                                             isMarkdown,
                                                             knit));
    }
 
 private:
    HTMLPreview(const FilePath& targetFile,
-               const std::string& fileContents,
+               const std::string& encoding,
                bool isMarkdown,
                bool knit)
       : targetFile_(targetFile), isRunning_(false), terminationRequested_(false)
@@ -74,6 +74,18 @@ private:
       }
       else
       {
+         // read the file using the specified encoding
+         std::string fileContents;
+         Error error = module_context::readAndDecodeFile(targetFile,
+                                                         encoding,
+                                                         true,
+                                                         &fileContents);
+         if (error)
+         {
+            terminateWithError(error);
+            return;
+         }
+
          // determine the preview HTML
          std::string previewHTML;
          if (isMarkdown)
@@ -95,12 +107,11 @@ private:
 
          // create an output file and write to it
          FilePath outputFile = createOutputFile();
-         Error error = core::writeStringToFile(outputFile, previewHTML);
+         error = core::writeStringToFile(outputFile, previewHTML);
          if (error)
             terminateWithError(error);
          else
             terminateWithSuccess(outputFile);
-
       }
    }
 
@@ -219,10 +230,10 @@ Error previewHTML(const json::JsonRpcRequest& request,
                   json::JsonRpcResponse* pResponse)
 {
    // read params
-   std::string file, fileContents;
+   std::string file, encoding;
    bool isMarkdown, knit;
    Error error = json::readParams(request.params, &file,
-                                                  &fileContents,
+                                                  &encoding,
                                                   &isMarkdown,
                                                   &knit);
    if (error)
@@ -237,7 +248,7 @@ Error previewHTML(const json::JsonRpcRequest& request,
    else
    {
       s_pCurrentPreview_ = HTMLPreview::create(filePath,
-                                               fileContents,
+                                               encoding,
                                                isMarkdown,
                                                knit);
       pResponse->setResult(true);

@@ -18,7 +18,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 public interface HTMLPreviewServerOperations
 {
    void previewHTML(String targetFile, 
-                    String fileContents,
+                    String encoding,
                     boolean isMarkdown,
                     boolean knit,
                     ServerRequestCallback<Boolean> requestCallback);

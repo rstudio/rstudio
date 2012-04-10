@@ -1856,36 +1856,55 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onPreviewHTML()
    {
-      // command to show the preview
-      final Command showPreviewCommand = new Command() {
+      // command to show the preview window
+      final Command showPreviewWindowCommand = new Command() {
          @Override
          public void execute()
          {
             HTMLPreviewParams params = HTMLPreviewParams.create(getPath());
             events_.fireEvent(new ShowHTMLPreviewEvent(params));  
             
-            boolean isMarkdown = FileTypeRegistry.MARKDOWN.getTypeId().equals(
-                                                         fileType_.getTypeId());
-            server_.previewHTML(docUpdateSentinel_.getPath(), 
-                  docDisplay_.getCode(),
-                  isMarkdown, 
-                  false, 
-                  new SimpleRequestCallback<Boolean>()); 
+          
          }
       };
+      
+      // command to run the preview
+      final Command runPreviewCommand = new Command() {
+         @Override
+         public void execute()
+         {
+            boolean isMarkdown = FileTypeRegistry.MARKDOWN.getTypeId().equals(
+                  fileType_.getTypeId());
+            server_.previewHTML(docUpdateSentinel_.getPath(), 
+                                docUpdateSentinel_.getEncoding(),
+                                isMarkdown, 
+                                false, 
+                                new SimpleRequestCallback<Boolean>()); 
+            
+         }      
+      };
+      
       
       // if the document is new and unsaved, then resolve that and then
       // show the preview window -- it won't activate in web mode
       // due to popup activation rules but at least it will show up
       if (isNewDoc())
       {
-         saveThenExecute(null, showPreviewCommand);
+         saveThenExecute(null, CommandUtil.join(showPreviewWindowCommand,
+                                                runPreviewCommand));
       }
-      
-      // otherewise kick it off straight away
+      // otherwise if it's dirty then show the preview window first (to 
+      // beat the popup blockers) then save & run
+      else if (dirtyState().getValue())
+      {
+         showPreviewWindowCommand.execute();
+         saveThenExecute(null, runPreviewCommand);
+      }
+      // otherwise show the preview window then run the preview
       else 
       {
-         showPreviewCommand.execute();
+         showPreviewWindowCommand.execute();
+         runPreviewCommand.execute();
       }
    }
    
