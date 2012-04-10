@@ -108,6 +108,7 @@ public class Renderer extends JavaScriptObject
    public native final void debug_forceTopsToZero() /*-{
       this.scroller.style.top = "0";
       this.content.style.top = "0";
+      this.scroller.scrollTop = 0;
    }-*/;
 
    public native final void setPasswordMode(boolean passwordMode) /*-{
