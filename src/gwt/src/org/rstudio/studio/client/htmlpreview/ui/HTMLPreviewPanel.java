@@ -99,11 +99,20 @@ public class HTMLPreviewPanel extends ResizeComposite
          // if we do allow scripts we need to make sure that same-origin
          // is not allowed (so the scripts are confined to this frame). 
          // however if scripts are not allowed we explicitly allow same-origin
-         // so that reloading will preseve scroll position. 
+         // so that reloading will preseve scroll position. in both cases
+         // we allow popups so that embedded links work (but note the popup
+         // window inherits the restrictions of the iframe so if scripts
+         // were disallowed then they are also disallowed in the popup)
          if (scriptsEnabled)
-            getElement().setAttribute("sandbox", "allow-scripts");
+         {
+            getElement().setAttribute("sandbox", "allow-scripts " +
+                                                 "allow-popups");
+         }
          else
-            getElement().setAttribute("sandbox", "allow-same-origin");
+         {
+            getElement().setAttribute("sandbox", "allow-same-origin " +
+                                                 "allow-popups");
+         }
       }
       
       public void navigate(final String url)
