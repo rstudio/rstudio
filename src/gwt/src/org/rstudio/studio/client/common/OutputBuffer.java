@@ -23,15 +23,13 @@ public class OutputBuffer extends Composite
 {
    public OutputBuffer()
    {
-      StudioStyles styles = StudioResources.INSTANCE.styles();
-
       output_ = new PreWidget();
       output_.setStylePrimaryName(
                         ConsoleResources.INSTANCE.consoleStyles().output());
       FontSizer.applyNormalFontSize(output_);
     
       scrollPanel_ = new ScrollPanel();
-      scrollPanel_.addStyleName(styles.outputBufferScrollPanel());
+      scrollPanel_.setSize("100%", "100%");
       scrollPanel_.add(output_);
       
       initWidget(scrollPanel_);
