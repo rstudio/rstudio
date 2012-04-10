@@ -382,6 +382,23 @@ public class SatelliteManager implements CloseHandler<Window>
       return !!$wnd.isRStudioSatellite;
    }-*/;
    
+   
+   // alert callback (used for testing html preview sandbox)
+   //private void showAlert(String message)
+   //{
+   //   RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage("Alert", 
+   //                                                                 message);
+   //}
+   
+   //private native void exportSatelliteAlertCallback() /*-{
+   //   var manager = this;
+   //   $wnd.rstudioSatelliteAlert = $entry(
+   //      function(message) {
+   //        manager.@org.rstudio.studio.client.common.satellite.SatelliteManager::showAlert(Ljava/lang/String;)(message);
+   //      }
+   //   ); 
+   //}-*/;
+   
    private final Session session_;
    private final Provider<ApplicationUncaughtExceptionHandler> pUncaughtExceptionHandler_;
    private final ArrayList<ActiveSatellite> satellites_ = 
