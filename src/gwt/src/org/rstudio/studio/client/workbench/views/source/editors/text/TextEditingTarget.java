@@ -1878,7 +1878,6 @@ public class TextEditingTarget implements EditingTarget
             server_.previewHTML(docUpdateSentinel_.getPath(), 
                                 docUpdateSentinel_.getEncoding(),
                                 isMarkdown, 
-                                false, 
                                 new SimpleRequestCallback<Boolean>()); 
             
          }      

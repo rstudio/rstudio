@@ -23,8 +23,11 @@
 #include <core/FileSerializer.hpp>
 #include <core/http/Util.hpp>
 #include <core/text/TemplateFilter.hpp>
+#include <core/system/Process.hpp>
 
 #include <core/markdown/Markdown.hpp>
+
+#include <r/RExec.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -39,79 +42,65 @@ namespace html_preview {
 
 namespace {
 
+bool requiresKnit(const std::string& fileContents, bool isMarkdown)
+{
+   bool requiresKnit = false;
+   std::string fileType = isMarkdown ? "gfm" : "html";
+   r::exec::RFunction reqFunc(".rs.requiresKnit", fileContents, fileType);
+   Error error = reqFunc.call(&requiresKnit);
+   if (error)
+      LOG_ERROR(error);
+
+   return requiresKnit;
+}
+
+
 class HTMLPreview : boost::noncopyable,
                     public boost::enable_shared_from_this<HTMLPreview>
 {
 public:
-   static boost::shared_ptr<HTMLPreview> create(
-                     const FilePath& targetFile,
-                     const std::string& encoding,
-                     bool isMarkdown,
-                     bool knit)
+   static boost::shared_ptr<HTMLPreview> create(const FilePath& targetFile,
+                                                const std::string& encoding,
+                                                bool isMarkdown)
    {
-      return boost::shared_ptr<HTMLPreview>(new HTMLPreview(targetFile,
-                                                            encoding,
-                                                            isMarkdown,
-                                                            knit));
+      boost::shared_ptr<HTMLPreview> pPreview(new HTMLPreview(targetFile));
+      pPreview->start(encoding, isMarkdown);
+      return pPreview;
    }
 
 private:
-   HTMLPreview(const FilePath& targetFile,
-               const std::string& encoding,
-               bool isMarkdown,
-               bool knit)
+   HTMLPreview(const FilePath& targetFile)
       : targetFile_(targetFile), isRunning_(false), terminationRequested_(false)
+   {
+   }
+
+   void start(const std::string& encoding, bool isMarkdown)
    {
       enqueHTMLPreviewStarted(targetFile_);
 
-      if (knit)
+      // read the file using the specified encoding
+      std::string fileContents;
+      Error error = module_context::readAndDecodeFile(targetFile_,
+                                                      encoding,
+                                                      true,
+                                                      &fileContents);
+      if (error)
       {
-         isRunning_ = true;
-
-
-
-         terminateWithSuccess(createOutputFile());
+         terminateWithError(error);
+         return;
       }
+
+      // determine whether we need to knit the file
+      if (requiresKnit(fileContents, isMarkdown))
+      {
+         knit(isMarkdown);
+      }
+
+      // otherwise we can just either copy or generate the html inline
+      // (for markdown) and return with success
       else
       {
-         // read the file using the specified encoding
-         std::string fileContents;
-         Error error = module_context::readAndDecodeFile(targetFile,
-                                                         encoding,
-                                                         true,
-                                                         &fileContents);
-         if (error)
-         {
-            terminateWithError(error);
-            return;
-         }
-
-         // determine the preview HTML
-         std::string previewHTML;
-         if (isMarkdown)
-         {
-            Error error = markdown::markdownToHTML(fileContents,
-                                                   markdown::Extensions(),
-                                                   markdown::HTMLOptions(),
-                                                   &previewHTML);
-            if (error)
-            {
-               terminateWithError(error);
-               return;
-            }
-         }
-         else
-         {
-            previewHTML = fileContents;
-         }
-
-         // create an output file and write to it
-         FilePath outputFile = createOutputFile();
-         error = core::writeStringToFile(outputFile, previewHTML);
-         if (error)
-            terminateWithError(error);
-         else
-            terminateWithSuccess(outputFile);
+         terminateWithContent(fileContents, isMarkdown);
       }
    }
 
@@ -149,18 +138,155 @@ public:
 
 private:
 
+   void knit(bool isMarkdown)
+   {
+      // set running flag
+      isRunning_ = true;
+
+      // create a temp file where we can write the name of the output file to
+      FilePath tempFile = module_context::tempFile("knitr-output", "out");
+      Error error = core::writeStringToFile(tempFile, "");
+      if (error)
+      {
+         terminateWithError(error);
+         return;
+      }
+      std::string tempFilePath = string_utils::utf8ToSystem(
+                                                   tempFile.absolutePath());
+
+      // R binary
+      std::string rProgramPath = r::exec::rBinaryPath().absolutePath();
+
+      // args
+      std::vector<std::string> args;
+      args.push_back("--silent");
+      args.push_back("-e");
+      boost::format fmt("require(knitr); "
+                        "o <- knit('%1%'); "
+                        "cat(o, file='%2%');");
+      std::string cmd = boost::str(fmt % targetFile_.filename()
+                                       % tempFilePath);
+      args.push_back(cmd);
+
+      // options
+      core::system::ProcessOptions options;
+      options.terminateChildren = true;
+      options.redirectStdErrToStdOut = true;
+      options.workingDir = targetFile_.parent();
+
+      // callbacks
+      core::system::ProcessCallbacks cb;
+      cb.onContinue = boost::bind(&HTMLPreview::onKnitContinue,
+                                  HTMLPreview::shared_from_this());
+      cb.onStdout = boost::bind(&HTMLPreview::onKnitOutput,
+                                HTMLPreview::shared_from_this(), _2);
+      cb.onStderr = boost::bind(&HTMLPreview::onKnitOutput,
+                                HTMLPreview::shared_from_this(), _2);
+      cb.onExit =  boost::bind(&HTMLPreview::onKnitCompleted,
+                                HTMLPreview::shared_from_this(),
+                                _1, tempFile, isMarkdown);
+
+      // execute knitr
+      module_context::processSupervisor().runProgram(rProgramPath,
+                                                     args,
+                                                     options,
+                                                     cb);
+   }
+
+   bool onKnitContinue()
+   {
+      return !terminationRequested_;
+   }
+
+   void onKnitOutput(const std::string& output)
+   {
+      enqueHTMLPreviewOutput(output);
+   }
+
+   void onKnitCompleted(int exitStatus,
+                        const FilePath& outputPathTempFile,
+                        bool isMarkdown)
+   {
+      if (exitStatus == EXIT_SUCCESS)
+      {
+         // read the path to the output file
+         std::string outputFile;
+         Error error = core::readStringFromFile(outputPathTempFile,
+                                                &outputFile);
+         if (error)
+         {
+            terminateWithError(error);
+         }
+         else
+         {
+            // read the output file
+            boost::algorithm::trim(outputFile);
+            FilePath outputFilePath = targetFile_.parent().complete(outputFile);
+            std::string output;
+            error = core::readStringFromFile(outputFilePath, &output);
+            if (error)
+            {
+               terminateWithError(error);
+            }
+            else
+            {
+               terminateWithContent(output, isMarkdown);
+            }
+         }
+      }
+      else
+      {
+         boost::format fmt("\nknitr terminated with status %1%\n");
+         terminateWithError(boost::str(fmt % exitStatus));
+      }
+   }
+
+   void terminateWithContent(const std::string& fileContents, bool isMarkdown)
+   {
+      // determine the preview HTML
+      std::string previewHTML;
+      if (isMarkdown)
+      {
+         Error error = markdown::markdownToHTML(fileContents,
+                                                markdown::Extensions(),
+                                                markdown::HTMLOptions(),
+                                                &previewHTML);
+         if (error)
+         {
+            terminateWithError(error);
+            return;
+         }
+      }
+      else
+      {
+         previewHTML = fileContents;
+      }
+
+      // create an output file and write to it
+      FilePath outputFile = createOutputFile();
+      Error error = core::writeStringToFile(outputFile, previewHTML);
+      if (error)
+         terminateWithError(error);
+      else
+         terminateWithSuccess(outputFile);
+   }
+
+
    void terminateWithError(const Error& error)
    {
-      isRunning_ = false;
       std::string message =
          "Error generating HTML preview for " +
          module_context::createAliasedPath(targetFile_) + " " +
          error.summary();
+      terminateWithError(message);
+   }
+
+   void terminateWithError(const std::string& message)
+   {
+      isRunning_ = false;
       enqueHTMLPreviewOutput(message);
       enqueHTMLPreviewFailed();
    }
-
-
 
    void terminateWithSuccess(const FilePath& outputFile)
    {
@@ -231,11 +357,10 @@ Error previewHTML(const json::JsonRpcRequest& request,
 {
    // read params
    std::string file, encoding;
-   bool isMarkdown, knit;
+   bool isMarkdown;
    Error error = json::readParams(request.params, &file,
                                                   &encoding,
-                                                  &isMarkdown,
-                                                  &knit);
+                                                  &isMarkdown);
    if (error)
       return error;
    FilePath filePath = module_context::resolveAliasedPath(file);
@@ -249,8 +374,7 @@ Error previewHTML(const json::JsonRpcRequest& request,
    {
       s_pCurrentPreview_ = HTMLPreview::create(filePath,
                                                encoding,
-                                               isMarkdown,
-                                               knit);
+                                               isMarkdown);
       pResponse->setResult(true);
    }
 
@@ -316,6 +440,7 @@ Error initialize()
    using namespace module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
+      (bind(sourceModuleRFile, "SessionHTMLPreview.R"))
       (bind(registerRpcMethod, "preview_html", previewHTML))
       (bind(registerRpcMethod, "terminate_preview_html", terminatePreviewHTML))
       (bind(registerUriHandler, kHTMLPreviewLocation, handlePreviewRequest))

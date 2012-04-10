@@ -2384,14 +2384,12 @@ public class RemoteServer implements Server
    public void previewHTML(String targetFile, 
                            String encoding,
                            boolean isMarkdown,
-                           boolean knit,
                            ServerRequestCallback<Boolean> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(targetFile));
       params.set(1, new JSONString(encoding));
       params.set(2, JSONBoolean.getInstance(isMarkdown));
-      params.set(3, JSONBoolean.getInstance(knit));
       sendRequest(RPC_SCOPE, PREVIEW_HTML, params, callback);
    }
 

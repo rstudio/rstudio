@@ -20,7 +20,6 @@ public interface HTMLPreviewServerOperations
    void previewHTML(String targetFile, 
                     String encoding,
                     boolean isMarkdown,
-                    boolean knit,
                     ServerRequestCallback<Boolean> requestCallback);
    
    void terminatePreviewHTML(ServerRequestCallback<Void> requestCallback);
