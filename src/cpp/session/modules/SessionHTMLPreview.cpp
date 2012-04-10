@@ -196,7 +196,7 @@ private:
 
    static FilePath createOutputFile()
    {
-      return module_context::tempFile("html_preview", ".htm");
+      return module_context::tempFile("html_preview", "htm");
    }
 
 private:
