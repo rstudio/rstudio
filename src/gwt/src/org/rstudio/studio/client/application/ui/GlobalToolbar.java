@@ -53,9 +53,16 @@ public class GlobalToolbar extends Toolbar
       newMenu.addItem(commands.newSweaveDoc().createMenuItem(false));
            
       // dynamically add other commands
-      ArrayList<FileTypeCommands.CommandWithId> fileNewCommands = 
-                                       fileTypeCommands.commandsWithIds();
-      for (FileTypeCommands.CommandWithId cmd : fileNewCommands)
+      ArrayList<FileTypeCommands.CommandWithId> rFileNewCommands = 
+                                   fileTypeCommands.rFileCommandsWithIds();
+      for (FileTypeCommands.CommandWithId cmd : rFileNewCommands)
+         newMenu.addItem(cmd.command.createMenuItem(false));
+            
+      newMenu.addSeparator();
+            
+      ArrayList<FileTypeCommands.CommandWithId> textFileNewCommands = 
+            fileTypeCommands.textFileCommandsWithIds();
+      for (FileTypeCommands.CommandWithId cmd : textFileNewCommands)
          newMenu.addItem(cmd.command.createMenuItem(false));
       
       // create and add new menu

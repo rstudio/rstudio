@@ -14,15 +14,20 @@ package org.rstudio.studio.client.htmlpreview.model;
 
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
 
 public interface HTMLPreviewServerOperations
 {
    void previewHTML(String targetFile, 
                     String encoding,
                     boolean isMarkdown,
+                    boolean knit,
                     ServerRequestCallback<Boolean> requestCallback);
    
    void terminatePreviewHTML(ServerRequestCallback<Void> requestCallback);
+   
+   void getHTMLCapabilities(ServerRequestCallback<HTMLCapabilities> callback);
+   
    
    String getApplicationURL(String pathName);
 }

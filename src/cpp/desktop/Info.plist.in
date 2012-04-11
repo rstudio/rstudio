@@ -92,6 +92,36 @@
       <dict>
          <key>CFBundleTypeExtensions</key>
          <array>
+             <string>Rmd</string>
+             <string>rmd</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>RMarkdown.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>R Markdown File</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+         <key>LSIsAppleDefaultForType</key>
+         <true/>
+      </dict>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
+             <string>Rhtml</string>
+             <string>rhtml</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>RHTML.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>R HTML File</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+         <key>LSIsAppleDefaultForType</key>
+         <true/>
+      </dict>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
              <string>tex</string>
          </array>
          <key>CFBundleTypeIconFile</key>

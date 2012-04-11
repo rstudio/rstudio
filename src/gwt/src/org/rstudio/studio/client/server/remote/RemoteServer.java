@@ -49,6 +49,7 @@ import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.model.Agreement;
+import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.TerminalOptions;
@@ -2384,12 +2385,14 @@ public class RemoteServer implements Server
    public void previewHTML(String targetFile, 
                            String encoding,
                            boolean isMarkdown,
+                           boolean knit,
                            ServerRequestCallback<Boolean> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(targetFile));
       params.set(1, new JSONString(encoding));
       params.set(2, JSONBoolean.getInstance(isMarkdown));
+      params.set(3, JSONBoolean.getInstance(knit));
       sendRequest(RPC_SCOPE, PREVIEW_HTML, params, callback);
    }
 
@@ -2397,6 +2400,13 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, TERMINATE_PREVIEW_HTML, callback);
    }
+   
+   public void getHTMLCapabilities(
+                        ServerRequestCallback<HTMLCapabilities> callback)
+   {
+      sendRequest(RPC_SCOPE, GET_HTML_CAPABILITIES, callback);
+   }
+   
    
    public void compilePdf(FileSystemItem targetFile,
                           SourceLocation sourceLocation,
@@ -2706,6 +2716,7 @@ public class RemoteServer implements Server
    
    private static final String PREVIEW_HTML = "preview_html";
    private static final String TERMINATE_PREVIEW_HTML = "terminate_preview_html";
+   private static final String GET_HTML_CAPABILITIES = "get_html_capabilities";
    
    private static final String COMPILE_PDF = "compile_pdf";
    private static final String IS_COMPILE_PDF_RUNNING = "is_compile_pdf_running";

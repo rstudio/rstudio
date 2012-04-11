@@ -44,29 +44,17 @@ namespace html_preview {
 
 namespace {
 
-bool requiresKnit(const std::string& fileContents, bool isMarkdown)
-{
-   bool requiresKnit = false;
-   std::string fileType = isMarkdown ? "gfm" : "html";
-   r::exec::RFunction reqFunc(".rs.requiresKnit", fileContents, fileType);
-   Error error = reqFunc.call(&requiresKnit);
-   if (error)
-      LOG_ERROR(error);
-
-   return requiresKnit;
-}
-
-
 class HTMLPreview : boost::noncopyable,
                     public boost::enable_shared_from_this<HTMLPreview>
 {
 public:
    static boost::shared_ptr<HTMLPreview> create(const FilePath& targetFile,
                                                 const std::string& encoding,
-                                                bool isMarkdown)
+                                                bool isMarkdown,
+                                                bool knit)
    {
       boost::shared_ptr<HTMLPreview> pPreview(new HTMLPreview(targetFile));
-      pPreview->start(encoding, isMarkdown);
+      pPreview->start(encoding, isMarkdown, knit);
       return pPreview;
    }
 
@@ -76,7 +64,7 @@ private:
    {
    }
 
-   void start(const std::string& encoding, bool isMarkdown)
+   void start(const std::string& encoding, bool isMarkdown, bool knit)
    {
       enqueHTMLPreviewStarted(targetFile_);
 
@@ -93,9 +81,9 @@ private:
       }
 
       // determine whether we need to knit the file
-      if (requiresKnit(fileContents, isMarkdown))
+      if (knit)
       {
-         knit(isMarkdown);
+         performKnit(isMarkdown);
       }
 
       // otherwise we can just either copy or generate the html inline
@@ -140,7 +128,7 @@ public:
 
 private:
 
-   void knit(bool isMarkdown)
+   void performKnit(bool isMarkdown)
    {
       // set running flag
       isRunning_ = true;
@@ -359,10 +347,11 @@ Error previewHTML(const json::JsonRpcRequest& request,
 {
    // read params
    std::string file, encoding;
-   bool isMarkdown;
+   bool isMarkdown, knit;
    Error error = json::readParams(request.params, &file,
                                                   &encoding,
-                                                  &isMarkdown);
+                                                  &isMarkdown,
+                                                  &knit);
    if (error)
       return error;
    FilePath filePath = module_context::resolveAliasedPath(file);
@@ -376,7 +365,8 @@ Error previewHTML(const json::JsonRpcRequest& request,
    {
       s_pCurrentPreview_ = HTMLPreview::create(filePath,
                                                encoding,
-                                               isMarkdown);
+                                               isMarkdown,
+                                               knit);
       pResponse->setResult(true);
    }
 
@@ -392,6 +382,15 @@ Error terminatePreviewHTML(const json::JsonRpcRequest&,
 
    return Success();
 }
+
+Error getHTMLCapabilities(const json::JsonRpcRequest&,
+                           json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(html_preview::capabilitiesAsJson());
+   return Success();
+}
+
+
 
 void handlePreviewRequest(const http::Request& request,
                           http::Response* pResponse)
@@ -433,19 +432,26 @@ void handlePreviewRequest(const http::Request& request,
    }
 }
 
+
    
 } // anonymous namespace
 
 core::json::Object capabilitiesAsJson()
 {
    // default to unsupported
+   std::string htmlVersion = "0.4.7";
+   std::string markdownVersion = "0.4.7";
    json::Object capsJson;
+   capsJson["r_html_version"] = htmlVersion;
+   capsJson["r_markdown_version"] = markdownVersion;
    capsJson["r_html_supported"] = false;
    capsJson["r_markdown_supported"] = false;
 
    r::sexp::Protect rProtect;
    SEXP capsSEXP;
    r::exec::RFunction func(".rs.getHTMLCapabilities");
+   func.addParam(htmlVersion);
+   func.addParam(markdownVersion);
    Error error = func.call(&capsSEXP, &rProtect);
    if (error)
    {
@@ -474,6 +480,7 @@ Error initialize()
       (bind(sourceModuleRFile, "SessionHTMLPreview.R"))
       (bind(registerRpcMethod, "preview_html", previewHTML))
       (bind(registerRpcMethod, "terminate_preview_html", terminatePreviewHTML))
+      (bind(registerRpcMethod, "get_html_capabilities", getHTMLCapabilities))
       (bind(registerUriHandler, kHTMLPreviewLocation, handlePreviewRequest))
    ;
    return initBlock.execute();

@@ -112,13 +112,11 @@ public class TextEditingTarget implements EditingTarget
          GWT.create(MyCommandBinder.class);
 
    public interface Display extends TextDisplay, 
-                                    TextEditingTargetCompilePdfHelper.Display,
+                                    WarningBarDisplay,
                                     HasEnsureVisibleHandlers
    {
       HasValue<Boolean> getSourceOnSave();
       void ensureVisible();
-      void showWarningBar(String warning);
-      void hideWarningBar();
       void showFindReplace();
     
       StatusBar getStatusBar();
@@ -237,6 +235,7 @@ public class TextEditingTarget implements EditingTarget
       dirtyState_ = new DirtyState(docDisplay_, false);
       prefs_ = prefs;
       compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
+      previewHtmlHelper_ = new TextEditingTargetPreviewHtmlHelper();
       docDisplay_.setRnwChunkOptionsProvider(compilePdfHelper_);
       scopeHelper_ = new TextEditingTargetScopeHelper(docDisplay_);
       
@@ -436,7 +435,8 @@ public class TextEditingTarget implements EditingTarget
       
       // validate required compontents (e.g. Tex, knitr, etc.)
       checkCompilePdfDependencies();
-     
+      previewHtmlHelper_.verifyPrerequisites(view_, fileType_);  
+      
       syncFontSize(releaseOnDismiss_, events_, view_, fontSizeManager_);
      
 
@@ -1873,10 +1873,14 @@ public class TextEditingTarget implements EditingTarget
          }
       }
    }
-   
+     
    @Handler
    void onPreviewHTML()
    {
+      // validate pre-reqs
+      if (!previewHtmlHelper_.verifyPrerequisites(view_, fileType_))
+         return;
+      
       // command to show the preview window
       final Command showPreviewWindowCommand = new Command() {
          @Override
@@ -1894,11 +1898,10 @@ public class TextEditingTarget implements EditingTarget
          @Override
          public void execute()
          {
-            boolean isMarkdown = FileTypeRegistry.MARKDOWN.getTypeId().equals(
-                  fileType_.getTypeId());
             server_.previewHTML(docUpdateSentinel_.getPath(), 
                                 docUpdateSentinel_.getEncoding(),
-                                isMarkdown, 
+                                fileType_.isMarkdown(), 
+                                fileType_.requiresKnit(),
                                 new SimpleRequestCallback<Boolean>()); 
             
          }      
@@ -2435,6 +2438,7 @@ public class TextEditingTarget implements EditingTarget
    private HandlerManager handlers_ = new HandlerManager(this);
    private FileSystemContext fileContext_;
    private final TextEditingTargetCompilePdfHelper compilePdfHelper_;
+   private final TextEditingTargetPreviewHtmlHelper previewHtmlHelper_;
    private boolean ignoreDeletes_;
    private final TextEditingTargetScopeHelper scopeHelper_;
    private TextEditingTargetSpelling spelling_;

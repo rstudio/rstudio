@@ -43,6 +43,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletio
 import org.rstudio.studio.client.workbench.views.source.DocsMenu;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPreviewHtmlHelper;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
 
 @GinModules(RStudioGinModule.class)
@@ -60,6 +61,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(RnwWeaveSelectWidget selectWidget);
    void injectMembers(CompilePdfProgressDialog compilePdfProgressDialog);
    void injectMembers(TextEditingTargetCompilePdfHelper compilePdfHelper);
+   void injectMembers(TextEditingTargetPreviewHtmlHelper previewHtmlHelper);
    void injectMembers(SpellChecker spellChecker);
    void injectMembers(SpellingCustomDictionariesWidget widget);
 

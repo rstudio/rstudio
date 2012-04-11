@@ -130,6 +130,18 @@ public class TextFileType extends EditableFileType
    {
       return FileTypeRegistry.SWEAVE.getTypeId().equals(getTypeId());
    }
+   
+   public boolean requiresKnit()
+   {
+      return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId()) ||
+             FileTypeRegistry.RHTML.getTypeId().equals(getTypeId());
+   }
+   
+   public boolean isMarkdown()
+   {
+      return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId()) ||
+             FileTypeRegistry.MARKDOWN.getTypeId().equals(getTypeId());
+   }
 
    public HashSet<AppCommand> getSupportedCommands(Commands commands)
    {
