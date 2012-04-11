@@ -135,4 +135,15 @@ public class EditSession extends JavaScriptObject
    public native final void unfold(int row, boolean expandInner) /*-{
       this.unfold(row, expandInner);
    }-*/;
+
+   public native final int addMarker(Range range,
+                                     String clazz,
+                                     String type,
+                                     boolean inFront) /*-{
+      return this.addMarker(range, clazz, type, inFront);
+   }-*/;
+
+   public native final void removeMarker(int markerId) /*-{
+      this.removeMarker(markerId);
+   }-*/;
 }
