@@ -53,6 +53,7 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.filetypes.FileType;
+import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.SweaveFileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
@@ -210,6 +211,7 @@ public class TextEditingTarget implements EditingTarget
                             GlobalDisplay globalDisplay,
                             FileDialogs fileDialogs,
                             FileTypeRegistry fileTypeRegistry,
+                            FileTypeCommands fileTypeCommands,
                             ConsoleDispatcher consoleDispatcher,
                             WorkbenchContext workbenchContext,
                             Session session,
@@ -224,6 +226,7 @@ public class TextEditingTarget implements EditingTarget
       globalDisplay_ = globalDisplay;
       fileDialogs_ = fileDialogs;
       fileTypeRegistry_ = fileTypeRegistry;
+      fileTypeCommands_ = fileTypeCommands;
       consoleDispatcher_ = consoleDispatcher;
       workbenchContext_ = workbenchContext;
       session_ = session;
@@ -502,38 +505,36 @@ public class TextEditingTarget implements EditingTarget
       updateStatusBarPosition();
       updateStatusBarLanguage();
 
-      statusBarFileTypes_ = new TextFileType[] {
-            FileTypeRegistry.R,
-            FileTypeRegistry.SWEAVE,
-            FileTypeRegistry.TEXT,
-            FileTypeRegistry.HTML,
-            FileTypeRegistry.MARKDOWN,
-            FileTypeRegistry.TEX,
-            FileTypeRegistry.RD
-      };
+      
+      // build file type menu dynamically (so it can change according
+      // to whether e.g. knitr is installed)
+      statusBar_.getLanguage().addMouseDownHandler(new MouseDownHandler() {
 
-      for (TextFileType fileType : statusBarFileTypes_)
-      {
-         statusBar_.getLanguage().addOptionValue(fileType.getLabel());
-      }
-
-      statusBar_.getLanguage().addSelectionHandler(new SelectionHandler<String>()
-      {
-         public void onSelection(SelectionEvent<String> event)
+         @Override
+         public void onMouseDown(MouseDownEvent event)
          {
-            String item = event.getSelectedItem();
-            for (TextFileType fileType : statusBarFileTypes_)
+            // build menu with all file types - also track whether we need
+            // to add the current type (may be the case for types which we 
+            // support but don't want to expose on the menu -- e.g. Rmd 
+            // files when knitr isn't installed)
+            boolean addCurrentType = true;
+            final StatusBarPopupMenu menu = new StatusBarPopupMenu();
+            TextFileType[] fileTypes = fileTypeCommands_.statusBarFileTypes();
+            for (TextFileType type : fileTypes)
             {
-               if (fileType.getLabel().equals(item))
-               {
-                  docUpdateSentinel_.changeFileType(
-                        fileType.getTypeId(),
-                        new SaveProgressIndicator(null, fileType, null));
-                  break;
-               }
+               menu.addItem(createMenuItemForType(type));
+               if (addCurrentType && type.equals(fileType_))
+                  addCurrentType = false;
             }
+            
+            // add the current type if isn't on the menu 
+            if (addCurrentType)
+               menu.addItem(createMenuItemForType(fileType_));
+         
+            // show the menu
+            menu.showRelativeToUpward((UIObject) statusBar_.getLanguage());  
          }
-      });
+      });      
 
       statusBar_.getScope().addMouseDownHandler(new MouseDownHandler()
       {
@@ -560,6 +561,26 @@ public class TextEditingTarget implements EditingTarget
             menu.showRelativeToUpward((UIObject) statusBar_.getScope());
          }
       });
+   }
+   
+   private MenuItem createMenuItemForType(final TextFileType type)
+   {
+      SafeHtmlBuilder labelBuilder = new SafeHtmlBuilder();
+      labelBuilder.appendEscaped(type.getLabel());
+
+      MenuItem menuItem = new MenuItem(
+         labelBuilder.toSafeHtml(),
+         new Command()
+         {
+            public void execute()
+            {
+               docUpdateSentinel_.changeFileType(
+                     type.getTypeId(),
+                     new SaveProgressIndicator(null, type, null));  
+            }
+         });
+      
+      return menuItem;
    }
 
    private MenuItem addFunctionsToMenu(StatusBarPopupMenu menu,
@@ -2388,7 +2409,6 @@ public class TextEditingTarget implements EditingTarget
    }
    
    private StatusBar statusBar_;
-   private TextFileType[] statusBarFileTypes_;
    private final DocDisplay docDisplay_;
    private final UIPrefs prefs_;
    private Display view_;
@@ -2398,6 +2418,7 @@ public class TextEditingTarget implements EditingTarget
    private final GlobalDisplay globalDisplay_;
    private final FileDialogs fileDialogs_;
    private final FileTypeRegistry fileTypeRegistry_;
+   private final FileTypeCommands fileTypeCommands_;
    private final ConsoleDispatcher consoleDispatcher_;
    private final WorkbenchContext workbenchContext_;
    private final Session session_;

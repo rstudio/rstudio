@@ -55,7 +55,19 @@ public class FileTypeCommands
    {
       return fileTypeCommands_;
    }
-    
+   
+   public TextFileType[] statusBarFileTypes()
+   {
+      return new TextFileType[] {FileTypeRegistry.R,
+                                 FileTypeRegistry.SWEAVE,
+                                 FileTypeRegistry.TEXT,
+                                 FileTypeRegistry.HTML,
+                                 FileTypeRegistry.MARKDOWN,
+                                 FileTypeRegistry.TEX,
+                                 FileTypeRegistry.RD};
+   }
+   
+   
    private void addType(final TextFileType fileType, String menuLabel)
    {
       AppCommand command = new AppCommand();
