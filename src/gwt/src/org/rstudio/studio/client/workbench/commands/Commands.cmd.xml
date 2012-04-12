@@ -222,6 +222,8 @@ well as menu structures (for main menu and popup menus).
       <separator/>
       
       <menu label="_Tools">
+         <cmd refid="checkSpelling"/>
+         <separator/>
          <cmd refid="interruptR"/>
          <separator/>
          <menu label="Set _Working Directory">
@@ -361,6 +363,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="vcsCommit" value="Cmd+Shift+M" />
       <shortcut refid="showShellDialog" value="Cmd+Shift+H" />
       <shortcut refid="synctexSearch" value="Cmd+F8" />
+      <shortcut refid="checkSpelling" value="F7" />
    </shortcuts>
 
    <!--
@@ -640,6 +643,9 @@ well as menu structures (for main menu and popup menus).
         menuLabel="S_ync PDF View to Editor"
         buttonLabel=""
         desc="Sync PDF view to editor location (Ctrl+Click)"/>
+
+   <cmd id="checkSpelling"
+        menuLabel="Check Spelling"/>
         
    <cmd id="newFolder"
         menuLabel="Folder..."

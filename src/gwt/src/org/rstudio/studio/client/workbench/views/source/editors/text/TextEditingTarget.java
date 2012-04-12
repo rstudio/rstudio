@@ -1118,6 +1118,12 @@ public class TextEditingTarget implements EditingTarget
    }
 
    @Handler
+   void onCheckSpelling()
+   {
+      spelling_.checkSpelling();
+   }
+
+   @Handler
    void onDebugForceTopsToZero()
    {
       view_.debug_forceTopsToZero();

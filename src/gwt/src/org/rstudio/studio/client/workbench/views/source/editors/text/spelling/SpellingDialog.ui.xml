@@ -1,0 +1,48 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:widget="urn:import:org.rstudio.core.client.widget">
+
+   <ui:style>
+      .control {
+         width: 275px;
+         border: 1px solid #888;
+         background-color: white;
+         margin: 0 0 3px 0;
+      }
+      .context {
+         height: 100px;
+         margin-bottom: 12px;
+      }
+   </ui:style>
+
+   <g:HTMLPanel>
+      <table cellpadding="0" cellspacing="0">
+         <tr>
+            <td><g:Label text="Not in dictionary:"/></td>
+         </tr>
+         <tr>
+            <td valign="top"><g:SimplePanel ui:field="divDisplay_" styleName="{style.control} {style.context}" /></td>
+            <td valign="top">
+               <widget:ThemedButton ui:field="btnAdd_"/><br/>
+               <widget:ThemedButton ui:field="btnIgnoreAll_"/><br/>
+               <widget:ThemedButton ui:field="btnSkip_"/>
+            </td>
+         </tr>
+         <tr>
+            <td><g:Label text="Change to:"/></td>
+         </tr>
+         <tr>
+            <td valign="top">
+               <g:TextBox ui:field="txtReplacement_" styleName="{style.control}" />
+               <br/>
+               <g:ListBox ui:field="lstSuggestions_" styleName="{style.control}" visibleItemCount="4"/>
+            </td>
+            <td valign="top">
+               <widget:ThemedButton ui:field="btnChange_"/><br/>
+               <widget:ThemedButton ui:field="btnChangeAll_"/>
+            </td>
+         </tr>
+      </table>
+   </g:HTMLPanel>
+
+</ui:UiBinder>

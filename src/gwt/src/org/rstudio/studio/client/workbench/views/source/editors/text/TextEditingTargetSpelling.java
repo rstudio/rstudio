@@ -20,6 +20,8 @@ import org.rstudio.core.client.CsvReader;
 import org.rstudio.core.client.CsvWriter;
 import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.studio.client.common.spelling.SpellChecker;
+import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.CheckSpelling;
+import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDialog;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -35,8 +37,11 @@ public class TextEditingTargetSpelling implements SpellChecker.Context
       
    }
    
- 
- 
+   public void checkSpelling()
+   {
+      new CheckSpelling(spellChecker_, docDisplay_, new SpellingDialog());
+   }
+
    @Override
    public void invalidateAllWords()
    {
@@ -91,7 +96,7 @@ public class TextEditingTargetSpelling implements SpellChecker.Context
    {
       releaseOnDismiss_.add(handler);      
    }
-   
+
    private final static String IGNORED_WORDS = "ignored_words"; 
    
    @SuppressWarnings("unused")

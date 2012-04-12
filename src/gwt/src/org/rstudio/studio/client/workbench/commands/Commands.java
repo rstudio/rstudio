@@ -247,4 +247,6 @@ public abstract class
    public abstract AppCommand mru8();
    public abstract AppCommand mru9();
    public abstract AppCommand clearRecentFiles();
+
+   public abstract AppCommand checkSpelling();
 }

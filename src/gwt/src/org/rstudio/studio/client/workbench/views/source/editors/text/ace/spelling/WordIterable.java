@@ -13,23 +13,11 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling;
 
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.WordIterable.CharPredicate;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.WordIterable.TokenPredicate;
 
 import java.util.Iterator;
 
 public class WordIterable implements Iterable<Range>
 {
-   public interface TokenPredicate
-   {
-      boolean test(Token token);
-   }
-
-   public interface CharPredicate
-   {
-      boolean test(char c);
-   }
-
    public WordIterable(EditSession session,
                        TokenPredicate checkableToken,
                        CharPredicate wordChar,
@@ -86,6 +74,7 @@ class RangeIterator implements Iterator<Range>
                         Position start,
                         Position end)
    {
+      start_ = start;
       end_ = end;
       isCheckableToken_ = isCheckableToken;
       isWordChar_ = isWordChar;
@@ -99,18 +88,40 @@ class RangeIterator implements Iterator<Range>
    private void initialize()
    {
       Token token = tokenIterator_.getCurrentToken();
-      if (token != null)
+      if (token != null && isCheckableToken_.test(token))
       {
-         currentValue_ = token.getValue();
-         tokenPos_ = 0;
+         if (tokenIterator_.getCurrentTokenRow() == start_.getRow()
+               && tokenIterator_.getCurrentTokenColumn() < start_.getColumn())
+         {
+            int endCol =
+                  tokenIterator_.getCurrentTokenColumn() +
+                  token.getValue().length();
+
+            currentValue_ = token.getValue();
+            tokenPos_ = start_.getColumn() -
+                        tokenIterator_.getCurrentTokenColumn();
+
+            if (tokenPos_ < currentValue_.length() &&
+                isWordChar_.test(currentValue_.charAt(tokenPos_)))
+            {
+               while (tokenPos_ > 0
+                      && isWordChar_.test(currentValue_.charAt(tokenPos_-1)))
+               {
+                  tokenPos_--;
+               }
+            }
+         }
+         else
+         {
+            currentValue_ = token.getValue();
+            tokenPos_ = 0;
+         }
       }
       advance();
    }
 
    private boolean nextToken()
    {
-      // TODO: Prevent token iterator from going beyond end_
-
       if (ended_)
          return false;
 
@@ -134,6 +145,9 @@ class RangeIterator implements Iterator<Range>
 
    private Range nextWord()
    {
+      if (ended_)
+         return null;
+
       while (tokenPos_ < currentValue_.length() &&
              !isWordChar_.test(currentValue_.charAt(tokenPos_)))
       {
@@ -156,6 +170,13 @@ class RangeIterator implements Iterator<Range>
             row, tokenIterator_.getCurrentTokenColumn() + wordStart);
       Position endPos = Position.create(
             row, tokenIterator_.getCurrentTokenColumn() + tokenPos_);
+
+      if (startPos.isAfterOrEqualTo(end_))
+      {
+         ended_ = true;
+         return null;
+      }
+
       return Range.fromPoints(startPos, endPos);
    }
 
@@ -191,6 +212,7 @@ class RangeIterator implements Iterator<Range>
       throw new UnsupportedOperationException();
    }
 
+   private final Position start_;
    private final Position end_;
    private final TokenPredicate isCheckableToken_;
    private final CharPredicate isWordChar_;
