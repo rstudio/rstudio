@@ -75,7 +75,7 @@ public class FileTypeRegistry
   
    public static final WebContentFileType HTML =
          new WebContentFileType("html", "HTML", EditorLanguage.LANG_PLAIN,
-                              ".htm", ICONS.iconHTML());
+                              ".html", ICONS.iconHTML());
    
    public static final RDataType RDATA = new RDataType();
    public static final RProjectType RPROJECT = new RProjectType();
