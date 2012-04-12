@@ -68,15 +68,6 @@ public class FileTypeRegistry
       new WebContentFileType("markdown", "Markdown", EditorLanguage.LANG_MARKDOWN,
                            ".md", ICONS.iconMarkdown());
    
-   
-   public static final RWebContentFileType RHTML =
-         new RWebContentFileType("r_html", "R HTML", EditorLanguage.LANG_PLAIN,
-                              ".Rhtml", ICONS.iconRhtml());
-  
-   public static final WebContentFileType HTML =
-         new WebContentFileType("html", "HTML", EditorLanguage.LANG_PLAIN,
-                              ".html", ICONS.iconHTML());
-   
    public static final RDataType RDATA = new RDataType();
    public static final RProjectType RPROJECT = new RProjectType();
    
@@ -116,9 +107,6 @@ public class FileTypeRegistry
       register("*.sty", TEX, icons.iconTex());
       register("*.cls", TEX, icons.iconTex());
       register("*.bbl", TEX, icons.iconTex());
-      register("*.rhtml", RHTML, icons.iconRhtml());
-      register("*.htm", HTML, icons.iconHTML());
-      register("*.html", HTML, icons.iconHTML());
       register("*.rmd", RMARKDOWN, icons.iconRmarkdown());
       register("*.md", MARKDOWN, icons.iconMarkdown());
       register("*.mdtxt", MARKDOWN, icons.iconMarkdown());
