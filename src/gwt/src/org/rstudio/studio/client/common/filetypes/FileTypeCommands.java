@@ -24,7 +24,6 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
-import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedHandler;
 
@@ -49,21 +48,18 @@ public class FileTypeCommands
    @Inject
    public FileTypeCommands(EventBus eventBus, 
                            Commands commands,
-                           final Session session,
                            final HTMLPreviewServerOperations server)
    {
       eventBus_ = eventBus;
       commands_ = commands;
-      session_ = session;
 
       rMDCommand_ = addRFileType(FileTypeRegistry.RMARKDOWN, "R _Markdown");
-      rHTMLCommand_ = addRFileType(FileTypeRegistry.RHTML, "R _HTML");
       addRFileType(FileTypeRegistry.RD, "R _Doc");
       
       addTextFileType(FileTypeRegistry.TEXT, "_Text File");
       addTextFileType(FileTypeRegistry.TEX, "Te_X File");
       addTextFileType(FileTypeRegistry.MARKDOWN, "Mar_kdown File");   
-      
+          
       eventBus.addHandler(InstalledPackagesChangedEvent.TYPE,
                           new InstalledPackagesChangedHandler() {
          @Override
@@ -75,7 +71,7 @@ public class FileTypeCommands
                      @Override
                      public void onResponseReceived(HTMLCapabilities caps)
                      {
-                        updateHTMLCapabilities(caps);
+                        setHTMLCapabilities(caps);
                      }
                      @Override
                      public void onError(ServerError error)
@@ -104,8 +100,6 @@ public class FileTypeCommands
       types.add(FileTypeRegistry.SWEAVE);
       if (rMDCommand_.isEnabled())
          types.add(FileTypeRegistry.RMARKDOWN);
-      if (rHTMLCommand_.isEnabled())
-         types.add(FileTypeRegistry.RHTML);
       types.add(FileTypeRegistry.TEXT);
       types.add(FileTypeRegistry.TEX);
       types.add(FileTypeRegistry.MARKDOWN);
@@ -117,13 +111,14 @@ public class FileTypeCommands
    
    public HTMLCapabilities getHTMLCapabiliites()
    {
-      if (htmlCapabilities_ == null)
-      {
-         updateHTMLCapabilities(
-                     session_.getSessionInfo().getHTMLCapabilities());
-      }
-      
       return htmlCapabilities_;
+   }
+   
+   public void setHTMLCapabilities(HTMLCapabilities caps)
+   {
+      htmlCapabilities_ = caps;
+      rMDCommand_.setEnabled(caps.isRMarkdownSupported());
+      rMDCommand_.setVisible(caps.isRMarkdownSupported());
    }
    
    private AppCommand addRFileType(TextFileType fileType, String menuLabel) 
@@ -159,17 +154,6 @@ public class FileTypeCommands
       return command;
    }
    
-   private void updateHTMLCapabilities(HTMLCapabilities caps)
-   {
-      htmlCapabilities_ = caps;
-      rMDCommand_.setEnabled(caps.isRMarkdownSupported());
-      rMDCommand_.setVisible(caps.isRMarkdownSupported());
-      
-      // for now we don't show R HTML commands at all
-      rHTMLCommand_.setEnabled(false);
-      rHTMLCommand_.setVisible(false);
-   }
-   
    private static String commandIdForType(FileType fileType)
    {
       return "filetype_" + fileType.getTypeId();
@@ -177,7 +161,6 @@ public class FileTypeCommands
 
    private final EventBus eventBus_;
    private final Commands commands_;
-   private final Session session_;
    
    private final ArrayList<CommandWithId> rFileTypeCommands_ =
          new ArrayList<CommandWithId>();
@@ -186,7 +169,6 @@ public class FileTypeCommands
          new ArrayList<CommandWithId>();
    
    private final AppCommand rMDCommand_;
-   private final AppCommand rHTMLCommand_;
    private HTMLCapabilities htmlCapabilities_;
 
 }

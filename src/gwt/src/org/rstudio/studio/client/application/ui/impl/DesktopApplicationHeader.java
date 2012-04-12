@@ -90,7 +90,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
          {
             final SessionInfo sessionInfo = session.getSessionInfo();
             
-            toolbar_.addProjectTools(sessionInfo);
+            toolbar_.completeInitialization(sessionInfo);
             
             Scheduler.get().scheduleFinally(new ScheduledCommand()
             {
