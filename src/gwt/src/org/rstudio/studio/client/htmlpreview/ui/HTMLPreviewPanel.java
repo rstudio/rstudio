@@ -47,12 +47,12 @@ public class HTMLPreviewPanel extends ResizeComposite
    {
       Toolbar toolbar = new Toolbar();
       
-      final FindTextBox findTextBox = new FindTextBox("");
-      findTextBox.setIconVisible(true);
-      findTextBox.setOverrideWidth(120);
-      toolbar.addRightWidget(findTextBox);
+      findTextBox_ = new FindTextBox("");
+      findTextBox_.setIconVisible(true);
+      findTextBox_.setOverrideWidth(120);
+      toolbar.addRightWidget(findTextBox_);
       
-      findTextBox.addKeyDownHandler(new KeyDownHandler() {
+      findTextBox_.addKeyDownHandler(new KeyDownHandler() {
          @Override
          public void onKeyDown(KeyDownEvent event)
          {
@@ -61,12 +61,12 @@ public class HTMLPreviewPanel extends ResizeComposite
             {
                event.preventDefault();
                event.stopPropagation();
-               findInTopic(findTextBox.getValue().trim(), findTextBox);
-               findTextBox.focus();
+               findInTopic(findTextBox_.getValue().trim(), findTextBox_);
+               findTextBox_.focus();
             }
             else if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE)
             {
-               findTextBox.setValue("");
+               findTextBox_.setValue("");
             }       
          }
          
@@ -103,7 +103,6 @@ public class HTMLPreviewPanel extends ResizeComposite
    public void setProgressCaption(String caption)
    {
       activeProgressDialog_.setCaption(caption);
-      
    }
    
    @Override
@@ -137,6 +136,7 @@ public class HTMLPreviewPanel extends ResizeComposite
    @Override
    public void showPreview(String url, boolean enableScripts)
    {
+      findTextBox_.setVisible(!enableScripts);
       previewFrame_.setScriptsEnabled(enableScripts);
       previewFrame_.navigate(url);
    }
@@ -155,10 +155,10 @@ public class HTMLPreviewPanel extends ResizeComposite
          // if we do allow scripts we need to make sure that same-origin
          // is not allowed (so the scripts are confined to this frame). 
          // however if scripts are not allowed we explicitly allow same-origin
-         // so that reloading will preseve scroll position. in both cases
-         // we allow popups so that embedded links work (but note the popup
-         // window inherits the restrictions of the iframe so if scripts
-         // were disallowed then they are also disallowed in the popup)
+         // so that find will work and reloading will preseve scroll position.
+         // in both cases we allow popups so that embedded links work.
+         // net tradeoff: if scripts are enabled then find and preservation of 
+         // scroll position after reload do not work
          if (scriptsEnabled)
          {
             getElement().setAttribute("sandbox", "allow-scripts " +
@@ -213,5 +213,6 @@ public class HTMLPreviewPanel extends ResizeComposite
    }
  
    private final PreviewFrame previewFrame_;
+   private FindTextBox findTextBox_;
    private HTMLPreviewProgressDialog activeProgressDialog_;
 }
