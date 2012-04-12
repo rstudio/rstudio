@@ -132,6 +132,9 @@ public abstract class
    // PDF
    public abstract AppCommand showPdfExternal();
    
+   // HTML preview
+   public abstract AppCommand printHtmlPreview();
+   
    // View
    public abstract AppCommand showToolbar();
    public abstract AppCommand hideToolbar();

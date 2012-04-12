@@ -11,7 +11,9 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
+import com.google.inject.Inject;
 
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.CanFocus;
@@ -21,15 +23,17 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarFileLabel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewPresenter;
+import org.rstudio.studio.client.workbench.commands.Commands;
 
 public class HTMLPreviewPanel extends ResizeComposite
                               implements HTMLPreviewPresenter.Display
 {
-   public HTMLPreviewPanel()
+   @Inject
+   public HTMLPreviewPanel(Commands commands)
    {
       LayoutPanel panel = new LayoutPanel();
       
-      Toolbar toolbar = createToolbar();
+      Toolbar toolbar = createToolbar(commands);
       int tbHeight = toolbar.getHeight();
       panel.add(toolbar);
       panel.setWidgetLeftRight(toolbar, 0, Unit.PX, 0, Unit.PX);
@@ -44,11 +48,16 @@ public class HTMLPreviewPanel extends ResizeComposite
       initWidget(panel);
    }
    
-   private Toolbar createToolbar()
+   private Toolbar createToolbar(Commands commands)
    {
       Toolbar toolbar = new Toolbar();
       
       fileLabel_ = new ToolbarFileLabel(toolbar, 200);
+      
+      toolbar.addLeftSeparator();
+      
+      printHtmlPreview_ = commands.printHtmlPreview();
+      toolbar.addLeftWidget(printHtmlPreview_.createToolbarButton());
       
       findTextBox_ = new FindTextBox("");
       findTextBox_.setIconVisible(true);
@@ -142,9 +151,18 @@ public class HTMLPreviewPanel extends ResizeComposite
                            boolean enableScripts)
    {
       fileLabel_.setFileName(sourceFile);
+      printHtmlPreview_.setVisible(!enableScripts);
       findTextBox_.setVisible(!enableScripts);
       previewFrame_.setScriptsEnabled(enableScripts);
       previewFrame_.navigate(url);
+   }
+   
+   @Override
+   public void print()
+   {
+      WindowEx window = previewFrame_.getWindow();
+      window.focus();
+      window.print();
    }
    
    private class PreviewFrame extends Frame
@@ -161,10 +179,10 @@ public class HTMLPreviewPanel extends ResizeComposite
          // if we do allow scripts we need to make sure that same-origin
          // is not allowed (so the scripts are confined to this frame). 
          // however if scripts are not allowed we explicitly allow same-origin
-         // so that find will work and reloading will preseve scroll position.
-         // in both cases we allow popups so that embedded links work.
-         // net tradeoff: if scripts are enabled then find and preservation of 
-         // scroll position after reload do not work
+         // so that find & print will work and so reloading will preserve 
+         // scroll position. in both cases we allow popups for embedded links.
+         // net tradeoff: if scripts are enabled then print, find, and 
+         // preservation of scroll position after reload do not work
          if (scriptsEnabled)
          {
             getElement().setAttribute("sandbox", "allow-scripts " +
@@ -221,5 +239,6 @@ public class HTMLPreviewPanel extends ResizeComposite
    private final PreviewFrame previewFrame_;
    private ToolbarFileLabel fileLabel_;
    private FindTextBox findTextBox_;
+   private AppCommand printHtmlPreview_;
    private HTMLPreviewProgressDialog activeProgressDialog_;
 }

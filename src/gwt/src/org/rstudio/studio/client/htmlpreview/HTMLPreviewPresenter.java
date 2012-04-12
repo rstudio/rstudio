@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.htmlpreview;
 
 import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.satellite.Satellite;
@@ -52,6 +53,8 @@ public class HTMLPreviewPresenter implements IsWidget
       void showPreview(String sourceFile,
                        String url, 
                        boolean enableScripts);
+      
+      void print();
    }
    
    @Inject
@@ -146,6 +149,12 @@ public class HTMLPreviewPresenter implements IsWidget
    public Widget asWidget()
    {
       return view_.asWidget();
+   }
+   
+   @Handler
+   public void onPrintHtmlPreview()
+   {
+      view_.print();
    }
 
    private void terminateRunningPreview()
