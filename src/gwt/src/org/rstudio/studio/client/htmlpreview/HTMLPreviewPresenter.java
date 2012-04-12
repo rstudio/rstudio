@@ -15,6 +15,7 @@ package org.rstudio.studio.client.htmlpreview;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
@@ -26,6 +27,8 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
@@ -55,6 +58,7 @@ public class HTMLPreviewPresenter implements IsWidget
                                Commands commands,
                                GlobalDisplay globalDisplay,
                                EventBus eventBus,
+                               Satellite satellite,
                                HTMLPreviewServerOperations server)
    {
       view_ = view;
@@ -62,6 +66,15 @@ public class HTMLPreviewPresenter implements IsWidget
       server_ = server;
       
       binder.bind(commands, this);
+      
+      satellite.addCloseHandler(new CloseHandler<Satellite>() {
+         @Override
+         public void onClose(CloseEvent<Satellite> event)
+         {
+            if (previewRunning_)
+               terminateRunningPreview();
+         }
+      });
       
       eventBus.addHandler(HTMLPreviewStartedEvent.TYPE, 
                           new HTMLPreviewStartedEvent.Handler()
@@ -76,14 +89,9 @@ public class HTMLPreviewPresenter implements IsWidget
                public void onClick(ClickEvent event)
                {
                   if (previewRunning_)
-                  {
-                     server_.terminatePreviewHTML(
-                                             new VoidServerRequestCallback());
-                  }
+                     terminateRunningPreview();
                   else
-                  {
                      view_.closeProgress();
-                  }
                }
                
             });
@@ -137,6 +145,11 @@ public class HTMLPreviewPresenter implements IsWidget
       return view_.asWidget();
    }
 
+   private void terminateRunningPreview()
+   {
+      server_.terminatePreviewHTML(new VoidServerRequestCallback());
+   }
+   
    private final Display view_;
    private boolean previewRunning_ = false;
    
