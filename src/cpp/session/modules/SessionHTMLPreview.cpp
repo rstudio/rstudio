@@ -296,7 +296,14 @@ private:
       isRunning_ = false;
       outputFile_ = outputFile;
 
-      // TODO: determine whether we should enable scripts
+      // NOTE: right now we never allow scripts in preview mode (this is
+      // so that the find and scroll-position preservation accross reload
+      // work). if we want to enable scripts within the preview window
+      // the best way to do it is detect them by sniffing the output
+      // and then pass true to enqueHTMLPreviewSucceeded (below). that way
+      // the full features of the preview window are available by default
+      // and users can (implicitly) elect to disable them in favor of
+      // scripts if they want to (see also HTMLPreviewPanel.setScriptsEnabled)
 
       enqueHTMLPreviewSucceeded(kHTMLPreview "/", false);
    }
