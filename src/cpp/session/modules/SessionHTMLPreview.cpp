@@ -133,16 +133,15 @@ private:
       // set running flag
       isRunning_ = true;
 
-      // create a temp file where we can write the name of the output file to
-      FilePath tempFile = module_context::tempFile("knitr-output", "out");
-      Error error = core::writeStringToFile(tempFile, "");
-      if (error)
-      {
-         terminateWithError(error);
-         return;
-      }
-      std::string tempFilePath = string_utils::utf8ToSystem(
-                                                   tempFile.absolutePath());
+      // predict the name of the output file -- if we can't do this then
+      // we instrument our call to knitr to return it in a temp file
+      FilePath outputFileTempFile;
+      if (isMarkdown && targetFile_.extensionLowerCase() == ".rmd")
+         knitrOutputFile_ = outputFileForTarget(".md");
+      else if (targetFile_.extensionLowerCase() == ".rhtml")
+         knitrOutputFile_= outputFileForTarget(".html");
+      else
+         outputFileTempFile = module_context::tempFile("knitr-output", "out");
 
       // R binary
       std::string rProgramPath = r::exec::rBinaryPath().absolutePath();
@@ -151,12 +150,23 @@ private:
       std::vector<std::string> args;
       args.push_back("--silent");
       args.push_back("-e");
-      boost::format fmt("require(knitr); "
-                        "o <- knit('%1%'); "
-                        "cat(o, file='%2%');");
-      std::string cmd = boost::str(fmt % targetFile_.filename()
+      if (!knitrOutputFile_.empty())
+      {
+         boost::format fmt("require(knitr); knit('%1%');");
+         std::string cmd = boost::str(fmt % targetFile_.filename());
+         args.push_back(cmd);
+      }
+      else
+      {
+         std::string tempFilePath = string_utils::utf8ToSystem(
+                                           outputFileTempFile.absolutePath());
+         boost::format fmt("require(knitr); "
+                           "o <- knit('%1%'); "
+                           "cat(o, file='%2%');");
+         std::string cmd = boost::str(fmt % targetFile_.filename()
                                        % tempFilePath);
-      args.push_back(cmd);
+         args.push_back(cmd);
+      }
 
       // options
       core::system::ProcessOptions options;
@@ -174,7 +184,7 @@ private:
                                 HTMLPreview::shared_from_this(), _2);
       cb.onExit =  boost::bind(&HTMLPreview::onKnitCompleted,
                                 HTMLPreview::shared_from_this(),
-                                _1, tempFile, isMarkdown);
+                                _1, outputFileTempFile, isMarkdown);
 
       // execute knitr
       module_context::processSupervisor().runProgram(rProgramPath,
@@ -199,36 +209,39 @@ private:
    {
       if (exitStatus == EXIT_SUCCESS)
       {
-         // read the path to the output file
-         std::string outputFile;
-         Error error = core::readStringFromFile(outputPathTempFile,
-                                                &outputFile);
-         if (error)
+         // determine the path of the knitr output file if necessary
+         if (knitrOutputFile_.empty())
          {
-            terminateWithError(error);
-         }
-         else
-         {
-            // read the output file
-            boost::algorithm::trim(outputFile);
-            FilePath outputFilePath = targetFile_.parent().complete(outputFile);
-            std::string output;
-            error = core::readStringFromFile(outputFilePath, &output);
+            std::string outputFile;
+            Error error = core::readStringFromFile(outputPathTempFile,
+                                                   &outputFile);
             if (error)
             {
                terminateWithError(error);
+               return;
             }
-            else
-            {
-               terminateWithContent(output, isMarkdown);
-            }
+            boost::algorithm::trim(outputFile);
+            knitrOutputFile_ = targetFile_.parent().complete(outputFile);
          }
+
+         // read the output file
+         std::string output;
+         Error error = core::readStringFromFile(knitrOutputFile_, &output);
+         if (error)
+            terminateWithError(error);
+         else
+            terminateWithContent(output, isMarkdown);
       }
       else
       {
          boost::format fmt("\nknitr terminated with status %1%\n");
          terminateWithError(boost::str(fmt % exitStatus));
       }
+   }
+
+   FilePath outputFileForTarget(const std::string& ext)
+   {
+      return targetFile_.parent().childPath(targetFile_.stem() + ext);
    }
 
    void terminateWithContent(const std::string& fileContents, bool isMarkdown)
@@ -328,6 +341,7 @@ private:
 
 private:
    FilePath targetFile_;
+   FilePath knitrOutputFile_;
    FilePath outputFile_;
    bool isRunning_;
    bool terminationRequested_;
