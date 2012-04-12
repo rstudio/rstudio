@@ -3,6 +3,8 @@
   <!-- Fill in the app name and version -->
   <application></application>
   <version></version>
+  <!-- TODO(???) please update threadsafe to true if code is threadsafe -->
+  <threadsafe>false</threadsafe>
 
   <!-- Configure serving/caching of GWT files -->
   <static-files>
