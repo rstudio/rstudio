@@ -4,6 +4,9 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.LayoutPanel;
@@ -11,7 +14,11 @@ import com.google.gwt.user.client.ui.ResizeComposite;
 
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.widget.CanFocus;
+import org.rstudio.core.client.widget.FindTextBox;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewPresenter;
 
 public class HTMLPreviewPanel extends ResizeComposite
@@ -21,7 +28,7 @@ public class HTMLPreviewPanel extends ResizeComposite
    {
       LayoutPanel panel = new LayoutPanel();
       
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = createToolbar();
       int tbHeight = toolbar.getHeight();
       panel.add(toolbar);
       panel.setWidgetLeftRight(toolbar, 0, Unit.PX, 0, Unit.PX);
@@ -34,6 +41,55 @@ public class HTMLPreviewPanel extends ResizeComposite
       panel.setWidgetTopBottom(previewFrame_, tbHeight+1, Unit.PX, 0, Unit.PX);
       
       initWidget(panel);
+   }
+   
+   private Toolbar createToolbar()
+   {
+      Toolbar toolbar = new Toolbar();
+      
+      final FindTextBox findTextBox = new FindTextBox("");
+      findTextBox.setIconVisible(true);
+      findTextBox.setOverrideWidth(120);
+      toolbar.addRightWidget(findTextBox);
+      
+      findTextBox.addKeyDownHandler(new KeyDownHandler() {
+         @Override
+         public void onKeyDown(KeyDownEvent event)
+         {
+            // enter key triggers a find
+            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               findInTopic(findTextBox.getValue().trim(), findTextBox);
+               findTextBox.focus();
+            }
+            else if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE)
+            {
+               findTextBox.setValue("");
+            }       
+         }
+         
+         private void findInTopic(String term, CanFocus findInputSource)
+         {
+            // get content window
+            WindowEx contentWindow = previewFrame_.getWindow();
+            if (contentWindow == null)
+               return;
+                
+            if (!contentWindow.find(term, false, false, true, false))
+            {
+               RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
+                     MessageDialog.INFO,
+                     "Find in Page", 
+                     "No occurences found",
+                     findInputSource);
+            }     
+         }
+         
+      });
+      
+      return toolbar;
    }
    
    @Override
