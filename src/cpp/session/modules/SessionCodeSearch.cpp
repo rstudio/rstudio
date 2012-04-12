@@ -424,7 +424,7 @@ private:
       FilePath filePath(fileInfo.absolutePath());
       std::string ext = filePath.extensionLowerCase();
       return !filePath.isDirectory() &&
-              (ext == ".r" || ext == ".rnw" || ext == ".rd");
+              (ext == ".r" || ext == ".rnw" || ext == ".rmd" || ext == ".rd");
    }
 
    static bool isIndexableSourceFile(const FileInfo& fileInfo)
