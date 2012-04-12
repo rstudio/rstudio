@@ -5,9 +5,13 @@
    <ui:style>
       .control {
          width: 275px;
-         border: 1px solid #888;
+         border: 1px solid #888 !important;
          background-color: white;
          margin: 0 0 3px 0;
+         box-sizing: border-box;
+         -moz-box-sizing: border-box;
+         -webkit-box-sizing: border-box;
+         font-size: 12px;
       }
       .context {
          height: 100px;
