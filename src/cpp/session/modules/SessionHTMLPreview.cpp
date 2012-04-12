@@ -305,7 +305,7 @@ private:
       // and users can (implicitly) elect to disable them in favor of
       // scripts if they want to (see also HTMLPreviewPanel.setScriptsEnabled)
 
-      enqueHTMLPreviewSucceeded(kHTMLPreview "/", false);
+      enqueHTMLPreviewSucceeded(targetFile_, kHTMLPreview "/", false);
    }
 
    static void enqueHTMLPreviewStarted(const FilePath& targetFile)
@@ -330,11 +330,13 @@ private:
       module_context::enqueClientEvent(event);
    }
 
-   static void enqueHTMLPreviewSucceeded(const std::string& previewUrl,
+   static void enqueHTMLPreviewSucceeded(const FilePath& sourceFile,
+                                         const std::string& previewUrl,
                                          bool enableScripts)
    {
       json::Object resultJson;
       resultJson["succeeded"] = true;
+      resultJson["source_file"] = module_context::createAliasedPath(sourceFile);
       resultJson["preview_url"] = previewUrl;
       resultJson["enable_scripts"] = enableScripts;
       ClientEvent event(client_events::kHTMLPreviewCompletedEvent, resultJson);

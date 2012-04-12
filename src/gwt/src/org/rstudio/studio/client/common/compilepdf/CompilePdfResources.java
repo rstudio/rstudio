@@ -22,7 +22,6 @@ public interface CompilePdfResources extends ClientBundle
 {  
    public static interface Styles extends CssResource
    {
-      String fileLabel();
       String table();
       String headerRow();
       String selectedRow();

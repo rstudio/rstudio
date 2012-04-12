@@ -18,6 +18,7 @@ import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FindTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarFileLabel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewPresenter;
 
@@ -46,6 +47,8 @@ public class HTMLPreviewPanel extends ResizeComposite
    private Toolbar createToolbar()
    {
       Toolbar toolbar = new Toolbar();
+      
+      fileLabel_ = new ToolbarFileLabel(toolbar, 200);
       
       findTextBox_ = new FindTextBox("");
       findTextBox_.setIconVisible(true);
@@ -134,8 +137,11 @@ public class HTMLPreviewPanel extends ResizeComposite
    }
    
    @Override
-   public void showPreview(String url, boolean enableScripts)
+   public void showPreview(String sourceFile,
+                           String url, 
+                           boolean enableScripts)
    {
+      fileLabel_.setFileName(sourceFile);
       findTextBox_.setVisible(!enableScripts);
       previewFrame_.setScriptsEnabled(enableScripts);
       previewFrame_.navigate(url);
@@ -213,6 +219,7 @@ public class HTMLPreviewPanel extends ResizeComposite
    }
  
    private final PreviewFrame previewFrame_;
+   private ToolbarFileLabel fileLabel_;
    private FindTextBox findTextBox_;
    private HTMLPreviewProgressDialog activeProgressDialog_;
 }

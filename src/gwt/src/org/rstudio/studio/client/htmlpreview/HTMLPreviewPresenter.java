@@ -49,7 +49,9 @@ public class HTMLPreviewPresenter implements IsWidget
       void closeProgress();
       HandlerRegistration addProgressClickHandler(ClickHandler handler);
       
-      void showPreview(String url, boolean enableScripts);
+      void showPreview(String sourceFile,
+                       String url, 
+                       boolean enableScripts);
    }
    
    @Inject
@@ -121,6 +123,7 @@ public class HTMLPreviewPresenter implements IsWidget
             {
                view_.closeProgress();
                view_.showPreview(
+                  result.getSourceFile(),
                   server_.getApplicationURL(result.getPreviewURL()),
                   result.getEnableScripts());
             }

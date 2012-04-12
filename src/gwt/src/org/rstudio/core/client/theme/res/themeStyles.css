@@ -700,6 +700,13 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 .toolbarSeparator {
    margin-right: 5px;
 }
+
+.toolbarFileLabel {
+   margin-right: 7px;
+   white-space: nowrap;
+}
+
+
 .secondaryToolbar {
    background: TABBACKGROUND bottom repeat-x;
    height: TABSTRIPHEIGHT;
