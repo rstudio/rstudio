@@ -24,6 +24,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedHandler;
 
@@ -48,10 +49,12 @@ public class FileTypeCommands
    @Inject
    public FileTypeCommands(EventBus eventBus, 
                            Commands commands,
+                           Session session,
                            final HTMLPreviewServerOperations server)
    {
       eventBus_ = eventBus;
       commands_ = commands;
+      session_ = session;
 
       rMDCommand_ = addRFileType(FileTypeRegistry.RMARKDOWN, "R _Markdown");
       addRFileType(FileTypeRegistry.RD, "R _Doc");
@@ -111,6 +114,9 @@ public class FileTypeCommands
    
    public HTMLCapabilities getHTMLCapabiliites()
    {
+      if (htmlCapabilities_ == null)
+         setHTMLCapabilities(session_.getSessionInfo().getHTMLCapabilities());
+      
       return htmlCapabilities_;
    }
    
@@ -161,6 +167,7 @@ public class FileTypeCommands
 
    private final EventBus eventBus_;
    private final Commands commands_;
+   private final Session session_;
    
    private final ArrayList<CommandWithId> rFileTypeCommands_ =
          new ArrayList<CommandWithId>();
