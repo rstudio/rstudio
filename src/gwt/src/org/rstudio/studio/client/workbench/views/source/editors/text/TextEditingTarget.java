@@ -293,7 +293,7 @@ public class TextEditingTarget implements EditingTarget
             {
                // warn firefox users that this doesn't really work in Firefox
                if (BrowseCap.isFirefox() && !BrowseCap.isMacintosh())
-                  SynctexUtils.showFirefoxWarning("PDF preview");
+                  SynctexUtils.maybeShowFirefoxWarning("PDF preview");
                
                doSynctexSearch(true);
             }

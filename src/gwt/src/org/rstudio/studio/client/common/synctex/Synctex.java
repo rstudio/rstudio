@@ -172,7 +172,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       
       // warn firefox users that this doesn't really work in Firefox
       if (BrowseCap.isFirefox())
-         SynctexUtils.showFirefoxWarning("source editor");
+         SynctexUtils.maybeShowFirefoxWarning("source editor");
       
       // do the inverse search
       callInverseSearch(pdfLocation);
