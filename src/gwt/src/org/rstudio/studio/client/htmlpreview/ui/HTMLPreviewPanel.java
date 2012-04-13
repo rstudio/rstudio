@@ -52,7 +52,7 @@ public class HTMLPreviewPanel extends ResizeComposite
    {
       Toolbar toolbar = new Toolbar();
       
-      fileLabel_ = new ToolbarFileLabel(toolbar, 200);
+      fileLabel_ = new ToolbarFileLabel(toolbar, 300);
       
       toolbar.addLeftSeparator();
       
