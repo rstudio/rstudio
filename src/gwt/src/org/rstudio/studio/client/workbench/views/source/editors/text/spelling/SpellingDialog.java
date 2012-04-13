@@ -30,6 +30,10 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
 
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
 
+      buttons_ = new ThemedButton[] {
+            btnAdd_, btnIgnoreAll_, btnSkip_, btnChange_, btnChangeAll_
+      };
+
       addCancelButton();
    }
 
@@ -133,6 +137,34 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
    {
       super.closeDialog();
    }
+
+   @Override
+   public void showProgress()
+   {
+      txtDisplay_.setText("Checking...");
+      txtReplacement_.setText("");
+
+      txtReplacement_.setEnabled(false);
+      lstSuggestions_.setEnabled(false);
+      clearSuggestions();
+      setButtonsEnabled(false);
+   }
+
+   @Override
+   public void hideProgress()
+   {
+      txtReplacement_.setEnabled(true);
+      lstSuggestions_.setEnabled(true);
+      setButtonsEnabled(true);
+   }
+
+   private void setButtonsEnabled(boolean enabled)
+   {
+      for (ThemedButton button : buttons_)
+         button.setEnabled(enabled);
+   }
+
+   private ThemedButton[] buttons_;
 
    @UiField(provided = true)
    ThemedButton btnAdd_;

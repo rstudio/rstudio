@@ -4,7 +4,11 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.logical.shared.HasCloseHandlers;
 import com.google.gwt.user.client.ui.HasText;
+import com.google.gwt.user.client.ui.PopupPanel;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -24,7 +28,7 @@ import java.util.HashMap;
 
 public class CheckSpelling
 {
-   public interface Display
+   public interface Display extends HasCloseHandlers<PopupPanel>
    {
       HasClickHandlers getAddButton();
       HasClickHandlers getIgnoreAllButton();
@@ -42,19 +46,32 @@ public class CheckSpelling
       void focusReplacement();
 
       void showModal();
-      void hide();
+      boolean isShowing();
       void closeDialog();
+
+      void showProgress();
+      void hideProgress();
+   }
+
+   public interface ProgressDisplay
+   {
+      void show();
+      void hide();
+      boolean isShowing();
+      HasClickHandlers getCancelButton();
    }
 
    public CheckSpelling(SpellChecker spellChecker,
                         DocDisplay docDisplay,
-                        Display view)
+                        Display view,
+                        ProgressDisplay progressDisplay)
    {
       spellChecker_ = spellChecker;
       docDisplay_ = docDisplay;
       view_ = view;
+      progressDisplay_ = progressDisplay;
 
-      currentPos_ = docDisplay_.getCursorPosition();
+      currentPos_ = docDisplay_.getSelectionStart();
       initialCursorPos_ = docDisplay_.createAnchor(currentPos_);
       wrapped_ = false;
 
@@ -127,6 +144,27 @@ public class CheckSpelling
          }
       });
 
+      view_.addCloseHandler(new CloseHandler<PopupPanel>()
+      {
+         @Override
+         public void onClose(CloseEvent<PopupPanel> popupPanelCloseEvent)
+         {
+            canceled_ = true;
+         }
+      });
+
+      progressDisplay_.getCancelButton().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            canceled_ = true;
+            progressDisplay_.hide();
+         }
+      });
+
+      progressDisplay_.show();
+
       findNextMisspelling();
    }
 
@@ -139,7 +177,10 @@ public class CheckSpelling
 
    private void findNextMisspelling()
    {
-      view_.hide();
+      if (checkForCancel())
+         return;
+
+      showProgress();
 
       Iterable<Range> wordSource = docDisplay_.getWords(
             docDisplay_.getFileType().getTokenPredicate(),
@@ -171,6 +212,9 @@ public class CheckSpelling
             @Override
             public void onResponseReceived(SpellCheckerResult response)
             {
+               if (checkForCancel())
+                  return;
+
                for (int i = 0; i < words.size(); i++)
                {
                   if (response.getIncorrect().contains(words.get(i)))
@@ -198,7 +242,7 @@ public class CheckSpelling
          // No misspellings
          if (wrapped_)
          {
-            view_.closeDialog();
+            close();
             RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
                   GlobalDisplay.MSG_INFO,
                   "Check Spelling",
@@ -211,6 +255,33 @@ public class CheckSpelling
             findNextMisspelling();
          }
       }
+   }
+
+   private void close()
+   {
+      progressDisplay_.hide();
+      view_.closeDialog();
+   }
+
+   private boolean checkForCancel()
+   {
+      return canceled_;
+   }
+
+   private void showProgress()
+   {
+      if (view_.isShowing())
+         view_.showProgress();
+   }
+
+   private void showDialog()
+   {
+      if (progressDisplay_.isShowing())
+         progressDisplay_.hide();
+
+      if (!view_.isShowing())
+         view_.showModal();
+      view_.hideProgress();
    }
 
    private void handleMisspelledWord(Range range)
@@ -229,14 +300,15 @@ public class CheckSpelling
       }
 
       view_.getMisspelledWord().setText(word);
-      view_.showModal();
+      showDialog();
 
       view_.focusReplacement();
 
       spellChecker_.suggestionList(word, new ServerRequestCallback<JsArrayString>()
       {
          @Override
-         public void onResponseReceived(JsArrayString response)
+         public void onResponseReceived(
+               JsArrayString response)
          {
             String[] suggestions = JsUtil.toStringArray(response);
             view_.setSuggestions(suggestions);
@@ -258,6 +330,7 @@ public class CheckSpelling
    private final SpellChecker spellChecker_;
    private final DocDisplay docDisplay_;
    private final Display view_;
+   private final ProgressDisplay progressDisplay_;
    private final Anchor initialCursorPos_;
 
    private final HashMap<String, String> changeAll_ = new HashMap<String, String>();
@@ -265,4 +338,5 @@ public class CheckSpelling
    private Position currentPos_;
 
    private boolean wrapped_;
+   private boolean canceled_;
 }

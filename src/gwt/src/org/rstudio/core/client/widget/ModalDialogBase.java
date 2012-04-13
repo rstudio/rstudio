@@ -338,7 +338,7 @@ public abstract class ModalDialogBase extends DialogBox
       };
    }
    
-   protected void closeDialog()
+   public void closeDialog()
    {
       hide();
       removeFromParent();

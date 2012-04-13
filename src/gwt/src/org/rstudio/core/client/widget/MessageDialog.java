@@ -39,10 +39,10 @@ public class MessageDialog extends ModalDialogBase
       setButtonAlignment(HasHorizontalAlignment.ALIGN_CENTER);
    }
 
-   public void addButton(String label,
-                         final Operation operation,
-                         boolean isDefault,
-                         boolean isCancel)
+   public ThemedButton addButton(String label,
+                                 final Operation operation,
+                                 boolean isDefault,
+                                 boolean isCancel)
    {
       ThemedButton button = new ThemedButton(label, new ClickHandler()
       {
@@ -55,12 +55,14 @@ public class MessageDialog extends ModalDialogBase
       });
 
       addButton(button, isDefault, isCancel);
+
+      return button;
    }
 
-   public void addButton(String label,
-                         final ProgressOperation operation,
-                         boolean isDefault,
-                         boolean isCancel)
+   public ThemedButton addButton(String label,
+                                 final ProgressOperation operation,
+                                 boolean isDefault,
+                                 boolean isCancel)
    {
       if (operation != null && progress_ == null)
          progress_ = addProgressIndicator();
@@ -77,6 +79,8 @@ public class MessageDialog extends ModalDialogBase
       });
 
       addButton(button, isDefault, isCancel);
+
+      return button;
    }
 
    private void addButton(ThemedButton button,

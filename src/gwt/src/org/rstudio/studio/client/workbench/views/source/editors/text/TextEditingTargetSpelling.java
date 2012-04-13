@@ -21,6 +21,7 @@ import org.rstudio.core.client.CsvWriter;
 import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.studio.client.common.spelling.SpellChecker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.CheckSpelling;
+import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.InitialProgressDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDialog;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
@@ -39,7 +40,9 @@ public class TextEditingTargetSpelling implements SpellChecker.Context
    
    public void checkSpelling()
    {
-      new CheckSpelling(spellChecker_, docDisplay_, new SpellingDialog());
+      new CheckSpelling(spellChecker_, docDisplay_,
+                        new SpellingDialog(),
+                        new InitialProgressDialog());
    }
 
    @Override
