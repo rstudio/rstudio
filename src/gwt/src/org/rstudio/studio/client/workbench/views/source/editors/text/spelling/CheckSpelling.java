@@ -26,16 +26,13 @@ public class CheckSpelling
 {
    public interface Display
    {
-      void setMisspelling(String text,
-                          int highlightOffset,
-                          int highlightLength);
-
       HasClickHandlers getAddButton();
       HasClickHandlers getIgnoreAllButton();
       HasClickHandlers getSkipButton();
       HasClickHandlers getChangeButton();
       HasClickHandlers getChangeAllButton();
 
+      HasText getMisspelledWord();
       HasText getReplacement();
       void setSuggestions(String[] values);
       void clearSuggestions();
@@ -74,9 +71,9 @@ public class CheckSpelling
          @Override
          public void onClick(ClickEvent event)
          {
-            if (!currentMisspelledWord_.equals(view_.getReplacement().getText()))
+            if (!view_.getMisspelledWord().getText().equals(view_.getReplacement().getText()))
             {
-               changeAll_.put(currentMisspelledWord_,
+               changeAll_.put(view_.getMisspelledWord().getText(),
                               view_.getReplacement().getText());
             }
             doReplacement(view_.getReplacement().getText());
@@ -99,7 +96,7 @@ public class CheckSpelling
          @Override
          public void onClick(ClickEvent event)
          {
-            spellChecker_.addIgnoredWord(currentMisspelledWord_);
+            spellChecker_.addIgnoredWord(view_.getMisspelledWord().getText());
             currentPos_ = docDisplay_.getCursorPosition();
             findNextMisspelling();
          }
@@ -110,7 +107,8 @@ public class CheckSpelling
          @Override
          public void onClick(ClickEvent event)
          {
-            spellChecker_.addToUserDictionary(currentMisspelledWord_);
+            spellChecker_.addToUserDictionary(
+                  view_.getMisspelledWord().getText());
             currentPos_ = docDisplay_.getCursorPosition();
             findNextMisspelling();
          }
@@ -133,7 +131,8 @@ public class CheckSpelling
    private void doReplacement(String replacement)
    {
       docDisplay_.replaceSelection(replacement);
-      currentPos_ = docDisplay_.getCursorPosition();
+      // Spell check what we just replaced
+      currentPos_ = docDisplay_.getSelectionStart();
    }
 
    private void findNextMisspelling()
@@ -219,7 +218,6 @@ public class CheckSpelling
       view_.getReplacement().setText("");
 
       String word = docDisplay_.getTextForRange(range);
-      currentMisspelledWord_ = word;
 
       if (changeAll_.containsKey(word))
       {
@@ -228,7 +226,7 @@ public class CheckSpelling
          return;
       }
 
-      view_.setMisspelling(word, 0, word.length());
+      view_.getMisspelledWord().setText(word);
       view_.showModal();
 
       spellChecker_.suggestionList(word, new ServerRequestCallback<JsArrayString>()
@@ -258,8 +256,6 @@ public class CheckSpelling
    private final HashMap<String, String> changeAll_ = new HashMap<String, String>();
 
    private Position currentPos_;
-
-   private String currentMisspelledWord_;
 
    private boolean wrapped_;
 }

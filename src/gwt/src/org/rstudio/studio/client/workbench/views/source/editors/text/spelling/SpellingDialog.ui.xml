@@ -3,6 +3,10 @@
              xmlns:widget="urn:import:org.rstudio.core.client.widget">
 
    <ui:style>
+      .outer button {
+         margin-right: -4px;
+      }
+
       .control {
          width: 275px;
          border: 1px solid #888 !important;
@@ -13,38 +17,58 @@
          -webkit-box-sizing: border-box;
          font-size: 12px;
       }
-      .context {
-         height: 100px;
-         margin-bottom: 12px;
+
+      .label {
+         display: inline-block;
+         width: 110px;
       }
+
+      .suggestionLabel {
+         display: block;
+         float: left;
+      }
+
    </ui:style>
 
-   <g:HTMLPanel>
+   <g:HTMLPanel styleName="{style.outer}">
       <table cellpadding="0" cellspacing="0">
          <tr>
-            <td><g:Label text="Not in dictionary:"/></td>
+            <td nowrap="nowrap">
+               <div class="{style.label}">Not in dictionary:
+               </div><g:TextBox ui:field="txtDisplay_"
+                          styleName="{style.control}"
+                          readOnly="true"/>
+            </td>
+            <td><widget:ThemedButton ui:field="btnSkip_"/></td>
          </tr>
          <tr>
-            <td valign="top"><g:SimplePanel ui:field="divDisplay_" styleName="{style.control} {style.context}" /></td>
-            <td valign="top">
-               <widget:ThemedButton ui:field="btnAdd_"/><br/>
-               <widget:ThemedButton ui:field="btnIgnoreAll_"/><br/>
-               <widget:ThemedButton ui:field="btnSkip_"/>
+            <td nowrap="nowrap">
+               <div class="{style.label}">Change to:
+               </div><g:TextBox ui:field="txtReplacement_" styleName="{style.control}" />
             </td>
+            <td><widget:ThemedButton ui:field="btnIgnoreAll_"/></td>
          </tr>
          <tr>
-            <td><g:Label text="Change to:"/></td>
+            <td rowspan="3" nowrap="nowrap" valign="top">
+               <div class="{style.label} {style.suggestionLabel}">
+                  <!-- reserved for future use -->
+                  <br/>
+               </div>
+               <g:ListBox
+                     ui:field="lstSuggestions_"
+                     styleName="{style.control}"
+                     visibleItemCount="6"/>
+            </td>
+            <td><widget:ThemedButton ui:field="btnChange_"/></td>
          </tr>
          <tr>
-            <td valign="top">
-               <g:TextBox ui:field="txtReplacement_" styleName="{style.control}" />
-               <br/>
-               <g:ListBox ui:field="lstSuggestions_" styleName="{style.control}" visibleItemCount="4"/>
-            </td>
-            <td valign="top">
-               <widget:ThemedButton ui:field="btnChange_"/><br/>
-               <widget:ThemedButton ui:field="btnChangeAll_"/>
-            </td>
+            <td><widget:ThemedButton ui:field="btnChangeAll_"/></td>
+         </tr>
+         <tr>
+            <td><widget:ThemedButton ui:field="btnAdd_"/></td>
+         </tr>
+         <tr>
+            <td/>
          </tr>
       </table>
    </g:HTMLPanel>

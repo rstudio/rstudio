@@ -22,8 +22,8 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
 
       btnAdd_ = new ThemedButton("Add");
       btnAdd_.setTitle("Add word to user dictionary");
+      btnSkip_ = new ThemedButton("Ignore");
       btnIgnoreAll_ = new ThemedButton("Ignore All");
-      btnSkip_ = new ThemedButton("Skip");
       btnChange_ = new ThemedButton("Change");
       btnChangeAll_ = new ThemedButton("Change All");
 
@@ -32,21 +32,10 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
       addCancelButton();
    }
 
-
-
    @Override
    protected Widget createMainWidget()
    {
       return mainWidget_;
-   }
-
-   @Override
-   public void setMisspelling(String text,
-                              int highlightOffset,
-                              int highlightLength)
-   {
-      // TODO: Implement highlight
-      divDisplay_.getElement().setInnerText(text);
    }
 
    @Override
@@ -77,6 +66,12 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
    public HasClickHandlers getChangeAllButton()
    {
       return btnChangeAll_;
+   }
+
+   @Override
+   public HasText getMisspelledWord()
+   {
+      return txtDisplay_;
    }
 
    @Override
@@ -138,6 +133,6 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
    @UiField
    ListBox lstSuggestions_;
    @UiField
-   SimplePanel divDisplay_;
+   TextBox txtDisplay_;
    private final Widget mainWidget_;
 }
