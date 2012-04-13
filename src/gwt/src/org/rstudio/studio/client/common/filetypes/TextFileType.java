@@ -137,7 +137,8 @@ public class TextFileType extends EditableFileType
    
    public boolean requiresKnit()
    {
-      return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId());
+      return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId()) ||
+             FileTypeRegistry.RHTML.getTypeId().equals(getTypeId());
    }
    
    public boolean isMarkdown()

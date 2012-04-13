@@ -126,6 +126,21 @@ public:
 
    bool requiresKnit() { return requiresKnit_; }
 
+   FilePath targetFile() const
+   {
+      return targetFile_;
+   }
+
+   FilePath targetDirectory() const
+   {
+      return targetFile_.parent();
+   }
+
+   FilePath knitrOutputFile() const
+   {
+      return knitrOutputFile_;
+   }
+
    std::string readOutput() const
    {
       if (outputFile_.empty())
@@ -139,24 +154,14 @@ public:
       return output;
    }
 
-   FilePath targetFilePath() const
+   FilePath htmlPreviewFile()
    {
-      return targetFile_;
-   }
-
-   FilePath dependentFilePath(const std::string& fileName = std::string())
-   {
-      return targetFile_.parent().childPath(fileName);
-   }
-
-   FilePath previewFilePath() const
-   {
-      if (isMarkdown_ || requiresKnit_)
-         return targetFile_.parent().childPath(targetFile_.stem() + ".html");
+      FilePath baseFile = requiresKnit() ? knitrOutputFile() : targetFile();
+      if (isMarkdown())
+         return baseFile.parent().childPath(baseFile.stem() + ".html");
       else
-         return targetFile_;
+         return baseFile;
    }
-
 
 private:
 
@@ -328,16 +333,15 @@ private:
       isRunning_ = false;
       outputFile_ = outputFile;
 
-      // NOTE: right now we never allow scripts in preview mode (this is
-      // so that the find and scroll-position preservation accross reload
-      // work). if we want to enable scripts within the preview window
-      // the best way to do it is detect them by sniffing the output
-      // and then pass true to enqueHTMLPreviewSucceeded (below). that way
-      // the full features of the preview window are available by default
-      // and users can (implicitly) elect to disable them in favor of
-      // scripts if they want to (see also HTMLPreviewPanel.setScriptsEnabled)
+      // Disable scripts for Markdown (since they'll get stripped at some
+      // point anyway) but enable them for HTML. Note that when scripts are
+      // enabled some features of the preview window (Print, Find, restoring
+      // scroll position on reload) are not available because when we allow
+      // scripts we sandbox the iframe out of our same-origin. see the comment
+      // in HTMLPreviewPanel.setScriptsEnabled for more details
+      bool scriptsEnabled = !isMarkdown();
 
-      enqueHTMLPreviewSucceeded(targetFile_, kHTMLPreview "/", false);
+      enqueHTMLPreviewSucceeded(targetFile_, kHTMLPreview "/", scriptsEnabled);
    }
 
    static void enqueHTMLPreviewStarted(const FilePath& targetFile)
@@ -504,6 +508,60 @@ private:
    FilePath basePath_;
 };
 
+void handleMarkdownPreviewRequest(http::Response* pResponse)
+{
+   try
+   {
+      // open input file (template)
+      FilePath resourcesPath = session::options().rResourcesPath();
+      FilePath htmlPreviewFile = resourcesPath.childPath("html_preview.htm");
+      boost::shared_ptr<std::istream> pIfs;
+      Error error = htmlPreviewFile.open_r(&pIfs);
+      if (error)
+      {
+         pResponse->setError(error);
+         return;
+      }
+      pIfs->exceptions(std::istream::failbit | std::istream::badbit);
+
+      // setup template filter
+      std::map<std::string,std::string> vars;
+      vars["html_output"] = s_pCurrentPreview_->readOutput();
+      text::TemplateFilter templateFilter(vars);
+
+      // setup image filter
+      Base64ImageFilter imageFilter(s_pCurrentPreview_->targetDirectory());
+
+      // open output file
+      FilePath outputFile = s_pCurrentPreview_->htmlPreviewFile();
+      boost::shared_ptr<std::ostream> pOfs;
+      error = outputFile.open_w(&pOfs);
+      if (error)
+      {
+         pResponse->setError(error);
+         return;
+      }
+      pOfs->exceptions(std::istream::failbit | std::istream::badbit);
+
+      // copy to output file with filters
+      boost::iostreams::filtering_ostream filteringStream ;
+      filteringStream.push(templateFilter);
+      filteringStream.push(imageFilter);
+      filteringStream.push(*pOfs);
+      boost::iostreams::copy(*pIfs, filteringStream, 128);
+
+      // send response
+      pResponse->setBody(outputFile);
+   }
+   catch(const std::exception& e)
+   {
+      Error error = systemError(boost::system::errc::io_error,
+                                ERROR_LOCATION);
+      error.addProperty("what", e.what());
+      pResponse->setError(error);
+   }
+}
+
 void handlePreviewRequest(const http::Request& request,
                           http::Response* pResponse)
 {
@@ -514,6 +572,9 @@ void handlePreviewRequest(const http::Request& request,
       return;
    }
 
+   // disable caching entirely
+   pResponse->setNoCacheHeaders();
+
    // get the requested path
    std::string path = http::util::pathAfterPrefix(request,
                                                   kHTMLPreviewLocation);
@@ -521,66 +582,19 @@ void handlePreviewRequest(const http::Request& request,
    // if it is empty then this is the main request
    if (path.empty())
    {
-      try
-      {
-         // open input file (template)
-         FilePath resourcesPath = session::options().rResourcesPath();
-         FilePath htmlPreviewFile = resourcesPath.childPath("html_preview.htm");
-         boost::shared_ptr<std::istream> pIfs;
-         Error error = htmlPreviewFile.open_r(&pIfs);
-         if (error)
-         {
-            pResponse->setError(error);
-            return;
-         }
-         pIfs->exceptions(std::istream::failbit | std::istream::badbit);
-
-         // setup template filter
-         std::map<std::string,std::string> vars;
-         vars["html_output"] = s_pCurrentPreview_->readOutput();
-         text::TemplateFilter templateFilter(vars);
-
-         // setup image filter
-         Base64ImageFilter imageFilter(s_pCurrentPreview_->dependentFilePath());
-
-         // open output file
-         boost::shared_ptr<std::ostream> pOfs;
-         error = s_pCurrentPreview_->previewFilePath().open_w(&pOfs);
-         if (error)
-         {
-            pResponse->setError(error);
-            return;
-         }
-         pOfs->exceptions(std::istream::failbit | std::istream::badbit);
-
-         // copy to output file with filters
-         boost::iostreams::filtering_ostream filteringStream ;
-         filteringStream.push(templateFilter);
-         if (s_pCurrentPreview_->isMarkdown())
-            filteringStream.push(imageFilter);
-         filteringStream.push(*pOfs);
-         boost::iostreams::copy(*pIfs, filteringStream, 128);
-      }
-      catch(const std::exception& e)
-      {
-         Error error = systemError(boost::system::errc::io_error,
-                                   ERROR_LOCATION);
-         error.addProperty("what", e.what());
-         pResponse->setError(error);
-      }
-
-      // send response
-      pResponse->setNoCacheHeaders();
-      pResponse->setBody(s_pCurrentPreview_->previewFilePath());
-
+      if (s_pCurrentPreview_->isMarkdown())
+         handleMarkdownPreviewRequest(pResponse);
+      else if (s_pCurrentPreview_->requiresKnit())
+         pResponse->setFile(s_pCurrentPreview_->knitrOutputFile(), request);
+      else
+         pResponse->setFile(s_pCurrentPreview_->targetFile(), request);
    }
 
    // request for dependent file
    else
    {
-      // return the file
-      FilePath filePath = s_pCurrentPreview_->dependentFilePath(path);
-      pResponse->setCacheableFile(filePath, request);
+      FilePath filePath = s_pCurrentPreview_->targetDirectory().childPath(path);
+      pResponse->setFile(filePath, request);
    }
 }
 

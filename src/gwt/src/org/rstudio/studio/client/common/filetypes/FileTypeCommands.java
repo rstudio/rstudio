@@ -57,11 +57,13 @@ public class FileTypeCommands
       session_ = session;
 
       rMDCommand_ = addRFileType(FileTypeRegistry.RMARKDOWN, "R _Markdown");
+      rHTMLCommand_ = addRFileType(FileTypeRegistry.RHTML, "R _HTML");
       addRFileType(FileTypeRegistry.RD, "R _Doc");
       
       addTextFileType(FileTypeRegistry.TEXT, "_Text File");
       addTextFileType(FileTypeRegistry.TEX, "Te_X File");
-      addTextFileType(FileTypeRegistry.MARKDOWN, "Mar_kdown File");   
+      addTextFileType(FileTypeRegistry.MARKDOWN, "Mar_kdown File");  
+      addTextFileType(FileTypeRegistry.HTML, "HTM_L File");
           
       eventBus.addHandler(InstalledPackagesChangedEvent.TYPE,
                           new InstalledPackagesChangedHandler() {
@@ -103,9 +105,12 @@ public class FileTypeCommands
       types.add(FileTypeRegistry.SWEAVE);
       if (rMDCommand_.isEnabled())
          types.add(FileTypeRegistry.RMARKDOWN);
+      if (rHTMLCommand_.isEnabled())
+         types.add(FileTypeRegistry.RHTML);
       types.add(FileTypeRegistry.TEXT);
       types.add(FileTypeRegistry.TEX);
       types.add(FileTypeRegistry.MARKDOWN);
+      types.add(FileTypeRegistry.HTML);
       
       return (TextFileType[])types.toArray(new TextFileType[0]);
    }
@@ -123,6 +128,8 @@ public class FileTypeCommands
       htmlCapabilities_ = caps;
       rMDCommand_.setEnabled(caps.isRMarkdownSupported());
       rMDCommand_.setVisible(caps.isRMarkdownSupported());
+      rHTMLCommand_.setEnabled(caps.isRHtmlSupported());
+      rHTMLCommand_.setVisible(caps.isRHtmlSupported());
    }
    
    private AppCommand addRFileType(TextFileType fileType, String menuLabel) 
@@ -174,6 +181,7 @@ public class FileTypeCommands
          new ArrayList<CommandWithId>();
    
    private final AppCommand rMDCommand_;
+   private final AppCommand rHTMLCommand_;
    private HTMLCapabilities htmlCapabilities_;
 
 }

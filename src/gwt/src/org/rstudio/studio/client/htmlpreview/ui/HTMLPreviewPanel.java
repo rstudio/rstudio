@@ -170,6 +170,7 @@ public class HTMLPreviewPanel extends ResizeComposite
       public PreviewFrame()
       {
          setStylePrimaryName("rstudio-HelpFrame");
+         getElement().getStyle().setBackgroundColor("white");
          setScriptsEnabled(false);
       }
       
