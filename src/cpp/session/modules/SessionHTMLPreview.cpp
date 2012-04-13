@@ -18,9 +18,17 @@
 #include <boost/format.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
+#include <boost/iostreams/copy.hpp>
+#include <boost/iostreams/concepts.hpp>
+#include <boost/iostreams/filter/regex.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/Base64.hpp>
 #include <core/http/Util.hpp>
 #include <core/PerformanceTimer.hpp>
 #include <core/text/TemplateFilter.hpp>
@@ -60,13 +68,20 @@ public:
 
 private:
    HTMLPreview(const FilePath& targetFile)
-      : targetFile_(targetFile), isRunning_(false), terminationRequested_(false)
+      : targetFile_(targetFile),
+        isMarkdown_(false),
+        requiresKnit_(false),
+        isRunning_(false),
+        terminationRequested_(false)
    {
    }
 
-   void start(const std::string& encoding, bool isMarkdown, bool knit)
+   void start(const std::string& encoding, bool isMarkdown, bool requiresKnit)
    {
       enqueHTMLPreviewStarted(targetFile_);
+
+      isMarkdown_ = isMarkdown;
+      requiresKnit_ = requiresKnit;
 
       // read the file using the specified encoding
       std::string fileContents;
@@ -81,7 +96,7 @@ private:
       }
 
       // determine whether we need to knit the file
-      if (knit)
+      if (requiresKnit)
       {
          performKnit(isMarkdown);
       }
@@ -107,6 +122,10 @@ public:
 
    void terminate() { terminationRequested_ = true; }
 
+   bool isMarkdown() { return isMarkdown_; }
+
+   bool requiresKnit() { return requiresKnit_; }
+
    std::string readOutput() const
    {
       if (outputFile_.empty())
@@ -120,9 +139,22 @@ public:
       return output;
    }
 
-   FilePath dependentFilePath(const std::string& fileName)
+   FilePath targetFilePath() const
+   {
+      return targetFile_;
+   }
+
+   FilePath dependentFilePath(const std::string& fileName = std::string())
    {
       return targetFile_.parent().childPath(fileName);
+   }
+
+   FilePath previewFilePath() const
+   {
+      if (isMarkdown_ || requiresKnit_)
+         return targetFile_.parent().childPath(targetFile_.stem() + ".html");
+      else
+         return targetFile_;
    }
 
 
@@ -350,6 +382,9 @@ private:
 
 private:
    FilePath targetFile_;
+   bool isMarkdown_;
+   bool requiresKnit_;
+
    FilePath knitrOutputFile_;
    FilePath outputFile_;
    bool isRunning_;
@@ -414,6 +449,60 @@ Error getHTMLCapabilities(const json::JsonRpcRequest&,
 }
 
 
+// convert images to base64
+class Base64ImageFilter : public boost::iostreams::regex_filter
+{
+public:
+   Base64ImageFilter(const FilePath& basePath)
+      : boost::iostreams::regex_filter(
+          boost::regex(
+           "(<\\s*[Ii][Mm][Gg] [^\\>]*[Ss][Rr][Cc]\\s*=\\s*)([\"'])(.*?)(\\2)"),
+           boost::bind(&Base64ImageFilter::toBase64Image, this, _1)),
+        basePath_(basePath)
+   {
+   }
+
+private:
+   std::string toBase64Image(const boost::cmatch& match)
+   {
+      // extract image reference
+      std::string imgRef = match[3];
+
+      // see if this is an image within the base directory. if it is then
+      // base64 encode it
+      FilePath imagePath = basePath_.childPath(imgRef);
+      if (imagePath.exists() &&
+          boost::algorithm::starts_with(imagePath.mimeContentType(), "image/"))
+      {
+         std::string imageContents;
+         Error error = core::readStringFromFile(imagePath, &imageContents);
+         if (!error)
+         {
+            std::string imageBase64;
+            Error error = core::base64::encode(imageContents, &imageBase64);
+            if (!error)
+            {
+               imgRef = "data:" + imagePath.mimeContentType() + ";base64,";
+               imgRef.append(imageBase64);
+            }
+            else
+            {
+               LOG_ERROR(error);
+            }
+         }
+         else
+         {
+            LOG_ERROR(error);
+         }
+      }
+
+      // return the filtered result
+      return match[1] + match[2] + imgRef + match[4];
+   }
+
+private:
+   FilePath basePath_;
+};
 
 void handlePreviewRequest(const http::Request& request,
                           http::Response* pResponse)
@@ -432,18 +521,58 @@ void handlePreviewRequest(const http::Request& request,
    // if it is empty then this is the main request
    if (path.empty())
    {
-      // determine location of template
-      FilePath resourcesPath = session::options().rResourcesPath();
-      FilePath htmlPreviewFile = resourcesPath.childPath("html_preview.htm");
+      try
+      {
+         // open input file (template)
+         FilePath resourcesPath = session::options().rResourcesPath();
+         FilePath htmlPreviewFile = resourcesPath.childPath("html_preview.htm");
+         boost::shared_ptr<std::istream> pIfs;
+         Error error = htmlPreviewFile.open_r(&pIfs);
+         if (error)
+         {
+            pResponse->setError(error);
+            return;
+         }
+         pIfs->exceptions(std::istream::failbit | std::istream::badbit);
 
-      // setup template filter
-      std::map<std::string,std::string> vars;
-      vars["html_output"] = s_pCurrentPreview_->readOutput();
-      text::TemplateFilter filter(vars);
+         // setup template filter
+         std::map<std::string,std::string> vars;
+         vars["html_output"] = s_pCurrentPreview_->readOutput();
+         text::TemplateFilter templateFilter(vars);
+
+         // setup image filter
+         Base64ImageFilter imageFilter(s_pCurrentPreview_->dependentFilePath());
+
+         // open output file
+         boost::shared_ptr<std::ostream> pOfs;
+         error = s_pCurrentPreview_->previewFilePath().open_w(&pOfs);
+         if (error)
+         {
+            pResponse->setError(error);
+            return;
+         }
+         pOfs->exceptions(std::istream::failbit | std::istream::badbit);
+
+         // copy to output file with filters
+         boost::iostreams::filtering_ostream filteringStream ;
+         filteringStream.push(templateFilter);
+         if (s_pCurrentPreview_->isMarkdown())
+            filteringStream.push(imageFilter);
+         filteringStream.push(*pOfs);
+         boost::iostreams::copy(*pIfs, filteringStream, 128);
+      }
+      catch(const std::exception& e)
+      {
+         Error error = systemError(boost::system::errc::io_error,
+                                   ERROR_LOCATION);
+         error.addProperty("what", e.what());
+         pResponse->setError(error);
+      }
 
       // send response
       pResponse->setNoCacheHeaders();
-      pResponse->setBody(htmlPreviewFile, filter);
+      pResponse->setBody(s_pCurrentPreview_->previewFilePath());
+
    }
 
    // request for dependent file
