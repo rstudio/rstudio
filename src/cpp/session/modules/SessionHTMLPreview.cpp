@@ -341,7 +341,11 @@ private:
       // in HTMLPreviewPanel.setScriptsEnabled for more details
       bool scriptsEnabled = !isMarkdown();
 
-      enqueHTMLPreviewSucceeded(targetFile_, kHTMLPreview "/", scriptsEnabled);
+      enqueHTMLPreviewSucceeded(kHTMLPreview "/",
+                                targetFile(),
+                                htmlPreviewFile(),
+                                isMarkdown(),
+                                scriptsEnabled);
    }
 
    static void enqueHTMLPreviewStarted(const FilePath& targetFile)
@@ -366,14 +370,18 @@ private:
       module_context::enqueClientEvent(event);
    }
 
-   static void enqueHTMLPreviewSucceeded(const FilePath& sourceFile,
-                                         const std::string& previewUrl,
+   static void enqueHTMLPreviewSucceeded(const std::string& previewUrl,
+                                         const FilePath& sourceFile,
+                                         const FilePath& htmlFile,
+                                         bool enableSaveAs,
                                          bool enableScripts)
    {
       json::Object resultJson;
       resultJson["succeeded"] = true;
       resultJson["source_file"] = module_context::createAliasedPath(sourceFile);
+      resultJson["html_file"] = module_context::createAliasedPath(htmlFile);
       resultJson["preview_url"] = previewUrl;
+      resultJson["enable_saveas"] = enableSaveAs;
       resultJson["enable_scripts"] = enableScripts;
       ClientEvent event(client_events::kHTMLPreviewCompletedEvent, resultJson);
       module_context::enqueClientEvent(event);

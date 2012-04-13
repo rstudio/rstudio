@@ -55,7 +55,10 @@ public class HTMLPreviewPanel extends ResizeComposite
       fileLabel_ = new ToolbarFileLabel(toolbar, 300);
       
       toolbar.addLeftSeparator();
+      saveHtmlPreviewAs_ = commands.saveHtmlPreviewAs();
+      toolbar.addLeftWidget(saveHtmlPreviewAs_.createToolbarButton());
       
+      toolbar.addLeftSeparator();
       printHtmlPreview_ = commands.printHtmlPreview();
       toolbar.addLeftWidget(printHtmlPreview_.createToolbarButton());
       
@@ -146,11 +149,13 @@ public class HTMLPreviewPanel extends ResizeComposite
    }
    
    @Override
-   public void showPreview(String sourceFile,
-                           String url, 
+   public void showPreview(String url, 
+                           String htmlFile,
+                           boolean enableSaveAs,
                            boolean enableScripts)
    {
-      fileLabel_.setFileName(sourceFile);
+      fileLabel_.setFileName(htmlFile);
+      saveHtmlPreviewAs_.setVisible(enableSaveAs);
       printHtmlPreview_.setVisible(!enableScripts);
       findTextBox_.setVisible(!enableScripts);
       previewFrame_.setScriptsEnabled(enableScripts);
@@ -240,6 +245,7 @@ public class HTMLPreviewPanel extends ResizeComposite
    private final PreviewFrame previewFrame_;
    private ToolbarFileLabel fileLabel_;
    private FindTextBox findTextBox_;
+   private AppCommand saveHtmlPreviewAs_;
    private AppCommand printHtmlPreview_;
    private HTMLPreviewProgressDialog activeProgressDialog_;
 }

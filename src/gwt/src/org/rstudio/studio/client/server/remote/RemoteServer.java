@@ -682,11 +682,13 @@ public class RemoteServer implements Server
    
    public void copyFile(FileSystemItem sourceFile,
                         FileSystemItem targetFile,
+                        boolean ovewrite,
                         ServerRequestCallback<Void> requestCallback)
    {
       JSONArray paramArray = new JSONArray();
       paramArray.set(0, new JSONString(sourceFile.getPath()));
       paramArray.set(1, new JSONString(targetFile.getPath()));
+      paramArray.set(2, JSONBoolean.getInstance(ovewrite));
       
       sendRequest(RPC_SCOPE, COPY_FILE, paramArray, requestCallback);
    }

@@ -89,6 +89,7 @@ public class FilesCopy
 
             server_.copyFile(sourceFile,
                              targetFile,
+                             false,
                              new VoidServerRequestCallback(progress) {
                                  @Override
                                  protected void onSuccess()
