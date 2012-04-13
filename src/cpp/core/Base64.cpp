@@ -38,7 +38,16 @@ Error encode(const std::string& input, std::string* pOutput)
                 b64_text(input.c_str() + input.size()),
                 ostream_iterator<char>(os));
 
-      *pOutput = os.str();
+      pOutput->clear();
+      pOutput->reserve(((input.size() * 4) / 3) + 3);
+      pOutput->append(os.str());
+
+      std::size_t mod = input.size() % 3;
+      if (mod == 1)
+         pOutput->append("==");
+      else if(mod == 2)
+         pOutput->append("=");
+
       return Success();
    }
    CATCH_UNEXPECTED_EXCEPTION
