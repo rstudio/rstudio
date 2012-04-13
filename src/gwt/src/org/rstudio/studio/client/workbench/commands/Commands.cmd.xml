@@ -746,6 +746,7 @@ well as menu structures (for main menu and popup menus).
         
    <!-- HTML Preview -->     
    <cmd id="printHtmlPreview"
+        buttonLabel="Print"
         desc="Print the current document"/>
         
    <cmd id="historySendToSource"
