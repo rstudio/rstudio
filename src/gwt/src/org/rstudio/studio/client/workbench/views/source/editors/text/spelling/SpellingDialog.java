@@ -26,6 +26,7 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
       btnIgnoreAll_ = new ThemedButton("Ignore All");
       btnChange_ = new ThemedButton("Change");
       btnChangeAll_ = new ThemedButton("Change All");
+      prepareButtons(btnAdd_, btnSkip_, btnIgnoreAll_, btnChange_, btnChangeAll_);
 
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
 
@@ -36,6 +37,14 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
    protected Widget createMainWidget()
    {
       return mainWidget_;
+   }
+
+   private void prepareButtons(ThemedButton... buttons)
+   {
+      for (ThemedButton button : buttons)
+      {
+         button.setTight(true);
+      }
    }
 
    @Override
@@ -110,6 +119,13 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
       if (index < 0)
          return null;
       return lstSuggestions_.getItemText(index);
+   }
+
+   @Override
+   public void focusReplacement()
+   {
+      txtReplacement_.setFocus(true);
+      txtReplacement_.selectAll();
    }
 
    @Override

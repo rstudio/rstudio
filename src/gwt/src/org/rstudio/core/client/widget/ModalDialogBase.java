@@ -135,7 +135,7 @@ public abstract class ModalDialogBase extends DialogBox
          mainWidget_ = createMainWidget();
          
          // get the main widget to line up with the right edge of the buttons. 
-         mainWidget_.getElement().getStyle().setMarginRight(3, Unit.PX);
+         mainWidget_.getElement().getStyle().setMarginRight(2, Unit.PX);
          
          mainPanel_.insert(mainWidget_, 0);
       }

@@ -91,6 +91,7 @@ public class ThemedButton extends FocusWidget implements HasClickHandlers
       String buttonCenter();
       String buttonRight();
       String buttonContent();
+      String tight();
    }
 
 
@@ -156,6 +157,14 @@ public class ThemedButton extends FocusWidget implements HasClickHandlers
          else
             removeStyleDependentName("DefaultDialogAction");
       }
+   }
+
+   public void setTight(boolean tight)
+   {
+      if (tight)
+         addStyleName(RESOURCES.styles().tight());
+      else
+         removeStyleName(RESOURCES.styles().tight());
    }
    
    public boolean isDefault()

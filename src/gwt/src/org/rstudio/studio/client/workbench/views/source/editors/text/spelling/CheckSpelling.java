@@ -39,6 +39,8 @@ public class CheckSpelling
       HasChangeHandlers getSuggestionList();
       String getSelectedSuggestion();
 
+      void focusReplacement();
+
       void showModal();
       void hide();
       void closeDialog();
@@ -229,6 +231,8 @@ public class CheckSpelling
       view_.getMisspelledWord().setText(word);
       view_.showModal();
 
+      view_.focusReplacement();
+
       spellChecker_.suggestionList(word, new ServerRequestCallback<JsArrayString>()
       {
          @Override
@@ -237,7 +241,10 @@ public class CheckSpelling
             String[] suggestions = JsUtil.toStringArray(response);
             view_.setSuggestions(suggestions);
             if (suggestions.length > 0)
+            {
                view_.getReplacement().setText(suggestions[0]);
+               view_.focusReplacement();
+            }
          }
 
          @Override
