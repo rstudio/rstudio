@@ -22,17 +22,16 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
 
       btnAdd_ = new ThemedButton("Add");
       btnAdd_.setTitle("Add word to user dictionary");
+      btnSkip_ = new ThemedButton("Ignore");
       btnIgnoreAll_ = new ThemedButton("Ignore All");
-      btnSkip_ = new ThemedButton("Skip");
       btnChange_ = new ThemedButton("Change");
       btnChangeAll_ = new ThemedButton("Change All");
+      prepareButtons(btnAdd_, btnSkip_, btnIgnoreAll_, btnChange_, btnChangeAll_);
 
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
 
       addCancelButton();
    }
-
-
 
    @Override
    protected Widget createMainWidget()
@@ -40,13 +39,12 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
       return mainWidget_;
    }
 
-   @Override
-   public void setMisspelling(String text,
-                              int highlightOffset,
-                              int highlightLength)
+   private void prepareButtons(ThemedButton... buttons)
    {
-      // TODO: Implement highlight
-      divDisplay_.getElement().setInnerText(text);
+      for (ThemedButton button : buttons)
+      {
+         button.setTight(true);
+      }
    }
 
    @Override
@@ -77,6 +75,12 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
    public HasClickHandlers getChangeAllButton()
    {
       return btnChangeAll_;
+   }
+
+   @Override
+   public HasText getMisspelledWord()
+   {
+      return txtDisplay_;
    }
 
    @Override
@@ -118,6 +122,13 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
    }
 
    @Override
+   public void focusReplacement()
+   {
+      txtReplacement_.setFocus(true);
+      txtReplacement_.selectAll();
+   }
+
+   @Override
    public void closeDialog()
    {
       super.closeDialog();
@@ -138,6 +149,6 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
    @UiField
    ListBox lstSuggestions_;
    @UiField
-   SimplePanel divDisplay_;
+   TextBox txtDisplay_;
    private final Widget mainWidget_;
 }

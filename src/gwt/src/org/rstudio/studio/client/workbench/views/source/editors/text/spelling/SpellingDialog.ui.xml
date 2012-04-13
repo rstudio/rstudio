@@ -3,6 +3,10 @@
              xmlns:widget="urn:import:org.rstudio.core.client.widget">
 
    <ui:style>
+      .outer input {
+         height: 20px !important;
+      }
+
       .control {
          width: 275px;
          border: 1px solid #888 !important;
@@ -13,40 +17,63 @@
          -webkit-box-sizing: border-box;
          font-size: 12px;
       }
-      .context {
-         height: 100px;
-         margin-bottom: 12px;
+
+      .label {
+         display: inline-block;
+         width: 110px;
       }
+
+      .suggestions {
+         width: 192px;
+         margin-bottom: 24px;
+      }
+
+      .start2 {
+         margin-left: 110px;
+      }
+
+      .col2_3 {
+         width: 275px;
+      }
+
+      .smallTopMargin {
+         margin-top: 4px;
+      }
+
+      .bigTopMargin {
+         margin-top: 18px;
+      }
+
    </ui:style>
 
-   <g:HTMLPanel>
-      <table cellpadding="0" cellspacing="0">
-         <tr>
-            <td><g:Label text="Not in dictionary:"/></td>
-         </tr>
-         <tr>
-            <td valign="top"><g:SimplePanel ui:field="divDisplay_" styleName="{style.control} {style.context}" /></td>
-            <td valign="top">
-               <widget:ThemedButton ui:field="btnAdd_"/><br/>
-               <widget:ThemedButton ui:field="btnIgnoreAll_"/><br/>
-               <widget:ThemedButton ui:field="btnSkip_"/>
-            </td>
-         </tr>
-         <tr>
-            <td><g:Label text="Change to:"/></td>
-         </tr>
-         <tr>
-            <td valign="top">
-               <g:TextBox ui:field="txtReplacement_" styleName="{style.control}" />
-               <br/>
-               <g:ListBox ui:field="lstSuggestions_" styleName="{style.control}" visibleItemCount="4"/>
-            </td>
-            <td valign="top">
-               <widget:ThemedButton ui:field="btnChange_"/><br/>
-               <widget:ThemedButton ui:field="btnChangeAll_"/>
-            </td>
-         </tr>
-      </table>
+   <g:HTMLPanel styleName="{style.outer}">
+
+      <div>
+         <div class="{style.label}">Not in dictionary:
+         </div><g:TextBox ui:field="txtDisplay_"
+                          styleName="{style.control}"
+                          readOnly="true"/>
+      </div>
+      <div class="{style.smallTopMargin} {style.start2} {style.col2_3}">
+         <widget:ThemedButton ui:field="btnSkip_"/><div style="display:inline-block;width:8px"/><widget:ThemedButton ui:field="btnIgnoreAll_"/>
+         <div style="float: right">
+            <widget:ThemedButton ui:field="btnAdd_"/>
+         </div>
+      </div>
+      <div>
+         <div class="{style.bigTopMargin} {style.label}">Change to:
+         </div><g:TextBox ui:field="txtReplacement_" styleName="{style.control}" />
+      </div>
+      <div class="{style.smallTopMargin} {style.start2} {style.col2_3}">
+         <g:ListBox
+               ui:field="lstSuggestions_"
+               styleName="{style.control} {style.suggestions}"
+               visibleItemCount="5"/>
+         <div style="float: right">
+            <div><widget:ThemedButton ui:field="btnChange_"/></div>
+            <div style="margin-top: 2px"><widget:ThemedButton ui:field="btnChangeAll_"/></div>
+         </div>
+      </div>
    </g:HTMLPanel>
 
 </ui:UiBinder>

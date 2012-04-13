@@ -40,6 +40,11 @@
    margin-right: 8px;
 }
 
+.themedButton.tight {
+   margin-left: -3px !important;
+   margin-right: -3px !important;
+}
+
 .buttonLeft {
    background: BUTTONLEFTENABLED no-repeat;
    width: 8px;
