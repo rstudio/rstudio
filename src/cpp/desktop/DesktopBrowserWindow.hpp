@@ -51,6 +51,12 @@ protected:
      virtual void postWebViewEvent(QEvent *event);
      virtual void triggerPageAction(QWebPage::WebAction action);
 
+     // hooks for subclasses
+     virtual QSize printDialogMinimumSize()
+     {
+         return QSize(0,0);
+     }
+
 protected:
      WebView* pView_;
      QToolBar* pToolbar_;

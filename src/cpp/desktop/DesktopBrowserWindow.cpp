@@ -53,6 +53,9 @@ BrowserWindow::BrowserWindow(bool showToolbar,
 void BrowserWindow::printRequested(QWebFrame* frame)
 {
    QPrintPreviewDialog dialog(window());
+   QSize size = printDialogMinimumSize();
+   if (!size.isNull())
+      dialog.setMinimumSize(size);
    dialog.setWindowModality(Qt::WindowModal);
    connect(&dialog, SIGNAL(paintRequested(QPrinter*)),
            frame, SLOT(print(QPrinter*)));

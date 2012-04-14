@@ -43,6 +43,11 @@ protected slots:
 protected:
    virtual void closeEvent(QCloseEvent *event);
 
+   virtual QSize printDialogMinimumSize()
+   {
+      return this->size();
+   }
+
 private:
    virtual void onActivated();
 
