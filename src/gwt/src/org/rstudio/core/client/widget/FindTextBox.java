@@ -24,6 +24,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasValue;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -38,6 +39,8 @@ public class FindTextBox extends Composite implements HasValue<String>,
    {
       textBox_ = new TextBoxWithCue(cueText);
       initWidget(uiBinder.createAndBindUi(this));
+      
+      setIconVisible(false);
 
       Style style = getElement().getStyle();
       style.setPosition(Position.RELATIVE);
@@ -64,6 +67,12 @@ public class FindTextBox extends Composite implements HasValue<String>,
    {
       textBox_.setValue(text, fireEvents);
    }
+   
+   public void setIconVisible(boolean visible)
+   {
+      textBoxDiv_.getStyle().setLeft(visible ? 18 : 0, Unit.PX);
+      icon_.setVisible(visible);
+   }
 
    public void focus()
    {
@@ -89,4 +98,8 @@ public class FindTextBox extends Composite implements HasValue<String>,
    TextBox textBox_;
    @UiField
    DivElement searchDiv_;
+   @UiField
+   Image icon_;
+   @UiField
+   DivElement textBoxDiv_;
 }

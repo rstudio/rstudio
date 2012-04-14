@@ -132,6 +132,10 @@ public abstract class
    // PDF
    public abstract AppCommand showPdfExternal();
    
+   // HTML preview
+   public abstract AppCommand saveHtmlPreviewAs();
+   public abstract AppCommand printHtmlPreview();
+   
    // View
    public abstract AppCommand showToolbar();
    public abstract AppCommand hideToolbar();
@@ -244,4 +248,6 @@ public abstract class
    public abstract AppCommand mru8();
    public abstract AppCommand mru9();
    public abstract AppCommand clearRecentFiles();
+
+   public abstract AppCommand checkSpelling();
 }

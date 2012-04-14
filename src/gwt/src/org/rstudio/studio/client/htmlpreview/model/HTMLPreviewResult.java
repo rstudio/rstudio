@@ -28,6 +28,18 @@ public class HTMLPreviewResult extends JavaScriptObject
       return this.preview_url;
    }-*/;
    
+   public final native String getSourceFile() /*-{
+      return this.source_file;
+   }-*/;
+   
+   public final native String getHtmlFile() /*-{
+      return this.html_file;
+   }-*/;
+   
+   public final native boolean getEnableSaveAs() /*-{
+      return this.enable_saveas;
+   }-*/;
+   
    public final native boolean getEnableScripts() /*-{
       return this.enable_scripts;
    }-*/;

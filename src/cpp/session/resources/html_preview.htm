@@ -1,20 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<!--
-#
-# html_preview.htm
-#
-# Copyright (C) 2009-11 by RStudio, Inc.
-#
-# This program is licensed to you under the terms of version 3 of the
-# GNU Affero General Public License. This program is distributed WITHOUT
-# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
-# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
-# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
-#
--->
-
 <html>
 <head>
 
@@ -25,7 +11,7 @@ body, td {
    font-family: sans-serif;
    font-size: 11pt;
    background-color: white;
-   margin: 0px;
+   margin: 8px;
 }
 
 ::selection {
@@ -39,6 +25,22 @@ body, td {
 a:visited {
    color: rgb(50%, 0%, 50%);
 }
+
+hr { 
+   visibility: hidden; 
+}
+ 
+@media print {
+   hr { page-break-before: always; }
+   a, a:visited { text-decoration: underline; }
+   tr, img { page-break-inside: avoid; }
+   img { max-width: 100% !important; }
+   @page :left { margin: 15mm 20mm 15mm 10mm; }
+   @page :right { margin: 15mm 10mm 15mm 20mm; }
+   p, h2, h3 { orphans: 3; widows: 3; }
+   h2, h3 { page-break-after: avoid; }
+}
+
 </style>
 
 </head>

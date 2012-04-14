@@ -272,14 +272,32 @@ Error copyFile(const core::json::JsonRpcRequest& request,
 {
    // read params
    std::string sourcePath, targetPath;
-   Error error = json::readParams(request.params, &sourcePath, &targetPath);
+   bool overwrite;
+   Error error = json::readParams(request.params,
+                                  &sourcePath,
+                                  &targetPath,
+                                  &overwrite);
    if (error)
-      return error ;
+      return error;
+   FilePath targetFilePath = module_context::resolveAliasedPath(targetPath);
    
    // make sure the target path doesn't exist
-   FilePath targetFilePath = module_context::resolveAliasedPath(targetPath);
    if (targetFilePath.exists())
-      return fileExistsError(ERROR_LOCATION);
+   {
+      if (overwrite)
+      {
+         Error error = targetFilePath.remove();
+         if (error)
+         {
+            LOG_ERROR(error);
+            return fileExistsError(ERROR_LOCATION);
+         }
+      }
+      else
+      {
+         return fileExistsError(ERROR_LOCATION);
+      }
+   }
 
    // compute the source file path
    FilePath sourceFilePath = module_context::resolveAliasedPath(sourcePath);

@@ -18,7 +18,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 
 import java.util.ArrayList;
 
-public class NewFileMenu
+public abstract class NewFileMenu
 {
    public NewFileMenu()
    {
@@ -34,8 +34,11 @@ public class NewFileMenu
    @Inject
    void initialize(FileTypeCommands fileTypeCommands)
    {
-      fileTypeCommands_ = fileTypeCommands.commandsWithIds();
+      fileTypeCommands_ = getFileTypeCommands(fileTypeCommands);
    }
+   
+   protected abstract ArrayList<FileTypeCommands.CommandWithId> 
+      getFileTypeCommands(FileTypeCommands fileTypeCommands);
    
    private ArrayList<FileTypeCommands.CommandWithId> fileTypeCommands_ =
          new ArrayList<FileTypeCommands.CommandWithId>();

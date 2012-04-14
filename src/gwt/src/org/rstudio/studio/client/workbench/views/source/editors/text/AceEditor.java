@@ -59,6 +59,9 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharPredicate;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.WordIterable;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
@@ -316,6 +319,11 @@ public class AceEditor implements DocDisplay,
    void initialize(CodeToolsServerOperations server)
    {
       server_ = server;
+   }
+
+   public TextFileType getFileType()
+   {
+      return fileType_;
    }
 
    public void setFileType(TextFileType fileType)
@@ -618,6 +626,12 @@ public class AceEditor implements DocDisplay,
       return Range.fromPoints(getSelectionStart(), getSelectionEnd());
    }
 
+   @Override
+   public void setSelectionRange(Range range)
+   {
+      getSession().getSelection().setSelectionRange(range);
+   }
+
    public int getLength(int row)
    {
       return getSession().getDocument().getLine(row).length();
@@ -649,6 +663,32 @@ public class AceEditor implements DocDisplay,
       return Position.create((Integer) pos.getLine(), pos.getPosition());
    }
 
+   @Override
+   public Iterable<Range> getWords(TokenPredicate tokenPredicate,
+                                   CharPredicate charPredicate,
+                                   Position start,
+                                   Position end)
+   {
+      return new WordIterable(getSession(),
+                              tokenPredicate,
+                              charPredicate,
+                              start,
+                              end);
+   }
+
+   @Override
+   public String getTextForRange(Range range)
+   {
+      return getSession().getTextRange(range);
+   }
+
+   @Override
+   public Anchor createAnchor(Position pos)
+   {
+      return Anchor.createAnchor(getSession().getDocument(),
+                                 pos.getRow(),
+                                 pos.getColumn());
+   }
 
    @Override
    public void debug_forceTopsToZero()
@@ -1072,7 +1112,8 @@ public class AceEditor implements DocDisplay,
 
    public Scope getCurrentScope()
    {
-      return getSession().getMode().getCodeModel().getCurrentScope(getCursorPosition());
+      return getSession().getMode().getCodeModel().getCurrentScope(
+            getCursorPosition());
    }
 
    public Scope getCurrentChunk()
@@ -1088,7 +1129,8 @@ public class AceEditor implements DocDisplay,
 
    public Scope getCurrentFunction()
    {
-      return getSession().getMode().getCodeModel().getCurrentFunction(getCursorPosition());
+      return getSession().getMode().getCodeModel().getCurrentFunction(
+            getCursorPosition());
    }
 
    public Position getCursorPosition()
@@ -1110,7 +1152,7 @@ public class AceEditor implements DocDisplay,
    
    public void scrollToBottom()
    { 
-      SourcePosition pos = SourcePosition.create(getCurrentLineCount()-1, 0);
+      SourcePosition pos = SourcePosition.create(getCurrentLineCount() - 1, 0);
       navigate(pos, false);
    }
 

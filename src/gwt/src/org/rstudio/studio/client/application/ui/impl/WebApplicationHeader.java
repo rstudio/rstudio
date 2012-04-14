@@ -160,8 +160,8 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
            if (sessionInfo.getMode().equals(SessionInfo.SERVER_MODE))
                initCommandsPanel(sessionInfo);
             
-            // add project tools to toolbar
-            toolbar_.addProjectTools(sessionInfo);
+            // complete toolbar initialization
+            toolbar_.completeInitialization(sessionInfo);
             
             // add project tools to main menu
             projectMenuButton_ = 

@@ -45,6 +45,7 @@ public interface FilesServerOperations
    // copy file
    void copyFile(FileSystemItem sourceFile,
                  FileSystemItem targetFile,
+                 boolean overwrite,
                  ServerRequestCallback<Void> requestCallback);
 
    // move files

@@ -41,14 +41,7 @@ import java.util.HashMap;
 
 public class TextEditingTargetCompilePdfHelper
       implements RnwChunkOptions.AsyncProvider
-{
-   public interface Display
-   {
-      void showWarningBar(String message);
-      void hideWarningBar();
-   }
-   
-   
+{ 
    public TextEditingTargetCompilePdfHelper(DocDisplay docDisplay)
    {
       docDisplay_ = docDisplay;
@@ -138,7 +131,8 @@ public class TextEditingTargetCompilePdfHelper
    }
    
    
-   public void checkCompilers(final Display display, TextFileType fileType)
+   public void checkCompilers(final WarningBarDisplay display, 
+                              TextFileType fileType)
    {
       // for all tex files we need to parse magic comments and validate
       // any explict latex proram directive

@@ -14,13 +14,11 @@
 
 package org.rstudio.studio.client.common.synctex;
 
-import org.rstudio.core.client.widget.MessageDialog;
-import org.rstudio.studio.client.RStudioGinjector;
-
 public class SynctexUtils
 {
-   public static void showFirefoxWarning(String target)
+   public static void maybeShowFirefoxWarning(String target)
    {
+      /*
       if (!messageShown_)
       {
          messageShown_ = true;
@@ -35,7 +33,9 @@ public class SynctexUtils
             "Google Chrome rather than Firefox when compiling and " +
             "previewing PDFs.");
       }
+      */
    }
    
+   @SuppressWarnings("unused")
    private static boolean messageShown_ = false;
 }

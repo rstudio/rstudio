@@ -14,11 +14,19 @@ package org.rstudio.studio.client.common.filetypes;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
+import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedEvent;
+import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedHandler;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -39,36 +47,105 @@ public class FileTypeCommands
    }
 
    @Inject
-   public FileTypeCommands(EventBus eventBus, Commands commands)
+   public FileTypeCommands(EventBus eventBus, 
+                           Commands commands,
+                           Session session,
+                           final HTMLPreviewServerOperations server)
    {
       eventBus_ = eventBus;
       commands_ = commands;
+      session_ = session;
 
-      addType(FileTypeRegistry.TEXT, "_Text File");
-      addType(FileTypeRegistry.MARKDOWN, "_Markdown File");
-      addType(FileTypeRegistry.TEX, "Te_X Document");
-      addType(FileTypeRegistry.RD, "R _Documentation");
+      rMDCommand_ = addRFileType(FileTypeRegistry.RMARKDOWN, "R _Markdown");
+      rHTMLCommand_ = addRFileType(FileTypeRegistry.RHTML, "R _HTML");
+      addRFileType(FileTypeRegistry.RD, "R _Doc");
+      
+      addTextFileType(FileTypeRegistry.TEXT, "_Text File");
+      addTextFileType(FileTypeRegistry.TEX, "Te_X File");
+      addTextFileType(FileTypeRegistry.MARKDOWN, "Mar_kdown File");  
+      addTextFileType(FileTypeRegistry.HTML, "HTM_L File");
+          
+      eventBus.addHandler(InstalledPackagesChangedEvent.TYPE,
+                          new InstalledPackagesChangedHandler() {
+         @Override
+         public void onInstalledPackagesChanged(InstalledPackagesChangedEvent e)
+         {
+            server.getHTMLCapabilities(
+                  new ServerRequestCallback<HTMLCapabilities>() {
+
+                     @Override
+                     public void onResponseReceived(HTMLCapabilities caps)
+                     {
+                        setHTMLCapabilities(caps);
+                     }
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                     }
+                  });
+         }
+      });
    }
-
-   
-   public ArrayList<CommandWithId> commandsWithIds()
+  
+   public ArrayList<CommandWithId> rFileCommandsWithIds()
    {
-      return fileTypeCommands_;
+      return rFileTypeCommands_;
+   }
+   
+   public ArrayList<CommandWithId> textFileCommandsWithIds()
+   {
+      return textFileTypeCommands_;
    }
    
    public TextFileType[] statusBarFileTypes()
    {
-      return new TextFileType[] {FileTypeRegistry.R,
-                                 FileTypeRegistry.SWEAVE,
-                                 FileTypeRegistry.TEXT,
-                                 FileTypeRegistry.HTML,
-                                 FileTypeRegistry.MARKDOWN,
-                                 FileTypeRegistry.TEX,
-                                 FileTypeRegistry.RD};
+      ArrayList<TextFileType> types = new ArrayList<TextFileType>();
+      types.add(FileTypeRegistry.R);
+      types.add(FileTypeRegistry.SWEAVE);
+      if (rMDCommand_.isEnabled())
+         types.add(FileTypeRegistry.RMARKDOWN);
+      if (rHTMLCommand_.isEnabled())
+         types.add(FileTypeRegistry.RHTML);
+      types.add(FileTypeRegistry.TEXT);
+      types.add(FileTypeRegistry.TEX);
+      types.add(FileTypeRegistry.MARKDOWN);
+      types.add(FileTypeRegistry.HTML);
+      
+      return (TextFileType[])types.toArray(new TextFileType[0]);
    }
    
+   public HTMLCapabilities getHTMLCapabiliites()
+   {
+      if (htmlCapabilities_ == null)
+         setHTMLCapabilities(session_.getSessionInfo().getHTMLCapabilities());
+      
+      return htmlCapabilities_;
+   }
    
-   private void addType(final TextFileType fileType, String menuLabel)
+   public void setHTMLCapabilities(HTMLCapabilities caps)
+   {
+      htmlCapabilities_ = caps;
+      rMDCommand_.setEnabled(caps.isRMarkdownSupported());
+      rMDCommand_.setVisible(caps.isRMarkdownSupported());
+      rHTMLCommand_.setEnabled(caps.isRHtmlSupported());
+      rHTMLCommand_.setVisible(caps.isRHtmlSupported());
+   }
+   
+   private AppCommand addRFileType(TextFileType fileType, String menuLabel) 
+   {
+      return addType(rFileTypeCommands_, fileType, menuLabel);
+   }
+   
+   private AppCommand addTextFileType(TextFileType fileType,  String menuLabel) 
+   {
+      return addType(textFileTypeCommands_, fileType, menuLabel);
+   }
+
+   
+   private AppCommand addType(ArrayList<CommandWithId> typeList,
+                              final TextFileType fileType, 
+                              String menuLabel)
    {
       AppCommand command = new AppCommand();
       command.setMenuLabel(menuLabel);
@@ -84,7 +161,8 @@ public class FileTypeCommands
 
       String commandId = commandIdForType(fileType);
       commands_.addCommand(commandId, command);
-      fileTypeCommands_.add(new CommandWithId(commandId, command));
+      typeList.add(new CommandWithId(commandId, command));
+      return command;
    }
    
    private static String commandIdForType(FileType fileType)
@@ -94,7 +172,16 @@ public class FileTypeCommands
 
    private final EventBus eventBus_;
    private final Commands commands_;
-   private ArrayList<CommandWithId> fileTypeCommands_ =
+   private final Session session_;
+   
+   private final ArrayList<CommandWithId> rFileTypeCommands_ =
          new ArrayList<CommandWithId>();
+   
+   private final ArrayList<CommandWithId> textFileTypeCommands_ =
+         new ArrayList<CommandWithId>();
+   
+   private final AppCommand rMDCommand_;
+   private final AppCommand rHTMLCommand_;
+   private HTMLCapabilities htmlCapabilities_;
 
 }

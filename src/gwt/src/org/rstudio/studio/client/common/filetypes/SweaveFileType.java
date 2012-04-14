@@ -44,7 +44,7 @@ public class SweaveFileType extends TextFileType
             true,
             true,
             false,
-            false);
+            true);
    }
 
 

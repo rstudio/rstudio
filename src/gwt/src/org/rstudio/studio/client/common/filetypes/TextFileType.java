@@ -17,10 +17,14 @@ import com.google.gwt.resources.client.ImageResource;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharPredicate;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 
 import java.util.HashSet;
 
@@ -130,6 +134,18 @@ public class TextFileType extends EditableFileType
    {
       return FileTypeRegistry.SWEAVE.getTypeId().equals(getTypeId());
    }
+   
+   public boolean requiresKnit()
+   {
+      return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId()) ||
+             FileTypeRegistry.RHTML.getTypeId().equals(getTypeId());
+   }
+   
+   public boolean isMarkdown()
+   {
+      return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId()) ||
+             FileTypeRegistry.MARKDOWN.getTypeId().equals(getTypeId());
+   }
 
    public HashSet<AppCommand> getSupportedCommands(Commands commands)
    {
@@ -181,7 +197,7 @@ public class TextFileType extends EditableFileType
       }
       if (canCheckSpelling())
       {
-      
+         results.add(commands.checkSpelling());
       }
       results.add(commands.findReplace());
       results.add(commands.setWorkingDirToActiveDoc());
@@ -196,6 +212,30 @@ public class TextFileType extends EditableFileType
       return defaultExtension_;
    }
 
+   public TokenPredicate getTokenPredicate()
+   {
+      return new TokenPredicate()
+      {
+         @Override
+         public boolean test(Token token)
+         {
+            return reTextType_.match(token.getType(), 0) != null;
+         }
+      };
+   }
+
+   public CharPredicate getCharPredicate()
+   {
+      return new CharPredicate()
+      {
+         @Override
+         public boolean test(char c)
+         {
+            return Character.isLetter(c);
+         }
+      };
+   }
+
    private final EditorLanguage editorLanguage_;
    private final boolean wordWrap_;
    private final boolean canSourceOnSave_;
@@ -208,4 +248,6 @@ public class TextFileType extends EditableFileType
    private final boolean canAutoIndent_;
    private final boolean canCheckSpelling_;
    private final String defaultExtension_;
+
+   private static Pattern reTextType_ = Pattern.create("\\btext\\b");
 }

@@ -12,12 +12,14 @@
  */
 package org.rstudio.studio.client.common.spelling;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.inject.Inject;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -27,13 +29,9 @@ import org.rstudio.studio.client.workbench.events.ListChangedEvent;
 import org.rstudio.studio.client.workbench.events.ListChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.inject.Inject;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 public class SpellChecker
 { 
@@ -97,13 +95,11 @@ public class SpellChecker
    @Inject
    void intialize(SpellingService spellingService,
                   WorkbenchListManager workbenchListManager,
-                  UIPrefs uiPrefs,
-                  GlobalDisplay globalDisplay)
+                  UIPrefs uiPrefs)
    {
       spellingService_ = spellingService;
       userDictionary_ = workbenchListManager.getUserDictionaryList();
       uiPrefs_ = uiPrefs;
-      globalDisplay_ = globalDisplay;
    }
    
    public void checkSpelling(
@@ -112,6 +108,12 @@ public class SpellChecker
    {
       // allocate results
       final SpellCheckerResult spellCheckerResult = new SpellCheckerResult();
+
+      if (words.isEmpty())
+      {
+         callback.onResponseReceived(spellCheckerResult);
+         return;
+      }
       
       // only send words to the server that aren't ignored
       final ArrayList<String> wordsToCheck = new ArrayList<String>();
@@ -230,6 +232,4 @@ public class SpellChecker
    
    private SpellingService spellingService_;
    private UIPrefs uiPrefs_;
-   @SuppressWarnings("unused")
-   private GlobalDisplay globalDisplay_;
 }

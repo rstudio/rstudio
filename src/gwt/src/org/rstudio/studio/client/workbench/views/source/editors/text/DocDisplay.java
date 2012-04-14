@@ -20,8 +20,11 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharPredicate;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasFoldChangeHandlers;
@@ -50,6 +53,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
       void apply();
       void detach();
    }
+   TextFileType getFileType();
    void setFileType(TextFileType fileType);
    void setFileType(TextFileType fileType, boolean suppressCompletion);
    void setFileType(TextFileType fileType, CompletionManager completionManager);
@@ -144,6 +148,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    Position getSelectionStart();
    Position getSelectionEnd();
    Range getSelectionRange();
+   void setSelectionRange(Range range);
    int getLength(int row);
    int getRowCount();
 
@@ -158,4 +163,13 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    // HACK: InputEditorPosition should just become AceInputEditorPosition
    Position selectionToPosition(InputEditorPosition pos);
+
+   Iterable<Range> getWords(TokenPredicate tokenPredicate,
+                            CharPredicate charPredicate,
+                            Position start,
+                            Position end);
+
+   String getTextForRange(Range range);
+
+   Anchor createAnchor(Position pos);
 }

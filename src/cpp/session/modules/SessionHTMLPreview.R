@@ -28,16 +28,19 @@
            checkPattern(lines, fileType, "inline.code"))
 })
 
-.rs.addFunction( "getHTMLCapabilities", function()
+.rs.addFunction( "getHTMLCapabilities", function(htmlVersion,
+                                                 markdownVersion)
 {
    caps <- list()
-   caps$r_html_supported = FALSE
-   caps$r_markdown_supported = FALSE
+   caps$r_html_version = .rs.scalar(htmlVersion)
+   caps$r_markdown_version = .rs.scalar(markdownVersion)
+   caps$r_html_supported = .rs.scalar(FALSE)
+   caps$r_markdown_supported = .rs.scalar(FALSE)
    if (.rs.isPackageInstalled("knitr"))
    {
       knitrVersion <- packageVersion("knitr")
-      caps$r_html_supported = knitrVersion >= "0.4.0"
-      caps$r_markdown_supported = knitrVersion >= "0.4.6"
+      caps$r_html_supported = .rs.scalar(knitrVersion >= htmlVersion)
+      caps$r_markdown_supported = .rs.scalar(knitrVersion >= markdownVersion)
    }
    return (caps)
 })

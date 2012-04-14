@@ -17,24 +17,19 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
-import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.OutputBuffer;
 import org.rstudio.studio.client.common.compilepdf.CompilePdfErrorList;
 import org.rstudio.studio.client.common.compilepdf.CompilePdfResources;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfError;
-import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
@@ -42,10 +37,9 @@ public class CompilePdfOutputPane extends WorkbenchPane
       implements CompilePdfOutputPresenter.Display
 {
    @Inject
-   public CompilePdfOutputPane(FileTypeRegistry fileTypeRegistry)
+   public CompilePdfOutputPane()
    {
       super("Compile PDF");
-      fileTypeRegistry_ = fileTypeRegistry;
       res_ = GWT.create(CompilePdfResources.class);
       ensureWidget();
    }
@@ -67,13 +61,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
    {
       Toolbar toolbar = new Toolbar();
       
-      fileImage_ = new Image(); 
-      toolbar.addLeftWidget(fileImage_);
-      
-      fileLabel_ = new ToolbarLabel();
-      fileLabel_.addStyleName(ThemeStyles.INSTANCE.subtitle());
-      fileLabel_.addStyleName(res_.styles().fileLabel());
-      toolbar.addLeftWidget(fileLabel_);
+      fileLabel_ = new ToolbarFileLabel(toolbar, 200);
       
       Commands commands = RStudioGinjector.INSTANCE.getCommands();
       ImageResource stopImage = commands.interruptR().getImageResource();
@@ -134,14 +122,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
       
       fileName_ = fileName;
 
-      fileImage_.setResource(fileTypeRegistry_.getIconForFilename(fileName));
-      
-      String shortFileName = StringUtil.shortPathName(
-                                 FileSystemItem.createFile(fileName), 
-                                 ThemeStyles.INSTANCE.subtitle(), 
-                                 200);
-      
-      fileLabel_.setText(shortFileName);
+      fileLabel_.setFileName(fileName);
       
       showOutputButton_.setVisible(false);
       showErrorsButton_.setVisible(false);
@@ -241,8 +222,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
       showLogButton_.setVisible(visible);
    }
    
-   private Image fileImage_;
-   private ToolbarLabel fileLabel_;
+   private ToolbarFileLabel fileLabel_;
    private ToolbarButton stopButton_;
    private Widget showLogSeparator_;
    private ToolbarButton showLogButton_;
@@ -250,7 +230,6 @@ public class CompilePdfOutputPane extends WorkbenchPane
    private LeftRightToggleButton showErrorsButton_;
    private SimplePanel panel_;
 
-   private FileTypeRegistry fileTypeRegistry_;
    private CompilePdfResources res_;
    private String fileName_;
    

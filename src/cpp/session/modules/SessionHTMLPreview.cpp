@@ -18,9 +18,17 @@
 #include <boost/format.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
+#include <boost/iostreams/copy.hpp>
+#include <boost/iostreams/concepts.hpp>
+#include <boost/iostreams/filter/regex.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/Base64.hpp>
 #include <core/http/Util.hpp>
 #include <core/PerformanceTimer.hpp>
 #include <core/text/TemplateFilter.hpp>
@@ -44,41 +52,36 @@ namespace html_preview {
 
 namespace {
 
-bool requiresKnit(const std::string& fileContents, bool isMarkdown)
-{
-   bool requiresKnit = false;
-   std::string fileType = isMarkdown ? "gfm" : "html";
-   r::exec::RFunction reqFunc(".rs.requiresKnit", fileContents, fileType);
-   Error error = reqFunc.call(&requiresKnit);
-   if (error)
-      LOG_ERROR(error);
-
-   return requiresKnit;
-}
-
-
 class HTMLPreview : boost::noncopyable,
                     public boost::enable_shared_from_this<HTMLPreview>
 {
 public:
    static boost::shared_ptr<HTMLPreview> create(const FilePath& targetFile,
                                                 const std::string& encoding,
-                                                bool isMarkdown)
+                                                bool isMarkdown,
+                                                bool knit)
    {
       boost::shared_ptr<HTMLPreview> pPreview(new HTMLPreview(targetFile));
-      pPreview->start(encoding, isMarkdown);
+      pPreview->start(encoding, isMarkdown, knit);
       return pPreview;
    }
 
 private:
    HTMLPreview(const FilePath& targetFile)
-      : targetFile_(targetFile), isRunning_(false), terminationRequested_(false)
+      : targetFile_(targetFile),
+        isMarkdown_(false),
+        requiresKnit_(false),
+        isRunning_(false),
+        terminationRequested_(false)
    {
    }
 
-   void start(const std::string& encoding, bool isMarkdown)
+   void start(const std::string& encoding, bool isMarkdown, bool requiresKnit)
    {
       enqueHTMLPreviewStarted(targetFile_);
+
+      isMarkdown_ = isMarkdown;
+      requiresKnit_ = requiresKnit;
 
       // read the file using the specified encoding
       std::string fileContents;
@@ -93,9 +96,9 @@ private:
       }
 
       // determine whether we need to knit the file
-      if (requiresKnit(fileContents, isMarkdown))
+      if (requiresKnit)
       {
-         knit(isMarkdown);
+         performKnit(isMarkdown);
       }
 
       // otherwise we can just either copy or generate the html inline
@@ -119,6 +122,25 @@ public:
 
    void terminate() { terminationRequested_ = true; }
 
+   bool isMarkdown() { return isMarkdown_; }
+
+   bool requiresKnit() { return requiresKnit_; }
+
+   FilePath targetFile() const
+   {
+      return targetFile_;
+   }
+
+   FilePath targetDirectory() const
+   {
+      return targetFile_.parent();
+   }
+
+   FilePath knitrOutputFile() const
+   {
+      return knitrOutputFile_;
+   }
+
    std::string readOutput() const
    {
       if (outputFile_.empty())
@@ -132,29 +154,31 @@ public:
       return output;
    }
 
-   FilePath dependentFilePath(const std::string& fileName)
+   FilePath htmlPreviewFile()
    {
-      return targetFile_.parent().childPath(fileName);
+      FilePath baseFile = requiresKnit() ? knitrOutputFile() : targetFile();
+      if (isMarkdown())
+         return baseFile.parent().childPath(baseFile.stem() + ".html");
+      else
+         return baseFile;
    }
-
 
 private:
 
-   void knit(bool isMarkdown)
+   void performKnit(bool isMarkdown)
    {
       // set running flag
       isRunning_ = true;
 
-      // create a temp file where we can write the name of the output file to
-      FilePath tempFile = module_context::tempFile("knitr-output", "out");
-      Error error = core::writeStringToFile(tempFile, "");
-      if (error)
-      {
-         terminateWithError(error);
-         return;
-      }
-      std::string tempFilePath = string_utils::utf8ToSystem(
-                                                   tempFile.absolutePath());
+      // predict the name of the output file -- if we can't do this then
+      // we instrument our call to knitr to return it in a temp file
+      FilePath outputFileTempFile;
+      if (isMarkdown && targetFile_.extensionLowerCase() == ".rmd")
+         knitrOutputFile_ = outputFileForTarget(".md");
+      else if (targetFile_.extensionLowerCase() == ".rhtml")
+         knitrOutputFile_= outputFileForTarget(".html");
+      else
+         outputFileTempFile = module_context::tempFile("knitr-output", "out");
 
       // R binary
       std::string rProgramPath = r::exec::rBinaryPath().absolutePath();
@@ -163,12 +187,23 @@ private:
       std::vector<std::string> args;
       args.push_back("--silent");
       args.push_back("-e");
-      boost::format fmt("require(knitr); "
-                        "o <- knit('%1%'); "
-                        "cat(o, file='%2%');");
-      std::string cmd = boost::str(fmt % targetFile_.filename()
+      if (!knitrOutputFile_.empty())
+      {
+         boost::format fmt("require(knitr); knit('%1%');");
+         std::string cmd = boost::str(fmt % targetFile_.filename());
+         args.push_back(cmd);
+      }
+      else
+      {
+         std::string tempFilePath = string_utils::utf8ToSystem(
+                                           outputFileTempFile.absolutePath());
+         boost::format fmt("require(knitr); "
+                           "o <- knit('%1%'); "
+                           "cat(o, file='%2%');");
+         std::string cmd = boost::str(fmt % targetFile_.filename()
                                        % tempFilePath);
-      args.push_back(cmd);
+         args.push_back(cmd);
+      }
 
       // options
       core::system::ProcessOptions options;
@@ -186,7 +221,7 @@ private:
                                 HTMLPreview::shared_from_this(), _2);
       cb.onExit =  boost::bind(&HTMLPreview::onKnitCompleted,
                                 HTMLPreview::shared_from_this(),
-                                _1, tempFile, isMarkdown);
+                                _1, outputFileTempFile, isMarkdown);
 
       // execute knitr
       module_context::processSupervisor().runProgram(rProgramPath,
@@ -211,36 +246,39 @@ private:
    {
       if (exitStatus == EXIT_SUCCESS)
       {
-         // read the path to the output file
-         std::string outputFile;
-         Error error = core::readStringFromFile(outputPathTempFile,
-                                                &outputFile);
-         if (error)
+         // determine the path of the knitr output file if necessary
+         if (knitrOutputFile_.empty())
          {
-            terminateWithError(error);
-         }
-         else
-         {
-            // read the output file
-            boost::algorithm::trim(outputFile);
-            FilePath outputFilePath = targetFile_.parent().complete(outputFile);
-            std::string output;
-            error = core::readStringFromFile(outputFilePath, &output);
+            std::string outputFile;
+            Error error = core::readStringFromFile(outputPathTempFile,
+                                                   &outputFile);
             if (error)
             {
                terminateWithError(error);
+               return;
             }
-            else
-            {
-               terminateWithContent(output, isMarkdown);
-            }
+            boost::algorithm::trim(outputFile);
+            knitrOutputFile_ = targetFile_.parent().complete(outputFile);
          }
+
+         // read the output file
+         std::string output;
+         Error error = core::readStringFromFile(knitrOutputFile_, &output);
+         if (error)
+            terminateWithError(error);
+         else
+            terminateWithContent(output, isMarkdown);
       }
       else
       {
          boost::format fmt("\nknitr terminated with status %1%\n");
          terminateWithError(boost::str(fmt % exitStatus));
       }
+   }
+
+   FilePath outputFileForTarget(const std::string& ext)
+   {
+      return targetFile_.parent().childPath(targetFile_.stem() + ext);
    }
 
    void terminateWithContent(const std::string& fileContents, bool isMarkdown)
@@ -295,9 +333,19 @@ private:
       isRunning_ = false;
       outputFile_ = outputFile;
 
-      // TODO: determine whether we should enable scripts
+      // Disable scripts for Markdown (since they'll get stripped at some
+      // point anyway) but enable them for HTML. Note that when scripts are
+      // enabled some features of the preview window (Print, Find, restoring
+      // scroll position on reload) are not available because when we allow
+      // scripts we sandbox the iframe out of our same-origin. see the comment
+      // in HTMLPreviewPanel.setScriptsEnabled for more details
+      bool scriptsEnabled = !isMarkdown();
 
-      enqueHTMLPreviewSucceeded(kHTMLPreview "/", false);
+      enqueHTMLPreviewSucceeded(kHTMLPreview "/",
+                                targetFile(),
+                                htmlPreviewFile(),
+                                isMarkdown(),
+                                scriptsEnabled);
    }
 
    static void enqueHTMLPreviewStarted(const FilePath& targetFile)
@@ -323,11 +371,17 @@ private:
    }
 
    static void enqueHTMLPreviewSucceeded(const std::string& previewUrl,
+                                         const FilePath& sourceFile,
+                                         const FilePath& htmlFile,
+                                         bool enableSaveAs,
                                          bool enableScripts)
    {
       json::Object resultJson;
       resultJson["succeeded"] = true;
+      resultJson["source_file"] = module_context::createAliasedPath(sourceFile);
+      resultJson["html_file"] = module_context::createAliasedPath(htmlFile);
       resultJson["preview_url"] = previewUrl;
+      resultJson["enable_saveas"] = enableSaveAs;
       resultJson["enable_scripts"] = enableScripts;
       ClientEvent event(client_events::kHTMLPreviewCompletedEvent, resultJson);
       module_context::enqueClientEvent(event);
@@ -340,6 +394,10 @@ private:
 
 private:
    FilePath targetFile_;
+   bool isMarkdown_;
+   bool requiresKnit_;
+
+   FilePath knitrOutputFile_;
    FilePath outputFile_;
    bool isRunning_;
    bool terminationRequested_;
@@ -359,10 +417,11 @@ Error previewHTML(const json::JsonRpcRequest& request,
 {
    // read params
    std::string file, encoding;
-   bool isMarkdown;
+   bool isMarkdown, knit;
    Error error = json::readParams(request.params, &file,
                                                   &encoding,
-                                                  &isMarkdown);
+                                                  &isMarkdown,
+                                                  &knit);
    if (error)
       return error;
    FilePath filePath = module_context::resolveAliasedPath(file);
@@ -376,7 +435,8 @@ Error previewHTML(const json::JsonRpcRequest& request,
    {
       s_pCurrentPreview_ = HTMLPreview::create(filePath,
                                                encoding,
-                                               isMarkdown);
+                                               isMarkdown,
+                                               knit);
       pResponse->setResult(true);
    }
 
@@ -393,6 +453,123 @@ Error terminatePreviewHTML(const json::JsonRpcRequest&,
    return Success();
 }
 
+Error getHTMLCapabilities(const json::JsonRpcRequest&,
+                           json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(html_preview::capabilitiesAsJson());
+   return Success();
+}
+
+
+// convert images to base64
+class Base64ImageFilter : public boost::iostreams::regex_filter
+{
+public:
+   Base64ImageFilter(const FilePath& basePath)
+      : boost::iostreams::regex_filter(
+          boost::regex(
+           "(<\\s*[Ii][Mm][Gg] [^\\>]*[Ss][Rr][Cc]\\s*=\\s*)([\"'])(.*?)(\\2)"),
+           boost::bind(&Base64ImageFilter::toBase64Image, this, _1)),
+        basePath_(basePath)
+   {
+   }
+
+private:
+   std::string toBase64Image(const boost::cmatch& match)
+   {
+      // extract image reference
+      std::string imgRef = match[3];
+
+      // see if this is an image within the base directory. if it is then
+      // base64 encode it
+      FilePath imagePath = basePath_.childPath(imgRef);
+      if (imagePath.exists() &&
+          boost::algorithm::starts_with(imagePath.mimeContentType(), "image/"))
+      {
+         std::string imageContents;
+         Error error = core::readStringFromFile(imagePath, &imageContents);
+         if (!error)
+         {
+            std::string imageBase64;
+            Error error = core::base64::encode(imageContents, &imageBase64);
+            if (!error)
+            {
+               imgRef = "data:" + imagePath.mimeContentType() + ";base64,";
+               imgRef.append(imageBase64);
+            }
+            else
+            {
+               LOG_ERROR(error);
+            }
+         }
+         else
+         {
+            LOG_ERROR(error);
+         }
+      }
+
+      // return the filtered result
+      return match[1] + match[2] + imgRef + match[4];
+   }
+
+private:
+   FilePath basePath_;
+};
+
+void handleMarkdownPreviewRequest(http::Response* pResponse)
+{
+   try
+   {
+      // open input file (template)
+      FilePath resourcesPath = session::options().rResourcesPath();
+      FilePath htmlPreviewFile = resourcesPath.childPath("html_preview.htm");
+      boost::shared_ptr<std::istream> pIfs;
+      Error error = htmlPreviewFile.open_r(&pIfs);
+      if (error)
+      {
+         pResponse->setError(error);
+         return;
+      }
+      pIfs->exceptions(std::istream::failbit | std::istream::badbit);
+
+      // setup template filter
+      std::map<std::string,std::string> vars;
+      vars["html_output"] = s_pCurrentPreview_->readOutput();
+      text::TemplateFilter templateFilter(vars);
+
+      // setup image filter
+      Base64ImageFilter imageFilter(s_pCurrentPreview_->targetDirectory());
+
+      // open output file
+      FilePath outputFile = s_pCurrentPreview_->htmlPreviewFile();
+      boost::shared_ptr<std::ostream> pOfs;
+      error = outputFile.open_w(&pOfs);
+      if (error)
+      {
+         pResponse->setError(error);
+         return;
+      }
+      pOfs->exceptions(std::istream::failbit | std::istream::badbit);
+
+      // copy to output file with filters
+      boost::iostreams::filtering_ostream filteringStream ;
+      filteringStream.push(templateFilter);
+      filteringStream.push(imageFilter);
+      filteringStream.push(*pOfs);
+      boost::iostreams::copy(*pIfs, filteringStream, 128);
+
+      // send response
+      pResponse->setBody(outputFile);
+   }
+   catch(const std::exception& e)
+   {
+      Error error = systemError(boost::system::errc::io_error,
+                                ERROR_LOCATION);
+      error.addProperty("what", e.what());
+      pResponse->setError(error);
+   }
+}
+
 void handlePreviewRequest(const http::Request& request,
                           http::Response* pResponse)
 {
@@ -403,6 +580,9 @@ void handlePreviewRequest(const http::Request& request,
       return;
    }
 
+   // disable caching entirely
+   pResponse->setNoCacheHeaders();
+
    // get the requested path
    std::string path = http::util::pathAfterPrefix(request,
                                                   kHTMLPreviewLocation);
@@ -410,28 +590,22 @@ void handlePreviewRequest(const http::Request& request,
    // if it is empty then this is the main request
    if (path.empty())
    {
-      // determine location of template
-      FilePath resourcesPath = session::options().rResourcesPath();
-      FilePath htmlPreviewFile = resourcesPath.childPath("html_preview.htm");
-
-      // setup template filter
-      std::map<std::string,std::string> vars;
-      vars["html_output"] = s_pCurrentPreview_->readOutput();
-      text::TemplateFilter filter(vars);
-
-      // send response
-      pResponse->setNoCacheHeaders();
-      pResponse->setBody(htmlPreviewFile, filter);
+      if (s_pCurrentPreview_->isMarkdown())
+         handleMarkdownPreviewRequest(pResponse);
+      else if (s_pCurrentPreview_->requiresKnit())
+         pResponse->setFile(s_pCurrentPreview_->knitrOutputFile(), request);
+      else
+         pResponse->setFile(s_pCurrentPreview_->targetFile(), request);
    }
 
    // request for dependent file
    else
    {
-      // return the file
-      FilePath filePath = s_pCurrentPreview_->dependentFilePath(path);
-      pResponse->setCacheableFile(filePath, request);
+      FilePath filePath = s_pCurrentPreview_->targetDirectory().childPath(path);
+      pResponse->setFile(filePath, request);
    }
 }
+
 
    
 } // anonymous namespace
@@ -439,13 +613,19 @@ void handlePreviewRequest(const http::Request& request,
 core::json::Object capabilitiesAsJson()
 {
    // default to unsupported
+   std::string htmlVersion = "0.4.7";
+   std::string markdownVersion = "0.4.7";
    json::Object capsJson;
+   capsJson["r_html_version"] = htmlVersion;
+   capsJson["r_markdown_version"] = markdownVersion;
    capsJson["r_html_supported"] = false;
    capsJson["r_markdown_supported"] = false;
 
    r::sexp::Protect rProtect;
    SEXP capsSEXP;
    r::exec::RFunction func(".rs.getHTMLCapabilities");
+   func.addParam(htmlVersion);
+   func.addParam(markdownVersion);
    Error error = func.call(&capsSEXP, &rProtect);
    if (error)
    {
@@ -474,6 +654,7 @@ Error initialize()
       (bind(sourceModuleRFile, "SessionHTMLPreview.R"))
       (bind(registerRpcMethod, "preview_html", previewHTML))
       (bind(registerRpcMethod, "terminate_preview_html", terminatePreviewHTML))
+      (bind(registerRpcMethod, "get_html_capabilities", getHTMLCapabilities))
       (bind(registerUriHandler, kHTMLPreviewLocation, handlePreviewRequest))
    ;
    return initBlock.execute();
