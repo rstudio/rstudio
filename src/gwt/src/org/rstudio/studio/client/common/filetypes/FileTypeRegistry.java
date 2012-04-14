@@ -77,6 +77,19 @@ public class FileTypeRegistry
          new WebContentFileType("html", "HTML", EditorLanguage.LANG_PLAIN,
                               ".html", ICONS.iconHTML());
    
+   public static final TextFileType CSS =
+         new TextFileType("css", "CSS", EditorLanguage.LANG_PLAIN, ".css",
+                          ICONS.iconCss(),
+                          true,
+                          false, false, false, false, false, false, false, false, true);
+
+   public static final TextFileType JS =
+         new TextFileType("js", "JavaScript", EditorLanguage.LANG_PLAIN, ".js",
+                          ICONS.iconJavascript(),
+                          true,
+                          false, false, false, false, false, false, false, false, true);
+
+   
    public static final RDataType RDATA = new RDataType();
    public static final RProjectType RPROJECT = new RProjectType();
    
@@ -119,6 +132,8 @@ public class FileTypeRegistry
       register("*.rhtml", RHTML, icons.iconRhtml());
       register("*.htm", HTML, icons.iconHTML());
       register("*.html", HTML, icons.iconHTML());
+      register("*.css", CSS, icons.iconCss());
+      register("*.js", JS, icons.iconJavascript());
       register("*.rmd", RMARKDOWN, icons.iconRmarkdown());
       register("*.md", MARKDOWN, icons.iconMarkdown());
       register("*.mdtxt", MARKDOWN, icons.iconMarkdown());

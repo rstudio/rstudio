@@ -22,6 +22,20 @@
     <glob pattern="*.rnw"/>
   </mime-type>
 
+  <mime-type type="text/x-r-markdown">
+    <sub-class-of type="text/plain"/>
+    <comment>R Markdown File</comment>
+    <glob pattern="*.Rmd"/>
+    <glob pattern="*.rmd"/>
+  </mime-type>
+
+  <mime-type type="text/x-r-html">
+    <sub-class-of type="text/plain"/>
+    <comment>R HTML File</comment>
+    <glob pattern="*.Rhtml"/>
+    <glob pattern="*.rhtml"/>
+  </mime-type>
+
   <mime-type type="application/x-r-data">
     <comment>R Data File</comment>
     <glob pattern="*.RData"/>
