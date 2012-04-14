@@ -107,6 +107,7 @@ public class FileTypeCommands
          types.add(FileTypeRegistry.RMARKDOWN);
       if (rHTMLCommand_.isEnabled())
          types.add(FileTypeRegistry.RHTML);
+      types.add(FileTypeRegistry.RD);
       types.add(FileTypeRegistry.TEXT);
       types.add(FileTypeRegistry.TEX);
       types.add(FileTypeRegistry.MARKDOWN);
