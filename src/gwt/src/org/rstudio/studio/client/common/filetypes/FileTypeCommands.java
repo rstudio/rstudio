@@ -56,14 +56,23 @@ public class FileTypeCommands
       commands_ = commands;
       session_ = session;
 
-      rMDCommand_ = addRFileType(FileTypeRegistry.RMARKDOWN, "R _Markdown");
-      rHTMLCommand_ = addRFileType(FileTypeRegistry.RHTML, "R _HTML");
-      addRFileType(FileTypeRegistry.RD, "R _Doc");
+      rMDCommand_ = addRFileType(FileTypeRegistry.RMARKDOWN, 
+                                 "R _Markdown",
+                                 "Create a new R Markdown file");
+      rHTMLCommand_ = addRFileType(FileTypeRegistry.RHTML, 
+                                   "R _HTML",
+                                   "Create a new R HTML file");
+      addRFileType(FileTypeRegistry.RD, 
+                   "R _Documentation",
+                   "Create a new R documentation file");
       
-      addTextFileType(FileTypeRegistry.TEXT, "_Text File");
-      addTextFileType(FileTypeRegistry.TEX, "Te_X File");
-      addTextFileType(FileTypeRegistry.MARKDOWN, "Mar_kdown File");  
-      addTextFileType(FileTypeRegistry.HTML, "HTM_L File");
+      // NOTE: we currently don't show these in the menus because
+      // there are too many and they aren't core enough to most R users
+      addTextFileType(FileTypeRegistry.TEX, "Te_X File", null);
+      addTextFileType(FileTypeRegistry.MARKDOWN, "Mar_kdown File", null);  
+      addTextFileType(FileTypeRegistry.HTML, "HTM_L File", null);
+      addTextFileType(FileTypeRegistry.CSS, "_CSS File", null);
+      addTextFileType(FileTypeRegistry.JS, "_JavaScript File", null);
           
       eventBus.addHandler(InstalledPackagesChangedEvent.TYPE,
                           new InstalledPackagesChangedHandler() {
@@ -93,6 +102,8 @@ public class FileTypeCommands
       return rFileTypeCommands_;
    }
    
+   // NOTE: we currently don't show these in the menus because
+   // there are too many and they aren't core enough to most R users
    public ArrayList<CommandWithId> textFileCommandsWithIds()
    {
       return textFileTypeCommands_;
@@ -135,24 +146,31 @@ public class FileTypeCommands
       rHTMLCommand_.setVisible(caps.isRHtmlSupported());
    }
    
-   private AppCommand addRFileType(TextFileType fileType, String menuLabel) 
+   private AppCommand addRFileType(TextFileType fileType, 
+                                   String menuLabel,
+                                   String desc) 
    {
-      return addType(rFileTypeCommands_, fileType, menuLabel);
+      return addType(rFileTypeCommands_, fileType, menuLabel, desc);
    }
    
-   private AppCommand addTextFileType(TextFileType fileType,  String menuLabel) 
+   private AppCommand addTextFileType(TextFileType fileType,  
+                                      String menuLabel,
+                                      String desc) 
    {
-      return addType(textFileTypeCommands_, fileType, menuLabel);
+      return addType(textFileTypeCommands_, fileType, menuLabel, desc);
    }
 
    
    private AppCommand addType(ArrayList<CommandWithId> typeList,
                               final TextFileType fileType, 
-                              String menuLabel)
+                              String menuLabel,
+                              String desc)
    {
       AppCommand command = new AppCommand();
       command.setMenuLabel(menuLabel);
       command.setImageResource(fileType.getDefaultIcon());
+      if (desc != null)
+         command.setDesc(desc);
       command.addHandler(new CommandHandler()
       {
          public void onCommand(AppCommand command)

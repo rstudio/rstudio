@@ -51,6 +51,8 @@ public class GlobalToolbar extends Toolbar
       newMenu_ = new ToolbarPopupMenu();
       newMenu_.addItem(commands.newSourceDoc().createMenuItem(false));
       newMenu_.addSeparator();
+      newMenu_.addItem(commands.newTextDoc().createMenuItem(false));
+      newMenu_.addSeparator();
       newMenu_.addItem(commands.newSweaveDoc().createMenuItem(false));
            
       // create and add new menu
@@ -125,14 +127,6 @@ public class GlobalToolbar extends Toolbar
       for (FileTypeCommands.CommandWithId cmd : rFileNewCommands)
          newMenu_.addItem(cmd.command.createMenuItem(false));
             
-      newMenu_.addSeparator();
-            
-      ArrayList<FileTypeCommands.CommandWithId> textFileNewCommands = 
-            fileTypeCommands_.textFileCommandsWithIds();
-      for (FileTypeCommands.CommandWithId cmd : textFileNewCommands)
-         newMenu_.addItem(cmd.command.createMenuItem(false));
-      
-      
       // project popup menu
       ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
                                                           commands_);

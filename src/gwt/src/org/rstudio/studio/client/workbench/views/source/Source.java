@@ -452,6 +452,12 @@ public class Source implements InsertSourceHandler,
    }
    
    @Handler
+   public void onNewTextDoc()
+   {
+      newDoc(FileTypeRegistry.TEXT, null);
+   }
+   
+   @Handler
    public void onNewSweaveDoc()
    {
       String concordance = new String();
