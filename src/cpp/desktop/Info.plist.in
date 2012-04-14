@@ -115,6 +115,43 @@
          <key>CFBundleTypeRole</key>
          <string>Editor</string>
       </dict>
+       <dict>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>htm</string>
+                <string>html</string>
+            </array>
+            <key>CFBundleTypeIconFile</key>
+            <string>HTML.icns</string>
+            <key>CFBundleTypeName</key>
+            <string>HTML File</string>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+         </dict>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
+             <string>css</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>CSS.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>CSS File</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+      </dict>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
+             <string>js</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>JS.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>Javascript File</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+      </dict>
    </array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
