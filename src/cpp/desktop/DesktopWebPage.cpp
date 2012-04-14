@@ -160,7 +160,12 @@ bool WebPage::acceptNavigationRequest(QWebFrame*,
       return false;
    }
 
-   if (baseUrl_.isEmpty() ||
+   // determine if this is a local request (handle internally only if local)
+   std::string host = url.host().toStdString();
+   bool isLocal = host == "localhost" || host == "127.0.0.1" ||
+                  url.scheme() == QString::fromAscii("data");
+
+   if ((baseUrl_.isEmpty() && isLocal) ||
        (url.scheme() == baseUrl_.scheme()
         && url.host() == baseUrl_.host()
         && url.port() == baseUrl_.port()))
