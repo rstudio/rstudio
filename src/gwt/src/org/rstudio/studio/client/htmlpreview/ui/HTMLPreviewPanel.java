@@ -13,14 +13,17 @@ import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FindTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.core.client.widget.ToolbarFileLabel;
+import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewPresenter;
@@ -53,8 +56,12 @@ public class HTMLPreviewPanel extends ResizeComposite
    {
       Toolbar toolbar = new Toolbar();
       
-      fileLabel_ = new ToolbarFileLabel(toolbar, 300);
-        
+      toolbar.addLeftWidget(new ToolbarLabel("Preview: "));
+      fileLabel_ = new ToolbarLabel();
+      fileLabel_.addStyleName(ThemeStyles.INSTANCE.subtitle());
+      fileLabel_.getElement().getStyle().setMarginRight(7, Unit.PX);
+      toolbar.addLeftWidget(fileLabel_);
+      
       toolbar.addLeftWidget(commands.refreshHtmlPreview().createToolbarButton());
       
       toolbar.addLeftSeparator();
@@ -165,7 +172,11 @@ public class HTMLPreviewPanel extends ResizeComposite
                            boolean enableSaveAs,
                            boolean enableScripts)
    {
-      fileLabel_.setFileName(htmlFile);
+      String shortFileName = StringUtil.shortPathName(
+            FileSystemItem.createFile(htmlFile), 
+            ThemeStyles.INSTANCE.subtitle(), 
+            300);
+      fileLabel_.setText(shortFileName);
       saveHtmlPreviewAs_.setVisible(enableSaveAs);
       printHtmlPreview_.setVisible(!enableScripts);
       findTextBox_.setVisible(!enableScripts);
@@ -254,7 +265,7 @@ public class HTMLPreviewPanel extends ResizeComposite
    }
  
    private final PreviewFrame previewFrame_;
-   private ToolbarFileLabel fileLabel_;
+   private ToolbarLabel fileLabel_;
    private FindTextBox findTextBox_;
    private AppCommand saveHtmlPreviewAs_;
    private AppCommand printHtmlPreview_;
