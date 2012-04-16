@@ -38,7 +38,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 
-import com.gargoylesoftware.htmlunit.javascript.host.Window;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
