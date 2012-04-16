@@ -109,6 +109,9 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(srcOnSaveLabel_);
 
       toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.checkSpelling().createToolbarButton());
+      
+      toolbar.addLeftSeparator();
       toolbar.addLeftWidget(findReplace_.createFindReplaceButton());
       toolbar.addLeftWidget(createCodeTransformMenuButton());
       

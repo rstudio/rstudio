@@ -47,7 +47,7 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
                                    appearance, 
                                    paneLayout,
                                    compilePdf,
-                                   //spelling,
+                                   spelling,
                                    sourceControl}); 
 
       session_ = session;

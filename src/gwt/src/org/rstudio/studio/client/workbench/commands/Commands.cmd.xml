@@ -76,7 +76,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="copyDummy"/>
          <cmd refid="pasteDummy"/>
          <separator/>
-         <menu label="Folding">
+         <menu label="_Folding">
             <cmd refid="fold"/>
             <cmd refid="unfold"/>
             <separator/>
@@ -89,6 +89,8 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="find"/>
          <cmd refid="findReplace"/>
          <cmd refid="findInFiles"/>
+         <separator/>
+         <cmd refid="checkSpelling"/>
          <separator/>
          <cmd refid="consoleClear"/>
       </menu>
@@ -649,7 +651,7 @@ well as menu structures (for main menu and popup menus).
         desc="Sync PDF view to editor location (Ctrl+Click)"/>
 
    <cmd id="checkSpelling"
-        menuLabel="Check Spelling"/>
+        menuLabel="Check _Spelling..."/>
         
    <cmd id="newFolder"
         menuLabel="Folder..."
