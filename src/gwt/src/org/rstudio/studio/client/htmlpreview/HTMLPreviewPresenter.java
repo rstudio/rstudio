@@ -17,6 +17,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -86,6 +87,10 @@ public class HTMLPreviewPresenter implements IsWidget
       fileSystemContext_ = fileSystemContext;
       
       binder.bind(commands, this);
+      
+      // disable print in desktop mode (qt printer can't handle page-breaks)
+      if (Desktop.isDesktop())
+         commands.printHtmlPreview().remove();
       
       satellite.addCloseHandler(new CloseHandler<Satellite>() {
          @Override
