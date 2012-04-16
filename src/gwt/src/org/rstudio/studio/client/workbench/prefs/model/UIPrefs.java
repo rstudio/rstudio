@@ -181,11 +181,7 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
             spellingCustomDictionaries().setGlobalValue(
                      newUiPrefs.spellingCustomDictionaries().getGlobalValue());
          }
-         
-         // check spelling as you type
-         checkSpellingAsYouType().setGlobalValue(
-                    newUiPrefs.checkSpellingAsYouType().getGlobalValue());
-         
+            
          // ignore words in uppercase
          ignoreWordsInUppercase().setGlobalValue(
                     newUiPrefs.ignoreWordsInUppercase().getGlobalValue());
@@ -193,12 +189,6 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // ignore words with numbers
          ignoreWordsWithNumbers().setGlobalValue(
                     newUiPrefs.ignoreWordsWithNumbers().getGlobalValue());
-         
-         // check spelling before compile
-         checkSpellingBeforeCompile().setGlobalValue(
-                    newUiPrefs.checkSpellingBeforeCompile().getGlobalValue());
-         
-         
       }
       else if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
       {

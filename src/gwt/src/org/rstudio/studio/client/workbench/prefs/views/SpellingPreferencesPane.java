@@ -51,19 +51,12 @@ public class SpellingPreferencesPane extends PreferencesPane
       spaced(customDictsWidget_);
       nudgeRight(customDictsWidget_);
       add(customDictsWidget_);
-         
-      add(checkboxPref("Check spelling as you type",
-                       prefs.checkSpellingAsYouType()));
-      
+            
       add(checkboxPref("Ignore words in UPPERCASE",
                         prefs.ignoreWordsInUppercase()));
       
       add(checkboxPref("Ignore words with numbers",
                        prefs.ignoreWordsInUppercase()));
-      
-      add(checkboxPref("Check spelling before compiling PDF",
-                       prefs.checkSpellingBeforeCompile()));
-
    }
 
    

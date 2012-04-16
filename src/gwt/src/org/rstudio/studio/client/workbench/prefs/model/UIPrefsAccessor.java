@@ -171,11 +171,6 @@ public class UIPrefsAccessor extends Prefs
                     JsArrayString.createArray().<JsArrayString>cast());
    }
    
-   public PrefValue<Boolean> checkSpellingAsYouType()
-   {
-      return bool("check_spelling_as_you_type", true);
-   }
-   
    public PrefValue<Boolean> ignoreWordsInUppercase()
    {
       return bool("ignore_uppercase_words", true);
@@ -184,12 +179,5 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> ignoreWordsWithNumbers()
    {
       return bool("ignore_words_with_numbers", true);
-   }
-   
-   public PrefValue<Boolean> checkSpellingBeforeCompile()
-   {
-      return bool("check_spelling_before_compile_pdf", false);
-   }
-  
-   
+   }  
 }
