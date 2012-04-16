@@ -9,8 +9,6 @@ import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
 
-import java.util.ArrayList;
-
 public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Display
 {
    interface Binder extends UiBinder<Widget, SpellingDialog>

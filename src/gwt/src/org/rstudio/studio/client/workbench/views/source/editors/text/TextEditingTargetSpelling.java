@@ -102,11 +102,8 @@ public class TextEditingTargetSpelling implements SpellChecker.Context
 
    private final static String IGNORED_WORDS = "ignored_words"; 
    
-   @SuppressWarnings("unused")
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel docUpdateSentinel_;
-   
-   @SuppressWarnings("unused")
    private final SpellChecker spellChecker_;
  
    private ArrayList<HandlerRegistration> releaseOnDismiss_ = 

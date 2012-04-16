@@ -93,6 +93,7 @@ class RangeIterator implements Iterator<Range>
          if (tokenIterator_.getCurrentTokenRow() == start_.getRow()
                && tokenIterator_.getCurrentTokenColumn() < start_.getColumn())
          {
+            @SuppressWarnings("unused")
             int endCol =
                   tokenIterator_.getCurrentTokenColumn() +
                   token.getValue().length();
