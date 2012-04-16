@@ -62,20 +62,20 @@ public class FileTypeRegistry
 
    public static final RWebContentFileType RMARKDOWN =
          new RWebContentFileType("r_markdown", "R Markdown", EditorLanguage.LANG_MARKDOWN,
-                              ".Rmd", ICONS.iconRmarkdown());
+                              ".Rmd", ICONS.iconRmarkdown(), true);
    
    public static final WebContentFileType MARKDOWN =
       new WebContentFileType("markdown", "Markdown", EditorLanguage.LANG_MARKDOWN,
-                           ".md", ICONS.iconMarkdown());
+                           ".md", ICONS.iconMarkdown(), true);
    
    
    public static final RWebContentFileType RHTML =
          new RWebContentFileType("r_html", "R HTML", EditorLanguage.LANG_PLAIN,
-                              ".Rhtml", ICONS.iconRhtml());
+                              ".Rhtml", ICONS.iconRhtml(), false);
   
    public static final WebContentFileType HTML =
          new WebContentFileType("html", "HTML", EditorLanguage.LANG_PLAIN,
-                              ".html", ICONS.iconHTML());
+                              ".html", ICONS.iconHTML(), false);
    
    public static final TextFileType CSS =
          new TextFileType("css", "CSS", EditorLanguage.LANG_PLAIN, ".css",

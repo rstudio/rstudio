@@ -573,6 +573,18 @@ void handleHttpdRequest(const std::string& location,
       }
    }
 
+   // markdown help is also a special case
+   if (path == "/doc/markdown_help.htm")
+   {
+      core::FilePath helpFile = options().rResourcesPath().childPath(
+                                                      "markdown_help.htm");
+      if (helpFile.exists())
+      {
+         pResponse->setFile(helpFile, request, filter);
+         return;
+      }
+   }
+
    // redirect from stock home to helpr home if it is active
    if (path == "/doc/html/index.html")
    {

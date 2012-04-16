@@ -12,8 +12,13 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
+import java.util.HashSet;
+
 import com.google.gwt.resources.client.ImageResource;
+
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
+import org.rstudio.studio.client.workbench.commands.Commands;
 
 public class WebContentFileType extends TextFileType
 {
@@ -21,7 +26,8 @@ public class WebContentFileType extends TextFileType
                       String label,
                       EditorLanguage editorLanguage,
                       String defaultExtension,
-                      ImageResource icon)
+                      ImageResource icon,
+                      boolean isMarkdown)
    {
       super(id, 
             label, 
@@ -39,5 +45,18 @@ public class WebContentFileType extends TextFileType
             false,
             false,
             false);
+      
+      isMarkdown_ = isMarkdown;
    }
+   
+   @Override
+   public HashSet<AppCommand> getSupportedCommands(Commands commands)
+   {
+      HashSet<AppCommand> result = super.getSupportedCommands(commands);
+      if (isMarkdown_)
+         result.add(commands.markdownHelp());
+      return result;
+   }
+   
+   private final boolean isMarkdown_;
 }

@@ -78,6 +78,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
+import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
@@ -1878,6 +1879,12 @@ public class TextEditingTarget implements EditingTarget
             events_.fireEvent(new SendToConsoleEvent(code, true));
          }
       }
+   }
+   
+   @Handler
+   void onMarkdownHelp()
+   {
+      events_.fireEvent(new ShowHelpEvent("help/doc/markdown_help.htm")) ;
    }
      
    @Handler

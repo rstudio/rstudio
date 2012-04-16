@@ -117,6 +117,7 @@ public class TextEditingTargetWidget
       
       texSeparatorWidget_ = toolbar.addLeftSeparator();
       toolbar.addLeftWidget(texToolbarButton_ = createLatexFormatButton());
+      toolbar.addLeftWidget(commands_.markdownHelp().createToolbarButton());
       
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.previewHTML().createToolbarButton());
