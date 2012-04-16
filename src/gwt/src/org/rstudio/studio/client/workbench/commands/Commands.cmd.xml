@@ -646,8 +646,8 @@ well as menu structures (for main menu and popup menus).
         desc="Help with using Markdown to author documents"/>
   
    <cmd id="knitToHTML"
-        buttonLabel="Knit"
-        menuLabel="Knit to HTML"
+        buttonLabel="Knit HTML"
+        menuLabel="Knit HTML"
         desc="Knit the current document to HTML"/>
  
    <cmd id="previewHTML"
