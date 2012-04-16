@@ -22,6 +22,7 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarFileLabel;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewPresenter;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
@@ -53,9 +54,8 @@ public class HTMLPreviewPanel extends ResizeComposite
       Toolbar toolbar = new Toolbar();
       
       fileLabel_ = new ToolbarFileLabel(toolbar, 300);
-      
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands.openHtmlExternal().createToolbarButton());
+        
+      toolbar.addLeftWidget(commands.refreshHtmlPreview().createToolbarButton());
       
       toolbar.addLeftSeparator();
       saveHtmlPreviewAs_ = commands.saveHtmlPreviewAs();
@@ -65,7 +65,15 @@ public class HTMLPreviewPanel extends ResizeComposite
       printHtmlPreview_ = commands.printHtmlPreview();
       toolbar.addLeftWidget(printHtmlPreview_.createToolbarButton());
       
-      findTextBox_ = new FindTextBox("");
+      // provide an external window button on the desktop (so the user can
+      // get to a decent printing engine)
+      if (Desktop.isDesktop())
+      {
+         toolbar.addLeftWidget(
+                           commands.openHtmlExternal().createToolbarButton());
+      }
+      
+      findTextBox_ = new FindTextBox("Find");
       findTextBox_.setIconVisible(true);
       findTextBox_.setOverrideWidth(120);
       toolbar.addRightWidget(findTextBox_);

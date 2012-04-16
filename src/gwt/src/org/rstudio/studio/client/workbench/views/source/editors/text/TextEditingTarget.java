@@ -1893,15 +1893,19 @@ public class TextEditingTarget implements EditingTarget
       if (!previewHtmlHelper_.verifyPrerequisites(view_, fileType_))
          return;
       
+      // build params
+      final HTMLPreviewParams params = HTMLPreviewParams.create(
+                                             docUpdateSentinel_.getPath(), 
+                                             docUpdateSentinel_.getEncoding(),
+                                             fileType_.isMarkdown(), 
+                                             fileType_.requiresKnit());
+      
       // command to show the preview window
       final Command showPreviewWindowCommand = new Command() {
          @Override
          public void execute()
          {
-            HTMLPreviewParams params = HTMLPreviewParams.create(getPath());
             events_.fireEvent(new ShowHTMLPreviewEvent(params));  
-            
-          
          }
       };
       
@@ -1910,12 +1914,7 @@ public class TextEditingTarget implements EditingTarget
          @Override
          public void execute()
          {
-            server_.previewHTML(docUpdateSentinel_.getPath(), 
-                                docUpdateSentinel_.getEncoding(),
-                                fileType_.isMarkdown(), 
-                                fileType_.requiresKnit(),
-                                new SimpleRequestCallback<Boolean>()); 
-            
+            server_.previewHTML(params, new SimpleRequestCallback<Boolean>());  
          }      
       };
       

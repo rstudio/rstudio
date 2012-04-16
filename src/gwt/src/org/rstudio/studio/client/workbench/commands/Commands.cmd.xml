@@ -770,6 +770,8 @@ well as menu structures (for main menu and popup menus).
    <cmd id="printHtmlPreview"
         buttonLabel="Print"
         desc="Print the page"/>
+   <cmd id="refreshHtmlPreview"
+        desc="Refresh the page"/>
         
    <cmd id="historySendToSource"
         menuLabel="Insert into _Source"

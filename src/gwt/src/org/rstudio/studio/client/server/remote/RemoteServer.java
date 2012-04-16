@@ -41,6 +41,7 @@ import org.rstudio.studio.client.common.shell.ShellInput;
 import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.common.vcs.*;
+import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.server.*;
@@ -2384,17 +2385,9 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SVN_SET_IGNORES, params, requestCallback);
    }
    
-   public void previewHTML(String targetFile, 
-                           String encoding,
-                           boolean isMarkdown,
-                           boolean knit,
+   public void previewHTML(HTMLPreviewParams params,
                            ServerRequestCallback<Boolean> callback)
    {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(targetFile));
-      params.set(1, new JSONString(encoding));
-      params.set(2, JSONBoolean.getInstance(isMarkdown));
-      params.set(3, JSONBoolean.getInstance(knit));
       sendRequest(RPC_SCOPE, PREVIEW_HTML, params, callback);
    }
 

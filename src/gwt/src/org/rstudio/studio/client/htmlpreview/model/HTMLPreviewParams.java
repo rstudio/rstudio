@@ -20,13 +20,31 @@ public class HTMLPreviewParams extends JavaScriptObject
    {
    }
    
-   public final static native HTMLPreviewParams create(String sourceFile) /*-{
+   public final static native HTMLPreviewParams create(String path,
+                                                       String encoding,
+                                                       boolean isMarkdown,
+                                                       boolean requiresKnit)/*-{
       var params = new Object();
-      params.source_file = sourceFile;
+      params.path = path;
+      params.encoding = encoding;
+      params.is_markdown = isMarkdown;
+      params.requires_knit = requiresKnit;
       return params;
    }-*/; 
    
-   public final native String getSourceFile() /*-{
-      return this.source_file;
+   public final native String getPath() /*-{
+      return this.path;
+   }-*/;
+   
+   public final native String getEncoding() /*-{
+      return this.encoding;
+   }-*/;
+   
+   public final native boolean isMarkdown() /*-{
+      return this.is_markdown;
+   }-*/;
+   
+   public final native boolean getRequiresKnit() /*-{
+      return this.requires_knit;
    }-*/;
 }

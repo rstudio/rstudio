@@ -19,10 +19,7 @@ import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
 
 public interface HTMLPreviewServerOperations
 {
-   void previewHTML(String targetFile, 
-                    String encoding, 
-                    boolean isMarkdown,
-                    boolean knit, 
+   void previewHTML(HTMLPreviewParams params, 
                     ServerRequestCallback<Boolean> requestCallback);
 
    void terminatePreviewHTML(ServerRequestCallback<Void> requestCallback);

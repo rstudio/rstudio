@@ -138,6 +138,7 @@ public abstract class
    public abstract AppCommand openHtmlExternal();
    public abstract AppCommand saveHtmlPreviewAs();
    public abstract AppCommand printHtmlPreview();
+   public abstract AppCommand refreshHtmlPreview();
    
    // View
    public abstract AppCommand showToolbar();

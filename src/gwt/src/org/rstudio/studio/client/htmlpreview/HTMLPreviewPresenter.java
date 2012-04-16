@@ -12,8 +12,10 @@
  */
 package org.rstudio.studio.client.htmlpreview;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -21,6 +23,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
@@ -35,11 +38,16 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 
+import com.gargoylesoftware.htmlunit.javascript.host.Window;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -70,7 +78,7 @@ public class HTMLPreviewPresenter implements IsWidget
    @Inject
    public HTMLPreviewPresenter(Display view,
                                Binder binder,
-                               Commands commands,
+                               final Commands commands,
                                GlobalDisplay globalDisplay,
                                EventBus eventBus,
                                Satellite satellite,
@@ -89,8 +97,31 @@ public class HTMLPreviewPresenter implements IsWidget
       binder.bind(commands, this);
       
       // disable print in desktop mode (qt printer can't handle page-breaks)
+      // as an alternative we provide a button to open the page in an 
+      // external browser window
       if (Desktop.isDesktop())
          commands.printHtmlPreview().remove();
+      
+      // map Ctrl-R to our internal refresh handler
+      Event.addNativePreviewHandler(new NativePreviewHandler() {
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent event)
+         {
+            if (event.getTypeInt() == Event.ONKEYDOWN)
+            {
+               NativeEvent ne = event.getNativeEvent();
+               int mod = KeyboardShortcut.getModifierValue(ne);
+               if ((mod == KeyboardShortcut.META || 
+                   (mod == KeyboardShortcut.CTRL && !BrowseCap.hasMetaKey()))
+                   && ne.getKeyCode() == 'R')
+               {
+                  ne.preventDefault();
+                  ne.stopPropagation();
+                  commands.refreshHtmlPreview().execute();
+               }
+            }
+         }
+      });
       
       satellite.addCloseHandler(new CloseHandler<Satellite>() {
          @Override
@@ -180,12 +211,11 @@ public class HTMLPreviewPresenter implements IsWidget
       };
    }
    
-   
    public void onActivated(HTMLPreviewParams params)
    {
+      lastPreviewParams_ =  params;
    }
   
-   
    @Override
    public Widget asWidget()
    {
@@ -263,6 +293,13 @@ public class HTMLPreviewPresenter implements IsWidget
    {
       view_.print();
    }
+   
+   @Handler
+   public void onRefreshHtmlPreview()
+   {
+      server_.previewHTML(lastPreviewParams_, 
+                          new SimpleRequestCallback<Boolean>());
+   }
 
    private void terminateRunningPreview()
    {
@@ -271,6 +308,7 @@ public class HTMLPreviewPresenter implements IsWidget
    
    private final Display view_;
    private boolean previewRunning_ = false;
+   private HTMLPreviewParams lastPreviewParams_;
    private HTMLPreviewResult lastSuccessfulPreview_;
    
    private String savePreviewDir_;

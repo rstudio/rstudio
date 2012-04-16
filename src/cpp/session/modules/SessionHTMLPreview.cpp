@@ -418,10 +418,11 @@ Error previewHTML(const json::JsonRpcRequest& request,
    // read params
    std::string file, encoding;
    bool isMarkdown, knit;
-   Error error = json::readParams(request.params, &file,
-                                                  &encoding,
-                                                  &isMarkdown,
-                                                  &knit);
+   Error error = json::readObjectParam(request.params, 0,
+                                       "path", &file,
+                                       "encoding", &encoding,
+                                       "is_markdown", &isMarkdown,
+                                       "requires_knit", &knit);
    if (error)
       return error;
    FilePath filePath = module_context::resolveAliasedPath(file);
