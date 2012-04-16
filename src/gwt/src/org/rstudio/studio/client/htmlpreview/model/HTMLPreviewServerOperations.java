@@ -36,4 +36,5 @@ public interface HTMLPreviewServerOperations
                  ServerRequestCallback<Void> requestCallback);
 
    String getApplicationURL(String pathName);
+   String getFileUrl(FileSystemItem file);
 }

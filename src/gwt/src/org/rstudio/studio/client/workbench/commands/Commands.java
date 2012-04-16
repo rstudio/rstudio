@@ -134,6 +134,7 @@ public abstract class
    public abstract AppCommand showPdfExternal();
    
    // HTML preview
+   public abstract AppCommand openHtmlExternal();
    public abstract AppCommand saveHtmlPreviewAs();
    public abstract AppCommand printHtmlPreview();
    

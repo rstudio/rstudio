@@ -417,7 +417,7 @@ public class PDFViewerPresenter implements IsWidget,
       {
          if (Desktop.isDesktop())
          {
-            Desktop.getFrame().showPdf(pdfPath);
+            Desktop.getFrame().showFile(pdfPath);
          }
          else
          {

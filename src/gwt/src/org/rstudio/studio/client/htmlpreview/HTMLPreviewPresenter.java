@@ -193,6 +193,24 @@ public class HTMLPreviewPresenter implements IsWidget
    }
    
    @Handler
+   public void onOpenHtmlExternal()
+   {
+      if (lastSuccessfulPreview_ != null)
+      {
+         String htmlFile = lastSuccessfulPreview_.getHtmlFile();
+         if (Desktop.isDesktop())
+         {
+            Desktop.getFrame().showFile(htmlFile);
+         }
+         else
+         {
+            globalDisplay_.openWindow(server_.getFileUrl(
+                                       FileSystemItem.createFile(htmlFile)));
+         }
+      }
+   }
+   
+   @Handler
    public void onSaveHtmlPreviewAs()
    {
       if (lastSuccessfulPreview_ != null)

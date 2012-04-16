@@ -751,12 +751,15 @@ well as menu structures (for main menu and popup menus).
         desc="Show in an external PDF viewer window"/>
         
    <!-- HTML Preview -->     
+   <cmd id="openHtmlExternal"
+        buttonLabel=""
+        desc="View the page with the system web browser"/>
    <cmd id="saveHtmlPreviewAs"
         buttonLabel="Save As"
-        desc="Save the document to another location"/>
+        desc="Save the page to another location"/>
    <cmd id="printHtmlPreview"
         buttonLabel="Print"
-        desc="Print the document"/>
+        desc="Print the page"/>
         
    <cmd id="historySendToSource"
         menuLabel="Insert into _Source"

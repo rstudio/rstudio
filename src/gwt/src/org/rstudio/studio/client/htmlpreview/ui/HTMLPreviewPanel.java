@@ -55,6 +55,9 @@ public class HTMLPreviewPanel extends ResizeComposite
       fileLabel_ = new ToolbarFileLabel(toolbar, 300);
       
       toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands.openHtmlExternal().createToolbarButton());
+      
+      toolbar.addLeftSeparator();
       saveHtmlPreviewAs_ = commands.saveHtmlPreviewAs();
       toolbar.addLeftWidget(saveHtmlPreviewAs_.createToolbarButton());
       

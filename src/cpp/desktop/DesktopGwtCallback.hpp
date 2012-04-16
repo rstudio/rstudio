@@ -65,7 +65,7 @@ public slots:
    QString getUriForPath(QString path);
    void onWorkbenchInitialized(QString scratchPath);
    void showFolder(QString path);
-   void showPdf(QString path);
+   void showFile(QString path);
 
    QString getRVersion();
    QString chooseRVersion();

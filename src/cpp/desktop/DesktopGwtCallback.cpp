@@ -313,7 +313,7 @@ void GwtCallback::showFolder(QString path)
    }
 }
 
-void GwtCallback::showPdf(QString path)
+void GwtCallback::showFile(QString path)
 {
    if (path.isNull() || path.isEmpty())
       return;
