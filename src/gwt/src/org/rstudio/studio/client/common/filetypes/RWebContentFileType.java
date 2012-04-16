@@ -33,7 +33,8 @@ public class RWebContentFileType extends TextFileType
             false, 
             false, 
             false,
-            true,    // preview-html
+            false,    // preview-html
+            true,     // knit-html
             false, 
             false,
             false,

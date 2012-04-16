@@ -52,6 +52,7 @@ public abstract class
    public abstract AppCommand goToFunctionDefinition();
    public abstract AppCommand sourceNavigateBack();
    public abstract AppCommand sourceNavigateForward();
+   public abstract AppCommand knitToHTML();
    public abstract AppCommand previewHTML();
    public abstract AppCommand compilePDF();
    public abstract AppCommand synctexSearch();

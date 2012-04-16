@@ -1881,6 +1881,12 @@ public class TextEditingTarget implements EditingTarget
    }
      
    @Handler
+   void onKnitToHTML()
+   {
+      onPreviewHTML();
+   }
+   
+   @Handler
    void onPreviewHTML()
    {
       // validate pre-reqs

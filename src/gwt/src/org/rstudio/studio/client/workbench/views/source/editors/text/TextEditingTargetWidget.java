@@ -98,7 +98,7 @@ public class TextEditingTargetWidget
    {
       // exclude back and forward buttons for authoring file types 
       // (because they have too many other commands)
-      Toolbar toolbar = fileType.canCompilePDF() || fileType.canPreviewHTML() ?
+      Toolbar toolbar = fileType.canAuthorContent() ?
                            new Toolbar() :
                            new EditingTargetToolbar(commands_);
        
@@ -120,6 +120,7 @@ public class TextEditingTargetWidget
       
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.previewHTML().createToolbarButton());
+      toolbar.addLeftWidget(commands_.knitToHTML().createToolbarButton());
       toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());

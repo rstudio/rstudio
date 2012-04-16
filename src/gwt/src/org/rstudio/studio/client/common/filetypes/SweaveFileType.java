@@ -41,6 +41,7 @@ public class SweaveFileType extends TextFileType
             true, 
             false, 
             false,
+            false,
             true,
             true,
             false,

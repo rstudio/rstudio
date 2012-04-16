@@ -108,7 +108,7 @@ public class HTMLPreviewPresenter implements IsWidget
          public void onHTMLPreviewStarted(HTMLPreviewStartedEvent event)
          {
             previewRunning_ = true;
-            view_.showProgress("Generating preview...");
+            view_.showProgress("Knitting...");
             view_.addProgressClickHandler(new ClickHandler() {
                @Override
                public void onClick(ClickEvent event)
@@ -277,7 +277,6 @@ public class HTMLPreviewPresenter implements IsWidget
    private static final String MODULE_HTML_PREVIEW = "html_preview";
    private static final String KEY_SAVEAS_DIR = "saveAsDir";
    
-   @SuppressWarnings("unused")
    private final GlobalDisplay globalDisplay_;
    private final FileDialogs fileDialogs_;
    private final Session session_;

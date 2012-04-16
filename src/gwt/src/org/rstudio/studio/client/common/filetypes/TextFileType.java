@@ -41,6 +41,7 @@ public class TextFileType extends EditableFileType
                 boolean canExecuteAllCode,
                 boolean canExecuteToCurrentLine,
                 boolean canPreviewHTML,
+                boolean canKnitToHTML,
                 boolean canCompilePDF,
                 boolean canExecuteChunks,
                 boolean canAutoIndent,
@@ -54,6 +55,7 @@ public class TextFileType extends EditableFileType
       canExecuteCode_ = canExecuteCode;
       canExecuteAllCode_ = canExecuteAllCode;
       canExecuteToCurrentLine_ = canExecuteToCurrentLine;
+      canKnitToHTML_ = canKnitToHTML;
       canPreviewHTML_ = canPreviewHTML;
       canCompilePDF_ = canCompilePDF;
       canExecuteChunks_ = canExecuteChunks;
@@ -105,6 +107,11 @@ public class TextFileType extends EditableFileType
       return canExecuteToCurrentLine_;
    }
    
+   public boolean canKnitToHTML()
+   {
+      return canKnitToHTML_;
+   }
+   
    public boolean canPreviewHTML()
    {
       return canPreviewHTML_;
@@ -113,6 +120,11 @@ public class TextFileType extends EditableFileType
    public boolean canCompilePDF()
    {
       return canCompilePDF_;
+   }
+   
+   public boolean canAuthorContent()
+   {
+      return canKnitToHTML() || canPreviewHTML() || canCompilePDF();
    }
    
    public boolean canExecuteChunks()
@@ -180,6 +192,10 @@ public class TextFileType extends EditableFileType
          results.add(commands.executeFromCurrentLine());
          results.add(commands.executeCurrentFunction());
       }
+      if (canKnitToHTML())
+      {
+         results.add(commands.knitToHTML());
+      }
       if (canPreviewHTML())
       {
          results.add(commands.previewHTML());
@@ -243,6 +259,7 @@ public class TextFileType extends EditableFileType
    private final boolean canExecuteAllCode_;
    private final boolean canExecuteToCurrentLine_;
    private final boolean canPreviewHTML_;
+   private final boolean canKnitToHTML_;
    private final boolean canCompilePDF_;
    private final boolean canExecuteChunks_;
    private final boolean canAutoIndent_;

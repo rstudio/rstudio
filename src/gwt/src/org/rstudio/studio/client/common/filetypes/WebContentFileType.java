@@ -34,6 +34,7 @@ public class WebContentFileType extends TextFileType
             false, 
             false,
             true,    // preview-html
+            false,
             false, 
             false,
             false,
