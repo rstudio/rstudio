@@ -36,15 +36,15 @@ public class RWebContentFileType extends TextFileType
             icon,
             true,    // word-wrap
             false, 
-            false, 
-            false, 
+            true, 
+            true, 
             false,
             false,    // preview-html
             true,     // knit-html
             false, 
+            true,
             false,
-            false,
-            false);
+            isMarkdown);
       
       isMarkdown_ = isMarkdown;
    }

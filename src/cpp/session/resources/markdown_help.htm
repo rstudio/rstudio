@@ -6,13 +6,144 @@
 <title>Markdown Quick Reference</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel="stylesheet" type="text/css" href="R.css">
+
+<style type="text/css">
+
+p {
+   font-size: 0.9em;
+}
+
+#md_examples p {
+   margin-top: 3px;
+   margin-bottom: 0px;
+}
+
+#md_examples h4 {
+   margin-bottom: 3px;
+}
+
+#md_examples code {	
+   font-family: Monaco, "DejaVu Sans Mono", Consolas, "Lucida Console", Courier, monospace;
+	font-size: 11px;
+}
+
+#md_examples pre {	
+   line-height: 12px;
+   margin-top: 0;
+	background-color: #f5f5f5;
+	border: 1px solid #ccc;
+	padding: 4px;
+}
+
+</style>
+
 </head>
 
 <body>
 
-<h3>Markdown Quick Reference</h3>
+<h2>Markdown Quick Reference</h2>
 
-<p>Under construction...</p>
+<div id="overview">
+<p>
+<!-- 
+<a href="http://en.wikipedia.org/wiki/Markdown">Markdown</a> is an easy way to create web content using a simple plain-text formatting syntax. 
+See <a href="">Using Markdown with RStudio</a> for more on creating dynamic R reports with Markdown.
+-->
+</p> 
+</div>
+
+<div id="md_examples">
+<h4>Phrase Emphasis</h4>
+
+<pre><code>*italic*   **bold**
+_italic_   __bold__
+</code></pre>
+
+<h4>Headers</h4>
+<pre><code>Header 1
+==================
+
+Header 2
+------------------
+
+### Header 3
+</code></pre>
+
+<h4>Lists</h4>
+<p>Unordered:</p>
+<pre><code>* Item 1
+* Item 2
+  * Item 2a
+  * Item 2b
+</code></pre>
+
+<p>Ordered:</p>
+<pre><code>1. Item 1
+2. Item 2
+3. Item 3
+   * Item 3a
+   * Item 3b
+</code></pre>
+
+<h4>Links</h4>
+<pre><code>http://example.com - linked automatically
+[Example Site](http://example.com)
+</code></pre>
+
+<h4>Images</h4>
+<pre><code>![Example Logo](http://example.com/logo.png)
+</code></pre>
+
+<h4>Blockquotes</h4>
+<pre><code>A friend once said:
+
+> It's always better to give 
+> than to receive.
+</code></pre>
+
+<h4>Code Blocks</h4>
+<pre><code>```
+add <- function(a, b) {
+   a + b
+}
+```
+</code></pre>
+
+<h4>Inline Code</h4>
+<pre><code>We defined the `add` function to 
+compute the sum of two numbers.
+</code></pre>
+
+<h4>Horizontal Rules</h4>
+<p>Three or more dashes or asterisks:</p>
+<pre><code>---
+
+* * *
+
+- - - - 
+</code></pre>
+
+<h4>Page Breaks</h4>
+<p>Heading 1 without a caption (requires that css property page-break-before be set to 'always' for h1 elements):
+<pre><code>==================
+</code></pre>
+
+<h4>Tables</h4>
+<pre><code>First Header  | Second Header
+------------- | -------------
+Content Cell  | Content Cell
+Content Cell  | Content Cell
+</code></pre>
+
+<h4>Miscellaneous</h4>
+<pre><code>~strikethrough~
+superscript^2
+</code></pre>
+
+<h4>Smartypants</h4>
+<p>Plain ASCII punctuation characters (e.g. dashes, quotes, etc.) are transormed into smart typographic punctuation HTML entities. Cmmon symbols including copyright and trademark are also transformed.</p>
+
+</div>
 
 </body>
 

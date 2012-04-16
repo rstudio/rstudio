@@ -642,8 +642,8 @@ well as menu structures (for main menu and popup menus).
         desc="Reflow selected comment lines so they wrap evenly"/>
   
    <cmd id="markdownHelp"
-        menuLabel="_Markdown Help"
-        desc="Help with using Markdown to author documents"/>
+        menuLabel="_Markdown Quick Reference"
+        desc="Markdown quick reference"/>
   
    <cmd id="knitToHTML"
         buttonLabel="Knit HTML"
