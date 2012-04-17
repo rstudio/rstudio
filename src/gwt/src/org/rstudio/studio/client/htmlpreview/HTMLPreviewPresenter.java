@@ -70,8 +70,7 @@ public class HTMLPreviewPresenter implements IsWidget
       
       void showPreview(String url,
                        String htmlFile, 
-                       boolean enableSaveAs,
-                       boolean enableScripts);
+                       boolean enableSaveAs);
       
       void print();
    }
@@ -177,8 +176,7 @@ public class HTMLPreviewPresenter implements IsWidget
                view_.showPreview(
                   server_.getApplicationURL(result.getPreviewURL()),
                   result.getHtmlFile(),
-                  result.getEnableSaveAs(),
-                  result.getEnableScripts());
+                  result.getEnableSaveAs());
             }
             else
             {

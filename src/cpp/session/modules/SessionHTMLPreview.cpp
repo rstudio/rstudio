@@ -333,19 +333,10 @@ private:
       isRunning_ = false;
       outputFile_ = outputFile;
 
-      // Disable scripts for Markdown (since they'll get stripped at some
-      // point anyway) but enable them for HTML. Note that when scripts are
-      // enabled some features of the preview window (Print, Find, restoring
-      // scroll position on reload) are not available because when we allow
-      // scripts we sandbox the iframe out of our same-origin. see the comment
-      // in HTMLPreviewPanel.setScriptsEnabled for more details
-      bool scriptsEnabled = !isMarkdown();
-
       enqueHTMLPreviewSucceeded(kHTMLPreview "/",
                                 targetFile(),
                                 htmlPreviewFile(),
-                                isMarkdown(),
-                                scriptsEnabled);
+                                isMarkdown());
    }
 
    static void enqueHTMLPreviewStarted(const FilePath& targetFile)
@@ -373,8 +364,7 @@ private:
    static void enqueHTMLPreviewSucceeded(const std::string& previewUrl,
                                          const FilePath& sourceFile,
                                          const FilePath& htmlFile,
-                                         bool enableSaveAs,
-                                         bool enableScripts)
+                                         bool enableSaveAs)
    {
       json::Object resultJson;
       resultJson["succeeded"] = true;
@@ -382,7 +372,6 @@ private:
       resultJson["html_file"] = module_context::createAliasedPath(htmlFile);
       resultJson["preview_url"] = previewUrl;
       resultJson["enable_saveas"] = enableSaveAs;
-      resultJson["enable_scripts"] = enableScripts;
       ClientEvent event(client_events::kHTMLPreviewCompletedEvent, resultJson);
       module_context::enqueClientEvent(event);
    }

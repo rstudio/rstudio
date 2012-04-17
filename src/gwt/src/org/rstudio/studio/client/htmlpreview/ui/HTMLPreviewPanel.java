@@ -183,8 +183,7 @@ public class HTMLPreviewPanel extends ResizeComposite
    @Override
    public void showPreview(String url, 
                            String htmlFile,
-                           boolean enableSaveAs,
-                           boolean enableScripts)
+                           boolean enableSaveAs)
    {
       String shortFileName = StringUtil.shortPathName(
             FileSystemItem.createFile(htmlFile), 
@@ -193,8 +192,6 @@ public class HTMLPreviewPanel extends ResizeComposite
       fileLabel_.setText(shortFileName);
       saveHtmlPreviewAsSeparator_.setVisible(enableSaveAs);
       saveHtmlPreviewAs_.setVisible(enableSaveAs);
-      findTextBox_.setVisible(!enableScripts);
-      previewFrame_.setScriptsEnabled(enableScripts);
       previewFrame_.navigate(url);
    }
    
@@ -212,29 +209,6 @@ public class HTMLPreviewPanel extends ResizeComposite
       {
          setStylePrimaryName("rstudio-HelpFrame");
          getElement().getStyle().setBackgroundColor("white");
-         setScriptsEnabled(false);
-      }
-      
-      public void setScriptsEnabled(boolean scriptsEnabled)
-      {
-         // enable scripts for the iframe sandbox if requested. note that
-         // if we do allow scripts we need to make sure that same-origin
-         // is not allowed (so the scripts are confined to this frame). 
-         // however if scripts are not allowed we explicitly allow same-origin
-         // so that find & print will work and so reloading will preserve 
-         // scroll position. in both cases we allow popups for embedded links.
-         // net tradeoff: if scripts are enabled then print, find, and 
-         // preservation of scroll position after reload do not work
-         if (scriptsEnabled)
-         {
-            getElement().setAttribute("sandbox", "allow-scripts " +
-                                                 "allow-popups");
-         }
-         else
-         {
-            getElement().setAttribute("sandbox", "allow-same-origin " +
-                                                 "allow-popups");
-         }
       }
       
       public void navigate(final String url)
