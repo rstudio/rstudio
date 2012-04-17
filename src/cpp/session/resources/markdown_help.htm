@@ -41,7 +41,7 @@ p {
 
 <body>
 
-<h2>Markdown Quick Reference</h2>
+<h3>Markdown Quick Reference</h3>
 
 <div id="overview">
 <p>
@@ -91,7 +91,7 @@ Header 2
 </code></pre>
 
 <h4>Images</h4>
-<pre><code>![Example Logo](http://example.com/logo.png)
+<pre><code>![alt text](figures/img.png "Title")
 </code></pre>
 
 <h4>Blockquotes</h4>
@@ -117,7 +117,22 @@ compute the sum of two numbers.
 <h4>Horizontal Rule / Page Break</h4>
 <p>Three or more asterisks or dashes:</p>
 <pre><code>******
+
 ------
+</code></pre>
+
+<h4>Reference Style Links and Images</h4>
+<p>Links (titles optional):</p>
+<pre><code>An [example][id]. Then, anywhere
+else in the doc, define the link:
+
+  [id]: http://example.com/  "Title"
+</code></pre>
+
+<p>Images (titles optional):</p>
+<pre><code>![alt text][id]
+
+[id]: figures/img.png "Title"
 </code></pre>
 
 <h4>Tables</h4>
@@ -132,7 +147,7 @@ superscript^2
 </code></pre>
 
 <h4>Smartypants</h4>
-<p>Plain ASCII punctuation characters (e.g. dashes, quotes, etc.) are transormed into smart typographic punctuation HTML entities. Cmmon symbols including copyright and trademark are also transformed.</p>
+<p>Plain ASCII punctuation characters (e.g. dashes, quotes, etc.) are translated into smart typographic punctuation HTML entities. Common symbols including copyright and trademark are also translated.</p>
 
 </div>
 
