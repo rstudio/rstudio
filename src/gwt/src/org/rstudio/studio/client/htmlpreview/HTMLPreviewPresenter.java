@@ -94,13 +94,7 @@ public class HTMLPreviewPresenter implements IsWidget
       fileSystemContext_ = fileSystemContext;
       
       binder.bind(commands, this);
-      
-      // disable print in desktop mode (qt printer can't handle page-breaks)
-      // as an alternative we provide a button to open the page in an 
-      // external browser window
-      if (Desktop.isDesktop())
-         commands.printHtmlPreview().remove();
-      
+         
       // map Ctrl-R to our internal refresh handler
       Event.addNativePreviewHandler(new NativePreviewHandler() {
          @Override
@@ -285,12 +279,6 @@ public class HTMLPreviewPresenter implements IsWidget
                }
          });
       }
-   }
-   
-   @Handler
-   public void onPrintHtmlPreview()
-   {
-      view_.print();
    }
    
    @Handler

@@ -25,7 +25,6 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewPresenter;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
@@ -62,27 +61,18 @@ public class HTMLPreviewPanel extends ResizeComposite
       fileLabel_.getElement().getStyle().setMarginRight(7, Unit.PX);
       toolbar.addLeftWidget(fileLabel_);
       
-      toolbar.addLeftWidget(commands.refreshHtmlPreview().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands.openHtmlExternal().createToolbarButton());
       
       toolbar.addLeftSeparator();
       saveHtmlPreviewAs_ = commands.saveHtmlPreviewAs();
       toolbar.addLeftWidget(saveHtmlPreviewAs_.createToolbarButton());
       
-      toolbar.addLeftSeparator();
-      printHtmlPreview_ = commands.printHtmlPreview();
-      toolbar.addLeftWidget(printHtmlPreview_.createToolbarButton());
-      
-      // provide an external window button on the desktop (so the user can
-      // get to a decent printing engine)
-      if (Desktop.isDesktop())
-      {
-         toolbar.addLeftWidget(
-                           commands.openHtmlExternal().createToolbarButton());
-      }
       
       findTextBox_ = new FindTextBox("Find");
       findTextBox_.setIconVisible(true);
       findTextBox_.setOverrideWidth(120);
+      findTextBox_.getElement().getStyle().setMarginRight(6, Unit.PX);
       toolbar.addRightWidget(findTextBox_);
       
       findTextBox_.addKeyDownHandler(new KeyDownHandler() {
@@ -121,6 +111,11 @@ public class HTMLPreviewPanel extends ResizeComposite
          }
          
       });
+      
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(
+                     commands.refreshHtmlPreview().createToolbarButton());
+      
       
       return toolbar;
    }
@@ -178,7 +173,6 @@ public class HTMLPreviewPanel extends ResizeComposite
             300);
       fileLabel_.setText(shortFileName);
       saveHtmlPreviewAs_.setVisible(enableSaveAs);
-      printHtmlPreview_.setVisible(!enableScripts);
       findTextBox_.setVisible(!enableScripts);
       previewFrame_.setScriptsEnabled(enableScripts);
       previewFrame_.navigate(url);
@@ -268,6 +262,5 @@ public class HTMLPreviewPanel extends ResizeComposite
    private ToolbarLabel fileLabel_;
    private FindTextBox findTextBox_;
    private AppCommand saveHtmlPreviewAs_;
-   private AppCommand printHtmlPreview_;
    private HTMLPreviewProgressDialog activeProgressDialog_;
 }
