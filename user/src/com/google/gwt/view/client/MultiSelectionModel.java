@@ -30,15 +30,15 @@ import java.util.Set;
 public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
 
   // Ensure one value per key
-  private final HashMap<Object, T> selectedSet = new HashMap<Object, T>();
+  final Map<Object, T> selectedSet;
 
-  private final HashMap<T, Boolean> selectionChanges = new HashMap<T, Boolean>();
+  private final Map<T, Boolean> selectionChanges;
 
   /**
    * Constructs a MultiSelectionModel without a key provider.
    */
   public MultiSelectionModel() {
-    super(null);
+    this(null);
   }
   
   /**
@@ -48,7 +48,24 @@ public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
    *        object should act as its own key
    */
   public MultiSelectionModel(ProvidesKey<T> keyProvider) {
+    this(keyProvider, new HashMap<Object, T>(), new HashMap<T, Boolean>());
+  }
+
+  /**
+   * Construct a MultiSelectionModel with the given key provider and
+   * implementations of selectedSet and selectionChanges. Different
+   * implementations allow for enforcing order on selection.
+   *
+   * @param keyProvider an instance of ProvidesKey<T>, or null if the record
+   *        object should act as its own key
+   * @param selectedSet an instance of Map
+   * @param selectionChanges an instance of Map
+   */
+  MultiSelectionModel(ProvidesKey<T> keyProvider, Map<Object, T> selectedSet,
+      Map<T, Boolean> selectionChanges) {
     super(keyProvider);
+    this.selectedSet = selectedSet;
+    this.selectionChanges = selectionChanges;
   }
 
   /**
@@ -80,11 +97,13 @@ public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
     return new HashSet<T>(selectedSet.values());
   }
 
+  @Override
   public boolean isSelected(T object) {
     resolveChanges();
     return selectedSet.containsKey(getKey(object));
   }
 
+  @Override
   public void setSelected(T object, boolean selected) {
     selectionChanges.put(object, selected);
     scheduleSelectionChangeEvent();
@@ -98,7 +117,7 @@ public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
     resolveChanges();
   }
 
-  private void resolveChanges() {
+  void resolveChanges() {
     if (selectionChanges.isEmpty()) {
       return;
     }
