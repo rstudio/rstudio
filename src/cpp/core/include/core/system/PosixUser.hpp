@@ -15,6 +15,7 @@
 #define CORE_SYSTEM_POSIX_USER_HPP
 
 #include <string>
+#include <unistd.h>
 
 namespace core {
    class Error;
