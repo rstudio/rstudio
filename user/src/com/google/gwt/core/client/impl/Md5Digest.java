@@ -444,9 +444,10 @@ public final class Md5Digest extends MessageDigest {
     c = ii(c, d, a, b, x[2], 15, 0x2ad7d2bb);
     b = ii(b, c, d, a, x[9], 21, 0xeb86d391);
 
-    state[0] += a;
-    state[1] += b;
-    state[2] += c;
-    state[3] += d;
+    // Coerce to 32-bits to compute the expression correctly in JavaScript.
+    state[0] = (state[0] + a) | 0;
+    state[1] = (state[1] + b) | 0;
+    state[2] = (state[2] + c) | 0;
+    state[3] = (state[3] + d) | 0;
   }
 }

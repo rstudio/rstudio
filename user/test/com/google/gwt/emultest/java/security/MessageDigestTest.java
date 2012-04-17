@@ -49,6 +49,35 @@ public class MessageDigestTest extends EmulTestBase {
 
       "12345678901234567890123456789012345678901234567890123456789012345678901234567890",
       "57edf4a22be3c955ac49da2e2107b67a",
+
+      "s nine o'clock at night upon the second of August--the mostterrible August in "
+          + "the history of the world. One might have thoughtalready that God's curse "
+          + "hung heavy over a degenerate world, for therewas an awesome hush and a "
+          + "feeling of vague expectancy in the sultry andstagnant air. The sun had "
+          + "long set, but one blood-red gash like anopen wound lay low in the distant "
+          + "west. Above, the stars were shiningbrightly, and below, the lights of the "
+          + "shipping glimmered in the bay.The two famous Germans stood beside the stone "
+          + "parapet of the gardenwalk, with the long, low, heavily gabled house behind "
+          + "them, and theylooked down upon the broad sweep of the beach at the foot of "
+          + "the greatchalk cliff in which Von Bork, like some wandering eagle, had "
+          + "perchedhimself four years before. They stood with their heads close "
+          + "together,talking in low, confidential tones. From below the two glowing "
+          + "ends oftheir cigars might have been the smouldering eyes of some "
+          + "malignantfiend looking down in the darkness.A remarkable man this Von Bork--a "
+          + "man who could hardly be matched amongall the devoted agents of the Kaiser. "
+          + "It was his talents which hadfirst recommended him for the English mission, "
+          + "the most importantmission of all, but since he had taken it over those "
+          + "talents had becomemore and more manifest to the half-dozen people in the "
+          + "world who werereally in touch with the truth. One of these was his "
+          + "presentcompanion, Baron Von Herling, the chief secretary of the legation,whose "
+          + "huge 100-horse-power Benz car was blocking the country lane as itwaited to "
+          + "waft its owner back to London.'So far as I can judge the trend of events, you "
+          + "will probably be backin Berlin within the week,' the secretary was saying. "
+          + "'When you getthere, my dear Von Bork, I think you will be surprised at the "
+          + "welcomeyou will receive. I happen to know what is thought in the "
+          + "highestquarters of your work in this country.' He was a huge man, "
+          + "thesecretary, deep, broad, and tall, with",
+      "ae610cd119d74e5ac18c111d4a91ef3f",
   };
 
   private static void assertDigest(String expected, MessageDigest md,
