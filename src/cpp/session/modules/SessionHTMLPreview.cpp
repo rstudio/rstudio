@@ -98,7 +98,7 @@ private:
       // determine whether we need to knit the file
       if (requiresKnit)
       {
-         performKnit(isMarkdown);
+         performKnit(encoding, isMarkdown);
       }
 
       // otherwise we can just either copy or generate the html inline
@@ -165,7 +165,7 @@ public:
 
 private:
 
-   void performKnit(bool isMarkdown)
+   void performKnit(const std::string& encoding, bool isMarkdown)
    {
       // set running flag
       isRunning_ = true;
@@ -189,19 +189,23 @@ private:
       args.push_back("-e");
       if (!knitrOutputFile_.empty())
       {
-         boost::format fmt("require(knitr); knit('%1%');");
-         std::string cmd = boost::str(fmt % targetFile_.filename());
+         boost::format fmt("options(encoding='%1%'); "
+                           "require(knitr); "
+                           "knit('%2%');");
+         std::string cmd = boost::str(fmt % encoding % targetFile_.filename());
          args.push_back(cmd);
       }
       else
       {
          std::string tempFilePath = string_utils::utf8ToSystem(
                                            outputFileTempFile.absolutePath());
-         boost::format fmt("require(knitr); "
-                           "o <- knit('%1%'); "
-                           "cat(o, file='%2%');");
-         std::string cmd = boost::str(fmt % targetFile_.filename()
-                                       % tempFilePath);
+         boost::format fmt("options(encoding='%1%'); "
+                           "require(knitr); "
+                           "o <- knit('%2%'); "
+                           "cat(o, file='%3%');");
+         std::string cmd = boost::str(fmt % encoding
+                                          % targetFile_.filename()
+                                          % tempFilePath);
          args.push_back(cmd);
       }
 
@@ -221,7 +225,7 @@ private:
                                 HTMLPreview::shared_from_this(), _2);
       cb.onExit =  boost::bind(&HTMLPreview::onKnitCompleted,
                                 HTMLPreview::shared_from_this(),
-                                _1, outputFileTempFile, isMarkdown);
+                                _1, outputFileTempFile, encoding, isMarkdown);
 
       // execute knitr
       module_context::processSupervisor().runProgram(rProgramPath,
@@ -242,6 +246,7 @@ private:
 
    void onKnitCompleted(int exitStatus,
                         const FilePath& outputPathTempFile,
+                        const std::string& encoding,
                         bool isMarkdown)
    {
       if (exitStatus == EXIT_SUCCESS)
@@ -261,9 +266,12 @@ private:
             knitrOutputFile_ = targetFile_.parent().complete(outputFile);
          }
 
-         // read the output file
+         // read the file using the specified encoding
          std::string output;
-         Error error = core::readStringFromFile(knitrOutputFile_, &output);
+         Error error = module_context::readAndDecodeFile(targetFile_,
+                                                         encoding,
+                                                         true,
+                                                         &output);
          if (error)
             terminateWithError(error);
          else
