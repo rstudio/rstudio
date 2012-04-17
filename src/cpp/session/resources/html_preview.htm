@@ -8,35 +8,131 @@
 <base target="_blank"/>
 
 <style type="text/css">
+
 body, td {
    font-family: sans-serif;
-   font-size: 11pt;
    background-color: white;
+   font-size: 12px;
    margin: 8px;
 }
 
-::selection {
-   background: rgb(181, 213, 255);
+h1 { 
+   font-size:2.0em; 
 }
 
-::-moz-selection{
-   background: rgb(181, 213, 255);
+h2 { 
+   font-size:1.5em; 
+}
+
+h3 { 
+   font-size:1.3em; 
+}
+
+h4 { 
+   font-size:1.1em; 
+}
+
+h5 { 
+   font-size:1em; 
+}
+
+h6 { 
+   font-size:0.9em; 
 }
 
 a:visited {
    color: rgb(50%, 0%, 50%);
 }
 
+code {	
+   font-family: Monaco, "DejaVu Sans Mono", Consolas, "Lucida Console", Courier, monospace;
+}
+
+pre {	
+   margin-top: 0;
+	background-color: #f5f5f5;
+	border: 1px solid #ccc;
+	padding: 4px;
+   font-size: 0.9em;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+	border-top-style: dotted;
+	border-top-color: #999999;
+}
+
+@media only screen and (min-width: 480px) {
+   body {
+      font-size:14px;
+   }
+}
+
+@media only screen and (min-width: 768px) {
+   body {
+      font-size:16px;
+   }
+}
  
 @media print {
-   h1 { page-break-before: always; }
-   a, a:visited { text-decoration: underline; }
-   tr, img { page-break-inside: avoid; }
-   img { max-width: 100% !important; }
-   @page :left { margin: 15mm 20mm 15mm 10mm; }
-   @page :right { margin: 15mm 10mm 15mm 20mm; }
-   p, h2, h3 { orphans: 3; widows: 3; }
-   h2, h3 { page-break-after: avoid; }
+   * { 
+      background: transparent !important; 
+      color: black !important; 
+      filter:none !important; 
+      -ms-filter: none !important; 
+   }
+
+   body { 
+      font-size:12pt; 
+      max-width:100%; 
+   }
+       
+   a, a:visited { 
+      text-decoration: underline; 
+   }
+
+   hr { 
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote { 
+      padding-right: 1em; 
+      page-break-inside: avoid; 
+   }
+
+   tr, img { 
+      page-break-inside: avoid; 
+   }
+
+   img { 
+      max-width: 100% !important; 
+   }
+
+   @page :left { 
+      margin: 15mm 20mm 15mm 10mm; 
+   }
+     
+   @page :right { 
+      margin: 15mm 10mm 15mm 20mm; 
+   }
+
+   p, h2, h3 { 
+      orphans: 3; widows: 3; 
+   }
+
+   h2, h3 { 
+      page-break-after: avoid; 
+   }
 }
 
 </style>
