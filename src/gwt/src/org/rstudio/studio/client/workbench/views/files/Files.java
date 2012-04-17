@@ -29,6 +29,7 @@ import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.fileexport.FileExport;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserHandler;
@@ -102,10 +103,6 @@ public class Files
                      FileSystemItem targetDirectory, 
                      RemoteFileSystemContext fileSystemContext,
                      OperationWithInput<PendingFileUpload> completedOperation);
-      
-      void showFileExport(String defaultName,
-                          String defaultExtension,
-                          ProgressOperationWithInput<String> operation);
    }
 
    @Inject
@@ -118,6 +115,7 @@ public class Files
                 Commands commands,
                 Provider<FilesCopy> pFilesCopy,
                 Provider<FilesUpload> pFilesUpload,
+                Provider<FileExport> pFileExport,
                 FileTypeRegistry fileTypeRegistry,
                 ConsoleDispatcher consoleDispatcher,
                 WorkbenchContext workbenchContext)
@@ -136,6 +134,7 @@ public class Files
       session_ = session;
       pFilesCopy_ = pFilesCopy;
       pFilesUpload_ = pFilesUpload;
+      pFileExport_ = pFileExport;
 
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
 
@@ -390,65 +389,11 @@ public class Files
 
    @Handler
    void onExportFiles()
-   {
-      // get currently selected files
-      final ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
-      
-      // validation: some selection exists
-      if  (selectedFiles.size() == 0)
-         return ;
-         
-      // case: single file which is not a folder 
-      if ((selectedFiles.size()) == 1 && !selectedFiles.get(0).isDirectory())
-      {
-         final FileSystemItem file = selectedFiles.get(0);
-         
-         view_.showFileExport(file.getStem(),
-                              file.getExtension(),
-                              new ProgressOperationWithInput<String>(){
-            public void execute(String name, ProgressIndicator progress)
-            {
-               // execute the download (open in a new window)
-               globalDisplay_.openWindow(server_.getFileExportUrl(name, file));
-               
-            }
-         });
-      }
-      
-      // case: folder or multiple files
-      else
-      {
-         // determine the default zip file name based on the selection
-         String defaultArchiveName;
-         if (selectedFiles.size() == 1)
-            defaultArchiveName = selectedFiles.get(0).getStem();
-         else
-            defaultArchiveName = "rstudio-export";
-         
-         // prompt user
-         final String ZIP = ".zip";
-         view_.showFileExport(defaultArchiveName,
-                              ZIP,
-                              new ProgressOperationWithInput<String>(){
-            
-            public void execute(String archiveName, ProgressIndicator progress)
-            {
-               // force zip extension in case the user deleted it
-               if (!archiveName.endsWith(ZIP))
-                  archiveName += ZIP;
-               
-               // build list of filenames for current selection
-               ArrayList<String> filenames = new ArrayList<String>();
-               for (FileSystemItem file : selectedFiles)
-                  filenames.add(file.getName());
-               
-               // execute the download (open in a new window)
-               globalDisplay_.openWindow(server_.getFileExportUrl(archiveName, 
-                                                                  currentPath_, 
-                                                                  filenames));
-            }
-         });
-      }
+   {     
+      pFileExport_.get().export("Export Files",
+                                "selected file(s)",
+                                currentPath_, 
+                                view_.getSelectedFiles());
    }
 
    @Handler
@@ -622,6 +567,7 @@ public class Files
    private boolean hasNavigatedToDirectory_ = false;
    private final Provider<FilesCopy> pFilesCopy_;
    private final Provider<FilesUpload> pFilesUpload_;
+   private final Provider<FileExport> pFileExport_;
    private static final String MODULE_FILES = "files-pane";
    private static final String KEY_PATH = "path";
    private static final String KEY_SORT_ORDER = "sortOrder";

@@ -23,8 +23,11 @@ import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FindTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewPresenter;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
@@ -65,8 +68,24 @@ public class HTMLPreviewPanel extends ResizeComposite
       toolbar.addLeftWidget(commands.openHtmlExternal().createToolbarButton());
       
       saveHtmlPreviewAsSeparator_ = toolbar.addLeftSeparator();
-      saveHtmlPreviewAs_ = commands.saveHtmlPreviewAs().createToolbarButton();
-      toolbar.addLeftWidget(saveHtmlPreviewAs_);
+      if (Desktop.isDesktop())
+      { 
+         saveHtmlPreviewAs_ = commands.saveHtmlPreviewAs().createToolbarButton();
+         toolbar.addLeftWidget(saveHtmlPreviewAs_);
+      }
+      else
+      {
+         ToolbarPopupMenu menu = new ToolbarPopupMenu();
+         menu.addItem(commands.saveHtmlPreviewAsLocalFile().createMenuItem(false));
+         menu.addItem(commands.saveHtmlPreviewAs().createMenuItem(false));
+         
+         saveHtmlPreviewAs_ = toolbar.addLeftWidget(new ToolbarButton(
+               "Save As", 
+               commands.saveSourceDoc().getImageResource(),
+               menu));
+         
+         
+      }
       
       
       findTextBox_ = new FindTextBox("Find");

@@ -137,6 +137,7 @@ public abstract class
    
    // HTML preview
    public abstract AppCommand openHtmlExternal();
+   public abstract AppCommand saveHtmlPreviewAsLocalFile();
    public abstract AppCommand saveHtmlPreviewAs();
    public abstract AppCommand refreshHtmlPreview();
    

@@ -769,9 +769,14 @@ well as menu structures (for main menu and popup menus).
    <cmd id="openHtmlExternal"
         buttonLabel=""
         desc="View the page with the system web browser"/>
+   
+   <cmd id="saveHtmlPreviewAsLocalFile"
+        menuLabel="File on Local Computer..."
+        desc="Download the page to a local file"/>
+        
    <cmd id="saveHtmlPreviewAs"
-        buttonLabel="Save As"
-        desc="Save the page to another location"/>
+        menuLabel="File on RStudio Server..."
+        desc="Save the page to a file on the server"/>
   
    <cmd id="refreshHtmlPreview"
         desc="Refresh the preview"/>

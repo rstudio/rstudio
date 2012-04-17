@@ -24,6 +24,7 @@ import org.rstudio.studio.client.application.ui.impl.WebApplicationHeader;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.compilepdf.dialog.CompilePdfProgressDialog;
+import org.rstudio.studio.client.common.fileexport.FileExport;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.NewFileMenu;
 import org.rstudio.studio.client.common.impl.DesktopFileDialogs;
@@ -64,6 +65,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(TextEditingTargetPreviewHtmlHelper previewHtmlHelper);
    void injectMembers(SpellChecker spellChecker);
    void injectMembers(SpellingCustomDictionariesWidget widget);
+   void injectMembers(FileExport fileExport);
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

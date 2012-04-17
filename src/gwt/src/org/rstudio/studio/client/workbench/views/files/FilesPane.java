@@ -159,22 +159,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
                                                   fileSystemContext,
                                                   completedOperation);
       dlg.showModal();
-   }
- 
-   public void showFileExport(String defaultName,
-                              String defaultExtension,
-                              ProgressOperationWithInput<String> operation)
-   {
-      globalDisplay_.promptForText(
-            "Export Files",
-            "The selected file(s) will be exported and downloaded to your " +
-            "computer. Please specify a name for the downloaded file:",
-            defaultName + defaultExtension,
-            -1, -1,
-            "Download",
-            operation);
-   }
-   
+   } 
    
    public void selectAll()
    {

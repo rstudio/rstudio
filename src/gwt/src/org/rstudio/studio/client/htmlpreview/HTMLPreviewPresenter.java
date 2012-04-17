@@ -24,6 +24,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.fileexport.FileExport;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
@@ -50,6 +51,7 @@ import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class HTMLPreviewPresenter implements IsWidget
 {
@@ -84,7 +86,8 @@ public class HTMLPreviewPresenter implements IsWidget
                                Session session,
                                FileDialogs fileDialogs,
                                RemoteFileSystemContext fileSystemContext,
-                               HTMLPreviewServerOperations server)
+                               HTMLPreviewServerOperations server,
+                               Provider<FileExport> pFileExport)
    {
       view_ = view;
       globalDisplay_ = globalDisplay;
@@ -92,6 +95,7 @@ public class HTMLPreviewPresenter implements IsWidget
       session_ = session;
       fileDialogs_ = fileDialogs;
       fileSystemContext_ = fileSystemContext;
+      pFileExport_ = pFileExport;
       
       binder.bind(commands, this);
          
@@ -234,6 +238,19 @@ public class HTMLPreviewPresenter implements IsWidget
    }
    
    @Handler
+   public void onSaveHtmlPreviewAsLocalFile()
+   {
+      if (lastSuccessfulPreview_ != null)
+      {
+         final FileSystemItem htmlFile = FileSystemItem.createFile(
+                                       lastSuccessfulPreview_.getHtmlFile());
+         pFileExport_.get().export("Download to Local File",
+                                   "web page", 
+                                   htmlFile);
+      }
+   }
+   
+   @Handler
    public void onSaveHtmlPreviewAs()
    {
       if (lastSuccessfulPreview_ != null)
@@ -307,4 +324,5 @@ public class HTMLPreviewPresenter implements IsWidget
    private final Session session_;
    private final RemoteFileSystemContext fileSystemContext_;
    private final HTMLPreviewServerOperations server_;
+   private final Provider<FileExport> pFileExport_;
 }
