@@ -11,10 +11,10 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -64,9 +64,9 @@ public class HTMLPreviewPanel extends ResizeComposite
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands.openHtmlExternal().createToolbarButton());
       
-      toolbar.addLeftSeparator();
-      saveHtmlPreviewAs_ = commands.saveHtmlPreviewAs();
-      toolbar.addLeftWidget(saveHtmlPreviewAs_.createToolbarButton());
+      saveHtmlPreviewAsSeparator_ = toolbar.addLeftSeparator();
+      saveHtmlPreviewAs_ = commands.saveHtmlPreviewAs().createToolbarButton();
+      toolbar.addLeftWidget(saveHtmlPreviewAs_);
       
       
       findTextBox_ = new FindTextBox("Find");
@@ -172,6 +172,7 @@ public class HTMLPreviewPanel extends ResizeComposite
             ThemeStyles.INSTANCE.subtitle(), 
             300);
       fileLabel_.setText(shortFileName);
+      saveHtmlPreviewAsSeparator_.setVisible(enableSaveAs);
       saveHtmlPreviewAs_.setVisible(enableSaveAs);
       findTextBox_.setVisible(!enableScripts);
       previewFrame_.setScriptsEnabled(enableScripts);
@@ -261,6 +262,7 @@ public class HTMLPreviewPanel extends ResizeComposite
    private final PreviewFrame previewFrame_;
    private ToolbarLabel fileLabel_;
    private FindTextBox findTextBox_;
-   private AppCommand saveHtmlPreviewAs_;
+   private Widget saveHtmlPreviewAsSeparator_;
+   private Widget saveHtmlPreviewAs_;
    private HTMLPreviewProgressDialog activeProgressDialog_;
 }
