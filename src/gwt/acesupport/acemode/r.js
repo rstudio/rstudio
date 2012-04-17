@@ -81,7 +81,7 @@ define("mode/r", function(require, exports, module)
          if (! /^\s+$/.test(line))
             return false;
 
-         return /^\s*[\{\}]/.test(input);
+         return /^\s*[\{\}\)]/.test(input);
       };
 
       this.getIndentForOpenBrace = function(openBracePos)
@@ -95,7 +95,7 @@ define("mode/r", function(require, exports, module)
 
          var line = doc.getLine(row);
 
-         var match = line.match(/^(\s*\})/);
+         var match = line.match(/^(\s*[\}\)])/);
          if (match)
          {
             var column = match[1].length;
