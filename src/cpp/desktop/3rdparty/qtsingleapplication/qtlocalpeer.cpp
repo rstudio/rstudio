@@ -48,7 +48,6 @@
 #include "qtlocalpeer.h"
 #include <QtCore/QCoreApplication>
 #include <QtCore/QTime>
-#include <unistd.h>
 
 #if defined(Q_OS_WIN)
 #include <QtCore/QLibrary>
@@ -58,6 +57,7 @@ static PProcessIdToSessionId pProcessIdToSessionId = 0;
 #endif
 #if defined(Q_OS_UNIX)
 #include <time.h>
+#include <unistd.h>
 #endif
 
 namespace QtLP_Private {
