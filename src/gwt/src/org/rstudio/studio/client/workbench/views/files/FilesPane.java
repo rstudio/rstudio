@@ -14,21 +14,28 @@ package org.rstudio.studio.client.workbench.views.files;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.cellview.ColumnSortInfo;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
@@ -42,11 +49,13 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    @Inject
    public FilesPane(GlobalDisplay globalDisplay,
                     FileDialogs fileDialogs,
+                    Commands commands,
                     FileTypeRegistry fileTypeRegistry,
                     Provider<FileCommandToolbar> pFileCommandToolbar)
    {
       super("Files");
       globalDisplay_ = globalDisplay ;
+      commands_ = commands;
       fileDialogs_ = fileDialogs;
       fileTypeRegistry_ = fileTypeRegistry;
       pFileCommandToolbar_ = pFileCommandToolbar;
@@ -176,6 +185,34 @@ public class FilesPane extends WorkbenchPane implements Files.Display
       return filesList_.getSelectedFiles();
    } 
    
+   @Override
+   public void showHtmlFileChoice(FileSystemItem file, 
+                                  Command onEdit,
+                                  Command onBrowse)
+   {
+       final ToolbarPopupMenu menu = new ToolbarPopupMenu();
+       
+       String editLabel = AppCommand.formatMenuLabel(
+          commands_.renameFile().getImageResource(), "Open in Editor", null);
+       String openLabel = AppCommand.formatMenuLabel(
+          commands_.openHtmlExternal().getImageResource(), 
+          "View in Web Browser", 
+          null);
+       
+       menu.addItem(new MenuItem(editLabel, true, onEdit));
+       menu.addItem(new MenuItem(openLabel, true, onBrowse));
+      
+       menu.setPopupPositionAndShow(new PositionCallback() {
+          @Override
+          public void setPosition(int offsetWidth, int offsetHeight)
+          {
+             Event event = Event.getCurrentEvent();
+             menu.setPopupPosition(event.getClientX(), event.getClientY());     
+          }
+       });
+   }
+
+   
    @Override 
    protected Widget createMainWidget()
    {
@@ -216,7 +253,6 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    private Files.Display.Observer observer_;
 
    private final FileTypeRegistry fileTypeRegistry_;
+   private final Commands commands_;
    private final Provider<FileCommandToolbar> pFileCommandToolbar_;
-
-
 }

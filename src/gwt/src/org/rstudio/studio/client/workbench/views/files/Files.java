@@ -103,6 +103,11 @@ public class Files
                      FileSystemItem targetDirectory, 
                      RemoteFileSystemContext fileSystemContext,
                      OperationWithInput<PendingFileUpload> completedOperation);
+
+
+      void showHtmlFileChoice(FileSystemItem file, 
+                              Command onEdit, 
+                              Command onBrowse);
    }
 
    @Inject
@@ -268,7 +273,7 @@ public class Files
          }
          else
          {
-            fileTypeRegistry_.openFile(file);
+            navigateToFile(file);
          }
       }
       
@@ -519,13 +524,8 @@ public class Files
 
    public void onOpenFileInBrowser(OpenFileInBrowserEvent event)
    {
-      FileSystemItem file = event.getFile();
-      // show the file in a new window if we can get a file url for it
-      String fileURL = server_.getFileUrl(file);
-      if (fileURL !=  null)
-      {
-         globalDisplay_.openWindow(fileURL);
-      }
+      showFileInBrowser(event.getFile());
+     
    }
    
    public void onDirectoryNavigate(DirectoryNavigateEvent event)
@@ -539,6 +539,48 @@ public class Files
       currentPath_ = directoryEntry;
       view_.listDirectory(currentPath_, currentPathFilesDS_);
       session_.persistClientState();
+   }
+   
+
+   private void navigateToFile(final FileSystemItem file)
+   {
+      String ext = file.getExtension().toLowerCase();
+      if (ext.equals(".htm") || ext.equals(".html"))
+      {
+         view_.showHtmlFileChoice(
+            file,
+            new Command() {
+
+               @Override
+               public void execute()
+               {
+                  fileTypeRegistry_.openFile(file);
+               }
+            },
+            new Command() {
+
+               @Override
+               public void execute()
+               {
+                  showFileInBrowser(file);                  
+               }
+            });
+      }
+      else
+      {
+         fileTypeRegistry_.openFile(file);
+      }
+      
+   }
+   
+   private void showFileInBrowser(FileSystemItem file)
+   {
+      // show the file in a new window if we can get a file url for it
+      String fileURL = server_.getFileUrl(file);
+      if (fileURL !=  null)
+      {
+         globalDisplay_.openWindow(fileURL);
+      }
    }
    
    // data source for listing files on the current path which can 
