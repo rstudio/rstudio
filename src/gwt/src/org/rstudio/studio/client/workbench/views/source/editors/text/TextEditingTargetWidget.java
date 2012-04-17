@@ -232,7 +232,7 @@ public class TextEditingTargetWidget
       
       sourceOnSave_.setVisible(fileType.canSourceOnSave());
       srcOnSaveLabel_.setVisible(fileType.canSourceOnSave());
-      codeTransform_.setVisible(canExecuteCode);   
+      codeTransform_.setVisible(canExecuteCode && !fileType.canAuthorContent());   
       sourceButton_.setVisible(canExecuteCode && !canExecuteChunks);
       sourceMenuButton_.setVisible(canExecuteCode && !canExecuteChunks);
    
