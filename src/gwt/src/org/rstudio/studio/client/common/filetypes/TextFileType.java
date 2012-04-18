@@ -15,6 +15,7 @@ package org.rstudio.studio.client.common.filetypes;
 import com.google.gwt.resources.client.ImageResource;
 
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.UnicodeLetters;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
@@ -23,7 +24,7 @@ import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharPredicate;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 
 import java.util.HashSet;
@@ -233,21 +234,26 @@ public class TextFileType extends EditableFileType
       return new TokenPredicate()
       {
          @Override
-         public boolean test(Token token)
+         public boolean test(Token token, int row, int column)
          {
             return reTextType_.match(token.getType(), 0) != null;
          }
       };
    }
 
-   public CharPredicate getCharPredicate()
+   public CharClassifier getCharPredicate()
    {
-      return new CharPredicate()
+      return new CharClassifier()
       {
          @Override
-         public boolean test(char c)
+         public CharClass classify(char c)
          {
-            return Character.isLetter(c);
+            if (UnicodeLetters.isLetter(c))
+               return CharClass.Word;
+            else if (c == '\'')
+               return CharClass.Boundary;
+            else
+               return CharClass.NonWord;
          }
       };
    }

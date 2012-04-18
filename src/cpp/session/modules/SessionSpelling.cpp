@@ -149,6 +149,19 @@ Error suggestionList(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error getWordChars(const json::JsonRpcRequest& request,
+                   json::JsonRpcResponse* pResponse)
+{
+   std::wstring wordChars;
+   Error error = s_pSpellingEngine->wordChars(&wordChars);
+   if (error)
+      return error;
+
+   pResponse->setResult(string_utils::wideToUtf8(wordChars));
+
+   return Success();
+}
+
 
 
 Error addCustomDictionary(const json::JsonRpcRequest& request,
@@ -299,6 +312,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "check_spelling", checkSpelling))
       (bind(registerRpcMethod, "suggestion_list", suggestionList))
+      (bind(registerRpcMethod, "get_word_chars", getWordChars))
       (bind(registerRpcMethod, "add_custom_dictionary", addCustomDictionary))
       (bind(registerRpcMethod, "remove_custom_dictionary", removeCustomDictionary))
       (bind(registerRpcMethod, "install_all_dictionaries", installAllDictionaries))

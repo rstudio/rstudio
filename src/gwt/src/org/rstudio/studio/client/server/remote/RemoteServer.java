@@ -2462,7 +2462,13 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(word));
       sendRequest(RPC_SCOPE, SUGGESTION_LIST, params, requestCallback);
    }
-   
+
+   @Override
+   public void getWordChars(ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "get_word_chars", requestCallback);
+   }
+
    public void addCustomDictionary(
                               String dictPath,
                               ServerRequestCallback<JsArrayString> callback)

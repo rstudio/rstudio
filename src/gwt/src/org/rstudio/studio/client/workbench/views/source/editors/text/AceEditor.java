@@ -59,7 +59,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharPredicate;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.WordIterable;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
@@ -665,13 +665,13 @@ public class AceEditor implements DocDisplay,
 
    @Override
    public Iterable<Range> getWords(TokenPredicate tokenPredicate,
-                                   CharPredicate charPredicate,
+                                   CharClassifier charClassifier,
                                    Position start,
                                    Position end)
    {
       return new WordIterable(getSession(),
                               tokenPredicate,
-                              charPredicate,
+                              charClassifier,
                               start,
                               end);
    }

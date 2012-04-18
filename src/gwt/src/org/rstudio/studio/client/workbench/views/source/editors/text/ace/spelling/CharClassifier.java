@@ -1,5 +1,5 @@
 /*
- * TokenPredicate.java
+ * CharClassifier.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -12,9 +12,14 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling;
 
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
-
-public interface TokenPredicate
+public interface CharClassifier
 {
-   boolean test(Token token, int row, int column);
+   public enum CharClass
+   {
+      Word,
+      Boundary, // Can be part of word, but can't end a word (e.g. apostrophe)
+      NonWord
+   }
+
+   CharClass classify(char c);
 }

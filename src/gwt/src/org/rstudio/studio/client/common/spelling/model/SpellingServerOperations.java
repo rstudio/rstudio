@@ -28,6 +28,8 @@ public interface SpellingServerOperations
    void suggestionList(String word,
                        ServerRequestCallback<JsArrayString> requestCallback);
    
+   void getWordChars(ServerRequestCallback<String> requestCallback);
+
    void addCustomDictionary(String dictPath,
                             ServerRequestCallback<JsArrayString> callback);
    

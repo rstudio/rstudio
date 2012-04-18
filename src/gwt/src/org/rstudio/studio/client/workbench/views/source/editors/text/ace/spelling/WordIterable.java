@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling;
 
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier.CharClass;
 
 import java.util.Iterator;
 
@@ -20,7 +21,7 @@ public class WordIterable implements Iterable<Range>
 {
    public WordIterable(EditSession session,
                        TokenPredicate checkableToken,
-                       CharPredicate wordChar,
+                       CharClassifier wordChar,
                        Position start)
    {
       this(session, checkableToken, wordChar, start, null);
@@ -29,7 +30,7 @@ public class WordIterable implements Iterable<Range>
 
    public WordIterable(EditSession session,
                        TokenPredicate checkableToken,
-                       CharPredicate wordChar,
+                       CharClassifier wordChar,
                        Position start,
                        Position end)
    {
@@ -44,7 +45,7 @@ public class WordIterable implements Iterable<Range>
 
       session_ = session;
       isCheckableToken_ = checkableToken;
-      isWordChar_ = wordChar;
+      charClassifier_ = wordChar;
       start_ = start;
       end_ = end;
    }
@@ -54,14 +55,14 @@ public class WordIterable implements Iterable<Range>
    {
       return new RangeIterator(session_,
                                isCheckableToken_,
-                               isWordChar_,
+                               charClassifier_,
                                start_,
                                end_);
    }
 
    private final EditSession session_;
    private final TokenPredicate isCheckableToken_;
-   private final CharPredicate isWordChar_;
+   private final CharClassifier charClassifier_;
    private final Position start_;
    private final Position end_;
 }
@@ -70,14 +71,14 @@ class RangeIterator implements Iterator<Range>
 {
    public RangeIterator(EditSession session,
                         TokenPredicate isCheckableToken,
-                        CharPredicate isWordChar,
+                        CharClassifier charClassifier,
                         Position start,
                         Position end)
    {
       start_ = start;
       end_ = end;
       isCheckableToken_ = isCheckableToken;
-      isWordChar_ = isWordChar;
+      charClassifier_ = charClassifier;
 
       tokenIterator_ = TokenIterator.create(session, start.getRow(),
                                             start.getColumn());
@@ -88,34 +89,28 @@ class RangeIterator implements Iterator<Range>
    private void initialize()
    {
       Token token = tokenIterator_.getCurrentToken();
-      if (token != null && isCheckableToken_.test(token))
+      if (token != null && isCheckableToken_.test(token,
+                                                  tokenIterator_.getCurrentTokenRow(),
+                                                  tokenIterator_.getCurrentTokenColumn()))
       {
+         currentValue_ = token.getValue();
+         tokenPos_ = 0;
+
          if (tokenIterator_.getCurrentTokenRow() == start_.getRow()
                && tokenIterator_.getCurrentTokenColumn() < start_.getColumn())
          {
-            @SuppressWarnings("unused")
-            int endCol =
-                  tokenIterator_.getCurrentTokenColumn() +
-                  token.getValue().length();
+            // If start_ is inside the current token, skip over any words that
+            // end before start_
 
-            currentValue_ = token.getValue();
-            tokenPos_ = start_.getColumn() -
-                        tokenIterator_.getCurrentTokenColumn();
-
-            if (tokenPos_ < currentValue_.length() &&
-                isWordChar_.test(currentValue_.charAt(tokenPos_)))
+            for (Range range; null != (range = nextWord()); )
             {
-               while (tokenPos_ > 0
-                      && isWordChar_.test(currentValue_.charAt(tokenPos_-1)))
+               if (range.getEnd().isAfter(start_))
                {
-                  tokenPos_--;
+                  tokenPos_ = range.getStart().getColumn() -
+                              tokenIterator_.getCurrentTokenColumn();
+                  break;
                }
             }
-         }
-         else
-         {
-            currentValue_ = token.getValue();
-            tokenPos_ = 0;
          }
       }
       advance();
@@ -135,7 +130,9 @@ class RangeIterator implements Iterator<Range>
             return false;
          }
 
-         if (isCheckableToken_.test(token))
+         if (isCheckableToken_.test(token,
+                                    tokenIterator_.getCurrentTokenRow(),
+                                    tokenIterator_.getCurrentTokenColumn()))
          {
             currentValue_ = token.getValue();
             tokenPos_ = 0;
@@ -150,7 +147,7 @@ class RangeIterator implements Iterator<Range>
          return null;
 
       while (tokenPos_ < currentValue_.length() &&
-             !isWordChar_.test(currentValue_.charAt(tokenPos_)))
+             charClassifier_.classify(currentValue_.charAt(tokenPos_)) != CharClass.Word)
       {
          tokenPos_++;
       }
@@ -161,9 +158,14 @@ class RangeIterator implements Iterator<Range>
       int wordStart = tokenPos_++;
 
       while (tokenPos_ < currentValue_.length() &&
-             isWordChar_.test(currentValue_.charAt(tokenPos_)))
+             charClassifier_.classify(currentValue_.charAt(tokenPos_)) != CharClass.NonWord)
       {
          tokenPos_++;
+      }
+
+      while (charClassifier_.classify(currentValue_.charAt(tokenPos_-1)) == CharClass.Boundary)
+      {
+         tokenPos_--;
       }
 
       int row = tokenIterator_.getCurrentTokenRow();
@@ -216,7 +218,7 @@ class RangeIterator implements Iterator<Range>
    private final Position start_;
    private final Position end_;
    private final TokenPredicate isCheckableToken_;
-   private final CharPredicate isWordChar_;
+   private final CharClassifier charClassifier_;
    private final TokenIterator tokenIterator_;
 
    private boolean ended_;

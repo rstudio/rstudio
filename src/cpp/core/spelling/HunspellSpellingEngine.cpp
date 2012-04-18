@@ -111,6 +111,7 @@ public:
    virtual Error checkSpelling(const std::string& word, bool *pCorrect) = 0;
    virtual Error suggestionList(const std::string& word,
                                 std::vector<std::string>* pSugs) = 0;
+   virtual Error wordChars(std::wstring* pWordChars) = 0;
 };
 
 class NoSpellChecker : public SpellChecker
@@ -124,6 +125,11 @@ public:
 
    Error suggestionList(const std::string& word,
                         std::vector<std::string>* pSugs)
+   {
+      return Success();
+   }
+
+   Error wordChars(std::wstring *pWordChars)
    {
       return Success();
    }
@@ -180,6 +186,17 @@ public:
       }
 
       // return success
+      return Success();
+   }
+
+   Error wordChars(std::wstring *pWordChars)
+   {
+      int len;
+      unsigned short *pChars = pHunspell_->get_wordchars_utf16(&len);
+
+      for (int i = 0; i < len; i++)
+         pWordChars->push_back(pChars[i]);
+
       return Success();
    }
 
@@ -448,6 +465,11 @@ Error HunspellSpellingEngine::suggestionList(const std::string& word,
                                              std::vector<std::string>* pSugs)
 {
    return pImpl_->spellChecker().suggestionList(word, pSugs);
+}
+
+Error HunspellSpellingEngine::wordChars(std::wstring *pChars)
+{
+   return pImpl_->spellChecker().wordChars(pChars);
 }
 
 } // namespace spelling

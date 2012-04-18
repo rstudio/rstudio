@@ -23,7 +23,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharPredicate;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
@@ -165,7 +165,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    Position selectionToPosition(InputEditorPosition pos);
 
    Iterable<Range> getWords(TokenPredicate tokenPredicate,
-                            CharPredicate charPredicate,
+                            CharClassifier charClassifier,
                             Position start,
                             Position end);
 
