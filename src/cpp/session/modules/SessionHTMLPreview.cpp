@@ -268,7 +268,7 @@ private:
 
          // read the file using the specified encoding
          std::string output;
-         Error error = module_context::readAndDecodeFile(targetFile_,
+         Error error = module_context::readAndDecodeFile(knitrOutputFile_,
                                                          encoding,
                                                          true,
                                                          &output);
