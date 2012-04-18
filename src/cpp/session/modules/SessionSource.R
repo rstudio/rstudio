@@ -11,7 +11,9 @@
 #
 #
 
-.rs.addJsonRpcHandler("save_active_document", function(contents, sweave)
+.rs.addJsonRpcHandler("save_active_document", function(contents,
+                                                       sweave,
+                                                       rnwWeave)
 {
    # manage working directory
    previousWd = getwd()
@@ -27,7 +29,7 @@
    if (sweave)
    {
       op <- function() {
-         utils::Stangle(activeRStudioDoc)
+         .Call("rs_rnwTangle", activeRStudioDoc, rnwWeave)
          file.remove(activeRStudioDoc)
          file.rename(paste(activeRStudioDoc, ".R", sep=""), activeRStudioDoc)
       }

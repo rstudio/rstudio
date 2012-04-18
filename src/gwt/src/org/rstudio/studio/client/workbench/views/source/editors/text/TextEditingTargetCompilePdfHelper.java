@@ -253,6 +253,36 @@ public class TextEditingTargetCompilePdfHelper
       }
    }
    
+   // get the currently active rnw weave method -- note this can return
+   // null in the case that there is an embedded directive which is invalid
+   public RnwWeave getActiveRnwWeave()
+   {
+      RnwWeaveDirective rnwWeaveDirective = detectRnwWeaveDirective(
+                         TexMagicComment.parseComments(docDisplay_.getCode()));
+      if (rnwWeaveDirective != null)
+         return rnwWeaveDirective.getRnwWeave();
+      else
+         return rnwWeaveRegistry_.findTypeIgnoreCase(
+                                    prefs_.defaultSweaveEngine().getValue());
+   }
+   
+   // get the currently active rnw weave name -- arranges to always return
+   // a valid string by returing the pref if the directive is invalid
+   public String getActiveRnwWeaveName()
+   {
+      RnwWeaveDirective rnwWeaveDirective = detectRnwWeaveDirective(
+                         TexMagicComment.parseComments(docDisplay_.getCode()));
+      if (rnwWeaveDirective != null)
+      {
+         RnwWeave rnwWeave = rnwWeaveDirective.getRnwWeave();
+         if (rnwWeave != null)
+            return rnwWeave.getName();
+      }
+        
+      return rnwWeaveRegistry_.findTypeIgnoreCase(
+                           prefs_.defaultSweaveEngine().getValue()).getName();
+   }
+   
    private boolean hasConcordanceDirective(String code)
    {
       Iterable<String> lines = StringUtil.getLineIterator(code);
@@ -273,19 +303,6 @@ public class TextEditingTargetCompilePdfHelper
       }
     
       return false;  
-   }
-    
-   // get the currently active rnw weave method -- note this can return
-   // null in the case that there is an embedded directive which is invalid
-   private RnwWeave getActiveRnwWeave()
-   {
-      RnwWeaveDirective rnwWeaveDirective = detectRnwWeaveDirective(
-                         TexMagicComment.parseComments(docDisplay_.getCode()));
-      if (rnwWeaveDirective != null)
-         return rnwWeaveDirective.getRnwWeave();
-      else
-         return rnwWeaveRegistry_.findTypeIgnoreCase(
-                                    prefs_.defaultSweaveEngine().getValue());
    }
    
    private RnwWeaveDirective detectRnwWeaveDirective(

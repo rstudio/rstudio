@@ -25,6 +25,9 @@
 
 #include <core/json/JsonRpc.hpp>
 
+#include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
+
 #include <session/SessionModuleContext.hpp>
 
 #include "tex/SessionCompilePdf.hpp"
@@ -155,6 +158,23 @@ bool isBrowserSupported(const std::string& userAgent,
    return true;
 }
 
+SEXP rs_rnwTangle(SEXP filePathSEXP, SEXP rnwWeaveSEXP)
+{
+   try
+   {
+      modules::tex::rnw_weave::runTangle(r::sexp::asString(filePathSEXP),
+                                         r::sexp::asString(rnwWeaveSEXP));
+   }
+   catch(const r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   return R_NilValue;
+}
+
+
 
 } // anonymous namespace
 
@@ -217,6 +237,13 @@ json::Object compilePdfStateAsJson()
 
 Error initialize()
 {
+   // register tanble function
+   R_CallMethodDef methodDef ;
+   methodDef.name = "rs_rnwTangle" ;
+   methodDef.fun = (DL_FUNC) rs_rnwTangle ;
+   methodDef.numArgs = 2;
+   r::routines::addCallMethod(methodDef);
+
    // install rpc methods
    using boost::bind;
    using namespace module_context;

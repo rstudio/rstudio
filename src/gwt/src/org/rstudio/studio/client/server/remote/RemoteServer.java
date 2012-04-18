@@ -1082,11 +1082,13 @@ public class RemoteServer implements Server
   
    public void saveActiveDocument(String contents,
                                   boolean sweave,
+                                  String rnwWeave,
                                   ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(contents));
       params.set(1, JSONBoolean.getInstance(sweave));
+      params.set(2, new JSONString(rnwWeave));
 
       sendRequest(RPC_SCOPE,
                   SAVE_ACTIVE_DOCUMENT,

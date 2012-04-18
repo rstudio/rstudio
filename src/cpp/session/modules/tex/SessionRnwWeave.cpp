@@ -84,6 +84,10 @@ public:
 
    virtual core::json::Value chunkOptions() const = 0;
 
+   // tangle the passed file (note that the implementation can assume
+   // that the working directory is already set to that of the file)
+   virtual core::Error tangle(const std::string& file) = 0;
+
    virtual std::vector<std::string> commandArgs(
                                     const std::string& file) const = 0;
 
@@ -179,6 +183,11 @@ public:
    virtual core::json::Value chunkOptions() const
    {
       return RnwWeave::chunkOptions(".rs.sweaveChunkOptions");
+   }
+
+   virtual core::Error tangle(const std::string& file)
+   {
+      return r::exec::RFunction("utils:::Stangle", file).call();
    }
 
 #ifdef _WIN32
@@ -290,6 +299,15 @@ public:
          return RnwWeave::chunkOptions(".rs.knitrChunkOptions");
       else
          return json::Value();
+   }
+
+   virtual core::Error tangle(const std::string& file)
+   {
+      r::session::utils::SuppressOutputInScope suppressOutput;
+      r::exec::RFunction purlFunc("knitr:::purl");
+      purlFunc.addParam("input", file);
+      purlFunc.addParam("output", file + ".R");
+      return purlFunc.call();
    }
 
 private:
@@ -417,6 +435,23 @@ void onWeaveProcessExit(boost::shared_ptr<RnwWeave> pRnwWeave,
 }
 
 } // anonymous namespace
+
+void runTangle(const std::string& filePath, const std::string& rnwWeave)
+{
+   using namespace module_context;
+   boost::shared_ptr<RnwWeave> pWeave =
+                         weaveRegistry().findTypeIgnoreCase(rnwWeave);
+   if (!pWeave)
+   {
+      consoleWriteError("Unknown Rnw weave type: " + rnwWeave + "\n");
+   }
+   else
+   {
+      Error error = pWeave->tangle(filePath);
+      if (error)
+         consoleWriteError(r::endUserErrorMessage(error) + "\n");
+   }
+}
 
 void runWeave(const core::FilePath& rnwPath,
               const core::tex::TexMagicComments& magicComments,

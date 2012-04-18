@@ -1824,7 +1824,11 @@ public class TextEditingTarget implements EditingTarget
          
          if (dirtyState_.getValue() || sweave)
          {
-            server_.saveActiveDocument(code, sweave, new SimpleRequestCallback<Void>() {
+            server_.saveActiveDocument(
+                                 code, 
+                                 sweave,
+                                 compilePdfHelper_.getActiveRnwWeaveName(),
+                                 new SimpleRequestCallback<Void>() {
                @Override
                public void onResponseReceived(Void response)
                {

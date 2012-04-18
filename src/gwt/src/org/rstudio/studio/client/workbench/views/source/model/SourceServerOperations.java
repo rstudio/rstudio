@@ -123,6 +123,7 @@ public interface SourceServerOperations extends FilesServerOperations,
 
    void saveActiveDocument(String contents,
                            boolean sweave,
+                           String rnwWeave,
                            ServerRequestCallback<Void> requestCallback);
 
    /**
