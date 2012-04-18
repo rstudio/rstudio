@@ -534,10 +534,19 @@ private:
 };
 
 
+bool requiresHighlighting(const std::string& htmlOutput)
+{
+   boost::regex hlRegex("^<pre><code class=(?!\"no-highlight\")");
+   return boost::regex_search(htmlOutput, hlRegex);
+}
+
 void handleMarkdownPreviewRequest(http::Response* pResponse)
 {
    try
    {
+      // read output
+      std::string htmlOutput = s_pCurrentPreview_->readOutput();
+
       // open input file (template)
       FilePath resPath = session::options().rResourcesPath();
       FilePath htmlPreviewFile = resPath.childPath("html_preview.htm");
@@ -550,22 +559,27 @@ void handleMarkdownPreviewRequest(http::Response* pResponse)
       }
       pIfs->exceptions(std::istream::failbit | std::istream::badbit);
 
-      // read highlight.js resources
+      // inject highlight.js if necessary
       std::string highlightJs, highlightStyles;
-      error = readStringFromFile(resPath.childPath("highlight.pack.js"),
-                                 &highlightJs);
-      if (error)
-         LOG_ERROR(error);
-      error = readStringFromFile(resPath.childPath("highlight.styles.css"),
-                                 &highlightStyles);
-      if (error)
-         LOG_ERROR(error);
+      if (requiresHighlighting(htmlOutput))
+      {
+         error = readStringFromFile(resPath.childPath("highlight.pack.js"),
+                                    &highlightJs);
+         if (error)
+            LOG_ERROR(error);
+        highlightJs += "\n   hljs.initHighlightingOnLoad();";
+
+         error = readStringFromFile(resPath.childPath("highlight.styles.css"),
+                                    &highlightStyles);
+         if (error)
+            LOG_ERROR(error);
+      }
 
       // setup template filter
       std::map<std::string,std::string> vars;
       vars["highlight_js"] = highlightJs;
       vars["highlight_js_styles"] = highlightStyles;
-      vars["html_output"] = s_pCurrentPreview_->readOutput();
+      vars["html_output"] = htmlOutput;
       text::TemplateFilter templateFilter(vars);
 
       // setup filters
