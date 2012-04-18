@@ -13,6 +13,10 @@ p {
    font-size: 0.9em;
 }
 
+h4 {
+   color: rgb(20%, 20%, 20%);
+}
+
 #md_examples p {
    margin-top: 3px;
    margin-bottom: 0px;
@@ -41,30 +45,26 @@ p {
 
 <body>
 
-<h3>Markdown Quick Reference</h3>
-
-<div id="overview">
-<p>
-<a href="http://en.wikipedia.org/wiki/Markdown">Markdown</a> is an easy way to create web content using a simple plain-text formatting syntax. 
-See <a href="http://www.rstudio.org/links/using_markdown" target="_blank">Using Markdown with RStudio</a> for more on creating dynamic web reports with R Markdown.
-</p> 
-</div>
+<h2>Markdown Quick Reference</h2>
 
 <div id="md_examples">
-<h4>Phrase Emphasis</h4>
+<h4>Emphasis</h4>
 
 <pre><code>*italic*   **bold**
+
 _italic_   __bold__
 </code></pre>
 
 <h4>Headers</h4>
 <pre><code>Header 1
-==================
+===================
 
 Header 2
-------------------
+-------------------
 
 ### Header 3
+
+#### Header 4
 </code></pre>
 
 <h4>Lists</h4>
@@ -84,12 +84,17 @@ Header 2
 </code></pre>
 
 <h4>Links</h4>
-<pre><code>http://example.com - linked automatically
-[Example Site](http://example.com)
+<p>Use a plain http address or add a link to a phrase:</p>
+<pre><code>http://example.com
+
+[linked phrase](http://example.com)
 </code></pre>
 
 <h4>Images</h4>
-<pre><code>![alt text](figures/img.png "Title")
+<p>Images on the web or local files in the same directory:</p>
+<pre><code>![alt text](http://example.com/logo.png)
+
+![alt text](figures/img.png)
 </code></pre>
 
 <h4>Blockquotes</h4>
@@ -119,20 +124,6 @@ compute the sum of two numbers.
 ------
 </code></pre>
 
-<h4>Reference Style Links and Images</h4>
-<p>Links (titles optional):</p>
-<pre><code>An [example][id]. Then, anywhere
-else in the doc, define the link:
-
-  [id]: http://example.com/  "Title"
-</code></pre>
-
-<p>Images (titles optional):</p>
-<pre><code>![alt text][id]
-
-[id]: figures/img.png "Title"
-</code></pre>
-
 <h4>Tables</h4>
 <pre><code>First Header  | Second Header
 ------------- | -------------
@@ -140,8 +131,25 @@ Content Cell  | Content Cell
 Content Cell  | Content Cell
 </code></pre>
 
+<h4>Reference Style Links and Images</h4>
+<p>Links (titles optional):</p>
+<pre><code>A [linked phrase][id]. 
+
+At the bottom of the document:
+
+  [id]: http://example.com/  "Title"
+</code></pre>
+
+<p>Images (titles optional):</p>
+<pre><code>![alt text][id]
+
+At the bottom of the document:
+
+[id]: figures/img.png "Title"
+</code></pre>
+
 <h4>Miscellaneous</h4>
-superscript^2
+<pre><code>superscript^2
 </code></pre>
 
 <h4>Smartypants</h4>
