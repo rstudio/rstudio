@@ -41,9 +41,9 @@
       <p><g:Label text="Search these files:"/>
          <g:ListBox ui:field="listPresetFilePatterns_"
                     styleName="{style.presetFilePatterns}">
-            <g:item value="*.r, *.R, *.Rnw, *.Rmd, *.Rhtml, *.Rd">Common R source files (R, Rnw, Rmd, Rhtml, Rd)</g:item>
-            <g:item value="">All files</g:item>
-            <g:item value="custom">Custom</g:item>
+            <g:item value="">All Files</g:item>
+            <g:item value="*.r, *.R, *.rnw, *.Rnw, *.rmd, *.Rmd, *.rhtml, *.Rhtml, *.rd, *.Rd">Common R source files (R, Rnw, Rmd, Rhtml, Rd)</g:item>
+            <g:item value="custom">Custom Filter</g:item>
          </g:ListBox>
          <div ui:field="divCustomFilter_">
             <g:TextBox ui:field="txtFilePattern_" styleName="{style.filePattern}"/>
