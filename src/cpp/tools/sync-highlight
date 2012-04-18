@@ -1,0 +1,28 @@
+#!/bin/sh
+
+set -e
+
+if [ ! -d "./highlight.js" ]; then
+    git clone git://github.com/rstudio/highlight.js.git highlight.js
+    cd highlight.js
+    git remote add upstream git://github.com/isagalaev/highlight.js
+    cd ..
+fi
+
+cd highlight.js
+
+# Use the branch with rstudio-specific changes 
+git checkout rstudio
+git pull
+VERSION=`git rev-parse HEAD`
+
+# copy files
+TARGET_DIR=../../session/resources
+mkdir -p $TARGET_DIR
+echo "$VERSION" > ../highlight-version
+python tools/build.py r
+mv src/highlight.pack.js $TARGET_DIR
+cp src/styles/vs.css $TARGET_DIR/highlight.styles.css
+ 
+# return to tools dir
+cd ..

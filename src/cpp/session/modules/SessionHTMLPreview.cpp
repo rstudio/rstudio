@@ -514,13 +514,33 @@ private:
    FilePath basePath_;
 };
 
+
+// add no-highlight designator to vanilla blocks
+class NoHighlightFilter : public boost::iostreams::regex_filter
+{
+public:
+   NoHighlightFilter()
+      : boost::iostreams::regex_filter(
+          boost::regex("^<pre><code>"),
+          boost::bind(&NoHighlightFilter::noHighlight, this, _1))
+   {
+   }
+
+private:
+   std::string noHighlight(const boost::cmatch&)
+   {
+      return "<pre><code class=\"no-highlight\">";
+   }
+};
+
+
 void handleMarkdownPreviewRequest(http::Response* pResponse)
 {
    try
    {
       // open input file (template)
-      FilePath resourcesPath = session::options().rResourcesPath();
-      FilePath htmlPreviewFile = resourcesPath.childPath("html_preview.htm");
+      FilePath resPath = session::options().rResourcesPath();
+      FilePath htmlPreviewFile = resPath.childPath("html_preview.htm");
       boost::shared_ptr<std::istream> pIfs;
       Error error = htmlPreviewFile.open_r(&pIfs);
       if (error)
@@ -530,13 +550,27 @@ void handleMarkdownPreviewRequest(http::Response* pResponse)
       }
       pIfs->exceptions(std::istream::failbit | std::istream::badbit);
 
+      // read highlight.js resources
+      std::string highlightJs, highlightStyles;
+      error = readStringFromFile(resPath.childPath("highlight.pack.js"),
+                                 &highlightJs);
+      if (error)
+         LOG_ERROR(error);
+      error = readStringFromFile(resPath.childPath("highlight.styles.css"),
+                                 &highlightStyles);
+      if (error)
+         LOG_ERROR(error);
+
       // setup template filter
       std::map<std::string,std::string> vars;
+      vars["highlight_js"] = highlightJs;
+      vars["highlight_js_styles"] = highlightStyles;
       vars["html_output"] = s_pCurrentPreview_->readOutput();
       text::TemplateFilter templateFilter(vars);
 
-      // setup image filter
+      // setup filters
       Base64ImageFilter imageFilter(s_pCurrentPreview_->targetDirectory());
+      NoHighlightFilter noHighlightFilter;
 
       // open output file
       FilePath outputFile = s_pCurrentPreview_->htmlPreviewFile();
@@ -553,6 +587,7 @@ void handleMarkdownPreviewRequest(http::Response* pResponse)
       boost::iostreams::filtering_ostream filteringStream ;
       filteringStream.push(templateFilter);
       filteringStream.push(imageFilter);
+      filteringStream.push(noHighlightFilter);
       filteringStream.push(*pOfs);
       boost::iostreams::copy(*pIfs, filteringStream, 128);
 
