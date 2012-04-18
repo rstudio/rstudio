@@ -65,6 +65,8 @@ public class FindOutputPresenter extends BasePresenter
       HandlerRegistration addSelectionChangedHandler(SelectionChangedHandler handler);
 
       void showOverflow();
+      
+      void showSearchCompleted();
 
       void updateSearchLabel(String query, String path);
       void clearSearchLabel();
@@ -138,6 +140,7 @@ public class FindOutputPresenter extends BasePresenter
             {
                currentFindHandle_ = null;
                view_.setStopSearchButtonVisible(false);
+               view_.showSearchCompleted();
             }
          }
       });

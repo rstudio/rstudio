@@ -21,10 +21,18 @@ public class HorizontalCenterPanel extends DockPanel
 {
    public HorizontalCenterPanel(Widget widget, int verticalOffset)
    {
+      widget_ = widget;
       VerticalPanel verticalPadWidget = new VerticalPanel();
       add(verticalPadWidget, DockPanel.NORTH);
       setCellHeight(verticalPadWidget, verticalOffset + "px");
-      add(widget, DockPanel.CENTER);
+      add(widget_, DockPanel.CENTER);
       setCellHorizontalAlignment(widget, DockPanel.ALIGN_CENTER);   
    }
+   
+   protected Widget getWidget()
+   {
+      return widget_;
+   }
+   
+   private final Widget widget_;
 }

@@ -20,6 +20,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
@@ -110,9 +111,14 @@ public class FindOutputPane extends WorkbenchPane
          }
       });
 
+      container_ =  new SimplePanel();
+      container_.setSize("100%", "100%");
+      statusPanel_ = new StatusPanel();
+      statusPanel_.setSize("100%", "100%");
       scrollPanel_ = new ScrollPanel(table_);
       scrollPanel_.setSize("100%", "100%");
-      return scrollPanel_;
+      container_.setWidget(scrollPanel_);
+      return container_;
    }
 
    private void fireSelectionCommitted()
@@ -130,9 +136,13 @@ public class FindOutputPane extends WorkbenchPane
       if (matchesToAdd > 0)
       {
          matchCount_ += matchesToAdd;
+         
+         if (matchCount_ > 0 && container_.getWidget() != scrollPanel_)
+            container_.setWidget(scrollPanel_);
+            
          table_.addItems(findResults.subList(0, matchesToAdd), false);
       }
-
+      
       if (matchesToAdd != findResults.size())
          showOverflow();
    }
@@ -144,6 +154,15 @@ public class FindOutputPane extends WorkbenchPane
       table_.clear();
       overflow_ = false;
       matchCount_ = 0;
+      statusPanel_.setStatusText("");
+      container_.setWidget(statusPanel_);
+   }
+   
+   @Override
+   public void showSearchCompleted()
+   {
+      if (matchCount_ == 0)
+         statusPanel_.setStatusText("(No results found)");
    }
 
    @Override
@@ -218,12 +237,33 @@ public class FindOutputPane extends WorkbenchPane
       return addHandler(handler, SelectionCommitEvent.getType());
    }
 
+   private class StatusPanel extends HorizontalCenterPanel
+   {
+      public StatusPanel()
+      {
+         super(new Label(), 50);
+         label_ = (Label)getWidget();
+         
+      }
+      
+      public void setStatusText(String status)
+      {
+         label_.setText(status);
+      }
+      
+      
+      private final Label label_;
+      
+   }
+   
    private FastSelectTable<FindResult, CodeNavigationTarget, Object> table_;
    private FindResultContext context_;
    private final Commands commands_;
    private Label searchLabel_;
    private ToolbarButton stopSearch_;
+   private SimplePanel container_;
    private ScrollPanel scrollPanel_;
+   private StatusPanel statusPanel_;
    private boolean overflow_ = false;
    private int matchCount_;
 
