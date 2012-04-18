@@ -372,6 +372,10 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="knitToHTML" value="Cmd+Shift+H" />
       <shortcut refid="synctexSearch" value="Cmd+F8" />
       <shortcut refid="checkSpelling" value="F7" />
+      <shortcut refid="fold" value="Alt+L"/>
+      <shortcut refid="unfold" value="Shift+Alt+L" />
+      <shortcut refid="foldAll" value="Alt+0" />
+      <shortcut refid="unfoldAll" value="Shift+Alt+0" />
    </shortcuts>
 
    <!--
