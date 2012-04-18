@@ -212,6 +212,8 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
          listPresetFilePatterns_.setSelectedIndex(0);
       else if (listPresetFilePatterns_.getValue(1).equals(filePatterns))
          listPresetFilePatterns_.setSelectedIndex(1);
+      else
+         listPresetFilePatterns_.setSelectedIndex(2);
       txtFilePattern_.setText(filePatterns);
       manageFilePattern();
    }
