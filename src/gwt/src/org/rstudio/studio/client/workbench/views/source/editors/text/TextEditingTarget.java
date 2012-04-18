@@ -1820,15 +1820,23 @@ public class TextEditingTarget implements EditingTarget
          if (!code.endsWith("\n"))
             code = code + "\n";
 
-         boolean sweave = fileType_.canCompilePDF();
+         boolean sweave = 
+                     fileType_.canCompilePDF() || fileType_.canKnitToHTML();
+         final boolean isKnitr = fileType_.canKnitToHTML();
+         
+         String rnwWeave = isKnitr ? "knitr"  :
+                                     compilePdfHelper_.getActiveRnwWeaveName();
+         
+         // NOTE: we always set echo to true for knitr because knitr doesn't
+         // require print statements so if you don't echo to the console
+         // then you don't see any of the output
          
          if (dirtyState_.getValue() || sweave)
          {
-            server_.saveActiveDocument(
-                                 code, 
-                                 sweave,
-                                 compilePdfHelper_.getActiveRnwWeaveName(),
-                                 new SimpleRequestCallback<Void>() {
+            server_.saveActiveDocument(code, 
+                                       sweave,
+                                       rnwWeave,
+                                       new SimpleRequestCallback<Void>() {
                @Override
                public void onResponseReceived(Void response)
                {
@@ -1836,7 +1844,7 @@ public class TextEditingTarget implements EditingTarget
                         "~/.active-rstudio-document",
                         "UTF-8",
                         activeCodeIsAscii(),
-                        echo);
+                        isKnitr ? true : echo); 
                }
             });
          }
@@ -1845,7 +1853,7 @@ public class TextEditingTarget implements EditingTarget
             consoleDispatcher_.executeSourceCommand(getPath(), 
                                                    docUpdateSentinel_.getEncoding(),
                                                    activeCodeIsAscii(), 
-                                                   echo);
+                                                   isKnitr ? true : echo);
          }
       }
       
