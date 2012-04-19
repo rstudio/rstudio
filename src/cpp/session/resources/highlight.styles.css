@@ -1,10 +1,36 @@
 /*
+ * highlight.styles.css
+ *
+ * RStudio style for highlight.js in HTML preview. Initial template based
+ * on highlight.js VS style by JasonDiamond, tweaked to look more like
+ * the default RStudio TextMate theme.
+ *
+ * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) Jason Diamond <jason@diamond.name>
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 
-Visual Studio-like style based on original C# coloring by Jason Diamond <jason@diamond.name>
-
-*/
 pre code {
-  display: block; padding: 0.5em;
+  display: block; padding: 0.1em;
+}
+
+pre .operator,
+pre .paren {
+  color: rgb(58, 62, 68)
+}
+
+pre .literal {
+  color: rgb(88, 72, 246)
+}
+
+pre .number {
+  color: rgb(0, 0, 205);
 }
 
 pre .comment,
@@ -13,7 +39,7 @@ pre .template_comment,
 pre .diff .header,
 pre .chunk,
 pre .apache .cbracket {
-  color: rgb(0, 128, 0);
+  color: rgb(76, 136, 107);
 }
 
 pre .keyword,
@@ -48,7 +74,7 @@ pre .stream,
 pre .apache .tag,
 pre .date,
 pre .tex .formula {
-  color: rgb(163, 21, 21);
+  color: rgb(3, 106, 7);
 }
 
 pre .ruby .string,
@@ -75,7 +101,7 @@ pre .input_number {
 pre .phpdoc,
 pre .javadoc,
 pre .xmlDocTag {
-  color: rgb(128, 128, 128);
+  color: rgb(128, 159, 191);
 }
 
 pre .vhdl .type { font-weight: bold; }

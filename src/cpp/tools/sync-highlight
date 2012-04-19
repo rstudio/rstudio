@@ -11,8 +11,8 @@ fi
 
 cd highlight.js
 
-# Use the branch with rstudio-specific changes 
-git checkout rstudio
+# get the lastest
+git checkout master
 git pull
 VERSION=`git rev-parse HEAD`
 
@@ -22,7 +22,6 @@ mkdir -p $TARGET_DIR
 echo "$VERSION" > ../highlight-version
 python tools/build.py r
 mv src/highlight.pack.js $TARGET_DIR
-cp src/styles/vs.css $TARGET_DIR/highlight.styles.css
  
 # return to tools dir
 cd ..
