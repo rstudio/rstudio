@@ -73,6 +73,7 @@ git merge \
     origin/patch/mousewheel2 \
     origin/patch/consistent-gutter-width \
     origin/patch/suppress-native-scroll \
+    origin/patch/build-markdown-html \
 
 
 make clean
