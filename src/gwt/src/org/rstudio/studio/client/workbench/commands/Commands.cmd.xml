@@ -228,8 +228,6 @@ well as menu structures (for main menu and popup menus).
       <separator/>
       
       <menu label="_Tools">
-         <cmd refid="checkSpelling"/>
-         <separator/>
          <cmd refid="interruptR"/>
          <separator/>
          <menu label="Set _Working Directory">
