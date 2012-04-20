@@ -176,8 +176,7 @@ public class TextEditingTargetWidget
       chunksMenu.addItem(commands_.executeCurrentChunk().createMenuItem(false));
       chunksMenu.addItem(commands_.executeNextChunk().createMenuItem(false));
       chunksMenu.addSeparator();
-      chunksMenu.addItem(commands_.sourceActiveDocument().createMenuItem(false));
-      chunksMenu.addItem(commands_.sourceActiveDocumentWithEcho().createMenuItem(false));
+      chunksMenu.addItem(commands_.executeAllCode().createMenuItem(false));
       chunksButton_ = new ToolbarButton(
                        "Chunks",  
                        StandardIcons.INSTANCE.chunk_menu(), 

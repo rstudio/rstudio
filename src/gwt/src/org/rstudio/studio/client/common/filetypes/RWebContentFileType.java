@@ -55,6 +55,8 @@ public class RWebContentFileType extends TextFileType
       HashSet<AppCommand> result = super.getSupportedCommands(commands);
       if (isMarkdown_)
          result.add(commands.markdownHelp());
+      result.add(commands.jumpTo());
+      result.add(commands.goToFunctionDefinition());
       return result;
    }
    
