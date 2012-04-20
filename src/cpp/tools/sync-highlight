@@ -11,8 +11,8 @@ fi
 
 cd highlight.js
 
-# get the lastest
-git checkout master
+# get the version with the r highlight mode
+git checkout r
 git pull
 VERSION=`git rev-parse HEAD`
 
