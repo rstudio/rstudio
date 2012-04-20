@@ -379,6 +379,11 @@ MimeType s_mimeTypes[] =
    { "svg",   "image/svg+xml" },
    { "swf",   "application/x-shockwave-flash" },
    
+   // markdown types
+   { ".md",       "text/x-markdown" },
+   { ".mdtxt",    "text/x-markdown" },
+   { ".markdown", "text/x-markdown" },
+
    // other types we are likely to serve
    { "xml",   "text/xml" },
    { "csv",   "text/csv" },
