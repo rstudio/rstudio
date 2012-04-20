@@ -61,7 +61,7 @@ public class FileTypeRegistry
                             true);
 
    public static final RWebContentFileType RMARKDOWN =
-         new RWebContentFileType("r_markdown", "R Markdown", EditorLanguage.LANG_MARKDOWN,
+         new RWebContentFileType("r_markdown", "R Markdown", EditorLanguage.LANG_RMARKDOWN,
                               ".Rmd", ICONS.iconRmarkdown(), true);
    
    public static final WebContentFileType MARKDOWN =

@@ -16,31 +16,19 @@
  *
  */
 
-define("mode/markdown", function(require, exports, module) {
+define("mode/rmarkdown", function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
-var TextMode = require("ace/mode/text").Mode;
+var MarkdownMode = require("ace/mode/markdown").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
-var MarkdownHighlightRules = require("mode/markdown_highlight_rules").MarkdownHighlightRules;
+var RMarkdownHighlightRules = require("mode/rmarkdown_highlight_rules").RMarkdownHighlightRules;
 
 var Mode = function() {   
-   this.$tokenizer = new Tokenizer(new MarkdownHighlightRules().getRules());
+   this.$tokenizer = new Tokenizer(new RMarkdownHighlightRules().getRules());
 };
-oop.inherits(Mode, TextMode);
+oop.inherits(Mode, MarkdownMode);
 
 (function() {
-    this.getNextLineIndent = function(state, line, tab) {
-        if (state == "listblock") {
-            var match = /^((?:.+)?)([-+*][ ]+)/.exec(line);
-            if (match) {
-                return new Array(match[1].length + 1).join(" ") + match[2];
-            } else {
-                return "";
-            }
-        } else {
-            return this.$getIndent(line);
-        }
-    };
 }).call(Mode.prototype);
 
 exports.Mode = Mode;
