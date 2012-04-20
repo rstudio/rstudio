@@ -21,10 +21,15 @@ define("mode/rmarkdown", function(require, exports, module) {
 var oop = require("ace/lib/oop");
 var MarkdownMode = require("ace/mode/markdown").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
+var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").SweaveBackgroundHighlighter;
 var RMarkdownHighlightRules = require("mode/rmarkdown_highlight_rules").RMarkdownHighlightRules;
 
-var Mode = function() {   
+var Mode = function(suppressHighlighting, doc, session) {
    this.$tokenizer = new Tokenizer(new RMarkdownHighlightRules().getRules());
+   this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
+         session,
+         /^`{3,}\s*\{r(?:.*)\}\s*$/,
+         /^`{3,}\s*$/);
 };
 oop.inherits(Mode, MarkdownMode);
 

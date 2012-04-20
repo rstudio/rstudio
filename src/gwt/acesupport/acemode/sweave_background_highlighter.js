@@ -14,9 +14,11 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
 {
    var Range = require("ace/range").Range;
 
-   var SweaveBackgroundHighlighter = function(session) {
+   var SweaveBackgroundHighlighter = function(session, reCode, reText) {
       this.$session = session;
       this.$doc = session.getDocument();
+      this.$reCode = reCode;
+      this.$reText = reText;
 
       var that = this;
       this.$doc.on('change', function(evt) {
@@ -33,7 +35,7 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
 
    (function() {
 
-      var TYPE_TEX = 'tex';
+      var TYPE_TEXT = 'text';
       var TYPE_BEGIN = 'begin';
       var TYPE_END = 'end';
       var TYPE_RCODE = 'r';
@@ -42,15 +44,15 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
          // classify this row
          var line = this.$doc.getLine(row);
 
-         var type = TYPE_TEX;
-         var nextType = TYPE_TEX;
-         if (line.match("^\\s*\\<\\<.*\\>\\>=.*$")) {
+         var type = TYPE_TEXT;
+         var nextType = TYPE_TEXT;
+         if (line.match(this.$reCode)) {
             type = TYPE_BEGIN;
             nextType = TYPE_RCODE;
          }
-         else if (line.match("^\\s*@(?:\\s.*)?$")) {
+         else if (line.match(this.$reText)) {
             type = TYPE_END;
-            nextType = TYPE_TEX;
+            nextType = TYPE_TEXT;
          }
          else if (row > 0) {
             var prevRowState = this.$rowState[row-1];
@@ -78,7 +80,7 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
 
          var endRow = this.$doc.getLength() - 1;
          for (var row = startRow; row <= endRow; row++) {
-            var foreign = this.$rowState[row] != TYPE_TEX;
+            var foreign = this.$rowState[row] != TYPE_TEXT;
             if (!!foreign != !!this.$markers[row]) {
                if (foreign) {
                   this.$markers[row] = this.$session.addMarker(new Range(row, 0, row + 1, 0),
