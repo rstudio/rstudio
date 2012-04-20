@@ -1544,19 +1544,7 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onExecuteAllCode()
    {
-      docDisplay_.focus();
-
-      String code = docDisplay_.getCode();
-
-      if (fileType_.canCompilePDF())
-      {
-         code = stangle(code);
-      }
-
-      code = code.replaceAll("^[ \t\n]*\n", "");
-      code = code.replaceAll("\n[ \t\n]*$", "");
-
-      events_.fireEvent(new SendToConsoleEvent(code, true));
+      sourceActiveDocument(true);
    }
 
    @Handler

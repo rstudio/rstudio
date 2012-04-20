@@ -121,12 +121,13 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="executeCode"/>
          <cmd refid="executeLastCode"/>
          <menu label="Run Regi_on">
-            <cmd refid="executeAllCode"/>
             <cmd refid="executeCurrentChunk"/>
             <cmd refid="executeNextChunk"/>
             <cmd refid="executeToCurrentLine"/>
             <cmd refid="executeFromCurrentLine"/>
             <cmd refid="executeCurrentFunction"/>
+            <separator/>
+            <cmd refid="executeAllCode"/>
          </menu>
          
          <separator/>
