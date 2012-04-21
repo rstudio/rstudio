@@ -70,11 +70,11 @@ public class FileTypeRegistry
    
    
    public static final RWebContentFileType RHTML =
-         new RWebContentFileType("r_html", "R HTML", EditorLanguage.LANG_PLAIN,
+         new RWebContentFileType("r_html", "R HTML", EditorLanguage.LANG_RHTML,
                               ".Rhtml", ICONS.iconRhtml(), false);
   
    public static final WebContentFileType HTML =
-         new WebContentFileType("html", "HTML", EditorLanguage.LANG_PLAIN,
+         new WebContentFileType("html", "HTML", EditorLanguage.LANG_HTML,
                               ".html", ICONS.iconHTML(), false);
    
    public static final TextFileType CSS =
