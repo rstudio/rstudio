@@ -1769,6 +1769,7 @@ public class TextEditingTarget implements EditingTarget
    }
 
 
+   @SuppressWarnings("unused")
    private String stangle(String sweaveStr)
    {
       ScopeList chunks = new ScopeList(docDisplay_);
