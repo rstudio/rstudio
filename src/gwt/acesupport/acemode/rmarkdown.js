@@ -28,7 +28,8 @@ var RCodeModel = require("mode/r_code_model").RCodeModel;
 var Mode = function(suppressHighlighting, doc, session) {
    this.$tokenizer = new Tokenizer(new RMarkdownHighlightRules().getRules());
 
-   this.codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/);
+   this.codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/,
+                                   /^`{3,}\s*\{r(.*)\}\s*$/);
    this.foldingRules = this.codeModel;
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
          session,

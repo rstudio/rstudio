@@ -40,7 +40,7 @@ public class EditorLanguage
    public static final EditorLanguage LANG_MARKDOWN = new EditorLanguage(
          "ace/mode/markdown", false);
    public static final EditorLanguage LANG_RMARKDOWN = new EditorLanguage(
-         "mode/rmarkdown", false);
+         "mode/rmarkdown", true);
 
    /**
     *

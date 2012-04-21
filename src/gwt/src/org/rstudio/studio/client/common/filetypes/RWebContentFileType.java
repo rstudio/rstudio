@@ -44,7 +44,8 @@ public class RWebContentFileType extends TextFileType
             false, 
             true,
             false,
-            isMarkdown);
+            isMarkdown,
+            true);
       
       isMarkdown_ = isMarkdown;
    }

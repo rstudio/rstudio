@@ -38,7 +38,8 @@ public class PlainTextFileType extends TextFileType
             false,
             false,
             false,
-            true);
+            true,
+            false);
       
    }
 }

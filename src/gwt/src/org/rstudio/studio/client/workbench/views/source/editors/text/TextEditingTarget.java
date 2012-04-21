@@ -652,7 +652,7 @@ public class TextEditingTarget implements EditingTarget
    private void updateStatusBarLanguage()
    {
       statusBar_.getLanguage().setValue(fileType_.getLabel());
-      boolean isR = fileType_ == FileTypeRegistry.R || fileType_.isRnw();
+      boolean isR = fileType_.canShowScopeTree();
       statusBar_.setScopeVisible(isR);
       if (isR)
          updateCurrentScope();

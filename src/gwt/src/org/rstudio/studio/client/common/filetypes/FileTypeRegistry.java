@@ -35,7 +35,7 @@ public class FileTypeRegistry
          new TextFileType("text", "Text File", EditorLanguage.LANG_PLAIN, "",
                           ICONS.iconText(),
                           true,
-                          false, false, false, false, false, false, false, false, false, true);
+                          false, false, false, false, false, false, false, false, false, true, false);
 
    public static final TextFileType R =
          new RFileType("r_source", "R Script", EditorLanguage.LANG_R, ".R",
@@ -45,7 +45,7 @@ public class FileTypeRegistry
       new TextFileType("r_doc", "R Doc", EditorLanguage.LANG_RDOC, ".Rd",
                        ICONS.iconRd(),
                        true,
-                       false, false, false, false, false, false, false, false, false, false);
+                       false, false, false, false, false, false, false, false, false, false, false);
 
    public static final TextFileType SWEAVE =
       new SweaveFileType("sweave", "R Sweave", 
@@ -81,13 +81,13 @@ public class FileTypeRegistry
          new TextFileType("css", "CSS", EditorLanguage.LANG_PLAIN, ".css",
                           ICONS.iconCss(),
                           true,
-                          false, false, false, false, false, false, false, false, false, true);
+                          false, false, false, false, false, false, false, false, false, true, false);
 
    public static final TextFileType JS =
          new TextFileType("js", "JavaScript", EditorLanguage.LANG_PLAIN, ".js",
                           ICONS.iconJavascript(),
                           true,
-                          false, false, false, false, false, false, false, false, false, true);
+                          false, false, false, false, false, false, false, false, false, true, false);
 
    
    public static final RDataType RDATA = new RDataType();

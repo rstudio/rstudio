@@ -46,7 +46,8 @@ public class TextFileType extends EditableFileType
                 boolean canCompilePDF,
                 boolean canExecuteChunks,
                 boolean canAutoIndent,
-                boolean canCheckSpelling)
+                boolean canCheckSpelling,
+                boolean canShowScopeTree)
    {
       super(id, label, defaultIcon);
       editorLanguage_ = editorLanguage;
@@ -62,6 +63,7 @@ public class TextFileType extends EditableFileType
       canExecuteChunks_ = canExecuteChunks;
       canAutoIndent_ = canAutoIndent;
       canCheckSpelling_ = canCheckSpelling;
+      canShowScopeTree_ = canShowScopeTree;
    }
 
    @Override
@@ -142,7 +144,12 @@ public class TextFileType extends EditableFileType
    {
       return canCheckSpelling_;
    }
-   
+
+   public boolean canShowScopeTree()
+   {
+      return canShowScopeTree_;
+   }
+
    public boolean isRnw()
    {
       return FileTypeRegistry.SWEAVE.getTypeId().equals(getTypeId());
@@ -270,6 +277,7 @@ public class TextFileType extends EditableFileType
    private final boolean canExecuteChunks_;
    private final boolean canAutoIndent_;
    private final boolean canCheckSpelling_;
+   private boolean canShowScopeTree_;
    private final String defaultExtension_;
 
    private static Pattern reTextType_ = Pattern.create("\\btext\\b");

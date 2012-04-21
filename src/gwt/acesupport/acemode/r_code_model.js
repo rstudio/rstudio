@@ -25,12 +25,13 @@ function comparePoints(pos1, pos2)
 
 var ScopeManager = require("mode/r_scope_tree").ScopeManager;
 
-var RCodeModel = function(doc, tokenizer, statePattern) {
+var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    this.$doc = doc;
    this.$tokenizer = tokenizer;
    this.$tokens = new Array(doc.getLength());
    this.$endStates = new Array(doc.getLength());
    this.$statePattern = statePattern;
+   this.$codeBeginPattern = codeBeginPattern;
    this.$scopes = new ScopeManager();
 
    var that = this;
@@ -233,8 +234,8 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
 
    this.$buildScopeTreeUpToRow = function(maxrow)
    {
-      function getChunkLabel(comment) {
-         var match = /<<(.*?)>>/.exec(comment);
+      function getChunkLabel(reOptions, comment) {
+         var match = reOptions.exec(comment);
          if (!match)
             return null;
          var value = match[1];
@@ -255,7 +256,6 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
 
          return null;
       }
-
 
       // It's possible that determining the scope at 'position' may require
       // parsing beyond the position itself--for example if the position is
@@ -296,7 +296,8 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
             var chunkStartPos = tokenCursor.currentPosition();
             var chunkPos = {row: chunkStartPos.row + 1, column: 0};
             var chunkNum = this.$scopes.getTopLevelScopeCount()+1;
-            var chunkLabel = getChunkLabel(tokenCursor.currentValue());
+            var chunkLabel = getChunkLabel(this.$codeBeginPattern,
+                                           tokenCursor.currentValue());
             var scopeName = "Chunk " + chunkNum;
             if (chunkLabel)
                scopeName += ": " + chunkLabel;

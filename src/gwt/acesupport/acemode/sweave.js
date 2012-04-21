@@ -34,7 +34,7 @@ var Mode = function(suppressHighlighting, doc, session) {
     	this.$tokenizer = new Tokenizer(new SweaveHighlightRules().getRules());
    this.$outdent = new MatchingBraceOutdent();
 
-   this.codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/);
+   this.codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/, /<<(.*?)>>/);
    this.foldingRules = this.codeModel;
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
          session,

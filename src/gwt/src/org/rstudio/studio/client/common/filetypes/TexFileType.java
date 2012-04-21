@@ -42,7 +42,8 @@ public class TexFileType extends TextFileType
             true, 
             false,
             false,
-            true);
+            true,
+            false);
    }
 
 
