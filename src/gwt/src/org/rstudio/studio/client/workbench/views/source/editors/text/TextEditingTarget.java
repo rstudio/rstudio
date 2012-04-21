@@ -2128,7 +2128,8 @@ public class TextEditingTarget implements EditingTarget
       
       // if the document has been previously saved then we should execute
       // the onBeforeCompile command immediately
-      if (!isNewDoc() && (onBeforeCompile != null))
+      final boolean isNewDoc = isNewDoc();
+      if (!isNewDoc && (onBeforeCompile != null))
          onBeforeCompile.execute();
       
       saveThenExecute(null, new Command()
@@ -2137,7 +2138,7 @@ public class TextEditingTarget implements EditingTarget
          {
             // if this was a new doc then we still need to execute the
             // onBeforeCompile command
-            if (isNewDoc() && (onBeforeCompile != null))
+            if (isNewDoc && (onBeforeCompile != null))
                onBeforeCompile.execute();
             
             String path = docUpdateSentinel_.getPath();
