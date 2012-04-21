@@ -36,7 +36,10 @@ var Mode = function(suppressHighlighting, doc, session) {
 
    this.codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/);
    this.foldingRules = this.codeModel;
-   this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(session);
+   this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
+         session,
+         /^\s*\<\<.*\>\>=.*$/,
+         /^\s*@(?:\s.*)?$/);
    this.$session = session;
 };
 oop.inherits(Mode, TextMode);
