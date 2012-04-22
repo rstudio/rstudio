@@ -88,8 +88,18 @@ public:
    // that the working directory is already set to that of the file)
    virtual core::Error tangle(const std::string& file) = 0;
 
-   virtual std::vector<std::string> commandArgs(
-                                    const std::string& file) const = 0;
+   virtual std::vector<std::string> commandArgs(const std::string& file) const
+   {
+      std::vector<std::string> args;
+      args.push_back("--silent");
+      args.push_back("-e");
+      std::string cmd = "grDevices::pdf.options(useDingbats = FALSE); "
+                        + weaveCommand(file);
+      args.push_back(cmd);
+      return args;
+   }
+
+   virtual std::string weaveCommand(const std::string& file) const = 0;
 
    virtual core::Error parseOutputForErrors(
                                     const std::string& output,
@@ -190,37 +200,22 @@ public:
       return r::exec::RFunction("utils:::Stangle", file).call();
    }
 
-#ifdef _WIN32
-   virtual std::vector<std::string> commandArgs(const std::string& file) const
+   virtual std::string weaveCommand(const std::string& file) const
    {
-      std::vector<std::string> args;
-      std::string sweaveCmd = "\"Sweave('" + file + "')\"";
-      args.push_back("-e");
-      args.push_back(sweaveCmd);
-      args.push_back("--silent");
-      return args;
+      return "utils::Sweave('" + file + "')";
    }
-#else
-   virtual std::vector<std::string> commandArgs(const std::string& file) const
-   {
-      std::vector<std::string> args;
-      args.push_back("CMD");
-      args.push_back("Sweave");
-      args.push_back(file);
-      return args;
-   }
-#endif
 };
 
-class RnwExternalWeave : public RnwWeave
+
+class RnwKnitr : public RnwWeave
 {
 public:
-   RnwExternalWeave(const std::string& name,
-                    const std::string& packageName,
-                    const std::string& cmdFmt)
-     : RnwWeave(name, packageName), cmdFmt_(cmdFmt)
+   RnwKnitr()
+      : RnwWeave("knitr", "knitr")
    {
    }
+
+   virtual bool injectConcordance() const { return false; }
 
    virtual bool isInstalled() const
    {
@@ -232,30 +227,15 @@ public:
       return !error ? installed : false;
    }
 
-   virtual std::vector<std::string> commandArgs(const std::string& file) const
+   virtual std::string weaveCommand(const std::string& file) const
    {
-      std::vector<std::string> args;
-      args.push_back("--silent");
-      args.push_back("-e");
-      std::string cmd = boost::str(boost::format(cmdFmt_) % file);
-      args.push_back(cmd);
-      return args;
+      std::string format = "require(knitr); ";
+      if (userSettings().alwaysEnableRnwCorcordance())
+         format += "opts_knit$set(concordance = TRUE); ";
+      format += "knit('%1%')";
+
+      return boost::str(boost::format(format) % file);
    }
-
-private:
-   std::string cmdFmt_;
-};
-
-
-class RnwKnitr : public RnwExternalWeave
-{
-public:
-   RnwKnitr()
-      : RnwExternalWeave("knitr", "knitr", cmdFormat())
-   {
-   }
-
-   virtual bool injectConcordance() const { return false; }
 
    virtual core::Error parseOutputForErrors(
                                     const std::string& output,
@@ -308,16 +288,6 @@ public:
       purlFunc.addParam("input", file);
       purlFunc.addParam("output", file + ".R");
       return purlFunc.call();
-   }
-
-private:
-   static std::string cmdFormat()
-   {
-      std::string format = "require(knitr); ";
-      if (userSettings().alwaysEnableRnwCorcordance())
-         format += "opts_knit$set(concordance = TRUE); ";
-      format += "knit('%1%')";
-      return format;
    }
 };
 
