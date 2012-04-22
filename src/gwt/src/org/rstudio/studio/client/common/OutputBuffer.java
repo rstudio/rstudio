@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.common;
 
+import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
@@ -37,7 +38,8 @@ public class OutputBuffer extends Composite
    
    public void append(String output)
    {
-      output_.appendText(output); 
+      virtualConsole_.submit(output);
+      output_.setText(virtualConsole_.toString()); 
       scrollPanel_.scrollToBottom();
    }
    
@@ -52,5 +54,6 @@ public class OutputBuffer extends Composite
    }
  
    private PreWidget output_;
+   private VirtualConsole virtualConsole_ = new VirtualConsole();
    private ScrollPanel scrollPanel_;
 }
