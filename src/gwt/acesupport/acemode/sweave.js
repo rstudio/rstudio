@@ -71,6 +71,11 @@ oop.inherits(Mode, TextMode);
    this.$reOpen = /^[(["'{]$/;
    this.$reClose = /^[)\]"'}]$/;
 
+   this.insertChunkInfo = {
+      value: "<<>>=\n\n@\n",
+      position: {row: 0, column: 2}
+   };
+
    this.getLanguageMode = function(position)
    {
       return this.$session.getState(position.row).match(/^r-/) ? 'R' : 'TeX';

@@ -40,6 +40,10 @@ var Mode = function(suppressHighlighting, doc, session) {
 oop.inherits(Mode, MarkdownMode);
 
 (function() {
+   this.insertChunkInfo = {
+      value: "```{r}\n\n```\n",
+      position: {row: 0, column: 5}
+   };
 }).call(Mode.prototype);
 
 exports.Mode = Mode;

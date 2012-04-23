@@ -84,6 +84,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList.ContainsPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
@@ -1596,9 +1597,20 @@ public class TextEditingTarget implements EditingTarget
    void onInsertChunk()
    {
       Position pos = moveCursorToNextInsertLocation();
-      docDisplay_.insertCode("<<>>=\n\n@\n", false);         
-      docDisplay_.setCursorPosition(Position.create(pos.getRow(), 2));
-      docDisplay_.focus();  
+      InsertChunkInfo insertChunkInfo = docDisplay_.getInsertChunkInfo();
+      if (insertChunkInfo != null)
+      {
+         docDisplay_.insertCode(insertChunkInfo.getValue(), false);
+         Position cursorPosition = insertChunkInfo.getCursorPosition();
+         docDisplay_.setCursorPosition(Position.create(
+               pos.getRow() + cursorPosition.getRow(),
+               cursorPosition.getColumn()));
+         docDisplay_.focus();
+      }
+      else
+      {
+         assert false : "Mode did not have insertChunkInfo available";
+      }
    }
    
    @Handler

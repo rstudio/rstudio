@@ -21,6 +21,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
@@ -136,6 +137,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    Scope getCurrentChunk(Position position);
    Scope getCurrentFunction();
    JsArray<Scope> getScopeTree();
+   InsertChunkInfo getInsertChunkInfo();
 
    void foldAll();
    void unfoldAll();

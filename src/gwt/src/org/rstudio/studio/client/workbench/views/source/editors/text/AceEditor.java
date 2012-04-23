@@ -58,6 +58,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
@@ -1168,6 +1169,12 @@ public class AceEditor implements DocDisplay,
    public JsArray<Scope> getScopeTree()
    {
       return getSession().getMode().getCodeModel().getScopeTree();
+   }
+
+   @Override
+   public InsertChunkInfo getInsertChunkInfo()
+   {
+      return getSession().getMode().getInsertChunkInfo();
    }
 
    @Override

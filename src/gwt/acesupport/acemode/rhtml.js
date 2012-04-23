@@ -40,6 +40,10 @@ var Mode = function(suppressHighlighting, doc, session) {
 oop.inherits(Mode, HtmlMode);
 
 (function() {
+   this.insertChunkInfo = {
+      value: "<!--begin.rcode\n\nend.rcode-->\n",
+      position: {row: 0, column: 15}
+   };
 }).call(Mode.prototype);
 
 exports.Mode = Mode;
