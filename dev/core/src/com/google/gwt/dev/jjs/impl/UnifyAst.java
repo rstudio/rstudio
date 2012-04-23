@@ -429,7 +429,7 @@ public class UnifyAst {
     private JExpression handleMagicMethodCall(JMethodCall x) {
       JMethod target = x.getTarget();
       String sig = target.getEnclosingType().getName() + '.' + target.getSignature();
-      if (GWT_CREATE.equals(sig)) {
+      if (GWT_CREATE.equals(sig) || OLD_GWT_CREATE.equals(sig)) {
         return handleGwtCreate(x);
       } else if (IMPL_GET_NAME_OF.equals(sig)) {
         return handleImplNameOf(x);
@@ -445,29 +445,38 @@ public class UnifyAst {
       "java.lang.Class.isClassMetadataEnabled()Z";
 
   private static final String GWT_CREATE =
-      "com.google.gwt.core.client.GWT.create(Ljava/lang/Class;)Ljava/lang/Object;";
+      "com.google.gwt.core.shared.GWT.create(Ljava/lang/Class;)Ljava/lang/Object;";
 
-  private static final String GWT_IS_CLIENT = "com.google.gwt.core.client.GWT.isClient()Z";
+  private static final String GWT_IS_CLIENT = "com.google.gwt.core.shared.GWT.isClient()Z";
 
-  private static final String GWT_IS_PROD_MODE = "com.google.gwt.core.client.GWT.isProdMode()Z";
+  private static final String GWT_IS_PROD_MODE = "com.google.gwt.core.shared.GWT.isProdMode()Z";
 
-  private static final String GWT_IS_SCRIPT = "com.google.gwt.core.client.GWT.isScript()Z";
+  private static final String GWT_IS_SCRIPT = "com.google.gwt.core.shared.GWT.isScript()Z";
 
   private static final String IMPL_GET_NAME_OF =
       "com.google.gwt.core.client.impl.Impl.getNameOf(Ljava/lang/String;)Ljava/lang/String;";
+
+  private static final String OLD_GWT_CREATE =
+      "com.google.gwt.core.client.GWT.create(Ljava/lang/Class;)Ljava/lang/Object;";
+
+  private static final String OLD_GWT_IS_CLIENT = "com.google.gwt.core.client.GWT.isClient()Z";
+
+  private static final String OLD_GWT_IS_PROD_MODE = "com.google.gwt.core.client.GWT.isProdMode()Z";
+
+  private static final String OLD_GWT_IS_SCRIPT = "com.google.gwt.core.client.GWT.isScript()Z";
 
   /**
    * Methods for which the call site must be replaced with magic AST nodes.
    */
   private static final Set<String> MAGIC_METHOD_CALLS = new LinkedHashSet<String>(Arrays.asList(
-      GWT_CREATE, IMPL_GET_NAME_OF));
+      GWT_CREATE, OLD_GWT_CREATE, IMPL_GET_NAME_OF));
 
   /**
    * Methods with magic implementations that the compiler must insert.
    */
   private static final Set<String> MAGIC_METHOD_IMPLS = new LinkedHashSet<String>(Arrays.asList(
-      GWT_IS_CLIENT, GWT_IS_PROD_MODE, GWT_IS_SCRIPT, CLASS_DESIRED_ASSERTION_STATUS,
-      CLASS_IS_CLASS_METADATA_ENABLED));
+      GWT_IS_CLIENT, OLD_GWT_IS_CLIENT, GWT_IS_PROD_MODE, OLD_GWT_IS_PROD_MODE, GWT_IS_SCRIPT,
+      OLD_GWT_IS_SCRIPT, CLASS_DESIRED_ASSERTION_STATUS, CLASS_IS_CLASS_METADATA_ENABLED));
 
   private final Map<String, CompiledClass> classFileMap;
   private final Map<String, CompiledClass> classFileMapBySource;
@@ -907,7 +916,8 @@ public class UnifyAst {
         magicMethodCalls.add(method);
       }
       if (MAGIC_METHOD_IMPLS.contains(sig)) {
-        if (sig.startsWith("com.google.gwt.core.client.GWT.")) {
+        if (sig.startsWith("com.google.gwt.core.client.GWT.")
+            || sig.startsWith("com.google.gwt.core.shared.GWT.")) {
           // GWT.isClient, GWT.isScript, GWT.isProdMode all true.
           implementMagicMethod(method, JBooleanLiteral.TRUE);
         } else {

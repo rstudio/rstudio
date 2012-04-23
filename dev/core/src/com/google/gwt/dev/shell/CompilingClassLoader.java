@@ -732,7 +732,9 @@ public final class CompilingClassLoader extends ClassLoader implements
    * space (thus, they bridge across the spaces).
    */
   private static final Class<?>[] BRIDGE_CLASSES = new Class<?>[]{
-      ShellJavaScriptHost.class, GWTBridge.class};
+      // Have to include the shared GWTBridge class since the client one
+      // inherits from it, otherwise we get verify errors
+      ShellJavaScriptHost.class, GWTBridge.class, com.google.gwt.core.shared.GWTBridge.class};
 
   private static final boolean CLASS_DUMP = Boolean.getBoolean("gwt.dev.classDump");
 
