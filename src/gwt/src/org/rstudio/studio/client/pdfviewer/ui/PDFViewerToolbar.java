@@ -129,12 +129,6 @@ public class PDFViewerToolbar extends Composite
    }
 
    @Override
-   public void setPageCount(int pageCount)
-   {
-      pageCountLabel_.setText(pageCount + "");
-   }
-
-   @Override
    public void setPdfFile(FileSystemItem pdfFile)
    {
       filename_.setText(pdfFile.getName());
@@ -175,8 +169,6 @@ public class PDFViewerToolbar extends Composite
    InlineToolbarButton btnNext_;
    @UiField
    InlineToolbarButton btnThumbnails_;
-   @UiField
-   SpanLabel pageCountLabel_;
    @UiField
    Anchor filename_;
    @UiField
