@@ -28,7 +28,6 @@
         <include name="com/google/gwt/dev/util/Name*.class" />
         <include name="com/google/gwt/dev/util/StringKey.class" />
         <include name="com/google/gwt/util/tools/shared/**" />
-        <include name="com/google/gwt/core/shared/**" />
       </fileset>
       <fileset dir="${gwt.user.bin}">
         <exclude name="**/rebind/**" />

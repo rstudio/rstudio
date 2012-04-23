@@ -16,7 +16,6 @@
 package com.google.gwt.core;
 
 import com.google.gwt.core.client.GWTTest;
-import com.google.gwt.core.client.GwtServletBaseTest;
 import com.google.gwt.core.client.HttpThrowableReporterTest;
 import com.google.gwt.core.client.JavaScriptExceptionTest;
 import com.google.gwt.core.client.JsArrayMixedTest;
@@ -42,7 +41,6 @@ public class CoreSuite {
 
     // $JUnit-BEGIN$
     suite.addTestSuite(AsyncFragmentLoaderTest.class);
-    suite.addTestSuite(GwtServletBaseTest.class);
     suite.addTestSuite(GWTTest.class);
     suite.addTestSuite(HttpThrowableReporterTest.class);
     suite.addTestSuite(JavaScriptExceptionTest.class);

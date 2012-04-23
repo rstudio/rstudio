@@ -18,9 +18,18 @@ package com.google.gwt.core.client;
 /**
  * When running in Development Mode, acts as a bridge from {@link GWT} into the
  * Development Mode environment.
- * 
- * For code that may run anywhere besides the client, use
- * {@link com.google.gwt.core.shared.GWTBridge} instead.
  */
-public abstract class GWTBridge extends com.google.gwt.core.shared.GWTBridge {
+public abstract class GWTBridge {
+
+  public abstract <T> T create(Class<?> classLiteral);
+
+  public String getThreadUniqueID() {
+    return "";
+  }
+  
+  public abstract String getVersion();
+
+  public abstract boolean isClient();
+
+  public abstract void log(String message, Throwable e);
 }
