@@ -34,7 +34,8 @@ var Mode = function(suppressHighlighting, doc, session) {
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
          session,
          /^`{3,}\s*\{r(?:.*)\}\s*$/,
-         /^`{3,}\s*$/);
+         /^`{3,}\s*$/,
+         true);
 };
 oop.inherits(Mode, MarkdownMode);
 

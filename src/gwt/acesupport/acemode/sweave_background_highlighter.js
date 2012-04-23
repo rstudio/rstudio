@@ -14,11 +14,13 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
 {
    var Range = require("ace/range").Range;
 
-   var SweaveBackgroundHighlighter = function(session, reCode, reText) {
+   var SweaveBackgroundHighlighter = function(session, reCode, reText,
+                                              textIsTerminator) {
       this.$session = session;
       this.$doc = session.getDocument();
       this.$reCode = reCode;
       this.$reText = reText;
+      this.$textIsTerminator = textIsTerminator;
 
       var that = this;
       this.$doc.on('change', function(evt) {
@@ -50,23 +52,65 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
             type = TYPE_BEGIN;
             nextType = TYPE_RCODE;
          }
-         else if (line.match(this.$reText)) {
+         else if (!this.$textIsTerminator && line.match(this.$reText)) {
             type = TYPE_END;
             nextType = TYPE_TEXT;
          }
          else if (row > 0) {
             var prevRowState = this.$rowState[row-1];
             if (prevRowState === TYPE_BEGIN || prevRowState === TYPE_RCODE) {
-               type = TYPE_RCODE;
-               nextType = TYPE_RCODE;
+               if (line.match(this.$reText)) {
+                  type = TYPE_END;
+                  nextType = TYPE_TEXT;
+               } else {
+                  type = TYPE_RCODE;
+                  nextType = TYPE_RCODE;
+               }
             }
          }
 
          this.$rowState[row] = type;
          for (var i = row+1; i < this.$rowState.length; i++) {
             var thisType = this.$rowState[i];
-            if (thisType === TYPE_BEGIN || thisType === TYPE_END)
+
+            // If this row begins a code block, we're done. It's not possible
+            // that a change to an earlier row could cause changes to ripple
+            // beyond a TYPE_BEGIN row.
+            if (thisType === TYPE_BEGIN)
                break;
+
+            // If this row ends a code block, it's more complicated. If
+            // $textIsTerminator is false, then we're done; it's not possible
+            // that a change to an earlier row could cause changes to ripple
+            // beyond this row. However, if $textIsTerminator, and we're now
+            // in text mode, then this row could've been turned into a text
+            // row.
+            if (thisType === TYPE_END) {
+               if (!this.$textIsTerminator) {
+                  break;
+               }
+               else if (nextType === TYPE_TEXT) {
+                  this.$rowState[i] = TYPE_TEXT;
+                  break;
+               }
+               else {
+                  // This row was previously TYPE_END, and is still TYPE_END so
+                  // it's safe to exit.
+                  break;
+               }
+            }
+
+            // Conversely, if $textIsTerminator, it's possible that we removed
+            // a previous reText line that causes a currently-text row to become
+            // a code terminator.
+            if (this.$textIsTerminator &&
+                nextType === TYPE_RCODE &&
+                this.$doc.getLine(i).match(this.$reText))
+            {
+               this.$updateRow(i);
+               break;
+            }
+
             if (this.$rowState[i] === nextType)
                break;
             this.$rowState[i] = nextType;

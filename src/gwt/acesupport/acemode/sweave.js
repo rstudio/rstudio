@@ -39,7 +39,8 @@ var Mode = function(suppressHighlighting, doc, session) {
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
          session,
          /^\s*\<\<.*\>\>=.*$/,
-         /^\s*@(?:\s.*)?$/);
+         /^\s*@(?:\s.*)?$/,
+         false);
    this.$session = session;
 };
 oop.inherits(Mode, TextMode);
