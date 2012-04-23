@@ -16,6 +16,23 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 public class Mode extends JavaScriptObject
 {
+   public static class InsertChunkInfo extends JavaScriptObject
+   {
+      protected InsertChunkInfo() {}
+
+      public native final String getValue() /*-{
+         return this.value;
+      }-*/;
+
+      /**
+       * @return Position cursor should be navigated to, relative to the
+       *       beginning of the value.
+       */
+      public native final Position getCursorPosition() /*-{
+         return this.position || {row: 0, column: 0};
+      }-*/;
+   }
+
    protected Mode()
    {
    }
@@ -26,5 +43,9 @@ public class Mode extends JavaScriptObject
 
    public native final FoldingRules getFoldingRules() /*-{
       return this.foldingRules;
+   }-*/;
+
+   public native final InsertChunkInfo getInsertChunkInfo() /*-{
+      return this.insertChunkInfo || null;
    }-*/;
 }

@@ -39,7 +39,8 @@ var Mode = function(suppressHighlighting, doc, session) {
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
          session,
          /^\s*\<\<.*\>\>=.*$/,
-         /^\s*@(?:\s.*)?$/);
+         /^\s*@(?:\s.*)?$/,
+         false);
    this.$session = session;
 };
 oop.inherits(Mode, TextMode);
@@ -69,6 +70,11 @@ oop.inherits(Mode, TextMode);
          };
    this.$reOpen = /^[(["'{]$/;
    this.$reClose = /^[)\]"'}]$/;
+
+   this.insertChunkInfo = {
+      value: "<<>>=\n\n@\n",
+      position: {row: 0, column: 2}
+   };
 
    this.getLanguageMode = function(position)
    {

@@ -28,6 +28,10 @@ var SweaveHighlightRules = function() {
         regex: "^\\s*\\<\\<.*\\>\\>=.*$",
         next: "r-start"
     });
+    this.$rules["start"].unshift({
+        token: "comment",
+        regex: "^\\s*@(?:\\s.*)?$"
+    });
 
     var rRules = new RHighlightRules().getRules();
     this.addRules(rRules, "r-");

@@ -34,11 +34,16 @@ var Mode = function(suppressHighlighting, doc, session) {
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
          session,
          /^`{3,}\s*\{r(?:.*)\}\s*$/,
-         /^`{3,}\s*$/);
+         /^`{3,}\s*$/,
+         true);
 };
 oop.inherits(Mode, MarkdownMode);
 
 (function() {
+   this.insertChunkInfo = {
+      value: "```{r}\n\n```\n",
+      position: {row: 0, column: 5}
+   };
 }).call(Mode.prototype);
 
 exports.Mode = Mode;

@@ -312,12 +312,6 @@ public class TextEditingTargetWidget
    }
 
    @Override
-   public void debug_forceTopsToZero()
-   {
-      editor_.debug_forceTopsToZero();
-   }
-
-   @Override
    public void debug_dumpContents()
    {
       String dump = editor_.debug_getDocumentDump();

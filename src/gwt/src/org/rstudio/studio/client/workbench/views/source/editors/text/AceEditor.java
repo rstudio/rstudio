@@ -58,6 +58,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
@@ -277,6 +278,7 @@ public class AceEditor implements DocDisplay,
          @Override
          public void onClick(AceClickEvent event)
          {    
+            fixVerticalOffsetBug();
             if (DomUtils.isCommandClick(event.getNativeEvent()))
             {     
                // eat the event so ace doesn't do anything with it
@@ -289,6 +291,15 @@ public class AceEditor implements DocDisplay,
                // go to function definition
                fireEvent(new CommandClickEvent());
             }
+         }
+      });
+
+      addCursorChangedHandler(new CursorChangedHandler()
+      {
+         @Override
+         public void onCursorChanged(CursorChangedEvent event)
+         {
+            fixVerticalOffsetBug();
          }
       });
       
@@ -690,10 +701,9 @@ public class AceEditor implements DocDisplay,
                                  pos.getColumn());
    }
 
-   @Override
-   public void debug_forceTopsToZero()
+   private void fixVerticalOffsetBug()
    {
-      widget_.getEditor().getRenderer().debug_forceTopsToZero();
+      widget_.getEditor().getRenderer().fixVerticalOffsetBug();
    }
 
    @Override
@@ -1159,6 +1169,12 @@ public class AceEditor implements DocDisplay,
    public JsArray<Scope> getScopeTree()
    {
       return getSession().getMode().getCodeModel().getScopeTree();
+   }
+
+   @Override
+   public InsertChunkInfo getInsertChunkInfo()
+   {
+      return getSession().getMode().getInsertChunkInfo();
    }
 
    @Override

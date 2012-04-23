@@ -34,11 +34,16 @@ var Mode = function(suppressHighlighting, doc, session) {
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
          session,
          /^<!--\s*begin.rcode\s*(?:.*)/,
-         /^\s*end.rcode\s*-->/);
+         /^\s*end.rcode\s*-->/,
+         true);
 };
 oop.inherits(Mode, HtmlMode);
 
 (function() {
+   this.insertChunkInfo = {
+      value: "<!--begin.rcode\n\nend.rcode-->\n",
+      position: {row: 0, column: 15}
+   };
 }).call(Mode.prototype);
 
 exports.Mode = Mode;
