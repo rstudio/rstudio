@@ -22,6 +22,7 @@
 #include <core/tex/TexSynctex.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 #include "SessionRnwConcordance.hpp"
 
@@ -72,7 +73,8 @@ json::Value toJson(const core::tex::SourceLocation& srcLoc)
    }
 }
 
-void applyForwardConcordance(core::tex::SourceLocation* pLoc)
+void applyForwardConcordance(const FilePath& mainFile,
+                             core::tex::SourceLocation* pLoc)
 {
    // skip if this isn't an Rnw
    if (pLoc->file().extensionLowerCase() != ".rnw")
@@ -81,7 +83,7 @@ void applyForwardConcordance(core::tex::SourceLocation* pLoc)
    // try to read concordance
    using namespace tex::rnw_concordance;
    Concordances concordances;
-   Error error = readIfExists(pLoc->file(), &concordances);
+   Error error = readIfExists(mainFile, &concordances);
    if (error)
    {
       LOG_ERROR(error);
@@ -211,15 +213,21 @@ Error forwardSearch(const json::Object& sourceLocation,
    if (error)
       return error;
 
-   // convert paths
+   // determine input file
    FilePath inputFile = module_context::resolveAliasedPath(file);
-   FilePath pdfFile = inputFile.parent().complete(inputFile.stem() + ".pdf");
+
+   // deterine pdf file
+   FilePath mainFile = inputFile;
+   std::string mainDoc = projects::projectContext().config().mainDocument;
+   if (!mainDoc.empty())
+      mainFile = projects::projectContext().directory().complete(mainDoc);
+   FilePath pdfFile = mainFile.parent().complete(mainFile.stem() + ".pdf");
 
    core::tex::Synctex synctex;
    if (synctex.parse(pdfFile))
    {
       core::tex::SourceLocation srcLoc(inputFile, line, column);
-      applyForwardConcordance(&srcLoc);
+      applyForwardConcordance(mainFile, &srcLoc);
 
       core::tex::PdfLocation pdfLoc = synctex.forwardSearch(srcLoc);
       *pPdfLocation = toJson(pdfFile, pdfLoc, fromClick);

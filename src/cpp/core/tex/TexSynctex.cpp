@@ -223,7 +223,7 @@ std::string Synctex::synctexNameForInputFile(const FilePath& inputFile)
    return std::string();
 }
 
-std::string Synctex::normalizeSynctexName(const std::string& name)
+std::string normalizeSynctexName(const std::string& name)
 {
    // trim it (on windows if it's the last available name it can include
    // some additional whitespace at the end)

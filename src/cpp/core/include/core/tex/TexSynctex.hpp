@@ -124,12 +124,14 @@ public:
 
 private:
    std::string synctexNameForInputFile(const FilePath& inputFile);
-   std::string normalizeSynctexName(const std::string& name);
 
 private:
    struct Impl;
    boost::scoped_ptr<Impl> pImpl_;
 };
+
+std::string normalizeSynctexName(const std::string& name);
+
 
 } // namespace tex
 } // namespace core 

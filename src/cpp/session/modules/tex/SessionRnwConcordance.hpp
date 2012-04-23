@@ -42,9 +42,15 @@ public:
 
    // COPYING: via compiler
 
+   // create by parsing a concordance file
    core::Error parse(const core::FilePath& sourceFile,
                      const std::string& input,
                      const core::FilePath& baseDir);
+
+   // append another concordance to this concordance (assumes they have
+   // the same input and output file and they originate from a common
+   // concordance generation sequences -- i.e. offsets line up)
+   void append(const Concordance& concordance);
 
    bool empty() const { return mapping_.empty(); }
 
@@ -52,7 +58,7 @@ public:
 
    const core::FilePath& inputFile() const { return inputFile_; }
 
-   int offset() const { return offset_; }
+   std::size_t offset() const { return offset_; }
 
    // checked access to rnw lines from tex lines
    int rnwLine(std::size_t texLine) const
@@ -133,6 +139,8 @@ private:
    core::FilePath filePath_;
    int line_;
 };
+
+std::ostream& operator << (std::ostream& stream, const FileAndLine& fileLine);
 
 class Concordances
 {

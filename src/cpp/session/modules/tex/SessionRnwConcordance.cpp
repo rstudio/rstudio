@@ -26,6 +26,9 @@
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/SafeConvert.hpp>
+#include <core/Algorithm.hpp>
+
+#include <core/tex/TexSynctex.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -113,8 +116,8 @@ Error Concordance::parse(const FilePath& sourceFile,
        return badFormatError(sourceFile, "sections", ERROR_LOCATION);
 
    // get input and output file names
-   outputFile_ = baseDir.complete(sections[1]);
-   inputFile_ = baseDir.complete(sections[2]);
+   outputFile_ = baseDir.complete(core::tex::normalizeSynctexName(sections[1]));
+   inputFile_ = baseDir.complete(core::tex::normalizeSynctexName(sections[2]));
 
    // get offset and values
    std::string valuesSection;
@@ -176,18 +179,89 @@ Error Concordance::parse(const FilePath& sourceFile,
    return Success();
 }
 
+void Concordance::append(const Concordance& concordance)
+{
+   // if we don't yet have an input and output file then initialize
+   // from this concordance -- otherwise verify that the inbound
+   // concordances match
+   if (inputFile_.empty())
+      inputFile_ = concordance.inputFile();
+   if (outputFile_.empty())
+      outputFile_ = concordance.outputFile();
+
+   if (inputFile_ != concordance.inputFile())
+   {
+      LOG_WARNING_MESSAGE("Non matching concordance: " +
+                          inputFile_.absolutePath() + ", " +
+                          concordance.inputFile().absolutePath());
+      return;
+   }
+
+   else if (outputFile_ != concordance.outputFile())
+   {
+      LOG_WARNING_MESSAGE("Non matching concordance: " +
+                          outputFile_.absolutePath() + ", " +
+                          concordance.outputFile().absolutePath());
+      return;
+   }
+
+   // if the concordance being added has an offset greater than our
+   // number of lines then we need to pad (so that we have a line for
+   // each line in the output file even if our concordances aren't
+   // responsible for the output)
+   int rnwLine = mapping_.size() > 0 ? mapping_.back() : 1;
+   while (mapping_.size() < concordance.offset())
+      mapping_.push_back(rnwLine);
+
+   // append the inbound concordance
+   std::copy(concordance.mapping_.begin(),
+             concordance.mapping_.end(),
+             std::back_inserter(mapping_));
+}
+
+std::ostream& operator << (std::ostream& stream, const FileAndLine& fileLine)
+{
+   stream << fileLine.filePath() << ":" << fileLine.line();
+   return stream;
+}
+
+
+namespace {
+
+bool hasOutputFile(const Concordance& concord, const FilePath& outputFile)
+{
+   return concord.outputFile().isEquivalentTo(outputFile);
+}
+
+bool hasInputFile(const Concordance& concord, const FilePath& inputFile)
+{
+   return concord.inputFile().isEquivalentTo(inputFile);
+}
+
+} // anonymous namespace
 
 FileAndLine Concordances::rnwLine(const FileAndLine& texLine) const
 {
    if (texLine.filePath().empty())
       return FileAndLine();
 
-   BOOST_FOREACH(const Concordance& concordance, concordances_)
+   // inspect concordance where output file is equivliant to tex file
+   std::vector<Concordance> texFileConcords;
+   algorithm::copy_if(
+      concordances_.begin(),
+      concordances_.end(),
+      std::back_inserter(texFileConcords),
+      boost::bind(hasOutputFile, _1, texLine.filePath()));
+
+   // reverse search for the first concordances whose offset is less than
+   // the text line we are seeking concordance for
+   for (std::vector<Concordance>::const_reverse_iterator it =
+      texFileConcords.rbegin(); it != texFileConcords.rend(); ++it)
    {
-      if (concordance.outputFile().isEquivalentTo(texLine.filePath()))
+      if (texLine.line() > static_cast<int>(it->offset()))
       {
-         return FileAndLine(concordance.inputFile(),
-                            concordance.rnwLine(texLine.line()));
+          return FileAndLine(it->inputFile(),
+                             it->rnwLine(texLine.line()));
       }
    }
 
@@ -197,19 +271,31 @@ FileAndLine Concordances::rnwLine(const FileAndLine& texLine) const
 
 FileAndLine Concordances::texLine(const FileAndLine& rnwLine) const
 {
-  if (rnwLine.filePath().empty())
+   if (rnwLine.filePath().empty())
       return FileAndLine();
 
-   BOOST_FOREACH(const Concordance& concordance, concordances_)
+   // inspect concordance where input file is equivilant to rnw file
+   std::vector<Concordance> rnwFileConcords;
+   algorithm::copy_if(
+      concordances_.begin(),
+      concordances_.end(),
+      std::back_inserter(rnwFileConcords),
+      boost::bind(hasInputFile, _1, rnwLine.filePath()));
+   if (rnwFileConcords.size() == 0)
+      return FileAndLine();
+
+   // build a single concordance structure for seeking
+   Concordance rnwFileConcord;
+   for (std::vector<Concordance>::const_iterator
+      it = rnwFileConcords.begin(); it != rnwFileConcords.end(); ++it)
    {
-      if (concordance.inputFile().isEquivalentTo(rnwLine.filePath()))
-      {
-         return FileAndLine(concordance.outputFile(),
-                            concordance.texLine(rnwLine.line()));
-      }
+      rnwFileConcord.append(*it);
    }
 
-   return FileAndLine();
+   // seek
+   FileAndLine texLine(rnwFileConcord.outputFile(),
+                       rnwFileConcord.texLine(rnwLine.line()));
+   return texLine;
 }
 
 std::string fixup_formatter(const Concordances& concordances,
