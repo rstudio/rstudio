@@ -49,6 +49,7 @@ public interface EditingTarget extends IsWidget,
    String getTabTooltip();
 
    HashSet<AppCommand> getSupportedCommands();
+   boolean canCompilePdf();
 
    void focus();
    void onActivate();

@@ -113,6 +113,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
        
       if (synctexAvailable)
          setSynctexStatus(event.getResult().getTargetFile(),
+                          event.getResult().getUsingMainDocument(),
                           event.getResult().getPdfPath());
       else
          setNoSynctexStatus();
@@ -130,6 +131,10 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       
       if (!isSynctexAvailable())
          return false;
+      
+      // if we are using a main document then its always available
+      if (usingMainDocument_)
+         return true;
       
       FileSystemItem file = FileSystemItem.createFile(editorFile); 
       String pdfPath = file.getParentPath().completePath(
@@ -262,15 +267,18 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    
    private void setNoSynctexStatus()
    {
-      setSynctexStatus(null, null);
+      setSynctexStatus(null, false, null);
    }
    
-   private void setSynctexStatus(String targetFile, String pdfPath)
+   private void setSynctexStatus(String targetFile, 
+                                 boolean usingMainDocument,
+                                 String pdfPath)
    {
       // set flag and fire event
       if (!StringUtil.notNull(pdfPath_).equals(StringUtil.notNull(pdfPath)))
       {
          pdfPath_ = pdfPath;
+         usingMainDocument_ = usingMainDocument;
          eventBus_.fireEvent(new SynctexStatusChangedEvent(targetFile, 
                                                            pdfPath));
       }
@@ -329,6 +337,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    private final Satellite satellite_;
    private final SatelliteManager satelliteManager_;
    private String pdfPath_ = null;
+   private boolean usingMainDocument_ = false;
    
  
 }

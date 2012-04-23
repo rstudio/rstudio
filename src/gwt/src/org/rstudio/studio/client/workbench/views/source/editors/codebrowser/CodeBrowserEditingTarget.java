@@ -277,6 +277,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
 
    @Override
+   public boolean canCompilePdf()
+   {
+      return false;
+   }
+   
+   @Override
    public void focus()
    {
       docDisplay_.focus();

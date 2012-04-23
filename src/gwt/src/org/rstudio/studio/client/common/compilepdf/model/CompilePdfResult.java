@@ -43,6 +43,10 @@ public class CompilePdfResult extends JavaScriptObject
       return this.synctex_available;
    }-*/;
    
+   public final native boolean getUsingMainDocument() /*-{
+      return this.using_main_document;
+   }-*/;
+   
    public final native PdfLocation getPdfLocation() /*-{
       return this.pdf_location;
    }-*/;

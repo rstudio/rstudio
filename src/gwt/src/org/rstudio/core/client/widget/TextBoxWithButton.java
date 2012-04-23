@@ -107,6 +107,11 @@ public class TextBoxWithButton extends Composite
       inner_.setCellWidth(textBox_, width);
    }
 
+   public void setReadOnly(boolean readOnly)
+   {
+      textBox_.setReadOnly(readOnly);
+   }
+   
    public void click()
    {
       themedButton_.click();
@@ -121,6 +126,11 @@ public class TextBoxWithButton extends Composite
    {
       textBox_.setEnabled(enabled);
       themedButton_.setEnabled(enabled);
+   }
+   
+   protected TextBox getTextBox()
+   {
+      return textBox_;
    }
 
    private HorizontalPanel inner_;

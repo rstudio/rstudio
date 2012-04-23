@@ -1417,7 +1417,9 @@ public class Source implements InsertSourceHandler,
       boolean synctexAvailable = synctex_.isSynctexAvailable();
       if (synctexAvailable)
       {
-         if (activeEditor_ != null && (activeEditor_.getPath() != null))
+         if ((activeEditor_ != null) && 
+             (activeEditor_.getPath() != null) &&
+             activeEditor_.canCompilePdf())
          {
             synctexAvailable = synctex_.isSynctexAvailable(
                                                       activeEditor_.getPath());

@@ -39,7 +39,8 @@ public class RProjectConfig extends JavaScriptObject
                                                     int numSpacesForTab,
                                                     String encoding,
                                                     String defaultSweaveEngine,
-                                                    String defaultLatexProgram) /*-{
+                                                    String defaultLatexProgram,
+                                                    String mainDocument) /*-{
       var config = new Object();
       config.version = 1.0;
       config.restore_workspace = restoreWorkspace;
@@ -51,6 +52,7 @@ public class RProjectConfig extends JavaScriptObject
       config.default_encoding = encoding;
       config.default_sweave_engine = defaultSweaveEngine;
       config.default_latex_program = defaultLatexProgram;
+      config.main_document = mainDocument;
       return config;
    }-*/;
 
@@ -128,6 +130,14 @@ public class RProjectConfig extends JavaScriptObject
 
    public native final void setDefaultLatexProgram(String defaultLatexProgram) /*-{
       this.default_latex_program = defaultLatexProgram;
+   }-*/;
+   
+   public native final String getMainDocument() /*-{
+      return this.main_document;
+   }-*/;
+
+   public native final void setMainDocument(String mainDocument) /*-{
+      this.main_document = mainDocument;
    }-*/;
    
 }

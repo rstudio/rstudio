@@ -114,6 +114,13 @@ public class UrlContentEditingTarget implements EditingTarget
       commands.add(commands_.popoutDoc());
       return commands;
    }
+   
+   @Override
+   public boolean canCompilePdf()
+   {
+      return false;
+   }
+   
 
    @Handler
    void onPrintSourceDoc()

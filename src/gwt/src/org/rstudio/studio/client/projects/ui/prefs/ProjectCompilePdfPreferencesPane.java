@@ -12,12 +12,19 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.core.client.widget.TextBoxWithButton;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.latex.LatexProgramSelectWidget;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
@@ -27,19 +34,19 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
    @Inject
    public ProjectCompilePdfPreferencesPane()
    {
-      PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
-
-      Label pdfCompilationLabel = new Label("Program defaults");
-      pdfCompilationLabel.addStyleName(baseRes.styles().headerLabel());
-      nudgeRight(pdfCompilationLabel);
-      add(pdfCompilationLabel);
-  
-      
+      addHeader("Program defaults");
+        
       defaultSweaveEngine_ = new RnwWeaveSelectWidget();
       add(defaultSweaveEngine_);  
       
       defaultLatexProgram_ = new LatexProgramSelectWidget();
       add(defaultLatexProgram_);
+      
+      addHeader("PDF preview");
+      
+      mainDoc_ = new MainDocumentChooser();
+      nudgeRight(mainDoc_);
+      add(mainDoc_);
    }
    
    @Override
@@ -60,6 +67,7 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
       RProjectConfig config = options.getConfig();
       defaultSweaveEngine_.setValue(config.getDefaultSweaveEngine());
       defaultLatexProgram_.setValue(config.getDefaultLatexProgram());
+      mainDoc_.setText(config.getMainDocument());
    }
    
    @Override
@@ -74,10 +82,84 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
       RProjectConfig config = options.getConfig();
       config.setDefaultSweaveEngine(defaultSweaveEngine_.getValue());
       config.setDefaultLatexProgram(defaultLatexProgram_.getValue());
+      config.setMainDocument(mainDoc_.getText().trim());
       return false;
+   }
+   
+   private void addHeader(String caption)
+   {
+      PreferencesDialogBaseResources baseRes = 
+                              PreferencesDialogBaseResources.INSTANCE;
+      Label pdfCompilationLabel = new Label(caption);
+      pdfCompilationLabel.addStyleName(baseRes.styles().headerLabel());
+      nudgeRight(pdfCompilationLabel);
+      add(pdfCompilationLabel);
+   }
+   
+   private class MainDocumentChooser extends TextBoxWithButton
+   {
+      public MainDocumentChooser()
+      {
+         super("Compile PDF main document:", 
+               "(Current Document)", 
+               "Browse...", 
+               null);
+         
+         // allow user to set the value to empty string
+         setReadOnly(false);
+         
+         addClickHandler(new ClickHandler()
+         {
+            public void onClick(ClickEvent event)
+            {
+               final FileSystemItem projDir = RStudioGinjector.INSTANCE.
+                         getSession().getSessionInfo().getActiveProjectDir();
+               
+               RStudioGinjector.INSTANCE.getFileDialogs().openFile(
+                     "Choose File",
+                     RStudioGinjector.INSTANCE.getRemoteFileSystemContext(),
+                     projDir,
+                     new ProgressOperationWithInput<FileSystemItem>()
+                     {
+                        public void execute(FileSystemItem input,
+                                            ProgressIndicator indicator)
+                        {
+                           if (input == null)
+                              return;
+
+                           indicator.onCompleted();
+                           
+                           String proj = projDir.getPath();
+                           if (input.getPath().startsWith(proj + "/"))
+                           {
+                              String projRelative = 
+                                input.getPath().substring(proj.length() + 1);
+                              setText(projRelative);
+                           }
+                           else
+                           {
+                              
+                           }
+                        }
+                     });
+            }
+         });
+         
+      }  
+      
+      // allow user to set the value to empty string
+      @Override
+      public String getText()
+      {
+         if (getTextBox().getText().trim().isEmpty())
+            return "";
+         else
+            return super.getText();
+      }
    }
     
    private RnwWeaveSelectWidget defaultSweaveEngine_;
    private LatexProgramSelectWidget defaultLatexProgram_;
+   private TextBoxWithButton mainDoc_;
 
 }

@@ -82,6 +82,7 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["default_encoding"] = config.encoding;
    configJson["default_sweave_engine"] = config.defaultSweaveEngine;
    configJson["default_latex_program"] = config.defaultLatexProgram;
+   configJson["main_document"] = config.mainDocument;
    return configJson;
 }
 
@@ -173,7 +174,8 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
                     "num_spaces_for_tab", &(config.numSpacesForTab),
                     "default_encoding", &(config.encoding),
                     "default_sweave_engine", &(config.defaultSweaveEngine),
-                    "default_latex_program", &(config.defaultLatexProgram));
+                    "default_latex_program", &(config.defaultLatexProgram),
+                    "main_document", &(config.mainDocument));
    if (error)
       return error;
 

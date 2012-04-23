@@ -491,6 +491,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
       defaultConfig.encoding = "UTF-8";
    defaultConfig.defaultSweaveEngine = userSettings().defaultSweaveEngine();
    defaultConfig.defaultLatexProgram = userSettings().defaultLatexProgram();
+   defaultConfig.mainDocument = std::string();
    return defaultConfig;
 }
 

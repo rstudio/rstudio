@@ -29,6 +29,7 @@
 #include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 #include "tex/SessionCompilePdf.hpp"
 #include "tex/SessionRnwWeave.hpp"
@@ -96,6 +97,12 @@ Error compilePdf(const json::JsonRpcRequest& request,
    if (error)
       return error;
    FilePath targetFilePath = module_context::resolveAliasedPath(targetFile);
+
+   // if this project has a main file defined then execute that instead
+   const projects::ProjectContext& projContext = projects::projectContext();
+   std::string mainDoc = projContext.config().mainDocument;
+   if (!mainDoc.empty())
+      targetFilePath = projContext.directory().complete(mainDoc);
 
    // initialize the completed function
    boost::function<void()> completedFunction;

@@ -729,6 +729,13 @@ public class TextEditingTarget implements EditingTarget
    {
       return fileType_.getSupportedCommands(commands_);
    }
+   
+   @Override
+   public boolean canCompilePdf()
+   {
+      return fileType_.canCompilePDF();
+   }
+   
 
    public void focus()
    {

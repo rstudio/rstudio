@@ -35,6 +35,7 @@
 
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 #include "SessionPdfLatex.hpp"
 #include "SessionTexi2Dvi.hpp"
@@ -209,6 +210,8 @@ void enqueCompletedEvent(bool succeeded,
    dataJson["view_pdf_url"] = tex::view_pdf::createViewPdfUrl(pdfPath);
    bool synctexAvailable = isSynctexAvailable(texFilePath);
    dataJson["synctex_available"] = synctexAvailable;
+   dataJson["using_main_document"] =
+                  !projects::projectContext().config().mainDocument.empty();
    if (synctexAvailable)
    {
       json::Value pdfLocation;

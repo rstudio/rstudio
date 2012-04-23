@@ -46,7 +46,8 @@ struct RProjectConfig
         numSpacesForTab(2),
         encoding(),
         defaultSweaveEngine(),
-        defaultLatexProgram()
+        defaultLatexProgram(),
+        mainDocument()
    {
    }
 
@@ -60,6 +61,7 @@ struct RProjectConfig
    std::string encoding;
    std::string defaultSweaveEngine;
    std::string defaultLatexProgram;
+   std::string mainDocument;
 };
 
 
