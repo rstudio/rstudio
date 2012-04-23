@@ -124,7 +124,6 @@ public class TextEditingTarget implements EditingTarget
 
       boolean isAttached();
 
-      void debug_forceTopsToZero();
       void debug_dumpContents();
       void debug_importDump();
    }
@@ -1122,12 +1121,6 @@ public class TextEditingTarget implements EditingTarget
    void onCheckSpelling()
    {
       spelling_.checkSpelling();
-   }
-
-   @Handler
-   void onDebugForceTopsToZero()
-   {
-      view_.debug_forceTopsToZero();
    }
 
    @Handler

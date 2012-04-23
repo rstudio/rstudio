@@ -105,9 +105,7 @@ public class Renderer extends JavaScriptObject
       this.$renderChanges(this.CHANGE_FULL);
    }-*/;
 
-   public native final void debug_forceTopsToZero() /*-{
-      this.scroller.style.top = "0";
-      this.content.style.top = "0";
+   public native final void fixVerticalOffsetBug() /*-{
       this.scroller.scrollTop = 0;
    }-*/;
 
