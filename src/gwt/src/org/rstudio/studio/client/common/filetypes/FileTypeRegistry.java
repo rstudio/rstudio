@@ -78,13 +78,13 @@ public class FileTypeRegistry
                               ".html", ICONS.iconHTML(), false);
    
    public static final TextFileType CSS =
-         new TextFileType("css", "CSS", EditorLanguage.LANG_PLAIN, ".css",
+         new TextFileType("css", "CSS", EditorLanguage.LANG_CSS, ".css",
                           ICONS.iconCss(),
                           true,
                           false, false, false, false, false, false, false, false, false, true, false);
 
    public static final TextFileType JS =
-         new TextFileType("js", "JavaScript", EditorLanguage.LANG_PLAIN, ".js",
+         new TextFileType("js", "JavaScript", EditorLanguage.LANG_JAVASCRIPT, ".js",
                           ICONS.iconJavascript(),
                           true,
                           false, false, false, false, false, false, false, false, false, true, false);

@@ -74,6 +74,7 @@ git merge \
     origin/patch/consistent-gutter-width \
     origin/patch/suppress-native-scroll \
     origin/patch/build-markdown-html \
+    origin/patch/build-markdown-html2 \
 
 
 make clean

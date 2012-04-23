@@ -45,6 +45,10 @@ public class EditorLanguage
          "ace/mode/html", false);
    public static final EditorLanguage LANG_RHTML = new EditorLanguage(
          "mode/rhtml", true);
+   public static final EditorLanguage LANG_CSS = new EditorLanguage(
+         "ace/mode/css", true);
+   public static final EditorLanguage LANG_JAVASCRIPT = new EditorLanguage(
+         "ace/mode/javascript", true);
 
    /**
     *
