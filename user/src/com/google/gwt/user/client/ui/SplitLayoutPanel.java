@@ -22,7 +22,6 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 
@@ -252,7 +251,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
       // Defer actually updating the layout, so that if we receive many
       // mouse events before layout/paint occurs, we'll only update once.
       if (layoutCommand == null) {
-        layoutCommand = new Command() {
+        layoutCommand = new ScheduledCommand() {
           @Override
           public void execute() {
             layoutCommand = null;

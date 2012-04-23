@@ -16,13 +16,13 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.FieldSetElement;
 import com.google.gwt.dom.client.LegendElement;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 
 import java.util.Iterator;
 
@@ -99,7 +99,7 @@ public class CaptionPanel extends Composite implements HasWidgets.ForIsWidget {
         String caption, boolean asHTML) {
       fieldset.getStyle().setProperty("visibility", "hidden");
       super.setCaption(fieldset, legend, caption, asHTML);
-      DeferredCommand.addCommand(new Command() {
+      Scheduler.get().scheduleDeferred(new ScheduledCommand() {
         public void execute() {
           fieldset.getStyle().setProperty("visibility", "");
         }
