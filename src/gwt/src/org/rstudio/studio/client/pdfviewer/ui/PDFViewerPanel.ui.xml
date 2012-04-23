@@ -157,7 +157,10 @@
         </div>
       </div>
 
-      <div id="loading" hidden="hidden">Loading... 0%</div>
+      <div id="loadingBox" hidden="hidden">
+         <div id="loading" hidden="hidden">Loading... 0%</div>
+         <div id="loadingBar" hidden="hidden"><div class="progress"></div></div>
+      </div>
       <g:FlowPanel ui:field="viewer_"/>
 
       <g:HorizontalPanel styleName="{style.statusBar}">

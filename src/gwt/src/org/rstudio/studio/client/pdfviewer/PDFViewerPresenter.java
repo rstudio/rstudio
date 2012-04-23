@@ -240,7 +240,6 @@ public class PDFViewerPresenter implements IsWidget,
          @Override
          public void onPDFLoad(PDFLoadEvent event)
          {
-            toolbar.setPageCount(PDFView.pageCount());
             if (executeOnLoad_ != null)
             {
                executeOnLoad_.execute();

@@ -121,7 +121,7 @@
                   Page
                   <widget:NumericTextBox styleName="{style.pageNumber}"
                                          ui:field="pageNumber_"/>
-                  of <widget:SpanLabel ui:field="pageCountLabel_" text="1"/>
+                  of <span id="numPages"/>
                </div>
                   <widget:InlineToolbarSeparator />
                <widget:InlineToolbarButton ui:field="btnThumbnails_"

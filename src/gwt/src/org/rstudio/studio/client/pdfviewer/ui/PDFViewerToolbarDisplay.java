@@ -29,6 +29,5 @@ public interface PDFViewerToolbarDisplay
    HasClickHandlers getZoomIn();
    HasValue<String> getPageNumber();
    void selectPageNumber();
-   void setPageCount(int pageCount);
    void setPdfFile(FileSystemItem pdfFile);
 }
