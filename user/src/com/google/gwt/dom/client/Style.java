@@ -522,7 +522,7 @@ public class Style extends JavaScriptObject {
   }
 
   /**
-   * Enum for the display property.
+   * Enum for the position property.
    */
   public enum Position implements HasCssName {
     STATIC {
