@@ -195,7 +195,7 @@ void enqueStartedEvent(const FilePath& texFilePath)
 }
 
 void enqueCompletedEvent(bool succeeded,
-                         const std::string& rootDocument,
+                         const FilePath& rootDocPath,
                          const json::Object& sourceLocation,
                          const FilePath& texFilePath)
 {
@@ -211,6 +211,7 @@ void enqueCompletedEvent(bool succeeded,
    dataJson["view_pdf_url"] = tex::view_pdf::createViewPdfUrl(pdfPath);
    bool synctexAvailable = isSynctexAvailable(texFilePath);
    dataJson["synctex_available"] = synctexAvailable;
+   std::string rootDocument = module_context::createAliasedPath(rootDocPath);
    dataJson["root_document"] = rootDocument;
    if (synctexAvailable)
    {
@@ -229,14 +230,14 @@ void enqueCompletedEvent(bool succeeded,
 }
 
 void enqueCompletedWithFailureEvent(const FilePath& texFilePath,
-                                    const std::string& rootDocument,
+                                    const FilePath& rootDocument,
                                     json::Object& sourceLocation)
 {
    enqueCompletedEvent(false, rootDocument, sourceLocation, texFilePath);
 }
 
 void enqueCompletedWithSuccessEvent(const FilePath& texFilePath,
-                                    const std::string& rootDocument,
+                                    const FilePath& rootDocument,
                                     const json::Object& sourceLocation)
 {
    enqueCompletedEvent(true, rootDocument, sourceLocation, texFilePath);
@@ -334,7 +335,6 @@ bool isLogEntryFromTargetFile(const core::tex::LogEntry& logEntry,
 }
 
 void getLogEntries(const FilePath& texPath,
-                   const rnw_concordance::Concordances& concordances,
                    core::tex::LogEntries* pLogEntries)
 {
    // latex log file
@@ -556,6 +556,15 @@ private:
         sourceLocation_(sourceLocation),
         onCompleted_(onCompleted)
    {
+      Error error = core::system::realPath(targetFilePath_.absolutePath(),
+                                           &targetFilePath_);
+      if (error)
+         LOG_ERROR(error);
+
+      error = core::system::realPath(rootDocument_.absolutePath(),
+                                     &rootDocument_);
+      if (error)
+         LOG_ERROR(error);
    }
 
    void start()
@@ -722,7 +731,7 @@ private:
    {
       // collect errors from the log
       core::tex::LogEntries logEntries;
-      getLogEntries(texFilePath, concords, &logEntries);
+      getLogEntries(texFilePath, &logEntries);
 
       // determine whether they will be shown in the list
       // list or within the console
@@ -814,8 +823,8 @@ private:
    }
 
 private:
-   const FilePath targetFilePath_;
-   std::string rootDocument_;
+   FilePath targetFilePath_;
+   FilePath rootDocument_;
    json::Object sourceLocation_;
    const boost::function<void()> onCompleted_;
    core::tex::TexMagicComments magicComments_;

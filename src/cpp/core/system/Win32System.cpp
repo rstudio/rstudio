@@ -314,6 +314,12 @@ Error captureCommand(const std::string& command, std::string* pOutput)
    return error;
 }
 
+Error realPath(const FilePath& filePath, FilePath* pRealPath)
+{
+   *pRealPath = filePath;
+   return Success();
+}
+
 bool isHiddenFile(const FilePath& filePath)
 {
    return isHiddenFile(filePath.absolutePath());

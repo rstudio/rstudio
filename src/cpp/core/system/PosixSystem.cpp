@@ -46,6 +46,7 @@
 #include <core/Exec.hpp>
 #include <core/SyslogLogWriter.hpp>
 #include <core/StderrLogWriter.hpp>
+#include <core/StringUtils.hpp>
 
 #include <core/system/ProcessArgs.hpp>
 #include <core/system/Environment.hpp>
@@ -114,6 +115,19 @@ int signalForType(SignalType type)
 }
 
 } // anonymous namespace
+
+Error realPath(const FilePath& filePath, FilePath* pRealPath)
+{
+   std::string path = string_utils::utf8ToSystem(filePath.absolutePath());
+
+   char buffer[PATH_MAX*2];
+   char* realPath = ::realpath(path.c_str(), buffer);
+   if (realPath == NULL)
+      return systemError(errno, ERROR_LOCATION);
+
+  *pRealPath = FilePath(string_utils::systemToUtf8(realPath));
+  return Success();
+}
 
 Error realPath(const std::string& path, FilePath* pRealPath)
 {

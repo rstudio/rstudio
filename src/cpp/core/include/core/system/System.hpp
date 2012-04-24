@@ -52,6 +52,8 @@ enum LogLevel
    kLogLevelDebug = 3
 };
 
+// portable realPath
+Error realPath(const FilePath& filePath, FilePath* pRealPath);
 
 #ifndef _WIN32
 Error closeAllFileDescriptors();
