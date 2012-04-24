@@ -47,7 +47,7 @@ struct RProjectConfig
         encoding(),
         defaultSweaveEngine(),
         defaultLatexProgram(),
-        mainDocument()
+        rootDocument()
    {
    }
 
@@ -61,7 +61,7 @@ struct RProjectConfig
    std::string encoding;
    std::string defaultSweaveEngine;
    std::string defaultLatexProgram;
-   std::string mainDocument;
+   std::string rootDocument;
 };
 
 

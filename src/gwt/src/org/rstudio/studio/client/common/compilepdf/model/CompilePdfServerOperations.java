@@ -24,7 +24,8 @@ public interface CompilePdfServerOperations
    // to indicate that the compile pdf could not be started because another
    // compile is currently in progress. pass the terminateExisting flag
    // to terminate a running compile
-   void compilePdf(FileSystemItem targetFile, 
+   void compilePdf(FileSystemItem targetFile,
+                   String rootDocument,
                    SourceLocation sourceLocation,
                    String completedAction,
                    ServerRequestCallback<Boolean> requestCallback);

@@ -113,7 +113,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
        
       if (synctexAvailable)
          setSynctexStatus(event.getResult().getTargetFile(),
-                          event.getResult().getUsingMainDocument(),
+                          event.getResult().getRootDocument(),
                           event.getResult().getPdfPath());
       else
          setNoSynctexStatus();
@@ -132,8 +132,8 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       if (!isSynctexAvailable())
          return false;
       
-      // if we are using a main document then its always available
-      if (usingMainDocument_)
+      // if we are using a root document then its always available
+      if (rootDocument_.length() > 0)
          return true;
       
       FileSystemItem file = FileSystemItem.createFile(editorFile); 
@@ -165,7 +165,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       satelliteManager_.activateSatelliteWindow(PDFViewerApplication.NAME);
          
       // execute the forward search
-      callForwardSearch(window, sourceLocation);
+      callForwardSearch(window, rootDocument_, sourceLocation);
   
       return true;
    }
@@ -184,12 +184,14 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    }
    
    
-   private void doForwardSearch(JavaScriptObject sourceLocationObject)
+   private void doForwardSearch(String rootDocument,
+                                JavaScriptObject sourceLocationObject)
    {
       SourceLocation sourceLocation = sourceLocationObject.cast();
       
       final ProgressIndicator indicator = getSyncProgress();
       server_.synctexForwardSearch(
+         rootDocument,
          sourceLocation,
          new ServerRequestCallback<PdfLocation>() {
 
@@ -267,18 +269,18 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    
    private void setNoSynctexStatus()
    {
-      setSynctexStatus(null, false, null);
+      setSynctexStatus(null, "", null);
    }
    
    private void setSynctexStatus(String targetFile, 
-                                 boolean usingMainDocument,
+                                 String rootDocument,
                                  String pdfPath)
    {
       // set flag and fire event
       if (!StringUtil.notNull(pdfPath_).equals(StringUtil.notNull(pdfPath)))
       {
          pdfPath_ = pdfPath;
-         usingMainDocument_ = usingMainDocument;
+         rootDocument_ = rootDocument;
          eventBus_.fireEvent(new SynctexStatusChangedEvent(targetFile, 
                                                            pdfPath));
       }
@@ -317,15 +319,16 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    private native void registerSatelliteCallbacks() /*-{
       var synctex = this;     
       $wnd.synctexForwardSearch = $entry(
-         function(sourceLocation) {
-            synctex.@org.rstudio.studio.client.common.synctex.Synctex::doForwardSearch(Lcom/google/gwt/core/client/JavaScriptObject;)(sourceLocation);
+         function(rootDocument, sourceLocation) {
+            synctex.@org.rstudio.studio.client.common.synctex.Synctex::doForwardSearch(Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;)(rootDocument, sourceLocation);
          }
       ); 
    }-*/;
    
    private native void callForwardSearch(JavaScriptObject satellite,
+                                         String rootDocument,
                                          JavaScriptObject sourceLocation) /*-{
-      satellite.synctexForwardSearch(sourceLocation);
+      satellite.synctexForwardSearch(rootDocument, sourceLocation);
    }-*/;
    
    private final GlobalDisplay globalDisplay_;
@@ -337,7 +340,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    private final Satellite satellite_;
    private final SatelliteManager satelliteManager_;
    private String pdfPath_ = null;
-   private boolean usingMainDocument_ = false;
+   private String rootDocument_ = "";
    
  
 }

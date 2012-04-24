@@ -30,6 +30,10 @@ public class CompilePdfResult extends JavaScriptObject
    public final native String getTargetFile() /*-{
       return this.target_file;
    }-*/;
+   
+   public final native String getRootDocument() /*-{
+      return this.root_document;
+   }-*/;
 
    public final native String getPdfPath() /*-{
       return this.pdf_path;
@@ -41,10 +45,6 @@ public class CompilePdfResult extends JavaScriptObject
    
    public final native boolean isSynctexAvailable() /*-{
       return this.synctex_available;
-   }-*/;
-   
-   public final native boolean getUsingMainDocument() /*-{
-      return this.using_main_document;
    }-*/;
    
    public final native PdfLocation getPdfLocation() /*-{

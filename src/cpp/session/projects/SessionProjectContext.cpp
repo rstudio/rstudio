@@ -475,6 +475,7 @@ json::Object ProjectContext::uiPrefs() const
    uiPrefs["default_encoding"] = defaultEncoding();
    uiPrefs["default_sweave_engine"] = config_.defaultSweaveEngine;
    uiPrefs["default_latex_program"] = config_.defaultLatexProgram;
+   uiPrefs["root_document"] = config_.rootDocument;
    return uiPrefs;
 }
 
@@ -491,7 +492,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
       defaultConfig.encoding = "UTF-8";
    defaultConfig.defaultSweaveEngine = userSettings().defaultSweaveEngine();
    defaultConfig.defaultLatexProgram = userSettings().defaultLatexProgram();
-   defaultConfig.mainDocument = std::string();
+   defaultConfig.rootDocument = std::string();
    return defaultConfig;
 }
 

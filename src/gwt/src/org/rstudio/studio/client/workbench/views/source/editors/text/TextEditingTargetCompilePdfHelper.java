@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.tex.TexMagicComment;
@@ -253,6 +254,35 @@ public class TextEditingTargetCompilePdfHelper
       }
    }
    
+   public String getRootDocument(FileSystemItem targetFile)
+   {
+      ArrayList<TexMagicComment> magicComments = 
+                  TexMagicComment.parseComments(docDisplay_.getCode());
+      String root = StringUtil.notNull(detectRootDirective(magicComments));
+      if (root.length() > 0)
+      {
+         return targetFile.getParentPath().completePath(root);
+      }
+      else 
+      {
+         String rootPref = prefs_.rootDocument().getValue();
+         if (rootPref.length() > 0)
+         {
+            FileSystemItem projDir = 
+                           session_.getSessionInfo().getActiveProjectDir();
+            if (projDir != null)
+               return projDir.completePath(rootPref);
+            else
+               return "";
+         }
+         else
+         {
+            return "";
+         }
+      }
+   }
+   
+   
    // get the currently active rnw weave method -- note this can return
    // null in the case that there is an embedded directive which is invalid
    public RnwWeave getActiveRnwWeave()
@@ -328,6 +358,21 @@ public class TextEditingTargetCompilePdfHelper
              (comment.getVariable().equalsIgnoreCase("program") ||
               comment.getVariable().equalsIgnoreCase("ts-program")))
          { 
+            return comment.getValue();
+         }
+      }
+      
+      return null;
+   }
+   
+   private String detectRootDirective(ArrayList<TexMagicComment> magicComments)
+   {
+      for (TexMagicComment comment : magicComments)
+      {
+         String scope = comment.getScope().toLowerCase();
+         if ((scope.equals("rnw") || scope.equals("tex")) &&
+             comment.getVariable().equalsIgnoreCase("root"))
+         {
             return comment.getValue();
          }
       }

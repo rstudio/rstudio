@@ -105,14 +105,15 @@ Error synctexForwardSearch(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
    // read params
+   std::string rootDoc;
    json::Object sourceLocation;
-   Error error = json::readParam(request.params, 0, &sourceLocation);
+   Error error = json::readParams(request.params, &rootDoc, &sourceLocation);
    if (error)
       return error;
 
    // do the search
    json::Value pdfLocation;
-   error = forwardSearch(sourceLocation, &pdfLocation);
+   error = forwardSearch(rootDoc, sourceLocation, &pdfLocation);
    if (error)
       return error;
 
@@ -198,7 +199,8 @@ Error synctexInverseSearch(const json::JsonRpcRequest& request,
 } // anonymous namespace
 
 
-Error forwardSearch(const json::Object& sourceLocation,
+Error forwardSearch(const std::string& rootDoc,
+                    const json::Object& sourceLocation,
                     json::Value* pPdfLocation)
 {
    // read params
@@ -216,11 +218,12 @@ Error forwardSearch(const json::Object& sourceLocation,
    // determine input file
    FilePath inputFile = module_context::resolveAliasedPath(file);
 
-   // deterine pdf file
-   FilePath mainFile = inputFile;
-   std::string mainDoc = projects::projectContext().config().mainDocument;
-   if (!mainDoc.empty())
-      mainFile = projects::projectContext().directory().complete(mainDoc);
+   // deterine main file
+   FilePath mainFile = rootDoc.empty() ?
+                                 inputFile :
+                                 module_context::resolveAliasedPath(rootDoc);
+
+   // determine pdf
    FilePath pdfFile = mainFile.parent().complete(mainFile.stem() + ".pdf");
 
    core::tex::Synctex synctex;

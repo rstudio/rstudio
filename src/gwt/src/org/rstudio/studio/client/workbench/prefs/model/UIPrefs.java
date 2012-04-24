@@ -156,6 +156,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // default latex program
          defaultLatexProgram().setGlobalValue(
                            newUiPrefs.defaultLatexProgram().getGlobalValue());
+         
+         // root document
+         rootDocument().setGlobalValue(
+                           newUiPrefs.rootDocument().getGlobalValue());
         
          // pdf preview
          pdfPreview().setGlobalValue(
@@ -216,7 +220,9 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // default latex program
          defaultLatexProgram().setProjectValue(
                             newUiPrefs.defaultLatexProgram().getValue());
- 
+         
+         // root document
+         rootDocument().setProjectValue(newUiPrefs.rootDocument().getValue());
       }
       else
       {

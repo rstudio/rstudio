@@ -87,6 +87,8 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                            config.getDefaultSweaveEngine());
                 uiPrefs.defaultLatexProgram().setProjectValue(
                                            config.getDefaultLatexProgram());
+                uiPrefs.rootDocument().setProjectValue(
+                                           config.getRootDocument());
                 
                 if (onCompleted != null)
                    onCompleted.execute();

@@ -180,7 +180,8 @@ public class CompilePdfOutputPresenter extends BasePresenter
       view_.ensureVisible(activate);
       
       // run the compile
-      compilePdf(event.getTargetFile(), 
+      compilePdf(event.getTargetFile(),
+                 event.getRootDocument(),
                  event.getSourceLocation(),
                  event.getCompletedAction());
    }
@@ -240,13 +241,15 @@ public class CompilePdfOutputPresenter extends BasePresenter
    }
    
    private void compilePdf(FileSystemItem targetFile,
+                           String rootDocument,
                            SourceLocation sourceLocation,
                            String completedAction)
    {
       // attempt to start a compilation (this might not actually work
       // if there is already a compile running)
       server_.compilePdf(
-            targetFile, 
+            targetFile,
+            rootDocument,
             sourceLocation,
             completedAction, 
             new RequestCallback<Boolean>("Compiling PDF...") 

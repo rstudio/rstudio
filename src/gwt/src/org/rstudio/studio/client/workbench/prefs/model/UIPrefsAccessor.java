@@ -141,6 +141,11 @@ public class UIPrefsAccessor extends Prefs
       return string("default_latex_program", "pdfLaTeX");
    }
    
+   public PrefValue<String> rootDocument()
+   {
+      return string("root_document", "");
+   }
+   
    public static final String PDF_PREVIEW_NONE = "none";
    public static final String PDF_PREVIEW_RSTUDIO = "rstudio";
    public static final String PDF_PREVIEW_SYSTEM = "system";

@@ -305,15 +305,15 @@ Error readProjectFile(const FilePath& projectFilePath,
       *pProvidedDefaults = true;
    }
 
-   // extract main document
-   it = dcfFields.find("MainDocument");
+   // extract root document
+   it = dcfFields.find("RootDocument");
    if (it != dcfFields.end())
    {
-      pConfig->mainDocument = it->second;
+      pConfig->rootDocument = it->second;
    }
    else
    {
-      pConfig->mainDocument = defaultConfig.mainDocument;
+      pConfig->rootDocument = defaultConfig.rootDocument;
       *pProvidedDefaults = true;
    }
 
@@ -339,7 +339,7 @@ Error writeProjectFile(const FilePath& projectFilePath,
       "\n"
       "RnwWeave: %9%\n"
       "LaTeX: %10%\n"
-      "MainDocument: %11%\n");
+      "RootDocument: %11%\n");
 
    std::string contents = boost::str(fmt %
         boost::io::group(std::fixed, std::setprecision(1), config.version) %
@@ -352,7 +352,7 @@ Error writeProjectFile(const FilePath& projectFilePath,
         config.encoding %
         config.defaultSweaveEngine %
         config.defaultLatexProgram %
-        config.mainDocument);
+        config.rootDocument);
 
    // write it
    return writeStringToFile(projectFilePath,

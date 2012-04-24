@@ -2406,14 +2406,16 @@ public class RemoteServer implements Server
    
    
    public void compilePdf(FileSystemItem targetFile,
+                          String rootDocument,
                           SourceLocation sourceLocation,
                           String completedAction,
                           ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(targetFile.getPath()));
-      params.set(1, new JSONObject(sourceLocation));
-      params.set(2, new JSONString(completedAction));
+      params.set(1, new JSONString(rootDocument));
+      params.set(2, new JSONObject(sourceLocation));
+      params.set(3, new JSONString(completedAction));
       sendRequest(RPC_SCOPE, COMPILE_PDF, params, requestCallback);
    }
    
@@ -2434,10 +2436,14 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void synctexForwardSearch(SourceLocation sourceLocation,
+   public void synctexForwardSearch(String rootDocument,
+                                    SourceLocation sourceLocation,
                                     ServerRequestCallback<PdfLocation> callback)
    {
-      sendRequest(RPC_SCOPE, SYNCTEX_FORWARD_SEARCH, sourceLocation, callback);
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(rootDocument));
+      params.set(1, new JSONObject(sourceLocation));
+      sendRequest(RPC_SCOPE, SYNCTEX_FORWARD_SEARCH, params, callback);
    }
 
    @Override

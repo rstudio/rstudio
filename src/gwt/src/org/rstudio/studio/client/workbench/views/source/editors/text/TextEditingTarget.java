@@ -2182,10 +2182,11 @@ public class TextEditingTarget implements EditingTarget
       }
       
       CompilePdfEvent event = new CompilePdfEvent(
-                                         file, 
-                                         getSelectionAsSourceLocation(false),
-                                         completedAction,
-                                         useInternalPreview);
+                                       file, 
+                                       compilePdfHelper_.getRootDocument(file),
+                                       getSelectionAsSourceLocation(false),
+                                       completedAction,
+                                       useInternalPreview);
       events_.fireEvent(event);
    }
    

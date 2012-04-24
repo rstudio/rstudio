@@ -44,9 +44,9 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
       
       addHeader("PDF preview");
       
-      mainDoc_ = new MainDocumentChooser();
-      nudgeRight(mainDoc_);
-      add(mainDoc_);
+      rootDoc_ = new RootDocumentChooser();
+      nudgeRight(rootDoc_);
+      add(rootDoc_);
    }
    
    @Override
@@ -67,7 +67,7 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
       RProjectConfig config = options.getConfig();
       defaultSweaveEngine_.setValue(config.getDefaultSweaveEngine());
       defaultLatexProgram_.setValue(config.getDefaultLatexProgram());
-      mainDoc_.setText(config.getMainDocument());
+      rootDoc_.setText(config.getRootDocument());
    }
    
    @Override
@@ -82,7 +82,7 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
       RProjectConfig config = options.getConfig();
       config.setDefaultSweaveEngine(defaultSweaveEngine_.getValue());
       config.setDefaultLatexProgram(defaultLatexProgram_.getValue());
-      config.setMainDocument(mainDoc_.getText().trim());
+      config.setRootDocument(rootDoc_.getText().trim());
       return false;
    }
    
@@ -96,11 +96,11 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
       add(pdfCompilationLabel);
    }
    
-   private class MainDocumentChooser extends TextBoxWithButton
+   private class RootDocumentChooser extends TextBoxWithButton
    {
-      public MainDocumentChooser()
+      public RootDocumentChooser()
       {
-         super("Compile PDF main document:", 
+         super("Compile PDF root document:", 
                "(Current Document)", 
                "Browse...", 
                null);
@@ -160,6 +160,6 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
     
    private RnwWeaveSelectWidget defaultSweaveEngine_;
    private LatexProgramSelectWidget defaultLatexProgram_;
-   private TextBoxWithButton mainDoc_;
+   private TextBoxWithButton rootDoc_;
 
 }

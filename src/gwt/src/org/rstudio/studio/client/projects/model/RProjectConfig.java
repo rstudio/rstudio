@@ -40,7 +40,7 @@ public class RProjectConfig extends JavaScriptObject
                                                     String encoding,
                                                     String defaultSweaveEngine,
                                                     String defaultLatexProgram,
-                                                    String mainDocument) /*-{
+                                                    String rootDocument) /*-{
       var config = new Object();
       config.version = 1.0;
       config.restore_workspace = restoreWorkspace;
@@ -52,7 +52,7 @@ public class RProjectConfig extends JavaScriptObject
       config.default_encoding = encoding;
       config.default_sweave_engine = defaultSweaveEngine;
       config.default_latex_program = defaultLatexProgram;
-      config.main_document = mainDocument;
+      config.root_document = rootDocument;
       return config;
    }-*/;
 
@@ -132,12 +132,12 @@ public class RProjectConfig extends JavaScriptObject
       this.default_latex_program = defaultLatexProgram;
    }-*/;
    
-   public native final String getMainDocument() /*-{
-      return this.main_document;
+   public native final String getRootDocument() /*-{
+      return this.root_document;
    }-*/;
 
-   public native final void setMainDocument(String mainDocument) /*-{
-      this.main_document = mainDocument;
+   public native final void setRootDocument(String rootDocument) /*-{
+      this.root_document = rootDocument;
    }-*/;
    
 }

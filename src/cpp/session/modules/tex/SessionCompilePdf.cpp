@@ -195,6 +195,7 @@ void enqueStartedEvent(const FilePath& texFilePath)
 }
 
 void enqueCompletedEvent(bool succeeded,
+                         const std::string& rootDocument,
                          const json::Object& sourceLocation,
                          const FilePath& texFilePath)
 {
@@ -210,12 +211,12 @@ void enqueCompletedEvent(bool succeeded,
    dataJson["view_pdf_url"] = tex::view_pdf::createViewPdfUrl(pdfPath);
    bool synctexAvailable = isSynctexAvailable(texFilePath);
    dataJson["synctex_available"] = synctexAvailable;
-   dataJson["using_main_document"] =
-                  !projects::projectContext().config().mainDocument.empty();
+   dataJson["root_document"] = rootDocument;
    if (synctexAvailable)
    {
       json::Value pdfLocation;
-      Error error = modules::tex::synctex::forwardSearch(sourceLocation,
+      Error error = modules::tex::synctex::forwardSearch(rootDocument,
+                                                         sourceLocation,
                                                          &pdfLocation);
       if (error)
          LOG_ERROR(error);
@@ -228,15 +229,17 @@ void enqueCompletedEvent(bool succeeded,
 }
 
 void enqueCompletedWithFailureEvent(const FilePath& texFilePath,
+                                    const std::string& rootDocument,
                                     json::Object& sourceLocation)
 {
-   enqueCompletedEvent(false, sourceLocation, texFilePath);
+   enqueCompletedEvent(false, rootDocument, sourceLocation, texFilePath);
 }
 
 void enqueCompletedWithSuccessEvent(const FilePath& texFilePath,
+                                    const std::string& rootDocument,
                                     const json::Object& sourceLocation)
 {
-   enqueCompletedEvent(true, sourceLocation, texFilePath);
+   enqueCompletedEvent(true, rootDocument, sourceLocation, texFilePath);
 }
 
 void enqueErrorsEvent(const json::Array& logEntriesJson)
@@ -528,11 +531,15 @@ class AsyncPdfCompiler : boost::noncopyable,
 {
 public:
    static void start(const FilePath& targetFilePath,
+                     const std::string& rootDocument,
                      const json::Object& sourceLocation,
                      const boost::function<void()>& onCompleted)
    {
       boost::shared_ptr<AsyncPdfCompiler> pCompiler(
-            new AsyncPdfCompiler(targetFilePath, sourceLocation, onCompleted));
+            new AsyncPdfCompiler(targetFilePath,
+                                 rootDocument,
+                                 sourceLocation,
+                                 onCompleted));
 
       pCompiler->start();
    }
@@ -541,9 +548,11 @@ public:
 
 private:
    AsyncPdfCompiler(const FilePath& targetFilePath,
+                    const std::string& rootDocument,
                     const json::Object& sourceLocation,
                     const boost::function<void()>& onCompleted)
       : targetFilePath_(targetFilePath),
+        rootDocument_(rootDocument),
         sourceLocation_(sourceLocation),
         onCompleted_(onCompleted)
    {
@@ -749,7 +758,9 @@ private:
          if (onCompleted_)
             onCompleted_();
 
-         enqueCompletedWithSuccessEvent(targetFilePath_, sourceLocation_);
+         enqueCompletedWithSuccessEvent(targetFilePath_,
+                                        rootDocument_,
+                                        sourceLocation_);
       }
       else
       {
@@ -775,20 +786,26 @@ private:
          if (!showIssuesList)
             writeLogEntriesOutput(logEntries);
 
-         enqueCompletedWithFailureEvent(targetFilePath_, sourceLocation_);
+         enqueCompletedWithFailureEvent(targetFilePath_,
+                                        rootDocument_,
+                                        sourceLocation_);
       }
    }
 
    void terminateWithError(const std::string& message)
    {
       enqueOutputEvent(message + "\n");
-      enqueCompletedWithFailureEvent(targetFilePath_, sourceLocation_);
+      enqueCompletedWithFailureEvent(targetFilePath_,
+                                     rootDocument_,
+                                     sourceLocation_);
    }
 
    void terminateWithErrorLogEntries(const core::tex::LogEntries& logEntries)
    {
       showLogEntries(logEntries);
-      enqueCompletedWithFailureEvent(targetFilePath_, sourceLocation_);
+      enqueCompletedWithFailureEvent(targetFilePath_,
+                                     rootDocument_,
+                                     sourceLocation_);
    }
 
    bool isTargetRnw() const
@@ -798,6 +815,7 @@ private:
 
 private:
    const FilePath targetFilePath_;
+   std::string rootDocument_;
    json::Object sourceLocation_;
    const boost::function<void()> onCompleted_;
    core::tex::TexMagicComments magicComments_;
@@ -810,12 +828,14 @@ private:
 
 
 bool startCompile(const core::FilePath& targetFilePath,
+                  const std::string& rootDocument,
                   const json::Object& sourceLocation,
                   const boost::function<void()>& onCompleted)
 {
    if (!compile_pdf_supervisor::hasRunningChildren())
    {
       AsyncPdfCompiler::start(targetFilePath,
+                              rootDocument,
                               sourceLocation,
                               onCompleted);
       return true;

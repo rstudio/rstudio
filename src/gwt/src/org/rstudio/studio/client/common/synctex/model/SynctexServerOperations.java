@@ -17,7 +17,8 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public interface SynctexServerOperations
 {
-   void synctexForwardSearch(SourceLocation sourceLocation, 
+   void synctexForwardSearch(String rootDocument,
+                             SourceLocation sourceLocation, 
                              ServerRequestCallback<PdfLocation> callback);
    
    
