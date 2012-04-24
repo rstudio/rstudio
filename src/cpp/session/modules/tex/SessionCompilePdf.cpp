@@ -556,13 +556,11 @@ private:
         sourceLocation_(sourceLocation),
         onCompleted_(onCompleted)
    {
-      Error error = core::system::realPath(targetFilePath_.absolutePath(),
-                                           &targetFilePath_);
+      Error error = core::system::realPath(targetFilePath_, &targetFilePath_);
       if (error)
          LOG_ERROR(error);
 
-      error = core::system::realPath(rootDocument_.absolutePath(),
-                                     &rootDocument_);
+      error = core::system::realPath(rootDocument_, &rootDocument_);
       if (error)
          LOG_ERROR(error);
    }

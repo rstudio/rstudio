@@ -285,17 +285,11 @@ FilePath texFilePath(const std::string& logPath, const FilePath& compileDir)
 {
    // some tex compilers report file names with absolute paths and some
    // report them relative to the compilation directory -- on Posix use
-   // realPath to get a clean full path back -- note the fact that we
-   // don't do this on Windows is a tacit assumption that Windows TeX logs
-   // are either absolute or don't require interpretation of .., etc.
+   // realPath to get a clean full path back
 
    FilePath path = compileDir.complete(logPath);
-
-#ifdef _WIN32
-   return path;
-#else
    FilePath realPath;
-   Error error = core::system::realPath(path.absolutePath(), &realPath);
+   Error error = core::system::realPath(path, &realPath);
    if (error)
    {
       // log any error which isn't no such file or directory
@@ -311,7 +305,6 @@ FilePath texFilePath(const std::string& logPath, const FilePath& compileDir)
    {
       return realPath;
    }
-#endif
 }
 
 size_t calculateWrappedLine(const std::vector<size_t>& unwrappedLines,
