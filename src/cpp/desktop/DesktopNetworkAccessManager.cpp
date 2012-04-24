@@ -13,6 +13,10 @@
 
 #include "DesktopNetworkAccessManager.hpp"
 
+#include "DesktopDataUriNetworkReply.hpp"
+
+using namespace desktop;
+
 NetworkAccessManager::NetworkAccessManager(QString secret, QObject *parent) :
     QNetworkAccessManager(parent), secret_(secret)
 {
@@ -24,6 +28,16 @@ QNetworkReply* NetworkAccessManager::createRequest(
       const QNetworkRequest& req,
       QIODevice* outgoingData)
 {
+   /*
+   QUrl url = req.url();
+   if (url.scheme() == QString::fromAscii("data"))
+   {
+      DataUriNetworkReply* pReply = new DataUriNetworkReply(NULL, req);
+      pReply->createReply();
+      return pReply;
+   }
+   */
+
    QNetworkRequest req2 = req;
    req2.setRawHeader("X-Shared-Secret",
                      secret_.toAscii());

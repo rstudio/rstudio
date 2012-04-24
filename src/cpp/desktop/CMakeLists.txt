@@ -73,6 +73,7 @@ set(DESKTOP_SOURCE_FILES
   DesktopAboutDialog.cpp
   DesktopBrowserWindow.cpp
   DesktopCommandInvoker.cpp
+  DesktopDataUriNetworkReply.cpp
   DesktopDownloadHelper.cpp
   DesktopGwtCallback.cpp
   DesktopGwtWindow.cpp
