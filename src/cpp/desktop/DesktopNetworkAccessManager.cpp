@@ -28,16 +28,6 @@ QNetworkReply* NetworkAccessManager::createRequest(
       const QNetworkRequest& req,
       QIODevice* outgoingData)
 {
-   /*
-   QUrl url = req.url();
-   if (url.scheme() == QString::fromAscii("data"))
-   {
-      DataUriNetworkReply* pReply = new DataUriNetworkReply(NULL, req);
-      pReply->createReply();
-      return pReply;
-   }
-   */
-
    QNetworkRequest req2 = req;
    req2.setRawHeader("X-Shared-Secret",
                      secret_.toAscii());

@@ -21,6 +21,19 @@
 
 namespace desktop {
 
+// NOTE: this does not yet actually work. PNGs served back through this
+// class end up unreadable by the client (but it appears as if at least
+// one GIF works). Note we actually tried returning just raw bytes
+// without the headers and it worked. We should therefore do more
+// research on what the expected behavior for data uris
+//
+// NOTE: if we get this work we still need to do some work around:
+//
+//  (1) Optimizing/eliminating data copies
+//  (2) Return error conditions for malformed data
+//  (3) Other assorted cleanup
+//
+
 void DataUriNetworkReply::createReply()
 {
    // get the url as a byte array
