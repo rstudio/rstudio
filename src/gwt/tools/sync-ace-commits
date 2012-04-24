@@ -75,6 +75,7 @@ git merge \
     origin/patch/suppress-native-scroll \
     origin/patch/build-markdown-html \
     origin/patch/build-markdown-html2 \
+    origin/patch/remove-webfont \
 
 
 make clean
