@@ -25,7 +25,6 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.HasButtonMethods;
 import org.rstudio.core.client.widget.InlineToolbarButton;
 import org.rstudio.core.client.widget.NumericTextBox;
-import org.rstudio.core.client.widget.SpanLabel;
 import org.rstudio.studio.client.pdfviewer.ui.images.Resources;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
