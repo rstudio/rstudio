@@ -1912,19 +1912,13 @@ public class TextEditingTarget implements EditingTarget
       // validate pre-reqs
       if (!previewHtmlHelper_.verifyPrerequisites(view_, fileType_))
          return;
-      
-      // build params
-      final HTMLPreviewParams params = HTMLPreviewParams.create(
-                                             docUpdateSentinel_.getPath(), 
-                                             docUpdateSentinel_.getEncoding(),
-                                             fileType_.isMarkdown(), 
-                                             fileType_.requiresKnit());
-      
+       
       // command to show the preview window
       final Command showPreviewWindowCommand = new Command() {
          @Override
          public void execute()
          {
+            HTMLPreviewParams params = createHTMLPreviewParams();
             events_.fireEvent(new ShowHTMLPreviewEvent(params));  
          }
       };
@@ -1934,6 +1928,7 @@ public class TextEditingTarget implements EditingTarget
          @Override
          public void execute()
          {
+            HTMLPreviewParams params = createHTMLPreviewParams();
             server_.previewHTML(params, new SimpleRequestCallback<Boolean>());  
          }      
       };
@@ -1960,6 +1955,14 @@ public class TextEditingTarget implements EditingTarget
          showPreviewWindowCommand.execute();
          runPreviewCommand.execute();
       }
+   }
+  
+   private HTMLPreviewParams createHTMLPreviewParams()
+   {
+      return HTMLPreviewParams.create(docUpdateSentinel_.getPath(), 
+                                      docUpdateSentinel_.getEncoding(),
+                                      fileType_.isMarkdown(), 
+                                      fileType_.requiresKnit());
    }
    
    @Handler
