@@ -17,12 +17,14 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.regex.Match;
-import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.common.r.RToken;
+import org.rstudio.studio.client.common.r.RTokenizer;
+import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Stack;
 
 public class RnwChunkOptions extends JavaScriptObject
 {
@@ -80,7 +82,8 @@ public class RnwChunkOptions extends JavaScriptObject
       public JsArrayString completions;
    }
 
-   public final RnwOptionCompletionResult getCompletions(String line, int pos)
+   public final RnwOptionCompletionResult getCompletions(String line, int pos,
+                                                         RnwWeave rnwWeave)
    {
       assert line.startsWith("<<");
       String linePart = line.substring(2, pos);
@@ -91,74 +94,30 @@ public class RnwChunkOptions extends JavaScriptObject
 
       String token = null;
       JsArrayString completions = JsArrayString.createArray().cast();
-      Match match = Pattern.create("([=,])?\\s*([^=,]*)$").match(linePart,
-                                                                 0);
-      if (match != null)
+      ArrayList<String> names = new ArrayList<String>();
+      ArrayList<String> values = new ArrayList<String>();
+      parseRnwChunkHeader(linePart, names, values);
+
+      assert names.size() == values.size();
+
+      String name = names.size() == 0
+                    ? null : names.get(names.size()-1);
+      String value = values.size() == 0
+                     ? null : values.get(values.size()-1);
+
+      if (value != null)
       {
-         boolean isValue = match.hasGroup(1) && match.getGroup(1).equals("=");
-         token = match.getGroup(2);
-         if (!isValue)
-         {
-            for (String option : this.getOptions())
-            {
-               if (option.startsWith(token))
-                  completions.push(option + "=");
-            }
-         }
-         else
-         {
-            ArrayList<String> names = new ArrayList<String>();
-            ArrayList<String> values = new ArrayList<String>();
-            parseRnwChunkHeader(linePart, names, values);
-
-            assert names.size() == values.size();
-
-            String name = names.size() == 0
-                          ? null : names.get(names.size()-1);
-            String value = values.size() == 0
-                           ? null : values.get(values.size()-1);
-
-            if (value != null)
-            {
-               // If value is not null, we follow an equal sign; try to complete
-               // based on value.
-
-               String optionType = StringUtil.notNull(this.getOptionType(
-                     name));
-               if (optionType.equals("logical"))
-               {
-                  ArrayList<String> logicals = new ArrayList<String>();
-                  logicals.add("FALSE");
-                  logicals.add("TRUE");
-                  if (value.length() > 0)
-                  {
-                     logicals.add("true");
-                     logicals.add("false");
-                     if (value.length() > 1)
-                     {
-                        logicals.add("True");
-                        logicals.add("False");
-                     }
-                  }
-
-                  for (String logical : logicals)
-                     if (logical.startsWith(value))
-                        completions.push(logical);
-               }
-               else if (optionType.equals("list"))
-               {
-                  for (String optionVal : this.getOptionValues(name))
-                     if (optionVal.startsWith(value))
-                        completions.push(optionVal);
-               }
-            }
-            else if (name != null)
-            {
-               for (String optionName : this.getOptions())
-                  if (optionName.startsWith(name))
-                     completions.push(optionName + "=");
-            }
-         }
+         token = value;
+         // If value is not null, we follow an equal sign; try to complete
+         // based on value.
+         completeValue(rnwWeave, name, value, completions);
+      }
+      else if (name != null)
+      {
+         token = name;
+         for (String optionName : this.getOptions())
+            if (optionName.startsWith(name))
+               completions.push(optionName + "=");
       }
 
       RnwOptionCompletionResult result = new RnwOptionCompletionResult();
@@ -167,28 +126,133 @@ public class RnwChunkOptions extends JavaScriptObject
       return result;
    }
 
+   private void completeValue(RnwWeave rnwWeave,
+                              String name,
+                              String value,
+                              JsArrayString completions)
+   {
+      String optionType = StringUtil.notNull(this.getOptionType(name));
+      if (optionType.equals("logical"))
+      {
+         CompletionOptions options = new CompletionOptions();
+         options.addOption("TRUE", 0);
+         options.addOption("FALSE", 0);
+         if (!rnwWeave.usesCodeForOptions())
+         {
+            // Legacy Sweave is case insensitive
+            options.addOption("true", 1);
+            options.addOption("false", 1);
+            options.addOption("True", 2);
+            options.addOption("False", 2);
+         }
+         for (String logical : options.getCompletions(value))
+            completions.push(logical);
+      }
+      else if (optionType.equals("list"))
+      {
+         CompletionOptions options = new CompletionOptions();
+         ArrayList<String> optionValues = this.getOptionValues(name);
+         if (!rnwWeave.usesCodeForOptions())
+         {
+            // Legacy Sweave
+            for (String optionVal : optionValues)
+               options.addOption(optionVal, 0);
+         }
+         else
+         {
+            for (String optionVal : optionValues)
+               options.addOption("'" + optionVal + "'", 0);
+            for (String optionVal : optionValues)
+               options.addOption('"' + optionVal + '"', 1);
+         }
+
+         for (String option : options.getCompletions(value))
+            completions.push(option);
+      }
+   }
+
    private static void parseRnwChunkHeader(String line,
                                            ArrayList<String> names,
                                            ArrayList<String> values)
    {
-      if (line.trim().length() == 0)
-         return;
+      String currentName = null;
+      String currentValue = null;
 
-      String[] chunks = line.split(",");
-      for (String chunk : chunks)
+      int currentPartBegin = 0;
+      Stack<Integer> braceStack = new Stack<Integer>();
+
+      RTokenizer tokenizer = new RTokenizer(line);
+      for (RToken token; null != (token = tokenizer.nextToken()); )
       {
-         if (chunk.indexOf('=') < 0)
+         switch (token.getTokenType())
          {
-            names.add(chunk.trim());
-            values.add(null);
+            case RToken.OPER:
+               if (token.getContent().equals("=") &&
+                   currentName == null &&
+                   braceStack.empty())
+               {
+                  String part = line.substring(currentPartBegin,
+                                               token.getOffset());
+                  currentName = part;
+                  currentPartBegin = token.getOffset() + token.getLength();
+               }
+               break;
+            case RToken.COMMA:
+               if (braceStack.empty())
+               {
+                  String part = line.substring(currentPartBegin,
+                                               token.getOffset());
+                  if (currentName == null)
+                     currentName = part;
+                  else
+                     currentValue = part;
+
+                  names.add(currentName.trim());
+                  values.add(currentValue != null ?
+                             StringUtil.trimLeft(currentValue) :
+                             null);
+                  currentName = null;
+                  currentValue = null;
+
+                  currentPartBegin = token.getOffset() + token.getLength();
+               }
+               break;
+
+            case RToken.LBRACE:     braceStack.push(RToken.RBRACE);    break;
+            case RToken.LBRACKET:   braceStack.push(RToken.RBRACKET);  break;
+            case RToken.LDBRACKET:  braceStack.push(RToken.RDBRACKET); break;
+            case RToken.LPAREN:     braceStack.push(RToken.RPAREN);    break;
+
+            case RToken.RBRACE:
+            case RToken.RBRACKET:
+            case RToken.RDBRACKET:
+            case RToken.RPAREN:
+               int distance = braceStack.search(token.getTokenType());
+               if (distance > 0)
+               {
+                  for (int i = 0; i < distance; i++)
+                     braceStack.pop();
+               }
+               break;
          }
-         else
-         {
-            String[] subChunks = chunk.split("=", 2);
-            names.add(subChunks[0].trim());
-            values.add(subChunks.length > 1 ? StringUtil.trimLeft(subChunks[1])
-                                            : "");
-         }
+      }
+
+      String part = line.substring(currentPartBegin,
+                                   line.length());
+      if (currentName == null)
+         currentName = part;
+      else
+         currentValue = part;
+
+      if (currentValue == null)
+      {
+         names.add(StringUtil.trimLeft(currentName));
+         values.add(null);
+      }
+      else
+      {
+         names.add(currentName.trim());
+         values.add(StringUtil.trimLeft(currentValue));
       }
    }
 }

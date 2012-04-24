@@ -13,12 +13,14 @@
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.inject.Provider;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.r.RToken;
 import org.rstudio.studio.client.common.r.RTokenizer;
+import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
@@ -32,15 +34,18 @@ public class CompletionRequester
 {
    private final CodeToolsServerOperations server_ ;
    private final AsyncProvider pRnwChunkOptions_;
+   private final Provider<RnwWeave> pRnwWeave_;
 
    private String cachedLinePrefix_ ;
    private CompletionResult cachedResult_ ;
    
    public CompletionRequester(CodeToolsServerOperations server,
-                              RnwChunkOptions.AsyncProvider pRnwChunkOptions)
+                              RnwChunkOptions.AsyncProvider pRnwChunkOptions,
+                              Provider<RnwWeave> pRnwWeave)
    {
       server_ = server ;
       pRnwChunkOptions_ = pRnwChunkOptions;
+      pRnwWeave_ = pRnwWeave;
    }
    
    public void getCompletions(
@@ -137,8 +142,8 @@ public class CompletionRequester
          @Override
          public void onResponseReceived(RnwChunkOptions options)
          {
-            RnwOptionCompletionResult result = options.getCompletions(line,
-                                                                      pos);
+            RnwOptionCompletionResult result = options.getCompletions(
+                       line, pos, pRnwWeave_ == null ? null : pRnwWeave_.get());
 
             Completions response = Completions.createCompletions(
                   result.token,

@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -294,6 +295,18 @@ public class TextEditingTargetCompilePdfHelper
       else
          return rnwWeaveRegistry_.findTypeIgnoreCase(
                                     prefs_.defaultSweaveEngine().getValue());
+   }
+
+   public Provider<RnwWeave> getRnwWeaveProvider()
+   {
+      return new Provider<RnwWeave>()
+      {
+         @Override
+         public RnwWeave get()
+         {
+            return getActiveRnwWeave();
+         }
+      };
    }
    
    // get the currently active rnw weave name -- arranges to always return

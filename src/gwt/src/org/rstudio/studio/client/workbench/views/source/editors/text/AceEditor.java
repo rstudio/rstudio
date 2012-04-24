@@ -32,6 +32,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
@@ -44,6 +45,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.EventBasedChangeTracker;
@@ -361,6 +363,12 @@ public class AceEditor implements DocDisplay,
       pRnwChunkOptions_ = pRnwChunkOptions;
    }
 
+   @Override
+   public void setRnwWeaveProvider(Provider<RnwWeave> pRnwWeave)
+   {
+      pRnwWeave_ = pRnwWeave;
+   }
+
    private void updateLanguage(boolean suppressCompletion)
    {
       if (fileType_ == null)
@@ -375,7 +383,8 @@ public class AceEditor implements DocDisplay,
                new CompletionPopupPanel(),
                server_,
                new Filter(),
-               fileType_.canExecuteChunks() ? pRnwChunkOptions_ : null);
+               fileType_.canExecuteChunks() ? pRnwChunkOptions_ : null,
+               pRnwWeave_);
       }
       else
          completionManager = new NullCompletionManager();
@@ -1461,6 +1470,7 @@ public class AceEditor implements DocDisplay,
    private TextFileType fileType_;
    private boolean passwordMode_;
    private RnwChunkOptions.AsyncProvider pRnwChunkOptions_;
+   private Provider<RnwWeave> pRnwWeave_;
 
    private static final ExternalJavaScriptLoader aceLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());

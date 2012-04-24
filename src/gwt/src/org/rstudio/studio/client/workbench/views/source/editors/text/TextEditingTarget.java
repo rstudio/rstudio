@@ -238,6 +238,7 @@ public class TextEditingTarget implements EditingTarget
       compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
       previewHtmlHelper_ = new TextEditingTargetPreviewHtmlHelper();
       docDisplay_.setRnwChunkOptionsProvider(compilePdfHelper_);
+      docDisplay_.setRnwWeaveProvider(compilePdfHelper_.getRnwWeaveProvider());
       scopeHelper_ = new TextEditingTargetScopeHelper(docDisplay_);
       
       addRecordNavigationPositionHandler(releaseOnDismiss_, 
