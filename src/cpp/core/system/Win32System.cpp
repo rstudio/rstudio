@@ -26,6 +26,7 @@
 #include <shlobj.h>
 
 #include <boost/foreach.hpp>
+#include <boost/system/windows_error.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/range.hpp>
 #include <boost/algorithm/string/replace.hpp>
@@ -316,7 +317,32 @@ Error captureCommand(const std::string& command, std::string* pOutput)
 
 Error realPath(const FilePath& filePath, FilePath* pRealPath)
 {
-   *pRealPath = filePath;
+   std::wstring wPath = filePath.absolutePathW();
+   std::vector<wchar_t> buffer(512);
+   DWORD res = ::GetFullPathNameW(wPath.c_str(),
+                                  buffer.size(),
+                                  &(buffer[0]),
+                                  NULL);
+   if (res == 0)
+   {
+      return systemError(::GetLastError(), ERROR_LOCATION);
+   }
+   else if (res > buffer.size())
+   {
+      buffer.resize(res);
+      res = ::GetFullPathNameW(wPath.c_str(),
+                               buffer.size(),
+                               &(buffer[0]),
+                               NULL);
+      if (res == 0)
+         return systemError(::GetLastError(), ERROR_LOCATION);
+      else if (res > buffer.size())
+         return systemError(boost::system::windows_error::bad_length,
+                            ERROR_LOCATION);
+   }
+
+   wPath = std::wstring(&(buffer[0]), res);
+   *pRealPath = FilePath(wPath);
    return Success();
 }
 
