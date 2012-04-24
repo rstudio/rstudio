@@ -85,9 +85,9 @@ public class PDFView extends JavaScriptObject
 
    public native static void initializeEvents() /*-{
 
-      var _load = $wnd.PDFView.load;
-      $wnd.PDFView.load = $entry(function(data, scale) {
-         _load.call($wnd.PDFView, data, scale);
+      var _setInitialView = $wnd.PDFView.setInitialView;
+      $wnd.PDFView.setInitialView = $entry(function(storedHash, scale) {
+         _setInitialView.call($wnd.PDFView, storedHash, scale);
          @org.rstudio.studio.client.pdfviewer.pdfjs.PDFView::firePDFLoadEvent()();
       });
 
