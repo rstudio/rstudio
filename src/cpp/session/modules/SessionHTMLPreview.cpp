@@ -173,7 +173,7 @@ private:
       // predict the name of the output file -- if we can't do this then
       // we instrument our call to knitr to return it in a temp file
       FilePath outputFileTempFile;
-      if (isMarkdown && targetFile_.extensionLowerCase() == ".rmd")
+      if (isMarkdown && targetIsRMarkdown())
          knitrOutputFile_ = outputFileForTarget(".md");
       else if (targetFile_.extensionLowerCase() == ".rhtml")
          knitrOutputFile_= outputFileForTarget(".html");
@@ -232,6 +232,12 @@ private:
                                                      args,
                                                      options,
                                                      cb);
+   }
+
+   bool targetIsRMarkdown()
+   {
+      std::string ext = targetFile_.extensionLowerCase();
+      return ext == ".rmd" || ext == ".rmarkdown";
    }
 
    bool onKnitContinue()

@@ -94,6 +94,8 @@
          <array>
              <string>Rmd</string>
              <string>rmd</string>
+             <string>Rmarkdown</string>
+             <string>rmarkdown</string>
          </array>
          <key>CFBundleTypeIconFile</key>
          <string>RMarkdown.icns</string>

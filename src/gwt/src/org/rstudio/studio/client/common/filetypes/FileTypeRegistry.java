@@ -135,6 +135,7 @@ public class FileTypeRegistry
       register("*.css", CSS, icons.iconCss());
       register("*.js", JS, icons.iconJavascript());
       register("*.rmd", RMARKDOWN, icons.iconRmarkdown());
+      register("*.rmarkdown", RMARKDOWN, icons.iconRmarkdown());
       register("*.md", MARKDOWN, icons.iconMarkdown());
       register("*.mdtxt", MARKDOWN, icons.iconMarkdown());
       register("*.markdown", MARKDOWN, icons.iconMarkdown());

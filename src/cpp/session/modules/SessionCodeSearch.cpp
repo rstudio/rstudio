@@ -424,7 +424,8 @@ private:
       FilePath filePath(fileInfo.absolutePath());
       std::string ext = filePath.extensionLowerCase();
       return !filePath.isDirectory() &&
-              (ext == ".r" || ext == ".rnw" || ext == ".rmd" ||
+              (ext == ".r" || ext == ".rnw" ||
+               ext == ".rmd" || ext == ".rmarkdown" ||
                ext == ".rhtml" || ext == ".rd");
    }
 

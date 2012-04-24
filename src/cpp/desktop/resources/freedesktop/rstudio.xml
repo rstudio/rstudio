@@ -27,6 +27,8 @@
     <comment>R Markdown File</comment>
     <glob pattern="*.Rmd"/>
     <glob pattern="*.rmd"/>
+    <glob pattern="*.Rmarkdown"/>
+    <glob pattern="*.rmarkdown"/>
   </mime-type>
 
   <mime-type type="text/x-r-html">
