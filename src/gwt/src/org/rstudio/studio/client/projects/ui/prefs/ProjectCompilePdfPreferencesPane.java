@@ -14,6 +14,7 @@ package org.rstudio.studio.client.projects.ui.prefs;
 
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
@@ -100,9 +101,10 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
    {
       public RootDocumentChooser()
       {
-         super("Compile PDF root document:", 
+         super("Compile PDF root document", 
                "(Current Document)", 
                "Browse...", 
+               new HelpButton("pdf_root_document"),
                null);
          
          // allow user to set the value to empty string

@@ -12,6 +12,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -34,6 +35,15 @@ public class TextBoxWithButton extends Composite
                             String action, 
                             ClickHandler handler)
    {
+      this(label, emptyLabel, action, null, handler);
+   }
+   
+   public TextBoxWithButton(String label, 
+                            String emptyLabel, 
+                            String action, 
+                            HelpButton helpButton,
+                            ClickHandler handler)
+   {
       emptyLabel_ = emptyLabel;
       
       textBox_ = new TextBox();
@@ -51,7 +61,19 @@ public class TextBoxWithButton extends Composite
       FlowPanel outer = new FlowPanel();
       if (label != null)
       {
-         outer.add(new Label(label, true));
+         Label lblCaption = new Label(label, true);
+         if (helpButton != null)
+         {
+            HorizontalPanel panel = new HorizontalPanel();
+            panel.add(lblCaption);
+            helpButton.getElement().getStyle().setMarginLeft(5, Unit.PX);
+            panel.add(helpButton);
+            outer.add(panel);
+         }
+         else
+         {
+            outer.add(lblCaption);
+         }
       }
       outer.add(inner_);
       initWidget(outer);
