@@ -20,17 +20,11 @@ define("mode/markdown", function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var TextMode = require("ace/mode/text").Mode;
-var TexMode = require("mode/tex").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
 var MarkdownHighlightRules = require("mode/markdown_highlight_rules").MarkdownHighlightRules;
 
 var Mode = function() {   
-   var highlighter = new MarkdownHighlightRules();
-   this.$tokenizer = new Tokenizer(highlighter.getRules());
-   this.$embeds = highlighter.getEmbeds();
-   this.createModeDelegates({
-      "mathjax-": function() { TexMode(false); }
-   });
+   this.$tokenizer = new Tokenizer(new MarkdownHighlightRules().getRules());
 };
 oop.inherits(Mode, TextMode);
 
