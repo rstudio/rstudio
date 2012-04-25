@@ -325,7 +325,9 @@ Error realPath(const FilePath& filePath, FilePath* pRealPath)
                                   NULL);
    if (res == 0)
    {
-      return systemError(::GetLastError(), ERROR_LOCATION);
+      Error error = systemError(::GetLastError(), ERROR_LOCATION);
+      error.addProperty("path", filePath);
+      return error;
    }
    else if (res > buffer.size())
    {

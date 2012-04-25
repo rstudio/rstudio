@@ -123,7 +123,11 @@ Error realPath(const FilePath& filePath, FilePath* pRealPath)
    char buffer[PATH_MAX*2];
    char* realPath = ::realpath(path.c_str(), buffer);
    if (realPath == NULL)
-      return systemError(errno, ERROR_LOCATION);
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", filePath);
+      return error;
+   }
 
   *pRealPath = FilePath(string_utils::systemToUtf8(realPath));
   return Success();

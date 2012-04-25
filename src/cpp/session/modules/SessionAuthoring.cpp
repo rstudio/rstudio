@@ -88,20 +88,17 @@ Error compilePdf(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
    // read params
-   std::string targetFile, rootDoc, completedAction;
+   std::string targetFile, completedAction;
    json::Object sourceLocation;
    Error error = json::readParams(request.params,
                                   &targetFile,
-                                  &rootDoc,
                                   &sourceLocation,
                                   &completedAction);
    if (error)
       return error;
 
    // determine compilation target
-   FilePath targetFilePath = rootDoc.empty() ?
-                        module_context::resolveAliasedPath(targetFile) :
-                        module_context::resolveAliasedPath(rootDoc);
+   FilePath targetFilePath = module_context::resolveAliasedPath(targetFile);
 
    // initialize the completed function
    boost::function<void()> completedFunction;
@@ -110,7 +107,6 @@ Error compilePdf(const json::JsonRpcRequest& request,
 
    // attempt to kickoff the compile
    bool started = tex::compile_pdf::startCompile(targetFilePath,
-                                                 rootDoc,
                                                  sourceLocation,
                                                  completedFunction);
 

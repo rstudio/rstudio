@@ -31,10 +31,6 @@ public class CompilePdfResult extends JavaScriptObject
       return this.target_file;
    }-*/;
    
-   public final native String getRootDocument() /*-{
-      return this.root_document;
-   }-*/;
-
    public final native String getPdfPath() /*-{
       return this.pdf_path;
    }-*/;

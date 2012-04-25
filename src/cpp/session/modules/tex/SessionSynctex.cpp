@@ -110,10 +110,12 @@ Error synctexForwardSearch(const json::JsonRpcRequest& request,
    Error error = json::readParams(request.params, &rootDoc, &sourceLocation);
    if (error)
       return error;
+   FilePath rootDocPath = module_context::resolveAliasedPath(rootDoc);
+
 
    // do the search
    json::Value pdfLocation;
-   error = forwardSearch(rootDoc, sourceLocation, &pdfLocation);
+   error = forwardSearch(rootDocPath, sourceLocation, &pdfLocation);
    if (error)
       return error;
 
@@ -199,7 +201,7 @@ Error synctexInverseSearch(const json::JsonRpcRequest& request,
 } // anonymous namespace
 
 
-Error forwardSearch(const std::string& rootDoc,
+Error forwardSearch(const FilePath& rootFile,
                     const json::Object& sourceLocation,
                     json::Value* pPdfLocation)
 {
@@ -218,19 +220,14 @@ Error forwardSearch(const std::string& rootDoc,
    // determine input file
    FilePath inputFile = module_context::resolveAliasedPath(file);
 
-   // deterine main file
-   FilePath mainFile = rootDoc.empty() ?
-                                 inputFile :
-                                 module_context::resolveAliasedPath(rootDoc);
-
    // determine pdf
-   FilePath pdfFile = mainFile.parent().complete(mainFile.stem() + ".pdf");
+   FilePath pdfFile = rootFile.parent().complete(rootFile.stem() + ".pdf");
 
    core::tex::Synctex synctex;
    if (synctex.parse(pdfFile))
    {
       core::tex::SourceLocation srcLoc(inputFile, line, column);
-      applyForwardConcordance(mainFile, &srcLoc);
+      applyForwardConcordance(rootFile, &srcLoc);
 
       core::tex::PdfLocation pdfLoc = synctex.forwardSearch(srcLoc);
       *pPdfLocation = toJson(pdfFile, pdfLoc, fromClick);

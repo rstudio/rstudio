@@ -113,7 +113,6 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
        
       if (synctexAvailable)
          setSynctexStatus(event.getResult().getTargetFile(),
-                          event.getResult().getRootDocument(),
                           event.getResult().getPdfPath());
       else
          setNoSynctexStatus();
@@ -122,24 +121,6 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    public boolean isSynctexAvailable()
    {
       return pdfPath_ != null;
-   }
-   
-   public boolean isSynctexAvailable(String editorFile)
-   {
-      if (editorFile == null)
-         return false;
-      
-      if (!isSynctexAvailable())
-         return false;
-      
-      // if we are using a root document then its always available
-      if (rootDocument_.length() > 0)
-         return true;
-      
-      FileSystemItem file = FileSystemItem.createFile(editorFile); 
-      String pdfPath = file.getParentPath().completePath(
-                                                    file.getStem() + ".pdf");
-      return pdfPath.equals(getPdfPath());
    }
    
    public String getPdfPath()
@@ -165,7 +146,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       satelliteManager_.activateSatelliteWindow(PDFViewerApplication.NAME);
          
       // execute the forward search
-      callForwardSearch(window, rootDocument_, sourceLocation);
+      callForwardSearch(window, targetFile_, sourceLocation);
   
       return true;
    }
@@ -269,18 +250,17 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    
    private void setNoSynctexStatus()
    {
-      setSynctexStatus(null, "", null);
+      setSynctexStatus(null, null);
    }
    
    private void setSynctexStatus(String targetFile, 
-                                 String rootDocument,
                                  String pdfPath)
    {
       // set flag and fire event
       if (!StringUtil.notNull(pdfPath_).equals(StringUtil.notNull(pdfPath)))
       {
+         targetFile_ = targetFile;
          pdfPath_ = pdfPath;
-         rootDocument_ = rootDocument;
          eventBus_.fireEvent(new SynctexStatusChangedEvent(targetFile, 
                                                            pdfPath));
       }
@@ -340,7 +320,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    private final Satellite satellite_;
    private final SatelliteManager satelliteManager_;
    private String pdfPath_ = null;
-   private String rootDocument_ = "";
+   private String targetFile_ = "";
    
  
 }

@@ -181,7 +181,6 @@ public class CompilePdfOutputPresenter extends BasePresenter
       
       // run the compile
       compilePdf(event.getTargetFile(),
-                 event.getRootDocument(),
                  event.getSourceLocation(),
                  event.getCompletedAction());
    }
@@ -241,7 +240,6 @@ public class CompilePdfOutputPresenter extends BasePresenter
    }
    
    private void compilePdf(FileSystemItem targetFile,
-                           String rootDocument,
                            SourceLocation sourceLocation,
                            String completedAction)
    {
@@ -249,7 +247,6 @@ public class CompilePdfOutputPresenter extends BasePresenter
       // if there is already a compile running)
       server_.compilePdf(
             targetFile,
-            rootDocument,
             sourceLocation,
             completedAction, 
             new RequestCallback<Boolean>("Compiling PDF...") 

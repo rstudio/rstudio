@@ -2182,8 +2182,7 @@ public class TextEditingTarget implements EditingTarget
       }
       
       CompilePdfEvent event = new CompilePdfEvent(
-                                       file, 
-                                       compilePdfHelper_.getRootDocument(file),
+                                       compilePdfHelper_.getTargetFile(file),
                                        getSelectionAsSourceLocation(false),
                                        completedAction,
                                        useInternalPreview);

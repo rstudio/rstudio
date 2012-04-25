@@ -254,14 +254,15 @@ public class TextEditingTargetCompilePdfHelper
       }
    }
    
-   public String getRootDocument(FileSystemItem targetFile)
+   public FileSystemItem getTargetFile(FileSystemItem editorFile)
    {
       ArrayList<TexMagicComment> magicComments = 
                   TexMagicComment.parseComments(docDisplay_.getCode());
       String root = StringUtil.notNull(detectRootDirective(magicComments));
       if (root.length() > 0)
       {
-         return targetFile.getParentPath().completePath(root);
+         return FileSystemItem.createFile(
+                        editorFile.getParentPath().completePath(root));
       }
       else 
       {
@@ -271,13 +272,13 @@ public class TextEditingTargetCompilePdfHelper
             FileSystemItem projDir = 
                            session_.getSessionInfo().getActiveProjectDir();
             if (projDir != null)
-               return projDir.completePath(rootPref);
+               return FileSystemItem.createFile(projDir.completePath(rootPref));
             else
-               return "";
+               return editorFile;
          }
          else
          {
-            return "";
+            return editorFile;
          }
       }
    }

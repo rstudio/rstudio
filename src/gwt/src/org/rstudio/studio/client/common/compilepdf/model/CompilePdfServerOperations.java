@@ -25,7 +25,6 @@ public interface CompilePdfServerOperations
    // compile is currently in progress. pass the terminateExisting flag
    // to terminate a running compile
    void compilePdf(FileSystemItem targetFile,
-                   String rootDocument,
                    SourceLocation sourceLocation,
                    String completedAction,
                    ServerRequestCallback<Boolean> requestCallback);
