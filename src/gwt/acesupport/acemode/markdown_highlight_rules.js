@@ -78,6 +78,13 @@ var MarkdownHighlightRules = function() {
         }, { // HR _
             token : "constant",
             regex : "^[ ]{0,2}(?:[ ]?\\_[ ]?){3,}\\s*$"
+        }, { // MathJax inline $$
+            token : "support.function",
+            regex : "\\${2}[^\\r]+\\${2}"
+        }, { // MathJax block $$
+            token : "support.function",
+            regex : "\\${2}",
+            next  : "mathjax"
         }, { // list
             token : "markup.list",
             regex : "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+",
@@ -121,6 +128,15 @@ var MarkdownHighlightRules = function() {
         "githubblock" : [ {
             token : "support.function",
             regex : "^```",
+            next  : "start"
+        }, {
+            token : "support.function",
+            regex : ".+"
+        } ],
+        
+        "mathjax" : [ {
+            token : "support.function",
+            regex : "\\${2}",
             next  : "start"
         }, {
             token : "support.function",
