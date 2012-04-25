@@ -12,9 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import com.google.inject.Provider;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
@@ -40,7 +38,6 @@ import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.IsWidget;
-import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 
 public interface DocDisplay extends HasValueChangeHandlers<Void>,
