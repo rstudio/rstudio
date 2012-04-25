@@ -79,6 +79,4 @@ public class PdfJs
    }-*/;
 
    private static boolean initialized_;
-   private static final ExternalJavaScriptLoader pdfjs_ = new ExternalJavaScriptLoader(
-         PdfJsResources.INSTANCE.pdfjs().getSafeUri().asString());
 }
