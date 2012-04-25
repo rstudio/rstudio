@@ -594,7 +594,7 @@ void handleMarkdownPreviewRequest(http::Response* pResponse)
       std::string mathjaxJs;
       if (requiresMathjax(htmlOutput))
       {
-         mathjaxJs = "<script type=\"text/javascript\""
+         mathjaxJs = "<script type=\"text/javascript\" "
                      "src=\"https://d3eoax9i5htok0.cloudfront.net/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML\">"
                      "</script>"
                      "<script type=\"text/javascript\">"
