@@ -78,10 +78,7 @@ var MarkdownHighlightRules = function() {
         }, { // HR _
             token : "constant",
             regex : "^[ ]{0,2}(?:[ ]?\\_[ ]?){3,}\\s*$"
-        }, { // MathJax inline $$
-            token : "support.function",
-            regex : "\\${2}[^\\r]+\\${2}"
-        }, { // MathJax block $$
+        }, { // MathJax $$
             token : "support.function",
             regex : "\\${2}",
             next  : "mathjax"
@@ -135,6 +132,10 @@ var MarkdownHighlightRules = function() {
         } ],
         
         "mathjax" : [ {
+            token : "support.function",
+            regex : "[^\\r]+\\${2}",
+            next  : "start"
+        }, {
             token : "support.function",
             regex : "\\${2}",
             next  : "start"
