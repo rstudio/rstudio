@@ -78,8 +78,15 @@ var MarkdownHighlightRules = function() {
         }, { // HR _
             token : "constant",
             regex : "^[ ]{0,2}(?:[ ]?\\_[ ]?){3,}\\s*$"
-        }, { // list
+        }, { // MathJax $
             token : "markup.list",
+            regex : "\\$[^\\r]+\\$"
+        }, { // MathJax $$
+            token : "markup.list",
+            regex : "\\${2}",
+            next  : "mathjax"
+        }, { // list
+            token : "text",
             regex : "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+",
             next  : "listblock"
         }, { // strong ** __
@@ -105,7 +112,7 @@ var MarkdownHighlightRules = function() {
             regex : "^$",
             next  : "start"
         }, {
-            token : "markup.list",
+            token : "text",
             regex : ".+"
         } ],
         
@@ -124,6 +131,19 @@ var MarkdownHighlightRules = function() {
             next  : "start"
         }, {
             token : "support.function",
+            regex : ".+"
+        } ],
+        
+        "mathjax" : [ {
+            token : "markup.list",
+            regex : "[^\\r]+\\${2}",
+            next  : "start"
+        }, {
+            token : "markup.list",
+            regex : "\\${2}",
+            next  : "start"
+        }, {
+            token : "markup.list",
             regex : ".+"
         } ]
     };
