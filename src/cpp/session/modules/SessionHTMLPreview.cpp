@@ -599,7 +599,7 @@ void handleMarkdownPreviewRequest(http::Response* pResponse)
       if (requiresMathjax(htmlOutput))
       {
          mathjaxJs = "<script type=\"text/javascript\" "
-                     "src=\"https://d3eoax9i5htok0.cloudfront.net/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML\">"
+                     "src=\"https://d3eoax9i5htok0.cloudfront.net/mathjax/latest/MathJax.js?config=TeX-AMS_HTML\">"
                      "</script>"
                      "<script type=\"text/javascript\">"
                      "MathJax.Hub.Config({"
