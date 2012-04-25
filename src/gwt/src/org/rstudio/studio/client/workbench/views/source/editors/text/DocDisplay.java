@@ -41,6 +41,7 @@ import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.IsWidget;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
+import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 
 public interface DocDisplay extends HasValueChangeHandlers<Void>,
                                     HasFoldChangeHandlers,
@@ -60,8 +61,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setFileType(TextFileType fileType);
    void setFileType(TextFileType fileType, boolean suppressCompletion);
    void setFileType(TextFileType fileType, CompletionManager completionManager);
-   void setRnwChunkOptionsProvider(RnwChunkOptions.AsyncProvider pRnwChunkOptions);
-   void setRnwWeaveProvider(Provider<RnwWeave> pRnwWeave);
+   void setRnwCompletionContext(RnwCompletionContext rnwContext);
    String getCode();
    void setCode(String code, boolean preserveCursorPosition);
    void insertCode(String code, boolean blockMode);

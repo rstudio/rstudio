@@ -13,19 +13,17 @@
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.core.client.JsArrayString;
-import com.google.inject.Provider;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.r.RToken;
 import org.rstudio.studio.client.common.r.RTokenizer;
-import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
-import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions.AsyncProvider;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions.RnwOptionCompletionResult;
+import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 
 import java.util.ArrayList;
 
@@ -33,19 +31,16 @@ import java.util.ArrayList;
 public class CompletionRequester
 {
    private final CodeToolsServerOperations server_ ;
-   private final AsyncProvider pRnwChunkOptions_;
-   private final Provider<RnwWeave> pRnwWeave_;
 
    private String cachedLinePrefix_ ;
    private CompletionResult cachedResult_ ;
+   private RnwCompletionContext rnwContext_ ;
    
    public CompletionRequester(CodeToolsServerOperations server,
-                              RnwChunkOptions.AsyncProvider pRnwChunkOptions,
-                              Provider<RnwWeave> pRnwWeave)
+                              RnwCompletionContext rnwContext)
    {
       server_ = server ;
-      pRnwChunkOptions_ = pRnwChunkOptions;
-      pRnwWeave_ = pRnwWeave;
+      rnwContext_ = rnwContext;
    }
    
    public void getCompletions(
@@ -122,9 +117,11 @@ public class CompletionRequester
          int pos,
          ServerRequestCallback<Completions> requestCallback)
    {
-      if (pRnwChunkOptions_ != null && line.matches("^<<.*"))
+      int optionsStartOffset;
+      if (rnwContext_ != null &&
+          (optionsStartOffset = rnwContext_.getRnwOptionsStart(line, pos)) >= 0)
       {
-         doGetSweaveCompletions(line, pos, requestCallback);
+         doGetSweaveCompletions(line, optionsStartOffset, pos, requestCallback);
       }
       else
       {
@@ -134,16 +131,20 @@ public class CompletionRequester
 
    private void doGetSweaveCompletions(
          final String line,
-         final int pos,
+         final int optionsStartOffset,
+         final int cursorPos,
          final ServerRequestCallback<Completions> requestCallback)
    {
-      pRnwChunkOptions_.getChunkOptions(new ServerRequestCallback<RnwChunkOptions>()
+      rnwContext_.getChunkOptions(new ServerRequestCallback<RnwChunkOptions>()
       {
          @Override
          public void onResponseReceived(RnwChunkOptions options)
          {
             RnwOptionCompletionResult result = options.getCompletions(
-                       line, pos, pRnwWeave_ == null ? null : pRnwWeave_.get());
+                  line,
+                  optionsStartOffset,
+                  cursorPos,
+                  rnwContext_ == null ? null : rnwContext_.getActiveRnwWeave());
 
             Completions response = Completions.createCompletions(
                   result.token,

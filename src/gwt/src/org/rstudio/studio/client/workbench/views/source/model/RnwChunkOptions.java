@@ -20,7 +20,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.common.r.RToken;
 import org.rstudio.studio.client.common.r.RTokenizer;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,12 +27,6 @@ import java.util.Stack;
 
 public class RnwChunkOptions extends JavaScriptObject
 {
-   public interface AsyncProvider
-   {
-      void getChunkOptions(
-                        ServerRequestCallback<RnwChunkOptions> requestCallback);
-   }
-
    protected RnwChunkOptions()
    {
    }
@@ -82,11 +75,15 @@ public class RnwChunkOptions extends JavaScriptObject
       public JsArrayString completions;
    }
 
-   public final RnwOptionCompletionResult getCompletions(String line, int pos,
+   public final RnwOptionCompletionResult getCompletions(String line,
+                                                         int optionsStartOffset,
+                                                         int cursorPos,
                                                          RnwWeave rnwWeave)
    {
-      assert line.startsWith("<<");
-      String linePart = line.substring(2, pos);
+      assert cursorPos >= optionsStartOffset :
+            "cursorPos was less than optionsStartOffset";
+
+      String linePart = line.substring(optionsStartOffset, cursorPos);
 
       // This can be pretty simple because Noweb doesn't allow = or , to appear
       // in names or values (i.e. no quotes or escaping to make parsing more
