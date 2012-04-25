@@ -19,7 +19,7 @@
 define("mode/rmarkdown", function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
-var MarkdownMode = require("ace/mode/markdown").Mode;
+var MarkdownMode = require("mode/markdown").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
 var RMarkdownHighlightRules = require("mode/rmarkdown_highlight_rules").RMarkdownHighlightRules;
 var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").SweaveBackgroundHighlighter;

@@ -19,7 +19,7 @@ define("mode/rmarkdown_highlight_rules", function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
-var MarkdownHighlightRules = require("ace/mode/markdown_highlight_rules").MarkdownHighlightRules;
+var MarkdownHighlightRules = require("mode/markdown_highlight_rules").MarkdownHighlightRules;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 
 var RMarkdownHighlightRules = function() {
