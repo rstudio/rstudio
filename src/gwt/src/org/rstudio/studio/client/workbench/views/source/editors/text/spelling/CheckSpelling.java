@@ -323,6 +323,7 @@ public class CheckSpelling
       try
       {
          docDisplay_.setSelectionRange(range);
+         docDisplay_.moveCursorNearTop();
          view_.clearSuggestions();
          view_.getReplacement().setText("");
 
