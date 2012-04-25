@@ -546,6 +546,15 @@ bool requiresHighlighting(const std::string& htmlOutput)
    return boost::regex_search(htmlOutput, hlRegex);
 }
 
+bool requiresMathjax(const std::string& htmlOutput)
+{
+   std::size_t escapeLoc = htmlOutput.find("$$");
+   if (escapeLoc == std::string::npos)
+      return false;
+   else
+      return htmlOutput.find("$$", escapeLoc) != std::string::npos;
+}
+
 void handleMarkdownPreviewRequest(http::Response* pResponse)
 {
    try
@@ -581,10 +590,27 @@ void handleMarkdownPreviewRequest(http::Response* pResponse)
             LOG_ERROR(error);
       }
 
+      // inject mathjax if necessary
+      std::string mathjaxJs;
+      if (requiresMathjax(htmlOutput))
+      {
+         mathjaxJs = "<script type=\"text/javascript\""
+                     "src=\"https://d3eoax9i5htok0.cloudfront.net/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML\">"
+                     "</script>"
+                     "<script type=\"text/javascript\">"
+                     "MathJax.Hub.Config({"
+                        "tex2jax: {"
+                           "processEscapes: true"
+                        "}"
+                     "});"
+                     "</script>";
+      }
+
       // setup template filter
       std::map<std::string,std::string> vars;
       vars["highlight_js"] = highlightJs;
       vars["highlight_js_styles"] = highlightStyles;
+      vars["mathjax_js"] = mathjaxJs;
       vars["html_output"] = htmlOutput;
       text::TemplateFilter templateFilter(vars);
 
