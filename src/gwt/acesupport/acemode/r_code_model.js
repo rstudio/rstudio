@@ -234,6 +234,17 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
    this.$buildScopeTreeUpToRow = function(maxrow)
    {
+      function maybeEvaluateLiteralString(value) {
+         // NOTE: We could evaluate escape sequences and whatnot here as well.
+         //       Hard to imagine who would abuse Rnw by putting escape
+         //       sequences in chunk labels, though.
+         var match = /^(['"])(.*)\1$/.exec(value);
+         if (!match)
+            return value;
+         else
+            return match[2];
+      }
+
       function getChunkLabel(reOptions, comment) {
          var match = reOptions.exec(comment);
          if (!match)
@@ -244,14 +255,16 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             return null;
 
          // If first arg has no =, it's a label
-         if (!/=/.test(values[0]))
+         if (!/=/.test(values[0])) {
             return values[0].replace(/(^\s+)|(\s+$)/g, '');
+         }
 
-         for (var i = 0; i < values.length; i++)
-         {
+         for (var i = 0; i < values.length; i++) {
             match = /^\s*label\s*=\s*(.*)$/.exec(values[i]);
-            if (match)
-               return match[1].replace(/(^\s+)|(\s+$)/g, '');
+            if (match) {
+               return maybeEvaluateLiteralString(
+                                        match[1].replace(/(^\s+)|(\s+$)/g, ''));
+            }
          }
 
          return null;
