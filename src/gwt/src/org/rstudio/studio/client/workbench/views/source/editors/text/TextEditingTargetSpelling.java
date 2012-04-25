@@ -42,7 +42,7 @@ public class TextEditingTargetSpelling implements SpellChecker.Context
    {
       new CheckSpelling(spellChecker_, docDisplay_,
                         new SpellingDialog(),
-                        new InitialProgressDialog());
+                        new InitialProgressDialog(1000));
    }
 
    @Override

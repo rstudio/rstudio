@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.spelling;
 
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.user.client.Timer;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -20,30 +21,49 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.Ch
 
 public class InitialProgressDialog implements ProgressDisplay
 {
-   public InitialProgressDialog()
+   public InitialProgressDialog(int delayShowMs)
    {
+      delayShowMs_ = delayShowMs;
       dialog_ = new MessageDialog(MessageDialog.INFO,
                                   "Check Spelling",
                                   "Spell check in progress...");
       cancel_ = dialog_.addButton("Cancel", (Operation) null, true, true);
+
+      delayShowTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            dialog_.showModal();
+         }
+      };
    }
 
    @Override
    public void show()
    {
-      dialog_.showModal();
+      if (running_)
+         return;
+
+      running_ = true;
+      delayShowTimer_.schedule(delayShowMs_);
    }
 
    @Override
    public void hide()
    {
-      dialog_.closeDialog();
+      if (running_)
+      {
+         delayShowTimer_.cancel();
+         if (dialog_.isShowing())
+            dialog_.closeDialog();
+      }
    }
 
    @Override
    public boolean isShowing()
    {
-      return dialog_.isShowing();
+      return running_;
    }
 
    @Override
@@ -54,4 +74,7 @@ public class InitialProgressDialog implements ProgressDisplay
 
    private final MessageDialog dialog_;
    private ThemedButton cancel_;
+   private final Timer delayShowTimer_;
+   private final int delayShowMs_;
+   private boolean running_;
 }
