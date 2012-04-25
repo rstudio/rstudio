@@ -19,6 +19,7 @@ define("mode/markdown_highlight_rules", function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
+var TexHighlightRules = require("mode/tex_highlight_rules").TexHighlightRules;
 
 var MarkdownHighlightRules = function() {
 
@@ -81,7 +82,7 @@ var MarkdownHighlightRules = function() {
         }, { // MathJax $$
             token : "support.function",
             regex : "\\${2}",
-            next  : "mathjax"
+            next  : "mathjax-start"
         }, { // list
             token : "markup.list",
             regex : "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+",
@@ -129,21 +130,19 @@ var MarkdownHighlightRules = function() {
         }, {
             token : "support.function",
             regex : ".+"
-        } ],
-        
-        "mathjax" : [ {
-            token : "support.function",
-            regex : "[^\\r]+\\${2}",
-            next  : "start"
-        }, {
-            token : "support.function",
-            regex : "\\${2}",
-            next  : "start"
-        }, {
-            token : "support.function",
-            regex : ".+"
         } ]
     };
+
+    this.embedRules(TexHighlightRules, "mathjax-", [{
+        token : "support.function",
+        regex : "[^\\r]+\\${2}",
+        next  : "start"
+        }, {
+        token : "support.function",
+        regex : "\\${2}",
+        next  : "start"
+    }]);
+
 };
 oop.inherits(MarkdownHighlightRules, TextHighlightRules);
 
