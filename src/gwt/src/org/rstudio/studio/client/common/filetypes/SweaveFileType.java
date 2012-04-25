@@ -14,6 +14,7 @@ package org.rstudio.studio.client.common.filetypes;
 
 import com.google.gwt.resources.client.ImageResource;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
@@ -58,4 +59,21 @@ public class SweaveFileType extends TextFileType
       result.add(commands.goToFunctionDefinition());
       return result;
    }
+
+   @Override
+   public Pattern getRnwStartPatternBegin()
+   {
+      return RNW_START_PATTERN;
+   }
+
+   @Override
+   public Pattern getRnwStartPatternEnd()
+   {
+      return RNW_END_PATTERN;
+   }
+
+   private static final Pattern RNW_START_PATTERN =
+                                                Pattern.create("^\\s*\\<\\<");
+   private static final Pattern RNW_END_PATTERN =
+                                                Pattern.create("\\>\\>=");
 }

@@ -35,13 +35,14 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
+import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.TexServerOperations;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class TextEditingTargetCompilePdfHelper
-      implements RnwChunkOptions.AsyncProvider
+      implements RnwCompletionContext
 { 
    public TextEditingTargetCompilePdfHelper(DocDisplay docDisplay)
    {
@@ -296,7 +297,28 @@ public class TextEditingTargetCompilePdfHelper
          return rnwWeaveRegistry_.findTypeIgnoreCase(
                                     prefs_.defaultSweaveEngine().getValue());
    }
-   
+
+   @Override
+   public int getRnwOptionsStart(String line, int cursorPos)
+   {
+      Pattern pattern = docDisplay_.getFileType().getRnwStartPatternBegin();
+      if (pattern == null)
+         return -1;
+
+      String linePart = line.substring(0, cursorPos);
+      Match match = pattern.match(linePart, 0);
+      if (match == null)
+         return -1;
+
+      // See if the cursor is already past the end of the chunk header,
+      // for example <<foo>>=[CURSOR].
+      Pattern patternEnd = docDisplay_.getFileType().getRnwStartPatternEnd();
+      if (patternEnd != null && patternEnd.match(linePart, 0) != null)
+         return -1;
+
+      return match.getValue().length();
+   }
+
    // get the currently active rnw weave name -- arranges to always return
    // a valid string by returing the pref if the directive is invalid
    public String getActiveRnwWeaveName()

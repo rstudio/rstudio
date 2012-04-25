@@ -66,8 +66,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spellin
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
-import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
-import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions.AsyncProvider;
+import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 public class AceEditor implements DocDisplay, 
@@ -356,9 +355,9 @@ public class AceEditor implements DocDisplay,
    }
 
    @Override
-   public void setRnwChunkOptionsProvider(AsyncProvider pRnwChunkOptions)
+   public void setRnwCompletionContext(RnwCompletionContext rnwContext)
    {
-      pRnwChunkOptions_ = pRnwChunkOptions;
+      rnwContext_ = rnwContext;
    }
 
    private void updateLanguage(boolean suppressCompletion)
@@ -366,7 +365,7 @@ public class AceEditor implements DocDisplay,
       if (fileType_ == null)
          return;
 
-      CompletionManager completionManager = null;
+      CompletionManager completionManager;
       if (!suppressCompletion && fileType_.getEditorLanguage().useRCompletion())
       {
          completionManager = new RCompletionManager(
@@ -375,7 +374,7 @@ public class AceEditor implements DocDisplay,
                new CompletionPopupPanel(),
                server_,
                new Filter(),
-               fileType_.canExecuteChunks() ? pRnwChunkOptions_ : null);
+               fileType_.canExecuteChunks() ? rnwContext_ : null);
       }
       else
          completionManager = new NullCompletionManager();
@@ -1460,7 +1459,7 @@ public class AceEditor implements DocDisplay,
    private CodeToolsServerOperations server_;
    private TextFileType fileType_;
    private boolean passwordMode_;
-   private RnwChunkOptions.AsyncProvider pRnwChunkOptions_;
+   private RnwCompletionContext rnwContext_;
 
    private static final ExternalJavaScriptLoader aceLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());

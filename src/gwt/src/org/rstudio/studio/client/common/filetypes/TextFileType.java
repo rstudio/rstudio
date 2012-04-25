@@ -264,6 +264,20 @@ public class TextFileType extends EditableFileType
       };
    }
 
+   /**
+    * Returns a regex pattern that will match against the beginning of
+    * Rnw lines, right up to the index where options begin.
+    */
+   public Pattern getRnwStartPatternBegin()
+   {
+      return null;
+   }
+
+   public Pattern getRnwStartPatternEnd()
+   {
+      return null;
+   }
+
    private final EditorLanguage editorLanguage_;
    private final boolean wordWrap_;
    private final boolean canSourceOnSave_;

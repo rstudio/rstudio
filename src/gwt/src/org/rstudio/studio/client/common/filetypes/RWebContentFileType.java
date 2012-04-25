@@ -12,13 +12,13 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
-import java.util.HashSet;
-
 import com.google.gwt.resources.client.ImageResource;
-
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
+
+import java.util.HashSet;
 
 public class RWebContentFileType extends TextFileType
 {
@@ -60,6 +60,27 @@ public class RWebContentFileType extends TextFileType
       result.add(commands.goToFunctionDefinition());
       return result;
    }
-   
+
+   @Override
+   public Pattern getRnwStartPatternBegin()
+   {
+      if (isMarkdown_)
+         return RNW_START_PATTERN_MD;
+      else
+         return RNW_START_PATTERN_HTML;
+   }
+
+   @Override
+   public Pattern getRnwStartPatternEnd()
+   {
+      return null;
+   }
+
    private final boolean isMarkdown_;
+
+   private static final Pattern RNW_START_PATTERN_MD =
+                                       Pattern.create("^`{3,}\\s*\\{r");
+   private static final Pattern RNW_START_PATTERN_HTML =
+                                Pattern.create("^\\<!--\\s*begin.rcode\\s*");
+
 }

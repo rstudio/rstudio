@@ -48,7 +48,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
-import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
+import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import java.util.ArrayList;
@@ -83,7 +83,7 @@ public class RCompletionManager implements CompletionManager
                              CompletionPopupDisplay popup,
                              CodeToolsServerOperations server,
                              InitCompletionFilter initFilter,
-                             RnwChunkOptions.AsyncProvider pRnwChunkOptions)
+                             RnwCompletionContext rnwContext)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -91,9 +91,9 @@ public class RCompletionManager implements CompletionManager
       navigableSourceEditor_ = navigableSourceEditor;
       popup_ = popup ;
       server_ = server ;
-      requester_ = new CompletionRequester(server_, pRnwChunkOptions) ;
+      requester_ = new CompletionRequester(server_, rnwContext);
       initFilter_ = initFilter ;
-      sweave_ = pRnwChunkOptions != null;
+      rnwContext_ = rnwContext;
       
       input_.addBlurHandler(new BlurHandler() {
          public void onBlur(BlurEvent event)
@@ -387,16 +387,21 @@ public class RCompletionManager implements CompletionManager
 
    private boolean isSweaveCompletion(char c)
    {
-      if (!sweave_ || (c != ',' && c != ' ' && c != '='))
+      if (rnwContext_ == null || (c != ',' && c != ' ' && c != '='))
          return false;
 
-      String linePart = input_.getText().substring(0, input_.getSelection().getStart().getPosition());
-      if (!linePart.matches("^<<.*"))
-         return false;
+      int optionsStart = rnwContext_.getRnwOptionsStart(
+            input_.getText(),
+            input_.getSelection().getStart().getPosition());
 
-      // Check if sweave chunk header is already closed
-      if (linePart.matches(".*>>.*"))
+      if (optionsStart < 0)
+      {
          return false;
+      }
+
+      String linePart = input_.getText().substring(
+            optionsStart,
+            input_.getSelection().getStart().getPosition());
 
       return c != ' ' || linePart.matches(".*,\\s*");
    }
@@ -668,8 +673,7 @@ public class RCompletionManager implements CompletionManager
    private boolean ignoreNextInputBlur_ = false;
    private String token_ ;
 
-   private final boolean sweave_;
-
    private final Invalidation invalidation_ = new Invalidation();
    private CompletionRequestContext context_ ;
+   private final RnwCompletionContext rnwContext_;
 }

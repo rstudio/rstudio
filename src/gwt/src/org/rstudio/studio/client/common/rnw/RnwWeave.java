@@ -31,4 +31,8 @@ public class RnwWeave extends JavaScriptObject
    public final native boolean getInjectConcordance() /*-{
       return this.inject_concordance;
    }-*/;
+
+   public final native boolean usesCodeForOptions() /*-{
+      return this.uses_code_for_options;
+   }-*/;
 }

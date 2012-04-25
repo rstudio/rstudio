@@ -237,7 +237,7 @@ public class TextEditingTarget implements EditingTarget
       prefs_ = prefs;
       compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
       previewHtmlHelper_ = new TextEditingTargetPreviewHtmlHelper();
-      docDisplay_.setRnwChunkOptionsProvider(compilePdfHelper_);
+      docDisplay_.setRnwCompletionContext(compilePdfHelper_);
       scopeHelper_ = new TextEditingTargetScopeHelper(docDisplay_);
       
       addRecordNavigationPositionHandler(releaseOnDismiss_, 
