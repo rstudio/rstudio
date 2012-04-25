@@ -1153,6 +1153,7 @@ public class AceEditor implements DocDisplay,
             Range.fromPoints(position, position));
    }
 
+   @Override
    public void moveCursorNearTop()
    {
       int screenRow = getSession().documentToScreenRow(getCursorPosition());
