@@ -72,10 +72,11 @@ public class PdfJs
    }
 
    private static native void initialize(String pdfjsUrl) /*-{
-      $wnd.PDFJS.workerSrc = pdfjsUrl;
+      if (@org.rstudio.studio.client.application.Desktop::isDesktop()())
+         $wnd.PDFJS.disableWorker = true;
+      else
+         $wnd.PDFJS.workerSrc = pdfjsUrl;
    }-*/;
 
    private static boolean initialized_;
-   private static final ExternalJavaScriptLoader pdfjs_ = new ExternalJavaScriptLoader(
-         PdfJsResources.INSTANCE.pdfjs().getSafeUri().asString());
 }

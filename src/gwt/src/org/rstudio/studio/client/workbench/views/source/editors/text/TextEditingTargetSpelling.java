@@ -18,8 +18,11 @@ import java.util.Iterator;
 
 import org.rstudio.core.client.CsvReader;
 import org.rstudio.core.client.CsvWriter;
+import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.studio.client.common.spelling.SpellChecker;
+import org.rstudio.studio.client.server.*;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.CheckSpelling;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.InitialProgressDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDialog;
@@ -40,9 +43,32 @@ public class TextEditingTargetSpelling implements SpellChecker.Context
    
    public void checkSpelling()
    {
+      if (isSpellChecking_)
+         return;
+      isSpellChecking_ = true;
       new CheckSpelling(spellChecker_, docDisplay_,
                         new SpellingDialog(),
-                        new InitialProgressDialog());
+                        new InitialProgressDialog(1000),
+                        new ResultCallback<Void, Exception>()
+                        {
+                           @Override
+                           public void onSuccess(Void result)
+                           {
+                              isSpellChecking_ = false;
+                           }
+
+                           @Override
+                           public void onFailure(Exception e)
+                           {
+                              isSpellChecking_ = false;
+                           }
+
+                           @Override
+                           public void onCancelled()
+                           {
+                              isSpellChecking_ = false;
+                           }
+                        });
    }
 
    @Override
@@ -99,6 +125,8 @@ public class TextEditingTargetSpelling implements SpellChecker.Context
    {
       releaseOnDismiss_.add(handler);      
    }
+
+   private boolean isSpellChecking_;
 
    private final static String IGNORED_WORDS = "ignored_words"; 
    
