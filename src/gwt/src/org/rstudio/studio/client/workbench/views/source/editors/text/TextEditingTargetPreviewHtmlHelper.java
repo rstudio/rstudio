@@ -45,7 +45,7 @@ public class TextEditingTargetPreviewHtmlHelper
             {
                showKnitrPreviewWarning(display,
                                        fileType.getLabel(),
-                                       htmlCaps.getRMarkdownRequiredVersion());
+                                       "0.5");
                return false;
             }
          }
@@ -55,7 +55,7 @@ public class TextEditingTargetPreviewHtmlHelper
             {
                showKnitrPreviewWarning(display,
                                        fileType.getLabel(),
-                                       htmlCaps.getRHtmlRequiredVersion());
+                                       "0.5");
                
                return false;
             }

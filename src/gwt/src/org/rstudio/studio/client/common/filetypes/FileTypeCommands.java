@@ -56,12 +56,12 @@ public class FileTypeCommands
       commands_ = commands;
       session_ = session;
 
-      rMDCommand_ = addRFileType(FileTypeRegistry.RMARKDOWN, 
-                                 "R _Markdown",
-                                 "Create a new R Markdown file");
-      rHTMLCommand_ = addRFileType(FileTypeRegistry.RHTML, 
-                                   "R _HTML",
-                                   "Create a new R HTML file");
+      addRFileType(FileTypeRegistry.RMARKDOWN, 
+                   "R _Markdown",
+                    "Create a new R Markdown file");
+      addRFileType(FileTypeRegistry.RHTML, 
+                   "R _HTML",
+                   "Create a new R HTML file");
       addRFileType(FileTypeRegistry.RD, 
                    "R _Documentation",
                    "Create a new R documentation file");
@@ -114,10 +114,8 @@ public class FileTypeCommands
       ArrayList<TextFileType> types = new ArrayList<TextFileType>();
       types.add(FileTypeRegistry.R);
       types.add(FileTypeRegistry.SWEAVE);
-      if (rMDCommand_.isEnabled())
-         types.add(FileTypeRegistry.RMARKDOWN);
-      if (rHTMLCommand_.isEnabled())
-         types.add(FileTypeRegistry.RHTML);
+      types.add(FileTypeRegistry.RMARKDOWN);
+      types.add(FileTypeRegistry.RHTML);
       types.add(FileTypeRegistry.RD);
       types.add(FileTypeRegistry.TEXT);
       types.add(FileTypeRegistry.TEX);
@@ -140,10 +138,6 @@ public class FileTypeCommands
    public void setHTMLCapabilities(HTMLCapabilities caps)
    {
       htmlCapabilities_ = caps;
-      rMDCommand_.setEnabled(caps.isRMarkdownSupported());
-      rMDCommand_.setVisible(caps.isRMarkdownSupported());
-      rHTMLCommand_.setEnabled(caps.isRHtmlSupported());
-      rHTMLCommand_.setVisible(caps.isRHtmlSupported());
    }
    
    private AppCommand addRFileType(TextFileType fileType, 
@@ -201,8 +195,6 @@ public class FileTypeCommands
    private final ArrayList<CommandWithId> textFileTypeCommands_ =
          new ArrayList<CommandWithId>();
    
-   private final AppCommand rMDCommand_;
-   private final AppCommand rHTMLCommand_;
    private HTMLCapabilities htmlCapabilities_;
 
 }

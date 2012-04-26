@@ -704,8 +704,8 @@ void handlePreviewRequest(const http::Request& request,
 core::json::Object capabilitiesAsJson()
 {
    // default to unsupported
-   std::string htmlVersion = "0.4.7";
-   std::string markdownVersion = "0.4.7";
+   std::string htmlVersion = "0.4.13";
+   std::string markdownVersion = "0.4.13";
    json::Object capsJson;
    capsJson["r_html_version"] = htmlVersion;
    capsJson["r_markdown_version"] = markdownVersion;
