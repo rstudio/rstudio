@@ -464,6 +464,16 @@ Error getHTMLCapabilities(const json::JsonRpcRequest&,
    return Success();
 }
 
+std::string defaultTitle(const std::string& htmlContent)
+{
+   boost::regex re("<[Hh]([1-6]).*?>(.*)</[Hh]\\1>");
+   boost::smatch match;
+   if (boost::regex_search(htmlContent, match, re))
+      return match[2];
+   else
+      return "";
+}
+
 
 // convert images to base64
 class Base64ImageFilter : public boost::iostreams::regex_filter
@@ -621,6 +631,7 @@ void handleMarkdownPreviewRequest(http::Response* pResponse)
 
       // setup template filter
       std::map<std::string,std::string> vars;
+      vars["title"] = defaultTitle(htmlOutput);
       vars["highlight_js"] = highlightJs;
       vars["highlight_js_styles"] = highlightStyles;
       vars["mathjax_js"] = mathjaxJs;
