@@ -206,7 +206,7 @@ public:
       : pHTMLOutput_(pHTMLOutput)
    {
       filter(boost::regex("\\${2}[\\s\\S]+\\${2}"), pInput);
-      filter(boost::regex("\\$\\S[^\\r]+\\S\\$"), pInput);
+      filter(boost::regex("\\$\\S[^\\n]+\\S\\$"), pInput);
    }
 
    ~MathFilter()
