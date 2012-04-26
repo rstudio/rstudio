@@ -183,6 +183,7 @@ public class AceEditorWidget extends Composite
          if (BrowseCap.INSTANCE.aceVerticalScrollBarIssue())
             editor_.getRenderer().forceScrollbarUpdate();
          editor_.getRenderer().updateFontSize();
+         editor_.getRenderer().forceImmediateRender();
       }
    }
 
