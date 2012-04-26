@@ -11,23 +11,6 @@
 #
 #
 
-.rs.addFunction( "requiresKnit", function(fileContents, fileType)
-{
-   if (!.rs.isPackageInstalled("knitr"))
-      return (FALSE)
-
-   checkPattern <- function(lines, fileType, pattern)
-   {
-      pat <- knitr:::all_patterns[[fileType]][[pattern]]
-      return (length(pat) && length(grep(pat,lines)))
-   }
-
-   lines <- strsplit(fileContents, split="\n")[[1]]
-
-   return (checkPattern(lines, fileType, "chunk.begin") ||
-           checkPattern(lines, fileType, "inline.code"))
-})
-
 .rs.addFunction( "getHTMLCapabilities", function(htmlVersion,
                                                  markdownVersion)
 {
