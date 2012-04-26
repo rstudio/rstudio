@@ -79,8 +79,9 @@ var MarkdownHighlightRules = function() {
             token : "constant",
             regex : "^[ ]{0,2}(?:[ ]?\\_[ ]?){3,}\\s*$"
         }, { // MathJax $$
-            token : ["markup.list","support.function","markup.list"],
-            regex : "(\\${2})" + "([\\s\\S\\r]+)" + "(\\${2})"
+            token : "markup.list",
+            regex : "\\${2}",
+            next  : "mathjax"
         }, { // MathJax $
             token : ["markup.list","support.function","markup.list"],
             regex : "(\\$)" + "(\\S[^\\r]+\\S)" + "(\\$)"
@@ -131,6 +132,15 @@ var MarkdownHighlightRules = function() {
         }, {
             token : "support.function",
             regex : ".+"
+        } ],
+
+        "mathjax" : [ {
+            token : "markup.list",
+            regex : "\\${2}",
+            next  : "start"
+        }, {
+            token : "support.function",
+            regex : "[^\\$]+"
         } ]
     };
 };
