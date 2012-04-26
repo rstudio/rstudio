@@ -539,6 +539,13 @@ private:
    }
 };
 
+/* Regex patterns for finding math regions
+
+ \\${2}[\\s\\S]+\\${2}
+
+ \\$\\S[^\\r]+\\S\\$
+
+*/
 
 bool requiresHighlighting(const std::string& htmlOutput)
 {
