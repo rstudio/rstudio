@@ -1825,7 +1825,8 @@ public class TextEditingTarget implements EditingTarget
          boolean sweave = 
                      fileType_.canCompilePDF() || fileType_.canKnitToHTML();
 
-         final RnwWeave rnwWeave = compilePdfHelper_.getActiveRnwWeave();
+         RnwWeave rnwWeave = compilePdfHelper_.getActiveRnwWeave();
+         final boolean forceEcho = rnwWeave != null ? rnwWeave.forceEchoOnExec() : false;
          
          // NOTE: we always set echo to true for knitr because knitr doesn't
          // require print statements so if you don't echo to the console
@@ -1835,7 +1836,7 @@ public class TextEditingTarget implements EditingTarget
          {
             server_.saveActiveDocument(code, 
                                        sweave,
-                                       rnwWeave.getName(),
+                                       compilePdfHelper_.getActiveRnwWeaveName(),
                                        new SimpleRequestCallback<Void>() {
                @Override
                public void onResponseReceived(Void response)
@@ -1844,7 +1845,7 @@ public class TextEditingTarget implements EditingTarget
                         "~/.active-rstudio-document",
                         "UTF-8",
                         activeCodeIsAscii(),
-                        rnwWeave.forceEchoOnExec() ? true : echo);
+                        forceEcho ? true : echo);
                }
             });
          }
@@ -1854,7 +1855,7 @@ public class TextEditingTarget implements EditingTarget
                   getPath(),
                   docUpdateSentinel_.getEncoding(),
                   activeCodeIsAscii(),
-                  rnwWeave.forceEchoOnExec() ? true : echo);
+                  forceEcho ? true : echo);
          }
       }
       
