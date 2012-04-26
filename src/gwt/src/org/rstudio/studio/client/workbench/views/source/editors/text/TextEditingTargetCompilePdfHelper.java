@@ -289,6 +289,9 @@ public class TextEditingTargetCompilePdfHelper
    // null in the case that there is an embedded directive which is invalid
    public RnwWeave getActiveRnwWeave()
    {
+      if (docDisplay_.getFileType().canKnitToHTML())
+         return rnwWeaveRegistry_.findTypeIgnoreCase("knitr");
+
       RnwWeaveDirective rnwWeaveDirective = detectRnwWeaveDirective(
                          TexMagicComment.parseComments(docDisplay_.getCode()));
       if (rnwWeaveDirective != null)
@@ -323,6 +326,9 @@ public class TextEditingTargetCompilePdfHelper
    // a valid string by returing the pref if the directive is invalid
    public String getActiveRnwWeaveName()
    {
+      if (docDisplay_.getFileType().canKnitToHTML())
+         return "knitr";
+
       RnwWeaveDirective rnwWeaveDirective = detectRnwWeaveDirective(
                          TexMagicComment.parseComments(docDisplay_.getCode()));
       if (rnwWeaveDirective != null)

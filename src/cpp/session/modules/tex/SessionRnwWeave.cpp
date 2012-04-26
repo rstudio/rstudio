@@ -82,6 +82,8 @@ public:
 
    virtual bool usesCodeForOptions() const = 0;
 
+   virtual bool forceEchoOnExec() const = 0;
+
    virtual bool isInstalled() const = 0;
 
    virtual core::json::Value chunkOptions() const = 0;
@@ -194,6 +196,8 @@ public:
 
    virtual bool usesCodeForOptions() const { return false; }
 
+   virtual bool forceEchoOnExec() const { return false; }
+
    virtual core::json::Value chunkOptions() const
    {
       return RnwWeave::chunkOptions(".rs.sweaveChunkOptions");
@@ -222,6 +226,8 @@ public:
    virtual bool injectConcordance() const { return false; }
 
    virtual bool usesCodeForOptions() const { return true; }
+
+   virtual bool forceEchoOnExec() const { return true; }
 
    virtual bool isInstalled() const
    {
@@ -510,6 +516,7 @@ core::json::Array supportedTypes()
       object["package_name"] = pRnwWeave->packageName();
       object["inject_concordance"] = pRnwWeave->injectConcordance();
       object["uses_code_for_options"] = pRnwWeave->usesCodeForOptions();
+      object["force_echo_on_exec"] = pRnwWeave->forceEchoOnExec();
       array.push_back(object);
    }
    return array;

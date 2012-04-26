@@ -57,6 +57,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.SweaveFileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.SynctexUtils;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
@@ -1823,10 +1824,8 @@ public class TextEditingTarget implements EditingTarget
 
          boolean sweave = 
                      fileType_.canCompilePDF() || fileType_.canKnitToHTML();
-         final boolean isKnitr = fileType_.canKnitToHTML();
-         
-         String rnwWeave = isKnitr ? "knitr"  :
-                                     compilePdfHelper_.getActiveRnwWeaveName();
+
+         final RnwWeave rnwWeave = compilePdfHelper_.getActiveRnwWeave();
          
          // NOTE: we always set echo to true for knitr because knitr doesn't
          // require print statements so if you don't echo to the console
@@ -1836,7 +1835,7 @@ public class TextEditingTarget implements EditingTarget
          {
             server_.saveActiveDocument(code, 
                                        sweave,
-                                       rnwWeave,
+                                       rnwWeave.getName(),
                                        new SimpleRequestCallback<Void>() {
                @Override
                public void onResponseReceived(Void response)
@@ -1845,16 +1844,17 @@ public class TextEditingTarget implements EditingTarget
                         "~/.active-rstudio-document",
                         "UTF-8",
                         activeCodeIsAscii(),
-                        isKnitr ? true : echo); 
+                        rnwWeave.forceEchoOnExec() ? true : echo);
                }
             });
          }
          else
          {
-            consoleDispatcher_.executeSourceCommand(getPath(), 
-                                                   docUpdateSentinel_.getEncoding(),
-                                                   activeCodeIsAscii(), 
-                                                   isKnitr ? true : echo);
+            consoleDispatcher_.executeSourceCommand(
+                  getPath(),
+                  docUpdateSentinel_.getEncoding(),
+                  activeCodeIsAscii(),
+                  rnwWeave.forceEchoOnExec() ? true : echo);
          }
       }
       

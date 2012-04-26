@@ -35,4 +35,8 @@ public class RnwWeave extends JavaScriptObject
    public final native boolean usesCodeForOptions() /*-{
       return this.uses_code_for_options;
    }-*/;
+
+   public final native boolean forceEchoOnExec() /*-{
+      return this.force_echo_on_exec;
+   }-*/;
 }
