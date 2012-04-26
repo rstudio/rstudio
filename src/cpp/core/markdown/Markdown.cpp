@@ -158,8 +158,8 @@ Error renderMarkdown(const SundownBuffer& inputBuffer,
       mdExt |= MKDEXT_AUTOLINK;
    if (extensions.strikethrough)
       mdExt |= MKDEXT_STRIKETHROUGH;
-   if (extensions.laxHTMLBlocks)
-      mdExt |= MKDEXT_LAX_HTML_BLOCKS;
+   if (extensions.laxSpacing)
+      mdExt |= MKDEXT_LAX_SPACING;
    if (extensions.spaceHeaders)
       mdExt |= MKDEXT_SPACE_HEADERS;
    if (extensions.superscript)

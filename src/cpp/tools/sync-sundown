@@ -3,17 +3,14 @@
 set -e
 
 if [ ! -d "./sundown" ]; then
-    git clone git://github.com/rstudio/sundown.git sundown
-    cd sundown
-    git remote add upstream git://github.com/tanoku/sundown.git
-    cd ..
+   git clone git@github.com:tanoku/sundown.git
 fi
 
 cd sundown
 git clean -dfx
 
 # Use the branch with rstudio-specific changes 
-git checkout rstudio
+git checkout master
 git pull
 VERSION=`git rev-parse HEAD`
 

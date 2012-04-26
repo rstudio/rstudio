@@ -30,7 +30,7 @@ struct Extensions
         tables(true),
         fencedCode(true),
         autolink(true),
-        laxHTMLBlocks(true),
+        laxSpacing(true),
         spaceHeaders(true),
         strikethrough(false),
         superscript(false)
@@ -41,7 +41,7 @@ struct Extensions
    bool tables;
    bool fencedCode;
    bool autolink;
-   bool laxHTMLBlocks;
+   bool laxSpacing;
    bool spaceHeaders;
    bool strikethrough;
    bool superscript;

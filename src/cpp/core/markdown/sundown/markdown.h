@@ -26,10 +26,10 @@
 extern "C" {
 #endif
 
-#define UPSKIRT_VERSION "1.15.2"
-#define UPSKIRT_VER_MAJOR 1
-#define UPSKIRT_VER_MINOR 15
-#define UPSKIRT_VER_REVISION 2
+#define SUNDOWN_VERSION "1.16.0"
+#define SUNDOWN_VER_MAJOR 1
+#define SUNDOWN_VER_MINOR 16
+#define SUNDOWN_VER_REVISION 0
 
 /********************
  * TYPE DEFINITIONS *
@@ -56,9 +56,9 @@ enum mkd_extensions {
 	MKDEXT_FENCED_CODE = (1 << 2),
 	MKDEXT_AUTOLINK = (1 << 3),
 	MKDEXT_STRIKETHROUGH = (1 << 4),
-	MKDEXT_LAX_HTML_BLOCKS = (1 << 5),
 	MKDEXT_SPACE_HEADERS = (1 << 6),
 	MKDEXT_SUPERSCRIPT = (1 << 7),
+	MKDEXT_LAX_SPACING = (1 << 8),
 };
 
 /* sd_callbacks - functions for rendering parsed data */
