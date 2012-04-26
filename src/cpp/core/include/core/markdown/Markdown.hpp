@@ -33,7 +33,8 @@ struct Extensions
         laxSpacing(true),
         spaceHeaders(true),
         strikethrough(true),
-        superscript(true)
+        superscript(true),
+        ignoreMath(true)
    {
    }
 
@@ -45,6 +46,7 @@ struct Extensions
    bool spaceHeaders;
    bool strikethrough;
    bool superscript;
+   bool ignoreMath;
 };
 
 struct HTMLOptions

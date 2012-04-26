@@ -15,10 +15,17 @@
 
 #include <iostream>
 
+#include <boost/bind.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/regex.hpp>
+
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
+
+#include <core/system/System.hpp>
 
 #include "sundown/markdown.h"
 #include "sundown/html.h"
@@ -192,6 +199,59 @@ Error renderMarkdown(const SundownBuffer& inputBuffer,
    return Success();
 }
 
+class MathFilter : boost::noncopyable
+{
+public:
+   MathFilter(std::string* pInput, std::string* pHTMLOutput)
+      : pHTMLOutput_(pHTMLOutput)
+   {
+      filter(boost::regex("\\${2}[\\s\\S]+\\${2}"), pInput);
+      filter(boost::regex("\\$\\S[^\\r]+\\S\\$"), pInput);
+   }
+
+   ~MathFilter()
+   {
+      try
+      {
+         std::for_each(mathBlocks_.begin(),
+                       mathBlocks_.end(),
+                       boost::bind(&MathFilter::restore, this, _1));
+      }
+      catch(...)
+      {
+      }
+   }
+
+private:
+   void filter(const boost::regex& re, std::string* pInput)
+   {
+      // explicit function type required because the Formatter functor
+      // supports 3 distinct signatures
+      boost::function<std::string(
+          boost::match_results<std::string::const_iterator>)> formatter =
+                                 boost::bind(&MathFilter::substitute, this, _1);
+
+      *pInput = boost::regex_replace(*pInput, re, formatter);
+   }
+
+   std::string substitute(
+               boost::match_results<std::string::const_iterator> match)
+   {
+      std::string guid = core::system::generateUuid(false);
+      mathBlocks_.insert(std::make_pair(guid, match[0]));
+      return guid;
+   }
+
+   void restore(const std::map<std::string,std::string>::value_type& block)
+   {
+      boost::algorithm::replace_all(*pHTMLOutput_, block.first, block.second);
+   }
+
+private:
+   std::string* pHTMLOutput_;
+   std::map<std::string,std::string> mathBlocks_;
+};
+
 } // anonymous namespace
 
 // render markdown to HTML -- assumes UTF-8 encoding
@@ -236,8 +296,13 @@ Error markdownToHTML(const std::string& markdownInput,
                      std::string* pHTMLOutput)
 
 {
+   std::string input = markdownInput;
+   boost::scoped_ptr<MathFilter> pMathFilter;
+   if (extensions.ignoreMath)
+      pMathFilter.reset(new MathFilter(&input, pHTMLOutput));
+
    // setup input buffer
-   SundownBuffer inputBuffer(markdownInput);
+   SundownBuffer inputBuffer(input);
    if (!inputBuffer.allocated())
       return allocationError(ERROR_LOCATION);
 
