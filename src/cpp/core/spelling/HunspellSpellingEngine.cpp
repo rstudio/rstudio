@@ -286,6 +286,14 @@ public:
       char ** wlst;
       int ns = pHunspell_->suggest(&wlst,encoded.c_str());
       copyAndFreeHunspellVector(pSug,wlst,ns);
+
+      BOOST_FOREACH(std::string& sug, *pSug)
+      {
+         error = iconvstrFunc_(sug, encoding_, "UTF-8", true, &sug);
+         if (error)
+            return error;
+      }
+
       return Success();
    }
 
