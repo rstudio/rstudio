@@ -32,8 +32,8 @@ struct Extensions
         autolink(true),
         laxSpacing(true),
         spaceHeaders(true),
-        strikethrough(false),
-        superscript(false)
+        strikethrough(true),
+        superscript(true)
    {
    }
 
