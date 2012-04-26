@@ -21,7 +21,6 @@ import org.rstudio.core.client.CsvWriter;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.studio.client.common.spelling.SpellChecker;
-import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.CheckSpelling;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.InitialProgressDialog;
