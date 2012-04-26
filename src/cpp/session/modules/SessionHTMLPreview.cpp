@@ -608,6 +608,7 @@ void handleMarkdownPreviewRequest(http::Response* pResponse)
                      "MathJax.Hub.Config({"
                         "tex2jax: {"
                            "processEscapes: true, "
+                           "processEnvironments: false, "
                            "inlineMath: [ ['$','$'] ], "
                            "displayMath: [ ['$$','$$'] ] "
                         "}, "
