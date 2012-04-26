@@ -552,6 +552,10 @@ bool requiresMathjax(const std::string& htmlOutput)
    if (boost::regex_search(htmlOutput, inlineMathRegex))
       return true;
 
+   boost::regex mathmlRegex("<math[>\\s](?s).*?</math>");
+   if (boost::regex_search(htmlOutput, mathmlRegex))
+      return true;
+
    std::size_t escapeLoc = htmlOutput.find("$$");
    if (escapeLoc == std::string::npos)
       return false;
