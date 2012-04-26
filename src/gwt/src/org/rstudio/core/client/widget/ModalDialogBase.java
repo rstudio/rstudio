@@ -13,6 +13,7 @@
 package org.rstudio.core.client.widget;
 
 
+import com.google.gwt.animation.client.Animation;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
@@ -24,6 +25,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
+import org.rstudio.core.client.Point;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.ShortcutManager.Handle;
 import org.rstudio.core.client.dom.DomUtils;
@@ -443,6 +445,43 @@ public abstract class ModalDialogBase extends DialogBox
          allButtons_.get(i).setEnabled(enabled);
    }
 
+   public void move(Point p, boolean allowAnimation)
+   {
+      if (!isShowing() || !allowAnimation)
+      {
+         // Don't animate if not showing
+         setPopupPosition(p.getX(), p.getY());
+         return;
+      }
+
+      if (currentAnimation_ != null)
+      {
+         currentAnimation_.cancel();
+         currentAnimation_ = null;
+      }
+
+      final int origLeft = getPopupLeft();
+      final int origTop = getPopupTop();
+      final int deltaX = p.getX() - origLeft;
+      final int deltaY = p.getY() - origTop;
+
+      currentAnimation_ = new Animation()
+      {
+         @Override
+         protected void onUpdate(double progress)
+         {
+            if (!isShowing())
+               cancel();
+            else
+            {
+               setPopupPosition((int)(origLeft + deltaX * progress),
+                                (int)(origTop + deltaY * progress));
+            }
+         }
+      };
+      currentAnimation_.run(200);
+   }
+
    private Handle shortcutDisableHandle_;
 
    private boolean escapeDisabled_;
@@ -457,4 +496,5 @@ public abstract class ModalDialogBase extends DialogBox
    private ArrayList<ThemedButton> allButtons_ = new ArrayList<ThemedButton>();
    private Widget mainWidget_ ;
    private com.google.gwt.dom.client.Element originallyActiveElement_;
+   private Animation currentAnimation_ = null;
 }

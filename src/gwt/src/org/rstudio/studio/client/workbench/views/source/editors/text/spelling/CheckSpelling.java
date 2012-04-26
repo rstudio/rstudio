@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.spelling;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -22,6 +23,7 @@ import com.google.gwt.event.logical.shared.HasCloseHandlers;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.PopupPanel;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -29,7 +31,8 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.spelling.SpellChecker;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
-import org.rstudio.studio.client.server.*;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
@@ -64,6 +67,8 @@ public class CheckSpelling
 
       void showProgress();
       void hideProgress();
+
+      void setEditorSelectionBounds(Rectangle bounds);
    }
 
    public interface ProgressDisplay
@@ -308,11 +313,12 @@ public class CheckSpelling
          view_.showProgress();
    }
 
-   private void showDialog()
+   private void showDialog(Rectangle selectedWordBounds)
    {
       if (progressDisplay_.isShowing())
          progressDisplay_.hide();
 
+      view_.setEditorSelectionBounds(selectedWordBounds);
       if (!view_.isShowing())
          view_.showModal();
       view_.hideProgress();
@@ -327,7 +333,7 @@ public class CheckSpelling
          view_.clearSuggestions();
          view_.getReplacement().setText("");
 
-         String word = docDisplay_.getTextForRange(range);
+         final String word = docDisplay_.getTextForRange(range);
 
          if (changeAll_.containsKey(word))
          {
@@ -337,31 +343,46 @@ public class CheckSpelling
          }
 
          view_.getMisspelledWord().setText(word);
-         showDialog();
 
-         view_.focusReplacement();
-
-         spellChecker_.suggestionList(word, new ServerRequestCallback<JsArrayString>()
+         // This fixed delay is regrettable but necessary as it can take some
+         // time for Ace's scrolling logic to actually execute (i.e. the next
+         // time the renderloop runs). If we don't wait, then misspelled words
+         // at the end of the document will result in misreported cursor bounds,
+         // meaning we'll be avoiding a completely incorrect region.
+         Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
          {
             @Override
-            public void onResponseReceived(
-                  JsArrayString response)
+            public boolean execute()
             {
-               String[] suggestions = JsUtil.toStringArray(response);
-               view_.setSuggestions(suggestions);
-               if (suggestions.length > 0)
-               {
-                  view_.getReplacement().setText(suggestions[0]);
-                  view_.focusReplacement();
-               }
-            }
+               showDialog(docDisplay_.getCursorBounds());
 
-            @Override
-            public void onError(ServerError error)
-            {
-               Debug.logError(error);
+               view_.focusReplacement();
+
+               spellChecker_.suggestionList(word, new ServerRequestCallback<JsArrayString>()
+               {
+                  @Override
+                  public void onResponseReceived(
+                        JsArrayString response)
+                  {
+                     String[] suggestions = JsUtil.toStringArray(response);
+                     view_.setSuggestions(suggestions);
+                     if (suggestions.length > 0)
+                     {
+                        view_.getReplacement().setText(suggestions[0]);
+                        view_.focusReplacement();
+                     }
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                  }
+               });
+
+               return false;
             }
-         });
+         }, 100);
       }
       catch (Exception e)
       {

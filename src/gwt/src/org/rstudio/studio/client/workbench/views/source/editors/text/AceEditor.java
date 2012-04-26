@@ -735,7 +735,6 @@ public class AceEditor implements DocDisplay,
       ScreenCoordinates end = renderer.textToScreenCoordinates(
                   range.getEnd().getRow(),
                   range.getEnd().getColumn());
-      // TODO: Use actual width and height
       return new Rectangle(start.getPageX(),
                            start.getPageY(),
                            end.getPageX() - start.getPageX(),

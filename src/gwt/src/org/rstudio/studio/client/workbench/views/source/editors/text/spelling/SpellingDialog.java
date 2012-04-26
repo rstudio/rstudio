@@ -17,7 +17,14 @@ import com.google.gwt.event.dom.client.HasChangeHandlers;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.HasText;
+import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.Rectangle.FailureMode;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
 
@@ -168,6 +175,52 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
       setButtonsEnabled(true);
    }
 
+   @Override
+   public void setEditorSelectionBounds(Rectangle selectionBounds)
+   {
+      // Inflate the bounds by 10 pixels to add a little air
+      boundsToAvoid_ = selectionBounds.inflate(10);
+      if (isShowing())
+      {
+         Rectangle screen = new Rectangle(0, 0,
+                                          Window.getClientWidth(),
+                                          Window.getClientHeight());
+
+         Rectangle bounds = new Rectangle(getPopupLeft(),
+                                          getPopupTop(),
+                                          getOffsetWidth(),
+                                          getOffsetHeight());
+
+         // In case user moved the dialog off the screen
+         bounds = bounds.attemptToMoveInto(screen, FailureMode.NO_CHANGE);
+
+         // Now avoid the selected word
+         move(bounds.avoidBounds(boundsToAvoid_, screen), true);
+      }
+   }
+
+   @Override
+   protected void positionAndShowDialog(final Command onCompleted)
+   {
+      setPopupPositionAndShow(new PositionCallback()
+      {
+         @Override
+         public void setPosition(int offsetWidth, int offsetHeight)
+         {
+            Rectangle screen = new Rectangle(0, 0,
+                                             Window.getClientWidth(),
+                                             Window.getClientHeight());
+
+            Rectangle bounds = screen.createCenteredRect(offsetWidth,
+                                                         offsetHeight);
+
+            move(bounds.avoidBounds(boundsToAvoid_, screen), false);
+
+            onCompleted.execute();
+         }
+      });
+   }
+
    private void setButtonsEnabled(boolean enabled)
    {
       for (ThemedButton button : buttons_)
@@ -193,4 +246,7 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
    @UiField
    TextBox txtDisplay_;
    private final Widget mainWidget_;
+
+   private Rectangle boundsToAvoid_;
+
 }
