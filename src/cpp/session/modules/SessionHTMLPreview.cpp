@@ -165,6 +165,24 @@ public:
 
 private:
 
+   static Error rScriptPath(FilePath* pRScriptPath)
+   {
+      std::string rHomeBin;
+      r::exec::RFunction rHomeBinFunc("R.home", "bin");
+      Error error = rHomeBinFunc.call(&rHomeBin);
+      if (error)
+         return error;
+      FilePath rHomeBinPath(rHomeBin);
+
+#ifdef _WIN32
+   *pRScriptPath = rHomeBinPath.complete("Rterm.exe");
+#else
+   *pRScriptPath = rHomeBinPath.complete("R");
+#endif
+      return Success();
+   }
+
+
    void performKnit(const std::string& encoding, bool isMarkdown)
    {
       // set running flag
@@ -181,7 +199,13 @@ private:
          outputFileTempFile = module_context::tempFile("knitr-output", "out");
 
       // R binary
-      std::string rProgramPath = r::exec::rBinaryPath().absolutePath();
+      FilePath rProgramPath;
+      Error error = rScriptPath(&rProgramPath);
+      if (error)
+      {
+         terminateWithError(error);
+         return;
+      }
 
       // args
       std::vector<std::string> args;
@@ -228,7 +252,7 @@ private:
                                 _1, outputFileTempFile, encoding, isMarkdown);
 
       // execute knitr
-      module_context::processSupervisor().runProgram(rProgramPath,
+      module_context::processSupervisor().runProgram(rProgramPath.absolutePath(),
                                                      args,
                                                      options,
                                                      cb);
@@ -572,7 +596,8 @@ bool requiresMathjax(const std::string& htmlOutput)
    return false;
 }
 
-void handleMarkdownPreviewRequest(http::Response* pResponse)
+void handleMarkdownPreviewRequest(const http::Request& request,
+                                  http::Response* pResponse)
 {
    try
    {
@@ -661,8 +686,13 @@ void handleMarkdownPreviewRequest(http::Response* pResponse)
       filteringStream.push(*pOfs);
       boost::iostreams::copy(*pIfs, filteringStream, 128);
 
+      // close input and output files
+      pIfs.reset();
+      pOfs.reset();
+
       // send response
-      pResponse->setBody(outputFile);
+      pResponse->setNoCacheHeaders();
+      pResponse->setFile(outputFile, request);
    }
    catch(const std::exception& e)
    {
@@ -694,7 +724,7 @@ void handlePreviewRequest(const http::Request& request,
    if (path.empty())
    {
       if (s_pCurrentPreview_->isMarkdown())
-         handleMarkdownPreviewRequest(pResponse);
+         handleMarkdownPreviewRequest(request, pResponse);
       else if (s_pCurrentPreview_->requiresKnit())
          pResponse->setFile(s_pCurrentPreview_->knitrOutputFile(), request);
       else
