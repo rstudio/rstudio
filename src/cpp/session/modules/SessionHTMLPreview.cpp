@@ -625,10 +625,10 @@ std::string preFontFamily()
    fonts.insert(fonts.end(), windowsFonts.begin(), windowsFonts.end());
 #elif defined(_WIN32)
    fonts.insert(fonts.end(), windowsFonts.begin(), windowsFonts.end());
-   fonts.insert(fonts.end(), linuxFonts.begin(), linuxFonts.end();
+   fonts.insert(fonts.end(), linuxFonts.begin(), linuxFonts.end());
    fonts.insert(fonts.end(), macFonts.begin(), macFonts.end());
 #else
-   fonts.insert(fonts.end(), linuxFonts.begin(), linuxFonts.end();
+   fonts.insert(fonts.end(), linuxFonts.begin(), linuxFonts.end());
    fonts.insert(fonts.end(), windowsFonts.begin(), windowsFonts.end());
    fonts.insert(fonts.end(), macFonts.begin(), macFonts.end());
 #endif
