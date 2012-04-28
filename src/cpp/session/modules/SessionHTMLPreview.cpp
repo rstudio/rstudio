@@ -23,6 +23,7 @@
 #include <boost/iostreams/filter/regex.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 
+#include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Error.hpp>
@@ -596,6 +597,46 @@ bool requiresMathjax(const std::string& htmlOutput)
    return false;
 }
 
+// for whatever reason when we host an iFrame in a Qt WebKit instance
+// it only looks at the very first font listed in the font-family
+// attribute. if the font isn't found then it displays a non-monospace
+// font by default. so to make preview mode always work we need to
+// order the font-family list according to the current platform.
+std::string preFontFamily()
+{
+   std::vector<std::string> linuxFonts;
+   linuxFonts.push_back("'Droid Sans Mono'");
+   linuxFonts.push_back("'DejaVu Sans Mono'");
+
+   std::vector<std::string> windowsFonts;
+   windowsFonts.push_back("Consolas");
+   windowsFonts.push_back("'Lucida Console'");
+
+   std::vector<std::string> macFonts;
+   macFonts.push_back("Monaco");
+
+   std::vector<std::string> universalFonts;
+   universalFonts.push_back("monospace");
+
+   std::vector<std::string> fonts;
+#if defined(__APPLE__)
+   fonts.insert(fonts.end(), macFonts.begin(), macFonts.end());
+   fonts.insert(fonts.end(), linuxFonts.begin(), linuxFonts.end());
+   fonts.insert(fonts.end(), windowsFonts.begin(), windowsFonts.end());
+#elif defined(_WIN32)
+   fonts.insert(fonts.end(), windowsFonts.begin(), windowsFonts.end());
+   fonts.insert(fonts.end(), linuxFonts.begin(), linuxFonts.end();
+   fonts.insert(fonts.end(), macFonts.begin(), macFonts.end());
+#else
+   fonts.insert(fonts.end(), linuxFonts.begin(), linuxFonts.end();
+   fonts.insert(fonts.end(), windowsFonts.begin(), windowsFonts.end());
+   fonts.insert(fonts.end(), macFonts.begin(), macFonts.end());
+#endif
+   fonts.insert(fonts.end(), universalFonts.begin(), universalFonts.end());
+
+   return boost::algorithm::join(fonts, ", ");
+}
+
 void handleMarkdownPreviewRequest(const http::Request& request,
                                   http::Response* pResponse)
 {
@@ -657,6 +698,7 @@ void handleMarkdownPreviewRequest(const http::Request& request,
       // setup template filter
       std::map<std::string,std::string> vars;
       vars["title"] = defaultTitle(htmlOutput);
+      vars["preFontFamily"] = preFontFamily();
       vars["highlight_js"] = highlightJs;
       vars["highlight_js_styles"] = highlightStyles;
       vars["mathjax_js"] = mathjaxJs;
