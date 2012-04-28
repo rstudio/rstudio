@@ -605,8 +605,8 @@ bool requiresMathjax(const std::string& htmlOutput)
 std::string preFontFamily()
 {
    std::vector<std::string> linuxFonts;
-   linuxFonts.push_back("'Droid Sans Mono'");
    linuxFonts.push_back("'DejaVu Sans Mono'");
+   linuxFonts.push_back("'Droid Sans Mono'");
 
    std::vector<std::string> windowsFonts;
    windowsFonts.push_back("Consolas");
