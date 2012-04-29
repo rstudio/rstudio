@@ -697,7 +697,10 @@ void handleMarkdownPreviewRequest(const http::Request& request,
                         "}, "
                         "asciimath2jax: {"
                            "delimiters: [ ['$','$'] ] "
-                        "}"
+                        "}, "
+                        "\"HTML-CSS\": {"
+                           "minScaleAdjust: 125 "
+                        "} "
                      "});"
                      "</script>";
       }
