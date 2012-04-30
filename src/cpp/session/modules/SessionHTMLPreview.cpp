@@ -673,12 +673,19 @@ void handleMarkdownPreviewRequest(const http::Request& request,
             LOG_ERROR(error);
       }
 
+      std::string mathjaxUrl;
+#ifdef _WIN32
+      mathjaxUrl = "http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+#else
+      mathjaxUrl = "https://d3eoax9i5htok0.cloudfront.net/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+#endif
+
       // inject mathjax if necessary
       std::string mathjaxJs;
       if (requiresMathjax(htmlOutput))
       {
          mathjaxJs = "<script type=\"text/javascript\" "
-                     "src=\"https://d3eoax9i5htok0.cloudfront.net/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML\">"
+                     "src=\"" + mathjaxUrl + "\">"
                      "</script>"
                      "<script type=\"text/javascript\">"
                      "MathJax.Hub.Config({"
@@ -690,7 +697,10 @@ void handleMarkdownPreviewRequest(const http::Request& request,
                         "}, "
                         "asciimath2jax: {"
                            "delimiters: [ ['$','$'] ] "
-                        "}"
+                        "}, "
+                        "\"HTML-CSS\": {"
+                           "minScaleAdjust: 125 "
+                        "} "
                      "});"
                      "</script>";
       }
