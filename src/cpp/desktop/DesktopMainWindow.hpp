@@ -38,6 +38,11 @@ public slots:
    void manageCommand(QString cmdId, QAction* pAction);
    void openFileInRStudio(QString path);
    void checkForUpdates();
+
+   void onSyncSource(const QString &source_file,
+                     const QPoint &source_point,
+                     uint timestamp);
+
 signals:
    void firstWorkbenchInitialized();
 

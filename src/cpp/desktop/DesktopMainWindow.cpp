@@ -139,6 +139,14 @@ void MainWindow::quit()
    close();
 }
 
+void MainWindow::onSyncSource(const QString &source_file,
+                              const QPoint &source_point,
+                              uint timestamp)
+{
+   // gtk_window_present_with_time(GTK_WINDOW, timestamp)
+   desktop::raiseAndActivateWindow(this);
+}
+
 void MainWindow::onJavaScriptWindowObjectCleared()
 {
    webView()->page()->mainFrame()->addToJavaScriptWindowObject(

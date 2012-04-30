@@ -544,6 +544,7 @@ void GwtCallback::checkForUpdates()
    pMainWindow_->checkForUpdates();
 }
 
+
 void GwtCallback::showAboutDialog()
 {
    EvinceDaemon* pDaemon = new EvinceDaemon(
@@ -564,6 +565,11 @@ void GwtCallback::showAboutDialog()
                                             QDBusConnection::sessionBus(),
                                             pMainWindow_);
 
+
+   QObject::connect(pEvince,
+                    SIGNAL(SyncSource(const QString&,const QPoint&,uint)),
+                    pMainWindow_,
+                    SLOT(onSyncSource(const QString&,const QPoint&,uint)));
 
    QPoint srcLoc(1,1);
 
