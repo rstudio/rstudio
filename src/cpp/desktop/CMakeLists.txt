@@ -35,7 +35,11 @@ endif()
 
 # find and include Qt
 add_definitions(-DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII)
-find_package(Qt4 ${QT_VERSION} COMPONENTS QtCore QtGui QtNetwork QtWebKit REQUIRED)
+list(APPEND RSTUDIO_QT_COMPONENTS QtCore QtGui QtNetwork QtWebKit)
+if(UNIX AND NOT APPLE)
+   list(APPEND RSTUDIO_QT_COMPONENTS QtDBus)
+endif()
+find_package(Qt4 ${QT_VERSION} COMPONENTS ${RSTUDIO_QT_COMPONENTS} REQUIRED)
 include(${QT_USE_FILE})
 
 # configure NOTICE file into build directory so it can be read at dev time
@@ -115,6 +119,12 @@ else()
     DesktopPosixApplicationLaunch.cpp
     DesktopPosixDetectRHome.cpp
   )
+  if(NOT APPLE)
+    set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
+      synctex/EvinceDaemon.cpp
+      synctex/EvinceWindow.cpp
+    )
+  endif()
 endif(WIN32)
 
 # include directories

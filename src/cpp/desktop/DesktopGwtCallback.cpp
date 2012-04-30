@@ -26,6 +26,7 @@
 #include <QMessageBox>
 
 #include <core/FilePath.hpp>
+#include <core/DateTime.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
@@ -38,6 +39,9 @@
 #include "DesktopRVersion.hpp"
 #include "DesktopMainWindow.hpp"
 #include "DesktopUtils.hpp"
+
+#include "synctex/EvinceDaemon.h"
+#include "synctex/EvinceWindow.h"
 
 #ifdef __APPLE__
 #include <Carbon/Carbon.h>
@@ -542,10 +546,47 @@ void GwtCallback::checkForUpdates()
 
 void GwtCallback::showAboutDialog()
 {
+   EvinceDaemon* pDaemon = new EvinceDaemon(
+            QString::fromAscii("org.gnome.evince.Daemon"),
+            QString::fromAscii("/org/gnome/evince/Daemon"),
+            QDBusConnection::sessionBus(),
+            pMainWindow_);
+
+   QDBusPendingReply<QString> reply = pDaemon->FindDocument(
+       QUrl::fromLocalFile(QString::fromAscii(
+         "/home/jjallaire/RProjects/SweaveDemo/SweaveDemo.pdf")).toString(),
+       true);
+
+   reply.waitForFinished();
+
+   EvinceWindow* pEvince = new EvinceWindow(reply.value(),
+                                            QString::fromAscii("/org/gnome/evince/Window/0"),
+                                            QDBusConnection::sessionBus(),
+                                            pMainWindow_);
+
+
+   QPoint srcLoc(1,1);
+
+   QDBusPendingReply<> syncReply = pEvince->SyncView(
+      QString::fromAscii("/home/jjallaire/RProjects/SweaveDemo/SweaveDemo.tex"),
+      srcLoc,
+      core::date_time::secondsSinceEpoch());
+   syncReply.waitForFinished();
+
+
+   if (syncReply.isError())
+   {
+      desktop::showWarning(NULL, QString::fromAscii("Error"), syncReply.error().message() );
+
+   }
+
+
+   /*
    // WA_DeleteOnClose
    AboutDialog* about = new AboutDialog(pOwner_->asWidget());
    about->setAttribute(Qt::WA_DeleteOnClose);
    about->show();
+   */
 }
 
 void GwtCallback::bringMainFrameToFront()
