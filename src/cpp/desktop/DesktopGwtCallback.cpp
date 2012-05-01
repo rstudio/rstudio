@@ -40,8 +40,8 @@
 #include "DesktopMainWindow.hpp"
 #include "DesktopUtils.hpp"
 
-#include "synctex/EvinceDaemon.h"
-#include "synctex/EvinceWindow.h"
+#include "synctex/evince/EvinceDaemon.hpp"
+#include "synctex/evince/EvinceWindow.hpp"
 
 #ifdef __APPLE__
 #include <Carbon/Carbon.h>
@@ -547,6 +547,8 @@ void GwtCallback::checkForUpdates()
 
 void GwtCallback::showAboutDialog()
 {
+   using namespace desktop::synctex;
+
    EvinceDaemon* pDaemon = new EvinceDaemon(
             QString::fromAscii("org.gnome.evince.Daemon"),
             QString::fromAscii("/org/gnome/evince/Daemon"),

@@ -121,8 +121,8 @@ else()
   )
   if(NOT APPLE)
     set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
-      synctex/EvinceDaemon.cpp
-      synctex/EvinceWindow.cpp
+      synctex/evince/EvinceDaemon.cpp
+      synctex/evince/EvinceWindow.cpp
     )
   endif()
 endif(WIN32)
