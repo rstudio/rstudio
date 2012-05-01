@@ -47,8 +47,6 @@ void Synctex::onClosed(const QString& pdfFile)
 
 void Synctex::onSyncSource(const QString &srcFile, const QPoint &srcLoc)
 {
-   // gtk_window_present_with_time(GTK_WINDOW, timestamp)
-
    desktop::raiseAndActivateWindow(pMainWindow_);
 
    pMainWindow_->onPdfViewerSyncSource(srcFile, srcLoc.x(), srcLoc.y());

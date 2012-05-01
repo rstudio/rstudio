@@ -28,12 +28,16 @@ namespace desktop {
 
 void raiseAndActivateWindow(QWidget* pWindow)
 {
+   // WId wid = pWindow->effectiveWinId(); -- gets X11 window id
+   // gtk_window_present_with_time(GTK_WINDOW, timestamp)
+
    if (pWindow->isMinimized())
    {
       pWindow->setWindowState(
                      pWindow->windowState() & ~Qt::WindowMinimized);
-      pWindow->raise();
    }
+
+   pWindow->raise();
    pWindow->activateWindow();
 }
 
