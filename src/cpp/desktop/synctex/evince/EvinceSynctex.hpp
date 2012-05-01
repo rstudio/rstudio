@@ -17,6 +17,7 @@
 #include <QObject>
 #include <QMap>
 #include <QPoint>
+#include <QDBusPendingCallWatcher>
 
 namespace desktop {
 
@@ -39,6 +40,8 @@ public:
                  const QPoint& srcLoc);
 
 private slots:
+   void onFindWindowFinished(QDBusPendingCallWatcher *pCall);
+   void onSyncViewFinished(QDBusPendingCallWatcher *pCall);
    void onClosed();
    void onSyncSource(const QString &source_file,
                      const QPoint &source_point,
@@ -54,6 +57,14 @@ private:
    MainWindow* pMainWindow_;
    EvinceDaemon* pEvince_;
    QMap<QString, EvinceWindow*> windows_;
+
+   struct SyncRequest
+   {
+      QString pdfFile;
+      QString srcFile;
+      QPoint srcLoc;
+   };
+   QMap<QDBusPendingCallWatcher*, SyncRequest> pendingSyncRequests_;
 };
 
 

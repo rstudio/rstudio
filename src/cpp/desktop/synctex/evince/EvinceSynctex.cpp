@@ -25,7 +25,6 @@
 #include "EvinceDaemon.hpp"
 #include "EvinceWindow.hpp"
 
-// TODO: make calls async
 // TODO: window activation
 // TODO: call evince directly for page
 // TODO: handle differnet evince versions
@@ -70,13 +69,36 @@ void EvinceSynctex::syncView(const QString& pdfFile,
       QDBusPendingReply<QString> reply = pEvince_->FindDocument(
                                        QUrl::fromLocalFile(pdfFile).toString(),
                                        true);
-      reply.waitForFinished();
-      if (reply.isError())
-      {
-         logDBusError(reply.error(), ERROR_LOCATION);
-         return;
-      }
 
+      // wait for the results asynchronously
+      QDBusPendingCallWatcher* pWatcher = new QDBusPendingCallWatcher(reply,
+                                                                      this);
+      SyncRequest request;
+      request.pdfFile = pdfFile;
+      request.srcFile = srcFile;
+      request.srcLoc = srcLoc;
+      pendingSyncRequests_.insert(pWatcher, request);
+
+      QObject::connect(pWatcher,
+                       SIGNAL(finished(QDBusPendingCallWatcher*)),
+                       this,
+                       SLOT(onFindWindowFinished(QDBusPendingCallWatcher*)));
+   }
+}
+
+void EvinceSynctex::onFindWindowFinished(QDBusPendingCallWatcher* pWatcher)
+{
+   // get the reply and the sync request params
+   QDBusPendingReply<QString> reply = *pWatcher;
+   SyncRequest req = pendingSyncRequests_.value(pWatcher);
+   pendingSyncRequests_.remove(pWatcher);
+
+   if (reply.isError())
+   {
+      logDBusError(reply.error(), ERROR_LOCATION);
+   }
+   else
+   {
       // initialize a connection to it
       EvinceWindow* pWindow = new EvinceWindow(reply.value());
       if (!pWindow->isValid())
@@ -86,7 +108,7 @@ void EvinceSynctex::syncView(const QString& pdfFile,
       }
 
       // put it in our map
-      windows_.insert(pdfFile, pWindow);
+      windows_.insert(req.pdfFile, pWindow);
 
       // sign up for events
       QObject::connect(pWindow,
@@ -99,8 +121,11 @@ void EvinceSynctex::syncView(const QString& pdfFile,
                        SLOT(onSyncSource(const QString&,const QPoint&,uint)));
 
       // perform sync
-      syncView(pWindow, srcFile, srcLoc);
+      syncView(pWindow, req.srcFile, req.srcLoc);
    }
+
+   // delete the watcher
+   pWatcher->deleteLater();
 }
 
 void EvinceSynctex::syncView(EvinceWindow* pWindow,
@@ -112,10 +137,22 @@ void EvinceSynctex::syncView(EvinceWindow* pWindow,
                                        srcLoc,
                                        core::date_time::secondsSinceEpoch());
 
-   reply.waitForFinished();
+   // wait for the results asynchronously
+   QDBusPendingCallWatcher* pWatcher = new QDBusPendingCallWatcher(reply,
+                                                                   this);
+   QObject::connect(pWatcher,
+                    SIGNAL(finished(QDBusPendingCallWatcher*)),
+                    this,
+                    SLOT(onSyncViewFinished(QDBusPendingCallWatcher*)));
+}
 
+void EvinceSynctex::onSyncViewFinished(QDBusPendingCallWatcher* pWatcher)
+{
+   QDBusPendingReply<QString> reply = *pWatcher;
    if (reply.isError())
       logDBusError(reply.error(), ERROR_LOCATION);
+
+   pWatcher->deleteLater();
 }
 
 void EvinceSynctex::onClosed()
