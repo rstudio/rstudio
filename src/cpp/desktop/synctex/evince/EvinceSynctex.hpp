@@ -53,6 +53,32 @@ private slots:
 
 
 private:
+   struct SyncRequest
+   {
+      SyncRequest()
+         : page(-1)
+      {
+      }
+
+      SyncRequest(QString pdfFile, int page)
+         : pdfFile(pdfFile), page(page)
+      {
+      }
+
+      SyncRequest(QString pdfFile, QString srcFile, QPoint srcLoc)
+         : pdfFile(pdfFile), page(-1), srcFile(srcFile), srcLoc(srcLoc)
+      {
+      }
+
+      QString pdfFile;
+      int page;
+      QString srcFile;
+      QPoint srcLoc;
+   };
+
+   void syncView(const SyncRequest& syncRequest);
+
+   void syncView(EvinceWindow* pWindow, const SyncRequest& syncRequest);
    void syncView(EvinceWindow* pWindow,
                  const QString& srcFile,
                  const QPoint& srcLoc);
@@ -61,12 +87,6 @@ private:
    EvinceDaemon* pEvince_;
    QMap<QString, EvinceWindow*> windows_;
 
-   struct SyncRequest
-   {
-      QString pdfFile;
-      QString srcFile;
-      QPoint srcLoc;
-   };
    QMap<QDBusPendingCallWatcher*, SyncRequest> pendingSyncRequests_;
 };
 

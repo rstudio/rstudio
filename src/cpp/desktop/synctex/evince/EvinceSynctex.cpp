@@ -27,16 +27,6 @@
 
 // TODO: window activation
 
-// TODO: no inverse search if the document was loaded using
-//       evince -i <page> style invocation (because no connection)
-//       (may need to poll for a connection with start == false)
-
-// TODO: don't get the close event if we start with page style
-//       (polling as described above would fix this)
-
-// TODO: cold start from synctex when window closed doesn't always work
-//       (wait for document loaded?)
-
 // TODO: can't rely on global pdfPath_ in synctex (multiple viewers)
 
 // TODO: handle differnet evince versions
@@ -75,9 +65,20 @@ void EvinceSynctex::syncView(const QString& pdfFile,
                              const QString& srcFile,
                              const QPoint& srcLoc)
 {
+   syncView(SyncRequest(pdfFile, srcFile, srcLoc));
+}
+
+void EvinceSynctex::syncView(const QString& pdfFile, int page)
+{
+   syncView(SyncRequest(pdfFile, page));
+}
+
+void EvinceSynctex::syncView(const SyncRequest& syncRequest)
+{
+   QString pdfFile = syncRequest.pdfFile;
    if (windows_.contains(pdfFile))
    {
-      syncView(windows_.value(pdfFile), srcFile, srcLoc);
+      syncView(windows_.value(pdfFile), syncRequest);
    }
    else
    {
@@ -89,26 +90,13 @@ void EvinceSynctex::syncView(const QString& pdfFile,
       // wait for the results asynchronously
       QDBusPendingCallWatcher* pWatcher = new QDBusPendingCallWatcher(reply,
                                                                       this);
-      SyncRequest request;
-      request.pdfFile = pdfFile;
-      request.srcFile = srcFile;
-      request.srcLoc = srcLoc;
-      pendingSyncRequests_.insert(pWatcher, request);
+      pendingSyncRequests_.insert(pWatcher, syncRequest);
 
       QObject::connect(pWatcher,
                        SIGNAL(finished(QDBusPendingCallWatcher*)),
                        this,
                        SLOT(onFindWindowFinished(QDBusPendingCallWatcher*)));
    }
-}
-
-void EvinceSynctex::syncView(const QString& pdfFile, int page)
-{
-   QStringList args;
-   args.append(QString::fromAscii("-i"));
-   args.append(QString::fromStdString(boost::lexical_cast<std::string>(page)));
-   args.append(pdfFile);
-   QProcess::startDetached(QString::fromAscii("evince"), args);
 }
 
 void EvinceSynctex::onFindWindowFinished(QDBusPendingCallWatcher* pWatcher)
@@ -146,11 +134,29 @@ void EvinceSynctex::onFindWindowFinished(QDBusPendingCallWatcher* pWatcher)
                        SLOT(onSyncSource(const QString&,const QPoint&,uint)));
 
       // perform sync
-      syncView(pWindow, req.srcFile, req.srcLoc);
+      syncView(pWindow, req);
    }
 
    // delete the watcher
    pWatcher->deleteLater();
+}
+
+void EvinceSynctex::syncView(EvinceWindow* pWindow, const SyncRequest& req)
+{
+   if (req.page != -1)
+   {
+      QStringList args;
+      args.append(QString::fromAscii("-i"));
+      args.append(QString::fromStdString(
+                           boost::lexical_cast<std::string>(req.page)));
+      args.append(req.pdfFile);
+      QProcess::startDetached(QString::fromAscii("evince"), args);
+   }
+   else
+   {
+      syncView(pWindow, req.srcFile, req.srcLoc);
+   }
+
 }
 
 void EvinceSynctex::syncView(EvinceWindow* pWindow,
