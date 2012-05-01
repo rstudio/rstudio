@@ -284,8 +284,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    {
       // apply concordance
       final ProgressIndicator indicator = getSyncProgress();  
-      server_.applyForwardConcordance(
-                              pdfPath_, 
+      server_.applyInverseConcordance(
                               SourceLocation.create(file, line, column, true),
                               new ServerRequestCallback<SourceLocation>() {
          @Override

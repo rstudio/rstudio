@@ -25,6 +25,8 @@
 #include "EvinceDaemon.hpp"
 #include "EvinceWindow.hpp"
 
+// TODO: multiple output lines in compile pdf
+
 // TODO: window activation
 
 // TODO: can't rely on global pdfPath_ in synctex (multiple viewers)

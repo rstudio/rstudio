@@ -29,8 +29,7 @@ public interface SynctexServerOperations
    void synctexInverseSearch(PdfLocation pdfLocation,
                              ServerRequestCallback<SourceLocation> callback);
    
-   void applyInverseConcordance(String rootDocument,
-                                SourceLocation sourceLocation,
+   void applyInverseConcordance(SourceLocation sourceLocation,
                                 ServerRequestCallback<SourceLocation> callback);
   
 }

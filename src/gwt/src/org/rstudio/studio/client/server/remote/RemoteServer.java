@@ -2465,13 +2465,11 @@ public class RemoteServer implements Server
    
    @Override
    public void applyInverseConcordance(
-                               String rootDocument,
                                SourceLocation sourceLocation,
                                ServerRequestCallback<SourceLocation> callback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(rootDocument));
-      params.set(1, new JSONObject(sourceLocation));
+      params.set(0, new JSONObject(sourceLocation));
       sendRequest(RPC_SCOPE, APPLY_INVERSE_CONCORDANCE, params, callback);
    }
 

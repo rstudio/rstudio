@@ -101,37 +101,6 @@ void applyForwardConcordance(const FilePath& mainFile,
    }
 }
 
-Error parseConcoranceRequest(const json::JsonRpcRequest& request,
-                             FilePath* pRootDocPath,
-                             core::tex::SourceLocation* pLoc,
-                             bool* pFromClick)
-{
-   // read params
-   std::string rootDoc;
-   json::Object sourceLocation;
-   Error error = json::readParams(request.params, &rootDoc, &sourceLocation);
-   if (error)
-      return error;
-   *pRootDocPath = module_context::resolveAliasedPath(rootDoc);
-
-   // read source location
-   std::string file;
-   int line, column;
-   error = json::readObject(sourceLocation,
-                                  "file", &file,
-                                  "line", &line,
-                                  "column", &column,
-                                  "from_click", pFromClick);
-   if (error)
-      return error;
-
-
-   FilePath srcPath = module_context::resolveAliasedPath(file);
-
-   *pLoc = core::tex::SourceLocation(srcPath, line, column);
-
-   return Success();
-}
 
 json::Object sourceLocationAsJson(const core::tex::SourceLocation& srcLoc,
                                   bool fromClick)
@@ -195,16 +164,30 @@ void applyInverseConcordance(core::tex::SourceLocation* pLoc)
 Error rpcApplyForwardConcordance(const json::JsonRpcRequest& request,
                                  json::JsonRpcResponse* pResponse)
 {
-   // parse params
-   FilePath rootDocPath;
-   core::tex::SourceLocation srcLoc;
-   bool fromClick;
-   Error error = parseConcoranceRequest(request,
-                                        &rootDocPath,
-                                        &srcLoc,
-                                        &fromClick);
+   // read params
+   std::string rootDoc;
+   json::Object sourceLocation;
+   Error error = json::readParams(request.params, &rootDoc, &sourceLocation);
    if (error)
       return error;
+   FilePath rootDocPath = module_context::resolveAliasedPath(rootDoc);
+
+   // read source location
+   std::string file;
+   int line, column;
+   bool fromClick;
+   error = json::readObject(sourceLocation,
+                                  "file", &file,
+                                  "line", &line,
+                                  "column", &column,
+                                  "from_click", &fromClick);
+   if (error)
+      return error;
+
+
+   FilePath srcPath = module_context::resolveAliasedPath(file);
+
+   core::tex::SourceLocation srcLoc(srcPath, line, column);
 
    applyForwardConcordance(rootDocPath, &srcLoc);
 
@@ -216,15 +199,21 @@ Error rpcApplyForwardConcordance(const json::JsonRpcRequest& request,
 Error rpcApplyInverseConcordance(const json::JsonRpcRequest& request,
                                  json::JsonRpcResponse* pResponse)
 {
-   FilePath rootDocPath;
-   core::tex::SourceLocation srcLoc;
+   // read source location
+   std::string file;
+   int line, column;
    bool fromClick;
-   Error error = parseConcoranceRequest(request,
-                                        &rootDocPath,
-                                        &srcLoc,
-                                        &fromClick);
+   Error error = json::readObjectParam(request.params,
+                                       0,
+                                       "file", &file,
+                                       "line", &line,
+                                       "column", &column,
+                                       "from_click", &fromClick);
    if (error)
       return error;
+   FilePath srcPath = module_context::resolveAliasedPath(file);
+
+   core::tex::SourceLocation srcLoc(srcPath, line, column);
 
    applyInverseConcordance(&srcLoc);
 
