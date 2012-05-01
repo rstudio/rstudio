@@ -17,6 +17,7 @@
 #include <QtWebKit>
 
 #include <boost/bind.hpp>
+#include <boost/format.hpp>
 
 #include <core/FilePath.hpp>
 #include <core/system/System.hpp>
@@ -139,14 +140,6 @@ void MainWindow::quit()
    close();
 }
 
-void MainWindow::onSyncSource(const QString &source_file,
-                              const QPoint &source_point,
-                              uint timestamp)
-{
-   // gtk_window_present_with_time(GTK_WINDOW, timestamp)
-   desktop::raiseAndActivateWindow(this);
-}
-
 void MainWindow::onJavaScriptWindowObjectCleared()
 {
    webView()->page()->mainFrame()->addToJavaScriptWindowObject(
@@ -226,6 +219,21 @@ void MainWindow::checkForUpdates()
    updateChecker_.performCheck(true);
 }
 
+void MainWindow::onPdfViewerClosed(QString pdfPath)
+{
+   webView()->page()->mainFrame()->evaluateJavaScript(
+            QString::fromAscii("window.synctexNotifyPdfViewerClosed(\"") +
+                                         pdfPath + QString::fromAscii("\")"));
+}
+
+void MainWindow::onPdfViewerSyncSource(QString srcFile, int line, int column)
+{
+   boost::format fmt("window.desktopSynctexInverseSearch(\"%1%\", %2%, %3%)");
+   std::string js = boost::str(fmt % srcFile.toStdString() % line % column);
+
+   webView()->page()->mainFrame()->evaluateJavaScript(
+                                                   QString::fromStdString(js));
+}
 
 // private interface for SessionLauncher
 

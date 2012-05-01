@@ -2443,6 +2443,18 @@ public class RemoteServer implements Server
       params.set(1, new JSONObject(sourceLocation));
       sendRequest(RPC_SCOPE, SYNCTEX_FORWARD_SEARCH, params, callback);
    }
+   
+   @Override
+   public void applyForwardConcordance(
+                                String rootDocument,
+                                SourceLocation sourceLocation,
+                                ServerRequestCallback<SourceLocation> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(rootDocument));
+      params.set(1, new JSONObject(sourceLocation));
+      sendRequest(RPC_SCOPE, APPLY_FORWARD_CONCORDANCE, params, callback);
+   }
 
    @Override
    public void synctexInverseSearch(PdfLocation pdfLocation,
@@ -2450,6 +2462,19 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, SYNCTEX_INVERSE_SEARCH, pdfLocation, callback);
    }
+   
+   @Override
+   public void applyInverseConcordance(
+                               String rootDocument,
+                               SourceLocation sourceLocation,
+                               ServerRequestCallback<SourceLocation> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(rootDocument));
+      params.set(1, new JSONObject(sourceLocation));
+      sendRequest(RPC_SCOPE, APPLY_INVERSE_CONCORDANCE, params, callback);
+   }
+
    
    public void checkSpelling(
                          JsArrayString words,
@@ -2732,6 +2757,8 @@ public class RemoteServer implements Server
    
    private static final String SYNCTEX_FORWARD_SEARCH = "synctex_forward_search";
    private static final String SYNCTEX_INVERSE_SEARCH = "synctex_inverse_search";
+   private static final String APPLY_FORWARD_CONCORDANCE = "apply_forward_concordance";
+   private static final String APPLY_INVERSE_CONCORDANCE = "apply_inverse_concordance";
    
    private static final String CHECK_SPELLING = "check_spelling";
    private static final String SUGGESTION_LIST = "suggestion_list";

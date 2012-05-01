@@ -20,6 +20,7 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
@@ -38,6 +39,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -56,6 +58,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
                   SynctexServerOperations server,
                   FileTypeRegistry fileTypeRegistry,
                   Session session,
+                  UIPrefs prefs,
                   Satellite satellite, 
                   SatelliteManager satelliteManager)
    {
@@ -65,6 +68,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
       session_ = session;
+      prefs_ = prefs;
       satellite_ = satellite;
       satelliteManager_ = satelliteManager;
       
@@ -81,7 +85,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
             @Override
             public void onClose(CloseEvent<Satellite> event)
             {
-               callNotifyPdfViewerClosed();
+               callNotifyPdfViewerClosed(pdfPath_);
             }
          });
       }
@@ -107,15 +111,33 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    @Override
    public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
    {
-      boolean synctexAvailable =
-            event.getResult().isSynctexAvailable() &&
-            session_.getSessionInfo().isInternalPdfPreviewEnabled();
+      String pdfPreview = prefs_.pdfPreview().getValue();
+      
+      boolean synctexSupported =
+                  // internal previewer
+                  (pdfPreview.equals(UIPrefs.PDF_PREVIEW_RSTUDIO) &&
+                  session_.getSessionInfo().isInternalPdfPreviewEnabled()) ||
+                  // platform-specific desktop previewer
+                  (pdfPreview.equals(UIPrefs.PDF_PREVIEW_DESKTOP_SYNCTEX) &&
+                   Desktop.isDesktop());
+      
+      boolean synctexAvailable = synctexSupported && 
+                                 event.getResult().isSynctexAvailable();
        
       if (synctexAvailable)
          setSynctexStatus(event.getResult().getTargetFile(),
                           event.getResult().getPdfPath());
       else
          setNoSynctexStatus();
+      
+      // if this was a desktop synctex preview then invoke it directly
+      // (internal previews are handled by the compile pdf window directly)
+      if (synctexAvailable && handleDesktopSynctex())
+      {
+         Desktop.getFrame().externalSynctexPreview(
+                                 event.getResult().getPdfPath(), 
+                                 event.getResult().getPdfLocation().getPage());
+      }
    }
    
    public boolean isSynctexAvailable()
@@ -136,19 +158,57 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
 
    public boolean forwardSearch(SourceLocation sourceLocation)
    {
-      // return false if there is no pdf viewer
-      WindowEx window = satelliteManager_.getSatelliteWindowObject(
-                                                   PDFViewerApplication.NAME);
-      if (window == null)
-         return false;
-      
-      // activate the satellite
-      satelliteManager_.activateSatelliteWindow(PDFViewerApplication.NAME);
+      if (handleDesktopSynctex())
+      {
+         // apply concordane
+         final ProgressIndicator indicator = getSyncProgress();  
+         server_.applyForwardConcordance(
+                                 pdfPath_, 
+                                 sourceLocation, 
+                                 new ServerRequestCallback<SourceLocation>() {
+            @Override
+            public void onResponseReceived(SourceLocation sourceLocation)
+            {
+               indicator.onCompleted();
+               
+               if (sourceLocation != null)
+               {
+                  Desktop.getFrame().externalSynctexView(
+                                 pdfPath_,
+                                 sourceLocation.getFile(),
+                                 sourceLocation.getLine(),
+                                 sourceLocation.getColumn());    
+               }
+            }
+            
+            @Override
+            public void onError(ServerError error)
+            {
+               indicator.onError(error.getUserMessage());
+            }
+            
+         });
          
-      // execute the forward search
-      callForwardSearch(window, targetFile_, sourceLocation);
-  
-      return true;
+         return true;
+      }
+      
+      // use internal viewer
+      else
+      {
+         // return false if there is no pdf viewer
+         WindowEx window = satelliteManager_.getSatelliteWindowObject(
+                                                      PDFViewerApplication.NAME);
+         if (window == null)
+            return false;
+         
+         // activate the satellite
+         satelliteManager_.activateSatelliteWindow(PDFViewerApplication.NAME);
+            
+         // execute the forward search
+         callForwardSearch(window, targetFile_, sourceLocation);
+     
+         return true;
+      }
    }
    
    public void inverseSearch(PdfLocation pdfLocation)
@@ -209,18 +269,9 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
                 indicator.onCompleted();
                 
                 if (location != null)
-                {
-                   // create file position
-                   FilePosition position = FilePosition.create(
-                         location.getLine(), 
-                         Math.min(1, location.getColumn()));
-                   
-                   fileTypeRegistry_.editFile(
-                                  FileSystemItem.createFile(location.getFile()), 
-                                  position);
-                }
+                   goToSourceLocation(location);
              }
-             
+
              @Override
              public void onError(ServerError error)
              {
@@ -229,7 +280,46 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
         });   
    }  
    
-   private void notifyPdfViewerClosed()
+   private void doDesktopInverseSearch(String file, int line, int column)
+   {
+      // apply concordance
+      final ProgressIndicator indicator = getSyncProgress();  
+      server_.applyForwardConcordance(
+                              pdfPath_, 
+                              SourceLocation.create(file, line, column, true),
+                              new ServerRequestCallback<SourceLocation>() {
+         @Override
+         public void onResponseReceived(SourceLocation sourceLocation)
+         {
+            indicator.onCompleted();
+            
+            if (sourceLocation != null)
+               goToSourceLocation(sourceLocation);
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            indicator.onError(error.getUserMessage());
+         }
+         
+      });
+      
+   }
+
+   private void goToSourceLocation(SourceLocation location)
+   {
+       FilePosition position = FilePosition.create(
+             location.getLine(), 
+             Math.min(1, location.getColumn()));
+       
+       fileTypeRegistry_.editFile(
+                      FileSystemItem.createFile(location.getFile()), 
+                      position);
+   }
+    
+   
+   private void notifyPdfViewerClosed(String pdfFile)
    {
       setNoSynctexStatus();
    }
@@ -239,6 +329,14 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       return satellite_.isCurrentWindowSatellite() && 
              satellite_.getSatelliteName().equals(PDFViewerApplication.NAME);
             
+   }
+   
+   private boolean handleDesktopSynctex()
+   {
+      return Desktop.isDesktop() && 
+             !satellite_.isCurrentWindowSatellite() &&
+              prefs_.pdfPreview().getValue().equals(
+                                   UIPrefs.PDF_PREVIEW_DESKTOP_SYNCTEX);
    }
 
    private ProgressIndicator getSyncProgress()
@@ -280,20 +378,25 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
          }
       ); 
       
-      $wnd.synctexNotifyPdfViewerClosed = $entry(
-         function() {
-            synctex.@org.rstudio.studio.client.common.synctex.Synctex::notifyPdfViewerClosed()();
+      $wnd.desktopSynctexInverseSearch = $entry(
+         function(file,line,column) {
+            synctex.@org.rstudio.studio.client.common.synctex.Synctex::doDesktopInverseSearch(Ljava/lang/String;II)(file,line,column);
          }
       ); 
       
+      $wnd.synctexNotifyPdfViewerClosed = $entry(
+         function(pdfPath) {
+            synctex.@org.rstudio.studio.client.common.synctex.Synctex::notifyPdfViewerClosed(Ljava/lang/String;)(pdfPath);
+         }
+      );       
    }-*/;
    
    private final native void callInverseSearch(JavaScriptObject pdfLocation)/*-{
       $wnd.opener.synctexInverseSearch(pdfLocation);
    }-*/;
    
-   private final native void callNotifyPdfViewerClosed() /*-{
-      $wnd.opener.synctexNotifyPdfViewerClosed();
+   private final native void callNotifyPdfViewerClosed(String pdfPath) /*-{
+      $wnd.opener.synctexNotifyPdfViewerClosed(pdfPath);
    }-*/;
    
    private native void registerSatelliteCallbacks() /*-{
@@ -317,6 +420,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    private final SynctexServerOperations server_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final Session session_;
+   private final UIPrefs prefs_;
    private final Satellite satellite_;
    private final SatelliteManager satelliteManager_;
    private String pdfPath_ = null;

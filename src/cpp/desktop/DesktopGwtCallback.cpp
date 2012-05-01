@@ -561,20 +561,10 @@ void GwtCallback::checkForUpdates()
 
 void GwtCallback::showAboutDialog()
 {
-   QString pdfFile = QString::fromAscii(
-            "/home/jjallaire/RProjects/SweaveDemo/SweaveDemo.pdf");
-   QString srcFile = QString::fromAscii(
-            "/home/jjallaire/RProjects/SweaveDemo/SweaveDemo.tex");
-
-   synctex().syncView(pdfFile, srcFile, QPoint(1,1));
-
-
-   /*
    // WA_DeleteOnClose
    AboutDialog* about = new AboutDialog(pOwner_->asWidget());
    about->setAttribute(Qt::WA_DeleteOnClose);
    about->show();
-   */
 }
 
 void GwtCallback::bringMainFrameToFront()
@@ -874,6 +864,21 @@ bool GwtCallback::forceFastScrollFactor()
 #else
    return false;
 #endif
+}
+
+void GwtCallback::externalSynctexPreview(QString pdfPath, int page)
+{
+   synctex().syncView(resolveAliasedPath(pdfPath), page);
+}
+
+void GwtCallback::externalSynctexView(const QString& pdfFile,
+                                      const QString& srcFile,
+                                      int line,
+                                      int column)
+{
+   synctex().syncView(resolveAliasedPath(pdfFile),
+                      resolveAliasedPath(srcFile),
+                      QPoint(line, column));
 }
 
 } // namespace desktop

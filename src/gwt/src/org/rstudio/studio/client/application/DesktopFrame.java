@@ -90,4 +90,11 @@ public interface DesktopFrame extends JavaScriptPassthrough
    JsArrayString getFontList(boolean fixedWidthOnly);
    String getFixedWidthFont();
    void setFixedWidthFont(String font);
+   
+   void externalSynctexPreview(String pdfPath, int page);
+   
+   void externalSynctexView(String pdfFile, 
+                            String srcFile, 
+                            int line,
+                            int column);
 }

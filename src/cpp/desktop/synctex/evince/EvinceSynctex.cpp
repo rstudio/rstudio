@@ -26,8 +26,26 @@
 #include "EvinceWindow.hpp"
 
 // TODO: window activation
-// TODO: call evince directly for page
+
+// TODO: no inverse search if the document was loaded using
+//       evince -i <page> style invocation (because no connection)
+//       (may need to poll for a connection with start == false)
+
+// TODO: don't get the close event if we start with page style
+//       (polling as described above would fix this)
+
+// TODO: cold start from synctex when window closed doesn't always work
+//       (wait for document loaded?)
+
+// TODO: can't rely on global pdfPath_ in synctex (multiple viewers)
+
 // TODO: handle differnet evince versions
+
+
+
+// TODO: remove hard-coding for check-in
+
+
 
 using namespace core;
 
@@ -82,6 +100,15 @@ void EvinceSynctex::syncView(const QString& pdfFile,
                        this,
                        SLOT(onFindWindowFinished(QDBusPendingCallWatcher*)));
    }
+}
+
+void EvinceSynctex::syncView(const QString& pdfFile, int page)
+{
+   QStringList args;
+   args.append(QString::fromAscii("-i"));
+   args.append(QString::fromStdString(boost::lexical_cast<std::string>(page)));
+   args.append(pdfFile);
+   QProcess::startDetached(QString::fromAscii("evince"), args);
 }
 
 void EvinceSynctex::onFindWindowFinished(QDBusPendingCallWatcher* pWatcher)

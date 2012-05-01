@@ -101,6 +101,49 @@ void applyForwardConcordance(const FilePath& mainFile,
    }
 }
 
+Error parseConcoranceRequest(const json::JsonRpcRequest& request,
+                             FilePath* pRootDocPath,
+                             core::tex::SourceLocation* pLoc,
+                             bool* pFromClick)
+{
+   // read params
+   std::string rootDoc;
+   json::Object sourceLocation;
+   Error error = json::readParams(request.params, &rootDoc, &sourceLocation);
+   if (error)
+      return error;
+   *pRootDocPath = module_context::resolveAliasedPath(rootDoc);
+
+   // read source location
+   std::string file;
+   int line, column;
+   error = json::readObject(sourceLocation,
+                                  "file", &file,
+                                  "line", &line,
+                                  "column", &column,
+                                  "from_click", pFromClick);
+   if (error)
+      return error;
+
+
+   FilePath srcPath = module_context::resolveAliasedPath(file);
+
+   *pLoc = core::tex::SourceLocation(srcPath, line, column);
+
+   return Success();
+}
+
+json::Object sourceLocationAsJson(const core::tex::SourceLocation& srcLoc,
+                                  bool fromClick)
+{
+   json::Object sourceLocation;
+   sourceLocation["file"] = module_context::createAliasedPath(srcLoc.file());
+   sourceLocation["line"] = srcLoc.line();
+   sourceLocation["column"] = srcLoc.column();
+   sourceLocation["from_click"] = fromClick;
+   return sourceLocation;
+}
+
 Error synctexForwardSearch(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
@@ -148,6 +191,48 @@ void applyInverseConcordance(core::tex::SourceLocation* pLoc)
                                         pLoc->column());
    }
 }
+
+Error rpcApplyForwardConcordance(const json::JsonRpcRequest& request,
+                                 json::JsonRpcResponse* pResponse)
+{
+   // parse params
+   FilePath rootDocPath;
+   core::tex::SourceLocation srcLoc;
+   bool fromClick;
+   Error error = parseConcoranceRequest(request,
+                                        &rootDocPath,
+                                        &srcLoc,
+                                        &fromClick);
+   if (error)
+      return error;
+
+   applyForwardConcordance(rootDocPath, &srcLoc);
+
+   pResponse->setResult(sourceLocationAsJson(srcLoc, fromClick));
+
+   return Success();
+}
+
+Error rpcApplyInverseConcordance(const json::JsonRpcRequest& request,
+                                 json::JsonRpcResponse* pResponse)
+{
+   FilePath rootDocPath;
+   core::tex::SourceLocation srcLoc;
+   bool fromClick;
+   Error error = parseConcoranceRequest(request,
+                                        &rootDocPath,
+                                        &srcLoc,
+                                        &fromClick);
+   if (error)
+      return error;
+
+   applyInverseConcordance(&srcLoc);
+
+   pResponse->setResult(sourceLocationAsJson(srcLoc, fromClick));
+
+   return Success();
+}
+
 
 Error synctexInverseSearch(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
@@ -247,6 +332,8 @@ Error initialize()
    using namespace module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
+      (bind(registerRpcMethod, "apply_forward_concordance", rpcApplyForwardConcordance))
+      (bind(registerRpcMethod, "apply_inverse_concordance", rpcApplyInverseConcordance))
       (bind(registerRpcMethod, "synctex_forward_search", synctexForwardSearch))
       (bind(registerRpcMethod, "synctex_inverse_search", synctexInverseSearch))
    ;

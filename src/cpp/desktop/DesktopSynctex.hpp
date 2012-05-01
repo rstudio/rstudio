@@ -36,9 +36,14 @@ public:
    // the base Synctex class does nothing -- subclasses provide an
    // implementation that does something by overriding syncView and
    // calling onClosed and onSyncSource at the appropriate times
+
    virtual void syncView(const QString& pdfFile,
                          const QString& srcFile,
                          const QPoint& srcLoc)
+   {
+   }
+
+   virtual void syncView(const QString& pdfFile, int pdfPage)
    {
    }
    

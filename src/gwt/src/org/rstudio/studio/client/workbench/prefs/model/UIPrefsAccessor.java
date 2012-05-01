@@ -148,6 +148,7 @@ public class UIPrefsAccessor extends Prefs
    
    public static final String PDF_PREVIEW_NONE = "none";
    public static final String PDF_PREVIEW_RSTUDIO = "rstudio";
+   public static final String PDF_PREVIEW_DESKTOP_SYNCTEX = "desktop-synctex";
    public static final String PDF_PREVIEW_SYSTEM = "system";
    
    public PrefValue<String> pdfPreview()

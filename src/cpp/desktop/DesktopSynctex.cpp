@@ -42,16 +42,16 @@ Synctex* Synctex::create(MainWindow* pMainWindow)
 
 void Synctex::onClosed(const QString& pdfFile)
 {
-   desktop::showWarning(NULL,
-                        QString::fromAscii("onClosed"),
-                        pdfFile);
+   pMainWindow_->onPdfViewerClosed(pdfFile);
 }
 
 void Synctex::onSyncSource(const QString &srcFile, const QPoint &srcLoc)
 {
-   desktop::showWarning(NULL,
-                        QString::fromAscii("onSyncSource"),
-                        srcFile);
+   // gtk_window_present_with_time(GTK_WINDOW, timestamp)
+
+   desktop::raiseAndActivateWindow(pMainWindow_);
+
+   pMainWindow_->onPdfViewerSyncSource(srcFile, srcLoc.x(), srcLoc.y());
 }
 
 } // namespace desktop

@@ -116,6 +116,13 @@ public slots:
 
    bool forceFastScrollFactor();
 
+   void externalSynctexPreview(QString pdfPath, int page);
+
+   void externalSynctexView(const QString& pdfFile,
+                            const QString& srcFile,
+                            int line,
+                            int column);
+
 private:
    Synctex& synctex();
 

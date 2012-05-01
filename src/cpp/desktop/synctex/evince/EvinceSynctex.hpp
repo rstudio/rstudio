@@ -41,6 +41,8 @@ public:
                          const QString& srcFile,
                          const QPoint& srcLoc);
 
+   virtual void syncView(const QString& pdfFile, int pdfPage);
+
 private slots:
    void onFindWindowFinished(QDBusPendingCallWatcher *pCall);
    void onSyncViewFinished(QDBusPendingCallWatcher *pCall);
