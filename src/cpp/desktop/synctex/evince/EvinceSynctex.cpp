@@ -26,11 +26,9 @@
 #include "EvinceWindow.hpp"
 
 // TODO: defaulting to desktop viewer
-// TODO: window activation
 // TODO: handle differnet evince versions
 
 // TODO: multiple output lines in compile pdf
-
 
 using namespace core;
 
