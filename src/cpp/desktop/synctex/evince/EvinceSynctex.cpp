@@ -20,9 +20,16 @@
 #include <core/DateTime.hpp>
 
 #include <DesktopMainWindow.hpp>
+#include <DesktopUtils.hpp>
 
 #include "EvinceDaemon.hpp"
 #include "EvinceWindow.hpp"
+
+// TODO: make calls async
+// TODO: window activation
+// TODO: call evince directly for page
+// TODO: handle differnet evince versions
+// TODO: dynamic binding to correct type
 
 using namespace core;
 
@@ -81,25 +88,19 @@ void EvinceSynctex::syncView(const QString& pdfFile,
       // put it in our map
       windows_.insert(pdfFile, pWindow);
 
-      // TODO: sign up for DocLoaded and Closed and remove from
-      // our map when that happens...
-      //
-      // OR, could we not cache it and just let the connection
-      // leak -- or do DBus objects manage their own lifetime?
-
       // sign up for events
-      /*
-      QObject::connect(pEvince,
+      QObject::connect(pWindow,
+                       SIGNAL(Closed()),
+                       this,
+                       SLOT(onClosed()));
+      QObject::connect(pWindow,
                        SIGNAL(SyncSource(const QString&,const QPoint&,uint)),
-                       pMainWindow_,
+                       this,
                        SLOT(onSyncSource(const QString&,const QPoint&,uint)));
-      */
 
       // perform sync
       syncView(pWindow, srcFile, srcLoc);
    }
-
-
 }
 
 void EvinceSynctex::syncView(EvinceWindow* pWindow,
@@ -115,6 +116,23 @@ void EvinceSynctex::syncView(EvinceWindow* pWindow,
 
    if (reply.isError())
       logDBusError(reply.error(), ERROR_LOCATION);
+}
+
+void EvinceSynctex::onClosed()
+{
+   EvinceWindow* pWindow = static_cast<EvinceWindow*>(sender());
+   windows_.remove(windows_.key(pWindow));
+   pWindow->deleteLater();
+}
+
+
+void EvinceSynctex::onSyncSource(const QString &source_file,
+                  const QPoint &source_point,
+                  uint timestamp)
+{
+    desktop::showWarning(NULL,
+                         QString::fromAscii("Event - SyncSource"),
+                         source_file);
 }
 
 

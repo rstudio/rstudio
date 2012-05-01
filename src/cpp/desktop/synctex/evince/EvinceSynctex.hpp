@@ -38,6 +38,13 @@ public:
                  const QString& srcFile,
                  const QPoint& srcLoc);
 
+private slots:
+   void onClosed();
+   void onSyncSource(const QString &source_file,
+                     const QPoint &source_point,
+                     uint timestamp);
+
+
 private:
    void syncView(EvinceWindow* pWindow,
                  const QString& srcFile,
