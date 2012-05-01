@@ -32,6 +32,9 @@ core::json::Object texCapabilitiesAsJson();
 core::json::Object compilePdfStateAsJson();
 bool hasRunningChildren();
 
+// accessors used by workbench
+std::string desktopSynctexViewer();
+
 core::Error initialize();
                        
 } // namespace authoring

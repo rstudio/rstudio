@@ -25,16 +25,11 @@
 #include "EvinceDaemon.hpp"
 #include "EvinceWindow.hpp"
 
-// TODO: multiple output lines in compile pdf
-
+// TODO: defaulting to desktop viewer
 // TODO: window activation
-
 // TODO: handle differnet evince versions
 
-
-
-// TODO: remove hard-coding for check-in
-
+// TODO: multiple output lines in compile pdf
 
 
 using namespace core;

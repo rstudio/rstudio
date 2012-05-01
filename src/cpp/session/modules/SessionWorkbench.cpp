@@ -48,6 +48,7 @@
 
 #include "SessionConsoleProcess.hpp"
 #include "SessionSpelling.hpp"
+#include "SessionAuthoring.hpp"
 
 #include <R_ext/RStartup.h>
 extern "C" SA_TYPE SaveAction;
@@ -393,6 +394,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    compilePdfPrefs["use_texi2dvi"] = userSettings().useTexi2Dvi();
    compilePdfPrefs["clean_output"] = userSettings().cleanTexi2DviOutput();
    compilePdfPrefs["enable_shell_escape"] = userSettings().enableLaTeXShellEscape();
+   compilePdfPrefs["desktop_synctex_viewer"] = session::modules::authoring::desktopSynctexViewer();
 
    // initialize and set result object
    json::Object result;

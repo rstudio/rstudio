@@ -16,6 +16,8 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.latex.LatexProgramSelectWidget;
@@ -91,7 +93,6 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       add(previwingOptionsLabel);
      
       pdfPreview_ = new PdfPreviewSelectWidget();
-      pdfPreview_.setValue(prefs_.pdfPreview().getValue());
       add(pdfPreview_);
       
       CheckBox chkConcordance = checkboxPref(
@@ -107,10 +108,8 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       {
          super(
             "Preview PDF after compile using:", 
-            new String[] {"(No Preview)", "RStudio Viewer", "System Viewer"}, 
-            new String[] {UIPrefsAccessor.PDF_PREVIEW_NONE, 
-                          UIPrefsAccessor.PDF_PREVIEW_RSTUDIO,
-                          UIPrefsAccessor.PDF_PREVIEW_SYSTEM},
+            new String[]{}, 
+            new String[]{},
             false, 
             true, 
             false);       
@@ -144,6 +143,24 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       chkUseTexi2Dvi_.setValue(compilePdfPrefs.getUseTexi2Dvi());
       chkCleanTexi2DviOutput_.setValue(compilePdfPrefs.getCleanOutput());
       chkEnableShellEscape_.setValue(compilePdfPrefs.getEnableShellEscape());
+      
+      pdfPreview_.addChoice("(No Preview)", UIPrefsAccessor.PDF_PREVIEW_NONE);
+      
+      String desktopViewer = StringUtil.notNull(
+                                 compilePdfPrefs.getDesktopSynctexViewer());
+      if (desktopViewer.length() > 0)
+      {
+         pdfPreview_.addChoice(desktopViewer, 
+                               UIPrefsAccessor.PDF_PREVIEW_DESKTOP_SYNCTEX);
+      }
+      
+      pdfPreview_.addChoice("RStudio Viewer", 
+                            UIPrefsAccessor.PDF_PREVIEW_RSTUDIO);
+      
+      pdfPreview_.addChoice("System Viewer",
+                            UIPrefsAccessor.PDF_PREVIEW_RSTUDIO);
+      
+      pdfPreview_.setValue(prefs_.pdfPreview().getValue());
    }
    
    @Override
