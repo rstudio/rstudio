@@ -96,6 +96,7 @@ set(DESKTOP_SOURCE_FILES
   DesktopSecondaryWindow.cpp
   DesktopSessionLauncher.cpp
   DesktopSlotBinders.cpp
+  DesktopSynctex.cpp
   DesktopNetworkAccessManager.cpp
   DesktopUpdateAvailableDialog.cpp
   DesktopUpdateChecker.cpp

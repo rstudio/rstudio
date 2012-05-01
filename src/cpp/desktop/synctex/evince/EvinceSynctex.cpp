@@ -28,7 +28,6 @@
 // TODO: window activation
 // TODO: call evince directly for page
 // TODO: handle differnet evince versions
-// TODO: dynamic binding to correct type
 
 using namespace core;
 
@@ -49,8 +48,7 @@ void logDBusError(const QDBusError& error, const ErrorLocation& location)
 } // anonymous namespace
 
 EvinceSynctex::EvinceSynctex(MainWindow* pMainWindow)
-   : QObject(pMainWindow),
-     pMainWindow_(pMainWindow)
+   : Synctex(pMainWindow)
 {
    pEvince_ = new EvinceDaemon(this);
 }
@@ -157,19 +155,25 @@ void EvinceSynctex::onSyncViewFinished(QDBusPendingCallWatcher* pWatcher)
 
 void EvinceSynctex::onClosed()
 {
+   // get the window that closed and determine the associated pdf
    EvinceWindow* pWindow = static_cast<EvinceWindow*>(sender());
-   windows_.remove(windows_.key(pWindow));
+   QString pdfFile = windows_.key(pWindow);
+
+   // notify base
+   Synctex::onClosed(pdfFile);
+
+   // remove window
+   windows_.remove(pdfFile);
    pWindow->deleteLater();
 }
 
 
-void EvinceSynctex::onSyncSource(const QString &source_file,
-                  const QPoint &source_point,
-                  uint timestamp)
+void EvinceSynctex::onSyncSource(const QString& srcFile,
+                                 const QPoint& srcLoc,
+                                 uint)
 {
-    desktop::showWarning(NULL,
-                         QString::fromAscii("Event - SyncSource"),
-                         source_file);
+   QUrl fileUrl(srcFile);
+   Synctex::onSyncSource(fileUrl.toLocalFile(), srcLoc);
 }
 
 

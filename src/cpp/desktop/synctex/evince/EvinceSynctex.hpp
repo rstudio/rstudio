@@ -19,6 +19,8 @@
 #include <QPoint>
 #include <QDBusPendingCallWatcher>
 
+#include <DesktopSynctex.hpp>
+
 namespace desktop {
 
 class MainWindow;
@@ -28,16 +30,16 @@ namespace synctex {
 class EvinceDaemon;
 class EvinceWindow;
 
-class EvinceSynctex : public QObject
+class EvinceSynctex : public Synctex
 {
    Q_OBJECT
 
 public:
    explicit EvinceSynctex(MainWindow* pMainWindow);
 
-   void syncView(const QString& pdfFile,
-                 const QString& srcFile,
-                 const QPoint& srcLoc);
+   virtual void syncView(const QString& pdfFile,
+                         const QString& srcFile,
+                         const QPoint& srcLoc);
 
 private slots:
    void onFindWindowFinished(QDBusPendingCallWatcher *pCall);
@@ -54,7 +56,6 @@ private:
                  const QPoint& srcLoc);
 
 private:
-   MainWindow* pMainWindow_;
    EvinceDaemon* pEvince_;
    QMap<QString, EvinceWindow*> windows_;
 

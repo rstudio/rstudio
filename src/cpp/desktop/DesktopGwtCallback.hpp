@@ -23,10 +23,7 @@ namespace desktop {
 
 class MainWindow;
 class BrowserWindow;
-
-namespace synctex {
-   class EvinceSynctex;
-} // anonymous namespace
+class Synctex;
 
 class GwtCallback : public QObject
 {
@@ -120,13 +117,13 @@ public slots:
    bool forceFastScrollFactor();
 
 private:
-   synctex::EvinceSynctex& synctex();
+   Synctex& synctex();
 
 private:
    void doAction(QKeySequence::StandardKey key);
    MainWindow* pMainWindow_;
    GwtCallbackOwner* pOwner_;
-   synctex::EvinceSynctex* pSynctex_;
+   Synctex* pSynctex_;
    bool switchToProjectPending_;
 
 };

@@ -39,8 +39,7 @@
 #include "DesktopRVersion.hpp"
 #include "DesktopMainWindow.hpp"
 #include "DesktopUtils.hpp"
-
-#include "synctex/evince/EvinceSynctex.hpp"
+#include "DesktopSynctex.hpp"
 
 #ifdef __APPLE__
 #include <Carbon/Carbon.h>
@@ -60,10 +59,10 @@ GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtCallbackOwner* pOwner)
 {
 }
 
-synctex::EvinceSynctex& GwtCallback::synctex()
+Synctex& GwtCallback::synctex()
 {
    if (pSynctex_ == NULL)
-      pSynctex_ = new synctex::EvinceSynctex(pMainWindow_);
+      pSynctex_ = Synctex::create(pMainWindow_);
 
    return *pSynctex_;
 }
@@ -562,9 +561,6 @@ void GwtCallback::checkForUpdates()
 
 void GwtCallback::showAboutDialog()
 {
-   using namespace desktop::synctex;
-
-
    QString pdfFile = QString::fromAscii(
             "/home/jjallaire/RProjects/SweaveDemo/SweaveDemo.pdf");
    QString srcFile = QString::fromAscii(
