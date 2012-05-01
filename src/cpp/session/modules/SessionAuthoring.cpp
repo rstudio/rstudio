@@ -240,6 +240,8 @@ json::Object compilePdfStateAsJson()
 
 std::string desktopSynctexViewer()
 {
+   if (session::options().programMode() == kSessionProgramModeDesktop)
+   {
 #if defined(__APPLE__)
    return std::string();
 #elif defined(_WIN32)
@@ -250,6 +252,11 @@ std::string desktopSynctexViewer()
    else
       return std::string();
 #endif
+   }
+   else
+   {
+      return std::string();
+   }
 }
 
 Error initialize()
