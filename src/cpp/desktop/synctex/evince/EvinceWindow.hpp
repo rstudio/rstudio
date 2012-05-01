@@ -34,7 +34,7 @@ public:
     { return "org.gnome.evince.Window"; }
 
 public:
-    EvinceWindow(const QString &service, const QString &path, const QDBusConnection &connection, QObject *parent = 0);
+    EvinceWindow(const QString &service, QObject *parent = 0);
 
     ~EvinceWindow();
 

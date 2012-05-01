@@ -34,7 +34,7 @@ public:
     { return "org.gnome.evince.Daemon"; }
 
 public:
-    EvinceDaemon(const QString &service, const QString &path, const QDBusConnection &connection, QObject *parent = 0);
+    EvinceDaemon(QObject *parent = 0);
 
     ~EvinceDaemon();
 

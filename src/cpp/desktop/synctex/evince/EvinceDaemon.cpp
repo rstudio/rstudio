@@ -16,8 +16,12 @@
 namespace desktop {
 namespace synctex {
 
-EvinceDaemon::EvinceDaemon(const QString &service, const QString &path, const QDBusConnection &connection, QObject *parent)
-    : QDBusAbstractInterface(service, path, staticInterfaceName(), connection, parent)
+EvinceDaemon::EvinceDaemon(QObject *parent)
+    : QDBusAbstractInterface(QString::fromAscii("org.gnome.evince.Daemon"),
+                             QString::fromAscii("/org/gnome/evince/Daemon"),
+                             staticInterfaceName(),
+                             QDBusConnection::sessionBus(),
+                             parent)
 {
 }
 

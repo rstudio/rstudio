@@ -122,6 +122,7 @@ else()
   if(NOT APPLE)
     set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
       synctex/evince/EvinceDaemon.cpp
+      synctex/evince/EvinceSynctex.cpp
       synctex/evince/EvinceWindow.cpp
     )
   endif()
@@ -132,6 +133,7 @@ include_directories(
   include
   ${Boost_INCLUDE_DIRS}
   ${CORE_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
 )
 

@@ -16,8 +16,12 @@
 namespace desktop {
 namespace synctex {
 
-EvinceWindow::EvinceWindow(const QString &service, const QString &path, const QDBusConnection &connection, QObject *parent)
-    : QDBusAbstractInterface(service, path, staticInterfaceName(), connection, parent)
+EvinceWindow::EvinceWindow(const QString &service, QObject *parent)
+    : QDBusAbstractInterface(service,
+                             QString::fromAscii("/org/gnome/evince/Window/0"),
+                             staticInterfaceName(),
+                             QDBusConnection::sessionBus(),
+                             parent)
 {
 }
 

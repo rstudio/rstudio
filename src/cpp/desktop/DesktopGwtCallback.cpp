@@ -40,8 +40,7 @@
 #include "DesktopMainWindow.hpp"
 #include "DesktopUtils.hpp"
 
-#include "synctex/evince/EvinceDaemon.hpp"
-#include "synctex/evince/EvinceWindow.hpp"
+#include "synctex/evince/EvinceSynctex.hpp"
 
 #ifdef __APPLE__
 #include <Carbon/Carbon.h>
@@ -52,6 +51,22 @@ using namespace core;
 namespace desktop {
 
 extern QString scratchPath;
+
+GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtCallbackOwner* pOwner)
+   : pMainWindow_(pMainWindow),
+     pOwner_(pOwner),
+     pSynctex_(NULL),
+     switchToProjectPending_(false)
+{
+}
+
+synctex::EvinceSynctex& GwtCallback::synctex()
+{
+   if (pSynctex_ == NULL)
+      pSynctex_ = new synctex::EvinceSynctex(pMainWindow_);
+
+   return *pSynctex_;
+}
 
 void GwtCallback::browseUrl(QString url)
 {
@@ -549,44 +564,13 @@ void GwtCallback::showAboutDialog()
 {
    using namespace desktop::synctex;
 
-   EvinceDaemon* pDaemon = new EvinceDaemon(
-            QString::fromAscii("org.gnome.evince.Daemon"),
-            QString::fromAscii("/org/gnome/evince/Daemon"),
-            QDBusConnection::sessionBus(),
-            pMainWindow_);
 
-   QDBusPendingReply<QString> reply = pDaemon->FindDocument(
-       QUrl::fromLocalFile(QString::fromAscii(
-         "/home/jjallaire/RProjects/SweaveDemo/SweaveDemo.pdf")).toString(),
-       true);
+   QString pdfFile = QString::fromAscii(
+            "/home/jjallaire/RProjects/SweaveDemo/SweaveDemo.pdf");
+   QString srcFile = QString::fromAscii(
+            "/home/jjallaire/RProjects/SweaveDemo/SweaveDemo.tex");
 
-   reply.waitForFinished();
-
-   EvinceWindow* pEvince = new EvinceWindow(reply.value(),
-                                            QString::fromAscii("/org/gnome/evince/Window/0"),
-                                            QDBusConnection::sessionBus(),
-                                            pMainWindow_);
-
-
-   QObject::connect(pEvince,
-                    SIGNAL(SyncSource(const QString&,const QPoint&,uint)),
-                    pMainWindow_,
-                    SLOT(onSyncSource(const QString&,const QPoint&,uint)));
-
-   QPoint srcLoc(1,1);
-
-   QDBusPendingReply<> syncReply = pEvince->SyncView(
-      QString::fromAscii("/home/jjallaire/RProjects/SweaveDemo/SweaveDemo.tex"),
-      srcLoc,
-      core::date_time::secondsSinceEpoch());
-   syncReply.waitForFinished();
-
-
-   if (syncReply.isError())
-   {
-      desktop::showWarning(NULL, QString::fromAscii("Error"), syncReply.error().message() );
-
-   }
+   synctex().syncView(pdfFile, srcFile, QPoint(1,1));
 
 
    /*

@@ -24,6 +24,10 @@ namespace desktop {
 class MainWindow;
 class BrowserWindow;
 
+namespace synctex {
+   class EvinceSynctex;
+} // anonymous namespace
+
 class GwtCallback : public QObject
 {
    Q_OBJECT
@@ -31,12 +35,7 @@ class GwtCallback : public QObject
    Q_PROPERTY(QString fixedWidthFont READ fixedWidthFont)
 
 public:
-   GwtCallback(MainWindow* pMainWindow, GwtCallbackOwner* pOwner)
-      : pMainWindow_(pMainWindow),
-        pOwner_(pOwner),
-        switchToProjectPending_(false)
-   {
-   }
+   GwtCallback(MainWindow* pMainWindow, GwtCallbackOwner* pOwner);
 
    QString proportionalFont();
    QString fixedWidthFont();
@@ -121,9 +120,13 @@ public slots:
    bool forceFastScrollFactor();
 
 private:
+   synctex::EvinceSynctex& synctex();
+
+private:
    void doAction(QKeySequence::StandardKey key);
    MainWindow* pMainWindow_;
    GwtCallbackOwner* pOwner_;
+   synctex::EvinceSynctex* pSynctex_;
    bool switchToProjectPending_;
 
 };
