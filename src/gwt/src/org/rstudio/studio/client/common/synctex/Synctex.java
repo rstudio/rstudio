@@ -145,17 +145,32 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       return pdfPath_ != null;
    }
    
-   public String getPdfPath()
-   {
-      return pdfPath_;
-   }
-   
    public void enableCommands(boolean enabled)
    {
       commands_.synctexSearch().setVisible(enabled);
       commands_.synctexSearch().setEnabled(enabled);
    }
 
+   // NOTE: the original design was for a single internal pdf viewer. for
+   // that configuration we could keep a global pdfPath_ around and be
+   // confident that it was always correct. we were also globally managing
+   // the state of the synctex command based on any external viewer closing.
+   // now that we optionally support desktop viewers for synctex this 
+   // assumption may not hold -- specfically there might be multiple active
+   // PDF viewers for different document. we have explicitly chosen to 
+   // avoid the complexity of tracking distinct viewer states. if we want
+   // to do this we probably should do the following:
+   //
+   //    - always keep the the syncex command available in all editors
+   //      so long as there is at least one preview window alive 
+   //
+   //    - have the server determine the pdfPath for a target file
+   //      (based on parsing magic comments, etc.) which will eliminate
+   //      the need for us to maintain the pdfPath_ separately here.
+   //
+   // In any case, the two issues are command enable/disable and letting
+   // the server know which pdfPath to apply synctex/concordance to.
+   //
    public boolean forwardSearch(SourceLocation sourceLocation)
    {
       if (handleDesktopSynctex())

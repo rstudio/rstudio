@@ -29,8 +29,6 @@
 
 // TODO: window activation
 
-// TODO: can't rely on global pdfPath_ in synctex (multiple viewers)
-
 // TODO: handle differnet evince versions
 
 
