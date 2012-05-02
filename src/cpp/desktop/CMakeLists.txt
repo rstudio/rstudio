@@ -68,6 +68,13 @@ if(WIN32)
    list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
      ${CMAKE_CURRENT_SOURCE_DIR}/DesktopPosixApplication.hpp)
 endif()
+if(WIN32 OR APPLE)
+   list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
+     ${CMAKE_CURRENT_SOURCE_DIR}/synctex/evince/EvinceDaemon.hpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/synctex/evince/EvinceWindow.hpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/synctex/evince/EvinceSynctex.hpp
+   )
+endif()
 
 configure_file (${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
                 ${CMAKE_CURRENT_BINARY_DIR}/config.h)
