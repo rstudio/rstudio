@@ -51,6 +51,7 @@ public class OutputBuffer extends Composite
    public void clear()
    {
       output_.setText("");
+      virtualConsole_ = new VirtualConsole();
    }
  
    private PreWidget output_;

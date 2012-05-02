@@ -28,9 +28,6 @@
 
 // TODO: handle differnet evince versions
 
-// TODO: multiple output lines in compile pdf
-
-
 using namespace core;
 
 namespace desktop {
