@@ -89,8 +89,8 @@ MainWindow::MainWindow(QUrl url) :
 QString MainWindow::getSumatraPdfExePath()
 {
    QWebFrame* pMainFrame = webView()->page()->mainFrame();
-   QString sumatraPath = pMainFrame->evaluateJavaScript(
-             QString::fromAscii("window.getSumatraPdfExePath()")).toString();
+   QString sumatraPath = pMainFrame->evaluateJavaScript(QString::fromAscii(
+                    "window.desktopHooks.getSumatraPdfExePath()")).toString();
    return sumatraPath;
 }
 

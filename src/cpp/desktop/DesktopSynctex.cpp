@@ -23,10 +23,10 @@
 #include "DesktopUtils.hpp"
 
 // per-platform synctex implemetnations
-#if defined(Q_OS_DARWIN)
+#if defined(Q_WS_MACX)
 
 #elif defined(Q_OS_WIN)
-
+#include "synctex/sumatra/SumatraSynctex.hpp"
 #elif defined(Q_OS_LINUX)
 #include "synctex/evince/EvinceSynctex.hpp"
 #endif
@@ -61,7 +61,12 @@ SynctexViewer s_viewer;
 
 SynctexViewer discoverViewer()
 {
-   return SynctexViewer();
+  SynctexViewer sv;
+  sv.name = QString::fromAscii("SumatraPDF");
+  sv.versionMajor = 2;
+  sv.versionMinor = 0;
+  sv.versionPatch = 1;
+  return sv;
 }
 
 #elif defined(Q_OS_LINUX)
@@ -141,10 +146,10 @@ QString Synctex::desktopViewerName()
 Synctex* Synctex::create(MainWindow* pMainWindow)
 {
    // per-platform synctex implemetnations
-#if defined(Q_OS_DARWIN)
+#if defined(Q_WS_MACX)
    return new Synctex(pMainWindow);
 #elif defined(Q_OS_WIN)
-   return new Synctex(pMainWindow);
+   return new synctex::SumatraSynctex(pMainWindow);
 #elif defined(Q_OS_LINUX)
    return new synctex::EvinceSynctex(pMainWindow);
 #else

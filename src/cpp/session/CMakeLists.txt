@@ -268,7 +268,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
       endif()
    endif()
 
-   # install gnudiff and mysys_ssh on windows
+   # install gnudiff, mysys_ssh, and sumatra-pdf on windows
    if(WIN32)
       install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/gnudiff"
               USE_SOURCE_PERMISSIONS
@@ -279,6 +279,12 @@ if (NOT RSTUDIO_SESSION_WIN64)
       install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/msys_ssh"
               USE_SOURCE_PERMISSIONS
               DESTINATION  ${RSTUDIO_INSTALL_BIN})
+
+
+      install(PROGRAMS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/sumatra/SumatraPDF.exe"
+              DESTINATION  "${RSTUDIO_INSTALL_BIN}/sumatra")
+      install(FILES resources/sumatrapdfrestrict.ini
+               DESTINATION  "${RSTUDIO_INSTALL_BIN}/sumatra")
    endif()
 endif()
 

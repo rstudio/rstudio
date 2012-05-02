@@ -252,6 +252,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("external-msysssh-path",
        value<std::string>(&msysSshPath_)->default_value("bin/msys_ssh"),
        "Path to msys_ssh utilities (windows-only)")
+      ("external-sumatra-path",
+       value<std::string>(&sumatraPath_)->default_value("bin/sumatra"),
+       "Path to SumatraPDF (windows-only)")
       ("external-hunspell-dictionaries-path",
        value<std::string>(&hunspellDictionariesPath_)->default_value("resources/dictionaries"),
        "Path to hunspell dictionaries");
@@ -362,7 +365,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(resourcePath, &gnudiffPath_);
    resolvePath(resourcePath, &gnugrepPath_);
    resolvePath(resourcePath, &msysSshPath_);
-
+   resolvePath(resourcePath, &sumatraPath_);
 #endif
    resolvePath(resourcePath, &hunspellDictionariesPath_);
 
