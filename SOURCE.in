@@ -24,6 +24,11 @@ RStudio for Windows is bundled with various binaries from the MSYS
 project. You can obtain the source code for MSYS at:
 
   http://sourceforge.net/projects/mingw/files/MSYS/
+  
+RStudio for Windows is bunled with a binary copy of SumatraPDF.
+You can obtain the source code for SumatraPDF at:
+
+  http://code.google.com/p/sumatrapdf/
  
 In the alternate, you may request a copy of the GNU DiffUtils or MSYS
 source code by e-mail to info@rstudio.org.

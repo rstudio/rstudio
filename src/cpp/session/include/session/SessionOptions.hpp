@@ -197,6 +197,11 @@ public:
    {
       return core::FilePath(msysSshPath_.c_str());
    }
+
+   core::FilePath sumatraPath() const
+   {
+      return core::FilePath(sumatraPath_.c_str());
+   }
    
    core::FilePath hunspellDictionariesPath() const
    {
@@ -319,6 +324,7 @@ private:
    std::string gnudiffPath_;
    std::string gnugrepPath_;
    std::string msysSshPath_;
+   std::string sumatraPath_;
    std::string hunspellDictionariesPath_;
 
    // user info
