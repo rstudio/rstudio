@@ -30,7 +30,6 @@
 
 // TODO: multiple output lines in compile pdf
 
-// TODO: ensure multifile works
 
 using namespace core;
 
