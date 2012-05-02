@@ -14,8 +14,18 @@
 
 package org.rstudio.studio.client.common.synctex;
 
+import org.rstudio.studio.client.application.Desktop;
+
 public class SynctexUtils
 {
+   public static String getDesktopSynctexViewer()
+   {
+      if (Desktop.isDesktop())
+         return Desktop.getFrame().getDesktopSynctexViewer();
+      else
+         return "";
+   }
+   
    public static void maybeShowFirefoxWarning(String target)
    {
       /*

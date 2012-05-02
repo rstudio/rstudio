@@ -91,6 +91,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    String getFixedWidthFont();
    void setFixedWidthFont(String font);
    
+   String getDesktopSynctexViewer();
+   
    void externalSynctexPreview(String pdfPath, int page);
    
    void externalSynctexView(String pdfFile, 

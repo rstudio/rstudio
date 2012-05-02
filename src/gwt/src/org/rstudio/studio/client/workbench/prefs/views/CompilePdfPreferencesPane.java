@@ -17,12 +17,11 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.latex.LatexProgramSelectWidget;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
-import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.common.synctex.SynctexUtils;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.CompilePdfPrefs;
@@ -32,12 +31,9 @@ public class CompilePdfPreferencesPane extends PreferencesPane
 {
    @Inject
    public CompilePdfPreferencesPane(UIPrefs prefs,
-                                    Session session,
                                     PreferencesDialogResources res)
    {
       prefs_ = prefs;
-      desktopSynctexViewer_ = StringUtil.notNull(
-                        session.getSessionInfo().getDesktopSynctexViewer());
       res_ = res;
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
 
@@ -150,9 +146,10 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       
       pdfPreview_.addChoice("(No Preview)", UIPrefsAccessor.PDF_PREVIEW_NONE);
       
-      if (desktopSynctexViewer_.length() > 0)
+      String desktopSynctexViewer = SynctexUtils.getDesktopSynctexViewer();
+      if (desktopSynctexViewer.length() > 0)
       {
-         pdfPreview_.addChoice(desktopSynctexViewer_, 
+         pdfPreview_.addChoice(desktopSynctexViewer, 
                                UIPrefsAccessor.PDF_PREVIEW_DESKTOP_SYNCTEX);
       }
       
@@ -187,7 +184,6 @@ public class CompilePdfPreferencesPane extends PreferencesPane
    }
 
    private final UIPrefs prefs_;
-   private final String desktopSynctexViewer_;
    
    @SuppressWarnings("unused")
    private final PreferencesDialogResources res_;

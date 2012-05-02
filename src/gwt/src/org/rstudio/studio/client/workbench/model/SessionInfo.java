@@ -221,10 +221,6 @@ public class SessionInfo extends JavaScriptObject
       return this.internal_pdf_preview_enabled;
    }-*/;
    
-   public native final String getDesktopSynctexViewer() /*-{
-     return this.desktop_synctex_viewer;
-   }-*/;
-   
    public final native HTMLCapabilities getHTMLCapabilities() /*-{
       return this.html_capabilities;
    }-*/;

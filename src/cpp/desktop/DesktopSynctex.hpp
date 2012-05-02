@@ -24,7 +24,11 @@ namespace desktop {
 class Synctex : public QObject
 {
 public:
-   static Synctex* create(MainWindow* pMainWindow);
+    // return the name of a desktop viewer if there is one
+    // available for this platform/environment
+    static QString desktopViewerName();
+
+    static Synctex* create(MainWindow* pMainWindow);
 
    Q_OBJECT
 public:

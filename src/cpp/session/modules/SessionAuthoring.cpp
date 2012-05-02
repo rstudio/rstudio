@@ -238,26 +238,6 @@ json::Object compilePdfStateAsJson()
    return tex::compile_pdf::currentStateAsJson();
 }
 
-std::string desktopSynctexViewer()
-{
-   if (session::options().programMode() == kSessionProgramModeDesktop)
-   {
-#if defined(__APPLE__)
-   return std::string();
-#elif defined(_WIN32)
-   return std::string();
-#else
-   if (!module_context::findProgram("evince").empty())
-      return "Evince";
-   else
-      return std::string();
-#endif
-   }
-   else
-   {
-      return std::string();
-   }
-}
 
 Error initialize()
 {
