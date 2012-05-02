@@ -1974,6 +1974,9 @@ public class TextEditingTarget implements EditingTarget
       boolean useInternalPreview = 
             pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_RSTUDIO) && 
             session_.getSessionInfo().isInternalPdfPreviewEnabled();
+      boolean useDesktopSynctexPreview = 
+            pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_DESKTOP_SYNCTEX) &&
+            Desktop.isDesktop();
       
       Command onBeforeCompile = null;
       if (useInternalPreview)
@@ -1988,9 +1991,9 @@ public class TextEditingTarget implements EditingTarget
       }
       
       String action = new String();
-      if (showPdf && !useInternalPreview)
+      if (showPdf && !useInternalPreview && !useDesktopSynctexPreview)
          action = "view_external";
-       
+      
       handlePdfCommand(action, useInternalPreview, onBeforeCompile);
    }
    
