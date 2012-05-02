@@ -125,14 +125,14 @@ public class HistoryPresenter
                            final Provider<ViewFilePanel> pViewFilePanel,
                            final DisplayBuilder viewBuilder,
                            final Session session,
-                           final GitHistoryStrategy gitStrategy,
-                           final SVNHistoryStrategy svnStrategy)
+                           final Provider<GitHistoryStrategy> pGitStrategy,
+                           final Provider<SVNHistoryStrategy> pSvnStrategy)
    {
       String vcsName = session.getSessionInfo().getVcsName();
       if (vcsName.equalsIgnoreCase("git"))
-         strategy_ = gitStrategy;
+         strategy_ = pGitStrategy.get();
       else if (vcsName.equalsIgnoreCase("svn"))
-         strategy_ = svnStrategy;
+         strategy_ = pSvnStrategy.get();
       else
          throw new IllegalStateException("Unknown vcs name: " + vcsName);
 
