@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.latex.LatexProgramSelectWidget;
+import org.rstudio.studio.client.common.prefs.PrefsWidgetHelper;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.common.synctex.SynctexUtils;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
@@ -112,7 +113,9 @@ public class CompilePdfPreferencesPane extends PreferencesPane
             new String[]{},
             false, 
             true, 
-            false);       
+            false);   
+         
+         PrefsWidgetHelper.addHelpButton(this, "pdf_preview");
       }
    }
   
