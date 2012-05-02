@@ -39,11 +39,4 @@ public class CompilePdfPrefs extends JavaScriptObject
    public native final boolean getEnableShellEscape() /*-{
       return this.enable_shell_escape;
    }-*/;
-   
-   // this is an read-only pref passed back for context. it determines
-   // if this platform should add an item for a special synctex-capable
-   // desktop viewer.
-   public native final String getDesktopSynctexViewer() /*-{
-     return this.desktop_synctex_viewer;
-   }-*/;
 }

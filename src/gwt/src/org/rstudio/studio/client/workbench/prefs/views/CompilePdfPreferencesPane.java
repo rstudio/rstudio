@@ -22,6 +22,7 @@ import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.latex.LatexProgramSelectWidget;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.CompilePdfPrefs;
@@ -31,9 +32,12 @@ public class CompilePdfPreferencesPane extends PreferencesPane
 {
    @Inject
    public CompilePdfPreferencesPane(UIPrefs prefs,
+                                    Session session,
                                     PreferencesDialogResources res)
    {
       prefs_ = prefs;
+      desktopSynctexViewer_ = StringUtil.notNull(
+                        session.getSessionInfo().getDesktopSynctexViewer());
       res_ = res;
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
 
@@ -146,11 +150,9 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       
       pdfPreview_.addChoice("(No Preview)", UIPrefsAccessor.PDF_PREVIEW_NONE);
       
-      String desktopViewer = StringUtil.notNull(
-                                 compilePdfPrefs.getDesktopSynctexViewer());
-      if (desktopViewer.length() > 0)
+      if (desktopSynctexViewer_.length() > 0)
       {
-         pdfPreview_.addChoice(desktopViewer, 
+         pdfPreview_.addChoice(desktopSynctexViewer_, 
                                UIPrefsAccessor.PDF_PREVIEW_DESKTOP_SYNCTEX);
       }
       
@@ -158,7 +160,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
                             UIPrefsAccessor.PDF_PREVIEW_RSTUDIO);
       
       pdfPreview_.addChoice("System Viewer",
-                            UIPrefsAccessor.PDF_PREVIEW_RSTUDIO);
+                            UIPrefsAccessor.PDF_PREVIEW_SYSTEM);
       
       pdfPreview_.setValue(prefs_.pdfPreview().getValue());
    }
@@ -185,6 +187,8 @@ public class CompilePdfPreferencesPane extends PreferencesPane
    }
 
    private final UIPrefs prefs_;
+   private final String desktopSynctexViewer_;
+   
    @SuppressWarnings("unused")
    private final PreferencesDialogResources res_;
    

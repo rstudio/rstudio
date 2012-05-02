@@ -25,10 +25,12 @@
 #include "EvinceDaemon.hpp"
 #include "EvinceWindow.hpp"
 
-// TODO: defaulting to desktop viewer
+
 // TODO: handle differnet evince versions
 
 // TODO: multiple output lines in compile pdf
+
+// TODO: ensure multifile works
 
 using namespace core;
 

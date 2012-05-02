@@ -12,19 +12,32 @@
  */
 package org.rstudio.studio.client.workbench.prefs.model;
 
+import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.inject.Inject;
 
 public class UIPrefsAccessor extends Prefs
 {
    public UIPrefsAccessor(JsObject uiPrefs, JsObject projectUiPrefs)
    {
       super(uiPrefs, projectUiPrefs);
+      RStudioGinjector.INSTANCE.injectMembers(this);
+   }
+   
+   @Inject
+   void initialize(Session session)
+   {
+      session_ = session;
    }
 
    public PrefValue<Boolean> showLineNumbers()
@@ -153,7 +166,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<String> pdfPreview()
    {
-      return string("pdf_preview", PDF_PREVIEW_RSTUDIO);
+      return string("pdf_preview", getDefaultPdfPreview());
    }
    
    public PrefValue<Boolean> alwaysEnableRnwConcordance()
@@ -186,4 +199,39 @@ public class UIPrefsAccessor extends Prefs
    {
       return bool("ignore_words_with_numbers", true);
    }  
+   
+   private String getDefaultPdfPreview()
+   {
+      if (Desktop.isDesktop())
+      {
+         // if there is a desktop synctex viewer available then default to it
+         if (!StringUtil.isNullOrEmpty(
+                        session_.getSessionInfo().getDesktopSynctexViewer()))
+         {
+            return PDF_PREVIEW_DESKTOP_SYNCTEX;
+         }
+         
+         // otherwise default to the system viewer on linux and the internal 
+         // viewer on mac (windows will always have a desktop synctex viewer)
+         else
+         {
+            if (BrowseCap.isLinux())
+            {
+               return PDF_PREVIEW_SYSTEM;
+            }
+            else
+            {
+               return PDF_PREVIEW_RSTUDIO;
+            }
+         }
+      }
+      
+      // web mode -- always default to internal viewer
+      else
+      {
+         return PDF_PREVIEW_RSTUDIO;
+      }
+   }
+   
+   private Session session_;
 }

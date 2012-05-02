@@ -406,6 +406,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["latex_program_types"] = modules::authoring::supportedLatexProgramTypes();
    sessionInfo["tex_capabilities"] = modules::authoring::texCapabilitiesAsJson();
    sessionInfo["compile_pdf_state"] = modules::authoring::compilePdfStateAsJson();
+   if (options.programMode() == kSessionProgramModeDesktop)
+      sessionInfo["desktop_synctex_viewer"] = modules::authoring::desktopSynctexViewer();
 
    sessionInfo["html_capabilities"] = modules::html_preview::capabilitiesAsJson();
 
