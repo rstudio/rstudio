@@ -44,6 +44,12 @@ oop.inherits(Mode, MarkdownMode);
       value: "```{r}\n\n```\n",
       position: {row: 0, column: 5}
    };
+
+   this.getNextLineIndent = function(state, line, tab, tabSize, row)
+   {
+      return this.codeModel.getNextLineIndent(row, line, state, tab, tabSize);
+   };
+
 }).call(Mode.prototype);
 
 exports.Mode = Mode;

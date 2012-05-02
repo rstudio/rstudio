@@ -81,6 +81,11 @@ oop.inherits(Mode, TextMode);
       return this.$session.getState(position.row).match(/^r-/) ? 'R' : 'TeX';
    };
 
+   this.getNextLineIndent = function(state, line, tab, tabSize, row)
+   {
+      return this.codeModel.getNextLineIndent(row, line, state, tab, tabSize);
+   };
+
    this.checkOutdent = function(state, line, input)
    {
       return this.$outdent.checkOutdent(line, input);
