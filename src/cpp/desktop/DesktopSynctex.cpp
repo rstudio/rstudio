@@ -83,13 +83,6 @@ SynctexViewer discoverViewer()
       return SynctexViewer();
    }
 
-   // default to version 2.0.0 (which is pre-synctex)
-   SynctexViewer viewer;
-   viewer.name = QString::fromAscii("Evince");
-   viewer.versionMajor = 2;
-   viewer.versionMinor = 0;
-   viewer.versionPatch = 0;
-
    // trim output
    std::string stdOut = boost::algorithm::trim_copy(result.stdOut);
 
@@ -98,15 +91,29 @@ SynctexViewer discoverViewer()
    boost::regex re("^.*(\\d+)\\.(\\d+)\\.(\\d)+$");
    if (boost::regex_match(stdOut, match, re))
    {
-      viewer.versionMajor = safe_convert::stringTo<int>(match[1],
-                                                        viewer.versionMajor);
-      viewer.versionMinor = safe_convert::stringTo<int>(match[2],
-                                                        viewer.versionMinor);
-      viewer.versionPatch = safe_convert::stringTo<int>(match[3],
-                                                        viewer.versionMajor);
-   }
+      SynctexViewer sv;
+      sv.name = QString::fromAscii("Evince");
+      sv.versionMajor = safe_convert::stringTo<int>(match[1], 2);
+      sv.versionMinor = safe_convert::stringTo<int>(match[2], 0);
+      sv.versionPatch = safe_convert::stringTo<int>(match[3], 0);
 
-   return viewer;
+      // the synctex dBus interface changed to include a timestamp parameter
+      // in evince 2.91.3 -- we therefore require this version or greater
+      // in order to work with evince
+      if (QT_VERSION_CHECK(sv.versionMajor, sv.versionMinor, sv.versionPatch) >=
+          QT_VERSION_CHECK(2, 91, 3))
+      {
+         return sv;
+      }
+      else
+      {
+         return SynctexViewer();
+      }
+   }
+   else
+   {
+      return SynctexViewer();
+   }
 }
 
 #else

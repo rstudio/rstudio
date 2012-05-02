@@ -25,9 +25,6 @@
 #include "EvinceDaemon.hpp"
 #include "EvinceWindow.hpp"
 
-
-// TODO: handle differnet evince versions
-
 using namespace core;
 
 namespace desktop {
