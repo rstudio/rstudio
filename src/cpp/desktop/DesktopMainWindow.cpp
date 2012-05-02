@@ -86,6 +86,14 @@ MainWindow::MainWindow(QUrl url) :
    setStyleSheet(QString::fromAscii("QMainWindow { background: #e1e2e5; }"));
 }
 
+QString MainWindow::getSumatraPdfExePath()
+{
+   QWebFrame* pMainFrame = webView()->page()->mainFrame();
+   QString sumatraPath = pMainFrame->evaluateJavaScript(
+             QString::fromAscii("window.getSumatraPdfExePath()")).toString();
+   return sumatraPath;
+}
+
 void MainWindow::onCloseWindowShortcut()
 {
    QWebFrame* pMainFrame = webView()->page()->mainFrame();

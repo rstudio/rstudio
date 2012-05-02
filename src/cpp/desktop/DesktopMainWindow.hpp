@@ -30,6 +30,9 @@ class MainWindow : public GwtWindow
 public:
    MainWindow(QUrl url=QUrl());
 
+public:
+   QString getSumatraPdfExePath();
+
 public slots:
    void quit();
    void loadUrl(const QUrl& url);

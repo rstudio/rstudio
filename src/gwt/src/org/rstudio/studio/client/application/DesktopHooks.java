@@ -27,6 +27,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 
 /**
@@ -43,6 +44,7 @@ public class DesktopHooks
    @Inject
    public DesktopHooks(Commands commands,
                        EventBus events,
+                       Session session,
                        GlobalDisplay globalDisplay,
                        Server server,
                        FileTypeRegistry fileTypeRegistry,
@@ -51,6 +53,7 @@ public class DesktopHooks
    {
       commands_ = commands;
       events_ = events;
+      session_ = session;
       globalDisplay_ = globalDisplay;
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
@@ -147,9 +150,15 @@ public class DesktopHooks
    {
       return workbenchContext_.getREnvironmentPath();
    }
+   
+   String getSumatraPdfExePath()
+   {
+      return session_.getSessionInfo().getSumatraPdfExePath();
+   }
 
    private final Commands commands_;
    private final EventBus events_;
+   private final Session session_;
    private final GlobalDisplay globalDisplay_;
    private final Server server_;
    private final FileTypeRegistry fileTypeRegistry_;

@@ -456,6 +456,11 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["internal_pdf_preview_enabled"] =
                modules::authoring::isPdfViewerSupported(userAgent);
 
+   // send sumatra pdf if we are on windows
+#ifdef _WIN32
+   sessionInfo["sumatra_pdf_exe_path"] = "";
+#endif
+
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
    json::JsonRpcResponse jsonRpcResponse ;

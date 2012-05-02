@@ -221,6 +221,11 @@ public class SessionInfo extends JavaScriptObject
       return this.internal_pdf_preview_enabled;
    }-*/;
    
+   
+   public final native String getSumatraPdfExePath() /*-{
+      return this.sumatra_pdf_exe_path;
+   }-*/;
+   
    public final native HTMLCapabilities getHTMLCapabilities() /*-{
       return this.html_capabilities;
    }-*/;
