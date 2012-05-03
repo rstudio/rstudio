@@ -147,6 +147,9 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    @Override
    public void onSynctexEditFile(SynctexEditFileEvent event)
    {
+      if (Desktop.isDesktop())
+         Desktop.getFrame().bringMainFrameToFront();
+
       goToSourceLocation(event.getSourceLocation());
    }
    
