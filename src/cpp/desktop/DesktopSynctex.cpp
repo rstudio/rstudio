@@ -42,7 +42,7 @@ namespace {
 SynctexViewerInfo discoverViewer()
 {
   SynctexViewerInfo sv;
-  sv.name = QString::fromAscii("SumatraPDF");
+  sv.name = QString::fromAscii("Sumatra");
   sv.versionMajor = 2;
   sv.versionMinor = 0;
   sv.versionPatch = 1;

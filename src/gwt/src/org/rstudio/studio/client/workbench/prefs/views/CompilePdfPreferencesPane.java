@@ -152,7 +152,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       String desktopSynctexViewer = SynctexUtils.getDesktopSynctexViewer();
       if (desktopSynctexViewer.length() > 0)
       {
-         pdfPreview_.addChoice(desktopSynctexViewer, 
+         pdfPreview_.addChoice(desktopSynctexViewer  + " (Recommended)", 
                                UIPrefsAccessor.PDF_PREVIEW_DESKTOP_SYNCTEX);
       }
       
