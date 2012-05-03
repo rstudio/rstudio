@@ -44,6 +44,12 @@ oop.inherits(Mode, HtmlMode);
       value: "<!--begin.rcode\n\nend.rcode-->\n",
       position: {row: 0, column: 15}
    };
+    
+   this.getNextLineIndent = function(state, line, tab, tabSize, row)
+   {
+      return this.codeModel.getNextLineIndent(row, line, state, tab, tabSize);
+   };
+
 }).call(Mode.prototype);
 
 exports.Mode = Mode;
