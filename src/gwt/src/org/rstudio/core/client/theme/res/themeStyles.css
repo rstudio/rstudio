@@ -112,6 +112,14 @@ body {
 select {
    font-size: 12px;
 }
+
+@if rstudio.desktop true {
+.macintosh select {
+   font-size: 11px;
+   text-indent: 0.1em;
+}
+}
+
 input[type=text] {
    font-family: proportionalFont;
 }
