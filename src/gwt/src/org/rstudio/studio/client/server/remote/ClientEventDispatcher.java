@@ -34,6 +34,8 @@ import org.rstudio.studio.client.common.console.ConsoleProcessCreatedEvent;
 import org.rstudio.studio.client.common.console.ServerConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ServerConsolePromptEvent;
 import org.rstudio.studio.client.common.console.ServerProcessExitEvent;
+import org.rstudio.studio.client.common.synctex.events.SynctexEditFileEvent;
+import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
@@ -341,6 +343,11 @@ public class ClientEventDispatcher
          {
             CompilePdfResult result = event.getData();
             eventBus_.fireEvent(new CompilePdfCompletedEvent(result));
+         }
+         else if (type.equals(ClientEvent.SynctexEditFile))
+         {
+            SourceLocation sourceLocation = event.getData();
+            eventBus_.fireEvent(new SynctexEditFileEvent(sourceLocation));
          }
          else if (type.equals(ClientEvent.FindResult))
          {

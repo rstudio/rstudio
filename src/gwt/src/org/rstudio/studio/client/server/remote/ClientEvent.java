@@ -69,6 +69,7 @@ class ClientEvent extends JavaScriptObject
    public static final String CompilePdfOutputEvent = "compile_pdf_output_event";
    public static final String CompilePdfErrorsEvent = "compile_pdf_errors_event";
    public static final String CompilePdfCompletedEvent = "compile_pdf_completed_event";
+   public static final String SynctexEditFile = "synctex_edit_file";
    public static final String FindResult = "find_result";
    public static final String FindOperationEnded = "find_operation_ended";
 

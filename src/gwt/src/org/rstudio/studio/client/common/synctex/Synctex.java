@@ -31,6 +31,7 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
 import org.rstudio.studio.client.common.synctex.events.SynctexViewPdfEvent;
+import org.rstudio.studio.client.common.synctex.events.SynctexEditFileEvent;
 import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.common.synctex.model.SynctexServerOperations;
@@ -49,7 +50,8 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class Synctex implements CompilePdfStartedEvent.Handler,
-                                CompilePdfCompletedEvent.Handler
+                                CompilePdfCompletedEvent.Handler,
+                                SynctexEditFileEvent.Handler
 {
    @Inject
    public Synctex(GlobalDisplay globalDisplay,
@@ -76,6 +78,8 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       if (!satellite.isCurrentWindowSatellite())
       {
          registerMainWindowCallbacks();
+         
+         eventBus_.addHandler(SynctexEditFileEvent.TYPE, this);
       }
       else if (isCurrentWindowPdfViewerSatellite())
       {
@@ -139,6 +143,13 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
                                  event.getResult().getPdfLocation().getPage());
       }
    }
+   
+   @Override
+   public void onSynctexEditFile(SynctexEditFileEvent event)
+   {
+      goToSourceLocation(event.getSourceLocation());
+   }
+   
    
    public boolean isSynctexAvailable()
    {
