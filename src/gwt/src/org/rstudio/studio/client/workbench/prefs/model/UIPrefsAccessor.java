@@ -155,7 +155,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<String> pdfPreview()
    {
-      return string("pdf_preview", getDefaultPdfPreview());
+      return string("pdf_previewer", getDefaultPdfPreview());
    }
    
    public PrefValue<Boolean> alwaysEnableRnwConcordance()
