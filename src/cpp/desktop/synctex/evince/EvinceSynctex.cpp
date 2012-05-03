@@ -43,8 +43,9 @@ void logDBusError(const QDBusError& error, const ErrorLocation& location)
 
 } // anonymous namespace
 
-EvinceSynctex::EvinceSynctex(MainWindow* pMainWindow)
-   : Synctex(pMainWindow)
+EvinceSynctex::EvinceSynctex(const SynctexViewerInfo& viewerInfo,
+                             MainWindow* pMainWindow)
+   : Synctex(pMainWindow), viewerInfo_(viewerInfo)
 {
    pEvince_ = new EvinceDaemon(this);
 }
@@ -101,7 +102,7 @@ void EvinceSynctex::onFindWindowFinished(QDBusPendingCallWatcher* pWatcher)
    else
    {
       // initialize a connection to it
-      EvinceWindow* pWindow = new EvinceWindow(reply.value());
+      EvinceWindow* pWindow = new EvinceWindow(viewerInfo_, reply.value());
       if (!pWindow->isValid())
       {
          logDBusError(pWindow->lastError(), ERROR_LOCATION);

@@ -23,6 +23,8 @@
 #include <QtCore/QVariant>
 #include <QtDBus/QtDBus>
 
+#include <DesktopSynctex.hpp>
+
 namespace desktop {
 namespace synctex {
 
@@ -34,22 +36,42 @@ public:
     { return "org.gnome.evince.Window"; }
 
 public:
-    EvinceWindow(const QString &service, QObject *parent = 0);
+    EvinceWindow(const SynctexViewerInfo& viewerInfo,
+                 const QString &service,
+                 QObject *parent = 0);
 
     ~EvinceWindow();
 
 public Q_SLOTS: // METHODS
     inline QDBusPendingReply<> SyncView(const QString &source_file, const QPoint &source_point, uint timestamp)
     {
-        QList<QVariant> argumentList;
-        argumentList << QVariant::fromValue(source_file) << QVariant::fromValue(source_point) << QVariant::fromValue(timestamp);
-        return asyncCallWithArgumentList(QLatin1String("SyncView"), argumentList);
+       // get source file path
+       QString srcFilePath = source_file;
+
+       // fixup the source file to have a "/./" (required by Evince < 3.3.2
+       // because it hadn't yet updated to version 1.17 of the synctex parser
+       // which is much more liberal in path parsing)
+       if (viewerInfo_.version() < QT_VERSION_CHECK(3,3,20))
+       {
+          QFileInfo srcFileInfo(srcFilePath);
+          srcFilePath = srcFileInfo.canonicalPath() +
+                        QString::fromAscii("/./") +
+                        srcFileInfo.fileName();
+       }
+
+       // invoke SyncView
+       QList<QVariant> argumentList;
+       argumentList << QVariant::fromValue(srcFilePath) << QVariant::fromValue(source_point) << QVariant::fromValue(timestamp);
+       return asyncCallWithArgumentList(QLatin1String("SyncView"), argumentList);
     }
 
 Q_SIGNALS: // SIGNALS
     void Closed();
     void DocumentLoaded(const QString &uri);
     void SyncSource(const QString &source_file, const QPoint &source_point, uint timestamp);
+
+private:
+    SynctexViewerInfo viewerInfo_;
 };
 
 } // namespace synctex

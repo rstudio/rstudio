@@ -19,14 +19,33 @@
 #include "DesktopMainWindow.hpp"
 namespace desktop {
 
+struct SynctexViewerInfo
+{
+   SynctexViewerInfo()
+      : versionMajor(0), versionMinor(0), versionPatch(0)
+   {
+   }
+
+   QString name;
+
+   bool empty() const { return name.isEmpty(); }
+
+   int version() const
+   {
+      return QT_VERSION_CHECK(versionMajor, versionMinor, versionPatch);
+   }
+
+   int versionMajor;
+   int versionMinor;
+   int versionPatch;
+};
 
 
 class Synctex : public QObject
 {
 public:
-    // return the name of a desktop viewer if there is one
-    // available for this platform/environment
-    static QString desktopViewerName();
+    // return the desktop viewer if there is one for this platform/environment
+    static SynctexViewerInfo desktopViewerInfo();
 
     static Synctex* create(MainWindow* pMainWindow);
 

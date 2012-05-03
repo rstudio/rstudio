@@ -35,7 +35,8 @@ class EvinceSynctex : public Synctex
    Q_OBJECT
 
 public:
-   explicit EvinceSynctex(MainWindow* pMainWindow);
+   explicit EvinceSynctex(const SynctexViewerInfo& viewerInfo,
+                          MainWindow* pMainWindow);
 
    virtual void syncView(const QString& pdfFile,
                          const QString& srcFile,
@@ -84,6 +85,7 @@ private:
                  const QPoint& srcLoc);
 
 private:
+   SynctexViewerInfo viewerInfo_;
    EvinceDaemon* pEvince_;
    QMap<QString, EvinceWindow*> windows_;
 
