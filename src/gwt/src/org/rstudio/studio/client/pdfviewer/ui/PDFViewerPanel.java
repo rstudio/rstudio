@@ -14,6 +14,7 @@ package org.rstudio.studio.client.pdfviewer.ui;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -31,6 +32,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.pdfviewer.PDFViewerPresenter;
 import org.rstudio.studio.client.pdfviewer.events.InitCompleteEvent;
@@ -219,56 +221,75 @@ public class PDFViewerPanel extends Composite
    }
 
    @Override
-   public void navigateTo(PdfLocation pdfLocation)
+   public void navigateTo(final PdfLocation pdfLocation)
    {
       double factor = PDFView.currentScale() * 96 / 72;
 
-      double x = pdfLocation.getX() * factor;
-      double y = pdfLocation.getY() * factor;
-      double w = pdfLocation.getWidth() * factor;
-      double h = pdfLocation.getHeight() * factor;
+      final double x = pdfLocation.getX() * factor;
+      final double y = pdfLocation.getY() * factor;
+      final double w = pdfLocation.getWidth() * factor;
+      final double h = pdfLocation.getHeight() * factor;
 
-      Element pageContainer = Document.get().getElementById(
-            "pageContainer" + pdfLocation.getPage());
+      final Value<Integer> retries = new Value<Integer>(0);
 
-      if (pdfLocation.isFromClick())
+      // Sometimes pageContainer is null during load, so retry every 100ms
+      // until it's not, or we've tried 40 times.
+      Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
       {
-         final DivElement div = Document.get().createDivElement();
-         div.getStyle().setPosition(Style.Position.ABSOLUTE);
-         div.getStyle().setTop(y, Unit.PX);
-         div.getStyle().setLeft(x, Unit.PX);
-         div.getStyle().setWidth(w, Unit.PX);
-         div.getStyle().setHeight(h, Unit.PX);
-         div.getStyle().setBackgroundColor("rgba(0, 126, 246, 0.1)");
-         div.getStyle().setProperty("transition", "opacity 4s");
-         // use DomUtils to set transition styles so gwt doesn't assert
-         // an invalid style name (no camelCase) in debug mode
-         DomUtils.setStyle(div, "-moz-transition", "opacity 4s");
-         DomUtils.setStyle(div, "-webkit-transition", "opacity 4s");
-
-         pageContainer.appendChild(div);
-
-         Scheduler.get().scheduleFixedDelay(new Scheduler.RepeatingCommand()
+         @Override
+         public boolean execute()
          {
-            @Override
-            public boolean execute()
-            {
-               div.getStyle().setOpacity(0.0);
-               return false;
-            }
-         }, 2000);
-      }
+            Element pageContainer = Document.get().getElementById(
+                  "pageContainer" + pdfLocation.getPage());
 
-      // scroll to the page
-      PDFView.goToPage(pdfLocation.getPage());
-            
-      // if the target isn't on-screen then scroll to it
-      if (pdfLocation.getY() > getBottomCoordinates().getY())
-      {
-         Window.scrollTo(
-            Window.getScrollLeft(),
-            Math.max(0, pageContainer.getAbsoluteTop() + (int) y - 180));
-      }
+            if (pageContainer == null)
+            {
+               retries.setValue(retries.getValue() + 1);
+               return retries.getValue() < 40;
+            }
+
+            if (pdfLocation.isFromClick())
+            {
+               final DivElement div = Document.get().createDivElement();
+               div.getStyle().setPosition(Style.Position.ABSOLUTE);
+               div.getStyle().setTop(y, Unit.PX);
+               div.getStyle().setLeft(x, Unit.PX);
+               div.getStyle().setWidth(w, Unit.PX);
+               div.getStyle().setHeight(h, Unit.PX);
+               div.getStyle().setBackgroundColor("rgba(0, 126, 246, 0.1)");
+               div.getStyle().setProperty("transition", "opacity 4s");
+               // use DomUtils to set transition styles so gwt doesn't assert
+               // an invalid style name (no camelCase) in debug mode
+               DomUtils.setStyle(div, "-moz-transition", "opacity 4s");
+               DomUtils.setStyle(div, "-webkit-transition", "opacity 4s");
+
+               pageContainer.appendChild(div);
+
+               Scheduler.get().scheduleFixedDelay(new Scheduler.RepeatingCommand()
+               {
+                  @Override
+                  public boolean execute()
+                  {
+                     div.getStyle().setOpacity(0.0);
+                     return false;
+                  }
+               }, 2000);
+            }
+
+            // scroll to the page
+            PDFView.goToPage(pdfLocation.getPage());
+
+            // if the target isn't on-screen then scroll to it
+            if (pdfLocation.getY() > getBottomCoordinates().getY())
+            {
+               Window.scrollTo(
+                  Window.getScrollLeft(),
+                  Math.max(0, pageContainer.getAbsoluteTop() + (int) y - 180));
+            }
+
+            return false;
+         }
+      }, 100);
    }
 
    @Override
