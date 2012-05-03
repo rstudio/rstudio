@@ -286,6 +286,17 @@ FilePath Options::urlopenerPath() const
    return parentDir.complete("urlopener.exe");
 }
 
+FilePath Options::rsinversePath() const
+{
+   FilePath parentDir = scriptsPath();
+
+   // detect dev configuration
+   if (parentDir.filename() == "desktop")
+      parentDir = parentDir.complete("synctex/rsinverse");
+
+   return parentDir.complete("rsinverse.exe");
+}
+
 #endif
 
 QStringList Options::ignoredUpdateVersions() const

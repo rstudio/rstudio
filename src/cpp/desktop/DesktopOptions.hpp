@@ -62,6 +62,7 @@ public:
 
 #ifdef _WIN32
    core::FilePath urlopenerPath() const;
+   core::FilePath rsinversePath() const;
 #endif
 
    QStringList ignoredUpdateVersions() const;

@@ -346,12 +346,11 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["userIdentity"] = options.userIdentity(); 
    }
 
-   // only send log_dir, scratch_dir, and postback exe for desktop
+   // only send log_dir and scratch_dir if we are in desktop mode
    if (options.programMode() == kSessionProgramModeDesktop)
    {
       sessionInfo["log_dir"] = options.userLogPath().absolutePath();
       sessionInfo["scratch_dir"] = options.userScratchPath().absolutePath();
-      sessionInfo["postback_exe"] = options.rpostbackPath().absolutePath();
    }
 
    // temp dir

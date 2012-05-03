@@ -31,8 +31,6 @@ public:
    MainWindow(QUrl url=QUrl());
 
 public:
-   // accessors for desktopHooks
-   QString getPostbackExePath();
    QString getSumatraPdfExePath();
 
 public slots:
@@ -72,9 +70,6 @@ private:
    bool desktopHooksAvailable();
 
    virtual void onActivated();
-
-private:
-   QString getDesktopHooksStringValue(QString script);
 
 private:
    bool quitConfirmed_;

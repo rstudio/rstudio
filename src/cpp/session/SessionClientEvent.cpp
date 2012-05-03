@@ -79,8 +79,9 @@ const int kCompilePdfStartedEvent = 54;
 const int kCompilePdfOutputEvent = 55;
 const int kCompilePdfErrorsEvent = 56;
 const int kCompilePdfCompletedEvent = 57;
-const int kFindResult = 58;
-const int kFindOperationEnded = 59;
+const int kSynctexEditFile = 58;
+const int kFindResult = 59;
+const int kFindOperationEnded = 60;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -204,6 +205,8 @@ std::string ClientEvent::typeName() const
          return "compile_pdf_errors_event";
       case client_events::kCompilePdfCompletedEvent:
          return "compile_pdf_completed_event";
+      case client_events::kSynctexEditFile:
+         return "synctex_edit_file";
       case client_events::kFindResult:
          return "find_result";
       case client_events::kFindOperationEnded:

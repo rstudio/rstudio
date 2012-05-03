@@ -271,6 +271,28 @@ Error synctexInverseSearch(const json::JsonRpcRequest& request,
    return Success();
 }
 
+void rsinversePostback(const std::string& arguments,
+                       const module_context::PostbackHandlerContinuation& cont)
+{
+   // crack the arguments and bind to them positionally
+   http::Fields args;
+   http::util::parseQueryString(arguments, &args);
+   if (args.size() != 2)
+      cont(EXIT_FAILURE, "Invalid number of arguments");
+   std::string sourceFile = args[0].second;
+   int line = safe_convert::stringTo<int>(args[1].second, 1);
+
+   // apply inverse concordance
+   core::tex::SourceLocation srcLoc(FilePath(sourceFile), line, 1);
+   applyInverseConcordance(&srcLoc);
+
+   // edit the file
+   ClientEvent event(client_events::kSynctexEditFile,
+                     sourceLocationAsJson(srcLoc, true));
+   module_context::enqueClientEvent(event);
+
+   cont(EXIT_SUCCESS, "");
+}
 
 } // anonymous namespace
 
@@ -316,6 +338,18 @@ Error forwardSearch(const FilePath& rootFile,
 
 Error initialize()
 {
+   // register postback handler for sumatra pdf
+#ifdef _WIN32
+   std::string ignoredCommand; // assumes bash script invocation, we
+                               // don't/can't use that for rsinverse
+   Error error = module_context::registerPostbackHandler("rsinverse",
+                                                         rsinversePostback,
+                                                         &ignoredCommand);
+   if (error)
+      return error ;
+
+#endif
+
    // install rpc methods
    using boost::bind;
    using namespace module_context;

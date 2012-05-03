@@ -199,6 +199,7 @@ if(WIN32)
 
    if(NOT RSTUDIO_SESSION_WIN64)
       add_subdirectory(urlopener)
+      add_subdirectory(synctex/rsinverse)
    endif()
 
 elseif(APPLE)

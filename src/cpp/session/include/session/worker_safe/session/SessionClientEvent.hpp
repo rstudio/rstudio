@@ -78,6 +78,7 @@ extern const int kCompilePdfStartedEvent;
 extern const int kCompilePdfOutputEvent;
 extern const int kCompilePdfErrorsEvent;
 extern const int kCompilePdfCompletedEvent;
+extern const int kSynctexEditFile;
 extern const int kFindResult;
 extern const int kFindOperationEnded;
 }

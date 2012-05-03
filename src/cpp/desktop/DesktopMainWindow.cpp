@@ -86,25 +86,13 @@ MainWindow::MainWindow(QUrl url) :
    setStyleSheet(QString::fromAscii("QMainWindow { background: #e1e2e5; }"));
 }
 
-QString MainWindow::getPostbackExePath()
-{
-   return getDesktopHooksStringValue(QString::fromAscii(
-                             "window.desktopHooks.getPostbackExePath()"));
-}
-
 QString MainWindow::getSumatraPdfExePath()
 {
-   return getDesktopHooksStringValue(QString::fromAscii(
-                             "window.desktopHooks.getSumatraPdfExePath()"));
-}
-
-QString MainWindow::getDesktopHooksStringValue(QString script)
-{
    QWebFrame* pMainFrame = webView()->page()->mainFrame();
-   return pMainFrame->evaluateJavaScript(script).toString();
+   QString sumatraPath = pMainFrame->evaluateJavaScript(QString::fromAscii(
+                    "window.desktopHooks.getSumatraPdfExePath()")).toString();
+   return sumatraPath;
 }
-
-
 
 void MainWindow::onCloseWindowShortcut()
 {

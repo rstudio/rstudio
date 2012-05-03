@@ -75,10 +75,6 @@ public class SessionInfo extends JavaScriptObject
    public final native String getTempDir() /*-{
       return this.temp_dir;
    }-*/;
-   
-   public final native String getPostbackExePath() /*-{
-      return this.postback_exe;
-   }-*/;
 
    public final native JsObject getUiPrefs() /*-{
       if (!this.ui_prefs)
