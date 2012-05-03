@@ -36,6 +36,11 @@ Notes
 that this parameter be excluded from dBus calls in these versions and prior 
 (see: https://bugzilla.gnome.org/show_bug.cgi?id=632313).
 
+   NOTE: We attempted to modify our Qt DBus bindings to call the earlier
+   version of the API however initial testing of this against Evince 2.32.0
+   did not work correctly. This attempt is on the gnome2-synctex branch if
+   we want to experiment further.
+
 - It has been noted that in Synctex parser versions < 1.17 that there is a 
 requirement of including ./ in paths. For example see:
 http://jlebl.wordpress.com/2011/01/13/vim-evince-and-forward-and-backward-latex-synctex-search/
