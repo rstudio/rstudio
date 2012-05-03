@@ -19,19 +19,68 @@ work around; and (b) we need to modify the Window interface to
 deal with the fact that pre 2.9.1 versions of evince don't include 
 a timestamp parameter.
 
-Evince Synctex Changes
+Synctex Version History
 -----------------------------------------------------------------------
 
-- In Evince 2.91.3 a timestamp paramter was added to the synctex
-dBus interface (see: https://bugzilla.gnome.org/show_bug.cgi?id=632313).
-So for versions of Evince prior to that the timestamp parameter 
-needs to be ommitted.
+2.31.5 -- introduced
+2.31.6 -- updated synctex parser
+2.91.0 -- add timestamp to SyncView & fix crash when reverse search fails
+2.91.3 -- add timestamp to SyncSource signal
+3.1.90 -- update parser to 1.16
+3.3.20 -- update parser to 1.17 (more liberal path parsing)
+
+Notes
+-----------------------------------------------------------------------
+
+- The addition of the timestamp parameter in 2.91.* creates a requirement
+that this parameter be excluded from dBus calls in these versions and prior 
+(see: https://bugzilla.gnome.org/show_bug.cgi?id=632313).
+
+- It has been noted that in Synctex parser versions < 1.17 that there is a 
+requirement of including ./ in paths. For example see:
+http://jlebl.wordpress.com/2011/01/13/vim-evince-and-forward-and-backward-latex-synctex-search/
+We pass full paths in to evince and in our own testing on Evince 3.2.0 we
+have not observed this problem (perhaps addressed in 1.16?). There are
+some notes about TexLive 2011 -- perhaps the issue only occurs when running
+against synctex files created by TexLive 2011? (not yet in Ubuntu 12.04)
  
-- In Evince 3.1.90 the synctex library version was updated to 1.16
+- If for some reason the 1.16 parser is enough to overcome the issue then
+we should be OK, as mainstream distros (Debian, Ubuntu, and Fedora) all had
+evince 3.2 as the first appearance in their distros (none had 2.91.*). See 
+distro notes below. 
+ 
+- Here are some additional notes on the changes made to the synctex parser 
+regarding path handling:
+http://ftp.tug.org/svn/texlive/trunk/Build/source/texk/web2c/synctexdir/synctex_parser_readme.txt?view=markup
 
-- In Evince 3.3.2 the synctex library was updated to 1.17 -- this resolved
-issues with finicky file paths. Therefore, when running against 
-earlier versions of Evince we need to be sure to pass ther right paths.
+Evince Versions in Distributions
+-----------------------------------------------------------------------
 
+NOTE: Neither Ubuntu nor Fedora are shipping TexLive 2011 as of their
+most current versions (12.04 and 16 respectively). This means that if
+there is a problem confined concurrent use of Evince < 3.3.20 and 
+TexLive >= 2011 that no user would see it in the default configuration
+(they'd have to have installed TexLive 2011 directly)
+
+Ubuntu
+
+- 10.04 -- 2.30.3 (no synctex)
+- 10.10 -- 2.32.0 (first synctex)
+- 11.04 -- 2.32.0
+- 11.10 -- 3.2.0 (timestamp params)
+- 12.04 -- 3.4.0 (new 1.17 file parsing)
+
+Debian
+
+- Debian 6 -- 2.30.3 (no synctex)
+- Wheezy   -- 3.2.1
+
+Fedora
+
+- Fedora 13 -- 2.30.3 (no synctex)
+- Fedora 14 -- 2.32 (first synctex)
+- Fedora 15 -- 2.91.90 (timestamp for SyncView but NOT for SyncSource)
+- Fedora 16 -- 3.20 (timestamp also in SyncSource)
+- Fedora 17 -- 3.4.0 (new 1.17 file parsing)
 
 
