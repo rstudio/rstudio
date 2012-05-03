@@ -151,6 +151,11 @@ public class DesktopHooks
       return workbenchContext_.getREnvironmentPath();
    }
    
+   String getPostbackExePath()
+   {
+      return session_.getSessionInfo().getPostbackExePath();
+   }
+   
    String getSumatraPdfExePath()
    {
       return session_.getSessionInfo().getSumatraPdfExePath();
