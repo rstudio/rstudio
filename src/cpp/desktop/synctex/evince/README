@@ -41,6 +41,11 @@ that this parameter be excluded from dBus calls in these versions and prior
    did not work correctly. This attempt is on the gnome2-synctex branch if
    we want to experiment further.
 
+   NOTE: We also attempted to do a lightweight version of syncing based
+   on passing the -i parameter to evince. This worked only for when the
+   document wasn't open yet so didn't really buy us much. This attempt is
+   on the gnome2-pagesync branch if we want to experiment further.
+
 - It has been noted that in Synctex parser versions < 1.17 that there is a 
 requirement of including ./ in paths. For example see:
 http://jlebl.wordpress.com/2011/01/13/vim-evince-and-forward-and-backward-latex-synctex-search/
