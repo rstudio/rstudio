@@ -138,7 +138,29 @@ Synctex* Synctex::create(MainWindow* pMainWindow)
 
 void Synctex::onClosed(const QString& pdfFile)
 {
+   // don't notify the main window that the viewer closed -- this mechanism
+   // was originallly designed for the RStudio Viewer because after it closes
+   // there is no way for synctex to work. With desktop viewers there are
+   // two other considerations:
+   //
+   //  (1) there might be multiple viewers active and we don't want to
+   //      disable the command for the other viewers
+   //
+   //  (2) they can actually bring back the pdf viewer to do the sync
+   //      without triggering a compile
+   //
+   // if we want to take this all they way we could:
+   //
+   //   - Enable/disable the forward search on a per-editor basis (note
+   //     below that we pass the PDF file to the onClosed handler so
+   //     we have the context to do this
+   //
+   //   - Allow the RStudio Viewer to be opened without kicking off a compile
+   //
+
+   /*
    pMainWindow_->onPdfViewerClosed(pdfFile);
+   */
 }
 
 void Synctex::onSyncSource(const QString &srcFile, const QPoint &srcLoc)
