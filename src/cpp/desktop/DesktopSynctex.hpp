@@ -69,7 +69,10 @@ public:
    virtual void syncView(const QString& pdfFile, int pdfPage)
    {
    }
-   
+
+protected:
+   WId mainWindowId() const { return pMainWindow_->effectiveWinId(); }
+
 protected:
    void onClosed(const QString& pdfFile);
    void onSyncSource(const QString& srcFile, const QPoint& sourceLoc);

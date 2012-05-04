@@ -11,6 +11,8 @@
  *
  */
 
+#include <windows.h>
+
 #include <string>
 
 #include <core/Log.hpp>
@@ -34,12 +36,6 @@
 
 using namespace core;
 
-int exitFailure(const Error& error)
-{
-   LOG_ERROR(error);
-   return EXIT_FAILURE;
-}
-
 int main(int argc, char** argv)
 {
    try
@@ -55,9 +51,13 @@ int main(int argc, char** argv)
       // read options
       using namespace boost::program_options ;
       options_description rsinverseOptions("rsinverse");
+      unsigned int windowHandle;
       std::string port, sharedSecret, sourceFile;
       int line;
       rsinverseOptions.add_options()
+         ("hwnd",
+            value<unsigned int>(&windowHandle),
+            "hwnd of rstudio instance")
          ("port",
             value<std::string>(&port),
             "port of rstudio instance")
@@ -74,6 +74,7 @@ int main(int argc, char** argv)
       // define program options (allow positional specification)
       core::program_options::OptionsDescription optDesc("rsinverse");
       optDesc.commandLine.add(rsinverseOptions);
+      optDesc.positionalOptions.add("hwnd", 1);
       optDesc.positionalOptions.add("port", 1);
       optDesc.positionalOptions.add("secret", 1);
       optDesc.positionalOptions.add("source-file", 1);
@@ -83,6 +84,18 @@ int main(int argc, char** argv)
       ProgramStatus status = core::program_options::read(optDesc, argc, argv);
       if (status.exit())
          return status.exitCode();
+
+      // activate the window
+      HWND hRStudioWnd = reinterpret_cast<HWND>(windowHandle);
+      if (::IsWindow(hRStudioWnd))
+      {
+         HWND hwndPopup = ::GetLastActivePopup(hRStudioWnd);
+         if (::IsWindow(hwndPopup))
+            hRStudioWnd = hwndPopup;
+         ::SetForegroundWindow(hRStudioWnd);
+         if (::IsIconic(hRStudioWnd))
+            ::ShowWindow(hRStudioWnd, SW_RESTORE);
+      }
 
       // we presume that the path is passed to us in the system encoding
       sourceFile = string_utils::systemToUtf8(sourceFile);
@@ -113,7 +126,10 @@ int main(int argc, char** argv)
       http::Response response;
       error = http::sendRequest("127.0.0.1", port, request, &response);
       if (error)
-         return exitFailure(error);
+      {
+         LOG_ERROR(error);
+         return EXIT_FAILURE;
+      }
 
       std::string exitCode = response.headerValue(kPostbackExitCodeHeader);
       return safe_convert::stringTo<int>(exitCode, EXIT_FAILURE);

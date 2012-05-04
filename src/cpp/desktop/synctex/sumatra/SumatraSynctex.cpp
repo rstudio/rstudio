@@ -39,7 +39,7 @@ QStringList standardSumatraArgs()
    return args;
 }
 
-QStringList inverseSearchArgs()
+QStringList inverseSearchArgs(WId mainWindowId)
 {
    QStringList args;
    args.append(QString::fromAscii("-inverse-search"));
@@ -47,14 +47,28 @@ QStringList inverseSearchArgs()
    QString cmdFormat;
    QString quote = QString::fromAscii("\"");
    QString space = QString::fromAscii(" ");
+
+   // path to rsinverse binary
    std::string rsinverse = desktop::options().rsinversePath().absolutePath();
    cmdFormat.append(quote + QString::fromStdString(rsinverse) + quote);
    cmdFormat.append(space);
+
+   // main window handle
+   unsigned int hwnd = reinterpret_cast<unsigned int>(mainWindowId);
+   std::string hwndStr = boost::lexical_cast<std::string>(hwnd);
+   cmdFormat.append(QString::fromStdString(hwndStr));
+   cmdFormat.append(space);
+
+   // port
    cmdFormat.append(desktop::options().portNumber());
    cmdFormat.append(space);
+
+   // shared secret
    cmdFormat.append(
           QString::fromStdString(core::system::getenv("RS_SHARED_SECRET")));
    cmdFormat.append(space);
+
+   // file and line placeholders
    cmdFormat.append(QString::fromAscii("\"%f\" %l"));
    args.append(cmdFormat);
 
@@ -78,7 +92,7 @@ void SumatraSynctex::syncView(const QString& pdfFile,
    args.append(srcFile);
    args.append(
       QString::fromStdString(boost::lexical_cast<std::string>(srcLoc.x())));
-   args.append(inverseSearchArgs());
+   args.append(inverseSearchArgs(mainWindowId()));
    args.append(pdfFile);
    QProcess::startDetached(sumatraExePath_, args);
 }
@@ -88,7 +102,7 @@ void SumatraSynctex::syncView(const QString& pdfFile, int page)
    QStringList args = standardSumatraArgs();
    args.append(QString::fromAscii("-page"));
    args.append(QString::fromStdString(boost::lexical_cast<std::string>(page)));
-   args.append(inverseSearchArgs());
+   args.append(inverseSearchArgs(mainWindowId()));
    args.append(pdfFile);
    QProcess::startDetached(sumatraExePath_, args);
 }
