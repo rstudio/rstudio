@@ -63,6 +63,20 @@ distro notes below.
 regarding path handling:
 http://ftp.tug.org/svn/texlive/trunk/Build/source/texk/web2c/synctexdir/synctex_parser_readme.txt?view=markup
 
+- We've also discovered some other differences across versions highlighted in this thread: http://comments.gmane.org/gmane.emacs.auctex.general/4434. See particularly this comment:
+
+Mandar, I also checked when the needed Evince Daemon DBUS service was
+introduced.  It was around Evince version 2.30, but the API changed
+several times before 3.0.0.  Most importantly, before 3.0 you couldn't
+spawn a new evince instance via DBUS, which means AUCTeX would need to
+check if evince is running via DBUS, spawn a new instance via the
+command line if not, and then sync the view again via DBUS.  Another
+major API incompatibility is that until 2.91.3 (an unstable release) you
+needed to provide the local path to the document, and now evince wants a
+URI.  All in all, I think it's not worth the complexity to support the
+unstable pre-3.0 evince DBUS API.
+
+
 Evince Versions in Distributions
 -----------------------------------------------------------------------
 
