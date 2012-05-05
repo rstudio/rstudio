@@ -23,7 +23,7 @@ h4 {
 }
 
 #md_examples h4 {
-   margin-bottom: 3px;
+   margin-bottom: 8px;
 }
 
 #md_examples code {	
@@ -33,10 +33,14 @@ h4 {
 
 #md_examples pre {	
    line-height: 12px;
-   margin-top: 0;
-	background-color: #f5f5f5;
-	border: 1px solid #ccc;
-	padding: 4px;
+   margin-top: 3px;
+   background-color: #f5f5f5;
+   border: 1px solid #ccc;
+   padding: 4px;
+}
+
+#md_examples ul {
+   margin-top: 3px;
 }
 
 </style>
@@ -59,10 +63,10 @@ _italic_   __bold__
 
 <h4>Headers</h4>
 <pre><code>Header 1
-===================
+=========================
 
 Header 2
--------------------
+-------------------------
 
 ### Header 3
 
@@ -119,6 +123,15 @@ add <- function(a, b) {
 compute the sum of two numbers.
 </code></pre>
 
+<h4>Equations</h4>
+<p>Inline and display equations (LaTeX or ASCIIMath):</p>
+<pre><code>$<i>equation</i>$
+
+$$
+  <i>equation</i>
+$$
+</code></pre>
+
 <h4>Horizontal Rule / Page Break</h4>
 <p>Three or more asterisks or dashes:</p>
 <pre><code>******
@@ -139,7 +152,7 @@ Content Cell  | Content Cell
 
 At the bottom of the document:
 
-  [id]: http://example.com/  "Title"
+[id]: http://example.com/ "Title"
 </code></pre>
 
 <p>Images (titles optional):</p>
@@ -156,8 +169,39 @@ At the bottom of the document:
 ~~strikethrough~~
 </code></pre>
 
-<h4>Smartypants</h4>
-<p>Plain ASCII punctuation characters (e.g. dashes, quotes, etc.) are translated into smart typographic punctuation HTML entities. Common symbols including copyright and trademark are also translated.</p>
+<h4>Typographic Entities</h4>
+<p>
+ASCII characters are transformed into
+typographic HTML entities:
+</p>
+
+<ul>
+<li>
+Straight quotes ( &#34; and &#39; ) into &#8220;curly&#8221; quotes
+</li>
+
+<li>
+Backtick quotes (<code>``like this''</code>) into &#8220;curly&#8221; quotes
+</li>
+
+<li>
+Dashes (&#8220;<code>--</code>&#8221; and &#8220;<code>---</code>&#8221;) into en- and em-dash entities
+</li>
+
+<li>
+Three consecutive dots (&#8220;<code>...</code>&#8221;) into an ellipsis entity
+</li>
+
+<li>
+Fractions <code>1/4</code>, <code>1/2</code>, and <code>3/4</code> into &frac14;, &frac12;, and &frac34;.
+</li>
+
+<li>
+Symbols <code>(c)</code>, <code>(tm)</code>, and <code>(r)</code> into &copy;, &trade;, and &reg;
+</li>
+
+</ul>
+
 
 </div>
 
