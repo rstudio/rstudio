@@ -2009,7 +2009,14 @@ public class TextEditingTarget implements EditingTarget
       if (sourceLocation == null)
          return;
       
-      synctex_.forwardSearch(sourceLocation);
+      // compute the target pdf
+      FileSystemItem editorFile = FileSystemItem.createFile(
+                                              docUpdateSentinel_.getPath());
+      FileSystemItem targetFile = compilePdfHelper_.getTargetFile(editorFile);
+      String pdfFile = 
+         targetFile.getParentPath().completePath(targetFile.getStem() + ".pdf");
+      
+      synctex_.forwardSearch(pdfFile, sourceLocation);
    }
    
    

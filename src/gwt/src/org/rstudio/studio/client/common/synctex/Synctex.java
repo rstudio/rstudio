@@ -171,28 +171,27 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    // the state of the synctex command based on any external viewer closing.
    // now that we optionally support desktop viewers for synctex this 
    // assumption may not hold -- specfically there might be multiple active
-   // PDF viewers for different document. we have explicitly chosen to 
+   // PDF viewers for different document or we might not know that the 
+   // external viewer has closed . we have explicitly chosen to 
    // avoid the complexity of tracking distinct viewer states. if we want
    // to do this we probably should do the following:
    //
    //    - always keep the the syncex command available in all editors
-   //      so long as there is at least one preview window alive 
+   //      so long as there is at least one preview window alive; OR
    //
-   //    - have the server determine the pdfPath for a target file
-   //      (based on parsing magic comments, etc.) which will eliminate
-   //      the need for us to maintain the pdfPath_ separately here.
+   //    - for cases where we do know whether the window is still alive
+   //      editors could dynamically show/hide their synctex button
+   //      based on that more granular state
    //
-   // In any case, the two issues are command enable/disable and letting
-   // the server know which pdfPath to apply synctex/concordance to.
-   //
-   public boolean forwardSearch(SourceLocation sourceLocation)
+   public boolean forwardSearch(final String pdfFile, 
+                                SourceLocation sourceLocation)
    {
       if (handleDesktopSynctex())
       {
          // apply concordane
          final ProgressIndicator indicator = getSyncProgress();  
          server_.applyForwardConcordance(
-                                 pdfPath_, 
+                                 pdfFile, 
                                  sourceLocation, 
                                  new ServerRequestCallback<SourceLocation>() {
             @Override
@@ -203,7 +202,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
                if (sourceLocation != null)
                {
                   Desktop.getFrame().externalSynctexView(
-                                 pdfPath_,
+                                 pdfFile,
                                  sourceLocation.getFile(),
                                  sourceLocation.getLine(),
                                  sourceLocation.getColumn());    
