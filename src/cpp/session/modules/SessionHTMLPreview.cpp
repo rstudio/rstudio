@@ -211,6 +211,7 @@ private:
       // args
       std::vector<std::string> args;
       args.push_back("--silent");
+      args.push_back("--vanilla");
       args.push_back("-e");
       if (!knitrOutputFile_.empty())
       {

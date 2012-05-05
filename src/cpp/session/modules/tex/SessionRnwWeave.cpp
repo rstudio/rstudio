@@ -96,6 +96,7 @@ public:
    {
       std::vector<std::string> args;
       args.push_back("--silent");
+      args.push_back("--vanilla");
       args.push_back("-e");
       std::string cmd = "grDevices::pdf.options(useDingbats = FALSE); "
                         + weaveCommand(file);
