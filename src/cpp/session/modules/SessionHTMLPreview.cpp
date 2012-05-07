@@ -663,10 +663,7 @@ void handleMarkdownPreviewRequest(const http::Request& request,
       std::string mathjaxJs;
       if (requiresMathjax(htmlOutput))
       {
-         mathjaxJs = "<script type=\"text/javascript\" "
-                     "src=\"" + mathjaxUrl + "\">"
-                     "</script>"
-                     "<script type=\"text/javascript\">"
+         mathjaxJs = "<script type=\"text/x-mathjax-config\">"
                      "MathJax.Hub.Config({"
                         "tex2jax: {"
                            "processEscapes: true, "
@@ -681,7 +678,11 @@ void handleMarkdownPreviewRequest(const http::Request& request,
                            "minScaleAdjust: 125 "
                         "} "
                      "});"
-                     "</script>";
+                     "</script>"
+                     "<script type=\"text/javascript\" "
+                              "src=\"" + mathjaxUrl + "\">"
+                     "</script>"
+                 ;
       }
 
       // setup template filter
