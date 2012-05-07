@@ -22,7 +22,7 @@ mkdir -p $TARGET_DIR
 echo "$VERSION" > ../highlight-version
 python tools/build.py r
 
-cat <<'EOF' > $TARGET_DIR/highlight.js
+cat <<'EOF' > $TARGET_DIR/r-highlight.js
 /*
 Copyright (c) 2006, Ivan Sagalaev
 All rights reserved.
@@ -51,8 +51,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 EOF
 
-cat src/highlight.js >> $TARGET_DIR/highlight.js
-cp src/highlight.pack.js $TARGET_DIR/highlight.min.js
+cat src/highlight.js >> $TARGET_DIR/r-highlight.js
+cp src/highlight.pack.js $TARGET_DIR/r-highlight.min.js
  
 # return to tools dir
 cd ..

@@ -643,13 +643,13 @@ void handleMarkdownPreviewRequest(const http::Request& request,
       std::string highlightJs, highlightStyles;
       if (requiresHighlighting(htmlOutput))
       {
-         error = readStringFromFile(resPath.childPath("highlight.min.js"),
+         error = readStringFromFile(resPath.childPath("r-highlight.min.js"),
                                     &highlightJs);
          if (error)
             LOG_ERROR(error);
         highlightJs += "\n   hljs.initHighlightingOnLoad();";
 
-         error = readStringFromFile(resPath.childPath("highlight.css"),
+         error = readStringFromFile(resPath.childPath("r-highlight.css"),
                                     &highlightStyles);
          if (error)
             LOG_ERROR(error);
