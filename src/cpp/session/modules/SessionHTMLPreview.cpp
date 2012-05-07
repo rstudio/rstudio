@@ -619,25 +619,69 @@ std::string preFontFamily()
    return boost::algorithm::join(fonts, ", ");
 }
 
+std::string mathjaxJs(const std::string& htmlOutput)
+{
+   std::string mathjaxJs;
+   if (requiresMathjax(htmlOutput))
+   {
+      std::string mathjaxUrl = "http://cdn.mathjax.org/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+      // std::string mathjaxUrl = "https://d3eoax9i5htok0.cloudfront.net/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+
+      mathjaxJs = "<script type=\"text/x-mathjax-config\">"
+                  "MathJax.Hub.Config({"
+                     "tex2jax: {"
+                        "processEscapes: true, "
+                        "processEnvironments: false, "
+                        "inlineMath: [ ['$','$'] ], "
+                        "displayMath: [ ['$$','$$'] ] "
+                     "}, "
+                     "asciimath2jax: {"
+                        "delimiters: [ ['$','$'] ] "
+                     "}, "
+                     "\"HTML-CSS\": {"
+                        "minScaleAdjust: 125 "
+                     "} "
+                  "});"
+                  "</script>"
+                  "<script type=\"text/javascript\" "
+                           "src=\"" + mathjaxUrl + "\">"
+                  "</script>";
+   }
+
+   return mathjaxJs;
+}
+
+std::string previewMathjaxJs(const std::string& htmlOutput)
+{
+   return mathjaxJs(htmlOutput);
+}
+
+
+Error readPreviewTemplate(const FilePath& resPath,
+                          std::string* pPreviewTemplate)
+{
+
+   FilePath htmlPreviewFile = resPath.childPath("html_preview.htm");
+   return core::readStringFromFile(htmlPreviewFile, pPreviewTemplate);
+}
+
 void handleMarkdownPreviewRequest(const http::Request& request,
                                   http::Response* pResponse)
 {
    try
    {
-      // read output
-      std::string htmlOutput = s_pCurrentPreview_->readOutput();
-
-      // open input file (template)
+      // read input template
       FilePath resPath = session::options().rResourcesPath();
-      FilePath htmlPreviewFile = resPath.childPath("html_preview.htm");
-      boost::shared_ptr<std::istream> pIfs;
-      Error error = htmlPreviewFile.open_r(&pIfs);
+      std::string previewTemplate;
+      Error error = readPreviewTemplate(resPath, &previewTemplate);
       if (error)
       {
          pResponse->setError(error);
          return;
       }
-      pIfs->exceptions(std::istream::failbit | std::istream::badbit);
+
+      // read output
+      std::string htmlOutput = s_pCurrentPreview_->readOutput();
 
       // inject highlight.js if necessary
       std::string highlightJs, highlightStyles;
@@ -655,47 +699,16 @@ void handleMarkdownPreviewRequest(const http::Request& request,
             LOG_ERROR(error);
       }
 
-      std::string mathjaxUrl;
-      mathjaxUrl = "http://cdn.mathjax.org/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
-      // mathjaxUrl = "https://d3eoax9i5htok0.cloudfront.net/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
-
-      // inject mathjax if necessary
-      std::string mathjaxJs;
-      if (requiresMathjax(htmlOutput))
-      {
-         mathjaxJs = "<script type=\"text/x-mathjax-config\">"
-                     "MathJax.Hub.Config({"
-                        "tex2jax: {"
-                           "processEscapes: true, "
-                           "processEnvironments: false, "
-                           "inlineMath: [ ['$','$'] ], "
-                           "displayMath: [ ['$$','$$'] ] "
-                        "}, "
-                        "asciimath2jax: {"
-                           "delimiters: [ ['$','$'] ] "
-                        "}, "
-                        "\"HTML-CSS\": {"
-                           "minScaleAdjust: 125 "
-                        "} "
-                     "});"
-                     "</script>"
-                     "<script type=\"text/javascript\" "
-                              "src=\"" + mathjaxUrl + "\">"
-                     "</script>"
-                 ;
-      }
-
-      // setup template filter
+      // define template filter vars
       std::map<std::string,std::string> vars;
       vars["title"] = defaultTitle(htmlOutput);
       vars["preFontFamily"] = preFontFamily();
       vars["highlight_js"] = highlightJs;
       vars["highlight_js_styles"] = highlightStyles;
-      vars["mathjax_js"] = mathjaxJs;
+      vars["mathjax_js"] = mathjaxJs(htmlOutput);
       vars["html_output"] = htmlOutput;
-      text::TemplateFilter templateFilter(vars);
 
-      // setup filters
+      // define base64 image filter
       Base64ImageFilter imageFilter(s_pCurrentPreview_->targetDirectory());
 
       // open output file
@@ -709,20 +722,40 @@ void handleMarkdownPreviewRequest(const http::Request& request,
       }
       pOfs->exceptions(std::istream::failbit | std::istream::badbit);
 
-      // copy to output file with filters
-      boost::iostreams::filtering_ostream filteringStream ;
-      filteringStream.push(templateFilter);
-      filteringStream.push(imageFilter);
-      filteringStream.push(*pOfs);
-      boost::iostreams::copy(*pIfs, filteringStream, 128);
+      // setup template filter
+      text::TemplateFilter templateFilter(vars);
 
-      // close input and output files
-      pIfs.reset();
-      pOfs.reset();
+      // copy to output file with filters
+      std::istringstream inputStream(previewTemplate);
+      boost::iostreams::filtering_ostream outputStream ;
+      outputStream.push(templateFilter);
+      outputStream.push(imageFilter);
+      outputStream.push(*pOfs);
+      boost::iostreams::copy(inputStream, outputStream, 128);
+      pOfs.reset(); // close file
+
+      // do another pass to generate the version for the preview page
+
+      // special local variation of mathjax
+      vars["mathjax_js"] = previewMathjaxJs(htmlOutput);
+      text::TemplateFilter previewTemplateFilter(vars);
+
+      // write into string stream
+      std::stringstream previewStrStream;
+      previewStrStream.exceptions(std::istream::failbit | std::istream::badbit);
+
+      // copy to output string with filters
+      std::istringstream previewInputStream(previewTemplate);
+      boost::iostreams::filtering_ostream previewOutputStream ;
+      previewOutputStream.push(previewTemplateFilter);
+      previewOutputStream.push(imageFilter);
+      previewOutputStream.push(previewStrStream);
+      boost::iostreams::copy(previewInputStream, previewOutputStream, 128);
 
       // send response
       pResponse->setNoCacheHeaders();
-      pResponse->setFile(outputFile, request);
+      pResponse->setContentType("text/html");
+      pResponse->setBody(previewStrStream);
    }
    catch(const std::exception& e)
    {
