@@ -556,28 +556,9 @@ private:
    FilePath basePath_;
 };
 
-
-// add no-highlight designator to vanilla blocks
-class NoHighlightFilter : public boost::iostreams::regex_filter
-{
-public:
-   NoHighlightFilter()
-      : boost::iostreams::regex_filter(
-          boost::regex("^<pre><code>"),
-          boost::bind(&NoHighlightFilter::noHighlight, this, _1))
-   {
-   }
-
-private:
-   std::string noHighlight(const boost::cmatch&)
-   {
-      return "<pre><code class=\"no-highlight\">";
-   }
-};
-
 bool requiresHighlighting(const std::string& htmlOutput)
 {
-   boost::regex hlRegex("^<pre><code class=(?!\"no-highlight\")");
+   boost::regex hlRegex("<pre><code class=\"r\"");
    return boost::regex_search(htmlOutput, hlRegex);
 }
 
@@ -662,13 +643,13 @@ void handleMarkdownPreviewRequest(const http::Request& request,
       std::string highlightJs, highlightStyles;
       if (requiresHighlighting(htmlOutput))
       {
-         error = readStringFromFile(resPath.childPath("highlight.pack.js"),
+         error = readStringFromFile(resPath.childPath("highlight.min.js"),
                                     &highlightJs);
          if (error)
             LOG_ERROR(error);
         highlightJs += "\n   hljs.initHighlightingOnLoad();";
 
-         error = readStringFromFile(resPath.childPath("highlight.styles.css"),
+         error = readStringFromFile(resPath.childPath("highlight.css"),
                                     &highlightStyles);
          if (error)
             LOG_ERROR(error);
@@ -715,7 +696,6 @@ void handleMarkdownPreviewRequest(const http::Request& request,
 
       // setup filters
       Base64ImageFilter imageFilter(s_pCurrentPreview_->targetDirectory());
-      NoHighlightFilter noHighlightFilter;
 
       // open output file
       FilePath outputFile = s_pCurrentPreview_->htmlPreviewFile();
@@ -732,7 +712,6 @@ void handleMarkdownPreviewRequest(const http::Request& request,
       boost::iostreams::filtering_ostream filteringStream ;
       filteringStream.push(templateFilter);
       filteringStream.push(imageFilter);
-      filteringStream.push(noHighlightFilter);
       filteringStream.push(*pOfs);
       boost::iostreams::copy(*pIfs, filteringStream, 128);
 
