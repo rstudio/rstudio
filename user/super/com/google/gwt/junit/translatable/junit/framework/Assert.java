@@ -74,7 +74,7 @@ public class Assert {
     } else if (Math.abs(obj1 - obj2) <= delta) {
       return;
     } else {
-      fail(str + " expected=" + obj1 + " actual=" + obj2 + " delta=" + delta);
+      failFloatingPointNotEquals(str, format(obj1), format(obj2), format(delta));
     }
   }
 
@@ -85,13 +85,13 @@ public class Assert {
     } else if (Math.abs(obj1 - obj2) <= delta) {
       return;
     } else {
-      fail(str + " expected=" + obj1 + " actual=" + obj2 + " delta=" + delta);
+      failFloatingPointNotEquals(str, format(obj1), format(obj2), format(delta));
     }
   }
 
   public static void assertEquals(String msg, int expected, int actual) {
     if (expected != actual) {
-      fail(msg + " expected=" + expected + " actual=" + actual);
+      failNotEquals(msg, expected, actual);
     }
   }
 
@@ -108,7 +108,7 @@ public class Assert {
       return;
     }
 
-    fail(msg + " expected=" + obj1 + " actual=" + obj2);
+    failNotEquals(msg, obj1, obj2);
   }
 
   public static void assertEquals(String str, short obj1, short obj2) {
@@ -128,7 +128,7 @@ public class Assert {
   }
 
   public static void assertFalse(String message, boolean condition) {
-    assertTrue(message, !condition);
+    assertEquals(message, false, condition);
   }
 
   public static void assertNotNull(Object obj) {
@@ -136,7 +136,9 @@ public class Assert {
   }
 
   public static void assertNotNull(String msg, Object obj) {
-    assertTrue(msg, obj != null);
+    if (obj == null) {
+      fail(concatMessages(msg, "expected: not null, actual: null"));
+    }
   }
 
   public static void assertNotSame(Object obj1, Object obj2) {
@@ -148,11 +150,7 @@ public class Assert {
       return;
     }
 
-    if (msg == null) {
-      msg = "";
-    }
-
-    fail(msg + " expected and actual match");
+    fail(concatMessages(msg, "expected: not same as " + format(obj1) + ", actual: same"));
   }
 
   public static void assertNull(Object obj) {
@@ -160,7 +158,7 @@ public class Assert {
   }
 
   public static void assertNull(String msg, Object obj) {
-    assertTrue(msg, obj == null);
+    assertEquals(msg, null, obj);
   }
 
   public static void assertSame(Object obj1, Object obj2) {
@@ -172,11 +170,7 @@ public class Assert {
       return;
     }
 
-    if (msg == null) {
-      msg = "";
-    }
-
-    fail(msg + " expected and actual do not match");
+    failNotSame(msg, obj1, obj2);
   }
 
   public static void assertTrue(boolean condition) {
@@ -184,9 +178,7 @@ public class Assert {
   }
 
   public static void assertTrue(String message, boolean condition) {
-    if (!condition) {
-      fail(message);
-    }
+    assertEquals(message, true, condition);
   }
 
   public static void fail() {
@@ -194,33 +186,61 @@ public class Assert {
   }
 
   public static void fail(String message) {
+    if (message == null) {
+      message = "failed";
+    }
+
     throw new AssertionFailedError(message);
   }
 
   public static void failNotEquals(String message, Object expected,
       Object actual) {
-    String formatted = "";
-    if (message != null) {
-      formatted = message + " ";
-    }
-    fail(formatted + "expected :<" + expected + "> was not:<" + actual + ">");
+    fail(concatMessages(message, "expected: " + format(expected) + ", actual: " + format(actual)));
   }
 
   public static void failNotSame(String message, Object expected, Object actual) {
-    String formatted = "";
-    if (message != null) {
-      formatted = message + " ";
-    }
-    fail(formatted + "expected same:<" + expected + "> was not:<" + actual
-        + ">");
+    fail(concatMessages(
+        message, "expected: same as " + format(expected) + ", actual: " + format(actual)));
   }
 
   public static void failSame(String message) {
-    String formatted = "";
-    if (message != null) {
-      formatted = message + " ";
+    fail(concatMessages(message, "expected: not same, actual: same"));
+  }
+
+  /**
+   * Concatenates a user-supplied message and a JUnit-generated message.  The user message
+   * may be null, which is treated as "".
+   */
+  private static String concatMessages(String userMessage, String junitMessage) {
+    if (userMessage == null || userMessage.isEmpty()) {
+      return junitMessage;
     }
-    fail(formatted + "expected not same");
+    return userMessage + " - " + junitMessage;
+  }
+
+  /**
+   * Fails with a message that the given floating-point numbers aren't within the delta.
+   */
+  private static void failFloatingPointNotEquals(
+      String userMessage, String expected, String actual, String delta) {
+    fail(concatMessages(
+        userMessage,
+        "expected: within " + delta + " of " + expected + ", actual: " + actual));
+  }
+
+  /**
+   * Returns obj.toString() inside angled brackets if obj is not null; otherwise returns
+   * "null".  This function is used to format arguments of assert*() methods.  The angled
+   * brackets make a value easier to find by a human, and help the reader know the
+   * boundary of the value when it has leading or trailing whitespace.  Also, they allow the
+   * reader to distinguish between a null object (formatted as "null") and a String whose
+   * contents are "null" (formatted as "<null>").
+   */
+  private static String format(Object obj) {
+    if (obj == null) {
+      return "null";
+    }
+    return "<" + obj.toString() + ">";
   }
 
   /**
