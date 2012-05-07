@@ -160,6 +160,13 @@ public class DockLayoutPanelTest extends WidgetTestBase {
     assertPhysicalPaternity(panel, widget);
   }
 
+  public void testGetWidgetSize() {
+    DockLayoutPanel panel = createDockLayoutPanel();
+    Widget widget = new Label();
+    panel.addEast(widget, 123.4);
+    assertEquals(123.4, panel.getWidgetSize(widget), 0.1);
+  }
+
   public void testInsertLineEnd() {
     DockLayoutPanel panel = createDockLayoutPanel();
     Widget widget = new Label();

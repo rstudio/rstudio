@@ -283,6 +283,7 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
    * @param child the widget to be queried
    * @return the widget's layout direction, or <code>null</code> if it is not a
    *         child of this panel
+   * @throws AssertionError if the widget is not a child and assertions are enabled
    */
   public Direction getWidgetDirection(Widget child) {
     assertIsChild(child);
@@ -290,6 +291,22 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
       return null;
     }
     return ((LayoutData) child.getLayoutData()).direction;
+  }
+
+  /**
+   * Gets the layout size of the given child widget.
+   * 
+   * @param child the widget to be queried
+   * @return the widget's layout size, or <code>null</code> if it is not a child of
+   *         this panel
+   * @throws AssertionError if the widget is not a child and assertions are enabled
+   */
+  public Double getWidgetSize(Widget child) {
+    assertIsChild(child);
+    if (child.getParent() != this) {
+      return null;
+    }
+    return ((LayoutData) child.getLayoutData()).size;
   }
 
   /**
