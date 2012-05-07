@@ -31,6 +31,11 @@
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 
+// openssl calls on lion are are all marked as deprecated
+#ifdef __APPLE__
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 using namespace core;
 
 namespace core {
