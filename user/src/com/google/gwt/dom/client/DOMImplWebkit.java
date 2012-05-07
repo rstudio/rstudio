@@ -37,6 +37,19 @@ class DOMImplWebkit extends DOMImplStandardBase {
   }-*/;
 
   /**
+   * Webkit events sometimes target the text node inside of the element instead
+   * of the element itself, so we need to get the parent of the text node.
+   */
+  @Override
+  public native EventTarget eventGetTarget(NativeEvent evt) /*-{
+    var target = evt.target;
+    if (target && target.nodeType == 3) {
+      target = target.parentNode;
+    }
+    return target;
+  }-*/;
+
+  /**
    * Webkit based browsers require that we set the webkit-user-drag style
    * attribute to make an element draggable.
    */
