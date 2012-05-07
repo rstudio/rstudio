@@ -656,8 +656,8 @@ void handleMarkdownPreviewRequest(const http::Request& request,
       }
 
       std::string mathjaxUrl;
-      mathjaxUrl = "http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
-      // mathjaxUrl = "https://d3eoax9i5htok0.cloudfront.net/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+      mathjaxUrl = "http://cdn.mathjax.org/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+      // mathjaxUrl = "https://d3eoax9i5htok0.cloudfront.net/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
 
       // inject mathjax if necessary
       std::string mathjaxJs;
