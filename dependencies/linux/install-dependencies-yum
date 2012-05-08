@@ -44,6 +44,7 @@ sudo yum install -y xml-commons-apis
 cd ../common
 ./install-gwt
 ./install-dictionaries
+./install-mathjax
 cd ../linux
 
 # desktop dependencies (qt)

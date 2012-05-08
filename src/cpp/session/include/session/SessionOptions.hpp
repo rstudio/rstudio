@@ -208,6 +208,11 @@ public:
       return core::FilePath(hunspellDictionariesPath_.c_str());
    }
 
+   core::FilePath mathjaxPath() const
+   {
+      return core::FilePath(mathjaxPath_.c_str());
+   }
+
    // user info
    std::string userIdentity() const 
    { 
@@ -326,6 +331,7 @@ private:
    std::string msysSshPath_;
    std::string sumatraPath_;
    std::string hunspellDictionariesPath_;
+   std::string mathjaxPath_;
 
    // user info
    std::string userIdentity_;

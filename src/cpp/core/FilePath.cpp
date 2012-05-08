@@ -432,6 +432,7 @@ MimeType s_mimeTypes[] =
    { "exe",   "application/octet-stream" },
    { "dll",   "application/octet-stream" },
    { "deb",   "application/octet-stream" },
+   { "otf",   "application/octet-stream" },
    { "xpi",   "application/x-xpinstall" },
    
    { "mp2",   "audio/mpeg" },

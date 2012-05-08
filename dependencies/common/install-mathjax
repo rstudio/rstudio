@@ -1,0 +1,48 @@
+#!/bin/bash
+
+#
+# install-mathjax
+#
+# Copyright (C) 2009-11 by RStudio, Inc.
+#
+# This program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+set -e
+
+# install dir
+INSTALL_DIR=`pwd`
+
+# determine platform
+PLATFORM=`uname`
+
+# use curl or wget as appropriate
+download()
+{
+  if [ "$PLATFORM" == "Darwin" ]
+  then
+    curl -L https://s3.amazonaws.com/rstudio-buildtools/$1 > $1
+  else
+    wget https://s3.amazonaws.com/rstudio-buildtools/$1 -O $1
+  fi
+}
+
+# download and extract mathjax if necessary
+MATHJAX_DIR=mathjax
+if [ -d "$MATHJAX_DIR" ]
+then
+   echo "Mathjax already installed"
+else
+   MATHJAX=mathjax-20.zip
+   download $MATHJAX
+   unzip -q "$MATHJAX"
+   rm $MATHJAX
+fi
+
+# back to install dir
+cd $INSTALL_DIR

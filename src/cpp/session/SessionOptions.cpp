@@ -257,7 +257,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
        "Path to SumatraPDF (windows-only)")
       ("external-hunspell-dictionaries-path",
        value<std::string>(&hunspellDictionariesPath_)->default_value("resources/dictionaries"),
-       "Path to hunspell dictionaries");
+       "Path to hunspell dictionaries")
+      ("external-mathjax-path",
+        value<std::string>(&mathjaxPath_)->default_value("resources/mathjax"),
+        "Path to mathjax library");
 
    // user options (default user identity to current username)
    std::string currentUsername = core::system::username();
@@ -368,6 +371,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(resourcePath, &sumatraPath_);
 #endif
    resolvePath(resourcePath, &hunspellDictionariesPath_);
+   resolvePath(resourcePath, &mathjaxPath_);
 
    // shared secret with parent
    secret_ = core::system::getenv("RS_SHARED_SECRET");
