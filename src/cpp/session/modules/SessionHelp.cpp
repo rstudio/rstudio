@@ -574,10 +574,10 @@ void handleHttpdRequest(const std::string& location,
    }
 
    // markdown help is also a special case
-   if (path == "/doc/markdown_help.htm")
+   if (path == "/doc/markdown_help.html")
    {
       core::FilePath helpFile = options().rResourcesPath().childPath(
-                                                      "markdown_help.htm");
+                                                      "markdown_help.html");
       if (helpFile.exists())
       {
          pResponse->setFile(helpFile, request, filter);

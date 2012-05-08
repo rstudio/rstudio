@@ -591,8 +591,8 @@ std::string preFontFamily()
    linuxFonts.push_back("'Droid Sans Mono'");
 
    std::vector<std::string> windowsFonts;
-   windowsFonts.push_back("Consolas");
    windowsFonts.push_back("'Lucida Console'");
+   windowsFonts.push_back("Consolas");
 
    std::vector<std::string> macFonts;
    macFonts.push_back("Monaco");
@@ -619,61 +619,27 @@ std::string preFontFamily()
    return boost::algorithm::join(fonts, ", ");
 }
 
-std::string mathjaxJs(const std::string& mathjaxUrl,
-                      const std::string& htmlOutput)
-{
-   std::string mathjaxJs;
-   if (requiresMathjax(htmlOutput))
-   {
-      mathjaxJs = "<script type=\"text/x-mathjax-config\">"
-                  "MathJax.Hub.Config({"
-                     "tex2jax: {"
-                        "processEscapes: true, "
-                        "processEnvironments: false, "
-                        "inlineMath: [ ['$','$'] ], "
-                        "displayMath: [ ['$$','$$'] ] "
-                     "}, "
-                     "asciimath2jax: {"
-                        "delimiters: [ ['$','$'] ] "
-                     "}, "
-                     "\"HTML-CSS\": {"
-                        "minScaleAdjust: 125 "
-                     "} "
-                  "});"
-                  "</script>"
-                  "<script type=\"text/javascript\" "
-                           "src=\"" + mathjaxUrl + "\">"
-                  "</script>";
-   }
 
-   return mathjaxJs;
-}
-
-std::string mathjaxJs(const std::string& htmlOutput)
-{
-   return mathjaxJs(
-        "http://cdn.mathjax.org/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML",
-         htmlOutput);
-}
-
-
-std::string previewMathjaxJs(const std::string& htmlOutput)
+void modifyOutputForPreview(std::string* pOutput)
 {
    if (session::options().programMode() == kSessionProgramModeDesktop)
    {
-      // serving mathjax locally on osx crashes webkit (some type of font
-      // cache reference counting problem) so we only do this on win & linux
-#ifndef __APPLE__
-      return mathjaxJs("mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML",
-                       htmlOutput);
-#else
-      return mathjaxJs(htmlOutput);
-#endif
+      // use correct font ordering for this platform
+      *pOutput = boost::regex_replace(
+           *pOutput,
+            boost::regex("tt, code, pre \\{\\n\\s+font-family:[^\n]+;"),
+           "tt, code, pre {\n   font-family: " + preFontFamily() + ";");
 
-   }
-   else
-   {
-      return mathjaxJs(htmlOutput);
+
+      // serve mathjax locally when running in desktop mode under linux
+      // and windows (on the mac serving mathjax locally to webkit causes
+      // it to crash with a font cache reference counting problem)
+#ifndef __APPLE__
+      boost::algorithm::replace_all(
+           *pOutput,
+           "http://cdn.mathjax.org/mathjax/2.0-latest",
+           "mathjax");
+#endif
    }
 }
 
@@ -682,8 +648,31 @@ Error readPreviewTemplate(const FilePath& resPath,
                           std::string* pPreviewTemplate)
 {
 
-   FilePath htmlPreviewFile = resPath.childPath("html_preview.htm");
+   FilePath htmlPreviewFile = resPath.childPath("html_preview.html");
    return core::readStringFromFile(htmlPreviewFile, pPreviewTemplate);
+}
+
+void setVarFromHtmlResourceFile(const std::string& name,
+                                const std::string& fileName,
+                                std::map<std::string,std::string>* pVars)
+{
+   FilePath resPath = session::options().rResourcesPath();
+   FilePath filePath = resPath.complete(fileName);
+   std::string fileContents;
+   Error error = readStringFromFile(filePath, &fileContents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   (*pVars)[name] = fileContents;
+}
+
+void setVarFromHtmlResourceFile(const std::string& name,
+                                std::map<std::string,std::string>* pVars)
+{
+   setVarFromHtmlResourceFile(name, name + ".html", pVars);
 }
 
 void handleMarkdownPreviewRequest(const http::Request& request,
@@ -704,85 +693,57 @@ void handleMarkdownPreviewRequest(const http::Request& request,
       // read output
       std::string htmlOutput = s_pCurrentPreview_->readOutput();
 
-      // inject highlight.js if necessary
-      std::string highlightJs, highlightStyles;
-      if (requiresHighlighting(htmlOutput))
-      {
-         error = readStringFromFile(resPath.childPath("r-highlight.min.js"),
-                                    &highlightJs);
-         if (error)
-            LOG_ERROR(error);
-        highlightJs += "\n   hljs.initHighlightingOnLoad();";
-
-         error = readStringFromFile(resPath.childPath("r-highlight.css"),
-                                    &highlightStyles);
-         if (error)
-            LOG_ERROR(error);
-      }
-
-      // define template filter vars
+      // define template filter
       std::map<std::string,std::string> vars;
       vars["title"] = defaultTitle(htmlOutput);
-      vars["preFontFamily"] = preFontFamily();
-      vars["highlight_js"] = highlightJs;
-      vars["highlight_js_styles"] = highlightStyles;
-      vars["mathjax_js"] = mathjaxJs(htmlOutput);
+      setVarFromHtmlResourceFile("markdown_css", "markdown.css", &vars);
+      if (requiresHighlighting(htmlOutput))
+         setVarFromHtmlResourceFile("r_highlight", &vars);
+      else
+         vars["r_highlight"]  = "";
+      if (requiresMathjax(htmlOutput))
+         setVarFromHtmlResourceFile("mathjax", &vars);
+      else
+         vars["mathjax"] = "";
       vars["html_output"] = htmlOutput;
+      text::TemplateFilter templateFilter(vars);
 
       // define base64 image filter
       Base64ImageFilter imageFilter(s_pCurrentPreview_->targetDirectory());
 
-      // open output file
-      FilePath outputFile = s_pCurrentPreview_->htmlPreviewFile();
-      boost::shared_ptr<std::ostream> pOfs;
-      error = outputFile.open_w(&pOfs);
+      // write into in-memory string
+      std::istringstream previewInputStream(previewTemplate);
+      std::stringstream previewStrStream;
+      previewStrStream.exceptions(std::istream::failbit | std::istream::badbit);
+      boost::iostreams::filtering_ostream previewOutputStream ;
+      previewOutputStream.push(templateFilter);
+      previewOutputStream.push(imageFilter);
+      previewOutputStream.push(previewStrStream);
+      boost::iostreams::copy(previewInputStream,
+                             previewOutputStream,
+                             128);
+
+
+      // write to output file
+      std::string previewHtml = previewStrStream.str();
+      error = core::writeStringToFile(s_pCurrentPreview_->htmlPreviewFile(),
+                                      previewHtml);
       if (error)
       {
          pResponse->setError(error);
          return;
       }
-      pOfs->exceptions(std::istream::failbit | std::istream::badbit);
 
-      // setup template filter
-      text::TemplateFilter templateFilter(vars);
-
-      // copy to output file with filters
-      std::istringstream inputStream(previewTemplate);
-      boost::iostreams::filtering_ostream outputStream ;
-      outputStream.push(templateFilter);
-      outputStream.push(imageFilter);
-      outputStream.push(*pOfs);
-      boost::iostreams::copy(inputStream, outputStream, 128);
-      pOfs.reset(); // close file
-
-      // do another pass to generate the version for the preview page
-
-      // special local variation of mathjax
-      vars["mathjax_js"] = previewMathjaxJs(htmlOutput);
-      text::TemplateFilter previewTemplateFilter(vars);
-
-      // write into string stream
-      std::stringstream previewStrStream;
-      previewStrStream.exceptions(std::istream::failbit | std::istream::badbit);
-
-      // copy to output string with filters
-      std::istringstream previewInputStream(previewTemplate);
-      boost::iostreams::filtering_ostream previewOutputStream ;
-      previewOutputStream.push(previewTemplateFilter);
-      previewOutputStream.push(imageFilter);
-      previewOutputStream.push(previewStrStream);
-      boost::iostreams::copy(previewInputStream, previewOutputStream, 128);
-
-      // send response
-      pResponse->setNoCacheHeaders();
-      pResponse->setContentType("text/html");
-      pResponse->setBody(previewStrStream);
+      // modify outpout then write back to client
+      modifyOutputForPreview(&previewHtml);
+      pResponse->setDynamicHtml(previewHtml, request);
    }
    catch(const std::exception& e)
    {
       Error error = systemError(boost::system::errc::io_error,
                                 ERROR_LOCATION);
       error.addProperty("what", e.what());
+      LOG_ERROR(error);
       pResponse->setError(error);
    }
 }

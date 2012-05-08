@@ -243,7 +243,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
    add_subdirectory(rspdflatex)
 
    # HTML resources
-   file(GLOB HTML_RESOURCE_FILES "resources/*.htm")
+   file(GLOB HTML_RESOURCE_FILES "resources/*.html")
    install(FILES ${HTML_RESOURCE_FILES}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
    # CSS resources
