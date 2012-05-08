@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,14 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.core.client;
+package com.google.gwt.core.shared;
 
 /**
- * When running in Development Mode, acts as a bridge from {@link GWT} into the
+ * When running in Development Mode, acts as a bridge from GWT into the
  * Development Mode environment.
- * 
- * For code that may run anywhere besides the client, use
- * {@link com.google.gwt.core.shared.GWTBridge} instead.
  */
-public abstract class GWTBridge extends com.google.gwt.core.shared.GWTBridge {
+public abstract class GWTBridge {
+
+  public abstract <T> T create(Class<?> classLiteral);
+
+  public String getThreadUniqueID() {
+    return "";
+  }
+
+  public abstract String getVersion();
+
+  public abstract boolean isClient();
+
+  public abstract void log(String message, Throwable e);
 }

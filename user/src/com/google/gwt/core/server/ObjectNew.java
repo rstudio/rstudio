@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,14 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.core.client;
+package com.google.gwt.core.server;
+
+import com.google.gwt.core.server.ServerGwtBridge.ClassInstantiatorBase;
+import com.google.gwt.core.server.ServerGwtBridge.Properties;
 
 /**
- * When running in Development Mode, acts as a bridge from {@link GWT} into the
- * Development Mode environment.
- * 
- * For code that may run anywhere besides the client, use
- * {@link com.google.gwt.core.shared.GWTBridge} instead.
+ * A class instantiator that simple news the requested class.  Used as a last
+ * resort.
  */
-public abstract class GWTBridge extends com.google.gwt.core.shared.GWTBridge {
+final class ObjectNew extends ClassInstantiatorBase {
+  @SuppressWarnings("unchecked")
+  @Override
+  public <T> T create(Class<?> clazz, Properties properties) {
+    return tryCreate((Class<T>) clazz);
+  }
 }

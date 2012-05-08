@@ -45,6 +45,7 @@ public final class GWT {
    */
   private static final class DefaultUncaughtExceptionHandler implements
       UncaughtExceptionHandler {
+    @Override
     public void onUncaughtException(Throwable e) {
       log("Uncaught exception escaped", e);
     }
@@ -55,12 +56,6 @@ public final class GWT {
    * Development Mode.
    */
   public static final String HOSTED_MODE_PERMUTATION_STRONG_NAME = "HostedMode";
-
-  /**
-   * Always <code>null</code> in Production Mode; in Development Mode provides
-   * the implementation for certain methods.
-   */
-  private static GWTBridge sGWTBridge = null;
 
   /**
    * Defaults to <code>null</code> in Production Mode and an instance of
@@ -80,22 +75,14 @@ public final class GWT {
    * 
    * @param classLiteral a class literal specifying the base class to be
    *          instantiated
-   * @return the new instance, which must be typecast to the requested class.
+   * @return the new instance, which must be cast to the requested class
    */
   public static <T> T create(Class<?> classLiteral) {
-    if (sGWTBridge == null) {
-      /*
-       * In Production Mode, the compiler directly replaces calls to this method
-       * with a new Object() type expression of the correct rebound type.
-       */
-      throw new UnsupportedOperationException(
-          "ERROR: GWT.create() is only usable in client code!  It cannot be called, "
-              + "for example, from server code.  If you are running a unit test, "
-              + "check that your test case extends GWTTestCase and that GWT.create() "
-              + "is not called from within an initializer or constructor.");
-    } else {
-      return sGWTBridge.<T> create(classLiteral);
-    }
+    /*
+     * In Production Mode, the compiler directly replaces calls to this method
+     * with a new Object() type expression of the correct rebound type.
+     */
+    return com.google.gwt.core.shared.GWT.create(classLiteral);
   }
 
   /**
@@ -195,18 +182,15 @@ public final class GWT {
    * gwt-dev.
    */
   public static String getUniqueThreadId() {
-    if (sGWTBridge != null) {
-      return sGWTBridge.getThreadUniqueID();
-    }
-    return "";
+    return com.google.gwt.core.shared.GWT.getUniqueThreadId();
   }
 
   public static String getVersion() {
-    if (sGWTBridge == null) {
-      return getVersion0();
-    } else {
-      return sGWTBridge.getVersion();
+    String version = com.google.gwt.core.shared.GWT.getVersion();
+    if (version == null) {
+      version = getVersion0();
     }
+    return version;
   }
 
   /**
@@ -217,8 +201,7 @@ public final class GWT {
    * GWTTestCase test.
    */
   public static boolean isClient() {
-    // Replaced with "true" by GWT compiler.
-    return sGWTBridge != null && sGWTBridge.isClient();
+    return com.google.gwt.core.shared.GWT.isClient();
   }
 
   /**
@@ -227,16 +210,14 @@ public final class GWT {
    * in a plain JVM.
    */
   public static boolean isProdMode() {
-    // Replaced with "true" by GWT compiler.
-    return false;
+    return com.google.gwt.core.shared.GWT.isProdMode();
   }
 
   /**
    * Determines whether or not the running program is script or bytecode.
    */
   public static boolean isScript() {
-    // Replaced with "true" by GWT compiler.
-    return false;
+    return com.google.gwt.core.shared.GWT.isScript();
   }
 
   /**
@@ -244,7 +225,7 @@ public final class GWT {
    * are optimized out in Production Mode.
    */
   public static void log(String message) {
-    log(message, null);
+    com.google.gwt.core.shared.GWT.log(message);
   }
 
   /**
@@ -252,10 +233,9 @@ public final class GWT {
    * are optimized out in Production Mode.
    */
   public static void log(String message, Throwable e) {
-    if (sGWTBridge != null) {
-      sGWTBridge.log(message, e);
-    }
+    com.google.gwt.core.shared.GWT.log(message, e);
   }
+
 
   /**
    * The same as {@link #runAsync(RunAsyncCallback)}, except with an extra
@@ -293,7 +273,7 @@ public final class GWT {
    * Production Mode.
    */
   static void setBridge(GWTBridge bridge) {
-    sGWTBridge = bridge;
+    com.google.gwt.core.shared.GWT.setBridge(bridge);
     if (bridge != null) {
       setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler());
     }

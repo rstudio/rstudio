@@ -26,6 +26,8 @@
   <inherits name="com.google.gwt.core.EmulateJsStack" />
   <inherits name="com.google.gwt.core.AsyncFragmentLoader" />
 
+  <source path="client" />
+  <source path="shared" />
   <super-source path="translatable" />
 
   <define-linker name="sso" class="com.google.gwt.core.linker.SingleScriptLinker" />
