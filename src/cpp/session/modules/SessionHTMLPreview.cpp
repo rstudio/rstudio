@@ -648,7 +648,7 @@ Error readPreviewTemplate(const FilePath& resPath,
                           std::string* pPreviewTemplate)
 {
 
-   FilePath htmlPreviewFile = resPath.childPath("html_preview.html");
+   FilePath htmlPreviewFile = resPath.childPath("markdown.html");
    return core::readStringFromFile(htmlPreviewFile, pPreviewTemplate);
 }
 
