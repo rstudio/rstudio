@@ -210,7 +210,7 @@ well as menu structures (for main menu and popup menus).
          
       <separator/>
 
-      <menu label="P_lots">
+      <menu label="Pl_ots">
          <cmd refid="nextPlot"/>
          <cmd refid="previousPlot"/>
          <separator/>
