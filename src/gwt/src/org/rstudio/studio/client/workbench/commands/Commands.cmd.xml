@@ -372,8 +372,8 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="checkSpelling" value="F7" />
       <shortcut refid="fold" value="Alt+L"/>
       <shortcut refid="unfold" value="Shift+Alt+L" />
-      <shortcut refid="foldAll" value="Alt+0" />
-      <shortcut refid="unfoldAll" value="Shift+Alt+0" />
+      <shortcut refid="foldAll" value="Alt+A" />
+      <shortcut refid="unfoldAll" value="Shift+Alt+A" />
    </shortcuts>
 
    <!--
