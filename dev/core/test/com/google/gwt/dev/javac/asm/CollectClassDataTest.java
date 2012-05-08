@@ -32,6 +32,18 @@ import java.util.List;
  */
 public class CollectClassDataTest extends AsmTestCase {
 
+  public static class LongDoubleArgs {
+
+    @SuppressWarnings("unused")
+    public LongDoubleArgs(int x, long y, double z, Object o) {
+    }
+
+    @SuppressWarnings("unused")
+    public void longDoubleMethod(int xx, long yy, double zz, String s) {
+    }
+  }
+
+
   public static class One extends EmptyVisitor {
 
     @Override
@@ -261,6 +273,39 @@ public class CollectClassDataTest extends AsmTestCase {
     assertEquals(0, cd.getAccess() & ~Opcodes.ACC_SUPER);
     assertEquals(ClassType.Local, cd.getClassType());
     assertEquals("methodWithLocalStatic", cd.getOuterMethodName());
+  }
+
+  // See http://code.google.com/p/google-web-toolkit/issues/detail?id=6591
+  // Argument names were incorrect in the presence of long/double args
+  public void testLongDoubleArgs() {
+    CollectClassData cd = collect(LongDoubleArgs.class);
+    List<CollectMethodData> methods = cd.getMethods();
+    assertEquals(2, methods.size());
+    CollectMethodData method = methods.get(0);
+    Type[] argTypes = method.getArgTypes();
+    String[] argNames = method.getArgNames();
+    assertEquals("<init>", method.getName());
+    assertEquals("x", argNames[0]);
+    assertEquals("y", argNames[1]);
+    assertEquals("z", argNames[2]);
+    assertEquals("o", argNames[3]);
+    assertEquals("I", argTypes[0].toString());
+    assertEquals("J", argTypes[1].toString());
+    assertEquals("D", argTypes[2].toString());
+    assertEquals("Ljava/lang/Object;", argTypes[3].toString());
+
+    method = methods.get(1);
+    argTypes = method.getArgTypes();
+    argNames = method.getArgNames();
+    assertEquals("longDoubleMethod", method.getName());
+    assertEquals("xx", argNames[0]);
+    assertEquals("yy", argNames[1]);
+    assertEquals("zz", argNames[2]);
+    assertEquals("s", argNames[3]);
+    assertEquals("I", argTypes[0].toString());
+    assertEquals("J", argTypes[1].toString());
+    assertEquals("D", argTypes[2].toString());
+    assertEquals("Ljava/lang/String;", argTypes[3].toString());
   }
 
   private CollectClassData collect(Class<?> clazz) {

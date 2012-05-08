@@ -42,6 +42,7 @@ public class CollectMethodData extends EmptyVisitor {
   private boolean actualArgNames = false;
   private final int access;
   private int syntheticArgs;
+  private int longDoubleCounter;
 
   /**
    * Prepare to collect data for a method from bytecode.
@@ -176,6 +177,21 @@ public class CollectMethodData extends EmptyVisitor {
   @Override
   public void visitLocalVariable(String name, String desc, String signature,
       Label start, Label end, int index) {
+    // The incoming index is based on counting long and double
+    // arguments as taking up two slots.  For example, a method 'm(int
+    // a, long b, String c, double d, Object e)' will call this method
+    // with indices 0, 1, 3, 4, 6 (ignoring 'this' for the sake of the
+    // example).  To compensate, we set a counter to 0 at the first
+    // argument of each method and increment it for each long or
+    // double argument we encounter.  Then each incoming index is
+    // adjusted down by the value of the counter to obtain a simple
+    // index.
+    if (index == 0) {
+      longDoubleCounter = 0;
+    } else {
+      index -= longDoubleCounter;
+    }
+
     if ((access & Opcodes.ACC_STATIC) == 0) {
       // adjust for "this"
       // TODO(jat): do we need to account for this$0 in inner classes?
@@ -186,6 +202,11 @@ public class CollectMethodData extends EmptyVisitor {
     if (index >= 0 && index < argNames.length) {
       actualArgNames = true;
       argNames[index] = name;
+    }
+
+    // Adjust the counter
+    if ("J".equals(desc) || "D".equals(desc)) {
+      longDoubleCounter++;
     }
   }
 
