@@ -43,7 +43,11 @@ pre {
    border: 1px solid #ccc;
 }
 
-.r {
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code.r {
    background-color: #F8F8F8;
 }
 

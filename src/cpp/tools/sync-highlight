@@ -27,10 +27,6 @@ TARGET_FILE=$TARGET_DIR/r_highlight.html
 cat <<'EOF' > $TARGET_FILE
 <!-- Styles for R syntax highlighter -->
 <style type="text/css">
-   pre code {
-     display: block; padding: 0.5em;
-   }
-
    pre .operator,
    pre .paren {
      color: rgb(104, 118, 135)
