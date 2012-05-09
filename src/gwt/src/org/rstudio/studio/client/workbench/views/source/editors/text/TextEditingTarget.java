@@ -1898,7 +1898,7 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onMarkdownHelp()
    {
-      events_.fireEvent(new ShowHelpEvent("help/doc/markdown_help.htm")) ;
+      events_.fireEvent(new ShowHelpEvent("help/doc/markdown_help.html")) ;
    }
      
    @Handler
