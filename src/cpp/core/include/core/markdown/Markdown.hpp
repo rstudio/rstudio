@@ -54,8 +54,8 @@ struct HTMLOptions
    HTMLOptions()
       : useXHTML(true),
         hardWrap(true),
-        safelink(true),
         smartypants(true),
+        safelink(false),
         toc(false),
         skipHTML(false),
         skipStyle(false),
@@ -66,8 +66,8 @@ struct HTMLOptions
    }
    bool useXHTML;
    bool hardWrap;
-   bool safelink;
    bool smartypants;
+   bool safelink;
    bool toc;
    bool skipHTML;
    bool skipStyle;
