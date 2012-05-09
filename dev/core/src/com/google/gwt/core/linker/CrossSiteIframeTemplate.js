@@ -79,6 +79,13 @@ function __MODULE_FUNC__() {
   __propertyErrorFunction = null;
 
 
+  // Set up our entry in the page-wide registry of active modules.
+  // It must be set up before calling computeScriptBase() and
+  // getCompiledCodeFilename().
+  var activeModules =
+      ($wnd.__gwt_activeModules = ($wnd.__gwt_activeModules || {}));
+  activeModules["__MODULE_NAME__"] = {moduleName: "__MODULE_NAME__"};
+
   /****************************************************************************
    * Internal Helper functions that have been broken out into their own .js
    * files for readability and for easy sharing between linkers.  The linker
@@ -124,6 +131,7 @@ function __MODULE_FUNC__() {
 
   // Must be set before getCompiledFilename() is called
   __MODULE_FUNC__.__moduleBase = computeScriptBase();
+  activeModules["__MODULE_NAME__"].moduleBase = __MODULE_FUNC__.__moduleBase;
 
   // Must be done right before the "bootstrap" "end" stat is sent
   var filename = getCompiledCodeFilename();

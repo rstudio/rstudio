@@ -36,8 +36,4 @@
   };
 
   // make properties available to super dev mode hook
-  var global = self || window;
-  var activeModules = (global.__gwt_activeModules =
-      global.__gwt_activeModules || {});
-  activeModules["__MODULE_NAME__"] = {moduleName: "__MODULE_NAME__",
-    bindings: __MODULE_FUNC__.__getPropMap};
+  $wnd.__gwt_activeModules["__MODULE_NAME__"].bindings = __MODULE_FUNC__.__getPropMap;
