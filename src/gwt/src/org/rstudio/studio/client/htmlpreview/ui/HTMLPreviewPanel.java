@@ -99,6 +99,9 @@ public class HTMLPreviewPanel extends ResizeComposite
          
       }
       
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands.publishHTML().createToolbarButton());
+      
       
       findTextBox_ = new FindTextBox("Find");
       findTextBox_.setIconVisible(true);

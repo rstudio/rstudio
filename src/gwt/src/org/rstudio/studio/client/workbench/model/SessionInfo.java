@@ -229,5 +229,8 @@ public class SessionInfo extends JavaScriptObject
    public final native HTMLCapabilities getHTMLCapabilities() /*-{
       return this.html_capabilities;
    }-*/;
-  
+   
+   public final native boolean getRPubsEnabled() /*-{
+      return this.rpubs_enabled;
+   }-*/;
 }

@@ -462,6 +462,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
                options.sumatraPath().complete("SumatraPDF.exe").absolutePath();
 #endif
 
+   sessionInfo["rpubs_enabled"] = userSettings().rpubsEnabled();
+
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
    json::JsonRpcResponse jsonRpcResponse ;

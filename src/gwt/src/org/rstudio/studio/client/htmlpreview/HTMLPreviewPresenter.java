@@ -97,6 +97,10 @@ public class HTMLPreviewPresenter implements IsWidget
       pFileExport_ = pFileExport;
       
       binder.bind(commands, this);
+      
+      // remove publish if it's not supported
+      if (!session.getSessionInfo().getRPubsEnabled())
+         commands.publishHTML().remove();
          
       // map Ctrl-R to our internal refresh handler
       Event.addNativePreviewHandler(new NativePreviewHandler() {
@@ -233,6 +237,12 @@ public class HTMLPreviewPresenter implements IsWidget
                                        FileSystemItem.createFile(htmlFile)));
          }
       }
+   }
+   
+   @Handler
+   public void onPublishHTML()
+   {
+      
    }
    
    @Handler

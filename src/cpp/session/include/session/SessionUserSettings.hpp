@@ -143,6 +143,8 @@ public:
    std::string spellingLanguage() const;
    std::vector<std::string> spellingCustomDictionaries() const;
 
+   bool rpubsEnabled() const;
+
 private:
 
    void onSettingsFileChanged(

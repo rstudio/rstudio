@@ -527,4 +527,9 @@ void UserSettings::setWorkingDirectoryValue(const std::string& key,
       settings_.set(key, filePath.absolutePath());
 }
 
+bool UserSettings::rpubsEnabled() const
+{
+    return settings_.getBool("rpubsEnabled", false);
+}
+
 } // namespace session

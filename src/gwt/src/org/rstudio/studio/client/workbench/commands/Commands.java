@@ -55,6 +55,7 @@ public abstract class
    public abstract AppCommand markdownHelp();
    public abstract AppCommand knitToHTML();
    public abstract AppCommand previewHTML();
+   public abstract AppCommand publishHTML();
    public abstract AppCommand compilePDF();
    public abstract AppCommand synctexSearch();
    public abstract AppCommand activateSource();

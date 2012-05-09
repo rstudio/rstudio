@@ -656,6 +656,11 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Preview"
         menuLabel="Preview HTML"
         desc="Show a preview of the current document as HTML"/>
+        
+   <cmd id="publishHTML"
+        buttonLabel="Publish"
+        menuLabel="Publish to RPubs..."
+        desc="Publish the current document"/>      
  
    <cmd id="compilePDF"
         buttonLabel="Compile PDF"
