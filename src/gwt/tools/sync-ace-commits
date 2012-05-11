@@ -70,7 +70,7 @@ git merge \
     origin/patch/build-matchingbraceoutdent2
     
 git merge \
-    origin/patch/mousewheel2 \
+    origin/patch/mousewheel3 \
     origin/patch/consistent-gutter-width \
     origin/patch/suppress-native-scroll \
     origin/patch/build-markdown-html \
