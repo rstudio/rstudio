@@ -82,6 +82,7 @@ const int kCompilePdfCompletedEvent = 57;
 const int kSynctexEditFile = 58;
 const int kFindResult = 59;
 const int kFindOperationEnded = 60;
+const int kRPubsUploadStatus = 61;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -211,6 +212,8 @@ std::string ClientEvent::typeName() const
          return "find_result";
       case client_events::kFindOperationEnded:
          return "find_operation_ended";
+      case client_events::kRPubsUploadStatus:
+         return "rpubs_upload_status";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              boost::lexical_cast<std::string>(type_));

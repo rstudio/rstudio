@@ -173,11 +173,8 @@ private:
 
    void terminateWithError(const std::string& error)
    {
-      isRunning_ = false;
-
-
+      terminateWithResult(Result(error));
    }
-
 
    struct Result
    {
@@ -201,12 +198,17 @@ private:
       std::string continueUrl;
       std::string error;
    };
+
    void terminateWithResult(const Result& result)
    {
       isRunning_ = false;
 
-
-
+      json::Object statusJson;
+      statusJson["id"] = result.id;
+      statusJson["continueUrl"] = result.continueUrl;
+      statusJson["error"] = result.error;
+      ClientEvent event(client_events::kRPubsUploadStatus, statusJson);
+      module_context::enqueClientEvent(event);
    }
 
    Result parseOutput(const std::string& output)
@@ -324,8 +326,6 @@ Error initialize()
       (bind(registerRpcMethod, "terminate_rpubs_upload", terminateRpubsUpload))
    ;
    return initBlock.execute();
-   return Success();
-
 }
    
    

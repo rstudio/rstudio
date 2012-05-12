@@ -81,6 +81,7 @@ extern const int kCompilePdfCompletedEvent;
 extern const int kSynctexEditFile;
 extern const int kFindResult;
 extern const int kFindOperationEnded;
+extern const int kRPubsUploadStatus;
 }
    
 class ClientEvent
