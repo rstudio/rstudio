@@ -19,12 +19,15 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.fileexport.FileExport;
+import org.rstudio.studio.client.common.filetypes.FileType;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
@@ -70,7 +73,8 @@ public class HTMLPreviewPresenter implements IsWidget
       
       void showPreview(String url,
                        String htmlFile, 
-                       boolean enableSaveAs);
+                       boolean enableSaveAs,
+                       boolean enablePublish);
       
       void print();
    }
@@ -96,12 +100,8 @@ public class HTMLPreviewPresenter implements IsWidget
       fileSystemContext_ = fileSystemContext;
       pFileExport_ = pFileExport;
       
-      binder.bind(commands, this);
+      binder.bind(commands, this);  
       
-      // remove publish if it's not supported
-      if (!session.getSessionInfo().getRPubsEnabled())
-         commands.publishHTML().remove();
-         
       // map Ctrl-R to our internal refresh handler
       Event.addNativePreviewHandler(new NativePreviewHandler() {
          @Override
@@ -172,7 +172,7 @@ public class HTMLPreviewPresenter implements IsWidget
          {
             previewRunning_ = false;
             
-            HTMLPreviewResult result = event.getResult();
+            HTMLPreviewResult result = event.getResult();           
             if (result.getSucceeded())
             {
                lastSuccessfulPreview_ = result;
@@ -180,7 +180,9 @@ public class HTMLPreviewPresenter implements IsWidget
                view_.showPreview(
                   server_.getApplicationURL(result.getPreviewURL()),
                   result.getHtmlFile(),
-                  result.getEnableSaveAs());
+                  result.getEnableSaveAs(),
+                  session_.getSessionInfo().getRPubsEnabled() &&
+                  isMarkdownFile(result.getSourceFile()));
             }
             else
             {
@@ -208,6 +210,15 @@ public class HTMLPreviewPresenter implements IsWidget
             return savePreviewDir_;
          }
       };
+   }
+   
+   private boolean isMarkdownFile(String file)
+   {
+      FileSystemItem fsi = FileSystemItem.createFile(file);
+      FileTypeRegistry ftReg = RStudioGinjector.INSTANCE.getFileTypeRegistry();
+      FileType fileType = ftReg.getTypeForFile(fsi);
+      return fileType.equals(FileTypeRegistry.MARKDOWN) ||
+             fileType.equals(FileTypeRegistry.RMARKDOWN);
    }
    
    public void onActivated(HTMLPreviewParams params)

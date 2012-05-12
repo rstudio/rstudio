@@ -99,8 +99,9 @@ public class HTMLPreviewPanel extends ResizeComposite
          
       }
       
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands.publishHTML().createToolbarButton());
+      publishButtonSeparator_ = toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(
+               publishButton_ = commands.publishHTML().createToolbarButton());
       
       
       findTextBox_ = new FindTextBox("Find");
@@ -198,7 +199,8 @@ public class HTMLPreviewPanel extends ResizeComposite
    @Override
    public void showPreview(String url, 
                            String htmlFile,
-                           boolean enableSaveAs)
+                           boolean enableSaveAs,
+                           boolean enablePublish)
    {
       String shortFileName = StringUtil.shortPathName(
             FileSystemItem.createFile(htmlFile), 
@@ -207,6 +209,8 @@ public class HTMLPreviewPanel extends ResizeComposite
       fileLabel_.setText(shortFileName);
       saveHtmlPreviewAsSeparator_.setVisible(enableSaveAs);
       saveHtmlPreviewAs_.setVisible(enableSaveAs);
+      publishButtonSeparator_.setVisible(enablePublish);
+      publishButton_.setVisible(enablePublish);
       previewFrame_.navigate(url);
    }
    
@@ -272,5 +276,7 @@ public class HTMLPreviewPanel extends ResizeComposite
    private FindTextBox findTextBox_;
    private Widget saveHtmlPreviewAsSeparator_;
    private Widget saveHtmlPreviewAs_;
+   private Widget publishButtonSeparator_;
+   private Widget publishButton_;
    private HTMLPreviewProgressDialog activeProgressDialog_;
 }
