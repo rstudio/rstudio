@@ -166,24 +166,6 @@ public:
 
 private:
 
-   static Error rScriptPath(FilePath* pRScriptPath)
-   {
-      std::string rHomeBin;
-      r::exec::RFunction rHomeBinFunc("R.home", "bin");
-      Error error = rHomeBinFunc.call(&rHomeBin);
-      if (error)
-         return error;
-      FilePath rHomeBinPath(rHomeBin);
-
-#ifdef _WIN32
-   *pRScriptPath = rHomeBinPath.complete("Rterm.exe");
-#else
-   *pRScriptPath = rHomeBinPath.complete("R");
-#endif
-      return Success();
-   }
-
-
    void performKnit(const std::string& encoding, bool isMarkdown)
    {
       // set running flag
@@ -201,7 +183,7 @@ private:
 
       // R binary
       FilePath rProgramPath;
-      Error error = rScriptPath(&rProgramPath);
+      Error error = module_context::rScriptPath(&rProgramPath);
       if (error)
       {
          terminateWithError(error);

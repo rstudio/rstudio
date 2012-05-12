@@ -680,6 +680,24 @@ FilePath findProgram(const std::string& name)
    }
 }
 
+Error rScriptPath(FilePath* pRScriptPath)
+{
+   std::string rHomeBin;
+   r::exec::RFunction rHomeBinFunc("R.home", "bin");
+   Error error = rHomeBinFunc.call(&rHomeBin);
+   if (error)
+      return error;
+   FilePath rHomeBinPath(rHomeBin);
+
+#ifdef _WIN32
+*pRScriptPath = rHomeBinPath.complete("Rterm.exe");
+#else
+*pRScriptPath = rHomeBinPath.complete("R");
+#endif
+   return Success();
+}
+
+
 json::Object createFileSystemItem(const FileInfo& fileInfo)
 {
    json::Object entry ;

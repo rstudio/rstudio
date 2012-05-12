@@ -67,6 +67,9 @@ core::FilePath tempFile(const std::string& prefix,
 // find out the location of a binary
 core::FilePath findProgram(const std::string& name);
 
+// find the location of the R script
+core::Error rScriptPath(core::FilePath* pRScriptPath);
+
 // register a handler for rBrowseUrl
 typedef boost::function<bool(const std::string&)> RBrowseUrlHandler;
 core::Error registerRBrowseUrlHandler(const RBrowseUrlHandler& handler);

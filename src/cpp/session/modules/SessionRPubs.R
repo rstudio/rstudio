@@ -25,7 +25,7 @@
 #'   \code{rpubsUpload}.
 #' @param properties A named list containing additional document properties
 #'   (RPubs doesn't currently expect any additional properties, this parameter
-#'   is reserved for future use)
+#'   is reserved for future use).
 #' @param method Method to be used for uploading. "internal" uses an insecure
 #' http socket connection; "curl" uses either RCurl or the curl binary to
 #' do an https upload; "auto" attempts to use curl if it is available and 
