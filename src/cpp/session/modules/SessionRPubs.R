@@ -23,10 +23,9 @@
 #'   id parameter should specify the document id to update. Note that the
 #'   id is provided as an element of the list returned by successful calls to
 #'   \code{rpubsUpload}.
-#' @param properties A named list containing additional document properties. 
-#'   This is principally used to pass version control context to Rpubs. Valid 
-#'   list elements include \code{vcsOriginUrl}, \code{vcsBranch} \code{vcsPath},
-#'   and \code{vcsCommitted}.
+#' @param properties A named list containing additional document properties
+#'   (RPubs doesn't currently expect any additional properties, this parameter
+#'   is reserved for future use)
 #' @param method Method to be used for uploading. "internal" uses an insecure
 #' http socket connection; "curl" uses either RCurl or the curl binary to
 #' do an https upload; "auto" attempts to use curl if it is available and 
