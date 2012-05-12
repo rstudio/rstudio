@@ -99,6 +99,7 @@
 #include "modules/SessionPlots.hpp"
 #include "modules/SessionPath.hpp"
 #include "modules/SessionPackages.hpp"
+#include "modules/SessionRPubs.hpp"
 #include "modules/SessionSpelling.hpp"
 #include "modules/SessionSource.hpp"
 #include "modules/SessionVCS.hpp"
@@ -1324,6 +1325,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::help::initialize)
       (modules::plots::initialize)
       (modules::packages::initialize)
+      (modules::rpubs::initialize)
       (modules::source::initialize)
       (modules::source_control::initialize)
       (modules::authoring::initialize)
