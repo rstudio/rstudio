@@ -27,8 +27,6 @@
 #'   This is principally used to pass version control context to Rpubs. Valid 
 #'   list elements include \code{vcsOriginUrl}, \code{vcsBranch} \code{vcsPath},
 #'   and \code{vcsCommitted}.
-#' @param sourceFiles Additional source files to include with the document ( 
-#'   e.g. the .Rmd and/or .md file that was used to generate the HTML).
 #' @param method Method to be used for uploading. "internal" uses an insecure
 #' http socket connection; "curl" uses either RCurl or the curl binary to
 #' do an https upload; "auto" attempts to use curl if it is available and 
@@ -57,7 +55,6 @@ rpubsUpload <- function(title,
                         htmlFile, 
                         id = NULL,
                         properties = list(), 
-                        sourceFiles = character(),
                         method = c("auto", "internal", "curl")) {
    
    # validate inputs
@@ -71,9 +68,7 @@ rpubsUpload <- function(title,
       stop("specified htmlFile does not exist")
    if (!is.list(properties))
       stop("properties paramater must be a named list")
-   if (!is.character(sourceFiles))
-      stop("sourceFiles must be a character vector")
-   
+ 
    parseHeader <- function(header) {
       split <- strsplit(header, ": ")[[1]]
       if (length(split) == 2)
@@ -145,8 +140,7 @@ rpubsUpload <- function(title,
    
    buildPackage <- function(title, 
                             htmlFile, 
-                            properties = list(), 
-                            sourceFiles = character()) {
+                            properties = list()) {
       
       # build package.json
       packageJson <- "{"
@@ -164,15 +158,12 @@ rpubsUpload <- function(title,
       fileSep <- .Platform$file.sep
       packageDir <- tempfile()
       dir.create(packageDir)
-      dir.create(paste(packageDir, "sources", sep=fileSep))
       packageFile <- function(fileName) {
          paste(packageDir,fileName,sep=fileSep)
       }
       writeLines(packageJson, packageFile("package.json"))
       file.copy(htmlFile, packageFile("index.html"))
-      for (file in sourceFiles)
-         file.copy(file, packageFile(paste("sources", file, sep=fileSep)))
-      
+       
       # switch to the package dir for building
       oldWd <- getwd()
       setwd(packageDir)
@@ -380,7 +371,7 @@ rpubsUpload <- function(title,
    }
    
    # build the package
-   packageFile <- buildPackage(title, htmlFile, properties, sourceFiles)
+   packageFile <- buildPackage(title, htmlFile, properties)
    
    # determine whether this is a new doc or an update
    isUpdate <- FALSE
