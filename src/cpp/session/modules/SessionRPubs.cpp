@@ -13,12 +13,15 @@
 
 #include "SessionRPubs.hpp"
 
+#include <boost/bind.hpp>
 #include <boost/utility.hpp>
 #include <boost/format.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
 #include <core/Error.hpp>
+#include <core/Exec.hpp>
+#include <core/text/CsvParser.hpp>
 #include <core/system/Process.hpp>
 
 #include <r/RSexp.hpp>
@@ -51,6 +54,8 @@ public:
    {
    }
 
+   bool isRunning() const { return isRunning_; }
+
    void terminate()
    {
       terminationRequested_ = true;
@@ -58,7 +63,7 @@ public:
 
 private:
    RPubsUpload()
-      : terminationRequested_(false)
+      : terminationRequested_(false), isRunning_(false)
    {
    }
 
@@ -68,6 +73,8 @@ private:
    {
       using namespace core::string_utils;
       using namespace module_context;
+
+      isRunning_ = true;
 
       // R binary
       FilePath rProgramPath;
@@ -92,16 +99,16 @@ private:
       FilePath modulesPath = session::options().modulesRSourcePath();;
       std::string scriptPath = utf8ToSystem(
                         modulesPath.complete("SessionRPubs.R").absolutePath());
-      boost::replace_all(scriptPath, "\\", "\\\\");
-
       std::string htmlPath = utf8ToSystem(htmlFile.absolutePath());
-      boost::replace_all(htmlPath, "\\", "\\\\");
+
+      std::string escapedScriptPath = string_utils::jsLiteralEscape(scriptPath);
+      std::string escapedTitle = string_utils::jsLiteralEscape(title);
+      std::string escapedHtmlPath = string_utils::jsLiteralEscape(htmlPath);
+      std::string escapedId = string_utils::jsLiteralEscape(id);
 
       std::string cmd = boost::str(fmt %
-                                   scriptPath %
-                                   title %
-                                   htmlPath %
-                                   (!id.empty() ? "\"" + id + "\"" : "NULL"));
+                    escapedScriptPath % escapedTitle % escapedHtmlPath %
+                    (!escapedId.empty() ? "\"" + escapedId + "\"" : "NULL"));
       args.push_back(cmd);
 
       // options
@@ -142,31 +149,145 @@ private:
       error_.append(error);
    }
 
+
    void onCompleted(int exitStatus)
    {
       if (exitStatus == EXIT_SUCCESS)
       {
-         module_context::consoleWriteOutput(output_);
+         Result result = parseOutput(output_);
+         if (!result.empty())
+            terminateWithResult(result);
+         else
+            terminateWithError("Unexpected output from upload: " + output_);
       }
       else
       {
-         module_context::consoleWriteError("Error: " + error_);
+         terminateWithError(error_);
       }
    }
 
    void terminateWithError(const Error& error)
    {
+      terminateWithError(error.summary());
+   }
+
+   void terminateWithError(const std::string& error)
+   {
+      isRunning_ = false;
+
 
    }
 
 
+   struct Result
+   {
+      Result()
+      {
+      }
+
+      Result(const std::string& error)
+         : error(error)
+      {
+      }
+
+      Result(const std::string& id, const std::string& continueUrl)
+         : id(id), continueUrl(continueUrl)
+      {
+      }
+
+      bool empty() const { return id.empty() && error.empty();  }
+
+      std::string id;
+      std::string continueUrl;
+      std::string error;
+   };
+   void terminateWithResult(const Result& result)
+   {
+      isRunning_ = false;
+
+
+
+   }
+
+   Result parseOutput(const std::string& output)
+   {
+      std::pair<std::vector<std::string>, std::string::const_iterator>
+                  line = text::parseCsvLine(output.begin(), output.end());
+      if (!line.first.empty())
+      {
+         std::vector<std::string> headers = line.first;
+
+         line = text::parseCsvLine(line.second, output.end());
+         if (!line.first.empty())
+         {
+            std::vector<std::string> data = line.first;
+
+            if (headers.size() == 1 &&
+                data.size() == 1 &&
+                headers[0] == "error")
+            {
+               return Result(data[0]);
+            }
+            else if (headers.size() == 2 &&
+                     data.size() == 2 &&
+                     headers[0] == "id" &&
+                     headers[1] == "continueUrl")
+            {
+               return Result(data[0], data[1]);
+            }
+         }
+      }
+
+      return Result();
+   }
+
 private:
    bool terminationRequested_;
+   bool isRunning_;
    std::string output_;
    std::string error_;
 };
 
 boost::shared_ptr<RPubsUpload> s_pCurrentUpload;
+
+bool isUploadRunning()
+{
+   return s_pCurrentUpload && s_pCurrentUpload->isRunning();
+}
+
+Error rpubsUpload(const json::JsonRpcRequest& request,
+                  json::JsonRpcResponse* pResponse)
+{
+   std::string title, htmlFile;
+   Error error = json::readParams(request.params, &title, &htmlFile);
+   if (error)
+      return error;
+
+   if (isUploadRunning())
+   {
+      pResponse->setResult(false);
+   }
+   else
+   {
+      FilePath filePath = module_context::resolveAliasedPath(htmlFile);
+      s_pCurrentUpload = RPubsUpload::create(title, filePath, "");
+      pResponse->setResult(true);
+   }
+
+   return Success();
+}
+
+Error terminateRpubsUpload(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   if (isUploadRunning())
+      s_pCurrentUpload->terminate();
+
+   return Success();
+}
+
+
+
 
 // log warning message from R
 SEXP rs_rpubsUpload(SEXP titleSEXP, SEXP htmlFileSEXP, SEXP idSEXP)
@@ -195,6 +316,14 @@ Error initialize()
    methodDef.numArgs = 3;
    r::routines::addCallMethod(methodDef);
 
+   using boost::bind;
+   using namespace module_context;
+   ExecBlock initBlock ;
+   initBlock.addFunctions()
+      (bind(registerRpcMethod, "rpubs_upload", rpubsUpload))
+      (bind(registerRpcMethod, "terminate_rpubs_upload", terminateRpubsUpload))
+   ;
+   return initBlock.execute();
    return Success();
 
 }

@@ -34,4 +34,11 @@ public interface HTMLPreviewServerOperations
 
    String getApplicationURL(String pathName);
    String getFileUrl(FileSystemItem file);
+   
+   // rpubs
+   void rpubsUpload(String title, 
+                    String htmlFile,
+                    ServerRequestCallback<Boolean> requestCallback);
+   
+   void rpubsTerminateUpload(ServerRequestCallback<Void> requestCallback);
 }

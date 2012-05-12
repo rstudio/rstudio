@@ -2404,6 +2404,21 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_HTML_CAPABILITIES, callback);
    }
    
+   public void rpubsUpload(String title, 
+                           String htmlFile,
+                           ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(title));
+      params.set(1, new JSONString(htmlFile));
+      sendRequest(RPC_SCOPE, RPUBS_UPLOAD, requestCallback);
+   }
+
+   public void rpubsTerminateUpload(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, RPUBS_TERMINATE_UPLOAD, requestCallback);
+   }
+   
    
    public void compilePdf(FileSystemItem targetFile,
                           SourceLocation sourceLocation,
@@ -2747,6 +2762,8 @@ public class RemoteServer implements Server
    private static final String PREVIEW_HTML = "preview_html";
    private static final String TERMINATE_PREVIEW_HTML = "terminate_preview_html";
    private static final String GET_HTML_CAPABILITIES = "get_html_capabilities";
+   private static final String RPUBS_UPLOAD = "rpubs_upload";
+   private static final String RPUBS_TERMINATE_UPLOAD = "terminate_rpubs_upload";
    
    private static final String COMPILE_PDF = "compile_pdf";
    private static final String IS_COMPILE_PDF_RUNNING = "is_compile_pdf_running";
