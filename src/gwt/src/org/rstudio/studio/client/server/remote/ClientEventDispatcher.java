@@ -39,6 +39,7 @@ import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
+import org.rstudio.studio.client.htmlpreview.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
@@ -359,6 +360,11 @@ public class ClientEventDispatcher
          {
             String data = event.getData();
             eventBus_.fireEvent(new FindOperationEndedEvent(data));
+         }
+         else if (type.equals(ClientEvent.RPubsUploadStatus))
+         {
+            RPubsUploadStatusEvent.Status status = event.getData();
+            eventBus_.fireEvent(new RPubsUploadStatusEvent(status));
          }
          else if (type.equals(ClientEvent.ListChanged))
          {

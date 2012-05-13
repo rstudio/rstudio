@@ -11,6 +11,30 @@
  *
  */
 
+// TODO: is there a way to get a better error diagnostic out of a
+//       network failure in calling system(curl) -- we get a file
+//       output error right now, any way for R to capture standard error?
+
+// NOTE: may be able to do this with a combination of passing --show-error
+//       to curl and then capturing the output from R using:
+//          output <- suppressWarnings(system(command, intern = TRUE))
+//       then if the output file doesn't exist we return the output as
+//       an error
+
+// TODO: should we prefer RCurl due to the above error reporting issue?
+
+// TODO: test whether id is still good even if we don't fully confirm
+
+// TODO: notification of public publishing w/ "don't show again"
+
+// TODO: progress dialog for preparing to publish (including cancel)
+
+// TODO: in web mode show the continueUrl window immediately then redirect
+//       on success and close on failure
+
+// TODO: wininet ssl
+// TODO: sync function over to markup package
+
 #include "SessionRPubs.hpp"
 
 #include <boost/bind.hpp>
@@ -21,13 +45,16 @@
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
+#include <core/Log.hpp>
+#include <core/Settings.hpp>
+
 #include <core/text/CsvParser.hpp>
+#include <core/http/Util.hpp>
 #include <core/system/Process.hpp>
 
-#include <r/RSexp.hpp>
-#include <r/RRoutines.hpp>
-
 #include <session/SessionModuleContext.hpp>
+
+#include <session/projects/SessionProjects.hpp>
 
 using namespace core ;
 
@@ -37,16 +64,60 @@ namespace rpubs {
 
 namespace {
 
+// we get a fresh settings object for each read or write so multiple
+// processes can all read and write without cache issues
+void getUploadIdSettings(Settings* pSettings)
+{
+   FilePath rpubsUploadIds =
+         module_context::scopedScratchPath().complete("rpubs_upload_ids");
+   Error error = pSettings->initialize(rpubsUploadIds);
+   if (error)
+      LOG_ERROR(error);
+}
+
+std::string pathIdentifier(const FilePath& filePath)
+{
+   // use a relative path if we are in a project
+   std::string path;
+   projects::ProjectContext& projectContext = projects::projectContext();
+   if (projectContext.hasProject() &&
+       filePath.isWithin(projectContext.directory()))
+   {
+      path = filePath.relativePath(projectContext.directory());
+   }
+   else
+   {
+      path = filePath.absolutePath();
+   }
+
+   // urlencode so we can use it as a key
+   return http::util::urlEncode(path);
+}
+
+std::string previousUploadId(const FilePath& filePath)
+{
+   Settings settings;
+   getUploadIdSettings(&settings);
+   return settings.get(pathIdentifier(filePath));
+}
+
+void saveUploadId(const FilePath& filePath, const std::string& uploadId)
+{
+   Settings settings;
+   getUploadIdSettings(&settings);
+   settings.set(pathIdentifier(filePath), uploadId);
+}
+
+
 class RPubsUpload : boost::noncopyable,
                     public boost::enable_shared_from_this<RPubsUpload>
 {
 public:
    static boost::shared_ptr<RPubsUpload> create(const std::string& title,
-                                                const FilePath& htmlFile,
-                                                const std::string& id)
+                                                const FilePath& htmlFile)
    {
       boost::shared_ptr<RPubsUpload> pUpload(new RPubsUpload());
-      pUpload->start(title, htmlFile, id);
+      pUpload->start(title, htmlFile);
       return pUpload;
    }
 
@@ -67,14 +138,16 @@ private:
    {
    }
 
-   void start(const std::string& title,
-              const FilePath& htmlFile,
-              const std::string& id)
+   void start(const std::string& title, const FilePath& htmlFile)
    {
       using namespace core::string_utils;
       using namespace module_context;
 
+      htmlFile_ = htmlFile;
       isRunning_ = true;
+
+      // see if we already know of an upload id for this file
+      std::string id = previousUploadId(htmlFile_);
 
       // R binary
       FilePath rProgramPath;
@@ -203,6 +276,9 @@ private:
    {
       isRunning_ = false;
 
+      if (!result.id.empty())
+         saveUploadId(htmlFile_, result.id);
+
       json::Object statusJson;
       statusJson["id"] = result.id;
       statusJson["continueUrl"] = result.continueUrl;
@@ -244,6 +320,7 @@ private:
    }
 
 private:
+   FilePath htmlFile_;
    bool terminationRequested_;
    bool isRunning_;
    std::string output_;
@@ -272,7 +349,7 @@ Error rpubsUpload(const json::JsonRpcRequest& request,
    else
    {
       FilePath filePath = module_context::resolveAliasedPath(htmlFile);
-      s_pCurrentUpload = RPubsUpload::create(title, filePath, "");
+      s_pCurrentUpload = RPubsUpload::create(title, filePath);
       pResponse->setResult(true);
    }
 
@@ -288,36 +365,11 @@ Error terminateRpubsUpload(const json::JsonRpcRequest& request,
    return Success();
 }
 
-
-
-
-// log warning message from R
-SEXP rs_rpubsUpload(SEXP titleSEXP, SEXP htmlFileSEXP, SEXP idSEXP)
-{
-   std::string title = r::sexp::asString(titleSEXP);
-   std::string htmlFile = r::sexp::asString(htmlFileSEXP);
-   std::string id = r::sexp::asString(idSEXP);
-
-   s_pCurrentUpload = RPubsUpload::create(title, FilePath(htmlFile), id);
-
-
-
-
-   return R_NilValue;
-}
-
-
 } // anonymous namespace
 
 
 Error initialize()
 {
-   R_CallMethodDef methodDef ;
-   methodDef.name = "rs_rpubsUpload" ;
-   methodDef.fun = (DL_FUNC) rs_rpubsUpload ;
-   methodDef.numArgs = 3;
-   r::routines::addCallMethod(methodDef);
-
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock ;

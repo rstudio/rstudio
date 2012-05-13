@@ -11,11 +11,13 @@
 #
 #
 
-#' Upload an HTML file to Rpubs
+#' Upload an HTML file to RPubs
 #' 
 #' This function uploads an HTML file to rpubs.com. If the upload succeeds a 
-#' list that includes a \code{continueUrl} is returned. A browser should be 
-#' opened to the \code{continueURl} to complete publishing of the document.
+#' list that includes an \code{id} and \code{continueUrl} is returned. A browser
+#' should be opened to the \code{continueURl} to complete publishing of the
+#' document. If an error occurs then a diagnostic message is returned in the
+#' \code{error} element of the list.
 #' 
 #' @param title The title of the document.
 #' @param htmlFile The path to the HTML file to upload.

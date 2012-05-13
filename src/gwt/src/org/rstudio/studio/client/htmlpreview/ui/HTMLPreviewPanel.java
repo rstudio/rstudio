@@ -222,6 +222,12 @@ public class HTMLPreviewPanel extends ResizeComposite
       window.print();
    }
    
+   @Override
+   public String getDocumentTitle()
+   {
+      return previewFrame_.getWindow().getDocument().getTitle();
+   }
+   
    private class PreviewFrame extends Frame
    {
       public PreviewFrame()

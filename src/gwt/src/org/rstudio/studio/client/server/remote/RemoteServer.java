@@ -2411,7 +2411,7 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(title));
       params.set(1, new JSONString(htmlFile));
-      sendRequest(RPC_SCOPE, RPUBS_UPLOAD, requestCallback);
+      sendRequest(RPC_SCOPE, RPUBS_UPLOAD, params, requestCallback);
    }
 
    public void rpubsTerminateUpload(ServerRequestCallback<Void> requestCallback)

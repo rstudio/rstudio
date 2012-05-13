@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.htmlpreview;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -56,7 +57,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-public class HTMLPreviewPresenter implements IsWidget
+public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
 {
    public interface Binder extends CommandBinder<Commands, HTMLPreviewPresenter>
    {}
@@ -77,6 +78,8 @@ public class HTMLPreviewPresenter implements IsWidget
                        boolean enablePublish);
       
       void print();
+      
+      String getDocumentTitle();
    }
    
    @Inject
@@ -90,6 +93,7 @@ public class HTMLPreviewPresenter implements IsWidget
                                FileDialogs fileDialogs,
                                RemoteFileSystemContext fileSystemContext,
                                HTMLPreviewServerOperations server,
+                               RPubsPresenter rpubsPresenter,
                                Provider<FileExport> pFileExport)
    {
       view_ = view;
@@ -99,6 +103,8 @@ public class HTMLPreviewPresenter implements IsWidget
       fileDialogs_ = fileDialogs;
       fileSystemContext_ = fileSystemContext;
       pFileExport_ = pFileExport;
+      
+      rpubsPresenter.setContext(this);
       
       binder.bind(commands, this);  
       
@@ -251,12 +257,6 @@ public class HTMLPreviewPresenter implements IsWidget
    }
    
    @Handler
-   public void onPublishHTML()
-   {
-      
-   }
-   
-   @Handler
    public void onSaveHtmlPreviewAsLocalFile()
    {
       if (lastSuccessfulPreview_ != null)
@@ -322,6 +322,27 @@ public class HTMLPreviewPresenter implements IsWidget
    {
       server_.previewHTML(lastPreviewParams_, 
                           new SimpleRequestCallback<Boolean>());
+   }
+   
+   @Override
+   public String getTitle()
+   {
+      String title = StringUtil.notNull(view_.getDocumentTitle());
+      if (title.length() == 0)
+      {
+         FileSystemItem fsi = FileSystemItem.createFile(getHtmlFile());
+         return fsi.getStem();
+      }
+      else
+      {
+         return title;
+      }
+   }
+
+   @Override
+   public String getHtmlFile()
+   {
+      return lastSuccessfulPreview_.getHtmlFile();
    }
 
    private void terminateRunningPreview()
