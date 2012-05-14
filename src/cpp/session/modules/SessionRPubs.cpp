@@ -22,9 +22,6 @@
 //       an error
 
 // TODO: should we prefer RCurl due to the above error reporting issue?
-
-// TODO: test whether id is still good even if we don't fully confirm
-
 // TODO: notification of public publishing w/ "don't show again"
 
 // TODO: progress dialog for preparing to publish (including cancel)
