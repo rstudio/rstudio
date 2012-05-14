@@ -226,7 +226,7 @@ public class EditTextCellTest extends EditableCellTestBase<String, ViewData> {
 
   @Override
   protected String getExpectedInnerHtmlNull() {
-    return "";
+    return "\u00A0";
   }
 
   @Override

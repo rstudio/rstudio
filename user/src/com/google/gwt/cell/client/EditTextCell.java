@@ -206,6 +206,7 @@ public class EditTextCell extends
       viewData = null;
     }
 
+    String toRender = value;
     if (viewData != null) {
       String text = viewData.getText();
       if (viewData.isEditing()) {
@@ -215,12 +216,21 @@ public class EditTextCell extends
          * context of the value attribute.
          */
         sb.append(template.input(text));
+        return;
       } else {
         // The user pressed enter, but view data still exists.
-        sb.append(renderer.render(text));
+        toRender = text;
       }
-    } else if (value != null) {
-      sb.append(renderer.render(value));
+    }
+
+    if (toRender != null && toRender.trim().length() > 0) {
+      sb.append(renderer.render(toRender));
+    } else {
+      /*
+       * Render a blank space to force the rendered element to have a height.
+       * Otherwise it is not clickable.
+       */
+      sb.appendHtmlConstant("\u00A0");
     }
   }
 
