@@ -15,13 +15,14 @@
  */
 package com.google.web.bindery.autobean.shared;
 
-import com.google.web.bindery.autobean.shared.AutoBean.PropertyName;
-import com.google.web.bindery.autobean.shared.impl.EnumMap;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.web.bindery.autobean.shared.AutoBean.PropertyName;
+import com.google.web.bindery.autobean.shared.impl.EnumMap;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,9 +39,13 @@ public class AutoBeanCodexTest extends GWTTestCase {
 
     AutoBean<HasCycle> hasCycle();
 
+    AutoBean<HasDate> hasDate();
+
     AutoBean<HasEnum> hasEnum();
 
     AutoBean<HasList> hasList();
+
+    AutoBean<HasLong> hasLong();
 
     AutoBean<HasMap> hasMap();
 
@@ -74,6 +79,12 @@ public class AutoBeanCodexTest extends GWTTestCase {
     void setCycle(List<HasCycle> cycle);
   }
 
+  interface HasDate {
+    Date getDate();
+
+    void setDate(Date date);
+  }
+
   interface HasEnum {
     MyEnum getEnum();
 
@@ -100,6 +111,12 @@ public class AutoBeanCodexTest extends GWTTestCase {
     void setIntList(List<Integer> list);
 
     void setList(List<Simple> list);
+  }
+
+  interface HasLong {
+    long getLong();
+
+    void setLong(long l);
   }
 
   interface HasMap {
@@ -178,6 +195,13 @@ public class AutoBeanCodexTest extends GWTTestCase {
     void setString(String s);
   }
 
+  @SuppressWarnings("deprecation")
+  private static final Date[] DATES = {
+    new Date(1900, 0, 1), new Date(2012, 3, 10), new Date(2100, 11, 31),
+    new Date(-8640000000000000L), // lowest JavaScript Date value
+    new Date(8640000000000000L) // highest JavaScript Date value
+  };
+
   protected Factory f;
 
   @Override
@@ -192,6 +216,40 @@ public class AutoBeanCodexTest extends GWTTestCase {
       checkEncode(bean);
       fail("Should not have encoded");
     } catch (UnsupportedOperationException expected) {
+    }
+  }
+
+  public void testDate() {
+    for (Date d : DATES) {
+      AutoBean<HasDate> bean = f.hasDate();
+      bean.as().setDate(d);
+      AutoBean<HasDate> decodedBean = checkEncode(bean);
+      assertEquals(d, decodedBean.as().getDate());
+    }
+  }
+
+  /**
+   * See issue 6331.
+   */
+  public void testDecodeDateFromNumericTimestamp() {
+    for (Date d : DATES) {
+      AutoBean<HasDate> decodedBean =
+          AutoBeanCodex.decode(f, HasDate.class, "{\"date\": " + d.getTime() + "}");
+      assertEquals(d, decodedBean.as().getDate());
+    }
+  }
+
+  /**
+   * See issue 6636.
+   */
+  public void testDecodeLongFromNumericValue() {
+    final long[] longs = { 42L,
+      -9007199254740991L, // lowest integral value that can be represented by a JavaScript Number
+      9007199254740991L // highest integral value that van be represented by a JavaScript Number
+    };
+    for (long l : longs) {
+      AutoBean<HasLong> decodedBean = AutoBeanCodex.decode(f, HasLong.class, "{\"long\": " + l + "}");
+      assertEquals(l, decodedBean.as().getLong());
     }
   }
 
@@ -253,6 +311,17 @@ public class AutoBeanCodexTest extends GWTTestCase {
         "FOO_KEY"));
     assertEquals(EnumReachableThroughMapValue.FOO_VALUE, map.getEnum(
         EnumReachableThroughMapValue.class, "FOO_VALUE"));
+  }
+
+  public void testLong() {
+    long[] longs = { Long.MIN_VALUE + 1, // See issue 7308
+        42L, Long.MAX_VALUE };
+    for (long l : longs) {
+      AutoBean<HasLong> bean = f.hasLong();
+      bean.as().setLong(l);
+      AutoBean<HasLong> decodedBean = checkEncode(bean);
+      assertEquals(l, decodedBean.as().getLong());
+    }
   }
 
   public void testMap() {

@@ -103,6 +103,9 @@ public class ValueCodex {
 
       @Override
       public Date decode(Class<?> clazz, Splittable value) {
+        if (value.isNumber()) {
+          return new Date((long) value.asNumber());
+        }
         return StringQuoter.tryParseDate(value.asString());
       }
 
@@ -163,6 +166,9 @@ public class ValueCodex {
     LONG(Long.class, long.class, 0L) {
       @Override
       public Long decode(Class<?> clazz, Splittable value) {
+        if (value.isNumber()) {
+          return Long.valueOf((long) value.asNumber());
+        }
         return Long.parseLong(value.asString());
       }
 
@@ -357,7 +363,7 @@ public class ValueCodex {
    * May return <code>null</code>.
    */
   private static <T> Type findType(Class<T> clazz) {
-    if (clazz.isEnum() || (clazz.getSuperclass() != null && clazz.getSuperclass().isEnum())) {
+    if (clazz.isEnum()) {
       return Type.ENUM;
     }
     return TYPES_BY_CLASS.get(clazz);
