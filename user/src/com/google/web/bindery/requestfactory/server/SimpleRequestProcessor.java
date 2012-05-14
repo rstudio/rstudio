@@ -262,7 +262,7 @@ public class SimpleRequestProcessor {
       Object domainObject = bean.getTag(Constants.DOMAIN_OBJECT);
       WriteOperation writeOperation;
 
-      if (id.isEphemeral()) {
+      if (id.isEphemeral() && returnState.isEntityType(id.getProxyClass())) {
         // See if the entity has been persisted in the meantime
         returnState.getResolver().resolveClientValue(domainObject, id.getProxyClass(),
             Collections.<String> emptySet());
