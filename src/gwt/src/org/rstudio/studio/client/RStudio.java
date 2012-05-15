@@ -44,6 +44,7 @@ import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
 import org.rstudio.studio.client.common.StudioResources;
 import org.rstudio.studio.client.common.compilepdf.CompilePdfResources;
 import org.rstudio.studio.client.common.mirrors.ChooseMirrorDialog;
+import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.common.vcs.CreateKeyDialog;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
@@ -216,6 +217,7 @@ public class RStudio implements EntryPoint
       SshKeyWidget.ensureStylesInjected();
       IgnoreDialog.ensureStylesInjected();
       SpellingCustomDictionariesWidget.ensureStylesInjected();
+      RPubsUploadDialog.ensureStylesInjected();
       WizardResources.INSTANCE.styles().ensureInjected();
       NewProjectResources.INSTANCE.styles().ensureInjected();
       

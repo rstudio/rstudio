@@ -1,0 +1,24 @@
+
+
+.mainWidget {
+   width: 450px;
+   height: 200px;
+}
+
+.headerPanel {
+   margin-bottom: 8px;
+}
+
+.headerLabel {
+	margin-left: 12px;
+	font-weight: bold;
+	font-size: 16px;
+}
+
+.descLabel {
+	margin-bottom: 14px;
+}
+
+.progressImage {
+   margin-right: 5px;
+}

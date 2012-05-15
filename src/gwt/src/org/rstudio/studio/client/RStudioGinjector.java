@@ -31,6 +31,7 @@ import org.rstudio.studio.client.common.impl.DesktopFileDialogs;
 import org.rstudio.studio.client.common.latex.LatexProgramRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
+import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 import org.rstudio.studio.client.common.spelling.SpellChecker;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
@@ -66,7 +67,8 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(SpellChecker spellChecker);
    void injectMembers(SpellingCustomDictionariesWidget widget);
    void injectMembers(FileExport fileExport);
-
+   void injectMembers(RPubsUploadDialog uploadDialog);
+   
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
    Application getApplication() ;

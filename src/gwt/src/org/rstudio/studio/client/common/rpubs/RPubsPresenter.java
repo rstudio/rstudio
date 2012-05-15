@@ -12,19 +12,13 @@
  */
 package org.rstudio.studio.client.common.rpubs;
 
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
-import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 import com.google.inject.Inject;
 
@@ -47,34 +41,6 @@ public class RPubsPresenter
                          RPubsServerOperations server)
    {
       binder.bind(commands, this);  
-      
-      server_ = server;
-      progressIndicator_ = globalDisplay.getProgressIndicator("Error");
-      
-      eventBus.addHandler(RPubsUploadStatusEvent.TYPE, 
-                          new RPubsUploadStatusEvent.Handler()
-      {
-         @Override
-         public void onRPubsPublishStatus(RPubsUploadStatusEvent event)
-         {
-            progressIndicator_.clearProgress();
-            
-            RPubsUploadStatusEvent.Status status = event.getStatus();
-            if (!StringUtil.isNullOrEmpty(status.getError()))
-            {
-               new ConsoleProgressDialog("Upload Error Occurred", 
-                                         status.getError(),
-                                         1).showModal();
-            }
-            else
-            {
-               NewWindowOptions options = new NewWindowOptions();
-               options.setAlwaysUseBrowser(true);
-               globalDisplay.openWindow(status.getContinueUrl(), options);
-            }
-            
-         }
-      });
    }
    
    public void setContext(Context context)
@@ -85,32 +51,10 @@ public class RPubsPresenter
    @Handler
    public void onPublishHTML()
    {
-      progressIndicator_.onProgress("Preparing to publish document...");
-      
-      server_.rpubsUpload(
-            context_.getTitle(), 
-            context_.getHtmlFile(), 
-            new ServerRequestCallback<Boolean>() {
-
-               @Override
-               public void onResponseReceived(Boolean response)
-               {
-                  if (!response.booleanValue())
-                  {
-                     progressIndicator_.onError(
-                      "Unable to publish (another publish is already running)");
-                  }
-               }
-               
-               @Override
-               public void onError(ServerError error)
-               {
-                  progressIndicator_.onError(error.getUserMessage());
-               }
-      });
+      RPubsUploadDialog dlg = new RPubsUploadDialog(context_.getTitle(),
+                                                    context_.getHtmlFile());
+      dlg.showModal();
    }
    
    private Context context_;
-   private final RPubsServerOperations server_;
-   private final ProgressIndicator progressIndicator_;
 }
