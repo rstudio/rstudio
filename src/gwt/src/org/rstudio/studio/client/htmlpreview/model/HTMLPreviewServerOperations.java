@@ -13,11 +13,12 @@
 package org.rstudio.studio.client.htmlpreview.model;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
 
-public interface HTMLPreviewServerOperations
+public interface HTMLPreviewServerOperations extends RPubsServerOperations
 {
    void previewHTML(HTMLPreviewParams params, 
                     ServerRequestCallback<Boolean> requestCallback);
@@ -34,11 +35,4 @@ public interface HTMLPreviewServerOperations
 
    String getApplicationURL(String pathName);
    String getFileUrl(FileSystemItem file);
-   
-   // rpubs
-   void rpubsUpload(String title, 
-                    String htmlFile,
-                    ServerRequestCallback<Boolean> requestCallback);
-   
-   void rpubsTerminateUpload(ServerRequestCallback<Void> requestCallback);
 }

@@ -33,6 +33,7 @@ import org.rstudio.studio.client.common.latex.LatexProgramRegistry;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
+import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
@@ -259,6 +260,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(FindInFilesServerOperations.class).to(RemoteServer.class);
       bind(SynctexServerOperations.class).to(RemoteServer.class);
       bind(HTMLPreviewServerOperations.class).to(RemoteServer.class);
+      bind(RPubsServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

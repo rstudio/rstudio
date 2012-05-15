@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.htmlpreview;
+package org.rstudio.studio.client.common.rpubs;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
@@ -19,8 +19,8 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
-import org.rstudio.studio.client.htmlpreview.events.RPubsUploadStatusEvent;
-import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
+import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
+import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -44,7 +44,7 @@ public class RPubsPresenter
                          Commands commands,
                          final GlobalDisplay globalDisplay,
                          EventBus eventBus,
-                         HTMLPreviewServerOperations server)
+                         RPubsServerOperations server)
    {
       binder.bind(commands, this);  
       
@@ -111,6 +111,6 @@ public class RPubsPresenter
    }
    
    private Context context_;
-   private final HTMLPreviewServerOperations server_;
+   private final RPubsServerOperations server_;
    private final ProgressIndicator progressIndicator_;
 }
