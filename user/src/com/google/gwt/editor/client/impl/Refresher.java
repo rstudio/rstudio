@@ -45,9 +45,6 @@ public class Refresher extends EditorVisitor {
         asLeaf.setValue(toSet);
       }
     }
-    // CompositeEditor's setValue should create sub-editors and attach them to
-    // the EditorChain, which will traverse them. Returning true here for a
-    // CompositeEditor would then traverse it twice. See issue 7038.
-    return ctx.asCompositeEditor() == null;
+    return true;
   }
 }

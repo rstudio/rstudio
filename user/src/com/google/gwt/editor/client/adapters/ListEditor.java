@@ -124,11 +124,6 @@ public class ListEditor<T, E extends Editor<T>> implements
    * @param value a List of data objects of type T
    */
   public void setValue(List<T> value) {
-    if ((list == null && value == null) || (list != null && list.isSameValue(value))) {
-      // setting the same value as the one being edited
-      list.refresh();
-      return;
-    }
     if (list != null) {
       // Having entire value reset, so dump the wrapper gracefully
       list.detach();

@@ -122,41 +122,4 @@ class ListEditorWrapper<T, E extends Editor<T>> extends AbstractList<T> {
   List<? extends E> getEditors() {
     return editors;
   }
-
-  /**
-   * Checks whether that ListEditorWrapper can be reused for the passed list.
-   * <p>
-   * The ListEditorWrapper can be reused if and only if the backing list is the
-   * same instance as the passed list.
-   */
-  boolean isSameValue(List<T> value) {
-    // identity check intentional
-    return (backing == value);
-  }
-
-  /**
-   * Refresh the editors in case the backing list has been modified from
-   * outside the ListEditorWrapper list.
-   * <p>
-   * This is basically the opposite from {@link #flush()}. It's used to
-   * reuse sub-editors instead of recreating a ListEditorWrapper from
-   * scratch.
-   */
-  void refresh() {
-    int i = 0;
-    for (T item : backing) {
-      if (i < size()) {
-        this.set(i, item);
-      } else {
-        assert i == size();
-        this.add(i, item);
-      }
-      i++;
-    }
-    while (backing.size() < size()) {
-      remove(size() - 1);
-    }
-    assert backing.size() == size();
-    assert backing.equals(workingCopy);
-  }
 }
