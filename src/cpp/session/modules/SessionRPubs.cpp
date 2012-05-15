@@ -11,17 +11,6 @@
  *
  */
 
-// TODO: is there a way to get a better error diagnostic out of a
-//       network failure in calling system(curl) -- we get a file
-//       output error right now, any way for R to capture standard error?
-
-// NOTE: may be able to do this with a combination of passing --show-error
-//       to curl and then capturing the output from R using:
-//          output <- suppressWarnings(system(command, intern = TRUE))
-//       then if the output file doesn't exist we return the output as
-//       an error
-
-// TODO: should we prefer RCurl due to the above error reporting issue?
 // TODO: notification of public publishing w/ "don't show again"
 
 // TODO: progress dialog for preparing to publish (including cancel)

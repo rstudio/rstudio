@@ -332,16 +332,20 @@ rpubsUpload <- function(title,
                        "--header", paste("Content-Length:", fileLength, sep=""),
                        extraHeaders,
                        "--header", "Expect:",
-                       "-s",
+                       "--silent",
+                       "--show-error",
                        "-o", shQuote(outputFile),
                        paste("https://rpubs.com", path, sep=""))
       
-      system(command)
+      result <- system(command)
       
-      fileConn <- file(outputFile, "rb")
-      on.exit(close(fileConn))
-      
-      readResponse(fileConn)
+      if (result == 0) {
+        fileConn <- file(outputFile, "rb")
+        on.exit(close(fileConn))
+        readResponse(fileConn)
+      } else {
+        stop(paste("Upload failed (curl error", result, "occurred)"))
+      }
    }
    
    # determine the upload function, scheme, and port
