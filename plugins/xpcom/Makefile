@@ -158,7 +158,12 @@ ifeq ($(BROWSER),ff110)
 GECKO_VERSION   = 11.0.0
 CFLAGS += -DGECKO_VERSION=11000
 else
-$(error Unrecognized BROWSER of $(BROWSER) - options are ff3, ff3+, ff35, ff36, ff40, ff50, ff60, ff70, ff80, ff90)
+ifeq ($(BROWSER),ff120)
+GECKO_VERSION   = 12.0.0
+CFLAGS += -DGECKO_VERSION=12000
+else
+$(error Unrecognized BROWSER of $(BROWSER) - options are ff3, ff3+, ff35, ff36, ff40, ff50, ff60, ff70, ff80, ff90, ff100, ff110)
+endif
 endif
 endif
 endif
@@ -256,6 +261,7 @@ linuxplatforms:
 	$(MAKE) lib BROWSER=ff90 ARCH=x86
 	$(MAKE) lib BROWSER=ff100 ARCH=x86
 	$(MAKE) lib BROWSER=ff110 ARCH=x86
+	$(MAKE) lib BROWSER=ff120 ARCH=x86
 	$(MAKE) lib BROWSER=ff3 ARCH=x86_64
 	$(MAKE) lib BROWSER=ff3+ ARCH=x86_64
 	$(MAKE) lib BROWSER=ff35 ARCH=x86_64
@@ -268,6 +274,7 @@ linuxplatforms:
 	$(MAKE) lib BROWSER=ff90 ARCH=x86_64
 	$(MAKE) lib BROWSER=ff100 ARCH=x86_64
 	$(MAKE) lib BROWSER=ff110 ARCH=x86_64
+	$(MAKE) lib BROWSER=ff120 ARCH=x86_64
 
 macplatforms:
 	$(MAKE) lib BROWSER=ff3
@@ -281,6 +288,7 @@ macplatforms:
 	$(MAKE) lib BROWSER=ff90
 	$(MAKE) lib BROWSER=ff100
 	$(MAKE) lib BROWSER=ff110
+	$(MAKE) lib BROWSER=ff120
 
 SRCS =	\
 		ExternalWrapper.cpp \
