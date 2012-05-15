@@ -15,30 +15,33 @@
 #' 
 #' This function uploads an HTML file to rpubs.com. If the upload succeeds a 
 #' list that includes an \code{id} and \code{continueUrl} is returned. A browser
-#' should be opened to the \code{continueURl} to complete publishing of the
-#' document. If an error occurs then a diagnostic message is returned in the
+#' should be opened to the \code{continueURl} to complete publishing of the 
+#' document. If an error occurs then a diagnostic message is returned in the 
 #' \code{error} element of the list.
 #' 
 #' @param title The title of the document.
 #' @param htmlFile The path to the HTML file to upload.
-#' @param id If this upload is an update of an existing document then the 
-#'   id parameter should specify the document id to update. Note that the
-#'   id is provided as an element of the list returned by successful calls to
+#' @param id If this upload is an update of an existing document then the id
+#'   parameter should specify the document id to update. Note that the id is
+#'   provided as an element of the list returned by successful calls to 
 #'   \code{rpubsUpload}.
-#' @param properties A named list containing additional document properties
-#'   (RPubs doesn't currently expect any additional properties, this parameter
+#' @param properties A named list containing additional document properties 
+#'   (RPubs doesn't currently expect any additional properties, this parameter 
 #'   is reserved for future use).
-#' @param method Method to be used for uploading. "internal" uses an insecure
-#' http socket connection; "curl" uses either RCurl or the curl binary to
-#' do an https upload; "auto" attempts to use curl if it is available and 
-#' reverts to internal if it isn't. 
+#' @param method Method to be used for uploading. "internal" uses a plain http
+#'   socket connection; "curl" uses the curl binary to do an https upload;
+#'   "rcurl" uses the RCurl package to do an https upload; and "auto" uses 
+#'   the best available method searched for in the following order: "curl", 
+#'   "rcurl", and then "internal". The global default behavior can be 
+#'   configured by setting the \code{rpubs.upload.method} option (the default
+#'   is "auto").
 #'   
-#' @return A named list. If the upload was successful then the list contains a
-#'   \code{id} element that can be used to subsequently update the 
-#'   document as well as a \code{continueUrl} elment that provides a URL that a
-#'   browser should be opened to in order to complete publishing of the
-#'   document. If the upload fails then the list contains an \code{error}
-#'   element which contains an explanation of the error that occurred.
+#' @return A named list. If the upload was successful then the list contains a 
+#'   \code{id} element that can be used to subsequently update the document as
+#'   well as a \code{continueUrl} elment that provides a URL that a browser
+#'   should be opened to in order to complete publishing of the document. If the
+#'   upload fails then the list contains an \code{error} element which contains
+#'   an explanation of the error that occurred.
 #'   
 #' @examples 
 #' \dontrun {
@@ -56,7 +59,7 @@ rpubsUpload <- function(title,
                         htmlFile, 
                         id = NULL,
                         properties = list(), 
-                        method = c("auto", "internal", "curl")) {
+                        method = getOption("rpubs.upload.method")) {
    
    # validate inputs
    if (!is.character(title))
@@ -69,6 +72,11 @@ rpubsUpload <- function(title,
       stop("specified htmlFile does not exist")
    if (!is.list(properties))
       stop("properties paramater must be a named list")
+   
+   # resolve method to auto if necessary
+   if (is.null(method))
+     method <- "auto"
+     
  
    parseHeader <- function(header) {
       split <- strsplit(header, ": ")[[1]]
@@ -348,29 +356,22 @@ rpubsUpload <- function(title,
       }
    }
    
-   # determine the upload function, scheme, and port
-   detectCurl <- function() {
-      if (nzchar(Sys.which("curl")))
-         return (curlUpload)
-      else if (suppressWarnings(require("RCurl", quietly=TRUE)))
-         return (rcurlUpload)
-      else
-         return (NULL) 
-   }
-   
    uploadFunction <- NULL
    if (is.function(method)) {
       uploadFunction <- method
-   } else if ("auto" %in% method) {
-      uploadFunction <- detectCurl()
-      if (is.null(uploadFunction))
+   } else if (identical("auto", method)) {
+      if (nzchar(Sys.which("curl")))
+         uploadFunction <- curlUpload
+      else if (suppressWarnings(require("RCurl", quietly=TRUE)))
+         uploadFunction <- rcurlUpload
+      else
          uploadFunction <- internalUpload
    } else if (identical("internal", method)) {
       uploadFunction <- internalUpload
    } else if (identical("curl",  method)) {
-      uploadFunction <- detectCurl()
-      if (is.null(uploadFunction))
-         stop("RCurl or the curl binary not found")
+      uploadFunction <- curlUpload
+   } else if (identical("rcurl", method)) {
+      uploadFunction <- rcurlUpload
    } else {
       stop(paste("Invalid upload method specified:",method))  
    }
