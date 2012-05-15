@@ -35,6 +35,8 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
     addSnippetClassDecl("static volatile long l;");
     addSnippetClassDecl("static volatile float f;");
     addSnippetClassDecl("static volatile double d;");
+    addSnippetClassDecl("static volatile String s;");
+    addSnippetClassDecl("static volatile Object o;");
   }
 
   public void testConditionalOptimizations() throws Exception {
@@ -112,6 +114,26 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
         "} while (false);");
   }
 
+  public void testOptimizeStringCalls() throws Exception {
+    // Note: we're limited here by the methods declared in the mock String in JJSTestBase#addBuiltinClasses
+
+    // String.length
+    optimize("int", "return \"abc\".length();").intoString("return 3;");
+    optimize("int", "return s.length();").intoString("return EntryPoint.s.length();");
+
+    // String.charAt
+    optimize("char", "return \"abc\".charAt(1);").intoString("return 'b';");
+    optimize("char", "return s.charAt(1);").intoString("return EntryPoint.s.charAt(1);");
+
+    // String.toString
+    optimize("String", "return s.toString();").intoString("return EntryPoint.s;");
+    optimize("String", "return o.toString();").intoString("return EntryPoint.o.toString();");
+
+    // String.hashCode: never optimized
+    optimize("int", "return \"abc\".hashCode();").intoString("return \"abc\".hashCode();");
+    optimize("int", "return s.hashCode();").intoString("return EntryPoint.s.hashCode();");
+  }
+
   public void testSubtractFromZero() throws Exception {
     optimize("int", "return 0 - i;").intoString("return -EntryPoint.i;");
     optimize("long", "return 0 - l;").intoString("return -EntryPoint.l;");
@@ -125,6 +147,8 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
 
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
+    // This is necessary for String calls optimizations
+    MethodCallTightener.exec(program);
     OptimizerStats result = DeadCodeElimination.exec(program, method);
     if (result.didChange()) {
       // Make sure we converge in one pass.

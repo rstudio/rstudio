@@ -268,6 +268,8 @@ public abstract class JJSTestBase extends TestCase {
           "public class String {" +
           "  public int length() { return 0; }" +
           "  public char charAt(int pos) { return 0; }" +
+          "  public String toString() { return this; }" +
+          "  public int hashCode() { return 0; }" +
           "}";
       }
     });

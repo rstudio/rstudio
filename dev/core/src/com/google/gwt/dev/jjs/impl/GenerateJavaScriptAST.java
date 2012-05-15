@@ -1729,6 +1729,14 @@ public class GenerateJavaScriptAST {
       return new JsBinaryOperation(lhs.getSourceInfo(), JsBinaryOperator.COMMA, lhs, rhs);
     }
 
+    private JsNameRef createNativeToStringRef(JsExpression qualifier) {
+      JsName toStringName = objectScope.declareName("toString");
+      toStringName.setObfuscatable(false);
+      JsNameRef toStringRef = toStringName.makeRef(qualifier.getSourceInfo());
+      toStringRef.setQualifier(qualifier);
+      return toStringRef;
+    }
+
     private JsExpression generateCastableTypeMap(JClassType x) {
       JsCastMap castMap = program.getCastMap(x);
       if (castMap != null) {
@@ -2047,10 +2055,7 @@ public class GenerateJavaScriptAST {
         // _.toString = function(){return this.java_lang_Object_toString();}
 
         // lhs
-        JsName lhsName = objectScope.declareName("toString");
-        lhsName.setObfuscatable(false);
-        JsNameRef lhs = lhsName.makeRef(sourceInfo);
-        lhs.setQualifier(globalTemp.makeRef(sourceInfo));
+        JsNameRef lhs = createNativeToStringRef(globalTemp.makeRef(sourceInfo));
 
         // rhs
         JsInvocation call = new JsInvocation(sourceInfo);
@@ -2088,16 +2093,24 @@ public class GenerateJavaScriptAST {
     }
 
     private void generateVTables(JClassType x, List<JsStatement> globalStmts) {
+      boolean isString = (x == program.getTypeJavaLangString());
       for (JMethod method : x.getMethods()) {
         SourceInfo sourceInfo = method.getSourceInfo();
         if (method.needsVtable() && !method.isAbstract()) {
           JsNameRef lhs = polymorphicNames.get(method).makeRef(sourceInfo);
           lhs.setQualifier(globalTemp.makeRef(sourceInfo));
-          /*
-           * Inline JsFunction rather than reference, e.g. _.vtableName =
-           * function functionName() { ... }
-           */
-          JsExpression rhs = methodBodyMap.get(method.getBody());
+
+          JsExpression rhs;
+          if (isString && "toString".equals(method.getName()))  {
+            // special-case String.toString: alias to the native JS toString()
+            rhs = createNativeToStringRef(globalTemp.makeRef(sourceInfo));
+          } else {
+            /*
+             * Inline JsFunction rather than reference, e.g. _.vtableName =
+             * function functionName() { ... }
+             */
+            rhs = methodBodyMap.get(method.getBody());
+          }
           JsExpression asg = createAssignment(lhs, rhs);
           JsExprStmt asgStat = new JsExprStmt(x.getSourceInfo(), asg);
           globalStmts.add(asgStat);

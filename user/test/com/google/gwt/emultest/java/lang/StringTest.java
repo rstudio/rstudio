@@ -16,6 +16,7 @@
 package com.google.gwt.emultest.java.lang;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.io.UnsupportedEncodingException;
@@ -29,15 +30,10 @@ import java.io.UnsupportedEncodingException;
  */
 public class StringTest extends GWTTestCase {
 
-  /**
-   * TODO(jat): use volatile fields instead of this.
-   */
+  static volatile boolean TRUE = true;
+
   private static <T> T hideFromCompiler(T value) {
-    int i = 7;
-    while (i > 0) {
-      i -= 2;
-    }
-    return (i & 1) != 0 ? value : null;
+    return TRUE ? value : null;
   }
 
   @Override
@@ -601,6 +597,18 @@ public class StringTest extends GWTTestCase {
     }
   }
 
+  public void testToString() {
+    String str = hideFromCompiler("abc");
+    assertSame("str same as str.toString()", str, str.toString());
+    // that one is mostly to debug how the code gets compiled to JS.
+    assertEquals("concat with str.toString()", "0abcd", "0" + str.toString() + "d");
+
+    // issue 4301
+    Object s = TRUE ? "abc" : JavaScriptObject.createObject();
+    assertTrue("issue4301", isJsStringValue(s.toString()));
+    assertSame("s same as s.toString()", s, s.toString());
+  }
+
   /*
    * TODO: needs rewriting to avoid compiler optimizations.
    */
@@ -665,6 +673,10 @@ public class StringTest extends GWTTestCase {
       assertEquals(category + " " + i, desired[i], got[i]);
     }
   }
+
+  private native boolean isJsStringValue(String s) /*-{
+    return typeof s == 'string';
+  }-*/;
 
   private String returnNull() {
     return null;

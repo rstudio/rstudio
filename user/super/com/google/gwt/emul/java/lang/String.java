@@ -958,6 +958,10 @@ public final class String implements Comparable<String>, CharSequence,
 
   @Override
   public String toString() {
+    /*
+     * Magic: this method is only used during compiler optimizations; the generated JS will instead alias
+     * this method to the native String.prototype.toString() function.
+     */
     return this;
   }
 
