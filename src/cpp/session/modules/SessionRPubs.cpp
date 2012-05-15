@@ -11,6 +11,8 @@
  *
  */
 
+// TODO: test curl error reporting on osx
+
 // TODO: notification of public publishing w/ "don't show again"
 
 // TODO: progress dialog for preparing to publish (including cancel)
