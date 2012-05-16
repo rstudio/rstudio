@@ -11,12 +11,6 @@
  *
  */
 
-
-// TODO: test curl error reporting on osx
-// TODO: test all error state (correct dialog & window dismissal)
-
-// TODO: sync function over to markup package
-
 #include "SessionRPubs.hpp"
 
 #include <boost/bind.hpp>
