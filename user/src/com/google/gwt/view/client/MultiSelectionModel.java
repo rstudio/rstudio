@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,16 +23,42 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A simple selection model that allows multiple objects to be selected.
- *
- * @param <T> the record data type
+ * A simple selection model that allows multiple items to be selected.
+ * 
+ * @param <T> the data type of the items
  */
 public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
+
+  /**
+   * Stores an item and its pending selection state.
+   * 
+   * @param <T> the data type of the item
+   */
+  static class SelectionChange<T> {
+    private final T item;
+    private final boolean isSelected;
+
+    SelectionChange(T item, boolean isSelected) {
+      this.item = item;
+      this.isSelected = isSelected;
+    }
+
+    public T getItem() {
+      return item;
+    }
+
+    public boolean isSelected() {
+      return isSelected;
+    }
+  }
 
   // Ensure one value per key
   final Map<Object, T> selectedSet;
 
-  private final Map<T, Boolean> selectionChanges;
+  /**
+   * A map of keys to the item and its pending selection state.
+   */
+  private final Map<Object, SelectionChange<T>> selectionChanges;
 
   /**
    * Constructs a MultiSelectionModel without a key provider.
@@ -40,29 +66,29 @@ public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
   public MultiSelectionModel() {
     this(null);
   }
-  
+
   /**
    * Constructs a MultiSelectionModel with the given key provider.
-   *
-   * @param keyProvider an instance of ProvidesKey<T>, or null if the record
-   *        object should act as its own key
+   * 
+   * @param keyProvider an instance of ProvidesKey<T>, or null if the item
+   *          should act as its own key
    */
   public MultiSelectionModel(ProvidesKey<T> keyProvider) {
-    this(keyProvider, new HashMap<Object, T>(), new HashMap<T, Boolean>());
+    this(keyProvider, new HashMap<Object, T>(), new HashMap<Object, SelectionChange<T>>());
   }
 
   /**
    * Construct a MultiSelectionModel with the given key provider and
    * implementations of selectedSet and selectionChanges. Different
    * implementations allow for enforcing order on selection.
-   *
-   * @param keyProvider an instance of ProvidesKey<T>, or null if the record
-   *        object should act as its own key
+   * 
+   * @param keyProvider an instance of ProvidesKey<T>, or null if the item
+   *          should act as its own key
    * @param selectedSet an instance of Map
    * @param selectionChanges an instance of Map
    */
   MultiSelectionModel(ProvidesKey<T> keyProvider, Map<Object, T> selectedSet,
-      Map<T, Boolean> selectionChanges) {
+      Map<Object, SelectionChange<T>> selectionChanges) {
     super(keyProvider);
     this.selectedSet = selectedSet;
     this.selectionChanges = selectionChanges;
@@ -72,24 +98,25 @@ public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
    * Deselect all selected values.
    */
   public void clear() {
-    // Clear the current list of pending changes. 
+    // Clear the current list of pending changes.
     selectionChanges.clear();
 
     /*
-     * Add a pending change to deselect each value that is currently selected.
-     * We cannot just clear the selected set, because then we would not know
-     * which values were selected before we cleared, which we need to know to
-     * determine if we should fire an event.
+     * Add a pending change to deselect each key that is currently selected. We
+     * cannot just clear the selected set, because then we would not know which
+     * keys were selected before we cleared, which we need to know to determine
+     * if we should fire an event.
      */
     for (T value : selectedSet.values()) {
-      selectionChanges.put(value, false);
+      selectionChanges.put(getKey(value), new SelectionChange<T>(value, false));
     }
     scheduleSelectionChangeEvent();
   }
 
   /**
-   * Get the set of selected items as a copy.
-   *
+   * Get the set of selected items as a copy. If multiple selected items share
+   * the same key, only the last selected item is included in the set.
+   * 
    * @return the set of selected items
    */
   public Set<T> getSelectedSet() {
@@ -98,14 +125,14 @@ public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
   }
 
   @Override
-  public boolean isSelected(T object) {
+  public boolean isSelected(T item) {
     resolveChanges();
-    return selectedSet.containsKey(getKey(object));
+    return selectedSet.containsKey(getKey(item));
   }
 
   @Override
-  public void setSelected(T object, boolean selected) {
-    selectionChanges.put(object, selected);
+  public void setSelected(T item, boolean selected) {
+    selectionChanges.put(getKey(item), new SelectionChange<T>(item, selected));
     scheduleSelectionChangeEvent();
   }
 
@@ -123,14 +150,14 @@ public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
     }
 
     boolean changed = false;
-    for (Map.Entry<T, Boolean> entry : selectionChanges.entrySet()) {
-      T object = entry.getKey();
-      boolean selected = entry.getValue();
+    for (Map.Entry<Object, SelectionChange<T>> entry : selectionChanges.entrySet()) {
+      Object key = entry.getKey();
+      SelectionChange<T> value = entry.getValue();
+      boolean selected = value.isSelected;
 
-      Object key = getKey(object);
       T oldValue = selectedSet.get(key);
       if (selected) {
-        selectedSet.put(key, object);
+        selectedSet.put(key, value.item);
         Object oldKey = getKey(oldValue);
         if (!changed) {
           changed = (oldKey == null) ? (key != null) : !oldKey.equals(key);

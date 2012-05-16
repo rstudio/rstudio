@@ -79,7 +79,7 @@ public class MultiSelectionModelTest extends AbstractSelectionModelTest {
     assertTrue(model.isSelected("test0"));
     handler.assertEventFired(true);
 
-    // Clear selection and reselect.  Verify that no event is fired.
+    // Clear selection and reselect. Verify that no event is fired.
     model.clear();
     model.setSelected("test0", true);
     model.setSelected("test1", true);
@@ -109,6 +109,7 @@ public class MultiSelectionModelTest extends AbstractSelectionModelTest {
   public void testSelectedChangeEvent() {
     MultiSelectionModel<String> model = createSelectionModel(null);
     SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
+        @Override
       public void onSelectionChange(SelectionChangeEvent event) {
         finishTest();
       }
@@ -118,10 +119,11 @@ public class MultiSelectionModelTest extends AbstractSelectionModelTest {
     delayTestFinish(2000);
     model.setSelected("test", true);
   }
-  
+
   public void testNoDuplicateChangeEvent() {
     MultiSelectionModel<String> model = createSelectionModel(null);
     SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
+        @Override
       public void onSelectionChange(SelectionChangeEvent event) {
         fail();
       }
@@ -132,10 +134,11 @@ public class MultiSelectionModelTest extends AbstractSelectionModelTest {
     model.setSelected("test", true); // Should not fire change event
     model.setSelected("test", true); // Should not fire change event
   }
-  
+
   public void testNoDuplicateChangeEvent2() {
     MultiSelectionModel<String> model = createSelectionModel(null);
     SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
+        @Override
       public void onSelectionChange(SelectionChangeEvent event) {
         fail();
       }
@@ -149,17 +152,19 @@ public class MultiSelectionModelTest extends AbstractSelectionModelTest {
   }
 
   /**
-   * Tests that reselecting the same key from a different object does not fire
-   * a change event.
+   * Tests that reselecting the same key from a different item does not fire a
+   * change event.
    */
   public void testNoDuplicateChangeEventWithKeyProvider() {
     ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
+        @Override
       public Object getKey(String item) {
         return item.toUpperCase();
       }
     };
     MultiSelectionModel<String> model = createSelectionModel(keyProvider);
     SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
+        @Override
       public void onSelectionChange(SelectionChangeEvent event) {
         fail();
       }
@@ -169,7 +174,7 @@ public class MultiSelectionModelTest extends AbstractSelectionModelTest {
     assertTrue(model.isSelected("test1"));
 
     model.addSelectionChangeHandler(handler);
-    // Selecting a different object with the same key should not be seen as a
+    // Selecting a different item with the same key should not be seen as a
     // selection change
     String replacement = "TEST1";
     model.setSelected(replacement, true);
@@ -194,8 +199,34 @@ public class MultiSelectionModelTest extends AbstractSelectionModelTest {
     assertTrue(model.isSelected("test0"));
   }
 
+  /**
+   * Tests that items with the same key share the same selection state.
+   */
+  public void testSetSelectedSameKey() {
+    ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
+        @Override
+      public Object getKey(String item) {
+        return item.toUpperCase();
+      }
+    };
+    MultiSelectionModel<String> model = createSelectionModel(keyProvider);
+    assertFalse(model.isSelected("test0"));
+
+    model.setSelected("test0", true);
+    assertTrue(model.isSelected("test0"));
+
+    model.setSelected("Test0", false);
+    assertFalse(model.isSelected("test0"));
+
+    // Verify that the last change wins if the key is the same.
+    model.setSelected("TEST0", true);
+    model.setSelected("test0", false);
+    assertFalse(model.isSelected("test0"));
+  }
+
   public void testSetSelectedWithKeyProvider() {
     ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
+        @Override
       public Object getKey(String item) {
         return item.toUpperCase();
       }

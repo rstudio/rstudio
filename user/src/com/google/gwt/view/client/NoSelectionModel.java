@@ -28,41 +28,43 @@ public class NoSelectionModel<T> extends AbstractSelectionModel<T> {
 
   private Object lastKey;
   private T lastSelection;
-  
+
   /**
    * Constructs a NoSelectionModel without a key provider.
    */
   public NoSelectionModel() {
     super(null);
   }
-  
+
   /**
    * Constructs a NoSelectionModel with the given key provider.
-   *
-   * @param keyProvider an instance of ProvidesKey<T>, or null if the record
-   *        object should act as its own key
+   * 
+   * @param keyProvider an instance of ProvidesKey<T>, or null if the item
+   *          should act as its own key
    */
   public NoSelectionModel(ProvidesKey<T> keyProvider) {
     super(keyProvider);
   }
 
   /**
-   * Gets the object that was last selected.
+   * Gets the item that was last selected.
    * 
-   * @return the last selected object
+   * @return the last selected item
    */
   public T getLastSelectedObject() {
     return lastSelection;
   }
 
-  public boolean isSelected(T object) {
+  @Override
+  public boolean isSelected(T item) {
     return false;
   }
 
-  public void setSelected(T object, boolean selected) {
-    Object key = getKey(object);
+  @Override
+  public void setSelected(T item, boolean selected) {
+    Object key = getKey(item);
     if (selected) {
-      lastSelection = object;
+      lastSelection = item;
       lastKey = key;
     } else if (lastKey != null && lastKey.equals(key)) {
       lastSelection = null;

@@ -51,6 +51,7 @@ public class DefaultSelectionModelTest extends AbstractSelectionModelTest {
   public void testSelectedChangeEvent() {
     DefaultSelectionModel<String> model = createSelectionModel(null);
     SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
+      @Override
       public void onSelectionChange(SelectionChangeEvent event) {
         finishTest();
       }
@@ -64,6 +65,7 @@ public class DefaultSelectionModelTest extends AbstractSelectionModelTest {
   public void testNoDuplicateChangeEvent() {
     DefaultSelectionModel<String> model = createSelectionModel(null);
     SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
+      @Override
       public void onSelectionChange(SelectionChangeEvent event) {
         fail();
       }
@@ -121,9 +123,35 @@ public class DefaultSelectionModelTest extends AbstractSelectionModelTest {
     assertTrue(model.isSelected("selected0"));
   }
 
+  /**
+   * Tests that items with the same key share the same selection state.
+   */
+  public void testSetSelectedSameKey() {
+    ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
+        @Override
+      public Object getKey(String item) {
+        return item.toUpperCase();
+      }
+    };
+    DefaultSelectionModel<String> model = createSelectionModel(keyProvider);
+    assertFalse(model.isSelected("test0"));
+
+    model.setSelected("test0", true);
+    assertTrue(model.isSelected("test0"));
+
+    model.setSelected("Test0", false);
+    assertFalse(model.isSelected("test0"));
+
+    // Verify that the last change wins if the key is the same.
+    model.setSelected("TEST0", true);
+    model.setSelected("test0", false);
+    assertFalse(model.isSelected("test0"));
+  }
+
   public void testSetSelectedWithKeyProvider() {
     Map<Object, Boolean> exceptions = new HashMap<Object, Boolean>();
     ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
+      @Override
       public Object getKey(String item) {
         return item.toUpperCase();
       }
