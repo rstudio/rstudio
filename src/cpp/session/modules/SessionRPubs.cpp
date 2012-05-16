@@ -11,14 +11,10 @@
  *
  */
 
-// TODO: why is the id and continue url printed to the server err console?
 
 // TODO: test curl error reporting on osx
-// TODO: test chrome popup blocking
-// TODO: test on desktop
 // TODO: test all error state (correct dialog & window dismissal)
 
-// TODO: wininet ssl
 // TODO: sync function over to markup package
 
 #include "SessionRPubs.hpp"
