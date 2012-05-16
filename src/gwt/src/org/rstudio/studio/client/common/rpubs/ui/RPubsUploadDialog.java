@@ -100,8 +100,8 @@ public class RPubsUploadDialog extends ModalDialogBase
       verticalPanel.add(descLabel);
       
       HTML warningLabel =  new HTML(
-        "<strong>IMPORTANT NOTE:</strong> Currently, all documents " +
-        "published to RPubs are publicly accessible&mdash;you should " +
+        "<strong>IMPORTANT NOTE:</strong> All documents " +
+        "published to RPubs are publicly accessible. You should " +
         "therefore only publish content that you wish to share publicly.");
       verticalPanel.add(warningLabel);
         
