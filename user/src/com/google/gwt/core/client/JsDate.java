@@ -267,14 +267,16 @@ public class JsDate extends JavaScriptObject {
    * adjusted date.
    */
   public final native double setDate(int dayOfMonth) /*-{
-    return this.setDate(dayOfMonth);
+    this.setDate(dayOfMonth);
+    return this.getTime();
   }-*/;
 
   /**
    * Sets the year. Returns the millisecond representation of the adjusted date.
    */
   public final native double setFullYear(int year) /*-{
-    return this.setFullYear(year);
+    this.setFullYear(year);
+    return this.getTime();
   }-*/;
 
   /**
@@ -282,7 +284,8 @@ public class JsDate extends JavaScriptObject {
    * adjusted date.
    */
   public final native double setFullYear(int year, int month) /*-{
-    return this.setFullYear(year, month);
+    this.setFullYear(year, month);
+    return this.getTime();
   }-*/;
 
   /**
@@ -290,14 +293,16 @@ public class JsDate extends JavaScriptObject {
    * the adjusted date.
    */
   public final native double setFullYear(int year, int month, int day) /*-{
-    return this.setFullYear(year, month, day);
+    this.setFullYear(year, month, day);
+    return this.getTime();
   }-*/;
 
   /**
    * Sets the hour. Returns the millisecond representation of the adjusted date.
    */
   public final native double setHours(int hours) /*-{
-    return this.setHours(hours);
+    this.setHours(hours);
+    return this.getTime();
   }-*/;
 
   /**
@@ -305,7 +310,8 @@ public class JsDate extends JavaScriptObject {
    * adjusted date.
    */
   public final native double setHours(int hours, int mins) /*-{
-    return this.setHours(hours, mins);
+    this.setHours(hours, mins);
+    return this.getTime();
   }-*/;
 
   /**
@@ -313,7 +319,8 @@ public class JsDate extends JavaScriptObject {
    * of the adjusted date.
    */
   public final native double setHours(int hours, int mins, int secs) /*-{
-    return this.setHours(hours, mins, secs);
+    this.setHours(hours, mins, secs);
+    return this.getTime();
   }-*/;
 
   /**
@@ -321,7 +328,8 @@ public class JsDate extends JavaScriptObject {
    * representation of the adjusted date.
    */
   public final native double setHours(int hours, int mins, int secs, int ms) /*-{
-    return this.setHours(hours, mins, secs, ms);
+    this.setHours(hours, mins, secs, ms);
+    return this.getTime();
   }-*/;
 
   /**
@@ -329,7 +337,8 @@ public class JsDate extends JavaScriptObject {
    * date.
    */
   public final native double setMinutes(int minutes) /*-{
-    return this.setMinutes(minutes);
+    this.setMinutes(minutes);
+    return this.getTime();
   }-*/;
 
   /**
@@ -337,7 +346,8 @@ public class JsDate extends JavaScriptObject {
    * adjusted date.
    */
   public final native double setMinutes(int minutes, int seconds) /*-{
-    return this.setMinutes(minutes, seconds);
+    this.setMinutes(minutes, seconds);
+    return this.getTime();
   }-*/;
 
   /**
@@ -345,7 +355,8 @@ public class JsDate extends JavaScriptObject {
    * representation of the adjusted date.
    */
   public final native double setMinutes(int minutes, int seconds, int millis) /*-{
-    return this.setMinutes(minutes, seconds, millis);
+    this.setMinutes(minutes, seconds, millis);
+    return this.getTime();
   }-*/;
 
   /**
@@ -353,7 +364,8 @@ public class JsDate extends JavaScriptObject {
    * date.
    */
   public final native double setMonth(int month) /*-{
-    return this.setMonth(month);
+    this.setMonth(month);
+    return this.getTime();
   }-*/;
 
   /**
@@ -361,7 +373,8 @@ public class JsDate extends JavaScriptObject {
    * adjusted date.
    */
   public final native double setMonth(int month, int dayOfMonth) /*-{
-    return this.setMonth(month, dayOfMonth);
+    this.setMonth(month, dayOfMonth);
+    return this.getTime();
   }-*/;
 
   /**
@@ -369,7 +382,8 @@ public class JsDate extends JavaScriptObject {
    * date.
    */
   public final native double setSeconds(int seconds) /*-{
-    return this.setSeconds(seconds);
+    this.setSeconds(seconds);
+    return this.getTime();
   }-*/;
 
   /**
@@ -377,7 +391,8 @@ public class JsDate extends JavaScriptObject {
    * of the adjusted date.
    */
   public final native double setSeconds(int seconds, int millis) /*-{
-    return this.setSeconds(seconds, millis);
+    this.setSeconds(seconds, millis);
+    return this.getTime();
   }-*/;
 
   /**
@@ -385,7 +400,8 @@ public class JsDate extends JavaScriptObject {
    * <code>milliseconds</code> argument.
    */
   public final native double setTime(double milliseconds) /*-{
-    return this.setTime(milliseconds);
+    this.setTime(milliseconds);
+    return this.getTime();
   }-*/;
 
   /**
@@ -393,7 +409,8 @@ public class JsDate extends JavaScriptObject {
    * of the adjusted date.
    */
   public final native double setUTCDate(int dayOfMonth) /*-{
-    return this.setUTCDate(dayOfMonth);
+    this.setUTCDate(dayOfMonth);
+    return this.getTime();
   }-*/;
 
   /**
@@ -401,7 +418,8 @@ public class JsDate extends JavaScriptObject {
    * adjusted date.
    */
   public final native double setUTCFullYear(int year) /*-{
-    return this.setUTCFullYear(year);
+    this.setUTCFullYear(year);
+    return this.getTime();
   }-*/;
 
   /**
@@ -409,7 +427,8 @@ public class JsDate extends JavaScriptObject {
    * the adjusted date.
    */
   public final native double setUTCFullYear(int year, int month) /*-{
-    return this.setUTCFullYear(year, month);
+    this.setUTCFullYear(year, month);
+    return this.getTime();
   }-*/;
 
   /**
@@ -417,7 +436,8 @@ public class JsDate extends JavaScriptObject {
    * representation of the adjusted date.
    */
   public final native double setUTCFullYear(int year, int month, int day) /*-{
-    return this.setUTCFullYear(year, month, day);
+    this.setUTCFullYear(year, month, day);
+    return this.getTime();
   }-*/;
 
   /**
@@ -425,7 +445,8 @@ public class JsDate extends JavaScriptObject {
    * adjusted date.
    */
   public final native double setUTCHours(int hours) /*-{
-    return this.setUTCHours(hours);
+    this.setUTCHours(hours);
+    return this.getTime();
   }-*/;
 
   /**
@@ -433,7 +454,8 @@ public class JsDate extends JavaScriptObject {
    * of the adjusted date.
    */
   public final native double setUTCHours(int hours, int mins) /*-{
-    return this.setUTCHours(hours, mins);
+    this.setUTCHours(hours, mins);
+    return this.getTime();
   }-*/;
 
   /**
@@ -441,7 +463,8 @@ public class JsDate extends JavaScriptObject {
    * representation of the adjusted date.
    */
   public final native double setUTCHours(int hours, int mins, int secs) /*-{
-    return this.setUTCHours(hours, mins, secs);
+    this.setUTCHours(hours, mins, secs);
+    return this.getTime();
   }-*/;
 
   /**
@@ -449,7 +472,8 @@ public class JsDate extends JavaScriptObject {
    * millisecond representation of the adjusted date.
    */
   public final native double setUTCHours(int hours, int mins, int secs, int ms) /*-{
-    return this.setUTCHours(hours, mins, secs, ms);
+    this.setUTCHours(hours, mins, secs, ms);
+    return this.getTime();
   }-*/;
 
   /**
@@ -457,7 +481,8 @@ public class JsDate extends JavaScriptObject {
    * adjusted date.
    */
   public final native double setUTCMinutes(int minutes) /*-{
-    return this.setUTCMinutes(minutes);
+    this.setUTCMinutes(minutes);
+    return this.getTime();
   }-*/;
 
   /**
@@ -465,7 +490,8 @@ public class JsDate extends JavaScriptObject {
    * representation of the adjusted date.
    */
   public final native double setUTCMinutes(int minutes, int seconds) /*-{
-    return this.setUTCMinutes(minutes, seconds);
+    this.setUTCMinutes(minutes, seconds);
+    return this.getTime();
   }-*/;
 
   /**
@@ -473,7 +499,8 @@ public class JsDate extends JavaScriptObject {
    * millisecond representation of the adjusted date.
    */
   public final native double setUTCMinutes(int minutes, int seconds, int millis) /*-{
-    return this.setUTCMinutes(minutes, seconds, millis);
+    this.setUTCMinutes(minutes, seconds, millis);
+    return this.getTime();
   }-*/;
 
   /**
@@ -481,7 +508,8 @@ public class JsDate extends JavaScriptObject {
    * adjusted date.
    */
   public final native double setUTCMonth(int month) /*-{
-    return this.setUTCMonth(month);
+    this.setUTCMonth(month);
+    return this.getTime();
   }-*/;
 
   /**
@@ -489,7 +517,8 @@ public class JsDate extends JavaScriptObject {
    * the adjusted date.
    */
   public final native double setUTCMonth(int month, int dayOfMonth) /*-{
-    return this.setUTCMonth(month, dayOfMonth);
+    this.setUTCMonth(month, dayOfMonth);
+    return this.getTime();
   }-*/;
 
   /**
@@ -497,7 +526,8 @@ public class JsDate extends JavaScriptObject {
    * adjusted date.
    */
   public final native double setUTCSeconds(int seconds) /*-{
-    return this.setUTCSeconds(seconds);
+    this.setUTCSeconds(seconds);
+    return this.getTime();
   }-*/;
 
   /**
@@ -505,7 +535,8 @@ public class JsDate extends JavaScriptObject {
    * representation of the adjusted date.
    */
   public final native double setUTCSeconds(int seconds, int millis) /*-{
-    return this.setUTCSeconds(seconds, millis);
+    this.setUTCSeconds(seconds, millis);
+    return this.getTime();
   }-*/;
 
   /**
@@ -515,7 +546,8 @@ public class JsDate extends JavaScriptObject {
    */
   @Deprecated
   public final native double setYear(int year) /*-{
-    return this.setYear(year);
+    this.setYear(year);
+    return this.getTime();
   }-*/;
 
   /**
