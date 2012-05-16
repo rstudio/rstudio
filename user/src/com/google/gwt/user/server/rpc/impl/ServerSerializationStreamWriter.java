@@ -398,17 +398,14 @@ public final class ServerSerializationStreamWriter extends
   }
 
   private static String escapeString(String toEscape, boolean splitNodes) {
-    char[] input = toEscape.toCharArray();
-
     // Since escaped characters will increase the output size, allocate extra room to start.
-    int capacityIncrement = Math.max(input.length, 16);
+    int length = toEscape.length();
+    int capacityIncrement = Math.max(length, 16);
     CharVector charVector = new CharVector(capacityIncrement * 2, capacityIncrement);
-
-    int i = 0;
-    int length = input.length;
 
     charVector.add(JS_QUOTE_CHAR);
 
+    int i = 0;
     while (i < length) {
 
       // Add one segment at a time, up to maxNodeLength characters. Note this always leave room
@@ -418,7 +415,7 @@ public final class ServerSerializationStreamWriter extends
           : Integer.MAX_VALUE;
 
       while (i < length && charVector.getSize() < maxSegmentVectorSize) {
-        char c = input[i++];
+        char c = toEscape.charAt(i++);
         if (needsUnicodeEscape(c)) {
           unicodeEscape(c, charVector);
         } else {
