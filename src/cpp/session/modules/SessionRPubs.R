@@ -44,7 +44,7 @@
 #'   an explanation of the error that occurred.
 #'   
 #' @examples 
-#' \dontrun {
+#' \dontrun{
 #' # upload a document
 #' result <- rpubsUpload("My document title", "Document.html")
 #' if (!is.null(result$continueUrl))
