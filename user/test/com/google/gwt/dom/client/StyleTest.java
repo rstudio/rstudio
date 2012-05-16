@@ -287,6 +287,17 @@ public class StyleTest extends GWTTestCase {
     assertEquals(Visibility.HIDDEN, style.getVisibility());
   }
 
+  /**
+   * Test that z-index can be set as an integer and returned as a string. 
+   */
+  public void testZIndexInt() {
+    DivElement div = Document.get().createDivElement();
+    Style style = div.getStyle();
+
+    setPropertyInt(style, "zIndex", 1);
+    assertEquals("1", style.getZIndex());
+  }
+
   @DoNotRunWith({Platform.HtmlUnitUnknown})
   public void testUnits() {
     DivElement div = Document.get().createDivElement();
@@ -315,4 +326,11 @@ public class StyleTest extends GWTTestCase {
   private void assertEquals(HasCssName enumValue, String cssValue) {
     assertEquals(enumValue.getCssName(), cssValue);
   }
+
+  /**
+   * Sets a style property as an int.
+   */
+  private native void setPropertyInt(Style style, String name, int value) /*-{
+    style[name] = value;
+  }-*/;
 }

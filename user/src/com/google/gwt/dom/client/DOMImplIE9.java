@@ -16,7 +16,7 @@
 package com.google.gwt.dom.client;
 
 /**
- * IE9 based implementation of {@link com.google.gwt.user.client.impl.DOMImplStandardBase}.
+ * IE9 based implementation of {@link com.google.gwt.dom.client.DOMImplStandardBase}.
  */
 class DOMImplIE9 extends DOMImplStandardBase {
 
@@ -34,11 +34,21 @@ class DOMImplIE9 extends DOMImplStandardBase {
     return getBoundingClientRectTop(elem) + getDocumentScrollTopImpl();
   }
 
+  /**
+   * Coerce numeric values a string. In IE, some values can be stored as numeric
+   * types.
+   */
+  @Override
+  public native String getNumericStyleProperty(Style style, String name) /*-{
+    return typeof(style[name]) == "number" ? "" + style[name] : style[name];
+  }-*/;
+
   @Override
   public int getScrollLeft(Document doc) {
     return getDocumentScrollLeftImpl();
   }
 
+  @Override
   public int getScrollLeft(Element elem) {
     int left = getScrollLeftImpl(elem);
     if (isRTL(elem)) {
@@ -57,6 +67,7 @@ class DOMImplIE9 extends DOMImplStandardBase {
     return elem.tabIndex < 65535 ? elem.tabIndex : -(elem.tabIndex % 65535) - 1;
   }-*/;
 
+  @Override
   public native void selectRemoveOption(SelectElement select, int index) /*-{
     try {
       // IE9 throws if elem at index is an optgroup

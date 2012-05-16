@@ -225,6 +225,15 @@ abstract class DOMImplTrident extends DOMImpl {
     return elem.innerText;
   }-*/;
 
+  /**
+   * Coerce numeric values a string. In IE, some values can be stored as numeric
+   * types.
+   */
+  @Override
+  public native String getNumericStyleProperty(Style style, String name) /*-{
+    return typeof(style[name]) == "number" ? "" + style[name] : style[name];
+  }-*/;
+
   @Override
   public String getTagName(Element elem) {
     String tagName = getTagNameInternal(elem);

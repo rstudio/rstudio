@@ -1409,7 +1409,7 @@ public class Style extends JavaScriptObject {
    * Get the z-index css property.
    */
   public final String getZIndex() {
-    return getProperty(STYLE_Z_INDEX);
+    return DOMImpl.impl.getNumericStyleProperty(this, STYLE_Z_INDEX);
   }
 
   /**
@@ -1758,9 +1758,9 @@ public class Style extends JavaScriptObject {
   /**
    * Gets the value of a named property.
    */
-  private native String getPropertyImpl(String name) /*-{
-    return this[name];
-  }-*/;
+  private String getPropertyImpl(String name) {
+    return DOMImpl.impl.getStyleProperty(this, name);
+  }
 
   /**
    * Sets the value of a named property.

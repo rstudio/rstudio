@@ -260,6 +260,14 @@ abstract class DOMImpl {
     return node.nodeType;
   }-*/;
 
+  /**
+   * Returns a numeric style property (such as zIndex) that may need to be
+   * coerced to a string.
+   */
+  public String getNumericStyleProperty(Style style, String name) {
+    return getStyleProperty(style, name);
+  }
+
   public native Element getParentElement(Node node) /*-{
     var parent = node.parentNode;
     if (!parent || parent.nodeType != 1) {
@@ -286,6 +294,10 @@ abstract class DOMImpl {
   public int getScrollTop(Document doc) {
     return doc.getViewportElement().getScrollTop();
   }
+
+  public native String getStyleProperty(Style style, String name) /*-{
+    return style[name];
+  }-*/;
 
   public native int getTabIndex(Element elem) /*-{
     return elem.tabIndex;
