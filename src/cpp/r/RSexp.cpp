@@ -231,6 +231,18 @@ Error extract(SEXP valueSEXP, bool* pBool)
    return Success();
    
 }
+
+Error extract(SEXP valueSEXP, double* pDouble)
+{
+   if (TYPEOF(valueSEXP) != REALSXP)
+      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+
+   if (Rf_length(valueSEXP) < 1)
+      return Error(errc::NoDataAvailableError, ERROR_LOCATION);
+
+   *pDouble = REAL(valueSEXP)[0];
+   return Success();
+}
    
 Error extract(SEXP valueSEXP, std::vector<int>* pVector)
 {

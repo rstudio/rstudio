@@ -47,10 +47,6 @@
 #define TRACE_GD_CALL
 #endif
 
-extern "C" double Rf_xDevtoUsr(double, pGEDevDesc);
-extern "C" double Rf_yDevtoUsr(double, pGEDevDesc);
-extern "C" double Rf_xDevtoNDC(double, pGEDevDesc);
-extern "C" double Rf_yDevtoNDC(double, pGEDevDesc);
 
 using namespace core ;
 
@@ -595,6 +591,41 @@ void deviceConvert(double* x,
    }
 }
 
+double grconvert(double val,
+                 const std::string& type,
+                 const std::string& from,
+                 const std::string& to)
+{
+   r::exec::RFunction grconvFunc("graphics:::grconvert" + type, val, from, to);
+   double convertedVal = val; // default in case of error
+   Error error = grconvFunc.call(&convertedVal);
+   if (error)
+      LOG_ERROR(error);
+   return convertedVal;
+}
+
+double grconvertX(double x, const std::string& from, const std::string& to)
+{
+   return grconvert(x, "X", from, to);
+}
+
+double grconvertY(double y, const std::string& from, const std::string& to)
+{
+   return grconvert(y, "Y", from, to);
+}
+
+void deviceToUser(double* x, double* y)
+{
+   *x = grconvertX(*x, "device", "user");
+   *y = grconvertY(*y, "device", "user");
+}
+
+void deviceToNDC(double* x, double* y)
+{
+   *x = grconvertX(*x, "device", "ndc");
+   *y = grconvertY(*y, "device", "ndc");
+}
+
 Error saveSnapshot(const core::FilePath& snapshotFile,
                    const core::FilePath& imageFile)
 {
@@ -684,10 +715,8 @@ Error initialize(
    
    // device conversion functions
    UnitConversionFunctions convert;
-   convert.deviceToUser = boost::bind(deviceConvert,
-                                    _1, _2, Rf_xDevtoUsr, Rf_yDevtoUsr);
-   convert.deviceToNDC = boost::bind(deviceConvert,
-                                    _1, _2, Rf_xDevtoNDC, Rf_yDevtoNDC);
+   convert.deviceToUser = deviceToUser;
+   convert.deviceToNDC = deviceToNDC;
 
    // create plot manager (provide functions & events)
    GraphicsDeviceFunctions graphicsDevice;
