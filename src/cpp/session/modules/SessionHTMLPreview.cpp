@@ -474,7 +474,7 @@ Error getHTMLCapabilities(const json::JsonRpcRequest&,
 
 std::string defaultTitle(const std::string& htmlContent)
 {
-   boost::regex re("<[Hh]([1-6]).*?>(.*)</[Hh]\\1>");
+   boost::regex re("<[Hh]([1-6]).*?>(.*?)</[Hh]\\1>");
    boost::smatch match;
    if (boost::regex_search(htmlContent, match, re))
       return match[2];
