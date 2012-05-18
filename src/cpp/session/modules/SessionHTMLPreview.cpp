@@ -613,6 +613,13 @@ void modifyOutputForPreview(std::string* pOutput)
             boost::regex("tt, code, pre \\{\\n\\s+font-family:[^\n]+;"),
            "tt, code, pre {\n   font-family: " + preFontFamily() + ";");
 
+      // add HTML-CSS options required for correct qtwebkit rendering
+      std::string target = "asciimath2jax: {";
+      boost::algorithm::replace_first(
+               *pOutput,
+               target,
+               "\"HTML-CSS\": { minScaleAdjust: 125, availableFonts: [] }, "
+               + target);
 
       // serve mathjax locally when running in desktop mode under linux
       // and windows (on the mac serving mathjax locally to webkit causes
