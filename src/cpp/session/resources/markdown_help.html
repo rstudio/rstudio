@@ -111,11 +111,18 @@ Header 2
 > than to receive.
 </code></pre>
 
-<h4>Code Blocks</h4>
+<h4>R Code Blocks</h4>
+<p>R code will be evaluated and printed</p>
+<pre><code>``` {r}
+summary(cars$dist)
+summary(cars$speed)
+```
+</code></pre>
+
+<h4>Plain Code Blocks</h4>
+<p>Plain code blocks are displayed in a fixed-width font but not evaulated</p>
 <pre><code>```
-add <- function(a, b) {
-   a + b
-}
+This text is displayed verbatim / preformatted
 ```
 </code></pre>
 
