@@ -34,9 +34,9 @@
    
    # system-specific download methods (to try to get https)
    switch(Sys.info()[['sysname']],
-          Windows = { method <<- "internal"},
-          Linux   = { method <<- "wget"},
-          Darwin  = { method <<- "curl"})
+          Windows = { method <- "internal"},
+          Linux   = { method <- "wget"},
+          Darwin  = { method <- "curl"})
    
    # try downloading using https, fallback to http if it fails for any reason
    tryCatch(download("https", method), 
