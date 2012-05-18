@@ -28,6 +28,10 @@
 #include <core/http/Util.hpp>
 #include <core/system/Process.hpp>
 
+#include <r/RSexp.hpp>
+#include <r/RRoutines.hpp>
+
+#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 
 #include <session/projects/SessionProjects.hpp>
@@ -342,11 +346,29 @@ Error terminateRpubsUpload(const json::JsonRpcRequest& request,
    return Success();
 }
 
+SEXP rs_rpubsEnable()
+{
+   userSettings().setRPubsEnabled(true);
+
+   module_context::consoleWriteOutput(
+                  "RPubs enabled (you need to restart RStudio for "
+                  "the change to take effect)\n");
+
+   return R_NilValue;
+}
+
 } // anonymous namespace
 
 
 Error initialize()
 {
+   // register rpubsEnable function
+   R_CallMethodDef methodDef ;
+   methodDef.name = "rs_rpubsEnable" ;
+   methodDef.fun = (DL_FUNC) rs_rpubsEnable ;
+   methodDef.numArgs = 0;
+   r::routines::addCallMethod(methodDef);
+
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock ;

@@ -537,4 +537,11 @@ bool UserSettings::rpubsEnabled() const
     return settings_.getBool("rpubsEnabled", false);
 }
 
+
+void UserSettings::setRPubsEnabled(bool enabled)
+{
+    return settings_.set("rpubsEnabled", enabled);
+}
+
+
 } // namespace session
