@@ -547,11 +547,11 @@ bool requiresHighlighting(const std::string& htmlOutput)
 
 bool requiresMathjax(const std::string& htmlOutput)
 {
-   boost::regex inlineMathRegex("\\$\\S[^\\n]+\\S\\$");
+   boost::regex inlineMathRegex("\\$(?!\\s)[^$]*[^$\\s]\\$");
    if (boost::regex_search(htmlOutput, inlineMathRegex))
       return true;
 
-   boost::regex displayMathRegex("\\${2}[\\s\\S]+\\${2}");
+   boost::regex displayMathRegex("\\${2}[\\s\\S]+?\\${2}");
    if (boost::regex_search(htmlOutput, displayMathRegex))
       return true;
 
