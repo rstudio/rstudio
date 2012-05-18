@@ -618,11 +618,15 @@ void modifyOutputForPreview(std::string* pOutput)
       // and windows (on the mac serving mathjax locally to webkit causes
       // it to crash with a font cache reference counting problem)
 #ifndef __APPLE__
+      std::string previewMathjax = "mathjax";
+#else
+      std::string previewMathjax = "http://cdn.mathjax.org/mathjax/2.0-latest";
+#endif
+
       boost::algorithm::replace_all(
            *pOutput,
-           "http://cdn.mathjax.org/mathjax/2.0-latest",
-           "mathjax");
-#endif
+           "https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest",
+           previewMathjax);
    }
 }
 
