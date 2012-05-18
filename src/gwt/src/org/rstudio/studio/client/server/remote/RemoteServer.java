@@ -1153,6 +1153,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, ICONVLIST, requestCallback);      
    }
    
+   public void getRMarkdownTemplate(
+                              ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_RMARKDOWN_TEMPLATE, requestCallback);
+   }
+   
    
    public void getRecentHistory(
          long maxItems,
@@ -2692,6 +2698,7 @@ public class RemoteServer implements Server
    private static final String REMOVE_CONTENT_URL = "remove_content_url";
    private static final String DETECT_FREE_VARS = "detect_free_vars";
    private static final String ICONVLIST = "iconvlist";
+   private static final String GET_RMARKDOWN_TEMPLATE = "get_rmarkdown_template";
    private static final String GET_TEX_CAPABILITIES = "get_tex_capabilities";
    private static final String GET_CHUNK_OPTIONS = "get_chunk_options";
 

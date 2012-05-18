@@ -251,7 +251,10 @@ if (NOT RSTUDIO_SESSION_WIN64)
    file(GLOB CSS_RESOURCE_FILES "resources/*.css")
    install(FILES ${CSS_RESOURCE_FILES}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
-
+   # Rmd resources
+   file(GLOB RMD_RESOURCE_FILES "resources/*.Rmd")
+   install(FILES ${RMD_RESOURCE_FILES}
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
    # JS resources
    file(GLOB JS_RESOURCE_FILES "resources/*.js")
    install(FILES ${JS_RESOURCE_FILES}

@@ -473,6 +473,24 @@ Error getHTMLCapabilities(const json::JsonRpcRequest&,
    return Success();
 }
 
+
+Error getRMarkdownTemplate(const json::JsonRpcRequest&,
+                                    json::JsonRpcResponse* pResponse)
+{
+   FilePath templatePath = session::options().rResourcesPath().complete(
+                                                   "r_markdown_template.Rmd");
+   std::string templateContents;
+   Error error = core::readStringFromFile(templatePath,
+                                          &templateContents,
+                                          string_utils::LineEndingPosix);
+   if (error)
+      return error;
+
+   pResponse->setResult(templateContents);
+
+   return Success();
+}
+
 std::string defaultTitle(const std::string& htmlContent)
 {
    boost::regex re("<[Hh]([1-6]).*?>(.*?)</[Hh]\\1>");
@@ -835,6 +853,7 @@ Error initialize()
       (bind(registerRpcMethod, "preview_html", previewHTML))
       (bind(registerRpcMethod, "terminate_preview_html", terminatePreviewHTML))
       (bind(registerRpcMethod, "get_html_capabilities", getHTMLCapabilities))
+      (bind(registerRpcMethod, "get_rmarkdown_template", getRMarkdownTemplate))
       (bind(registerUriHandler, kHTMLPreviewLocation, handlePreviewRequest))
    ;
    return initBlock.execute();
