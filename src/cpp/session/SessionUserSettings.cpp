@@ -455,12 +455,17 @@ void UserSettings::setVcsUseGitBash(bool useGitBash)
 
 bool UserSettings::useTexi2Dvi() const
 {
-   return settings_.getBool("useTexi2Dvi", true);
+#if defined(_WIN32) || defined(__APPLE__)
+   bool defaultValue = true;
+#else
+   bool defaultValue = false;
+#endif
+    return settings_.getBool("useTexi2DviCompile", defaultValue);
 }
 
 void UserSettings::setUsetexi2Dvi(bool useTexi2Dvi)
 {
-   settings_.set("useTexi2Dvi", useTexi2Dvi);
+   settings_.set("useTexi2DviCompile", useTexi2Dvi);
 }
 
 bool UserSettings::cleanTexi2DviOutput() const
