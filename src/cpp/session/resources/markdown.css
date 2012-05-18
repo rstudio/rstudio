@@ -51,6 +51,10 @@ code.r {
    background-color: #F8F8F8;
 }
 
+table, td, th {
+  border: none;
+}
+
 blockquote {
    color:#666666;
    margin:0;
