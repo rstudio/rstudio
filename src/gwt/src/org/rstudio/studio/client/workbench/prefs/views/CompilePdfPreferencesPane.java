@@ -68,11 +68,6 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       compilationOptionsLabel.addStyleName(baseRes.styles().headerLabel());
       nudgeRight(compilationOptionsLabel);
       add(compilationOptionsLabel);
-            
-      chkUseTexi2Dvi_ = new CheckBox( "Use texi2dvi to resolve cross-references");
-      spaced(chkUseTexi2Dvi_);
-      add(chkUseTexi2Dvi_);
-      
       chkCleanTexi2DviOutput_ = new CheckBox(
                                      "Clean auxiliary output after compile");
       spaced(chkCleanTexi2DviOutput_);
@@ -87,6 +82,10 @@ public class CompilePdfPreferencesPane extends PreferencesPane
                                   prefs_.insertNumberedLatexSections());
       spaced(chkNumberedSections);
       add(chkNumberedSections);
+      
+      chkUseTexi2Dvi_ = new CheckBox( "Invoke compiler via texi2dvi script");
+      spaced(chkUseTexi2Dvi_);
+      add(chkUseTexi2Dvi_);
       
       Label previwingOptionsLabel = new Label("PDF preview");
       previwingOptionsLabel.addStyleName(baseRes.styles().headerLabel());
