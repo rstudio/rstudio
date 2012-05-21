@@ -20,12 +20,6 @@ public class CodeModel extends JavaScriptObject
 {
    protected CodeModel() {}
 
-   public native final String getLanguageMode(Position position) /*-{
-      if (!this.getLanguageMode)
-         return null;
-      return this.getLanguageMode(position);
-   }-*/;
-
    public native final Scope getCurrentScope(Position position) /*-{
       if (!this.getCurrentScope)
          return null;
@@ -44,7 +38,7 @@ public class CodeModel extends JavaScriptObject
       if (!this.getCurrentScope)
          return null;
       return this.getCurrentScope(position, function(scope) {
-         return scope.isFunction() && scope.label;
+         return scope.isBrace() && scope.label;
       });
    }-*/;
 
