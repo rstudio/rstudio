@@ -2353,7 +2353,6 @@ public class TextEditingTarget implements EditingTarget
    private boolean isCursorInRMode()
    {
       String mode = docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());
-      Debug.devlog(mode);
       if (mode == null)
          return true;
       if (mode.equals(TextFileType.R_LANG_MODE))
