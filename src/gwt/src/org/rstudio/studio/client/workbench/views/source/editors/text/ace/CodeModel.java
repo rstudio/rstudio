@@ -20,12 +20,6 @@ public class CodeModel extends JavaScriptObject
 {
    protected CodeModel() {}
 
-   public native final String getLanguageMode(Position position) /*-{
-      if (!this.getLanguageMode)
-         return null;
-      return this.getLanguageMode(position);
-   }-*/;
-
    public native final Scope getCurrentScope(Position position) /*-{
       if (!this.getCurrentScope)
          return null;

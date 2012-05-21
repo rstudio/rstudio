@@ -1314,7 +1314,7 @@ public class TextEditingTarget implements EditingTarget
    {
       if (isCursorInTexMode())
          doCommentUncomment('%');
-      else
+      else if (isCursorInRMode())
          doCommentUncomment('#');
    }
    
@@ -2348,6 +2348,17 @@ public class TextEditingTarget implements EditingTarget
       {
          return false;
       }
+   }
+
+   private boolean isCursorInRMode()
+   {
+      String mode = docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());
+      Debug.devlog(mode);
+      if (mode == null)
+         return true;
+      if (mode.equals(TextFileType.R_LANG_MODE))
+         return true;
+      return false;
    }
    
    private boolean isNewDoc()

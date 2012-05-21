@@ -840,7 +840,7 @@ public class AceEditor implements DocDisplay,
    @Override
    public String getLanguageMode(Position position)
    {
-      return getSession().getMode().getCodeModel().getLanguageMode(position);
+      return getSession().getMode().getLanguageMode(position);
    }
 
    public void replaceCode(String code)

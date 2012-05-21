@@ -26,6 +26,7 @@ var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").
 var RCodeModel = require("mode/r_code_model").RCodeModel;
 
 var Mode = function(suppressHighlighting, doc, session) {
+   this.$session = session;
    this.$tokenizer = new Tokenizer(new RHtmlHighlightRules().getRules());
 
    this.codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/,
@@ -45,6 +46,11 @@ oop.inherits(Mode, HtmlMode);
       position: {row: 0, column: 15}
    };
     
+   this.getLanguageMode = function(position)
+   {
+      return this.$session.getState(position.row).match(/^r-/) ? 'R' : 'HTML';
+   };
+
    this.getNextLineIndent = function(state, line, tab, tabSize, row)
    {
       return this.codeModel.getNextLineIndent(row, line, state, tab, tabSize);
