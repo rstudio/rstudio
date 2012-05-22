@@ -84,7 +84,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       headerPanel.addStyleName(styles.headerPanel());
       headerPanel.add(new Image(RESOURCES.publishLarge()));
       
-      Label headerLabel = new Label("Publish to RPubs (Beta)");
+      Label headerLabel = new Label("Publish to RPubs");
       headerLabel.addStyleName(styles.headerLabel());
       headerPanel.add(headerLabel);
       headerPanel.setCellVerticalAlignment(headerLabel,
@@ -95,13 +95,13 @@ public class RPubsUploadDialog extends ModalDialogBase
       Label descLabel = new Label(
          "RPubs is a service that allows you to publish " +
          "R Markdown documents to the web. Use of RPubs is free for " +
-         "publishing publicly accessible documents.");
+         "publicly accessible documents.");
       descLabel.addStyleName(styles.descLabel());
       verticalPanel.add(descLabel);
       
       HTML warningLabel =  new HTML(
         "<strong>IMPORTANT NOTE:</strong> All documents " +
-        "published to RPubs are publicly accessible. You should " +
+        "published to RPubs are publicly visible. You should " +
         "therefore only publish content that you wish to share publicly.");
       verticalPanel.add(warningLabel);
         
@@ -122,7 +122,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       });
       addCancelButton(cancelButton);
       
-      continueButton_ = new ThemedButton("Continue", new ClickHandler() {
+      continueButton_ = new ThemedButton("Publish", new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
          {   
