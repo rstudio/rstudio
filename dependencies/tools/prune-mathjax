@@ -28,6 +28,9 @@ fi
 
 MATHJAX_DIR=$1
 
+rm -rf $MATHJAX_DIR/.gitignore
+rm -rf $MATHJAX_DIR/README.md
+rm -rf $MATHJAX_DIR/README-branch.txt
 rm -rf $MATHJAX_DIR/docs
 rm -rf $MATHJAX_DIR/test
 rm -rf $MATHJAX_DIR/unpacked
@@ -41,14 +44,11 @@ rm -f $MATHJAX_DIR/config/MML_HTMLorMML-full.js
 rm -f $MATHJAX_DIR/config/MML_HTMLorMML.js
 rm -f $MATHJAX_DIR/config/TeX-AMS_HTML-full.js
 rm -f $MATHJAX_DIR/config/TeX-AMS_HTML.js
-rm -f $MATHJAX_DIR/config/TeX-AMS-MML_SVG-full.js
-rm -f $MATHJAX_DIR/config/TeX-AMS-MML_SVG.js
 rm -f $MATHJAX_DIR/config/TeX-MML-AM_HTMLorMML-full.js
 rm -f $MATHJAX_DIR/config/TeX-MML-AM_HTMLorMML.js
 rm -f $MATHJAX_DIR/config/TeX-AMS-MML_HTMLorMML-full.js
 rm -rf $MATHJAX_DIR/config/local
 
-rm -rf $MATHJAX_DIR/jax/output/SVG
 rm -rf $MATHJAX_DIR/fonts/HTML-CSS/TeX/svg
 rm -rf $MATHJAX_DIR/fonts/HTML-CSS/TeX/png
 rm -rf $MATHJAX_DIR/fonts/HTML-CSS/TeX/eot

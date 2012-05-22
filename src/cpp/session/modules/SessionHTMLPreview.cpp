@@ -631,6 +631,13 @@ void modifyOutputForPreview(std::string* pOutput)
             boost::regex("tt, code, pre \\{\\n\\s+font-family:[^\n]+;"),
            "tt, code, pre {\n   font-family: " + preFontFamily() + ";");
 
+#ifdef __APPLE__
+      // use SVG fonts on MacOS (because HTML-CSS fonts crash QtWebKit)
+       boost::algorithm::replace_first(
+                *pOutput,
+                "config=TeX-AMS-MML_HTMLorMML",
+                "config=TeX-AMS-MML_SVG");
+#else
       // add HTML-CSS options required for correct qtwebkit rendering
       std::string target = "asciimath2jax: {";
       boost::algorithm::replace_first(
@@ -638,17 +645,11 @@ void modifyOutputForPreview(std::string* pOutput)
                target,
                "\"HTML-CSS\": { minScaleAdjust: 125, availableFonts: [] }, "
                + target);
-
-      // serve mathjax locally when running in desktop mode under linux
-      // and windows (on the mac serving mathjax locally to webkit causes
-      // it to crash with a font cache reference counting problem)
-#ifndef __APPLE__
-      std::string previewMathjax = "mathjax";
-#else
-      std::string previewMathjax = "http://cdn.mathjax.org/mathjax/2.0-latest";
 #endif
 
-      boost::algorithm::replace_all(
+      // serve mathjax locally
+      std::string previewMathjax = "mathjax";
+      boost::algorithm::replace_first(
            *pOutput,
            "https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest",
            previewMathjax);
