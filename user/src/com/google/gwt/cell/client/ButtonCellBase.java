@@ -23,6 +23,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.resources.client.ClientBundle;
@@ -32,6 +33,8 @@ import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
+import com.google.gwt.safecss.shared.SafeStyles;
+import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -107,7 +110,7 @@ public class ButtonCellBase<C> extends AbstractCell<C> implements IsCollapsible,
   }
 
   /**
-   * The default implementation of the {@link Appearance}.
+   * The default implementation of the {@link ButtonCellBase.Appearance}.
    * 
    * @param <C> the type that this Cell represents
    */
@@ -182,16 +185,16 @@ public class ButtonCellBase<C> extends AbstractCell<C> implements IsCollapsible,
        * wrap even when they do not need to.
        */
       @SafeHtmlTemplates.Template("<div class=\"{0}\""
-          + " style=\"position:relative;padding-{1}:{2}px;zoom:0;\">{3}{4}</div>")
-      SafeHtml iconContentLayout(String classes, String iconDirection, int iconWidth,
-          SafeHtml icon, SafeHtml cellContents);
+          + " style=\"{1}position:relative;zoom:0;\">{2}{3}</div>")
+      SafeHtml iconContentLayout(
+          String classes, SafeStyles styles, SafeHtml icon, SafeHtml cellContents);
 
       /**
        * The wrapper around the icon that aligns it vertically with the text.
        */
-      @SafeHtmlTemplates.Template("<div style=\"position:absolute;{0}:0px;top:50%;line-height:0px;"
-          + "margin-top:-{1}px;\">{2}</div>")
-      SafeHtml iconWrapper(String direction, int halfHeight, SafeHtml image);
+      @SafeHtmlTemplates.Template("<div style=\"{0}position:absolute;top:50%;line-height:0px;\">"
+          + "{1}</div>")
+      SafeHtml iconWrapper(SafeStyles styles, SafeHtml image);
     }
 
     private static final int DEFAULT_ICON_PADDING = 3;
@@ -205,14 +208,13 @@ public class ButtonCellBase<C> extends AbstractCell<C> implements IsCollapsible,
       return defaultResources;
     }
 
-    private final String iconDirection = LocaleInfo.getCurrentLocale().isRTL() ? "right" : "left";
     private SafeHtml iconSafeHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
     private ImageResource lastIcon;
     private final SafeHtmlRenderer<C> renderer;
     private final Style style;
 
     /**
-     * Construct a new {@link DefaultAppearance} using the default styles.
+     * Construct a new {@link ButtonCellBase.DefaultAppearance} using the default styles.
      * 
      * @param renderer the {@link SafeHtmlRenderer} used to render the contents
      */
@@ -221,7 +223,7 @@ public class ButtonCellBase<C> extends AbstractCell<C> implements IsCollapsible,
     }
 
     /**
-     * Construct a new {@link DefaultAppearance} using the specified resources.
+     * Construct a new {@link ButtonCellBase.DefaultAppearance} using the specified resources.
      * 
      * @param renderer the {@link SafeHtmlRenderer} used to render the contents
      * @param resources the resources and styles to apply to the button
@@ -245,14 +247,17 @@ public class ButtonCellBase<C> extends AbstractCell<C> implements IsCollapsible,
       return renderer;
     }
 
+    @Override
     public void onPush(Element parent) {
       parent.getFirstChildElement().addClassName(style.buttonCellBasePushing());
     }
 
+    @Override
     public void onUnpush(Element parent) {
       parent.getFirstChildElement().removeClassName(style.buttonCellBasePushing());
     }
 
+    @Override
     public void render(ButtonCellBase<C> cell, Context context, C value, SafeHtmlBuilder sb) {
       // Determine the classes from the state of the button.
       SafeHtmlBuilder classes = new SafeHtmlBuilder();
@@ -281,7 +286,14 @@ public class ButtonCellBase<C> extends AbstractCell<C> implements IsCollapsible,
           AbstractImagePrototype proto = AbstractImagePrototype.create(icon);
           SafeHtml iconOnly = SafeHtmlUtils.fromTrustedString(proto.getHTML());
           int halfHeight = (int) Math.round(icon.getHeight() / 2.0);
-          iconSafeHtml = template.iconWrapper(iconDirection, halfHeight, iconOnly);
+          SafeStylesBuilder styles = new SafeStylesBuilder();
+          styles.marginTop(-halfHeight, Unit.PX);
+          if (LocaleInfo.getCurrentLocale().isRTL()) {
+            styles.right(0, Unit.PX);
+          } else {
+            styles.left(0, Unit.PX);
+          }
+          iconSafeHtml = template.iconWrapper(styles.toSafeStyles(), iconOnly);
         }
       }
 
@@ -297,11 +309,17 @@ public class ButtonCellBase<C> extends AbstractCell<C> implements IsCollapsible,
       }
 
       // Create the button.
+      SafeStylesBuilder styles = new SafeStylesBuilder();
       int iconWidth = (icon == null) ? 0 : icon.getWidth();
+      int iconPadding = iconWidth + DEFAULT_ICON_PADDING;
+      if (LocaleInfo.getCurrentLocale().isRTL()) {
+        styles.paddingRight(iconPadding, Unit.PX);
+      } else {
+        styles.paddingLeft(iconPadding, Unit.PX);
+      }
       SafeHtml safeValue = renderer.render(value);
-      SafeHtml content =
-          template.iconContentLayout(CommonResources.getInlineBlockStyle(), iconDirection,
-              iconWidth + DEFAULT_ICON_PADDING, iconSafeHtml, safeValue);
+      SafeHtml content = template.iconContentLayout(
+          CommonResources.getInlineBlockStyle(), styles.toSafeStyles(), iconSafeHtml, safeValue);
       int tabIndex = cell.getTabIndex();
       StringBuilder openTag = new StringBuilder();
       openTag.append("<button type=\"button\"");
@@ -313,6 +331,7 @@ public class ButtonCellBase<C> extends AbstractCell<C> implements IsCollapsible,
       sb.appendHtmlConstant("</button>");
     }
 
+    @Override
     public void setFocus(Element parent, boolean focused) {
       Element focusable = parent.getFirstChildElement().cast();
       if (focused) {
@@ -337,6 +356,7 @@ public class ButtonCellBase<C> extends AbstractCell<C> implements IsCollapsible,
       this.reg = Event.addNativePreviewHandler(this);
     }
 
+    @Override
     public void onPreviewNativeEvent(NativePreviewEvent event) {
       if (BrowserEvents.MOUSEUP.equals(event.getNativeEvent().getType())) {
         // Unregister self.
@@ -408,14 +428,17 @@ public class ButtonCellBase<C> extends AbstractCell<C> implements IsCollapsible,
     return tabIndex;
   }
 
+  @Override
   public boolean isCollapseLeft() {
     return this.isCollapsedLeft;
   }
 
+  @Override
   public boolean isCollapseRight() {
     return this.isCollapsedRight;
   }
 
+  @Override
   public boolean isEnabled() {
     return isEnabled;
   }
@@ -481,6 +504,7 @@ public class ButtonCellBase<C> extends AbstractCell<C> implements IsCollapsible,
    * <p>
    * The change takes effect the next time the Cell is rendered.
    */
+  @Override
   public void setCollapseLeft(boolean isCollapsed) {
     this.isCollapsedLeft = isCollapsed;
   }
@@ -491,6 +515,7 @@ public class ButtonCellBase<C> extends AbstractCell<C> implements IsCollapsible,
    * <p>
    * The change takes effect the next time the Cell is rendered.
    */
+  @Override
   public void setCollapseRight(boolean isCollapsed) {
     this.isCollapsedRight = isCollapsed;
   }
@@ -513,6 +538,7 @@ public class ButtonCellBase<C> extends AbstractCell<C> implements IsCollapsible,
    * <p>
    * The change takes effect the next time the Cell is rendered.
    */
+  @Override
   public void setEnabled(boolean isEnabled) {
     this.isEnabled = isEnabled;
   }
