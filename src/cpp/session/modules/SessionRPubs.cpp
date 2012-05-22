@@ -23,6 +23,7 @@
 #include <core/Exec.hpp>
 #include <core/Log.hpp>
 #include <core/Settings.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <core/text/CsvParser.hpp>
 #include <core/http/Util.hpp>
@@ -124,6 +125,7 @@ private:
       using namespace module_context;
 
       htmlFile_ = htmlFile;
+      csvOutputFile_ = module_context::tempFile("rpubsupload", "csv");
       isRunning_ = true;
 
       // see if we already know of an upload id for this file
@@ -148,21 +150,26 @@ private:
       boost::format fmt(
                "source(\"%1%\"); "
                "result <- rpubsUpload(\"%2%\", \"%3%\", %4%); "
-               "utils::write.csv(as.data.frame(result), row.names=FALSE);");
+               "utils::write.csv(as.data.frame(result), "
+                               " file=\"%5%\", "
+                               " row.names=FALSE);");
 
       FilePath modulesPath = session::options().modulesRSourcePath();;
       std::string scriptPath = utf8ToSystem(
                         modulesPath.complete("SessionRPubs.R").absolutePath());
       std::string htmlPath = utf8ToSystem(htmlFile.absolutePath());
+      std::string outputPath = utf8ToSystem(csvOutputFile_.absolutePath());
 
       std::string escapedScriptPath = string_utils::jsLiteralEscape(scriptPath);
       std::string escapedTitle = string_utils::jsLiteralEscape(title);
       std::string escapedHtmlPath = string_utils::jsLiteralEscape(htmlPath);
       std::string escapedId = string_utils::jsLiteralEscape(id);
+      std::string escapedOutputPath = string_utils::jsLiteralEscape(outputPath);
 
       std::string cmd = boost::str(fmt %
                     escapedScriptPath % escapedTitle % escapedHtmlPath %
-                    (!escapedId.empty() ? "\"" + escapedId + "\"" : "NULL"));
+                    (!escapedId.empty() ? "\"" + escapedId + "\"" : "NULL") %
+                    escapedOutputPath);
       args.push_back(cmd);
 
       // options
@@ -203,16 +210,36 @@ private:
       error_.append(error);
    }
 
-
    void onCompleted(int exitStatus)
    {
       if (exitStatus == EXIT_SUCCESS)
       {
-         Result result = parseOutput(output_);
-         if (!result.empty())
-            terminateWithResult(result);
+         if(csvOutputFile_.exists())
+         {
+            std::string csvOutput;
+            Error error = core::readStringFromFile(
+                                             csvOutputFile_,
+                                             &csvOutput,
+                                             string_utils::LineEndingPosix);
+            if (error)
+            {
+               terminateWithError(error);
+            }
+            else
+            {
+               // parse output
+               Result result = parseOutput(csvOutput);
+               if (!result.empty())
+                  terminateWithResult(result);
+               else
+                  terminateWithError(
+                           "Unexpected output from upload: " + csvOutput);
+            }
+         }
          else
+         {
             terminateWithError("Unexpected output from upload: " + output_);
+         }
       }
       else
       {
@@ -306,6 +333,7 @@ private:
    bool isRunning_;
    std::string output_;
    std::string error_;
+   FilePath csvOutputFile_;
 };
 
 boost::shared_ptr<RPubsUpload> s_pCurrentUpload;
