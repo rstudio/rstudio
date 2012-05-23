@@ -337,7 +337,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="extractFunction" value="Cmd+Shift+U"/>
       <shortcut refid="executeLastCode" value="Cmd+Shift+P"/>
       <shortcut refid="findInFiles" value="Cmd+Shift+F"/>
-      <shortcut refid="commentUncomment" value="Cmd+Shift+Backspace"/>
+      <shortcut refid="commentUncomment" value="Cmd+Shift+C"/>
       <shortcut refid="reindent" value="Cmd+I"/>
       <shortcut refid="reflowComment" value="Cmd+Shift+/"/>
       <shortcut refid="consoleClear" value="Ctrl+L"/>
