@@ -270,9 +270,8 @@ if (NOT RSTUDIO_SESSION_WIN64)
    install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries"
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
 
-   # install mathjax for local html preview (but not for osx since
-   # mac webkit crashes when loading mathjax locally)
-   if(RSTUDIO_DESKTOP AND NOT APPLE)
+   # install mathjax for local html preview
+   if(RSTUDIO_DESKTOP)
       install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax"
               DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
    endif()
