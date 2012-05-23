@@ -64,9 +64,12 @@ class AnimationSchedulerImplMozilla extends AnimationSchedulerImpl {
    */
   private native void requestAnimationFrameImpl(AnimationCallback callback,
       AnimationHandleImpl handle) /*-{
-    var wrapper = $entry(function(time) {
+    var wrapper = $entry(function() {
       if (!handle.@com.google.gwt.animation.client.AnimationSchedulerImplMozilla.AnimationHandleImpl::canceled) {
-        callback.@com.google.gwt.animation.client.AnimationScheduler.AnimationCallback::execute(D)(time);
+        // Older versions of firefox pass the current timestamp, but the spec has changed to pass a
+        // high resolution timer instead, and newer versions of Firefox will eventually change.
+        var now = @com.google.gwt.core.client.Duration::currentTimeMillis()();
+        callback.@com.google.gwt.animation.client.AnimationScheduler.AnimationCallback::execute(D)(now);
       }
     });
     $wnd.mozRequestAnimationFrame(wrapper);

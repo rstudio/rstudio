@@ -63,10 +63,11 @@ class AnimationSchedulerImplWebkit extends AnimationSchedulerImpl {
 
   private native double requestAnimationFrameImpl(AnimationCallback callback, Element element) /*-{
     var _callback = callback;
-    var wrapper = $entry(function(time) {
-      // Chrome 10 does not pass the 'time' argument, so we fake it.
-      time = time || @com.google.gwt.core.client.Duration::currentTimeMillis()();
-      _callback.@com.google.gwt.animation.client.AnimationScheduler.AnimationCallback::execute(D)(time);
+    var wrapper = $entry(function() {
+      // Older versions of Chrome pass the current timestamp, but newer versions pass a
+      // high resolution timer. We normalize on the current timestamp.
+      var now = @com.google.gwt.core.client.Duration::currentTimeMillis()();
+      _callback.@com.google.gwt.animation.client.AnimationScheduler.AnimationCallback::execute(D)(now);
     });
     return $wnd.webkitRequestAnimationFrame(wrapper, element);
   }-*/;
