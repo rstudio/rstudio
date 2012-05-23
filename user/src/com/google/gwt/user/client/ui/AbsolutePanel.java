@@ -251,6 +251,11 @@ public class AbsolutePanel extends ComplexPanel implements
     if (GWT.isProdMode()) {
       return;
     }
+    
+    // Make sure we can actually perform a check
+    if (!isAttached()) {
+      return;
+    }
 
     // Non-visible or detached elements have no offsetParent
     if (child.getElement().getOffsetParent() == null) {
