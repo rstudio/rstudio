@@ -4,16 +4,15 @@ function setupWaitForBodyLoad(callback) {
   // Provides the isBodyLoaded() function
   __IS_BODY_LOADED__
   
-  var bodyDone = false;
+  var bodyDone = isBodyLoaded();
 
-  if (isBodyLoaded()) {
-    bodyDone = true;
+  if (bodyDone) {
     callback();
+    return;
   }
 
   // If the page is not already loaded, setup some listeners and timers to
   // detect when it is done.
-  var onBodyDoneTimerId;
   function onBodyDone() {
     if (!bodyDone) {
       bodyDone = true;
@@ -30,9 +29,7 @@ function setupWaitForBodyLoad(callback) {
 
   // For everyone that supports DOMContentLoaded.
   if ($doc.addEventListener) {
-    $doc.addEventListener("DOMContentLoaded", function() {
-      onBodyDone();
-    }, false);
+    $doc.addEventListener("DOMContentLoaded", onBodyDone, false);
   }
 
   // Fallback. If onBodyDone() gets fired twice, it's not a big deal.
