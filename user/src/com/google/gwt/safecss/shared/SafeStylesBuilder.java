@@ -29,6 +29,7 @@ import com.google.gwt.dom.client.Style.TextDecoration;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.VerticalAlign;
 import com.google.gwt.dom.client.Style.Visibility;
+import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.safehtml.shared.SafeUri;
 
 /**
@@ -530,6 +531,13 @@ public final class SafeStylesBuilder {
    */
   public SafeStylesBuilder visibility(Visibility value) {
     return append(SafeStylesUtils.forVisibility(value));
+  }
+
+  /**
+   * Append the 'white-space' CSS property.
+   */
+  public SafeStylesBuilder whiteSpace(WhiteSpace whiteSpace) {
+    return append(SafeStylesUtils.forWhiteSpace(whiteSpace));
   }
 
   /**

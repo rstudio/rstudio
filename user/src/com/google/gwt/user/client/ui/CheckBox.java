@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.LabelElement;
+import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.editor.client.IsEditor;
 import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.editor.client.adapters.TakesValueEditor;
@@ -69,7 +70,7 @@ import com.google.gwt.user.client.EventListener;
 public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
     HasWordWrap, HasDirectionalSafeHtml, HasDirectionEstimator,
     IsEditor<LeafValueEditor<Boolean>> {
-  
+
   public static final DirectionEstimator DEFAULT_DIRECTION_ESTIMATOR =
     DirectionalTextHelper.DEFAULT_DIRECTION_ESTIMATOR;
 
@@ -196,6 +197,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
     setTabIndex(0);
   }
 
+  @Override
   public HandlerRegistration addValueChangeHandler(
       ValueChangeHandler<Boolean> handler) {
     // Is this the first value change handler? If so, time to add handlers
@@ -206,6 +208,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
     return addHandler(handler, ValueChangeEvent.getType());
   }
 
+  @Override
   public LeafValueEditor<Boolean> asEditor() {
     if (editor == null) {
       editor = TakesValueEditor.of(this);
@@ -213,6 +216,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
     return editor;
   }
 
+  @Override
   public DirectionEstimator getDirectionEstimator() {
     return directionalTextHelper.getDirectionEstimator();
   }
@@ -235,6 +239,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
     return directionalTextHelper.getTextOrHtml(true);
   }
 
+  @Override
   public String getName() {
     return inputElem.getName();
   }
@@ -249,6 +254,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
     return directionalTextHelper.getTextOrHtml(false);
   }
 
+  @Override
   public Direction getTextDirection() {
     return directionalTextHelper.getTextDirection();
   }
@@ -263,6 +269,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
    * @return <code>true</code> if the check box is checked, false otherwise.
    *         Will not return null
    */
+  @Override
   public Boolean getValue() {
     if (isAttached()) {
       return inputElem.isChecked();
@@ -271,8 +278,9 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
     }
   }
 
+  @Override
   public boolean getWordWrap() {
-    return !getElement().getStyle().getProperty("whiteSpace").equals("nowrap");
+    return !WhiteSpace.NOWRAP.getCssName().equals(getElement().getStyle().getWhiteSpace());
   }
 
   /**
@@ -314,6 +322,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
    * <p>
    * See note at {@link #setDirectionEstimator(DirectionEstimator)}.
    */
+  @Override
   public void setDirectionEstimator(boolean enabled) {
     directionalTextHelper.setDirectionEstimator(enabled);
   }
@@ -327,6 +336,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
    * according to the new estimator's result. This may cause flicker, and thus
    * should be avoided.
    */
+  @Override
   public void setDirectionEstimator(DirectionEstimator directionEstimator) {
     directionalTextHelper.setDirectionEstimator(directionEstimator);
   }
@@ -365,6 +375,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
     inputElem.setAttribute("value", value);
   }
 
+  @Override
   public void setHTML(SafeHtml html, Direction dir) {
     directionalTextHelper.setTextOrHtml(html.asString(), dir, true);
   }
@@ -374,6 +385,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
     directionalTextHelper.setTextOrHtml(html, true);
   }
 
+  @Override
   public void setName(String name) {
     inputElem.setName(name);
   }
@@ -394,6 +406,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
     directionalTextHelper.setTextOrHtml(text, false);
   }
 
+  @Override
   public void setText(String text, Direction dir) {
     directionalTextHelper.setTextOrHtml(text, dir, false);
   }
@@ -407,6 +420,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
    * 
    * @param value true to check, false to uncheck; null value implies false
    */
+  @Override
   public void setValue(Boolean value) {
     setValue(value, false);
   }
@@ -423,6 +437,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
    * @param fireEvents If true, and value has changed, fire a
    *          {@link ValueChangeEvent}
    */
+  @Override
   public void setValue(Boolean value, boolean fireEvents) {
     if (value == null) {
       value = Boolean.FALSE;
@@ -439,9 +454,9 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
     }
   }
 
+  @Override
   public void setWordWrap(boolean wrap) {
-    getElement().getStyle().setProperty("whiteSpace",
-        wrap ? "normal" : "nowrap");
+    getElement().getStyle().setWhiteSpace(wrap ? WhiteSpace.NORMAL : WhiteSpace.NOWRAP);
   }
 
   // Unlike other widgets the CheckBox sinks on its inputElement, not
@@ -458,6 +473,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
 
   protected void ensureDomEventHandlers() {
     addClickHandler(new ClickHandler() {
+      @Override
       public void onClick(ClickEvent event) {
         // Checkboxes always toggle their value, no need to compare
         // with old value. Radio buttons are not so lucky, see

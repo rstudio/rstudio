@@ -17,6 +17,7 @@ package com.google.gwt.safecss.shared;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.safehtml.shared.UriUtils;
@@ -89,6 +90,18 @@ public class GwtSafeStylesUtilsTest extends GWTTestCase {
 
   public void testForDisplay() {
     assertEquals("display:none;", SafeStylesUtils.forDisplay(Display.NONE).asString());
+  }
+
+  public void testForWhiteSpace() {
+    assertEquals(
+        "white-space:normal;", SafeStylesUtils.forWhiteSpace(WhiteSpace.NORMAL).asString());
+    assertEquals(
+        "white-space:nowrap;", SafeStylesUtils.forWhiteSpace(WhiteSpace.NOWRAP).asString());
+    assertEquals("white-space:pre;", SafeStylesUtils.forWhiteSpace(WhiteSpace.PRE).asString());
+    assertEquals(
+        "white-space:pre-line;", SafeStylesUtils.forWhiteSpace(WhiteSpace.PRE_LINE).asString());
+    assertEquals(
+        "white-space:pre-wrap;", SafeStylesUtils.forWhiteSpace(WhiteSpace.PRE_WRAP).asString());
   }
 
   public void testForZIndex() {

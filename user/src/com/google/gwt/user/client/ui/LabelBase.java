@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.i18n.shared.DirectionEstimator;
 import com.google.gwt.i18n.shared.HasDirectionEstimator;
 
@@ -76,7 +77,7 @@ public class LabelBase<T> extends Widget implements HasWordWrap,
   }
 
   public boolean getWordWrap() {
-    return !getElement().getStyle().getProperty("whiteSpace").equals("nowrap");
+    return !WhiteSpace.NOWRAP.getCssName().equals(getElement().getStyle().getWhiteSpace());
   }
 
   public void setAutoHorizontalAlignment(
@@ -127,8 +128,7 @@ public class LabelBase<T> extends Widget implements HasWordWrap,
   }
 
   public void setWordWrap(boolean wrap) {
-    getElement().getStyle().setProperty("whiteSpace",
-        wrap ? "normal" : "nowrap");
+    getElement().getStyle().setWhiteSpace(wrap ? WhiteSpace.NORMAL : WhiteSpace.NOWRAP);
   }
 
   /**

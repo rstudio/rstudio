@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.i18n.client.BidiUtils;
 import com.google.gwt.i18n.client.HasDirection;
 import com.google.gwt.i18n.shared.DirectionEstimator;
@@ -143,7 +144,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
   public Anchor(SafeHtml html, Direction dir) {
     this(html.asString(), true, dir, DEFAULT_HREF);
   }
-  
+
   /**
    * Creates an anchor for scripting.
    *
@@ -232,7 +233,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
   public Anchor(SafeHtml html, Direction dir, String href) {
     this(html.asString(), true, dir, href);
   }
-  
+
   /**
    *  Creates an anchor with its html and href (target URL) specified.
    *
@@ -363,7 +364,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
     directionalTextHelper.setTextOrHtml(text, dir, asHTML);
     setHref(href);
   }
-  
+
   /**
    * Creates an anchor with its text, direction and href (target URL) specified.
    * 
@@ -382,14 +383,17 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
     setHref(href);
   }
 
+  @Override
   public Direction getDirection() {
     return BidiUtils.getDirectionOnElement(getElement());
   }
 
+  @Override
   public DirectionEstimator getDirectionEstimator() {
     return directionalTextHelper.getDirectionEstimator();
   }
 
+  @Override
   public HorizontalAlignmentConstant getHorizontalAlignment() {
     return horzAlign;
   }
@@ -403,10 +407,12 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
     return getAnchorElement().getHref();
   }
 
+  @Override
   public String getHTML() {
     return getElement().getInnerHTML();
   }
 
+  @Override
   public String getName() {
     return getAnchorElement().getName();
   }
@@ -426,16 +432,19 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
     return getAnchorElement().getTarget();
   }
 
+  @Override
   public String getText() {
     return directionalTextHelper.getTextOrHtml(false);
   }
 
+  @Override
   public Direction getTextDirection() {
     return directionalTextHelper.getTextDirection();
   }
 
+  @Override
   public boolean getWordWrap() {
-    return !getElement().getStyle().getProperty("whiteSpace").equals("nowrap");
+    return !WhiteSpace.NOWRAP.getCssName().equals(getElement().getStyle().getWhiteSpace());
   }
 
   @Override
@@ -447,6 +456,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    * @deprecated Use {@link #setDirectionEstimator} and / or pass explicit
    * direction to {@link #setText}, {@link #setHTML} instead
    */
+  @Override
   @Deprecated
   public void setDirection(Direction direction) {
     directionalTextHelper.setDirection(direction);
@@ -457,6 +467,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    * <p>
    * See note at {@link #setDirectionEstimator(DirectionEstimator)}.
    */
+  @Override
   public void setDirectionEstimator(boolean enabled) {
     directionalTextHelper.setDirectionEstimator(enabled);
   }
@@ -470,6 +481,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    * according to the new estimator's result. This may cause flicker, and thus
    * should be avoided.
    */
+  @Override
   public void setDirectionEstimator(DirectionEstimator directionEstimator) {
     directionalTextHelper.setDirectionEstimator(directionEstimator);
   }
@@ -483,6 +495,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
     }
   }
 
+  @Override
   public void setHorizontalAlignment(HorizontalAlignmentConstant align) {
     horzAlign = align;
     getElement().getStyle().setProperty("textAlign", align.getTextAlignString());
@@ -497,18 +510,22 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
     getAnchorElement().setHref(href);
   }
 
+  @Override
   public void setHTML(SafeHtml html) {
     setHTML(html.asString());
   }
 
+  @Override
   public void setHTML(String html) {
     directionalTextHelper.setTextOrHtml(html, true);
   }
 
+  @Override
   public void setHTML(SafeHtml html, Direction dir) {
     directionalTextHelper.setTextOrHtml(html.asString(), dir, true);
   }
 
+  @Override
   public void setName(String name) {
     getAnchorElement().setName(name);
   }
@@ -528,17 +545,19 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
     getAnchorElement().setTarget(target);
   }
 
+  @Override
   public void setText(String text) {
     directionalTextHelper.setTextOrHtml(text, false);
   }
 
+  @Override
   public void setText(String text, Direction dir) {
     directionalTextHelper.setTextOrHtml(text, dir, false);
   }
 
+  @Override
   public void setWordWrap(boolean wrap) {
-    getElement().getStyle().setProperty("whiteSpace",
-        wrap ? "normal" : "nowrap");
+    getElement().getStyle().setWhiteSpace(wrap ? WhiteSpace.NORMAL : WhiteSpace.NOWRAP);
   }
 
   private AnchorElement getAnchorElement() {

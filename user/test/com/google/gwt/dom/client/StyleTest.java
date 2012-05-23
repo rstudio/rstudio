@@ -37,6 +37,7 @@ import com.google.gwt.dom.client.Style.TableLayout;
 import com.google.gwt.dom.client.Style.TextDecoration;
 import com.google.gwt.dom.client.Style.VerticalAlign;
 import com.google.gwt.dom.client.Style.Visibility;
+import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -287,6 +288,24 @@ public class StyleTest extends GWTTestCase {
     assertEquals(Visibility.HIDDEN, style.getVisibility());
   }
 
+  public void testWhiteSpace() {
+    DivElement div = Document.get().createDivElement();
+    Style style = div.getStyle();
+
+    style.setWhiteSpace(WhiteSpace.NORMAL);
+    assertEquals(WhiteSpace.NORMAL, style.getWhiteSpace());
+    style.setWhiteSpace(WhiteSpace.NOWRAP);
+    assertEquals(WhiteSpace.NOWRAP, style.getWhiteSpace());
+    style.setWhiteSpace(WhiteSpace.PRE);
+    assertEquals(WhiteSpace.PRE, style.getWhiteSpace());
+    style.setWhiteSpace(WhiteSpace.PRE_LINE);
+    assertEquals(WhiteSpace.PRE_LINE, style.getWhiteSpace());
+    style.setWhiteSpace(WhiteSpace.PRE_WRAP);
+    assertEquals(WhiteSpace.PRE_WRAP, style.getWhiteSpace());
+    style.clearWhiteSpace();
+    assertEmpty(style.getWhiteSpace());
+  }
+
   /**
    * Test that z-index can be set as an integer and returned as a string. 
    */
@@ -326,6 +345,10 @@ public class StyleTest extends GWTTestCase {
   private void assertEquals(HasCssName enumValue, String cssValue) {
     assertEquals(enumValue.getCssName(), cssValue);
   }
+  
+  private void assertEmpty(String cssValue) {  
+    assertEquals("", cssValue);
+  } 
 
   /**
    * Sets a style property as an int.

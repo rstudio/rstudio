@@ -681,6 +681,44 @@ public class Style extends JavaScriptObject {
     public abstract String getCssName();
   }
 
+  /**
+   * Enum for the 'white-space' CSS property.
+   */
+  public enum WhiteSpace implements HasCssName {
+    NORMAL {
+      @Override
+      public String getCssName() {
+        return WHITE_SPACE_NORMAL;
+      }
+    },
+    NOWRAP {
+      @Override
+      public String getCssName() {
+        return WHITE_SPACE_NOWRAP;
+      }
+    },
+    PRE {
+      @Override
+      public String getCssName() {
+        return WHITE_SPACE_PRE;
+      }
+    },
+    PRE_LINE {
+      @Override
+      public String getCssName() {
+        return WHITE_SPACE_PRE_LINE;
+      }
+    },
+    PRE_WRAP {
+      @Override
+      public String getCssName() {
+        return WHITE_SPACE_PRE_WRAP;
+      }
+    };
+    @Override
+    public abstract String getCssName();
+  }
+
   private static final String BORDER_STYLE_SOLID = "solid";
   private static final String BORDER_STYLE_DASHED = "dashed";
   private static final String BORDER_STYLE_DOTTED = "dotted";
@@ -796,6 +834,7 @@ public class Style extends JavaScriptObject {
   private static final String STYLE_OUTLINE_STYLE = "outlineStyle";
   private static final String STYLE_OUTLINE_COLOR = "outlineColor";
   private static final String STYLE_LINE_HEIGHT = "lineHeight";
+  private static final String STYLE_WHITE_SPACE = "whiteSpace";
 
   private static final String TABLE_LAYOUT_AUTO = "auto";
   private static final String TABLE_LAYOUT_FIXED = "fixed";
@@ -826,6 +865,12 @@ public class Style extends JavaScriptObject {
 
   private static final String VISIBILITY_HIDDEN = "hidden";
   private static final String VISIBILITY_VISIBLE = "visible";
+  
+  private static final String WHITE_SPACE_NORMAL = "normal";
+  private static final String WHITE_SPACE_NOWRAP = "nowrap";
+  private static final String WHITE_SPACE_PRE = "pre";
+  private static final String WHITE_SPACE_PRE_LINE = "pre-line";
+  private static final String WHITE_SPACE_PRE_WRAP = "pre-wrap"; 
 
   protected Style() {
   }
@@ -835,21 +880,21 @@ public class Style extends JavaScriptObject {
    */
   public final void clearBackgroundColor() {
      clearProperty(STYLE_BACKGROUND_COLOR);
-   }
+  }
 
   /**
    * Clear the background-image css property.
    */
   public final void clearBackgroundImage() {
      clearProperty(STYLE_BACKGROUND_IMAGE);
-   }
+  }
 
   /**
    * Clear the border-color css property.
    */
   public final void clearBorderColor() {
      clearProperty(STYLE_BORDER_COLOR);
-   }
+  }
 
   /**
    * Clears the border-style CSS property.
@@ -870,14 +915,14 @@ public class Style extends JavaScriptObject {
    */
   public final void clearBottom() {
      clearProperty(STYLE_BOTTOM);
-   }
+  }
 
   /**
    * Clear the color css property.
    */
   public final void clearColor() {
      clearProperty(STYLE_COLOR);
-   }
+  }
 
   /**
    * Clears the cursor CSS property.
@@ -954,35 +999,35 @@ public class Style extends JavaScriptObject {
    */
   public final void clearMargin() {
      clearProperty(STYLE_MARGIN);
-   }
+  }
 
   /**
    * Clear the margin-bottom css property.
    */
   public final void clearMarginBottom() {
      clearProperty(STYLE_MARGIN_BOTTOM);
-   }
+  }
 
   /**
    * Clear the margin-left css property.
    */
   public final void clearMarginLeft() {
      clearProperty(STYLE_MARGIN_LEFT);
-   }
+  }
 
   /**
    * Clear the margin-right css property.
    */
   public final void clearMarginRight() {
      clearProperty(STYLE_MARGIN_RIGHT);
-   }
+  }
 
   /**
    * Clear the margin-top css property.
    */
   public final void clearMarginTop() {
      clearProperty(STYLE_MARGIN_TOP);
-   }
+  }
 
   /**
    * Clear the opacity css property.
@@ -996,7 +1041,7 @@ public class Style extends JavaScriptObject {
    */
   public final void clearOutlineColor() {
      clearProperty(STYLE_OUTLINE_COLOR);
-   }
+  }
 
   /**
    * Clears the outline-style CSS property.
@@ -1038,35 +1083,35 @@ public class Style extends JavaScriptObject {
    */
   public final void clearPadding() {
      clearProperty(STYLE_PADDING);
-   }
+  }
 
   /**
    * Clear the padding-bottom css property.
    */
   public final void clearPaddingBottom() {
      clearProperty(STYLE_PADDING_BOTTOM);
-   }
+  }
 
   /**
    * Clear the padding-left css property.
    */
   public final void clearPaddingLeft() {
      clearProperty(STYLE_PADDING_LEFT);
-   }
+  }
 
   /**
    * Clear the padding-right css property.
    */
   public final void clearPaddingRight() {
      clearProperty(STYLE_PADDING_RIGHT);
-   }
+  }
 
   /**
    * Clear the padding-top css property.
    */
   public final void clearPaddingTop() {
      clearProperty(STYLE_PADDING_TOP);
-   }
+  }
 
   /**
    * Clears the position CSS property.
@@ -1087,7 +1132,7 @@ public class Style extends JavaScriptObject {
    */
   public final void clearRight() {
      clearProperty(STYLE_RIGHT);
-   }
+  }
 
   /**
    * Clear the table-layout css property.
@@ -1108,7 +1153,7 @@ public class Style extends JavaScriptObject {
    */
   public final void clearTop() {
      clearProperty(STYLE_TOP);
-   }
+  }
 
   /**
    * Clears the visibility CSS property.
@@ -1118,18 +1163,25 @@ public class Style extends JavaScriptObject {
   }
 
   /**
+   * Clear the 'white-space' CSS property.
+   */
+  public final void clearWhiteSpace() {
+    clearProperty(STYLE_WHITE_SPACE);
+  }
+
+  /**
    * Clear the width css property.
    */
   public final void clearWidth() {
      clearProperty(STYLE_WIDTH);
-   }
+  }
 
   /**
    * Clear the z-index css property.
    */
   public final void clearZIndex() {
      clearProperty(STYLE_Z_INDEX);
-   }
+  }
 
   /**
    * Get the background-color css property.
@@ -1396,6 +1448,13 @@ public class Style extends JavaScriptObject {
    */
   public final String getVisibility() {
     return getProperty(STYLE_VISIBILITY);
+  }
+
+  /**
+   * Get the 'white-space' CSS property.
+   */
+  public final String getWhiteSpace() {
+    return getProperty(STYLE_WHITE_SPACE);
   }
 
   /**
@@ -1729,6 +1788,13 @@ public class Style extends JavaScriptObject {
    */
   public final void setVisibility(Visibility value) {
     setProperty(STYLE_VISIBILITY, value.getCssName());
+  }
+
+  /**
+   * Set the 'white-space' CSS property.
+   */
+  public final void setWhiteSpace(WhiteSpace value) {
+    setProperty(STYLE_WHITE_SPACE, value.getCssName());
   }
 
   /**
