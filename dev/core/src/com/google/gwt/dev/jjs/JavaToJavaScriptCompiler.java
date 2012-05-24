@@ -101,6 +101,7 @@ import com.google.gwt.dev.jjs.impl.SameParameterValueOptimizer;
 import com.google.gwt.dev.jjs.impl.SourceInfoCorrelator;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
 import com.google.gwt.dev.jjs.impl.UnifyAst;
+import com.google.gwt.dev.jjs.impl.VerifySymbolMap;
 import com.google.gwt.dev.jjs.impl.gflow.DataflowOptimizer;
 import com.google.gwt.dev.js.ClosureJsRunner;
 import com.google.gwt.dev.js.EvalFunctionsAtTopScope;
@@ -126,6 +127,7 @@ import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsName;
+import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.DefaultTextOutput;
@@ -416,6 +418,10 @@ public class JavaToJavaScriptCompiler {
       // point.
       HandleCrossFragmentReferences.exec(logger, jsProgram, propertyOracles);
 
+      
+      // Verify that SymbolMap is somewhat close to being complete.
+      VerifySymbolMap.exec(jsProgram, jjsmap, symbolTable);
+      
       // (11) Perform any post-obfuscation normalizations.
 
       // Work around an IE7 bug,
@@ -1225,7 +1231,12 @@ public class JavaToJavaScriptCompiler {
   private static SymbolData[] makeSymbolMap(Map<StandardSymbolData, JsName> symbolTable,
       JsProgram jsProgram) {
 
+
+    // Keep tracks of a list of referenced name. If it is not used, don't
+    // add it to symbol map.
+    final Set<String> nameUsed = new HashSet<String>();
     final Map<JsName, Integer> nameToFragment = new HashMap<JsName, Integer>();
+
     for (int i = 0; i < jsProgram.getFragmentCount(); i++) {
       final Integer fragId = i;
       new JsVisitor() {
@@ -1235,11 +1246,25 @@ public class JavaToJavaScriptCompiler {
               nameToFragment.put(x.getName(), fragId);
             }
         }
+        
+        @Override
+        public void endVisit(JsNameRef x, JsContext ctx) {
+          // Obviously this isn't even that accurate. Some of them are
+          // variable names, some of the are property. At least this
+          // this give us a safe approximation. Ideally we need
+          // the code removal passes to remove stuff in the scope objects.
+          nameUsed.add(x.getName().getIdent());
+        }
+
       }.accept(jsProgram.getFragmentBlock(i));
     }
 
-    SymbolData[] result = new SymbolData[symbolTable.size()];
-    int i = 0;
+    // TODO(acleung): This is a temp fix. Once we know this is safe. We
+    // new to rewrite it to avoid extra ArrayList creations.
+    // Or we should just consider serializing it as an ArrayList if
+    // it is that much trouble to determine the true size.
+    List<SymbolData> result = new ArrayList<SymbolData>();
+
     for (Map.Entry<StandardSymbolData, JsName> entry : symbolTable.entrySet()) {
       StandardSymbolData symbolData = entry.getKey();
       symbolData.setSymbolName(entry.getValue().getShortIdent());
@@ -1247,9 +1272,12 @@ public class JavaToJavaScriptCompiler {
       if (fragNum != null) {
         symbolData.setFragmentNumber(fragNum);
       }
-      result[i++] = symbolData;
+      if (nameUsed.contains(entry.getValue().getIdent())) {
+        result.add(symbolData);
+      }
     }
-    return result;
+
+    return result.toArray(new SymbolData[result.size()]);
   }
 
   /**
