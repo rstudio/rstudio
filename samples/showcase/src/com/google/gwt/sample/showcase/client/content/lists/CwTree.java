@@ -147,10 +147,12 @@ public class CwTree extends ContentWidget {
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
     GWT.runAsync(CwTree.class, new RunAsyncCallback() {
 
+      @Override
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
       }
 
+      @Override
       public void onSuccess() {
         callback.onSuccess(onInitialize());
       }
@@ -167,9 +169,9 @@ public class CwTree extends ContentWidget {
   @ShowcaseSource
   private void addMusicSection(
       TreeItem parent, String label, String[] composerWorks) {
-    TreeItem section = parent.addItem(label);
+    TreeItem section = parent.addTextItem(label);
     for (String work : composerWorks) {
-      section.addItem(work);
+      section.addTextItem(work);
     }
   }
 
@@ -186,14 +188,15 @@ public class CwTree extends ContentWidget {
 
     // Add some default tree items
     for (int i = 0; i < 5; i++) {
-      TreeItem item = dynamicTree.addItem(constants.cwTreeItem() + " " + i);
+      TreeItem item = dynamicTree.addTextItem(constants.cwTreeItem() + " " + i);
 
       // Temporarily add an item so we can expand this node
-      item.addItem("");
+      item.addTextItem("");
     }
 
     // Add a handler that automatically generates some children
     dynamicTree.addOpenHandler(new OpenHandler<TreeItem>() {
+      @Override
       public void onOpen(OpenEvent<TreeItem> event) {
         TreeItem item = event.getTarget();
         if (item.getChildCount() == 1) {
@@ -204,8 +207,8 @@ public class CwTree extends ContentWidget {
           String itemText = item.getText();
           int numChildren = Random.nextInt(5) + 2;
           for (int i = 0; i < numChildren; i++) {
-            TreeItem child = item.addItem(itemText + "." + i);
-            child.addItem("");
+            TreeItem child = item.addTextItem(itemText + "." + i);
+            child.addTextItem("");
           }
 
           // Remove the temporary item when we finish loading
@@ -237,7 +240,7 @@ public class CwTree extends ContentWidget {
     Tree staticTree = new Tree();
 
     // Add some of Beethoven's music
-    TreeItem beethovenItem = staticTree.addItem(composers[0]);
+    TreeItem beethovenItem = staticTree.addTextItem(composers[0]);
     addMusicSection(beethovenItem, concertosLabel,
         constants.cwTreeBeethovenWorkConcertos());
     addMusicSection(
@@ -248,7 +251,7 @@ public class CwTree extends ContentWidget {
         constants.cwTreeBeethovenWorkSymphonies());
 
     // Add some of Brahms's music
-    TreeItem brahmsItem = staticTree.addItem(composers[1]);
+    TreeItem brahmsItem = staticTree.addTextItem(composers[1]);
     addMusicSection(
         brahmsItem, concertosLabel, constants.cwTreeBrahmsWorkConcertos());
     addMusicSection(
@@ -259,7 +262,7 @@ public class CwTree extends ContentWidget {
         brahmsItem, symphoniesLabel, constants.cwTreeBrahmsWorkSymphonies());
 
     // Add some of Mozart's music
-    TreeItem mozartItem = staticTree.addItem(composers[2]);
+    TreeItem mozartItem = staticTree.addTextItem(composers[2]);
     addMusicSection(
         mozartItem, concertosLabel, constants.cwTreeMozartWorkConcertos());
 

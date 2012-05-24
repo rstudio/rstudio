@@ -105,6 +105,7 @@ public class CwStackLayoutPanel extends ContentWidget {
     /**
      * Use noimage.png, which is a blank 1x1 image.
      */
+    @Override
     @Source("noimage.png")
     ImageResource treeLeaf();
   }
@@ -163,10 +164,12 @@ public class CwStackLayoutPanel extends ContentWidget {
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
     GWT.runAsync(CwStackLayoutPanel.class, new RunAsyncCallback() {
 
+      @Override
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
       }
 
+      @Override
       public void onSuccess() {
         callback.onSuccess(onInitialize());
       }
@@ -219,6 +222,7 @@ public class CwStackLayoutPanel extends ContentWidget {
 
       // Open the contact info popup when the user clicks a contact
       contactLink.addClickHandler(new ClickHandler() {
+        @Override
         public void onClick(ClickEvent event) {
           // Set the info about the contact
           SafeHtmlBuilder sb = new SafeHtmlBuilder();
@@ -285,7 +289,7 @@ public class CwStackLayoutPanel extends ContentWidget {
   @ShowcaseSource
   private Widget createMailItem(Images images) {
     Tree mailPanel = new Tree(images);
-    TreeItem mailPanelRoot = mailPanel.addItem("foo@example.com");
+    TreeItem mailPanelRoot = mailPanel.addTextItem("foo@example.com");
     String[] mailFolders = constants.cwStackLayoutPanelMailFolders();
     addItem(mailPanelRoot, images.inbox(), mailFolders[0]);
     addItem(mailPanelRoot, images.drafts(), mailFolders[1]);

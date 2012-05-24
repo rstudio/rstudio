@@ -21,6 +21,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
@@ -101,6 +102,7 @@ public class CwStackPanel extends ContentWidget {
     /**
      * Use noimage.png, which is a blank 1x1 image.
      */
+    @Override
     @Source("noimage.png")
     ImageResource treeLeaf();
   }
@@ -159,10 +161,12 @@ public class CwStackPanel extends ContentWidget {
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
     GWT.runAsync(CwStackPanel.class, new RunAsyncCallback() {
 
+      @Override
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
       }
 
+      @Override
       public void onSuccess() {
         callback.onSuccess(onInitialize());
       }
@@ -170,7 +174,10 @@ public class CwStackPanel extends ContentWidget {
   }
 
   private void addItem(TreeItem root, ImageResource image, String label) {
-    root.addItem(AbstractImagePrototype.create(image).getHTML() + " " + label);
+    SafeHtmlBuilder itemHtml = new SafeHtmlBuilder();
+    itemHtml.append(AbstractImagePrototype.create(image).getSafeHtml());
+    itemHtml.appendHtmlConstant(" ").appendEscaped(label);
+    root.addItem(itemHtml.toSafeHtml());
   }
 
   /**
@@ -203,6 +210,7 @@ public class CwStackPanel extends ContentWidget {
 
       // Open the contact info popup when the user clicks a contact
       contactLink.addClickHandler(new ClickHandler() {
+        @Override
         public void onClick(ClickEvent event) {
           // Set the info about the contact
           contactInfo.setHTML(contactName + "<br><i>" + contactEmail + "</i>");
@@ -242,7 +250,7 @@ public class CwStackPanel extends ContentWidget {
   @ShowcaseSource
   private Tree createMailItem(Images images) {
     Tree mailPanel = new Tree(images);
-    TreeItem mailPanelRoot = mailPanel.addItem("foo@example.com");
+    TreeItem mailPanelRoot = mailPanel.addTextItem("foo@example.com");
     String[] mailFolders = constants.cwStackPanelMailFolders();
     addItem(mailPanelRoot, images.inbox(), mailFolders[0]);
     addItem(mailPanelRoot, images.drafts(), mailFolders[1]);

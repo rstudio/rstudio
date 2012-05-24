@@ -23,12 +23,14 @@ import com.google.gwt.user.client.ui.TreeItem;
 
 public class TreeExample implements EntryPoint {
 
+  @Override
   public void onModuleLoad() {
     // Create a tree with a few items in it.
-    TreeItem root = new TreeItem("root");
-    root.addItem("item0");
-    root.addItem("item1");
-    root.addItem("item2");
+    TreeItem root = new TreeItem();
+    root.setText("root");
+    root.addTextItem("item0");
+    root.addTextItem("item1");
+    root.addTextItem("item2");
 
     // Add a CheckBox to the tree
     TreeItem item = new TreeItem(new CheckBox("item3"));
