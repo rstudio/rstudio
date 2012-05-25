@@ -565,11 +565,11 @@ bool requiresHighlighting(const std::string& htmlOutput)
 
 bool requiresMathjax(const std::string& htmlOutput)
 {
-   boost::regex inlineMathRegex("\\$(?!\\s)[^$]*[^$\\s]\\$");
+   boost::regex inlineMathRegex("\\\\\\(([\\s\\S]+?)\\\\\\)");
    if (boost::regex_search(htmlOutput, inlineMathRegex))
       return true;
 
-   boost::regex displayMathRegex("\\${2}[\\s\\S]+?\\${2}");
+   boost::regex displayMathRegex("\\\\\\[([\\s\\S]+?)\\\\\\]");
    if (boost::regex_search(htmlOutput, displayMathRegex))
       return true;
 
@@ -639,12 +639,16 @@ void modifyOutputForPreview(std::string* pOutput)
                 "config=TeX-AMS-MML_SVG");
 #else
       // add HTML-CSS options required for correct qtwebkit rendering
-      std::string target = "tex2jax: {";
+      std::string target = "<!-- MathJax scripts -->";
       boost::algorithm::replace_first(
                *pOutput,
                target,
-               "\"HTML-CSS\": { minScaleAdjust: 125, availableFonts: [] }, "
-               + target);
+               target + "\n"
+               "<script type=\"text/x-mathjax-config\">"
+                  "MathJax.Hub.Config({"
+                  "  \"HTML-CSS\": { minScaleAdjust: 125, availableFonts: [] } "
+                  " });"
+               "</script>");
 #endif
 
       // serve mathjax locally
