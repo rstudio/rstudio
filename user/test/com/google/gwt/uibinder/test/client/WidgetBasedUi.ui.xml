@@ -107,7 +107,7 @@
 <!--
   Tests creating a CssResource from an external file.
  -->
-<ui:style field='myStyle' src='WidgetBasedUi.css Menu.css'
+<ui:style field='myStyle' src='WidgetBasedUi.css com/google/gwt/uibinder/test/client/Menu.css'
     type='com.google.gwt.uibinder.test.client.WidgetBasedUi.Style'>
     .menuBar {
       font-family: sans-serif;

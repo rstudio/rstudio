@@ -193,8 +193,16 @@ public class ImplicitCssResource {
 
     for (String s : sources) {
       String resourcePath = path + '/' + s;
+      // Try to find the resource relative to the package.
       URL found = classLoader.getResource(resourcePath);
-      if (null == found) {
+      /*
+       * If we didn't find the resource relative to the package, assume it
+       * is absolute.
+       */
+      if (found == null) {
+        found = classLoader.getResource(s);
+      }
+      if (found == null) {
         logger.die("Unable to find resource: " + resourcePath);
       }
       urls.add(found);
