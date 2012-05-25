@@ -27,13 +27,10 @@ import com.google.gwt.place.shared.PlaceTokenizer;
 import com.google.gwt.place.shared.Prefix;
 import com.google.gwt.place.shared.WithTokenizers;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -232,17 +229,7 @@ class PlaceHistoryGeneratorContext {
 
   private JClassType getPlaceTypeForTokenizerType(JClassType tokenizerType)
       throws UnableToCompleteException {
-
-    List<JClassType> implementedInterfaces = new ArrayList<JClassType>();
-
-    JClassType isInterface = tokenizerType.isInterface();
-    if (isInterface != null) {
-      implementedInterfaces.add(isInterface);
-    }
-
-    implementedInterfaces.addAll(Arrays.asList(tokenizerType.getImplementedInterfaces()));
-
-    JClassType rtn = placeTypeForInterfaces(implementedInterfaces);
+    JClassType rtn = placeTypeForInterfaces(tokenizerType.getFlattenedSupertypeHierarchy());
     if (rtn == null) {
       logger.log(TreeLogger.ERROR, "Found no Place type for "
           + tokenizerType.getQualifiedSourceName());
@@ -332,7 +319,7 @@ class PlaceHistoryGeneratorContext {
     }
   }
 
-  private JClassType placeTypeForInterfaces(Collection<JClassType> interfaces) {
+  private JClassType placeTypeForInterfaces(Collection<? extends JClassType> interfaces) {
     JClassType rtn = null;
     for (JClassType i : interfaces) {
       JParameterizedType parameterizedType = i.isParameterized();

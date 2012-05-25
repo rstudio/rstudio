@@ -35,6 +35,7 @@ import com.google.gwt.place.shared.Prefix;
 import com.google.gwt.place.shared.WithTokenizers;
 import com.google.gwt.place.testplacemappers.NoFactory;
 import com.google.gwt.place.testplacemappers.WithFactory;
+import com.google.gwt.place.testplaces.AbstractTokenizer;
 import com.google.gwt.place.testplaces.Place1;
 import com.google.gwt.place.testplaces.Place2;
 import com.google.gwt.place.testplaces.Place3;
@@ -85,6 +86,7 @@ public class PlaceHistoryGeneratorContextTest extends TestCase {
     rtn.add(new RealJavaResource(Place3.class));
     rtn.add(new RealJavaResource(Place4.class));
     rtn.add(new RealJavaResource(Place6.class));
+    rtn.add(new RealJavaResource(AbstractTokenizer.class));
     rtn.add(new RealJavaResource(Tokenizer2.class));
     rtn.add(new RealJavaResource(Tokenizer3.class));
     rtn.add(new RealJavaResource(Tokenizer4.class));

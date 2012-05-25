@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2012 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,11 +15,16 @@
  */
 package com.google.gwt.place.testplaces;
 
+import com.google.gwt.place.shared.PlaceTokenizer;
+
 /**
  * Used by tests of {@link com.google.gwt.place.rebind.PlaceHistoryMapperGenerator}.
+ * @param <P> A place type (for testing generics).
  */
-public class Tokenizer4 extends AbstractTokenizer<Place4> {
-  public Place4 getPlace(String token) {
-    return new Place4(token);
+public abstract class AbstractTokenizer<P extends Place1> implements PlaceTokenizer<P> {
+  public abstract P getPlace(String token);
+
+  public String getToken(P place) {
+    return place.content;
   }
 }
