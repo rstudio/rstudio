@@ -639,7 +639,7 @@ void modifyOutputForPreview(std::string* pOutput)
                 "config=TeX-AMS-MML_SVG");
 #else
       // add HTML-CSS options required for correct qtwebkit rendering
-      std::string target = "asciimath2jax: {";
+      std::string target = "tex2jax: {";
       boost::algorithm::replace_first(
                *pOutput,
                target,
