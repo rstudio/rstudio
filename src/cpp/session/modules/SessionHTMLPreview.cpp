@@ -565,7 +565,7 @@ bool requiresHighlighting(const std::string& htmlOutput)
 
 bool requiresMathjax(const std::string& htmlOutput)
 {
-   boost::regex inlineMathRegex("\\$(?!\\s)[^$]*[^$\\s]\\$");
+   boost::regex inlineMathRegex("\\$(?!\\s)([^$](?!</code>))*[^$\\s]\\$");
    if (boost::regex_search(htmlOutput, inlineMathRegex))
       return true;
 
