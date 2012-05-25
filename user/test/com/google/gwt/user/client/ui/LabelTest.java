@@ -60,7 +60,7 @@ public class LabelTest extends GWTTestCase {
     label.setAutoHorizontalAlignment(null);
     assertEquals("text-align is not empty after " +
         "setAutoHorizontalAlignment(null)", "",
-        label.getElement().getStyle().getProperty("textAlign"));
+        label.getElement().getStyle().getTextAlign());
 
     label.setAutoHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
     assertAlign("horizontal alignment was set to right by " +
@@ -162,7 +162,7 @@ public class LabelTest extends GWTTestCase {
       AutoHorizontalAlignmentConstant expectedAuto) {
     assertEquals(msg + " (text-align property value is incorrect)",
         expected.getTextAlignString(),
-        label.getElement().getStyle().getProperty("textAlign"));
+        label.getElement().getStyle().getTextAlign());
     assertEquals(msg + " (getHorizontalAlignment return value is incorrect)",
         expected, label.getHorizontalAlignment());
     assertEquals(msg + " (getAutoHorizontalAlignment return value is incorrect)",

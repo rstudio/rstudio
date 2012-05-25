@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.TextAlign;
 import com.google.gwt.i18n.client.HasDirection.Direction;
 import com.google.gwt.i18n.client.LocaleInfo;
 
@@ -94,25 +95,25 @@ public interface HasHorizontalAlignment {
    * Specifies that the widget's contents should be aligned in the center.
    */
   HorizontalAlignmentConstant ALIGN_CENTER = new HorizontalAlignmentConstant(
-      "center");
+      TextAlign.CENTER.getCssName());
 
   /**
    * Specifies that the widget's contents should be aligned as justify.
    */
   HorizontalAlignmentConstant ALIGN_JUSTIFY = new HorizontalAlignmentConstant(
-      "justify");
+      TextAlign.JUSTIFY.getCssName());
 
   /**
    * Specifies that the widget's contents should be aligned to the left.
    */
   HorizontalAlignmentConstant ALIGN_LEFT = new HorizontalAlignmentConstant(
-      "left");
+      TextAlign.LEFT.getCssName());
 
   /**
    * Specifies that the widget's contents should be aligned to the right.
    */
   HorizontalAlignmentConstant ALIGN_RIGHT = new HorizontalAlignmentConstant(
-      "right");
+      TextAlign.RIGHT.getCssName());
 
   /**
    * In a RTL layout, specifies that the widget's contents should be aligned to

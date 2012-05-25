@@ -17,6 +17,7 @@ package com.google.gwt.safecss.shared;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Style.TextAlign;
 import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeUri;
@@ -90,6 +91,13 @@ public class GwtSafeStylesUtilsTest extends GWTTestCase {
 
   public void testForDisplay() {
     assertEquals("display:none;", SafeStylesUtils.forDisplay(Display.NONE).asString());
+  }
+  
+  public void testForTextAlign() {
+    assertEquals("text-align:center;", SafeStylesUtils.forTextAlign(TextAlign.CENTER).asString());
+    assertEquals("text-align:justify;", SafeStylesUtils.forTextAlign(TextAlign.JUSTIFY).asString());
+    assertEquals("text-align:left;", SafeStylesUtils.forTextAlign(TextAlign.LEFT).asString());
+    assertEquals("text-align:right;", SafeStylesUtils.forTextAlign(TextAlign.RIGHT).asString());
   }
 
   public void testForWhiteSpace() {

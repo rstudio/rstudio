@@ -27,6 +27,7 @@ import com.google.gwt.dom.client.Style.OutlineStyle;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.TableLayout;
+import com.google.gwt.dom.client.Style.TextAlign;
 import com.google.gwt.dom.client.Style.TextDecoration;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.VerticalAlign;
@@ -315,6 +316,13 @@ public final class SafeStylesUtils {
    */
   public static SafeStyles forTableLayout(TableLayout value) {
     return fromTrustedNameAndValue("table-layout", value.getCssName());
+  }
+
+  /**
+   * Sets the 'text-align' CSS property.
+   */
+  public static SafeStyles forTextAlign(TextAlign value) {
+    return fromTrustedNameAndValue("text-align", value.getCssName());
   }
 
   /**

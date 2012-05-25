@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.TextAlign;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -178,7 +179,7 @@ public final class VerticalSplitPanel extends SplitPanel {
 
       // Prevents inherited text-align settings from interfering with the
       // panel's layout.
-      DOM.setStyleAttribute(elem, "textAlign", "left");
+      elem.getStyle().setTextAlign(TextAlign.LEFT);
       DOM.setStyleAttribute(elem, "position", "relative");
 
       final Element topElem = panel.getElement(TOP);

@@ -25,6 +25,7 @@ import com.google.gwt.dom.client.Style.ListStyleType;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.TableLayout;
+import com.google.gwt.dom.client.Style.TextAlign;
 import com.google.gwt.dom.client.Style.TextDecoration;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.VerticalAlign;
@@ -333,6 +334,13 @@ public final class SafeStylesBuilder {
    */
   public SafeStylesBuilder tableLayout(TableLayout value) {
     return append(SafeStylesUtils.forTableLayout(value));
+  }
+
+  /**
+   * Append the 'text-align' CSS property.
+   */
+  public SafeStylesBuilder textAlign(TextAlign value) {
+    return append(SafeStylesUtils.forTextAlign(value));
   }
 
   /**

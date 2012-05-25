@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.TextAlign;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
@@ -205,9 +206,9 @@ public final class HorizontalSplitPanel extends SplitPanel {
       // as left-alignment is the default with LTR directionality, and
       // right-alignment is the default with RTL directionality.
       if (LocaleInfo.getCurrentLocale().isRTL()) {
-        DOM.setStyleAttribute(elem, "textAlign", "right");
+        elem.getStyle().setTextAlign(TextAlign.RIGHT);
       } else {
-        DOM.setStyleAttribute(elem, "textAlign", "left");
+        elem.getStyle().setTextAlign(TextAlign.LEFT);
       }
 
       DOM.setStyleAttribute(elem, "position", "relative");

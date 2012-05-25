@@ -574,6 +574,38 @@ public class Style extends JavaScriptObject {
   }
 
   /**
+   * Enum for the text-align property.
+   */
+  public enum TextAlign implements HasCssName {
+    CENTER {
+      @Override
+      public String getCssName() {
+        return TEXT_ALIGN_CENTER;
+      }
+    },
+    JUSTIFY {
+      @Override
+      public String getCssName() {
+        return TEXT_ALIGN_JUSTIFY;
+      }
+    },
+    LEFT {
+      @Override
+      public String getCssName() {
+        return TEXT_ALIGN_LEFT;
+      }
+    },
+    RIGHT {
+      @Override
+      public String getCssName() {
+        return TEXT_ALIGN_RIGHT;
+      }
+    };
+    @Override
+    public abstract String getCssName();
+  }
+
+  /**
    * Enum for the text-decoration property.
    */
   public enum TextDecoration implements HasCssName {
@@ -830,6 +862,7 @@ public class Style extends JavaScriptObject {
   private static final String STYLE_BACKGROUND_COLOR = "backgroundColor";
   private static final String STYLE_VERTICAL_ALIGN = "verticalAlign";
   private static final String STYLE_TABLE_LAYOUT = "tableLayout";
+  private static final String STYLE_TEXT_ALIGN = "textAlign";
   private static final String STYLE_OUTLINE_WIDTH = "outlineWidth";
   private static final String STYLE_OUTLINE_STYLE = "outlineStyle";
   private static final String STYLE_OUTLINE_COLOR = "outlineColor";
@@ -838,6 +871,11 @@ public class Style extends JavaScriptObject {
 
   private static final String TABLE_LAYOUT_AUTO = "auto";
   private static final String TABLE_LAYOUT_FIXED = "fixed";
+
+  private static final String TEXT_ALIGN_CENTER = "center";
+  private static final String TEXT_ALIGN_JUSTIFY = "justify";
+  private static final String TEXT_ALIGN_LEFT = "left";
+  private static final String TEXT_ALIGN_RIGHT = "right";
 
   private static final String TEXT_DECORATION_LINE_THROUGH = "line-through";
   private static final String TEXT_DECORATION_OVERLINE = "overline";
@@ -1142,6 +1180,13 @@ public class Style extends JavaScriptObject {
   }
 
   /**
+   * Clear the 'text-align' CSS property.
+   */
+  public final void clearTextAlign() {
+    clearProperty(STYLE_TEXT_ALIGN);
+  }
+
+  /**
    * Clears the text-decoration CSS property.
    */
   public final void clearTextDecoration() {
@@ -1420,6 +1465,13 @@ public class Style extends JavaScriptObject {
    */
   public final String getTableLayout() {
     return getProperty(STYLE_TABLE_LAYOUT);
+  }
+
+  /**
+   * Get the 'text-align' CSS property.
+   */
+  public final String getTextAlign() {
+    return getProperty(STYLE_TEXT_ALIGN);
   }
 
   /**
@@ -1753,6 +1805,13 @@ public class Style extends JavaScriptObject {
    */
   public final void setTableLayout(TableLayout value) {
     setProperty(STYLE_TABLE_LAYOUT, value.getCssName());
+  }
+
+  /**
+   * Set the 'text-align' CSS property.
+   */
+  public final void setTextAlign(TextAlign value) {
+    setProperty(STYLE_TEXT_ALIGN, value.getCssName());
   }
 
   /**
