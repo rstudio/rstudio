@@ -16,14 +16,14 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.TextAlign;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Timer;
 
@@ -302,8 +302,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
           // If one tries to set the width of the LEFT element to
           // before layout completes, the RIGHT element will
           // appear to be blanked out.
-
-          DeferredCommand.addCommand(new Command() {
+          Scheduler.get().scheduleDeferred(new ScheduledCommand() {
             public void execute() {
               setWidth(panel.getElement(LEFT), "0px");
             }
@@ -580,7 +579,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
      * possible.
      */
     setSplitPosition(lastSplitPosition);
-    DeferredCommand.addCommand(new Command() {
+    Scheduler.get().scheduleDeferred(new ScheduledCommand() {
       public void execute() {
         setSplitPosition(lastSplitPosition);
       }
