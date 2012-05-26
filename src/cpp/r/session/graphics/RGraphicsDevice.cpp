@@ -755,13 +755,12 @@ Error initialize(
       activateGDMethodDef.numArgs = 0;
       r::routines::addCallMethod(activateGDMethodDef);
 
-
       // register dev.set hook to handle special dev.set(which = 1) case
-      error = function_hook::registerReplaceHook("dev.set",
-                                                 devSetHook,
-                                                 &s_originalDevSetFunction);
-      if (error)
-         return error;
+      // (tolerate error since this symbol isn't available for lookup
+      // in >= R 2.16)
+      function_hook::registerReplaceHook("dev.set",
+                                         devSetHook,
+                                         &s_originalDevSetFunction);
 
       // initialize
       return r::exec::RFunction(".rs.initGraphicsDevice").call();
