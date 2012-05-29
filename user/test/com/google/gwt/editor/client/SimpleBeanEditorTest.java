@@ -24,6 +24,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -210,11 +211,11 @@ public class SimpleBeanEditorTest extends GWTTestCase {
 
   class PersonWithListEditor implements Editor<PersonWithList> {
     SimpleEditor<String> nameEditor = SimpleEditor.of(UNINITIALIZED);
-    ListEditor<Address, AddressEditor> addressesEditor = ListEditor
-        .of(new EditorSource<AddressEditor>() {
+    ListEditor<Address, ValueAwareAddressEditor> addressesEditor = ListEditor
+        .of(new EditorSource<ValueAwareAddressEditor>() {
           @Override
-          public AddressEditor create(int index) {
-            return new AddressEditor();
+          public ValueAwareAddressEditor create(int index) {
+            return new ValueAwareAddressEditor();
           }
         });
   }
@@ -526,6 +527,30 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     assertEquals(3, editors.size());
     assertEquals("quux", editors.get(2).getValue());
     assertEquals(editors, new ArrayList<SimpleEditor<String>>(positionMap.values()));
+
+    // Change list outside editor: shouldn't impact editors
+    rawData.clear();
+    rawData.addAll(Arrays.asList("able", "baker"));
+    List<String> expectedList = Arrays.asList("Hello", "World", "quux");
+    assertEquals(expectedList, editor.getList());
+    assertEquals(expectedList.size(), editors.size());
+    assertEquals(expectedList, Arrays.asList(editors.get(0).getValue(), editors.get(1).getValue(),
+        editors.get(2).getValue()));
+    assertEquals(editors, new ArrayList<SimpleEditor<String>>(positionMap.values()));
+
+    // Edit again: should reuse sub-editors and dispose unneeded ones
+    disposed[0] = null;
+    expectedDisposed = editors.get(2);
+    @SuppressWarnings("unchecked")
+    List<SimpleEditor<String>> expectedEditors = Arrays.asList(editors.get(0), editors.get(1));
+    driver.edit(rawData);
+    assertEquals(expectedEditors, editors);
+    assertEquals(expectedEditors, editor.getEditors());
+    assertEquals(rawData, editor.getList());
+    assertEquals(rawData.size(), editors.size());
+    assertEquals(rawData, Arrays.asList(editors.get(0).getValue(), editors.get(1).getValue()));
+    assertEquals(editors, new ArrayList<SimpleEditor<String>>(positionMap.values()));
+    assertEquals(expectedDisposed, disposed[0]);
   }
 
   /**
@@ -547,22 +572,37 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     PersonWithListEditor personEditor = new PersonWithListEditor();
     // Initialize
     driver.initialize(personEditor);
-    try {
-      personEditor.addressesEditor.getEditors();
-      // Address editors aren't created until edit() is called
-      fail();
-    } catch (IllegalStateException expected) {
-    }
+    // Address editors aren't created until edit() is called
+    assertEquals(Collections.emptyList(), personEditor.addressesEditor.getEditors());
 
     // Edit
     driver.edit(person);
-    AddressEditor addressEditor = personEditor.addressesEditor.getEditors().get(1);
+    ValueAwareAddressEditor addressEditor = personEditor.addressesEditor.getEditors().get(1);
+    // Check that setValue is only called once on sub-editors (issue 7038)
+    assertEquals(1, addressEditor.setValueCalled);
+
     assertEquals("a2City", addressEditor.city.getValue());
     addressEditor.city.setValue("edited");
 
     // Flush
     driver.flush();
     assertEquals("edited", person.addresses.get(1).getCity());
+
+    // Verify that setting the same list reuses sub-editors
+    addressEditor.setValueCalled = 0;
+    driver.edit(person);
+    assertSame(addressEditor, personEditor.addressesEditor.getEditors().get(1));
+    // Check that setValue has correctly been called on the sub-editor anyway
+    assertEquals(1, addressEditor.setValueCalled);
+
+    // Edit with a null list
+    person.addresses = null;
+    driver.edit(person);
+    assertNull(personEditor.addressesEditor.getList());
+    assertEquals(Collections.emptyList(), personEditor.addressesEditor.getEditors());
+    // Flushing should not throw:
+    driver.flush();
+    assertNull(person.addresses);
   }
 
   public void testMultipleBinding() {
