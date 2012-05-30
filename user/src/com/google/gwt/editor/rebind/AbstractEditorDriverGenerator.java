@@ -94,22 +94,9 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
     Map<EditorData, String> delegateFields = new IdentityHashMap<EditorData, String>();
     NameFactory nameFactory = new NameFactory();
 
-    /*
-     * The paramaterization of the editor type is included to ensure that a
-     * correct specialization of a CompositeEditor will be generated. For
-     * example, a ListEditor<Person, APersonEditor> would need a different
-     * delegate from a ListEditor<Person, AnotherPersonEditor>.
-     */
-    StringBuilder maybeParameterizedName = new StringBuilder(
-        BinaryName.getClassName(editor.getQualifiedBinaryName()));
-    if (editor.isParameterized() != null) {
-      for (JClassType type : editor.isParameterized().getTypeArgs()) {
-        maybeParameterizedName.append("$").append(type.getQualifiedBinaryName());
-      }
-    }
     String delegateSimpleName = String.format(
         "%s_%s",
-        escapedBinaryName(maybeParameterizedName.toString()),
+        escapedMaybeParameterizedBinaryName(editor),
         BinaryName.getShortClassName(Name.getBinaryNameForClass(getEditorDelegateType())));
 
     String packageName = editor.getPackage().getName();
@@ -230,8 +217,25 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
     return binaryName.replace("_", "_1").replace('$', '_').replace('.', '_');
   }
 
+  private String escapedMaybeParameterizedBinaryName(JClassType editor) {
+    /*
+     * The parameterization of the editor type is included to ensure that a
+     * correct specialization of a CompositeEditor will be generated. For
+     * example, a ListEditor<Person, APersonEditor> would need a different
+     * delegate from a ListEditor<Person, AnotherPersonEditor>.
+     */
+    StringBuilder maybeParameterizedName = new StringBuilder(
+        BinaryName.getClassName(editor.getQualifiedBinaryName()));
+    if (editor.isParameterized() != null) {
+      for (JClassType type : editor.isParameterized().getTypeArgs()) {
+        maybeParameterizedName.append("$").append(type.getQualifiedBinaryName());
+      }
+    }
+    return escapedBinaryName(maybeParameterizedName.toString());
+  }
+
   /**
-   * Create an EditorContext implementation that will provide acess to
+   * Create an EditorContext implementation that will provide access to
    * {@link data} owned by {@link parent}. In other words, given the EditorData
    * for a {@code PersonEditor} and the EditorData for a {@code AddressEditor}
    * nested in the {@code PersonEditor}, create an EditorContext that will
@@ -242,7 +246,8 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
   private String getEditorContext(EditorData parent, EditorData data) {
     String pkg = parent.getEditorType().getPackage().getName();
     // PersonEditor_manager_name_Context
-    String simpleName = escapedBinaryName(parent.getEditorType().getName())
+    String simpleName =
+        escapedMaybeParameterizedBinaryName(parent.getEditorType())
         + "_" + data.getDeclaredPath().replace("_", "_1").replace(".", "_")
         + "_Context";
 

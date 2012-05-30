@@ -58,6 +58,22 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     }
   }
 
+  /**
+   * See <a
+   * href="http://code.google.com/p/google-web-toolkit/issues/detail?id=6016"
+   * >issue 6016</a>
+   */
+  static class EditorWithGenericSubEditors implements Editor<Department> {
+
+    PersonGenericEditor<Manager> manager = new PersonGenericEditor<Manager>();
+
+    PersonGenericEditor<Intern> intern = new PersonGenericEditor<Intern>();
+  }
+
+  interface EditorWithGenericSubEditorsDriver extends
+      SimpleBeanEditorDriver<Department, EditorWithGenericSubEditors> {
+  }
+
   class LeafAddressEditor extends AddressEditor implements LeafValueEditor<Address> {
     /*
      * These two fields are used to ensure that getValue() and setValue() aren't
@@ -194,6 +210,10 @@ public class SimpleBeanEditorTest extends GWTTestCase {
 
   interface PersonEditorWithValueAwareLeafAddressEditorDriver extends
       SimpleBeanEditorDriver<Person, PersonEditorWithValueAwareLeafAddressEditor> {
+  }
+
+  static class PersonGenericEditor<T extends Person> implements Editor<T> {
+    SimpleEditor<String> name = SimpleEditor.of(UNINITIALIZED);
   }
 
   class PersonWithList {
@@ -347,6 +367,19 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     driver.edit(person);
 
     assertEquals("manager.name", editor.managerName.delegate.getPath());
+  }
+
+  /**
+   * See <a
+   * href="http://code.google.com/p/google-web-toolkit/issues/detail?id=6016"
+   * >issue 6016</a>
+   */
+  public void testEditorWithGenericSubEditors() {
+    EditorWithGenericSubEditorsDriver driver = GWT.create(EditorWithGenericSubEditorsDriver.class);
+    // Issue 6016 would make the above line fail (when generating the editor
+    // driver), but let's try editing an object too, it doesn't cost much.
+    driver.initialize(new EditorWithGenericSubEditors());
+    driver.edit(new Department());
   }
 
   public void testEditorWithNullSubEditor() {
