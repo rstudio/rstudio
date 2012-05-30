@@ -28,6 +28,7 @@ public final class Float extends Number implements Comparable<Float> {
   public static final float NEGATIVE_INFINITY = -1f / 0f;
   public static final float POSITIVE_INFINITY = 1f / 0f;
   public static final int SIZE = 32;
+  public static final Class<Float> TYPE = float.class;
 
   private static final long POWER_31_INT = 2147483648L;
   private static final long POWER_32_INT = 4294967296L;

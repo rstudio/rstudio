@@ -23,6 +23,7 @@ public final class Byte extends Number implements Comparable<Byte> {
   public static final byte MIN_VALUE = (byte) 0x80;
   public static final byte MAX_VALUE = (byte) 0x7F;
   public static final int SIZE = 8;
+  public static final Class<Byte> TYPE = byte.class;
 
   /**
    * Use nested class to avoid clinit on outer.

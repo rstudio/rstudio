@@ -23,6 +23,7 @@ public final class Short extends Number implements Comparable<Short> {
   public static final short MIN_VALUE = (short) 0x8000;
   public static final short MAX_VALUE = (short) 0x7fff;
   public static final int SIZE = 16;
+  public static final Class<Short> TYPE = short.class;
 
   /**
    * Use nested class to avoid clinit on outer.
