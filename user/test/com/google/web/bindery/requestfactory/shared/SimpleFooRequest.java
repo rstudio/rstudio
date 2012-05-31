@@ -119,6 +119,8 @@ public interface SimpleFooRequest extends RequestContext {
 
   Request<SimpleFooProxy> returnSimpleFooSubclass();
 
+  Request<List<SimpleValueProxy>> returnValueProxies();
+
   Request<SimpleValueProxy> returnValueProxy();
 
   InstanceRequest<SimpleFooProxy, Integer> sum(List<Integer> values);

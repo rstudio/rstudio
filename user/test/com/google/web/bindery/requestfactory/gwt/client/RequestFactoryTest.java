@@ -579,6 +579,24 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     });
   }
 
+  /**
+   * @see http://code.google.com/p/google-web-toolkit/issues/detail?id=6710
+   */
+  public void testEntityChainFromListOfValueObjects() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    simpleFooRequest().returnValueProxies().with("simpleFoo.fooField").fire(new Receiver<List<SimpleValueProxy>>() {
+      @Override
+      public void onSuccess(List<SimpleValueProxy> response) {
+        assertTrue("Issue 6710 only manifested itself with 2 value proxies at least", response.size() >= 2);
+        for (SimpleValueProxy value : response) {
+          assertNotNull(value.getSimpleFoo());
+          assertNotNull(value.getSimpleFoo().getFooField());
+        }
+        finishTestAndReset();
+      }
+    });
+  }
+
   public void testFetchEntity() {
     delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().findSimpleFooById(999L).fire(new Receiver<SimpleFooProxy>() {

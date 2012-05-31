@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -359,9 +360,13 @@ class Resolver {
 
   /**
    * Maps proxy instances to the Resolution objects.
+   *<p>
+   * FIXME: The proxies are later mutated, which is not an issue as this is an
+   * IdentityHashMap, but still feels weird. We should try to find a way to
+   * put immutable objects as keys in this map.
    */
-  private Map<BaseProxy, Resolution> clientObjectsToResolutions =
-      new HashMap<BaseProxy, Resolution>();
+  private IdentityHashMap<BaseProxy, Resolution> clientObjectsToResolutions =
+      new IdentityHashMap<BaseProxy, Resolution>();
   /**
    * Maps domain values to client values. This map prevents cycles in the object
    * graph from causing infinite recursion.

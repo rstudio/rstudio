@@ -73,6 +73,14 @@ public class SimpleRequestProcessor {
   /**
    * This parameterization is so long, it improves readability to have a
    * specific type.
+   * <p>
+   * FIXME: IDs used as keys in this map can be mutated (turning an ephemeral
+   * ID to a persisted ID in Resolver#resolveClientProxy) in a way that can
+   * change their hashCode value and equals behavior, therefore breaking the
+   * Map contract. We should find a way to only put immutable IDs here, or
+   * change SimpleProxyId so that its hashCode value and equals behavior don't
+   * change, or possibly remove and re-add the entry when the ID is modified
+   * (as this is something entirely under our control).
    */
   @SuppressWarnings("serial")
   static class IdToEntityMap extends HashMap<SimpleProxyId<?>, AutoBean<? extends BaseProxy>> {

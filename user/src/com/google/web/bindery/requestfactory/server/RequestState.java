@@ -38,7 +38,6 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Encapsulates all state relating to the processing of a single request so that
@@ -46,7 +45,7 @@ import java.util.Map;
  */
 class RequestState implements EntityCodex.EntitySource {
   final IdToEntityMap beans = new IdToEntityMap();
-  private final Map<Object, SimpleProxyId<?>> domainObjectsToId;
+  private final IdentityHashMap<Object, SimpleProxyId<?>> domainObjectsToId;
   private final IdFactory idFactory;
   private final ServiceLayer service;
   private final Resolver resolver;

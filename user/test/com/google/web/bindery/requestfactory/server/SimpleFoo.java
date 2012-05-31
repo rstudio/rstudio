@@ -24,6 +24,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -439,6 +440,21 @@ public class SimpleFoo {
     };
   }
 
+  public static List<SimpleValue> returnValueProxies() {
+    List<SimpleValue> toReturn = new ArrayList<SimpleValue>(2);
+    for (int i = 0; i < 2; i++) {
+      SimpleValue value = returnValueProxy();
+      SimpleFoo foo = new SimpleFoo();
+      SimpleFoo subFoo = new SimpleFoo();
+      foo.setFooField(subFoo);
+      value.setSimpleFoo(foo);
+      toReturn.add(value);
+      foo.persist();
+      subFoo.persist();
+    }
+    return toReturn;
+  }
+
   public static SimpleValue returnValueProxy() {
     SimpleValue toReturn = new SimpleValue();
     toReturn.setNumber(42);
@@ -495,7 +511,7 @@ public class SimpleFoo {
 
   private List<Integer> numberListField;
 
-  private SimpleValue simpleValueField;
+  private List<SimpleValue> simpleValueField;
 
   /*
    * isChanged is just a quick-and-dirty way to get version-ing for now.
@@ -667,11 +683,11 @@ public class SimpleFoo {
   }
 
   public SimpleValue getSimpleValue() {
-    return simpleValueField;
+    return simpleValueField != null && simpleValueField.size() > 0 ? simpleValueField.get(0) : null;
   }
 
   public List<SimpleValue> getSimpleValues() {
-    return Arrays.asList(simpleValueField);
+    return simpleValueField;
   }
 
   public boolean getUnpersisted() {
@@ -852,11 +868,11 @@ public class SimpleFoo {
   }
 
   public void setSimpleValue(SimpleValue simpleValueField) {
-    this.simpleValueField = simpleValueField;
+    this.simpleValueField = Collections.singletonList(simpleValueField);
   }
 
   public void setSimpleValues(List<SimpleValue> simpleValueField) {
-    this.simpleValueField = simpleValueField.get(0);
+    this.simpleValueField = simpleValueField;
   }
 
   public void setUnpersisted(boolean unpersisted) {
