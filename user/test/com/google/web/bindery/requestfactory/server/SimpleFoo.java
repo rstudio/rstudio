@@ -24,7 +24,6 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -514,7 +513,8 @@ public class SimpleFoo {
 
   private List<Integer> numberListField;
 
-  private List<SimpleValue> simpleValueField;
+  private SimpleValue simpleValueField;
+  private List<SimpleValue> simpleValuesField;
 
   /*
    * isChanged is just a quick-and-dirty way to get version-ing for now.
@@ -686,11 +686,11 @@ public class SimpleFoo {
   }
 
   public SimpleValue getSimpleValue() {
-    return simpleValueField != null && simpleValueField.size() > 0 ? simpleValueField.get(0) : null;
+    return simpleValueField;
   }
 
   public List<SimpleValue> getSimpleValues() {
-    return simpleValueField;
+    return simpleValuesField;
   }
 
   public boolean getUnpersisted() {
@@ -871,11 +871,11 @@ public class SimpleFoo {
   }
 
   public void setSimpleValue(SimpleValue simpleValueField) {
-    this.simpleValueField = Collections.singletonList(simpleValueField);
+    this.simpleValueField = simpleValueField;
   }
 
   public void setSimpleValues(List<SimpleValue> simpleValueField) {
-    this.simpleValueField = simpleValueField;
+    this.simpleValuesField = simpleValueField;
   }
 
   public void setUnpersisted(boolean unpersisted) {
