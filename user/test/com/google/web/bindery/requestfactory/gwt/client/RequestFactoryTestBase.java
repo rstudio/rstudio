@@ -168,7 +168,6 @@ public abstract class RequestFactoryTestBase extends GWTTestCase {
   protected void finishTestAndReset() {
     SimpleFooRequest ctx = req.simpleFooRequest();
     ctx.reset();
-    ctx.append(req.simpleBarRequest()).reset();
     ctx.fire(new Receiver<Void>() {
       @Override
       public void onSuccess(Void response) {

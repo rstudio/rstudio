@@ -307,37 +307,239 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     assertFalse(context.isChanged());
   }
 
-  public void testChangedEdit() {
+  public void testChangedEditCollectionsOfEntityProxies() {
     delayTestFinish(DELAY_TEST_FINISH);
-    simpleFooRequest().findSimpleFooById(1L).fire(new Receiver<SimpleFooProxy>() {
+    simpleFooRequest().findSimpleFooById(1L).with("barField", "oneToManyField").fire(
+        new Receiver<SimpleFooProxy>() {
 
-      @Override
-      public void onSuccess(SimpleFooProxy foo) {
-        foo = checkSerialization(foo);
-        SimpleFooRequest context = simpleFooRequest();
+          @Override
+          public void onSuccess(SimpleFooProxy foo) {
+            foo = checkSerialization(foo);
+            SimpleFooRequest context = simpleFooRequest();
 
-        // edit() doesn't cause a change
-        foo = context.edit(foo);
-        assertFalse(context.isChanged());
+            // edit() doesn't cause a change
+            foo = context.edit(foo);
+            assertFalse(context.isChanged());
 
-        final String newName = "something else;";
-        String oldName = foo.getUserName();
-        assertFalse("Don't accidentally set the same name", newName.equals(oldName));
+            // Change collection to a copy doesn't cause a change
+            List<SimpleBarProxy> oldOneToManyField = foo.getOneToManyField();
+            List<SimpleBarProxy> newOneToManyField =
+                new ArrayList<SimpleBarProxy>(oldOneToManyField);
+            foo.setOneToManyField(newOneToManyField);
+            assertFalse(context.isChanged());
 
-        // gets don't cause a change
-        assertFalse(context.isChanged());
+            // Change to same entity proxy doesn't cause a change
+            foo.getOneToManyField().set(0, context.edit(foo.getOneToManyField().get(0)));
+            assertFalse(context.isChanged());
 
-        // Change
-        foo.setUserName(newName);
-        assertTrue(context.isChanged());
+            // Change to a collection directly causes a change
+            // Note that create() doesn't cause a change, see testChangedCreate
+            foo.getOneToManyField().set(0, context.create(SimpleBarProxy.class));
+            assertTrue(context.isChanged());
 
-        // Undo the change
-        foo.setUserName(oldName);
-        assertFalse(context.isChanged());
+            // Undo the change
+            foo.getOneToManyField().set(0, oldOneToManyField.get(0));
+            assertFalse(context.isChanged());
 
-        finishTestAndReset();
-      }
-    });
+            // Change to a collection directly causes a change
+            foo.getOneToManyField().remove(0);
+            assertTrue(context.isChanged());
+
+            // Undo the change
+            foo.setOneToManyField(oldOneToManyField);
+            assertFalse(context.isChanged());
+
+            finishTestAndReset();
+          }
+        });
+  }
+
+  public void testChangedEditCollectionsOfSimpleValues() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    simpleFooRequest().findSimpleFooById(1L).with("barField", "oneToManyField").fire(
+        new Receiver<SimpleFooProxy>() {
+
+          @Override
+          public void onSuccess(SimpleFooProxy foo) {
+            foo = checkSerialization(foo);
+            SimpleFooRequest context = simpleFooRequest();
+
+            // edit() doesn't cause a change
+            foo = context.edit(foo);
+            assertFalse(context.isChanged());
+
+            // Change collection to a copy doesn't cause a change
+            List<Integer> oldNumberListField = foo.getNumberListField();
+            List<Integer> newOneToManuField =
+                new ArrayList<Integer>(oldNumberListField);
+            foo.setNumberListField(newOneToManuField);
+            assertFalse(context.isChanged());
+
+            // Change to a collection directly causes a change
+            foo.getNumberListField().set(0, 43);
+            assertTrue(context.isChanged());
+
+            // Undo the change
+            foo.getNumberListField().set(0, oldNumberListField.get(0));
+            assertFalse(context.isChanged());
+
+            // Change to a collection directly causes a change
+            foo.getNumberListField().remove(0);
+            assertTrue(context.isChanged());
+
+            // Undo the change
+            foo.setNumberListField(oldNumberListField);
+            assertFalse(context.isChanged());
+
+            finishTestAndReset();
+          }
+        });
+  }
+
+  public void testChangedEditEntityProxies() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    simpleFooRequest().findSimpleFooById(1L).with("barField", "oneToManyField").fire(
+        new Receiver<SimpleFooProxy>() {
+
+          @Override
+          public void onSuccess(SimpleFooProxy foo) {
+            foo = checkSerialization(foo);
+            SimpleFooRequest context = simpleFooRequest();
+
+            // edit() doesn't cause a change
+            foo = context.edit(foo);
+            assertFalse(context.isChanged());
+
+            // Change entity proxy to its edited version doesn't cause a change
+            SimpleBarProxy oldBarField = foo.getBarField();
+            foo.setBarField(context.edit(oldBarField));
+            assertFalse(context.isChanged());
+
+            // Change entity proxy to null causes a change
+            foo.setBarField(null);
+            assertTrue(context.isChanged());
+
+            // Undo the change (even though oldBarField is actually a mutable
+            // version)
+            foo.setBarField(oldBarField);
+            assertFalse(context.isChanged());
+
+            // Change entity proxy to another one causes a change
+            // Note that create() doesn't cause a change, see testChangedCreate
+            foo.setBarField(context.create(SimpleBarProxy.class));
+            assertTrue(context.isChanged());
+
+            // Undo the change
+            foo.setBarField(oldBarField);
+            assertFalse(context.isChanged());
+
+            finishTestAndReset();
+          }
+        });
+  }
+
+  public void testChangedEditSimpleValues() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    simpleFooRequest().findSimpleFooById(1L).with("barField", "oneToManyField").fire(
+        new Receiver<SimpleFooProxy>() {
+
+          @Override
+          public void onSuccess(SimpleFooProxy foo) {
+            foo = checkSerialization(foo);
+            SimpleFooRequest context = simpleFooRequest();
+
+            // edit() doesn't cause a change
+            foo = context.edit(foo);
+            assertFalse(context.isChanged());
+
+            final String newName = "something else;";
+            String oldName = foo.getUserName();
+            assertFalse("Don't accidentally set the same name", newName.equals(oldName));
+
+            // gets don't cause a change
+            assertFalse(context.isChanged());
+
+            // Change
+            foo.setUserName(newName);
+            assertTrue(context.isChanged());
+
+            // Undo the change
+            foo.setUserName(oldName);
+            assertFalse(context.isChanged());
+
+            finishTestAndReset();
+          }
+        });
+  }
+
+  public void testChangedEditValueProxies() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    simpleFooRequest().findSimpleFooById(1L).with("barField", "oneToManyField").fire(
+        new Receiver<SimpleFooProxy>() {
+
+          @Override
+          public void onSuccess(SimpleFooProxy foo) {
+            foo = checkSerialization(foo);
+            SimpleFooRequest context = simpleFooRequest();
+
+            foo = context.edit(foo);
+
+            // Create
+            SimpleValueProxy created = context.create(SimpleValueProxy.class);
+            created.setNumber(42);
+            created.setString("Hello world!");
+            created.setSimpleFoo(foo);
+
+            // That proxy is a "clone" of the 'create' one
+            SimpleValueProxy other = context.create(SimpleValueProxy.class);
+            other.setNumber(42);
+            other.setString("Hello world!");
+            other.setSimpleFoo(foo);
+
+            // Test cycles in value
+            created.setSimpleValue(Arrays.asList(created, other));
+            other.setSimpleValue(Arrays.asList(created, other));
+
+            // Set
+            foo.setSimpleValue(created);
+            foo.setSimpleValues(Collections.singletonList(created));
+
+            // Retrieve
+            context.persistAndReturnSelf().using(foo).with("simpleValue.simpleFoo",
+                "simpleValue.simpleValue").fire(new Receiver<SimpleFooProxy>() {
+              @Override
+              public void onSuccess(SimpleFooProxy foo) {
+                foo = checkSerialization(foo);
+                SimpleFooRequest context = simpleFooRequest();
+
+                // edit() still doesn't cause a change
+                foo = context.edit(foo);
+                assertFalse(context.isChanged());
+
+                // Change to a referenced value proxy causes a change
+                foo.getSimpleValue().setNumber(43);
+                assertTrue(context.isChanged());
+
+                // Undo the change
+                foo.getSimpleValue().setNumber(42);
+                assertFalse(context.isChanged());
+
+                // Change to another value proxy causes a change
+                // Note that create() doesn't cause a change, see testChangedCreate
+                SimpleValueProxy old = foo.getSimpleValue();
+                SimpleValueProxy created = context.create(SimpleValueProxy.class);
+                foo.setSimpleValue(created);
+                assertTrue(context.isChanged());
+
+                // An equivalent value proxy reverts the change
+                foo.setSimpleValue(old.getSimpleValue().get(1));
+                assertFalse(context.isChanged());
+
+                finishTestAndReset();
+              }
+            });
+          }
+        });
   }
 
   public void testChangedNothing() {
@@ -718,11 +920,11 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
           }
         });
   }
- 
+
   public void testForwardReferenceWildcardDecode() {
     delayTestFinish(DELAY_TEST_FINISH);
-    simpleFooRequest().getTripletReference().with("selfOneToManyField.*.fooField")
-        .fire(new Receiver<SimpleFooProxy>() {
+    simpleFooRequest().getTripletReference().with("selfOneToManyField.*.fooField").fire(
+        new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
             response = checkSerialization(response);
@@ -1014,7 +1216,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().returnNullSimpleFoo().fire(new NullReceiver());
   }
-  
+
   public void testNullEntityFieldResult() {
     delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().getSimpleFooWithNullRelationship().with("fooField.fooField.fooField").fire(
@@ -1132,21 +1334,21 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
       }
     });
   }
-  
+
   public void testNullValueInEntityListResponse() {
     delayTestFinish(DELAY_TEST_FINISH);
     final Request<SimpleFooProxy> fooReq =
-      req.simpleFooRequest().getNullInEntityList().with("selfOneToManyField");
+        req.simpleFooRequest().getNullInEntityList().with("selfOneToManyField");
     fooReq.fire(new Receiver<SimpleFooProxy>() {
       @Override
       public void onSuccess(SimpleFooProxy v) {
         List<SimpleFooProxy> manyFoos = v.getSelfOneToManyField();
         assertEquals(3, manyFoos.size());
-        
+
         assertNotNull(manyFoos.get(0));
         assertNull(manyFoos.get(1));
         assertNotNull(manyFoos.get(2));
-        
+
         finishTestAndReset();
       }
     });
@@ -1155,18 +1357,18 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   public void testNullValueInEntityListResponseWithWildcard() {
     delayTestFinish(DELAY_TEST_FINISH);
     final Request<SimpleFooProxy> fooReq =
-      req.simpleFooRequest().getNullInEntityList().with("selfOneToManyField.*.fooField");
+        req.simpleFooRequest().getNullInEntityList().with("selfOneToManyField.*.fooField");
     fooReq.fire(new Receiver<SimpleFooProxy>() {
       @Override
       public void onSuccess(SimpleFooProxy foo0) {
         List<SimpleFooProxy> manyFoos = foo0.getSelfOneToManyField();
         assertEquals(3, manyFoos.size());
-        
+
         assertSame(foo0, manyFoos.get(0).getSelfOneToManyField().get(0));
         assertNull(manyFoos.get(1));
         assertSame(foo0, manyFoos.get(2).getSelfOneToManyField().get(0));
         assertSame(foo0, manyFoos.get(2).getFooField().getFooField());
-        
+
         finishTestAndReset();
       }
     });
@@ -1175,16 +1377,17 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   public void testNullValueInEntityListResponseWithLongResolvePaths() {
     delayTestFinish(DELAY_TEST_FINISH);
     final Request<SimpleFooProxy> fooReq =
-        req.simpleFooRequest().getNullInEntityList().with("selfOneToManyField.selfOneToManyField.selfOneToManyField");
+        req.simpleFooRequest().getNullInEntityList().with(
+            "selfOneToManyField.selfOneToManyField.selfOneToManyField");
     fooReq.fire(new Receiver<SimpleFooProxy>() {
       @Override
       public void onSuccess(SimpleFooProxy v) {
         assertEquals(3, v.getSelfOneToManyField().size());
-        
+
         assertNotNull(v.getSelfOneToManyField().get(0));
         assertNull(v.getSelfOneToManyField().get(1));
         assertNotNull(v.getSelfOneToManyField().get(2));
-        
+
         finishTestAndReset();
       }
     });
@@ -2149,22 +2352,22 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
           }
         });
   }
-  
+
   public void testPropertyRefsOnWildcardChain() {
     delayTestFinish(DELAY_TEST_FINISH);
     final Request<SimpleFooProxy> fooReq =
-      req.simpleFooRequest().getLongChain().with("fooField.*.*.fooField");
+        req.simpleFooRequest().getLongChain().with("fooField.*.*.fooField");
     fooReq.fire(new Receiver<SimpleFooProxy>() {
       @Override
       public void onSuccess(SimpleFooProxy foo0) {
         assertNull(foo0.getSelfOneToManyField()); // didn't ask for it
-        
+
         SimpleFooProxy foo1 = foo0.getFooField(); // "fooField
-        SimpleFooProxy foo2 = foo1.getFooField(); //          .*
-        SimpleFooProxy foo3 = foo2.getFooField(); //            .*
-        SimpleFooProxy foo4 = foo3.getFooField(); //              .fooField"
-        SimpleFooProxy foo5 = foo4.getFooField(); 
-        
+        SimpleFooProxy foo2 = foo1.getFooField(); // .*
+        SimpleFooProxy foo3 = foo2.getFooField(); // .*
+        SimpleFooProxy foo4 = foo3.getFooField(); // .fooField"
+        SimpleFooProxy foo5 = foo4.getFooField();
+
         assertNotNull(foo1);
         assertNotNull(foo2);
         assertNotNull(foo3);

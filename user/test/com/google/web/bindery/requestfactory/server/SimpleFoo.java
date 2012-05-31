@@ -399,6 +399,9 @@ public class SimpleFoo {
   }
 
   public static synchronized Map<Long, SimpleFoo> resetImpl() {
+    // NOTE: Must be reset before instantiating new SimpleFoos.
+    SimpleBar.reset();
+
     Map<Long, SimpleFoo> instance = new HashMap<Long, SimpleFoo>();
     // fixtures
     SimpleFoo s1 = new SimpleFoo();

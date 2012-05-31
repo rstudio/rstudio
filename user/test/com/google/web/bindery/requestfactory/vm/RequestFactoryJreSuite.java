@@ -25,6 +25,7 @@ import com.google.web.bindery.requestfactory.server.RequestFactoryExceptionPropa
 import com.google.web.bindery.requestfactory.server.RequestFactoryJreTest;
 import com.google.web.bindery.requestfactory.server.RequestFactoryPolymorphicJreTest;
 import com.google.web.bindery.requestfactory.server.RequestFactoryUnicodeEscapingJreTest;
+import com.google.web.bindery.requestfactory.server.RequestPayloadJreTest;
 import com.google.web.bindery.requestfactory.server.ServiceInheritanceJreTest;
 import com.google.web.bindery.requestfactory.server.ServiceLocatorTest;
 import com.google.web.bindery.requestfactory.shared.impl.SimpleEntityProxyIdTest;
@@ -51,6 +52,7 @@ public class RequestFactoryJreSuite {
     suite.addTestSuite(RequestFactoryJreTest.class);
     suite.addTestSuite(RequestFactoryPolymorphicJreTest.class);
     suite.addTestSuite(RequestFactoryUnicodeEscapingJreTest.class);
+    suite.addTestSuite(RequestPayloadJreTest.class);
     suite.addTestSuite(ServiceInheritanceJreTest.class);
     suite.addTestSuite(ServiceLocatorTest.class);
     suite.addTestSuite(SimpleEntityProxyIdTest.class);

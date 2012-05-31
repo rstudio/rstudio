@@ -36,7 +36,5 @@ public interface SimpleBarRequest extends RequestContext {
 
   InstanceRequest<SimpleBarProxy, SimpleBarProxy> persistAndReturnSelf();
 
-  Request<Void> reset();
-
   Request<SimpleBarProxy> returnFirst(List<SimpleBarProxy> proxy);
 }

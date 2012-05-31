@@ -30,6 +30,7 @@ import com.google.web.bindery.requestfactory.shared.ComplexKeysTest;
 import com.google.web.bindery.requestfactory.shared.FanoutReceiverTest;
 import com.google.web.bindery.requestfactory.shared.LocatorTest;
 import com.google.web.bindery.requestfactory.shared.ServiceInheritanceTest;
+import com.google.web.bindery.requestfactory.shared.impl.RequestPayloadTest;
 
 import junit.framework.Test;
 
@@ -53,6 +54,7 @@ public class RequestFactorySuite {
     suite.addTestSuite(RequestFactoryExceptionPropagationTest.class);
     suite.addTestSuite(RequestFactoryPolymorphicTest.class);
     suite.addTestSuite(RequestFactoryUnicodeEscapingTest.class);
+    suite.addTestSuite(RequestPayloadTest.class);
     suite.addTestSuite(ServiceInheritanceTest.class);
     return suite;
   }

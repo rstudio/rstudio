@@ -41,7 +41,7 @@ public class BaseProxyCategory {
      * The context will be null if the bean is immutable. If the context is
      * locked, don't try to edit.
      */
-    if (context == null || context.isLocked()) {
+    if (context == null || context.isLocked() || context.isDiffing()) {
       return returnValue;
     }
 

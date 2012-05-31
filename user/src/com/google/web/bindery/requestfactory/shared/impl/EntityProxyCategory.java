@@ -43,7 +43,7 @@ public class EntityProxyCategory {
 
     // Object comparison intentional. True if both null or both the same
     return stableId(bean).equals(stableId(other))
-        && requestContext(bean) == requestContext(other);
+        && nonDiffingRequestContext(bean) == nonDiffingRequestContext(other);
   }
 
   /**
@@ -60,5 +60,13 @@ public class EntityProxyCategory {
   public static <T extends EntityProxy> SimpleEntityProxyId<T> stableId(
       AutoBean<? extends T> bean) {
     return bean.getTag(STABLE_ID);
+  }
+
+  private static AbstractRequestContext nonDiffingRequestContext(AutoBean<?> bean) {
+    AbstractRequestContext context = requestContext(bean);
+    if (context != null && context.isDiffing()) {
+      context = null;
+    }
+    return context;
   }
 }

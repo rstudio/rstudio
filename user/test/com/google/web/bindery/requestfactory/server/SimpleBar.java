@@ -92,11 +92,17 @@ public class SimpleBar implements HasId {
     return findSimpleBar("1L");
   }
 
-  public static void reset() {
+  public static SimpleBar returnFirst(List<SimpleBar> list) {
+    SimpleBar toReturn = list.get(0);
+    return toReturn;
+  }
+
+  // Called from SimpleFoo.reset()
+  static void reset() {
     resetImpl();
   }
 
-  public static synchronized Map<String, SimpleBar> resetImpl() {
+  private static synchronized Map<String, SimpleBar> resetImpl() {
     Map<String, SimpleBar> instance = new HashMap<String, SimpleBar>();
     // fixtures
     SimpleBar s1 = new SimpleBar();
@@ -117,11 +123,6 @@ public class SimpleBar implements HasId {
           instance);
     }
     return instance;
-  }
-
-  public static SimpleBar returnFirst(List<SimpleBar> list) {
-    SimpleBar toReturn = list.get(0);
-    return toReturn;
   }
 
   Integer version = 1;

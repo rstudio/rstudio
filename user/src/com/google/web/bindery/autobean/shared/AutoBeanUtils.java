@@ -119,7 +119,7 @@ public final class AutoBeanUtils {
    */
   public static Map<String, Object> diff(AutoBean<?> a, AutoBean<?> b) {
     // Fast check for comparing an object to itself
-    if (a.equals(b)) {
+    if (a == b) {
       return Collections.emptyMap();
     }
     final Map<String, Object> toReturn = getAllProperties(b);

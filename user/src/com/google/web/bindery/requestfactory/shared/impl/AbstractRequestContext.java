@@ -112,6 +112,10 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
 
     public boolean locked;
     /**
+     * See http://code.google.com/p/google-web-toolkit/issues/detail?id=5952.
+     */
+    public boolean diffing;
+    /**
      * A map of all EntityProxies that the RequestContext has interacted with. Objects are placed
      * into this map by being returned from {@link #create}, passed into {@link #edit}, or used as
      * an invocation argument.
@@ -637,21 +641,31 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     /*
      * NB: Don't use the presence of ephemeral objects for this test.
      * 
-     * Diff the objects until one is found to be different. It's not just a simple flag-check
-     * because of the possibility of "unmaking" a change, per the JavaDoc.
+     * Diff the objects until one is found to be different. It's not just a
+     * simple flag-check because of the possibility of "unmaking" a change, per
+     * the JavaDoc.
+     * 
+     * TODO: try to get rid of the 'diffing' flag and optimize the diffing of
+     * objects: http://code.google.com/p/google-web-toolkit/issues/detail?id=7379
      */
-    for (AutoBean<? extends BaseProxy> bean : state.editedProxies.values()) {
-      AutoBean<?> previous = bean.getTag(Constants.PARENT_OBJECT);
-      if (previous == null) {
-        // Compare to empty object
-        Class<?> proxyClass = stableId(bean).getProxyClass();
-        previous = getAutoBeanFactory().create(proxyClass);
+    assert !state.diffing;
+    state.diffing = true;
+    try {
+      for (AutoBean<? extends BaseProxy> bean : state.editedProxies.values()) {
+        AutoBean<?> previous = bean.getTag(Constants.PARENT_OBJECT);
+        if (previous == null) {
+          // Compare to empty object
+          Class<?> proxyClass = stableId(bean).getProxyClass();
+          previous = getAutoBeanFactory().create(proxyClass);
+        }
+        if (!AutoBeanUtils.diff(previous, bean).isEmpty()) {
+          return true;
+        }
       }
-      if (!AutoBeanUtils.diff(previous, bean).isEmpty()) {
-        return true;
-      }
+      return false;
+    } finally {
+      state.diffing = false;
     }
-    return false;
   }
 
   /**
@@ -810,6 +824,23 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     }
 
     return bean;
+  }
+
+  /**
+   * Whether the RequestContext is currently diffing proxies.
+   * <p>
+   * This flag is used in {@link BaseProxyCategory} and
+   * {@link EntityProxyCategory} to influence the way proxies are being
+   * compared for equality, and to prevent auto-editing proxies when
+   * walking reference properties.
+   * <p>
+   * See http://code.google.com/p/google-web-toolkit/issues/detail?id=5952
+   * <p>
+   * TODO: try to get rid of this flag.
+   * See http://code.google.com/p/google-web-toolkit/issues/detail?id=7379
+   */
+  boolean isDiffing() {
+    return state.diffing;
   }
 
   /**
@@ -1179,15 +1210,28 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
 
   /**
    * Compute deltas for each entity seen by the context.
+   * <p>
+   * TODO(t.broyer): reduce payload size by only sending proxies that are
+   * directly referenced by invocation arguments or by other proxies. For
+   * backwards-compatibility with no-op requests and operation-only requests,
+   * only do so when there's at least one invocation (or we can choose to
+   * break backwards compatibility for those edge-cases).
    */
   private List<OperationMessage> makePayloadOperations() {
-    List<OperationMessage> operations = new ArrayList<OperationMessage>();
-    for (AutoBean<? extends BaseProxy> currentView : state.editedProxies.values()) {
-      OperationMessage operation =
-          makeOperationMessage(BaseProxyCategory.stableId(currentView), currentView, true).as();
-      operations.add(operation);
+    assert isLocked();
+    assert !state.diffing;
+    state.diffing = true;
+    try {
+      List<OperationMessage> operations = new ArrayList<OperationMessage>();
+      for (AutoBean<? extends BaseProxy> currentView : state.editedProxies.values()) {
+        OperationMessage operation =
+            makeOperationMessage(BaseProxyCategory.stableId(currentView), currentView, true).as();
+        operations.add(operation);
+      }
+      return operations;
+    } finally {
+      state.diffing = false;
     }
-    return operations;
   }
 
   /**
