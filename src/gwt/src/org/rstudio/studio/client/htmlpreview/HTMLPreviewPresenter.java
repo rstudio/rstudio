@@ -192,7 +192,6 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
                   server_.getApplicationURL(result.getPreviewURL()),
                   result.getHtmlFile(),
                   result.getEnableSaveAs(),
-                  session_.getSessionInfo().getRPubsEnabled() &&
                   isMarkdownFile(result.getSourceFile()));
 
                isPublished_ = result.getPreviouslyPublished();
