@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -38,7 +38,7 @@ import com.google.gwt.view.client.Range;
 /**
  * A pager for controlling a {@link HasRows} that only supports simple page
  * navigation.
- * 
+ *
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.cellview.SimplePagerExample}
@@ -46,7 +46,7 @@ import com.google.gwt.view.client.Range;
  */
 public class SimplePager extends AbstractPager {
   /**
-   * Constant for labeling the simple pager navigational {@link ImageButton}s  
+   * Constant for labeling the simple pager navigational {@link ImageButton}s
    */
   @DefaultLocale("en_US")
   public interface ImageButtonsConstants extends Constants {
@@ -212,7 +212,7 @@ public class SimplePager extends AbstractPager {
     }
   }
 
-  private static int DEFAULT_FAST_FORWARD_ROWS = 1000;
+  private static final int DEFAULT_FAST_FORWARD_ROWS = 1000;
   private static Resources DEFAULT_RESOURCES;
 
   private static Resources getDefaultResources() {
@@ -256,7 +256,7 @@ public class SimplePager extends AbstractPager {
 
   /**
    * Construct a {@link SimplePager} with the specified text location.
-   * 
+   *
    * @param location the location of the text relative to the buttons
    */
   @UiConstructor
@@ -267,8 +267,38 @@ public class SimplePager extends AbstractPager {
   }
 
   /**
+   * Construct a {@link SimplePager} with the default resources, fast forward rows and
+   * default image button names.
+   *
+   * @param location the location of the text relative to the buttons
+   * @param showFastForwardButton if true, show a fast-forward button that
+   *          advances by a larger increment than a single page
+   * @param showLastPageButton if true, show a button to go the the last page
+   */
+  public SimplePager(TextLocation location, boolean showFastForwardButton,
+      boolean showLastPageButton) {
+    this(location, showFastForwardButton, DEFAULT_FAST_FORWARD_ROWS,
+        showLastPageButton);
+  }
+
+  /**
+   * Construct a {@link SimplePager} with the default resources and default image button names.
+   *
+   * @param location the location of the text relative to the buttons
+   * @param showFastForwardButton if true, show a fast-forward button that
+   *          advances by a larger increment than a single page
+   * @param fastForwardRows the number of rows to jump when fast forwarding
+   * @param showLastPageButton if true, show a button to go the the last page
+   */
+  public SimplePager(TextLocation location, boolean showFastForwardButton,
+      final int fastForwardRows, boolean showLastPageButton) {
+    this(location, getDefaultResources(), showFastForwardButton, fastForwardRows,
+        showLastPageButton);
+  }
+
+  /**
    * Construct a {@link SimplePager} with the specified resources.
-   * 
+   *
    * @param location the location of the text relative to the buttons
    * @param resources the {@link Resources} to use
    * @param showFastForwardButton if true, show a fast-forward button that
@@ -284,7 +314,7 @@ public class SimplePager extends AbstractPager {
     this.fastForwardRows = fastForwardRows;
     this.style = resources.simplePagerStyle();
     this.style.ensureInjected();
-    
+
     // Create the buttons.
     String disabledStyle = style.disabledButton();
     firstPage = new ImageButton(resources.simplePagerFirstPage(),
@@ -304,7 +334,7 @@ public class SimplePager extends AbstractPager {
       }
     });
     prevPage = new ImageButton(resources.simplePagerPreviousPage(),
-        resources.simplePagerPreviousPageDisabled(), disabledStyle, 
+        resources.simplePagerPreviousPageDisabled(), disabledStyle,
         imageButtonConstants.prevPage());
     prevPage.addClickHandler(new ClickHandler() {
       @Override
@@ -326,7 +356,7 @@ public class SimplePager extends AbstractPager {
     }
     if (showFastForwardButton) {
       fastForward = new ImageButton(resources.simplePagerFastForward(),
-          resources.simplePagerFastForwardDisabled(), disabledStyle, 
+          resources.simplePagerFastForwardDisabled(), disabledStyle,
           imageButtonConstants.fastForward());
       fastForward.addClickHandler(new ClickHandler() {
         @Override
@@ -376,10 +406,10 @@ public class SimplePager extends AbstractPager {
     // Disable the buttons by default.
     setDisplay(null);
   }
-  
+
   /**
    * Construct a {@link SimplePager} with the specified resources and default image button names.
-   * 
+   *
    * @param location the location of the text relative to the buttons
    * @param resources the {@link Resources} to use
    * @param showFastForwardButton if true, show a fast-forward button that
@@ -393,7 +423,7 @@ public class SimplePager extends AbstractPager {
     this(location, resources, showFastForwardButton, fastForwardRows, showLastPageButton,
         GWT.<ImageButtonsConstants>create(ImageButtonsConstants.class));
   }
-  
+
   @Override
   public void firstPage() {
     super.firstPage();
@@ -491,7 +521,7 @@ public class SimplePager extends AbstractPager {
 
   /**
    * Get the text to display in the pager that reflects the state of the pager.
-   * 
+   *
    * @return the text
    */
   protected String createText() {
@@ -540,7 +570,7 @@ public class SimplePager extends AbstractPager {
 
   /**
    * Get the number of pages to fast forward based on the current page size.
-   * 
+   *
    * @return the number of pages to fast forward
    */
   private int getFastForwardPages() {
@@ -550,7 +580,7 @@ public class SimplePager extends AbstractPager {
 
   /**
    * Enable or disable the fast forward button.
-   * 
+   *
    * @param disabled true to disable, false to enable
    */
   private void setFastForwardDisabled(boolean disabled) {
@@ -570,7 +600,7 @@ public class SimplePager extends AbstractPager {
 
   /**
    * Enable or disable the next page buttons.
-   * 
+   *
    * @param disabled true to disable, false to enable
    */
   private void setNextPageButtonsDisabled(boolean disabled) {
@@ -582,7 +612,7 @@ public class SimplePager extends AbstractPager {
 
   /**
    * Enable or disable the previous page buttons.
-   * 
+   *
    * @param disabled true to disable, false to enable
    */
   private void setPrevPageButtonsDisabled(boolean disabled) {
