@@ -52,12 +52,13 @@ import com.google.inject.Inject;
 
 public class RPubsUploadDialog extends ModalDialogBase
 {
-   public RPubsUploadDialog(String title, String htmlFile)
+   public RPubsUploadDialog(String title, String htmlFile, boolean isPublished)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       setText("Publish to RPubs");
       title_ = title;
       htmlFile_ = htmlFile;
+      isPublished_ = isPublished;
    }
    
    @Inject
@@ -91,18 +92,28 @@ public class RPubsUploadDialog extends ModalDialogBase
                                            HasVerticalAlignment.ALIGN_MIDDLE);
       
       verticalPanel.add(headerPanel);
-      
-      Label descLabel = new Label(
-         "RPubs is a service that allows you to publish " +
-         "R Markdown documents to the web. Use of RPubs is free for " +
-         "publicly accessible documents.");
+
+      String msg;
+      if (!isPublished_)
+      {
+         msg = "RPubs is a free service from RStudio for sharing " +
+                       "R Markdown documents on the web. Click Publish to get " +
+                       "started.";
+      }
+      else
+      {
+         msg = "This document has already been published on RPubs. You can " +
+               "choose to either update the existing RPubs document, or " +
+               "create a new one.";
+      }
+      Label descLabel = new Label(msg);
       descLabel.addStyleName(styles.descLabel());
       verticalPanel.add(descLabel);
-      
+
       HTML warningLabel =  new HTML(
-        "<strong>IMPORTANT NOTE:</strong> All documents " +
-        "published to RPubs are publicly visible. You should " +
-        "therefore only publish content that you wish to share publicly.");
+        "<strong>IMPORTANT: All documents published to RPubs are " +
+        "publicly visible.</strong> You should " +
+        "only publish documents that you wish to share publicly.");
       verticalPanel.add(warningLabel);
         
       ThemedButton cancelButton = createCancelButton(new Operation() {
@@ -120,16 +131,44 @@ public class RPubsUploadDialog extends ModalDialogBase
          }
          
       });
-      addCancelButton(cancelButton);
-      
+
       continueButton_ = new ThemedButton("Publish", new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
          {   
-            performUpload();
+            performUpload(false);
          }
       });
-      addOkButton(continueButton_);
+
+      updateButton_ = new ThemedButton("Update Existing", new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            performUpload(true);
+         }
+      });
+
+      createButton_ = new ThemedButton("Create New", new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            performUpload(false);
+         }
+      });
+
+      if (!isPublished_)
+      {
+         addOkButton(continueButton_);
+         addCancelButton(cancelButton);
+      }
+      else
+      {
+         addOkButton(updateButton_);
+         addButton(createButton_);
+         addCancelButton(cancelButton);
+      }
      
       mainPanel.setWidget(verticalPanel);
       return mainPanel;
@@ -142,14 +181,14 @@ public class RPubsUploadDialog extends ModalDialogBase
       super.onUnload();
    }
   
-   private void performUpload()
+   private void performUpload(final boolean modify)
    {
       // set state
       uploadInProgress_ = true;
     
       if (Desktop.isDesktop())
       {
-         performUpload(null);
+         performUpload(null, modify);
       }
       else
       {
@@ -163,7 +202,7 @@ public class RPubsUploadDialog extends ModalDialogBase
                   @Override
                   public void execute(WindowEx window)
                   {
-                     performUpload(window);
+                     performUpload(window, modify);
                   }
                });
       }
@@ -171,7 +210,8 @@ public class RPubsUploadDialog extends ModalDialogBase
    }
    
    
-   private void performUpload(final WindowEx progressWindow)
+   private void performUpload(final WindowEx progressWindow,
+                              boolean modify)
    {
       // record progress window
       uploadProgressWindow_ = progressWindow;
@@ -222,7 +262,8 @@ public class RPubsUploadDialog extends ModalDialogBase
       // initiate the upload
       server_.rpubsUpload(
             title_, 
-            htmlFile_, 
+            htmlFile_,
+            modify,
             new ServerRequestCallback<Boolean>() {
 
                @Override
@@ -252,6 +293,8 @@ public class RPubsUploadDialog extends ModalDialogBase
    {
       // disable continue button
       continueButton_.setVisible(false);
+      updateButton_.setVisible(false);
+      createButton_.setVisible(false);
       enableOkButton(false);
       
       // add progress
@@ -281,7 +324,9 @@ public class RPubsUploadDialog extends ModalDialogBase
       
       ImageResource publishLarge();
    }
-   
+
+   private final boolean isPublished_;
+
    static Resources RESOURCES = (Resources)GWT.create(Resources.class) ;
    public static void ensureStylesInjected()
    {
@@ -289,7 +334,9 @@ public class RPubsUploadDialog extends ModalDialogBase
    }
   
    private ThemedButton continueButton_;
-   
+   private ThemedButton updateButton_;
+   private ThemedButton createButton_;
+
    private final String title_;
    private final String htmlFile_;
    

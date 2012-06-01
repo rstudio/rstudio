@@ -15,6 +15,7 @@
 #define SESSION_SESSION_RPUBS_HPP
 
 #include <string>
+#include <core/FilePath.hpp>
 
 namespace core {
    class Error;
@@ -25,6 +26,7 @@ namespace modules {
 namespace rpubs {
 
 core::Error initialize();
+std::string previousUploadId(const core::FilePath& filePath);
    
 } // namespace rpubs
 } // namepace handlers

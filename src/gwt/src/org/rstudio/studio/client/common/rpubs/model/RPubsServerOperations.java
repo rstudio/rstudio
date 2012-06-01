@@ -17,8 +17,12 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public interface RPubsServerOperations
 {
+   void rpubsIsPublished(String htmlFile,
+                         ServerRequestCallback<Boolean> requestCallback);
+
    void rpubsUpload(String title, 
                     String htmlFile,
+                    boolean isUpdate,
                     ServerRequestCallback<Boolean> requestCallback);
    
    void rpubsTerminateUpload(ServerRequestCallback<Void> requestCallback);

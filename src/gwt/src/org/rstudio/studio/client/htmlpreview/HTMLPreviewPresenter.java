@@ -30,6 +30,7 @@ import org.rstudio.studio.client.common.fileexport.FileExport;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.rpubs.RPubsPresenter;
+import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
@@ -81,6 +82,8 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
       void print();
       
       String getDocumentTitle();
+
+      void setPublishButtonLabel(String label);
    }
    
    @Inject
@@ -130,7 +133,8 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
          }
       });
       
-      satellite.addCloseHandler(new CloseHandler<Satellite>() {
+      satellite.addCloseHandler(new CloseHandler<Satellite>()
+      {
          @Override
          public void onClose(CloseEvent<Satellite> event)
          {
@@ -139,7 +143,7 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
          }
       });
       
-      eventBus.addHandler(HTMLPreviewStartedEvent.TYPE, 
+      eventBus.addHandler(HTMLPreviewStartedEvent.TYPE,
                           new HTMLPreviewStartedEvent.Handler()
       {
          @Override
@@ -190,11 +194,31 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
                   result.getEnableSaveAs(),
                   session_.getSessionInfo().getRPubsEnabled() &&
                   isMarkdownFile(result.getSourceFile()));
+
+               isPublished_ = result.getPreviouslyPublished();
+               if (isPublished_)
+                  view_.setPublishButtonLabel("Republish");
             }
             else
             {
                view_.setProgressCaption("Preview failed");
                view_.stopProgress();
+            }
+         }
+      });
+
+      eventBus.addHandler(RPubsUploadStatusEvent.TYPE,
+                          new org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent.Handler()
+      {
+         @Override
+         public void onRPubsPublishStatus(
+               RPubsUploadStatusEvent event)
+         {
+            if (StringUtil.isNullOrEmpty(event.getStatus().getError())
+                && !isPublished_)
+            {
+               isPublished_ = true;
+               view_.setPublishButtonLabel("Republish");
             }
          }
       });
@@ -346,6 +370,12 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
       return lastSuccessfulPreview_.getHtmlFile();
    }
 
+   @Override
+   public boolean isPublished()
+   {
+      return isPublished_;
+   }
+
    private void terminateRunningPreview()
    {
       server_.terminatePreviewHTML(new VoidServerRequestCallback());
@@ -357,6 +387,7 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
    private HTMLPreviewResult lastSuccessfulPreview_;
    
    private String savePreviewDir_;
+   private boolean isPublished_;
    private static final String MODULE_HTML_PREVIEW = "html_preview";
    private static final String KEY_SAVEAS_DIR = "saveAsDir";
    

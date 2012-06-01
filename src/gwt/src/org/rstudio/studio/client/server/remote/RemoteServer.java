@@ -2409,14 +2409,22 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, GET_HTML_CAPABILITIES, callback);
    }
+
+   public void rpubsIsPublished(String htmlFile,
+                                ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "rpubs_is_published", htmlFile, requestCallback);
+   }
    
    public void rpubsUpload(String title, 
                            String htmlFile,
+                           boolean isUpdate,
                            ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(title));
       params.set(1, new JSONString(htmlFile));
+      params.set(2, JSONBoolean.getInstance(isUpdate));
       sendRequest(RPC_SCOPE, RPUBS_UPLOAD, params, requestCallback);
    }
 

@@ -529,7 +529,7 @@ void UserSettings::setWorkingDirectoryValue(const std::string& key,
 
 bool UserSettings::rpubsEnabled() const
 {
-    return settings_.getBool("rpubsEnabled", false);
+    return settings_.getBool("rpubsEnabled", true);
 }
 
 

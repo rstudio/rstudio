@@ -31,6 +31,7 @@ public class RPubsPresenter
    {
       String getTitle();
       String getHtmlFile();
+      boolean isPublished();
    }
    
    @Inject
@@ -52,9 +53,10 @@ public class RPubsPresenter
    public void onPublishHTML()
    {
       RPubsUploadDialog dlg = new RPubsUploadDialog(context_.getTitle(),
-                                                    context_.getHtmlFile());
+                                                    context_.getHtmlFile(),
+                                                    context_.isPublished());
       dlg.showModal();
    }
-   
+
    private Context context_;
 }

@@ -227,7 +227,13 @@ public class HTMLPreviewPanel extends ResizeComposite
    {
       return previewFrame_.getWindow().getDocument().getTitle();
    }
-   
+
+   @Override
+   public void setPublishButtonLabel(String label)
+   {
+      publishButton_.setText(label);
+   }
+
    private class PreviewFrame extends Frame
    {
       public PreviewFrame()
@@ -283,6 +289,6 @@ public class HTMLPreviewPanel extends ResizeComposite
    private Widget saveHtmlPreviewAsSeparator_;
    private Widget saveHtmlPreviewAs_;
    private Widget publishButtonSeparator_;
-   private Widget publishButton_;
+   private ToolbarButton publishButton_;
    private HTMLPreviewProgressDialog activeProgressDialog_;
 }

@@ -75,13 +75,6 @@ std::string pathIdentifier(const FilePath& filePath)
    return http::util::urlEncode(path);
 }
 
-std::string previousUploadId(const FilePath& filePath)
-{
-   Settings settings;
-   getUploadIdSettings(&settings);
-   return settings.get(pathIdentifier(filePath));
-}
-
 void saveUploadId(const FilePath& filePath, const std::string& uploadId)
 {
    Settings settings;
@@ -95,10 +88,11 @@ class RPubsUpload : boost::noncopyable,
 {
 public:
    static boost::shared_ptr<RPubsUpload> create(const std::string& title,
-                                                const FilePath& htmlFile)
+                                                const FilePath& htmlFile,
+                                                bool allowUpdate)
    {
       boost::shared_ptr<RPubsUpload> pUpload(new RPubsUpload());
-      pUpload->start(title, htmlFile);
+      pUpload->start(title, htmlFile, allowUpdate);
       return pUpload;
    }
 
@@ -119,7 +113,7 @@ private:
    {
    }
 
-   void start(const std::string& title, const FilePath& htmlFile)
+   void start(const std::string& title, const FilePath& htmlFile, bool allowUpdate)
    {
       using namespace core::string_utils;
       using namespace module_context;
@@ -129,7 +123,7 @@ private:
       isRunning_ = true;
 
       // see if we already know of an upload id for this file
-      std::string id = previousUploadId(htmlFile_);
+      std::string id = allowUpdate ? previousUploadId(htmlFile_) : std::string();
 
       // R binary
       FilePath rProgramPath;
@@ -343,11 +337,27 @@ bool isUploadRunning()
    return s_pCurrentUpload && s_pCurrentUpload->isRunning();
 }
 
+Error rpubsIsPublished(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+    std::string htmlFile;
+    Error error = json::readParams(request.params, &htmlFile);
+    if (error)
+       return error;
+
+    FilePath filePath = module_context::resolveAliasedPath(htmlFile);
+
+    pResponse->setResult(!previousUploadId(filePath).empty());
+
+    return Success();
+}
+
 Error rpubsUpload(const json::JsonRpcRequest& request,
                   json::JsonRpcResponse* pResponse)
 {
    std::string title, htmlFile;
-   Error error = json::readParams(request.params, &title, &htmlFile);
+   bool isUpdate;
+   Error error = json::readParams(request.params, &title, &htmlFile, &isUpdate);
    if (error)
       return error;
 
@@ -358,7 +368,7 @@ Error rpubsUpload(const json::JsonRpcRequest& request,
    else
    {
       FilePath filePath = module_context::resolveAliasedPath(htmlFile);
-      s_pCurrentUpload = RPubsUpload::create(title, filePath);
+      s_pCurrentUpload = RPubsUpload::create(title, filePath, isUpdate);
       pResponse->setResult(true);
    }
 
@@ -387,6 +397,12 @@ SEXP rs_rpubsEnable()
 
 } // anonymous namespace
 
+std::string previousUploadId(const FilePath& filePath)
+{
+   Settings settings;
+   getUploadIdSettings(&settings);
+   return settings.get(pathIdentifier(filePath));
+}
 
 Error initialize()
 {
@@ -401,6 +417,7 @@ Error initialize()
    using namespace module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
+      (bind(registerRpcMethod, "rpubs_is_published", rpubsIsPublished))
       (bind(registerRpcMethod, "rpubs_upload", rpubsUpload))
       (bind(registerRpcMethod, "terminate_rpubs_upload", terminateRpubsUpload))
    ;

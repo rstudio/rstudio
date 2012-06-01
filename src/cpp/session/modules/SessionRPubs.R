@@ -140,7 +140,7 @@ rpubsUpload <- function(title,
    }
    
    pathFromId <- function(id) {
-      split <- strsplit(id, "://rpubs.com")[[1]]
+      split <- strsplit(id, "^https?://[^/]+")[[1]]
       if (length(split) == 2)
          return (split[2])
       else
@@ -235,7 +235,7 @@ rpubsUpload <- function(title,
       request <- NULL
       request <- c(request, paste("POST ", path, " HTTP/1.1\r\n", sep=""))
       request <- c(request, "User-Agent: RStudio\r\n")
-      request <- c(request, "Host: rpubs.com\r\n")
+      request <- c(request, "Host: api.rpubs.com\r\n")
       request <- c(request, "Accept: */*\r\n")
       request <- c(request, paste("Content-Type: ", 
                                   contentType, 
@@ -253,7 +253,7 @@ rpubsUpload <- function(title,
       request <- c(request, "\r\n")
       
       # open socket connection
-      conn <- socketConnection(host="rpubs.com",
+      conn <- socketConnection(host="api.rpubs.com",
                                port=80,
                                open="w+b",
                                blocking=TRUE)
@@ -276,7 +276,7 @@ rpubsUpload <- function(title,
       require(RCurl)
          
       # url to post to
-      url <- paste("https://rpubs.com", path, sep="")
+      url <- paste("https://api.rpubs.com", path, sep="")
       
       # upload package file
       params <- list(file = fileUpload(filename = packageFile,
@@ -295,7 +295,7 @@ rpubsUpload <- function(title,
       options$httpheader <- extraHeaders
       
       # post the form
-      postForm(paste("https://rpubs.com", path, sep=""), 
+      postForm(paste("https://api.rpubs.com", path, sep=""),
                            .params = params,
                            .opts = options,
                            useragent = "RStudio")
@@ -343,7 +343,7 @@ rpubsUpload <- function(title,
                        "--silent",
                        "--show-error",
                        "-o", shQuote(outputFile),
-                       paste("https://rpubs.com", path, sep=""))
+                       paste("https://api.rpubs.com", path, sep=""))
       
       result <- system(command)
       

@@ -42,6 +42,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+ #include "SessionRPubs.hpp"
+
 #define kHTMLPreview "html_preview"
 #define kHTMLPreviewLocation "/" kHTMLPreview "/"
 
@@ -395,6 +397,7 @@ private:
       resultJson["html_file"] = module_context::createAliasedPath(htmlFile);
       resultJson["preview_url"] = previewUrl;
       resultJson["enable_saveas"] = enableSaveAs;
+      resultJson["previously_published"] = !rpubs::previousUploadId(htmlFile).empty();
       ClientEvent event(client_events::kHTMLPreviewCompletedEvent, resultJson);
       module_context::enqueClientEvent(event);
    }
