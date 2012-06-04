@@ -15,12 +15,12 @@
  */
 package com.google.gwt.user.client.ui.impl;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.DeferredCommand;
 
 /**
  * Implementation class used by {@link com.google.gwt.user.client.ui.PopupPanel}.
@@ -99,7 +99,7 @@ public class PopupImplMozilla extends PopupImpl {
       // 'overflow:auto' after all of the elements on the page have been
       // rendered,
       // the PopupPanel becomes the highest element in the stacking order.
-      DeferredCommand.addCommand(new Command() {
+      Scheduler.get().scheduleDeferred(new ScheduledCommand() {
         public void execute() {
           outerElem.getStyle().setOverflow(Overflow.AUTO);
         }
