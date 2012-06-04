@@ -16,11 +16,11 @@
 package com.google.gwt.jsonp.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.ScriptElement;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
@@ -319,7 +319,7 @@ public class JsonpRequest<T> {
      * scope of the script itself. Therefore, we need to defer the delete
      * statement after the callback execution.
      */
-    DeferredCommand.addCommand(new Command() {
+    Scheduler.get().scheduleDeferred(new ScheduledCommand() {
       public void execute() {
         if (!canHaveMultipleRequestsForSameId) {
           // If there can me multiple requests for a particular ID, then we
