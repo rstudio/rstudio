@@ -15,12 +15,12 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.builder.shared.HtmlElementBuilder;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.client.Command;
 
 /**
  * EXPERIMENTAL and subject to change. Do not use this in production code.
@@ -50,8 +50,8 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
 
   // TODO(rdcastro): Add setters for these, or maybe have a list instead of a
   // single callback.
-  public Command wrapInitializationCallback = null;
-  public Command detachedInitializationCallback = null;
+  public ScheduledCommand wrapInitializationCallback = null;
+  public ScheduledCommand detachedInitializationCallback = null;
 
   protected SafeHtml html = null;
 
