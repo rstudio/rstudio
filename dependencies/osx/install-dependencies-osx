@@ -26,6 +26,9 @@ cd ../common
 # dictionaries
 ./install-dictionaries
 
+# mathjax
+./install-mathjax
+
 cd ../osx
 
 # enable PAM

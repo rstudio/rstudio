@@ -1314,7 +1314,7 @@ public class TextEditingTarget implements EditingTarget
    {
       if (isCursorInTexMode())
          doCommentUncomment('%');
-      else
+      else if (isCursorInRMode())
          doCommentUncomment('#');
    }
    
@@ -1898,7 +1898,7 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onMarkdownHelp()
    {
-      events_.fireEvent(new ShowHelpEvent("help/doc/markdown_help.htm")) ;
+      events_.fireEvent(new ShowHelpEvent("help/doc/markdown_help.html")) ;
    }
      
    @Handler
@@ -2348,6 +2348,16 @@ public class TextEditingTarget implements EditingTarget
       {
          return false;
       }
+   }
+
+   private boolean isCursorInRMode()
+   {
+      String mode = docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());
+      if (mode == null)
+         return true;
+      if (mode.equals(TextFileType.R_LANG_MODE))
+         return true;
+      return false;
    }
    
    private boolean isNewDoc()

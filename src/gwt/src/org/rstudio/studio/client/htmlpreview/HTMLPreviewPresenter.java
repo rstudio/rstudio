@@ -13,18 +13,24 @@
 package org.rstudio.studio.client.htmlpreview;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.fileexport.FileExport;
+import org.rstudio.studio.client.common.filetypes.FileType;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.rpubs.RPubsPresenter;
+import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
@@ -53,7 +59,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-public class HTMLPreviewPresenter implements IsWidget
+public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
 {
    public interface Binder extends CommandBinder<Commands, HTMLPreviewPresenter>
    {}
@@ -70,9 +76,14 @@ public class HTMLPreviewPresenter implements IsWidget
       
       void showPreview(String url,
                        String htmlFile, 
-                       boolean enableSaveAs);
+                       boolean enableSaveAs,
+                       boolean enablePublish);
       
       void print();
+      
+      String getDocumentTitle();
+
+      void setPublishButtonLabel(String label);
    }
    
    @Inject
@@ -86,6 +97,7 @@ public class HTMLPreviewPresenter implements IsWidget
                                FileDialogs fileDialogs,
                                RemoteFileSystemContext fileSystemContext,
                                HTMLPreviewServerOperations server,
+                               RPubsPresenter rpubsPresenter,
                                Provider<FileExport> pFileExport)
    {
       view_ = view;
@@ -96,8 +108,10 @@ public class HTMLPreviewPresenter implements IsWidget
       fileSystemContext_ = fileSystemContext;
       pFileExport_ = pFileExport;
       
-      binder.bind(commands, this);
-         
+      rpubsPresenter.setContext(this);
+      
+      binder.bind(commands, this);  
+      
       // map Ctrl-R to our internal refresh handler
       Event.addNativePreviewHandler(new NativePreviewHandler() {
          @Override
@@ -119,7 +133,8 @@ public class HTMLPreviewPresenter implements IsWidget
          }
       });
       
-      satellite.addCloseHandler(new CloseHandler<Satellite>() {
+      satellite.addCloseHandler(new CloseHandler<Satellite>()
+      {
          @Override
          public void onClose(CloseEvent<Satellite> event)
          {
@@ -128,7 +143,7 @@ public class HTMLPreviewPresenter implements IsWidget
          }
       });
       
-      eventBus.addHandler(HTMLPreviewStartedEvent.TYPE, 
+      eventBus.addHandler(HTMLPreviewStartedEvent.TYPE,
                           new HTMLPreviewStartedEvent.Handler()
       {
          @Override
@@ -168,7 +183,7 @@ public class HTMLPreviewPresenter implements IsWidget
          {
             previewRunning_ = false;
             
-            HTMLPreviewResult result = event.getResult();
+            HTMLPreviewResult result = event.getResult();           
             if (result.getSucceeded())
             {
                lastSuccessfulPreview_ = result;
@@ -176,12 +191,33 @@ public class HTMLPreviewPresenter implements IsWidget
                view_.showPreview(
                   server_.getApplicationURL(result.getPreviewURL()),
                   result.getHtmlFile(),
-                  result.getEnableSaveAs());
+                  result.getEnableSaveAs(),
+                  isMarkdownFile(result.getSourceFile()));
+
+               isPublished_ = result.getPreviouslyPublished();
+               if (isPublished_)
+                  view_.setPublishButtonLabel("Republish");
             }
             else
             {
                view_.setProgressCaption("Preview failed");
                view_.stopProgress();
+            }
+         }
+      });
+
+      eventBus.addHandler(RPubsUploadStatusEvent.TYPE,
+                          new org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent.Handler()
+      {
+         @Override
+         public void onRPubsPublishStatus(
+               RPubsUploadStatusEvent event)
+         {
+            if (StringUtil.isNullOrEmpty(event.getStatus().getError())
+                && !isPublished_)
+            {
+               isPublished_ = true;
+               view_.setPublishButtonLabel("Republish");
             }
          }
       });
@@ -204,6 +240,15 @@ public class HTMLPreviewPresenter implements IsWidget
             return savePreviewDir_;
          }
       };
+   }
+   
+   private boolean isMarkdownFile(String file)
+   {
+      FileSystemItem fsi = FileSystemItem.createFile(file);
+      FileTypeRegistry ftReg = RStudioGinjector.INSTANCE.getFileTypeRegistry();
+      FileType fileType = ftReg.getTypeForFile(fsi);
+      return fileType.equals(FileTypeRegistry.MARKDOWN) ||
+             fileType.equals(FileTypeRegistry.RMARKDOWN);
    }
    
    public void onActivated(HTMLPreviewParams params)
@@ -302,6 +347,33 @@ public class HTMLPreviewPresenter implements IsWidget
       server_.previewHTML(lastPreviewParams_, 
                           new SimpleRequestCallback<Boolean>());
    }
+   
+   @Override
+   public String getTitle()
+   {
+      String title = StringUtil.notNull(view_.getDocumentTitle());
+      if (title.length() == 0)
+      {
+         FileSystemItem fsi = FileSystemItem.createFile(getHtmlFile());
+         return fsi.getStem();
+      }
+      else
+      {
+         return title;
+      }
+   }
+
+   @Override
+   public String getHtmlFile()
+   {
+      return lastSuccessfulPreview_.getHtmlFile();
+   }
+
+   @Override
+   public boolean isPublished()
+   {
+      return isPublished_;
+   }
 
    private void terminateRunningPreview()
    {
@@ -314,6 +386,7 @@ public class HTMLPreviewPresenter implements IsWidget
    private HTMLPreviewResult lastSuccessfulPreview_;
    
    private String savePreviewDir_;
+   private boolean isPublished_;
    private static final String MODULE_HTML_PREVIEW = "html_preview";
    private static final String KEY_SAVEAS_DIR = "saveAsDir";
    

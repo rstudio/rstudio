@@ -113,8 +113,12 @@ void WebView::keyPressEvent(QKeyEvent* pEv)
    Qt::KeyboardModifiers modifiers;
   
 #ifdef Q_WS_MAC
-   if ((pEv->nativeModifiers() & 0x40101) == 0x40101){
-     modifiers = pEv->modifiers() & ~Qt::MetaModifier | Qt::ControlModifier;
+   if ((pEv->nativeModifiers() & 0x40101) == 0x40101) {
+      modifiers &= ~Qt::MetaModifier;
+      modifiers |= Qt::ControlModifier;
+   } else if ((pEv->nativeModifiers() & 0x100108) == 0x100108) {
+      modifiers &= ~Qt::ControlModifier;
+      modifiers |= Qt::MetaModifier;
    } else {
 #else
    {

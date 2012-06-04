@@ -1,16 +1,3 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<!-- saved from url=(0014)about:internet -->
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-
-<title>#!title#</title>
-
-<base target="_blank"/>
-
-<style type="text/css">
-
 body, td {
    font-family: sans-serif;
    background-color: white;
@@ -19,7 +6,7 @@ body, td {
 }
 
 tt, code, pre {
-   font-family: #!preFontFamily#;
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
 }
 
 h1 { 
@@ -56,8 +43,16 @@ pre {
    border: 1px solid #ccc;
 }
 
-.r {
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code.r {
    background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
 }
 
 blockquote {
@@ -71,12 +66,9 @@ hr {
    height: 0px;
    border-bottom: none;
    border-top-width: thin;
-	border-top-style: dotted;
-	border-top-color: #999999;
+   border-top-style: dotted;
+   border-top-color: #999999;
 }
-
-#!highlight_js_styles#
-
 
 @media print {
    * { 
@@ -129,20 +121,3 @@ hr {
       page-break-after: avoid; 
    }
 }
-
-</style>
-
-<script type="text/javascript">
-   #!highlight_js#  
-</script>
-
-#!mathjax_js#
-
-</head>
-
-<body>
-#!html_output#
-</body>
-
-</html>
-

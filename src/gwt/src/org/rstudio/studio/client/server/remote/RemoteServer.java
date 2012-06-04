@@ -1153,6 +1153,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, ICONVLIST, requestCallback);      
    }
    
+   public void getRMarkdownTemplate(
+                              ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_RMARKDOWN_TEMPLATE, requestCallback);
+   }
+   
    
    public void getRecentHistory(
          long maxItems,
@@ -2403,6 +2409,29 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, GET_HTML_CAPABILITIES, callback);
    }
+
+   public void rpubsIsPublished(String htmlFile,
+                                ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "rpubs_is_published", htmlFile, requestCallback);
+   }
+   
+   public void rpubsUpload(String title, 
+                           String htmlFile,
+                           boolean isUpdate,
+                           ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(title));
+      params.set(1, new JSONString(htmlFile));
+      params.set(2, JSONBoolean.getInstance(isUpdate));
+      sendRequest(RPC_SCOPE, RPUBS_UPLOAD, params, requestCallback);
+   }
+
+   public void rpubsTerminateUpload(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, RPUBS_TERMINATE_UPLOAD, requestCallback);
+   }
    
    
    public void compilePdf(FileSystemItem targetFile,
@@ -2677,6 +2706,7 @@ public class RemoteServer implements Server
    private static final String REMOVE_CONTENT_URL = "remove_content_url";
    private static final String DETECT_FREE_VARS = "detect_free_vars";
    private static final String ICONVLIST = "iconvlist";
+   private static final String GET_RMARKDOWN_TEMPLATE = "get_rmarkdown_template";
    private static final String GET_TEX_CAPABILITIES = "get_tex_capabilities";
    private static final String GET_CHUNK_OPTIONS = "get_chunk_options";
 
@@ -2747,6 +2777,8 @@ public class RemoteServer implements Server
    private static final String PREVIEW_HTML = "preview_html";
    private static final String TERMINATE_PREVIEW_HTML = "terminate_preview_html";
    private static final String GET_HTML_CAPABILITIES = "get_html_capabilities";
+   private static final String RPUBS_UPLOAD = "rpubs_upload";
+   private static final String RPUBS_TERMINATE_UPLOAD = "terminate_rpubs_upload";
    
    private static final String COMPILE_PDF = "compile_pdf";
    private static final String IS_COMPILE_PDF_RUNNING = "is_compile_pdf_running";

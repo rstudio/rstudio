@@ -158,6 +158,8 @@ function loadEditor(container) {
    squelch("replace");
    squelch("togglecomment");
    squelch("gotoline");
+   squelch("foldall");
+   squelch("unfoldall");
    return env.editor;
 }
 

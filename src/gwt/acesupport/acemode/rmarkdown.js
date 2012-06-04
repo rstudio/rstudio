@@ -26,6 +26,7 @@ var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").
 var RCodeModel = require("mode/r_code_model").RCodeModel;
 
 var Mode = function(suppressHighlighting, doc, session) {
+   this.$session = session;
    this.$tokenizer = new Tokenizer(new RMarkdownHighlightRules().getRules());
 
    this.codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/,
@@ -43,6 +44,11 @@ oop.inherits(Mode, MarkdownMode);
    this.insertChunkInfo = {
       value: "```{r}\n\n```\n",
       position: {row: 0, column: 5}
+   };
+
+   this.getLanguageMode = function(position)
+   {
+      return this.$session.getState(position.row).match(/^r-/) ? 'R' : 'Markdown';
    };
 
    this.getNextLineIndent = function(state, line, tab, tabSize, row)

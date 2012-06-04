@@ -88,9 +88,9 @@ public class HTMLPreviewPanel extends ResizeComposite
       else
       {
          ToolbarPopupMenu menu = new ToolbarPopupMenu();
-         menu.addItem(commands.saveHtmlPreviewAsLocalFile().createMenuItem(false));
          menu.addItem(commands.saveHtmlPreviewAs().createMenuItem(false));
-         
+         menu.addItem(commands.saveHtmlPreviewAsLocalFile().createMenuItem(false));
+      
          saveHtmlPreviewAs_ = toolbar.addLeftWidget(new ToolbarButton(
                "Save As", 
                commands.saveSourceDoc().getImageResource(),
@@ -98,6 +98,10 @@ public class HTMLPreviewPanel extends ResizeComposite
          
          
       }
+      
+      publishButtonSeparator_ = toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(
+               publishButton_ = commands.publishHTML().createToolbarButton());
       
       
       findTextBox_ = new FindTextBox("Find");
@@ -195,7 +199,8 @@ public class HTMLPreviewPanel extends ResizeComposite
    @Override
    public void showPreview(String url, 
                            String htmlFile,
-                           boolean enableSaveAs)
+                           boolean enableSaveAs,
+                           boolean enablePublish)
    {
       String shortFileName = StringUtil.shortPathName(
             FileSystemItem.createFile(htmlFile), 
@@ -204,6 +209,8 @@ public class HTMLPreviewPanel extends ResizeComposite
       fileLabel_.setText(shortFileName);
       saveHtmlPreviewAsSeparator_.setVisible(enableSaveAs);
       saveHtmlPreviewAs_.setVisible(enableSaveAs);
+      publishButtonSeparator_.setVisible(enablePublish);
+      publishButton_.setVisible(enablePublish);
       previewFrame_.navigate(url);
    }
    
@@ -215,6 +222,18 @@ public class HTMLPreviewPanel extends ResizeComposite
       window.print();
    }
    
+   @Override
+   public String getDocumentTitle()
+   {
+      return previewFrame_.getWindow().getDocument().getTitle();
+   }
+
+   @Override
+   public void setPublishButtonLabel(String label)
+   {
+      publishButton_.setText(label);
+   }
+
    private class PreviewFrame extends Frame
    {
       public PreviewFrame()
@@ -269,5 +288,7 @@ public class HTMLPreviewPanel extends ResizeComposite
    private FindTextBox findTextBox_;
    private Widget saveHtmlPreviewAsSeparator_;
    private Widget saveHtmlPreviewAs_;
+   private Widget publishButtonSeparator_;
+   private ToolbarButton publishButton_;
    private HTMLPreviewProgressDialog activeProgressDialog_;
 }

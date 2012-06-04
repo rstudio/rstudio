@@ -42,6 +42,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+ #include "SessionRPubs.hpp"
+
 #define kHTMLPreview "html_preview"
 #define kHTMLPreviewLocation "/" kHTMLPreview "/"
 
@@ -166,24 +168,6 @@ public:
 
 private:
 
-   static Error rScriptPath(FilePath* pRScriptPath)
-   {
-      std::string rHomeBin;
-      r::exec::RFunction rHomeBinFunc("R.home", "bin");
-      Error error = rHomeBinFunc.call(&rHomeBin);
-      if (error)
-         return error;
-      FilePath rHomeBinPath(rHomeBin);
-
-#ifdef _WIN32
-   *pRScriptPath = rHomeBinPath.complete("Rterm.exe");
-#else
-   *pRScriptPath = rHomeBinPath.complete("R");
-#endif
-      return Success();
-   }
-
-
    void performKnit(const std::string& encoding, bool isMarkdown)
    {
       // set running flag
@@ -201,7 +185,7 @@ private:
 
       // R binary
       FilePath rProgramPath;
-      Error error = rScriptPath(&rProgramPath);
+      Error error = module_context::rScriptPath(&rProgramPath);
       if (error)
       {
          terminateWithError(error);
@@ -211,7 +195,8 @@ private:
       // args
       std::vector<std::string> args;
       args.push_back("--silent");
-      args.push_back("--vanilla");
+      args.push_back("--no-save");
+      args.push_back("--no-restore");
       args.push_back("-e");
       if (!knitrOutputFile_.empty())
       {
@@ -412,6 +397,7 @@ private:
       resultJson["html_file"] = module_context::createAliasedPath(htmlFile);
       resultJson["preview_url"] = previewUrl;
       resultJson["enable_saveas"] = enableSaveAs;
+      resultJson["previously_published"] = !rpubs::previousUploadId(htmlFile).empty();
       ClientEvent event(client_events::kHTMLPreviewCompletedEvent, resultJson);
       module_context::enqueClientEvent(event);
    }
@@ -490,9 +476,27 @@ Error getHTMLCapabilities(const json::JsonRpcRequest&,
    return Success();
 }
 
+
+Error getRMarkdownTemplate(const json::JsonRpcRequest&,
+                                    json::JsonRpcResponse* pResponse)
+{
+   FilePath templatePath = session::options().rResourcesPath().complete(
+                                                   "r_markdown_template.Rmd");
+   std::string templateContents;
+   Error error = core::readStringFromFile(templatePath,
+                                          &templateContents,
+                                          string_utils::LineEndingPosix);
+   if (error)
+      return error;
+
+   pResponse->setResult(templateContents);
+
+   return Success();
+}
+
 std::string defaultTitle(const std::string& htmlContent)
 {
-   boost::regex re("<[Hh]([1-6]).*?>(.*)</[Hh]\\1>");
+   boost::regex re("<[Hh]([1-6]).*?>(.*?)</[Hh]\\1>");
    boost::smatch match;
    if (boost::regex_search(htmlContent, match, re))
       return match[2];
@@ -556,38 +560,19 @@ private:
    FilePath basePath_;
 };
 
-
-// add no-highlight designator to vanilla blocks
-class NoHighlightFilter : public boost::iostreams::regex_filter
-{
-public:
-   NoHighlightFilter()
-      : boost::iostreams::regex_filter(
-          boost::regex("^<pre><code>"),
-          boost::bind(&NoHighlightFilter::noHighlight, this, _1))
-   {
-   }
-
-private:
-   std::string noHighlight(const boost::cmatch&)
-   {
-      return "<pre><code class=\"no-highlight\">";
-   }
-};
-
 bool requiresHighlighting(const std::string& htmlOutput)
 {
-   boost::regex hlRegex("^<pre><code class=(?!\"no-highlight\")");
+   boost::regex hlRegex("<pre><code class=\"r\"");
    return boost::regex_search(htmlOutput, hlRegex);
 }
 
 bool requiresMathjax(const std::string& htmlOutput)
 {
-   boost::regex inlineMathRegex("\\$\\S[^\\n]+\\S\\$");
+   boost::regex inlineMathRegex("\\\\\\(([\\s\\S]+?)\\\\\\)");
    if (boost::regex_search(htmlOutput, inlineMathRegex))
       return true;
 
-   boost::regex displayMathRegex("\\${2}[\\s\\S]+\\${2}");
+   boost::regex displayMathRegex("\\\\\\[([\\s\\S]+?)\\\\\\]");
    if (boost::regex_search(htmlOutput, displayMathRegex))
       return true;
 
@@ -610,8 +595,8 @@ std::string preFontFamily()
    linuxFonts.push_back("'Droid Sans Mono'");
 
    std::vector<std::string> windowsFonts;
-   windowsFonts.push_back("Consolas");
    windowsFonts.push_back("'Lucida Console'");
+   windowsFonts.push_back("Consolas");
 
    std::vector<std::string> macFonts;
    macFonts.push_back("Monaco");
@@ -638,117 +623,147 @@ std::string preFontFamily()
    return boost::algorithm::join(fonts, ", ");
 }
 
+
+void modifyOutputForPreview(std::string* pOutput)
+{
+   if (session::options().programMode() == kSessionProgramModeDesktop)
+   {
+      // use correct font ordering for this platform
+      *pOutput = boost::regex_replace(
+           *pOutput,
+            boost::regex("tt, code, pre \\{\\n\\s+font-family:[^\n]+;"),
+           "tt, code, pre {\n   font-family: " + preFontFamily() + ";");
+
+#ifdef __APPLE__
+      // use SVG fonts on MacOS (because HTML-CSS fonts crash QtWebKit)
+       boost::algorithm::replace_first(
+                *pOutput,
+                "config=TeX-AMS-MML_HTMLorMML",
+                "config=TeX-AMS-MML_SVG");
+#else
+      // add HTML-CSS options required for correct qtwebkit rendering
+      std::string target = "<!-- MathJax scripts -->";
+      boost::algorithm::replace_first(
+               *pOutput,
+               target,
+               target + "\n"
+               "<script type=\"text/x-mathjax-config\">"
+                  "MathJax.Hub.Config({"
+                  "  \"HTML-CSS\": { minScaleAdjust: 125, availableFonts: [] } "
+                  " });"
+               "</script>");
+#endif
+
+      // serve mathjax locally
+      std::string previewMathjax = "mathjax";
+      boost::algorithm::replace_first(
+           *pOutput,
+           "https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest",
+           previewMathjax);
+   }
+}
+
+
+Error readPreviewTemplate(const FilePath& resPath,
+                          std::string* pPreviewTemplate)
+{
+
+   FilePath htmlPreviewFile = resPath.childPath("markdown.html");
+   return core::readStringFromFile(htmlPreviewFile, pPreviewTemplate);
+}
+
+void setVarFromHtmlResourceFile(const std::string& name,
+                                const std::string& fileName,
+                                std::map<std::string,std::string>* pVars)
+{
+   FilePath resPath = session::options().rResourcesPath();
+   FilePath filePath = resPath.complete(fileName);
+   std::string fileContents;
+   Error error = readStringFromFile(filePath, &fileContents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   (*pVars)[name] = fileContents;
+}
+
+void setVarFromHtmlResourceFile(const std::string& name,
+                                std::map<std::string,std::string>* pVars)
+{
+   setVarFromHtmlResourceFile(name, name + ".html", pVars);
+}
+
 void handleMarkdownPreviewRequest(const http::Request& request,
                                   http::Response* pResponse)
 {
    try
    {
+      // read input template
+      FilePath resPath = session::options().rResourcesPath();
+      std::string previewTemplate;
+      Error error = readPreviewTemplate(resPath, &previewTemplate);
+      if (error)
+      {
+         pResponse->setError(error);
+         return;
+      }
+
       // read output
       std::string htmlOutput = s_pCurrentPreview_->readOutput();
 
-      // open input file (template)
-      FilePath resPath = session::options().rResourcesPath();
-      FilePath htmlPreviewFile = resPath.childPath("html_preview.htm");
-      boost::shared_ptr<std::istream> pIfs;
-      Error error = htmlPreviewFile.open_r(&pIfs);
-      if (error)
-      {
-         pResponse->setError(error);
-         return;
-      }
-      pIfs->exceptions(std::istream::failbit | std::istream::badbit);
-
-      // inject highlight.js if necessary
-      std::string highlightJs, highlightStyles;
-      if (requiresHighlighting(htmlOutput))
-      {
-         error = readStringFromFile(resPath.childPath("highlight.pack.js"),
-                                    &highlightJs);
-         if (error)
-            LOG_ERROR(error);
-        highlightJs += "\n   hljs.initHighlightingOnLoad();";
-
-         error = readStringFromFile(resPath.childPath("highlight.styles.css"),
-                                    &highlightStyles);
-         if (error)
-            LOG_ERROR(error);
-      }
-
-      std::string mathjaxUrl;
-      mathjaxUrl = "http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
-      // mathjaxUrl = "https://d3eoax9i5htok0.cloudfront.net/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
-
-      // inject mathjax if necessary
-      std::string mathjaxJs;
-      if (requiresMathjax(htmlOutput))
-      {
-         mathjaxJs = "<script type=\"text/javascript\" "
-                     "src=\"" + mathjaxUrl + "\">"
-                     "</script>"
-                     "<script type=\"text/javascript\">"
-                     "MathJax.Hub.Config({"
-                        "tex2jax: {"
-                           "processEscapes: true, "
-                           "processEnvironments: false, "
-                           "inlineMath: [ ['$','$'] ], "
-                           "displayMath: [ ['$$','$$'] ] "
-                        "}, "
-                        "asciimath2jax: {"
-                           "delimiters: [ ['$','$'] ] "
-                        "}, "
-                        "\"HTML-CSS\": {"
-                           "minScaleAdjust: 125 "
-                        "} "
-                     "});"
-                     "</script>";
-      }
-
-      // setup template filter
+      // define template filter
       std::map<std::string,std::string> vars;
       vars["title"] = defaultTitle(htmlOutput);
-      vars["preFontFamily"] = preFontFamily();
-      vars["highlight_js"] = highlightJs;
-      vars["highlight_js_styles"] = highlightStyles;
-      vars["mathjax_js"] = mathjaxJs;
+      setVarFromHtmlResourceFile("markdown_css", "markdown.css", &vars);
+      if (requiresHighlighting(htmlOutput))
+         setVarFromHtmlResourceFile("r_highlight", &vars);
+      else
+         vars["r_highlight"]  = "";
+      if (requiresMathjax(htmlOutput))
+         setVarFromHtmlResourceFile("mathjax", &vars);
+      else
+         vars["mathjax"] = "";
       vars["html_output"] = htmlOutput;
       text::TemplateFilter templateFilter(vars);
 
-      // setup filters
+      // define base64 image filter
       Base64ImageFilter imageFilter(s_pCurrentPreview_->targetDirectory());
-      NoHighlightFilter noHighlightFilter;
 
-      // open output file
-      FilePath outputFile = s_pCurrentPreview_->htmlPreviewFile();
-      boost::shared_ptr<std::ostream> pOfs;
-      error = outputFile.open_w(&pOfs);
+      // write into in-memory string
+      std::istringstream previewInputStream(previewTemplate);
+      std::stringstream previewStrStream;
+      previewStrStream.exceptions(std::istream::failbit | std::istream::badbit);
+      boost::iostreams::filtering_ostream previewOutputStream ;
+      previewOutputStream.push(templateFilter);
+      previewOutputStream.push(imageFilter);
+      previewOutputStream.push(previewStrStream);
+      boost::iostreams::copy(previewInputStream,
+                             previewOutputStream,
+                             128);
+
+
+      // write to output file
+      std::string previewHtml = previewStrStream.str();
+      error = core::writeStringToFile(s_pCurrentPreview_->htmlPreviewFile(),
+                                      previewHtml);
       if (error)
       {
          pResponse->setError(error);
          return;
       }
-      pOfs->exceptions(std::istream::failbit | std::istream::badbit);
 
-      // copy to output file with filters
-      boost::iostreams::filtering_ostream filteringStream ;
-      filteringStream.push(templateFilter);
-      filteringStream.push(imageFilter);
-      filteringStream.push(noHighlightFilter);
-      filteringStream.push(*pOfs);
-      boost::iostreams::copy(*pIfs, filteringStream, 128);
-
-      // close input and output files
-      pIfs.reset();
-      pOfs.reset();
-
-      // send response
-      pResponse->setNoCacheHeaders();
-      pResponse->setFile(outputFile, request);
+      // modify outpout then write back to client
+      modifyOutputForPreview(&previewHtml);
+      pResponse->setDynamicHtml(previewHtml, request);
    }
    catch(const std::exception& e)
    {
       Error error = systemError(boost::system::errc::io_error,
                                 ERROR_LOCATION);
       error.addProperty("what", e.what());
+      LOG_ERROR(error);
       pResponse->setError(error);
    }
 }
@@ -779,6 +794,14 @@ void handlePreviewRequest(const http::Request& request,
          pResponse->setFile(s_pCurrentPreview_->knitrOutputFile(), request);
       else
          pResponse->setFile(s_pCurrentPreview_->targetFile(), request);
+   }
+
+   // request for mathjax file
+   else if (boost::algorithm::starts_with(path, "mathjax"))
+   {
+      FilePath filePath =
+            session::options().mathjaxPath().parent().childPath(path);
+      pResponse->setFile(filePath, request);
    }
 
    // request for dependent file
@@ -838,6 +861,7 @@ Error initialize()
       (bind(registerRpcMethod, "preview_html", previewHTML))
       (bind(registerRpcMethod, "terminate_preview_html", terminatePreviewHTML))
       (bind(registerRpcMethod, "get_html_capabilities", getHTMLCapabilities))
+      (bind(registerRpcMethod, "get_rmarkdown_template", getRMarkdownTemplate))
       (bind(registerUriHandler, kHTMLPreviewLocation, handlePreviewRequest))
    ;
    return initBlock.execute();

@@ -80,11 +80,12 @@ var MarkdownHighlightRules = function() {
             regex : "^[ ]{0,2}(?:[ ]?\\_[ ]?){3,}\\s*$"
         }, { // MathJax $$
             token : "markup.list",
-            regex : "\\${2}",
-            next  : "mathjax"
+            regex : "\\${2}latex\\s",
+            next  : "mathjaxdisplay"
         }, { // MathJax $
-            token : ["markup.list","support.function","markup.list"],
-            regex : "(\\$)" + "(\\S[^\\r]+\\S)" + "(\\$)"
+            token : "markup.list",
+            regex : "\\$latex\\s",
+            next  : "mathjaxinline"
         }, { // list
             token : "text",
             regex : "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+",
@@ -134,9 +135,18 @@ var MarkdownHighlightRules = function() {
             regex : ".+"
         } ],
 
-        "mathjax" : [ {
+        "mathjaxdisplay" : [ {
             token : "markup.list",
             regex : "\\${2}",
+            next  : "start"
+        }, {
+            token : "support.function",
+            regex : "[^\\$]+"
+        } ],
+        
+        "mathjaxinline" : [ {
+            token : "markup.list",
+            regex : "\\$",
             next  : "start"
         }, {
             token : "support.function",

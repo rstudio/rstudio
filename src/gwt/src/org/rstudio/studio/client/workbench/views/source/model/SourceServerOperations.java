@@ -158,4 +158,6 @@ public interface SourceServerOperations extends FilesServerOperations,
                        ServerRequestCallback<JsArrayString> requestCallback);
 
    void iconvlist(ServerRequestCallback<IconvListResult> requestCallback);
+   
+   void getRMarkdownTemplate(ServerRequestCallback<String> requestCallback);
 }

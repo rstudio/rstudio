@@ -39,4 +39,9 @@ public class HTMLPreviewResult extends JavaScriptObject
    public final native boolean getEnableSaveAs() /*-{
       return this.enable_saveas;
    }-*/;
+
+   public final native boolean getPreviouslyPublished() /*-{
+      return this.previously_published;
+   }-*/;
+
 }

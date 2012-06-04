@@ -99,6 +99,7 @@
 #include "modules/SessionPlots.hpp"
 #include "modules/SessionPath.hpp"
 #include "modules/SessionPackages.hpp"
+#include "modules/SessionRPubs.hpp"
 #include "modules/SessionSpelling.hpp"
 #include "modules/SessionSource.hpp"
 #include "modules/SessionVCS.hpp"
@@ -1322,6 +1323,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::help::initialize)
       (modules::plots::initialize)
       (modules::packages::initialize)
+      (modules::rpubs::initialize)
       (modules::source::initialize)
       (modules::source_control::initialize)
       (modules::authoring::initialize)
@@ -1590,12 +1592,18 @@ FilePath rChooseFile(bool newFile)
 
 void rBusy(bool busy)
 {
+   if (s_wasForked)
+      return;
+
    ClientEvent busyEvent(kBusy, busy);
    session::clientEventQueue().add(busyEvent);
 }
       
 void rConsoleWrite(const std::string& output, int otype)   
 {
+   if (s_wasForked)
+      return;
+
    int event = otype == 1 ? kConsoleWriteError : kConsoleWriteOutput;
    ClientEvent writeEvent(event, output);
    session::clientEventQueue().add(writeEvent);
@@ -1764,6 +1772,9 @@ bool rHandleUnsavedChanges()
 
 void rQuit()
 {   
+   if (s_wasForked)
+      return;
+
    // enque a quit event
    bool switchProjects =
          !session::projects::projectContext().nextSessionProject().empty();

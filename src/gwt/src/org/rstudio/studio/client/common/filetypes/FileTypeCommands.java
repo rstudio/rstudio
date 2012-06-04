@@ -56,9 +56,6 @@ public class FileTypeCommands
       commands_ = commands;
       session_ = session;
 
-      addRFileType(FileTypeRegistry.RMARKDOWN, 
-                   "R _Markdown",
-                    "Create a new R Markdown file");
       addRFileType(FileTypeRegistry.RHTML, 
                    "R _HTML",
                    "Create a new R HTML file");

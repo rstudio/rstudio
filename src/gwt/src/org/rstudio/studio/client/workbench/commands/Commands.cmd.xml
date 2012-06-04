@@ -33,6 +33,7 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="newTextDoc"/>
             <separator/>
             <cmd refid="newSweaveDoc"/>
+            <cmd refid="newRMarkdownDoc"/>
             <dynamic class="org.rstudio.studio.client.common.filetypes.NewRFileMenu"/>
          </menu>
          <separator/>
@@ -210,7 +211,7 @@ well as menu structures (for main menu and popup menus).
          
       <separator/>
 
-      <menu label="P_lots">
+      <menu label="Pl_ots">
          <cmd refid="nextPlot"/>
          <cmd refid="previousPlot"/>
          <separator/>
@@ -336,7 +337,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="extractFunction" value="Cmd+Shift+U"/>
       <shortcut refid="executeLastCode" value="Cmd+Shift+P"/>
       <shortcut refid="findInFiles" value="Cmd+Shift+F"/>
-      <shortcut refid="commentUncomment" value="Cmd+/"/>
+      <shortcut refid="commentUncomment" value="Cmd+Shift+C"/>
       <shortcut refid="reindent" value="Cmd+I"/>
       <shortcut refid="reflowComment" value="Cmd+Shift+/"/>
       <shortcut refid="consoleClear" value="Ctrl+L"/>
@@ -372,8 +373,8 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="checkSpelling" value="F7" />
       <shortcut refid="fold" value="Alt+L"/>
       <shortcut refid="unfold" value="Shift+Alt+L" />
-      <shortcut refid="foldAll" value="Alt+0" />
-      <shortcut refid="unfoldAll" value="Shift+Alt+0" />
+      <shortcut refid="foldAll" value="Alt+A" />
+      <shortcut refid="unfoldAll" value="Shift+Alt+A" />
    </shortcuts>
 
    <!--
@@ -423,7 +424,11 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="newSweaveDoc"
         menuLabel="R _Sweave"
-        desc="Create a new Sweave document"/>      
+        desc="Create a new R Sweave document"/>  
+        
+   <cmd id="newRMarkdownDoc"
+        menuLabel="R _Markdown"
+        desc="Create a new R Markdown document"/>    
         
    <cmd id="openSourceDoc"
         menuLabel="_Open File..."
@@ -656,6 +661,11 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Preview"
         menuLabel="Preview HTML"
         desc="Show a preview of the current document as HTML"/>
+        
+   <cmd id="publishHTML"
+        buttonLabel="Publish"
+        menuLabel="Publish to RPubs..."
+        desc="Publish the current document"/>      
  
    <cmd id="compilePDF"
         buttonLabel="Compile PDF"

@@ -43,7 +43,10 @@ elseif(RSTUDIO_DESKTOP)
   # rpm scripts
   set(RPM_POSTINST postinst-desktop.sh.in)
   set(RPM_POSTRM postrm-desktop.sh.in)
- 
+
+  # depend on libjpeg62 (for Qt 4.8 jpeg plugin)
+  set(RSTUDIO_DEBIAN_DEPENDS "libjpeg62, ")
+
 endif()
 
 

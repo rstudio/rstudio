@@ -193,6 +193,8 @@ public class ShortcutsEmitter
          return "187";
       if (val.equals("<"))
          return "188";
+      if (val.equals("Backspace"))
+         return "8";
       return null;
    }
 

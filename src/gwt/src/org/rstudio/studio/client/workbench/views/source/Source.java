@@ -39,6 +39,7 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.EditableFileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -488,6 +489,37 @@ public class Source implements InsertSourceHandler,
                    target.setCursorPosition(Position.create(startRow, 0));
                 }
              });
+   }
+   
+   @Handler
+   public void onNewRMarkdownDoc()
+   {
+      final ProgressIndicator indicator = new GlobalProgressDelayer(
+            globalDisplay_, 500, "Creating new document...").getIndicator();
+      
+      server_.getRMarkdownTemplate(new ServerRequestCallback<String>() {
+         @Override
+         public void onResponseReceived(String rmarkdownTemplate)
+         {
+            indicator.onCompleted();
+            
+            newDoc(FileTypeRegistry.RMARKDOWN, 
+                  rmarkdownTemplate, 
+                  new ResultCallback<EditingTarget, ServerError> () {
+                  @Override
+                  public void onSuccess(EditingTarget target)
+                  {
+                     target.setCursorPosition(Position.create(3, 0));
+                  }
+            });
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            indicator.onError(error.getUserMessage());
+         }
+      });
    }
 
    private void newDoc(EditableFileType fileType,

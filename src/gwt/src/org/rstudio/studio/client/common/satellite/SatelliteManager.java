@@ -330,8 +330,8 @@ public class SatelliteManager implements CloseHandler<Window>
          height = height - 50;
 
       // compute width (trim to max)
-      int width = Math.min(preferredSize.width, screen.getAvailWidth());
-        
+      int width = Math.min(preferredSize.width, screen.getAvailWidth() - 20);
+      
       // return size
       return new Size(width, height);
    }

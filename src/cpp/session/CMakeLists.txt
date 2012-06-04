@@ -15,9 +15,12 @@ project (SESSION)
 
 add_subdirectory(workers)
 
-# verify that install-dictionaries has been run
+# verify that install-dictionaries and install-mathjax have been run
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries")
   message(FATAL_ERROR "Dictionaries not found (re-run install-dependencies script to install)")
+endif()
+if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax")
+  message(FATAL_ERROR "Mathjax not found (re-run install-dependencies script to install)")
 endif()
 
 # include files
@@ -61,6 +64,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionPackages.cpp
    modules/SessionPath.cpp
    modules/SessionPlots.cpp
+   modules/SessionRPubs.cpp
    modules/SessionSource.cpp
    modules/SessionSpelling.cpp
    modules/SessionSVN.cpp
@@ -240,14 +244,17 @@ if (NOT RSTUDIO_SESSION_WIN64)
    add_subdirectory(rspdflatex)
 
    # HTML resources
-   file(GLOB HTML_RESOURCE_FILES "resources/*.htm")
+   file(GLOB HTML_RESOURCE_FILES "resources/*.html")
    install(FILES ${HTML_RESOURCE_FILES}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
    # CSS resources
    file(GLOB CSS_RESOURCE_FILES "resources/*.css")
    install(FILES ${CSS_RESOURCE_FILES}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
-
+   # Rmd resources
+   file(GLOB RMD_RESOURCE_FILES "resources/*.Rmd")
+   install(FILES ${RMD_RESOURCE_FILES}
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
    # JS resources
    file(GLOB JS_RESOURCE_FILES "resources/*.js")
    install(FILES ${JS_RESOURCE_FILES}
@@ -257,7 +264,24 @@ if (NOT RSTUDIO_SESSION_WIN64)
    file(GLOB R_MODULE_SRC_FILES "${CMAKE_CURRENT_BINARY_DIR}/modules/R/*.R")
    install(FILES ${R_MODULE_SRC_FILES}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/modules)
-           
+
+
+   # install hunspell dictionaries
+   install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries"
+           DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
+
+   # install mathjax for local html preview
+   if(RSTUDIO_DESKTOP)
+      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax"
+              DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
+   endif()
+
+   # add gpl for desktop
+   if(RSTUDIO_DESKTOP)
+      install(FILES resources/agpl-3.0-standalone.html
+              DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+   endif()
+
    # install 64 bit binaries if we are on win64
    if(WIN32)
       if(NOT ("$ENV{PROGRAMW6432}" STREQUAL ""))
@@ -286,16 +310,6 @@ if (NOT RSTUDIO_SESSION_WIN64)
       install(FILES resources/sumatrapdfrestrict.ini
                DESTINATION  "${RSTUDIO_INSTALL_BIN}/sumatra")
    endif()
-endif()
-
-# install hunspell dictionaries
-install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries"
-        DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
-
-# add gpl for desktop
-if(RSTUDIO_DESKTOP)
-   install(FILES resources/agpl-3.0-standalone.html
-           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 endif()
 
  # install 64-bit gcc runtime for session win64

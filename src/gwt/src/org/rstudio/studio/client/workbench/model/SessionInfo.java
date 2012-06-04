@@ -229,5 +229,4 @@ public class SessionInfo extends JavaScriptObject
    public final native HTMLCapabilities getHTMLCapabilities() /*-{
       return this.html_capabilities;
    }-*/;
-  
 }

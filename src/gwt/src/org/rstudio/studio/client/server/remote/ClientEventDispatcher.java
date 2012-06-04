@@ -34,6 +34,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcessCreatedEvent;
 import org.rstudio.studio.client.common.console.ServerConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ServerConsolePromptEvent;
 import org.rstudio.studio.client.common.console.ServerProcessExitEvent;
+import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.common.synctex.events.SynctexEditFileEvent;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
@@ -359,6 +360,11 @@ public class ClientEventDispatcher
          {
             String data = event.getData();
             eventBus_.fireEvent(new FindOperationEndedEvent(data));
+         }
+         else if (type.equals(ClientEvent.RPubsUploadStatus))
+         {
+            RPubsUploadStatusEvent.Status status = event.getData();
+            eventBus_.fireEvent(new RPubsUploadStatusEvent(status));
          }
          else if (type.equals(ClientEvent.ListChanged))
          {

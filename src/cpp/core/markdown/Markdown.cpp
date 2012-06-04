@@ -205,17 +205,28 @@ public:
    MathFilter(std::string* pInput, std::string* pHTMLOutput)
       : pHTMLOutput_(pHTMLOutput)
    {
-      filter(boost::regex("\\${2}[\\s\\S]+\\${2}"), pInput);
-      filter(boost::regex("\\$\\S[^\\n]+\\S\\$"), pInput);
+      filter(boost::regex("\\${2}latex(\\s[\\s\\S]+?)\\${2}"),
+                          pInput,
+                          &displayMathBlocks_);
+
+      filter(boost::regex("\\$latex(\\s[\\s\\S]+?)\\$"),
+                          pInput,
+                          &inlineMathBlocks_);
    }
 
    ~MathFilter()
    {
       try
       {
-         std::for_each(mathBlocks_.begin(),
-                       mathBlocks_.end(),
-                       boost::bind(&MathFilter::restore, this, _1));
+         std::for_each(
+            displayMathBlocks_.begin(),
+            displayMathBlocks_.end(),
+            boost::bind(&MathFilter::restore, this, _1, "\\[", "\\]"));
+
+         std::for_each(
+            inlineMathBlocks_.begin(),
+            inlineMathBlocks_.end(),
+            boost::bind(&MathFilter::restore, this, _1, "\\(", "\\)"));
       }
       catch(...)
       {
@@ -223,33 +234,43 @@ public:
    }
 
 private:
-   void filter(const boost::regex& re, std::string* pInput)
+   void filter(const boost::regex& re,
+               std::string* pInput,
+               std::map<std::string,std::string>* pMathBlocks)
    {
       // explicit function type required because the Formatter functor
       // supports 3 distinct signatures
       boost::function<std::string(
           boost::match_results<std::string::const_iterator>)> formatter =
-                                 boost::bind(&MathFilter::substitute, this, _1);
+                                 boost::bind(&MathFilter::substitute,
+                                             this, _1, pMathBlocks);
 
       *pInput = boost::regex_replace(*pInput, re, formatter);
    }
 
    std::string substitute(
-               boost::match_results<std::string::const_iterator> match)
+               boost::match_results<std::string::const_iterator> match,
+               std::map<std::string,std::string>* pMathBlocks)
    {
       std::string guid = core::system::generateUuid(false);
-      mathBlocks_.insert(std::make_pair(guid, match[0]));
+      pMathBlocks->insert(std::make_pair(guid, match[1]));
       return guid;
    }
 
-   void restore(const std::map<std::string,std::string>::value_type& block)
+   void restore(const std::map<std::string,std::string>::value_type& block,
+                const std::string& beginDelim,
+                const std::string& endDelim)
    {
-      boost::algorithm::replace_all(*pHTMLOutput_, block.first, block.second);
+      boost::algorithm::replace_first(
+                          *pHTMLOutput_,
+                          block.first,
+                          beginDelim + " " + block.second + " " + endDelim);
    }
 
 private:
    std::string* pHTMLOutput_;
-   std::map<std::string,std::string> mathBlocks_;
+   std::map<std::string,std::string> displayMathBlocks_;
+   std::map<std::string,std::string> inlineMathBlocks_;
 };
 
 } // anonymous namespace

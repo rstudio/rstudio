@@ -3,7 +3,7 @@
 set -e
 
 if [ ! -d "./highlight.js" ]; then
-    git clone git://github.com/rstudio/highlight.js.git highlight.js
+    git clone git@github.com:rstudio/highlight.js.git highlight.js
     cd highlight.js
     git remote add upstream git://github.com/isagalaev/highlight.js
     cd ..
@@ -21,7 +21,47 @@ TARGET_DIR=../../session/resources
 mkdir -p $TARGET_DIR
 echo "$VERSION" > ../highlight-version
 python tools/build.py r
-mv src/highlight.pack.js $TARGET_DIR
- 
+
+TARGET_FILE=$TARGET_DIR/r_highlight.html
+
+cat <<'EOF' > $TARGET_FILE
+<!-- Styles for R syntax highlighter -->
+<style type="text/css">
+   pre .operator,
+   pre .paren {
+     color: rgb(104, 118, 135)
+   }
+
+   pre .literal {
+     color: rgb(88, 72, 246)
+   }
+
+   pre .number {
+     color: rgb(0, 0, 205);
+   }
+
+   pre .comment {
+     color: rgb(76, 136, 107);
+   }
+
+   pre .keyword {
+     color: rgb(0, 0, 255);
+   }
+
+   pre .identifier {
+     color: rgb(0, 0, 0);
+   }
+
+   pre .string {
+     color: rgb(3, 106, 7);
+   }
+</style>
+EOF
+echo "\n<!-- R syntax highlighter -->" >> $TARGET_FILE
+echo "<script type=\"text/javascript\">" >> $TARGET_FILE
+cat src/highlight.pack.js >> $TARGET_FILE
+echo "\nhljs.initHighlightingOnLoad();" >> $TARGET_FILE
+echo "</script>" >> $TARGET_FILE
+
 # return to tools dir
 cd ..
