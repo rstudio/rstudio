@@ -16,11 +16,11 @@
 package com.google.gwt.user.client.impl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.ScriptElement;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.TextResource;
-import com.google.gwt.user.client.Command;
 
 /**
  * IE implementation of {@link com.google.gwt.user.client.impl.WindowImpl}.
@@ -82,7 +82,7 @@ public class WindowImplIE extends WindowImpl {
   @Override
   public void initWindowCloseHandler() {
     initHandler(Resources.INSTANCE.initWindowCloseHandler().getText(),
-        new Command() {
+        new ScheduledCommand() {
           public void execute() {
             initWindowCloseHandlerImpl();
           }
@@ -92,7 +92,7 @@ public class WindowImplIE extends WindowImpl {
   @Override
   public void initWindowResizeHandler() {
     initHandler(Resources.INSTANCE.initWindowResizeHandler().getText(),
-        new Command() {
+        new ScheduledCommand() {
           public void execute() {
             initWindowResizeHandlerImpl();
           }
@@ -102,7 +102,7 @@ public class WindowImplIE extends WindowImpl {
   @Override
   public void initWindowScrollHandler() {
     initHandler(Resources.INSTANCE.initWindowScrollHandler().getText(),
-        new Command() {
+        new ScheduledCommand() {
           public void execute() {
             initWindowScrollHandlerImpl();
           }
@@ -117,7 +117,7 @@ public class WindowImplIE extends WindowImpl {
    * @param initFunc the string representation of the init function
    * @param cmd the command to execute the init function
    */
-  private void initHandler(String initFunc, Command cmd) {
+  private void initHandler(String initFunc, ScheduledCommand cmd) {
     if (GWT.isClient()) {
       // Embed the init script on the page
       ScriptElement scriptElem = Document.get().createScriptElement(initFunc);
