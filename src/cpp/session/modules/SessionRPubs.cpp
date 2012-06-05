@@ -142,10 +142,10 @@ private:
       args.push_back("-e");
 
       boost::format fmt(
-               "source(\"%1%\"); "
-               "result <- rpubsUpload(\"%2%\", \"%3%\", %4%); "
+               "source('%1%'); "
+               "result <- rpubsUpload('%2%', '%3%', %4%); "
                "utils::write.csv(as.data.frame(result), "
-                               " file=\"%5%\", "
+                               " file='%5%', "
                                " row.names=FALSE);");
 
       FilePath modulesPath = session::options().modulesRSourcePath();;
@@ -162,7 +162,7 @@ private:
 
       std::string cmd = boost::str(fmt %
                     escapedScriptPath % escapedTitle % escapedHtmlPath %
-                    (!escapedId.empty() ? "\"" + escapedId + "\"" : "NULL") %
+                    (!escapedId.empty() ? "'" + escapedId + "'" : "NULL") %
                     escapedOutputPath);
       args.push_back(cmd);
 
