@@ -169,6 +169,19 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     return ss.toString();
   }
 
+  protected boolean getBooleanConfigurationProperty(LinkerContext context,
+      String name, boolean def) {
+    String value = getStringConfigurationProperty(context, name, null);
+    if (value != null) {
+      if (value.equalsIgnoreCase("true")) {
+        return true;
+      } else if (value.equalsIgnoreCase("false")) {
+        return false;
+      }
+    }
+    return def;
+  }
+
   @Override
   protected String getCompilationExtension(TreeLogger logger, LinkerContext context) {
     return ".cache.js";
@@ -212,9 +225,13 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
    * Returns a code fragment to check for the new development mode.
    */
   protected String getJsDevModeRedirectHook(LinkerContext context) {
-    // Temporarily disabled by default.
-    // return "com/google/gwt/core/linker/DevModeRedirectHook.js";
-    return "";
+    // Enable Super Dev Mode for this app if the devModeRedirectEnabled config property is true.
+    // TODO(skybrian) Change the default to enabled once we're sure it's safe.
+    if (getBooleanConfigurationProperty(context, "devModeRedirectEnabled", false)) {
+      return "com/google/gwt/core/linker/DevModeRedirectHook.js";
+    } else {
+      return "";
+    }
   }
 
   /**
@@ -238,7 +255,8 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
    * @param context a LinkerContext
    */
   protected String getJsInstallScript(LinkerContext context) {
-    return "com/google/gwt/core/ext/linker/impl/installScriptEarlyDownload.js";
+    return getStringConfigurationProperty(context, "installScriptJs",
+        "com/google/gwt/core/ext/linker/impl/installScriptEarlyDownload.js");
   }
 
   /**
@@ -399,6 +417,18 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     return "com/google/gwt/core/linker/CrossSiteIframeTemplate.js";
   }
 
+  protected String getStringConfigurationProperty(LinkerContext context,
+      String name, String def) {
+    for (ConfigurationProperty property : context.getConfigurationProperties()) {
+      if (property.getName().equals(name) && property.getValues().size() > 0) {
+        if (property.getValues().get(0) != null) {
+          return property.getValues().get(0);
+        }
+      }
+    }
+    return def;
+  }
+
   protected void includeJs(StringBuffer selectionScript, TreeLogger logger, String jsSource,
       String templateVar) throws UnableToCompleteException {
     String js;
@@ -493,7 +523,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   }
 
   protected boolean shouldInstallCode(LinkerContext context) {
-    return true;
+    return getBooleanConfigurationProperty(context, "installCode", true);
   }
 
   /**

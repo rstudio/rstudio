@@ -15,4 +15,8 @@
 <module rename-to="hello">
 	<inherits name="com.google.gwt.user.User"/>
 	<entry-point class="com.google.gwt.sample.hello.client.Hello"/>
+
+    <!-- Changing the linker is only necessary if you want to try out SuperDevMode -->
+    <add-linker name="xsiframe"/>
+    <set-configuration-property name="devModeRedirectEnabled" value="true"/>
 </module>

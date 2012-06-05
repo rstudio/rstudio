@@ -1,0 +1,141 @@
+<!-- Copyright 2011 Google Inc.                                             -->
+<!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
+<!-- may not use this file except in compliance with the License. You may   -->
+<!-- may obtain a copy of the License at                                    -->
+<!--                                                                        -->
+<!-- http://www.apache.org/licenses/LICENSE-2.0                             -->
+<!--                                                                        -->
+<!-- Unless required by applicable law or agreed to in writing, software    -->
+<!-- distributed under the License is distributed on an "AS IS" BASIS,      -->
+<!-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or        -->
+<!-- implied. License for the specific language governing permissions and   -->
+<!-- limitations under the License.                                         -->
+
+<html>
+<head>
+  <title>GWT Code Server</title>
+  <script>
+
+/**
+ * Updates the dynamic parts of this page, based on template variables.
+ * @param config {Object} Contains the list of GWT apps that this code server
+ * can compile (in moduleNames). Comes from a global defined in JavaScript
+ * prepended to this file by the server.
+ */
+function updatePage(config) {
+  var moduleNames = config.moduleNames;
+
+  var target = document.getElementById("bookmarklets");
+  target.appendChild(makeDevModeOnBookmarklet());
+  target.appendChild(document.createTextNode(" "));
+  target.appendChild(makeDevModeOffBookmarklet());
+
+  target = document.getElementById("modules");
+  for (var i = 0; i < moduleNames.length; i++) {
+    var moduleName = moduleNames[i];
+
+    var anchor = document.createElement("a");
+    anchor.setAttribute("href", moduleName + "/");
+    anchor.textContent = moduleName;
+
+    var item = document.createElement("li");
+    item.appendChild(anchor);
+    target.appendChild(item);
+  }
+}
+
+/**
+ * Creates a bookmarklet that will show the module selection dialog
+ * if the code server is running. Otherwise, nothing will happen.
+ * @return {Element} An anchor element containing the bookmarklet.
+ */
+function makeDevModeOnBookmarklet() {
+  var bookmarklets_js = document.URL + "dev_mode_on.js";
+  var javascript = "{ window.__gwt_bookmarklet_params = {"
+          + "'server_url':'" + document.URL + "'};"
+          + " var s = document.createElement('script');"
+          + " s.src = '" + bookmarklets_js + "';"
+          + " void(document.getElementsByTagName('head')[0].appendChild(s));}";
+  return makeBookmarklet("Dev Mode On", javascript);
+}
+
+/**
+ * Creates a bookmarklet that will turn off Super Dev Mode for all modules,
+ * even if the code server isn't running.
+ * @return {Element} An anchor element containing the bookmarklet.
+ */
+function makeDevModeOffBookmarklet() {
+  var javascript =
+          "{var toRemove = [];" +
+          " for(var i = 0; i<sessionStorage.length; i++) {" +
+          "  var key = sessionStorage.key(i);" +
+          "  if (key.indexOf('__gwtDevModeHook:') == 0) {" +
+          "    toRemove.push(key);" +
+          "  }}" +
+          " for (var j = 0; j<toRemove.length; j++) {" +
+          "   sessionStorage.removeItem(toRemove[j]);" +
+          " } window.location.reload();}";
+  return makeBookmarklet("Dev Mode Off", javascript);
+}
+
+function makeBookmarklet(name, javascript) {
+  var result = document.createElement("a");
+  result.setAttribute("class", "bookmarklet");
+  result.setAttribute("href", "javascript:" + encodeURIComponent(javascript));
+  result.textContent = name;
+  return result;
+}
+  </script>
+
+  <style>
+    body {
+      margin: 2cm;
+      font-size: 24pt;
+    }
+
+    h1 {
+      margin-bottom: 2pt;
+    }
+
+    #bookmarklets {
+      margin: 10pt;
+    }
+
+    #modules a:link, #modules a:visited {
+      color: black;
+    }
+
+    .bookmarklet {
+      color: black;
+      text-decoration: none;
+      font-family: sans-serif;
+      font-size: 18pt;
+
+      background-color: #ddd;
+      border-top: 1px solid #fff;
+      border-bottom: 1px solid #888;
+      padding: 3pt;
+      margin: 8pt;
+    }
+  </style>
+</head>
+<body onload="updatePage(config)">
+
+<h1>GWT Code Server</h1>
+
+<ol>
+
+<li>Drag these two bookmarklets to your browser's bookmark bar:
+  <div id="bookmarklets"></div>
+</li>
+
+<li>Visit a web page that uses one of these modules:
+
+  <ul id="modules">
+  </ul>
+
+<li>Click "Dev Mode On" to start development mode.</li>
+
+</ol>
+
+</body></html>

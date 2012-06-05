@@ -17,6 +17,12 @@
   <define-linker name="xsiframe" class="com.google.gwt.core.linker.CrossSiteIframeLinker" />
   <define-linker name="direct_install" class="com.google.gwt.core.linker.DirectInstallLinker" />
   <define-configuration-property name="xsiframe.failIfScriptTag" is_multi_valued="FALSE"/>
+
+  <!-- Properties controlling behavior of the linker (overridden by Super Dev Mode) -->
+  <define-configuration-property name="devModeRedirectEnabled" is_multi_valued="false"/>
+  <define-configuration-property name="installScriptJs" is-multi-valued="false" />
+  <define-configuration-property name="installCode" is-multi-valued="false" />
+
   <set-configuration-property name="xsiframe.failIfScriptTag" value="TRUE"/> 
 
   <replace-with class="com.google.gwt.core.client.impl.ScriptTagLoadingStrategy">

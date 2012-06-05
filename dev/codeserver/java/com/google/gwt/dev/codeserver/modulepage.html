@@ -1,0 +1,55 @@
+<!-- Copyright 2012 Google Inc.                                             -->
+<!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
+<!-- may not use this file except in compliance with the License. You may   -->
+<!-- may obtain a copy of the License at                                    -->
+<!--                                                                        -->
+<!-- http://www.apache.org/licenses/LICENSE-2.0                             -->
+<!--                                                                        -->
+<!-- Unless required by applicable law or agreed to in writing, software    -->
+<!-- distributed under the License is distributed on an "AS IS" BASIS,      -->
+<!-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or        -->
+<!-- implied. License for the specific language governing permissions and   -->
+<!-- limitations under the License.                                         -->
+
+<html>
+<head>
+  <title>Loading...</title>
+
+  <script>
+    function updatePage(config) {
+      var title = config.moduleName + " (GWT Code Server)";
+      document.getElementsByTagName("title")[0].textContent = title;
+      document.getElementById("title").textContent = title;
+
+      document.getElementById("logLink").setAttribute("href", "../log/" + config.moduleName);
+      updateFileList(config, document.getElementById("files"));
+    }
+
+    function updateFileList(config, resultElement) {
+      for (var i = 0; i < config.files.length; i++) {
+        var file = config.files[i];
+
+        var anchor = document.createElement("a");
+        anchor.setAttribute("href", file.link);
+        anchor.textContent = file.name;
+
+        var listItem = document.createElement("li");
+        listItem.appendChild(anchor);
+        resultElement.appendChild(listItem);
+      }
+    }
+  </script>
+
+</head>
+<body onload="updatePage(config)">
+<h1 id="title">Loading...</h1>
+
+<p><a id="logLink">Messages</a> from the last time this module was compiled.</p>
+
+<h2>Output Files</h2>
+<p>(From the last successful compile.)</p>
+<ul id="files">
+</ul>
+
+</body>
+</html>
