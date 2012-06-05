@@ -134,6 +134,38 @@ public class Style extends JavaScriptObject {
   }
 
   /**
+   * Enum for the 'clear' CSS property.
+   */
+  public enum Clear implements HasCssName {
+    BOTH {
+      @Override
+      public String getCssName() {
+        return CLEAR_BOTH;
+      }
+    },
+    LEFT {
+      @Override
+      public String getCssName() {
+        return CLEAR_LEFT;
+      }
+    },
+    NONE {
+      @Override
+      public String getCssName() {
+        return CLEAR_NONE;
+      }
+    },
+    RIGHT {
+      @Override
+      public String getCssName() {
+        return CLEAR_RIGHT;
+      }
+    };
+    @Override
+    public abstract String getCssName();
+  }
+  
+  /**
    * Enum for the cursor property.
    */
   public enum Cursor implements HasCssName {
@@ -756,6 +788,11 @@ public class Style extends JavaScriptObject {
   private static final String BORDER_STYLE_DOTTED = "dotted";
   private static final String BORDER_STYLE_HIDDEN = "hidden";
   private static final String BORDER_STYLE_NONE = "none";
+  
+  private static final String CLEAR_BOTH = "both";
+  private static final String CLEAR_LEFT = "left";
+  private static final String CLEAR_NONE = "none";
+  private static final String CLEAR_RIGHT = "right";
 
   private static final String CURSOR_ROW_RESIZE = "row-resize";
   private static final String CURSOR_COL_RESIZE = "col-resize";
@@ -854,6 +891,7 @@ public class Style extends JavaScriptObject {
   private static final String STYLE_DISPLAY = "display";
   private static final String STYLE_CURSOR = "cursor";
   private static final String STYLE_COLOR = "color";
+  private static final String STYLE_CLEAR = "clear";
   private static final String STYLE_BOTTOM = "bottom";
   private static final String STYLE_BORDER_WIDTH = "borderWidth";
   private static final String STYLE_BORDER_STYLE = "borderStyle";
@@ -953,6 +991,13 @@ public class Style extends JavaScriptObject {
    */
   public final void clearBottom() {
      clearProperty(STYLE_BOTTOM);
+  }
+
+  /**
+   * Clear the 'clear' CSS property.
+   */
+  public final void clearClear() {
+     clearProperty(STYLE_CLEAR);
   }
 
   /**
@@ -1271,6 +1316,13 @@ public class Style extends JavaScriptObject {
   }
 
   /**
+   * Get the 'clear' CSS property.
+   */
+  public final String getClear() {
+    return getProperty(STYLE_CLEAR);
+  }
+
+  /**
    * Get the color css property.
    */
   public final String getColor() {
@@ -1563,6 +1615,13 @@ public class Style extends JavaScriptObject {
    */
   public final void setBottom(double value, Unit unit) {
     setProperty(STYLE_BOTTOM, value, unit);
+  }
+
+  /**
+   * Sets the 'clear' CSS property.
+   */
+  public final void setClear(Clear value) {
+    setProperty(STYLE_CLEAR, value.getCssName());
   }
 
   /**

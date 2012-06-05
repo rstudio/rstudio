@@ -16,6 +16,7 @@
 package com.google.gwt.safecss.shared;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Clear;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.TextAlign;
 import com.google.gwt.dom.client.Style.WhiteSpace;
@@ -87,6 +88,13 @@ public class GwtSafeStylesUtilsTest extends GWTTestCase {
     SafeUri uri = UriUtils.fromSafeConstant("http://localhost");
     assertEquals("background-image:url(\"http://localhost\");", SafeStylesUtils.forBackgroundImage(
         uri).asString());
+  }
+
+  public void testForClear() {
+    assertEquals("clear:both;", SafeStylesUtils.forClear(Clear.BOTH).asString());
+    assertEquals("clear:left;", SafeStylesUtils.forClear(Clear.LEFT).asString());
+    assertEquals("clear:none;", SafeStylesUtils.forClear(Clear.NONE).asString());
+    assertEquals("clear:right;", SafeStylesUtils.forClear(Clear.RIGHT).asString());
   }
 
   public void testForDisplay() {

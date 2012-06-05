@@ -25,6 +25,7 @@ import static com.google.gwt.dom.client.Style.Unit.PCT;
 import static com.google.gwt.dom.client.Style.Unit.PT;
 import static com.google.gwt.dom.client.Style.Unit.PX;
 
+import com.google.gwt.dom.client.Style.Clear;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.FontStyle;
@@ -51,6 +52,22 @@ public class StyleTest extends GWTTestCase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.dom.DOMTest";
+  }
+
+  public void testClear() {
+    DivElement div = Document.get().createDivElement();
+    Style style = div.getStyle();
+
+    style.setClear(Clear.BOTH);
+    assertEquals(Clear.BOTH, style.getClear());
+    style.setClear(Clear.LEFT);
+    assertEquals(Clear.LEFT, style.getClear());
+    style.setClear(Clear.NONE);
+    assertEquals(Clear.NONE, style.getClear());
+    style.setClear(Clear.RIGHT);
+    assertEquals(Clear.RIGHT, style.getClear());
+    style.clearClear();
+    assertEmpty(style.getClear());
   }
 
   public void testCursor() {

@@ -17,6 +17,7 @@ package com.google.gwt.safecss.shared;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.BorderStyle;
+import com.google.gwt.dom.client.Style.Clear;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Float;
@@ -113,6 +114,13 @@ public final class SafeStylesUtils {
    */
   public static SafeStyles forBottom(double value, Unit unit) {
     return fromTrustedNameAndValue("bottom", value, unit);
+  }
+
+  /**
+   * Sets the 'clear' CSS property.
+   */
+  public static SafeStyles forClear(Clear value) {
+    return fromTrustedNameAndValue("clear", value.getCssName());
   }
 
   /**
