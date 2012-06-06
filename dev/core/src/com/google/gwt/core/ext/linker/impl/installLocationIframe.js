@@ -27,7 +27,8 @@ function setupInstallLocation() {
   var scriptFrame = $doc.createElement('iframe');
   scriptFrame.src = 'javascript:""';
   scriptFrame.id = '__MODULE_NAME__';
-  scriptFrame.style.cssText = 'position:absolute; width:0; height:0; border:none; left: -1000px; top: -1000px; !important';
+  scriptFrame.style.cssText = 'position:absolute; width:0; height:0; border:none; left: -1000px;'
+    + ' top: -1000px;';
   scriptFrame.tabIndex = -1;
   $doc.body.appendChild(scriptFrame);
 
