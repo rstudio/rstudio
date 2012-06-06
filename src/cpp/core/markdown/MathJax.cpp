@@ -27,42 +27,6 @@ namespace markdown {
 
 namespace {
 
-typedef boost::iterator_range<std::string::const_iterator> ExcludedRange;
-
-std::vector<ExcludedRange> findExcludedRanges(const std::string& input,
-                                              const ExcludePattern& pattern)
-{
-   std::string::const_iterator pos = input.begin();
-   std::string::const_iterator end = input.end();
-
-   std::vector<ExcludedRange> ranges;
-   while(true)
-   {
-      // if the pattern isn't found then break
-      boost::smatch match;
-      if (!boost::regex_search(pos, end, match, pattern.beginPattern))
-         break;
-
-      // capture begin location and update pos
-      std::string::const_iterator begin = match[1].first;
-      pos = match[1].second;
-
-      // if there is an end pattern then look for it -- if it's not
-      // found then break
-      if (!pattern.endPattern.empty() &&
-          !boost::regex_search(pos, end, match, pattern.endPattern))
-      {
-         break;
-      }
-
-      // add to excluded ranges (match.end() will either be the end
-      // of the beginPattern match or the endPattern match)
-      ranges.push_back(ExcludedRange(begin, match[1].second));
-    }
-
-    return ranges;
-}
-
 struct TextRange
 {
    TextRange(bool process,
@@ -89,8 +53,62 @@ MathJaxFilter::MathJaxFilter(const std::vector<ExcludePattern>& excludePatterns,
    // and some of which will not -- we don't process some regions so that
    // we don't need to worry about mathjax ambiguity within code regions)
    std::vector<TextRange> ranges;
-   ranges.push_back(TextRange(true, pInput->begin(), pInput->end()));
+   std::string::const_iterator pos = pInput->begin();
+   std::string::const_iterator inputEnd = pInput->end();
+   while (pos != inputEnd)
+   {
+      // try all of the exclude patterns
+      bool foundPattern = false;
+      BOOST_FOREACH(const ExcludePattern& pattern, excludePatterns)
+      {
+         boost::smatch m;
+         if (boost::regex_search(pos, inputEnd, m, pattern.begin))
+         {
+            // set begin and end (may change if there is an end pattern)
+            std::string::const_iterator begin = m[0].first;
+            std::string::const_iterator end = m[0].second;
 
+            // check for a second match
+            if (!pattern.end.empty())
+            {
+               if (boost::regex_search(end, inputEnd, m, pattern.end))
+               {
+                  // update end to be the end of the match
+                  end = m[0].second;
+               }
+               else
+               {
+                  // didn't find a matching end pattern so set the end to the
+                  // end of the document -- this will cause us to exclude the
+                  // rest of the document from processing
+                  end = inputEnd;
+               }
+            }
+
+            // mark everything before the match as requiring processing
+            ranges.push_back(TextRange(true, pos, begin));
+
+            // mark the match as excluded from processing
+            ranges.push_back(TextRange(false, begin, end));
+
+            // update the position
+            pos = end;
+
+            // mark us as finding a pattern and break out of pattern loop
+            foundPattern = true;
+            break;
+
+         }
+      }
+
+      // if we didn't find a pattern then consume the rest of the input
+      // and mark it as requiring processing
+      if (!foundPattern)
+      {
+         ranges.push_back(TextRange(true, pos, pInput->end()));
+         pos = pInput->end();
+      }
+   }
 
    // now iterate through the ranges and substitute a guid for math blocks
    std::string filteredInput;

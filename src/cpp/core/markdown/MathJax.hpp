@@ -24,18 +24,18 @@ namespace markdown {
 struct ExcludePattern
 {
    ExcludePattern(const boost::regex& pattern)
-      : beginPattern(pattern)
+      : begin(pattern)
    {
    }
 
    ExcludePattern(const boost::regex& beginPattern,
                   const boost::regex& endPattern)
-      : beginPattern(beginPattern), endPattern(endPattern)
+      : begin(beginPattern), end(endPattern)
    {
    }
 
-   boost::regex beginPattern;
-   boost::regex endPattern;
+   boost::regex begin;
+   boost::regex end;
 };
 
 class MathJaxFilter : boost::noncopyable
