@@ -64,6 +64,7 @@ set (CORE_SOURCE_FILES
    http/UriHandler.cpp
    http/Util.cpp
    markdown/Markdown.cpp
+   markdown/MathJax.cpp
    markdown/sundown/autolink.c
    markdown/sundown/buffer.c
    markdown/sundown/houdini_href_e.c

@@ -15,17 +15,14 @@
 
 #include <iostream>
 
-#include <boost/bind.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <boost/algorithm/string/replace.hpp>
-#include <boost/algorithm/string/regex.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
 
-#include <core/system/System.hpp>
+#include "MathJax.hpp"
 
 #include "sundown/markdown.h"
 #include "sundown/html.h"
@@ -199,80 +196,6 @@ Error renderMarkdown(const SundownBuffer& inputBuffer,
    return Success();
 }
 
-class MathFilter : boost::noncopyable
-{
-public:
-   MathFilter(std::string* pInput, std::string* pHTMLOutput)
-      : pHTMLOutput_(pHTMLOutput)
-   {
-      filter(boost::regex("\\${2}latex(\\s[\\s\\S]+?)\\${2}"),
-                          pInput,
-                          &displayMathBlocks_);
-
-      filter(boost::regex("\\$latex(\\s[\\s\\S]+?)\\$"),
-                          pInput,
-                          &inlineMathBlocks_);
-   }
-
-   ~MathFilter()
-   {
-      try
-      {
-         std::for_each(
-            displayMathBlocks_.begin(),
-            displayMathBlocks_.end(),
-            boost::bind(&MathFilter::restore, this, _1, "\\[", "\\]"));
-
-         std::for_each(
-            inlineMathBlocks_.begin(),
-            inlineMathBlocks_.end(),
-            boost::bind(&MathFilter::restore, this, _1, "\\(", "\\)"));
-      }
-      catch(...)
-      {
-      }
-   }
-
-private:
-   void filter(const boost::regex& re,
-               std::string* pInput,
-               std::map<std::string,std::string>* pMathBlocks)
-   {
-      // explicit function type required because the Formatter functor
-      // supports 3 distinct signatures
-      boost::function<std::string(
-          boost::match_results<std::string::const_iterator>)> formatter =
-                                 boost::bind(&MathFilter::substitute,
-                                             this, _1, pMathBlocks);
-
-      *pInput = boost::regex_replace(*pInput, re, formatter);
-   }
-
-   std::string substitute(
-               boost::match_results<std::string::const_iterator> match,
-               std::map<std::string,std::string>* pMathBlocks)
-   {
-      std::string guid = core::system::generateUuid(false);
-      pMathBlocks->insert(std::make_pair(guid, match[1]));
-      return guid;
-   }
-
-   void restore(const std::map<std::string,std::string>::value_type& block,
-                const std::string& beginDelim,
-                const std::string& endDelim)
-   {
-      boost::algorithm::replace_first(
-                          *pHTMLOutput_,
-                          block.first,
-                          beginDelim + " " + block.second + " " + endDelim);
-   }
-
-private:
-   std::string* pHTMLOutput_;
-   std::map<std::string,std::string> displayMathBlocks_;
-   std::map<std::string,std::string> inlineMathBlocks_;
-};
-
 } // anonymous namespace
 
 // render markdown to HTML -- assumes UTF-8 encoding
@@ -318,9 +241,9 @@ Error markdownToHTML(const std::string& markdownInput,
 
 {
    std::string input = markdownInput;
-   boost::scoped_ptr<MathFilter> pMathFilter;
+   boost::scoped_ptr<MathJaxFilter> pMathFilter;
    if (extensions.ignoreMath)
-      pMathFilter.reset(new MathFilter(&input, pHTMLOutput));
+      pMathFilter.reset(new MathJaxFilter(&input, pHTMLOutput));
 
    // setup input buffer
    SundownBuffer inputBuffer(input);
