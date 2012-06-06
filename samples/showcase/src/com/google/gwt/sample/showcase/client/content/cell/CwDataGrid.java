@@ -276,7 +276,7 @@ public class CwDataGrid extends ContentWidget {
         return object.getAge();
       }
     };
-    lastNameColumn.setSortable(true);
+    ageColumn.setSortable(true);
     sortHandler.setComparator(ageColumn, new Comparator<ContactInfo>() {
       @Override
       public int compare(ContactInfo o1, ContactInfo o2) {
