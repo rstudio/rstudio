@@ -16,15 +16,15 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.safehtml.client.HasSafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 
 /**
  * An entry in a
  * {@link com.google.gwt.user.client.ui.MenuBar}. Menu items can either fire a
- * {@link com.google.gwt.user.client.Command} when they are clicked, or open a
+ * {@link com.google.gwt.core.client.Scheduler.ScheduledCommand} when they are clicked, or open a
  * cascading sub-menu.
  *
  * Each menu item is assigned a unique DOM id in order to support ARIA. See
@@ -35,7 +35,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
   private static final String DEPENDENT_STYLENAME_SELECTED_ITEM = "selected";
   private static final String DEPENDENT_STYLENAME_DISABLED_ITEM = "disabled";
 
-  private Command command;
+  private ScheduledCommand command;
   private MenuBar parentMenu, subMenu;
   private boolean enabled = true;
 
@@ -54,7 +54,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
    * @param html the item's text
    * @param cmd the command to be fired when it is selected
    */
-  public MenuItem(SafeHtml html, Command cmd) {
+  public MenuItem(SafeHtml html, ScheduledCommand cmd) {
     this(html.asString(), true, cmd);
   }
 
@@ -75,7 +75,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
    * @param asHTML <code>true</code> to treat the specified text as html
    * @param cmd the command to be fired when it is selected
    */
-  public MenuItem(String text, boolean asHTML, Command cmd) {
+  public MenuItem(String text, boolean asHTML, ScheduledCommand cmd) {
     this(text, asHTML);
     setCommand(cmd);
   }
@@ -98,7 +98,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
    * @param text the item's text
    * @param cmd the command to be fired when it is selected
    */
-  public MenuItem(String text, Command cmd) {
+  public MenuItem(String text, ScheduledCommand cmd) {
     this(text, false);
     setCommand(cmd);
   }
@@ -135,7 +135,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
    *
    * @return this item's command, or <code>null</code> if none exists
    */
-  public Command getCommand() {
+  public ScheduledCommand getCommand() {
     return command;
   }
 
@@ -177,7 +177,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
    *
    * @param cmd the command to be associated with this item
    */
-  public void setCommand(Command cmd) {
+  public void setCommand(ScheduledCommand cmd) {
     command = cmd;
   }
 

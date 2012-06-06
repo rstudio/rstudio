@@ -19,6 +19,7 @@ import com.google.gwt.aria.client.CommonAttributeTypes.IdReference;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
@@ -32,7 +33,6 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -44,7 +44,7 @@ import java.util.List;
 
 /**
  * A standard menu bar widget. A menu bar can contain any number of menu items,
- * each of which can either fire a {@link com.google.gwt.user.client.Command} or
+ * each of which can either fire a {@link com.google.gwt.core.client.Scheduler.ScheduledCommand} or
  * open a cascaded menu bar.
  *
  * <p>
@@ -285,7 +285,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * @param cmd the command to be fired
    * @return the {@link MenuItem} object created
    */
-  public MenuItem addItem(SafeHtml html, Command cmd) {
+  public MenuItem addItem(SafeHtml html, ScheduledCommand cmd) {
     return addItem(new MenuItem(html, cmd));
   }
 
@@ -298,7 +298,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * @param cmd the command to be fired
    * @return the {@link MenuItem} object created
    */
-  public MenuItem addItem(String text, boolean asHTML, Command cmd) {
+  public MenuItem addItem(String text, boolean asHTML, ScheduledCommand cmd) {
     return addItem(new MenuItem(text, asHTML, cmd));
   }
 
@@ -335,7 +335,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * @param cmd the command to be fired
    * @return the {@link MenuItem} object created
    */
-  public MenuItem addItem(String text, Command cmd) {
+  public MenuItem addItem(String text, ScheduledCommand cmd) {
     return addItem(new MenuItem(text, cmd));
   }
 
@@ -893,7 +893,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
       // Fire the item's command. The command must be fired in the same event
       // loop or popup blockers will prevent popups from opening.
-      final Command cmd = item.getCommand();
+      final ScheduledCommand cmd = item.getCommand();
       Scheduler.get().scheduleFinally(new Scheduler.ScheduledCommand() {
         @Override
         public void execute() {

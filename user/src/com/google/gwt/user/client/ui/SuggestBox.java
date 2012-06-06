@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.editor.client.IsEditor;
@@ -35,7 +36,6 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.PopupPanel.AnimationType;
 import com.google.gwt.user.client.ui.SuggestOracle.Callback;
@@ -496,7 +496,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
       for (final Suggestion curSuggestion : suggestions) {
         final SuggestionMenuItem menuItem = new SuggestionMenuItem(
             curSuggestion, isDisplayStringHTML);
-        menuItem.setCommand(new Command() {
+        menuItem.setCommand(new ScheduledCommand() {
           public void execute() {
             callback.onSuggestionSelected(curSuggestion);
           }
