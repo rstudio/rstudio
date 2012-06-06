@@ -240,10 +240,20 @@ Error markdownToHTML(const std::string& markdownInput,
                      std::string* pHTMLOutput)
 
 {
+   // setup mathjax filter
+   std::vector<ExcludePattern> excludePatterns;
+   excludePatterns.push_back(
+            ExcludePattern(boost::regex("^`{3,}.*$"),
+                           boost::regex("^`{3,}\\s*$")));
+
    std::string input = markdownInput;
    boost::scoped_ptr<MathJaxFilter> pMathFilter;
    if (extensions.ignoreMath)
-      pMathFilter.reset(new MathJaxFilter(&input, pHTMLOutput));
+   {
+      pMathFilter.reset(new MathJaxFilter(excludePatterns,
+                                          &input,
+                                          pHTMLOutput));
+   }
 
    // setup input buffer
    SundownBuffer inputBuffer(input);

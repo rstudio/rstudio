@@ -17,6 +17,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <core/system/System.hpp>
@@ -24,16 +25,94 @@
 namespace core {
 namespace markdown {
 
-MathJaxFilter::MathJaxFilter(std::string* pInput, std::string* pHTMLOutput)
+namespace {
+
+typedef boost::iterator_range<std::string::const_iterator> ExcludedRange;
+
+std::vector<ExcludedRange> findExcludedRanges(const std::string& input,
+                                              const ExcludePattern& pattern)
+{
+   std::string::const_iterator pos = input.begin();
+   std::string::const_iterator end = input.end();
+
+   std::vector<ExcludedRange> ranges;
+   while(true)
+   {
+      // if the pattern isn't found then break
+      boost::smatch match;
+      if (!boost::regex_search(pos, end, match, pattern.beginPattern))
+         break;
+
+      // capture begin location and update pos
+      std::string::const_iterator begin = match[1].first;
+      pos = match[1].second;
+
+      // if there is an end pattern then look for it -- if it's not
+      // found then break
+      if (!pattern.endPattern.empty() &&
+          !boost::regex_search(pos, end, match, pattern.endPattern))
+      {
+         break;
+      }
+
+      // add to excluded ranges (match.end() will either be the end
+      // of the beginPattern match or the endPattern match)
+      ranges.push_back(ExcludedRange(begin, match[1].second));
+    }
+
+    return ranges;
+}
+
+struct TextRange
+{
+   TextRange(bool process,
+             const std::string::const_iterator& begin,
+             const std::string::const_iterator& end)
+      : process(process), begin(begin), end(end)
+   {
+   }
+
+   bool process;
+   std::string::const_iterator begin;
+   std::string::const_iterator end;
+};
+
+
+}
+
+MathJaxFilter::MathJaxFilter(const std::vector<ExcludePattern>& excludePatterns,
+                             std::string* pInput,
+                             std::string* pHTMLOutput)
    : pHTMLOutput_(pHTMLOutput)
 {
-   filter(boost::regex("\\${2}latex(\\s[\\s\\S]+?)\\${2}"),
-                       pInput,
-                       &displayMathBlocks_);
+   // divide the document into ranges (some of which will be processed
+   // and some of which will not -- we don't process some regions so that
+   // we don't need to worry about mathjax ambiguity within code regions)
+   std::vector<TextRange> ranges;
+   ranges.push_back(TextRange(true, pInput->begin(), pInput->end()));
 
-   filter(boost::regex("\\$latex(\\s[\\s\\S]+?)\\$"),
-                       pInput,
-                       &inlineMathBlocks_);
+
+   // now iterate through the ranges and substitute a guid for math blocks
+   std::string filteredInput;
+   BOOST_FOREACH(const TextRange& range, ranges)
+   {
+      std::string rangeText(range.begin, range.end);
+
+      if (range.process)
+      {
+         filter(boost::regex("\\${2}latex(\\s[\\s\\S]+?)\\${2}"),
+                             &rangeText,
+                             &displayMathBlocks_);
+
+         filter(boost::regex("\\$latex(\\s[\\s\\S]+?)\\$"),
+                             &rangeText,
+                             &inlineMathBlocks_);
+      }
+
+      filteredInput.append(rangeText);
+   }
+
+   *pInput = filteredInput;
 }
 
 MathJaxFilter::~MathJaxFilter()
@@ -73,6 +152,7 @@ std::string MathJaxFilter::substitute(
                boost::match_results<std::string::const_iterator> match,
                std::map<std::string,std::string>* pMathBlocks)
 {
+   // insert a guid
    std::string guid = core::system::generateUuid(false);
    pMathBlocks->insert(std::make_pair(guid, match[1]));
    return guid;

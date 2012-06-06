@@ -12,6 +12,7 @@
  */
 
 #include <string>
+#include <vector>
 #include <map>
 
 #include <boost/utility.hpp>
@@ -20,10 +21,29 @@
 namespace core {
 namespace markdown {
 
+struct ExcludePattern
+{
+   ExcludePattern(const boost::regex& pattern)
+      : beginPattern(pattern)
+   {
+   }
+
+   ExcludePattern(const boost::regex& beginPattern,
+                  const boost::regex& endPattern)
+      : beginPattern(beginPattern), endPattern(endPattern)
+   {
+   }
+
+   boost::regex beginPattern;
+   boost::regex endPattern;
+};
+
 class MathJaxFilter : boost::noncopyable
 {
 public:
-   MathJaxFilter(std::string* pInput, std::string* pHTMLOutput);
+   MathJaxFilter(const std::vector<ExcludePattern>& excludePatterns,
+                 std::string* pInput,
+                 std::string* pHTMLOutput);
    ~MathJaxFilter();
 
 private:
