@@ -89,6 +89,22 @@ void MathJaxFilter::restore(
                        beginDelim + " " + block.second + " " + endDelim);
 }
 
+bool requiresMathjax(const std::string& htmlOutput)
+{
+   boost::regex inlineMathRegex("\\\\\\(([\\s\\S]+?)\\\\\\)");
+   if (boost::regex_search(htmlOutput, inlineMathRegex))
+      return true;
+
+   boost::regex displayMathRegex("\\\\\\[([\\s\\S]+?)\\\\\\]");
+   if (boost::regex_search(htmlOutput, displayMathRegex))
+      return true;
+
+   boost::regex mathmlRegex("<math[>\\s](?s).*?</math>");
+   if (boost::regex_search(htmlOutput, mathmlRegex))
+      return true;
+
+   return false;
+}
 
 } // namespace markdown
 } // namespace core

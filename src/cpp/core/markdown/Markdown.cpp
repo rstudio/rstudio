@@ -312,6 +312,11 @@ Error markdownToHTML(const std::string& markdownInput,
    return Success();
 }
 
+bool isMathJaxRequired(const std::string& htmlOutput)
+{
+   return requiresMathjax(htmlOutput);
+}
+
 } // namespace markdown
 } // namespace core
    

@@ -566,22 +566,6 @@ bool requiresHighlighting(const std::string& htmlOutput)
    return boost::regex_search(htmlOutput, hlRegex);
 }
 
-bool requiresMathjax(const std::string& htmlOutput)
-{
-   boost::regex inlineMathRegex("\\\\\\(([\\s\\S]+?)\\\\\\)");
-   if (boost::regex_search(htmlOutput, inlineMathRegex))
-      return true;
-
-   boost::regex displayMathRegex("\\\\\\[([\\s\\S]+?)\\\\\\]");
-   if (boost::regex_search(htmlOutput, displayMathRegex))
-      return true;
-
-   boost::regex mathmlRegex("<math[>\\s](?s).*?</math>");
-   if (boost::regex_search(htmlOutput, mathmlRegex))
-      return true;
-
-   return false;
-}
 
 // for whatever reason when we host an iFrame in a Qt WebKit instance
 // it only looks at the very first font listed in the font-family
@@ -721,7 +705,7 @@ void handleMarkdownPreviewRequest(const http::Request& request,
          setVarFromHtmlResourceFile("r_highlight", &vars);
       else
          vars["r_highlight"]  = "";
-      if (requiresMathjax(htmlOutput))
+      if (markdown::isMathJaxRequired(htmlOutput))
          setVarFromHtmlResourceFile("mathjax", &vars);
       else
          vars["mathjax"] = "";

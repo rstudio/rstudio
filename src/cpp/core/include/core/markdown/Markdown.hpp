@@ -94,6 +94,9 @@ Error markdownToHTML(const std::string& markdownInput,
                      const HTMLOptions& htmlOptions,
                      std::string* pHTMLOutput);
 
+
+bool isMathJaxRequired(const std::string& htmlOutput);
+
 } // namespace markdown
 } // namespace core 
 

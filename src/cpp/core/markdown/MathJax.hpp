@@ -45,6 +45,8 @@ private:
    std::map<std::string,std::string> inlineMathBlocks_;
 };
 
+bool requiresMathjax(const std::string& htmlOutput);
+
 
 } // namespace markdown
 } // namespace core
