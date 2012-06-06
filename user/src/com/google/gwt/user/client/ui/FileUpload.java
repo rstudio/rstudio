@@ -35,7 +35,7 @@ import com.google.gwt.user.client.Event;
  * {@example com.google.gwt.examples.FormPanelExample}
  * </p>
  */
-public class FileUpload extends Widget implements HasName, HasChangeHandlers {
+public class FileUpload extends Widget implements HasName, HasChangeHandlers, HasEnabled {
   /**
    * Implementation class for {@link FileUpload}.
    */
