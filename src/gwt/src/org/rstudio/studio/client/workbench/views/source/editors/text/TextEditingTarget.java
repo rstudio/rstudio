@@ -1826,7 +1826,7 @@ public class TextEditingTarget implements EditingTarget
                      fileType_.canCompilePDF() || fileType_.canKnitToHTML();
 
          RnwWeave rnwWeave = compilePdfHelper_.getActiveRnwWeave();
-         final boolean forceEcho = rnwWeave != null ? rnwWeave.forceEchoOnExec() : false;
+         final boolean forceEcho = sweave && (rnwWeave != null) ? rnwWeave.forceEchoOnExec() : false;
          
          // NOTE: we always set echo to true for knitr because knitr doesn't
          // require print statements so if you don't echo to the console
