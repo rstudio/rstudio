@@ -118,6 +118,17 @@ MathJaxFilter::MathJaxFilter(const std::vector<ExcludePattern>& excludePatterns,
 
       if (range.process)
       {
+         // native mathjax display equations
+         filter(boost::regex("\\\\\\\\\\[([\\s\\S]+?)\\\\\\\\\\]"),
+                             &rangeText,
+                             &displayMathBlocks_);
+
+         // latex display equations (latex designator optional, used for
+         // syntactic compatiblity w/ wordpress-style inline equations)
+         filter(boost::regex("\\${2}(?:latex)?\\s([\\s\\S]+?)\\${2}"),
+                             &rangeText,
+                             &displayMathBlocks_);
+
          // native mathjax inline equations
          filter(boost::regex("\\\\\\\\\\(([\\s\\S]+?)\\\\\\\\\\)"),
                              &rangeText,
@@ -132,17 +143,6 @@ MathJaxFilter::MathJaxFilter(const std::vector<ExcludePattern>& excludePatterns,
          filter(boost::regex("\\$((?!\\s)[^$]*[^$\\s])\\$([\\s\\-\\.\\!\\?])"),
                              &rangeText,
                              &inlineMathBlocks_);
-
-         // native mathjax display equations
-         filter(boost::regex("\\\\\\\\\\[([\\s\\S]+?)\\\\\\\\\\]"),
-                             &rangeText,
-                             &displayMathBlocks_);
-
-         // latex display equations (latex designator optional, used for
-         // syntactic compatiblity w/ wordpress-style inline equations)
-         filter(boost::regex("\\${2}(?:latex)?\\s([\\s\\S]+?)\\${2}"),
-                             &rangeText,
-                             &displayMathBlocks_);
       }
 
       filteredInput.append(rangeText);
