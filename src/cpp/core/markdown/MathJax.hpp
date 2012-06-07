@@ -17,6 +17,7 @@
 
 #include <boost/utility.hpp>
 #include <boost/regex.hpp>
+#include <boost/function.hpp>
 
 namespace core {
 namespace markdown {
@@ -62,9 +63,21 @@ public:
 private:
    void filter(const boost::regex& re,
                std::string* pInput,
+               std::map<std::string,MathBlock>* pMathBlocks)
+   {
+      filter(re,
+             boost::function<bool(const std::string&)>(),
+             pInput,
+             pMathBlocks);
+   }
+
+   void filter(const boost::regex& re,
+               const boost::function<bool(const std::string&)>& condition,
+               std::string* pInput,
                std::map<std::string,MathBlock>* pMathBlocks);
 
    std::string substitute(
+               const boost::function<bool(const std::string&)>& condition,
                boost::match_results<std::string::const_iterator> match,
                std::map<std::string,MathBlock>* pMathBlocks);
 

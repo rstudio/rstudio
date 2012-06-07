@@ -41,6 +41,10 @@ struct TextRange
    std::string::const_iterator end;
 };
 
+bool hasLessThanThreeNewlines(const std::string& str)
+{
+   return std::count(str.begin(), str.end(), '\n') < 3;
+}
 
 }
 
@@ -141,6 +145,7 @@ MathJaxFilter::MathJaxFilter(const std::vector<ExcludePattern>& excludePatterns,
 
          // Org-mode style inline equations
          filter(boost::regex("\\$((?!\\s)[^$]*[^$\\s])\\$(?![\\w\\d`])"),
+                             &hasLessThanThreeNewlines,
                              &rangeText,
                              &inlineMathBlocks_);
       }
@@ -171,6 +176,7 @@ MathJaxFilter::~MathJaxFilter()
 }
 
 void MathJaxFilter::filter(const boost::regex& re,
+                           const boost::function<bool(const std::string&)>& condition,
                            std::string* pInput,
                            std::map<std::string,MathBlock>* pMathBlocks)
 {
@@ -179,21 +185,32 @@ void MathJaxFilter::filter(const boost::regex& re,
    boost::function<std::string(
        boost::match_results<std::string::const_iterator>)> formatter =
                               boost::bind(&MathJaxFilter::substitute,
-                                          this, _1, pMathBlocks);
+                                          this, condition, _1, pMathBlocks);
 
    *pInput = boost::regex_replace(*pInput, re, formatter);
 }
 
 std::string MathJaxFilter::substitute(
+               const boost::function<bool(const std::string&)>& condition,
                boost::match_results<std::string::const_iterator> match,
                std::map<std::string,MathBlock>* pMathBlocks)
 {
-   // insert a guid
-   std::string guid = core::system::generateUuid(false);
+   // get the equation
    std::string equation = match[1];
-   std::string suffix = (match.size() > 2) ? std::string(match[2]) : "";
-   pMathBlocks->insert(std::make_pair(guid, MathBlock(equation,suffix)));
-   return guid;
+
+   // apply additional condition if available
+   if (condition && !condition(equation))
+   {
+      // don't perform any substitution
+      return match[0];
+   }
+   else
+   {
+      std::string guid = core::system::generateUuid(false);
+      std::string suffix = (match.size() > 2) ? std::string(match[2]) : "";
+      pMathBlocks->insert(std::make_pair(guid, MathBlock(equation,suffix)));
+      return guid;
+   }
 }
 
 void MathJaxFilter::restore(
