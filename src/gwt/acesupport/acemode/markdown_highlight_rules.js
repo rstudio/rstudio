@@ -78,6 +78,9 @@ var MarkdownHighlightRules = function() {
         }, { // HR _
             token : "constant",
             regex : "^[ ]{0,2}(?:[ ]?\\_[ ]?){3,}\\s*$"
+        }, { // $ escape
+            token : "text",
+            regex : "\\\\\\$"
         }, { // MathJax $$
             token : "markup.list",
             regex : "\\${2}(?:latex)?\\s",
