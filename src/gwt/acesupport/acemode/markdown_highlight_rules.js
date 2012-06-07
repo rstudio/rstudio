@@ -80,7 +80,7 @@ var MarkdownHighlightRules = function() {
             regex : "^[ ]{0,2}(?:[ ]?\\_[ ]?){3,}\\s*$"
         }, { // MathJax $$
             token : "markup.list",
-            regex : "\\${2}latex\\s",
+            regex : "\\${2}(?:latex)?\\s",
             next  : "mathjaxdisplay"
         }, { // MathJax $
             token : "markup.list",
