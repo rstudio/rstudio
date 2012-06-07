@@ -97,6 +97,9 @@ var MarkdownHighlightRules = function() {
             token : "markup.list",
             regex : "\\$latex\\s",
             next  : "mathjaxinline"
+        }, { // MathJax $...$ (org-mode style)
+            token : ["markup.list","support.function","markup.list", "text"],
+            regex : "(\\$)" + "((?!\\s)[^$]*[^$\\s])" + "(\\$)" + "([\\s\\-\\.\\!\\?])"
         }, { // list
             token : "text",
             regex : "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+",
