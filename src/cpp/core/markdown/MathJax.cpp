@@ -124,7 +124,7 @@ MathJaxFilter::MathJaxFilter(const std::vector<ExcludePattern>& excludePatterns,
                              &inlineMathBlocks_);
 
          // wordpress style inline equations
-         filter(boost::regex("\\$latex(\\s[\\s\\S]+?)\\$"),
+         filter(boost::regex("\\$latex\\s([\\s\\S]+?)\\$"),
                              &rangeText,
                              &inlineMathBlocks_);
 
@@ -134,7 +134,7 @@ MathJaxFilter::MathJaxFilter(const std::vector<ExcludePattern>& excludePatterns,
                              &displayMathBlocks_);
 
          // wordpress style display equations
-         filter(boost::regex("\\${2}latex(\\s[\\s\\S]+?)\\${2}"),
+         filter(boost::regex("\\${2}latex\\s([\\s\\S]+?)\\${2}"),
                              &rangeText,
                              &displayMathBlocks_);
       }
