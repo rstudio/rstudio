@@ -91,7 +91,7 @@ var MarkdownHighlightRules = function() {
             regex : "\\\\\\$"
         }, { // MathJax $$(?:latex)?
             token : "markup.list",
-            regex : "\\${2}(?:latex\\s?)?",
+            regex : "\\${2}(?:latex(\\s|$))?",
             next  : "mathjaxdisplay"
         }, { // MathJax $latex
             token : "markup.list",
