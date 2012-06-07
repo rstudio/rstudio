@@ -27,6 +27,16 @@ import com.google.gwt.resources.rg.ExternalTextResourceGenerator;
 @DefaultExtensions(value = {".txt"})
 @ResourceGeneratorType(ExternalTextResourceGenerator.class)
 public interface ExternalTextResource extends ResourcePrototype {
-  void getText(ResourceCallback<TextResource> callback)
-      throws ResourceException;
+
+  /**
+   * Fetches a {@link TextResource} and calls {@code callback} with the result.
+   * 
+   * Caches after the first result, so {@code callback} is invoked immediately for subsequent
+   * invocations.
+   * 
+   * @throws ResourceException if the resource request cannot be initiated, e.g. due to an invalid
+   *           url or an AJAX security error (same origin violation)
+   */
+  void getText(ResourceCallback<TextResource> callback) throws ResourceException;
+
 }
