@@ -685,7 +685,7 @@ char_codespan(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t of
 static size_t
 char_escape(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
 {
-	static const char *escape_chars = "\\`*_{}[]()#+-.!:|&<>^~";
+	static const char *escape_chars = "\\`*_{}[]()#+-.!:|&<>^~$";
 	struct buf work = { 0, 0, 0, 0 };
 
 	if (size > 1) {

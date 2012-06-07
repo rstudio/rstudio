@@ -3,7 +3,7 @@
 set -e
 
 if [ ! -d "./sundown" ]; then
-   git clone git@github.com:tanoku/sundown.git
+   git clone git@github.com:rstudio/sundown.git
 fi
 
 cd sundown
