@@ -208,7 +208,8 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
    * @param context a LinkerContext
    */
   protected String getJsComputeScriptBase(LinkerContext context) {
-    return "com/google/gwt/core/ext/linker/impl/computeScriptBase.js";
+    return getStringConfigurationProperty(context, "computeScriptBaseJs",
+        "com/google/gwt/core/ext/linker/impl/computeScriptBase.js");
   }
 
   /**

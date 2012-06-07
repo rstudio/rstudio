@@ -172,6 +172,10 @@ class Recompiler {
         "com/google/gwt/core/ext/linker/impl/installScriptDirect.js");
     overrideConfig(moduleDef, "installCode", "false");
 
+    // override computeScriptBase.js to enable the "Compile" button
+    overrideConfig(moduleDef, "computeScriptBaseJs",
+        "com/google/gwt/dev/codeserver/computeScriptBase.js");
+
     // If present, set some config properties back to defaults.
     // (Needed for Google's server-side linker.)
     maybeOverrideConfig(moduleDef, "includeBootstrapInPrimaryFragment", "false");
@@ -179,8 +183,6 @@ class Recompiler {
         "com/google/gwt/core/ext/linker/impl/permutations.js");
     maybeOverrideConfig(moduleDef, "propertiesJs",
         "com/google/gwt/core/ext/linker/impl/properties.js");
-    maybeOverrideConfig(moduleDef, "computeScriptBaseJs",
-        "com/google/gwt/dev/codeserver/computeScriptBase.js");
 
     for (Map.Entry<String, String> entry : bindingProperties.entrySet()) {
       String propName = entry.getKey();

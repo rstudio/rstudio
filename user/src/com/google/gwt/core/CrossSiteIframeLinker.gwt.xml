@@ -22,6 +22,7 @@
   <define-configuration-property name="devModeRedirectEnabled" is_multi_valued="false"/>
   <define-configuration-property name="installScriptJs" is-multi-valued="false" />
   <define-configuration-property name="installCode" is-multi-valued="false" />
+  <define-configuration-property name="computeScriptBaseJs" is-multi-valued="false" />
 
   <set-configuration-property name="xsiframe.failIfScriptTag" value="TRUE"/> 
 
