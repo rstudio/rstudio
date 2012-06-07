@@ -91,7 +91,7 @@ var MarkdownHighlightRules = function() {
             regex : "\\\\\\$"
         }, { // MathJax $$(?:latex)?
             token : "markup.list",
-            regex : "\\${2}(?:latex)?\\s",
+            regex : "\\${2}(?:latex\\s?)?",
             next  : "mathjaxdisplay"
         }, { // MathJax $latex
             token : "markup.list",
@@ -119,7 +119,10 @@ var MarkdownHighlightRules = function() {
                     ")(>)"
         }, {
             token : "text",
-            regex : "[^\\*_%$`\\[#<>]+"
+            regex : "[^\\*_%$`\\[#<>\\\\]+"
+        } , {
+            token : "text",
+            regex : "\\\\"
         } ],
         
         "listblock" : [ { // Lists only escape on completely blank lines.
