@@ -42,6 +42,10 @@ int main(int argc, char * const argv[])
 
          "$latex y + 1$\n"
 
+         "\\\\( 1^2 \\\\)\n"
+
+         "\\\\[ 1^2 \\\\]\n"
+
          "```\n"
          "## $latex y + 1$\n"
          "```\n"
