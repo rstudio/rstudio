@@ -41,6 +41,21 @@ struct TextRange
    std::string::const_iterator end;
 };
 
+
+TextRange findClosestRange(std::string::const_iterator pos,
+                           const std::vector<TextRange>& ranges)
+{
+   TextRange closestRange = ranges.front();
+
+   BOOST_FOREACH(const TextRange& range, ranges)
+   {
+      if (std::abs(range.begin - pos) < std::abs(closestRange.begin - pos))
+         closestRange = range;
+   }
+
+   return closestRange;
+}
+
 bool hasLessThanThreeNewlines(const std::string& str)
 {
    return std::count(str.begin(), str.end(), '\n') < 3;
@@ -62,7 +77,7 @@ MathJaxFilter::MathJaxFilter(const std::vector<ExcludePattern>& excludePatterns,
    while (pos != inputEnd)
    {
       // try all of the exclude patterns
-      bool foundPattern = false;
+      std::vector<TextRange> matchedRanges;
       BOOST_FOREACH(const ExcludePattern& pattern, excludePatterns)
       {
          boost::smatch m;
@@ -89,25 +104,30 @@ MathJaxFilter::MathJaxFilter(const std::vector<ExcludePattern>& excludePatterns,
                }
             }
 
-            // mark everything before the match as requiring processing
-            ranges.push_back(TextRange(true, pos, begin));
-
-            // mark the match as excluded from processing
-            ranges.push_back(TextRange(false, begin, end));
-
-            // update the position
-            pos = end;
-
-            // mark us as finding a pattern and break out of pattern loop
-            foundPattern = true;
-            break;
-
+            // add the matched range to our list
+            matchedRanges.push_back(TextRange(false, begin, end));
          }
       }
 
-      // if we didn't find a pattern then consume the rest of the input
-      // and mark it as requiring processing
-      if (!foundPattern)
+      // if we found at least one matched range then find the closest one,
+      // add it to our list, and continue
+      if (!matchedRanges.empty())
+      {
+         // find the closest range
+         TextRange range = findClosestRange(pos, matchedRanges);
+
+         // mark everything before the match as requiring processing
+         ranges.push_back(TextRange(true, pos, range.begin));
+
+         // add the range
+         ranges.push_back(range);
+
+         // update the position
+         pos = range.end;
+      }
+
+      // no match -- consume remaining input and tag it for processing
+      else
       {
          ranges.push_back(TextRange(true, pos, pInput->end()));
          pos = pInput->end();
