@@ -140,7 +140,7 @@ MathJaxFilter::MathJaxFilter(const std::vector<ExcludePattern>& excludePatterns,
                              &inlineMathBlocks_);
 
          // Org-mode style inline equations
-         filter(boost::regex("\\$((?!\\s)[^$]*[^$\\s])\\$([\\s\\-\\.\\!\\?])"),
+         filter(boost::regex("\\$((?!\\s)[^$]*[^$\\s])\\$(?![\\w\\d`])"),
                              &rangeText,
                              &inlineMathBlocks_);
       }
