@@ -128,6 +128,11 @@ MathJaxFilter::MathJaxFilter(const std::vector<ExcludePattern>& excludePatterns,
                              &rangeText,
                              &inlineMathBlocks_);
 
+         // Org-mode style inline equations
+         filter(boost::regex("\\$((?!\\s)[^$]*[^$\\s])\\$([\\s\\-\\.\\!\\?])"),
+                             &rangeText,
+                             &inlineMathBlocks_);
+
          // native mathjax display equations
          filter(boost::regex("\\\\\\\\\\[([\\s\\S]+?)\\\\\\\\\\]"),
                              &rangeText,
@@ -167,7 +172,7 @@ MathJaxFilter::~MathJaxFilter()
 
 void MathJaxFilter::filter(const boost::regex& re,
                            std::string* pInput,
-                           std::map<std::string,std::string>* pMathBlocks)
+                           std::map<std::string,MathBlock>* pMathBlocks)
 {
    // explicit function type required because the Formatter functor
    // supports 3 distinct signatures
@@ -181,23 +186,26 @@ void MathJaxFilter::filter(const boost::regex& re,
 
 std::string MathJaxFilter::substitute(
                boost::match_results<std::string::const_iterator> match,
-               std::map<std::string,std::string>* pMathBlocks)
+               std::map<std::string,MathBlock>* pMathBlocks)
 {
    // insert a guid
    std::string guid = core::system::generateUuid(false);
-   pMathBlocks->insert(std::make_pair(guid, match[1]));
+   std::string equation = match[1];
+   std::string suffix = (match.size() > 2) ? std::string(match[2]) : "";
+   pMathBlocks->insert(std::make_pair(guid, MathBlock(equation,suffix)));
    return guid;
 }
 
 void MathJaxFilter::restore(
-               const std::map<std::string,std::string>::value_type& block,
+               const std::map<std::string,MathBlock>::value_type& block,
                const std::string& beginDelim,
                const std::string& endDelim)
 {
    boost::algorithm::replace_first(
-                       *pHTMLOutput_,
-                       block.first,
-                       beginDelim + " " + block.second + " " + endDelim);
+     *pHTMLOutput_,
+     block.first,
+     beginDelim + " " + block.second.equation + " " + endDelim +
+       block.second.suffix);
 }
 
 bool requiresMathjax(const std::string& htmlOutput)

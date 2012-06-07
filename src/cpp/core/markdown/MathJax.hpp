@@ -38,6 +38,19 @@ struct ExcludePattern
    boost::regex end;
 };
 
+
+struct MathBlock
+{
+   MathBlock(const std::string& equation,
+             const std::string& suffix)
+      : equation(equation), suffix(suffix)
+   {
+   }
+
+   std::string equation;
+   std::string suffix;
+};
+
 class MathJaxFilter : boost::noncopyable
 {
 public:
@@ -49,20 +62,20 @@ public:
 private:
    void filter(const boost::regex& re,
                std::string* pInput,
-               std::map<std::string,std::string>* pMathBlocks);
+               std::map<std::string,MathBlock>* pMathBlocks);
 
    std::string substitute(
                boost::match_results<std::string::const_iterator> match,
-               std::map<std::string,std::string>* pMathBlocks);
+               std::map<std::string,MathBlock>* pMathBlocks);
 
-   void restore(const std::map<std::string,std::string>::value_type& block,
+   void restore(const std::map<std::string,MathBlock>::value_type& block,
                 const std::string& beginDelim,
                 const std::string& endDelim);
 
 private:
    std::string* pHTMLOutput_;
-   std::map<std::string,std::string> displayMathBlocks_;
-   std::map<std::string,std::string> inlineMathBlocks_;
+   std::map<std::string,MathBlock> displayMathBlocks_;
+   std::map<std::string,MathBlock> inlineMathBlocks_;
 };
 
 bool requiresMathjax(const std::string& htmlOutput);

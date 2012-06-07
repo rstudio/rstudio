@@ -53,6 +53,8 @@ int main(int argc, char * const argv[])
 
 
          "`$latex z + 1$`\n"
+
+          "$x + 1$!\n"
       ;
 
       std::string output;
