@@ -93,7 +93,7 @@ function maven-gwt() {
     zip -d $GWT_EXTRACT_DIR/requestfactory-${i}.jar org/json/*
   done
 
-  for i in dev user servlet
+  for i in dev user servlet codeserver
   do
     CUR_FILE=`ls $GWT_EXTRACT_DIR/gwt-${i}.jar`
     
@@ -122,7 +122,7 @@ function maven-gwt() {
   # push parent poms
   maven-deploy-file $mavenRepoUrl $mavenRepoId $pomDir/gwt/pom.xml $pomDir/gwt/pom.xml
 
-  for i in dev user servlet
+  for i in dev user servlet codeserver
   do
     CUR_FILE=`ls $GWT_EXTRACT_DIR/gwt-${i}.jar`
     gwtPomFile=$pomDir/gwt/gwt-$i/pom.xml

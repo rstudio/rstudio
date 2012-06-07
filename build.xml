@@ -36,6 +36,7 @@
   <target name="buildonly"
           description="[action] Minimal one-platform devel build, without distro packaging">
     <call-subproject subproject="dev" subtarget="build" />
+    <call-subproject subproject="codeserver" subtarget="build" />
     <call-subproject subproject="user" subtarget="build" />
     <call-subproject subproject="requestfactory" subtarget="build" />
     <call-subproject subproject="servlet" subtarget="build" />
@@ -53,6 +54,12 @@
   <target name="dev" description="[subdir] Builds (or runs ${target} if set) all the dev libraries">
     <call-subproject subproject="buildtools" subtarget="build" />
     <gwt.ant dir="dev" />
+    <gwt.ant dir="dev/codeserver" />
+  </target>
+
+  <target name="codeserver" description="[subdir] Builds (or runs ${target} if set) only the SuperDevMode">
+    <call-subproject subproject="dev" subtarget="build" />
+    <gwt.ant dir="dev/codeserver" />
   </target>
 
   <target name="user" description="[subdir] Builds (or runs ${target} if set) only the user library">
@@ -101,6 +108,7 @@
 
   <target name="build" description="[action] Builds GWT, including samples, but without distro packaging">
     <call-subproject subproject="dev" subtarget="build"/>
+    <call-subproject subproject="codeserver" subtarget="build"/>
     <call-subproject subproject="user" subtarget="build"/>
     <call-subproject subproject="requestfactory" subtarget="build"/>
     <call-subproject subproject="servlet" subtarget="build"/>
@@ -112,6 +120,7 @@
   <target name="checkstyle" description="[action] Does static analysis of GWT source">
     <call-subproject subproject="buildtools" subtarget="checkstyle" />
     <call-subproject subproject="dev" subtarget="checkstyle" />
+    <call-subproject subproject="codeserver" subtarget="checkstyle" />
     <call-subproject subproject="user" subtarget="checkstyle" />
     <call-subproject subproject="requestfactory" subtarget="checkstyle" />
     <call-subproject subproject="servlet" subtarget="checkstyle" />
@@ -123,6 +132,7 @@
           description="[action] Runs all the GWT tests, including checkstyle and apicheck">
     <call-subproject subproject="buildtools" subtarget="test" />
     <call-subproject subproject="dev" subtarget="test" />
+    <call-subproject subproject="codeserver" subtarget="test" />
     <call-subproject subproject="user" subtarget="test" />
     <call-subproject subproject="requestfactory" subtarget="test" />
     <call-subproject subproject="servlet" subtarget="test" />
