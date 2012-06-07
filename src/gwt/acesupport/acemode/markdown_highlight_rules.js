@@ -78,14 +78,22 @@ var MarkdownHighlightRules = function() {
         }, { // HR _
             token : "constant",
             regex : "^[ ]{0,2}(?:[ ]?\\_[ ]?){3,}\\s*$"
+        }, { // MathJax native display \\[ ... \\]
+            token : "markup.list",
+            regex : "\\\\\\\\\\[",
+            next  : "mathjaxnativedisplay"
+        }, { // MathJax native inline \\( ... \\)
+            token : "markup.list",
+            regex : "\\\\\\\\\\(",
+            next  : "mathjaxnativeinline"
         }, { // $ escape
             token : "text",
             regex : "\\\\\\$"
-        }, { // MathJax $$
+        }, { // MathJax $$(?:latex)?
             token : "markup.list",
             regex : "\\${2}(?:latex)?\\s",
             next  : "mathjaxdisplay"
-        }, { // MathJax $
+        }, { // MathJax $latex
             token : "markup.list",
             regex : "\\$latex\\s",
             next  : "mathjaxinline"
@@ -147,6 +155,15 @@ var MarkdownHighlightRules = function() {
             regex : "[^\\$]+"
         } ],
         
+        "mathjaxnativedisplay" : [ {
+            token : "markup.list",
+            regex : "\\\\\\\\\\]",
+            next  : "start"
+        }, {
+            token : "support.function",
+            regex : "[\\s\\S]+?"
+        } ],
+        
         "mathjaxinline" : [ {
             token : "markup.list",
             regex : "\\$",
@@ -154,6 +171,15 @@ var MarkdownHighlightRules = function() {
         }, {
             token : "support.function",
             regex : "[^\\$]+"
+        } ],
+
+        "mathjaxnativeinline" : [ {
+            token : "markup.list",
+            regex : "\\\\\\\\\\)",
+            next  : "start"
+        }, {
+            token : "support.function",
+            regex : "[\\s\\S]+?"
         } ]
     };
 };
