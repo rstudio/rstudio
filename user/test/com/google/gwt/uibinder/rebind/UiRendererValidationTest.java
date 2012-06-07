@@ -26,6 +26,7 @@ import org.xml.sax.SAXParseException;
 public class UiRendererValidationTest extends AbstractUiBinderWriterTest {
 
   private static String UI_XML = "<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'>"
+      + "<ui:style field='styleField'>.foo {color:black;}</ui:style>"
       + "<ui:with field='withField' />"
       + "  <div ui:field='root'>"
       + "    <span ui:field='someField'><ui:text from='{withField.toString}'/></span>"
@@ -45,6 +46,7 @@ public class UiRendererValidationTest extends AbstractUiBinderWriterTest {
     declaredMethods.append("    public void render(SafeHtmlBuilder sb, foo.Foo withField);");
     declaredMethods.append("    public DivElement getRoot(Element foo);");
     declaredMethods.append("    public SpanElement getSomeField(Element bar);");
+    declaredMethods.append("    public UiStyle getStyleField();");
     init(UI_XML, generateRendererResource(declaredMethods));
     writer.parseDocument(doc, printWriter);
   }
@@ -74,7 +76,16 @@ public class UiRendererValidationTest extends AbstractUiBinderWriterTest {
     init(UI_XML, generateRendererResource(declaredMethods));
 
     assertParseFailure("Expected failure due to getter with no parameters.",
-        "Getter getRoot must have exactly one parameter in renderer.OwnerClass.Renderer");
+        "Field getter getRoot must have exactly one parameter in renderer.OwnerClass.Renderer");
+  }
+
+  public void testStyleGetterWithParameter() throws SAXParseException, UnableToCompleteException {
+    initGetterTest();
+    declaredMethods.append("    public UiStyle getStyleField(DivElement bar);");
+    init(UI_XML, generateRendererResource(declaredMethods));
+
+    assertParseFailure("Expected failure due to style getter with a parameter.",
+        "Style getter getStyleField must have no parameters in renderer.OwnerClass.Renderer");
   }
 
   public void testGetterTooManyParameters() throws SAXParseException, UnableToCompleteException {
@@ -83,7 +94,7 @@ public class UiRendererValidationTest extends AbstractUiBinderWriterTest {
     init(UI_XML, generateRendererResource(declaredMethods));
 
     assertParseFailure("Expected failure due to bad getter signature.",
-        "Getter getRoot must have exactly one parameter in renderer.OwnerClass.Renderer");
+        "Field getter getRoot must have exactly one parameter in renderer.OwnerClass.Renderer");
   }
 
   public void testGetterUnknownField() throws SAXParseException, UnableToCompleteException {
@@ -91,7 +102,9 @@ public class UiRendererValidationTest extends AbstractUiBinderWriterTest {
     declaredMethods.append("    public DivElement getQuux(Element parent);");
     init(UI_XML, generateRendererResource(declaredMethods));
     assertParseFailure("Expected failure due to getter for an unexpected field name.",
-        "getQuux does not match a \"ui:field='quux'\" declaration in renderer.OwnerClass.Renderer");
+        "getQuux does not match a \"ui:field='quux'\" declaration in renderer.OwnerClass.Renderer,"
+            + " or 'quux' refers to something other than a ui:style or an HTML element in"
+            + " the template");
   }
 
   public void testRenderBadReturnType() throws SAXParseException, UnableToCompleteException {
@@ -171,6 +184,7 @@ public class UiRendererValidationTest extends AbstractUiBinderWriterTest {
         code.append("import com.google.gwt.dom.client.Element;\n");
         code.append("import com.google.gwt.dom.client.SpanElement;\n");
         code.append("import foo.Foo;\n");
+        code.append("import foo.UiStyle;\n");
         code.append("public class OwnerClass {");
         code.append("  public interface Renderer");
         code.append("      extends UiRenderer {");

@@ -102,6 +102,17 @@ public abstract class AbstractUiBinderWriterTest extends TestCase {
     }
   };
 
+  public static final MockJavaResource UI_STYLE = new MockJavaResource("foo.UiStyle") {
+    @Override
+    public CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package foo;");
+      code.append("public interface UiStyle {");
+      code.append("}");
+      return code;
+    }
+  };
+
   protected static final String BINDER_URI = "urn:ui:com.google.gwt.uibinder";
 
   protected static final W3cDomHelper docHelper = new W3cDomHelper(TreeLogger.NULL,
@@ -153,6 +164,7 @@ public abstract class AbstractUiBinderWriterTest extends TestCase {
     resources.add(CLIENT_BUNDLE);
     resources.add(DIV_ELEMENT);
     resources.add(SPAN_ELEMENT);
+    resources.add(UI_STYLE);
     resources.add(FOO);
     resources.add(rendererClass);
     resources.addAll(Arrays.asList(otherClasses));

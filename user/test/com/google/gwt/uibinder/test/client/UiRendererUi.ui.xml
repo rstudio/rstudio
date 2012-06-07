@@ -17,12 +17,16 @@
 
   <ui:with field="aValue"/>
   <ui:with field="aValueTwice"/>
+  <ui:style field="uiStyle"  type="com.google.gwt.uibinder.test.client.UiRendererUi.UiStyle">
+    .enabled { color:black; }
+    .disabled { color:gray; }
+  </ui:style>
 
   <div ui:field='root' class="{res.style.bodyColor} {res.style.bodyFont}"
       title="The title of this div is localizable">
     <ui:attribute name='title'/>
     <span><ui:text from="{constants.getText}" /></span>
-    Hello, <span ui:field="nameSpan"><ui:text from="{aValue.getBar}"/></span>.
+    Hello, <span ui:field="nameSpan" class="{uiStyle.enabled}"><ui:text from="{aValue.getBar}"/></span>.
     <ui:msg>How goes it?</ui:msg>
     <span/><span><ui:text from="{aValueTwice.getBar}{aValueTwice.getBar}"/></span>
       <h2 class="{res.style.bodyColor} {res.style.bodyFont}">Placeholders in localizables</h2>

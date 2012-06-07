@@ -248,6 +248,14 @@ public class UiRendererTest extends GWTTestCase {
         spanNode2.getFirstChild());
   }
 
+  public void testStyleManipulation() {
+    SpanElement nameSpan = renderer.getNameSpan(docDiv);
+    assertEquals(renderer.getUiStyle().enabled(), nameSpan.getClassName());
+    nameSpan.replaceClassName(renderer.getUiStyle().enabled(),
+        renderer.getUiStyle().disabled());
+    assertEquals(renderer.getUiStyle().disabled(), nameSpan.getClassName());
+  }
+
   @Override
   protected void gwtTearDown() {
     docDiv.removeFromParent();

@@ -1132,6 +1132,18 @@ public class UiBinderWriter implements Statements {
   }
 
   /**
+   * Add call to {@code com.google.gwt.resources.client.CssResource#ensureInjected()}
+   * on each CSS resource field.
+   */
+  private void ensureInjectedCssFields() {
+    for (ImplicitCssResource css : bundleClass.getCssMethods()) {
+      String fieldName = css.getName();
+      FieldWriter cssField = fieldManager.require(fieldName);
+      cssField.addStatement("%s.ensureInjected();", fieldName);
+    }
+  }
+
+  /**
    * Evaluate whether all @UiField attributes are also defined in the template.
    * Dies if not.
    */
@@ -1364,13 +1376,10 @@ public class UiBinderWriter implements Statements {
     IndentedWriter niceWriter = new IndentedWriter(new PrintWriter(stringWriter));
 
     if (isRenderer) {
+      ensureInjectedCssFields();
       writeRenderer(niceWriter, rootField);
     } else if (useLazyWidgetBuilders) {
-      for (ImplicitCssResource css : bundleClass.getCssMethods()) {
-        String fieldName = css.getName();
-        FieldWriter cssField = fieldManager.require(fieldName);
-        cssField.addStatement("%s.ensureInjected();", fieldName);
-      }
+      ensureInjectedCssFields();
       writeBinderForRenderableStrategy(niceWriter, rootField);
     } else {
       writeBinder(niceWriter, rootField);
@@ -1558,32 +1567,43 @@ public class UiBinderWriter implements Statements {
   /**
    * Scan the base class for the getter methods. Assumes getters begin with
    * "get" and validates that each corresponds to a field declared with
-   * {@code ui:field}, it has a single parameter, the parameter type is
-   * assignable to {@code Element} and its return type is assignable to
-   * {@code Element}.
+   * {@code ui:field}. If the getter return type is assignable to
+   * {@code Element}, the getter must have a single parameter and the parameter
+   * must be assignable to {@code Element}. If the getter return type is assignable
+   * to {@code com.google.gwt.resources.client.CssResource}, the getter must
+   * have no parameters.
    */
   private void validateRendererGetters(JClassType owner) throws UnableToCompleteException {
     for (JMethod jMethod : owner.getInheritableMethods()) {
       String getterName = jMethod.getName();
       if (getterName.startsWith("get")) {
-        if (jMethod.getParameterTypes().length != 1) {
-          die("Getter %s must have exactly one parameter in %s", getterName,
-              owner.getQualifiedSourceName());
-        }
-        String elementClassName = com.google.gwt.dom.client.Element.class.getCanonicalName();
-        JClassType elementType = oracle.findType(elementClassName);
-        JClassType getterParamType =
-            jMethod.getParameterTypes()[0].getErasedType().isClassOrInterface();
-
-        if (!elementType.isAssignableFrom(getterParamType)) {
-          die("Getter %s must have exactly one parameter of type assignable to %s in %s",
-              getterName, elementClassName, owner.getQualifiedSourceName());
-        }
         String fieldName = getterToFieldName(getterName);
         FieldWriter field = fieldManager.lookup(fieldName);
-        if (field == null || !FieldWriterType.DEFAULT.equals(field.getFieldType())) {
-          die("%s does not match a \"ui:field='%s'\" declaration in %s", getterName, fieldName,
+        if (field == null || (!FieldWriterType.DEFAULT.equals(field.getFieldType())
+            && !FieldWriterType.GENERATED_CSS.equals(field.getFieldType()))) {
+          die("%s does not match a \"ui:field='%s'\" declaration in %s, "
+              + "or '%s' refers to something other than a ui:style"
+              + " or an HTML element in the template", getterName, fieldName,
+              owner.getQualifiedSourceName(), fieldName);
+        }
+        if (FieldWriterType.DEFAULT.equals(field.getFieldType())
+             && jMethod.getParameterTypes().length != 1) {
+          die("Field getter %s must have exactly one parameter in %s", getterName,
               owner.getQualifiedSourceName());
+        } else if (FieldWriterType.GENERATED_CSS.equals(field.getFieldType())
+            && jMethod.getParameterTypes().length != 0) {
+          die("Style getter %s must have no parameters in %s", getterName,
+              owner.getQualifiedSourceName());
+        } else if (jMethod.getParameterTypes().length == 1) {
+          String elementClassName = com.google.gwt.dom.client.Element.class.getCanonicalName();
+          JClassType elementType = oracle.findType(elementClassName);
+          JClassType getterParamType =
+              jMethod.getParameterTypes()[0].getErasedType().isClassOrInterface();
+
+          if (!elementType.isAssignableFrom(getterParamType)) {
+            die("Getter %s must have exactly one parameter of type assignable to %s in %s",
+                getterName, elementClassName, owner.getQualifiedSourceName());
+          }
         }
       } else if (!getterName.equals("render") && !getterName.equals("onBrowserEvent")
           && !getterName.equals("isParentOrRenderer")) {
@@ -2199,18 +2219,26 @@ public class UiBinderWriter implements Statements {
       // public ElementSubclass getFoo(Element parent) {
       w.write("%s {", getter.getReadableDeclaration(false, false, false, false, true));
       w.indent();
-      String elementParameter = getter.getParameters()[0].getName();
       String getterFieldName = getterToFieldName(getter.getName());
-      // The non-root elements are found by id
-      if (!getterFieldName.equals(rootFieldName)) {
-        // return (ElementSubclass) findUiField(parent);
-        w.write("return (%s) findInnerField(%s, \"%s\", RENDERED_ATTRIBUTE);",
-            getter.getReturnType().getErasedType().getQualifiedSourceName(), elementParameter,
-            getterFieldName);
+      // Is this a CSS resource field?
+      FieldWriter fieldWriter = fieldManager.lookup(getterFieldName);
+      if (FieldWriterType.GENERATED_CSS.equals(fieldWriter.getFieldType())) {
+        // return (CssResourceSubclass) get_styleField;
+        w.write("return (%s) %s;", getter.getReturnType().getErasedType().getQualifiedSourceName(),
+                FieldManager.getFieldGetter(getterFieldName));
       } else {
-        // return (ElementSubclass) findPreviouslyRendered(parent);
-        w.write("return (%s) findRootElement(%s, RENDERED_ATTRIBUTE);",
-            getter.getReturnType().getErasedType().getQualifiedSourceName(), elementParameter);
+        // Else the non-root elements are found by id
+        String elementParameter = getter.getParameters()[0].getName();
+        if (!getterFieldName.equals(rootFieldName)) {
+          // return (ElementSubclass) findInnerField(parent, "foo", RENDERED_ATTRIBUTE);
+          w.write("return (%s) findInnerField(%s, \"%s\", RENDERED_ATTRIBUTE);",
+              getter.getReturnType().getErasedType().getQualifiedSourceName(), elementParameter,
+              getterFieldName);
+        } else {
+          // return (ElementSubclass) findRootElement(parent);
+          w.write("return (%s) findRootElement(%s, RENDERED_ATTRIBUTE);",
+              getter.getReturnType().getErasedType().getQualifiedSourceName(), elementParameter);
+        }
       }
       w.outdent();
       w.write("}");
