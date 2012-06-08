@@ -1,0 +1,23 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder">
+  <ui:style>
+    .taskTemplateCell {
+      margin: 8px;
+      border: 1px solid #666;
+      -moz-border-radius: 8px;
+      border-radius: 8px;
+      padding: 18px 10px;
+      font-size: 12pt;
+      background-color: #eee;
+      -webkit-user-drag: element;
+    }
+  </ui:style>
+
+  <ui:with field="name" type="java.lang.String"/>
+  <ui:with field="notes" type="java.lang.String"/>
+
+  <div ui:field="root" class="{style.taskTemplateCell}" draggable="true">
+    <ui:text from="{name}"/>
+    <div style="font-size:80%;"><ui:text from="{notes}"/></div>
+  </div>
+</ui:UiBinder>

@@ -1,0 +1,23 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+  xmlns:ui="urn:ui:com.google.gwt.uibinder">
+
+  <ui:style field="cellStyle"
+      type="com.google.gwt.sample.mobilewebapp.client.mobile.TaskProxyCell.CellStyle">
+    .noDate {font-size:80%;}
+    .onTime {font-size:80%;color:#999;}
+    .pastDue {font-size:80%;color:red;}
+  </ui:style>
+
+  <ui:with field="date" type="java.lang.String"/>
+  <ui:with field="name" type="com.google.gwt.safehtml.shared.SafeHtml"/>
+  <ui:with field="dateStyle" type="java.lang.String"/>
+
+  <div>
+    <ui:text from="{name.asString}"/>
+    <div class="{dateStyle}">
+      <ui:text from="{date}"/>
+    </div>
+  </div>
+
+</ui:UiBinder>

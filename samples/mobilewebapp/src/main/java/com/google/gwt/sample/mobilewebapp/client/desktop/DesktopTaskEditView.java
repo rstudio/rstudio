@@ -29,12 +29,9 @@ import com.google.gwt.event.dom.client.DragLeaveEvent;
 import com.google.gwt.event.dom.client.DragLeaveHandler;
 import com.google.gwt.event.dom.client.DragOverEvent;
 import com.google.gwt.event.dom.client.DragOverHandler;
+import com.google.gwt.event.dom.client.DragStartEvent;
 import com.google.gwt.event.dom.client.DropEvent;
 import com.google.gwt.event.dom.client.DropHandler;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.sample.mobilewebapp.client.ui.DateButton;
 import com.google.gwt.sample.mobilewebapp.client.ui.EditorDecorator;
@@ -43,6 +40,9 @@ import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxyImpl;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.uibinder.client.UiRenderer;
+import com.google.gwt.uibinder.client.UiTemplate;
 import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.Button;
@@ -71,55 +71,39 @@ public class DesktopTaskEditView extends Composite implements TaskEditView {
   }
 
   /**
-   * A ClientBundle that provides images for this widget.
-   */
-  interface Resources extends ClientBundle {
-    @Source("DesktopTaskEditView.css")
-    Style style();
-  }
-
-  /**
-   * The styles used in this widget.
-   */
-  interface Style extends CssResource {
-    /**
-     * Applies to the cells in the task template list.
-     */
-    String taskTemplateCell();
-  }
-
-  /**
    * The cell used to render task templates.
    */
   static class TaskTemplateCell extends AbstractCell<TaskProxy> {
 
-    interface Template extends SafeHtmlTemplates {
-      @SafeHtmlTemplates.Template("<div class=\"{0}\" draggable=\"true\">"
-          + "{1}<div style=\"font-size:80%;\">{2}</div></div>")
-      SafeHtml task(String className, String name, String notes);
+    /**
+     * Use a UiBinder template to generate the {@code Cell} contents and process
+     * events.
+     */
+    @UiTemplate("TaskTemplateCell.ui.xml")
+    interface Renderer extends UiRenderer {
+      void render(SafeHtmlBuilder sb, String name, String notes);
+      void onBrowserEvent(TaskTemplateCell o, NativeEvent n, Element e, Context context);
     }
 
-    private Template template = GWT.create(Template.class);
-    private final String className;
+    private Renderer renderer = GWT.create(Renderer.class);
 
-    public TaskTemplateCell(String className) {
+    public TaskTemplateCell() {
+      // Register the kinds of event this cell will manage.
       super("dragstart");
-      this.className = className;
     }
 
+    /**
+     * Delegates event handling to the generated {@link UiRenderer}.
+     */
     @Override
     public void onBrowserEvent(Context context, Element parent, TaskProxy value, NativeEvent event,
         ValueUpdater<TaskProxy> valueUpdater) {
-      if ("dragstart".equals(event.getType())) {
-        // Save the ID of the TaskProxy.
-        DataTransfer dataTransfer = event.getDataTransfer();
-        dataTransfer.setData("text", String.valueOf(context.getIndex()));
-
-        // Set the image.
-        dataTransfer.setDragImage(parent, 25, 15);
-      }
+      renderer.onBrowserEvent(this, event, parent, context);
     }
 
+    /**
+     * Delegates the cell rendering to the generated {@link UiRenderer}.
+     */
     @Override
     public void render(Context context, TaskProxy value, SafeHtmlBuilder sb) {
       if (value == null) {
@@ -127,7 +111,20 @@ public class DesktopTaskEditView extends Composite implements TaskEditView {
       }
 
       String notes = value.getNotes();
-      sb.append(template.task(className, value.getName(), (notes == null) ? "" : notes));
+      renderer.render(sb, value.getName(), (notes == null) ? "" : notes);
+    }
+
+    /**
+     * Handles "drag-start" events inside the element named "root".
+    */
+    @UiHandler({"root"})
+    void onDragStart(DragStartEvent event, Element parent, Context context) {
+      // Save the ID of the TaskProxy.
+      DataTransfer dataTransfer = event.getDataTransfer();
+      dataTransfer.setData("text", String.valueOf(context.getIndex()));
+
+      // Set the image.
+      dataTransfer.setDragImage(parent, 25, 15);
     }
   }
 
@@ -203,16 +200,10 @@ public class DesktopTaskEditView extends Composite implements TaskEditView {
    */
   private Presenter presenter;
 
-  private final Resources resources;
-
   /**
    * Construct a new {@link DesktopTaskEditView}.
    */
   public DesktopTaskEditView() {
-    // Initialize the styles.
-    resources = GWT.create(Resources.class);
-    resources.style().ensureInjected();
-
     // Create the template list.
     templateList = createTaskTemplateList();
 
@@ -316,7 +307,7 @@ public class DesktopTaskEditView extends Composite implements TaskEditView {
 
   private CellList<TaskProxy> createTaskTemplateList() {
     CellList<TaskProxy> list =
-        new CellList<TaskProxy>(new TaskTemplateCell(resources.style().taskTemplateCell()));
+        new CellList<TaskProxy>(new TaskTemplateCell());
     list.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
 
     // Create the templates.

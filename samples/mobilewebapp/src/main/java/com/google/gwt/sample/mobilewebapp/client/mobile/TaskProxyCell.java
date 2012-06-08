@@ -19,43 +19,55 @@ import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
+import com.google.gwt.uibinder.client.UiRenderer;
 
 import java.util.Date;
 
 /**
  * A {@link com.google.gwt.cell.client.Cell} used to render a {@link TaskProxy}.
+ * Uses a UiRenderer to generate the cell contents.
  */
 class TaskProxyCell extends AbstractCell<TaskProxy> {
 
   /**
-   * The template used by this cell.
-   * 
+   * Use a UiBinder template to render this cell.
    */
-  interface Template extends SafeHtmlTemplates {
-    @SafeHtmlTemplates.Template("{0}<div style=\"font-size:80%;\">&nbsp;</div>")
-    SafeHtml noDate(SafeHtml name);
+  interface Renderer extends UiRenderer {
+    /**
+     * Retrieves the CSS resource defined in the template.
+     */
+    CellStyle getCellStyle();
 
-    @SafeHtmlTemplates.Template("{0}<div style=\"font-size:80%;color:#999;\">Due: {1}</div>")
-    SafeHtml onTime(SafeHtml name, String date);
-
-    @SafeHtmlTemplates.Template("{0}<div style=\"font-size:80%;color:red;\">Due: {1}</div>")
-    SafeHtml pastDue(SafeHtml name, String date);
+    /**
+     * Renders the cell contents into {@code sb}, filling in {@name},
+     * {@code date}, and the CSS {@code dateStyle}.
+     */
+    void render(SafeHtmlBuilder sb, SafeHtml name, String date, String dateStyle);
   }
 
-  private static Template template;
+  interface CellStyle extends CssResource {
+    String noDate();
+    String onTime();
+    String pastDue();
+  }
+
   private final DateTimeFormat dateFormat = DateTimeFormat.getFormat(PredefinedFormat.DATE_LONG);
 
+  private final Renderer renderer;
+
   public TaskProxyCell() {
-    if (template == null) {
-      template = GWT.create(Template.class);
-    }
+    renderer = GWT.<Renderer>create(Renderer.class);
   }
 
+  /**
+   * Renders the cell contents. Delegates the actual rendering to the
+   * UiRenderer decined in the template.
+   */
   @Override
   @SuppressWarnings("deprecation")
   public void render(com.google.gwt.cell.client.Cell.Context context, TaskProxy value,
@@ -77,11 +89,11 @@ class TaskProxyCell extends AbstractCell<TaskProxy> {
     today.setMinutes(0);
     today.setSeconds(0);
     if (date == null) {
-      sb.append(template.noDate(name));
+      renderer.render(sb, name, " ", renderer.getCellStyle().noDate());
     } else if (date.before(today)) {
-      sb.append(template.pastDue(name, dateFormat.format(date)));
+      renderer.render(sb, name, dateFormat.format(date), renderer.getCellStyle().pastDue());
     } else {
-      sb.append(template.onTime(name, dateFormat.format(date)));
+      renderer.render(sb, name, dateFormat.format(date), renderer.getCellStyle().onTime());
     }
   }
 }
