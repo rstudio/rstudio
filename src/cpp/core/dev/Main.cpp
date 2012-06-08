@@ -19,8 +19,6 @@
 
 #include <core/system/System.hpp>
 
-#include <core/markdown/Markdown.hpp>
-
 using namespace core ;
 
 int main(int argc, char * const argv[]) 
@@ -30,42 +28,6 @@ int main(int argc, char * const argv[])
       // initialize log
       initializeSystemLog("coredev", core::system::kLogLevelWarning);
 
-      // markdown to process
-      std::string input =
-         "Test markdown input\n"
-
-         "$latex x + 1$\n"
-
-         "```r\n"
-         "cat(\"$latex y + 1$\n\")\n"
-         "```\n"
-
-         "$latex y + 1$\n"
-
-         "\\\\( 1^2 \\\\)\n"
-
-         "\\\\[ 1^2 \\\\]\n"
-
-         "```\n"
-         "## $latex y + 1$\n"
-         "```\n"
-
-
-
-         "`$latex z + 1$`\n"
-
-          "$x + 1$!\n"
-      ;
-
-      std::string output;
-      Error error = markdown::markdownToHTML(input,
-                                             markdown::Extensions(),
-                                             markdown::HTMLOptions(),
-                                             &output);
-      if (error)
-         LOG_ERROR(error);
-
-      std::cerr << output << std::endl;
      
       return EXIT_SUCCESS;
    }
