@@ -35,6 +35,16 @@ public class TextEditingTargetPreviewHtmlHelper
    public boolean verifyPrerequisites(WarningBarDisplay display,
                                       TextFileType fileType)
    {
+      return verifyPrerequisites(null, display, fileType);
+   }
+   
+   public boolean verifyPrerequisites(String feature,
+                                      WarningBarDisplay display,
+                                      TextFileType fileType)
+   {
+      if (feature == null)
+         feature = fileType.getLabel() + " files";
+      
       // if this file requires knitr then validate pre-reqs
       if (fileType.requiresKnit())
       {
@@ -43,9 +53,7 @@ public class TextEditingTargetPreviewHtmlHelper
          {
             if (!htmlCaps.isRMarkdownSupported())
             {
-               showKnitrPreviewWarning(display,
-                                       fileType.getLabel(),
-                                       "0.5");
+               showKnitrPreviewWarning(display, feature, "0.5");
                return false;
             }
          }
@@ -53,10 +61,7 @@ public class TextEditingTargetPreviewHtmlHelper
          {
             if (!htmlCaps.isRHtmlSupported())
             {
-               showKnitrPreviewWarning(display,
-                                       fileType.getLabel(),
-                                       "0.5");
-               
+               showKnitrPreviewWarning(display, feature,  "0.5");
                return false;
             }
          }
@@ -66,10 +71,10 @@ public class TextEditingTargetPreviewHtmlHelper
    }
    
    private void showKnitrPreviewWarning(WarningBarDisplay display,
-                                        String fileType, 
+                                        String feature, 
                                         String requiredVersion)
    {
-      display.showWarningBar(fileType + " files require the " +
+      display.showWarningBar(feature + " require the " +
                              "knitr package (version " + requiredVersion + 
                              " or higher)");
    }

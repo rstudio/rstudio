@@ -2043,7 +2043,8 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onCompileNotebook()
    {
-      if (!previewHtmlHelper_.verifyPrerequisites(view_,
+      if (!previewHtmlHelper_.verifyPrerequisites("Compile Notebook",
+                                                  view_,
                                                   FileTypeRegistry.RMARKDOWN))
       {
          return;
