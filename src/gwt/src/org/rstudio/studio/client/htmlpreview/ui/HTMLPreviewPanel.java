@@ -147,8 +147,8 @@ public class HTMLPreviewPanel extends ResizeComposite
          
       });
       
-      toolbar.addRightSeparator();
-      toolbar.addRightWidget(
+      refreshButtonSeparator_ = toolbar.addRightSeparator();
+      refreshButton_ = toolbar.addRightWidget(
                      commands.refreshHtmlPreview().createToolbarButton());
       
       
@@ -200,7 +200,8 @@ public class HTMLPreviewPanel extends ResizeComposite
    public void showPreview(String url, 
                            String htmlFile,
                            boolean enableSaveAs,
-                           boolean enablePublish)
+                           boolean enablePublish,
+                           boolean enableRefresh)
    {
       String shortFileName = StringUtil.shortPathName(
             FileSystemItem.createFile(htmlFile), 
@@ -211,6 +212,8 @@ public class HTMLPreviewPanel extends ResizeComposite
       saveHtmlPreviewAs_.setVisible(enableSaveAs);
       publishButtonSeparator_.setVisible(enablePublish);
       publishButton_.setVisible(enablePublish);
+      refreshButtonSeparator_.setVisible(enableRefresh);
+      refreshButton_.setVisible(enableRefresh);
       previewFrame_.navigate(url);
    }
    
@@ -290,5 +293,7 @@ public class HTMLPreviewPanel extends ResizeComposite
    private Widget saveHtmlPreviewAs_;
    private Widget publishButtonSeparator_;
    private ToolbarButton publishButton_;
+   private Widget refreshButtonSeparator_;
+   private ToolbarButton refreshButton_;
    private HTMLPreviewProgressDialog activeProgressDialog_;
 }

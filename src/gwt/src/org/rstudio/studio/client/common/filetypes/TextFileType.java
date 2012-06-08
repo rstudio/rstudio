@@ -126,6 +126,11 @@ public class TextFileType extends EditableFileType
    {
       return canCompilePDF_;
    }
+
+   public boolean canCompileNotebook()
+   {
+      return false;
+   }
    
    public boolean canAuthorContent()
    {
@@ -214,6 +219,10 @@ public class TextFileType extends EditableFileType
       {
          results.add(commands.compilePDF());
          results.add(commands.synctexSearch());
+      }
+      if (canCompileNotebook())
+      {
+         results.add(commands.compileNotebook());
       }
       if (canExecuteChunks())
       {

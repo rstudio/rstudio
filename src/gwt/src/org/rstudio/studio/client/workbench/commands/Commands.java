@@ -58,6 +58,7 @@ public abstract class
    public abstract AppCommand previewHTML();
    public abstract AppCommand publishHTML();
    public abstract AppCommand compilePDF();
+   public abstract AppCommand compileNotebook();
    public abstract AppCommand synctexSearch();
    public abstract AppCommand activateSource();
    public abstract AppCommand printSourceDoc();

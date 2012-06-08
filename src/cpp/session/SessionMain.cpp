@@ -341,11 +341,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["clientId"] = clientId;
    sessionInfo["mode"] = options.programMode();
    
-   // only send the user identity if we are in server mode
-   if (options.programMode() == kSessionProgramModeServer)
-   {
-      sessionInfo["userIdentity"] = options.userIdentity(); 
-   }
+   sessionInfo["userIdentity"] = options.userIdentity();
 
    // only send log_dir and scratch_dir if we are in desktop mode
    if (options.programMode() == kSessionProgramModeDesktop)
