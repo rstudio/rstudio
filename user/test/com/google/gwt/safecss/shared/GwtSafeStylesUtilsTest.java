@@ -19,6 +19,10 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Clear;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.TextAlign;
+import com.google.gwt.dom.client.Style.TextDecoration;
+import com.google.gwt.dom.client.Style.TextJustify;
+import com.google.gwt.dom.client.Style.TextOverflow;
+import com.google.gwt.dom.client.Style.TextTransform;
 import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeUri;
@@ -102,10 +106,40 @@ public class GwtSafeStylesUtilsTest extends GWTTestCase {
   }
   
   public void testForTextAlign() {
-    assertEquals("text-align:center;", SafeStylesUtils.forTextAlign(TextAlign.CENTER).asString());
-    assertEquals("text-align:justify;", SafeStylesUtils.forTextAlign(TextAlign.JUSTIFY).asString());
-    assertEquals("text-align:left;", SafeStylesUtils.forTextAlign(TextAlign.LEFT).asString());
-    assertEquals("text-align:right;", SafeStylesUtils.forTextAlign(TextAlign.RIGHT).asString());
+    assertEquals("text-align:center;", SafeStylesUtils.forTextAlign(TextAlign.CENTER));
+    assertEquals("text-align:justify;", SafeStylesUtils.forTextAlign(TextAlign.JUSTIFY));
+    assertEquals("text-align:left;", SafeStylesUtils.forTextAlign(TextAlign.LEFT));
+    assertEquals("text-align:right;", SafeStylesUtils.forTextAlign(TextAlign.RIGHT));
+  }
+  
+  public void testForTextDecoration() {
+    assertEquals("text-decoration:blink;", SafeStylesUtils.forTextDecoration(TextDecoration.BLINK));
+    assertEquals("text-decoration:line-through;", SafeStylesUtils.forTextDecoration(TextDecoration.LINE_THROUGH));
+    assertEquals("text-decoration:none;", SafeStylesUtils.forTextDecoration(TextDecoration.NONE));
+    assertEquals("text-decoration:overline;", SafeStylesUtils.forTextDecoration(TextDecoration.OVERLINE));
+    assertEquals("text-decoration:underline;", SafeStylesUtils.forTextDecoration(TextDecoration.UNDERLINE));
+  }
+  
+  public void testForTextJustify() {
+    assertEquals("text-justify:auto;", SafeStylesUtils.forTextJustify(TextJustify.AUTO));
+    assertEquals("text-justify:distribute;", SafeStylesUtils.forTextJustify(TextJustify.DISTRIBUTE));
+    assertEquals("text-justify:inter-cluster;", SafeStylesUtils.forTextJustify(TextJustify.INTER_CLUSTER));
+    assertEquals("text-justify:inter-ideograph;", SafeStylesUtils.forTextJustify(TextJustify.INTER_IDEOGRAPH));
+    assertEquals("text-justify:inter-word;", SafeStylesUtils.forTextJustify(TextJustify.INTER_WORD));
+    assertEquals("text-justify:kashida;", SafeStylesUtils.forTextJustify(TextJustify.KASHIDA));
+    assertEquals("text-justify:none;", SafeStylesUtils.forTextJustify(TextJustify.NONE));
+  }
+  
+  public void testForTextOverflow() {
+    assertEquals("text-overflow:clip;", SafeStylesUtils.forTextOverflow(TextOverflow.CLIP));
+    assertEquals("text-overflow:ellipsis;", SafeStylesUtils.forTextOverflow(TextOverflow.ELLIPSIS));
+  }
+  
+  public void testForTextTransform() {
+    assertEquals("text-transform:capitalize;", SafeStylesUtils.forTextTransform(TextTransform.CAPITALIZE));
+    assertEquals("text-transform:lowercase;", SafeStylesUtils.forTextTransform(TextTransform.LOWERCASE));
+    assertEquals("text-transform:none;", SafeStylesUtils.forTextTransform(TextTransform.NONE));
+    assertEquals("text-transform:uppercase;", SafeStylesUtils.forTextTransform(TextTransform.UPPERCASE));
   }
 
   public void testForWhiteSpace() {
@@ -196,7 +230,7 @@ public class GwtSafeStylesUtilsTest extends GWTTestCase {
     for (String s : VALID_STYLE_NAMES) {
       try {
         SafeStyles styles = SafeStylesUtils.fromTrustedNameAndValue(s, "value");
-        assertEquals(s + ":value;", styles.asString());
+        assertEquals(s + ":value;", styles);
       } catch (Exception e) {
         fail("Unexpected exception thrown for valid style name: '" + s + "'.\n" + e.getMessage());
       }
@@ -212,7 +246,7 @@ public class GwtSafeStylesUtilsTest extends GWTTestCase {
     for (String s : VALID_STYLE_VALUES) {
       try {
         SafeStyles styles = SafeStylesUtils.fromTrustedNameAndValue("name", s);
-        assertEquals("name" + ":" + s + ";", styles.asString());
+        assertEquals("name" + ":" + s + ";", styles);
       } catch (Exception e) {
         fail("Unexpected exception thrown for valid style value: '" + s + "'.\n" + e.getMessage());
       }
@@ -220,6 +254,10 @@ public class GwtSafeStylesUtilsTest extends GWTTestCase {
   }
 
   public void testFromTrustedString() {
-    assertEquals("name:value;", SafeStylesUtils.fromTrustedString("name:value;").asString());
+    assertEquals("name:value;", SafeStylesUtils.fromTrustedString("name:value;"));
+  }
+  
+  private void assertEquals(String cssValue, SafeStyles safeStyles) {
+    assertEquals(cssValue, safeStyles.asString());
   }
 }

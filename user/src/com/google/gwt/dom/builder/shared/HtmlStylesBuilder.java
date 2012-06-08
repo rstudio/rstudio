@@ -28,7 +28,11 @@ import com.google.gwt.dom.client.Style.OutlineStyle;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.TableLayout;
+import com.google.gwt.dom.client.Style.TextAlign;
 import com.google.gwt.dom.client.Style.TextDecoration;
+import com.google.gwt.dom.client.Style.TextJustify;
+import com.google.gwt.dom.client.Style.TextOverflow;
+import com.google.gwt.dom.client.Style.TextTransform;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.VerticalAlign;
 import com.google.gwt.dom.client.Style.Visibility;
@@ -364,8 +368,33 @@ class HtmlStylesBuilder implements StylesBuilder {
   }
 
   @Override
+  public StylesBuilder textAlign(TextAlign value) {
+    return delegate.styleProperty(SafeStylesUtils.forTextAlign(value));
+  }
+
+  @Override
   public StylesBuilder textDecoration(TextDecoration value) {
     return delegate.styleProperty(SafeStylesUtils.forTextDecoration(value));
+  }
+
+  @Override
+  public StylesBuilder textIndent(double value, Unit unit) {
+    return delegate.styleProperty(SafeStylesUtils.forTextIndent(value, unit));
+  }
+
+  @Override
+  public StylesBuilder textJustify(TextJustify value) {
+    return delegate.styleProperty(SafeStylesUtils.forTextJustify(value));
+  }
+
+  @Override
+  public StylesBuilder textOverflow(TextOverflow value) {
+    return delegate.styleProperty(SafeStylesUtils.forTextOverflow(value));
+  }
+
+  @Override
+  public StylesBuilder textTransform(TextTransform value) {
+    return delegate.styleProperty(SafeStylesUtils.forTextTransform(value));
   }
 
   @Override

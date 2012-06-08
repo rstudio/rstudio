@@ -28,6 +28,9 @@ import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.TableLayout;
 import com.google.gwt.dom.client.Style.TextAlign;
 import com.google.gwt.dom.client.Style.TextDecoration;
+import com.google.gwt.dom.client.Style.TextJustify;
+import com.google.gwt.dom.client.Style.TextOverflow;
+import com.google.gwt.dom.client.Style.TextTransform;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.VerticalAlign;
 import com.google.gwt.dom.client.Style.Visibility;
@@ -356,6 +359,34 @@ public final class SafeStylesBuilder {
    */
   public SafeStylesBuilder textDecoration(TextDecoration value) {
     return append(SafeStylesUtils.forTextDecoration(value));
+  }
+
+  /**
+   * Append the 'text-indent' CSS property.
+   */
+  public SafeStylesBuilder textIndent(double value, Unit unit) {
+    return append(SafeStylesUtils.forTextIndent(value, unit));
+  }
+
+  /**
+   * Append the 'text-justify' CSS3 property.
+   */
+  public SafeStylesBuilder textJustify(TextJustify value) {
+    return append(SafeStylesUtils.forTextJustify(value));
+  }
+
+  /**
+   * Append the 'text-overflow' CSS3 property.
+   */
+  public SafeStylesBuilder textOverflow(TextOverflow value) {
+    return append(SafeStylesUtils.forTextOverflow(value));
+  }
+
+  /**
+   * Append the 'text-transform' CSS property.
+   */
+  public SafeStylesBuilder textTransform(TextTransform value) {
+    return append(SafeStylesUtils.forTextTransform(value));
   }
 
   /**

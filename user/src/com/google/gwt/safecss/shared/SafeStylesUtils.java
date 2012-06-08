@@ -30,6 +30,9 @@ import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.TableLayout;
 import com.google.gwt.dom.client.Style.TextAlign;
 import com.google.gwt.dom.client.Style.TextDecoration;
+import com.google.gwt.dom.client.Style.TextJustify;
+import com.google.gwt.dom.client.Style.TextOverflow;
+import com.google.gwt.dom.client.Style.TextTransform;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.VerticalAlign;
 import com.google.gwt.dom.client.Style.Visibility;
@@ -334,10 +337,38 @@ public final class SafeStylesUtils {
   }
 
   /**
-   * Sets the text-decoration CSS property.
+   * Sets the 'text-decoration' CSS property.
    */
   public static SafeStyles forTextDecoration(TextDecoration value) {
     return fromTrustedNameAndValue("text-decoration", value.getCssName());
+  }
+
+  /**
+   * Set the 'text-indent' CSS property.
+   */
+  public static SafeStyles forTextIndent(double value, Unit unit) {
+    return fromTrustedNameAndValue("text-indent", value + unit.getType());
+  }
+
+  /**
+   * Set the 'text-justify' CSS3 property.
+   */
+  public static SafeStyles forTextJustify(TextJustify value) {
+    return fromTrustedNameAndValue("text-justify", value.getCssName());
+  }
+
+  /**
+   * Set the 'text-overflow' CSS3 property.
+   */
+  public static SafeStyles forTextOverflow(TextOverflow value) {
+    return fromTrustedNameAndValue("text-overflow", value.getCssName());
+  }
+
+  /**
+   * Set the 'text-transform' CSS property.
+   */
+  public static SafeStyles forTextTransform(TextTransform value) {
+    return fromTrustedNameAndValue("text-transform", value.getCssName());
   }
 
   /**

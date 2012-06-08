@@ -37,6 +37,9 @@ import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.TableLayout;
 import com.google.gwt.dom.client.Style.TextAlign;
 import com.google.gwt.dom.client.Style.TextDecoration;
+import com.google.gwt.dom.client.Style.TextJustify;
+import com.google.gwt.dom.client.Style.TextOverflow;
+import com.google.gwt.dom.client.Style.TextTransform;
 import com.google.gwt.dom.client.Style.VerticalAlign;
 import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.dom.client.Style.WhiteSpace;
@@ -277,6 +280,8 @@ public class StyleTest extends GWTTestCase {
     DivElement div = Document.get().createDivElement();
     Style style = div.getStyle();
 
+    style.setTextDecoration(TextDecoration.BLINK);
+    assertEquals(TextDecoration.BLINK, style.getTextDecoration());
     style.setTextDecoration(TextDecoration.NONE);
     assertEquals(TextDecoration.NONE, style.getTextDecoration());
     style.setTextDecoration(TextDecoration.UNDERLINE);
@@ -285,6 +290,68 @@ public class StyleTest extends GWTTestCase {
     assertEquals(TextDecoration.OVERLINE, style.getTextDecoration());
     style.setTextDecoration(TextDecoration.LINE_THROUGH);
     assertEquals(TextDecoration.LINE_THROUGH, style.getTextDecoration());
+  }
+
+  public void testTextIndent() {
+    DivElement div = Document.get().createDivElement();
+    Style style = div.getStyle();
+
+    style.setTextIndent(1, PX);
+    assertEquals("1px", style.getTextIndent());
+    style.setTextIndent(1, PCT);
+    assertEquals("1%", style.getTextIndent());
+    style.clearTextIndent();
+    assertEmpty(style.getTextIndent());
+  }
+
+  public void testTextJustify() {
+    DivElement div = Document.get().createDivElement();
+    Style style = div.getStyle();
+
+    style.setTextJustify(TextJustify.AUTO);
+    assertEquals(TextJustify.AUTO, style.getTextOverflow());
+    style.setTextJustify(TextJustify.DISTRIBUTE);
+    assertEquals(TextJustify.DISTRIBUTE, style.getTextOverflow());
+    style.setTextJustify(TextJustify.INTER_CLUSTER);
+    assertEquals(TextJustify.INTER_CLUSTER, style.getTextOverflow());
+    style.setTextJustify(TextJustify.INTER_IDEOGRAPH);
+    assertEquals(TextJustify.INTER_IDEOGRAPH, style.getTextOverflow());
+    style.setTextJustify(TextJustify.INTER_WORD);
+    assertEquals(TextJustify.INTER_WORD, style.getTextOverflow());
+    style.setTextJustify(TextJustify.KASHIDA);
+    assertEquals(TextJustify.KASHIDA, style.getTextOverflow());
+    style.setTextJustify(TextJustify.NONE);
+    assertEquals(TextJustify.NONE, style.getTextOverflow());
+    style.clearTextJustify();
+    assertEmpty(style.getTextJustify());
+  }
+
+  public void testTextOverflow() {
+    DivElement div = Document.get().createDivElement();
+    Style style = div.getStyle();
+
+    style.setTextOverflow(TextOverflow.CLIP);
+    assertEquals(TextOverflow.CLIP, style.getTextOverflow());
+    style.setTextOverflow(TextOverflow.ELLIPSIS);
+    assertEquals(TextOverflow.ELLIPSIS, style.getTextOverflow());
+    style.clearTextOverflow();
+    assertEmpty(style.getTextOverflow());
+  }
+
+  public void testTextTransform() {
+    DivElement div = Document.get().createDivElement();
+    Style style = div.getStyle();
+
+    style.setTextTransform(TextTransform.CAPITALIZE);
+    assertEquals(TextTransform.CAPITALIZE, style.getTextTransform());
+    style.setTextTransform(TextTransform.LOWERCASE);
+    assertEquals(TextTransform.LOWERCASE, style.getTextTransform());
+    style.setTextTransform(TextTransform.NONE);
+    assertEquals(TextTransform.NONE, style.getTextTransform());
+    style.setTextTransform(TextTransform.UPPERCASE);
+    assertEquals(TextTransform.UPPERCASE, style.getTextTransform());
+    style.clearTextTransform();
+    assertEmpty(style.getTextTransform());
   }
 
   public void testVerticalAlign() {

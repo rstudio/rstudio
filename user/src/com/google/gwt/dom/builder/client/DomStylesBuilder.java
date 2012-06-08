@@ -28,7 +28,11 @@ import com.google.gwt.dom.client.Style.OutlineStyle;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.TableLayout;
+import com.google.gwt.dom.client.Style.TextAlign;
 import com.google.gwt.dom.client.Style.TextDecoration;
+import com.google.gwt.dom.client.Style.TextJustify;
+import com.google.gwt.dom.client.Style.TextOverflow;
+import com.google.gwt.dom.client.Style.TextTransform;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.VerticalAlign;
 import com.google.gwt.dom.client.Style.Visibility;
@@ -350,8 +354,38 @@ class DomStylesBuilder implements StylesBuilder {
   }
 
   @Override
+  public StylesBuilder textAlign(TextAlign value) {
+    delegate.assertCanAddStyleProperty().setTextAlign(value);
+    return this;
+  }
+
+  @Override
   public StylesBuilder textDecoration(TextDecoration value) {
     delegate.assertCanAddStyleProperty().setTextDecoration(value);
+    return this;
+  }
+
+  @Override
+  public StylesBuilder textIndent(double value, Unit unit) {
+    delegate.assertCanAddStyleProperty().setTextIndent(value, unit);
+    return this;
+  }
+
+  @Override
+  public StylesBuilder textJustify(TextJustify value) {
+    delegate.assertCanAddStyleProperty().setTextJustify(value);
+    return this;
+  }
+
+  @Override
+  public StylesBuilder textOverflow(TextOverflow value) {
+    delegate.assertCanAddStyleProperty().setTextOverflow(value);
+    return this;
+  }
+
+  @Override
+  public StylesBuilder textTransform(TextTransform value) {
+    delegate.assertCanAddStyleProperty().setTextTransform(value);
     return this;
   }
 

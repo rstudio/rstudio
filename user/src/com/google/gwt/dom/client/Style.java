@@ -638,19 +638,25 @@ public class Style extends JavaScriptObject {
   }
 
   /**
-   * Enum for the text-decoration property.
+   * Enum for the 'text-decoration' CSS property.
    */
   public enum TextDecoration implements HasCssName {
+    BLINK {
+      @Override
+      public String getCssName() {
+        return TEXT_DECORATION_BLINK;
+      }
+    },
+    LINE_THROUGH {
+      @Override
+      public String getCssName() {
+        return TEXT_DECORATION_LINE_THROUGH;
+      }
+    },
     NONE {
       @Override
       public String getCssName() {
         return TEXT_DECORATION_NONE;
-      }
-    },
-    UNDERLINE {
-      @Override
-      public String getCssName() {
-        return TEXT_DECORATION_UNDERLINE;
       }
     },
     OVERLINE {
@@ -659,10 +665,114 @@ public class Style extends JavaScriptObject {
         return TEXT_DECORATION_OVERLINE;
       }
     },
-    LINE_THROUGH {
+    UNDERLINE {
       @Override
       public String getCssName() {
-        return TEXT_DECORATION_LINE_THROUGH;
+        return TEXT_DECORATION_UNDERLINE;
+      }
+    };
+    @Override
+    public abstract String getCssName();
+  }
+
+
+
+  /**
+   * Enum for the 'text-justify' CSS3 property.
+   */
+  public enum TextJustify implements HasCssName {
+    AUTO {
+      @Override
+      public String getCssName() {
+        return TEXT_JUSTIFY_AUTO;
+      }
+    },
+    DISTRIBUTE {
+      @Override
+      public String getCssName() {
+        return TEXT_JUSTIFY_DISTRIBUTE;
+      }
+    },
+    INTER_CLUSTER {
+      @Override
+      public String getCssName() {
+        return TEXT_JUSTIFY_INTER_CLUSTER;
+      }
+    },
+    INTER_IDEOGRAPH {
+      @Override
+      public String getCssName() {
+        return TEXT_JUSTIFY_INTER_IDEOGRAPH;
+      }
+    },
+    INTER_WORD {
+      @Override
+      public String getCssName() {
+        return TEXT_JUSTIFY_INTER_WORD;
+      }
+    },
+    KASHIDA {
+      @Override
+      public String getCssName() {
+        return TEXT_JUSTIFY_KASHIDA;
+      }
+    },
+    NONE {
+      @Override
+      public String getCssName() {
+        return TEXT_JUSTIFY_NONE;
+      }
+    };
+    @Override
+    public abstract String getCssName();
+  }
+  
+  /**
+   * Enum for the 'text-overflow' CSS3 property.
+   */
+  public enum TextOverflow implements HasCssName {
+    CLIP {
+      @Override
+      public String getCssName() {
+        return TEXT_OVERFLOW_CLIP;
+      }
+    },
+    ELLIPSIS {
+      @Override
+      public String getCssName() {
+        return TEXT_OVERFLOW_ELLIPSIS;
+      }
+    };
+    @Override
+    public abstract String getCssName();
+  }
+
+  /**
+   * Enum for the 'text-transform' CSS property.
+   */
+  public enum TextTransform implements HasCssName {
+    CAPITALIZE {
+      @Override
+      public String getCssName() {
+        return TEXT_TRANSFORM_CAPITALIZE;
+      }
+    },
+    NONE {
+      @Override
+      public String getCssName() {
+        return TEXT_TRANSFORM_NONE;
+      }
+    },
+    LOWERCASE {
+      @Override
+      public String getCssName() {
+        return TEXT_TRANSFORM_LOWERCASE;
+      }
+    },
+    UPPERCASE {
+      @Override
+      public String getCssName() {
+        return TEXT_TRANSFORM_UPPERCASE;
       }
     };
     @Override
@@ -901,6 +1011,10 @@ public class Style extends JavaScriptObject {
   private static final String STYLE_VERTICAL_ALIGN = "verticalAlign";
   private static final String STYLE_TABLE_LAYOUT = "tableLayout";
   private static final String STYLE_TEXT_ALIGN = "textAlign";
+  private static final String STYLE_TEXT_INDENT = "textIndent";
+  private static final String STYLE_TEXT_JUSTIFY = "textJustify";
+  private static final String STYLE_TEXT_OVERFLOW = "textOverflow";
+  private static final String STYLE_TEXT_TRANSFORM = "textTransform";
   private static final String STYLE_OUTLINE_WIDTH = "outlineWidth";
   private static final String STYLE_OUTLINE_STYLE = "outlineStyle";
   private static final String STYLE_OUTLINE_COLOR = "outlineColor";
@@ -915,10 +1029,27 @@ public class Style extends JavaScriptObject {
   private static final String TEXT_ALIGN_LEFT = "left";
   private static final String TEXT_ALIGN_RIGHT = "right";
 
+  private static final String TEXT_DECORATION_BLINK = "blink";
   private static final String TEXT_DECORATION_LINE_THROUGH = "line-through";
+  private static final String TEXT_DECORATION_NONE = "none";
   private static final String TEXT_DECORATION_OVERLINE = "overline";
   private static final String TEXT_DECORATION_UNDERLINE = "underline";
-  private static final String TEXT_DECORATION_NONE = "none";
+  
+  private static final String TEXT_JUSTIFY_AUTO = "auto";
+  private static final String TEXT_JUSTIFY_DISTRIBUTE = "distribute";
+  private static final String TEXT_JUSTIFY_INTER_CLUSTER = "inter-cluster";
+  private static final String TEXT_JUSTIFY_INTER_IDEOGRAPH = "inter-ideograph";
+  private static final String TEXT_JUSTIFY_INTER_WORD = "inter-word";
+  private static final String TEXT_JUSTIFY_KASHIDA = "kashida";
+  private static final String TEXT_JUSTIFY_NONE = "none";
+  
+  private static final String TEXT_OVERFLOW_CLIP = "clip";
+  private static final String TEXT_OVERFLOW_ELLIPSIS = "ellipsis";
+
+  private static final String TEXT_TRANSFORM_CAPITALIZE = "capitalize";
+  private static final String TEXT_TRANSFORM_NONE = "none";
+  private static final String TEXT_TRANSFORM_LOWERCASE = "lowercase";
+  private static final String TEXT_TRANSFORM_UPPERCASE = "uppercase";
 
   private static final String UNIT_MM = "mm";
   private static final String UNIT_CM = "cm";
@@ -1237,6 +1368,34 @@ public class Style extends JavaScriptObject {
   public final void clearTextDecoration() {
     clearProperty(STYLE_TEXT_DECORATION);
   }
+  
+  /**
+   * Clear the 'text-indent' CSS property.
+   */
+  public final void clearTextIndent() {
+    clearProperty(STYLE_TEXT_INDENT);
+  }
+  
+  /**
+   * Clear the 'text-justify' CSS3 property.
+   */
+  public final void clearTextJustify() {
+    clearProperty(STYLE_TEXT_JUSTIFY);
+  }
+  
+  /**
+   * Clear the 'text-overflow' CSS3 property.
+   */
+  public final void clearTextOverflow() {
+    clearProperty(STYLE_TEXT_OVERFLOW);
+  }
+  
+  /**
+   * Clear the 'text-transform' CSS property.
+   */
+  public final void clearTextTransform() {
+    clearProperty(STYLE_TEXT_TRANSFORM);
+  }
 
   /**
    * Clear the top css property.
@@ -1531,6 +1690,34 @@ public class Style extends JavaScriptObject {
    */
   public final String getTextDecoration() {
     return getProperty(STYLE_TEXT_DECORATION);
+  }
+  
+  /**
+   * Get the 'text-indent' CSS property.
+   */
+  public final String getTextIndent() {
+    return getProperty(STYLE_TEXT_INDENT);
+  }
+  
+  /**
+   * Get the 'text-justify' CSS3 property.
+   */
+  public final String getTextJustify() {
+    return getProperty(STYLE_TEXT_JUSTIFY);
+  }
+
+  /**
+   * Get the 'text-overflow' CSS3 property.
+   */
+  public final String getTextOverflow() {
+    return getProperty(STYLE_TEXT_OVERFLOW);
+  }
+
+  /**
+   * Get the 'text-transform' CSS property.
+   */
+  public final String getTextTransform() {
+    return getProperty(STYLE_TEXT_TRANSFORM);
   }
 
   /**
@@ -1878,6 +2065,34 @@ public class Style extends JavaScriptObject {
    */
   public final void setTextDecoration(TextDecoration value) {
     setProperty(STYLE_TEXT_DECORATION, value.getCssName());
+  }
+  
+  /**
+   * Set the 'text-indent' CSS property.
+   */
+  public final void setTextIndent(double value, Unit unit) {
+    setProperty(STYLE_TEXT_INDENT, value, unit);
+  }
+
+  /**
+   * Set the 'text-justify' CSS3 property.
+   */
+  public final void setTextJustify(TextJustify value) {
+    setProperty(STYLE_TEXT_JUSTIFY, value.getCssName());
+  }
+
+  /**
+   * Set the 'text-overflow' CSS3 property.
+   */
+  public final void setTextOverflow(TextOverflow value) {
+    setProperty(STYLE_TEXT_OVERFLOW, value.getCssName());
+  }
+
+  /**
+   * Set the 'text-transform' CSS property.
+   */
+  public final void setTextTransform(TextTransform value) {
+    setProperty(STYLE_TEXT_TRANSFORM, value.getCssName());
   }
 
   /**

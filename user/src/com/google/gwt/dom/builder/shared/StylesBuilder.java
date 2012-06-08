@@ -26,7 +26,11 @@ import com.google.gwt.dom.client.Style.OutlineStyle;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.TableLayout;
+import com.google.gwt.dom.client.Style.TextAlign;
 import com.google.gwt.dom.client.Style.TextDecoration;
+import com.google.gwt.dom.client.Style.TextJustify;
+import com.google.gwt.dom.client.Style.TextOverflow;
+import com.google.gwt.dom.client.Style.TextTransform;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.VerticalAlign;
 import com.google.gwt.dom.client.Style.Visibility;
@@ -220,9 +224,34 @@ public interface StylesBuilder {
   StylesBuilder tableLayout(TableLayout value);
 
   /**
-   * Sets the text-decoration CSS property.
+   * Set the text-align CSS property.
+   */
+  StylesBuilder textAlign(TextAlign value);
+  
+  /**
+   * Set the text-decoration CSS property.
    */
   StylesBuilder textDecoration(TextDecoration value);
+
+  /**
+   * Set the text-indent CSS property.
+   */
+  StylesBuilder textIndent(double value, Unit unit);
+
+  /**
+   * Set the text-justify CSS3 property.
+   */
+  StylesBuilder textJustify(TextJustify value);
+
+  /**
+   * Set the text-overflow CSS3 property.
+   */
+  StylesBuilder textOverflow(TextOverflow value);
+
+  /**
+   * Set the text-transform CSS property.
+   */
+  StylesBuilder textTransform(TextTransform value);
 
   /**
    * Set the top css property.
