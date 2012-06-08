@@ -266,6 +266,8 @@ public class TextEditingTargetWidget
       texToolbarButton_.setText(width < 520 ? "" : "Format");
       runButton_.setText(width < 480 ? "" : "Run");
       compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
+      srcOnSaveLabel_.setText(width < 450 ? "Source" : "Source on Save");
+      sourceButton_.setText(width < 400 ? "" : "Source");
      
    }
 
