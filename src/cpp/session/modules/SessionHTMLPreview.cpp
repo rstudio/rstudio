@@ -426,9 +426,9 @@ std::string deriveNotebookPath(const std::string& path)
        && (boost::algorithm::ends_with(path, ".r") ||
            boost::algorithm::ends_with(path, ".R")))
    {
-      return path.substr(0, path.size()-2) + ".rmd";
+      return path.substr(0, path.size()-2) + ".Rmd";
    }
-   return path + ".rmd";
+   return path + ".Rmd";
 }
 
 // current preview (stays around after the preview executes so it can
