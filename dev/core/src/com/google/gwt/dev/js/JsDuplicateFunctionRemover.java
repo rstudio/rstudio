@@ -46,9 +46,16 @@ public class JsDuplicateFunctionRemover {
 
     private final Map<JsName, JsName> duplicateOriginalMap = new IdentityHashMap<JsName, JsName>();
 
+    private final Map<JsFunction, JsFunction> duplicateMethodOriginalMap = new IdentityHashMap<JsFunction, JsFunction>();
+
+
     private final Stack<JsNameRef> invocationQualifiers = new Stack<JsNameRef>();
 
+    // static / global methods
     private final Map<String, JsName> uniqueBodies = new HashMap<String, JsName>();
+
+    // vtable methods
+    private final Map<String, JsFunction> uniqueMethodBodies = new HashMap<String, JsFunction>();
 
     public DuplicateFunctionBodyRecorder() {
       // Add sentinel to stop Stack.peek() from throwing exception.
@@ -84,20 +91,31 @@ public class JsDuplicateFunctionRemover {
       return duplicateOriginalMap;
     }
 
+    public Map<JsFunction, JsFunction> getDuplicateMethodMap() {
+      return duplicateMethodOriginalMap;
+    }
+
     @Override
     public boolean visit(JsFunction x, JsContext ctx) {
+      String fnSource = x.toSource();
+      String body = fnSource.substring(fnSource.indexOf("("));
       /*
-       * Don't process anonymous functions.
+       * Static function processed separate from virtual functions
        */
       if (x.getName() != null) {
-        String fnSource = x.toSource();
-        String body = fnSource.substring(fnSource.indexOf("("));
         JsName original = uniqueBodies.get(body);
         if (original != null) {
           duplicateOriginalMap.put(x.getName(), original);
         } else {
           uniqueBodies.put(body, x.getName());
         }
+      } else if (x.isFromJava()) {
+         JsFunction original = uniqueMethodBodies.get(body);
+         if (original != null) {
+           duplicateMethodOriginalMap.put(x, original);
+         } else {
+           uniqueMethodBodies.put(body, x);
+         }
       }
       return true;
     }
@@ -114,13 +132,27 @@ public class JsDuplicateFunctionRemover {
   private class ReplaceDuplicateInvocationNameRefs extends JsModVisitor {
 
     private final Set<JsName> blacklist;
+    private final Map<JsFunction, JsFunction> dupMethodMap;
+    private final Map<JsFunction, JsName> hoistMap;
 
     private final Map<JsName, JsName> duplicateMap;
 
     public ReplaceDuplicateInvocationNameRefs(Map<JsName, JsName> duplicateMap,
-        Set<JsName> blacklist) {
+        Set<JsName> blacklist, Map<JsFunction, JsFunction> dupMethodMap,
+        Map<JsFunction, JsName> hoistMap) {
       this.duplicateMap = duplicateMap;
       this.blacklist = blacklist;
+      this.dupMethodMap = dupMethodMap;
+      this.hoistMap = hoistMap;
+    }
+
+    @Override
+    public void endVisit(JsFunction x, JsContext ctx) {
+      if (dupMethodMap.containsKey(x)) {
+        ctx.replaceMe(hoistMap.get(dupMethodMap.get(x)).makeRef(x.getSourceInfo()));
+      } else if (hoistMap.containsKey(x)) {
+        ctx.replaceMe(hoistMap.get(x).makeRef(x.getSourceInfo()));
+      }
     }
 
     @Override
@@ -152,8 +184,28 @@ public class JsDuplicateFunctionRemover {
   private boolean execImpl(JsBlock fragment) {
     DuplicateFunctionBodyRecorder dfbr = new DuplicateFunctionBodyRecorder();
     dfbr.accept(fragment);
+    int count = 0;
+    Map<JsFunction, JsName> hoistMap = new HashMap<JsFunction, JsName>();
+    // Hoist all anonymous versions
+    Map<JsFunction, JsFunction> dupMethodMap = dfbr.getDuplicateMethodMap();
+    for (JsFunction x : dupMethodMap.values()) {
+      if (!hoistMap.containsKey(x)) {
+        // move function to top scope and re-declaring it with a unique name
+        JsName newName = program.getScope().declareName("_DUP" + count++);
+        JsFunction newFunc = new JsFunction(x.getSourceInfo(),
+            program.getScope(), newName, x.isFromJava());
+        // we're not using the old function anymore, we can use reuse the body instead of cloning it
+        newFunc.setBody(x.getBody());
+        // also copy the parameters from the old function
+        newFunc.getParameters().addAll(x.getParameters());
+        // add the new function to the top level list of statements
+        fragment.getStatements().add(newFunc.makeStmt());
+        hoistMap.put(x, newName);
+      }
+    }
+
     ReplaceDuplicateInvocationNameRefs rdup = new ReplaceDuplicateInvocationNameRefs(
-        dfbr.getDuplicateMap(), dfbr.getBlacklist());
+        dfbr.getDuplicateMap(), dfbr.getBlacklist(), dupMethodMap, hoistMap);
     rdup.accept(fragment);
     return rdup.didChange();
   }

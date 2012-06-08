@@ -395,6 +395,8 @@ public class JavaToJavaScriptCompiler {
               }
               if (changed) {
                 JsUnusedFunctionRemover.exec(jsProgram);
+                // run again
+                JsObfuscateNamer.exec(jsProgram);
               }
             }
           }
