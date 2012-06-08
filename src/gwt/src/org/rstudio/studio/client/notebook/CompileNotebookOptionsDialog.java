@@ -12,12 +12,16 @@
  */
 package org.rstudio.studio.client.notebook;
 
+import java.util.Date;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 
@@ -57,7 +61,7 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
       String title = txtTitle_.getValue().trim();
       if (title.length() > 0)
       {
-         builder.append("# ")
+         builder.append("### ")
                 .append(SafeHtmlUtils.htmlEscape(title))
                 .append("\n");
       }
@@ -65,11 +69,13 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
       String author = txtAuthor_.getValue().trim();
       if (author.length() > 0)
       {
-         builder.append("### By ")
-                .append(SafeHtmlUtils.htmlEscape(author))
-                .append("\n");
+         builder.append(SafeHtmlUtils.htmlEscape(author))
+                .append(" --- ");
       }
-
+      builder.append("*");
+      builder.append(StringUtil.formatDate(new Date()));
+      builder.append("*");
+      
       return builder.toString();
    }
 
