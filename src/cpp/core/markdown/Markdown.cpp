@@ -242,11 +242,11 @@ Error markdownToHTML(const std::string& markdownInput,
 {
    // exclude fenced code blocks
    std::vector<ExcludePattern> excludePatterns;
-   excludePatterns.push_back(ExcludePattern(boost::regex("^`{3,}.*?$"),
+   excludePatterns.push_back(ExcludePattern(boost::regex("^`{3,}[^\\n]*?$"),
                                             boost::regex("^`{3,}\\s*$")));
 
    // exclude inline verbatim code
-   excludePatterns.push_back(ExcludePattern(boost::regex("`.+?`")));
+   excludePatterns.push_back(ExcludePattern(boost::regex("`[^\\n]+?`")));
 
    // exclude indented code blocks
    excludePatterns.push_back(ExcludePattern(
