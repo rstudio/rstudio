@@ -65,6 +65,7 @@ import org.rstudio.studio.client.htmlpreview.events.ShowHTMLPreviewEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
+import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -2014,12 +2015,23 @@ public class TextEditingTarget implements EditingTarget
             changedProperties.put(NOTEBOOK_AUTHOR, input.getNotebookAuthor());
             docUpdateSentinel_.modifyProperties(changedProperties, null);
 
-            server_.createNotebook(input, new SimpleRequestCallback<Void>()
+            server_.createNotebook(
+                          input, 
+                          new SimpleRequestCallback<CompileNotebookResult>()
             {
                @Override
-               public void onResponseReceived(Void response)
+               public void onResponseReceived(CompileNotebookResult response)
                {
-                  executeOnSuccess.execute();
+                  if (response.getSucceeded())
+                  {
+                     executeOnSuccess.execute();
+                  }
+                  else
+                  {
+                     globalDisplay_.showErrorMessage(
+                                       "Unable to Compile Notebook", 
+                                       response.getFailureMessage());
+                  }
                }
             });
          }
