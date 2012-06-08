@@ -213,6 +213,19 @@ public class StyleInjector {
   private static boolean needsInjection = false;
 
   /**
+   * Flushes any pending stylesheets to the document.
+   * <p>
+   * This can be useful if you used CssResource.ensureInjected but
+   * now in the same event loop want to measure widths based on the
+   * new styles. 
+   * <p>
+   * Note that calling this method excessively will decrease performance.
+   */
+  public static void flush() {
+    inject(true);
+  }
+
+  /**
    * Add a stylesheet to the document.
    * 
    * @param css the CSS contents of the stylesheet
