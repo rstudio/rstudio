@@ -15,8 +15,6 @@
  */
 package org.hibernate.jsr303.tck.tests.validation;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
-
 import javax.validation.ValidationException;
 
 /**
@@ -62,7 +60,6 @@ public class ValidatePropertyGwtTest extends AbstractValidationTest {
     delegate.testValidatePropertyWithNullProperty();
   }
 
-  @Failing(issue = 5804)
   public void testValidIsNotHonoredValidateProperty() {
     delegate.testValidIsNotHonoredValidateProperty();
   }
