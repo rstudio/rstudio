@@ -2003,8 +2003,10 @@ public class TextEditingTarget implements EditingTarget
    {
       String defaultTitle = docUpdateSentinel_.getProperty(NOTEBOOK_TITLE);
       if (defaultTitle == null)
-         defaultTitle = StringUtil.pathToTitle(docUpdateSentinel_.getPath());
+         defaultTitle = FileSystemItem.getNameFromPath(docUpdateSentinel_.getPath());
       String defaultAuthor = docUpdateSentinel_.getProperty(NOTEBOOK_AUTHOR);
+      if (defaultAuthor == null)
+         defaultAuthor = session_.getSessionInfo().getUserIdentity();
       CompileNotebookOptionsDialog dialog = new CompileNotebookOptionsDialog(getId(), defaultTitle, defaultAuthor, new OperationWithInput<CompileNotebookOptions>()
       {
          @Override
