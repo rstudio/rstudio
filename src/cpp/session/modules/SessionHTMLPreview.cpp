@@ -64,10 +64,11 @@ public:
    static boost::shared_ptr<HTMLPreview> create(const FilePath& targetFile,
                                                 const std::string& encoding,
                                                 bool isMarkdown,
+                                                bool isNotebook,
                                                 bool knit)
    {
       boost::shared_ptr<HTMLPreview> pPreview(new HTMLPreview(targetFile));
-      pPreview->start(encoding, isMarkdown, knit);
+      pPreview->start(encoding, isMarkdown, isNotebook, knit);
       return pPreview;
    }
 
@@ -75,17 +76,22 @@ private:
    HTMLPreview(const FilePath& targetFile)
       : targetFile_(targetFile),
         isMarkdown_(false),
+        isNotebook_(false),
         requiresKnit_(false),
         isRunning_(false),
         terminationRequested_(false)
    {
    }
 
-   void start(const std::string& encoding, bool isMarkdown, bool requiresKnit)
+   void start(const std::string& encoding,
+              bool isMarkdown,
+              bool isNotebook,
+              bool requiresKnit)
    {
       enqueHTMLPreviewStarted(targetFile_);
 
       isMarkdown_ = isMarkdown;
+      isNotebook_ = isNotebook;
       requiresKnit_ = requiresKnit;
 
       // read the file using the specified encoding
@@ -128,6 +134,8 @@ public:
    void terminate() { terminationRequested_ = true; }
 
    bool isMarkdown() { return isMarkdown_; }
+
+   bool isNotebook() { return isNotebook_; }
 
    bool requiresKnit() { return requiresKnit_; }
 
@@ -363,7 +371,8 @@ private:
       enqueHTMLPreviewSucceeded(kHTMLPreview "/",
                                 targetFile(),
                                 htmlPreviewFile(),
-                                isMarkdown());
+                                isMarkdown(),
+                                !isNotebook());
    }
 
    static void enqueHTMLPreviewStarted(const FilePath& targetFile)
@@ -391,7 +400,8 @@ private:
    static void enqueHTMLPreviewSucceeded(const std::string& previewUrl,
                                          const FilePath& sourceFile,
                                          const FilePath& htmlFile,
-                                         bool enableSaveAs)
+                                         bool enableSaveAs,
+                                         bool enableRefresh)
    {
       json::Object resultJson;
       resultJson["succeeded"] = true;
@@ -399,6 +409,7 @@ private:
       resultJson["html_file"] = module_context::createAliasedPath(htmlFile);
       resultJson["preview_url"] = previewUrl;
       resultJson["enable_saveas"] = enableSaveAs;
+      resultJson["enable_refresh"] = enableRefresh;
       resultJson["previously_published"] = !rpubs::previousUploadId(htmlFile).empty();
       ClientEvent event(client_events::kHTMLPreviewCompletedEvent, resultJson);
       module_context::enqueClientEvent(event);
@@ -412,6 +423,7 @@ private:
 private:
    FilePath targetFile_;
    bool isMarkdown_;
+   bool isNotebook_;
    bool requiresKnit_;
 
    FilePath knitrOutputFile_;
@@ -470,6 +482,7 @@ Error previewHTML(const json::JsonRpcRequest& request,
       s_pCurrentPreview_ = HTMLPreview::create(filePath,
                                                encoding,
                                                isMarkdown,
+                                               isNotebook,
                                                knit);
       pResponse->setResult(true);
    }
@@ -513,6 +526,7 @@ Error getRMarkdownTemplate(const json::JsonRpcRequest&,
 }
 
 const char* const MAGIC_GUID = "12861c30b10411e1afa60800200c9a66";
+const char* const FIGURE_DIR = "figure-compile-notebook-12861c30b";
 
 bool okToGenerateFile(const FilePath& rmdPath,
                       const std::string& extension,
@@ -609,6 +623,8 @@ Error createNotebook(const json::JsonRpcRequest& request,
 
    std::string contents;
    contents.append(prefix);
+   contents.append("`r opts_chunk$set(fig.path='" +
+                   std::string(FIGURE_DIR) + "/')`\n");
    contents.append("```{r}\n");
    contents.append(pDoc->contents());
    contents.append("\n```\n");
@@ -883,6 +899,24 @@ void handleMarkdownPreviewRequest(const http::Request& request,
       {
          pResponse->setError(error);
          return;
+      }
+
+      // remove generated files if this was a notebook
+      if (s_pCurrentPreview_->isNotebook())
+      {
+         error = s_pCurrentPreview_->targetFile().removeIfExists();
+         if (error)
+            LOG_ERROR(error);
+
+         error = s_pCurrentPreview_->knitrOutputFile()
+                                                .removeIfExists();
+         if (error)
+            LOG_ERROR(error);
+
+         error = s_pCurrentPreview_->targetDirectory()
+                           .complete(FIGURE_DIR).removeIfExists();
+         if (error)
+            LOG_ERROR(error);
       }
 
       // modify outpout then write back to client
