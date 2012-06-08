@@ -84,7 +84,7 @@ public class StandardPublicResource extends PublicResource {
     try {
       return resource.openContents();
     } catch (IOException ex) {
-      logger.log (TreeLogger.ERROR, "Problem reading resource: " + resource.getLocation(), ex);
+      logger.log(TreeLogger.ERROR, "Problem reading resource: " + resource.getLocation(), ex);
       throw new UnableToCompleteException();
     }
   }

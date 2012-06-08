@@ -28,12 +28,12 @@ public interface Position {
   /**
    * Returns information about the coordinates reported by the browser.
    */
-  public Coordinates getCoordinates();
+  Coordinates getCoordinates();
 
   /**
    * Returns the time this position was reported by the browser.
    */
-  public double getTimestamp();
+  double getTimestamp();
 
   /**
    * Represents position reported by the browser.
@@ -44,7 +44,7 @@ public interface Position {
     /**
      * Returns the estimated accuracy reported by the browser, in meters.
      */
-    public double getAccuracy();
+    double getAccuracy();
 
     /**
      * Returns the altitude reported by the browser, in meters, above the <a
@@ -52,37 +52,37 @@ public interface Position {
      * ellipsoid</a>, or <code>null</code> if the browser did not report an
      * altitude.
      */
-    public Double getAltitude();
+    Double getAltitude();
 
     /**
      * Returns the estimated accuracy of the altitude reported by the browser,
      * in meters, or <code>null</code> if the browser did not report an
      * accuracy.
      */
-    public Double getAltitudeAccuracy();
+    Double getAltitudeAccuracy();
 
     /**
      * Returns the heading, in degrees from due north, reported by the browser,
      * based on previous calls to get the user's position, or <code>null</code>
      * if the browser did not report a heading.
      */
-    public Double getHeading();
+    Double getHeading();
 
     /**
      * Returns the decimal latitude reported by the browser.
      */
-    public double getLatitude();
+    double getLatitude();
 
     /**
      * Returns the decimal longitude reported by the browser.
      */
-    public double getLongitude();
+    double getLongitude();
 
     /**
      * Returns the speed, in meters/second, reported by the browser, based on
      * previous calls to get the user's position, or <code>null</code> if the
      * browser did not report a speed.
      */
-    public Double getSpeed();
+    Double getSpeed();
   }
 }

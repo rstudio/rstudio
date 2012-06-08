@@ -527,7 +527,7 @@ public class RPCTypeCheckTest extends TestCase {
    * Test interface for multiple wildcard bounds.
    */
   public interface MInterface<X> {
-    public X echo(X arg);
+    X echo(X arg);
   }
 
   /**

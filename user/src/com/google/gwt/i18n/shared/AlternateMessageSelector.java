@@ -24,7 +24,7 @@ public interface AlternateMessageSelector {
   /**
    * Name of the "other" form.
    */
-  public static final String OTHER_FORM_NAME = "other";
+  String OTHER_FORM_NAME = "other";
 
   /**
    * Represents an alternate form of a message.

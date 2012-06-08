@@ -98,9 +98,10 @@ public class DirtyEditorTest extends GWTTestCase {
     person.address = null;
 
     AddressEditor addressEditor = new AddressEditor();
-    PersonEditorWithOptionalAddressEditor editor = new PersonEditorWithOptionalAddressEditor(
-        addressEditor);
-    PersonEditorWithOptionalAddressDriver driver = GWT.create(PersonEditorWithOptionalAddressDriver.class);
+    PersonEditorWithOptionalAddressEditor editor =
+        new PersonEditorWithOptionalAddressEditor(addressEditor);
+    PersonEditorWithOptionalAddressDriver driver =
+        GWT.create(PersonEditorWithOptionalAddressDriver.class);
     driver.initialize(editor);
     driver.edit(person);
 
@@ -177,23 +178,22 @@ public class DirtyEditorTest extends GWTTestCase {
   }
   class WorkgroupEditor implements Editor<Workgroup> {
     SimpleEditor<String> label = SimpleEditor.of();
-    OptionalFieldEditor<List<Person>, ListEditor<Person, PersonEditor>> people = //
-    OptionalFieldEditor.of(ListEditor.<Person, PersonEditor> of( //
-    new EditorSource<PersonEditor>() {
-      @Override
-      public PersonEditor create(int index) {
-        return new PersonEditor();
-      }
-    }));
+    OptionalFieldEditor<List<Person>, ListEditor<Person, PersonEditor>> people =
+        OptionalFieldEditor.of(ListEditor
+            .<Person, PersonEditor> of(new EditorSource<PersonEditor>() {
+              @Override
+              public PersonEditor create(int index) {
+                return new PersonEditor();
+              }
+            }));
   }
 
-  interface WorkgroupEditorDriver extends
-      SimpleBeanEditorDriver<Workgroup, WorkgroupEditor> {
+  interface WorkgroupEditorDriver extends SimpleBeanEditorDriver<Workgroup, WorkgroupEditor> {
   }
 
   /**
-   * CompositeEditors have an implementation complication due to the EditorChain
-   * needing to patch the composite editors into the hierarchy.
+   * CompositeEditors have an implementation complication due to the EditorChain needing to patch
+   * the composite editors into the hierarchy.
    */
   public void testDirtyOptionalList() {
     WorkgroupEditorDriver driver = GWT.create(WorkgroupEditorDriver.class);

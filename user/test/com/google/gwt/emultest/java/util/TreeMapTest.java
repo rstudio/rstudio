@@ -85,7 +85,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     }
 
     @Override
-    public final V setValue(V value) {
+    public V setValue(V value) {
       throw new UnsupportedOperationException();
     }
   }

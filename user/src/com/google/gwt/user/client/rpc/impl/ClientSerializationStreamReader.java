@@ -375,7 +375,7 @@ public final class ClientSerializationStreamReader extends
   
   @Override
   public long readLong() {    
-    return LongLib.longFromBase64(((JsStringLiteral)decoder.getValues().get(--index)).getValue());
+    return LongLib.longFromBase64(((JsStringLiteral) decoder.getValues().get(--index)).getValue());
   }
   
   @Override

@@ -30,7 +30,7 @@ import java.util.Map;
  */
 public class CountingEventBus extends EventBus {
   private final KeyedCounter<Type<?>> handlerCounts = new KeyedCounter<Event.Type<?>>();
-  private final KeyedCounter<Type<?>> firedCounts = new KeyedCounter<Event.Type<?>> ();
+  private final KeyedCounter<Type<?>> firedCounts = new KeyedCounter<Event.Type<?>>();
   private final KeyedCounter<TypeSourcePair> sourceCounts = new KeyedCounter<TypeSourcePair>();
   private final EventBus wrapped;
 

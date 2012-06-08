@@ -128,7 +128,7 @@ public class TypeHierarchyTest extends GWTTestCase {
 
   private static class JvmNode implements Node {
     public JvmNode appendChild(Node node) {
-      return (JvmNode)node;
+      return (JvmNode) node;
     }
   }
   

@@ -179,8 +179,7 @@ public class BindingProperty extends Property {
         LinkedList<String> childList = fallbackValues.get(from);
         LinkedHashSet<String> children = new LinkedHashSet<String>();
         children.addAll(childList);
-        while (children != null && children.size() > 0) 
-        {
+        while (children != null && children.size() > 0) {
           alternates.add(children);
           LinkedHashSet<String> newChildren = new LinkedHashSet<String>();
           for (String child : children) {
