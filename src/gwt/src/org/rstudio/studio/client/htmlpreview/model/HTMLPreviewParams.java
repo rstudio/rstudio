@@ -23,12 +23,14 @@ public class HTMLPreviewParams extends JavaScriptObject
    public final static native HTMLPreviewParams create(String path,
                                                        String encoding,
                                                        boolean isMarkdown,
-                                                       boolean requiresKnit)/*-{
+                                                       boolean requiresKnit,
+                                                       boolean isNotebook)/*-{
       var params = new Object();
       params.path = path;
       params.encoding = encoding;
       params.is_markdown = isMarkdown;
       params.requires_knit = requiresKnit;
+      params.is_notebook = isNotebook;
       return params;
    }-*/; 
    
@@ -46,5 +48,9 @@ public class HTMLPreviewParams extends JavaScriptObject
    
    public final native boolean getRequiresKnit() /*-{
       return this.requires_knit;
+   }-*/;
+
+   public final native boolean isNotebook() /*-{
+      return this.is_notebook;
    }-*/;
 }

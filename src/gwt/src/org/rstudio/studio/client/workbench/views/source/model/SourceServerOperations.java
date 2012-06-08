@@ -14,8 +14,10 @@ package org.rstudio.studio.client.workbench.views.source.model;
 
 import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
+import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
@@ -160,4 +162,7 @@ public interface SourceServerOperations extends FilesServerOperations,
    void iconvlist(ServerRequestCallback<IconvListResult> requestCallback);
    
    void getRMarkdownTemplate(ServerRequestCallback<String> requestCallback);
+
+   void createNotebook(CompileNotebookOptions options,
+                       ServerRequestCallback<Void> requestCallback);
 }

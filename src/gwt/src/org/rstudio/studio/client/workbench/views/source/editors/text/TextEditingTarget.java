@@ -63,6 +63,8 @@ import org.rstudio.studio.client.common.synctex.SynctexUtils;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.htmlpreview.events.ShowHTMLPreviewEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
+import org.rstudio.studio.client.notebook.CompileNotebookOptions;
+import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -102,6 +104,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsHistor
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRevertFileEvent;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class TextEditingTarget implements EditingTarget
@@ -110,6 +113,9 @@ public class TextEditingTarget implements EditingTarget
          extends CommandBinder<Commands, TextEditingTarget>
    {
    }
+
+   private static final String NOTEBOOK_TITLE = "notebook_title";
+   private static final String NOTEBOOK_AUTHOR = "notebook_author";
 
    private static final MyCommandBinder commandBinder =
          GWT.create(MyCommandBinder.class);
@@ -1913,37 +1919,71 @@ public class TextEditingTarget implements EditingTarget
       // validate pre-reqs
       if (!previewHtmlHelper_.verifyPrerequisites(view_, fileType_))
          return;
-       
+
+      doHtmlPreview(new Provider<HTMLPreviewParams>()
+      {
+         @Override
+         public HTMLPreviewParams get()
+         {
+            return HTMLPreviewParams.create(docUpdateSentinel_.getPath(),
+                                            docUpdateSentinel_.getEncoding(),
+                                            fileType_.isMarkdown(),
+                                            fileType_.requiresKnit(),
+                                            false);
+         }
+      });
+   }
+
+   private void doHtmlPreview(final Provider<HTMLPreviewParams> pParams)
+   {
       // command to show the preview window
       final Command showPreviewWindowCommand = new Command() {
          @Override
          public void execute()
          {
-            HTMLPreviewParams params = createHTMLPreviewParams();
-            events_.fireEvent(new ShowHTMLPreviewEvent(params));  
+            HTMLPreviewParams params = pParams.get();
+            events_.fireEvent(new ShowHTMLPreviewEvent(params));
          }
       };
-      
+
       // command to run the preview
       final Command runPreviewCommand = new Command() {
          @Override
          public void execute()
          {
-            HTMLPreviewParams params = createHTMLPreviewParams();
-            server_.previewHTML(params, new SimpleRequestCallback<Boolean>());  
-         }      
+            final HTMLPreviewParams params = pParams.get();
+            server_.previewHTML(params, new SimpleRequestCallback<Boolean>());
+         }
       };
-      
-      
+
+      if (pParams.get().isNotebook())
+      {
+         saveThenExecute(null, new Command()
+         {
+            @Override
+            public void execute()
+            {
+               generateNotebook(new Command()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     showPreviewWindowCommand.execute();
+                     runPreviewCommand.execute();
+                  }
+               });
+            }
+         });
+      }
       // if the document is new and unsaved, then resolve that and then
       // show the preview window -- it won't activate in web mode
       // due to popup activation rules but at least it will show up
-      if (isNewDoc())
+      else if (isNewDoc())
       {
          saveThenExecute(null, CommandUtil.join(showPreviewWindowCommand,
                                                 runPreviewCommand));
       }
-      // otherwise if it's dirty then show the preview window first (to 
+      // otherwise if it's dirty then show the preview window first (to
       // beat the popup blockers) then save & run
       else if (dirtyState().getValue())
       {
@@ -1951,21 +1991,66 @@ public class TextEditingTarget implements EditingTarget
          saveThenExecute(null, runPreviewCommand);
       }
       // otherwise show the preview window then run the preview
-      else 
+      else
       {
          showPreviewWindowCommand.execute();
          runPreviewCommand.execute();
       }
    }
-  
-   private HTMLPreviewParams createHTMLPreviewParams()
+
+   private void generateNotebook(final Command executeOnSuccess)
    {
-      return HTMLPreviewParams.create(docUpdateSentinel_.getPath(), 
-                                      docUpdateSentinel_.getEncoding(),
-                                      fileType_.isMarkdown(), 
-                                      fileType_.requiresKnit());
+      String defaultTitle = docUpdateSentinel_.getProperty(NOTEBOOK_TITLE);
+      if (defaultTitle == null)
+         defaultTitle = StringUtil.pathToTitle(docUpdateSentinel_.getPath());
+      String defaultAuthor = docUpdateSentinel_.getProperty(NOTEBOOK_AUTHOR);
+      CompileNotebookOptionsDialog dialog = new CompileNotebookOptionsDialog(getId(), defaultTitle, defaultAuthor, new OperationWithInput<CompileNotebookOptions>()
+      {
+         @Override
+         public void execute(CompileNotebookOptions input)
+         {
+            HashMap<String, String> changedProperties = new HashMap<String, String>();
+            changedProperties.put(NOTEBOOK_TITLE, input.getNotebookTitle());
+            changedProperties.put(NOTEBOOK_AUTHOR, input.getNotebookAuthor());
+            docUpdateSentinel_.modifyProperties(changedProperties, null);
+
+            server_.createNotebook(input, new SimpleRequestCallback<Void>()
+            {
+               @Override
+               public void onResponseReceived(Void response)
+               {
+                  executeOnSuccess.execute();
+               }
+            });
+         }
+      }
+      );
+      dialog.showModal();
    }
-   
+
+   @Handler
+   void onCompileNotebook()
+   {
+      if (!previewHtmlHelper_.verifyPrerequisites(view_,
+                                                  FileTypeRegistry.RMARKDOWN))
+      {
+         return;
+      }
+
+      doHtmlPreview(new Provider<HTMLPreviewParams>()
+      {
+         @Override
+         public HTMLPreviewParams get()
+         {
+            return HTMLPreviewParams.create(docUpdateSentinel_.getPath(),
+                                            docUpdateSentinel_.getEncoding(),
+                                            true,
+                                            true,
+                                            true);
+         }
+      });
+   }
+
    @Handler
    void onCompilePDF()
    {
@@ -1996,7 +2081,7 @@ public class TextEditingTarget implements EditingTarget
       
       handlePdfCommand(action, useInternalPreview, onBeforeCompile);
    }
-   
+
    @Handler
    void onSynctexSearch()
    {

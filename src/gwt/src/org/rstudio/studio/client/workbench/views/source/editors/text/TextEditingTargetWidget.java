@@ -167,7 +167,10 @@ public class TextEditingTargetWidget
       
       sourceMenuButton_ = new ToolbarButton(sourceMenu, true);
       toolbar.addRightWidget(sourceMenuButton_);  
-      
+
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(commands_.compileNotebook().createToolbarButton());
+
       ToolbarPopupMenu chunksMenu = new ToolbarPopupMenu();
       chunksMenu.addItem(commands_.insertChunk().createMenuItem(false));
       chunksMenu.addSeparator();
