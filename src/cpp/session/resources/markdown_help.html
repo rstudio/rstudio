@@ -26,6 +26,11 @@ h4 {
    margin-bottom: 8px;
 }
 
+#md_examples h5 {
+   margin-top: 5px;
+   margin-bottom: 2px;
+}
+
 #md_examples code {	
    font-family: Monaco, "DejaVu Sans Mono", Consolas, "Lucida Console", Courier, monospace;
 	font-size: 11px;
@@ -75,14 +80,14 @@ Header 2
 </code></pre>
 
 <h4>Lists</h4>
-<p>Unordered:</p>
+<h5>Unordered List</h5>
 <pre><code>* Item 1
 * Item 2
   * Item 2a
   * Item 2b
 </code></pre>
 
-<p>Ordered:</p>
+<h5>Ordered List</h5>
 <pre><code>1. Item 1
 2. Item 2
 3. Item 3
@@ -132,12 +137,22 @@ compute the sum of two numbers.
 </code></pre>
 
 <h4>LaTeX Equations</h4>
-<p>Inline and display LaTeX equations:</p>
-<pre><code>$latex <i>equation</i> $
+<p>See also: <a href="http://www.rstudio.org/links/mathjax_help" target="_blank">Using Equations with Markdown</a></p>
 
-$$latex
-  <i>equation</i>
-$$
+<h5>Inline Equation</h5>
+<pre><code>$<i>equation</i>$
+
+$latex <i>equation</i>$
+
+\\( <i>equation</i> \\)
+</code></pre>
+
+<h5>Display Equation</h5>
+<pre><code>$$ <i>equation</i> $$
+
+$$latex <i>equation</i> $$
+
+\\[ <i>equation</i> \\]
 </code></pre>
 
 <h4>Horizontal Rule / Page Break</h4>
@@ -155,7 +170,7 @@ Content Cell  | Content Cell
 </code></pre>
 
 <h4>Reference Style Links and Images</h4>
-<p>Links (titles optional):</p>
+<h5>Links</h5>
 <pre><code>A [linked phrase][id]. 
 
 At the bottom of the document:
@@ -163,7 +178,7 @@ At the bottom of the document:
 [id]: http://example.com/ "Title"
 </code></pre>
 
-<p>Images (titles optional):</p>
+<h5>Images</h5>
 <pre><code>![alt text][id]
 
 At the bottom of the document:
