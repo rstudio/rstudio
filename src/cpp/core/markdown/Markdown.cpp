@@ -248,6 +248,10 @@ Error markdownToHTML(const std::string& markdownInput,
    // exclude inline verbatim code
    excludePatterns.push_back(ExcludePattern(boost::regex("`.+?`")));
 
+   // exclude indented code blocks
+   excludePatterns.push_back(ExcludePattern(
+      boost::regex("(\\A|\\A\\s*\\n|\\n\\s*\\n)(( {4}|\\t)[^\\n]*\\n)*(( {4}|\\t)[^\\n]*)")));
+
    std::string input = markdownInput;
    boost::scoped_ptr<MathJaxFilter> pMathFilter;
    if (extensions.ignoreMath)
