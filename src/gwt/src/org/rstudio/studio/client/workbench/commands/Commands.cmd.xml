@@ -674,7 +674,7 @@ well as menu structures (for main menu and popup menus).
         desc="Compile a PDF from the current LaTeX or Sweave document"/>
 
    <cmd id="compileNotebook"
-        menuLabel="Compile Notebook"
+        menuLabel="Compile Notebook..."
         desc="Compile an HTML notebook from the current R script"/>
 
    <cmd id="synctexSearch"
