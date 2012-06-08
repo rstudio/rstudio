@@ -36,14 +36,23 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
          String defaultAuthor,
          final OperationWithInput<CompileNotebookOptions> operation)
    {
-      super("Compile Notebook", operation);
+      super("Compile Notebook from R Script", operation);
       docId_ = docId;
 
       widget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       txtTitle_.setText(defaultTitle);
       txtAuthor_.setText(defaultAuthor);
+      
+      setOkButtonCaption("Compile");
    }
 
+   @Override
+   protected void onDialogShown()
+   {
+      txtTitle_.setFocus(true);
+      txtTitle_.selectAll();
+   }
+   
    @Override
    protected CompileNotebookOptions collectInput()
    {

@@ -5,9 +5,16 @@
       .dialog input {
          width: 300px;
       }
+      .dialog  {
+	      width: 305px;
+      }
    </ui:style>
 
    <g:HTMLPanel styleName="{style.dialog}">
+      
+      <label>A Notebook is a standalone HTML file that contains the
+      code and output from your R script.</label>
+      
       <p>
          <label>Title (optional):</label><br/>
          <g:TextBox ui:field="txtTitle_" />
@@ -16,6 +23,7 @@
          <label>Author (optional):</label><br/>
          <g:TextBox ui:field="txtAuthor_" />
       </p>
+ 
    </g:HTMLPanel>
 
 </ui:UiBinder>
