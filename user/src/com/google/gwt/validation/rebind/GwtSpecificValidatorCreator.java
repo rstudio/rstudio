@@ -1509,13 +1509,15 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
     // final Set<ConstraintViolation<T>> violations,
     sw.println("final Set<ConstraintViolation<T>> violations,");
 
-    // final BeanType object, <Type> value,
+    // BeanType object,
     sw.println(beanHelper.getTypeCanonicalName() + " object,");
 
-    // Class<?>... groups) {
+    // final <Type> value,
     sw.print("final ");
     sw.print(elementType.getParameterizedQualifiedSourceName());
     sw.println(" value,");
+
+    // Class<?>... groups) {
     sw.println("Class<?>... groups) {");
     sw.outdent();
 
