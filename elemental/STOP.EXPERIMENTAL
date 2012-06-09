@@ -1,0 +1,6 @@
+DANGER! DANGER!
+
+Elemental is experimental. It will change rapidly, both because the HTML5 IDLs are evolving, and because
+some things like the Collection class APIs will most likely be changed. If you use elemental, be prepared to
+have your app broken, and to contribute by giving feedback and/or patches.
+

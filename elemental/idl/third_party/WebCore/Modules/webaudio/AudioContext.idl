@@ -1,0 +1,91 @@
+/*
+ * Copyright (C) 2010, Google Inc. All rights reserved.
+ * Copyright (C) 2011 Apple Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1.  Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2.  Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+module webaudio {
+    interface [
+        Conditional=WEB_AUDIO,
+        ActiveDOMObject,
+        CustomConstructor,
+        ConstructorParameters=0,
+        JSCustomMarkFunction,
+        EventTarget
+    ] AudioContext {
+        // All rendered audio ultimately connects to destination, which represents the audio hardware.
+        readonly attribute AudioDestinationNode destination;
+
+        // All scheduled times are relative to this time in seconds.
+        readonly attribute float currentTime;
+
+        // All AudioNodes in the context run at this sample-rate (in sample-frames per second).
+        readonly attribute float sampleRate;
+
+        // All panning is relative to this listener.
+        readonly attribute AudioListener listener;
+
+        // Number of AudioBufferSourceNodes that are currently playing.
+        readonly attribute unsigned long activeSourceCount;
+        
+        AudioBuffer createBuffer(in unsigned long numberOfChannels, in unsigned long numberOfFrames, in float sampleRate)
+            raises(DOMException);
+        AudioBuffer createBuffer(in ArrayBuffer buffer, in boolean mixToMono)
+            raises(DOMException);
+
+        // Asynchronous audio file data decoding.
+        void decodeAudioData(in ArrayBuffer audioData, in [Callback] AudioBufferCallback successCallback, in [Optional, Callback] AudioBufferCallback errorCallback)
+            raises(DOMException);
+
+        // Sources
+        AudioBufferSourceNode createBufferSource();
+#if defined(ENABLE_VIDEO) && ENABLE_VIDEO
+        MediaElementAudioSourceNode createMediaElementSource(in HTMLMediaElement mediaElement)
+            raises(DOMException);
+#endif
+        // Processing nodes
+        AudioGainNode createGainNode();
+        DelayNode createDelayNode(in [Optional] double maxDelayTime);
+        BiquadFilterNode createBiquadFilter();
+        WaveShaperNode createWaveShaper();
+        AudioPannerNode createPanner();
+        ConvolverNode createConvolver();
+        DynamicsCompressorNode createDynamicsCompressor();
+        RealtimeAnalyserNode createAnalyser();
+        JavaScriptAudioNode createJavaScriptNode(in unsigned long bufferSize, in [Optional] unsigned long numberOfInputChannels, in [Optional] unsigned long numberOfOutputChannels)
+            raises(DOMException);
+        Oscillator createOscillator();
+        WaveTable createWaveTable(in Float32Array real, in Float32Array imag)
+            raises(DOMException);
+
+        // Channel splitting and merging
+        AudioChannelSplitter createChannelSplitter(in [Optional] unsigned long numberOfOutputs)
+            raises(DOMException);
+        AudioChannelMerger createChannelMerger(in [Optional] unsigned long numberOfInputs)
+            raises(DOMException);
+
+        // Offline rendering
+        // void prepareOfflineBufferRendering(in unsigned long numberOfChannels, in unsigned long numberOfFrames, in float sampleRate);
+        attribute EventListener oncomplete;
+        void startRendering();
+    };
+}

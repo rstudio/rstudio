@@ -1,0 +1,186 @@
+/*
+ * Copyright 2012 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package $PACKAGE;
+$IMPORTS
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+
+import elemental.events.*;
+import elemental.util.*;
+import elemental.dom.*;
+import elemental.html.*;
+import elemental.svg.*;
+import elemental.js.util.JsElementalBase;
+
+import java.util.Date;
+
+/**
+  * A base class containing all of the IDL interfaces which are shared
+  * between disjoint type hierarchies. Because of the GWT compiler
+  * SingleJsoImpl restriction that only a single JavaScriptObject
+  * may implement a given interface, we hoist all of the explicit
+  * mixin classes into a base JSO used by all of elemental.
+  */
+public class JsElementalMixinBase $EXTENDS $IMPLEMENTS {
+  protected JsElementalMixinBase() {}
+$!MEMBERS
+
+private static class Remover implements EventRemover {
+  private final EventTarget target;
+  private final String type;
+  private final JavaScriptObject handler;
+  private final boolean useCapture;
+
+  private Remover(EventTarget target, String type, JavaScriptObject handler,
+      boolean useCapture) {
+    this.target = target;
+    this.type = type;
+    this.handler = handler;
+    this.useCapture = useCapture;
+  }
+
+  @Override
+  public void remove() {
+    removeEventListener(target, type, handler, useCapture);
+  }
+
+  private static Remover create(EventTarget target, String type, JavaScriptObject handler,
+      boolean useCapture) {
+    return new Remover(target, type, handler, useCapture);
+  }
+}
+
+// NOTES:
+// - This handler/listener structure is currently the same in DevMode and ProdMode but it is
+//   subject to change. In fact, I would like to use:
+//     { listener : listener, handleEvent : function() }
+//   but Firefox doesn't properly support that form of handler for onEvent type events.
+// - The handler property on listener can be removed when removeEventListener is removed.
+private native static JavaScriptObject createHandler(EventListener listener) /*-{
+  var handler = listener.handler;
+  if (!handler) {
+    handler = $entry(function(event) {
+      @elemental.js.dom.JsElementalMixinBase::handleEvent(Lelemental/events/EventListener;Lelemental/events/Event;)(listener, event);
+    });
+    handler.listener = listener;
+    // TODO(knorton): Remove at Christmas when removeEventListener is removed.
+    listener.handler = handler;
+  }
+  return handler;
+}-*/;
+
+private static class ForDevMode {
+  private static java.util.Map<EventListener, JavaScriptObject> handlers;
+
+  static {
+    if (!com.google.gwt.core.client.GWT.isScript()) {
+      handlers = new java.util.HashMap<EventListener, JavaScriptObject>();
+    }
+  }
+
+  private static JavaScriptObject getHandlerFor(EventListener listener) {
+    if (listener == null) {
+      return null;
+    }
+
+    JavaScriptObject handler = handlers.get(listener);
+    if (handler == null) {
+      handler = createHandler(listener);
+      handlers.put(listener, handler);
+    }
+    return handler;
+  }
+
+  private native static JavaScriptObject createHandler(EventListener listener) /*-{
+    var handler = $entry(function(event) {
+      @elemental.js.dom.JsElementalMixinBase::handleEvent(Lelemental/events/EventListener;Lelemental/events/Event;)(listener, event);
+    });
+    handler.listener = listener;
+    return handler;
+  }-*/;
+
+  private native static EventListener getListenerFor(JavaScriptObject handler) /*-{
+    return handler && handler.listener;
+  }-*/;
+}
+
+private static class ForProdMode {
+  private static JavaScriptObject getHandlerFor(EventListener listener) {
+    return listener == null ? null : createHandler(listener);
+  }
+
+  private native static EventListener getListenerFor(JavaScriptObject handler) /*-{
+    return handler && handler.listener;
+  }-*/;
+}
+
+private static void handleEvent(EventListener listener, Event event) {
+  listener.handleEvent(event);
+}
+
+private static EventListener getListenerFor(JavaScriptObject handler) {
+  return com.google.gwt.core.client.GWT.isScript()
+    ? ForProdMode.getListenerFor(handler)
+    : ForDevMode.getListenerFor(handler);
+}
+
+private static JavaScriptObject getHandlerFor(EventListener listener) {
+  return com.google.gwt.core.client.GWT.isScript()
+    ? ForProdMode.getHandlerFor(listener)
+    : ForDevMode.getHandlerFor(listener);
+}
+ 
+public native final EventRemover addEventListener(String type, EventListener listener, boolean useCapture) /*-{
+  var handler = @elemental.js.dom.JsElementalMixinBase::getHandlerFor(Lelemental/events/EventListener;)(listener);
+  this.addEventListener(type, handler, useCapture);
+  return @elemental.js.dom.JsElementalMixinBase.Remover::create(Lelemental/events/EventTarget;Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;Z)
+      (this, type, handler, useCapture);
+}-*/;
+
+public native final EventRemover addEventListener(String type, EventListener listener) /*-{
+  var handler = @elemental.js.dom.JsElementalMixinBase::getHandlerFor(Lelemental/events/EventListener;)(listener);
+  this.addEventListener(type, handler);
+  return @elemental.js.dom.JsElementalMixinBase.Remover::create(Lelemental/events/EventTarget;Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;Z)
+      (this, type, handler, useCapture);
+}-*/;
+
+@Deprecated
+public final void removeEventListener(String type, EventListener listener, boolean useCapture) {
+  final JavaScriptObject handler = getHandlerFor(listener);
+  if (handler != null) {
+    removeEventListener(this, type, handler, useCapture);
+  }
+}
+
+@Deprecated
+public final void removeEventListener(String type, EventListener listener) {
+  final JavaScriptObject handler = getHandlerFor(listener);
+  if (handler != null) {
+    removeEventListener(this, type, handler);
+  }
+}
+
+private static native void removeEventListener(EventTarget target, String type,
+    JavaScriptObject handler, boolean useCapture) /*-{
+  target.removeEventListener(type, handler, useCapture);
+}-*/;
+
+private static native void removeEventListener(EventTarget target, String type,
+    JavaScriptObject handler) /*-{
+  target.removeEventListener(type, handler);
+}-*/;
+
+}

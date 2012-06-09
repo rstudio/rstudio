@@ -1,0 +1,4 @@
+<module rename-to="elementalExample">
+  <inherits name="elemental.Elemental"/>
+  <entry-point class="elemental.example.client.ElementalExample" />
+</module>

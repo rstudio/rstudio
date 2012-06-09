@@ -1,0 +1,45 @@
+# List of css properties
+# If you add the word 'dim' on the end, then that means it's a dimension property
+# and will get px, em, ex, etc accessors
+# If you add the word 'int' on the end, then that means it has integral type
+# Add the word 'enum' followed by a list of values to generate an enum
+# as an inner class
+
+background-color
+background-image
+border-color
+border-style enum none hidden dotted dashed solid
+border-width dim
+bottom dim
+color
+cursor enum default auto crosshair pointer move e-resize ne-resize nw-resize n-resize se-resize sw-resize s-resize w-resize text wait help col-resize row-resize
+display enum none block inline inline-block
+font-size dim
+font-style enum normal italic oblique
+font-weight enum normal bold bolder lighter
+height dim
+left dim
+list-style-type enum none disc circle square decimal lower-alpha upper-alpha lower-roman upper-roman
+margin dim
+margin-bottom dim
+margin-left dim
+margin-right dim
+margin-top dim
+opacity double
+overflow enum visible hidden scroll auto
+overflow-x enum visible hidden scroll auto
+overflow-y enum visible hidden scroll auto
+padding dim
+padding-bottom dim
+padding-left dim
+padding-right dim
+padding-top dim
+position enum static relative absolute fixed
+right dim
+text-decoration enum none underline overline line-through
+top dim
+visibility enum visible hidden
+white-space enum pre nowrap pre-wrap pre-line
+width dim
+z-index int
+

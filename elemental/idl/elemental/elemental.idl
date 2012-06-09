@@ -1,0 +1,376 @@
+/**
+ * Copyright (C) 2010 Google Inc. All rights reserved.
+ * License TBD
+ */
+
+module default {
+  FileList implements sequence<File>;
+  HTMLCollection implements sequence<Node>;
+  MediaList implements sequence<DOMString>;
+  NamedNodeMap implements sequence<Node>;
+  NodeList implements sequence<Node>;
+  StyleSheetList implements sequence<StyleSheet>;
+  TouchList implements sequence<Touch>;
+
+  Float32Array implements sequence<double>;
+  Float64Array implements sequence<double>;
+  Int8Array implements sequence<int>;
+  Int16Array implements sequence<int>;
+  Int32Array implements sequence<int>;
+  Uint8Array implements sequence<int>;
+  // Ugliness ahead: we cannot analyse inheritance right now when deducing if
+  // given interface is a typed array (database is not accessible), so I have
+  // to duplicate both sequence<int> and ArrayBufferView to make our heuristics
+  // work.
+  // FIXME: thread datatbase to all the clients that need it and probably
+  // move the method itself to database.
+  Uint8ClampedArray implements sequence<int>;
+  Uint8ClampedArray implements ArrayBufferView;
+  Uint16Array implements sequence<int>;
+  Uint32Array implements sequence<int>;
+
+  // Is List<int> because inherits from Uint8Array:
+  // Uint8ClampedArray implements sequence<int>;
+}
+
+module core {
+  [Supplemental]
+  interface Document {
+    [Suppressed] DOMObject getCSSCanvasContext(in DOMString contextId, in DOMString name, in long width, in long height);
+    CanvasRenderingContext getCSSCanvasContext(in DOMString contextId, in DOMString name, in long width, in long height);
+  };
+
+  DOMStringList implements sequence<DOMString>;
+};
+
+module dom {
+  // Force NodeSelector. WebKit defines these operations directly.
+  interface NodeSelector {
+    Element   querySelector(in DOMString selectors);
+    NodeList  querySelectorAll(in DOMString selectors);
+  };
+  Document implements NodeSelector;
+  DocumentFragment implements NodeSelector;
+  Element implements NodeSelector;
+
+  // Force ElementTraversal. WebKit defines these directly.
+  interface ElementTraversal {
+    getter attribute unsigned long childElementCount;
+    getter attribute Element firstElementChild;
+    getter attribute Element lastElementChild;
+    getter attribute Element nextElementSibling;
+    getter attribute Element previousElementSibling;
+  };
+  Element implements ElementTraversal;
+
+  [Callback]
+  interface TimeoutHandler {
+    void handleEvent();
+  };
+};
+
+module html {
+  [Supplemental]
+  interface Console {
+    [Suppressed] void debug();
+    [CallWith=ScriptArguments|CallStack] void debug(DOMObject arg);
+    [Suppressed] void error();
+    [CallWith=ScriptArguments|CallStack] void error(DOMObject arg);
+    [Suppressed] void info();
+    [CallWith=ScriptArguments|CallStack] void info(DOMObject arg);
+    [Suppressed] void log();
+    [CallWith=ScriptArguments|CallStack] void log(DOMObject arg);
+    [Suppressed] void warn();
+    [CallWith=ScriptArguments|CallStack] void warn(DOMObject arg);
+    [Suppressed] void trace();
+    [CallWith=ScriptArguments|CallStack] void trace(DOMObject arg);
+    [Suppressed] void assert(in boolean condition);
+    [CallWith=ScriptArguments|CallStack] void assertCondition(boolean condition, DOMObject arg);
+    [Suppressed] void timeEnd(in DOMString title);
+    [CallWith=ScriptArguments|CallStack] void timeEnd(DOMString title, DOMObject arg);
+    [Suppressed] void timeStamp();
+    [CallWith=ScriptArguments|CallStack] void timeStamp(DOMObject arg);
+    [Suppressed] void group();
+    [CallWith=ScriptArguments|CallStack] void group(DOMObject arg);
+    [Suppressed] void groupCollapsed();
+    [CallWith=ScriptArguments|CallStack] void groupCollapsed(DOMObject arg);
+  };
+
+  [Supplemental]
+  interface HTMLOptionsCollection {
+    [Suppressed] void add(in optional HTMLOptionElement element, in optional long before);
+  };
+
+  [Supplemental]
+  interface ImageData {
+    readonly attribute Uint8ClampedArray data;
+  };
+
+  [Supplemental]
+  interface WebGLContextEvent {
+    [Suppressed] void initEvent(in optional DOMString eventTypeArg,
+                                in optional boolean canBubbleArg,
+                                in optional boolean cancelableArg,
+                                in optional DOMString statusMessageArg);
+  };
+};
+
+module html {
+  [Supplemental]
+  interface WebGLRenderingContext {
+
+    //void         compressedTexImage2D(in unsigned long target, in long level, in unsigned long internalformat, in unsigned long width, in unsigned long height, in long border, in unsigned long imageSize, const void* data);
+    //void         compressedTexSubImage2D(in unsigned long target, in long level, in long xoffset, in long yoffset, in unsigned long width, in unsigned long height, in unsigned long format, in unsigned long imageSize, const void* data);
+
+    any getBufferParameter(in unsigned long target, in unsigned long pname) raises(DOMException);
+    [Suppressed, StrictTypeChecking, Custom] void getBufferParameter();
+
+    any getFramebufferAttachmentParameter(in unsigned long target, in unsigned long attachment, in unsigned long pname) raises(DOMException);
+    [Suppressed, StrictTypeChecking, Custom] void getFramebufferAttachmentParameter();
+
+    any getParameter(in unsigned long pname) raises(DOMException);
+    [Suppressed, StrictTypeChecking, Custom] void getParameter();
+
+    any getProgramParameter(in WebGLProgram program, in unsigned long pname) raises(DOMException);
+    [Suppressed, StrictTypeChecking, Custom] void getProgramParameter();
+
+    any getRenderbufferParameter(in unsigned long target, in unsigned long pname) raises(DOMException);
+    [Suppressed, StrictTypeChecking, Custom] void getRenderbufferParameter();
+
+    any getShaderParameter(in WebGLShader shader, in unsigned long pname) raises(DOMException);
+    [Suppressed, StrictTypeChecking, Custom] void getShaderParameter() raises(DOMException);
+
+    // TBD
+    // void glGetShaderPrecisionFormat (GLenum shadertype, GLenum precisiontype, GLint* range, GLint* precision);
+
+    DOMString[] getSupportedExtensions();
+    [Suppressed, StrictTypeChecking, Custom] void getSupportedExtensions();
+
+    any getTexParameter(in unsigned long target, in unsigned long pname) raises(DOMException);
+    [Suppressed, StrictTypeChecking, Custom] void getTexParameter();
+
+    any getUniform(in WebGLProgram program, in WebGLUniformLocation location) raises(DOMException);
+    [Suppressed, StrictTypeChecking, Custom] void getUniform();
+
+    any getVertexAttrib(in unsigned long index, in unsigned long pname) raises(DOMException);
+    [Suppressed, StrictTypeChecking, Custom] void getVertexAttrib();
+  };
+}
+
+
+
+module canvas {
+  // TODO(dstockwell): Define these manually.
+  [Supplemental]
+  interface Float32Array {
+    [Suppressed] void set();
+    [DartName=setElements, Custom] void set(in any array, in optional unsigned long offset);
+  };
+  [Supplemental]
+  interface Float64Array {
+    [Suppressed] void set();
+    [DartName=setElements, Custom] void set(in any array, in optional unsigned long offset);
+  };
+  [Supplemental]
+  interface Int16Array {
+    [Suppressed] void set();
+    [DartName=setElements, Custom] void set(in any array, in optional unsigned long offset);
+  };
+  [Supplemental]
+  interface Int32Array {
+    [Suppressed] void set();
+    [DartName=setElements, Custom] void set(in any array, in optional unsigned long offset);
+  };
+  [Supplemental]
+  interface Int8Array {
+    [Suppressed] void set();
+    [DartName=setElements, Custom] void set(in any array, in optional unsigned long offset);
+  };
+  [Supplemental]
+  interface Uint16Array {
+    [Suppressed] void set();
+    [DartName=setElements, Custom] void set(in any array, in optional unsigned long offset);
+  };
+  [Supplemental]
+  interface Uint32Array {
+    [Suppressed] void set();
+    [DartName=setElements, Custom] void set(in any array, in optional unsigned long offset);
+  };
+  [Supplemental]
+  interface Uint8Array {
+    [Suppressed] void set();
+    [DartName=setElements, Custom] void set(in any array, in optional unsigned long offset);
+  };
+
+  [Supplemental]
+  interface Uint8ClampedArray {
+    // Avoid 'overriding static member BYTES_PER_ELEMENT'.
+    [Suppressed] const long BYTES_PER_ELEMENT = 1;
+
+    [Suppressed] void set();
+    [DartName=setElements, Custom] void set(in any array, in optional unsigned long offset);
+  };
+};
+
+module storage {
+  // TODO(vsm): Define new names for these (see b/4436830).
+  [Supplemental]
+  interface IDBCursor {
+    [DartName=continueFunction] void continue(in optional IDBKey key);
+  };
+  [Supplemental]
+  interface IDBIndex {
+    [DartName=getObject] IDBRequest get(in IDBKey key);
+  };
+  [Supplemental]
+  interface IDBObjectStore {
+    [DartName=getObject] IDBRequest get(in IDBKey key);
+    [DartName=getObject] IDBRequest get(in IDBKeyRange key);
+    [Suppressed] IDBRequest openCursor() raises (IDBDatabaseException);
+  };
+
+  interface EntrySync {
+    // Native implementation is declared to return EntrySync.
+    [Suppressed] DirectoryEntrySync getParent();
+    EntrySync getParent();
+  };
+};
+
+module html {
+  [Supplemental, Callback] // Add missing Callback attribute.
+  interface VoidCallback {
+  };
+};
+
+module svg {
+    interface SVGNumber {
+      [StrictTypeChecking, Custom] attribute double value;
+    };
+}
+
+module html {
+  [Supplemental]
+  interface HTMLCanvasElement {
+    [Suppressed] DOMObject getContext(in DOMString contextId);
+    // W3C defines this as returning 'object':
+    CanvasRenderingContext getContext(in DOMString contextId);
+  };
+};
+
+module svg {
+  // fix convariant return clash with Element
+  [Supplemental]
+  interface SVGStylable {
+    @WebKit [DartName=svgStyle] getter attribute CSSStyleDeclaration style;
+    @WebKit [DartName=animatedClassName] getter attribute SVGAnimatedString className;
+  };
+
+  // rename width/height covariant returns on several SVG classes
+  [Supplemental]
+  interface SVGFilterElement {
+    @WebKit [DartName=animatedWidth] getter attribute SVGAnimatedLength width;
+    @WebKit [DartName=animatedHeight] getter attribute SVGAnimatedLength height;
+  };
+
+  [Supplemental]
+  interface SVGFilterPrimitiveStandardAttributes {
+    @WebKit [DartName=animatedWidth] getter attribute SVGAnimatedLength width;
+    @WebKit [DartName=animatedHeight] getter attribute SVGAnimatedLength height;
+    @WebKit [DartName=animatedResult] getter attribute SVGAnimatedString result;
+    @WebKit [DartName=animatedX] getter attribute SVGAnimatedLength x;
+    @WebKit [DartName=animatedY] getter attribute SVGAnimatedLength y;
+  };
+
+  [Supplemental]
+  interface SVGForeignObjectElement {
+    @WebKit [DartName=animatedWidth] getter attribute SVGAnimatedLength width;
+    @WebKit [DartName=animatedHeight] getter attribute SVGAnimatedLength height;
+  };
+
+  [Supplemental]
+  interface SVGImageElement {
+    @WebKit [DartName=animatedWidth] getter attribute SVGAnimatedLength width;
+    @WebKit [DartName=animatedHeight] getter attribute SVGAnimatedLength height;
+  };
+
+  [Supplemental]
+  interface SVGMaskElement {
+    @WebKit [DartName=animatedWidth] getter attribute SVGAnimatedLength width;
+    @WebKit [DartName=animatedHeight] getter attribute SVGAnimatedLength height;
+  };
+
+  [Supplemental]
+  interface SVGPatternElement {
+    @WebKit [DartName=animatedWidth] getter attribute SVGAnimatedLength width;
+    @WebKit [DartName=animatedHeight] getter attribute SVGAnimatedLength height;
+  };
+
+  [Supplemental]
+  interface SVGRectElement {
+    @WebKit [DartName=animatedWidth] getter attribute SVGAnimatedLength width;
+    @WebKit [DartName=animatedHeight] getter attribute SVGAnimatedLength height;
+  };
+
+  [Supplemental]
+  interface SVGSVGElement {
+    @WebKit [DartName=animatedWidth] getter attribute SVGAnimatedLength width;
+    @WebKit [DartName=animatedHeight] getter attribute SVGAnimatedLength height;
+  };
+
+  [Supplemental]
+  interface SVGUseElement {
+    @WebKit [DartName=animatedWidth] getter attribute SVGAnimatedLength width;
+    @WebKit [DartName=animatedHeight] getter attribute SVGAnimatedLength height;
+  };
+
+  [Supplemental]
+  interface SVGTransformable :
+    @WebKit SVGLocatable {
+    @WebKit [DartName=animatedTransform] getter attribute SVGAnimatedTransformList transform;
+  };
+
+  [Supplemental]
+  interface SVGURIReference {
+    @WebKit [DartName=animatedHref] getter attribute SVGAnimatedString href;
+  };
+};
+
+module base {
+  interface ElementalMixinBase {
+  };
+};
+
+module html {
+  [Supplemental]
+  interface Uint8ClampedArray :
+    @WebKit Uint8Array,
+    sequence<int>,
+    ArrayBufferView {
+    /* suppressed, we don't support covariant return, just cast to the clamped interface if needed */
+    @WebKit [Suppressed] Uint8ClampedArray subarray(in long start);
+    @WebKit [Suppressed] Uint8ClampedArray subarray(in long start, in long end);
+  };
+};
+
+module events {
+  [Supplemental]
+  interface Event {
+    @WebKit [Suppressed] const unsigned short BLUR = 8192;
+    @WebKit [Suppressed] const unsigned short CHANGE = 32768;
+    @WebKit [Suppressed] const unsigned short CLICK = 64;
+    @WebKit [Suppressed] const unsigned short DBLCLICK = 128;
+    @WebKit [Suppressed] const unsigned short DRAGDROP = 2048;
+    @WebKit [Suppressed] const unsigned short FOCUS = 4096;
+    @WebKit [Suppressed] const unsigned short KEYDOWN = 256;
+    @WebKit [Suppressed] const unsigned short KEYPRESS = 1024;
+    @WebKit [Suppressed] const unsigned short KEYUP = 512;
+    @WebKit [Suppressed] const unsigned short MOUSEDOWN = 1;
+    @WebKit [Suppressed] const unsigned short MOUSEDRAG = 32;
+    @WebKit [Suppressed] const unsigned short MOUSEMOVE = 16;
+    @WebKit [Suppressed] const unsigned short MOUSEOUT = 8;
+    @WebKit [Suppressed] const unsigned short MOUSEOVER = 4;
+    @WebKit [Suppressed] const unsigned short MOUSEUP = 2;
+    @WebKit [Suppressed] const unsigned short SELECT = 16384;
+  };
+};
+

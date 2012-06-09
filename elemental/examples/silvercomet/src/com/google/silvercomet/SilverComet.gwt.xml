@@ -1,0 +1,6 @@
+<module rename-to="SilverComet">
+  <inherits name="elemental.Elemental"/>
+  <add-linker name="xsiframe"/>
+  <set-configuration-property name="devModeRedirectEnabled" value="true"/>
+  <entry-point class="com.google.silvercomet.client.Main"/>
+</module>

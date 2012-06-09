@@ -1,0 +1,675 @@
+/*
+ * Copyright 2008 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package $PACKAGE;
+$IMPORTS
+import elemental.events.*;
+import elemental.util.*;
+import elemental.dom.*;
+import elemental.html.*;
+import elemental.css.*;
+import elemental.stylesheets.*;
+
+
+import java.util.Date;
+
+/**
+  * $CLASSJAVADOC
+  */
+public interface $ID$EXTENDS {
+/**
+ * Defines the standard key locations returned by {@link #getKeyLocation}.
+ */
+public interface KeyLocation {
+
+  /**
+   * The event key is not distinguished as the left or right version
+   * of the key, and did not originate from the numeric keypad (or did not
+   * originate with a virtual key corresponding to the numeric keypad).
+   */
+  public static final int STANDARD = 0;
+
+  /**
+   * The event key is in the left key location.
+   */
+  public static final int LEFT = 1;
+
+  /**
+   * The event key is in the right key location.
+   */
+  public static final int RIGHT = 2;
+
+  /**
+   * The event key originated on the numeric keypad or with a virtual key
+   * corresponding to the numeric keypad.
+   */
+  public static final int NUMPAD = 3;
+
+  /**
+   * The event key originated on a mobile device, either on a physical
+   * keypad or a virtual keyboard.
+   */
+  public static final int MOBILE = 4;
+
+  /**
+   * The event key originated on a game controller or a joystick on a mobile
+   * device.
+   */
+  public static final int JOYSTICK = 5;
+}
+
+/**
+ * Defines the expected key codes returned by {@link #getKeyCode}.
+ *
+ * @see "http://code.google.com/p/closure-library/source/browse/trunk/closure/goog/events/keycodes.js"
+ */
+public interface KeyCode {
+  public static final int BACKSPACE = 8;
+  public static final int TAB = 9;
+  public static final int NUM_CENTER = 12; // NUMLOCK on FF/Safari Mac
+  public static final int ENTER = 13;
+  public static final int SHIFT = 16;
+  public static final int CTRL = 17;
+  public static final int ALT = 18;
+  public static final int PAUSE = 19;
+  public static final int CAPS_LOCK = 20;
+  public static final int ESC = 27;
+  public static final int SPACE = 32;
+  public static final int PAGE_UP = 33; // also NUM_NORTH_EAST
+  public static final int PAGE_DOWN = 34; // also NUM_SOUTH_EAST
+  public static final int END = 35; // also NUM_SOUTH_WEST
+  public static final int HOME = 36; // also NUM_NORTH_WEST
+  public static final int LEFT = 37; // also NUM_WEST
+  public static final int UP = 38; // also NUM_NORTH
+  public static final int RIGHT = 39; // also NUM_EAST
+  public static final int DOWN = 40; // also NUM_SOUTH
+  public static final int PRINT_SCREEN = 44;
+  public static final int INSERT = 45; // also NUM_INSERT
+  public static final int DELETE = 46; // also NUM_DELETE
+  public static final int ZERO = 48;
+  public static final int ONE = 49;
+  public static final int TWO = 50;
+  public static final int THREE = 51;
+  public static final int FOUR = 52;
+  public static final int FIVE = 53;
+  public static final int SIX = 54;
+  public static final int SEVEN = 55;
+  public static final int EIGHT = 56;
+  public static final int NINE = 57;
+  public static final int QUESTION_MARK = 63; // needs localization
+  public static final int A = 65;
+  public static final int B = 66;
+  public static final int C = 67;
+  public static final int D = 68;
+  public static final int E = 69;
+  public static final int F = 70;
+  public static final int G = 71;
+  public static final int H = 72;
+  public static final int I = 73;
+  public static final int J = 74;
+  public static final int K = 75;
+  public static final int L = 76;
+  public static final int M = 77;
+  public static final int N = 78;
+  public static final int O = 79;
+  public static final int P = 80;
+  public static final int Q = 81;
+  public static final int R = 82;
+  public static final int S = 83;
+  public static final int T = 84;
+  public static final int U = 85;
+  public static final int V = 86;
+  public static final int W = 87;
+  public static final int X = 88;
+  public static final int Y = 89;
+  public static final int Z = 90;
+  public static final int META = 91;
+  public static final int CONTEXT_MENU = 93;
+  public static final int NUM_ZERO = 96;
+  public static final int NUM_ONE = 97;
+  public static final int NUM_TWO = 98;
+  public static final int NUM_THREE = 99;
+  public static final int NUM_FOUR = 100;
+  public static final int NUM_FIVE = 101;
+  public static final int NUM_SIX = 102;
+  public static final int NUM_SEVEN = 103;
+  public static final int NUM_EIGHT = 104;
+  public static final int NUM_NINE = 105;
+  public static final int NUM_MULTIPLY = 106;
+  public static final int NUM_PLUS = 107;
+  public static final int NUM_MINUS = 109;
+  public static final int NUM_PERIOD = 110;
+  public static final int NUM_DIVISION = 111;
+  public static final int F1 = 112;
+  public static final int F2 = 113;
+  public static final int F3 = 114;
+  public static final int F4 = 115;
+  public static final int F5 = 116;
+  public static final int F6 = 117;
+  public static final int F7 = 118;
+  public static final int F8 = 119;
+  public static final int F9 = 120;
+  public static final int F10 = 121;
+  public static final int F11 = 122;
+  public static final int F12 = 123;
+  public static final int NUMLOCK = 144;
+  public static final int SEMICOLON = 186; // needs localization
+  public static final int DASH = 189; // needs localization
+  public static final int EQUALS = 187; // needs localization
+  public static final int COMMA = 188; // needs localization
+  public static final int PERIOD = 190; // needs localization
+  public static final int SLASH = 191; // needs localization
+  public static final int APOSTROPHE = 192; // needs localization
+  public static final int SINGLE_QUOTE = 222; // needs localization
+  public static final int OPEN_SQUARE_BRACKET = 219; // needs localization
+  public static final int BACKSLASH = 220;
+  public static final int CLOSE_SQUARE_BRACKET = 221;
+  public static final int WIN_KEY = 224;
+  public static final int WIN_IME = 229;
+}
+
+/**
+ * Defines the standard keyboard identifier names for keys that are returned
+ * by {@link #getKeyboardIdentifier} when the key does not have a direct
+ * unicode mapping.
+ */
+public interface KeyName {
+
+  /** The Accept (Commit, OK) key */
+  public static final String ACCEPT = "Accept";
+
+  /** The Add key */
+  public static final String ADD = "Add";
+
+  /** The Again key */
+  public static final String AGAIN = "Again";
+
+  /** The All Candidates key */
+  public static final String ALL_CANDIDATES = "AllCandidates";
+
+  /** The Alphanumeric key */
+  public static final String ALPHANUMERIC = "Alphanumeric";
+
+  /** The Alt (Menu) key */
+  public static final String ALT = "Alt";
+
+  /** The Alt-Graph key */
+  public static final String ALT_GRAPH = "AltGraph";
+
+  /** The Application key */
+  public static final String APPS = "Apps";
+
+  /** The ATTN key */
+  public static final String ATTN = "Attn";
+
+  /** The Browser Back key */
+  public static final String BROWSER_BACK = "BrowserBack";
+
+  /** The Browser Favorites key */
+  public static final String BROWSER_FAVORTIES = "BrowserFavorites";
+
+  /** The Browser Forward key */
+  public static final String BROWSER_FORWARD = "BrowserForward";
+
+  /** The Browser Home key */
+  public static final String BROWSER_NAME = "BrowserHome";
+
+  /** The Browser Refresh key */
+  public static final String BROWSER_REFRESH = "BrowserRefresh";
+
+  /** The Browser Search key */
+  public static final String BROWSER_SEARCH = "BrowserSearch";
+
+  /** The Browser Stop key */
+  public static final String BROWSER_STOP = "BrowserStop";
+
+  /** The Camera key */
+  public static final String CAMERA = "Camera";
+
+  /** The Caps Lock (Capital) key */
+  public static final String CAPS_LOCK = "CapsLock";
+
+  /** The Clear key */
+  public static final String CLEAR = "Clear";
+
+  /** The Code Input key */
+  public static final String CODE_INPUT = "CodeInput";
+
+  /** The Compose key */
+  public static final String COMPOSE = "Compose";
+
+  /** The Control (Ctrl) key */
+  public static final String CONTROL = "Control";
+
+  /** The Crsel key */
+  public static final String CRSEL = "Crsel";
+
+  /** The Convert key */
+  public static final String CONVERT = "Convert";
+
+  /** The Copy key */
+  public static final String COPY = "Copy";
+
+  /** The Cut key */
+  public static final String CUT = "Cut";
+
+  /** The Decimal key */
+  public static final String DECIMAL = "Decimal";
+
+  /** The Divide key */
+  public static final String DIVIDE = "Divide";
+
+  /** The Down Arrow key */
+  public static final String DOWN = "Down";
+
+  /** The diagonal Down-Left Arrow key */
+  public static final String DOWN_LEFT = "DownLeft";
+
+  /** The diagonal Down-Right Arrow key */
+  public static final String DOWN_RIGHT = "DownRight";
+
+  /** The Eject key */
+  public static final String EJECT = "Eject";
+
+  /** The End key */
+  public static final String END = "End";
+
+  /**
+   * The Enter key. Note: This key value must also be used for the Return
+   *  (Macintosh numpad) key
+   */
+  public static final String ENTER = "Enter";
+
+  /** The Erase EOF key */
+  public static final String ERASE_EOF= "EraseEof";
+
+  /** The Execute key */
+  public static final String EXECUTE = "Execute";
+
+  /** The Exsel key */
+  public static final String EXSEL = "Exsel";
+
+  /** The Function switch key */
+  public static final String FN = "Fn";
+
+  /** The F1 key */
+  public static final String F1 = "F1";
+
+  /** The F2 key */
+  public static final String F2 = "F2";
+
+  /** The F3 key */
+  public static final String F3 = "F3";
+
+  /** The F4 key */
+  public static final String F4 = "F4";
+
+  /** The F5 key */
+  public static final String F5 = "F5";
+
+  /** The F6 key */
+  public static final String F6 = "F6";
+
+  /** The F7 key */
+  public static final String F7 = "F7";
+
+  /** The F8 key */
+  public static final String F8 = "F8";
+
+  /** The F9 key */
+  public static final String F9 = "F9";
+
+  /** The F10 key */
+  public static final String F10 = "F10";
+
+  /** The F11 key */
+  public static final String F11 = "F11";
+
+  /** The F12 key */
+  public static final String F12 = "F12";
+
+  /** The F13 key */
+  public static final String F13 = "F13";
+
+  /** The F14 key */
+  public static final String F14 = "F14";
+
+  /** The F15 key */
+  public static final String F15 = "F15";
+
+  /** The F16 key */
+  public static final String F16 = "F16";
+
+  /** The F17 key */
+  public static final String F17 = "F17";
+
+  /** The F18 key */
+  public static final String F18 = "F18";
+
+  /** The F19 key */
+  public static final String F19 = "F19";
+
+  /** The F20 key */
+  public static final String F20 = "F20";
+
+  /** The F21 key */
+  public static final String F21 = "F21";
+
+  /** The F22 key */
+  public static final String F22 = "F22";
+
+  /** The F23 key */
+  public static final String F23 = "F23";
+
+  /** The F24 key */
+  public static final String F24 = "F24";
+
+  /** The Final Mode (Final) key used on some asian keyboards */
+  public static final String FINAL_MODE = "FinalMode";
+
+  /** The Find key */
+  public static final String FIND = "Find";
+
+  /** The Full-Width Characters key */
+  public static final String FULL_WIDTH = "FullWidth";
+
+  /** The Half-Width Characters key */
+  public static final String HALF_WIDTH = "HalfWidth";
+
+  /** The Hangul (Korean characters) Mode key */
+  public static final String HANGUL_MODE = "HangulMode";
+
+  /** The Hanja (Korean characters) Mode key */
+  public static final String HANJA_MODE = "HanjaMode";
+
+  /** The Help key */
+  public static final String HELP = "Help";
+
+  /** The Hiragana (Japanese Kana characters) key */
+  public static final String HIRAGANA = "Hiragana";
+
+  /** The Home key */
+  public static final String HOME = "Home";
+
+  /** The Insert (Ins) key */
+  public static final String INSERT = "Insert";
+
+  /** The Japanese-Hiragana key */
+  public static final String JAPANESE_HIRAGANA = "JapaneseHiragana";
+
+  /** The Japanese-Katakana key */
+  public static final String JAPANESE_KATAKANA = "JapaneseKatakana";
+
+  /** The Japanese-Romaji key */
+  public static final String JAPANESE_ROMAJI = "JapaneseRomaji";
+
+  /** The Junja Mode key */
+  public static final String JUNJA_MODE = "JunjaMode";
+
+  /** The Kana Mode (Kana Lock) key */
+  public static final String KANA_MODE = "KanaMode";
+
+  /**
+   * The Kanji (Japanese name for ideographic characters of Chinese origin)
+   * Mode key
+   */
+  public static final String KANJI_MODE = "KanjiMode";
+
+  /** The Katakana (Japanese Kana characters) key */
+  public static final String KATAKANA = "Katakana";
+
+  /** The Start Application One key */
+  public static final String LAUNCH_APPLICATION_1 = "LaunchApplication1";
+
+  /** The Start Application Two key */
+  public static final String LAUNCH_APPLICATION_2 = "LaunchApplication2";
+
+  /** The Start Mail key */
+  public static final String LAUNCH_MAIL = "LaunchMail";
+
+  /** The Left Arrow key */
+  public static final String LEFT = "Left";
+
+  /** The Menu key */
+  public static final String MENU = "Menu";
+
+  /**
+   * The Meta key. Note: This key value shall be also used for the Apple
+   * Command key
+   */
+  public static final String META = "Meta";
+
+  /** The Media Next Track key */
+  public static final String MEDIA_NEXT_TRACK = "MediaNextTrack";
+
+  /** The Media Play Pause key */
+  public static final String MEDIA_PAUSE_PLAY = "MediaPlayPause";
+
+  /** The Media Previous Track key */
+  public static final String MEDIA_PREVIOUS_TRACK = "MediaPreviousTrack";
+
+  /** The Media Stop key */
+  public static final String MEDIA_STOP = "MediaStop";
+
+  /** The Mode Change key */
+  public static final String MODE_CHANGE = "ModeChange";
+
+  /** The Next Candidate function key */
+  public static final String NEXT_CANDIDATE = "NextCandidate";
+
+  /** The Nonconvert (Don't Convert) key */
+  public static final String NON_CONVERT = "Nonconvert";
+
+  /** The Number Lock key */
+  public static final String NUM_LOCK = "NumLock";
+
+  /** The Page Down (Next) key */
+  public static final String PAGE_DOWN = "PageDown";
+
+  /** The Page Up key */
+  public static final String PAGE_UP = "PageUp";
+
+  /** The Paste key */
+  public static final String PASTE = "Paste";
+
+  /** The Pause key */
+  public static final String PAUSE = "Pause";
+
+  /** The Play key */
+  public static final String PLAY = "Play";
+
+  /**
+   * The Power key. Note: Some devices may not expose this key to the
+   * operating environment
+   */
+  public static final String POWER = "Power";
+
+  /** The Previous Candidate function key */
+  public static final String PREVIOUS_CANDIDATE = "PreviousCandidate";
+
+  /** The Print Screen (PrintScrn, SnapShot) key */
+  public static final String PRINT_SCREEN = "PrintScreen";
+
+  /** The Process key */
+  public static final String PROCESS = "Process";
+
+  /** The Props key */
+  public static final String PROPS = "Props";
+
+  /** The Right Arrow key */
+  public static final String RIGHT = "Right";
+
+  /** The Roman Characters function key */
+  public static final String ROMAN_CHARACTERS = "RomanCharacters";
+
+  /** The Scroll Lock key */
+  public static final String SCROLL = "Scroll";
+
+  /** The Select key */
+  public static final String SELECT = "Select";
+
+  /** The Select Media key */
+  public static final String SELECT_MEDIA = "SelectMedia";
+
+  /** The Separator key */
+  public static final String SEPARATOR = "Separator";
+
+  /** The Shift key */
+  public static final String SHIFT = "Shift";
+
+  /** The Soft1 key */
+  public static final String SOFT_1 = "Soft1";
+
+  /** The Soft2 key */
+  public static final String SOFT_2 = "Soft2";
+
+  /** The Soft3 key */
+  public static final String SOFT_3 = "Soft3";
+
+  /** The Soft4 key */
+  public static final String SOFT_4 = "Soft4";
+
+  /** The Stop key */
+  public static final String STOP = "Stop";
+
+  /** The Subtract key */
+  public static final String SUBTRACT = "Subtract";
+
+  /** The Symbol Lock key */
+  public static final String SYMBOL_LOCK = "SymbolLock";
+
+  /** The Up Arrow key */
+  public static final String UP = "Up";
+
+  /** The diagonal Up-Left Arrow key */
+  public static final String UP_LEFT = "UpLeft";
+
+  /** The diagonal Up-Right Arrow key */
+  public static final String UP_RIGHT = "UpRight";
+
+  /** The Undo key */
+  public static final String UNDO = "Undo";
+
+  /** The Volume Down key */
+  public static final String VOLUME_DOWN = "VolumeDown";
+
+  /** The Volume Mute key */
+  public static final String VOLUMN_MUTE = "VolumeMute";
+
+  /** The Volume Up key */
+  public static final String VOLUMN_UP = "VolumeUp";
+
+  /** The Windows Logo key */
+  public static final String WIN = "Win";
+
+  /** The Zoom key */
+  public static final String ZOOM = "Zoom";
+
+  /**
+   * The Backspace (Back) key. Note: This key value shall be also used for the
+   * key labeled 'delete' MacOS keyboards when not modified by the 'Fn' key
+   */
+  public static final String BACKSPACE = "Backspace";
+
+  /** The Horizontal Tabulation (Tab) key */
+  public static final String TAB = "Tab";
+
+  /** The Cancel key */
+  public static final String CANCEL = "Cancel";
+
+  /** The Escape (Esc) key */
+  public static final String ESC = "Esc";
+
+  /** The Space (Spacebar) key:   */
+  public static final String SPACEBAR = "Spacebar";
+
+  /**
+   * The Delete (Del) Key. Note: This key value shall be also used for the key
+   * labeled 'delete' MacOS keyboards when modified by the 'Fn' key
+   */
+  public static final String DEL = "Del";
+
+  /** The Combining Grave Accent (Greek Varia, Dead Grave) key */
+  public static final String DEAD_GRAVE = "DeadGrave";
+
+  /**
+   * The Combining Acute Accent (Stress Mark, Greek Oxia, Tonos, Dead Eacute)
+   * key
+   */
+  public static final String DEAD_EACUTE = "DeadEacute";
+
+  /** The Combining Circumflex Accent (Hat, Dead Circumflex) key */
+  public static final String DEAD_CIRCUMFLEX = "DeadCircumflex";
+
+  /** The Combining Tilde (Dead Tilde) key */
+  public static final String DEAD_TILDE = "DeadTilde";
+
+  /** The Combining Macron (Long, Dead Macron) key */
+  public static final String DEAD_MACRON = "DeadMacron";
+
+  /** The Combining Breve (Short, Dead Breve) key */
+  public static final String DEAD_BREVE = "DeadBreve";
+
+  /** The Combining Dot Above (Derivative, Dead Above Dot) key */
+  public static final String DEAD_ABOVE_DOT = "DeadAboveDot";
+
+  /**
+   * The Combining Diaeresis (Double Dot Abode, Umlaut, Greek Dialytika,
+   * Double Derivative, Dead Diaeresis) key
+   */
+  public static final String DEAD_UMLAUT = "DeadUmlaut";
+
+  /** The Combining Ring Above (Dead Above Ring) key */
+  public static final String DEAD_ABOVE_RING = "DeadAboveRing";
+
+  /** The Combining Double Acute Accent (Dead Doubleacute) key */
+  public static final String DEAD_DOUBLEACUTE = "DeadDoubleacute";
+
+  /** The Combining Caron (Hacek, V Above, Dead Caron) key */
+  public static final String DEAD_CARON = "DeadCaron";
+
+  /** The Combining Cedilla (Dead Cedilla) key */
+  public static final String DEAD_CEDILLA = "DeadCedilla";
+
+  /** The Combining Ogonek (Nasal Hook, Dead Ogonek) key */
+  public static final String DEAD_OGONEK = "DeadOgonek";
+
+  /**
+   * The Combining Greek Ypogegrammeni (Greek Non-Spacing Iota Below, Iota
+   * Subscript, Dead Iota) key
+   */
+  public static final String DEAD_IOTA = "DeadIota";
+
+  /**
+   * The Combining Katakana-Hiragana Voiced Sound Mark (Dead Voiced Sound) key
+   */
+  public static final String DEAD_VOICED_SOUND = "DeadVoicedSound";
+
+  /**
+   * The Combining Katakana-Hiragana Semi-Voiced Sound Mark (Dead Semivoiced
+   * Sound) key
+   */
+  public static final String DEC_SEMIVOICED_SOUND= "DeadSemivoicedSound";
+
+  /**
+   * Key value used when an implementation is unable to identify another key
+   * value, due to either hardware, platform, or software constraints
+   */
+  public static final String UNIDENTIFIED = "Unidentified";
+  }
+
+  int getKeyCode();
+    
+$!MEMBERS}

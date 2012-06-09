@@ -1,0 +1,7 @@
+GWT bindings generation code adapted from the Dart Project at http://code.google.com/p/dart/source/browse/trunk/dart/lib/
+
+How to update bindings:
+1) Update third_party/WebCore/ from trac.webkit.org or the Dart Project
+2) Modify elemental.idl to fix any issues (usually caused by covariant returns)
+3) Run build script to regenerate the bindings
+4) cp -r generated/src/elemental/* ../src/elemental/

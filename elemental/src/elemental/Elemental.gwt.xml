@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+  <inherits name="com.google.gwt.core.Core" />
+
+  <!-- Enables use of ClientBundle -->
+  <inherits name="com.google.gwt.resources.Resources" />
+  <set-configuration-property name="user.agent.runtimeWarning" value="false" />
+  <set-property name="user.agent" value="safari" />
+  <source path="client" />
+  <source path="js" />
+  <source path='canvas'/>
+  <source path='css'/>
+  <source path='dom'/>
+  <source path='events'/>
+  <source path='html'/>
+  <source path='json'/>
+  <source path='ranges'/>
+  <source path='stylesheets'/>
+  <source path='svg'/>
+  <source path='traversal'/>
+  <source path='xpath'/>
+  <source path='xml'/>
+  <source path='util'/>
+  <super-source path="super"/>
+</module>
