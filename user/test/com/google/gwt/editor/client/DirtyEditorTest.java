@@ -180,6 +180,7 @@ public class DirtyEditorTest extends GWTTestCase {
     SimpleEditor<String> label = SimpleEditor.of();
     OptionalFieldEditor<List<Person>, ListEditor<Person, PersonEditor>> people =
         OptionalFieldEditor.of(ListEditor
+            // The method type parameterization is needed by OpenJDK, please keep.
             .<Person, PersonEditor> of(new EditorSource<PersonEditor>() {
               @Override
               public PersonEditor create(int index) {
