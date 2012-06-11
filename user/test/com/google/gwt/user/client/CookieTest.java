@@ -31,6 +31,13 @@ public class CookieTest extends GWTTestCase {
     return "com.google.gwt.user.User";
   }
 
+  @Override
+  protected void gwtSetUp() throws Exception {
+    // Sets URI Encode to default so we don't depend on execution order of test functions
+    // between JDK versions.
+    Cookies.setUriEncode(true);
+  }
+
   public void test() {
     // Make the cookie expire in one minute, so that they don't hang around
     // past the end of this test.
