@@ -23,6 +23,9 @@
 #include "nsIScriptObjectPrincipal.h"
 #include "nsIURI.h"
 #include "nsIXPConnect.h"
+#if GECKO_VERSION >= 13000
+#include "nsJSPrincipals.h"
+#endif
 #include "nsStringAPI.h"
 
 // from js_runner_ff.cc in Gears (http://code.google.com/p/gears/)
@@ -35,7 +38,9 @@ bool JSRunner::eval(JSContext* ctx, JSObject* object, const std::string& script)
   // associated with the global JSObject on the current context.
   nsCOMPtr<nsIScriptGlobalObject> sgo;
   nsISupports *priv = reinterpret_cast<nsISupports *>(JS_GetPrivate(
+#if GECKO_VERSION < 13000
                                                           ctx,
+#endif
                                                           object));
   nsCOMPtr<nsIXPConnectWrappedNative> wrapped_native = do_QueryInterface(priv);
 
@@ -91,7 +96,17 @@ bool JSRunner::eval(JSContext* ctx, JSObject* object, const std::string& script)
     virtual_filename += host.BeginReading();
   }
 
+#if GECKO_VERSION >= 13000
+  jsprin = nsJSPrincipals::get(principal);
+#else
   principal->GetJSPrincipals(ctx, &jsprin);
+#endif
+
+  if (jsprin == nsnull) {
+    Debug::log(Debug::Error) << "Get JSPrincial failed at JSRunner::eval"
+        << Debug::flush;
+    return false;
+  }
 
   // Set up the JS stack so that our context is on top.  This is needed to
   // play nicely with plugins that access the context stack, such as Firebug.
@@ -112,7 +127,11 @@ bool JSRunner::eval(JSContext* ctx, JSObject* object, const std::string& script)
 //  stack->Pop(&cx);
 
   // Decrements ref count on jsprin (Was added in GetJSPrincipals()).
+#if GECKO_VERSION >= 13000
+  (void) JS_DropPrincipals(JS_GetRuntime(ctx), jsprin);
+#else
   (void) JSPRINCIPALS_DROP(ctx, jsprin);
+#endif
   if (!js_ok) {
     Debug::log(Debug::Error) << "JS execution failed in JSRunner::eval"
         << Debug::flush;

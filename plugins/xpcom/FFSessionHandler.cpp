@@ -228,7 +228,7 @@ bool FFSessionHandler::invoke(HostChannel& channel, const gwt::Value& thisObj, c
   jsval jsThis;
   if (thisObj.isNull()) {
     jsThis = OBJECT_TO_JSVAL(global);
-    Debug::log(Debug::Spam) << "  using global object for this" << Debug::flush;
+    Debug::log(Debug::Error) << " using global object for this" << Debug::flush;
   } else {
     makeJsvalFromValue(jsThis, ctx, thisObj);
     if (Debug::level(Debug::Spam)) {
@@ -250,7 +250,7 @@ bool FFSessionHandler::invoke(HostChannel& channel, const gwt::Value& thisObj, c
     Debug::log(Debug::Error) << "Could not get function " << methodName
         << Debug::flush;
     return true;
-  }
+  } 
 
   scoped_array<jsval> jsargs(new jsval[numArgs]);
   for (int i = 0; i < numArgs; ++i) {
@@ -601,7 +601,7 @@ void FFSessionHandler::disconnect() {
       if (JavaObject::isJavaObject(ctx, obj)) {
         // clear the SessionData pointer -- JavaObject knows it is
         // disconnected if this is null
-        JS_SetPrivate(ctx, obj, NULL);
+        MOZ_JS_SetPrivate(ctx, obj, NULL);
         javaObjectsToFree.erase(javaId);
       }
     }

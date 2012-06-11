@@ -39,7 +39,9 @@ static JSClass JavaObjectClass = {
   JS_ConvertStub, // JavaObject::convert, /* convert */
   JavaObject::finalize, /* finalize */ //TODO
 
+#if GECKO_VERSION < 13000
   NULL, /* object hooks */
+#endif
   NULL, /* check access */
 #if GECKO_VERSION < 2000
   JavaObject::call, /* call */ //TODO
@@ -69,10 +71,17 @@ int JavaObject::getObjectId(JSContext* ctx, JSObject* obj) {
         << " reserved slots, no objectId present" << Debug::flush;
     return -1;
   }
+
+
+#if GECKO_VERSION >= 13000
+  val = JS_GetReservedSlot(obj, 0);
+#else
   if (!JS_GetReservedSlot(ctx, obj, 0, &val)) {
     Debug::log(Debug::Error) << "Error getting reserved slot" << Debug::flush;
     return -1;
   }
+#endif
+
   // TODO: assert JSVAL_IS_INT(val)
   return JSVAL_TO_INT(val);
 }
@@ -96,15 +105,25 @@ JSObject* JavaObject::construct(JSContext* ctx, SessionData* data, int objectRef
     return NULL;
   }
   // set the session data
-  if (!JS_SetPrivate(ctx, obj, data)) {
+#if GECKO_VERSION >= 13000
+  MOZ_JS_SetPrivate(ctx, obj, data);
+#else
+  if (!MOZ_JS_SetPrivate(ctx, obj, data)) {
     Debug::log(Debug::Error) << "Could not set private data" << Debug::flush;
     return NULL;
   }
+#endif
+
+  #if GECKO_VERSION >= 13000
+  MOZ_JS_SetReservedSlot(ctx, obj, 0, INT_TO_JSVAL(objectRef));
+  #else
   // set the objectId
-  if (!JS_SetReservedSlot(ctx, obj, 0, INT_TO_JSVAL(objectRef))) {
+  if (!MOZ_JS_SetReservedSlot(ctx, obj, 0, INT_TO_JSVAL(objectRef))) {
     Debug::log(Debug::Error) << "Could not set reserved slot" << Debug::flush;
     return NULL;
   }
+  #endif
+
   // define toString (TODO: some way to avoid doing this each time)
 #if GECKO_VERSION < 2000
   if (!JS_DefineFunction(ctx, obj, "toString", JavaObject::toString, 0, 0)) {
@@ -289,7 +308,7 @@ void JavaObject::finalize(JSContext* ctx, JSObject* obj) {
   if (data) {
     int objectId = JavaObject::getObjectId(ctx, obj);
     data->freeJavaObject(objectId);
-    JS_SetPrivate(ctx, obj, NULL);
+    MOZ_JS_SetPrivate(ctx, obj, NULL);
   }
 }
 
