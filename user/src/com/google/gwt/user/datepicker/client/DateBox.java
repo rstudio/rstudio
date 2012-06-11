@@ -287,6 +287,7 @@ public class DateBox extends Composite implements HasValue<Date>,
     box.addBlurHandler(handler);
     box.addClickHandler(handler);
     box.addKeyDownHandler(handler);
+    box.setDirectionEstimator(false);
     popup.addCloseHandler(handler);
     setValue(date);
   }
