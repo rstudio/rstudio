@@ -57,28 +57,10 @@ public class UserAgentPropertyGenerator implements PropertyProviderGenerator {
         .println("return (ua.indexOf('opera') != -1);")
       .returns("'opera'"),
 
-      // webkit family (chrome, safari and chromeframe).
+      // webkit family
       new UserAgentPropertyGeneratorPredicate("safari")
       .getPredicateBlock()
-        .println("return (")
-          .println("(ua.indexOf('webkit') != -1)")
-          .println("||")
-          .println("(function() {")
-            .println("if (ua.indexOf('chromeframe') != -1) {")
-              .println("return true;")
-            .println("}")
-            .println("if (typeof window['ActiveXObject'] != 'undefined') {")
-              .println("try {")
-                .println("var obj = new ActiveXObject('ChromeTab.ChromeFrame');")
-                .println("if (obj) {")
-                  .println("obj.registerBhoIfNeeded();")
-                  .println("return true;")
-                .println("}")
-              .println("} catch(e) { }")
-            .println("}")
-            .println("return false;")
-            .println("})()")
-        .println(")")
+        .println("return (ua.indexOf('webkit') != -1);")
       .returns("'safari'"),
 
       // IE9
