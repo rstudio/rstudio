@@ -23,9 +23,10 @@ import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyList;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptySet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEnum;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEnumMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMapKey;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeIdentityHashMapKey;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeIdentityHashMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMapKey;
@@ -42,8 +43,9 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -247,6 +249,25 @@ public class CollectionsTest extends RpcTestBase {
     });
   }
 
+  public void testEmptyEnumMap() {
+    CollectionsTestServiceAsync service = getServiceAsync();
+    final EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> expected =
+        TestSetFactory.createEmptyEnumMap();
+    delayTestFinishForRpc();
+    service.echoEmptyEnumMap(expected, new AsyncCallback<EnumMap<MarkerTypeEnum,
+      MarkerTypeEnumMapValue>>() {
+        public void onFailure(Throwable caught) {
+          TestSetValidator.rethrowException(caught);
+        }
+
+        public void onSuccess(EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> result) {
+          assertNotNull(result);
+          assertTrue(TestSetValidator.isValid(expected, result));
+          finishTest();
+        }
+    });
+  }
+  
   public void testEmptyList() {
     CollectionsTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
@@ -318,6 +339,44 @@ public class CollectionsTest extends RpcTestBase {
         finishTest();
       }
     });
+  }
+
+  public void testEnumMapEnumKey() {
+    CollectionsTestServiceAsync service = getServiceAsync();
+    final EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> expected =
+        TestSetFactory.createEnumMapEnumKey();
+    delayTestFinishForRpc();
+    service.echoEnumKey(expected,
+        new AsyncCallback<EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> result) {
+            assertNotNull(result);
+            assertTrue(TestSetValidator.isValidEnumKey(expected, result));
+            finishTest();
+          }
+        });
+  }
+
+  public void testEnumMap() {
+    CollectionsTestServiceAsync service = getServiceAsync();
+    final EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> expected =
+        TestSetFactory.createEnumMap();
+    delayTestFinishForRpc();
+    service.echo(expected,
+        new AsyncCallback<EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> result) {
+            assertNotNull(result);
+            assertTrue(TestSetValidator.isValid(expected, result));
+            finishTest();
+          }
+        });
   }
 
   public void testFloatArray() {

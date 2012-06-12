@@ -22,9 +22,10 @@ import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyList;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptySet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEnum;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEnumMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMapKey;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeIdentityHashMapKey;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeIdentityHashMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMapKey;
@@ -40,8 +41,9 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -110,6 +112,10 @@ public interface CollectionsTestService extends RemoteService {
 
   Float[] echo(Float[] value) throws CollectionsTestServiceException;
 
+  EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> echo(
+      EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> value)
+      throws CollectionsTestServiceException;
+ 
   HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue> echo(
       HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue> value)
       throws CollectionsTestServiceException;
@@ -171,7 +177,15 @@ public interface CollectionsTestService extends RemoteService {
   List<MarkerTypeArraysAsList> echoArraysAsList(
       List<MarkerTypeArraysAsList> value)
       throws CollectionsTestServiceException;
+  
+  EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> echoEmptyEnumMap(
+      EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> value)
+      throws CollectionsTestServiceException;
 
+  EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> echoEnumKey(
+      EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> value)
+      throws CollectionsTestServiceException;
+  
   IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> echoEnumKey(
       IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> value)
       throws CollectionsTestServiceException;

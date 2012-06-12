@@ -21,8 +21,9 @@ import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyKey;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyList;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptySet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyValue;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEnum;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMapKey;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEnum;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEnumMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeIdentityHashMapKey;
@@ -40,6 +41,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -96,6 +98,9 @@ public interface CollectionsTestServiceAsync {
 
   void echo(Float[] value, AsyncCallback<Float[]> callback);
 
+  void echo(EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> value,
+      AsyncCallback<EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue>> callback);
+
   void echo(HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue> value,
       AsyncCallback<HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue>> callback);
 
@@ -150,6 +155,12 @@ public interface CollectionsTestServiceAsync {
 
   void echoArraysAsList(List<MarkerTypeArraysAsList> value,
       AsyncCallback<List<MarkerTypeArraysAsList>> callback);
+
+  void echoEmptyEnumMap(EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> expected,
+      AsyncCallback<EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue>> asyncCallback);
+  
+  void echoEnumKey(EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> value,
+      AsyncCallback<EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue>> callback);
 
   void echoEnumKey(IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> value,
       AsyncCallback<IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue>> callback);

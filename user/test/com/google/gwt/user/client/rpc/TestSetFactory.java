@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -152,6 +153,21 @@ public class TestSetFactory {
    */
   public static enum MarkerTypeEnum {
     A, B, C;
+  }
+  
+  /**
+   * A single-use marker type to independently check type parameter exposure in
+   * various collections.
+   */
+  public static final class MarkerTypeEnumMapValue extends MarkerBase {
+
+    public MarkerTypeEnumMapValue(String value) {
+      super(value);
+    }
+
+   MarkerTypeEnumMapValue() {
+     super(null);
+   }
   }
 
   /**
@@ -556,7 +572,37 @@ public class TestSetFactory {
         new Float(Float.MIN_VALUE)};
   }
 
+  public static EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> createEmptyEnumMap() {
+    EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> map =
+       new EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue>(MarkerTypeEnum.class);
+   return map;
+  }
+
+  public static EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> createEnumMap() {
+    EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> map =
+        new EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue>(MarkerTypeEnum.class);
+    map.put(MarkerTypeEnum.A, new MarkerTypeEnumMapValue("A"));
+    map.put(MarkerTypeEnum.B, new MarkerTypeEnumMapValue("B"));
+    map.put(MarkerTypeEnum.C, new MarkerTypeEnumMapValue("C"));
+    return map;
+  }
+
+  public static EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue>
+  createEnumMapEnumKey() {
+    EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> map =
+        new EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue>(MarkerTypeEnum.class);
+    /*
+     * An EnumMap lets us check that references to Enums remain constant
+     * across RPC send-receive cycles.
+     */
+    map.put(MarkerTypeEnum.A, new MarkerTypeEnumMapValue("A"));
+    map.put(MarkerTypeEnum.B, new MarkerTypeEnumMapValue("B"));
+    map.put(MarkerTypeEnum.C, new MarkerTypeEnumMapValue("C"));
+    return map;
+  }
+
   public static HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue> createHashMap() {
+
     HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue> map =
         new HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue>();
     map.put(new MarkerTypeHashMapKey("foo"), new MarkerTypeHashMapValue("foo"));

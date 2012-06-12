@@ -24,9 +24,10 @@ import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArrayList;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArraysAsList;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEnum;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEnumMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMapKey;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeIdentityHashMapKey;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeIdentityHashMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMapKey;
@@ -44,6 +45,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -185,6 +187,18 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     if (!TestSetValidator.equals(expected, actual)) {
       throw new CollectionsTestServiceException("expected: "
           + Arrays.toString(expected) + " actual: " + Arrays.toString(actual));
+    }
+
+    return actual;
+  }
+
+  public EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> echo(
+      EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> actual)
+      throws CollectionsTestServiceException {
+    EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> expected = TestSetFactory.createEnumMap();
+    if (!TestSetValidator.isValid(expected, actual)) {
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
     }
 
     return actual;
@@ -464,10 +478,35 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
+  public EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> echoEmptyEnumMap(
+      EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> actual)
+      throws CollectionsTestServiceException {
+    EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> expected = TestSetFactory.createEmptyEnumMap();
+    if (!TestSetValidator.isValid(expected, actual)) {
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
+    }
+
+    return actual;
+  }
+  
   public IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> echoEnumKey(
       IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> actual)
       throws CollectionsTestServiceException {
     IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> expected = TestSetFactory.createIdentityHashMapEnumKey();
+    if (!TestSetValidator.isValidEnumKey(expected, actual)) {
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
+    }
+
+    return actual;
+  }
+
+  public EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> echoEnumKey(
+      EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> actual)
+      throws CollectionsTestServiceException {
+    EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> expected =
+      TestSetFactory.createEnumMapEnumKey();
     if (!TestSetValidator.isValidEnumKey(expected, actual)) {
       throw new CollectionsTestServiceException("expected: "
           + expected.toString() + " actual: " + actual.toString());

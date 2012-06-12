@@ -21,6 +21,7 @@ import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyList;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptySet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEnum;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEnumMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeIdentityHashMapKey;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeIdentityHashMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeSingleton;
@@ -40,6 +41,7 @@ import static junit.framework.Assert.assertSame;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.EnumMap;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -324,6 +326,60 @@ public class TestSetValidator {
 
   public static boolean isValid(Set<MarkerTypeEmptySet> set) {
     return set != null && set.size() == 0;
+  }
+
+  public static boolean isValidEnumKey(
+    EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> expected,
+    EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> map) {
+    if (map == null) {
+      return false;
+    }
+
+    Set<?> entries = expected.entrySet();
+    Iterator<?> entryIter = entries.iterator();
+    while (entryIter.hasNext()) {
+      Entry<?, ?> entry = (Entry<?, ?>) entryIter.next();
+
+      Object value = map.get(entry.getKey());
+
+      if (value != entry.getValue()) {
+        if (value == null || entry.getValue() == null) {
+          return false;
+        } 
+
+        if (!map.get(entry.getKey()).equals(entry.getValue())) {
+          return false;
+        }
+      }
+    } 
+
+    return true;
+  }
+
+  public static boolean isValid(EnumMap<?, ?> expected, EnumMap<?, ?> map) {
+    if (map == null) {
+      return false;
+    }
+
+    Set<?> entries = expected.entrySet();
+    Iterator<?> entryIter = entries.iterator();
+    while (entryIter.hasNext()) {
+      Entry<?, ?> entry = (Entry<?, ?>) entryIter.next();
+
+      Object value = map.get(entry.getKey());
+
+      if (value != entry.getValue()) {
+        if (value == null || entry.getValue() == null) {
+          return false;
+        } 
+
+        if (!map.get(entry.getKey()).equals(entry.getValue())) {
+          return false;
+        }
+      }
+    } 
+
+    return true;
   }
 
   public static boolean isValid(HashMap<?, ?> expected, HashMap<?, ?> map) {
