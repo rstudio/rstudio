@@ -17,17 +17,31 @@ package com.google.web.bindery.requestfactory.apt;
 
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.ProxyFor;
+import com.google.web.bindery.requestfactory.shared.ValueProxy;
 
 @Expected({
     @Expect(method = "domainGetIdStatic"),
     @Expect(method = "domainGetVersionStatic"),
     @Expect(method = "domainFindNotStatic", args = "Domain"),
-    @Expect(method = "domainNoDefaultConstructor", args = {
+    @Expect(method = "domainNotDefaultInstantiable", args = {
         "Domain", "EntityProxyCheckDomainMapping", "RequestContext"}, warning = true)})
 @ProxyFor(EntityProxyCheckDomainMapping.Domain.class)
 @SuppressWarnings("requestfactory")
 interface EntityProxyCheckDomainMapping extends EntityProxy {
-  public static class Domain {
+  class Domain {
+
+    public static abstract class Abstract {
+    }
+
+    public enum Enumeration {
+    }
+
+    public class Inner {
+    }
+
+    public interface Interface {
+    }
+
     public static String getFoo() {
       return null;
     }
@@ -47,13 +61,57 @@ interface EntityProxyCheckDomainMapping extends EntityProxy {
       return null;
     }
 
+    public Abstract getAbstract() {
+      return null;
+    }
+
+    public Enumeration getEnum() {
+      return null;
+    }
+
+    public Inner getInner() {
+      return null;
+    }
+
+    public Interface getInterface() {
+      return null;
+    }
+
     String getNotPublic() {
       return null;
     }
   }
 
+  @Expect(method = "domainNotDefaultInstantiable", args = { "Inner", "InnerProxy", "RequestContext" }, warning = true)
+  @ProxyFor(Domain.Inner.class)
+  interface InnerProxy extends ValueProxy {
+  }
+
+  @Expect(method = "domainNotDefaultInstantiable", args = { "Abstract", "AbstractProxy", "RequestContext" }, warning = true)
+  @ProxyFor(Domain.Abstract.class)
+  interface AbstractProxy extends ValueProxy {
+  }
+
+  @Expect(method = "domainNotDefaultInstantiable", args = { "Enumeration", "EnumProxy", "RequestContext" }, warning = true)
+  @ProxyFor(Domain.Enumeration.class)
+  interface EnumProxy extends ValueProxy {
+  }
+
+  @Expect(method = "domainNotDefaultInstantiable", args = { "Interface", "InterfaceProxy", "RequestContext" }, warning = true)
+  @ProxyFor(Domain.Interface.class)
+  interface InterfaceProxy extends ValueProxy {
+  }
+
+  AbstractProxy getAbstract();
+
+  EnumProxy getEnum();
+
   @Expect(method = "domainMethodWrongModifier", args = {"false", "getFoo"})
   String getFoo();
+
+  InnerProxy getInner();
+
+  InterfaceProxy getInterface();
 
   @Expect(method = "domainMissingMethod", args = "java.lang.String getMissingProperty()")
   String getMissingProperty();

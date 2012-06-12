@@ -54,7 +54,6 @@
   <target name="dev" description="[subdir] Builds (or runs ${target} if set) all the dev libraries">
     <call-subproject subproject="buildtools" subtarget="build" />
     <gwt.ant dir="dev" />
-    <gwt.ant dir="dev/codeserver" />
   </target>
 
   <target name="codeserver" description="[subdir] Builds (or runs ${target} if set) only the SuperDevMode">

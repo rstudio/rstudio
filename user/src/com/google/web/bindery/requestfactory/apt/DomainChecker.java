@@ -26,9 +26,11 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
+import javax.lang.model.element.NestingKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.MirroredTypeException;
@@ -242,9 +244,9 @@ class DomainChecker extends ScannerBase<Void> {
       // Require domain property methods to be instance methods
       requireInstanceDomainMethods = true;
       if (!hasProxyLocator(clientTypeElement, state)) {
-        // Domain types without a Locator should have a no-arg constructor
-        if (!hasNoArgConstructor(domainElement)) {
-          state.warn(clientTypeElement, Messages.domainNoDefaultConstructor(domainElement
+        // Domain types without a Locator should be default-instantiable
+        if (!isDefaultInstantiable(domainElement)) {
+          state.warn(clientTypeElement, Messages.domainNotDefaultInstantiable(domainElement
               .getSimpleName(), clientTypeElement.getSimpleName(), state.requestContextType
               .asElement().getSimpleName()));
         }
@@ -349,23 +351,6 @@ class DomainChecker extends ScannerBase<Void> {
     return returnType;
   }
 
-  /**
-   * Looks for a no-arg constructor or no constructors at all. Instance
-   * initializers are ignored.
-   */
-  private boolean hasNoArgConstructor(TypeElement x) {
-    List<ExecutableElement> constructors = ElementFilter.constructorsIn(x.getEnclosedElements());
-    if (constructors.isEmpty()) {
-      return true;
-    }
-    for (ExecutableElement constructor : constructors) {
-      if (constructor.getParameters().isEmpty()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private boolean hasProxyLocator(TypeElement x, State state) {
     ProxyFor proxyFor = x.getAnnotation(ProxyFor.class);
     if (proxyFor != null) {
@@ -396,5 +381,33 @@ class DomainChecker extends ScannerBase<Void> {
     }
     ServiceName serviceName = x.getAnnotation(ServiceName.class);
     return serviceName != null && !serviceName.locator().isEmpty();
+  }
+
+  /**
+   * Looks for a no-arg constructor or no constructors at all. Instance
+   * initializers are ignored.
+   */
+  private boolean isDefaultInstantiable(TypeElement x) {
+    if (x.getKind() != ElementKind.CLASS) {
+      return false;
+    }
+    if (x.getModifiers().contains(Modifier.ABSTRACT)) {
+      return false;
+    }
+    if (x.getNestingKind() == NestingKind.ANONYMOUS || x.getNestingKind() == NestingKind.LOCAL
+        || (x.getNestingKind() == NestingKind.MEMBER && !x.getModifiers().contains(Modifier.STATIC))) {
+      // anonymous and local shouldn't ever happen, but just in case...
+      return false;
+    }
+    List<ExecutableElement> constructors = ElementFilter.constructorsIn(x.getEnclosedElements());
+    if (constructors.isEmpty()) {
+      return true;
+    }
+    for (ExecutableElement constructor : constructors) {
+      if (constructor.getParameters().isEmpty()) {
+        return true;
+      }
+    }
+    return false;
   }
 }

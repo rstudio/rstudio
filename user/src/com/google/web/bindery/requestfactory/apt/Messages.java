@@ -94,19 +94,19 @@ class Messages {
     return String.format("Could not find domain method similar to %s", description);
   }
 
-  public static String domainNoDefaultConstructor(Object domainName, Object proxyName,
-      Object requestContextName) {
-    return String.format("The domain type %s has no default constructor."
-        + " Calling %s.create(%s.class) will cause a server error.", domainName,
-        requestContextName, proxyName);
-  }
-
   public static String domainNoGetId(Object domainType) {
     return String.format("Domain type %s does not have a getId() method", domainType);
   }
 
   public static String domainNoGetVersion(Object domainType) {
     return String.format("Domain type %s does not have a getVersion() method", domainType);
+  }
+
+  public static String domainNotDefaultInstantiable(Object domainName, Object proxyName,
+      Object requestContextName) {
+    return String.format("The domain type %s is not default-instantiable."
+        + " Calling %s.create(%s.class) will cause a server error.", domainName,
+        requestContextName, proxyName);
   }
 
   public static String factoryMustBeAssignable(Object assignableTo) {
