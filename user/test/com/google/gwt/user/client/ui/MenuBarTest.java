@@ -42,6 +42,14 @@ public class MenuBarTest extends WidgetTestBase {
     }
   };
 
+  /**
+   * A blank scheduled command.
+   */
+  private static final ScheduledCommand BLANK_SCHEDULED_COMMAND = new ScheduledCommand() {
+    public void execute() {
+    }
+  };
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.DebugTest";
@@ -51,7 +59,7 @@ public class MenuBarTest extends WidgetTestBase {
    * Test adding and removing {@link MenuItem}s and {@link MenuItemSeparator}s
    * from a menu.
    */
-  public void testAddRemoveItems() {
+  public void testAddRemoveItemsWithCommand() {
     // Create a menu bar
     MenuBar bar = new MenuBar(true);
 
@@ -92,6 +100,62 @@ public class MenuBarTest extends WidgetTestBase {
     MenuItem item3 = bar.addItem("test3", true, BLANK_COMMAND);
     MenuItemSeparator separator2 = bar.addSeparator();
     MenuItem item4 = bar.addItem("test4", true, BLANK_COMMAND);
+    MenuItemSeparator separator3 = bar.addSeparator();
+    bar.clearItems();
+    assertEquals(0, bar.getItems().size());
+    assertNull(item2.getParentMenu());
+    assertNull(item3.getParentMenu());
+    assertNull(item4.getParentMenu());
+    assertNull(separator1.getParentMenu());
+    assertNull(separator2.getParentMenu());
+    assertNull(separator3.getParentMenu());
+  }
+
+  /**
+   * Test adding and removing {@link MenuItem}s and {@link MenuItemSeparator}s
+   * from a menu.
+   */
+  public void testAddRemoveItemsWithScheduledCommand() {
+    // Create a menu bar
+    MenuBar bar = new MenuBar(true);
+
+    // Add an item, default to text
+    MenuItem item0 = bar.addItem("<b>test</b>", BLANK_SCHEDULED_COMMAND);
+    assertEquals("<b>test</b>", item0.getText());
+    assertEquals(BLANK_SCHEDULED_COMMAND, item0.getScheduledCommand());
+    assertEquals(bar, item0.getParentMenu());
+
+    // Add a separator
+    MenuItemSeparator separator0 = bar.addSeparator();
+    assertEquals(bar, separator0.getParentMenu());
+
+    // Add another item, force to html
+    MenuItem item1 = bar.addItem("<b>test1</b>", true, BLANK_SCHEDULED_COMMAND);
+    assertEquals("test1", item1.getText());
+    assertEquals(BLANK_SCHEDULED_COMMAND, item1.getScheduledCommand());
+    assertEquals(bar, item1.getParentMenu());
+
+    // Get all items
+    List<MenuItem> items = bar.getItems();
+    assertEquals(item0, items.get(0));
+    assertEquals(item1, items.get(1));
+
+    // Remove an item
+    bar.removeItem(item0);
+    assertEquals(item1, items.get(0));
+    assertNull(item0.getParentMenu());
+
+    // Remove the separator
+    bar.removeSeparator(separator0);
+    assertEquals(item1, items.get(0));
+    assertNull(separator0.getParentMenu());
+
+    // Add a bunch of items and clear them all
+    MenuItem item2 = bar.addItem("test2", true, BLANK_SCHEDULED_COMMAND);
+    MenuItemSeparator separator1 = bar.addSeparator();
+    MenuItem item3 = bar.addItem("test3", true, BLANK_SCHEDULED_COMMAND);
+    MenuItemSeparator separator2 = bar.addSeparator();
+    MenuItem item4 = bar.addItem("test4", true, BLANK_SCHEDULED_COMMAND);
     MenuItemSeparator separator3 = bar.addSeparator();
     bar.clearItems();
     assertEquals(0, bar.getItems().size());
@@ -333,7 +397,7 @@ public class MenuBarTest extends WidgetTestBase {
     }
   }
 
-  public void testSafeHtml() {
+  public void testSafeHtmlWithCommand() {
     MenuBar bar = new MenuBar(true);
 
     // ensure safehtml passes through when a command is set.
@@ -341,6 +405,24 @@ public class MenuBarTest extends WidgetTestBase {
       bar.addItem(SafeHtmlUtils.fromSafeConstant(html), BLANK_COMMAND);
     assertEquals(html, item1.getHTML().toLowerCase());
     assertEquals(BLANK_COMMAND, item1.getCommand());
+    assertEquals(bar, item1.getParentMenu());
+
+    // ensure safehtml passes through when a submenu/popup is set.
+    MenuBar foo = new MenuBar(true);
+    MenuItem item2 = foo.addItem(SafeHtmlUtils.fromSafeConstant(html), bar);
+    assertEquals(html, item2.getHTML().toLowerCase());
+    assertEquals(bar, item2.getSubMenu());
+    assertEquals(foo, item2.getParentMenu());
+  }
+
+  public void testSafeHtmlWithScheduledCommand() {
+    MenuBar bar = new MenuBar(true);
+
+    // ensure safehtml passes through when a command is set.
+    MenuItem item1 =
+      bar.addItem(SafeHtmlUtils.fromSafeConstant(html), BLANK_SCHEDULED_COMMAND);
+    assertEquals(html, item1.getHTML().toLowerCase());
+    assertEquals(BLANK_SCHEDULED_COMMAND, item1.getScheduledCommand());
     assertEquals(bar, item1.getParentMenu());
 
     // ensure safehtml passes through when a submenu/popup is set.

@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;
@@ -44,6 +45,26 @@ public class MenuItemTest extends GWTTestCase {
     assertEquals(command, item.getCommand());
   }
 
+  public void testSafeHtmlWithScheduledCommand() {
+    ScheduledCommand command = new ScheduledCommand() {
+      @Override
+      public void execute() {
+      }
+    };
+    MenuItem item = new MenuItem(SafeHtmlUtils.fromSafeConstant(html), command);
+
+    assertEquals(html, item.getHTML().toLowerCase());
+    assertEquals(command, item.getScheduledCommand());
+  }
+
+  public void testSafeHtmlWithSubMenu() {
+    MenuBar subMenu = new MenuBar();
+    MenuItem item = new MenuItem(SafeHtmlUtils.fromSafeConstant(html), subMenu);
+
+    assertEquals(html, item.getHTML().toLowerCase());
+    assertEquals(subMenu, item.getSubMenu());
+  }
+
   public void testSetCommandWithMenuBar() {
     Command command = new Command() {
       @Override
@@ -59,14 +80,6 @@ public class MenuItemTest extends GWTTestCase {
 
     item.setCommand(command);
     assertEquals(command, item.getCommand());
-  }
-
-  public void testSafeHtmlWithSubMenu() {
-    MenuBar subMenu = new MenuBar();
-    MenuItem item = new MenuItem(SafeHtmlUtils.fromSafeConstant(html), subMenu);
-
-    assertEquals(html, item.getHTML().toLowerCase());
-    assertEquals(subMenu, item.getSubMenu());
   }
 
   public void testSetCommandWithoutMenuBar() {
@@ -85,7 +98,7 @@ public class MenuItemTest extends GWTTestCase {
     assertEquals(command, item.getCommand());
   }
 
-  public void testSetSafeHtml() {
+  public void testSetSafeHtmlWithCommand() {
     Command command = new Command() {
       @Override
       public void execute() {
@@ -96,6 +109,52 @@ public class MenuItemTest extends GWTTestCase {
 
     assertEquals(html, item.getHTML().toLowerCase());
     assertEquals(command, item.getCommand());
+  }
+
+  public void testSetSafeHtmlWithScheduledCommand() {
+    ScheduledCommand command = new ScheduledCommand() {
+      @Override
+      public void execute() {
+      }
+    };
+    MenuItem item = new MenuItem("foo", command);
+    item.setHTML(SafeHtmlUtils.fromSafeConstant(html));
+
+    assertEquals(html, item.getHTML().toLowerCase());
+    assertEquals(command, item.getScheduledCommand());
+  }
+
+  public void testSetScheduledCommandWithMenuBar() {
+    ScheduledCommand command = new ScheduledCommand() {
+      @Override
+      public void execute() {
+      }
+    };
+    MenuBar bar = new MenuBar();
+    MenuItem item = bar.addItem("test", command);
+    assertEquals(command, item.getScheduledCommand());
+
+    item.setScheduledCommand(null);
+    assertNull(item.getScheduledCommand());
+
+    item.setScheduledCommand(command);
+    assertEquals(command, item.getScheduledCommand());
+  }
+
+  public void testSetScheduledCommandWithoutMenuBar() {
+    ScheduledCommand command = new ScheduledCommand() {
+      @Override
+      public void execute() {
+      }
+    };
+    MenuItem item = new MenuItem("test", command);
+    assertEquals(command, item.getScheduledCommand());
+
+    item.setScheduledCommand(null);
+    assertNull(item.getScheduledCommand());
+
+    item.setScheduledCommand(command);
+    assertEquals(command, item.getScheduledCommand());
   }
 
   public void testSetSubMenuWithMenuBar() {
