@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2012 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -11,7 +11,11 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.google.gwt.aria.client;
+/////////////////////////////////////////////////////////
+// This is auto-generated code.  Do not manually edit! //
+/////////////////////////////////////////////////////////
 
 import com.google.gwt.aria.client.CommonAttributeTypes.BooleanAndUndefined;
 import com.google.gwt.aria.client.CommonAttributeTypes.IdReference;
@@ -23,7 +27,7 @@ import com.google.gwt.aria.client.StateTokenTypes.InvalidToken;
 import com.google.gwt.dom.client.Element;
 
 /**
- * Implements {@link RowgroupRole}.
+ * <p>Implements {@link RowgroupRole}.</p>
  */
 class RowgroupRoleImpl extends Role implements RowgroupRole {
   RowgroupRoleImpl(String roleName) {

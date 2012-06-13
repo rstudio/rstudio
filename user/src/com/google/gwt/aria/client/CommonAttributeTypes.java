@@ -13,9 +13,11 @@
  */
 
 package com.google.gwt.aria.client;
+/////////////////////////////////////////////////////////
+// This is auto-generated code.  Do not manually edit! //
+/////////////////////////////////////////////////////////
 
 /**
- *
  * ARIA attributes common non primitive types as defined by the W3C specification
  * <a href="http://www.w3.org/TR/wai-aria/">W3C ARIA specification</a>.
  * Users should use the types defined in this class to get instances of {@link Tristate),

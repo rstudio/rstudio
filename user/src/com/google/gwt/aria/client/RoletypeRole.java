@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2012 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -11,7 +11,11 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.google.gwt.aria.client;
+/////////////////////////////////////////////////////////
+// This is auto-generated code.  Do not manually edit! //
+/////////////////////////////////////////////////////////
 
 import com.google.gwt.aria.client.CommonAttributeTypes.BooleanAndUndefined;
 import com.google.gwt.aria.client.CommonAttributeTypes.IdReferenceList;
@@ -28,7 +32,7 @@ import com.google.gwt.dom.client.Element;
  * assistive technology.</p>
  *
  * <p>ARIA roles define widgets and page structure that can be interpreted by a reader
- * application/device. There is a set of abstract roles which are used as 
+ * application/device. There is a set of abstract roles which are used as
  * building blocks of the roles hierarchy structural and define the common properties and states
  * for the concrete roles. Abstract roles cannot be set to HTML elements.</p>
  *

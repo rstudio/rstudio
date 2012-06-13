@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2012 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -13,6 +13,9 @@
  */
 
 package com.google.gwt.aria.client;
+/////////////////////////////////////////////////////////
+// This is auto-generated code.  Do not manually edit! //
+/////////////////////////////////////////////////////////
 
 import com.google.gwt.aria.client.CommonAttributeTypes.BooleanAndUndefined;
 import com.google.gwt.aria.client.StateTokenTypes.InvalidToken;
