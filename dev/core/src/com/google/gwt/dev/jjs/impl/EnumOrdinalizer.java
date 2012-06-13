@@ -434,16 +434,18 @@ public class EnumOrdinalizer {
         blackListIfEnumExpression(x.getInstance());
       } else if (x.getField().isStatic()) {
         /*
-         * Black list if the $VALUES static field is referenced outside of an
-         * enum class. This can happen if there's a call to an enum's values()
-         * method, which then gets inlined.
+         * Black list if the $VALUES static field is referenced, unless it's
+         * within the auto-generated clinit or values method, within the enum
+         * class itself.
          * 
          * TODO (jbrosenberg): Investigate further whether referencing the
          * $VALUES array (as well as the values() method) should not block
          * ordinalization. Instead, convert $VALUES to an array of int.
          */
         if (x.getField().getName().equals("$VALUES")
-            && this.currentMethod.getEnclosingType() != x.getField().getEnclosingType()) {
+            && ((this.currentMethod.getEnclosingType() != x.getField().getEnclosingType()) ||
+                (!this.currentMethod.getName().equals("values") &&
+                 !this.currentMethod.getName().equals("$clinit")))) {
           blackListIfEnum(x.getField().getEnclosingType(), x.getSourceInfo());
         }
       }

@@ -259,6 +259,33 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
     assertTrue(tracker.isOrdinalized("test.EntryPoint$Fruit"));
   } 
   
+  public void testNotOrdinalizableStaticMethodThatRefsValuesArray() 
+      throws UnableToCompleteException  {
+    EnumOrdinalizer.resetTracker();
+    
+    // this will cause a static method that references an element
+    // of the values() array
+    setupFruitEnumWithStaticMethodThatRefsValuesArray();
+    optimize("void", "Fruit y = Fruit.forInteger(0);");
+    
+    EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
+    assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
+    assertFalse(tracker.isOrdinalized("test.EntryPoint$Fruit"));
+  } 
+  
+  public void testNotOrdinalizableStaticMethodThatRefsValuesLength() 
+      throws UnableToCompleteException  {
+    EnumOrdinalizer.resetTracker();
+    
+    // this will cause a static method that references values().length
+    setupFruitEnumWithStaticMethodThatRefsValuesLength();
+    optimize("void", "Fruit y = Fruit.forInteger(0);");
+    
+    EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
+    assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
+    assertFalse(tracker.isOrdinalized("test.EntryPoint$Fruit"));
+  } 
+  
   public void testNotOrdinalizableInstanceStaticFieldRef() 
       throws UnableToCompleteException  {
     EnumOrdinalizer.resetTracker();
@@ -977,6 +1004,29 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
                         "  public static final int staticMethod() {",
                         "    int x = 0;",
                         "    return x;",
+                        "  }",
+                        "}");
+  }
+    
+  private void setupFruitEnumWithStaticMethodThatRefsValuesArray() {
+    // add a little extra logic here, to prevent inlining
+    addSnippetClassDecl("public enum Fruit {APPLE, ORANGE;",
+                        "  public static Fruit forInteger(int value) {",
+                        "    if (value < 0 || value >= 2) {",
+                        "      return ORANGE;",
+                        "    }",
+                        "    return Fruit.values()[value];",
+                        "  }",
+                        "}");
+  }
+    
+  private void setupFruitEnumWithStaticMethodThatRefsValuesLength() {
+    addSnippetClassDecl("public enum Fruit {APPLE, ORANGE;",
+                        "  public static Fruit forInteger(int value) {",
+                        "    if (value < 0 || value >= Fruit.values().length) {",
+                        "      return ORANGE;",
+                        "    }",
+                        "    return APPLE;",
                         "  }",
                         "}");
   }
