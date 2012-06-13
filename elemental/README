@@ -1,0 +1,19 @@
+Elemental is a "to the metal" raw programming API designed to keep up with fast changing 
+HTML5 browsers, reduce the need for JSNI code, and melt away to as little overhead as possible.
+It is particularly suited for situations where direct low level access and small code are important 
+such as mobile devices.
+
+Currently, Elemental is generated from the WebKit project's WebIDL binding definitions which are used also
+by the Dart project. Because of this, vendor prefixed APIs also show up (webkit specific). These APIs are
+often also available on Firefox, Opera, and IE. A future version of Elemental will generate these
+as well, either as Mozilla/Opera/IE vendor prefixed calls, or as standardized non-prefix calls backed by 
+multibrowser shim.
+
+To see Elemental and SuperDevMode in action, run 'ant dist-dev' to build gwt-dev and gwt-user jars. Then
+cd to examples/silvercomet and run 'ant demo'
+
+Visit http://localhost:9876/SilverComet/SilverComet.html and enjoy.
+
+
+
+

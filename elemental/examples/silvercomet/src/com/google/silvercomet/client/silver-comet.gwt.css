@@ -1,0 +1,175 @@
+@def rootWidth 800px;
+@def rootHeight 600px;
+
+/* TODO(knorton): -moz and -webkit prefixes can be targeted with @if */
+body {
+  font-family: Helvetica,Arial,san-serif;
+  -webkit-transition: opacity 200ms ease-in-out;
+  /* opacity: 0 is defined in SilverComet.html */
+  
+  /* 
+   * Firefox doesn't allow margin: auto on flex-box displayed elements.
+   * It's like the new IE6.
+   */
+  text-align: center;
+}
+
+/* header */
+#h {
+  display: -webkit-box;
+  display: -moz-box;
+  -webkit-box-orient: horizontal;
+  -moz-box-orient: horizontal;
+  width: rootWidth;
+  margin: 10px auto;
+  background: #666;
+  padding: 10px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  color: #be7;
+  font-size: 12pt;
+}
+
+/* The chart */
+#c {
+  text-align: left;
+}
+
+/* find a runner */
+#ha {
+  font-size: 10px;
+  background-color: #777;
+  padding: 4px 10px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+}
+
+/* header title */
+#hb {
+  padding: 4px 10px;
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  text-align: right;
+}
+
+/* search results */
+#r {
+  position: relative;
+  text-align: left;
+  font-size: 10px;
+  width: rootWidth;
+  margin: 0 auto;
+  height: 45px;
+  padding: 10px 4px;
+  background-color: #eee;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+}
+
+.result {
+  display: inline-block;
+  margin: 4px 0;
+  padding: 4px 10px;
+  border-right: 1px solid #999;
+  border-left: 1px solid #fff;
+  width: 111px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.resultLeft {
+  border-left: none;
+}
+
+.resultRight {
+  border-right: none;
+}
+ 
+ .resultName {
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+ }
+  
+#search {
+  font-size: 10px;
+  margin-left: 10px;
+}
+
+.root {
+  width: rootWidth;
+  height: rootHeight;
+  border-bottom: 1px solid #666;
+  margin: 50px auto;
+  position: relative;
+}
+
+.bar {
+  position: absolute;
+  background: #ccc;
+}
+
+.count {
+  font-size: 10px;
+  color: #666;
+  margin-top: -15px;
+}
+
+.label {
+  font-size: 10px;
+  position: absolute;
+  top: 601px;
+  height: 20px;
+  padding-top: 15px;
+  text-align: center;
+}
+
+.tickMinor {
+  position: absolute;
+  border-left: 1px solid #666;
+  bottom: -6px;
+  height: 6px;
+}
+
+.tickMajor {
+  position: absolute;
+  border-left: 1px solid #666;
+  bottom: -10px;
+  height: 10px;
+}
+
+.marker {
+  font-size: 10px;
+  border-left: 1px solid #600;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  color: #600;
+  padding-left: 4px;
+  -webkit-transition: left 200ms ease-in-out;
+  -moz-transition: left 200ms ease-in-out;
+  min-width: 200px;
+}
+
+.moreResults {
+  right: -5em;
+  top: 2.5em;
+  position: absolute;
+  background-color: #fff;
+  color: #000;
+  padding: 2px 10px;
+  -webkit-box-shadow: rgba(0, 0, 0, 0.2) 2px 2px 2px;
+  -moz-box-shadow: rgba(0, 0, 0, 0.2) 2px 2px 2px;
+  -webkit-border-radius: 20px;
+  -moz-border-radius: 20px;
+  border: 1px solid #666;
+}
+
+.browserInfo {
+  font-size: 8px;
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  padding: 4px;
+  color: #666;
+}

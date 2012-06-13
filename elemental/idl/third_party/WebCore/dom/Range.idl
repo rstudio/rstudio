@@ -1,0 +1,130 @@
+/*
+ * Copyright (C) 2006 Apple Computer, Inc.
+ * Copyright (C) 2006 Samuel Weinig <sam.weinig@gmail.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU Library General Public License
+ * along with this library; see the file COPYING.LIB.  If not, write to
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
+ */
+
+module ranges {
+
+    // Introduced in DOM Level 2:
+    interface Range {
+
+        readonly attribute Node startContainer
+            getter raises(DOMException);
+        readonly attribute long startOffset
+            getter raises(DOMException);
+        readonly attribute Node endContainer
+            getter raises(DOMException);
+        readonly attribute long endOffset
+            getter raises(DOMException);
+        readonly attribute boolean collapsed
+            getter raises(DOMException);
+        readonly attribute Node commonAncestorContainer
+            getter raises(DOMException);
+
+        [ObjCLegacyUnnamedParameters] void setStart(in [Optional=DefaultIsUndefined] Node refNode, 
+                                     in [Optional=DefaultIsUndefined] long offset)
+            raises(RangeException, DOMException);
+        [ObjCLegacyUnnamedParameters] void setEnd(in [Optional=DefaultIsUndefined] Node refNode, 
+                                   in [Optional=DefaultIsUndefined] long offset)
+            raises(RangeException, DOMException);
+        void setStartBefore(in [Optional=DefaultIsUndefined] Node refNode)
+            raises(RangeException, DOMException);
+        void setStartAfter(in [Optional=DefaultIsUndefined] Node refNode)
+            raises(RangeException, DOMException);
+        void setEndBefore(in [Optional=DefaultIsUndefined] Node refNode)
+            raises(RangeException, DOMException);
+        void setEndAfter(in [Optional=DefaultIsUndefined] Node refNode)
+            raises(RangeException, DOMException);
+        void collapse(in [Optional=DefaultIsUndefined] boolean toStart)
+            raises(DOMException);
+        void selectNode(in [Optional=DefaultIsUndefined] Node refNode)
+            raises(RangeException, DOMException);
+        void selectNodeContents(in [Optional=DefaultIsUndefined] Node refNode)
+            raises(RangeException, DOMException);
+
+        // CompareHow
+        const unsigned short START_TO_START = 0;
+        const unsigned short START_TO_END   = 1;
+        const unsigned short END_TO_END     = 2;
+        const unsigned short END_TO_START   = 3;
+
+        [ObjCLegacyUnnamedParameters] short compareBoundaryPoints(in [Optional=DefaultIsUndefined] CompareHow how,
+                                                   in [Optional=DefaultIsUndefined] Range sourceRange)
+            raises(DOMException);
+
+        void deleteContents()
+            raises(DOMException);
+        DocumentFragment extractContents()
+            raises(DOMException);
+        DocumentFragment cloneContents()
+            raises(DOMException);
+        void insertNode(in [Optional=DefaultIsUndefined] Node newNode)
+            raises(DOMException, RangeException);
+        void surroundContents(in [Optional=DefaultIsUndefined] Node newParent)
+            raises(DOMException, RangeException);
+        Range cloneRange()
+            raises(DOMException);
+        DOMString toString()
+            raises(DOMException);
+
+        void detach()
+            raises(DOMException);
+
+#if defined(LANGUAGE_JAVASCRIPT) || LANGUAGE_JAVASCRIPT
+        // CSSOM View Module API extensions
+
+        ClientRectList getClientRects();
+        ClientRect getBoundingClientRect();
+#endif
+
+        // extensions
+
+        DocumentFragment createContextualFragment(in [Optional=DefaultIsUndefined] DOMString html)
+            raises(DOMException);
+
+        // WebKit extensions
+
+        boolean intersectsNode(in [Optional=DefaultIsUndefined] Node refNode)
+            raises(RangeException, DOMException);
+
+        short compareNode(in [Optional=DefaultIsUndefined] Node refNode)
+            raises(RangeException, DOMException);
+
+        // CompareResults
+        const unsigned short NODE_BEFORE           = 0;
+        const unsigned short NODE_AFTER            = 1;
+        const unsigned short NODE_BEFORE_AND_AFTER = 2;
+        const unsigned short NODE_INSIDE           = 3;
+
+        short comparePoint(in [Optional=DefaultIsUndefined] Node refNode, 
+                           in [Optional=DefaultIsUndefined] long offset)
+            raises(RangeException, DOMException);
+
+        boolean isPointInRange(in [Optional=DefaultIsUndefined] Node refNode, 
+                               in [Optional=DefaultIsUndefined] long offset)
+            raises(RangeException, DOMException);
+
+        void expand(in [Optional=DefaultIsUndefined] DOMString unit)
+            raises(RangeException, DOMException);
+
+#if !defined(LANGUAGE_JAVASCRIPT) || !LANGUAGE_JAVASCRIPT
+        readonly attribute DOMString text;
+#endif
+    };
+
+}

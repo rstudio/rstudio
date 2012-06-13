@@ -1,0 +1,36 @@
+#!/bin/sh
+# Re-builds all the generated code in ../java/elemental/ from the scraped IDL files
+# Writable dir to do work in
+TMPDIR=$1
+# Where to write the output jar
+OUT=$2
+# where is the IDL directory
+ROOT=`dirname $0`
+
+rm -rf ${TMPDIR}
+mkdir -p ${TMPDIR}
+cp -r ${ROOT} ${TMPDIR}
+
+# all variables are relative to current directory
+export CC="$PWD/$CC"
+export JAR="$PWD/$JAR"
+export OUT="$PWD/$OUT"
+
+cd ${TMPDIR}
+chmod -R 755 .
+# Regenerate CSS templates for list of css properties
+python2.6 \
+  idl/css/generate-style.py \
+  idl/css/styles.txt \
+  idl/templates/java_interface_CSSStyleDeclaration.darttemplate \
+  idl/templates/jso_impl_CSSStyleDeclaration.darttemplate
+
+cd idl/scripts
+export PYTHONPATH=$PYTHONPATH:.
+# Parse WebIDL files, merging them with elemental.idl overlay
+python2.6 elemental_fremontcutbuilder.py
+# Generate interface and JSO implementations of WebIDL bindings
+python2.6 elementaldomgenerator.py
+mkdir -p ../generated/src
+cd ../generated/src
+$JAR cvf $OUT *

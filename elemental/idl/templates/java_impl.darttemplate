@@ -1,0 +1,10 @@
+
+package $PACKAGE;
+import elemental.dom.*;
+import elemental.html.*;
+
+/**
+  * $CLASS_JAVADOC
+  */
+public class $CLASSNAME$EXTENDS$IMPLEMENTS {
+$!MEMBERS}

@@ -1,0 +1,37 @@
+<!-- Demo of elemental implementing search and visualization of marathon runner times (json data) -->
+<project name="silvercomet" default="build" basedir=".">
+  <property name="gwt.root" location="../../.." />
+  <property name="project.tail" value="elemental/examples/silvercomet" />
+  <import file="${gwt.root}/common.ant.xml" />
+
+  <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev.jar" />
+  <property.ensure name="gwt.codeserver.jar" location="${gwt.build.lib}/gwt-codeserver.jar" />
+  <property.ensure name="gwt.elemental.jar" location="${gwt.build.lib}/gwt-elemental.jar" />
+
+  <target name="demo" depends="build" description="starts the code server with a sample app">
+
+    <!-- hack to make sourcemaps generation work in the compiler -->
+    <!-- See: http://code.google.com/p/google-web-toolkit/issues/detail?id=7397 -->
+    <property.ensure name="json.jar"
+                     location="${gwt.tools}/redist/json/r2_20080312/json-1.5.jar" />
+
+    <property.ensure name="gwt.user.jar" location="${gwt.build.lib}/gwt-user.jar" />
+    <property.ensure name="sample-src" location="${gwt.root}/elemental/examples/silvercomet/src" />
+
+
+    <java fork="true" failonerror="true" classname="com.google.gwt.dev.codeserver.CodeServer">
+      <classpath>
+        <pathelement location="${project.lib}"/>
+        <pathelement location="${gwt.dev.jar}"/>
+        <pathelement location="${json.jar}" />
+        <pathelement location="${gwt.user.jar}"/>
+        <pathelement location="${gwt.codeserver.jar}"/>
+        <pathelement location="${gwt.elemental.jar}"/>
+      </classpath>
+      <arg value="-src"/>
+      <arg value="${sample-src}"/>
+      <arg value="com.google.silvercomet.SilverComet"/>
+    </java>
+  </target>
+
+</project>

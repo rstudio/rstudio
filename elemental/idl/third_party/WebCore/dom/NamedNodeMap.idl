@@ -1,0 +1,60 @@
+/*
+ * Copyright (C) 2006 Samuel Weinig <sam.weinig@gmail.com>
+ * Copyright (C) 2007, 2009 Apple Inc. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU Library General Public License
+ * along with this library; see the file COPYING.LIB.  If not, write to
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
+ */
+
+module core {
+
+    interface [
+        JSGenerateIsReachable=ImplElementRoot,
+        JSCustomMarkFunction,
+        IndexedGetter,
+        NamedGetter,
+        V8CustomToJSObject
+    ] NamedNodeMap {
+
+        Node getNamedItem(in [Optional=DefaultIsUndefined] DOMString name);
+
+        Node setNamedItem(in [Optional=DefaultIsUndefined] Node node)
+            raises(DOMException);
+
+        Node removeNamedItem(in [Optional=DefaultIsUndefined] DOMString name)
+            raises(DOMException);
+
+        Node item(in [Optional=DefaultIsUndefined] unsigned long index);
+        
+        readonly attribute unsigned long length;
+
+
+        // Introduced in DOM Level 2:
+
+        [ObjCLegacyUnnamedParameters] Node getNamedItemNS(in [TreatNullAs=NullString,Optional=DefaultIsUndefined] DOMString namespaceURI, 
+                                           in [Optional=DefaultIsUndefined] DOMString localName)
+            // FIXME: the implementation does take an exceptioncode parameter.
+            /*raises(DOMException)*/;
+
+        Node setNamedItemNS(in [Optional=DefaultIsUndefined] Node node)
+            raises(DOMException);
+
+        [ObjCLegacyUnnamedParameters] Node removeNamedItemNS(in [TreatNullAs=NullString,Optional=DefaultIsUndefined] DOMString namespaceURI, 
+                                              in [Optional=DefaultIsUndefined] DOMString localName)
+            raises(DOMException);
+
+    };
+
+}
