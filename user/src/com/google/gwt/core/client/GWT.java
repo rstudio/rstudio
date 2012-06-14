@@ -82,7 +82,7 @@ public final class GWT {
      * In Production Mode, the compiler directly replaces calls to this method
      * with a new Object() type expression of the correct rebound type.
      */
-    return com.google.gwt.core.shared.GWT.create(classLiteral);
+    return com.google.gwt.core.shared.GWT.<T>create(classLiteral);
   }
 
   /**

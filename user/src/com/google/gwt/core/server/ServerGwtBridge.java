@@ -241,7 +241,7 @@ public class ServerGwtBridge extends GWTBridge {
       while (!stack.isEmpty()) {
         Node node = stack.pop();
         for (ClassInstantiator inst : node.instantiators) {
-          T obj = inst.create(classLiteral, properties);
+          T obj = inst.<T>create(classLiteral, properties);
           if (obj != null) {
             return obj;
           }

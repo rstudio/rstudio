@@ -37,20 +37,20 @@ class LocalizableInstantiator extends ClassInstantiatorBase implements ClassInst
     GwtLocale locale = ServerGwtBridge.getLocale(properties);
     for (GwtLocale search : locale.getCompleteSearchList()) {
       String suffix = "_" + search.getAsString();
-      T obj = tryCreate(pkgName + "." + className + suffix);
+      T obj = this.<T>tryCreate(pkgName + "." + className + suffix);
       if (obj != null) {
         return obj;
       }
-      obj = tryCreate(pkgName + ".impl." + className + suffix);
+      obj = this.<T>tryCreate(pkgName + ".impl." + className + suffix);
       if (obj != null) {
         return obj;
       }
-      obj = tryCreate(pkgName + "." + className + "Impl" + suffix);
+      obj = this.<T>tryCreate(pkgName + "." + className + "Impl" + suffix);
       if (obj != null) {
         return obj;
       }
       if (enclosingClass != null) {
-        obj = tryCreate(enclosingClass.getCanonicalName() + "$" + className + suffix);
+        obj = this.<T>tryCreate(enclosingClass.getCanonicalName() + "$" + className + suffix);
         if (obj != null) {
           return obj;
         }
