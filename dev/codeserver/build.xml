@@ -57,11 +57,6 @@
 
   <target name="demo" depends="build" description="starts the code server with a sample app">
 
-    <!-- hack to make sourcemaps generation work in the compiler -->
-    <!-- See: http://code.google.com/p/google-web-toolkit/issues/detail?id=7397 -->
-    <property.ensure name="json.jar"
-                     location="${gwt.tools}/redist/json/r2_20080312/json-1.5.jar" />
-
     <property.ensure name="gwt.user.jar" location="${gwt.build.lib}/gwt-user.jar" />
     <property.ensure name="sample-src" location="${gwt.root}/samples/hello/src" />
 
@@ -69,7 +64,6 @@
       <classpath>
         <pathelement location="${project.lib}"/>
         <pathelement location="${gwt.dev.jar}"/>
-        <pathelement location="${json.jar}" />
         <pathelement location="${gwt.user.jar}"/>
       </classpath>
       <arg value="-src"/>

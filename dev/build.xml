@@ -40,7 +40,6 @@
         <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
         <pathelement location="${gwt.tools.lib}/w3c/sac/sac-1.3.jar" />
         <pathelement location="${gwt.tools.lib}/w3c/flute/flute-1.3-gg2.jar" />
-        <pathelement location="${gwt.tools}/redist/json/r2_20080312/json-1.5.jar" />
         <pathelement location="${gwt.tools.lib}/hibernate/validator/hibernate-validator-4.1.0.Final.jar" />
         <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar" />
         <pathelement location="${gwt.build.lib}/gwt-dev-${build.host.platform}.jar" />
@@ -114,6 +113,9 @@
           <include name="guava/guava-10.0.1/guava-10.0.1-rebased.jar" />
           <include name="jscomp/r1649/compiler-rebased.jar" />
         </fileset>
+        <fileset dir="${gwt.tools.redist}">
+          <include name="json/r2_20080312/json-1.5.jar" />
+        </fileset>
         <fileset file="build.xml"/>
       </sourcefiles>
       <targetfiles>
@@ -179,6 +181,7 @@
           <zipfileset src="${gwt.tools.lib}/sun/swingworker/swing-worker-1.1.jar" />
           <zipfileset src="${gwt.tools.lib}/guava/guava-10.0.1/guava-10.0.1-rebased.jar" />
           <zipfileset src="${gwt.tools.lib}/jscomp/r1649/compiler-rebased.jar" />
+          <zipfileset src="${gwt.tools.redist}/json/r2_20080312/json-1.5.jar" />
         </gwt.jar>
       </sequential>
     </outofdate>
