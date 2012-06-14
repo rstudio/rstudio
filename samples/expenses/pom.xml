@@ -8,7 +8,7 @@
   <version>0.1.0.BUILD-SNAPSHOT</version>
   <name>expenses</name>
   <properties>
-    <gwt.version>2.4.0</gwt.version>
+    <gwt.version>2.5.0-rc1</gwt.version>
     <roo.version>1.1.0.RELEASE</roo.version>
     <spring.version>3.0.3.RELEASE</spring.version>
     <slf4j.version>1.6.1</slf4j.version>
