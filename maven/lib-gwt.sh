@@ -93,6 +93,10 @@ function maven-gwt() {
     zip -d $GWT_EXTRACT_DIR/requestfactory-${i}.jar org/json/*
   done
 
+  # Remove bundled org/json classes from gwt-dev
+  echo "Removing org.json classes from gwt-dev"
+  zip -d $GWT_EXTRACT_DIR/gwt-dev.jar org/json/*
+
   for i in dev user servlet codeserver
   do
     CUR_FILE=`ls $GWT_EXTRACT_DIR/gwt-${i}.jar`
