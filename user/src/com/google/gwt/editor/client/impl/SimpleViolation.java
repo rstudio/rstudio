@@ -126,25 +126,96 @@ public abstract class SimpleViolation {
           // and the absolute path of the leaf editor receiving the error.
           String absolutePath = (basePath.length() > 0 ? basePath + "." : "")
               + error.getPath();
-
-          // Find the leaf editor's delegate.
-          List<AbstractEditorDelegate<?, ?>> leafDelegates = delegateMap.getDelegatesByPath(absolutePath);
-          List<Editor<?>> editors = delegateMap.getEditorByPath(absolutePath);
-          if (leafDelegates != null) {
-            for (AbstractEditorDelegate<?, ?> delegate : leafDelegates) {
-              delegate.recordError(error.getMessage(), null,
-                  error.getUserDataObject());
-            }
-          } else if (editors != null) {
-            // No EditorDelegate to attach it to, so fake the source
-            for (Editor<?> editor : editors) {
-              baseDelegate.recordError(error.getMessage(), null,
-                  error.getUserDataObject(), error.getPath(), editor);
+          final String originalAbsolutePath = absolutePath;
+          while (true) {
+            if (processLeafDelegates(
+                delegateMap, originalAbsolutePath, absolutePath, error)) {
+              break;
+            } else if (processEditors(
+                delegateMap, baseDelegate, absolutePath, error)) {
+              break;
+            } else {
+              // This is guaranteed to never happen because we should always
+              // process a delegate/editor if the absolutePath is empty.
+              // Still, we have the check here to prevent an infinite
+              // loop if something goes wrong.
+              if (absolutePath.isEmpty()) {
+                throw new IllegalStateException(
+                    "No editor: " + originalAbsolutePath);
+              }
+              absolutePath = getParentPath(absolutePath);
             }
           }
         }
       }
     }
+  }
+
+  /**
+   * Returns the path with everything after the last '.' stripped off,
+   * or "" if there was no '.' in the path.
+   */
+  private static String getParentPath(String absolutePath) {
+    // Traverse upwards in the path to the parents in order
+    // to report the error to the nearest valid parent.
+    int dotIdx = absolutePath.lastIndexOf('.');
+    if (dotIdx > 0) {
+      return absolutePath.substring(0, dotIdx);
+    }
+    return "";
+  }
+
+  /**
+   * Records an error in any editors that match the path, returning true
+   * if any editors matched.
+   */
+  private static boolean processEditors(DelegateMap delegateMap,
+      AbstractEditorDelegate<?, ?> baseDelegate,
+      String absolutePath,
+      SimpleViolation error) {
+    List<Editor<?>> editors = delegateMap.getEditorByPath(absolutePath);
+    if (editors == null) {
+      return false;
+    }
+    // No EditorDelegate to attach it to, so record on the baseDelegate
+    // with the appropriate editor & path.
+    for (Editor<?> editor : editors) {
+      baseDelegate.recordError(error.getMessage(), null,
+          error.getUserDataObject(), error.getPath(), editor);
+    }
+    return true;
+  }
+
+  /**
+   * Records an error in any delegates that match the {@code absolutePath},
+   * returning true if any matched.  ({@code originalAbsolutePath}
+   * is not used for finding delegates, but is instead used to determine
+   * how to record the error.)
+   */
+  private static boolean processLeafDelegates(DelegateMap delegateMap,
+      String originalAbsolutePath,
+      String absolutePath,
+      SimpleViolation error) {
+    // Find the leaf editor's delegate.
+    List<AbstractEditorDelegate<?, ?>> leafDelegates =
+      delegateMap.getDelegatesByPath(absolutePath);
+    if (leafDelegates == null) {
+      return false;
+    }
+    String addlPath = originalAbsolutePath.substring(absolutePath.length());
+    for (AbstractEditorDelegate<?, ?> delegate : leafDelegates) {
+      // If this is the original path value, don't record the additional path.
+      if (addlPath.isEmpty()) {
+        delegate.recordError(error.getMessage(), null,
+            error.getUserDataObject());
+      } else {
+        // Otherwise, include the additional path.
+        delegate.recordError(error.getMessage(), null,
+            error.getUserDataObject(), addlPath,
+            delegate.getEditor());
+      }
+    }
+    return true;
   }
 
   /**

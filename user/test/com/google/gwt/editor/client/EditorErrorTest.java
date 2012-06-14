@@ -19,10 +19,15 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.adapters.EditorSource;
 import com.google.gwt.editor.client.adapters.ListEditor;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.validation.client.impl.ConstraintViolationImpl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.Path;
 
 /**
  * Tests error propagation in generated code.
@@ -215,5 +220,119 @@ public class EditorErrorTest extends GWTTestCase {
     assertNull(error.getUserData());
     assertSame(a, error.getValue());
     assertSame(editor.addressEditor, error.getEditor());
+  }
+
+  public void testUnmatchedConstraintViolationsHasErrors() {
+    Address a = new Address();
+    Person p = new Person();
+    p.address = a;
+
+    PersonEditorDriver driver = GWT.create(PersonEditorDriver.class);
+    PersonEditor editor = new PersonEditor();
+    driver.initialize(editor);
+    driver.edit(p);
+    driver.flush();
+
+    ConstraintViolation<Person> e1 = createViolation("msg1", p, "address");
+    ConstraintViolation<Person> e2 = createViolation("msg2", p, "bogus1");
+    ConstraintViolation<Person> e3 = createViolation("msg3", p, "address.city");
+    ConstraintViolation<Person> e4 =
+        createViolation("msg4", p, "address.bogus2");
+    ConstraintViolation<Person> e5 =
+        createViolation("msg5", p, "address.city.bogus3");
+    ConstraintViolation<Person> e6 =
+        createViolation("msg6", p, "address.bogusparent.boguschild");
+    ConstraintViolation<Person> e7 = createViolation("msg7", p, ".");
+    ConstraintViolation<Person> e8 = createViolation("msg8", p, "address.");
+    driver.setConstraintViolations(
+        Arrays.<ConstraintViolation<?>>asList(e1, e2, e3, e4, e5, e6, e7, e8));
+    assertTrue(driver.hasErrors());
+    assertEquals(driver.getErrors().toString(), 8, driver.getErrors().size());
+
+    List<EditorError> list = driver.getErrors();
+    
+    // All the errors w/ addressEditor are collected first
+    EditorError error = list.get(0);
+    assertEquals("msg1", error.getMessage());
+    assertEquals("address", error.getAbsolutePath());
+    assertEquals("address", error.getPath());
+    assertSame(e1, error.getUserData());
+    assertSame(a, error.getValue());
+    assertSame(editor.addressEditor, error.getEditor());
+
+    error = list.get(1);
+    assertEquals("msg4", error.getMessage());
+    assertEquals("address.bogus2", error.getAbsolutePath());
+    assertEquals("address.bogus2", error.getPath());
+    assertSame(e4, error.getUserData());
+    assertSame(null, error.getValue());
+    assertSame(editor.addressEditor, error.getEditor());
+    
+    error = list.get(2);
+    assertEquals("msg6", error.getMessage());
+    assertEquals("address.bogusparent.boguschild", error.getAbsolutePath());
+    assertEquals("address.bogusparent.boguschild", error.getPath());
+    assertSame(e6, error.getUserData());
+    assertSame(null, error.getValue());
+    assertSame(editor.addressEditor, error.getEditor());
+    
+    error = list.get(3);
+    assertEquals("msg8", error.getMessage());
+    assertEquals("address.", error.getAbsolutePath());
+    assertEquals("address.", error.getPath());
+    assertSame(e8, error.getUserData());
+    assertSame(null, error.getValue());
+    assertSame(editor.addressEditor, error.getEditor());
+    
+    // Then the rest of the errors.
+    error = list.get(4);
+    assertEquals("msg2", error.getMessage());
+    assertEquals("bogus1", error.getAbsolutePath());
+    assertEquals("bogus1", error.getPath());
+    assertSame(e2, error.getUserData());
+    assertSame(null, error.getValue());
+    assertSame(editor, error.getEditor());
+    
+    error = list.get(5);
+    assertEquals("msg3", error.getMessage());
+    assertEquals("address.city", error.getAbsolutePath());
+    assertEquals("address.city", error.getPath());
+    assertSame(e3, error.getUserData());
+    assertSame(a.city, error.getValue());
+    assertSame(editor.addressEditor.city, error.getEditor());
+
+    error = list.get(6);
+    assertEquals("msg5", error.getMessage());
+    assertEquals("address.city.bogus3", error.getAbsolutePath());
+    assertEquals("address.city.bogus3", error.getPath());
+    assertSame(e5, error.getUserData());
+    assertSame(null, error.getValue());
+    assertSame(editor.addressEditor.city, error.getEditor());    
+    
+    error = list.get(7);
+    assertEquals("msg7", error.getMessage());
+    assertEquals(".", error.getAbsolutePath());
+    assertEquals(".", error.getPath());
+    assertSame(e7, error.getUserData());
+    assertSame(null, error.getValue());
+    assertSame(editor, error.getEditor());
+  }
+
+  private <T> ConstraintViolation<T> createViolation(
+      String msg, T rootBean, final String path) {
+    return new ConstraintViolationImpl.Builder<T>()
+        .setMessage(msg)
+        .setRootBean(rootBean)
+        .setPropertyPath(new Path() {
+          @Override
+          public Iterator<Node> iterator() {
+            return null;
+          }
+
+          @Override
+          public String toString() {
+            return path;
+          }
+        }).build();
   }
 }
