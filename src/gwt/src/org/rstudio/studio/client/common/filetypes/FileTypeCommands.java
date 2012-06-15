@@ -120,6 +120,7 @@ public class FileTypeCommands
       types.add(FileTypeRegistry.HTML);
       types.add(FileTypeRegistry.CSS);
       types.add(FileTypeRegistry.JS);
+      types.add(FileTypeRegistry.CPP);
       
       return (TextFileType[])types.toArray(new TextFileType[0]);
    }

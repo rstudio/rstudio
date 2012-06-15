@@ -90,6 +90,15 @@ public class FileTypeRegistry
                           false, false, false, false, false, false, false, false, false, false, false);
 
    
+   public static final TextFileType CPP =
+         new TextFileType("cpp", "C/C++", EditorLanguage.LANG_CPP, ".cpp",
+                          ICONS.iconCpp(),
+                          true,
+                          false, false, false, false, false, false, false, false, false, false, false);
+
+   
+   
+   
    public static final RDataType RDATA = new RDataType();
    public static final RProjectType RPROJECT = new RProjectType();
    
@@ -140,10 +149,10 @@ public class FileTypeRegistry
       register("*.mdtxt", MARKDOWN, icons.iconMarkdown());
       register("*.markdown", MARKDOWN, icons.iconMarkdown());
       register("*.bib", TEXT, icons.iconText());
-      register("*.c", TEXT, icons.iconText());
-      register("*.cpp", TEXT, icons.iconText());
-      register("*.h", TEXT, icons.iconText());
-      register("*.hpp", TEXT, icons.iconText());
+      register("*.c", CPP, icons.iconCpp());
+      register("*.cpp", CPP, icons.iconCpp());
+      register("*.h", CPP, icons.iconCpp());
+      register("*.hpp", CPP, icons.iconCpp());
       register("*.Rout.save", TEXT, icons.iconText());
       register("*.rd", RD, icons.iconRd());
       register("*.rdata", RDATA, icons.iconRdata());
