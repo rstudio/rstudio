@@ -86,6 +86,11 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
+  public void setFragmentCount(int numFragments) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public void setFragmentsMerge(int numFragments) {
     throw new UnsupportedOperationException();
   }

@@ -38,6 +38,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean soycHtmlDisabled = false;
   private boolean strict = false;
   private boolean closureCompilerEnabled;
+  private int fragmentCount = -1;
   private int fragmentsMerge = -1;
 
   public JJSOptionsImpl() {
@@ -62,6 +63,12 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setStrict(other.isStrict());
     setClosureCompilerEnabled(other.isClosureCompilerEnabled());
     setFragmentsMerge(other.getFragmentsMerge());
+    setFragmentCount(other.getFragmentCount());
+  }
+  
+  @Override
+  public int getFragmentCount() {
+    return fragmentCount;
   }
   
   @Override
@@ -171,6 +178,11 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   @Override
   public void setEnableAssertions(boolean enableAssertions) {
     this.enableAssertions = enableAssertions;
+  }
+  
+  @Override
+  public void setFragmentCount(int numFragments) {
+    this.fragmentCount = numFragments;
   }
 
   @Override

@@ -359,7 +359,17 @@ public class JavaToJavaScriptCompiler {
     
       if (options.isRunAsyncEnabled()) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        int fragmentsMerge = options.getFragmentsMerge();
+        
+        int fragmentsMerge = 0;
+        
+        int expectedFragmentCount = options.getFragmentCount();
+        if (expectedFragmentCount > 0) {
+          // + 1 for left over, + 1 for initial gave us the total number
+          // of fragments without splitting.
+          fragmentsMerge = jprogram.getRunAsyncs().size() + 2 - expectedFragmentCount;
+        } else {
+          fragmentsMerge = options.getFragmentsMerge();
+        }
         
         // Pick and choose which code splitter to use. Only use the experimental
         // one when the user explicitly decides the project needs fragment

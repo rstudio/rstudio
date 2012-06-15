@@ -48,8 +48,13 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
+  public int getFragmentCount() {
+    return -1;
+  }
+  
+  @Override
   public int getFragmentsMerge() {
-    return 0;
+    return -1;
   }
 
   @Override

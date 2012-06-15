@@ -20,23 +20,23 @@ import com.google.gwt.util.tools.ArgHandlerInt;
 /**
  * An ArgHandler to provide the -XfragmentMerge flag.
  */
-public class ArgHandlerFragmentMerge extends ArgHandlerInt {
+public class ArgHandlerFragmentCount extends ArgHandlerInt {
 
-  private final OptionFragmentsMerge option;
+  private final OptionFragmentCount option;
 
-  public ArgHandlerFragmentMerge(OptionFragmentsMerge option) {
+  public ArgHandlerFragmentCount(OptionFragmentCount option) {
     this.option = option;
   }
 
   @Override
   public String getPurpose() {
-    return "DEPRECATED (use -XfragmentMerge instead): " +
-      "Enables Fragment merging code splitter.";
+    return "EXPERIMENTAL: " +
+       "Limits of number of fragments using a code splitter that merges split points.";
   }
 
   @Override
   public String getTag() {
-    return "-XfragmentMerge";
+    return "-XfragmentCount";
   }
 
   @Override
@@ -46,6 +46,6 @@ public class ArgHandlerFragmentMerge extends ArgHandlerInt {
 
   @Override
   public void setInt(int value) {
-    option.setFragmentsMerge(value);
+    option.setFragmentCount(value);
   }
 }

@@ -49,6 +49,11 @@ class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl implements Precom
   }
 
   @Override
+  public int getFragmentCount() {
+    return jjsOptions.getFragmentCount();
+  }
+  
+  @Override
   public int getFragmentsMerge() {
     return jjsOptions.getFragmentsMerge();
   }
@@ -192,6 +197,11 @@ class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl implements Precom
     enableGeneratingOnShards = enabled;
   }
 
+  @Override
+  public void setFragmentCount(int numFragments) {
+    jjsOptions.setFragmentCount(numFragments);
+  }
+  
   @Override
   public void setFragmentsMerge(int numFragments) {
     jjsOptions.setFragmentsMerge(numFragments);

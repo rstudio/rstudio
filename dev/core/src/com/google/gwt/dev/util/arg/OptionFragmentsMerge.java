@@ -19,6 +19,7 @@ package com.google.gwt.dev.util.arg;
  * Enable the new code splitter that auto-partitions.
  */
 public interface OptionFragmentsMerge {
+  // TODO(acleung): Delete this in favor of -XfragmentCount
   
   // TODO(acleung): This is currently an experimental frag. We should find a
   // use case new splitter. Some possible approache:
