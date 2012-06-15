@@ -23,6 +23,7 @@ import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 
 /**
  * <p>This class contains the {@link #main main method} that starts the code server for
@@ -49,9 +50,11 @@ public class CodeServer {
     try {
       start(options);
 
+      String url = "http://" + options.getPreferredHost() + ":" + options.getPort() + "/";
+
       System.out.println();
       System.out.println("The code server is ready.");
-      System.out.println("Next, visit: http://localhost:" + options.getPort() + "/");
+      System.out.println("Next, visit: " + url);
     } catch (Throwable t) {
       t.printStackTrace();
       System.exit(1);
@@ -88,7 +91,7 @@ public class CodeServer {
     SourceHandler sourceHandler = new SourceHandler(modules, logger);
 
     WebServer webServer = new WebServer(sourceHandler, modules,
-        options.getPort(), logger);
+        options.getBindAddress(), options.getPort(), logger);
     webServer.start();
 
     return webServer;

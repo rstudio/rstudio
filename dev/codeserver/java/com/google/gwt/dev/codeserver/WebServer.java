@@ -37,6 +37,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashMap;
@@ -83,13 +84,16 @@ public class WebServer {
 
   private final Modules modules;
 
+  private final String bindAddress;
   private final int port;
   private final TreeLogger logger;
   private Server server;
 
-  public WebServer(SourceHandler handler, Modules modules, int port, TreeLogger logger) {
+  WebServer(SourceHandler handler, Modules modules, String bindAddress, int port,
+      TreeLogger logger) {
     this.handler = handler;
     this.modules = modules;
+    this.bindAddress = bindAddress;
     this.port = port;
     this.logger = logger;
   }
@@ -97,6 +101,7 @@ public class WebServer {
   public void start() throws UnableToCompleteException {
 
     SelectChannelConnector connector = new SelectChannelConnector();
+    connector.setHost(bindAddress);
     connector.setPort(port);
     connector.setReuseAddress(false);
     connector.setSoLingerTime(0);
