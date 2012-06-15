@@ -27,7 +27,6 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedOptions;
-import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.ElementFilter;
@@ -36,7 +35,6 @@ import javax.lang.model.util.ElementFilter;
  * The entry point for annotation validation.
  */
 @SupportedAnnotationTypes("*")
-@SupportedSourceVersion(SourceVersion.RELEASE_6)
 @SupportedOptions({"rootOverride", "suppressErrors", "suppressWarnings", "verbose"})
 public class RfValidator extends AbstractProcessor {
 
@@ -46,6 +44,11 @@ public class RfValidator extends AbstractProcessor {
   private boolean forceErrors;
   private State state;
 
+  @Override
+  public SourceVersion getSupportedSourceVersion() {
+      return SourceVersion.latestSupported();
+  }
+  
   @Override
   public synchronized void init(ProcessingEnvironment processingEnv) {
     super.init(processingEnv);

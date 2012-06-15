@@ -23,7 +23,6 @@ import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -39,12 +38,19 @@ import javax.tools.Diagnostic.Kind;
 @SupportedAnnotationTypes({
     "com.google.web.bindery.requestfactory.apt.Expect",
     "com.google.web.bindery.requestfactory.apt.Expected"})
-@SupportedSourceVersion(SourceVersion.RELEASE_6)
 class ExpectCollector extends AbstractProcessor {
+  
+  @Override
+  public SourceVersion getSupportedSourceVersion() {
+      return SourceVersion.latestSupported();
+  }
+
   class Scanner extends ElementScanner6<Void, Void> {
 
     private final Messager messager;
 
+    
+    
     public Scanner(Messager messager) {
       this.messager = messager;
     }
