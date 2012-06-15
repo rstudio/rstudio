@@ -97,7 +97,13 @@ function maven-gwt() {
   echo "Removing org.json classes from gwt-dev"
   zip -d $GWT_EXTRACT_DIR/gwt-dev.jar org/json/*
 
-  for i in dev user servlet codeserver
+  # Silently skip Elemental if it doesn't exist
+  gwtLibs='dev user servlet codeserver'
+  if [ -f $GWT_EXTRACT_DIR/gwt-elemental.jar ]; then
+    gwtLibs="${gwtLibs} elemental"
+  fi
+
+  for i in $gwtLibs
   do
     CUR_FILE=`ls $GWT_EXTRACT_DIR/gwt-${i}.jar`
     
@@ -126,7 +132,7 @@ function maven-gwt() {
   # push parent poms
   maven-deploy-file $mavenRepoUrl $mavenRepoId $pomDir/gwt/pom.xml $pomDir/gwt/pom.xml
 
-  for i in dev user servlet codeserver
+  for i in $gwtLibs
   do
     CUR_FILE=`ls $GWT_EXTRACT_DIR/gwt-${i}.jar`
     gwtPomFile=$pomDir/gwt/gwt-$i/pom.xml

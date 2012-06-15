@@ -152,7 +152,7 @@
   </presetdef>
 
   <presetdef name="gwt.javac">
-    <javac srcdir="src" destdir="${javac.out}" debug="${javac.debug}" debuglevel="${javac.debuglevel}" source="${javac.source}" target="${javac.target}" nowarn="${javac.nowarn}" encoding="${javac.encoding}" fork="true" memoryMaximumSize="1024m" />
+    <javac srcdir="src" destdir="${javac.out}" debug="${javac.debug}" debuglevel="${javac.debuglevel}" source="${javac.source}" target="${javac.target}" nowarn="${javac.nowarn}" encoding="${javac.encoding}" fork="true" memoryMaximumSize="1024m" includeantruntime="false" />
   </presetdef>
 
   <macrodef name="gwt.jar">

@@ -412,8 +412,7 @@ class IDLParser(object):
       includePaths -- an array of path strings.
     """
     # FIXME: Handle gcc not found, or any other processing errors
-    if 'CC' in os.environ:
-      gcc = os.environ['CC']
+    gcc = os.environ.get('CC', None)
     if not gcc:
       gcc = 'gcc'
     cmd = [gcc, '-E', '-P', '-C', '-x', 'c++'];

@@ -10,4 +10,7 @@ python \
 
 python ${ROOT}/scripts/elemental_fremontcutbuilder.py
 python ${ROOT}/scripts/elementaldomgenerator.py
-cp -R ${ROOT}/generated/src/elemental/* ${ROOT}/../java/elemental/
+# Keep compatibility with Google's internal build
+if [ -d ${ROOT}/../java/elemental/ ]; then
+  cp -R ${ROOT}/generated/src/elemental/* ${ROOT}/../java/elemental/
+fi

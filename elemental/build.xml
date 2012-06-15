@@ -16,7 +16,7 @@
 
   <target name="compile" description="Compile all class files">
     <mkdir dir="${javac.out}" />
-    <gwt.javac excludes="**/super/**">
+    <gwt.javac srcdir="src:idl/generated/src" excludes="**/super/**">
       <classpath>
         <pathelement location="${gwt.dev.jar}" />
         <pathelement location="${gwt.user.jar}" />
@@ -41,6 +41,7 @@
           <java classname="com.google.gwt.dev.CompileModule" fork="yes" failonerror="true">
             <classpath>
               <pathelement location="${gwt.root}/elemental/src" />
+              <pathelement location="${gwt.root}/elemental/idl/generated/src" />
               <pathelement location="${gwt.dev.jar}" />
               <pathelement location="${gwt.user.jar}" />
             </classpath>
@@ -56,6 +57,8 @@
 
   <target name="clean"
       description="Cleans this project's intermediate and output files">
+    <delete dir="idl/generated" />
+    <delete dir="idl/database" />
     <delete dir="${project.build}" />
     <delete file="${project.lib}" />
   </target>

@@ -37,7 +37,8 @@
     <javac srcdir="src" destdir="${javac.out}"
         debug="${javac.debug}" debuglevel="${javac.debuglevel}"
         source="${javac.source}" target="${javac.target}"
-        nowarn="${javac.nowarn}" encoding="${javac.encoding}">
+        nowarn="${javac.nowarn}" encoding="${javac.encoding}"
+        includeantruntime="false">
       <classpath refid="project.class.path"/>
     </javac>
     <copy todir="${javac.out}">

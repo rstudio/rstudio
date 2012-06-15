@@ -17,6 +17,14 @@
     <!-- TODO: figure out how to share most of this across platforms -->
     <mkdir dir="${gwt.build.dist}" />
     <mkdir dir="${gwt.build.out}/samples-scripts"/>
+    <if>
+      <not>
+        <available file="${gwt.build.lib}/gwt-elemental.jar" type="file" />
+      </not>
+      <then>
+        <echo message="Building SDK without Elemental - did you forget to call 'ant elemental' before 'ant dist'?" />
+      </then>
+    </if>
     <zip destfile="${project.dist}">
       <!-- jars -->
       <zipfileset file="${gwt.build.lib}/gwt-dev.jar" prefix="${project.distname}" />
@@ -28,6 +36,7 @@
       <zipfileset file="${gwt.build.lib}/gwt-soyc-vis.jar" prefix="${project.distname}" />
       <zipfileset file="${gwt.build.lib}/gwt-api-checker.jar" prefix="${project.distname}" />
       <zipfileset file="${gwt.build.lib}/requestfactory*.jar" prefix="${project.distname}" />
+      <zipfileset file="${gwt.build.lib}/gwt-elemental.jar" prefix="${project.distname}" />
       <!-- jni libs-->
       <zipfileset dir="${gwt.build.jni}/windows" prefix="${project.distname}" />
 

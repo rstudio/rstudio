@@ -73,7 +73,7 @@
     <length property="gwt.sample.length">
       <fileset dir="${gwt.build.out}/samples" includes="*/war/*/*.cache.html,*/war/*/*.cache.js"/>
     </length>
-    <echo message="compiled size of all samples is ${gwt.sample.length} bytes."/>
+    <echo message="compiled size of all samples is ${gwt.sample.length} bytes." level="info"/>
   </target>
 
   <target name="checkstyle" description="Static analysis of GWT source">
