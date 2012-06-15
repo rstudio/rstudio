@@ -38,6 +38,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   protected void setUp() throws Exception {
     super.setUp();
     EnumOrdinalizer.enableTracker();
+    EnumOrdinalizer.resetTracker();
     
     // defaults, can be overridden by individual test cases
     runTypeTightener = false;
@@ -45,11 +46,14 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
     runMethodInliner = true;
     runMakeCallsStatic = true;
   }
+
+  @Override
+  protected void tearDown() throws Exception {
+    super.tearDown();
+  }
   
   public void testOrdinalizeBasicAssignment() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Fruit apple = Fruit.APPLE;",
                     "Fruit orange = Fruit.ORANGE;");
@@ -60,8 +64,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
 
   public void testOrdinalizeNewArrayAndAssignmentLocalRef() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Fruit[] fruits = new Fruit[] {Fruit.APPLE, Fruit.ORANGE, Fruit.APPLE};",
                      "if (fruits[0] == Fruit.APPLE) {",
@@ -74,8 +76,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
 
   public void testOrdinalizeNewArrayOfArrayAndAssignmentLocalRef() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Fruit[][] fruits = new Fruit[][] ",
                      " {{Fruit.APPLE, Fruit.ORANGE},{Fruit.APPLE, Fruit.ORANGE}};",
@@ -89,8 +89,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
 
   public void testOrdinalizeNewArrayAndAssignmentFieldRef() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     addSnippetClassDecl("private final Fruit[] fruits = new Fruit[] ",
                         "  {Fruit.APPLE, Fruit.ORANGE, Fruit.APPLE};");
@@ -102,8 +100,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
 
   public void testOrdinalizableFinalFieldUninitializedByDefault() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     addSnippetClassDecl("private final Fruit uninitializedFinalFruit;",
                         "public EntryPoint() {",
@@ -118,8 +114,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testOrdinalizeSwitchStatement() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     setupFruitSwitchMethod();
     optimize("void", "String apple = fruitSwitch(Fruit.APPLE);",
@@ -131,8 +125,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
 
   public void testOrdinalizeIfStatement() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     addSnippetClassDecl(
         "public static String fruitIf(Fruit fruit) {",
@@ -153,8 +145,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testOrdinalizeConditional() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Fruit fruit = (true) ? Fruit.APPLE : Fruit.ORANGE;");
     
@@ -164,8 +154,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
 
   public void testOrdinalizeFieldRefOrdinalMethodCall() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "int i = Fruit.APPLE.ordinal();");
     
@@ -175,8 +163,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testOrdinalizeVariableRefOrdinalMethodCall() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Fruit fruit = Fruit.APPLE;",
                     "int i = fruit.ordinal();");
@@ -186,8 +172,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   }
 
   public void testOrdinalizeUnusedEmptyEnum() throws UnableToCompleteException {
-    EnumOrdinalizer.resetTracker();
-
     setupEmptyEnum();
 
     optimize("void", "EmptyEnum myEnum;");
@@ -197,8 +181,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   }
 
   public void testOrdinalizeUnusedEnum() throws UnableToCompleteException {
-    EnumOrdinalizer.resetTracker();
-
     setupFruitEnum();
 
     optimize("void", "Fruit myEnum;");
@@ -209,8 +191,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
 
   public void testOrdinalizeMethodCallExpressionOrdinalFieldRef() 
       throws UnableToCompleteException {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     addSnippetClassDecl("public static Fruit getResolvedFruit(Fruit fruit) {",
                         "  if (fruit == Fruit.APPLE) {",
@@ -237,8 +217,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testOrdinalizableStaticFieldRef() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     // this will cause a static field ref in the enum clinit
     setupFruitEnumWithStaticField();
     optimize("void", "String y = Fruit.staticField;");
@@ -249,8 +227,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testOrdinalizableStaticMethod() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     // this will cause a static method enum class
     setupFruitEnumWithStaticMethod();
     optimize("void", "int y = Fruit.staticMethod();");
@@ -261,8 +237,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableStaticMethodThatRefsValuesArray() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     // this will cause a static method that references an element
     // of the values() array
     setupFruitEnumWithStaticMethodThatRefsValuesArray();
@@ -275,8 +249,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableStaticMethodThatRefsValuesLength() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     // this will cause a static method that references values().length
     setupFruitEnumWithStaticMethodThatRefsValuesLength();
     optimize("void", "Fruit y = Fruit.forInteger(0);");
@@ -288,8 +260,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableInstanceStaticFieldRef() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     // this will cause a static field ref in the enum clinit
     setupFruitEnumWithStaticField();
     optimize("void", "Fruit fruit = Fruit.APPLE;",
@@ -302,8 +272,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableInstanceStaticMethod() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     // this will cause a static method enum class
     setupFruitEnumWithStaticMethod();
     optimize("void", "Fruit fruit = Fruit.APPLE;",
@@ -316,8 +284,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableClassLiteralReference() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Class clazz = Fruit.class;",
                     "String clazzStr = clazz.toString();");
@@ -329,8 +295,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableEnumValueOfWithClassLiteralArg() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Object Carrot = Enum.valueOf(Fruit.class, \"APPLE\");",
                     "String carrot = Carrot.toString();");
@@ -342,8 +306,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableGetClassMethodCall() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Class clazz = Fruit.APPLE.getClass();",
                     "String clazzStr = clazz.toString();");
@@ -355,8 +317,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableExplicitCastToEnumClass() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Object obj = new Object();",
                     "Fruit fruit = (Fruit) obj;");
@@ -368,8 +328,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableExplicitCastToArrayOfEnumClass() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Enum[] enumArray = new Enum[10];",
                     "Fruit[] fruitArray = (Fruit[]) enumArray;");
@@ -381,8 +339,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableExplicitCastFromArrayOfEnumClass() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Fruit[] fruitArray = new Fruit[10];",
                     "Enum[] enumArray = (Enum[]) fruitArray;");
@@ -394,8 +350,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableExplicitCastToArrayOfArrayOfEnumClass() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Enum[][] enumArray = new Enum[10][10];",
                     "Fruit[][] fruitArray = (Fruit[][]) enumArray;");
@@ -407,8 +361,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableExplicitCastFromArrayOfArrayOfEnumClass() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Fruit[][] fruitArray = new Fruit[10][10];",
                     "Enum[][] enumArray = (Enum[][]) fruitArray;");
@@ -420,8 +372,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableExplicitCastFromEnumClass() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Enum Carrot = (Enum) Fruit.APPLE;",
                     "String carrot = Carrot.toString();");
@@ -433,8 +383,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableOrdinalMethodRefFromExplicitCastWithBlackListableSubExpression() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "int ord = " +
         "((Fruit) Enum.valueOf(Fruit.class,\"APPLE\")).ordinal();");
@@ -446,8 +394,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableInstanceFieldRef() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     // this will cause an instance field ref in the enum constructor
     setupFruitEnumWithInstanceField();
     optimize("void");
@@ -485,8 +431,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
 
   public void testNotOrdinalizableStaticFieldRefToVALUES() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     // this ends up inlining the values() method call, and thus $VALUES is referenced external
     // to the Fruit enum class.
     setupFruitEnum();
@@ -499,8 +443,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableStaticMethodCallValues() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     // make sure values() method call doesn't doesn't get inlined
     runMethodInliner = false;
     
@@ -514,8 +456,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableJsniFieldRef() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     addSnippetClassDecl("public static Fruit instanceFruit;");
     addSnippetClassDecl("public static native void jsniMethod() /*-{",
@@ -531,8 +471,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableJsniFieldRefStatic() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     addSnippetClassDecl("public static native void jsniMethod() /*-{",
                         "  var x = @test.EntryPoint.Fruit::APPLE",
@@ -546,8 +484,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableJsniFieldRefClassLiteral() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     addSnippetClassDecl("public static native void jsniMethod() /*-{",
                         "  var x = @test.EntryPoint.Fruit::class",
@@ -561,8 +497,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableImplicitUpcastBinaryOpAssignment() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Enum tomato;",
                     "tomato = Fruit.APPLE;");
@@ -574,8 +508,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableImplicitUpcastFieldInitializedWithNullByDefault() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     addSnippetClassDecl("static private Fruit uninitializedFruitAsNull;");
     optimize("void", "if (uninitializedFruitAsNull != Fruit.APPLE) {",
@@ -589,8 +521,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableImplicitUpcastBinaryOpEquals() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     setupVegetableEnum();
     optimize("void", "Fruit fruit = Fruit.APPLE;",
@@ -606,8 +536,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableImplicitUpcastBinaryOpNotEquals() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     setupVegetableEnum();
     optimize("void", "Fruit fruit = Fruit.APPLE;",
@@ -624,8 +552,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableImplicitUpcastBinaryOpEqualsNull() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     addSnippetClassDecl("public static boolean testIsNull(Fruit fruit) {",
                         "  if (fruit == null) {",
@@ -644,8 +570,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableImplicitUpcastBinaryOpNotEqualsNull() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     addSnippetClassDecl("public static boolean testIsNull(Fruit fruit) {",
                         "  if (fruit != null) {",
@@ -664,8 +588,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableImplicitUpcastBinaryOpStringConcat() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Fruit fruit = Fruit.APPLE;",
                     "String str = \"A string followed by \" + fruit;");
@@ -677,8 +599,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableImplicitUpcastBinaryOpStringConcat2() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Fruit fruit = Fruit.APPLE;",
                     "String str = fruit + \" followed by a string\";");
@@ -690,8 +610,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableImplicitUpcastBinaryOpStringConcatAssignment() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Fruit fruit = Fruit.APPLE;",
                     "String str = \"A string concatenated with: \";",
@@ -704,8 +622,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableImplicitUpcastDeclarationToNull() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Fruit fruit = null;");
     
@@ -716,8 +632,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableImplicitUpcastAssignmentToNull() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Fruit fruit;",
                     "fruit = null;");
@@ -729,8 +643,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableImplicitUpcastDeclaration() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Enum tomato = Fruit.APPLE;");
     
@@ -741,8 +653,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableImplicitUpcastConditional() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     setupVegetableEnum();
     optimize("void", "Enum tomato = null;",
@@ -761,8 +671,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
     // this test depends on the tighteners running
     runTypeTightener = true;
     runMethodCallTightener = true;
-    
-    EnumOrdinalizer.resetTracker();
     
     /*
      * Create methods with covariant return type, which the MethodTypeTightener
@@ -805,8 +713,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableImplicitUpcastMethodCallArgs() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     addSnippetClassDecl("public static String getEnumString(Enum myEnum) {",
                         // make sure this method does something so not inlined
@@ -827,8 +733,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableImplicitUpcastMethodCallArgsNewArray() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     addSnippetClassDecl("public static String getEnumString(Enum[] myEnumArray) {",
                         "  String retString = \"\";",
@@ -846,8 +750,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
 
   public void testNotOrdinalizableImplicitUpcastMethodCallVarArgs() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     addSnippetClassDecl("public static String getEnumString(Enum...myEnumArray) {",
                         "  String retString = \"\";",
@@ -865,8 +767,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
 
   public void testNotOrdinalizableImplicitUpcastNewArrayElements() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Enum[] enums = new Enum[] {Fruit.APPLE, Fruit.ORANGE};");
     
@@ -877,8 +777,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableImplicitUpcastNewArrayArrayElements() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     optimize("void", "Enum[][] enums = new Enum[][] {{Fruit.APPLE, Fruit.ORANGE},{Fruit.ORANGE, Fruit.APPLE}};");
     
@@ -889,8 +787,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableImplicitUpcastJsniMethodBodyParams() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     addSnippetClassDecl("public static native void passEnumToJsniMethod(Fruit myEnum) /*-{",
                         "}-*/");
@@ -903,8 +799,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableImplicitUpcastJsniMethodBodyReturnType() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     addSnippetClassDecl("public static native Fruit returnFruitViaJsni() /*-{",
                         "  var myJso;",
@@ -919,8 +813,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableImplicitUpcastJsniMethodRefParams() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     setupFruitSwitchMethod();
     addSnippetClassDecl("public static native void fruitSwitchViaJsni() /*-{",
@@ -936,8 +828,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableImplicitUpcastJsniMethodRefReturnType() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     addSnippetClassDecl("public static Fruit returnSomeFruit() {",
                         "  return Fruit.APPLE;",
@@ -954,8 +844,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   
   public void testNotOrdinalizableImplicitUpcastReturnStatement() 
       throws UnableToCompleteException  {
-    EnumOrdinalizer.resetTracker();
-    
     setupFruitEnum();
     setupVegetableEnum();
     addSnippetClassDecl("public static Enum returnAsEnum(int mode) {",
