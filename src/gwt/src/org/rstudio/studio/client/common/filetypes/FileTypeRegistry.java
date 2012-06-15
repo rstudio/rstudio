@@ -149,10 +149,10 @@ public class FileTypeRegistry
       register("*.mdtxt", MARKDOWN, icons.iconMarkdown());
       register("*.markdown", MARKDOWN, icons.iconMarkdown());
       register("*.bib", TEXT, icons.iconText());
-      register("*.c", CPP, icons.iconCpp());
+      register("*.c", CPP, icons.iconC());
       register("*.cpp", CPP, icons.iconCpp());
-      register("*.h", CPP, icons.iconCpp());
-      register("*.hpp", CPP, icons.iconCpp());
+      register("*.h", CPP, icons.iconH());
+      register("*.hpp", CPP, icons.iconHpp());
       register("*.Rout.save", TEXT, icons.iconText());
       register("*.rd", RD, icons.iconRd());
       register("*.rdata", RDATA, icons.iconRdata());
