@@ -1513,6 +1513,11 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     // The _throwsUnsupportedOperationException version of this test will
     // verify that the method is not supported.
     if (isRemoveSupported) {
+      
+      // TODO(acleung): Post JDK7, map.put(null) will actually throw a NPE.
+      // Lets disable this for now. Once we no longer test on JDK6, we can
+      // add this back and always assert an NPE.
+      /*
       Map<K, V> map;
       map = createMap();
       // test remove null key with map containing a single null key
@@ -1523,6 +1528,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
       } catch (NullPointerException e) {
         assertFalse(useNullKey());
       }
+      */
 
       map = createMap();
       // test remove null key with map containing a single non-null key
