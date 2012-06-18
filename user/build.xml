@@ -74,6 +74,7 @@
     <pathelement location="${gwt.tools.lib}/slf4j/slf4j-api/slf4j-api-1.6.1.jar" />
     <pathelement location="${gwt.tools.lib}/slf4j/slf4j-log4j12/slf4j-log4j12-1.6.1.jar" />
     <pathelement location="${gwt.tools}/redist/json/r2_20080312/json-1.5.jar" />
+    <pathelement location="${gwt.tools.lib}/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar" />
     <!-- TCK jars -->
     <pathelement location="${gwt.tools.lib}/hibernate/validator/tck/jsr303-tck-1.0.3.GA-sources.jar" />
     <pathelement location="${gwt.tools.lib}/hibernate/validator/tck/jsr303-tck-1.0.3.GA.jar" />
@@ -108,6 +109,7 @@
         <pathelement location="${gwt.tools.lib}/hibernate/validator/hibernate-validator-4.1.0.Final-sources.jar" />
         <!-- Bootstrap support needed for obfuscated type tokens for JRE runtime -->
         <pathelement location="${gwt.tools.lib}/requestfactory/requestfactory-apt.jar" />
+        <pathelement location="${gwt.tools.lib}/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar" />
         <pathelement location="${gwt.dev.jar}" />
       </classpath>
     </gwt.javac>
@@ -215,6 +217,7 @@
       <zipfileset src="${gwt.tools.lib}/tomcat/servlet-api-2.5.jar" excludes="**/*.java"/>
       <zipfileset src="${gwt.tools.lib}/w3c/sac/sac-1.3.jar" />
       <zipfileset src="${gwt.tools.lib}/w3c/flute/flute-1.3-gg2.jar" />
+      <zipfileset src="${gwt.tools.lib}/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar" />
     </gwt.jar>
   </target>
 
