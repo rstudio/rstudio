@@ -25,7 +25,9 @@ import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
@@ -89,6 +91,17 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
      */
     @Source(BasicStyle.DEFAULT_CSS)
     BasicStyle cellTreeStyle();
+  }
+
+  /**
+   * Constants for labeling the cell tree. Provides just English messages by default.
+   */
+  @DefaultLocale("en_US")
+  public interface CellTreeMessages extends Constants {
+    @DefaultStringValue("Show more")
+    String showMore();
+    @DefaultStringValue("Empty")
+    String emptyTree();
   }
 
   /**
@@ -555,7 +568,8 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
   }
 
   /**
-   * Construct a new {@link CellTree}.
+   * Construct a new {@link CellTree}. Uses default translations that means
+   * that messages will be always in English.
    *
    * @param <T> the type of data in the root node
    * @param viewModel the {@link TreeViewModel} that backs the tree
@@ -563,6 +577,23 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
    * @param resources the resources used to render the tree
    */
   public <T> CellTree(TreeViewModel viewModel, T rootValue, Resources resources) {
+    this(viewModel, rootValue, resources,
+        GWT.<CellTreeMessages>create(CellTreeMessages.class));
+  }
+  /**
+   * Construct a new {@link CellTree}.
+   *
+   * @param <T> the type of data in the root node
+   * @param viewModel the {@link TreeViewModel} that backs the tree
+   * @param rootValue the hidden root value of the tree
+   * @param resources the resources used to render the tree
+   * @param messages translation messages. Users should inherit an empty interface from
+   *                 {@link CellTreeMessages} and add annotations needed for their specific
+   *                 translation systems. Then create the new interface with GWT.create and pass
+   *                 as this argument.
+   */
+  public <T> CellTree(TreeViewModel viewModel, T rootValue, Resources resources,
+      CellTreeMessages messages) {
     super(viewModel);
     if (template == null) {
       template = GWT.create(Template.class);
@@ -599,7 +630,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
 
     // Associate a view with the item.
     CellTreeNodeView<T> root = new CellTreeNodeView<T>(this, null, null,
-        getElement(), rootValue);
+        getElement(), rootValue, messages);
     keyboardSelectedNode = rootNode = root;
     root.setOpen(true, false);
   }

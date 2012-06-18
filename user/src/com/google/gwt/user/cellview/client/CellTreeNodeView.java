@@ -40,6 +40,7 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.cellview.client.CellTree.CellTreeMessages;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.user.client.ui.UIObject;
@@ -794,6 +795,11 @@ class CellTreeNodeView<T> extends UIObject {
   private boolean isDestroyed;
 
   /**
+   * Messages used for translation.
+   */
+  private final CellTreeMessages messages;
+
+  /**
    * The info about children of this node.
    */
   private NodeInfo<?> nodeInfo;
@@ -842,20 +848,22 @@ class CellTreeNodeView<T> extends UIObject {
 
   /**
    * Construct a {@link CellTreeNodeView}.
-   * 
+   *
    * @param tree the parent {@link CellTreeNodeView}
    * @param parent the parent {@link CellTreeNodeView}
    * @param parentNodeInfo the {@link NodeInfo} of the parent
    * @param elem the outer element of this {@link CellTreeNodeView}
    * @param value the value of this node
+   * @param messages tranlation messages
    */
   CellTreeNodeView(final CellTree tree, final CellTreeNodeView<?> parent,
-      NodeInfo<T> parentNodeInfo, Element elem, T value) {
+      NodeInfo<T> parentNodeInfo, Element elem, T value, CellTreeMessages messages) {
     this.tree = tree;
     this.parentNode = parent;
     this.parentNodeInfo = parentNodeInfo;
     this.depth = parentNode == null ? 0 : parentNode.depth + 1;
     this.value = value;
+    this.messages = messages;
     setElement(elem);
   }
 
@@ -1024,7 +1032,7 @@ class CellTreeNodeView<T> extends UIObject {
    */
   protected <C> CellTreeNodeView<C> createTreeNodeView(NodeInfo<C> nodeInfo, Element childElem,
       C childValue, Object viewData) {
-    return new CellTreeNodeView<C>(tree, this, nodeInfo, childElem, childValue);
+    return new CellTreeNodeView<C>(tree, this, nodeInfo, childElem, childValue, messages);
   }
 
   /**
@@ -1161,16 +1169,15 @@ class CellTreeNodeView<T> extends UIObject {
       contentContainer = Document.get().createDivElement();
       ensureAnimationFrame().appendChild(contentContainer);
 
-      // TODO(jlabanca): I18N no data string.
       emptyMessageElem = Document.get().createDivElement();
-      emptyMessageElem.setInnerHTML("no data");
+      emptyMessageElem.setInnerHTML(messages.emptyTree());
       setStyleName(emptyMessageElem, tree.getStyle().cellTreeEmptyMessage(), true);
       showOrHide(emptyMessageElem, false);
       contentContainer.appendChild(emptyMessageElem);
 
       showMoreElem = Document.get().createAnchorElement();
       showMoreElem.setHref("javascript:;");
-      showMoreElem.setInnerText("Show more");
+      showMoreElem.setInnerText(messages.showMore());
       setStyleName(showMoreElem, tree.getStyle().cellTreeShowMoreButton(), true);
       showOrHide(showMoreElem, false);
       contentContainer.appendChild(showMoreElem);
