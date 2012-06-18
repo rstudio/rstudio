@@ -28,7 +28,3 @@
    return (caps)
 })
 
-.rs.addFunction( "rpubsEnable", function()
-{
-   invisible(.Call("rs_rpubsEnable"))
-})
