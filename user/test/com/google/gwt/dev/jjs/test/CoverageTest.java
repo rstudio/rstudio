@@ -154,6 +154,7 @@ public class CoverageTest extends CoverageBase {
     }
 
     private void testArrayReference() {
+      ia = new int[] {i, j};
       // ArrayReference
       i = ia[0];
       assertEquals(ia[0], i);
@@ -415,6 +416,7 @@ public class CoverageTest extends CoverageBase {
     }
 
     private void testForeachStatement() {
+      ia = new int[] {i, j};
       // Array of primitive.
       for (int q : ia) {
         i = q;
@@ -557,12 +559,14 @@ public class CoverageTest extends CoverageBase {
 
     private void testPostfixExpression() {
       // PostfixExpression
+      i = 1;
       assertEquals(1, i++);
       assertEquals(2, i--);
     }
 
     private void testPrefixExpression() {
       // PrefixExpression
+      i = 1;
       assertEquals(2, ++i);
       assertEquals(1, --i);
     }
@@ -822,6 +826,23 @@ public class CoverageTest extends CoverageBase {
     return false;
   }
 
+  @Override
+  public void gwtSetUp() throws Exception {
+    super.gwtSetUp();
+    x = 3;
+    d = 0;
+    f = 0;
+    i = 1 + 2 + 3;
+    ia = null;
+    iaa = null;
+    iaaa = null;
+    l = 0;
+    o = null;
+    s = "foo";
+    sa = new String[]{"foo", "bar", "bar"};
+    z = false;
+  }
+  
   protected static void sfoo() {
   }
 
