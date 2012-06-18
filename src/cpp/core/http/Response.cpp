@@ -24,7 +24,6 @@
 #include <core/http/Util.hpp>
 #include <core/http/Cookie.hpp>
 #include <core/Hash.hpp>
-#include <core/StringUtils.hpp>
 
 namespace core {
 namespace http {
@@ -34,7 +33,7 @@ Response::Response()
 {
 }   
    
-const std::string& Response::statusMessage() const
+const std::string& Response::statusMessage() const    
 { 
    ensureStatusMessage();  
    return statusMessage_; 
@@ -147,9 +146,7 @@ void Response::setError(int statusCode, const std::string& message)
    setStatusCode(statusCode);
    removeCachingHeaders();
    setContentType("text/plain");
-   std::string escapedMessage = string_utils::htmlEscape(message,
-                                                         false);
-   setBodyUnencoded(escapedMessage);
+   setBodyUnencoded(message);
 }
    
 void Response::setError(const Error& error)
