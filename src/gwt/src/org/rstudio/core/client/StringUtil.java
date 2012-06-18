@@ -18,6 +18,7 @@ import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.regex.Pattern.ReplaceOperation;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -427,6 +428,21 @@ public class StringUtil
          default:
             return false;
       }
+   }
+
+   public static String pathToTitle(String path)
+   {
+      String val = FileSystemItem.createFile(path).getStem();
+      val = Pattern.create("\\b[a-z]").replaceAll(val, new ReplaceOperation()
+      {
+         @Override
+         public String replace(Match m)
+         {
+            return m.getValue().toUpperCase();
+         }
+      });
+      val = Pattern.create("[-_]").replaceAll(val, " ");
+      return val;
    }
 
    private static final long[] SIZES = {

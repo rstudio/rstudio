@@ -42,6 +42,8 @@ import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.common.vcs.*;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
+import org.rstudio.studio.client.notebook.CompileNotebookOptions;
+import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.server.*;
@@ -1158,8 +1160,15 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, GET_RMARKDOWN_TEMPLATE, requestCallback);
    }
-   
-   
+
+   @Override
+   public void createNotebook(
+                 CompileNotebookOptions options,
+                 ServerRequestCallback<CompileNotebookResult> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "create_notebook", options, requestCallback);
+   }
+
    public void getRecentHistory(
          long maxItems,
          ServerRequestCallback<RpcObjectList<HistoryEntry>> requestCallback)

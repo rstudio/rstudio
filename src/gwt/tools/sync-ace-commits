@@ -73,8 +73,7 @@ git merge \
     origin/patch/mousewheel3 \
     origin/patch/consistent-gutter-width \
     origin/patch/suppress-native-scroll \
-    origin/patch/build-markdown-html \
-    origin/patch/build-markdown-html2 \
+    origin/patch/build \
     origin/patch/remove-webfont \
 
 

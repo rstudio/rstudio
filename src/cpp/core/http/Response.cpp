@@ -16,7 +16,7 @@
 #include <algorithm>
 
 #include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/asio/buffer.hpp>
 
@@ -24,6 +24,7 @@
 #include <core/http/Util.hpp>
 #include <core/http/Cookie.hpp>
 #include <core/Hash.hpp>
+#include <core/StringUtils.hpp>
 
 namespace core {
 namespace http {
@@ -33,7 +34,7 @@ Response::Response()
 {
 }   
    
-const std::string& Response::statusMessage() const    
+const std::string& Response::statusMessage() const
 { 
    ensureStatusMessage();  
    return statusMessage_; 
@@ -146,24 +147,45 @@ void Response::setError(int statusCode, const std::string& message)
    setStatusCode(statusCode);
    removeCachingHeaders();
    setContentType("text/plain");
-   setBodyUnencoded(message);
+   std::string escapedMessage = string_utils::htmlEscape(message,
+                                                         false);
+   setBodyUnencoded(escapedMessage);
 }
    
 void Response::setError(const Error& error)
 {
    setError(status::InternalServerError, error.code().message());
 }
-     
-void Response::setMovedPermanently(const http::Request& request, const std::string& location)
+
+namespace {
+
+// only take up to the first newline to prevent http response split
+std::string safeLocation(const std::string& location)
 {
-   std::string uri = URL::complete(request.absoluteUri(), location);
+   std::vector<std::string> lines;
+   boost::algorithm::split(lines,
+                           location,
+                           boost::algorithm::is_any_of("\r\n"));
+   return lines.size() > 0 ? lines[0] : "";
+}
+
+} // anonymous namespace
+
+
+void Response::setMovedPermanently(const http::Request& request,
+                                   const std::string& location)
+{
+   std::string uri = URL::complete(request.absoluteUri(),
+                                   safeLocation(location));
    setError(http::status::MovedPermanently, uri);
    setHeader("Location", uri);
 }
 
-void Response::setMovedTemporarily(const http::Request& request, const std::string& location)
+void Response::setMovedTemporarily(const http::Request& request,
+                                   const std::string& location)
 {
-   std::string uri = URL::complete(request.absoluteUri(), location);
+   std::string uri = URL::complete(request.absoluteUri(),
+                                   safeLocation(location));
    setError(http::status::MovedTemporarily, uri);
    setHeader("Location", uri);
 }

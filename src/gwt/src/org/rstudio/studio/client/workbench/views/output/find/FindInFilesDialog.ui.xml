@@ -42,7 +42,7 @@
          <g:ListBox ui:field="listPresetFilePatterns_"
                     styleName="{style.presetFilePatterns}">
             <g:item value="">All Files</g:item>
-            <g:item value="*.r, *.R, *.rnw, *.Rnw, *.rmd, *.Rmd, *.rmarkdown, *.Rmarkdown, *.rhtml, *.Rhtml, *.rd, *.Rd">Common R source files (R, Rnw, Rmd, Rhtml, Rd)</g:item>
+            <g:item value="*.r, *.R, *.rnw, *.Rnw, *.rmd, *.Rmd, *.rmarkdown, *.Rmarkdown, *.rhtml, *.Rhtml, *.rd, *.Rd, *.h, *.hpp, *.c, *.cpp">Common R source files (R, C/C++, Rnw, Rmd, Rhtml, Rd)</g:item>
             <g:item value="custom">Custom Filter</g:item>
          </g:ListBox>
          <div ui:field="divCustomFilter_">

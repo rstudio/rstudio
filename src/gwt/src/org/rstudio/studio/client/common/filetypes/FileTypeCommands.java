@@ -62,14 +62,6 @@ public class FileTypeCommands
       addRFileType(FileTypeRegistry.RD, 
                    "R _Documentation",
                    "Create a new R documentation file");
-      
-      // NOTE: we currently don't show these in the menus because
-      // there are too many and they aren't core enough to most R users
-      addTextFileType(FileTypeRegistry.TEX, "Te_X File", null);
-      addTextFileType(FileTypeRegistry.MARKDOWN, "Mar_kdown File", null);  
-      addTextFileType(FileTypeRegistry.HTML, "HTM_L File", null);
-      addTextFileType(FileTypeRegistry.CSS, "_CSS File", null);
-      addTextFileType(FileTypeRegistry.JS, "_JavaScript File", null);
           
       eventBus.addHandler(InstalledPackagesChangedEvent.TYPE,
                           new InstalledPackagesChangedHandler() {
@@ -99,13 +91,6 @@ public class FileTypeCommands
       return rFileTypeCommands_;
    }
    
-   // NOTE: we currently don't show these in the menus because
-   // there are too many and they aren't core enough to most R users
-   public ArrayList<CommandWithId> textFileCommandsWithIds()
-   {
-      return textFileTypeCommands_;
-   }
-   
    public TextFileType[] statusBarFileTypes()
    {
       ArrayList<TextFileType> types = new ArrayList<TextFileType>();
@@ -120,6 +105,7 @@ public class FileTypeCommands
       types.add(FileTypeRegistry.HTML);
       types.add(FileTypeRegistry.CSS);
       types.add(FileTypeRegistry.JS);
+      types.add(FileTypeRegistry.CPP);
       
       return (TextFileType[])types.toArray(new TextFileType[0]);
    }
@@ -143,14 +129,6 @@ public class FileTypeCommands
    {
       return addType(rFileTypeCommands_, fileType, menuLabel, desc);
    }
-   
-   private AppCommand addTextFileType(TextFileType fileType,  
-                                      String menuLabel,
-                                      String desc) 
-   {
-      return addType(textFileTypeCommands_, fileType, menuLabel, desc);
-   }
-
    
    private AppCommand addType(ArrayList<CommandWithId> typeList,
                               final TextFileType fileType, 
@@ -187,9 +165,6 @@ public class FileTypeCommands
    private final Session session_;
    
    private final ArrayList<CommandWithId> rFileTypeCommands_ =
-         new ArrayList<CommandWithId>();
-   
-   private final ArrayList<CommandWithId> textFileTypeCommands_ =
          new ArrayList<CommandWithId>();
    
    private HTMLCapabilities htmlCapabilities_;

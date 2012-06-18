@@ -77,7 +77,8 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
       void showPreview(String url,
                        String htmlFile, 
                        boolean enableSaveAs,
-                       boolean enablePublish);
+                       boolean enablePublish,
+                       boolean enableRefresh);
       
       void print();
       
@@ -192,7 +193,8 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
                   server_.getApplicationURL(result.getPreviewURL()),
                   result.getHtmlFile(),
                   result.getEnableSaveAs(),
-                  isMarkdownFile(result.getSourceFile()));
+                  isMarkdownFile(result.getSourceFile()),
+                  result.getEnableRefresh());
 
                isPublished_ = result.getPreviouslyPublished();
                if (isPublished_)

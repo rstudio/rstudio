@@ -62,6 +62,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="knitToHTML"/>
          <cmd refid="previewHTML"/>
          <cmd refid="compilePDF"/>
+         <cmd refid="compileNotebook"/>
          <separator/>
          <cmd refid="printSourceDoc"/>
          <separator/>
@@ -671,6 +672,10 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Compile PDF"
         menuLabel="Compile PDF"
         desc="Compile a PDF from the current LaTeX or Sweave document"/>
+
+   <cmd id="compileNotebook"
+        menuLabel="Compile Notebook..."
+        desc="Compile an HTML notebook from the current R script"/>
 
    <cmd id="synctexSearch"
         menuLabel="S_ync PDF View to Editor"

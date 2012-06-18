@@ -39,8 +39,10 @@
 
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
+#include <r/RUtil.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionSourceDatabase.hpp>
 
  #include "SessionRPubs.hpp"
 
@@ -62,10 +64,11 @@ public:
    static boost::shared_ptr<HTMLPreview> create(const FilePath& targetFile,
                                                 const std::string& encoding,
                                                 bool isMarkdown,
+                                                bool isNotebook,
                                                 bool knit)
    {
       boost::shared_ptr<HTMLPreview> pPreview(new HTMLPreview(targetFile));
-      pPreview->start(encoding, isMarkdown, knit);
+      pPreview->start(encoding, isMarkdown, isNotebook, knit);
       return pPreview;
    }
 
@@ -73,17 +76,22 @@ private:
    HTMLPreview(const FilePath& targetFile)
       : targetFile_(targetFile),
         isMarkdown_(false),
+        isNotebook_(false),
         requiresKnit_(false),
         isRunning_(false),
         terminationRequested_(false)
    {
    }
 
-   void start(const std::string& encoding, bool isMarkdown, bool requiresKnit)
+   void start(const std::string& encoding,
+              bool isMarkdown,
+              bool isNotebook,
+              bool requiresKnit)
    {
       enqueHTMLPreviewStarted(targetFile_);
 
       isMarkdown_ = isMarkdown;
+      isNotebook_ = isNotebook;
       requiresKnit_ = requiresKnit;
 
       // read the file using the specified encoding
@@ -126,6 +134,8 @@ public:
    void terminate() { terminationRequested_ = true; }
 
    bool isMarkdown() { return isMarkdown_; }
+
+   bool isNotebook() { return isNotebook_; }
 
    bool requiresKnit() { return requiresKnit_; }
 
@@ -361,7 +371,8 @@ private:
       enqueHTMLPreviewSucceeded(kHTMLPreview "/",
                                 targetFile(),
                                 htmlPreviewFile(),
-                                isMarkdown());
+                                isMarkdown(),
+                                !isNotebook());
    }
 
    static void enqueHTMLPreviewStarted(const FilePath& targetFile)
@@ -389,7 +400,8 @@ private:
    static void enqueHTMLPreviewSucceeded(const std::string& previewUrl,
                                          const FilePath& sourceFile,
                                          const FilePath& htmlFile,
-                                         bool enableSaveAs)
+                                         bool enableSaveAs,
+                                         bool enableRefresh)
    {
       json::Object resultJson;
       resultJson["succeeded"] = true;
@@ -397,6 +409,7 @@ private:
       resultJson["html_file"] = module_context::createAliasedPath(htmlFile);
       resultJson["preview_url"] = previewUrl;
       resultJson["enable_saveas"] = enableSaveAs;
+      resultJson["enable_refresh"] = enableRefresh;
       resultJson["previously_published"] = !rpubs::previousUploadId(htmlFile).empty();
       ClientEvent event(client_events::kHTMLPreviewCompletedEvent, resultJson);
       module_context::enqueClientEvent(event);
@@ -410,6 +423,7 @@ private:
 private:
    FilePath targetFile_;
    bool isMarkdown_;
+   bool isNotebook_;
    bool requiresKnit_;
 
    FilePath knitrOutputFile_;
@@ -417,6 +431,17 @@ private:
    bool isRunning_;
    bool terminationRequested_;
 };
+
+std::string deriveNotebookPath(const std::string& path)
+{
+   if (path.size() > 2
+       && (boost::algorithm::ends_with(path, ".r") ||
+           boost::algorithm::ends_with(path, ".R")))
+   {
+      return path.substr(0, path.size()-2) + ".Rmd";
+   }
+   return path + ".Rmd";
+}
 
 // current preview (stays around after the preview executes so it can
 // serve the web content back)
@@ -432,12 +457,17 @@ Error previewHTML(const json::JsonRpcRequest& request,
 {
    // read params
    std::string file, encoding;
-   bool isMarkdown, knit;
+   bool isMarkdown, knit, isNotebook;
    Error error = json::readObjectParam(request.params, 0,
                                        "path", &file,
                                        "encoding", &encoding,
                                        "is_markdown", &isMarkdown,
-                                       "requires_knit", &knit);
+                                       "requires_knit", &knit,
+                                       "is_notebook", &isNotebook);
+
+   if (isNotebook)
+      file = deriveNotebookPath(file);
+
    if (error)
       return error;
    FilePath filePath = module_context::resolveAliasedPath(file);
@@ -452,6 +482,7 @@ Error previewHTML(const json::JsonRpcRequest& request,
       s_pCurrentPreview_ = HTMLPreview::create(filePath,
                                                encoding,
                                                isMarkdown,
+                                               isNotebook,
                                                knit);
       pResponse->setResult(true);
    }
@@ -491,6 +522,123 @@ Error getRMarkdownTemplate(const json::JsonRpcRequest&,
 
    pResponse->setResult(templateContents);
 
+   return Success();
+}
+
+const char* const MAGIC_GUID = "12861c30b10411e1afa60800200c9a66";
+const char* const FIGURE_DIR = "figure-compile-notebook-12861c30b";
+
+bool okToGenerateFile(const FilePath& rmdPath,
+                      const std::string& extension,
+                      std::string* pErrMsg)
+{
+   FilePath filePath = rmdPath.parent().complete(
+                                    rmdPath.stem() + extension);
+
+   if (filePath.exists())
+   {
+      boost::shared_ptr<std::istream> pStr;
+      Error error = filePath.open_r(&pStr);
+      if (error)
+      {
+         *pErrMsg = "Error opening file: " + error.summary();
+         return false;
+      }
+
+      std::string magicGuid(MAGIC_GUID);
+      std::istreambuf_iterator<char> eod;
+      if (eod == std::search(std::istreambuf_iterator<char>(*pStr),
+                             eod,
+                             magicGuid.begin(),
+                             magicGuid.end()))
+      {
+         *pErrMsg = "Unable to generate the file '" +
+                    filePath.filename() + "' because it already "
+                    "exists.\n\n"
+                    "You need to move or delete this file prior to "
+                    "compiling a notebook for this R script.";
+         return false;
+      }
+      else
+      {
+         return true;
+      }
+   }
+   else
+   {
+      return true;
+   }
+}
+
+bool okToGenerateFiles(const FilePath& rmdPath, std::string* pErrMsg)
+{
+   return okToGenerateFile(rmdPath, ".Rmd", pErrMsg) &&
+          okToGenerateFile(rmdPath, ".md", pErrMsg) &&
+          okToGenerateFile(rmdPath, ".html", pErrMsg);
+}
+
+Error createNotebook(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string id, prefix, suffix;
+   bool sessionInfo;
+   Error error = json::readObjectParam(request.params, 0,
+                                       "id", &id,
+                                       "prefix", &prefix,
+                                       "suffix", &suffix,
+                                       "session_info", &sessionInfo);
+   if (error)
+      return error;
+
+   boost::shared_ptr<source_database::SourceDocument> pDoc(
+         new source_database::SourceDocument());
+   error = source_database::get(id, pDoc);
+   if (error)
+      return error;
+
+   std::string path = pDoc->path();
+   path = deriveNotebookPath(path);
+
+   FilePath realPath = module_context::resolveAliasedPath(path);
+   std::string errMsg;
+   if (!okToGenerateFiles(realPath, &errMsg))
+   {
+      json::Object resultJson;
+      resultJson["succeeded"] = false;
+      resultJson["failure_message"] =  errMsg;
+      pResponse->setResult(resultJson);
+      return Success();
+   }
+
+   // Add the magic comment to the prefix
+   prefix = "<!-- Automatically generated by RStudio [" +
+              std::string(MAGIC_GUID) + "] -->\n" + prefix;
+
+   error = r::util::iconvstr(prefix, "UTF-8", pDoc->encoding(), true, &prefix);
+   if (error)
+      return error;
+   error = r::util::iconvstr(suffix, "UTF-8", pDoc->encoding(), true, &suffix);
+   if (error)
+      return error;
+
+   std::string contents;
+   contents.append(prefix);
+   contents.append("`r opts_chunk$set(tidy=FALSE, comment=NA, "
+                   "fig.path='" +std::string(FIGURE_DIR) + "/')`");
+   contents.append("\n");
+   contents.append("```{r}\n");
+   contents.append(pDoc->contents());
+   contents.append("\n```\n");
+   contents.append(suffix);
+
+   error = writeStringToFile(realPath, contents);
+   if (error)
+      return error;
+
+   // return success
+   json::Object resultJson;
+   resultJson["succeeded"] = true;
+   pResponse->setResult(resultJson);
    return Success();
 }
 
@@ -738,6 +886,24 @@ void handleMarkdownPreviewRequest(const http::Request& request,
          return;
       }
 
+      // remove generated files if this was a notebook
+      if (s_pCurrentPreview_->isNotebook())
+      {
+         error = s_pCurrentPreview_->targetFile().removeIfExists();
+         if (error)
+            LOG_ERROR(error);
+
+         error = s_pCurrentPreview_->knitrOutputFile()
+                                                .removeIfExists();
+         if (error)
+            LOG_ERROR(error);
+
+         error = s_pCurrentPreview_->targetDirectory()
+                           .complete(FIGURE_DIR).removeIfExists();
+         if (error)
+            LOG_ERROR(error);
+      }
+
       // modify outpout then write back to client
       modifyOutputForPreview(&previewHtml);
       pResponse->setDynamicHtml(previewHtml, request);
@@ -846,6 +1012,7 @@ Error initialize()
       (bind(registerRpcMethod, "terminate_preview_html", terminatePreviewHTML))
       (bind(registerRpcMethod, "get_html_capabilities", getHTMLCapabilities))
       (bind(registerRpcMethod, "get_rmarkdown_template", getRMarkdownTemplate))
+      (bind(registerRpcMethod, "create_notebook", createNotebook))
       (bind(registerUriHandler, kHTMLPreviewLocation, handlePreviewRequest))
    ;
    return initBlock.execute();

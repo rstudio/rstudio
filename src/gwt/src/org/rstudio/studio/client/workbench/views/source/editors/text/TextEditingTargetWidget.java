@@ -167,7 +167,10 @@ public class TextEditingTargetWidget
       
       sourceMenuButton_ = new ToolbarButton(sourceMenu, true);
       toolbar.addRightWidget(sourceMenuButton_);  
-      
+
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(commands_.compileNotebook().createToolbarButton());
+
       ToolbarPopupMenu chunksMenu = new ToolbarPopupMenu();
       chunksMenu.addItem(commands_.insertChunk().createMenuItem(false));
       chunksMenu.addSeparator();
@@ -263,6 +266,8 @@ public class TextEditingTargetWidget
       texToolbarButton_.setText(width < 520 ? "" : "Format");
       runButton_.setText(width < 480 ? "" : "Run");
       compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
+      srcOnSaveLabel_.setText(width < 450 ? "Source" : "Source on Save");
+      sourceButton_.setText(width < 400 ? "" : "Source");
      
    }
 

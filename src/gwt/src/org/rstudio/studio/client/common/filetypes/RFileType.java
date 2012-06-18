@@ -44,6 +44,12 @@ public class RFileType extends TextFileType
    }
 
    @Override
+   public boolean canCompileNotebook()
+   {
+      return true;
+   }
+
+   @Override
    public HashSet<AppCommand> getSupportedCommands(Commands commands)
    {
       HashSet<AppCommand> result = super.getSupportedCommands(commands);
