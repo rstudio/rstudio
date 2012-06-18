@@ -28,6 +28,10 @@ sudo apt-get -y install libbz2-dev
 sudo apt-get -y install zlib1g-dev
 sudo apt-get -y install libpam-dev
 
+# app armor dependencies no longer included in ubuntu >= 11.10
+sudo apt-get -y install libapparmor1 
+sudo apt-get -y install apparmor-utils
+
 # boost
 sudo apt-get -y install libboost-all-dev
 
@@ -53,6 +57,9 @@ then
    # libs are always available for desktop builds (required by QtWebKit 2.2)
    sudo apt-get -y install libgstreamer0.10-0
    sudo apt-get -y install libgstreamer-plugins-base0.10-0
+
+   # Ubuntu 12.04 doesn't include libjpeg62 (and it's required by Qt 4.8)
+   sudo apt-get -y install libjpeg62
 
    # install Qt 4.8 SDK (into a private /opt/RStudio-QtSDK directory so as to 
    # not conflict with any other installed versions of Qt on the system)
