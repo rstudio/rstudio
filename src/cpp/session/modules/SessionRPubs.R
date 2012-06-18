@@ -279,14 +279,14 @@ rpubsUpload <- function(title,
       url <- paste("https://api.rpubs.com", path, sep="")
       
       # upload package file
-      params <- list(file = fileUpload(filename = packageFile,
+      params <- list(file = RCurl::fileUpload(filename = packageFile,
                                        contentType = contentType))
       
       # use custom header and text gatherers
-      options <- curlOptions(url)
-      headerGatherer <- basicHeaderGatherer()
+      options <- RCurl::curlOptions(url)
+      headerGatherer <- RCurl::basicHeaderGatherer()
       options$headerfunction <- headerGatherer$update
-      textGatherer <- basicTextGatherer()
+      textGatherer <- RCurl::basicTextGatherer()
       options$writefunction <- textGatherer$update
       
       # add extra headers
@@ -295,7 +295,7 @@ rpubsUpload <- function(title,
       options$httpheader <- extraHeaders
       
       # post the form
-      postForm(paste("https://api.rpubs.com", path, sep=""),
+      RCurl::postForm(paste("https://api.rpubs.com", path, sep=""),
                            .params = params,
                            .opts = options,
                            useragent = "RStudio")
