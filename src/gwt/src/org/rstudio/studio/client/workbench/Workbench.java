@@ -120,6 +120,11 @@ public class Workbench implements BusyHandler,
    public void onWorkbenchLoaded(WorkbenchLoadedEvent event)
    {
       server_.initializeForMainWorkbench();
+
+      FileSystemItem defaultDialogDir =
+            session_.getSessionInfo().getActiveProjectDir();
+      if (defaultDialogDir != null)
+         workbenchContext_.setDefaultFileDialogDir(defaultDialogDir);
    }
    
    public void onBusy(BusyEvent event)

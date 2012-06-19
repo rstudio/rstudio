@@ -53,7 +53,10 @@ public class WorkbenchContext
    
    public FileSystemItem getDefaultFileDialogDir()
    {
-      return defaultFileDialogDir_;
+      if (defaultFileDialogDir_ != null)
+         return defaultFileDialogDir_;
+      else
+         return getCurrentWorkingDir();
    }
    
    public void setDefaultFileDialogDir(FileSystemItem dir)
