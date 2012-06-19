@@ -20,7 +20,7 @@ VERSION=`git rev-parse HEAD`
 TARGET_DIR=../../session/resources
 mkdir -p $TARGET_DIR
 echo "$VERSION" > ../highlight-version
-python tools/build.py r
+python tools/build.py r cpp
 
 TARGET_FILE=$TARGET_DIR/r_highlight.html
 
