@@ -710,7 +710,7 @@ private:
 
 bool requiresHighlighting(const std::string& htmlOutput)
 {
-   boost::regex hlRegex("<pre><code class=\"r\"");
+   boost::regex hlRegex("<pre><code class=\"(r|cpp)\"");
    return boost::regex_search(htmlOutput, hlRegex);
 }
 
