@@ -25,9 +25,9 @@ import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
+import com.google.gwt.i18n.client.Messages;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
@@ -97,10 +97,10 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
    * Constants for labeling the cell tree. Provides just English messages by default.
    */
   @DefaultLocale("en_US")
-  public interface CellTreeMessages extends Constants {
-    @DefaultStringValue("Show more")
+  public interface CellTreeMessages extends Messages {
+    @DefaultMessage("Show more")
     String showMore();
-    @DefaultStringValue("Empty")
+    @DefaultMessage("Empty")
     String emptyTree();
   }
 
