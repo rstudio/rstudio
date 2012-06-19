@@ -34,17 +34,26 @@
 #include <core/PerformanceTimer.hpp>
 #include <core/text/TemplateFilter.hpp>
 #include <core/system/Process.hpp>
+#include <core/StringUtils.hpp>
 
 #include <core/markdown/Markdown.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
 #include <r/RUtil.hpp>
+#include <r/ROptions.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 
- #include "SessionRPubs.hpp"
+#include "SessionRPubs.hpp"
+
+
+// TODO: apply markdown package options to internal processing
+// TODO: remember html preview window size on a per-project basis
+// TODO: consider retaining #foo in url (for slides)
+// TODO: consider some type of in-file expression of rendering
+// TOOD: documentation
 
 #define kHTMLPreview "html_preview"
 #define kHTMLPreviewLocation "/" kHTMLPreview "/"
@@ -76,6 +85,7 @@ private:
    HTMLPreview(const FilePath& targetFile)
       : targetFile_(targetFile),
         isMarkdown_(false),
+        isInternalMarkdown_(false),
         isNotebook_(false),
         requiresKnit_(false),
         isRunning_(false),
@@ -94,29 +104,17 @@ private:
       isNotebook_ = isNotebook;
       requiresKnit_ = requiresKnit;
 
-      // read the file using the specified encoding
-      std::string fileContents;
-      Error error = module_context::readAndDecodeFile(targetFile_,
-                                                      encoding,
-                                                      true,
-                                                      &fileContents);
-      if (error)
-      {
-         terminateWithError(error);
-         return;
-      }
-
       // determine whether we need to knit the file
       if (requiresKnit)
       {
-         performKnit(encoding, isMarkdown);
+         performKnit(encoding);
       }
 
       // otherwise we can just either copy or generate the html inline
       // (for markdown) and return with success
       else
       {
-         terminateWithContent(fileContents, isMarkdown);
+         terminateWithContent(targetFile_, encoding);
       }
    }
 
@@ -134,6 +132,8 @@ public:
    void terminate() { terminationRequested_ = true; }
 
    bool isMarkdown() { return isMarkdown_; }
+
+   bool isInternalMarkdown() { return isInternalMarkdown_; }
 
    bool isNotebook() { return isNotebook_; }
 
@@ -178,7 +178,7 @@ public:
 
 private:
 
-   void performKnit(const std::string& encoding, bool isMarkdown)
+   void performKnit(const std::string& encoding)
    {
       // set running flag
       isRunning_ = true;
@@ -186,7 +186,7 @@ private:
       // predict the name of the output file -- if we can't do this then
       // we instrument our call to knitr to return it in a temp file
       FilePath outputFileTempFile;
-      if (isMarkdown && targetIsRMarkdown())
+      if (isMarkdown() && targetIsRMarkdown())
          knitrOutputFile_ = outputFileForTarget(".md");
       else if (targetFile_.extensionLowerCase() == ".rhtml")
          knitrOutputFile_= outputFileForTarget(".html");
@@ -246,7 +246,7 @@ private:
                                 HTMLPreview::shared_from_this(), _2);
       cb.onExit =  boost::bind(&HTMLPreview::onKnitCompleted,
                                 HTMLPreview::shared_from_this(),
-                                _1, outputFileTempFile, encoding, isMarkdown);
+                                _1, outputFileTempFile, encoding);
 
       // execute knitr
       module_context::processSupervisor().runProgram(rProgramPath.absolutePath(),
@@ -273,8 +273,7 @@ private:
 
    void onKnitCompleted(int exitStatus,
                         const FilePath& outputPathTempFile,
-                        const std::string& encoding,
-                        bool isMarkdown)
+                        const std::string& encoding)
    {
       if (exitStatus == EXIT_SUCCESS)
       {
@@ -293,16 +292,8 @@ private:
             knitrOutputFile_ = targetFile_.parent().complete(outputFile);
          }
 
-         // read the file using the specified encoding
-         std::string output;
-         Error error = module_context::readAndDecodeFile(knitrOutputFile_,
-                                                         encoding,
-                                                         true,
-                                                         &output);
-         if (error)
-            terminateWithError(error);
-         else
-            terminateWithContent(output, isMarkdown);
+         // terminate with content
+         terminateWithContent(knitrOutputFile_, encoding);
       }
       else
       {
@@ -316,34 +307,95 @@ private:
       return targetFile_.parent().childPath(targetFile_.stem() + ext);
    }
 
-   void terminateWithContent(const std::string& fileContents, bool isMarkdown)
+   void terminateWithContent(const FilePath& filePath,
+                             const std::string& encoding)
    {
-      // determine the preview HTML
-      std::string previewHTML;
-      if (isMarkdown)
+      // lookup the custom renderer function and calculate
+      // whether we are going to use it
+      SEXP renderMarkdownSEXP = r::options::getOption(
+                                       "rstudio.renderMarkdown");
+      r::sexp::Protect rProtect(renderMarkdownSEXP);
+      bool usingCustomMarkdownRenderer =
+                        isMarkdown() && !isNotebook() &&
+                        !r::sexp::isNull(renderMarkdownSEXP);
+
+      // call custom renderer if necessary
+      if (usingCustomMarkdownRenderer)
       {
-         Error error = markdown::markdownToHTML(fileContents,
-                                                markdown::Extensions(),
-                                                markdown::HTMLOptions(),
-                                                &previewHTML);
+         // fulfill semantics of calling the custom function
+         // from the directory of the input file
+         RestoreCurrentPathScope restorePathScope(
+                           module_context::safeCurrentPath());
+         Error error = filePath.parent().makeCurrentPath();
          if (error)
          {
             terminateWithError(error);
             return;
          }
+
+         // call the function
+         r::exec::RFunction renderMarkdownFunc(renderMarkdownSEXP);
+         renderMarkdownFunc.addParam(
+            string_utils::utf8ToSystem(filePath.filename()));
+         renderMarkdownFunc.addParam(
+            string_utils::utf8ToSystem(htmlPreviewFile().filename()));
+         error = renderMarkdownFunc.call();
+         if (error)
+         {
+            terminateWithError(error);
+            return;
+         }
+
+         // terminate with the target file
+         terminateWithSuccess(htmlPreviewFile());
       }
       else
       {
-         previewHTML = fileContents;
-      }
+         // read file contents
+         std::string content;
+         Error error = module_context::readAndDecodeFile(filePath,
+                                                         encoding,
+                                                         true,
+                                                         &content);
+         if (error)
+         {
+            terminateWithError(error);
+            return;
+         }
 
-      // create an output file and write to it
-      FilePath outputFile = createOutputFile();
-      Error error = core::writeStringToFile(outputFile, previewHTML);
-      if (error)
-         terminateWithError(error);
-      else
-         terminateWithSuccess(outputFile);
+         // if this is markdown then convert it
+         if (isMarkdown())
+         {
+            // set flag indicating that we used the internal
+            // markdown renderer (so we know to do mathjax,
+            // highlighting, base64 encoding, etc.)
+            isInternalMarkdown_ = true;
+
+            // run markdownToHTML
+            std::string htmlContent;
+            Error error = markdown::markdownToHTML(
+                                            content,
+                                            markdown::Extensions(),
+                                            markdown::HTMLOptions(),
+                                            &htmlContent);
+            if (error)
+            {
+               terminateWithError(error);
+               return;
+            }
+
+            // substitute html version
+            content = htmlContent;
+         }
+
+         // create an output file and write to it
+         FilePath outputFile = createOutputFile();
+         error = core::writeStringToFile(outputFile, content);
+         if (error)
+            terminateWithError(error);
+         else
+            terminateWithSuccess(outputFile);
+      }
    }
 
 
@@ -423,6 +475,7 @@ private:
 private:
    FilePath targetFile_;
    bool isMarkdown_;
+   bool isInternalMarkdown_;
    bool isNotebook_;
    bool requiresKnit_;
 
@@ -827,7 +880,8 @@ void setVarFromHtmlResourceFile(const std::string& name,
    setVarFromHtmlResourceFile(name, name + ".html", pVars);
 }
 
-void handleMarkdownPreviewRequest(const http::Request& request,
+void handleInternalMarkdownPreviewRequest(
+                                  const http::Request& request,
                                   http::Response* pResponse)
 {
    try
@@ -939,11 +993,21 @@ void handlePreviewRequest(const http::Request& request,
    if (path.empty())
    {
       if (s_pCurrentPreview_->isMarkdown())
-         handleMarkdownPreviewRequest(request, pResponse);
+      {
+         if (s_pCurrentPreview_->isInternalMarkdown())
+            handleInternalMarkdownPreviewRequest(request, pResponse);
+         else
+            pResponse->setFile(s_pCurrentPreview_->htmlPreviewFile(),
+                               request);
+      }
       else if (s_pCurrentPreview_->requiresKnit())
+      {
          pResponse->setFile(s_pCurrentPreview_->knitrOutputFile(), request);
+      }
       else
+      {
          pResponse->setFile(s_pCurrentPreview_->targetFile(), request);
+      }
    }
 
    // request for mathjax file
