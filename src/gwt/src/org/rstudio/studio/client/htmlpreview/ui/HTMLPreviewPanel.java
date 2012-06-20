@@ -253,7 +253,7 @@ public class HTMLPreviewPanel extends ResizeComposite
             {
                if (getIFrame() != null && getWindow() != null)
                {
-                  if (url.equals(getWindow().getLocationHref()))
+                  if (reloadCurrentPage(url))
                   {
                      getWindow().reload();
                   }
@@ -275,6 +275,21 @@ public class HTMLPreviewPanel extends ResizeComposite
 
          if (navigateCommand.execute())
             Scheduler.get().scheduleFixedDelay(navigateCommand, 50);      
+      }
+      
+      private boolean reloadCurrentPage(String newUrl)
+      {
+         // make sure there is an existing url to compare to
+         String existingUrl = getWindow().getLocationHref();
+         if (existingUrl == null)
+            return false;
+         
+         // strip trailing # before comparing
+         int hashPos = existingUrl.lastIndexOf('#');
+         if (hashPos != -1)
+            existingUrl = existingUrl.substring(0, hashPos);
+         
+         return newUrl.equals(existingUrl);
       }
       
       private IFrameElementEx getIFrame()
