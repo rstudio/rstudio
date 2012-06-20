@@ -245,20 +245,6 @@ class DOMImplStandardBase extends DOMImplStandard {
   }-*/;
 
   @Override
-  public native boolean isOrHasChild(Node parent, Node child) /*-{
-    while (child) {
-      if (parent == child) {
-        return true;
-      }
-      child = child.parentNode;
-      if (child && (child.nodeType != 1)) {
-        child = null;
-      }
-    }
-    return false;
-  }-*/;
-
-  @Override
   public void setScrollLeft(Document doc, int left) {
     // Safari always applies document scrolling to the body element, even in
     // strict mode.

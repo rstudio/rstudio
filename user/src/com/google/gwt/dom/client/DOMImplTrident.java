@@ -27,6 +27,33 @@ abstract class DOMImplTrident extends DOMImpl {
    */
   private static EventTarget currentEventTarget;
 
+  static native boolean isOrHasChildImpl(Node parent, Node child) /*-{
+    // Element.contains() doesn't work with non-Element nodes on IE, so we have
+    // to deal explicitly with non-Element nodes here.
+
+    // Only Element (1) and Document (9) can contain other nodes.
+    if ((parent.nodeType != 1) && (parent.nodeType != 9)) {
+      return parent == child;
+    }
+
+    // If the child is not an Element, check its parent instead.
+    if (child.nodeType != 1) {
+      child = child.parentNode;
+      if (!child) {
+        return false;
+      }
+    }
+
+    if (parent.nodeType == 9) {
+      // In IE8 and IE9 (at least), document.contains does not exist, so use body.contains instead
+      return (parent === child) || (parent.body && parent.body.contains(child));
+    } else {
+      // An extra equality check is required due to the fact that
+      // elem.contains(elem) is false if elem is not attached to the DOM.
+      return (parent === child) || parent.contains(child);
+    }
+  }-*/;
+
   @Override
   public native ButtonElement createButtonElement(Document doc, String type) /*-{
     return doc.createElement("<BUTTON type='" + type + "'></BUTTON>");
@@ -253,27 +280,9 @@ abstract class DOMImplTrident extends DOMImpl {
   }-*/;
 
   @Override
-  public native boolean isOrHasChild(Node parent, Node child) /*-{
-    // Element.contains() doesn't work with non-Element nodes on IE, so we have
-    // to deal explicitly with non-Element nodes here.
-
-    // Only Element (1) and Document (9) can contain other nodes.
-    if ((parent.nodeType != 1) && (parent.nodeType != 9)) {
-      return parent == child;
-    }
-
-    // If the child is not an Element, check its parent instead.
-    if (child.nodeType != 1) {
-      child = child.parentNode;
-      if (!child) {
-        return false;
-      }
-    }
-
-    // An extra equality check is required due to the fact that
-    // elem.contains(elem) is false if elem is not attached to the DOM.
-    return (parent === child) || parent.contains(child);
-  }-*/;
+  public boolean isOrHasChild(Node parent, Node child) {
+    return isOrHasChildImpl(parent, child);
+  }
 
   @Override
   public native void selectAdd(SelectElement select, OptionElement option,

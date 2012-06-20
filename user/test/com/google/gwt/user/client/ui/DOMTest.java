@@ -17,17 +17,18 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Text;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
@@ -83,6 +84,7 @@ public class DOMTest extends GWTTestCase {
    */
   public void testEventGetCurrentEventOnException() {
     Button button = new Button("test", new ClickHandler() {
+      @Override
       public void onClick(ClickEvent event) {
         // Intentionally trigger an error
         throw new IllegalArgumentException();
@@ -93,6 +95,7 @@ public class DOMTest extends GWTTestCase {
     // Verify the exception is captured
     final List<String> ret = new ArrayList<String>();
     GWT.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+      @Override
       public void onUncaughtException(Throwable e) {
         Event event = DOM.eventGetCurrentEvent();
         if (event == null) {
@@ -141,11 +144,12 @@ public class DOMTest extends GWTTestCase {
     DOM.setStyleAttribute(elem, "left", (left - doc.getBodyOffsetTop()) + "px");
 
     delayTestFinish(1000);
-    DeferredCommand.addCommand(new Command() {
+    Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+        @Override
       public void execute() {
-        assertEquals(top + margin, DOM.getAbsoluteTop(elem));
-        assertEquals(left + margin, DOM.getAbsoluteLeft(elem));
-        finishTest();
+          assertEquals(top + margin, DOM.getAbsoluteTop(elem));
+          assertEquals(left + margin, DOM.getAbsoluteLeft(elem));
+          finishTest();
       }
     });
   }
@@ -269,20 +273,45 @@ public class DOMTest extends GWTTestCase {
    * across browsers.
    */
   public void testIsOrHasChild() {
+    Document doc = Document.get();
     Element div = DOM.createDiv();
     Element childDiv = DOM.createDiv();
+    Text text = Document.get().createTextNode("text");
 
-    assertFalse(DOM.isOrHasChild(div, childDiv));
-    assertTrue(DOM.isOrHasChild(div, div));
+    // unattached, not related
+    assertFalse(div.isOrHasChild(childDiv));
+    assertFalse(div.isOrHasChild(text));
+    assertTrue(div.isOrHasChild(div));
+    assertTrue(text.isOrHasChild(text));
+    assertFalse(doc.isOrHasChild(div));
+    assertFalse(doc.isOrHasChild(text));
+    assertFalse(div.isOrHasChild(doc));
+    assertFalse(text.isOrHasChild(doc));
 
-    DOM.appendChild(div, childDiv);
-    assertTrue(DOM.isOrHasChild(div, childDiv));
-    assertFalse(DOM.isOrHasChild(childDiv, div));
+    // unattached, related
+    div.appendChild(childDiv);
+    childDiv.appendChild(text);
+    assertTrue(div.isOrHasChild(childDiv));
+    assertTrue(childDiv.isOrHasChild(text));
+    assertFalse(childDiv.isOrHasChild(div));
+    assertFalse(text.isOrHasChild(childDiv));
+    assertFalse(doc.isOrHasChild(div));
+    assertFalse(doc.isOrHasChild(text));
+    assertFalse(div.isOrHasChild(doc));
+    assertFalse(text.isOrHasChild(doc));
 
+    // attached, related
     DOM.appendChild(RootPanel.getBodyElement(), div);
-    assertTrue(DOM.isOrHasChild(div, childDiv));
-    assertTrue(DOM.isOrHasChild(div, div));
-    assertFalse(DOM.isOrHasChild(childDiv, div));
+    assertTrue(div.isOrHasChild(childDiv));
+    assertTrue(childDiv.isOrHasChild(text));
+    assertTrue(div.isOrHasChild(div));
+    assertTrue(text.isOrHasChild(text));
+    assertFalse(childDiv.isOrHasChild(div));
+    assertFalse(text.isOrHasChild(childDiv));
+    assertTrue(doc.isOrHasChild(div));
+    assertTrue(doc.isOrHasChild(text));
+    assertFalse(div.isOrHasChild(Document.get()));
+    assertFalse(text.isOrHasChild(Document.get()));
   }
 
   /**

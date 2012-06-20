@@ -68,6 +68,12 @@ class DOMImplIE9 extends DOMImplStandardBase {
   }-*/;
 
   @Override
+  public boolean isOrHasChild(Node parent, Node child) {
+    // IE9 still behaves like IE6-8 for this method
+    return DOMImplTrident.isOrHasChildImpl(parent, child);
+  }
+
+  @Override
   public native void selectRemoveOption(SelectElement select, int index) /*-{
     try {
       // IE9 throws if elem at index is an optgroup
