@@ -39,6 +39,7 @@ public class PaneConfig extends JavaScriptObject
       JsArrayString tabSet1 = createArray().cast();
       tabSet1.push("Workspace");
       tabSet1.push("History");
+      tabSet1.push("Build");
       tabSet1.push("VCS");
 
       JsArrayString tabSet2 = createArray().cast();
@@ -58,7 +59,7 @@ public class PaneConfig extends JavaScriptObject
    public static String[] getAllTabs()
    {
       return new String[] {"Workspace", "History", "Files", "Plots",
-                           "Packages", "Help", "VCS"};
+                           "Packages", "Help", "VCS", "Build"};
    }
 
    protected PaneConfig()
@@ -102,19 +103,32 @@ public class PaneConfig extends JavaScriptObject
       if (ts1.length() == 0 || ts2.length() == 0)
          return false;
 
-      if (!sameElements(concat(ts1, ts2), new String[] {"Workspace", "History", "Files", "Plots", "Packages", "Help", "VCS"}))
+      if (!sameElements(concat(ts1, ts2), new String[] {"Workspace", "History", "Files", "Plots", "Packages", "Help", "VCS", "Build"}))
       {
-         if (!sameElements(concat(ts1, ts2), new String[] {"Workspace", "History", "Files", "Plots", "Packages", "Help"}))
-            return false;
+         if (!sameElements(concat(ts1, ts2), new String[] {"Workspace", "History", "Files", "Plots", "Packages", "Help", "VCS"}))
+         {
+            if (!sameElements(concat(ts1, ts2), new String[] {"Workspace", "History", "Files", "Plots", "Packages", "Help"}))
+               return false;
 
-         // It's only that the VCS tab is missing. Add it to tabset 1.
-         ts1.push("VCS");
+            // The VCS tab is missing. Add it to tabset 1.
+            ts1.push("VCS");
+         }
+         
+         // The Build tab is missing. Add it to tabset 1.
+         ts1.push("Build");
       }
 
-      // Can't have a tabset that only contains VCS since it will be hidden when
-      // outside of a project context (or in a non-VCS project)
+      // Can't have a tabset that only contains VCS and/or Build since one
+      // or both can be hidden
       String[] justVCS = {"VCS"};
       if (sameElements(ts1, justVCS) || sameElements(ts2, justVCS))
+         return false;
+      String[] justBuild = {"Build"};
+      if (sameElements(ts1, justBuild) || sameElements(ts2, justBuild))
+         return false;
+      String[] justVcsAndBuild = {"VCS", "Build"};
+      if (sameElements(ts1, justVcsAndBuild) || 
+                       sameElements(ts2, justVcsAndBuild))
          return false;
 
       return true;
@@ -180,10 +194,26 @@ public class PaneConfig extends JavaScriptObject
          return false;
       if (tabs.size() == 1 && "VCS".equals(tabs.get(0)))
          return false;
+      if (tabs.size() == 1 && "Build".equals(tabs.get(0)))
+         return false;
+      if (isBuildAndVcs(tabs))
+         return false;
       if (tabs.size() == getAllTabs().length)
          return false;
       if (tabs.size() == getAllTabs().length - 1 && !tabs.contains("VCS"))
          return false;
+      if (tabs.size() == getAllTabs().length - 1 && !tabs.contains("Build"))
+         return false;
+      if (tabs.size() == getAllTabs().length - 2 && (!tabs.contains("Build") ||
+                                                     !tabs.contains("VCS")))
+         return false;
       return true;
+   }
+   
+   private static boolean isBuildAndVcs(ArrayList<String> tabs)
+   {
+      return tabs.size() == 2 &&
+             (tabs.get(0).equals("Build") && tabs.get(1).equals("VCS") ||
+              tabs.get(0).equals("VCS") && tabs.get(1).equals("Build"));
    }
 }

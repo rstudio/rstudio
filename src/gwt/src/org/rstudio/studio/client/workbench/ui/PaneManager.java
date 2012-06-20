@@ -56,7 +56,7 @@ import java.util.HashMap;
 public class PaneManager
 {
    public enum Tab {
-      Workspace, History, Files, Plots, Packages, Help, VCS
+      Workspace, History, Files, Plots, Packages, Help, VCS, Build
    }
 
    class SelectedTabStateValue extends IntStateValue
@@ -100,6 +100,7 @@ public class PaneManager
                       @Named("Packages") final WorkbenchTab packagesTab,
                       @Named("Help") final WorkbenchTab helpTab,
                       @Named("VCS") final WorkbenchTab vcsTab,
+                      @Named("Build") final WorkbenchTab buildTab,
                       @Named("Compile PDF") final WorkbenchTab compilePdfTab,
                       final FindOutputTab findOutputTab)
    {
@@ -116,6 +117,7 @@ public class PaneManager
       packagesTab_ = packagesTab;
       helpTab_ = helpTab;
       vcsTab_ = vcsTab;
+      buildTab_ = buildTab;
       compilePdfTab_ = compilePdfTab;
       findOutputTab_ = findOutputTab;
 
@@ -237,6 +239,8 @@ public class PaneManager
             return helpTab_;
          case VCS:
             return vcsTab_;
+         case Build:
+            return buildTab_;
       }
       throw new IllegalArgumentException("Unknown tab");
    }
@@ -245,7 +249,7 @@ public class PaneManager
    {
       return new WorkbenchTab[] { workspaceTab_, historyTab_, filesTab_,
                                   plotsTab_, packagesTab_, helpTab_,
-                                  vcsTab_ };
+                                  vcsTab_, buildTab_};
    }
 
    public void activateTab(Tab tab)
@@ -391,6 +395,8 @@ public class PaneManager
             return "Help";
          case VCS:
             return getTab(tab).getTitle();
+         case Build:
+            return "Build";
       }
       return "??";
    }
@@ -410,6 +416,7 @@ public class PaneManager
    private final WorkbenchTab packagesTab_;
    private final WorkbenchTab helpTab_;
    private final WorkbenchTab vcsTab_;
+   private final WorkbenchTab buildTab_;
    private MainSplitPanel panel_;
    private LogicalWindow sourceLogicalWindow_;
    private final HashMap<Tab, WorkbenchTabPanel> tabToPanel_ =

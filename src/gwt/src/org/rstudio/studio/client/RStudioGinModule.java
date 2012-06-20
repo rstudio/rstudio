@@ -76,6 +76,9 @@ import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
 import org.rstudio.studio.client.workbench.ui.WorkbenchScreen;
 import org.rstudio.studio.client.workbench.ui.WorkbenchTab;
+import org.rstudio.studio.client.workbench.views.build.Build;
+import org.rstudio.studio.client.workbench.views.build.BuildPane;
+import org.rstudio.studio.client.workbench.views.build.BuildTab;
 import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.choosefile.model.ChooseFileServerOperations;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
@@ -200,6 +203,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Edit.Display.class).to(EditView.class);
       bind(GitPresenter.Display.class).to(GitPane.class);
       bind(SVNPresenter.Display.class).to(SVNPane.class);
+      bind(Build.Display.class).to(BuildPane.class);
       bind(Ignore.Display.class).to(IgnoreDialog.class);
       bind(CompilePdfOutputPresenter.Display.class).to(CompilePdfOutputPane.class);
       bind(FindOutputPresenter.Display.class).to(FindOutputPane.class);
@@ -211,6 +215,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("Packages", PackagesTab.class);
       bindTab("Help", HelpTab.class);
       bindTab("VCS", VCSTab.class);
+      bindTab("Build", BuildTab.class);
       bindTab("Compile PDF", CompilePdfOutputTab.class);
       bindTab("Find", FindOutputTab.class);
 
