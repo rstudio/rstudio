@@ -48,14 +48,6 @@
 
 #include "SessionRPubs.hpp"
 
-
-// TODO: apply markdown package options to internal processing (including css)
-// TODO: remember html preview window size on a per-project basis
-// TODO: consider retaining #foo in url (for slides)
-// TODO: set focus to iframe in preview window
-// TODO: consider some type of in-file expression of rendering
-// TOOD: documentation
-
 #define kHTMLPreview "html_preview"
 #define kHTMLPreviewLocation "/" kHTMLPreview "/"
 
