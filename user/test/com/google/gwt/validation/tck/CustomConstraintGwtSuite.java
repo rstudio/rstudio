@@ -17,6 +17,7 @@ package com.google.gwt.validation.tck;
 
 import junit.framework.Test;
 
+import org.hibernate.jsr303.tck.tests.constraints.customconstraint.CustomConstraintValidatorCompileTest;
 import org.hibernate.jsr303.tck.tests.constraints.customconstraint.CustomConstraintValidatorGwtTest;
 import org.hibernate.jsr303.tck.util.TckTestSuiteWrapper;
 
@@ -28,6 +29,7 @@ public class CustomConstraintGwtSuite {
     TckTestSuiteWrapper suite = new TckTestSuiteWrapper(
         "TCK for GWT Validation, constraints customconstraint package");
     suite.addTestSuite(CustomConstraintValidatorGwtTest.class);
+    suite.addTestSuite(CustomConstraintValidatorCompileTest.class);
     return suite;
   }
 }
