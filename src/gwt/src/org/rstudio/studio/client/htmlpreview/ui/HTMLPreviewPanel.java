@@ -261,6 +261,9 @@ public class HTMLPreviewPanel extends ResizeComposite
                   {
                      getWindow().replaceLocationHref(url);
                   }
+                  
+                  getWindow().focus();
+                  
                   return false;
                }
                else
