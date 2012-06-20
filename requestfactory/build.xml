@@ -42,7 +42,7 @@
       </java>
     </sequential>
   </macrodef>
- 
+
   <!-- Targets for individual jars -->
   <target name="requestfactory-apt" description="Build RequestFactory apt jar">
     <requestfactory-jar target="apt"/>
@@ -117,6 +117,7 @@
         <fileset dir="${gwt.build.lib}" includes="requestfactory-test.jar" />
       </classpath>
       <arg path="${gwt.build.lib}/requestfactory-test-validated.jar" />
+      <arg value="com.google.web.bindery.requestfactory.gwt.client.RequestFactoryChainedContextTest.Factory" />
       <arg value="com.google.web.bindery.requestfactory.gwt.client.RequestFactoryPolymorphicTest.Factory" />
       <arg value="com.google.web.bindery.requestfactory.shared.BoxesAndPrimitivesTest.Factory" />
       <arg value="com.google.web.bindery.requestfactory.shared.ComplexKeysTest.Factory" />

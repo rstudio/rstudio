@@ -42,6 +42,7 @@
         <pathelement location="${gwt.tools.lib}/w3c/flute/flute-1.3-gg2.jar" />
         <pathelement location="${gwt.tools.lib}/hibernate/validator/hibernate-validator-4.1.0.Final.jar" />
         <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar" />
+        <pathelement location="${gwt.tools.lib}/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar" />
         <pathelement location="${gwt.build.lib}/gwt-dev-${build.host.platform}.jar" />
         <pathelement location="${alldeps.jar}" />
       </classpath>
