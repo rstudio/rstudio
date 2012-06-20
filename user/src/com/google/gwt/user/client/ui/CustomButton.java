@@ -16,7 +16,7 @@
 
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.aria.client.CommonAttributeTypes.BooleanAndUndefined;
+import com.google.gwt.aria.client.PressedValue;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
@@ -999,7 +999,7 @@ public abstract class CustomButton extends ButtonBase {
 
   private void setAriaPressed(Face newFace) {
     boolean pressed = (newFace.getFaceID() & DOWN_ATTRIBUTE) == 1;
-    Roles.getButtonRole().setAriaPressedState(getElement(), BooleanAndUndefined.of(pressed));
+    Roles.getButtonRole().setAriaPressedState(getElement(), PressedValue.of(pressed));
   }
 
   /**

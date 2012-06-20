@@ -15,9 +15,10 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.aria.client.CommonAttributeTypes.BooleanAndUndefined;
 import com.google.gwt.aria.client.CommonAttributeTypes.IdReference;
+import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.aria.client.SelectedValue;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
@@ -1415,19 +1416,14 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
       Roles.getTreeitemRole().removeAriaExpandedState(curSelectionContentElem);
 
     } else {
-      if (curSelection.getState()) {
-        Roles.getTreeitemRole().setAriaExpandedState(curSelectionContentElem,
-            BooleanAndUndefined.of(true));
-      } else {
-        Roles.getTreeitemRole().setAriaExpandedState(curSelectionContentElem,
-            BooleanAndUndefined.of(false));
-      }
+      Roles.getTreeitemRole().setAriaExpandedState(curSelectionContentElem,
+            ExpandedValue.of(curSelection.getState()));
     }
 
     // Make sure that 'aria-selected' is true.
 
     Roles.getTreeitemRole().setAriaSelectedState(curSelectionContentElem,
-        BooleanAndUndefined.of(true));
+        SelectedValue.of(true));
 
     // Update the 'aria-activedescendant' state for the focusable element to
     // match the id of the currently selected item
