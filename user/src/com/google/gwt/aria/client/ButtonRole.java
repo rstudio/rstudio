@@ -47,7 +47,21 @@ public interface ButtonRole extends CommandRole {
 
   void removeAriaPressedState(Element element);
 
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaExpandedState(Element element, ExpandedToken value)} instead
+   */
+  @Deprecated
   void setAriaExpandedState(Element element, BooleanAndUndefined value);
 
+  void setAriaExpandedState(Element element, ExpandedValue value);
+
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaPressedState(Element element, PressedToken value)} instead
+   */
+  @Deprecated
   void setAriaPressedState(Element element, BooleanAndUndefined value);
+
+  void setAriaPressedState(Element element, PressedValue value);
 }

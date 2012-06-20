@@ -43,5 +43,12 @@ public interface SliderRole extends InputRole, RangeRole {
 
   void removeAriaOrientationProperty(Element element);
 
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaOrientationProperty(Element element, OrientationValue value)} instead
+   */
+  @Deprecated
   void setAriaOrientationProperty(Element element, OrientationToken value);
+
+  void setAriaOrientationProperty(Element element, OrientationValue value);
 }

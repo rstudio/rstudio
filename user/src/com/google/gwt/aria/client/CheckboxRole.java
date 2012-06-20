@@ -43,5 +43,12 @@ public interface CheckboxRole extends InputRole {
 
   void removeAriaCheckedState(Element element);
 
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaCheckedState(Element element, CheckedToken value)} instead
+   */
+  @Deprecated
   void setAriaCheckedState(Element element, BooleanAndUndefined value);
+
+  void setAriaCheckedState(Element element, CheckedValue value);
 }

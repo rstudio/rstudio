@@ -48,7 +48,21 @@ public interface SeparatorRole extends StructureRole {
 
   void removeAriaOrientationProperty(Element element);
 
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaExpandedState(Element element, ExpandedToken value)} instead
+   */
+  @Deprecated
   void setAriaExpandedState(Element element, BooleanAndUndefined value);
 
+  void setAriaExpandedState(Element element, ExpandedValue value);
+
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaOrientationProperty(Element element, OrientationValue value)} instead
+   */
+  @Deprecated
   void setAriaOrientationProperty(Element element, OrientationToken value);
+
+  void setAriaOrientationProperty(Element element, OrientationValue value);
 }

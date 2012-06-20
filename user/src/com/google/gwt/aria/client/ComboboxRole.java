@@ -47,7 +47,14 @@ public interface ComboboxRole extends SelectRole {
 
   void removeAriaRequiredProperty(Element element);
 
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaAutocompleteProperty(Element element, AutocompleteValue value)} instead
+   */
+  @Deprecated
   void setAriaAutocompleteProperty(Element element, AutocompleteToken value);
+
+  void setAriaAutocompleteProperty(Element element, AutocompleteValue value);
 
   void setAriaRequiredProperty(Element element, boolean value);
 }

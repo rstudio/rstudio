@@ -278,8 +278,18 @@ class SpinbuttonRoleImpl extends Role implements SpinbuttonRole {
     State.DISABLED.set(element, value);
   }
 
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaDropeffectProperty(Element element, DropeffectValue... value)} instead
+   */
+  @Deprecated
   @Override
   public void setAriaDropeffectProperty(Element element, DropeffectTokenList value) {
+    Property.DROPEFFECT.set(element, value);
+  }
+
+  @Override
+  public void setAriaDropeffectProperty(Element element, DropeffectValue... value) {
     Property.DROPEFFECT.set(element, value);
   }
 
@@ -288,8 +298,19 @@ class SpinbuttonRoleImpl extends Role implements SpinbuttonRole {
     Property.FLOWTO.set(element, value);
   }
 
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaGrabbedState(Element element, GrabbedToken value)} instead
+   */
+  @Deprecated
   @Override
   public void setAriaGrabbedState(Element element, BooleanAndUndefined value) {
+    // "DO NOT USE!!!";
+    State.GRABBED.set(element, value);
+  }
+
+  @Override
+  public void setAriaGrabbedState(Element element, GrabbedValue value) {
     State.GRABBED.set(element, value);
   }
 
@@ -303,8 +324,18 @@ class SpinbuttonRoleImpl extends Role implements SpinbuttonRole {
     State.HIDDEN.set(element, value);
   }
 
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaInvalidState(Element element, InvalidValue value)} instead
+   */
+  @Deprecated
   @Override
   public void setAriaInvalidState(Element element, InvalidToken value) {
+    State.INVALID.set(element, value);
+  }
+
+  @Override
+  public void setAriaInvalidState(Element element, InvalidValue value) {
     State.INVALID.set(element, value);
   }
 
@@ -318,8 +349,18 @@ class SpinbuttonRoleImpl extends Role implements SpinbuttonRole {
     Property.LABEL.set(element, value);
   }
 
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaLiveProperty(Element element, LiveValue value)} instead
+   */
+  @Deprecated
   @Override
   public void setAriaLiveProperty(Element element, LiveToken value) {
+    Property.LIVE.set(element, value);
+  }
+
+  @Override
+  public void setAriaLiveProperty(Element element, LiveValue value) {
     Property.LIVE.set(element, value);
   }
 
@@ -328,8 +369,18 @@ class SpinbuttonRoleImpl extends Role implements SpinbuttonRole {
     Property.OWNS.set(element, value);
   }
 
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaRelevantProperty(Element element, RelevantValue... value)} instead
+   */
+  @Deprecated
   @Override
   public void setAriaRelevantProperty(Element element, RelevantTokenList value) {
+    Property.RELEVANT.set(element, value);
+  }
+
+  @Override
+  public void setAriaRelevantProperty(Element element, RelevantValue... value) {
     Property.RELEVANT.set(element, value);
   }
 

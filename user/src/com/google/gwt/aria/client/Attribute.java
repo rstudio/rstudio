@@ -92,7 +92,8 @@ public class Attribute<T> {
    * @param element HTML element
    * @param value Attribute value
    */
-  public void set(Element element, T value) {
+  // TODO(atincheva): make value of type T after fixing the client code
+  public void set(Element element, Object... value) {
     assert element != null : "Element cannot be null.";
     element.setAttribute(name, getAriaValue(value));
   }
@@ -112,11 +113,27 @@ public class Attribute<T> {
     element.setAttribute(name, defaultValue);
   }
 
-  private String getAriaValue(T value) {
-    if (value instanceof AriaAttributeType) {
-      return ((AriaAttributeType) value).getAriaValue();
+  // TODO(atincheva): make value of type T after fixing the client code
+  private String getAriaValue(Object... value) {
+    assert value.length > 0;
+    if (value[0] instanceof AriaAttributeType) {
+      if (value.length == 1) {
+        return ((AriaAttributeType) value[0]).getAriaValue();
+      }
+      StringBuffer buf = new StringBuffer();
+      for (Object item : value) {
+        buf.append(((AriaAttributeType) item).getAriaValue()).append(" ");
+      }
+      return buf.toString().trim();
     } else {
-      return String.valueOf(value);
+      if (value.length == 1) {
+        return String.valueOf(value[0]);
+      }
+      StringBuffer buf = new StringBuffer();
+      for (Object item : value) {
+        buf.append(String.valueOf(item)).append(" ");
+      }
+      return buf.toString().trim();
     }
   }
 }

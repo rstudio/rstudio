@@ -43,5 +43,12 @@ public interface TabRole extends SectionheadRole, WidgetRole {
 
   void removeAriaSelectedState(Element element);
 
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaSelectedState(Element element, SelectedToken value)} instead
+   */
+  @Deprecated
   void setAriaSelectedState(Element element, BooleanAndUndefined value);
+
+  void setAriaSelectedState(Element element, SelectedValue value);
 }

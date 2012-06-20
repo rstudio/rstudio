@@ -27,27 +27,31 @@ public final class StateTokenTypes {
    * CheckedToken type for the 'aria-checked' state.
    */
   public static enum CheckedToken implements AriaAttributeType {
-    TRUE("true"), FALSE("false"), MIXED("mixed"), UNDEFINED("undefined");
+    TRUE, FALSE, MIXED, UNDEFINED;
 
-   /**
-    * Gets the enum constant corresponding to {@code value} for the token type
-    * CheckedToken.
-    *
-    * @param value Boolean value for which we want to get the corresponding enum constant.
-    */
+    /**
+     * Gets the enum constant corresponding to {@code value} for the token type
+     * CheckedToken.
+     *
+     * @param value Boolean value for which we want to get the corresponding enum constant.
+     */
     public static CheckedToken of(boolean value) {
       return value ? TRUE : FALSE;
     }
 
-    private final String value;
-
-    private CheckedToken(String value) {
-      this.value = value;
-    }
-
     @Override
     public String getAriaValue() {
-      return value;
+      switch (this) {
+        case TRUE:
+          return "true";
+        case FALSE:
+          return "false";
+        case MIXED:
+          return "mixed";
+        case UNDEFINED:
+          return "undefined";
+      }
+      return null; // not reachable
     }
   }
 
@@ -55,27 +59,29 @@ public final class StateTokenTypes {
    * ExpandedToken type for the 'aria-expanded' state.
    */
   public static enum ExpandedToken implements AriaAttributeType {
-    TRUE("true"), FALSE("false"), UNDEFINED("undefined");
+    TRUE, FALSE, UNDEFINED;
 
-   /**
-    * Gets the enum constant corresponding to {@code value} for the token type
-    * ExpandedToken.
-    *
-    * @param value Boolean value for which we want to get the corresponding enum constant.
-    */
+    /**
+     * Gets the enum constant corresponding to {@code value} for the token type
+     * ExpandedToken.
+     *
+     * @param value Boolean value for which we want to get the corresponding enum constant.
+     */
     public static ExpandedToken of(boolean value) {
       return value ? TRUE : FALSE;
     }
 
-    private final String value;
-
-    private ExpandedToken(String value) {
-      this.value = value;
-    }
-
     @Override
     public String getAriaValue() {
-      return value;
+      switch (this) {
+        case TRUE:
+          return "true";
+        case FALSE:
+          return "false";
+        case UNDEFINED:
+          return "undefined";
+      }
+      return null; // not reachable
     }
   }
 
@@ -83,27 +89,29 @@ public final class StateTokenTypes {
    * GrabbedToken type for the 'aria-grabbed' state.
    */
   public static enum GrabbedToken implements AriaAttributeType {
-    TRUE("true"), FALSE("false"), UNDEFINED("undefined");
+    TRUE, FALSE, UNDEFINED;
 
-   /**
-    * Gets the enum constant corresponding to {@code value} for the token type
-    * GrabbedToken.
-    *
-    * @param value Boolean value for which we want to get the corresponding enum constant.
-    */
+    /**
+     * Gets the enum constant corresponding to {@code value} for the token type
+     * GrabbedToken.
+     *
+     * @param value Boolean value for which we want to get the corresponding enum constant.
+     */
     public static GrabbedToken of(boolean value) {
       return value ? TRUE : FALSE;
     }
 
-    private final String value;
-
-    private GrabbedToken(String value) {
-      this.value = value;
-    }
-
     @Override
     public String getAriaValue() {
-      return value;
+      switch (this) {
+        case TRUE:
+          return "true";
+        case FALSE:
+          return "false";
+        case UNDEFINED:
+          return "undefined";
+      }
+      return null; // not reachable
     }
   }
 
@@ -111,27 +119,21 @@ public final class StateTokenTypes {
    * InvalidToken type for the 'aria-invalid' state.
    */
   public static enum InvalidToken implements AriaAttributeType {
-    GRAMMAR("grammar"), FALSE("false"), SPELLING("spelling"), TRUE("true");
-
-   /**
-    * Gets the enum constant corresponding to {@code value} for the token type
-    * InvalidToken.
-    *
-    * @param value Boolean value for which we want to get the corresponding enum constant.
-    */
-    public static InvalidToken of(boolean value) {
-      return value ? TRUE : FALSE;
-    }
-
-    private final String value;
-
-    private InvalidToken(String value) {
-      this.value = value;
-    }
+    GRAMMAR, FALSE, SPELLING, TRUE;
 
     @Override
     public String getAriaValue() {
-      return value;
+      switch (this) {
+        case GRAMMAR:
+          return "grammar";
+        case FALSE:
+          return "false";
+        case SPELLING:
+          return "spelling";
+        case TRUE:
+          return "true";
+      }
+      return null; // not reachable
     }
   }
 
@@ -139,27 +141,31 @@ public final class StateTokenTypes {
    * PressedToken type for the 'aria-pressed' state.
    */
   public static enum PressedToken implements AriaAttributeType {
-    TRUE("true"), FALSE("false"), MIXED("mixed"), UNDEFINED("undefined");
+    TRUE, FALSE, MIXED, UNDEFINED;
 
-   /**
-    * Gets the enum constant corresponding to {@code value} for the token type
-    * PressedToken.
-    *
-    * @param value Boolean value for which we want to get the corresponding enum constant.
-    */
+    /**
+     * Gets the enum constant corresponding to {@code value} for the token type
+     * PressedToken.
+     *
+     * @param value Boolean value for which we want to get the corresponding enum constant.
+     */
     public static PressedToken of(boolean value) {
       return value ? TRUE : FALSE;
     }
 
-    private final String value;
-
-    private PressedToken(String value) {
-      this.value = value;
-    }
-
     @Override
     public String getAriaValue() {
-      return value;
+      switch (this) {
+        case TRUE:
+          return "true";
+        case FALSE:
+          return "false";
+        case MIXED:
+          return "mixed";
+        case UNDEFINED:
+          return "undefined";
+      }
+      return null; // not reachable
     }
   }
 
@@ -167,27 +173,29 @@ public final class StateTokenTypes {
    * SelectedToken type for the 'aria-selected' state.
    */
   public static enum SelectedToken implements AriaAttributeType {
-    TRUE("true"), FALSE("false"), UNDEFINED("undefined");
+    TRUE, FALSE, UNDEFINED;
 
-   /**
-    * Gets the enum constant corresponding to {@code value} for the token type
-    * SelectedToken.
-    *
-    * @param value Boolean value for which we want to get the corresponding enum constant.
-    */
+    /**
+     * Gets the enum constant corresponding to {@code value} for the token type
+     * SelectedToken.
+     *
+     * @param value Boolean value for which we want to get the corresponding enum constant.
+     */
     public static SelectedToken of(boolean value) {
       return value ? TRUE : FALSE;
     }
 
-    private final String value;
-
-    private SelectedToken(String value) {
-      this.value = value;
-    }
-
     @Override
     public String getAriaValue() {
-      return value;
+      switch (this) {
+        case TRUE:
+          return "true";
+        case FALSE:
+          return "false";
+        case UNDEFINED:
+          return "undefined";
+      }
+      return null; // not reachable
     }
   }
 }

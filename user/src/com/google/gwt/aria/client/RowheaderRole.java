@@ -43,5 +43,12 @@ public interface RowheaderRole extends GridcellRole, SectionheadRole, WidgetRole
 
   void removeAriaSortProperty(Element element);
 
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaSortProperty(Element element, SortValue value)} instead
+   */
+  @Deprecated
   void setAriaSortProperty(Element element, SortToken value);
+
+  void setAriaSortProperty(Element element, SortValue value);
 }

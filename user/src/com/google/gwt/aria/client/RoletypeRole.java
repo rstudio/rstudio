@@ -130,27 +130,62 @@ public interface RoletypeRole {
 
   void setAriaDisabledState(Element element, boolean value);
 
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaDropeffectProperty(Element element, DropeffectValue... value)} instead
+   */
+  @Deprecated
   void setAriaDropeffectProperty(Element element, DropeffectTokenList value);
+
+  void setAriaDropeffectProperty(Element element, DropeffectValue... value);
 
   void setAriaFlowtoProperty(Element element, IdReferenceList value);
 
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaGrabbedState(Element element, GrabbedToken value)} instead
+   */
+  @Deprecated
   void setAriaGrabbedState(Element element, BooleanAndUndefined value);
+
+  void setAriaGrabbedState(Element element, GrabbedValue value);
 
   void setAriaHaspopupProperty(Element element, boolean value);
 
   void setAriaHiddenState(Element element, boolean value);
 
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaInvalidState(Element element, InvalidValue value)} instead
+   */
+  @Deprecated
   void setAriaInvalidState(Element element, InvalidToken value);
+
+  void setAriaInvalidState(Element element, InvalidValue value);
 
   void setAriaLabelledbyProperty(Element element, IdReferenceList value);
 
   void setAriaLabelProperty(Element element, String value);
 
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaLiveProperty(Element element, LiveValue value)} instead
+   */
+  @Deprecated
   void setAriaLiveProperty(Element element, LiveToken value);
+
+  void setAriaLiveProperty(Element element, LiveValue value);
 
   void setAriaOwnsProperty(Element element, IdReferenceList value);
 
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaRelevantProperty(Element element, RelevantValue... value)} instead
+   */
+  @Deprecated
   void setAriaRelevantProperty(Element element, RelevantTokenList value);
+
+  void setAriaRelevantProperty(Element element, RelevantValue... value);
 
   void setTabindexExtraAttribute(Element element, int value);
 }

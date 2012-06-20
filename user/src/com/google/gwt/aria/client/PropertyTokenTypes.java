@@ -24,43 +24,55 @@ import com.google.gwt.aria.client.CommonAttributeTypes.AriaAttributeType;
  */
 public final class PropertyTokenTypes {
   /**
-   * AutocompleteToken enum type
+   * AutocompleteToken type for the 'aria-autocomplete' property.
    */
   public static enum AutocompleteToken implements AriaAttributeType {
-    INLINE("inline"), LIST("list"), BOTH("both"), NONE("none");
-
-    private final String value;
-
-    private AutocompleteToken(String value) {
-      this.value = value;
-    }
+    INLINE, LIST, BOTH, NONE;
 
     @Override
     public String getAriaValue() {
-      return value;
+      switch (this) {
+        case INLINE:
+          return "inline";
+        case LIST:
+          return "list";
+        case BOTH:
+          return "both";
+        case NONE:
+          return "none";
+      }
+      return null; // not reachable
     }
   }
 
   /**
-   * DropeffectToken enum type
+   * DropeffectToken type for the 'aria-dropeffect' property.
    */
   public static enum DropeffectToken implements AriaAttributeType {
-    COPY("copy"), MOVE("move"), LINK("link"), EXECUTE("execute"), POPUP("popup"), NONE("none");
-
-    private final String value;
-
-    private DropeffectToken(String value) {
-      this.value = value;
-    }
+    COPY, MOVE, LINK, EXECUTE, POPUP, NONE;
 
     @Override
     public String getAriaValue() {
-      return value;
+      switch (this) {
+        case COPY:
+          return "copy";
+        case MOVE:
+          return "move";
+        case LINK:
+          return "link";
+        case EXECUTE:
+          return "execute";
+        case POPUP:
+          return "popup";
+        case NONE:
+          return "none";
+      }
+      return null; // not reachable
     }
   }
 
   /**
-   * DropeffectTokenList tokens class type
+   * DropeffectTokenList tokens class type.
    */
   public static final class DropeffectTokenList implements AriaAttributeType {
 
@@ -81,61 +93,67 @@ public final class PropertyTokenTypes {
   }
 
   /**
-   * LiveToken enum type
+   * LiveToken type for the 'aria-live' property.
    */
   public static enum LiveToken implements AriaAttributeType {
-    OFF("off"), POLITE("polite"), ASSERTIVE("assertive");
-
-    private final String value;
-
-    private LiveToken(String value) {
-      this.value = value;
-    }
+    OFF, POLITE, ASSERTIVE;
 
     @Override
     public String getAriaValue() {
-      return value;
+      switch (this) {
+        case OFF:
+          return "off";
+        case POLITE:
+          return "polite";
+        case ASSERTIVE:
+          return "assertive";
+      }
+      return null; // not reachable
     }
   }
 
   /**
-   * OrientationToken enum type
+   * OrientationToken type for the 'aria-orientation' property.
    */
   public static enum OrientationToken implements AriaAttributeType {
-    HORIZONTAL("horizontal"), VERTICAL("vertical");
-
-    private final String value;
-
-    private OrientationToken(String value) {
-      this.value = value;
-    }
+    HORIZONTAL, VERTICAL;
 
     @Override
     public String getAriaValue() {
-      return value;
+      switch (this) {
+        case HORIZONTAL:
+          return "horizontal";
+        case VERTICAL:
+          return "vertical";
+      }
+      return null; // not reachable
     }
   }
 
   /**
-   * RelevantToken enum type
+   * RelevantToken type for the 'aria-relevant' property.
    */
   public static enum RelevantToken implements AriaAttributeType {
-    ADDITIONS("additions"), REMOVALS("removals"), TEXT("text"), ALL("all");
-
-    private final String value;
-
-    private RelevantToken(String value) {
-      this.value = value;
-    }
+    ADDITIONS, REMOVALS, TEXT, ALL;
 
     @Override
     public String getAriaValue() {
-      return value;
+      switch (this) {
+        case ADDITIONS:
+          return "additions";
+        case REMOVALS:
+          return "removals";
+        case TEXT:
+          return "text";
+        case ALL:
+          return "all";
+      }
+      return null; // not reachable
     }
   }
 
   /**
-   * RelevantTokenList tokens class type
+   * RelevantTokenList tokens class type.
    */
   public static final class RelevantTokenList implements AriaAttributeType {
 
@@ -156,20 +174,24 @@ public final class PropertyTokenTypes {
   }
 
   /**
-   * SortToken enum type
+   * SortToken type for the 'aria-sort' property.
    */
   public static enum SortToken implements AriaAttributeType {
-    ASCENDING("ascending"), DESCENDING("descending"), NONE("none"), OTHER("other");
-
-    private final String value;
-
-    private SortToken(String value) {
-      this.value = value;
-    }
+    ASCENDING, DESCENDING, NONE, OTHER;
 
     @Override
     public String getAriaValue() {
-      return value;
+      switch (this) {
+        case ASCENDING:
+          return "ascending";
+        case DESCENDING:
+          return "descending";
+        case NONE:
+          return "none";
+        case OTHER:
+          return "other";
+      }
+      return null; // not reachable
     }
   }
 }

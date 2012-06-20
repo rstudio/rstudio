@@ -43,5 +43,12 @@ public interface LinkRole extends CommandRole {
 
   void removeAriaExpandedState(Element element);
 
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaExpandedState(Element element, ExpandedToken value)} instead
+   */
+  @Deprecated
   void setAriaExpandedState(Element element, BooleanAndUndefined value);
+
+  void setAriaExpandedState(Element element, ExpandedValue value);
 }
