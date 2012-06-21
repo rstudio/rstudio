@@ -15,7 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.aria.client.CommonAttributeTypes.IdReference;
+import com.google.gwt.aria.client.IdReference;
 import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.aria.client.SelectedValue;
