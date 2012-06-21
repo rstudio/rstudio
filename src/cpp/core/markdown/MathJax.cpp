@@ -143,7 +143,7 @@ MathJaxFilter::MathJaxFilter(const std::vector<ExcludePattern>& excludePatterns,
       if (range.process)
       {
          // native mathjax display equations
-         filter(boost::regex("\\\\\\\\\\[([\\s\\S]+?)\\\\\\\\\\]"),
+         filter(boost::regex("\\\\\\[([\\s\\S]+?)\\\\\\]"),
                              &rangeText,
                              &displayMathBlocks_);
 
@@ -154,7 +154,7 @@ MathJaxFilter::MathJaxFilter(const std::vector<ExcludePattern>& excludePatterns,
                              &displayMathBlocks_);
 
          // native mathjax inline equations
-         filter(boost::regex("\\\\\\\\\\(([\\s\\S]+?)\\\\\\\\\\)"),
+         filter(boost::regex("\\\\\\(([\\s\\S]+?)\\\\\\)"),
                              &rangeText,
                              &inlineMathBlocks_);
 
