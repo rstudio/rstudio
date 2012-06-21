@@ -19,7 +19,7 @@ import junit.framework.Test;
 
 import org.hibernate.jsr303.tck.tests.constraints.constraintcomposition.ConstraintCompositionCompileTest;
 import org.hibernate.jsr303.tck.tests.constraints.constraintcomposition.ConstraintCompositionGwtTest;
-import org.hibernate.jsr303.tck.tests.constraints.constraintcomposition.nestedconstraintcomposition.NestedConstraintCompositionGwtTest;
+import org.hibernate.jsr303.tck.tests.constraints.constraintcomposition.nestedconstraintcomposition.NestedConstraintCompositionTest;
 import org.hibernate.jsr303.tck.util.TckTestSuiteWrapper;
 
 /**
@@ -31,7 +31,7 @@ public class ConstraintCompositionGwtSuite {
         "TCK for GWT Validation, constraints composition package");
     suite.addTestSuite(ConstraintCompositionCompileTest.class);
     suite.addTestSuite(ConstraintCompositionGwtTest.class);
-    suite.addTestSuite(NestedConstraintCompositionGwtTest.class);
+    suite.addTestSuite(NestedConstraintCompositionTest.class);
     return suite;
   }
 }
