@@ -16,12 +16,17 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 public class CompileNotebookOptions extends JavaScriptObject
 {
+   public static final String TYPE_DEFAULT = "default";
+   public static final String TYPE_STITCH = "stitch";
+   public static final String TYPE_SPIN = "spin";
+   
    public static native CompileNotebookOptions create(String id,
                                                       String prefix,
                                                       String suffix,
                                                       boolean sessionInfo,
                                                       String notebookTitle,
-                                                      String notebookAuthor)
+                                                      String notebookAuthor,
+                                                      String notebookType)
    /*-{
       return {
          id: id,
@@ -29,7 +34,8 @@ public class CompileNotebookOptions extends JavaScriptObject
          suffix: suffix,
          session_info: sessionInfo,
          notebook_title: notebookTitle,
-         notebook_author: notebookAuthor
+         notebook_author: notebookAuthor,
+         notebook_type: notebookType
       };
    }-*/;
 
@@ -58,5 +64,9 @@ public class CompileNotebookOptions extends JavaScriptObject
 
    public native final String getNotebookAuthor() /*-{
       return this.notebook_author;
+   }-*/;
+   
+   public native final String getNotebookType() /*-{
+      return this.notebook_type;
    }-*/;
 }

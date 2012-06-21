@@ -8,6 +8,10 @@
       .dialog  {
 	      width: 305px;
       }
+      
+      .type {
+         width: 100%;
+      }
    </ui:style>
 
    <g:HTMLPanel styleName="{style.dialog}">
@@ -23,6 +27,18 @@
          <label>Author (optional):</label><br/>
          <g:TextBox ui:field="txtAuthor_" />
       </p>
+ 
+      <div ui:field="divTypeSelector_">
+         <g:HorizontalPanel ui:field="typeLabelPanel_">
+            <g:Label ui:field="lblType_" text="Notebook type:"/>
+         </g:HorizontalPanel>
+         <g:ListBox ui:field="listType_"
+                    styleName="{style.type}">
+            <g:item value="default">(Default)</g:item>
+            <g:item value="stitch">knitr::stitch</g:item>
+            <g:item value="spin">knitr::spin</g:item>
+         </g:ListBox>
+      </div>
  
    </g:HTMLPanel>
 

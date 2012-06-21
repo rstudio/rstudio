@@ -14,12 +14,12 @@ package org.rstudio.studio.client.common.rnw;
 
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.prefs.PrefsWidgetHelper;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -37,7 +37,7 @@ public class RnwWeaveSelectWidget extends SelectWidget
    { 
       super("Weave Rnw files using:", rnwWeaveRegistry_.getTypeNames());
   
-      PrefsWidgetHelper.addHelpButton(this, "rnw_weave_method");
+      HelpButton.addHelpButton(this, "rnw_weave_method");
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       

@@ -15,15 +15,26 @@ package org.rstudio.studio.client.notebook;
 import java.util.Date;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 
 public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOptions>
 {
@@ -34,16 +45,47 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
          String docId,
          String defaultTitle,
          String defaultAuthor,
+         String defaultType,
          final OperationWithInput<CompileNotebookOptions> operation)
    {
       super("Compile Notebook from R Script", operation);
       docId_ = docId;
+      RStudioGinjector.INSTANCE.injectMembers(this);
 
       widget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       txtTitle_.setText(defaultTitle);
       txtAuthor_.setText(defaultAuthor);
       
+      if (showTypes_)
+      {
+         setType(defaultType);
+        
+         typeLabelPanel_.setCellVerticalAlignment(
+                                       lblType_, 
+                                       HasVerticalAlignment.ALIGN_MIDDLE);
+         
+         HelpButton helpButton = HelpButton.createHelpButton("notebook_types");
+         typeLabelPanel_.add(helpButton);
+         typeLabelPanel_.setCellVerticalAlignment(
+                                       helpButton, 
+                                       HasVerticalAlignment.ALIGN_MIDDLE);
+
+         
+         divTypeSelector_.getStyle().setPaddingBottom(10, Unit.PX);
+      }
+      else
+      {
+         setType(CompileNotebookOptions.TYPE_DEFAULT);
+         divTypeSelector_.getStyle().setDisplay(Style.Display.NONE);
+      }
+      
       setOkButtonCaption("Compile");
+   }
+   
+   @Inject
+   void initialize(FileTypeCommands fileTypeCommands)
+   {
+      showTypes_ = fileTypeCommands.getHTMLCapabiliites().isStitchSupported();
    }
 
    @Override
@@ -61,7 +103,8 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
                                            createSuffix(),
                                            true,
                                            txtTitle_.getValue().trim(),
-                                           txtAuthor_.getValue().trim());
+                                           txtAuthor_.getValue().trim(),
+                                           getType());
    }
 
    private String createPrefix()
@@ -105,12 +148,41 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
       return widget_;
    }
 
+   private String getType()
+   {
+      return listType_.getValue(listType_.getSelectedIndex());
+   }
+   
+   private void setType(String type)
+   {
+      int typeIndex = 0;
+      for (int i=0; i<listType_.getItemCount(); i++)
+      {
+         if (type.equals(listType_.getValue(i)))
+         {
+            typeIndex = i;
+            break;
+         }
+      }
+      listType_.setSelectedIndex(typeIndex);
+   }
+   
    private final String docId_;
 
    @UiField
    TextBox txtTitle_;
    @UiField
    TextBox txtAuthor_;
+   @UiField
+   DivElement divTypeSelector_;
+   @UiField
+   HorizontalPanel typeLabelPanel_;
+   @UiField
+   Label lblType_;
+   @UiField
+   ListBox listType_;
+   
+   private boolean showTypes_;
 
    private Widget widget_;
 }

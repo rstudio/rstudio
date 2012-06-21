@@ -43,27 +43,16 @@ public class TextEditingTargetPreviewHtmlHelper
                                       TextFileType fileType)
    {
       if (feature == null)
-         feature = fileType.getLabel() + " files";
+         feature = fileType.getLabel();
       
       // if this file requires knitr then validate pre-reqs
       if (fileType.requiresKnit())
       {
          HTMLCapabilities htmlCaps = fileTypeCommands_.getHTMLCapabiliites();
-         if (fileType.isMarkdown())
+         if (!htmlCaps.isRMarkdownSupported())
          {
-            if (!htmlCaps.isRMarkdownSupported())
-            {
-               showKnitrPreviewWarning(display, feature, "0.5");
-               return false;
-            }
-         }
-         else // must be html
-         {
-            if (!htmlCaps.isRHtmlSupported())
-            {
-               showKnitrPreviewWarning(display, feature,  "0.5");
-               return false;
-            }
+            showKnitrPreviewWarning(display, feature, "0.5");
+            return false;
          }
       }
       
@@ -74,7 +63,7 @@ public class TextEditingTargetPreviewHtmlHelper
                                         String feature, 
                                         String requiredVersion)
    {
-      display.showWarningBar(feature + " require the " +
+      display.showWarningBar(feature + " requires the " +
                              "knitr package (version " + requiredVersion + 
                              " or higher)");
    }
