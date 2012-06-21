@@ -14,10 +14,9 @@ package org.rstudio.studio.client.workbench.ui;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
+import org.rstudio.core.client.js.JsUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 
 public class PaneConfig extends JavaScriptObject
 {
@@ -59,7 +58,24 @@ public class PaneConfig extends JavaScriptObject
    public static String[] getAllTabs()
    {
       return new String[] {"Workspace", "History", "Files", "Plots",
-                           "Packages", "Help", "VCS", "Build"};
+                           "Packages", "Help", "Build", "VCS"};
+   }
+
+   public static String[] getAlwaysVisibleTabs()
+   {
+      return new String[] {"Workspace", "History", "Files", "Plots",
+                           "Packages", "Help"};
+   }
+
+   public static String[] getHideableTabs()
+   {
+      return new String[] {"Build", "VCS"};
+   }
+
+   // Any tabs that were added after our first public release.
+   public static String[] getAddableTabs()
+   {
+      return new String[] {"Build", "VCS"};
    }
 
    protected PaneConfig()
@@ -103,35 +119,54 @@ public class PaneConfig extends JavaScriptObject
       if (ts1.length() == 0 || ts2.length() == 0)
          return false;
 
-      if (!sameElements(concat(ts1, ts2), new String[] {"Workspace", "History", "Files", "Plots", "Packages", "Help", "VCS", "Build"}))
-      {
-         if (!sameElements(concat(ts1, ts2), new String[] {"Workspace", "History", "Files", "Plots", "Packages", "Help", "VCS"}))
-         {
-            if (!sameElements(concat(ts1, ts2), new String[] {"Workspace", "History", "Files", "Plots", "Packages", "Help"}))
-               return false;
+      // If any of these tabs are missing, then they can be added
+      Set<String> addableTabs = makeSet(getAddableTabs());
+      // If any of these tabs are missing, then the whole config is invalid
+      Set<String> baseTabs = makeSet(getAllTabs());
+      baseTabs.removeAll(addableTabs);
 
-            // The VCS tab is missing. Add it to tabset 1.
-            ts1.push("VCS");
-         }
-         
-         // The Build tab is missing. Add it to tabset 1.
-         ts1.push("Build");
+      for (String tab : JsUtil.asIterable(concat(ts1, ts2)))
+      {
+         if (!baseTabs.remove(tab) && !addableTabs.remove(tab))
+            return false; // unknown tab
       }
 
-      // Can't have a tabset that only contains VCS and/or Build since one
-      // or both can be hidden
-      String[] justVCS = {"VCS"};
-      if (sameElements(ts1, justVCS) || sameElements(ts2, justVCS))
-         return false;
-      String[] justBuild = {"Build"};
-      if (sameElements(ts1, justBuild) || sameElements(ts2, justBuild))
-         return false;
-      String[] justVcsAndBuild = {"VCS", "Build"};
-      if (sameElements(ts1, justVcsAndBuild) || 
-                       sameElements(ts2, justVcsAndBuild))
+      // If any baseTabs are still present, they weren't part of the tabsets
+      if (baseTabs.size() > 0)
          return false;
 
+      // Were any addable tabs missing? Add them to ts1.
+      // (Iterate over original array instead of addableTabs set so that order
+      // is well-defined)
+      for (String tab : getAddableTabs())
+         if (addableTabs.contains(tab))
+            ts1.push(tab);
+
+      // These tabs can be hidden sometimes; they can't stand alone in a tabset
+      Set<String> hideableTabs = makeSet(getHideableTabs());
+      if (isSubset(hideableTabs, JsUtil.asIterable(ts1))
+          || isSubset(hideableTabs, JsUtil.asIterable(ts2)))
+      {
+         return false;
+      }
+
       return true;
+   }
+
+   private static boolean isSubset(Set<String> set, Iterable<String> possibleSubset)
+   {
+      for (String el : possibleSubset)
+         if (!set.contains(el))
+            return false;
+      return true;
+   }
+
+   private static Set<String> makeSet(String... values)
+   {
+      TreeSet<String> set = new TreeSet<String>();
+      for (String val : values)
+         set.add(val);
+      return set;
    }
 
    public final PaneConfig copy()
@@ -190,30 +225,21 @@ public class PaneConfig extends JavaScriptObject
 
    public static boolean isValidConfig(ArrayList<String> tabs)
    {
-      if (tabs.size() == 0)
+      if (isSubset(makeSet(getHideableTabs()), tabs))
+      {
+         // The proposed tab config only contains hideable tabs (or possibly
+         // no tabs at all). Reject.
          return false;
-      if (tabs.size() == 1 && "VCS".equals(tabs.get(0)))
+      }
+      else if (isSubset(makeSet(tabs.toArray(new String[tabs.size()])),
+                        makeSet(getAlwaysVisibleTabs())))
+      {
+         // The proposed tab config contains all the always-visible tabs,
+         // which implies that the other tab config only contains hideable
+         // tabs (or possibly no tabs at all). Reject.
          return false;
-      if (tabs.size() == 1 && "Build".equals(tabs.get(0)))
-         return false;
-      if (isBuildAndVcs(tabs))
-         return false;
-      if (tabs.size() == getAllTabs().length)
-         return false;
-      if (tabs.size() == getAllTabs().length - 1 && !tabs.contains("VCS"))
-         return false;
-      if (tabs.size() == getAllTabs().length - 1 && !tabs.contains("Build"))
-         return false;
-      if (tabs.size() == getAllTabs().length - 2 && (!tabs.contains("Build") ||
-                                                     !tabs.contains("VCS")))
-         return false;
-      return true;
-   }
-   
-   private static boolean isBuildAndVcs(ArrayList<String> tabs)
-   {
-      return tabs.size() == 2 &&
-             (tabs.get(0).equals("Build") && tabs.get(1).equals("VCS") ||
-              tabs.get(0).equals("VCS") && tabs.get(1).equals("Build"));
+      }
+      else
+         return true;
    }
 }
