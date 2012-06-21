@@ -17,7 +17,6 @@ package com.google.gwt.aria.client;
 // This is auto-generated code.  Do not manually edit! //
 /////////////////////////////////////////////////////////
 
-import com.google.gwt.aria.client.PropertyTokenTypes.SortToken;
 import com.google.gwt.dom.client.Element;
 
 /**
@@ -42,13 +41,6 @@ public interface RowheaderRole extends GridcellRole, SectionheadRole, WidgetRole
   String getAriaSortProperty(Element element);
 
   void removeAriaSortProperty(Element element);
-
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaSortProperty(Element element, SortValue value)} instead
-   */
-  @Deprecated
-  void setAriaSortProperty(Element element, SortToken value);
 
   void setAriaSortProperty(Element element, SortValue value);
 }

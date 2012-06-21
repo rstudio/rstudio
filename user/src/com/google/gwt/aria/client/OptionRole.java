@@ -17,7 +17,6 @@ package com.google.gwt.aria.client;
 // This is auto-generated code.  Do not manually edit! //
 /////////////////////////////////////////////////////////
 
-import com.google.gwt.aria.client.CommonAttributeTypes.BooleanAndUndefined;
 import com.google.gwt.dom.client.Element;
 
 /**
@@ -55,23 +54,9 @@ public interface OptionRole extends InputRole {
 
   void removeAriaSetsizeProperty(Element element);
 
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaCheckedState(Element element, CheckedToken value)} instead
-   */
-  @Deprecated
-  void setAriaCheckedState(Element element, BooleanAndUndefined value);
-
   void setAriaCheckedState(Element element, CheckedValue value);
 
   void setAriaPosinsetProperty(Element element, int value);
-
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaSelectedState(Element element, SelectedToken value)} instead
-   */
-  @Deprecated
-  void setAriaSelectedState(Element element, BooleanAndUndefined value);
 
   void setAriaSelectedState(Element element, SelectedValue value);
 

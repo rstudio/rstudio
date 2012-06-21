@@ -18,30 +18,20 @@ package com.google.gwt.aria.client;
 /////////////////////////////////////////////////////////
 
 /**
- * State enum for 'aria-expanded' values.
+ *  ARIA specific type attribute.
  */
-public enum ExpandedValue implements AriaAttributeType {
-  TRUE, FALSE, UNDEFINED;
-  /**
-   * Gets the enum constant corresponding to {@code value} for the token type
-   * ExpandedValue.
-   *
-   * @param value Boolean value for which we want to get the corresponding enum constant.
-   */
-  public static ExpandedValue of(boolean value) {
-    return value ? TRUE : FALSE;
+class AriaValuedAttribute<T extends AriaAttributeType> extends Attribute<T> {
+  public AriaValuedAttribute(String name, String defaultValue) {
+    super(name, defaultValue);
+  }
+
+  public AriaValuedAttribute(String name) {
+    super(name);
   }
 
   @Override
-  public String getAriaValue() {
-    switch (this) {
-        case TRUE:
-          return "true";
-        case FALSE:
-          return "false";
-        case UNDEFINED:
-          return "undefined";
-    }
-    return null; // not reachable
+  // TODO (atincheva) : revert once we clean client code
+  protected String getSingleValue(Object value) {
+    return ((AriaAttributeType) value).getAriaValue();
   }
 }

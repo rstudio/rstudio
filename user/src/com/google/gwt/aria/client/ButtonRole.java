@@ -17,7 +17,6 @@ package com.google.gwt.aria.client;
 // This is auto-generated code.  Do not manually edit! //
 /////////////////////////////////////////////////////////
 
-import com.google.gwt.aria.client.CommonAttributeTypes.BooleanAndUndefined;
 import com.google.gwt.dom.client.Element;
 
 /**
@@ -47,21 +46,7 @@ public interface ButtonRole extends CommandRole {
 
   void removeAriaPressedState(Element element);
 
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaExpandedState(Element element, ExpandedToken value)} instead
-   */
-  @Deprecated
-  void setAriaExpandedState(Element element, BooleanAndUndefined value);
-
   void setAriaExpandedState(Element element, ExpandedValue value);
-
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaPressedState(Element element, PressedToken value)} instead
-   */
-  @Deprecated
-  void setAriaPressedState(Element element, BooleanAndUndefined value);
 
   void setAriaPressedState(Element element, PressedValue value);
 }

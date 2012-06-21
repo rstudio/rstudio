@@ -17,7 +17,6 @@ package com.google.gwt.aria.client;
 // This is auto-generated code.  Do not manually edit! //
 /////////////////////////////////////////////////////////
 
-import com.google.gwt.aria.client.CommonAttributeTypes.BooleanAndUndefined;
 import com.google.gwt.dom.client.Element;
 
 /**
@@ -42,13 +41,6 @@ public interface CheckboxRole extends InputRole {
   String getAriaCheckedState(Element element);
 
   void removeAriaCheckedState(Element element);
-
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaCheckedState(Element element, CheckedToken value)} instead
-   */
-  @Deprecated
-  void setAriaCheckedState(Element element, BooleanAndUndefined value);
 
   void setAriaCheckedState(Element element, CheckedValue value);
 }

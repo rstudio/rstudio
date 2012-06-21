@@ -17,7 +17,6 @@ package com.google.gwt.aria.client;
 // This is auto-generated code.  Do not manually edit! //
 /////////////////////////////////////////////////////////
 
-import com.google.gwt.aria.client.CommonAttributeTypes.IdReference;
 import com.google.gwt.dom.client.Element;
 
 /**
@@ -42,6 +41,14 @@ public interface GroupRole extends SectionRole {
   String getAriaActivedescendantProperty(Element element);
 
   void removeAriaActivedescendantProperty(Element element);
+
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaActivedescendantProperty(Element element, IdReference value)} instead
+   */
+  @Deprecated
+  void setAriaActivedescendantProperty(Element element,
+      CommonAttributeTypes.IdReference value);
 
   void setAriaActivedescendantProperty(Element element, IdReference value);
 }

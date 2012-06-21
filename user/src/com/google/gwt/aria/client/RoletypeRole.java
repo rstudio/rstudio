@@ -17,12 +17,6 @@ package com.google.gwt.aria.client;
 // This is auto-generated code.  Do not manually edit! //
 /////////////////////////////////////////////////////////
 
-import com.google.gwt.aria.client.CommonAttributeTypes.BooleanAndUndefined;
-import com.google.gwt.aria.client.CommonAttributeTypes.IdReferenceList;
-import com.google.gwt.aria.client.PropertyTokenTypes.DropeffectTokenList;
-import com.google.gwt.aria.client.PropertyTokenTypes.LiveToken;
-import com.google.gwt.aria.client.PropertyTokenTypes.RelevantTokenList;
-import com.google.gwt.aria.client.StateTokenTypes.InvalidToken;
 import com.google.gwt.dom.client.Element;
 
 /**
@@ -124,29 +118,39 @@ public interface RoletypeRole {
 
   void setAriaBusyState(Element element, boolean value);
 
-  void setAriaControlsProperty(Element element, IdReferenceList value);
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaControlsProperty(Element element, IdReference... value)} instead
+   */
+  @Deprecated
+  void setAriaControlsProperty(Element element,
+      CommonAttributeTypes.IdReferenceList value);
 
-  void setAriaDescribedbyProperty(Element element, IdReferenceList value);
+  void setAriaControlsProperty(Element element, IdReference... value);
+
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaDescribedbyProperty(Element element, IdReference... value)} instead
+   */
+  @Deprecated
+  void setAriaDescribedbyProperty(Element element,
+      CommonAttributeTypes.IdReferenceList value);
+
+  void setAriaDescribedbyProperty(Element element, IdReference... value);
 
   void setAriaDisabledState(Element element, boolean value);
 
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaDropeffectProperty(Element element, DropeffectValue... value)} instead
-   */
-  @Deprecated
-  void setAriaDropeffectProperty(Element element, DropeffectTokenList value);
-
   void setAriaDropeffectProperty(Element element, DropeffectValue... value);
 
-  void setAriaFlowtoProperty(Element element, IdReferenceList value);
-
   /**
    * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaGrabbedState(Element element, GrabbedToken value)} instead
+   * Use {@link #setAriaFlowtoProperty(Element element, IdReference... value)} instead
    */
   @Deprecated
-  void setAriaGrabbedState(Element element, BooleanAndUndefined value);
+  void setAriaFlowtoProperty(Element element,
+      CommonAttributeTypes.IdReferenceList value);
+
+  void setAriaFlowtoProperty(Element element, IdReference... value);
 
   void setAriaGrabbedState(Element element, GrabbedValue value);
 
@@ -154,36 +158,31 @@ public interface RoletypeRole {
 
   void setAriaHiddenState(Element element, boolean value);
 
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaInvalidState(Element element, InvalidValue value)} instead
-   */
-  @Deprecated
-  void setAriaInvalidState(Element element, InvalidToken value);
-
   void setAriaInvalidState(Element element, InvalidValue value);
 
-  void setAriaLabelledbyProperty(Element element, IdReferenceList value);
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaLabelledbyProperty(Element element, IdReference... value)} instead
+   */
+  @Deprecated
+  void setAriaLabelledbyProperty(Element element,
+      CommonAttributeTypes.IdReferenceList value);
+
+  void setAriaLabelledbyProperty(Element element, IdReference... value);
 
   void setAriaLabelProperty(Element element, String value);
 
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaLiveProperty(Element element, LiveValue value)} instead
-   */
-  @Deprecated
-  void setAriaLiveProperty(Element element, LiveToken value);
-
   void setAriaLiveProperty(Element element, LiveValue value);
 
-  void setAriaOwnsProperty(Element element, IdReferenceList value);
-
   /**
    * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaRelevantProperty(Element element, RelevantValue... value)} instead
+   * Use {@link #setAriaOwnsProperty(Element element, IdReference... value)} instead
    */
   @Deprecated
-  void setAriaRelevantProperty(Element element, RelevantTokenList value);
+  void setAriaOwnsProperty(Element element,
+      CommonAttributeTypes.IdReferenceList value);
+
+  void setAriaOwnsProperty(Element element, IdReference... value);
 
   void setAriaRelevantProperty(Element element, RelevantValue... value);
 

@@ -20,71 +20,15 @@ package com.google.gwt.aria.client;
 /**
  * ARIA attributes common non primitive types as defined by the W3C specification
  * <a href="http://www.w3.org/TR/wai-aria/">W3C ARIA specification</a>.
- * Users should use the types defined in this class to get instances of {@link Tristate},
- * {@link BooleanAndUndefined}, {@link IdReference} and {@link IdReferenceList}.
+ * Users should use the types defined in this class to get instances of
+ * {@link IdReference} and {@link IdReferenceList}.
  * For more details about ARIA states and properties check
  * <a href="http://www.w3.org/TR/wai-aria/states_and_properties"> Supported States and Properties
  * </a>.
  */
 public final class CommonAttributeTypes {
-  public static final String TRUE_VALUE = "true";
-  public static final String FALSE_VALUE = "false";
-  public static final String MIXED_TRISTATE_VALUE = "mixed";
-  public static final String UNDEFINED_VALUE = "undefined";
-
   // This class cannot be instanted
   private CommonAttributeTypes() {
-  }
-
-  /**
-   * Interface that is and needs to be implemented by ALL non primitive attribute types
-   */
-  public static interface AriaAttributeType {
-    String getAriaValue();
-  }
-
-  /**
-   * Tristate enum type
-   */
-  public static enum Tristate implements AriaAttributeType {
-    TRUE(TRUE_VALUE), FALSE(FALSE_VALUE), MIXED(MIXED_TRISTATE_VALUE);
-
-    public static Tristate of(boolean value) {
-      return value ? TRUE : FALSE;
-    }
-
-    private final String value;
-
-    private Tristate(String value) {
-      this.value = value;
-    }
-
-    @Override
-    public String getAriaValue() {
-      return value;
-    }
-  }
-
-  /**
-   * Boolean and undefined enum type
-   */
-  public static enum BooleanAndUndefined implements AriaAttributeType {
-    TRUE(TRUE_VALUE), FALSE(FALSE_VALUE), UNDEFINED(UNDEFINED_VALUE);
-
-    public static BooleanAndUndefined of(boolean value) {
-      return value ? TRUE : FALSE;
-    }
-
-    private final String value;
-
-    private BooleanAndUndefined(String value) {
-      this.value = value;
-    }
-
-    @Override
-    public String getAriaValue() {
-      return value;
-    }
   }
 
   /**

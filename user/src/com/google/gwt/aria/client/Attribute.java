@@ -17,7 +17,6 @@ package com.google.gwt.aria.client;
 // This is auto-generated code.  Do not manually edit! //
 /////////////////////////////////////////////////////////
 
-import com.google.gwt.aria.client.CommonAttributeTypes.AriaAttributeType;
 import com.google.gwt.dom.client.Element;
 
 /**
@@ -30,9 +29,9 @@ import com.google.gwt.dom.client.Element;
  *
  * @param <T> The attribute value type
  */
-public class Attribute<T> {
-  private final String name;
-  private String defaultValue;
+public abstract class Attribute<T> {
+  protected final String name;
+  protected String defaultValue;
 
   /**
    * Constructs a state/property ARIA attribute with name {@code name} and {@code defaultValue}.
@@ -90,12 +89,13 @@ public class Attribute<T> {
    * Sets the state/property {@code value} for the HTML element {@code element}.
    *
    * @param element HTML element
-   * @param value Attribute value
+   * @param values Attribute value
    */
-  // TODO(atincheva): make value of type T after fixing the client code
-  public void set(Element element, Object... value) {
+  // TODO (atincheva) : revert once we clean client code
+  public void set(Element element, Object... values) {
     assert element != null : "Element cannot be null.";
-    element.setAttribute(name, getAriaValue(value));
+    assert values.length > 0;
+    element.setAttribute(name, getAriaValue(values));
   }
 
   /**
@@ -113,25 +113,17 @@ public class Attribute<T> {
     element.setAttribute(name, defaultValue);
   }
 
-  // TODO(atincheva): make value of type T after fixing the client code
+  // TODO (atincheva) : revert once we clean client code
+  protected abstract String getSingleValue(Object value);
+  
+  // TODO (atincheva) : revert once we clean client code
   private String getAriaValue(Object... value) {
-    assert value.length > 0;
-    if (value[0] instanceof AriaAttributeType) {
-      if (value.length == 1) {
-        return ((AriaAttributeType) value[0]).getAriaValue();
-      }
-      StringBuffer buf = new StringBuffer();
-      for (Object item : value) {
-        buf.append(((AriaAttributeType) item).getAriaValue()).append(" ");
-      }
-      return buf.toString().trim();
+    if (value.length == 1) {
+      return getSingleValue(value[0]);  
     } else {
-      if (value.length == 1) {
-        return String.valueOf(value[0]);
-      }
       StringBuffer buf = new StringBuffer();
       for (Object item : value) {
-        buf.append(String.valueOf(item)).append(" ");
+        buf.append(getSingleValue(item)).append(" ");
       }
       return buf.toString().trim();
     }

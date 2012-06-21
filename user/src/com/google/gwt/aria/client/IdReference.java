@@ -14,24 +14,31 @@
 
 package com.google.gwt.aria.client;
 
-import com.google.gwt.aria.client.CommonAttributeTypes.IdReference;
-import com.google.gwt.aria.client.CommonAttributeTypes.IdReferenceList;
-import com.google.gwt.junit.client.GWTTestCase;
+/////////////////////////////////////////////////////////
+// This is auto-generated code.  Do not manually edit! //
+/////////////////////////////////////////////////////////
 
 /**
- * Tests {@link CommonAttributeTypes}
+ * Id reference attribute type
  */
-public class CommonAttributeTypesTest extends GWTTestCase {
-  public void testIdReference() {
-    assertEquals("test1", IdReference.of("test1").getAriaValue());
+public class IdReference implements AriaAttributeType {
+  public static IdReference of(String value) {
+    return new IdReference(value);
   }
 
-  public void testIdReferenceList() {
-    assertEquals("test1 test2", IdReferenceList.of("test1", "test2").getAriaValue());
+  private final String id;
+
+  /**
+   * An instance of {@link IdReference} is created.
+   *
+   * @param value String id value
+   */
+  private IdReference(String value) {
+    this.id = value;
   }
 
   @Override
-  public String getModuleName() {
-    return "com.google.gwt.aria.Aria";
+  public String getAriaValue() {
+    return id;
   }
 }

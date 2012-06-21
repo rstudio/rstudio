@@ -14,7 +14,6 @@
 
 package com.google.gwt.aria.client;
 
-import com.google.gwt.aria.client.CommonAttributeTypes.IdReferenceList;
 import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -37,7 +36,7 @@ public class RoleTest extends GWTTestCase {
 
   public void testSetGetRemoveProperty() {
     assertEquals("", regionRole.getAriaLabelledbyProperty(div));
-    regionRole.setAriaLabelledbyProperty(div, IdReferenceList.of("test1"));
+    regionRole.setAriaLabelledbyProperty(div, IdReference.of("test1"));
     assertEquals("test1", regionRole.getAriaLabelledbyProperty(div));
     regionRole.removeAriaLabelledbyProperty(div);
     assertEquals("", regionRole.getAriaLabelledbyProperty(div));

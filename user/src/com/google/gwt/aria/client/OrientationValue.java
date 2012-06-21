@@ -17,8 +17,6 @@ package com.google.gwt.aria.client;
 // This is auto-generated code.  Do not manually edit! //
 /////////////////////////////////////////////////////////
 
-import com.google.gwt.aria.client.CommonAttributeTypes.AriaAttributeType;
-
 /**
  * Property enum for 'aria-orientation' values.
  */

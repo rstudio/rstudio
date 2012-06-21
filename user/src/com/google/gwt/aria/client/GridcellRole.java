@@ -17,7 +17,6 @@ package com.google.gwt.aria.client;
 // This is auto-generated code.  Do not manually edit! //
 /////////////////////////////////////////////////////////
 
-import com.google.gwt.aria.client.CommonAttributeTypes.BooleanAndUndefined;
 import com.google.gwt.dom.client.Element;
 
 /**
@@ -54,13 +53,6 @@ public interface GridcellRole extends SectionRole, WidgetRole {
   void setAriaReadonlyProperty(Element element, boolean value);
 
   void setAriaRequiredProperty(Element element, boolean value);
-
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaSelectedState(Element element, SelectedToken value)} instead
-   */
-  @Deprecated
-  void setAriaSelectedState(Element element, BooleanAndUndefined value);
 
   void setAriaSelectedState(Element element, SelectedValue value);
 }

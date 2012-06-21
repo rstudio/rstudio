@@ -17,7 +17,6 @@ package com.google.gwt.aria.client;
 // This is auto-generated code.  Do not manually edit! //
 /////////////////////////////////////////////////////////
 
-import com.google.gwt.aria.client.CommonAttributeTypes.BooleanAndUndefined;
 import com.google.gwt.dom.client.Element;
 
 /**
@@ -42,13 +41,6 @@ public interface SectionheadRole extends StructureRole {
   String getAriaExpandedState(Element element);
 
   void removeAriaExpandedState(Element element);
-
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaExpandedState(Element element, ExpandedToken value)} instead
-   */
-  @Deprecated
-  void setAriaExpandedState(Element element, BooleanAndUndefined value);
 
   void setAriaExpandedState(Element element, ExpandedValue value);
 }

@@ -78,10 +78,10 @@ public class AttributeTest extends GWTTestCase {
     div = Document.get().createDivElement();
     div.setAttribute("id", "test1");
     Document.get().getBody().appendChild(div);
-    attribute1 = new Attribute<OrientationValue>("attr1", "vertical");
-    attribute2 = new Attribute<Boolean>("attr2", "true");
-    attribute3 = new Attribute<String>("attr3");
-    attribute4 = new Attribute<RelevantValue>("attr4", "additions text");
+    attribute1 = new AriaValuedAttribute<OrientationValue>("attr1", "vertical");
+    attribute2 = new PrimitiveTypeAttribute<Boolean>("attr2", "true");
+    attribute3 = new PrimitiveTypeAttribute<String>("attr3");
+    attribute4 = new AriaValuedAttribute<RelevantValue>("attr4", "additions text");
   }
 
   @Override

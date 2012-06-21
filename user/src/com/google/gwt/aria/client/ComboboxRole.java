@@ -17,7 +17,6 @@ package com.google.gwt.aria.client;
 // This is auto-generated code.  Do not manually edit! //
 /////////////////////////////////////////////////////////
 
-import com.google.gwt.aria.client.PropertyTokenTypes.AutocompleteToken;
 import com.google.gwt.dom.client.Element;
 
 /**
@@ -46,13 +45,6 @@ public interface ComboboxRole extends SelectRole {
   void removeAriaAutocompleteProperty(Element element);
 
   void removeAriaRequiredProperty(Element element);
-
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaAutocompleteProperty(Element element, AutocompleteValue value)} instead
-   */
-  @Deprecated
-  void setAriaAutocompleteProperty(Element element, AutocompleteToken value);
 
   void setAriaAutocompleteProperty(Element element, AutocompleteValue value);
 

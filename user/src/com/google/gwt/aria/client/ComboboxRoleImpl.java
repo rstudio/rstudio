@@ -17,14 +17,6 @@ package com.google.gwt.aria.client;
 // This is auto-generated code.  Do not manually edit! //
 /////////////////////////////////////////////////////////
 
-import com.google.gwt.aria.client.CommonAttributeTypes.BooleanAndUndefined;
-import com.google.gwt.aria.client.CommonAttributeTypes.IdReference;
-import com.google.gwt.aria.client.CommonAttributeTypes.IdReferenceList;
-import com.google.gwt.aria.client.PropertyTokenTypes.AutocompleteToken;
-import com.google.gwt.aria.client.PropertyTokenTypes.DropeffectTokenList;
-import com.google.gwt.aria.client.PropertyTokenTypes.LiveToken;
-import com.google.gwt.aria.client.PropertyTokenTypes.RelevantTokenList;
-import com.google.gwt.aria.client.StateTokenTypes.InvalidToken;
 import com.google.gwt.dom.client.Element;
 
 /**
@@ -245,6 +237,17 @@ class ComboboxRoleImpl extends Role implements ComboboxRole {
     ExtraAttribute.TABINDEX.remove(element);
   }
 
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaActivedescendantProperty(Element element, IdReference value)} instead
+   */
+  @Deprecated
+  @Override
+  public void setAriaActivedescendantProperty(Element element,
+      CommonAttributeTypes.IdReference value) {
+    Property.ACTIVEDESCENDANT.set(element, value);
+  }
+
   @Override
   public void setAriaActivedescendantProperty(Element element, IdReference value) {
     Property.ACTIVEDESCENDANT.set(element, value);
@@ -253,16 +256,6 @@ class ComboboxRoleImpl extends Role implements ComboboxRole {
   @Override
   public void setAriaAtomicProperty(Element element, boolean value) {
     Property.ATOMIC.set(element, value);
-  }
-
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaAutocompleteProperty(Element element, AutocompleteValue value)} instead
-   */
-  @Deprecated
-  @Override
-  public void setAriaAutocompleteProperty(Element element, AutocompleteToken value) {
-    Property.AUTOCOMPLETE.set(element, value);
   }
 
   @Override
@@ -275,13 +268,35 @@ class ComboboxRoleImpl extends Role implements ComboboxRole {
     State.BUSY.set(element, value);
   }
 
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaControlsProperty(Element element, IdReference... value)} instead
+   */
+  @Deprecated
   @Override
-  public void setAriaControlsProperty(Element element, IdReferenceList value) {
+  public void setAriaControlsProperty(Element element,
+      CommonAttributeTypes.IdReferenceList value) {
     Property.CONTROLS.set(element, value);
   }
 
   @Override
-  public void setAriaDescribedbyProperty(Element element, IdReferenceList value) {
+  public void setAriaControlsProperty(Element element, IdReference... value) {
+    Property.CONTROLS.set(element, value);
+  }
+
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaDescribedbyProperty(Element element, IdReference... value)} instead
+   */
+  @Deprecated
+  @Override
+  public void setAriaDescribedbyProperty(Element element,
+      CommonAttributeTypes.IdReferenceList value) {
+    Property.DESCRIBEDBY.set(element, value);
+  }
+
+  @Override
+  public void setAriaDescribedbyProperty(Element element, IdReference... value) {
     Property.DESCRIBEDBY.set(element, value);
   }
 
@@ -290,30 +305,9 @@ class ComboboxRoleImpl extends Role implements ComboboxRole {
     State.DISABLED.set(element, value);
   }
 
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaDropeffectProperty(Element element, DropeffectValue... value)} instead
-   */
-  @Deprecated
-  @Override
-  public void setAriaDropeffectProperty(Element element, DropeffectTokenList value) {
-    Property.DROPEFFECT.set(element, value);
-  }
-
   @Override
   public void setAriaDropeffectProperty(Element element, DropeffectValue... value) {
     Property.DROPEFFECT.set(element, value);
-  }
-
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaExpandedState(Element element, ExpandedToken value)} instead
-   */
-  @Deprecated
-  @Override
-  public void setAriaExpandedState(Element element, BooleanAndUndefined value) {
-    // "DO NOT USE!!!";
-    State.EXPANDED.set(element, value);
   }
 
   @Override
@@ -321,20 +315,20 @@ class ComboboxRoleImpl extends Role implements ComboboxRole {
     State.EXPANDED.set(element, value);
   }
 
-  @Override
-  public void setAriaFlowtoProperty(Element element, IdReferenceList value) {
-    Property.FLOWTO.set(element, value);
-  }
-
   /**
    * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaGrabbedState(Element element, GrabbedToken value)} instead
+   * Use {@link #setAriaFlowtoProperty(Element element, IdReference... value)} instead
    */
   @Deprecated
   @Override
-  public void setAriaGrabbedState(Element element, BooleanAndUndefined value) {
-    // "DO NOT USE!!!";
-    State.GRABBED.set(element, value);
+  public void setAriaFlowtoProperty(Element element,
+      CommonAttributeTypes.IdReferenceList value) {
+    Property.FLOWTO.set(element, value);
+  }
+
+  @Override
+  public void setAriaFlowtoProperty(Element element, IdReference... value) {
+    Property.FLOWTO.set(element, value);
   }
 
   @Override
@@ -352,23 +346,24 @@ class ComboboxRoleImpl extends Role implements ComboboxRole {
     State.HIDDEN.set(element, value);
   }
 
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaInvalidState(Element element, InvalidValue value)} instead
-   */
-  @Deprecated
-  @Override
-  public void setAriaInvalidState(Element element, InvalidToken value) {
-    State.INVALID.set(element, value);
-  }
-
   @Override
   public void setAriaInvalidState(Element element, InvalidValue value) {
     State.INVALID.set(element, value);
   }
 
+  /**
+   * @deprecated This method will be deleted. Do not use!!!
+   * Use {@link #setAriaLabelledbyProperty(Element element, IdReference... value)} instead
+   */
+  @Deprecated
   @Override
-  public void setAriaLabelledbyProperty(Element element, IdReferenceList value) {
+  public void setAriaLabelledbyProperty(Element element,
+      CommonAttributeTypes.IdReferenceList value) {
+    Property.LABELLEDBY.set(element, value);
+  }
+
+  @Override
+  public void setAriaLabelledbyProperty(Element element, IdReference... value) {
     Property.LABELLEDBY.set(element, value);
   }
 
@@ -377,34 +372,25 @@ class ComboboxRoleImpl extends Role implements ComboboxRole {
     Property.LABEL.set(element, value);
   }
 
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaLiveProperty(Element element, LiveValue value)} instead
-   */
-  @Deprecated
-  @Override
-  public void setAriaLiveProperty(Element element, LiveToken value) {
-    Property.LIVE.set(element, value);
-  }
-
   @Override
   public void setAriaLiveProperty(Element element, LiveValue value) {
     Property.LIVE.set(element, value);
   }
 
-  @Override
-  public void setAriaOwnsProperty(Element element, IdReferenceList value) {
-    Property.OWNS.set(element, value);
-  }
-
   /**
    * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaRelevantProperty(Element element, RelevantValue... value)} instead
+   * Use {@link #setAriaOwnsProperty(Element element, IdReference... value)} instead
    */
   @Deprecated
   @Override
-  public void setAriaRelevantProperty(Element element, RelevantTokenList value) {
-    Property.RELEVANT.set(element, value);
+  public void setAriaOwnsProperty(Element element,
+      CommonAttributeTypes.IdReferenceList value) {
+    Property.OWNS.set(element, value);
+  }
+
+  @Override
+  public void setAriaOwnsProperty(Element element, IdReference... value) {
+    Property.OWNS.set(element, value);
   }
 
   @Override

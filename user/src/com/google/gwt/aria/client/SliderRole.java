@@ -17,7 +17,6 @@ package com.google.gwt.aria.client;
 // This is auto-generated code.  Do not manually edit! //
 /////////////////////////////////////////////////////////
 
-import com.google.gwt.aria.client.PropertyTokenTypes.OrientationToken;
 import com.google.gwt.dom.client.Element;
 
 /**
@@ -42,13 +41,6 @@ public interface SliderRole extends InputRole, RangeRole {
   String getAriaOrientationProperty(Element element);
 
   void removeAriaOrientationProperty(Element element);
-
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaOrientationProperty(Element element, OrientationValue value)} instead
-   */
-  @Deprecated
-  void setAriaOrientationProperty(Element element, OrientationToken value);
 
   void setAriaOrientationProperty(Element element, OrientationValue value);
 }

@@ -18,30 +18,8 @@ package com.google.gwt.aria.client;
 /////////////////////////////////////////////////////////
 
 /**
- * State enum for 'aria-expanded' values.
+ * Interface that is and needs to be implemented by ALL non primitive attribute types
  */
-public enum ExpandedValue implements AriaAttributeType {
-  TRUE, FALSE, UNDEFINED;
-  /**
-   * Gets the enum constant corresponding to {@code value} for the token type
-   * ExpandedValue.
-   *
-   * @param value Boolean value for which we want to get the corresponding enum constant.
-   */
-  public static ExpandedValue of(boolean value) {
-    return value ? TRUE : FALSE;
-  }
-
-  @Override
-  public String getAriaValue() {
-    switch (this) {
-        case TRUE:
-          return "true";
-        case FALSE:
-          return "false";
-        case UNDEFINED:
-          return "undefined";
-    }
-    return null; // not reachable
-  }
+public interface AriaAttributeType {
+  String getAriaValue();
 }
