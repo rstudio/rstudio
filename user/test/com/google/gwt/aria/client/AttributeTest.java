@@ -14,22 +14,20 @@
 
 package com.google.gwt.aria.client;
 
-import com.google.gwt.aria.client.PropertyTokenTypes.OrientationToken;
-import com.google.gwt.aria.client.PropertyTokenTypes.RelevantToken;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Tests {@link Attribute} ARIA class 
+ * Tests {@link Attribute} ARIA class
  */
 public class AttributeTest extends GWTTestCase {
   private Element div;
-  private Attribute<OrientationToken> attribute1;
+  private Attribute<OrientationValue> attribute1;
   private Attribute<Boolean> attribute2;
   private Attribute<String> attribute3;
-  private Attribute<RelevantToken> attribute4;
-  
+  private Attribute<RelevantValue> attribute4;
+
   public void testSetGetRemove_booleanValue() {
     attribute2.setDefault(div);
     attribute2.set(div, false);
@@ -40,26 +38,26 @@ public class AttributeTest extends GWTTestCase {
     attribute2.remove(div);
     assertEquals("", attribute2.get(div));
   }
-  
+
   public void testSetGetRemove_tokenValue() {
     attribute1.setDefault(div);
-    assertEquals(OrientationToken.VERTICAL.getAriaValue(), attribute1.get(div));
+    assertEquals(OrientationValue.VERTICAL.getAriaValue(), attribute1.get(div));
     attribute1.remove(div);
     assertEquals("", attribute1.get(div));
-    attribute1.set(div, OrientationToken.HORIZONTAL);
-    assertEquals(OrientationToken.HORIZONTAL.getAriaValue(), attribute1.get(div));
+    attribute1.set(div, OrientationValue.HORIZONTAL);
+    assertEquals(OrientationValue.HORIZONTAL.getAriaValue(), attribute1.get(div));
   }
-  
+
   public void testSetGetRemove_tokenListValue() {
     attribute4.setDefault(div);
-    assertEquals(RelevantToken.ADDITIONS.getAriaValue() + " " + RelevantToken.TEXT.getAriaValue(), 
+    assertEquals(RelevantValue.ADDITIONS.getAriaValue() + " " + RelevantValue.TEXT.getAriaValue(),
         attribute4.get(div));
     attribute4.remove(div);
     assertEquals("", attribute1.get(div));
-    attribute4.set(div, RelevantToken.REMOVALS);
-    assertEquals(RelevantToken.REMOVALS.getAriaValue(), attribute4.get(div));
+    attribute4.set(div, RelevantValue.REMOVALS);
+    assertEquals(RelevantValue.REMOVALS.getAriaValue(), attribute4.get(div));
   }
-  
+
   public void testSetDefaultValue_noSet() {
     try {
       attribute3.setDefault(div);
@@ -68,24 +66,24 @@ public class AttributeTest extends GWTTestCase {
       // Expected -- no default value for attribute2
     }
   }
-  
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.aria.Aria";
   }
-  
+
   @Override
   protected void gwtSetUp() throws Exception {
     super.gwtSetUp();
     div = Document.get().createDivElement();
     div.setAttribute("id", "test1");
     Document.get().getBody().appendChild(div);
-    attribute1 = new Attribute<OrientationToken>("attr1", "vertical");
+    attribute1 = new Attribute<OrientationValue>("attr1", "vertical");
     attribute2 = new Attribute<Boolean>("attr2", "true");
     attribute3 = new Attribute<String>("attr3");
-    attribute4 = new Attribute<RelevantToken>("attr4", "additions text");
+    attribute4 = new Attribute<RelevantValue>("attr4", "additions text");
   }
-  
+
   @Override
   protected void gwtTearDown() throws Exception {
     super.gwtTearDown();

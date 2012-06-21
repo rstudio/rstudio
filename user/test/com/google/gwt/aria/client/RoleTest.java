@@ -15,8 +15,6 @@
 package com.google.gwt.aria.client;
 
 import com.google.gwt.aria.client.CommonAttributeTypes.IdReferenceList;
-import com.google.gwt.aria.client.PropertyTokenTypes.DropeffectToken;
-import com.google.gwt.aria.client.PropertyTokenTypes.DropeffectTokenList;
 import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -38,9 +36,8 @@ public class RoleTest extends GWTTestCase {
   }
 
   public void testSetGetRemoveProperty() {
-    IdReferenceList idRefs = IdReferenceList.of("test1");
     assertEquals("", regionRole.getAriaLabelledbyProperty(div));
-    regionRole.setAriaLabelledbyProperty(div, idRefs);
+    regionRole.setAriaLabelledbyProperty(div, IdReferenceList.of("test1"));
     assertEquals("test1", regionRole.getAriaLabelledbyProperty(div));
     regionRole.removeAriaLabelledbyProperty(div);
     assertEquals("", regionRole.getAriaLabelledbyProperty(div));
@@ -49,8 +46,7 @@ public class RoleTest extends GWTTestCase {
   public void testSetGetRemoveNmtokensProperty() {
     ButtonRole buttonRole = Roles.getButtonRole();
     assertEquals("", buttonRole.getAriaDropeffectProperty(div));
-    regionRole.setAriaDropeffectProperty(div, new DropeffectTokenList(DropeffectToken.COPY,
-        DropeffectToken.MOVE));
+    regionRole.setAriaDropeffectProperty(div, DropeffectValue.COPY, DropeffectValue.MOVE);
     assertEquals("copy move", regionRole.getAriaDropeffectProperty(div));
     regionRole.removeAriaDropeffectProperty(div);
     assertEquals("", regionRole.getAriaDropeffectProperty(div));
@@ -58,8 +54,8 @@ public class RoleTest extends GWTTestCase {
 
   public void testSetGetRemoveState() {
     assertEquals("", regionRole.getAriaInvalidState(div));
-    regionRole.setAriaInvalidState(div, StateTokenTypes.InvalidToken.GRAMMAR);
-    assertEquals(StateTokenTypes.InvalidToken.GRAMMAR.getAriaValue(),
+    regionRole.setAriaInvalidState(div, InvalidValue.GRAMMAR);
+    assertEquals(InvalidValue.GRAMMAR.getAriaValue(),
         regionRole.getAriaInvalidState(div));
     regionRole.removeAriaInvalidState(div);
     assertEquals("", regionRole.getAriaInvalidState(div));
