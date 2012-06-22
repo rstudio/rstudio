@@ -374,3 +374,22 @@ module events {
   };
 };
 
+module html {
+  [Supplemental, Constructor]
+  interface AudioContext {
+  };
+
+  [Supplemental, Constructor(in DOMString url)]
+  interface WebSocket {
+  };
+
+  [Supplemental, Suppressed]
+  interface DeprecatedPeerConnection {
+  };
+
+  /* TODO(cromwellian) fix after API/IDL settles
+    [Supplemental, Constructor(in MutationCallback callback)]
+    interface WebKitMutationObserver {
+  };
+  */
+}

@@ -133,6 +133,9 @@ def MatchSourceFilter(filter, thing):
 def DartType(idl_type_name):
   return GetIDLTypeInfo(idl_type_name).dart_type()
 
+def JsType(idl_type_name):
+  return GetIDLTypeInfo(idl_type_name).js_type()
+
 
 class ParamInfo(object):
   """Holder for various information about a parameter of a Dart operation.
@@ -451,19 +454,24 @@ class IDLTypeInfo(object):
   def __init__(self, idl_type, dart_type=None,
                native_type=None,
                custom_to_native=False,
-               custom_to_dart=False, conversion_includes=[]):
+               custom_to_dart=False, conversion_includes=[],
+               js_type = None):
     self._idl_type = idl_type
     self._dart_type = dart_type
     self._native_type = native_type
     self._custom_to_native = custom_to_native
     self._custom_to_dart = custom_to_dart
     self._conversion_includes = conversion_includes + [idl_type]
+    self._js_type = js_type
 
   def idl_type(self):
     return self._idl_type
 
   def dart_type(self):
     return self._dart_type or self._idl_type
+
+  def js_type(self):
+    return self._js_type or self._idl_type
 
   def native_type(self):
     return self._native_type or self._idl_type
@@ -735,8 +743,27 @@ _idl_type_registry = {
     'SVGRect': SVGTearOffIDLTypeInfo('SVGRect', native_type='SVGPropertyTearOff<FloatRect>'),
     'SVGStringList': SVGTearOffIDLTypeInfo('SVGStringList', native_type='SVGStaticListPropertyTearOff<SVGStringList>'),
     'SVGTransform': SVGTearOffIDLTypeInfo('SVGTransform'),
-    'SVGTransformList': SVGTearOffIDLTypeInfo('SVGTransformList', native_type='SVGTransformListPropertyTearOff')
+    'SVGTransformList': SVGTearOffIDLTypeInfo('SVGTransformList', native_type='SVGTransformListPropertyTearOff'),
+    'PeerConnection00': IDLTypeInfo('PeerConnection00', js_type='webkitPeerConnection00'),
+    'AudioContext': IDLTypeInfo('AudioContext', js_type='webkitAudioContext'),
+    'AudioPannerNode': IDLTypeInfo('AudioPannerNode', js_type='webkitAudioPannerNode'),
+    'IDBCursor': IDLTypeInfo('IDBCursor', js_type='webkitIDBCursor'),
+    'IDBDatabase': IDLTypeInfo('IDBDatabase', js_type='webkitIDBDatabase'),
+    'IDBDatabaseFactory': IDLTypeInfo('IDBDatabaseRactory', js_type='webkitIDBDatabaseFactory'),
+    'IDBFactory': IDLTypeInfo('IDBFactory', js_type='webkitIDBFactory'),
+    'IDBIndex': IDLTypeInfo('IDBIndex', js_type='webkitIDBIndex'),
+    'IDBKeyRange': IDLTypeInfo('IDBKeyRange', js_type='webkitIDBKeyRange'),
+    'IDBObjectStore': IDLTypeInfo('IDBObjectStore', js_type='webkitIDBObjectStore'),
+    'IDBRequest': IDLTypeInfo('IDBRequest', js_type='webkitIDBRequest'),
+    'IDBTransaction': IDLTypeInfo('IDBTransaction', js_type='webkitIDBTransaction'),
+    'IndexedDB': IDLTypeInfo('IndexedDB', js_type='webkitIndexedDB'),
+    'Intent': IDLTypeInfo('Intent', js_type='webkitIntent'),
+    'MediaStream': IDLTypeInfo('MediaStream', js_type='webkitMediaStream'),
+    'URL': IDLTypeInfo('URL', js_type='webkitURL'),
+    'ShadowRoot': IDLTypeInfo('ShadowRoot', js_type='WebKitShadowRoot'),
+    'BlobBuilder': IDLTypeInfo('BlobBuilder', js_type='WebKitBlobBuilder'),
 }
+
 
 _svg_supplemental_includes = [
     '"SVGAnimatedPropertyTearOff.h"',

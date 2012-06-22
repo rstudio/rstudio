@@ -298,9 +298,10 @@ class ElementalInterfaceGenerator(systembaseelemental.ElementalBase):
          if constructor_info:
            self._members_emitter.Emit(
              '\n'
-             '  public final native Js$TYPE new$CTOR($PARAMS) /*-{ return new $TYPE($ARGS); }-*/;\n',
+             '  public final native Js$TYPE new$CTOR($PARAMS) /*-{ return new $JSTYPE($ARGS); }-*/;\n',
              TYPE=iface.id,
              CTOR=iface.id,
+             JSTYPE=JsType(iface.id),
              PARAMS=constructor_info.ParametersInterfaceDeclaration(),
              ARGS=constructor_info.ParametersAsArgumentList(self._database));
 
@@ -333,7 +334,7 @@ class ElementalInterfaceGenerator(systembaseelemental.ElementalBase):
                                      NAME=setterName(setter),
                                      TYPE=TypeOrVar(DartType(setter.type.id),
                                                     setter.type.id),
-                                     FIELD=setter.type.id)
+                                     FIELD=setter.id)
         else:
           if setter.id in self.reserved_keywords:
             field_template = "this['$FIELD']"
