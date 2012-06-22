@@ -42,13 +42,5 @@ public interface GroupRole extends SectionRole {
 
   void removeAriaActivedescendantProperty(Element element);
 
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaActivedescendantProperty(Element element, IdReference value)} instead
-   */
-  @Deprecated
-  void setAriaActivedescendantProperty(Element element,
-      CommonAttributeTypes.IdReference value);
-
   void setAriaActivedescendantProperty(Element element, IdReference value);
 }

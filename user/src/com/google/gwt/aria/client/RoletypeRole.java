@@ -118,37 +118,13 @@ public interface RoletypeRole {
 
   void setAriaBusyState(Element element, boolean value);
 
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaControlsProperty(Element element, IdReference... value)} instead
-   */
-  @Deprecated
-  void setAriaControlsProperty(Element element,
-      CommonAttributeTypes.IdReferenceList value);
-
   void setAriaControlsProperty(Element element, IdReference... value);
-
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaDescribedbyProperty(Element element, IdReference... value)} instead
-   */
-  @Deprecated
-  void setAriaDescribedbyProperty(Element element,
-      CommonAttributeTypes.IdReferenceList value);
 
   void setAriaDescribedbyProperty(Element element, IdReference... value);
 
   void setAriaDisabledState(Element element, boolean value);
 
   void setAriaDropeffectProperty(Element element, DropeffectValue... value);
-
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaFlowtoProperty(Element element, IdReference... value)} instead
-   */
-  @Deprecated
-  void setAriaFlowtoProperty(Element element,
-      CommonAttributeTypes.IdReferenceList value);
 
   void setAriaFlowtoProperty(Element element, IdReference... value);
 
@@ -160,27 +136,11 @@ public interface RoletypeRole {
 
   void setAriaInvalidState(Element element, InvalidValue value);
 
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaLabelledbyProperty(Element element, IdReference... value)} instead
-   */
-  @Deprecated
-  void setAriaLabelledbyProperty(Element element,
-      CommonAttributeTypes.IdReferenceList value);
-
   void setAriaLabelledbyProperty(Element element, IdReference... value);
 
   void setAriaLabelProperty(Element element, String value);
 
   void setAriaLiveProperty(Element element, LiveValue value);
-
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaOwnsProperty(Element element, IdReference... value)} instead
-   */
-  @Deprecated
-  void setAriaOwnsProperty(Element element,
-      CommonAttributeTypes.IdReferenceList value);
 
   void setAriaOwnsProperty(Element element, IdReference... value);
 

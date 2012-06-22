@@ -217,31 +217,9 @@ class DefinitionRoleImpl extends Role implements DefinitionRole {
     State.BUSY.set(element, value);
   }
 
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaControlsProperty(Element element, IdReference... value)} instead
-   */
-  @Deprecated
-  @Override
-  public void setAriaControlsProperty(Element element,
-      CommonAttributeTypes.IdReferenceList value) {
-    Property.CONTROLS.set(element, value);
-  }
-
   @Override
   public void setAriaControlsProperty(Element element, IdReference... value) {
     Property.CONTROLS.set(element, value);
-  }
-
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaDescribedbyProperty(Element element, IdReference... value)} instead
-   */
-  @Deprecated
-  @Override
-  public void setAriaDescribedbyProperty(Element element,
-      CommonAttributeTypes.IdReferenceList value) {
-    Property.DESCRIBEDBY.set(element, value);
   }
 
   @Override
@@ -262,17 +240,6 @@ class DefinitionRoleImpl extends Role implements DefinitionRole {
   @Override
   public void setAriaExpandedState(Element element, ExpandedValue value) {
     State.EXPANDED.set(element, value);
-  }
-
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaFlowtoProperty(Element element, IdReference... value)} instead
-   */
-  @Deprecated
-  @Override
-  public void setAriaFlowtoProperty(Element element,
-      CommonAttributeTypes.IdReferenceList value) {
-    Property.FLOWTO.set(element, value);
   }
 
   @Override
@@ -300,17 +267,6 @@ class DefinitionRoleImpl extends Role implements DefinitionRole {
     State.INVALID.set(element, value);
   }
 
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaLabelledbyProperty(Element element, IdReference... value)} instead
-   */
-  @Deprecated
-  @Override
-  public void setAriaLabelledbyProperty(Element element,
-      CommonAttributeTypes.IdReferenceList value) {
-    Property.LABELLEDBY.set(element, value);
-  }
-
   @Override
   public void setAriaLabelledbyProperty(Element element, IdReference... value) {
     Property.LABELLEDBY.set(element, value);
@@ -324,17 +280,6 @@ class DefinitionRoleImpl extends Role implements DefinitionRole {
   @Override
   public void setAriaLiveProperty(Element element, LiveValue value) {
     Property.LIVE.set(element, value);
-  }
-
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaOwnsProperty(Element element, IdReference... value)} instead
-   */
-  @Deprecated
-  @Override
-  public void setAriaOwnsProperty(Element element,
-      CommonAttributeTypes.IdReferenceList value) {
-    Property.OWNS.set(element, value);
   }
 
   @Override

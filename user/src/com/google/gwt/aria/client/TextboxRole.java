@@ -58,14 +58,6 @@ public interface TextboxRole extends InputRole {
 
   void removeAriaRequiredProperty(Element element);
 
-  /**
-   * @deprecated This method will be deleted. Do not use!!!
-   * Use {@link #setAriaActivedescendantProperty(Element element, IdReference value)} instead
-   */
-  @Deprecated
-  void setAriaActivedescendantProperty(Element element,
-      CommonAttributeTypes.IdReference value);
-
   void setAriaActivedescendantProperty(Element element, IdReference value);
 
   void setAriaAutocompleteProperty(Element element, AutocompleteValue value);
