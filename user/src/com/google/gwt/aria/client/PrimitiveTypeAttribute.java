@@ -30,9 +30,7 @@ class PrimitiveTypeAttribute<T> extends Attribute<T> {
   }
 
   @Override
-  // TODO (atincheva) : revert once we clean client code
-  protected String getSingleValue(Object value) {
+  protected String getSingleValue(T value) {
     return String.valueOf(value);
   }
 }
-

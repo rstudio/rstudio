@@ -30,8 +30,7 @@ class AriaValuedAttribute<T extends AriaAttributeType> extends Attribute<T> {
   }
 
   @Override
-  // TODO (atincheva) : revert once we clean client code
-  protected String getSingleValue(Object value) {
-    return ((AriaAttributeType) value).getAriaValue();
+  protected String getSingleValue(T value) {
+    return value.getAriaValue();
   }
 }

@@ -91,8 +91,7 @@ public abstract class Attribute<T> {
    * @param element HTML element
    * @param values Attribute value
    */
-  // TODO (atincheva) : revert once we clean client code
-  public void set(Element element, Object... values) {
+  public void set(Element element, T... values) {
     assert element != null : "Element cannot be null.";
     assert values.length > 0;
     element.setAttribute(name, getAriaValue(values));
@@ -113,16 +112,14 @@ public abstract class Attribute<T> {
     element.setAttribute(name, defaultValue);
   }
 
-  // TODO (atincheva) : revert once we clean client code
-  protected abstract String getSingleValue(Object value);
-  
-  // TODO (atincheva) : revert once we clean client code
-  private String getAriaValue(Object... value) {
+  protected abstract String getSingleValue(T value);
+
+  private String getAriaValue(T... value) {
     if (value.length == 1) {
-      return getSingleValue(value[0]);  
+      return getSingleValue(value[0]);
     } else {
       StringBuffer buf = new StringBuffer();
-      for (Object item : value) {
+      for (T item : value) {
         buf.append(getSingleValue(item)).append(" ");
       }
       return buf.toString().trim();
