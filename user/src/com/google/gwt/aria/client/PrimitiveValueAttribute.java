@@ -18,14 +18,14 @@ package com.google.gwt.aria.client;
 /////////////////////////////////////////////////////////
 
 /**
- * Primitive type attribute.
+ * Primitive type attribute. The primitive types are: boolean, string, int, number.
  */
-class PrimitiveTypeAttribute<T> extends Attribute<T> {
-  public PrimitiveTypeAttribute(String name) {
+class PrimitiveValueAttribute<T> extends Attribute<T> {
+  public PrimitiveValueAttribute(String name) {
     super(name);
   }
 
-  public PrimitiveTypeAttribute(String name, String defaultValue) {
+  public PrimitiveValueAttribute(String name, String defaultValue) {
     super(name, defaultValue);
   }
 

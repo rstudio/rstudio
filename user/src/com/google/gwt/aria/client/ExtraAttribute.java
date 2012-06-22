@@ -24,7 +24,7 @@ package com.google.gwt.aria.client;
  */
 public final class ExtraAttribute {
   public static final Attribute<Integer> TABINDEX =
-      new PrimitiveTypeAttribute<Integer>("tabIndex", "");
+      new PrimitiveValueAttribute<Integer>("tabIndex", "");
 
   private ExtraAttribute() {
   }

@@ -38,31 +38,31 @@ package com.google.gwt.aria.client;
  */
 public final class State {
   public static final Attribute<Boolean> BUSY =
-      new PrimitiveTypeAttribute<Boolean>("aria-busy", "false");
+      new PrimitiveValueAttribute<Boolean>("aria-busy", "false");
 
   public static final Attribute<CheckedValue> CHECKED =
-      new AriaValuedAttribute<CheckedValue>("aria-checked", "undefined");
+      new AriaValueAttribute<CheckedValue>("aria-checked", "undefined");
 
   public static final Attribute<Boolean> DISABLED =
-      new PrimitiveTypeAttribute<Boolean>("aria-disabled", "false");
+      new PrimitiveValueAttribute<Boolean>("aria-disabled", "false");
 
   public static final Attribute<ExpandedValue> EXPANDED =
-      new AriaValuedAttribute<ExpandedValue>("aria-expanded", "undefined");
+      new AriaValueAttribute<ExpandedValue>("aria-expanded", "undefined");
 
   public static final Attribute<GrabbedValue> GRABBED =
-      new AriaValuedAttribute<GrabbedValue>("aria-grabbed", "undefined");
+      new AriaValueAttribute<GrabbedValue>("aria-grabbed", "undefined");
 
   public static final Attribute<Boolean> HIDDEN =
-      new PrimitiveTypeAttribute<Boolean>("aria-hidden", "false");
+      new PrimitiveValueAttribute<Boolean>("aria-hidden", "false");
 
   public static final Attribute<InvalidValue> INVALID =
-      new AriaValuedAttribute<InvalidValue>("aria-invalid", "false");
+      new AriaValueAttribute<InvalidValue>("aria-invalid", "false");
 
   public static final Attribute<PressedValue> PRESSED =
-      new AriaValuedAttribute<PressedValue>("aria-pressed", "undefined");
+      new AriaValueAttribute<PressedValue>("aria-pressed", "undefined");
 
   public static final Attribute<SelectedValue> SELECTED =
-      new AriaValuedAttribute<SelectedValue>("aria-selected", "undefined");
+      new AriaValueAttribute<SelectedValue>("aria-selected", "undefined");
 
   private State() {
   }

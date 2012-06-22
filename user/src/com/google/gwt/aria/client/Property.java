@@ -42,82 +42,82 @@ package com.google.gwt.aria.client;
  */
 public final class Property {
   public static final Attribute<IdReference> ACTIVEDESCENDANT =
-      new AriaValuedAttribute<IdReference>("aria-activedescendant", "");
+      new AriaValueAttribute<IdReference>("aria-activedescendant", "");
 
   public static final Attribute<Boolean> ATOMIC =
-      new PrimitiveTypeAttribute<Boolean>("aria-atomic", "false");
+      new PrimitiveValueAttribute<Boolean>("aria-atomic", "false");
 
   public static final Attribute<AutocompleteValue> AUTOCOMPLETE =
-      new AriaValuedAttribute<AutocompleteValue>("aria-autocomplete", "none");
+      new AriaValueAttribute<AutocompleteValue>("aria-autocomplete", "none");
 
   public static final Attribute<IdReference> CONTROLS =
-      new AriaValuedAttribute<IdReference>("aria-controls", "");
+      new AriaValueAttribute<IdReference>("aria-controls", "");
 
   public static final Attribute<IdReference> DESCRIBEDBY =
-      new AriaValuedAttribute<IdReference>("aria-describedby", "");
+      new AriaValueAttribute<IdReference>("aria-describedby", "");
 
   public static final Attribute<DropeffectValue> DROPEFFECT =
-      new AriaValuedAttribute<DropeffectValue>("aria-dropeffect", "none");
+      new AriaValueAttribute<DropeffectValue>("aria-dropeffect", "none");
 
   public static final Attribute<IdReference> FLOWTO =
-      new AriaValuedAttribute<IdReference>("aria-flowto", "");
+      new AriaValueAttribute<IdReference>("aria-flowto", "");
 
   public static final Attribute<Boolean> HASPOPUP =
-      new PrimitiveTypeAttribute<Boolean>("aria-haspopup", "false");
+      new PrimitiveValueAttribute<Boolean>("aria-haspopup", "false");
 
   public static final Attribute<String> LABEL =
-      new PrimitiveTypeAttribute<String>("aria-label", "");
+      new PrimitiveValueAttribute<String>("aria-label", "");
 
   public static final Attribute<IdReference> LABELLEDBY =
-      new AriaValuedAttribute<IdReference>("aria-labelledby", "");
+      new AriaValueAttribute<IdReference>("aria-labelledby", "");
 
   public static final Attribute<Integer> LEVEL =
-      new PrimitiveTypeAttribute<Integer>("aria-level", "");
+      new PrimitiveValueAttribute<Integer>("aria-level", "");
 
   public static final Attribute<LiveValue> LIVE =
-      new AriaValuedAttribute<LiveValue>("aria-live", "off");
+      new AriaValueAttribute<LiveValue>("aria-live", "off");
 
   public static final Attribute<Boolean> MULTILINE =
-      new PrimitiveTypeAttribute<Boolean>("aria-multiline", "false");
+      new PrimitiveValueAttribute<Boolean>("aria-multiline", "false");
 
   public static final Attribute<Boolean> MULTISELECTABLE =
-      new PrimitiveTypeAttribute<Boolean>("aria-multiselectable", "false");
+      new PrimitiveValueAttribute<Boolean>("aria-multiselectable", "false");
 
   public static final Attribute<OrientationValue> ORIENTATION =
-      new AriaValuedAttribute<OrientationValue>("aria-orientation", "vertical");
+      new AriaValueAttribute<OrientationValue>("aria-orientation", "vertical");
 
   public static final Attribute<IdReference> OWNS =
-      new AriaValuedAttribute<IdReference>("aria-owns", "");
+      new AriaValueAttribute<IdReference>("aria-owns", "");
 
   public static final Attribute<Integer> POSINSET =
-      new PrimitiveTypeAttribute<Integer>("aria-posinset", "");
+      new PrimitiveValueAttribute<Integer>("aria-posinset", "");
 
   public static final Attribute<Boolean> READONLY =
-      new PrimitiveTypeAttribute<Boolean>("aria-readonly", "false");
+      new PrimitiveValueAttribute<Boolean>("aria-readonly", "false");
 
   public static final Attribute<RelevantValue> RELEVANT =
-      new AriaValuedAttribute<RelevantValue>("aria-relevant", "additions text");
+      new AriaValueAttribute<RelevantValue>("aria-relevant", "additions text");
 
   public static final Attribute<Boolean> REQUIRED =
-      new PrimitiveTypeAttribute<Boolean>("aria-required", "false");
+      new PrimitiveValueAttribute<Boolean>("aria-required", "false");
 
   public static final Attribute<Integer> SETSIZE =
-      new PrimitiveTypeAttribute<Integer>("aria-setsize", "");
+      new PrimitiveValueAttribute<Integer>("aria-setsize", "");
 
   public static final Attribute<SortValue> SORT =
-      new AriaValuedAttribute<SortValue>("aria-sort", "none");
+      new AriaValueAttribute<SortValue>("aria-sort", "none");
 
   public static final Attribute<Number> VALUEMAX =
-      new PrimitiveTypeAttribute<Number>("aria-valuemax", "");
+      new PrimitiveValueAttribute<Number>("aria-valuemax", "");
 
   public static final Attribute<Number> VALUEMIN =
-      new PrimitiveTypeAttribute<Number>("aria-valuemin", "");
+      new PrimitiveValueAttribute<Number>("aria-valuemin", "");
 
   public static final Attribute<Number> VALUENOW =
-      new PrimitiveTypeAttribute<Number>("aria-valuenow", "");
+      new PrimitiveValueAttribute<Number>("aria-valuenow", "");
 
   public static final Attribute<String> VALUETEXT =
-      new PrimitiveTypeAttribute<String>("aria-valuetext", "");
+      new PrimitiveValueAttribute<String>("aria-valuetext", "");
 
   private Property() {
   }

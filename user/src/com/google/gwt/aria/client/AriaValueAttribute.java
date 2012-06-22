@@ -20,12 +20,12 @@ package com.google.gwt.aria.client;
 /**
  *  ARIA specific type attribute.
  */
-class AriaValuedAttribute<T extends AriaAttributeType> extends Attribute<T> {
-  public AriaValuedAttribute(String name, String defaultValue) {
+class AriaValueAttribute<T extends AriaAttributeType> extends Attribute<T> {
+  public AriaValueAttribute(String name, String defaultValue) {
     super(name, defaultValue);
   }
 
-  public AriaValuedAttribute(String name) {
+  public AriaValueAttribute(String name) {
     super(name);
   }
 
