@@ -55,8 +55,8 @@
   <property name="javac.debug" value="true" />
   <property name="javac.debuglevel" value="lines,vars,source" />
   <property name="javac.encoding" value="utf-8" />
-  <property name="javac.source" value="1.5" />
-  <property name="javac.target" value="1.5" />
+  <property name="javac.source" value="1.6" />
+  <property name="javac.target" value="1.6" />
   <property name="javac.nowarn" value="true" />
   <property name="junit.out" location="${project.build}/test" />
   <property name="emma.dir" value="${gwt.tools.redist}/emma" />
