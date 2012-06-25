@@ -1,7 +1,7 @@
-<project name="dynatablerf" default="build" basedir=".">
+<project name="dynatablerf" default="source" basedir=".">
   <property name="sample.root" value="dynatablerf" />
   <property name="sample.module" value="DynaTableRf" />
-  <property name="sample.path" value="src" />
+  <property name="sample.path" value="src/main/java" />
   <import file="../common.ant.xml" />
   <!-- these are after the common.ant.xml so they have gwt.tools etc -->
   <path id="sample.extraclasspath">

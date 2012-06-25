@@ -1,4 +1,4 @@
-<project name="expenses" default="build" basedir=".">
+<project name="expenses" default="source" basedir=".">
   <property name="sample.root" value="expenses" />
   <property name="sample.module" value="Expenses" />
   <property name="sample.path" value="src/main/java" />

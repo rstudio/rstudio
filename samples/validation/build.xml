@@ -1,4 +1,4 @@
-<project name="validation" default="build" basedir=".">
+<project name="validation" default="source" basedir=".">
   <property name="sample.root" value="validation" />
   <property name="sample.module" value="Validation" />
   <property name="sample.path" value="src" />

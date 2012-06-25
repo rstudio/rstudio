@@ -2,12 +2,13 @@
 
   <target name="-do">
     <ant target="${target}" dir="DynaTable"/>
-    <ant target="${target}" dir="DynaTableRf"/>
     <ant target="${target}" dir="Hello"/>
     <ant target="${target}" dir="JSON"/>
     <ant target="${target}" dir="LogExample"/>
     <ant target="${target}" dir="Mail"/>
     <ant target="${target}" dir="Showcase"/>
+    <ant target="${target}" dir="SimpleRPC"/>
+    <ant target="${target}" dir="SimpleXML"/>
   </target>
 
   <target name="build" description="Build all samples">

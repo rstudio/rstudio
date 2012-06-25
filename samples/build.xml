@@ -42,6 +42,14 @@
     <gwt.ant dir="showcase" />
   </target>
 
+  <target name="simplexml" description="Build xml sample">
+     <gwt.ant dir="simplexml" />
+  </target>
+
+  <target name="simplerpc" description="Build rpc sample">
+     <gwt.ant dir="simplerpc" />
+  </target>
+
   <target name="validation" description="Build validation">
     <gwt.ant dir="validation" target="source" />
   </target>
@@ -60,6 +68,8 @@
     <antcall target="mail" />
     <antcall target="mobilewebapp" />
     <antcall target="showcase" />
+    <antcall target="simplerpc" />
+    <antcall target="simplexml" />
     <antcall target="validation" />
     <!-- don't include validationtck, it is not really a sample -->
   </target>
