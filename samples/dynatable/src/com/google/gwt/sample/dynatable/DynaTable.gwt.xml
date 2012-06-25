@@ -14,7 +14,6 @@
 
 <module rename-to="dynatable">
   <inherits name='com.google.gwt.user.User' />
-  <inherits name='com.google.gwt.rpc.RPC' />
   <entry-point class='com.google.gwt.sample.dynatable.client.DynaTable' />
   <servlet path='/calendar'
     class='com.google.gwt.sample.dynatable.server.SchoolCalendarServiceImpl' />
