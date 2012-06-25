@@ -16,6 +16,7 @@
 package com.google.gwt.validation.client.impl;
 
 import java.io.Serializable;
+import java.lang.annotation.ElementType;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Path;
@@ -45,17 +46,23 @@ public final class ConstraintViolationImpl<T> implements ConstraintViolation<T>,
     private Object leafBean;
     private Path propertyPath;
     private Object invalidValue;
+    private ElementType elementType;
     private ConstraintDescriptor<?> constraintDescriptor;
 
     public ConstraintViolationImpl<T> build() {
       return new ConstraintViolationImpl<T>(message, messageTemplate, rootBean,
-          rootBeanClass, leafBean, propertyPath, invalidValue,
+          rootBeanClass, leafBean, propertyPath, invalidValue, elementType,
           constraintDescriptor);
     }
 
     public Builder<T> setConstraintDescriptor(
         ConstraintDescriptor<?> constraintDescriptor) {
       this.constraintDescriptor = constraintDescriptor;
+      return this;
+    }
+
+    public Builder<T> setElementType(ElementType elementType) {
+      this.elementType = elementType;
       return this;
     }
 
@@ -108,6 +115,7 @@ public final class ConstraintViolationImpl<T> implements ConstraintViolation<T>,
   private final Object leafBean;
   private final Path propertyPath;
   private final Object invalidValue;
+  private final ElementType elementType;
   private final ConstraintDescriptor<?> constraintDescriptor;
 
   /**
@@ -122,7 +130,8 @@ public final class ConstraintViolationImpl<T> implements ConstraintViolation<T>,
    */
   private ConstraintViolationImpl(String message, String messageTemplate,
       T rootBean, Class<T> rootBeanClass, Object leafBean, Path propertyPath,
-      Object invalidValue, ConstraintDescriptor<?> constraintDescriptor) {
+      Object invalidValue, ElementType elementType,
+      ConstraintDescriptor<?> constraintDescriptor) {
     super();
     this.message = message;
     this.messageTemplate = messageTemplate;
@@ -131,39 +140,78 @@ public final class ConstraintViolationImpl<T> implements ConstraintViolation<T>,
     this.leafBean = leafBean;
     this.propertyPath = propertyPath;
     this.invalidValue = invalidValue;
+    this.elementType = elementType;
     this.constraintDescriptor = constraintDescriptor;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof ConstraintViolationImpl)) {
+      return false;
+    }
+    ConstraintViolationImpl<?> other = (ConstraintViolationImpl<?>) o;
+    return (message == null ? other.message == null : message.equals(other.message)
+        && propertyPath == null ? other.propertyPath == null :
+          propertyPath.equals(other.propertyPath)
+        && rootBean == null ? other.rootBean == null : rootBean.equals(other.rootBean)
+        && leafBean == null ? other.leafBean == null : leafBean.equals(other.leafBean)
+        && elementType == null ? other.elementType == null : elementType.equals(other.elementType)
+        && invalidValue == null ? other.invalidValue == null :
+          invalidValue.equals(other.invalidValue));
+  }
+
+  @Override
   public ConstraintDescriptor<?> getConstraintDescriptor() {
     return constraintDescriptor;
   }
 
+  @Override
   public Object getInvalidValue() {
     return invalidValue;
   }
 
+  @Override
   public Object getLeafBean() {
     return leafBean;
   }
 
+  @Override
   public String getMessage() {
     return message;
   }
 
+  @Override
   public String getMessageTemplate() {
     return messageTemplate;
   }
 
+  @Override
   public Path getPropertyPath() {
     return propertyPath;
   }
 
+  @Override
   public T getRootBean() {
     return rootBean;
   }
 
+  @Override
   public Class<T> getRootBeanClass() {
     return rootBeanClass;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = message != null ? message.hashCode() : 0;
+    result = 31 * result + (propertyPath != null ? propertyPath.hashCode() : 0);
+    result = 31 * result + (rootBean != null ? rootBean.hashCode() : 0);
+    result = 31 * result + (leafBean != null ? leafBean.hashCode() : 0);
+    result = 31 * result + (elementType != null ? elementType.hashCode() : 0);
+    result = 31 * result + (invalidValue != null ? invalidValue.hashCode() : 0);
+    return result;
   }
 
   /**
@@ -171,9 +219,10 @@ public final class ConstraintViolationImpl<T> implements ConstraintViolation<T>,
    */
   @Override
   public String toString() {
-    return "message= " + message //
+    return "ConstraintViolationImpl(message= " + message //
         + ", path= " + propertyPath //
         + ", invalidValue=" + invalidValue //
-        + ", desc=" + constraintDescriptor;
+        + ", desc=" + constraintDescriptor //
+        + ", elementType=" + elementType + ")";
   }
 }

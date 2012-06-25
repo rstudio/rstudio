@@ -16,6 +16,7 @@
 package com.google.gwt.validation.client.impl;
 
 import java.lang.annotation.Annotation;
+import java.lang.annotation.ElementType;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -51,6 +52,7 @@ public final class ConstraintDescriptorImpl<T extends Annotation> implements
     private Set<ConstraintDescriptor<?>> composingConstraints =
         new HashSet<ConstraintDescriptor<?>>();
     private boolean reportAsSingleViolation;
+    private ElementType elementType;
 
     public Builder<T> addComposingConstraint(
         ConstraintDescriptor<?> composingConstraint) {
@@ -66,7 +68,8 @@ public final class ConstraintDescriptorImpl<T extends Annotation> implements
           constraintValidatorClasses, //
           attributes, //
           composingConstraints, //
-          reportAsSingleViolation);
+          reportAsSingleViolation, //
+          elementType);
     }
 
     public Builder<T> setAnnotation(T annotation) {
@@ -89,6 +92,11 @@ public final class ConstraintDescriptorImpl<T extends Annotation> implements
     public Builder<T> setConstraintValidatorClasses(
         List<Class<? extends ConstraintValidator<T, ?>>> constraintValidatorClasses) {
       this.constraintValidatorClasses = constraintValidatorClasses;
+      return this;
+    }
+    
+    public Builder<T> setElementType(ElementType elementType) {
+      this.elementType = elementType;
       return this;
     }
 
@@ -129,6 +137,7 @@ public final class ConstraintDescriptorImpl<T extends Annotation> implements
   private final Map<String, Object> attributes;
   private final Set<ConstraintDescriptor<?>> composingConstraints;
   private final boolean reportAsSingleViolation;
+  private ElementType elementType;
 
   private ConstraintDescriptorImpl(
       T annotation,
@@ -137,7 +146,8 @@ public final class ConstraintDescriptorImpl<T extends Annotation> implements
       List<Class<? extends ConstraintValidator<T, ?>>> constraintValidatorClasses,
       Map<String, Object> attributes,
       Set<ConstraintDescriptor<?>> composingConstraints,
-      boolean reportAsSingleViolation) {
+      boolean reportAsSingleViolation,
+      ElementType elementType) {
     super();
     this.annotation = annotation;
     this.groups = groups;
@@ -146,6 +156,7 @@ public final class ConstraintDescriptorImpl<T extends Annotation> implements
     this.attributes = attributes;
     this.composingConstraints = composingConstraints;
     this.reportAsSingleViolation = reportAsSingleViolation;
+    this.elementType = elementType;
   }
 
   public T getAnnotation() {
@@ -162,6 +173,10 @@ public final class ConstraintDescriptorImpl<T extends Annotation> implements
 
   public List<Class<? extends ConstraintValidator<T, ?>>> getConstraintValidatorClasses() {
     return constraintValidatorClasses;
+  }
+
+  public ElementType getElementType() {
+    return elementType;
   }
 
   public Set<Class<?>> getGroups() {

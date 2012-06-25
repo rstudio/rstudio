@@ -162,6 +162,7 @@ public abstract class AbstractGwtSpecificValidator<G> implements
         .setPropertyPath(messageAndPath.getPath()) //
         .setRootBean(context.getRootBean()) //
         .setRootBeanClass(context.getRootBeanClass()) //
+        .setElementType(constraintDescriptor.getElementType()) //
         .build();
     return violation;
   }

@@ -17,8 +17,6 @@ package org.hibernate.jsr303.tck.tests.constraints.application;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
-
 /**
  * Wraps {@link ValidationRequirementTest} .
  */
@@ -37,7 +35,6 @@ public class ValidationRequirementGwtTest extends GWTTestCase {
     return "org.hibernate.jsr303.tck.tests.constraints.application.TckTest";
   }
 
-  @Failing(issue = 5798)
   public void testClassLevelConstraints() {
     delegate.testClassLevelConstraints();
   }
