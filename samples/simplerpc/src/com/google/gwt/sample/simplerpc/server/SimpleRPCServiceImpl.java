@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -34,7 +34,7 @@ public class SimpleRPCServiceImpl extends RemoteServiceServlet implements
    * The server strings used to supply the information to <code>getString</code>.
    */
   private static final String[] SERVER_STRINGS = new String[] {
-      "Hello World", "Bonjour monde", "Hola Español"};
+      "Hello World", "Bonjour monde", "Hola EspaÃ±ol"};
 
   /**
    * Gets a map of strings associated with the given indexes.
@@ -54,7 +54,7 @@ public class SimpleRPCServiceImpl extends RemoteServiceServlet implements
    * Gets a string associated with a given index. In a real world application,
    * we would be consulting a database or some other server-side set of
    * information. Here we are just accessing a server side array.
-   * 
+   *
    * @param index index of string
    * @return the string associated with the given index
    * @throws SimpleRPCException
