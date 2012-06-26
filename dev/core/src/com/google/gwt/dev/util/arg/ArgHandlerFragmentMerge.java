@@ -30,7 +30,7 @@ public class ArgHandlerFragmentMerge extends ArgHandlerInt {
 
   @Override
   public String getPurpose() {
-    return "DEPRECATED (use -XfragmentMerge instead): " +
+    return "DEPRECATED (use -XfragmentCount instead): " +
       "Enables Fragment merging code splitter.";
   }
 

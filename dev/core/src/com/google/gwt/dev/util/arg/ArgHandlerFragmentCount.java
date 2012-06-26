@@ -18,7 +18,7 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerInt;
 
 /**
- * An ArgHandler to provide the -XfragmentMerge flag.
+ * An ArgHandler to provide the -XfragmentCount flag.
  */
 public class ArgHandlerFragmentCount extends ArgHandlerInt {
 
