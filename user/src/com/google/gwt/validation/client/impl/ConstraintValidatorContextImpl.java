@@ -130,10 +130,7 @@ public final class ConstraintValidatorContextImpl<A extends Annotation, T>
     }
 
     public ConstraintValidatorContext addConstraintViolation() {
-      ConstraintViolation<T> violation = ConstraintViolationImpl.<T> builder().setPropertyPath(
-          path).setMessageTemplate(messageTemplate).build();
-
-      parent.context.violations.add(violation);
+      messages.add(new MessageAndPath(path, messageTemplate));
       return parent.context;
     }
 

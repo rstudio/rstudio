@@ -17,8 +17,6 @@ package org.hibernate.jsr303.tck.tests.validation.validatorcontext;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
-
 /**
  * Test wrapper for {@link ConstraintValidatorContextTest}.
  */
@@ -39,7 +37,6 @@ public class ConstraintValidatorContextGwtTest extends GWTTestCase {
     delegate.testDisableDefaultErrorWithCustomErrorNoSubNode();
   }
 
-  @Failing(issue = 6907)
   public void testDisableDefaultErrorWithCustomErrorWithSubNode() {
     delegate.testDisableDefaultErrorWithCustomErrorWithSubNode();
   }
