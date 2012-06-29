@@ -56,6 +56,7 @@ import java.lang.annotation.ElementType;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -435,6 +436,10 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
           Class<?> valueType = valueMethod.getReturnType();
           if (valueType.isArray()
               && Annotation.class.isAssignableFrom(valueType.getComponentType())) {
+            if (Modifier.isAbstract(valueMethod.getModifiers())) {
+              // handle edge case where interface is marked "abstract"
+              valueMethod.setAccessible(true);
+            }
             Annotation[] valueAnnotions = (Annotation[]) valueMethod.invoke(annotation);
             for (Annotation annotation2 : valueAnnotions) {
               if (expectedAnnotation.equals(annotation2)) {

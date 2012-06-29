@@ -17,7 +17,6 @@ package org.hibernate.jsr303.tck.tests.constraints.constraintdefinition;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
 import org.hibernate.jsr303.tck.util.client.NonTckTest;
 
 /**
@@ -25,26 +24,19 @@ import org.hibernate.jsr303.tck.util.client.NonTckTest;
  */
 public class ConstraintDefinitionsGwtTest extends GWTTestCase {
 
-  // TODO(nchalko) Generating Person validator fails.
-  // see http://code.google.com/p/google-web-toolkit/issues/detail?id=6284
-  // private ConstraintDefinitionsTest delegate = new
-  // ConstraintDefinitionsTest();
+  private ConstraintDefinitionsTest delegate = new ConstraintDefinitionsTest();
 
   @Override
   public String getModuleName() {
     return "org.hibernate.jsr303.tck.tests.constraints.constraintdefinition.TckTest";
   }
 
-  @Failing(issue = 6284)
   public void testConstraintWithCustomAttributes() {
-    fail();
-    // delegate.testConstraintWithCustomAttributes();
+    delegate.testConstraintWithCustomAttributes();
   }
 
-  @Failing(issue = 6284)
   public void testDefaultGroupAssumedWhenNoGroupsSpecified() {
-    fail();
-    // delegate.testDefaultGroupAssumedWhenNoGroupsSpecified();
+    delegate.testDefaultGroupAssumedWhenNoGroupsSpecified();
   }
 
   @NonTckTest
