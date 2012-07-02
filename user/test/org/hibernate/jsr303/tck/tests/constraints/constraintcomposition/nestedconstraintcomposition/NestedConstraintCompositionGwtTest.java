@@ -17,7 +17,6 @@ package org.hibernate.jsr303.tck.tests.constraints.constraintcomposition.nestedc
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
 import org.hibernate.jsr303.tck.util.client.NonTckTest;
 
 /**
@@ -25,7 +24,7 @@ import org.hibernate.jsr303.tck.util.client.NonTckTest;
  */
 public class NestedConstraintCompositionGwtTest extends GWTTestCase {
 
-  //private NestedConstraintCompositionTest delegate = new NestedConstraintCompositionTest();
+  private NestedConstraintCompositionTest delegate = new NestedConstraintCompositionTest();
 
 
   @Override
@@ -33,28 +32,20 @@ public class NestedConstraintCompositionGwtTest extends GWTTestCase {
     return "org.hibernate.jsr303.tck.tests.constraints.constraintcomposition.nestedconstraintcomposition.TckTest";
   }
 
-  @Failing(issue = 1744804)
   public void testCompositeConstraint1WithNestedConstraintSingleViolation() {
-    //delegate.testCompositeConstraint1WithNestedConstraintSingleViolation();
-    fail();
+    delegate.testCompositeConstraint1WithNestedConstraintSingleViolation();
   }
 
-  @Failing(issue = 1744804)
   public void testCompositeConstraint2WithNestedConstraintSingleViolation() {
-    //delegate.testCompositeConstraint2WithNestedConstraintSingleViolation();
-    fail();
+    delegate.testCompositeConstraint2WithNestedConstraintSingleViolation();
   }
 
-  @Failing(issue = 1744804)
   public void testCompositeConstraint3WithNestedConstraint() {
-    //delegate.testCompositeConstraint3WithNestedConstraint();
-    fail();
+    delegate.testCompositeConstraint3WithNestedConstraint();
   }
 
-  @Failing(issue = 1744804)
   public void testCompositeConstraint4WithNestedConstraintSingleViolation() {
-    //delegate.testCompositeConstraint4WithNestedConstraintSingleViolation();
-    fail();
+    delegate.testCompositeConstraint4WithNestedConstraintSingleViolation();
   }
   
   @NonTckTest

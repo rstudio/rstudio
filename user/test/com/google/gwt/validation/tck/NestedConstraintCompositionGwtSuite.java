@@ -17,19 +17,17 @@ package com.google.gwt.validation.tck;
 
 import junit.framework.Test;
 
-import org.hibernate.jsr303.tck.tests.constraints.constraintcomposition.ConstraintCompositionCompileTest;
-import org.hibernate.jsr303.tck.tests.constraints.constraintcomposition.ConstraintCompositionGwtTest;
+import org.hibernate.jsr303.tck.tests.constraints.constraintcomposition.nestedconstraintcomposition.NestedConstraintCompositionGwtTest;
 import org.hibernate.jsr303.tck.util.TckTestSuiteWrapper;
 
 /**
- * Tck Tests for the {@code constraints composition} package.
+ * Tck Tests for the {@code nested constraints composition} package.
  */
-public class ConstraintCompositionGwtSuite {
+public class NestedConstraintCompositionGwtSuite {
   public static Test suite() {
     TckTestSuiteWrapper suite = new TckTestSuiteWrapper(
-        "TCK for GWT Validation, constraints composition package");
-    suite.addTestSuite(ConstraintCompositionCompileTest.class);
-    suite.addTestSuite(ConstraintCompositionGwtTest.class);
+        "TCK for GWT Validation, nested constraints composition package");
+    suite.addTestSuite(NestedConstraintCompositionGwtTest.class);
     return suite;
   }
 }
