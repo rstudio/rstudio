@@ -462,6 +462,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // are build tools enabled (currently just for package projects but plan
    // on making this more flexible)
    bool buildToolsEnabled =
+      userSettings().buildToolsEnabled() &&
       projects::projectContext().hasProject() &&
       projects::projectContext().directory().childPath("DESCRIPTION").exists();
    sessionInfo["build_tools_enabled"] = buildToolsEnabled;
