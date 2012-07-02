@@ -65,6 +65,7 @@ import org.rstudio.studio.client.htmlpreview.events.ShowHTMLPreviewEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
+import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
 import org.rstudio.studio.client.server.ServerError;
@@ -117,6 +118,7 @@ public class TextEditingTarget implements EditingTarget
 
    private static final String NOTEBOOK_TITLE = "notebook_title";
    private static final String NOTEBOOK_AUTHOR = "notebook_author";
+   private static final String NOTEBOOK_TYPE = "notebook_type";
 
    private static final MyCommandBinder commandBinder =
          GWT.create(MyCommandBinder.class);
@@ -2001,22 +2003,39 @@ public class TextEditingTarget implements EditingTarget
 
    private void generateNotebook(final Command executeOnSuccess)
    {
+      // default title
       String defaultTitle = docUpdateSentinel_.getProperty(NOTEBOOK_TITLE);
-      if (defaultTitle == null)
+      if (StringUtil.isNullOrEmpty(defaultTitle))
          defaultTitle = FileSystemItem.getNameFromPath(docUpdateSentinel_.getPath());
+      
+      // default author
       String defaultAuthor = docUpdateSentinel_.getProperty(NOTEBOOK_AUTHOR);
-      if (defaultAuthor == null)
-         defaultAuthor = session_.getSessionInfo().getUserIdentity();
-      CompileNotebookOptionsDialog dialog = new CompileNotebookOptionsDialog(getId(), defaultTitle, defaultAuthor, new OperationWithInput<CompileNotebookOptions>()
+      if (StringUtil.isNullOrEmpty(defaultAuthor))
+      {
+         defaultAuthor = prefs_.compileNotebookOptions().getValue().getAuthor();
+         if (StringUtil.isNullOrEmpty(defaultAuthor))
+            defaultAuthor = session_.getSessionInfo().getUserIdentity();
+      }
+      
+      // default type
+      String defaultType = docUpdateSentinel_.getProperty(NOTEBOOK_TYPE);
+      if (StringUtil.isNullOrEmpty(defaultType))
+      {
+         defaultType = prefs_.compileNotebookOptions().getValue().getType();
+         if (StringUtil.isNullOrEmpty(defaultType))
+            defaultType = CompileNotebookOptions.TYPE_DEFAULT;
+      }
+      
+      CompileNotebookOptionsDialog dialog = new CompileNotebookOptionsDialog(
+            getId(), 
+            defaultTitle, 
+            defaultAuthor, 
+            defaultType,
+            new OperationWithInput<CompileNotebookOptions>()
       {
          @Override
          public void execute(CompileNotebookOptions input)
-         {
-            HashMap<String, String> changedProperties = new HashMap<String, String>();
-            changedProperties.put(NOTEBOOK_TITLE, input.getNotebookTitle());
-            changedProperties.put(NOTEBOOK_AUTHOR, input.getNotebookAuthor());
-            docUpdateSentinel_.modifyProperties(changedProperties, null);
-
+         { 
             server_.createNotebook(
                           input, 
                           new SimpleRequestCallback<CompileNotebookResult>()
@@ -2036,6 +2055,25 @@ public class TextEditingTarget implements EditingTarget
                   }
                }
             });
+            
+            // save options for this document
+            HashMap<String, String> changedProperties = new HashMap<String, String>();
+            changedProperties.put(NOTEBOOK_TITLE, input.getNotebookTitle());
+            changedProperties.put(NOTEBOOK_AUTHOR, input.getNotebookAuthor());
+            changedProperties.put(NOTEBOOK_TYPE, input.getNotebookType());
+            docUpdateSentinel_.modifyProperties(changedProperties, null);
+
+            // save global prefs
+            CompileNotebookPrefs prefs = CompileNotebookPrefs.create(
+                                          input.getNotebookAuthor(), 
+                                          input.getNotebookType());
+            if (!CompileNotebookPrefs.areEqual(
+                                  prefs, 
+                                  prefs_.compileNotebookOptions().getValue()))
+            {
+               prefs_.compileNotebookOptions().setGlobalValue(prefs);
+               prefs_.writeUIPrefs();
+            }
          }
       }
       );

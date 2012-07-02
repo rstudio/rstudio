@@ -17,7 +17,9 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Cursor;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Composite;
@@ -25,6 +27,21 @@ import com.google.gwt.user.client.ui.Image;
 
 public class HelpButton extends Composite
 {
+   public static void addHelpButton(SelectWidget selectWidget, 
+                                    String rstudioLinkName)
+   {
+      selectWidget.addWidget(createHelpButton(rstudioLinkName));
+   }
+  
+   public static HelpButton createHelpButton(String rstudioLinkName)
+   {
+      HelpButton helpButton = new HelpButton(rstudioLinkName);
+      Style style = helpButton.getElement().getStyle();
+      style.setMarginTop(3, Unit.PX);
+      style.setMarginLeft(4, Unit.PX);
+      return helpButton;
+   }
+   
    public HelpButton(final String rstudioLinkName)
    {
       Image helpImage = new Image(ThemeResources.INSTANCE.help());

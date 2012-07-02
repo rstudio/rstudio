@@ -16,6 +16,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
@@ -126,6 +127,12 @@ public class UIPrefsAccessor extends Prefs
    {
       return object("save_plot_as_pdf_options",
                     SavePlotAsPdfOptions.createDefault());
+   }
+   
+   public PrefValue<CompileNotebookPrefs> compileNotebookOptions()
+   {
+      return object("compile_notebook_options",
+                    CompileNotebookPrefs.createDefault());
    }
    
    public PrefValue<Boolean> newProjGitInit()

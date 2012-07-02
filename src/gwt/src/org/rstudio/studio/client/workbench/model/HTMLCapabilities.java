@@ -18,19 +18,11 @@ public class HTMLCapabilities extends JavaScriptObject
 {
    protected HTMLCapabilities() {}
  
-   public native final boolean isRHtmlSupported() /*-{
-      return this.r_html_supported;
-   }-*/;
-   
-   public native final String getRHtmlRequiredVersion() /*-{
-      return this.r_html_version;
-   }-*/;
-   
    public native final boolean isRMarkdownSupported() /*-{
       return this.r_markdown_supported;
    }-*/;
    
-   public native final String getRMarkdownRequiredVersion() /*-{
-      return this.r_markdown_version;
+   public native final boolean isStitchSupported() /*-{
+      return this.stitch_supported;
    }-*/;
 }
