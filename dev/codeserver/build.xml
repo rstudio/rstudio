@@ -37,6 +37,7 @@
 
   <target name="build" depends="compile" description="builds gwt-codeserver.jar">
     <gwt.jar>
+      <fileset dir="${src}" />
       <fileset dir="${javac.out}"/>
       <fileset dir="java">
         <include name="**/*.html"/>
