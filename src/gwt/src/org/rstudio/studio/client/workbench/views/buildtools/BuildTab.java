@@ -53,21 +53,30 @@ public class BuildTab extends DelayLoadWorkbenchTab<Build>
          public void onSessionInit(SessionInitEvent sie)
          {
             SessionInfo sessionInfo = session.getSessionInfo();
-            
-            String type = sessionInfo.getBuildToolsType();
-                
-            // adapt or remove package-specific commands if this isn't a package
-            if (!type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
+
+            if (sessionInfo.getBuildToolsEnabled())
             {
-               commands.checkPackage().remove();
-               commands.buildAll().setMenuLabel("_Build All");
+               // adapt or remove package commands if this isn't a package
+               String type = sessionInfo.getBuildToolsType();
+               if (!type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
+               {
+                  commands.checkPackage().remove();
+                  commands.buildAll().setMenuLabel("_Build All");
+               }
+               
+               // remove all other commands if there are no build tools
+               if (type.equals(SessionInfo.BUILD_TOOLS_NONE))
+               {
+                  commands.buildAll().remove();
+                  commands.activateBuild().remove();
+               }
             }
-            
-            // remove all other commands if there are no build tools
-            if (type.equals(SessionInfo.BUILD_TOOLS_NONE))
+            else // build tools disabled
             {
                commands.buildAll().remove();
+               commands.checkPackage().remove();
                commands.activateBuild().remove();
+               commands.buildToolsProjectSetup().remove();
             }
             
            
@@ -78,7 +87,9 @@ public class BuildTab extends DelayLoadWorkbenchTab<Build>
    @Override
    public boolean isSuppressed()
    {
-      return session_.getSessionInfo().getBuildToolsType().equals("None");
+      return !session_.getSessionInfo().getBuildToolsEnabled() ||
+             session_.getSessionInfo().getBuildToolsType().equals(
+                                                 SessionInfo.BUILD_TOOLS_NONE);
    }
 
    private Session session_;

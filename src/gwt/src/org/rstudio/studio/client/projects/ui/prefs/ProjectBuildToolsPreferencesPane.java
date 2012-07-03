@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
-// TODO: make sure build stuff can't sneak in
 // TODO: make all label text, etc. dynamic for non package build-all
 // TODO: add Rebuild All command for makefiles
 // TODO: add Clean All command for makefiles (with toolbar button)
