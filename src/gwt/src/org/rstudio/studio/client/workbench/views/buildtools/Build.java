@@ -41,24 +41,21 @@ public class Build extends BasePresenter
       globalDisplay_.showErrorMessage("Build Package", "Build Package");
    }
    
-   void onRebuildAll()
-   {
-      globalDisplay_.showErrorMessage("Rebuild All", "Rebuild All");
-   }
-   
-   void onCleanAll()
-   {
-      globalDisplay_.showErrorMessage("Clean All", "Clean All");
-   }
-   
    void onCheckPackage()
    {
       globalDisplay_.showErrorMessage("Check Package", "Check Package");
    }
    
    
-  
+   void onRebuildAll()
+   {
+   }
    
+   void onCleanAll()
+   {
+   }
+   
+  
    private final GlobalDisplay globalDisplay_;
    
    @SuppressWarnings("unused")
