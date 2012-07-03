@@ -18,6 +18,8 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.widget.HorizontalCenterPanel;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -43,10 +45,22 @@ public class BuildPane extends WorkbenchPane implements Build.Display
       
       // always include build all
       toolbar.addLeftWidget(commands_.buildAll().createToolbarButton());
+      
+      // makefiles get extra build menu entries
+      String type = session_.getSessionInfo().getBuildToolsType();
+      if (type.equals(SessionInfo.BUILD_TOOLS_MAKEFILE))
+      {
+         ToolbarPopupMenu buildMenu = new ToolbarPopupMenu();
+         buildMenu.addItem(commands_.buildAll().createMenuItem(false));
+         buildMenu.addItem(commands_.rebuildAll().createMenuItem(false));
+         buildMenu.addItem(commands_.cleanAll().createMenuItem(false));
+         ToolbarButton buildMenuButton = new ToolbarButton(buildMenu, true);
+         toolbar.addLeftWidget(buildMenuButton);
+      }
+      
       toolbar.addLeftSeparator();
       
       // packages get checkPackage
-      String type = session_.getSessionInfo().getBuildToolsType();
       if (type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
       {
          toolbar.addLeftWidget(commands_.checkPackage().createToolbarButton());

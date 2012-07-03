@@ -35,6 +35,10 @@ public class BuildTab extends DelayLoadWorkbenchTab<Build>
       @Handler
       public abstract void onBuildAll();
       @Handler
+      public abstract void onRebuildAll();
+      @Handler
+      public abstract void onCleanAll();
+      @Handler
       public abstract void onCheckPackage();
    }
 
@@ -56,18 +60,30 @@ public class BuildTab extends DelayLoadWorkbenchTab<Build>
 
             if (sessionInfo.getBuildToolsEnabled())
             {
+               
+               
                // adapt or remove package commands if this isn't a package
                String type = sessionInfo.getBuildToolsType();
                if (!type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
                {
                   commands.checkPackage().remove();
                   commands.buildAll().setMenuLabel("_Build All");
+                  commands.buildAll().setDesc("Build all");
+               }
+               
+               // remove makefile commands if this isn't a makefile
+               if (!type.equals(SessionInfo.BUILD_TOOLS_MAKEFILE))
+               {
+                  commands.rebuildAll().remove();
+                  commands.cleanAll().remove();
                }
                
                // remove all other commands if there are no build tools
                if (type.equals(SessionInfo.BUILD_TOOLS_NONE))
                {
                   commands.buildAll().remove();
+                  commands.rebuildAll().remove();
+                  commands.cleanAll().remove();
                   commands.activateBuild().remove();
                }
             }

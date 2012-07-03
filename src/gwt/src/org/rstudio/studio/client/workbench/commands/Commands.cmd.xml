@@ -243,6 +243,8 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <menu label="_Build">
             <cmd refid="buildAll"/>
+            <cmd refid="rebuildAll"/>
+            <cmd refid="cleanAll"/>
             <cmd refid="checkPackage"/>
             <separator/>
             <cmd refid="buildToolsProjectSetup"/>
@@ -1012,6 +1014,15 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Build"
         menuLabel="_Build Package"
         desc="Build package"/>
+        
+   <cmd id="rebuildAll"
+        menuLabel="_Rebuild All"
+        desc="Rebuild all"/>
+        
+   <cmd id="cleanAll"
+        menuLabel="_Clean All"
+        buttonLabel="Clean"
+        desc="Clean all"/>
 
    <cmd id="checkPackage"
         buttonLabel="Check"
@@ -1019,7 +1030,8 @@ well as menu structures (for main menu and popup menus).
         desc="R CMD check"/>
 
    <cmd id="buildToolsProjectSetup"
-        menuLabel="Project _Setup..."/>
+        menuLabel="Configure Build _Tools..."
+        desc="Configure build tools"/>
  
    <cmd id="undoDummy"
         menuLabel="_Undo"/>

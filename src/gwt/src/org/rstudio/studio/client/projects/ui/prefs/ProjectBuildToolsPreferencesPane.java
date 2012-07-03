@@ -12,13 +12,6 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
-// TODO: make all label text, etc. dynamic for non package build-all
-// TODO: add Rebuild All command for makefiles
-// TODO: add Clean All command for makefiles (with toolbar button)
-// TODO: add drop down menu to build (rebuild, clean, config?)
-// TODO: consider renaming "Project Setup" to Configure Build Tools
-
-
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
@@ -78,8 +71,12 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
    {
       public BuildTypeSelectWidget()
       {
-         super("Project build type:",
-               new String[]{"None", "Package", "Makefile", "Custom"});
+         super("Project build tools:",
+               new String[]{"(None)", "Package", "Makefile", "Custom"},
+               new String[]{"None", "Package", "Makefile", "Custom"},
+               false,
+               true,
+               false);
       }
    }
    
