@@ -54,8 +54,10 @@ RClientMetrics get()
    
 void set(const RClientMetrics& metrics)
 {
-   // set console width
-   r::options::setOptionWidth(metrics.consoleWidth);
+   // set console width (if it's within the valid range -- if it's not
+   // then an error will be thrown)
+   if (metrics.consoleWidth >= 10 && metrics.consoleWidth <= 10000)
+      r::options::setOptionWidth(metrics.consoleWidth);
    
    // set graphics size, however don't do anything if width or height is less
    // than or equal to 0) 

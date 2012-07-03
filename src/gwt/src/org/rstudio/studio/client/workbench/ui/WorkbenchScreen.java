@@ -230,22 +230,11 @@ public class WorkbenchScreen extends Composite
       // console width
       int consoleWidth = paneManager_.getConsole().getCharacterWidth();
 
-      // if the console is hidden then just use its last value. we don't
-      // actually need a try/catch here but we are putting this into
-      // v0.96.316 at the very last minute and want to ensure that
-      // no unexpected behavior occurs.
-      // TODO: remove try/catch once we start 0.97 development
-      try
-      {
-         if (paneManager_.getConsole().getOffsetWidth() <= 0 &&
-             lastMetrics_ != null)
-         {
-            consoleWidth = lastMetrics_.getConsoleWidth();
-         }
-      }
-      catch(Exception e)
-      {
-      }
+      // if the console is hidden then just use its last value. if there
+      // has never been a valid value then then lastMetrics_ console width
+      // will be 0, which the server will know to ignore
+      if (paneManager_.getConsole().getOffsetWidth() <= 0)
+         consoleWidth = lastMetrics_.getConsoleWidth();
       
       // plots size (don't allow negative metrics)
       WorkbenchTabPanel plotPanel = paneManager_.getOwnerTabPanel(Tab.Plots);
