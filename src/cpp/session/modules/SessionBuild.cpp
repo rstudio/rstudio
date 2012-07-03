@@ -56,9 +56,12 @@ private:
 
       isRunning_ = true;
 
-      // R binary
-      FilePath rProgram;
-      Error error = module_context::rScriptPath(&rProgram);
+      // project directory
+      FilePath projectDir =  projects::projectContext().directory();
+
+      // R bin directory
+      FilePath rBinDir;
+      Error error = module_context::rBinDir(&rBinDir);
       if (error)
       {
          std::string msg = "Error attempting to locate R binary: " +
@@ -68,12 +71,16 @@ private:
          return;
       }
 
-      // project directory
-      FilePath projectDir =  projects::projectContext().directory();
-
-      // args
+      // R binary and intial args
+      FilePath rProgram;
       std::vector<std::string> args;
+  #ifdef _WIN32
+      rProgram = rBinDir.childPath("Rcmd.exe");
+  #else
+      rProgram = rBinDir.childPath("R");
       args.push_back("CMD");
+#endif
+
       if (type == "build-all")
       {
          args.push_back("build");

@@ -680,14 +680,25 @@ FilePath findProgram(const std::string& name)
    }
 }
 
-Error rScriptPath(FilePath* pRScriptPath)
+Error rBinDir(core::FilePath* pRBinDirPath)
 {
    std::string rHomeBin;
    r::exec::RFunction rHomeBinFunc("R.home", "bin");
    Error error = rHomeBinFunc.call(&rHomeBin);
    if (error)
       return error;
-   FilePath rHomeBinPath(rHomeBin);
+
+   *pRBinDirPath = FilePath(rHomeBin);
+   return Success();
+}
+
+
+Error rScriptPath(FilePath* pRScriptPath)
+{
+   FilePath rHomeBinPath;
+   Error error = rBinDir(&rHomeBinPath);
+   if (error)
+      return error;
 
 #ifdef _WIN32
 *pRScriptPath = rHomeBinPath.complete("Rterm.exe");

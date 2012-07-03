@@ -68,6 +68,7 @@ core::FilePath tempFile(const std::string& prefix,
 core::FilePath findProgram(const std::string& name);
 
 // find the location of the R script
+core::Error rBinDir(core::FilePath* pRBinDirPath);
 core::Error rScriptPath(core::FilePath* pRScriptPath);
 
 // register a handler for rBrowseUrl
