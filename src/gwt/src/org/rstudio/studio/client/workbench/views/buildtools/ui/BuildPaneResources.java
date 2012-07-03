@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.buildtools.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
 
 public interface BuildPaneResources extends ClientBundle
 {  
@@ -28,6 +29,7 @@ public interface BuildPaneResources extends ClientBundle
    @Source("BuildPane.css")
    Styles styles();
   
+   ImageResource iconBuild();
    
    public static BuildPaneResources INSTANCE = 
       (BuildPaneResources)GWT.create(BuildPaneResources.class) ;

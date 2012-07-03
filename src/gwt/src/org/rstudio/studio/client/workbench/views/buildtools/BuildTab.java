@@ -25,6 +25,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
+import org.rstudio.studio.client.workbench.views.buildtools.ui.BuildPaneResources;
 
 
 public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
@@ -68,8 +69,11 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
                if (!type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
                {
                   commands.checkPackage().remove();
+                  commands.buildAll().setImageResource(
+                                    BuildPaneResources.INSTANCE.iconBuild());
                   commands.buildAll().setMenuLabel("_Build All");
                   commands.buildAll().setDesc("Build all");
+                  
                }
                
                // remove makefile commands if this isn't a makefile

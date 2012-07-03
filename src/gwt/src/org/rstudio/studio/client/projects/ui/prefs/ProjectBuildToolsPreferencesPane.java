@@ -71,7 +71,7 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
    {
       public BuildTypeSelectWidget()
       {
-         super("Project build tools:",
+         super("Build tools:",
                new String[]{"(None)", "Package"},
                new String[]{"None", "Package"},
                false,
