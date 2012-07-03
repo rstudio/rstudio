@@ -28,6 +28,11 @@
 namespace core {
 namespace r_util {
 
+const char * const kBuildTypeNone = "None";
+const char * const kBuildTypePackage = "Package";
+const char * const kBuildTypeMakefile = "Makefile";
+const char * const kBuildTypeCustom = "Custom";
+
 namespace {
 
 Error requiredFieldError(const std::string& field,
@@ -104,6 +109,23 @@ bool interpretBoolValue(const std::string& value, bool* pValue)
    }
 }
 
+bool interpretBuildTypeValue(const std::string& value, std::string* pValue)
+{
+   if (value == "" ||
+       value == kBuildTypeNone ||
+       value == kBuildTypePackage ||
+       value == kBuildTypeMakefile ||
+       value == kBuildTypeCustom)
+   {
+      *pValue = value;
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
 
 bool interpretIntValue(const std::string& value, int* pValue)
 {
@@ -116,6 +138,17 @@ bool interpretIntValue(const std::string& value, int* pValue)
    {
       return false;
    }
+}
+
+std::string detectBuildType(const FilePath& projectFilePath)
+{
+   FilePath projectDir = projectFilePath.parent();
+   if (projectDir.childPath("DESCRIPTION").exists())
+      return kBuildTypePackage;
+   else if (projectDir.childPath("Makefile").exists())
+      return kBuildTypeMakefile;
+   else
+      return kBuildTypeNone;
 }
 
 } // anonymous namespace
@@ -317,6 +350,65 @@ Error readProjectFile(const FilePath& projectFilePath,
       *pProvidedDefaults = true;
    }
 
+   // extract build type
+   it = dcfFields.find("BuildType");
+   if (it != dcfFields.end())
+   {
+      if (!interpretBuildTypeValue(it->second, &(pConfig->buildType)))
+         return requiredFieldError("BuildType", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->buildType = defaultConfig.buildType;
+   }
+
+   // extract package path
+   it = dcfFields.find("PackagePath");
+   if (it != dcfFields.end())
+   {
+      pConfig->packagePath = it->second;
+   }
+   else
+   {
+      pConfig->packagePath = "";
+   }
+
+   // extract makefile path
+   it = dcfFields.find("MakefilePath");
+   if (it != dcfFields.end())
+   {
+      pConfig->makefilePath = it->second;
+   }
+   else
+   {
+      pConfig->makefilePath = "";
+   }
+
+   // extract custom script path
+   it = dcfFields.find("CustomScriptPath");
+   if (it != dcfFields.end())
+   {
+      pConfig->customScriptPath = it->second;
+   }
+   else
+   {
+      pConfig->customScriptPath = "";
+   }
+
+   // auto-detect build type if necessary
+   if (pConfig->buildType.empty())
+   {
+      // try to detect the build type
+      pConfig->buildType = detectBuildType(projectFilePath);
+
+      // set *pProvidedDefaults only if we successfully auto-detected
+      // (this will prevent us from writing None into the project file,
+      // thus allowing auto-detection to work in the future if the user
+      // adds a DESCRIPTION or Makefile
+      if (pConfig->buildType != kBuildTypeNone)
+         *pProvidedDefaults = true;
+   }
+
    return Success();
 }
 
@@ -353,6 +445,48 @@ Error writeProjectFile(const FilePath& projectFilePath,
         config.defaultSweaveEngine %
         config.defaultLatexProgram %
         config.rootDocument);
+
+   // add build-specific settings if necessary
+   if (!config.buildType.empty())
+   {
+      // if the build type is None and the detected build type is None
+      // then don't write any build type into the file (so that auto-detection
+      // has a chance to work in the future if the user turns this project
+      // into a package or adds a Makefile)
+      if (config.buildType != kBuildTypeNone ||
+          detectBuildType(projectFilePath) != kBuildTypeNone)
+      {
+         // build type
+         boost::format buildFmt("\nBuildType: %1%\n");
+         std::string build = boost::str(buildFmt % config.buildType);
+
+         // extra fields
+         if (config.buildType == kBuildTypePackage)
+         {
+            if (!config.packagePath.empty())
+            {
+               boost::format pkgFmt("PackagePath: %1%\n");
+               build.append(boost::str(pkgFmt % config.packagePath));
+            }
+         }
+         else if (config.buildType == kBuildTypeMakefile)
+         {
+            if (!config.makefilePath.empty())
+            {
+               boost::format makefileFmt("MakefilePath: %1%\n");
+               build.append(boost::str(makefileFmt % config.makefilePath));
+            }
+         }
+         else if (config.buildType == kBuildTypeCustom)
+         {
+            boost::format customFmt("CustomScriptPath: %1%\n");
+            build.append(boost::str(customFmt % config.customScriptPath));
+         }
+
+         // add to contents
+         contents.append(build);
+      }
+   }
 
    // write it
    return writeStringToFile(projectFilePath,

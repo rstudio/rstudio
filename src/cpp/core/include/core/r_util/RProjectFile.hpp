@@ -32,6 +32,11 @@ enum YesNoAskValue
    AskValue = 3
 };
 
+extern const char * const kBuildTypeNone;
+extern const char * const kBuildTypePackage;
+extern const char * const kBuildTypeMakefile;
+extern const char * const kBuildTypeCustom;
+
 std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val);
 
 struct RProjectConfig
@@ -47,7 +52,11 @@ struct RProjectConfig
         encoding(),
         defaultSweaveEngine(),
         defaultLatexProgram(),
-        rootDocument()
+        rootDocument(),
+        buildType(),
+        packagePath(),
+        makefilePath(),
+        customScriptPath()
    {
    }
 
@@ -62,6 +71,10 @@ struct RProjectConfig
    std::string defaultSweaveEngine;
    std::string defaultLatexProgram;
    std::string rootDocument;
+   std::string buildType;
+   std::string packagePath;
+   std::string makefilePath;
+   std::string customScriptPath;
 };
 
 

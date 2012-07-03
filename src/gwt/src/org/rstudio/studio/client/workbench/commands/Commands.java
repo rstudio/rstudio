@@ -237,6 +237,12 @@ public abstract class
 
    public abstract AppCommand showWarningBar();
  
+   // Build
+   public abstract AppCommand buildAll();
+   public abstract AppCommand checkPackage();
+   public abstract AppCommand buildToolsProjectSetup();
+   public abstract AppCommand activateBuild();
+   
    // Clipboard placeholders
    public abstract AppCommand undoDummy();
    public abstract AppCommand redoDummy();

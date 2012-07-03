@@ -18,12 +18,10 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SelectWidget;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.common.vcs.VCSHelpLink;
-import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsContext;
@@ -47,12 +45,10 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    @Inject
    public ProjectSourceControlPreferencesPane(final Session session,
                                               GlobalDisplay globalDisplay,
-                                              EventBus eventBus,
                                               GitServerOperations server)
    {
       session_ = session;
       globalDisplay_ = globalDisplay;
-      eventBus_ = eventBus;
       server_ = server;
       
       vcsSelect_ = new SelectWidget("Version control system:", new String[]{}); 
@@ -274,36 +270,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       });
       
    }
-   
-   private void promptToRestart()
-   {
-      globalDisplay_.showYesNoMessage(
-         MessageDialog.QUESTION,
-         "Confirm Restart RStudio", 
-         "You need to restart RStudio in order for this change to take " +
-         "effect. Do you want to do this now?",
-         new Operation()
-         {
-            @Override
-            public void execute()
-            {
-               forceClosed(new Command() {
-
-                  @Override
-                  public void execute()
-                  {
-                     SwitchToProjectEvent event = new SwitchToProjectEvent(
-                           session_.getSessionInfo().getActiveProjectFile());
-                     eventBus_.fireEvent(event);
-                     
-                  }
-                  
-               });
-            }  
-         },
-         true);
-   }
-   
+      
    private class OriginLabel extends Composite
    {
       public OriginLabel()
@@ -338,7 +305,6 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    
    private final Session session_;
    private final GlobalDisplay globalDisplay_;
-   private final EventBus eventBus_;
    private final GitServerOperations server_;
    
    private SelectWidget vcsSelect_;

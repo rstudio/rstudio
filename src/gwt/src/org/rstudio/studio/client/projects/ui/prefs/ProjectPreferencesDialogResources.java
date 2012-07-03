@@ -15,6 +15,7 @@ package org.rstudio.studio.client.projects.ui.prefs;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
 
 public interface ProjectPreferencesDialogResources extends ClientBundle
 {
@@ -32,9 +33,10 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
       String vcsNoOriginUrl();
    }
   
-
    @Source("ProjectPreferencesDialog.css")
    Styles styles();
+  
+   ImageResource iconBuild();
    
    static ProjectPreferencesDialogResources INSTANCE = (ProjectPreferencesDialogResources)GWT.create(ProjectPreferencesDialogResources.class);
 }

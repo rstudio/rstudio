@@ -476,6 +476,26 @@ public class Projects implements OpenProjectFileHandler,
    }
    
    @Handler
+   public void onBuildToolsProjectSetup()
+   {
+   // check whether there is a project active
+      if (!hasActiveProject())
+      { 
+         globalDisplay_.showMessage(
+               MessageDialog.INFO, 
+               "No Active Project", 
+               "Build tools can only be configured from within an " +
+               "RStudio project.");
+        
+      }
+      else
+      {
+         showProjectOptions(ProjectPreferencesDialog.BUILD);
+      }
+   }
+   
+   
+   @Handler
    public void onVersionControlProjectSetup()
    {
       // check whether there is a project active

@@ -83,6 +83,10 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["default_sweave_engine"] = config.defaultSweaveEngine;
    configJson["default_latex_program"] = config.defaultLatexProgram;
    configJson["root_document"] = config.rootDocument;
+   configJson["build_type"] = config.buildType;
+   configJson["package_path"] = config.packagePath;
+   configJson["makefile_path"] = config.makefilePath;
+   configJson["custom_script_path"] = config.customScriptPath;
    return configJson;
 }
 
@@ -179,6 +183,12 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   error = json::readObject(
+                    configJson,
+                    "build_type", &(config.buildType),
+                    "package_path", &(config.packagePath),
+                    "makefile_path", &(config.makefilePath),
+                    "custom_script_path", &(config.customScriptPath));
 
    // read the vcs options
    RProjectVcsOptions vcsOptions;

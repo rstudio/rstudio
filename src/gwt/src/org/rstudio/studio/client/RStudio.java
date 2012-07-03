@@ -58,6 +58,7 @@ import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResou
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
+import org.rstudio.studio.client.workbench.views.buildtools.ui.BuildPaneResources;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.files.ui.FilesListCellTableResources;
 import org.rstudio.studio.client.workbench.views.history.view.HistoryPane;
@@ -184,7 +185,8 @@ public class RStudio implements EntryPoint
       ExportPlotResources.INSTANCE.styles().ensureInjected();
       CodeSearchResources.INSTANCE.styles().ensureInjected();
       CompilePdfResources.INSTANCE.styles().ensureInjected();
-
+      BuildPaneResources.INSTANCE.styles().ensureInjected();
+      
       ProgressDialog.ensureStylesInjected();
       SupportPopupMenu.ensureStylesInjected();
       SlideLabel.ensureStylesInjected();

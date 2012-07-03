@@ -40,7 +40,11 @@ public class RProjectConfig extends JavaScriptObject
                                                     String encoding,
                                                     String defaultSweaveEngine,
                                                     String defaultLatexProgram,
-                                                    String rootDocument) /*-{
+                                                    String rootDocument,
+                                                    String buildType,
+                                                    String packagePath,
+                                                    String makefilePath,
+                                                    String customScriptPath) /*-{
       var config = new Object();
       config.version = 1.0;
       config.restore_workspace = restoreWorkspace;
@@ -53,6 +57,10 @@ public class RProjectConfig extends JavaScriptObject
       config.default_sweave_engine = defaultSweaveEngine;
       config.default_latex_program = defaultLatexProgram;
       config.root_document = rootDocument;
+      config.build_type = buildType;
+      config.package_path = packagePath;
+      config.makefile_path = makefilePath;
+      config.custom_script_path = customScriptPath;
       return config;
    }-*/;
 
@@ -138,6 +146,38 @@ public class RProjectConfig extends JavaScriptObject
 
    public native final void setRootDocument(String rootDocument) /*-{
       this.root_document = rootDocument;
+   }-*/;
+   
+   public native final String getBuildType() /*-{
+      return this.build_type;
+   }-*/;
+
+   public native final void setBuildType(String buildType) /*-{
+      this.build_type = buildType;
+   }-*/;
+   
+   public native final String getPackagePath() /*-{
+      return this.package_path;
+   }-*/;
+
+   public native final void setPackagePath(String packagePath) /*-{
+      this.package_path = packagePath;
+   }-*/;
+   
+   public native final String getMakefilePath() /*-{
+      return this.makefile_path;
+   }-*/;
+
+   public native final void setMakefilePath(String makefilePath) /*-{
+      this.makefile_path = makefilePath;
+   }-*/;
+
+   public native final String getCustomScriptPath() /*-{
+      return this.custom_script_path;
+   }-*/;
+
+   public native final void setCustomScriptPath(String customScriptPath) /*-{
+      this.custom_script_path = customScriptPath;
    }-*/;
    
 }

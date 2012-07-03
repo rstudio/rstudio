@@ -459,13 +459,13 @@ void handleClientInit(const boost::function<void()>& initFunction,
                options.sumatraPath().complete("SumatraPDF.exe").absolutePath();
 #endif
 
-   // are build tools enabled (currently just for package projects but plan
-   // on making this more flexible)
-   bool buildToolsEnabled =
-      userSettings().buildToolsEnabled() &&
-      projects::projectContext().hasProject() &&
-      projects::projectContext().directory().childPath("DESCRIPTION").exists();
-   sessionInfo["build_tools_enabled"] = buildToolsEnabled;
+   // are build tools enabled
+   sessionInfo["build_tools_enabled"] = userSettings().buildToolsEnabled();
+   if (projects::projectContext().hasProject())
+      sessionInfo["build_tools_type"] = projects::projectContext().config()
+                                                                     .buildType;
+   else
+      sessionInfo["build_tools_type"] = r_util::kBuildTypeNone;
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)

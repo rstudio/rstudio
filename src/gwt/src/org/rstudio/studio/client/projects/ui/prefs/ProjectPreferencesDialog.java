@@ -33,6 +33,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    public static final int EDITING = 1;
    public static final int SWEAVE = 2;
    public static final int VCS = 3;
+   public static final int BUILD = 4;
    
    @Inject
    public ProjectPreferencesDialog(ProjectsServerOperations server,
@@ -41,12 +42,16 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                    ProjectGeneralPreferencesPane general,
                                    ProjectEditingPreferencesPane editing,
                                    ProjectCompilePdfPreferencesPane compilePdf,
-                                   ProjectSourceControlPreferencesPane source)
-   {
+                                   ProjectSourceControlPreferencesPane source,
+                                   ProjectBuildToolsPreferencesPane build)
+   {      
       super("Project Options",
             RES.styles().panelContainer(),
             false,
-            new ProjectPreferencesPane[] {general, editing, compilePdf, source});
+            new ProjectPreferencesPane[] {general, editing, compilePdf, source, build});
+      
+      if (!session.getSessionInfo().getBuildToolsEnabled())
+         hidePane(4);
       
       server_ = server;
       pUIPrefs_ = pUIPrefs;  
@@ -104,8 +109,8 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
           });
       
    }
-
    
+ 
    private final ProjectsServerOperations server_;
    private final Provider<UIPrefs> pUIPrefs_;
    

@@ -493,6 +493,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
    defaultConfig.defaultSweaveEngine = userSettings().defaultSweaveEngine();
    defaultConfig.defaultLatexProgram = userSettings().defaultLatexProgram();
    defaultConfig.rootDocument = std::string();
+   defaultConfig.buildType = std::string();
    return defaultConfig;
 }
 
