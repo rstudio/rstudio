@@ -25,9 +25,8 @@ import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfOutputEvent;
@@ -37,8 +36,6 @@ import org.rstudio.studio.client.common.compilepdf.model.CompilePdfServerOperati
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -150,7 +147,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
       });
       
       server_.isCompilePdfRunning(
-                  new RequestCallback<Boolean>("Closing Compile PDF...") {
+        new DelayedProgressRequestCallback<Boolean>("Closing Compile PDF...") {
          @Override
          public void onSuccess(Boolean isRunning)
          {  
@@ -249,7 +246,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
             targetFile,
             sourceLocation,
             completedAction, 
-            new RequestCallback<Boolean>("Compiling PDF...") 
+            new DelayedProgressRequestCallback<Boolean>("Compiling PDF...") 
             {
                @Override
                protected void onSuccess(Boolean started)
@@ -279,7 +276,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
   
    private void terminateCompilePdf(final Command onTerminated)
    {
-      server_.terminateCompilePdf(new RequestCallback<Boolean>(
+      server_.terminateCompilePdf(new DelayedProgressRequestCallback<Boolean>(
                                     "Terminating PDF compilation...") {
          @Override
          protected void onSuccess(Boolean wasTerminated)
@@ -298,33 +295,6 @@ public class CompilePdfOutputPresenter extends BasePresenter
          }
       });
    }
-   
-   
-   private abstract class RequestCallback<T> extends ServerRequestCallback<T>
-   {
-      public RequestCallback(String progressMessage)
-      {
-         indicator_ = new GlobalProgressDelayer(
-            globalDisplay_,  500, progressMessage).getIndicator();
-      }
-      
-      @Override
-      public void onResponseReceived(T response)
-      {
-         indicator_.onCompleted();
-         onSuccess(response);
-      }
-      
-      protected abstract void onSuccess(T response);
-
-      @Override
-      public void onError(ServerError error)
-      {
-         indicator_.onError(error.getUserMessage());
-      }
-      
-      private ProgressIndicator indicator_;   
-   };
    
    private FileSystemItem targetFile_ = null;
    private final Display view_;

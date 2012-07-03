@@ -12,21 +12,23 @@
  */
 package org.rstudio.studio.client.workbench.views.buildtools;
 
-import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.widget.HorizontalCenterPanel;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.common.OutputBuffer;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.buildtools.ui.BuildPaneResources;
 
-public class BuildPane extends WorkbenchPane implements Build.Display
+public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
 {
    @Inject
    public BuildPane(Commands commands,
@@ -71,23 +73,72 @@ public class BuildPane extends WorkbenchPane implements Build.Display
       toolbar.addLeftWidget(
                commands_.buildToolsProjectSetup().createToolbarButton());
       
+      // stop button (initially hidden)
+      ImageResource stopImage = commands_.interruptR().getImageResource();
+      stopButton_ = new ToolbarButton(stopImage, null);
+      stopButton_.setVisible(false);
+      toolbar.addRightWidget(stopButton_);
+      
       return toolbar;
    }
    
    @Override 
    protected Widget createMainWidget()
    {
-      Label label = new Label("Under Construction");
-      label.getElement().getStyle().setColor("#888");
-      return new HorizontalCenterPanel(label, 100);
+      panel_ = new SimplePanel();
+     
+      outputBuffer_ = new OutputBuffer();
+         
+      panel_.setWidget(outputBuffer_);
+ 
+      return panel_;
+      
    }
+   
+   @Override
+   public void buildStarted()
+   {
+     outputBuffer_.clear();
+     stopButton_.setVisible(true);
+      
+   }
+
+   @Override
+   public void showOutput(String output)
+   {
+      outputBuffer_.append(output);
+      
+   }
+
+   @Override
+   public void buildCompleted()
+   {
+      stopButton_.setVisible(false);
+      
+   }
+   
+   @Override
+   public HasClickHandlers stopButton()
+   {
+      return stopButton_;
+   }
+   
+   @Override
+   public void scrollToBottom()
+   {
+      outputBuffer_.scrollToBottom();
+      
+   }
+
 
    
    private Commands commands_;
    private Session session_;
    
+   private SimplePanel panel_;
+   private OutputBuffer outputBuffer_;
+   private ToolbarButton stopButton_;
+   
    @SuppressWarnings("unused")
-   private static BuildPaneResources RES = BuildPaneResources.INSTANCE;
-   
-   
+   private static BuildPaneResources RES = BuildPaneResources.INSTANCE; 
 }

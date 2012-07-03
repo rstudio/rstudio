@@ -107,6 +107,7 @@
 #include "modules/SessionLimits.hpp"
 #include "modules/SessionLists.hpp"
 #include "modules/SessionContentUrls.hpp"
+#include "modules/SessionBuild.hpp"
 
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"
@@ -466,6 +467,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
                                                                      .buildType;
    else
       sessionInfo["build_tools_type"] = r_util::kBuildTypeNone;
+
+   sessionInfo["build_state"] = modules::build::buildStateAsJson();
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
@@ -1334,6 +1337,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::html_preview::initialize)
       (modules::history::initialize)
       (modules::code_search::initialize)
+      (modules::build::initialize)
 
       // workers
       (workers::web_request::initialize)

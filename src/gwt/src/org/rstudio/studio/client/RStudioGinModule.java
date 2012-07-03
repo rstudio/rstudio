@@ -76,9 +76,10 @@ import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
 import org.rstudio.studio.client.workbench.ui.WorkbenchScreen;
 import org.rstudio.studio.client.workbench.ui.WorkbenchTab;
-import org.rstudio.studio.client.workbench.views.buildtools.Build;
+import org.rstudio.studio.client.workbench.views.buildtools.BuildPresenter;
 import org.rstudio.studio.client.workbench.views.buildtools.BuildPane;
 import org.rstudio.studio.client.workbench.views.buildtools.BuildTab;
+import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.choosefile.model.ChooseFileServerOperations;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
@@ -203,7 +204,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Edit.Display.class).to(EditView.class);
       bind(GitPresenter.Display.class).to(GitPane.class);
       bind(SVNPresenter.Display.class).to(SVNPane.class);
-      bind(Build.Display.class).to(BuildPane.class);
+      bind(BuildPresenter.Display.class).to(BuildPane.class);
       bind(Ignore.Display.class).to(IgnoreDialog.class);
       bind(CompilePdfOutputPresenter.Display.class).to(CompilePdfOutputPane.class);
       bind(FindOutputPresenter.Display.class).to(FindOutputPane.class);
@@ -266,6 +267,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(SynctexServerOperations.class).to(RemoteServer.class);
       bind(HTMLPreviewServerOperations.class).to(RemoteServer.class);
       bind(RPubsServerOperations.class).to(RemoteServer.class);
+      bind(BuildServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

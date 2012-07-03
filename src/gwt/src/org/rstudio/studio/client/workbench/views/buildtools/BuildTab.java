@@ -24,13 +24,14 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
+import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 
 
-public class BuildTab extends DelayLoadWorkbenchTab<Build>
+public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
 {
    public interface Binder extends CommandBinder<Commands, Shim> {}
    
-   public abstract static class Shim extends DelayLoadTabShim<Build, BuildTab> 
+   public abstract static class Shim extends DelayLoadTabShim<BuildPresenter, BuildTab> 
    {
       @Handler
       public abstract void onBuildAll();
@@ -40,10 +41,12 @@ public class BuildTab extends DelayLoadWorkbenchTab<Build>
       public abstract void onCleanAll();
       @Handler
       public abstract void onCheckPackage();
+      
+      abstract void initialize(BuildState buildState);
    }
 
    @Inject
-   public BuildTab(Shim shim, 
+   public BuildTab(final Shim shim, 
                    final Session session, 
                    Binder binder, 
                    final Commands commands,
@@ -60,8 +63,6 @@ public class BuildTab extends DelayLoadWorkbenchTab<Build>
 
             if (sessionInfo.getBuildToolsEnabled())
             {
-               
-               
                // adapt or remove package commands if this isn't a package
                String type = sessionInfo.getBuildToolsType();
                if (!type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
@@ -86,6 +87,11 @@ public class BuildTab extends DelayLoadWorkbenchTab<Build>
                   commands.cleanAll().remove();
                   commands.activateBuild().remove();
                }
+               
+               // call initialize if we have build state
+               BuildState buildState = sessionInfo.getBuildState();
+               if (buildState != null)
+                  shim.initialize(buildState);
             }
             else // build tools disabled
             {

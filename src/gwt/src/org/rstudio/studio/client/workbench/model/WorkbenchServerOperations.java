@@ -28,6 +28,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
+import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.choosefile.model.ChooseFileServerOperations;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.data.model.DataServerOperations;
@@ -63,7 +64,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    SpellingServerOperations,
                                                    CompilePdfServerOperations,
                                                    FindInFilesServerOperations,
-                                                   SynctexServerOperations
+                                                   SynctexServerOperations,
+                                                   BuildServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();

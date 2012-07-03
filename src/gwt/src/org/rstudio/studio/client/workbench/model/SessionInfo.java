@@ -23,6 +23,7 @@ import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
+import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
@@ -241,5 +242,9 @@ public class SessionInfo extends JavaScriptObject
    
    public final native String getBuildToolsType() /*-{
       return this.build_tools_type;
+   }-*/;
+   
+   public final native BuildState getBuildState() /*-{
+      return this.build_state;
    }-*/;
 }

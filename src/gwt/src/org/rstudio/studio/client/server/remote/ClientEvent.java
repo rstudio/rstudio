@@ -73,6 +73,8 @@ class ClientEvent extends JavaScriptObject
    public static final String FindResult = "find_result";
    public static final String FindOperationEnded = "find_operation_ended";
    public static final String RPubsUploadStatus = "rpubs_upload_status";
+   public static final String BuildStatus = "build_status";
+   public static final String BuildOutput = "build_output";
 
    protected ClientEvent()
    {

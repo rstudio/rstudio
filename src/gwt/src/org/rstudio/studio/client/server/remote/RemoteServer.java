@@ -2587,6 +2587,20 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, "clear_find_results", requestCallback);
    }
+   
+   @Override
+   public void startBuild(String type,
+                          ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, START_BUILD, type, requestCallback);
+   }
+
+   @Override
+   public void terminateBuild(ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, TERMINATE_BUILD, requestCallback);
+   }
+   
 
    private String clientId_;
    private double clientVersion_ = 0;
@@ -2807,6 +2821,9 @@ public class RemoteServer implements Server
 
    private static final String BEGIN_FIND = "begin_find";
    private static final String STOP_FIND = "stop_find";
+   
+   private static final String START_BUILD = "start_build";
+   private static final String TERMINATE_BUILD = "terminate_build";
 
    private static final String LOG = "log";
 }
