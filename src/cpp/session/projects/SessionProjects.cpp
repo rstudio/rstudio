@@ -86,6 +86,7 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["build_type"] = config.buildType;
    configJson["package_path"] = config.packagePath;
    configJson["makefile_path"] = config.makefilePath;
+   configJson["makefile_args"] = config.makefileArgs;
    configJson["custom_script_path"] = config.customScriptPath;
    return configJson;
 }
@@ -188,6 +189,7 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
                     "build_type", &(config.buildType),
                     "package_path", &(config.packagePath),
                     "makefile_path", &(config.makefilePath),
+                    "makefile_args", &(config.makefileArgs),
                     "custom_script_path", &(config.customScriptPath));
    if (error)
       return error;

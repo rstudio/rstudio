@@ -44,6 +44,7 @@ public class RProjectConfig extends JavaScriptObject
                                                     String buildType,
                                                     String packagePath,
                                                     String makefilePath,
+                                                    String makefileArgs,
                                                     String customScriptPath) /*-{
       var config = new Object();
       config.version = 1.0;
@@ -60,6 +61,7 @@ public class RProjectConfig extends JavaScriptObject
       config.build_type = buildType;
       config.package_path = packagePath;
       config.makefile_path = makefilePath;
+      config.makefile_args = makefileArgs;
       config.custom_script_path = customScriptPath;
       return config;
    }-*/;
@@ -177,6 +179,14 @@ public class RProjectConfig extends JavaScriptObject
       this.makefile_path = makefilePath;
    }-*/;
 
+   public native final String getMakefileArgs() /*-{
+      return this.makefile_args;
+   }-*/;
+
+   public native final void setMakefileArgs(String makefileArgs) /*-{
+      this.makefile_args = makefileArgs;
+   }-*/;
+   
    public native final String getCustomScriptPath() /*-{
       return this.custom_script_path;
    }-*/;

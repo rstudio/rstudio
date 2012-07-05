@@ -94,7 +94,7 @@ private:
       {
          FilePath makefilePath = projectPath(config.makefilePath);
          options.workingDir = makefilePath;
-         executeMakefileBuild(type, options, cb);
+         executeMakefileBuild(type, config.makefileArgs, options, cb);
       }
       else if (config.buildType == r_util::kBuildTypeCustom)
       {
@@ -153,21 +153,28 @@ private:
 
 
    void executeMakefileBuild(const std::string& type,
+                             const std::string& makeArgs,
                              const core::system::ProcessOptions& options,
                              const core::system::ProcessCallbacks& cb)
    {
+      std::string make = "make";
+      if (!makeArgs.empty())
+         make += " " + makeArgs;
+
+      std::string makeClean = make + " clean";
+
       std::string cmd;
       if (type == "build-all")
       {
-         cmd = "make";
+         cmd = make;
       }
       else if (type == "clean-all")
       {
-         cmd = "make clean";
+         cmd = makeClean;
       }
       else if (type == "rebuild-all")
       {
-         cmd = shell_utils::join_and("make clean", "make");
+         cmd = shell_utils::join_and(makeClean, make);
       }
 
       module_context::processSupervisor().runCommand(cmd,

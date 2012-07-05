@@ -16,6 +16,9 @@ package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.TextBox;
+
 
 public class BuildToolsMakefilePanel extends BuildToolsPanel
 {
@@ -24,20 +27,27 @@ public class BuildToolsMakefilePanel extends BuildToolsPanel
       pathSelector_ = new DirectorySelector("Makefile directory:");
       add(pathSelector_);
       
+      add(new Label("Additional arguments:"));
+      txtMakefileArgs_ = new TextBox();
+      add(txtMakefileArgs_);
+      
    }
 
    @Override
    void load(RProjectConfig config)
    {
       pathSelector_.setText(config.getMakefilePath());
+      txtMakefileArgs_.setText(config.getMakefileArgs());
+      
    }
 
    @Override
    void save(RProjectConfig config)
    {
       config.setMakefilePath(pathSelector_.getText());
-      
+      config.setMakefileArgs(txtMakefileArgs_.getText().trim());
    }
 
    private PathSelector pathSelector_;
+   private TextBox txtMakefileArgs_;
 }
