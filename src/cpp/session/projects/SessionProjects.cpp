@@ -189,6 +189,8 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
                     "package_path", &(config.packagePath),
                     "makefile_path", &(config.makefilePath),
                     "custom_script_path", &(config.customScriptPath));
+   if (error)
+      return error;
 
    // read the vcs options
    RProjectVcsOptions vcsOptions;

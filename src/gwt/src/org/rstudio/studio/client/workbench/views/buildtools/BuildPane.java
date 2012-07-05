@@ -55,6 +55,7 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
          ToolbarPopupMenu buildMenu = new ToolbarPopupMenu();
          buildMenu.addItem(commands_.buildAll().createMenuItem(false));
          buildMenu.addItem(commands_.rebuildAll().createMenuItem(false));
+         buildMenu.addSeparator();
          buildMenu.addItem(commands_.cleanAll().createMenuItem(false));
          ToolbarButton buildMenuButton = new ToolbarButton(buildMenu, true);
          toolbar.addLeftWidget(buildMenuButton);

@@ -20,6 +20,7 @@
 
 #include <core/Exec.hpp>
 #include <core/system/Process.hpp>
+#include <core/system/ShellUtils.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -56,9 +57,62 @@ private:
 
       isRunning_ = true;
 
-      // project directory
-      FilePath projectDir =  projects::projectContext().directory();
+      // callbacks
+      core::system::ProcessCallbacks cb;
+      cb.onContinue = boost::bind(&Build::onContinue,
+                                  Build::shared_from_this());
+      cb.onStdout = boost::bind(&Build::onOutput,
+                                Build::shared_from_this(), _2);
+      cb.onStderr = boost::bind(&Build::onOutput,
+                                Build::shared_from_this(), _2);
+      cb.onExit =  boost::bind(&Build::onCompleted,
+                                Build::shared_from_this(),
+                                _1);
 
+      // execute build
+      executeBuild(type, cb);
+   }
+
+
+   void executeBuild(const std::string& type,
+                     const core::system::ProcessCallbacks& cb)
+   {
+      // options
+      core::system::ProcessOptions options;
+      options.terminateChildren = true;
+      options.redirectStdErrToStdOut = true;
+
+      const core::r_util::RProjectConfig& config =
+                                          projects::projectContext().config();
+      if (config.buildType == r_util::kBuildTypePackage)
+      {
+         FilePath packagePath = projectPath(config.packagePath);
+         options.workingDir = packagePath.parent();
+         executePackageBuild(type, packagePath, options, cb);
+      }
+      else if (config.buildType == r_util::kBuildTypeMakefile)
+      {
+         FilePath makefilePath = projectPath(config.makefilePath);
+         options.workingDir = makefilePath;
+         executeMakefileBuild(type, options, cb);
+      }
+      else if (config.buildType == r_util::kBuildTypeCustom)
+      {
+         FilePath scriptPath = projectPath(config.customScriptPath);
+         options.workingDir = scriptPath.parent();
+         executeCustomBuild(type, scriptPath, options, cb);
+      }
+      else
+      {
+         terminateWithError("Unrecognized build type: " + config.buildType);
+      }
+   }
+
+   void executePackageBuild(const std::string& type,
+                            const FilePath& packagePath,
+                            const core::system::ProcessOptions& options,
+                            const core::system::ProcessCallbacks& cb)
+   {
       // R bin directory
       FilePath rBinDir;
       Error error = module_context::rBinDir(&rBinDir);
@@ -66,8 +120,7 @@ private:
       {
          std::string msg = "Error attempting to locate R binary: " +
                            error.summary();
-         enqueBuildOutput(msg);
-         enqueBuildCompleted();
+         terminateWithError(msg);
          return;
       }
 
@@ -89,31 +142,67 @@ private:
       {
          args.push_back("check");
       }
-      args.push_back(projectDir.filename());
+      args.push_back(packagePath.filename());
 
-      // options
-      core::system::ProcessOptions options;
-      options.terminateChildren = true;
-      options.redirectStdErrToStdOut = true;
-      options.workingDir = projectDir.parent();
-
-      // callbacks
-      core::system::ProcessCallbacks cb;
-      cb.onContinue = boost::bind(&Build::onContinue,
-                                  Build::shared_from_this());
-      cb.onStdout = boost::bind(&Build::onOutput,
-                                Build::shared_from_this(), _2);
-      cb.onStderr = boost::bind(&Build::onOutput,
-                                Build::shared_from_this(), _2);
-      cb.onExit =  boost::bind(&Build::onCompleted,
-                                Build::shared_from_this(),
-                                _1);
-
-      // execute build
+      // run process
       module_context::processSupervisor().runProgram(rProgram.absolutePath(),
                                                      args,
                                                      options,
                                                      cb);
+   }
+
+
+   void executeMakefileBuild(const std::string& type,
+                             const core::system::ProcessOptions& options,
+                             const core::system::ProcessCallbacks& cb)
+   {
+      std::string cmd;
+      if (type == "build-all")
+      {
+         cmd = "make";
+      }
+      else if (type == "clean-all")
+      {
+         cmd = "make clean";
+      }
+      else if (type == "rebuild-all")
+      {
+         cmd = shell_utils::join_and("make clean", "make");
+      }
+
+      module_context::processSupervisor().runCommand(cmd,
+                                                     options,
+                                                     cb);
+   }
+
+   void executeCustomBuild(const std::string& type,
+                           const FilePath& customScriptPath,
+                           const core::system::ProcessOptions& options,
+                           const core::system::ProcessCallbacks& cb)
+   {
+      module_context::processSupervisor().runCommand(
+                           shell_utils::ShellCommand(customScriptPath),
+                           options,
+                           cb);
+   }
+
+   FilePath projectPath(const std::string& path)
+   {
+      if (boost::algorithm::starts_with(path, "~/") ||
+          FilePath::isRootPath(path))
+      {
+         return module_context::resolveAliasedPath(path);
+      }
+      else
+      {
+         return projects::projectContext().directory().complete(path);
+      }
+   }
+
+   void terminateWithError(const std::string& msg)
+   {
+      enqueBuildOutput(msg);
+      enqueBuildCompleted();
    }
 
 public:

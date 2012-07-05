@@ -4,6 +4,10 @@
    height: 360px;
 }
 
+.buildToolsPanel {
+   width: 100%;
+}
+
 .workspaceGrid {
    margin-bottom: 10px; 
 }

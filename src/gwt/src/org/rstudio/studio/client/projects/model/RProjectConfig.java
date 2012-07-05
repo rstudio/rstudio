@@ -148,6 +148,11 @@ public class RProjectConfig extends JavaScriptObject
       this.root_document = rootDocument;
    }-*/;
    
+   public static final String BUILD_TYPE_NONE = "None";
+   public static final String BUILD_TYPE_PACKAGE = "Package";
+   public static final String BUILD_TYPE_MAKEFILE = "Makefile";
+   public static final String BUILD_TYPE_CUSTOM = "Custom";
+   
    public native final String getBuildType() /*-{
       return this.build_type;
    }-*/;
