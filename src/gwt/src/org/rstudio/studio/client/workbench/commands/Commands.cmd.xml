@@ -1015,9 +1015,9 @@ well as menu structures (for main menu and popup menus).
         visible="false"/>
               
    <cmd id="buildAll"
-        buttonLabel="Build"
-        menuLabel="_Build Package"
-        desc="Build package"/>
+        buttonLabel="Build &amp; Install"
+        menuLabel="_Build &amp; Install Package"
+        desc="Build and install the package"/>
         
    <cmd id="rebuildAll"
         menuLabel="_Rebuild All"

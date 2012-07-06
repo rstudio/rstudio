@@ -142,7 +142,7 @@ private:
 
       if (type == "build-all")
       {
-         args.push_back("build");
+         args.push_back("INSTALL");
       }
       else if (type == "check-package")
       {
