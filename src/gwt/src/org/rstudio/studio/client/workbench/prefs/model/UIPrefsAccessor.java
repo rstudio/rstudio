@@ -86,6 +86,11 @@ public class UIPrefsAccessor extends Prefs
    {
       return bool("syntax_color_console", false);
    }
+   
+   public PrefValue<Boolean> saveAllBeforeBuild()
+   {
+      return bool("save_all_before_build", true);
+   }
 
    public PrefValue<Double> fontSize()
    {

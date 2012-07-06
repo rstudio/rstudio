@@ -23,11 +23,13 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.WorkbenchView;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStatusEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
+import org.rstudio.studio.client.workbench.views.source.SourceShim;
 
 public class BuildPresenter extends BasePresenter 
 {
@@ -46,6 +48,8 @@ public class BuildPresenter extends BasePresenter
    @Inject
    public BuildPresenter(Display display, 
                          GlobalDisplay globalDisplay,
+                         SourceShim sourceShim,
+                         UIPrefs uiPrefs,
                          BuildServerOperations server,
                          EventBus eventBus)
    {
@@ -53,7 +57,9 @@ public class BuildPresenter extends BasePresenter
       view_ = display;
       server_ = server;
       globalDisplay_ = globalDisplay;
-   
+      sourceShim_ = sourceShim;
+      uiPrefs_ = uiPrefs;
+      
       eventBus.addHandler(BuildStatusEvent.TYPE, 
                           new BuildStatusEvent.Handler()
       {  
@@ -122,18 +128,33 @@ public class BuildPresenter extends BasePresenter
       startBuild("clean-all");
    }
    
-   private void startBuild(String type)
+   private void startBuild(final String type)
    {
       // attempt to start a build (this will be a silent no-op if there
       // is already a build running)
-      server_.startBuild(type,
-            new DelayedProgressRequestCallback<Boolean>("Starting Build...") {
+      Command buildCommand = new Command() {
          @Override
-         protected void onSuccess(Boolean response)
+         public void execute()
          {
-           
+            server_.startBuild(type,
+                  new DelayedProgressRequestCallback<Boolean>("Starting Build...") {
+               @Override
+               protected void onSuccess(Boolean response)
+               {
+                 
+               }
+            });
          }
-      });
+      };
+      
+      if (uiPrefs_.saveAllBeforeBuild().getValue())
+      {
+         sourceShim_.saveAllUnsaved(buildCommand);
+      }
+      else
+      {
+         buildCommand.execute();
+      }
    }
    
    private void terminateBuild()
@@ -168,6 +189,8 @@ public class BuildPresenter extends BasePresenter
    }
    
    private final GlobalDisplay globalDisplay_;
+   private final SourceShim sourceShim_;
+   private final UIPrefs uiPrefs_;
    private final BuildServerOperations server_;
    private final Display view_ ; 
 }

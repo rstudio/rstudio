@@ -178,6 +178,14 @@ public class SourceShim extends Composite
             ((RequiresVisibilityChanged)w).onVisibilityChanged(visible);
    }
    
+   public void saveAllUnsaved(Command onCompleted)
+   {
+      if (source_ != null)
+      {
+         source_.saveAllUnsaved(onCompleted);
+      }
+   }
+   
    public ArrayList<UnsavedChangesTarget> getUnsavedChanges()
    {
       if (source_ != null)

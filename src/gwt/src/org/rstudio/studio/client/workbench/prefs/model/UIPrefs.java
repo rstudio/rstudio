@@ -108,6 +108,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // syntax color console
          syntaxColorConsole().setGlobalValue(
                              newUiPrefs.syntaxColorConsole().getGlobalValue());
+         
+         // save all before build
+         saveAllBeforeBuild().setGlobalValue(
+                             newUiPrefs.saveAllBeforeBuild().getGlobalValue());
       
          // font size
          fontSize().setGlobalValue(

@@ -838,6 +838,11 @@ public class Source implements InsertSourceHandler,
       return targets;
    }
    
+   public void saveAllUnsaved(Command onCompleted)
+   {
+      saveChanges(getUnsavedChanges(), onCompleted);
+   }
+   
    public void saveWithPrompt(UnsavedChangesTarget target, 
                               Command onCompleted,
                               Command onCancelled)

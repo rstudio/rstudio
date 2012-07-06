@@ -50,6 +50,7 @@ public class EditingPreferencesPane extends PreferencesPane
       add(checkboxPref("Automatically insert matching parens/quotes", prefs_.insertMatching()));
       add(checkboxPref("Soft-wrap R source files", prefs_.softWrapRFiles()));
       add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
+      add(checkboxPref("Save all files before build", prefs_.saveAllBeforeBuild()));
 
       encodingValue_ = prefs_.defaultEncoding().getGlobalValue();
       add(encoding_ = new TextBoxWithButton(
