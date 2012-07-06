@@ -98,6 +98,9 @@ public:
    int saveAction() const;
    void setSaveAction(int saveAction);
 
+   bool noSaveRDataForPackages() const;
+   void setNoSaveRDataForPackages(bool noSave);
+
    bool loadRData() const;
    void setLoadRData(bool loadRData);
 
