@@ -101,6 +101,7 @@ public abstract class
    // Console
    public abstract AppCommand consoleClear();
    public abstract AppCommand interruptR();
+   public abstract AppCommand restartR();
    public abstract AppCommand activateConsole();
 
    // Files

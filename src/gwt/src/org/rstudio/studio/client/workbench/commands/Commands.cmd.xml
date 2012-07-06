@@ -233,6 +233,7 @@ well as menu structures (for main menu and popup menus).
       
       <menu label="_Tools">
          <cmd refid="interruptR"/>
+         <cmd refid="restartR"/>
          <separator/>
          <menu label="Set _Working Directory">
             <cmd refid="setWorkingDirToActiveDoc"/>
@@ -787,6 +788,9 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Cle_ar Console"/>
    <cmd id="interruptR"
         menuLabel="_Interrupt R"/>
+   <cmd id="restartR"
+        menuLabel="_Restart R..."/>
+        
    <cmd id="vcsResolve"
         menuLabel="Resolve..."
         buttonLabel="Resolve"

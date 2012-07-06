@@ -622,7 +622,7 @@ public class Projects implements OpenProjectFileHandler,
    private final Provider<ProjectPreferencesDialog> pPrefDialog_;
    private final Provider<UIPrefs> pUIPrefs_;
    
-   private static final String NONE = "none";
+   public static final String NONE = "none";
 
    
   

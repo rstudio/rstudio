@@ -26,6 +26,8 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.HandleUnsavedChangesEvent;
 import org.rstudio.studio.client.application.events.HandleUnsavedChangesHandler;
+import org.rstudio.studio.client.application.events.RestartEvent;
+import org.rstudio.studio.client.application.events.RestartHandler;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
@@ -33,6 +35,7 @@ import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
+import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -40,6 +43,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
@@ -51,7 +55,8 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class ApplicationQuit implements SaveActionChangedHandler,
-                                        HandleUnsavedChangesHandler
+                                        HandleUnsavedChangesHandler,
+                                        RestartHandler
 {
    public interface Binder extends CommandBinder<Commands, ApplicationQuit> {}
    
@@ -59,6 +64,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    public ApplicationQuit(ApplicationServerOperations server,
                           GlobalDisplay globalDisplay,
                           EventBus eventBus,
+                          Session session,
                           WorkbenchContext workbenchContext,
                           SourceShim sourceShim,
                           Commands commands,
@@ -68,6 +74,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       server_ = server;
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
+      session_ = session;
       workbenchContext_ = workbenchContext;
       sourceShim_ = sourceShim;
       
@@ -77,6 +84,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       // subscribe to events
       eventBus.addHandler(SaveActionChangedEvent.TYPE, this);   
       eventBus.addHandler(HandleUnsavedChangesEvent.TYPE, this);
+      eventBus.addHandler(RestartEvent.TYPE, this);
    }
    
   
@@ -187,9 +195,17 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       
    }
    
-   public void performQuit(boolean saveChanges, String switchToProject)
+   public void performQuit(boolean saveChanges, 
+                           String switchToProject)
    {
-      new QuitCommand(saveChanges, switchToProject).execute();
+      performQuit(null, saveChanges, switchToProject);
+   }
+   
+   public void performQuit(String progressMessage,
+                           boolean saveChanges, 
+                           String switchToProject)
+   {
+      new QuitCommand(progressMessage, saveChanges, switchToProject).execute();
    }
    
    @Override
@@ -258,6 +274,30 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       
      
    @Handler
+   public void onRestartR()
+   {
+      eventBus_.fireEvent(new RestartEvent());
+   }
+   
+   @Override
+   public void onRestart(RestartEvent event)
+   {
+      prepareForQuit("Restart R Session", new QuitContext() {
+
+         @Override
+         public void onReadyToQuit(boolean saveChanges)
+         {
+            String projFile = session_.getSessionInfo().getActiveProjectFile();
+            performQuit("Restarting R...", 
+                        saveChanges, 
+                        projFile != null ? projFile : Projects.NONE);
+            
+         }
+         
+      });
+   }
+   
+   @Handler
    public void onQuitSession()
    {
       prepareForQuit("Quit R Session", new QuitContext() {
@@ -306,9 +346,12 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    }
    
    private class QuitCommand implements Command 
-   {
-      public QuitCommand(boolean saveChanges, String switchToProject)
+   { 
+      public QuitCommand(String progressMessage, 
+                         boolean saveChanges, 
+                         String switchToProject)
       {
+         progressMessage_ = progressMessage;
          saveChanges_ = saveChanges;
          switchToProject_ = switchToProject;
       }
@@ -316,9 +359,13 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       public void execute()
       {
          // show delayed progress
-         String msg = switchToProject_ != null ? 
+         String msg = progressMessage_;
+         if (msg == null)
+         {
+            msg = switchToProject_ != null ? 
                                     buildSwitchMessage(switchToProject_) :
                                     "Quitting R Session...";
+         }
          final GlobalProgressDelayer progress = new GlobalProgressDelayer(
                                                                globalDisplay_,
                                                                250,
@@ -381,6 +428,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
 
       private final boolean saveChanges_;
       private final String switchToProject_;
+      private final String progressMessage_;
 
    };
 
@@ -388,6 +436,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
    private final WorkbenchContext workbenchContext_;
+   private final Session session_;
    private final SourceShim sourceShim_;
    
    private SaveAction saveAction_ = SaveAction.saveAsk();
