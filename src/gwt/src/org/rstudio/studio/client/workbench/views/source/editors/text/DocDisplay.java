@@ -108,6 +108,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void unfold(int row);
    void unfold(Range range);
 
+   void forceImmediateRender();
+   
    HandlerRegistration addCommandClickHandler(CommandClickEvent.Handler handler);
    
    HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);

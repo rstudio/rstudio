@@ -168,6 +168,8 @@ SourceDocument::SourceDocument(const std::string& type)
    dirty_ = false;
    created_ = date_time::millisecondsSinceEpoch();
    sourceOnSave_ = false;
+   scrollPosition_ = 0;
+   lineNumber_ = 0;
 }
    
 
@@ -340,6 +342,12 @@ Error SourceDocument::readFromJson(json::Object* pDocJson)
       json::Value folds = docJson["folds"];
       folds_ = !folds.is_null() ? folds.get_str() : std::string();
 
+      json::Value scrollPos = docJson["scroll_pos"];
+      scrollPosition_ = !scrollPos.is_null() ? scrollPos.get_int() : 0;
+
+      json::Value lineNumber = docJson["line_number"];
+      lineNumber_ = !lineNumber.is_null() ? lineNumber.get_int() : 0;
+
       return Success();
    }
    catch(const std::exception& e)
@@ -363,6 +371,8 @@ void SourceDocument::writeToJson(json::Object* pDocJson) const
    jsonDoc["source_on_save"] = sourceOnSave();
    jsonDoc["properties"] = properties();
    jsonDoc["folds"] = folds();
+   jsonDoc["scroll_pos"] = scrollPosition();
+   jsonDoc["line_number"] = lineNumber();
    jsonDoc["lastKnownWriteTime"] = json::Value(
          static_cast<boost::int64_t>(lastKnownWriteTime_));
    jsonDoc["encoding"] = encoding_;

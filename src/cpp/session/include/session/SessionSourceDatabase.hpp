@@ -50,6 +50,8 @@ public:
    bool sourceOnSave() const { return sourceOnSave_; }
    const core::json::Object& properties() const { return properties_; }
    const std::string& folds() const { return folds_; }
+   int scrollPosition() const { return scrollPosition_; }
+   int lineNumber() const { return lineNumber_; }
    std::string getProperty(const std::string& name) const;
 
    // is this an untitled document?
@@ -86,6 +88,16 @@ public:
       folds_ = folds;
    }
 
+   void setScrollPosition(int scrollPosition)
+   {
+      scrollPosition_ = scrollPosition;
+   }
+
+   void setLineNumber(int lineNumber)
+   {
+      lineNumber_ = lineNumber;
+   }
+
    void checkForExternalEdit(std::time_t* pTime);
 
    void updateLastKnownWriteTime();
@@ -118,6 +130,8 @@ private:
    std::string hash_;
    std::string encoding_;
    std::string folds_;
+   int scrollPosition_;
+   int lineNumber_;
    std::time_t lastKnownWriteTime_;
    bool dirty_;
    double created_;

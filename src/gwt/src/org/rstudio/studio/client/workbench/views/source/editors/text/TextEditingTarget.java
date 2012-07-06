@@ -390,7 +390,10 @@ public class TextEditingTarget implements EditingTarget
       name_.setValue(getNameFromDocument(document, defaultNameProvider), true);
       docDisplay_.setCode(document.getContents(), false);
 
+      // restore folds, scroll position, and cursor location
       final ArrayList<Fold> folds = Fold.decode(document.getFoldSpec());
+      final int lineNumber = document.getLineNumber();
+      final int scrollPosition = document.getScrollPosition();
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          @Override
@@ -398,6 +401,23 @@ public class TextEditingTarget implements EditingTarget
          {
             for (Fold fold : folds)
                docDisplay_.addFold(fold.getRange());
+            
+            if (scrollPosition != 0)
+               docDisplay_.scrollToY(scrollPosition);
+            
+            if (lineNumber != 0)
+               docDisplay_.setCursorPosition(Position.create(lineNumber, 0));
+             
+            // we seem to need to delay this in order for the painting
+            // to always happen correctly
+            Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+               @Override
+               public void execute()
+               {
+                  docDisplay_.forceImmediateRender();  
+               }
+            });
+         
          }
       });
 

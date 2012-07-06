@@ -35,6 +35,8 @@ import org.rstudio.studio.client.workbench.events.LastChanceSaveHandler;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Fold;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 
@@ -42,7 +44,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DocUpdateSentinel
-      implements ValueChangeHandler<Void>,FoldChangeEvent.Handler
+      implements ValueChangeHandler<Void>,FoldChangeEvent.Handler,CursorChangedHandler
 {
    private class ReopenFileCallback extends ServerRequestCallback<SourceDocument>
    {
@@ -109,7 +111,8 @@ public class DocUpdateSentinel
 
       docDisplay_.addValueChangeHandler(this);
       docDisplay_.addFoldChangeHandler(this);
-
+      docDisplay_.addCursorChangedHandler(this);
+      
       // Web only
       closeHandlerReg_ = Window.addWindowClosingHandler(new ClosingHandler()
       {
@@ -255,13 +258,21 @@ public class DocUpdateSentinel
       final String foldSpec = Fold.encode(Fold.flatten(docDisplay_.getFolds()));
       String oldFoldSpec = sourceDoc_.getFoldSpec();
 
+      final int scrollPosition = docDisplay_.getScrollTop();
+      int oldScrollPosition = sourceDoc_.getScrollPosition();
+      
+      final int lineNumber = docDisplay_.getCurrentLineNum();
+      int oldLineNumber = sourceDoc_.getLineNumber();
+      
       //String patch = DiffMatchPatch.diff(oldContents, newContents);
       SubstringDiff diff = new SubstringDiff(oldContents, newContents);
 
       // Don't auto-save when there are no changes. In addition to being
       // wasteful, it causes the server to think the document is dirty.
       if (path == null && fileType == null && diff.isEmpty()
-          && foldSpec.equals(oldFoldSpec))
+          && foldSpec.equals(oldFoldSpec)
+          && (scrollPosition == oldScrollPosition)
+          && (lineNumber == oldLineNumber))
       {
          changesPending_ = false;
          return false;
@@ -286,6 +297,8 @@ public class DocUpdateSentinel
             fileType,
             encoding,
             foldSpec,
+            scrollPosition,
+            lineNumber,
             diff.getReplacement(),
             diff.getOffset(),
             diff.getLength(),
@@ -315,7 +328,9 @@ public class DocUpdateSentinel
                                         newHash,
                                         path,
                                         fileType,
-                                        encoding);
+                                        encoding,
+                                        scrollPosition,
+                                        lineNumber);
                      if (progress != null)
                         progress.onCompleted();
                   }
@@ -335,6 +350,8 @@ public class DocUpdateSentinel
                            fileType,
                            encoding,
                            foldSpec,
+                           scrollPosition,
+                           lineNumber,
                            newContents,
                            this);
                   }
@@ -348,7 +365,9 @@ public class DocUpdateSentinel
                                    String hash,
                                    String path,
                                    String fileType,
-                                   String encoding)
+                                   String encoding,
+                                   int scrollPosition,
+                                   int lineNumber)
    {
       changesPending_ = false;
       sourceDoc_.setContents(contents);
@@ -364,6 +383,9 @@ public class DocUpdateSentinel
       }
       if (encoding != null)
          sourceDoc_.setEncoding(encoding);
+      
+      sourceDoc_.setScrollPosition(scrollPosition);
+      sourceDoc_.setLineNumber(lineNumber);
    }
 
    public boolean sourceOnSave()
@@ -471,6 +493,13 @@ public class DocUpdateSentinel
 
    @Override
    public void onFoldChange(FoldChangeEvent event)
+   {
+      changesPending_ = true;
+      bufferedCommand_.nudge();
+   }
+   
+   @Override
+   public void onCursorChanged(CursorChangedEvent event)
    {
       changesPending_ = true;
       bufferedCommand_.nudge();

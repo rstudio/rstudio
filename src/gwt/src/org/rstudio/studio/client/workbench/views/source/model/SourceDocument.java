@@ -112,4 +112,23 @@ public class SourceDocument extends JavaScriptObject
    public native final void setFoldSpec(String foldSpec) /*-{
       this.folds = foldSpec;
    }-*/;
+   
+   public native final int getScrollPosition() /*-{
+      return this.scroll_pos;
+   }-*/;
+   
+   public native final void setScrollPosition(int scrollPos) /*-{
+      this.scroll_pos = scrollPos;
+   }-*/;
+   
+   public native final int getLineNumber() /*-{
+      return this.line_number;
+   }-*/;
+
+   public native final void setLineNumber(int lineNumber) /*-{
+      this.line_number = lineNumber;
+   }-*/;
+   
+   
+   
 }
