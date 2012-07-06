@@ -15,7 +15,10 @@
 package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
 import org.rstudio.studio.client.projects.model.RProjectConfig;
+import org.rstudio.studio.client.projects.model.RProjectOptions;
 
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 
@@ -27,25 +30,33 @@ public class BuildToolsMakefilePanel extends BuildToolsPanel
       pathSelector_ = new DirectorySelector("Makefile directory:");
       add(pathSelector_);
       
+      
       add(new Label("Additional arguments:"));
       txtMakefileArgs_ = new TextBox();
+      Style style = txtMakefileArgs_.getElement().getStyle();
+      style.setMarginTop(2, Unit.PX);
       add(txtMakefileArgs_);
       
    }
 
    @Override
-   void load(RProjectConfig config)
+   void load(RProjectOptions options)
    {
+      RProjectConfig config = options.getConfig();
       pathSelector_.setText(config.getMakefilePath());
-      txtMakefileArgs_.setText(config.getMakefileArgs());
+      
+      txtMakefileArgs_.setText(options.getBuildOptions().getMakefileArgs());
       
    }
 
    @Override
-   void save(RProjectConfig config)
+   void save(RProjectOptions options)
    {
+      RProjectConfig config = options.getConfig();
       config.setMakefilePath(pathSelector_.getText());
-      config.setMakefileArgs(txtMakefileArgs_.getText().trim());
+      
+      options.getBuildOptions().setMakefileArgs(
+                                          txtMakefileArgs_.getText().trim());
    }
 
    private PathSelector pathSelector_;

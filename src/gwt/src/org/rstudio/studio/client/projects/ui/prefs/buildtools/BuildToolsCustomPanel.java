@@ -16,6 +16,7 @@ package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
+import org.rstudio.studio.client.projects.model.RProjectOptions;
 
 
 public class BuildToolsCustomPanel extends BuildToolsPanel
@@ -27,14 +28,16 @@ public class BuildToolsCustomPanel extends BuildToolsPanel
    }
 
    @Override
-   void load(RProjectConfig config)
+   void load(RProjectOptions options)
    {
+      RProjectConfig config = options.getConfig();
       pathSelector_.setText(config.getCustomScriptPath());
    }
 
    @Override
-   void save(RProjectConfig config)
+   void save(RProjectOptions options)
    {
+      RProjectConfig config = options.getConfig();
       config.setCustomScriptPath(pathSelector_.getText());
    }
    

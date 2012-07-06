@@ -384,17 +384,6 @@ Error readProjectFile(const FilePath& projectFilePath,
       pConfig->makefilePath = "";
    }
 
-   // extract makefile args
-   it = dcfFields.find("MakefileArgs");
-   if (it != dcfFields.end())
-   {
-      pConfig->makefileArgs = it->second;
-   }
-   else
-   {
-      pConfig->makefileArgs = "";
-   }
-
    // extract custom script path
    it = dcfFields.find("CustomScriptPath");
    if (it != dcfFields.end())
@@ -486,12 +475,6 @@ Error writeProjectFile(const FilePath& projectFilePath,
             {
                boost::format makefileFmt("MakefilePath: %1%\n");
                build.append(boost::str(makefileFmt % config.makefilePath));
-            }
-
-            if (!config.makefileArgs.empty())
-            {
-               boost::format makeargsFmt("MakefileArgs: %1%\n");
-               build.append(boost::str(makeargsFmt % config.makefileArgs));
             }
          }
          else if (config.buildType == kBuildTypeCustom)

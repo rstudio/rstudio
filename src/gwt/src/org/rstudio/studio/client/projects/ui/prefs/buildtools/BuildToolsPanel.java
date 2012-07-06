@@ -18,7 +18,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.projects.model.RProjectConfig;
+import org.rstudio.studio.client.projects.model.RProjectOptions;
 
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -32,8 +32,8 @@ public abstract class BuildToolsPanel extends VerticalPanel
    {
    }
    
-   abstract void load(RProjectConfig config);
-   abstract void save(RProjectConfig config);
+   abstract void load(RProjectOptions options);
+   abstract void save(RProjectOptions options);
    
    boolean validate()
    {

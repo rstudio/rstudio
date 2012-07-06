@@ -23,16 +23,19 @@ public class RProjectOptions extends JavaScriptObject
    public static final RProjectOptions createEmpty()
    {
       return create(RProjectConfig.createEmpty(), 
-                    RProjectVcsOptions.createEmpty());
+                    RProjectVcsOptions.createEmpty(),
+                    RProjectBuildOptions.createEmpty());
    }
    
    public native static final RProjectOptions create(
-                                           RProjectConfig config,
-                                           RProjectVcsOptions vcsOptions) /*-{
+                                    RProjectConfig config,
+                                    RProjectVcsOptions vcsOptions,
+                                    RProjectBuildOptions buildOptions) /*-{
       var options = new Object();
       options.config = config;
       options.vcs_options = vcsOptions;
       options.vcs_options_default = new Object();
+      options.build_options = buildOptions;
       return options;
    }-*/;
    
@@ -42,6 +45,10 @@ public class RProjectOptions extends JavaScriptObject
    
    public native final RProjectVcsOptions getVcsOptions() /*-{
       return this.vcs_options;
+   }-*/;
+   
+   public native final RProjectBuildOptions getBuildOptions() /*-{
+      return this.build_options;
    }-*/;
 
    public native final RProjectVcsContext getVcsContext() /*-{

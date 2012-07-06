@@ -57,6 +57,14 @@ private:
 
       isRunning_ = true;
 
+      // read build options
+      Error error = projects::projectContext().readBuildOptions(&options_);
+      if (error)
+      {
+         terminateWithError("reading build options file", error);
+         return;
+      }
+
       // callbacks
       core::system::ProcessCallbacks cb;
       cb.onContinue = boost::bind(&Build::onContinue,
@@ -94,7 +102,7 @@ private:
       {
          FilePath makefilePath = projectPath(config.makefilePath);
          options.workingDir = makefilePath;
-         executeMakefileBuild(type, config.makefileArgs, options, cb);
+         executeMakefileBuild(type, options, cb);
       }
       else if (config.buildType == r_util::kBuildTypeCustom)
       {
@@ -118,9 +126,7 @@ private:
       Error error = module_context::rBinDir(&rBinDir);
       if (error)
       {
-         std::string msg = "Error attempting to locate R binary: " +
-                           error.summary();
-         terminateWithError(msg);
+         terminateWithError("attempting to locate R binary", error);
          return;
       }
 
@@ -153,13 +159,12 @@ private:
 
 
    void executeMakefileBuild(const std::string& type,
-                             const std::string& makeArgs,
                              const core::system::ProcessOptions& options,
                              const core::system::ProcessCallbacks& cb)
    {
       std::string make = "make";
-      if (!makeArgs.empty())
-         make += " " + makeArgs;
+      if (!options_.makefileArgs.empty())
+         make += " " + options_.makefileArgs;
 
       std::string makeClean = make + " clean";
 
@@ -204,6 +209,13 @@ private:
       {
          return projects::projectContext().directory().complete(path);
       }
+   }
+
+   void terminateWithError(const std::string& context,
+                           const Error& error)
+   {
+      std::string msg = "Error " + context + ": " + error.summary();
+      terminateWithError(msg);
    }
 
    void terminateWithError(const std::string& msg)
@@ -273,6 +285,7 @@ private:
    bool isRunning_;
    bool terminationRequested_;
    std::string output_;
+   projects::RProjectBuildOptions options_;
 };
 
 boost::shared_ptr<Build> s_pBuild;

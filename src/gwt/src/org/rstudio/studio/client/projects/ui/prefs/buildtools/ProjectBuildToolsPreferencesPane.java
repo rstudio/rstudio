@@ -78,7 +78,7 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
       buildTypeSelect_.setValue(initialConfig_.getBuildType());
       
       for (BuildToolsPanel panel : buildToolsPanels_.values())
-         panel.load(initialConfig_);
+         panel.load(options);
       
       manageBuildToolsPanel(buildType);
    }
@@ -91,7 +91,7 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
       config.setBuildType(buildTypeSelect_.getValue());
       
       for (BuildToolsPanel panel : buildToolsPanels_.values())
-         panel.save(config);
+         panel.save(options);
      
       // require reload if the build type changed
       return !initialConfig_.getBuildType().equals(buildTypeSelect_.getValue());

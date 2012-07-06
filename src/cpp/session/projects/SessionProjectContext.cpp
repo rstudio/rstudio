@@ -510,6 +510,12 @@ FilePath ProjectContext::vcsOptionsFilePath() const
    return scratchPath().childPath("vcs_options");
 }
 
+Error ProjectContext::buildOptionsFile(Settings* pOptionsFile) const
+{
+   return pOptionsFile->initialize(scratchPath().childPath("build_options"));
+}
+
+
 Error ProjectContext::readVcsOptions(RProjectVcsOptions* pOptions) const
 {
    core::Settings settings;
@@ -537,6 +543,33 @@ Error ProjectContext::writeVcsOptions(const RProjectVcsOptions& options) const
 
    return Success();
 }
+
+Error ProjectContext::readBuildOptions(RProjectBuildOptions* pOptions)
+{
+   core::Settings optionsFile;
+   Error error = buildOptionsFile(&optionsFile);
+   if (error)
+      return error;
+
+   pOptions->makefileArgs = optionsFile.get("makefile_args");
+
+   return Success();
+}
+
+Error ProjectContext::writeBuildOptions(const RProjectBuildOptions& options)
+{
+   core::Settings optionsFile;
+   Error error = buildOptionsFile(&optionsFile);
+   if (error)
+      return error;
+
+   optionsFile.beginUpdate();
+   optionsFile.set("makefile_args", options.makefileArgs);
+   optionsFile.endUpdate();
+
+   return Success();
+}
+
 
 } // namespace projects
 } // namesapce session

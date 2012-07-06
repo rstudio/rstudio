@@ -56,7 +56,6 @@ struct RProjectConfig
         buildType(),
         packagePath(),
         makefilePath(),
-        makefileArgs(),
         customScriptPath()
    {
    }
@@ -75,7 +74,6 @@ struct RProjectConfig
    std::string buildType;
    std::string packagePath;
    std::string makefilePath;
-   std::string makefileArgs;
    std::string customScriptPath;
 };
 

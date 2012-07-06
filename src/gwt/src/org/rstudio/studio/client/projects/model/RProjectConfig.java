@@ -178,14 +178,6 @@ public class RProjectConfig extends JavaScriptObject
    public native final void setMakefilePath(String makefilePath) /*-{
       this.makefile_path = makefilePath;
    }-*/;
-
-   public native final String getMakefileArgs() /*-{
-      return this.makefile_args;
-   }-*/;
-
-   public native final void setMakefileArgs(String makefileArgs) /*-{
-      this.makefile_args = makefileArgs;
-   }-*/;
    
    public native final String getCustomScriptPath() /*-{
       return this.custom_script_path;

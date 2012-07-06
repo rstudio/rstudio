@@ -55,6 +55,12 @@ struct RProjectVcsOptions
    std::string vcsOverride;
 };
 
+// build options
+struct RProjectBuildOptions
+{
+   std::string makefileArgs;
+};
+
 class ProjectContext : boost::noncopyable
 {
 public:
@@ -98,6 +104,9 @@ public:
    core::Error readVcsOptions(RProjectVcsOptions* pOptions) const;
    core::Error writeVcsOptions(const RProjectVcsOptions& options) const;
 
+   core::Error readBuildOptions(RProjectBuildOptions* pOptions);
+   core::Error writeBuildOptions(const RProjectBuildOptions& options);
+
    // code which needs to rely on the encoding should call this method
    // rather than getting the encoding off of the config (because the
    // config could have been created on another system with an encoding
@@ -140,6 +149,7 @@ private:
    void fileMonitorTermination(const core::Error& error);
 
    core::FilePath vcsOptionsFilePath() const;
+   core::Error buildOptionsFile(core::Settings* pOptionsFile) const;
 
    void updateDefaultEncoding();
 

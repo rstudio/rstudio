@@ -86,9 +86,19 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["build_type"] = config.buildType;
    configJson["package_path"] = config.packagePath;
    configJson["makefile_path"] = config.makefilePath;
-   configJson["makefile_args"] = config.makefileArgs;
    configJson["custom_script_path"] = config.customScriptPath;
    return configJson;
+}
+
+json::Object projectBuildOptionsJson()
+{
+   RProjectBuildOptions buildOptions;
+   Error error = s_projectContext.readBuildOptions(&buildOptions);
+   if (error)
+      LOG_ERROR(error);
+   json::Object buildOptionsJson;
+   buildOptionsJson["makefile_args"] = buildOptions.makefileArgs;
+   return buildOptionsJson;
 }
 
 json::Object projectVcsOptionsJson()
@@ -133,6 +143,7 @@ Error readProjectOptions(const json::JsonRpcRequest& request,
    optionsJson["config"] = configJson;
    optionsJson["vcs_options"] = projectVcsOptionsJson();
    optionsJson["vcs_context"] = projectVcsContextJson();
+   optionsJson["build_options"] = projectBuildOptionsJson();
 
    pResponse->setResult(optionsJson);
    return Success();
@@ -147,6 +158,14 @@ void setProjectConfig(const r_util::RProjectConfig& config)
    module_context::syncRSaveAction();
 }
 
+Error rProjectBuildOptionsFromJson(const json::Object& optionsJson,
+                                   RProjectBuildOptions* pOptions)
+{
+   return json::readObject(
+        optionsJson,
+        "makefile_args", (&pOptions->makefileArgs));
+}
+
 Error rProjectVcsOptionsFromJson(const json::Object& optionsJson,
                                  RProjectVcsOptions* pOptions)
 {
@@ -158,11 +177,12 @@ Error rProjectVcsOptionsFromJson(const json::Object& optionsJson,
 Error writeProjectOptions(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
-   // get the project config and vcs options
-   json::Object configJson, vcsOptionsJson;
+   // get the project config, vcs options, and build options
+   json::Object configJson, vcsOptionsJson, buildOptionsJson;
    Error error = json::readObjectParam(request.params, 0,
                                        "config", &configJson,
-                                       "vcs_options", &vcsOptionsJson);
+                                       "vcs_options", &vcsOptionsJson,
+                                       "build_options", &buildOptionsJson);
    if (error)
       return error;
 
@@ -189,7 +209,6 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
                     "build_type", &(config.buildType),
                     "package_path", &(config.packagePath),
                     "makefile_path", &(config.makefilePath),
-                    "makefile_args", &(config.makefileArgs),
                     "custom_script_path", &(config.customScriptPath));
    if (error)
       return error;
@@ -197,6 +216,12 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
    // read the vcs options
    RProjectVcsOptions vcsOptions;
    error = rProjectVcsOptionsFromJson(vcsOptionsJson, &vcsOptions);
+   if (error)
+      return error;
+
+   // read the buld options
+   RProjectBuildOptions buildOptions;
+   error = rProjectBuildOptionsFromJson(buildOptionsJson, &buildOptions);
    if (error)
       return error;
 
@@ -210,6 +235,11 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
 
    // write the vcs options
    error = s_projectContext.writeVcsOptions(vcsOptions);
+   if (error)
+      LOG_ERROR(error);
+
+   // write the build options
+   error = s_projectContext.writeBuildOptions(buildOptions);
    if (error)
       LOG_ERROR(error);
 
