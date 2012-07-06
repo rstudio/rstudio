@@ -130,31 +130,28 @@ private:
          return;
       }
 
-      // R binary and intial args
-      FilePath rProgram;
-      std::vector<std::string> args;
-  #ifdef _WIN32
-      rProgram = rBinDir.childPath("Rcmd.exe");
-  #else
-      rProgram = rBinDir.childPath("R");
-      args.push_back("CMD");
+      // base command
+
+#ifdef _WIN32
+      shell_utils::ShellCommand rCmd(rBinDir.childPath("Rcmd.exe"));
+#else
+      shell_utils::ShellCommand rCmd(rBinDir.childPath("R"));
+      rCmd << "CMD";
 #endif
 
       if (type == "build-all")
       {
-         args.push_back("INSTALL");
+         rCmd << "INSTALL";
+         rCmd << packagePath.filename();
       }
       else if (type == "check-package")
       {
-         args.push_back("check");
+         rCmd << "check";
+         rCmd << packagePath.filename();
       }
-      args.push_back(packagePath.filename());
 
-      // run process
-      module_context::processSupervisor().runProgram(rProgram.absolutePath(),
-                                                     args,
-                                                     options,
-                                                     cb);
+      // run command
+      module_context::processSupervisor().runCommand(rCmd, options, cb);
    }
 
 
