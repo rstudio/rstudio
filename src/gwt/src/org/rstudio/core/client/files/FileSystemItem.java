@@ -313,9 +313,9 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "swf",   "application/x-shockwave-flash" );
       
       // markdown types
-      MIME_TYPES.put( ".md",       "text/x-markdown" );
-      MIME_TYPES.put( ".mdtxt",    "text/x-markdown" );
-      MIME_TYPES.put( ".markdown", "text/x-markdown" );
+      MIME_TYPES.put( "md",       "text/x-markdown" );
+      MIME_TYPES.put( "mdtxt",    "text/x-markdown" );
+      MIME_TYPES.put( "markdown", "text/x-markdown" );
       
       // other types we are likely to serve
       MIME_TYPES.put( "xml",   "text/xml" );
