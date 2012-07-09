@@ -29,8 +29,10 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
+import org.rstudio.studio.client.workbench.views.buildtools.model.BuildRestartContext;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 
 public class BuildPresenter extends BasePresenter 
@@ -53,7 +55,7 @@ public class BuildPresenter extends BasePresenter
                          SourceShim sourceShim,
                          UIPrefs uiPrefs,
                          BuildServerOperations server,
-                         Commands commands,
+                         final Commands commands,
                          EventBus eventBus)
    {
       super(display);
@@ -62,6 +64,7 @@ public class BuildPresenter extends BasePresenter
       globalDisplay_ = globalDisplay;
       sourceShim_ = sourceShim;
       uiPrefs_ = uiPrefs;
+      eventBus_ = eventBus;
       
       eventBus.addHandler(BuildStartedEvent.TYPE, 
                           new BuildStartedEvent.Handler()
@@ -69,6 +72,7 @@ public class BuildPresenter extends BasePresenter
          @Override
          public void onBuildStarted(BuildStartedEvent event)
          {
+            view_.bringToFront();
             view_.buildStarted();
          }
       });
@@ -89,7 +93,10 @@ public class BuildPresenter extends BasePresenter
          @Override
          public void onBuildCompleted(BuildCompletedEvent event)
          {
+            view_.bringToFront();
             view_.buildCompleted();
+            if (event.getRestartR())
+               commands.restartR().execute();
          }
       });
       
@@ -109,6 +116,19 @@ public class BuildPresenter extends BasePresenter
       view_.showOutput(buildState.getOutput());
       if (!buildState.isRunning())
          view_.buildCompleted();
+   }
+   
+   public void initializeAfterRestart(BuildRestartContext context)
+   {
+      view_.bringToFront();
+      
+      view_.buildStarted();
+      view_.showOutput(context.getBuildOutput());
+      view_.buildCompleted();
+      
+      String loadPackage = "library(" + context.getPackageName() + ")";
+      SendToConsoleEvent event = new SendToConsoleEvent(loadPackage, true);
+      eventBus_.fireEvent(event);
    }
    
   
@@ -198,4 +218,5 @@ public class BuildPresenter extends BasePresenter
    private final UIPrefs uiPrefs_;
    private final BuildServerOperations server_;
    private final Display view_ ; 
+   private final EventBus eventBus_;
 }

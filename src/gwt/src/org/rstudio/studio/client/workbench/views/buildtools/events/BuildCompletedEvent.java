@@ -22,8 +22,14 @@ public class BuildCompletedEvent extends GwtEvent<BuildCompletedEvent.Handler>
       void onBuildCompleted(BuildCompletedEvent event);
    }
 
-   public BuildCompletedEvent()
+   public BuildCompletedEvent(boolean restartR)
    {
+      restartR_ = restartR;
+   }
+   
+   public boolean getRestartR()
+   {
+      return restartR_;
    }
   
    @Override
@@ -37,6 +43,8 @@ public class BuildCompletedEvent extends GwtEvent<BuildCompletedEvent.Handler>
    {
       handler.onBuildCompleted(this);
    }
+   
+   private final boolean restartR_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

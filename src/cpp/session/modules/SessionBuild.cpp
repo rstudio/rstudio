@@ -16,9 +16,12 @@
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/format.hpp>
+#include <boost/scope_exit.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
 #include <core/Exec.hpp>
+#include <core/FileSerializer.hpp>
+#include <core/text/DcfParser.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/ShellUtils.hpp>
 
@@ -33,6 +36,110 @@ namespace build {
 
 namespace {
 
+struct PackageDescription
+{
+   bool empty() const { return name.empty(); }
+
+   std::string name;
+};
+
+PackageDescription readPackageDescription(const FilePath& packageDir)
+{
+   PackageDescription packageDesc;
+
+   FilePath descFilePath = packageDir.childPath("DESCRIPTION");
+   if (descFilePath.exists())
+   {
+      std::string errMsg;
+      std::map<std::string,std::string> fields;
+      Error error = text::parseDcfFile(descFilePath, true, &fields, &errMsg);
+      if (!error)
+      {
+         std::map<std::string,std::string>::const_iterator it;
+
+         // extract package name
+         it = fields.find("Package");
+         if (it != fields.end())
+            packageDesc.name = it->second;
+         else
+            LOG_ERROR_MESSAGE("Package field not found in DESCRIPTION at " +
+                              descFilePath.absolutePath());
+      }
+      else
+      {
+         LOG_ERROR(error);
+      }
+   }
+   else
+   {
+      LOG_ERROR_MESSAGE("No DESCRIPTION for package at: " +
+                        packageDir.absolutePath());
+   }
+
+   return packageDesc;
+}
+
+FilePath restartContextFilePath()
+{
+   return module_context::scopedScratchPath().childPath(
+                                                   "build_restart_context");
+}
+
+void saveRestartContext(const FilePath& packageDir,
+                        const std::string& buildOutput)
+{
+   // parse the DESCRIPTION file for the package name
+   PackageDescription packageDesc = readPackageDescription(packageDir);
+   if (!packageDesc.empty())
+   {
+      core::Settings restartSettings;
+      Error error = restartSettings.initialize(restartContextFilePath());
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+
+      restartSettings.beginUpdate();
+      restartSettings.set("package_name", packageDesc.name);
+      restartSettings.set("build_output", buildOutput);
+      restartSettings.endUpdate();
+   }
+}
+
+json::Value collectRestartContext()
+{
+   FilePath restartSettingsPath = restartContextFilePath();
+   if (restartSettingsPath.exists())
+   {
+      // always cleanup the restart context on scope exit
+      BOOST_SCOPE_EXIT( (&restartSettingsPath) )
+      {
+         Error error = restartSettingsPath.remove();
+         if (error)
+            LOG_ERROR(error);
+      }
+      BOOST_SCOPE_EXIT_END
+
+      core::Settings restartSettings;
+      Error error = restartSettings.initialize(restartContextFilePath());
+      if (error)
+      {
+         LOG_ERROR(error);
+         return json::Value();
+      }
+
+      json::Object restartJson;
+      restartJson["package_name"] = restartSettings.get("package_name");
+      restartJson["build_output"] = restartSettings.get("build_output");
+      return restartJson;
+   }
+   else
+   {
+      return json::Value();
+   }
+}
+
 class Build : boost::noncopyable,
               public boost::enable_shared_from_this<Build>
 {
@@ -46,7 +153,7 @@ public:
 
 private:
    Build()
-      : isRunning_(false), terminationRequested_(false)
+      : isRunning_(false), terminationRequested_(false), restartR_(false)
    {
    }
 
@@ -90,8 +197,7 @@ private:
       options.terminateChildren = true;
       options.redirectStdErrToStdOut = true;
 
-      const core::r_util::RProjectConfig& config =
-                                          projects::projectContext().config();
+      const core::r_util::RProjectConfig& config = projectConfig();
       if (config.buildType == r_util::kBuildTypePackage)
       {
          FilePath packagePath = projectPath(config.packagePath);
@@ -121,6 +227,9 @@ private:
                             const core::system::ProcessOptions& options,
                             const core::system::ProcessCallbacks& cb)
    {
+      // restart R after build is completed
+      restartR_ = true;
+
       // R bin directory
       FilePath rBinDir;
       Error error = module_context::rBinDir(&rBinDir);
@@ -249,14 +358,13 @@ private:
 
    void onCompleted(int exitStatus)
    {
-      if (exitStatus == EXIT_SUCCESS)
-      {
-         enqueBuildOutput("Completed successfully.\n");
-      }
-      else
+      if (exitStatus != EXIT_SUCCESS)
       {
          boost::format fmt("\nExited with status %1%.\n\n");
          enqueBuildOutput(boost::str(fmt % exitStatus));
+
+         // never restart R after a failed build
+         restartR_ = false;
       }
 
       enqueBuildCompleted();
@@ -274,8 +382,20 @@ private:
    {
       isRunning_ = false;
 
-      ClientEvent event(client_events::kBuildCompleted);
+      // save the restart context if necessary
+      if ((projectConfig().buildType == r_util::kBuildTypePackage) && restartR_)
+      {
+         FilePath packagePath = projectPath(projectConfig().packagePath);
+         saveRestartContext(packagePath, output_);
+      }
+
+      ClientEvent event(client_events::kBuildCompleted, restartR_);
       module_context::enqueClientEvent(event);
+   }
+
+   const r_util::RProjectConfig& projectConfig()
+   {
+      return projects::projectContext().config();
    }
 
 private:
@@ -283,6 +403,7 @@ private:
    bool terminationRequested_;
    std::string output_;
    projects::RProjectBuildOptions options_;
+   bool restartR_;
 };
 
 boost::shared_ptr<Build> s_pBuild;
@@ -332,7 +453,7 @@ Error terminateBuild(const json::JsonRpcRequest& request,
 } // anonymous namespace
 
 
-core::json::Value buildStateAsJson()
+json::Value buildStateAsJson()
 {
    if (s_pBuild)
    {
@@ -345,6 +466,11 @@ core::json::Value buildStateAsJson()
    {
       return json::Value();
    }
+}
+
+json::Value buildRestartContext()
+{
+   return collectRestartContext();
 }
 
 Error initialize()

@@ -24,6 +24,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
+import org.rstudio.studio.client.workbench.views.buildtools.model.BuildRestartContext;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.buildtools.ui.BuildPaneResources;
 
@@ -44,6 +45,8 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
       public abstract void onCheckPackage();
       
       abstract void initialize(BuildState buildState);
+      
+      abstract void initializeAfterRestart(BuildRestartContext restartContext);
    }
 
    @Inject
@@ -90,10 +93,15 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
                commands.activateBuild().remove();
             }
             
-            // call initialize if we have build state
+            // initialize from build state or restart context
             BuildState buildState = sessionInfo.getBuildState();
+            BuildRestartContext context = sessionInfo.getBuildRestartContext();
+            
             if (buildState != null)
                shim.initialize(buildState);
+            else if (context != null)
+               shim.initializeAfterRestart(context);
+               
           }
       });
    }
