@@ -23,10 +23,12 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.WorkbenchView;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
-import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStatusEvent;
+import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
@@ -51,6 +53,7 @@ public class BuildPresenter extends BasePresenter
                          SourceShim sourceShim,
                          UIPrefs uiPrefs,
                          BuildServerOperations server,
+                         Commands commands,
                          EventBus eventBus)
    {
       super(display);
@@ -60,21 +63,13 @@ public class BuildPresenter extends BasePresenter
       sourceShim_ = sourceShim;
       uiPrefs_ = uiPrefs;
       
-      eventBus.addHandler(BuildStatusEvent.TYPE, 
-                          new BuildStatusEvent.Handler()
+      eventBus.addHandler(BuildStartedEvent.TYPE, 
+                          new BuildStartedEvent.Handler()
       {  
          @Override
-         public void onBuildStatus(BuildStatusEvent event)
+         public void onBuildStarted(BuildStartedEvent event)
          {
-            String status = event.getStatus();
-            if (status.equals(BuildStatusEvent.STATUS_STARTED))
-            {
-               view_.buildStarted();
-            }
-            else if (status.equals(BuildStatusEvent.STATUS_COMPLETED))
-            {
-               view_.buildCompleted();
-            }
+            view_.buildStarted();
          }
       });
       
@@ -85,6 +80,16 @@ public class BuildPresenter extends BasePresenter
          public void onBuildOutput(BuildOutputEvent event)
          {
             view_.showOutput(event.getOutput());
+         }
+      });
+      
+      eventBus.addHandler(BuildCompletedEvent.TYPE, 
+            new BuildCompletedEvent.Handler()
+      {  
+         @Override
+         public void onBuildCompleted(BuildCompletedEvent event)
+         {
+            view_.buildCompleted();
          }
       });
       

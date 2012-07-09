@@ -1,5 +1,5 @@
 /*
- * BuildStatusEvent.java
+ * BuildStartedEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -15,26 +15,17 @@ package org.rstudio.studio.client.workbench.views.buildtools.events;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class BuildStatusEvent extends GwtEvent<BuildStatusEvent.Handler>
+public class BuildStartedEvent extends GwtEvent<BuildStartedEvent.Handler>
 {  
-   public final static String STATUS_STARTED = "started";
-   public final static String STATUS_COMPLETED = "completed";
-   
    public interface Handler extends EventHandler
    {
-      void onBuildStatus(BuildStatusEvent event);
+      void onBuildStarted(BuildStartedEvent event);
    }
 
-   public BuildStatusEvent(String status)
+   public BuildStartedEvent()
    {
-      status_ = status;
    }
-    
-   public String getStatus()
-   {
-      return status_;
-   }
-   
+  
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -44,10 +35,8 @@ public class BuildStatusEvent extends GwtEvent<BuildStatusEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onBuildStatus(this);
+      handler.onBuildStarted(this);
    }
-   
-   private final String status_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

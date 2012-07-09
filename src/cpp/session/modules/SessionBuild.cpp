@@ -52,7 +52,7 @@ private:
 
    void start(const std::string& type)
    {
-      ClientEvent event(client_events::kBuildStatus, "started");
+      ClientEvent event(client_events::kBuildStarted);
       module_context::enqueClientEvent(event);
 
       isRunning_ = true;
@@ -274,7 +274,7 @@ private:
    {
       isRunning_ = false;
 
-      ClientEvent event(client_events::kBuildStatus, "completed");
+      ClientEvent event(client_events::kBuildCompleted);
       module_context::enqueClientEvent(event);
    }
 

@@ -82,8 +82,9 @@ extern const int kSynctexEditFile;
 extern const int kFindResult;
 extern const int kFindOperationEnded;
 extern const int kRPubsUploadStatus;
-extern const int kBuildStatus;
+extern const int kBuildStarted;
 extern const int kBuildOutput;
+extern const int kBuildCompleted;
 }
    
 class ClientEvent

@@ -47,8 +47,9 @@ import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
+import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
-import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStatusEvent;
+import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEvent;
 import org.rstudio.studio.client.workbench.views.console.events.*;
 import org.rstudio.studio.client.workbench.views.console.model.ConsolePrompt;
@@ -368,15 +369,18 @@ public class ClientEventDispatcher
             RPubsUploadStatusEvent.Status status = event.getData();
             eventBus_.fireEvent(new RPubsUploadStatusEvent(status));
          }
-         else if (type.equals(ClientEvent.BuildStatus))
+         else if (type.equals(ClientEvent.BuildStarted))
          {
-            String status = event.getData();
-            eventBus_.fireEvent(new BuildStatusEvent(status));
+            eventBus_.fireEvent(new BuildStartedEvent());
          }
          else if (type.equals(ClientEvent.BuildOutput))
          {
             String output = event.getData();
             eventBus_.fireEvent(new BuildOutputEvent(output));
+         }
+         else if (type.equals(ClientEvent.BuildCompleted))
+         {
+            eventBus_.fireEvent(new BuildCompletedEvent());
          }
          else if (type.equals(ClientEvent.ListChanged))
          {

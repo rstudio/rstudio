@@ -83,8 +83,9 @@ const int kSynctexEditFile = 58;
 const int kFindResult = 59;
 const int kFindOperationEnded = 60;
 const int kRPubsUploadStatus = 61;
-const int kBuildStatus = 62;
+const int kBuildStarted = 62;
 const int kBuildOutput = 63;
+const int kBuildCompleted = 64;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -216,10 +217,12 @@ std::string ClientEvent::typeName() const
          return "find_operation_ended";
       case client_events::kRPubsUploadStatus:
          return "rpubs_upload_status";
-      case client_events::kBuildStatus:
-         return "build_status";
+      case client_events::kBuildStarted:
+         return "build_started";
       case client_events::kBuildOutput:
          return "build_output";
+      case client_events::kBuildCompleted:
+         return "build_completed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              boost::lexical_cast<std::string>(type_));
