@@ -21,8 +21,16 @@ public class SendToConsoleEvent extends GwtEvent<SendToConsoleHandler>
 
    public SendToConsoleEvent(String code, boolean execute)
    {
+      this(code, execute, false);
+   }
+   
+   public SendToConsoleEvent(String code, 
+                             boolean execute, 
+                             boolean suppressAddToHistory)
+   {
       code_ = code;
       execute_ = execute;
+      suppressAddToHistory_ = suppressAddToHistory;
    }
 
    public String getCode()
@@ -33,6 +41,11 @@ public class SendToConsoleEvent extends GwtEvent<SendToConsoleHandler>
    public boolean shouldExecute()
    {
       return execute_;
+   }
+   
+   public boolean suppressAddToHistory()
+   {
+      return suppressAddToHistory_;
    }
 
    @Override
@@ -49,4 +62,5 @@ public class SendToConsoleEvent extends GwtEvent<SendToConsoleHandler>
 
    private final String code_;
    private final boolean execute_;
+   private final boolean suppressAddToHistory_;
 }

@@ -127,8 +127,8 @@ public class BuildPresenter extends BasePresenter
       view_.buildCompleted();
       
       String loadPackage = "library(" + context.getPackageName() + ")";
-      SendToConsoleEvent event = new SendToConsoleEvent(loadPackage, true);
-      eventBus_.fireEvent(event);
+      eventBus_.fireEvent(
+              new SendToConsoleEvent(loadPackage, true, true));
    }
    
   
