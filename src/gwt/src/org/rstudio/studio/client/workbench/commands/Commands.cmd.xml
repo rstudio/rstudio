@@ -204,6 +204,8 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="buildSourcePackage"/>
          <cmd refid="buildBinaryPackage"/>
          <separator/>
+         <cmd refid="stopBuild"/>
+         <separator/>
          <cmd refid="buildToolsProjectSetup"/>
       </menu>
       
@@ -1044,6 +1046,10 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Check"
         menuLabel="_Check Package"
         desc="R CMD check"/>
+
+   <cmd id="stopBuild"
+        menuLabel="Sto_p Build"
+        desc="Stop the current build"/>
 
    <cmd id="buildToolsProjectSetup"
         menuLabel="Configure Build _Tools..."

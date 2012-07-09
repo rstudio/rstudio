@@ -245,6 +245,7 @@ public abstract class
    public abstract AppCommand buildSourcePackage();
    public abstract AppCommand buildBinaryPackage();
    public abstract AppCommand checkPackage();
+   public abstract AppCommand stopBuild();
    public abstract AppCommand buildToolsProjectSetup();
    public abstract AppCommand activateBuild();
    

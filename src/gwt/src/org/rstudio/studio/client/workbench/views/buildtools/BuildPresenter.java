@@ -65,15 +65,19 @@ public class BuildPresenter extends BasePresenter
       sourceShim_ = sourceShim;
       uiPrefs_ = uiPrefs;
       eventBus_ = eventBus;
-      
+      commands_ = commands;
+        
       eventBus.addHandler(BuildStartedEvent.TYPE, 
                           new BuildStartedEvent.Handler()
       {  
          @Override
          public void onBuildStarted(BuildStartedEvent event)
          {
+            commands.stopBuild().setEnabled(true);
+            
             view_.bringToFront();
             view_.buildStarted();
+         
          }
       });
       
@@ -93,6 +97,8 @@ public class BuildPresenter extends BasePresenter
          @Override
          public void onBuildCompleted(BuildCompletedEvent event)
          {
+            commands.stopBuild().setEnabled(false);
+            
             view_.bringToFront();
             view_.buildCompleted();
             if (event.getRestartR())
@@ -105,7 +111,7 @@ public class BuildPresenter extends BasePresenter
          @Override
          public void onClick(ClickEvent event)
          {
-            terminateBuild();
+            commands.stopBuild().execute();
          }
       });
    }
@@ -116,6 +122,10 @@ public class BuildPresenter extends BasePresenter
       view_.showOutput(buildState.getOutput());
       if (!buildState.isRunning())
          view_.buildCompleted();
+      else
+         commands_.stopBuild().setEnabled(true);
+         
+      
    }
    
    public void initializeAfterRestart(BuildRestartContext context)
@@ -192,7 +202,7 @@ public class BuildPresenter extends BasePresenter
       }
    }
    
-   private void terminateBuild()
+   void onStopBuild()
    {
        server_.terminateBuild(new DelayedProgressRequestCallback<Boolean>(
                                                        "Terminating Build..."){
@@ -229,4 +239,5 @@ public class BuildPresenter extends BasePresenter
    private final BuildServerOperations server_;
    private final Display view_ ; 
    private final EventBus eventBus_;
+   private final Commands commands_;
 }

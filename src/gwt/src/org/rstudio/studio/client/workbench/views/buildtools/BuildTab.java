@@ -46,6 +46,8 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
       @Handler
       public abstract void onBuildBinaryPackage();
       @Handler
+      public abstract void onStopBuild();
+      @Handler
       public abstract void onCheckPackage();
       
       abstract void initialize(BuildState buildState);
@@ -63,6 +65,9 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
       super("Build", shim);
       session_ = session;
       binder.bind(commands, shim);
+      
+      // stop build always starts out disabled
+      commands.stopBuild().setEnabled(false);
       
       eventBus.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
          public void onSessionInit(SessionInitEvent sie)
