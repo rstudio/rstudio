@@ -146,8 +146,6 @@ public:
    std::string spellingLanguage() const;
    std::vector<std::string> spellingCustomDictionaries() const;
 
-   bool buildToolsEnabled() const;
-
 private:
 
    void onSettingsFileChanged(

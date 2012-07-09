@@ -50,10 +50,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
             RES.styles().panelContainer(),
             false,
             new ProjectPreferencesPane[] {general, editing, compilePdf, source, build});
-      
-      if (!session.getSessionInfo().getBuildToolsEnabled())
-         hidePane(4);
-      
+           
       server_ = server;
       pUIPrefs_ = pUIPrefs;  
    }

@@ -62,59 +62,46 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
          {
             SessionInfo sessionInfo = session.getSessionInfo();
 
-            if (sessionInfo.getBuildToolsEnabled())
+            // adapt or remove package commands if this isn't a package
+            String type = sessionInfo.getBuildToolsType();
+            if (!type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
             {
-               // adapt or remove package commands if this isn't a package
-               String type = sessionInfo.getBuildToolsType();
-               if (!type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
-               {
-                  commands.checkPackage().remove();
-                  commands.buildAll().setImageResource(
-                                    BuildPaneResources.INSTANCE.iconBuild());
-                  commands.buildAll().setMenuLabel("_Build All");
-                  commands.buildAll().setDesc("Build all");
-                  
-               }
-               
-               // remove makefile commands if this isn't a makefile
-               if (!type.equals(SessionInfo.BUILD_TOOLS_MAKEFILE))
-               {
-                  commands.rebuildAll().remove();
-                  commands.cleanAll().remove();
-               }
-               
-               // remove all other commands if there are no build tools
-               if (type.equals(SessionInfo.BUILD_TOOLS_NONE))
-               {
-                  commands.buildAll().remove();
-                  commands.rebuildAll().remove();
-                  commands.cleanAll().remove();
-                  commands.activateBuild().remove();
-               }
-               
-               // call initialize if we have build state
-               BuildState buildState = sessionInfo.getBuildState();
-               if (buildState != null)
-                  shim.initialize(buildState);
-            }
-            else // build tools disabled
-            {
-               commands.buildAll().remove();
                commands.checkPackage().remove();
-               commands.activateBuild().remove();
-               commands.buildToolsProjectSetup().remove();
+               commands.buildAll().setImageResource(
+                                 BuildPaneResources.INSTANCE.iconBuild());
+               commands.buildAll().setMenuLabel("_Build All");
+               commands.buildAll().setDesc("Build all");
+               
             }
             
-           
-         }
+            // remove makefile commands if this isn't a makefile
+            if (!type.equals(SessionInfo.BUILD_TOOLS_MAKEFILE))
+            {
+               commands.rebuildAll().remove();
+               commands.cleanAll().remove();
+            }
+            
+            // remove all other commands if there are no build tools
+            if (type.equals(SessionInfo.BUILD_TOOLS_NONE))
+            {
+               commands.buildAll().remove();
+               commands.rebuildAll().remove();
+               commands.cleanAll().remove();
+               commands.activateBuild().remove();
+            }
+            
+            // call initialize if we have build state
+            BuildState buildState = sessionInfo.getBuildState();
+            if (buildState != null)
+               shim.initialize(buildState);
+          }
       });
    }
    
    @Override
    public boolean isSuppressed()
    {
-      return !session_.getSessionInfo().getBuildToolsEnabled() ||
-             session_.getSessionInfo().getBuildToolsType().equals(
+      return session_.getSessionInfo().getBuildToolsType().equals(
                                                  SessionInfo.BUILD_TOOLS_NONE);
    }
 

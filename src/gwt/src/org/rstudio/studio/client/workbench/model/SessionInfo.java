@@ -231,10 +231,6 @@ public class SessionInfo extends JavaScriptObject
       return this.html_capabilities;
    }-*/;
    
-   public final native boolean getBuildToolsEnabled() /*-{
-      return this.build_tools_enabled;
-   }-*/;
-   
    public final static String BUILD_TOOLS_NONE = "None";
    public final static String BUILD_TOOLS_PACKAGE = "Package";
    public final static String BUILD_TOOLS_MAKEFILE = "Makefile";

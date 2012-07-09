@@ -461,7 +461,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
 #endif
 
    // are build tools enabled
-   sessionInfo["build_tools_enabled"] = userSettings().buildToolsEnabled();
    if (projects::projectContext().hasProject())
       sessionInfo["build_tools_type"] = projects::projectContext().config()
                                                                      .buildType;

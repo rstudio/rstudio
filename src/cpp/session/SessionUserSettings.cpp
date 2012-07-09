@@ -507,12 +507,6 @@ bool UserSettings::removeHistoryDuplicates() const
    return settings_.getBool(kRemoveHistoryDuplicates, false);
 }
 
-bool UserSettings::buildToolsEnabled() const
-{
-   return settings_.getBool("buildToolsEnabled", false);
-}
-
-
 void UserSettings::setRemoveHistoryDuplicates(bool removeDuplicates)
 {
    settings_.set(kRemoveHistoryDuplicates, removeDuplicates);
