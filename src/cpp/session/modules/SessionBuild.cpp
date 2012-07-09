@@ -337,6 +337,9 @@ private:
          // show the user the command
          enqueBuildOutput(rCmd.commandString() + "\n\n");
 
+         // set a success message
+         successMessage_ = "R CMD check succeeded\n";
+
          // run the source build
          module_context::processSupervisor().runCommand(rCmd.shellCommand(),
                                                         options,
