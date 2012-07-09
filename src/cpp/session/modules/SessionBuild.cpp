@@ -103,6 +103,49 @@ json::Value collectRestartContext()
    }
 }
 
+
+// R command invocation -- has two representations, one to be submitted
+// (shellCmd_) and one to show the user (cmdString_)
+class RCommand
+{
+public:
+   explicit RCommand(const FilePath& rBinDir)
+#ifdef _WIN32
+      : shellCmd_(rBinDir.childPath("Rcmd.exe"))
+#else
+      : shellCmd_(rBinDir.childPath("R"))
+#endif
+   {
+#ifdef _WIN32
+      cmdString_ = "Rcmd.exe";
+#else
+      shellCmd_ << "CMD";
+      cmdString_ = "R CMD";
+#endif
+   }
+
+   RCommand& operator<<(const std::string& arg)
+   {
+      cmdString_ += " " + arg;
+      shellCmd_ << arg;
+      return *this;
+   }
+
+   const std::string& commandString() const
+   {
+      return cmdString_;
+   }
+
+   const shell_utils::ShellCommand& shellCommand() const
+   {
+      return shellCmd_;
+   }
+
+private:
+   std::string cmdString_;
+   shell_utils::ShellCommand shellCmd_;
+};
+
 class Build : boost::noncopyable,
               public boost::enable_shared_from_this<Build>
 {
@@ -190,42 +233,102 @@ private:
                             const core::system::ProcessOptions& options,
                             const core::system::ProcessCallbacks& cb)
    {
-      // restart R after build is completed
-      restartR_ = true;
+      // get package info
+      r_util::RPackageInfo pkgInfo;
+      Error error = pkgInfo.read(packagePath);
+      if (error)
+      {
+         terminateWithError("Reading package DESCRIPTION", error);
+         return;
+      }
 
-      // R bin directory
+      // get R bin directory
       FilePath rBinDir;
-      Error error = module_context::rBinDir(&rBinDir);
+      error = module_context::rBinDir(&rBinDir);
       if (error)
       {
          terminateWithError("attempting to locate R binary", error);
          return;
       }
 
-      // base command
-
-#ifdef _WIN32
-      shell_utils::ShellCommand rCmd(rBinDir.childPath("Rcmd.exe"));
-#else
-      shell_utils::ShellCommand rCmd(rBinDir.childPath("R"));
-      rCmd << "CMD";
-#endif
-
+      // build command
       if (type == "build-all")
       {
+         // restart R after build is completed
+         restartR_ = true;
+
+         // build command
+         RCommand rCmd(rBinDir);
          rCmd << "INSTALL";
          rCmd << packagePath.filename();
+
+         // show the user the command
+         enqueBuildOutput(rCmd.commandString() + "\n");
+
+         // run R CMD INSTALL <package-dir>
+         module_context::processSupervisor().runCommand(rCmd.shellCommand(),
+                                                        options,
+                                                        cb);
       }
+
       else if (type == "check-package")
       {
-         rCmd << "check";
-         rCmd << packagePath.filename();
-      }
+         // first build then check
 
-      // run command
-      module_context::processSupervisor().runCommand(rCmd, options, cb);
+         // compose the build command
+         RCommand rCmd(rBinDir);
+         rCmd << "build";
+         rCmd << packagePath.filename();
+
+         // compose the check command (will be executed by the onExit
+         // handler of the build cmd)
+         RCommand rCheckCmd(rBinDir);
+         rCheckCmd << "check";
+         rCheckCmd << pkgInfo.sourcePackageFilename();
+
+         // special callback for build result
+         system::ProcessCallbacks buildCb = cb;
+         buildCb.onExit =  boost::bind(&Build::onBuildForCheckCompleted,
+                                       Build::shared_from_this(),
+                                       _1,
+                                       rCheckCmd,
+                                       options,
+                                       buildCb);
+
+         // show the user the command
+         enqueBuildOutput(rCmd.commandString() + "\n");
+
+         // run the source build
+         module_context::processSupervisor().runCommand(rCmd.shellCommand(),
+                                                        options,
+                                                        buildCb);
+      }
    }
 
+
+   void onBuildForCheckCompleted(
+                         int exitStatus,
+                         const RCommand& checkCmd,
+                         const core::system::ProcessOptions& checkOptions,
+                         const core::system::ProcessCallbacks& checkCb)
+   {
+      if (exitStatus == EXIT_SUCCESS)
+      {
+         // show the user the buld command
+         enqueBuildOutput(checkCmd.commandString() + "\n");
+
+         // run the check
+         module_context::processSupervisor().runCommand(checkCmd.shellCommand(),
+                                                        checkOptions,
+                                                        checkCb);
+      }
+      else
+      {
+         boost::format fmt("\nExited with status %1%.\n\n");
+         enqueBuildOutput(boost::str(fmt % exitStatus));
+         enqueBuildCompleted();
+      }
+   }
 
    void executeMakefileBuild(const std::string& type,
                              const core::system::ProcessOptions& options,
