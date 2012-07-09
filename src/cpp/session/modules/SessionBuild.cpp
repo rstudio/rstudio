@@ -263,7 +263,7 @@ private:
          rCmd << packagePath.filename();
 
          // show the user the command
-         enqueBuildOutput(rCmd.commandString() + "\n");
+         enqueBuildOutput(rCmd.commandString() + "\n\n");
 
          // run R CMD INSTALL <package-dir>
          module_context::processSupervisor().runCommand(rCmd.shellCommand(),
@@ -296,7 +296,7 @@ private:
                                        buildCb);
 
          // show the user the command
-         enqueBuildOutput(rCmd.commandString() + "\n");
+         enqueBuildOutput(rCmd.commandString() + "\n\n");
 
          // run the source build
          module_context::processSupervisor().runCommand(rCmd.shellCommand(),
@@ -315,7 +315,7 @@ private:
       if (exitStatus == EXIT_SUCCESS)
       {
          // show the user the buld command
-         enqueBuildOutput(checkCmd.commandString() + "\n");
+         enqueBuildOutput(checkCmd.commandString() + "\n\n");
 
          // run the check
          module_context::processSupervisor().runCommand(checkCmd.shellCommand(),
