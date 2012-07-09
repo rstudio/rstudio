@@ -193,7 +193,17 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="projectOptions"/>
       </menu>
-
+      
+      <menu label="_Build">
+         <cmd refid="buildAll"/>
+         <separator/>
+         <cmd refid="rebuildAll"/>
+         <cmd refid="cleanAll"/>
+         <cmd refid="checkPackage"/>
+         <separator/>
+         <cmd refid="buildToolsProjectSetup"/>
+      </menu>
+      
       <separator/>
 
       <menu label="_Workspace">
@@ -240,15 +250,6 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="setWorkingDirToFilesPane"/>
             <separator/>
             <cmd refid="setWorkingDir"/>
-         </menu>
-         <separator/>
-         <menu label="_Build">
-            <cmd refid="buildAll"/>
-            <cmd refid="rebuildAll"/>
-            <cmd refid="cleanAll"/>
-            <cmd refid="checkPackage"/>
-            <separator/>
-            <cmd refid="buildToolsProjectSetup"/>
          </menu>
          <separator/>
          <cmd refid="installPackage"/>
@@ -1015,9 +1016,9 @@ well as menu structures (for main menu and popup menus).
         visible="false"/>
               
    <cmd id="buildAll"
-        buttonLabel="Build &amp; Install"
-        menuLabel="_Build &amp; Install Package"
-        desc="Build and install the package"/>
+        buttonLabel="Build &amp; Reload"
+        menuLabel="_Build &amp; Reload Package"
+        desc="Build and reload the package"/>
         
    <cmd id="rebuildAll"
         menuLabel="_Rebuild All"
