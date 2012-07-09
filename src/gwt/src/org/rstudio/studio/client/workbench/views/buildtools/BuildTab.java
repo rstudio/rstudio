@@ -42,6 +42,10 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
       @Handler
       public abstract void onCleanAll();
       @Handler
+      public abstract void onBuildSourcePackage();
+      @Handler
+      public abstract void onBuildBinaryPackage();
+      @Handler
       public abstract void onCheckPackage();
       
       abstract void initialize(BuildState buildState);
@@ -69,6 +73,8 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
             String type = sessionInfo.getBuildToolsType();
             if (!type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
             {
+               commands.buildSourcePackage().remove();
+               commands.buildBinaryPackage().remove();
                commands.checkPackage().remove();
                commands.buildAll().setImageResource(
                                  BuildPaneResources.INSTANCE.iconBuild());

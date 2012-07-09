@@ -242,6 +242,8 @@ public abstract class
    public abstract AppCommand buildAll();
    public abstract AppCommand rebuildAll();
    public abstract AppCommand cleanAll();
+   public abstract AppCommand buildSourcePackage();
+   public abstract AppCommand buildBinaryPackage();
    public abstract AppCommand checkPackage();
    public abstract AppCommand buildToolsProjectSetup();
    public abstract AppCommand activateBuild();

@@ -61,14 +61,19 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
          toolbar.addLeftWidget(buildMenuButton);
       }
       
-      toolbar.addLeftSeparator();
-      
-      // packages get checkPackage
-      if (type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
+      // packages get additional commands 
+      else if (type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
       {
-         toolbar.addLeftWidget(commands_.checkPackage().createToolbarButton());
+         ToolbarPopupMenu buildMenu = new ToolbarPopupMenu();
+         buildMenu.addItem(commands_.buildSourcePackage().createMenuItem(false));
+         buildMenu.addItem(commands_.buildBinaryPackage().createMenuItem(false));
+         ToolbarButton buildMenuButton = new ToolbarButton(buildMenu, true);
+         toolbar.addLeftWidget(buildMenuButton);
          toolbar.addLeftSeparator();
+         toolbar.addLeftWidget(commands_.checkPackage().createToolbarButton());
       }
+      
+      toolbar.addLeftSeparator();
       
       // always include configuration
       toolbar.addLeftWidget(

@@ -271,6 +271,45 @@ private:
                                                         cb);
       }
 
+      else if (type == "build-source-package")
+      {
+         // compose the build command
+         RCommand rCmd(rBinDir);
+         rCmd << "build";
+         rCmd << packagePath.filename();
+
+         // show the user the command
+         enqueBuildOutput(rCmd.commandString() + "\n\n");
+
+         // set a success message
+         successMessage_ = buildPackageSuccessMsg("Source");
+
+         // run R CMD build <package-dir>
+         module_context::processSupervisor().runCommand(rCmd.shellCommand(),
+                                                        options,
+                                                        cb);
+      }
+
+      else if (type == "build-binary-package")
+      {
+         // compose the INSTALL --binary
+         RCommand rCmd(rBinDir);
+         rCmd << "INSTALL";
+         rCmd << "--build";
+         rCmd << packagePath.filename();
+
+         // show the user the command
+         enqueBuildOutput(rCmd.commandString() + "\n\n");
+
+         // set a success message
+         successMessage_ = "\n" + buildPackageSuccessMsg("Binary");
+
+         // run R CMD INSTALL --build <package-dir>
+         module_context::processSupervisor().runCommand(rCmd.shellCommand(),
+                                                        options,
+                                                        cb);
+      }
+
       else if (type == "check-package")
       {
          // first build then check
@@ -432,6 +471,11 @@ private:
          // never restart R after a failed build
          restartR_ = false;
       }
+      else
+      {
+         if (!successMessage_.empty())
+            enqueBuildOutput(successMessage_ + "\n");
+      }
 
       enqueBuildCompleted();
    }
@@ -464,11 +508,22 @@ private:
       return projects::projectContext().config();
    }
 
+   std::string buildPackageSuccessMsg(const std::string& type)
+   {
+      FilePath writtenPath = projectPath(projectConfig().packagePath).parent();
+      std::string written = module_context::createAliasedPath(writtenPath);
+      if (written == "~")
+         written = writtenPath.absolutePath();
+
+      return type + " package written to " + written;
+   }
+
 private:
    bool isRunning_;
    bool terminationRequested_;
    std::string output_;
    projects::RProjectBuildOptions options_;
+   std::string successMessage_;
    bool restartR_;
 };
 

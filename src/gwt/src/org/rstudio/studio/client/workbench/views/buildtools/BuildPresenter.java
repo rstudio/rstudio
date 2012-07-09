@@ -137,6 +137,16 @@ public class BuildPresenter extends BasePresenter
       startBuild("build-all");
    }
    
+   void onBuildSourcePackage()
+   {
+      startBuild("build-source-package");
+   }
+   
+   void onBuildBinaryPackage()
+   {
+      startBuild("build-binary-package");
+   }
+   
    void onCheckPackage()
    {
       startBuild("check-package");

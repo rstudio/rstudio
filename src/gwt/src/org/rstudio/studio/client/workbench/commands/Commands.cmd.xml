@@ -201,6 +201,9 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="cleanAll"/>
          <cmd refid="checkPackage"/>
          <separator/>
+         <cmd refid="buildSourcePackage"/>
+         <cmd refid="buildBinaryPackage"/>
+         <separator/>
          <cmd refid="buildToolsProjectSetup"/>
       </menu>
       
@@ -1028,6 +1031,14 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Clean All"
         buttonLabel="Clean"
         desc="Clean all"/>
+        
+   <cmd id="buildSourcePackage"
+        menuLabel="Build _Source Package"
+        desc="Build a source package"/>
+        
+     <cmd id="buildBinaryPackage"
+        menuLabel="Build Binar_y Package"
+        desc="Build a binary package"/>     
 
    <cmd id="checkPackage"
         buttonLabel="Check"
