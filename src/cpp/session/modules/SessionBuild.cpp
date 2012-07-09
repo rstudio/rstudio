@@ -24,6 +24,7 @@
 #include <core/text/DcfParser.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/ShellUtils.hpp>
+#include <core/r_util/RPackageInfo.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -36,49 +37,6 @@ namespace build {
 
 namespace {
 
-struct PackageDescription
-{
-   bool empty() const { return name.empty(); }
-
-   std::string name;
-};
-
-PackageDescription readPackageDescription(const FilePath& packageDir)
-{
-   PackageDescription packageDesc;
-
-   FilePath descFilePath = packageDir.childPath("DESCRIPTION");
-   if (descFilePath.exists())
-   {
-      std::string errMsg;
-      std::map<std::string,std::string> fields;
-      Error error = text::parseDcfFile(descFilePath, true, &fields, &errMsg);
-      if (!error)
-      {
-         std::map<std::string,std::string>::const_iterator it;
-
-         // extract package name
-         it = fields.find("Package");
-         if (it != fields.end())
-            packageDesc.name = it->second;
-         else
-            LOG_ERROR_MESSAGE("Package field not found in DESCRIPTION at " +
-                              descFilePath.absolutePath());
-      }
-      else
-      {
-         LOG_ERROR(error);
-      }
-   }
-   else
-   {
-      LOG_ERROR_MESSAGE("No DESCRIPTION for package at: " +
-                        packageDir.absolutePath());
-   }
-
-   return packageDesc;
-}
-
 FilePath restartContextFilePath()
 {
    return module_context::scopedScratchPath().childPath(
@@ -88,23 +46,28 @@ FilePath restartContextFilePath()
 void saveRestartContext(const FilePath& packageDir,
                         const std::string& buildOutput)
 {
-   // parse the DESCRIPTION file for the package name
-   PackageDescription packageDesc = readPackageDescription(packageDir);
-   if (!packageDesc.empty())
+   // read package info
+   r_util::RPackageInfo pkgInfo;
+   Error error = pkgInfo.read(packageDir);
+   if (error)
    {
-      core::Settings restartSettings;
-      Error error = restartSettings.initialize(restartContextFilePath());
-      if (error)
-      {
-         LOG_ERROR(error);
-         return;
-      }
-
-      restartSettings.beginUpdate();
-      restartSettings.set("package_name", packageDesc.name);
-      restartSettings.set("build_output", buildOutput);
-      restartSettings.endUpdate();
+      LOG_ERROR(error);
+      return;
    }
+
+   // save restart context
+   core::Settings restartSettings;
+   error = restartSettings.initialize(restartContextFilePath());
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   restartSettings.beginUpdate();
+   restartSettings.set("package_name", pkgInfo.name());
+   restartSettings.set("build_output", buildOutput);
+   restartSettings.endUpdate();
 }
 
 json::Value collectRestartContext()

@@ -73,6 +73,7 @@ set (CORE_SOURCE_FILES
    markdown/sundown/html_smartypants.c
    markdown/sundown/markdown.c
    markdown/sundown/stack.c
+   r_util/RPackageInfo.cpp
    r_util/RProjectFile.cpp
    r_util/RTokenizer.cpp
    r_util/RSourceIndex.cpp
