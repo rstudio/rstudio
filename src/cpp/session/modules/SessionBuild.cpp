@@ -263,7 +263,7 @@ private:
          rCmd << packagePath.filename();
 
          // show the user the command
-         enqueBuildOutput(rCmd.commandString() + "\n\n");
+         enqueCommandString(rCmd.commandString());
 
          // run R CMD INSTALL <package-dir>
          module_context::processSupervisor().runCommand(rCmd.shellCommand(),
@@ -279,7 +279,7 @@ private:
          rCmd << packagePath.filename();
 
          // show the user the command
-         enqueBuildOutput(rCmd.commandString() + "\n\n");
+         enqueCommandString(rCmd.commandString());
 
          // set a success message
          successMessage_ = buildPackageSuccessMsg("Source");
@@ -299,7 +299,7 @@ private:
          rCmd << packagePath.filename();
 
          // show the user the command
-         enqueBuildOutput(rCmd.commandString() + "\n\n");
+         enqueCommandString(rCmd.commandString());
 
          // set a success message
          successMessage_ = "\n" + buildPackageSuccessMsg("Binary");
@@ -335,7 +335,7 @@ private:
                                        buildCb);
 
          // show the user the command
-         enqueBuildOutput(rCmd.commandString() + "\n\n");
+         enqueCommandString(rCmd.commandString());
 
          // set a success message
          successMessage_ = "R CMD check succeeded\n";
@@ -357,7 +357,7 @@ private:
       if (exitStatus == EXIT_SUCCESS)
       {
          // show the user the buld command
-         enqueBuildOutput(checkCmd.commandString() + "\n\n");
+         enqueCommandString(checkCmd.commandString());
 
          // run the check
          module_context::processSupervisor().runCommand(checkCmd.shellCommand(),
@@ -489,6 +489,11 @@ private:
 
       ClientEvent event(client_events::kBuildOutput, output);
       module_context::enqueClientEvent(event);
+   }
+
+   void enqueCommandString(const std::string& cmd)
+   {
+      enqueBuildOutput("==> " + cmd + "\n\n");
    }
 
    void enqueBuildCompleted()
