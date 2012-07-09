@@ -122,14 +122,30 @@ public:
       shellCmd_ << "CMD";
       cmdString_ = "R CMD";
 #endif
+
+      // set escape mode to files-only. this is so that when we
+      // add the group of extra arguments from the user that we
+      // don't put quotes around it.
+      shellCmd_ << shell_utils::EscapeFilesOnly;
    }
 
    RCommand& operator<<(const std::string& arg)
    {
-      cmdString_ += " " + arg;
+      if (!arg.empty())
+      {
+         cmdString_ += " " + arg;
+         shellCmd_ << arg;
+      }
+      return *this;
+   }
+
+   RCommand& operator<<(const FilePath& arg)
+   {
+      cmdString_ += " " + arg.absolutePath();
       shellCmd_ << arg;
       return *this;
    }
+
 
    const std::string& commandString() const
    {
@@ -260,7 +276,12 @@ private:
          // build command
          RCommand rCmd(rBinDir);
          rCmd << "INSTALL";
-         rCmd << packagePath.filename();
+
+         // add extra args if provided
+         rCmd << projectConfig().packageInstallArgs;
+
+         // add filename as a FilePath so it is escaped
+         rCmd << FilePath(packagePath.filename());
 
          // show the user the command
          enqueCommandString(rCmd.commandString());
@@ -276,7 +297,12 @@ private:
          // compose the build command
          RCommand rCmd(rBinDir);
          rCmd << "build";
-         rCmd << packagePath.filename();
+
+         // add extra args if provided
+         rCmd << projectConfig().packageBuildArgs;
+
+         // add filename as a FilePath so it is escaped
+         rCmd << FilePath(packagePath.filename());
 
          // show the user the command
          enqueCommandString(rCmd.commandString());
@@ -296,7 +322,12 @@ private:
          RCommand rCmd(rBinDir);
          rCmd << "INSTALL";
          rCmd << "--build";
-         rCmd << packagePath.filename();
+
+         // add extra args if provided
+         rCmd << projectConfig().packageInstallArgs;
+
+         // add filename as a FilePath so it is escaped
+         rCmd << FilePath(packagePath.filename());
 
          // show the user the command
          enqueCommandString(rCmd.commandString());
@@ -317,13 +348,23 @@ private:
          // compose the build command
          RCommand rCmd(rBinDir);
          rCmd << "build";
-         rCmd << packagePath.filename();
+
+         // add extra args if provided
+         rCmd << projectConfig().packageBuildArgs;
+
+         // add filename as a FilePath so it is escaped
+         rCmd << FilePath(packagePath.filename());
 
          // compose the check command (will be executed by the onExit
          // handler of the build cmd)
          RCommand rCheckCmd(rBinDir);
          rCheckCmd << "check";
-         rCheckCmd << pkgInfo.sourcePackageFilename();
+
+         // add extra args if provided
+         rCheckCmd << projectConfig().packageCheckArgs;
+
+         // add filename as a FilePath so it is escaped
+         rCheckCmd << FilePath(pkgInfo.sourcePackageFilename());
 
          // special callback for build result
          system::ProcessCallbacks buildCb = cb;
@@ -339,6 +380,14 @@ private:
 
          // set a success message
          successMessage_ = "R CMD check succeeded\n";
+
+         // bind a success function if appropriate
+         if (options_.cleanupAfterCheck)
+         {
+            successFunction_ = boost::bind(&Build::cleanupAfterCheck,
+                                           Build::shared_from_this(),
+                                           pkgInfo);
+         }
 
          // run the source build
          module_context::processSupervisor().runCommand(rCmd.shellCommand(),
@@ -370,6 +419,23 @@ private:
          enqueBuildOutput(boost::str(fmt % exitStatus));
          enqueBuildCompleted();
       }
+   }
+
+
+   void cleanupAfterCheck(const r_util::RPackageInfo& pkgInfo)
+   {
+      // compute paths
+      FilePath buildPath = projectPath(projectConfig().packagePath).parent();
+      FilePath srcPkgPath = buildPath.childPath(pkgInfo.sourcePackageFilename());
+      FilePath chkDirPath = buildPath.childPath(pkgInfo.name() + ".Rcheck");
+
+      // cleanup
+      Error error = srcPkgPath.removeIfExists();
+      if (error)
+         LOG_ERROR(error);
+      error = chkDirPath.removeIfExists();
+      if (error)
+         LOG_ERROR(error);
    }
 
    void executeMakefileBuild(const std::string& type,
@@ -478,6 +544,9 @@ private:
       {
          if (!successMessage_.empty())
             enqueBuildOutput(successMessage_ + "\n");
+
+         if (successFunction_)
+            successFunction_();
       }
 
       enqueBuildCompleted();
@@ -532,6 +601,7 @@ private:
    std::string output_;
    projects::RProjectBuildOptions options_;
    std::string successMessage_;
+   boost::function<void()> successFunction_;
    bool restartR_;
 };
 
