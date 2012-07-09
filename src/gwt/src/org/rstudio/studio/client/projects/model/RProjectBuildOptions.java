@@ -32,4 +32,14 @@ public class RProjectBuildOptions extends JavaScriptObject
    public native final void setMakefileArgs(String makefileArgs) /*-{
       this.makefile_args = makefileArgs;
    }-*/;   
+   
+   public native final boolean getCleanupAfterCheck() /*-{
+      return this.cleanup_after_check;
+   }-*/;
+
+   public native final void setCleanupAfterCheck(boolean cleanup) /*-{
+      this.cleanup_after_check = cleanup;
+   }-*/;   
+
+   
 }

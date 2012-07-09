@@ -1,4 +1,6 @@
 
+@external gwt-Label, gwt-TextBox;
+
 .panelContainer {
    width: 525px;
    height: 360px;
@@ -56,3 +58,15 @@
    color: #494949;
 }
 
+.buildToolsAdditionalArguments {
+   width: 350px;
+   margin-bottom: 8px;
+}
+
+.buildToolsAdditionalArguments .gwt-Label {
+   margin-bottom: 2px;
+}
+
+.buildToolsAdditionalArguments .gwt-TextBox {
+   width: 100%;
+}

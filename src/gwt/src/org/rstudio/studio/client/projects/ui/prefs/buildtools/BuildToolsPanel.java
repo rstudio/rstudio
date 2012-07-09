@@ -19,11 +19,15 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
+import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
 
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 public abstract class BuildToolsPanel extends VerticalPanel
@@ -160,5 +164,36 @@ public abstract class BuildToolsPanel extends VerticalPanel
       }
       
       
+   }
+   
+   protected class AdditionalArguments extends Composite
+   {
+      AdditionalArguments(String label)
+      {
+         ProjectPreferencesDialogResources RES = 
+                                 ProjectPreferencesDialogResources.INSTANCE;
+         VerticalPanel panel = new VerticalPanel();
+         panel.addStyleName(RES.styles().buildToolsAdditionalArguments());
+         
+         Label captionLabel = new Label(label);
+         panel.add(captionLabel);
+         
+         textBox_ = new TextBox();
+         panel.add(textBox_);
+   
+         initWidget(panel);
+      }
+      
+      public void setText(String text)
+      {
+         textBox_.setText(text);
+      }
+      
+      public String getText()
+      {
+         return textBox_.getText().trim();
+      }
+      
+      private final TextBox textBox_;
    }
 }

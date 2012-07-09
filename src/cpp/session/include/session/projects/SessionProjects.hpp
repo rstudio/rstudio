@@ -58,7 +58,9 @@ struct RProjectVcsOptions
 // build options
 struct RProjectBuildOptions
 {
+   RProjectBuildOptions() : cleanupAfterCheck(true) {}
    std::string makefileArgs;
+   bool cleanupAfterCheck;
 };
 
 class ProjectContext : boost::noncopyable

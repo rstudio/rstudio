@@ -55,6 +55,9 @@ struct RProjectConfig
         rootDocument(),
         buildType(),
         packagePath(),
+        packageInstallArgs(),
+        packageBuildArgs(),
+        packageCheckArgs(),
         makefilePath(),
         customScriptPath()
    {
@@ -73,6 +76,9 @@ struct RProjectConfig
    std::string rootDocument;
    std::string buildType;
    std::string packagePath;
+   std::string packageInstallArgs;
+   std::string packageBuildArgs;
+   std::string packageCheckArgs;
    std::string makefilePath;
    std::string customScriptPath;
 };

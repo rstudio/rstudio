@@ -30,41 +30,6 @@ public class RProjectConfig extends JavaScriptObject
       config.version = 1.0;
       return config;
    }-*/;
-   
-   public native static final RProjectConfig create(int restoreWorkspace,
-                                                    int saveWorkspace,
-                                                    int alwaysSaveHistory,
-                                                    boolean enableCodeIndexing,
-                                                    boolean useSpacesForTab,
-                                                    int numSpacesForTab,
-                                                    String encoding,
-                                                    String defaultSweaveEngine,
-                                                    String defaultLatexProgram,
-                                                    String rootDocument,
-                                                    String buildType,
-                                                    String packagePath,
-                                                    String makefilePath,
-                                                    String makefileArgs,
-                                                    String customScriptPath) /*-{
-      var config = new Object();
-      config.version = 1.0;
-      config.restore_workspace = restoreWorkspace;
-      config.save_workspace = saveWorkspace;
-      config.always_save_history = alwaysSaveHistory;
-      config.enable_code_indexing = enableCodeIndexing;
-      config.use_spaces_for_tab = useSpacesForTab;
-      config.num_spaces_for_tab = numSpacesForTab;
-      config.default_encoding = encoding;
-      config.default_sweave_engine = defaultSweaveEngine;
-      config.default_latex_program = defaultLatexProgram;
-      config.root_document = rootDocument;
-      config.build_type = buildType;
-      config.package_path = packagePath;
-      config.makefile_path = makefilePath;
-      config.makefile_args = makefileArgs;
-      config.custom_script_path = customScriptPath;
-      return config;
-   }-*/;
 
    public native final double getVersion() /*-{
       return this.version;
@@ -169,6 +134,30 @@ public class RProjectConfig extends JavaScriptObject
 
    public native final void setPackagePath(String packagePath) /*-{
       this.package_path = packagePath;
+   }-*/;
+   
+   public native final String getPackageInstallArgs() /*-{
+      return this.package_install_args;
+   }-*/;
+
+   public native final void setPackageInstallArgs(String installArgs) /*-{
+      this.package_install_args = installArgs;
+   }-*/;
+   
+   public native final String getPackageBuildArgs() /*-{
+      return this.package_build_args;
+   }-*/;
+
+   public native final void setPackageBuildArgs(String buildArgs) /*-{
+      this.package_build_args = buildArgs;
+   }-*/;
+   
+   public native final String getPackageCheckArgs() /*-{
+      return this.package_check_args;
+   }-*/;
+
+   public native final void setPackageCheckArgs(String checkArgs) /*-{
+      this.package_check_args = checkArgs;
    }-*/;
    
    public native final String getMakefilePath() /*-{

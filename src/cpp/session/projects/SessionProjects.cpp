@@ -85,6 +85,9 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["root_document"] = config.rootDocument;
    configJson["build_type"] = config.buildType;
    configJson["package_path"] = config.packagePath;
+   configJson["package_install_args"] = config.packageInstallArgs;
+   configJson["package_build_args"] = config.packageBuildArgs;
+   configJson["package_check_args"] = config.packageCheckArgs;
    configJson["makefile_path"] = config.makefilePath;
    configJson["custom_script_path"] = config.customScriptPath;
    return configJson;
@@ -98,6 +101,7 @@ json::Object projectBuildOptionsJson()
       LOG_ERROR(error);
    json::Object buildOptionsJson;
    buildOptionsJson["makefile_args"] = buildOptions.makefileArgs;
+   buildOptionsJson["cleanup_after_check"] = buildOptions.cleanupAfterCheck;
    return buildOptionsJson;
 }
 
@@ -163,7 +167,8 @@ Error rProjectBuildOptionsFromJson(const json::Object& optionsJson,
 {
    return json::readObject(
         optionsJson,
-        "makefile_args", (&pOptions->makefileArgs));
+        "makefile_args", (&pOptions->makefileArgs),
+        "cleanup_after_check",(&pOptions->cleanupAfterCheck));
 }
 
 Error rProjectVcsOptionsFromJson(const json::Object& optionsJson,
@@ -208,6 +213,9 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
                     configJson,
                     "build_type", &(config.buildType),
                     "package_path", &(config.packagePath),
+                    "package_install_args", &(config.packageInstallArgs),
+                    "package_build_args", &(config.packageBuildArgs),
+                    "package_check_args", &(config.packageCheckArgs),
                     "makefile_path", &(config.makefilePath),
                     "custom_script_path", &(config.customScriptPath));
    if (error)

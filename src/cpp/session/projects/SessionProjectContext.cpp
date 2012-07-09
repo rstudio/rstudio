@@ -552,6 +552,8 @@ Error ProjectContext::readBuildOptions(RProjectBuildOptions* pOptions)
       return error;
 
    pOptions->makefileArgs = optionsFile.get("makefile_args");
+   pOptions->cleanupAfterCheck = optionsFile.getBool("cleanup_after_check",
+                                                     true);
 
    return Success();
 }
@@ -565,6 +567,7 @@ Error ProjectContext::writeBuildOptions(const RProjectBuildOptions& options)
 
    optionsFile.beginUpdate();
    optionsFile.set("makefile_args", options.makefileArgs);
+   optionsFile.set("cleanup_after_check", options.cleanupAfterCheck);
    optionsFile.endUpdate();
 
    return Success();

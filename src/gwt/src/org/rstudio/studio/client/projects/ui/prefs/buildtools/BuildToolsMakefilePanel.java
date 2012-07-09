@@ -19,8 +19,6 @@ import org.rstudio.studio.client.projects.model.RProjectOptions;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextBox;
 
 
 public class BuildToolsMakefilePanel extends BuildToolsPanel
@@ -29,10 +27,8 @@ public class BuildToolsMakefilePanel extends BuildToolsPanel
    {
       pathSelector_ = new DirectorySelector("Makefile directory:");
       add(pathSelector_);
-      
-      
-      add(new Label("Additional arguments:"));
-      txtMakefileArgs_ = new TextBox();
+        
+      txtMakefileArgs_ = new AdditionalArguments("Additional arguments:");
       Style style = txtMakefileArgs_.getElement().getStyle();
       style.setMarginTop(2, Unit.PX);
       add(txtMakefileArgs_);
@@ -60,5 +56,5 @@ public class BuildToolsMakefilePanel extends BuildToolsPanel
    }
 
    private PathSelector pathSelector_;
-   private TextBox txtMakefileArgs_;
+   private AdditionalArguments txtMakefileArgs_;
 }

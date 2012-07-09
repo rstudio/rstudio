@@ -373,6 +373,40 @@ Error readProjectFile(const FilePath& projectFilePath,
       pConfig->packagePath = "";
    }
 
+   // extract package install args
+   it = dcfFields.find("PackageInstallArgs");
+   if (it != dcfFields.end())
+   {
+      pConfig->packageInstallArgs = it->second;
+   }
+   else
+   {
+      pConfig->packageInstallArgs = "";
+   }
+
+   // extract package build args
+   it = dcfFields.find("PackageBuildArgs");
+   if (it != dcfFields.end())
+   {
+      pConfig->packageBuildArgs = it->second;
+   }
+   else
+   {
+      pConfig->packageBuildArgs = "";
+   }
+
+   // extract package check args
+   it = dcfFields.find("PackageCheckArgs");
+   if (it != dcfFields.end())
+   {
+      pConfig->packageCheckArgs = it->second;
+   }
+   else
+   {
+      pConfig->packageCheckArgs = "";
+   }
+
+
    // extract makefile path
    it = dcfFields.find("MakefilePath");
    if (it != dcfFields.end())
@@ -468,6 +502,25 @@ Error writeProjectFile(const FilePath& projectFilePath,
                boost::format pkgFmt("PackagePath: %1%\n");
                build.append(boost::str(pkgFmt % config.packagePath));
             }
+
+            if (!config.packageInstallArgs.empty())
+            {
+               boost::format pkgFmt("PackageInstallArgs: %1%\n");
+               build.append(boost::str(pkgFmt % config.packageInstallArgs));
+            }
+
+            if (!config.packageBuildArgs.empty())
+            {
+               boost::format pkgFmt("PackageBuildArgs: %1%\n");
+               build.append(boost::str(pkgFmt % config.packageBuildArgs));
+            }
+
+            if (!config.packageCheckArgs.empty())
+            {
+               boost::format pkgFmt("PackageCheckArgs: %1%\n");
+               build.append(boost::str(pkgFmt % config.packageCheckArgs));
+            }
+
          }
          else if (config.buildType == kBuildTypeMakefile)
          {
