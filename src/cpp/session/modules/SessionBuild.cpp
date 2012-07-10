@@ -255,30 +255,34 @@ private:
          return;
       }
 
-      // get R bin directory
-      FilePath rBinDir;
-      error = module_context::rBinDir(&rBinDir);
-      if (error)
-      {
-         terminateWithError("attempting to locate R binary", error);
-         return;
-      }
-
-
       // bind a function that can be used to build the package
       boost::function<void()> buildFunction = boost::bind(
                          &Build::buildPackage, Build::shared_from_this(),
-                             type, packagePath, pkgInfo, rBinDir, options, cb);
+                             type, packagePath, pkgInfo, options, cb);
 
 
       // roxygenize first if necessary
       if (!projectConfig().packageRoxygenize.empty())
       {
+         FilePath rScriptPath;
+         Error error = module_context::rScriptPath(&rScriptPath);
+         if (error)
+         {
+            terminateWithError("Locating R script", error);
+            return;
+         }
+
          // build the roxygenize command
+         shell_utils::ShellCommand cmd(rScriptPath);
+         cmd << "--slave";
+         cmd << "--vanilla";
+         cmd << "-e";
          std::string roxygenizeCall = buildRoxygenizeCall(pkgInfo);
-         boost::format fmt("R --slave --vanilla -e "
-           "\"suppressPackageStartupMessages({library(roxygen2); %1%;})\"");
-         std::string cmd = boost::str(fmt % roxygenizeCall);
+         boost::format fmt(
+            "suppressPackageStartupMessages({library(roxygen2); %1%;})");
+         cmd << boost::str(fmt % roxygenizeCall);
+
+         // show the user the call to roxygenize
          enqueCommandString(roxygenizeCall);
 
          // special callback for roxygenize result
@@ -334,10 +338,18 @@ private:
    void buildPackage(const std::string& type,
                      const FilePath& packagePath,
                      const r_util::RPackageInfo& pkgInfo,
-                     const FilePath& rBinDir,
                      const core::system::ProcessOptions& options,
                      const core::system::ProcessCallbacks& cb)
    {
+      // get R bin directory
+      FilePath rBinDir;
+      Error error = module_context::rBinDir(&rBinDir);
+      if (error)
+      {
+         terminateWithError("attempting to locate R binary", error);
+         return;
+      }
+
       // build command
       if (type == "build-all")
       {
