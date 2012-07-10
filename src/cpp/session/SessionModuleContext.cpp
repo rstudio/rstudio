@@ -708,6 +708,16 @@ Error rScriptPath(FilePath* pRScriptPath)
    return Success();
 }
 
+shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir)
+{
+#ifdef _WIN32
+      return shell_utils::ShellCommand(rBinDir.childPath("Rcmd.exe"));
+#else
+      shell_utils::ShellCommand rCmd(rBinDir.childPath("R"));
+      rCmd << "CMD";
+      return rCmd;
+#endif
+}
 
 json::Object createFileSystemItem(const FileInfo& fileInfo)
 {

@@ -27,6 +27,7 @@ import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
@@ -37,6 +38,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.ElementEx;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FindTextBox;
@@ -184,17 +186,36 @@ public class HelpPane extends WorkbenchPane
          }
       }
       
-      String effectiveTitle = doc.getTitle();
-      if (StringUtil.isNullOrEmpty(effectiveTitle))
+      
+      String effectiveTitle = getDocTitle(doc);
+      title_.setText(effectiveTitle) ;
+      this.fireEvent(new HelpNavigateEvent(doc.getURL(), effectiveTitle)) ;
+   }
+   
+   private String getDocTitle(Document doc)
+   {
+      String docUrl = StringUtil.notNull(doc.getURL());
+      String docTitle = doc.getTitle();
+      
+      String previewPrefix = new String("/help/preview?file=");
+      int previewLoc = docUrl.indexOf(previewPrefix);
+      if (previewLoc != -1)
       {
-         String url = StringUtil.notNull(doc.getURL());
+         String file = docUrl.substring(previewLoc + previewPrefix.length());
+         file = URL.decodeQueryString(file);
+         FileSystemItem fsi = FileSystemItem.createFile(file);
+         docTitle = fsi.getName();
+      }
+      else if (StringUtil.isNullOrEmpty(docTitle))
+      {
+         String url = new String(docUrl); 
          url = url.split("\\?")[0];
          url = url.split("#")[0];
          String[] chunks = url.split("/");
-         effectiveTitle = chunks[chunks.length - 1];
+         docTitle = chunks[chunks.length - 1];
       }
-      title_.setText(effectiveTitle) ;
-      this.fireEvent(new HelpNavigateEvent(doc.getURL(), effectiveTitle)) ;
+      
+      return docTitle;
    }
 
    private void unload()
@@ -350,8 +371,15 @@ public class HelpPane extends WorkbenchPane
             if (getIFrameEx() != null && 
                   getIFrameEx().getContentWindow() != null)
             {
-               getIFrameEx().getContentWindow().replaceLocationHref(targetUrl_);
-               frame_.setUrl(targetUrl_);
+               if (targetUrl_.equals(getUrl()))
+               {
+                  getIFrameEx().getContentWindow().reload();
+               }
+               else
+               {
+                  getIFrameEx().getContentWindow().replaceLocationHref(targetUrl_);
+                  frame_.setUrl(targetUrl_);
+               }
                return false;
             }
             else

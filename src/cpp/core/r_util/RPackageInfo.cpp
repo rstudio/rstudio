@@ -73,16 +73,6 @@ std::string RPackageInfo::sourcePackageFilename() const
    return packageFilename("tar.gz");
 }
 
-std::string RPackageInfo::binaryPackageFilename() const
-{
-#ifdef _WIN32
-   std::string extension = "zip";
-#else
-   std::string extension= "tgz";
-#endif
-   return packageFilename(extension);
-}
-
 std::string RPackageInfo::packageFilename(const std::string& extension) const
 {
    boost::format fmt("%1%_%2%.%3%");

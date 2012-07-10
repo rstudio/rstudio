@@ -162,6 +162,11 @@ public class TextFileType extends EditableFileType
       return FileTypeRegistry.SWEAVE.getTypeId().equals(getTypeId());
    }
    
+   public boolean isRd()
+   {
+      return FileTypeRegistry.RD.getTypeId().equals(getTypeId());
+   }
+   
    public boolean requiresKnit()
    {
       return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId()) ||

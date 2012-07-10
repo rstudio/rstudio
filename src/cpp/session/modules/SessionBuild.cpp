@@ -110,16 +110,11 @@ class RCommand
 {
 public:
    explicit RCommand(const FilePath& rBinDir)
-#ifdef _WIN32
-      : shellCmd_(rBinDir.childPath("Rcmd.exe"))
-#else
-      : shellCmd_(rBinDir.childPath("R"))
-#endif
+      : shellCmd_(module_context::rCmd(rBinDir))
    {
 #ifdef _WIN32
       cmdString_ = "Rcmd.exe";
 #else
-      shellCmd_ << "CMD";
       cmdString_ = "R CMD";
 #endif
 

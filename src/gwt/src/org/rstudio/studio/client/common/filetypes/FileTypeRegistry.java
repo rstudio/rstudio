@@ -44,8 +44,11 @@ public class FileTypeRegistry
    public static final TextFileType RD =
       new TextFileType("r_doc", "R Doc", EditorLanguage.LANG_RDOC, ".Rd",
                        ICONS.iconRd(),
-                       true,
-                       false, false, false, false, false, false, false, false, false, false, false);
+                       true, // word-wrap
+                       true, // source on save aka preview on save
+                       false, false, false, 
+                       true, // preview html
+                       false, false, false, false, false, false);
 
    public static final TextFileType SWEAVE =
       new SweaveFileType("sweave", "R Sweave", 

@@ -233,6 +233,10 @@ public class TextEditingTargetWidget
       
       sourceOnSave_.setVisible(fileType.canSourceOnSave());
       srcOnSaveLabel_.setVisible(fileType.canSourceOnSave());
+      if (fileType.isRd())
+         srcOnSaveLabel_.setText("Preview on Save");
+      else
+         srcOnSaveLabel_.setText("Source on Save");
       codeTransform_.setVisible(canExecuteCode && !fileType.canAuthorContent());   
       sourceButton_.setVisible(canExecuteCode && !canExecuteChunks);
       sourceMenuButton_.setVisible(canExecuteCode && !canExecuteChunks);
@@ -266,7 +270,10 @@ public class TextEditingTargetWidget
       texToolbarButton_.setText(width < 520 ? "" : "Format");
       runButton_.setText(width < 480 ? "" : "Run");
       compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
-      srcOnSaveLabel_.setText(width < 450 ? "Source" : "Source on Save");
+      if (editor_.getFileType().isRd())
+         srcOnSaveLabel_.setText(width < 450 ? "Preview" : "Preview on Save");
+      else
+         srcOnSaveLabel_.setText(width < 450 ? "Source" : "Source on Save");
       sourceButton_.setText(width < 400 ? "" : "Source");
      
    }

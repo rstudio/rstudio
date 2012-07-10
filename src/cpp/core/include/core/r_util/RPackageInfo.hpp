@@ -39,17 +39,17 @@ public:
 public:
    Error read(const FilePath& packageDir);
 
+   bool empty() const { return name().empty(); }
+
    const std::string& name() const { return name_; }
    const std::string& version() const { return version_; }
 
    std::string sourcePackageFilename() const;
-   std::string binaryPackageFilename() const;
 
 private:
    std::string packageFilename(const std::string& extension) const;
 
 private:
-   FilePath packageDir_;
    std::string name_;
    std::string version_;
 };

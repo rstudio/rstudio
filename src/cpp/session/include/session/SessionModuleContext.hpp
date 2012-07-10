@@ -23,6 +23,7 @@
 
 #include <core/system/System.hpp>
 #include <core/system/FileChangeEvent.hpp>
+#include <core/system/ShellUtils.hpp>
 #include <core/http/UriHandler.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/Thread.hpp>
@@ -70,6 +71,8 @@ core::FilePath findProgram(const std::string& name);
 // find the location of the R script
 core::Error rBinDir(core::FilePath* pRBinDirPath);
 core::Error rScriptPath(core::FilePath* pRScriptPath);
+core::shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir);
+
 
 // register a handler for rBrowseUrl
 typedef boost::function<bool(const std::string&)> RBrowseUrlHandler;

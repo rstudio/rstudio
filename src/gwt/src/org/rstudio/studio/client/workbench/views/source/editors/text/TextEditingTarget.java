@@ -24,6 +24,7 @@ import com.google.gwt.event.logical.shared.*;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
@@ -1939,6 +1940,30 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onPreviewHTML()
    {
+      if (fileType_.isRd())
+         previewRd();
+      else
+         previewHTML();
+   }
+   
+   
+   void previewRd()
+   {
+      saveThenExecute(null, new Command() {
+         @Override
+         public void execute()
+         {
+            String previewURL = "help/preview?file=";
+            previewURL += URL.encodeQueryString(docUpdateSentinel_.getPath());   
+            events_.fireEvent(new ShowHelpEvent(previewURL)) ; 
+         }
+         
+      });
+     
+   }
+   
+   void previewHTML()
+   {
       // validate pre-reqs
       if (!previewHtmlHelper_.verifyPrerequisites(view_, fileType_))
          return;
@@ -2366,11 +2391,18 @@ public class TextEditingTarget implements EditingTarget
          {
             if (fileType_.canSourceOnSave() && docUpdateSentinel_.sourceOnSave())
             {
-               consoleDispatcher_.executeSourceCommand(
+               if (fileType_.isRd())
+               {
+                  previewRd();
+               }
+               else
+               {
+                  consoleDispatcher_.executeSourceCommand(
                                              docUpdateSentinel_.getPath(), 
                                              docUpdateSentinel_.getEncoding(), 
                                              activeCodeIsAscii(),
                                              false);
+               }
             }
          }
       };

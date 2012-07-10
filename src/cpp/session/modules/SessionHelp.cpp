@@ -31,6 +31,8 @@
 #include <core/http/Response.hpp>
 #include <core/http/URL.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/system/Process.hpp>
+#include <core/r_util/RPackageInfo.hpp>
 
 #define R_INTERNAL_FUNCTIONS
 #include <r/RInternal.hpp>
@@ -552,6 +554,89 @@ SEXP callHandler(const std::string& path,
    return resultSEXP;
 }
 
+r_util::RPackageInfo packageInfoForRd(const FilePath& rdFilePath)
+{
+   FilePath packageDir = rdFilePath.parent().parent();
+
+   FilePath descFilePath = packageDir.childPath("DESCRIPTION");
+   if (!descFilePath.exists())
+      return r_util::RPackageInfo();
+
+   r_util::RPackageInfo pkgInfo;
+   Error error = pkgInfo.read(packageDir);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return r_util::RPackageInfo();
+   }
+   else
+   {
+      return pkgInfo;
+   }
+}
+
+template <typename Filter>
+void handleRdPreviewRequest(const http::Request& request,
+                            const Filter& filter,
+                            http::Response* pResponse)
+{
+   // read parmaeters
+   std::string file = request.queryParamValue("file");
+   if (file.empty())
+   {
+      pResponse->setError(http::status::BadRequest, "No file parameter");
+      return;
+   }
+
+   // ensure file exists
+   FilePath filePath = module_context::resolveAliasedPath(file);
+   if (!filePath.exists())
+   {
+      pResponse->setError(http::status::NotFound, request.uri());
+      return;
+   }
+
+   // build command used to convert to HTML
+   FilePath rHomeBinDir;
+   Error error = module_context::rBinDir(&rHomeBinDir);
+   if (error)
+   {
+      pResponse->setError(error);
+      return;
+   }
+   shell_utils::ShellCommand rCmd = module_context::rCmd(rHomeBinDir);
+   rCmd << "Rdconv";
+   rCmd << "--type=html";
+   r_util::RPackageInfo pkgInfo = packageInfoForRd(filePath);
+   if (!pkgInfo.empty())
+      rCmd << "--package=" + pkgInfo.name();
+
+   rCmd << filePath;
+
+   // run the converstion and return it
+   core::system::ProcessOptions options;
+   core::system::ProcessResult result;
+   error = core::system::runCommand(rCmd, options, &result);
+   if (error)
+   {
+      pResponse->setError(error);
+   }
+   else if (result.exitStatus != EXIT_SUCCESS)
+   {
+      pResponse->setError(http::status::InternalServerError, result.stdErr);
+   }
+   else
+   {
+      if (!result.stdErr.empty())
+         module_context::consoleWriteError(result.stdErr + "\n");
+
+      pResponse->setContentType("text/html");
+      pResponse->setNoCacheHeaders();
+      std::istringstream istr(result.stdOut);
+      pResponse->setBody(istr, filter);
+   }
+}
+
 template <typename Filter>
 void handleHttpdRequest(const std::string& location,
                         const HandlerSource& handlerSource,
@@ -571,6 +656,13 @@ void handleHttpdRequest(const std::string& location,
          pResponse->setFile(cssFile, request, filter);
          return;
       }
+   }
+
+   // handle Rd file preview
+   if (boost::algorithm::starts_with(path, "/preview"))
+   {
+      handleRdPreviewRequest(request, filter, pResponse);
+      return;
    }
 
    // markdown help is also a special case
