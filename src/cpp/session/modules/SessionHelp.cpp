@@ -627,9 +627,6 @@ void handleRdPreviewRequest(const http::Request& request,
    }
    else
    {
-      if (!result.stdErr.empty())
-         module_context::consoleWriteError(result.stdErr + "\n");
-
       pResponse->setContentType("text/html");
       pResponse->setNoCacheHeaders();
       std::istringstream istr(result.stdOut);
