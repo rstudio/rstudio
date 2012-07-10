@@ -233,12 +233,7 @@ public:
 
    virtual bool isInstalled() const
    {
-      r::session::utils::SuppressOutputInScope suppressOutput;
-
-      bool installed;
-      r::exec::RFunction func(".rs.isPackageInstalled", packageName());
-      Error error = func.call(&installed);
-      return !error ? installed : false;
+      return module_context::isPackageInstalled(packageName());
    }
 
    virtual std::string weaveCommand(const std::string& file) const

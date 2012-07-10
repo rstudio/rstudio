@@ -18,6 +18,8 @@
 #include <boost/format.hpp>
 #include <boost/scope_exit.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/join.hpp>
 
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
@@ -262,6 +264,80 @@ private:
          return;
       }
 
+
+      // bind a function that can be used to build the package
+      boost::function<void()> buildFunction = boost::bind(
+                         &Build::buildPackage, Build::shared_from_this(),
+                             type, packagePath, pkgInfo, rBinDir, options, cb);
+
+
+      // roxygenize first if necessary
+      if (!projectConfig().packageRoxygenize.empty())
+      {
+         // build the roxygenize command
+         std::string roxygenizeCall = buildRoxygenizeCall(pkgInfo);
+         boost::format fmt("R --slave --vanilla -e "
+           "\"suppressPackageStartupMessages({library(roxygen2); %1%;})\"");
+         std::string cmd = boost::str(fmt % roxygenizeCall);
+         enqueCommandString(roxygenizeCall);
+
+         // special callback for roxygenize result
+         system::ProcessCallbacks roxygenizeCb = cb;
+         roxygenizeCb.onExit =  boost::bind(&Build::onRoxygenizeCompleted,
+                                            Build::shared_from_this(),
+                                            _1,
+                                            buildFunction);
+
+         // run it
+         module_context::processSupervisor().runCommand(cmd,
+                                                        options,
+                                                        roxygenizeCb);
+
+      }
+      else
+      {
+         // execute the build directly
+         buildFunction();
+      }
+   }
+
+   std::string buildRoxygenizeCall(const r_util::RPackageInfo& pkgInfo)
+   {
+      std::vector<std::string> roclets;
+      boost::algorithm::split(roclets,
+                              projectConfig().packageRoxygenize,
+                              boost::algorithm::is_any_of(","));
+      BOOST_FOREACH(std::string& roclet, roclets)
+      {
+         roclet = "'" + roclet + "'";
+      }
+
+      boost::format fmt("roxygenize('%1%', roclets=c(%2%))");
+      return boost::str(fmt % pkgInfo.name() %
+                              boost::algorithm::join(roclets, ", "));
+   }
+
+   void onRoxygenizeCompleted(int exitStatus,
+                              const boost::function<void()>& buildFunction)
+   {
+      if (exitStatus == EXIT_SUCCESS)
+      {
+         enqueBuildOutput("Roxygen completed\n\n");
+         buildFunction();
+      }
+      else
+      {
+         terminateWithErrorStatus(exitStatus);
+      }
+   }
+
+   void buildPackage(const std::string& type,
+                     const FilePath& packagePath,
+                     const r_util::RPackageInfo& pkgInfo,
+                     const FilePath& rBinDir,
+                     const core::system::ProcessOptions& options,
+                     const core::system::ProcessCallbacks& cb)
+   {
       // build command
       if (type == "build-all")
       {
@@ -410,9 +486,7 @@ private:
       }
       else
       {
-         boost::format fmt("\nExited with status %1%.\n\n");
-         enqueBuildOutput(boost::str(fmt % exitStatus));
-         enqueBuildCompleted();
+         terminateWithErrorStatus(exitStatus);
       }
    }
 
@@ -484,6 +558,13 @@ private:
       {
          return projects::projectContext().directory().complete(path);
       }
+   }
+
+   void terminateWithErrorStatus(int exitStatus)
+   {
+      boost::format fmt("\nExited with status %1%.\n\n");
+      enqueBuildOutput(boost::str(fmt % exitStatus));
+      enqueBuildCompleted();
    }
 
    void terminateWithError(const std::string& context,

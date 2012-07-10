@@ -58,6 +58,7 @@ struct RProjectConfig
         packageInstallArgs(),
         packageBuildArgs(),
         packageCheckArgs(),
+        packageRoxygenize(),
         makefilePath(),
         customScriptPath()
    {
@@ -79,6 +80,7 @@ struct RProjectConfig
    std::string packageInstallArgs;
    std::string packageBuildArgs;
    std::string packageCheckArgs;
+   std::string packageRoxygenize;
    std::string makefilePath;
    std::string customScriptPath;
 };

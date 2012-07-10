@@ -12,6 +12,10 @@
  */
 package org.rstudio.studio.client.projects.model;
 
+import java.util.ArrayList;
+
+import org.rstudio.core.client.StringUtil;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class RProjectConfig extends JavaScriptObject
@@ -158,6 +162,66 @@ public class RProjectConfig extends JavaScriptObject
 
    public native final void setPackageCheckArgs(String checkArgs) /*-{
       this.package_check_args = checkArgs;
+   }-*/;
+   
+  
+   public final boolean hasPackageRoxygenize()
+   {
+      return !StringUtil.isNullOrEmpty(getPackageRoxygenizeNative());
+   }
+   
+   public final boolean getPackageRoxygenzieRd()
+   {
+      return getPackageRoxygenize(ROXYGENIZE_RD);
+   }
+   
+   public final boolean getPackageRoxygenizeNamespace()
+   {
+      return getPackageRoxygenize(ROXYGENIZE_NAMESPACE);
+   }
+   
+   public final boolean getPackageRoxygenizeCollate()
+   {
+      return getPackageRoxygenize(ROXYGENIZE_COLLATE);
+   }
+   
+   public final void setPackageRoxygenize(boolean rd,
+                                          boolean collate,
+                                          boolean namespace)
+   {
+      ArrayList<String> roclets = new ArrayList<String>();
+      if (rd)
+         roclets.add(ROXYGENIZE_RD);
+      if (collate)
+         roclets.add(ROXYGENIZE_COLLATE);
+      if (namespace)
+         roclets.add(ROXYGENIZE_NAMESPACE);
+      
+      String roxygenize = StringUtil.join(roclets, ROXYGENIZE_DELIM);
+      setPackageRoxygenizeNative(roxygenize);
+   }
+   
+   private static final String ROXYGENIZE_RD = "rd";
+   private static final String ROXYGENIZE_COLLATE = "collate";
+   private static final String ROXYGENIZE_NAMESPACE = "namespace";
+   private static final String ROXYGENIZE_DELIM = ", ";
+ 
+   private final boolean getPackageRoxygenize(String roclet)
+   {
+      String[] roclets = getPackageRoxygenizeNative().split(ROXYGENIZE_DELIM);
+      for (int i=0; i<roclets.length; i++)
+         if (roclets[i].equals(roclet))
+            return true;
+      
+      return false;
+   }
+   
+   private native final String getPackageRoxygenizeNative() /*-{
+      return this.package_roxygenize;
+   }-*/;
+
+   private native final void setPackageRoxygenizeNative(String roxygenize) /*-{
+      this.package_roxygenize = roxygenize;
    }-*/;
    
    public native final String getMakefilePath() /*-{

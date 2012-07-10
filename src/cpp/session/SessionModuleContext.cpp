@@ -719,6 +719,17 @@ shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir)
 #endif
 }
 
+// check if a package is installed
+bool isPackageInstalled(const std::string& packageName)
+{
+   r::session::utils::SuppressOutputInScope suppressOutput;
+
+   bool installed;
+   r::exec::RFunction func(".rs.isPackageInstalled", packageName);
+   Error error = func.call(&installed);
+   return !error ? installed : false;
+}
+
 json::Object createFileSystemItem(const FileInfo& fileInfo)
 {
    json::Object entry ;

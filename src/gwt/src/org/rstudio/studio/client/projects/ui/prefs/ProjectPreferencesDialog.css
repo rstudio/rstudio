@@ -70,3 +70,9 @@
 .buildToolsAdditionalArguments .gwt-TextBox {
    width: 100%;
 }
+
+.buildToolsRoxygenize {
+   margin-top: 20px;
+   width: 100%;
+}
+

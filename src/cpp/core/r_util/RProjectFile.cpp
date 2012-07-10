@@ -406,6 +406,16 @@ Error readProjectFile(const FilePath& projectFilePath,
       pConfig->packageCheckArgs = "";
    }
 
+   // extract package roxygenzize
+   it = dcfFields.find("PackageRoxygenize");
+   if (it != dcfFields.end())
+   {
+      pConfig->packageRoxygenize = it->second;
+   }
+   else
+   {
+      pConfig->packageRoxygenize = "";
+   }
 
    // extract makefile path
    it = dcfFields.find("MakefilePath");
@@ -519,6 +529,12 @@ Error writeProjectFile(const FilePath& projectFilePath,
             {
                boost::format pkgFmt("PackageCheckArgs: %1%\n");
                build.append(boost::str(pkgFmt % config.packageCheckArgs));
+            }
+
+            if (!config.packageRoxygenize.empty())
+            {
+               boost::format pkgFmt("PackageRoxygenize: %1%\n");
+               build.append(boost::str(pkgFmt % config.packageRoxygenize));
             }
 
          }

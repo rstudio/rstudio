@@ -88,6 +88,7 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["package_install_args"] = config.packageInstallArgs;
    configJson["package_build_args"] = config.packageBuildArgs;
    configJson["package_check_args"] = config.packageCheckArgs;
+   configJson["package_roxygenize"] = config.packageRoxygenize;
    configJson["makefile_path"] = config.makefilePath;
    configJson["custom_script_path"] = config.customScriptPath;
    return configJson;
@@ -136,6 +137,14 @@ json::Object projectVcsContextJson()
    return contextJson;
 }
 
+json::Object projectBuildContextJson()
+{
+   json::Object contextJson;
+   contextJson["roxygen2_installed"] =
+                        module_context::isPackageInstalled("roxygen2");
+   return contextJson;
+}
+
 Error readProjectOptions(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
@@ -148,6 +157,7 @@ Error readProjectOptions(const json::JsonRpcRequest& request,
    optionsJson["vcs_options"] = projectVcsOptionsJson();
    optionsJson["vcs_context"] = projectVcsContextJson();
    optionsJson["build_options"] = projectBuildOptionsJson();
+   optionsJson["build_context"] = projectBuildContextJson();
 
    pResponse->setResult(optionsJson);
    return Success();
@@ -216,6 +226,7 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
                     "package_install_args", &(config.packageInstallArgs),
                     "package_build_args", &(config.packageBuildArgs),
                     "package_check_args", &(config.packageCheckArgs),
+                    "package_roxygenize", &(config.packageRoxygenize),
                     "makefile_path", &(config.makefilePath),
                     "custom_script_path", &(config.customScriptPath));
    if (error)

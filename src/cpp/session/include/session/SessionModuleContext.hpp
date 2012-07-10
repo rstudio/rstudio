@@ -73,6 +73,8 @@ core::Error rBinDir(core::FilePath* pRBinDirPath);
 core::Error rScriptPath(core::FilePath* pRScriptPath);
 core::shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir);
 
+// check if a package is installed
+bool isPackageInstalled(const std::string& packageName);
 
 // register a handler for rBrowseUrl
 typedef boost::function<bool(const std::string&)> RBrowseUrlHandler;
