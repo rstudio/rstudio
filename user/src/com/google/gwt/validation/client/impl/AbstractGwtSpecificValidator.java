@@ -16,6 +16,7 @@
 package com.google.gwt.validation.client.impl;
 
 import java.lang.annotation.Annotation;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -101,8 +102,9 @@ public abstract class AbstractGwtSpecificValidator<G> implements
       constraintGroup.add(Default.class);
     }
 
-    // check group
-    if (!containsAny(groups, constraintGroup)) {
+    // check groups requested are in the set of constraint groups (including the implicit group)
+    if (!containsAny(groups, constraintGroup)
+        && !Arrays.asList(groups).contains(getConstraints().getElementClass())) {
       return false;
     }
 
