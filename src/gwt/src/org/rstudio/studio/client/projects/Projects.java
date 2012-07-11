@@ -477,8 +477,8 @@ public class Projects implements OpenProjectFileHandler,
    
    @Handler
    public void onBuildToolsProjectSetup()
-   {
-   // check whether there is a project active
+   {   
+      // check whether there is a project active
       if (!hasActiveProject())
       { 
          globalDisplay_.showMessage(
