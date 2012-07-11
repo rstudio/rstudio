@@ -206,6 +206,7 @@ public abstract class
    
    // Tools
    public abstract AppCommand showShellDialog();
+   public abstract AppCommand macPreferences();
    public abstract AppCommand showOptions();
 
    // Help

@@ -25,6 +25,8 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.Size;
@@ -79,6 +81,9 @@ public class WorkbenchScreen extends Composite
       session_ = session;
       edit_ = edit;
       optionsLoader_ = optionsLoader;
+      
+      if (!BrowseCap.isMacintoshDesktop())
+         commands.macPreferences().remove();
 
       eventBus_.addHandler(ShowEditorEvent.TYPE, edit);
       eventBus_.addHandler(ChangeFontSizeEvent.TYPE, new ChangeFontSizeHandler()
@@ -284,11 +289,18 @@ public class WorkbenchScreen extends Composite
    void onActivateBuild() { paneManager_.activateTab(Tab.Build); }
 
    @Handler
+   void onMacPreferences()
+   {
+      onShowOptions();
+   }
+   
+   @Handler
    void onShowOptions()
    {
       optionsLoader_.showOptions();
    }
-      
+   
+     
    @Handler
    void onVersionControlHelp()
    {
