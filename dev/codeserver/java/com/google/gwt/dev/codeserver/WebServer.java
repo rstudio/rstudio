@@ -26,26 +26,18 @@ import com.google.gwt.thirdparty.org.mortbay.jetty.Server;
 import com.google.gwt.thirdparty.org.mortbay.jetty.handler.AbstractHandler;
 import com.google.gwt.thirdparty.org.mortbay.jetty.nio.SelectChannelConnector;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
-import java.net.InetAddress;
-import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -154,14 +146,16 @@ public class WebServer {
     if (target.equals("/")) {
       setHandled(request);
       JsonObject config = makeConfig();
-      sendJsonAndHtmlPage("config", config, "frontpage.html", response);
+      PageUtil.sendJsonAndHtml("config", config, "frontpage.html", response, logger);
       return;
     }
 
     if (target.equals("/dev_mode_on.js")) {
       setHandled(request);
       JsonObject config = makeConfig();
-      sendJsonAndJavaScriptPage("__gwt_codeserver_config", config, "dev_mode_on.js", response);
+      PageUtil
+          .sendJsonAndJavaScript("__gwt_codeserver_config", config, "dev_mode_on.js", response,
+              logger);
       return;
     }
 
@@ -241,7 +235,7 @@ public class WebServer {
           "/gwtSourceMap.json");
     }
     response.addHeader("Access-Control-Allow-Origin", "*");
-    sendPage(mimeType, file, response);
+    PageUtil.sendFile(mimeType, file, response);
   }
 
   private void sendModulePage(String moduleName, HttpServletResponse response) throws IOException {
@@ -251,7 +245,9 @@ public class WebServer {
       logger.log(TreeLogger.WARN, "module not found: " + moduleName);
       return;
     }
-    sendJsonAndHtmlPage("config", module.getTemplateVariables(), "modulepage.html", response);
+    PageUtil
+        .sendJsonAndHtml("config", module.getTemplateVariables(), "modulepage.html", response,
+            logger);
   }
 
   private JsonObject makeConfig() {
@@ -283,90 +279,8 @@ public class WebServer {
     out.println(");");
   }
 
-  /**
-   * Sends an HTML page with some JSON code prepended to it.
-   *
-   * @param variableName the name of the variable to set on the "window" object.
-   * @param json         the data to embed in the script.
-   * @param resourceName the name of the HTML file to send (in the current directory)
-   * @param response     where to send the page
-   */
-  private void sendJsonAndHtmlPage(String variableName, JsonObject json, String resourceName,
-      HttpServletResponse response)
-      throws IOException {
-    URL resource = WebServer.class.getResource(resourceName);
-    if (resource == null) {
-      response.sendError(HttpServletResponse.SC_NOT_FOUND);
-      logger.log(TreeLogger.ERROR, "resource not found: " + resourceName);
-      return;
-    }
-    response.setStatus(HttpServletResponse.SC_OK);
-    response.setContentType("text/html");
-
-    ServletOutputStream outBytes = response.getOutputStream();
-    Writer out = new OutputStreamWriter(outBytes, "UTF-8");
-
-    out.append("<script>\n");
-    out.append("window." + variableName + " = ");
-    json.write(out);
-    out.append(";\n");
-    out.append("</script>\n");
-    out.flush();
-
-    copyStream(resource.openStream(), outBytes);
-  }
-
-  private void sendJsonAndJavaScriptPage(String variableName, JsonObject json, String resourceName,
-      HttpServletResponse response)
-      throws IOException {
-    URL resource = WebServer.class.getResource(resourceName);
-    if (resource == null) {
-      response.sendError(HttpServletResponse.SC_NOT_FOUND);
-      logger.log(TreeLogger.ERROR, "resource not found: " + resourceName);
-      return;
-    }
-    response.setStatus(HttpServletResponse.SC_OK);
-    response.setContentType("application/javascript");
-
-    ServletOutputStream outBytes = response.getOutputStream();
-    Writer out = new OutputStreamWriter(outBytes, "UTF-8");
-
-    out.append("window." + variableName + " = ");
-    json.write(out);
-    out.append(";\n");
-    out.flush();
-
-    copyStream(resource.openStream(), outBytes);
-  }
-
-  static void sendPage(String mimeType, File file, HttpServletResponse response)
-      throws IOException {
-    BufferedInputStream in = new BufferedInputStream(new FileInputStream(file));
-    sendPage(mimeType, in, response);
-  }
-
-  /**
-   * Sends a page. Closes pageBytes when done.
-   */
-  static void sendPage(String mimeType, InputStream pageBytes, HttpServletResponse response)
-      throws IOException {
-    response.setStatus(HttpServletResponse.SC_OK);
-    response.setContentType(mimeType);
-    copyStream(pageBytes, response.getOutputStream());
-  }
-
   private static String guessMimeType(String filename) {
     return URLConnection.guessContentTypeFromName(filename);
-  }
-
-  /**
-   * Sends a page represented as a string.
-   */
-  static void sendPage(String mimeType, String page, HttpServletResponse response)
-      throws IOException {
-    response.setStatus(HttpServletResponse.SC_OK);
-    response.setContentType(mimeType);
-    response.getWriter().append(page);
   }
 
   /**
@@ -404,24 +318,6 @@ public class WebServer {
     Request baseRequest = (request instanceof Request) ? (Request) request :
         HttpConnection.getCurrentConnection().getRequest();
     baseRequest.setHandled(true);
-  }
-
-  /**
-   * Copies in to out and closes in when done.
-   */
-  private static void copyStream(InputStream in, OutputStream out) throws IOException {
-    try {
-      byte[] buffer = new byte[8 * 1024];
-      while (true) {
-        int bytesRead = in.read(buffer);
-        if (bytesRead == -1) {
-          return;
-        }
-        out.write(buffer, 0, bytesRead);
-      }
-    } finally {
-      in.close();
-    }
   }
 
   private static final Pattern ERROR_PATTERN = Pattern.compile("\\[ERROR\\]");

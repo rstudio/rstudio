@@ -65,7 +65,10 @@ class SourceHandler {
   void handle(String target, HttpServletRequest request, HttpServletResponse response)
       throws IOException {
     String moduleName = getModuleNameFromRequest(target);
-    assert moduleName != null;
+    if (moduleName == null) {
+      throw new RuntimeException("invalid request (shouldn't happen): " + target);
+    }
+
     if (target.equals(SOURCEMAP_PATH + moduleName + "/gwtSourceMap.json")) {
         sendSourceMap(moduleName, request, response);
         return;
@@ -103,7 +106,7 @@ class SourceHandler {
         request.getServerPort(), moduleName);
     sourceMapJson = addPrefixToSourceMapFilenames(serverPrefix, sourceMapJson);
 
-    WebServer.sendPage("application/json", sourceMapJson, response);
+    PageUtil.sendString("application/json", sourceMapJson, response);
     logger.log(TreeLogger.WARN, "sent source map for module: " + moduleName);
   }
 
@@ -118,7 +121,7 @@ class SourceHandler {
         sendNotFound(response, target);
         return;
       }
-      WebServer.sendPage("text/plain", fileInGenDir, response);
+      PageUtil.sendFile("text/plain", fileInGenDir, response);
       return;
     }
 
@@ -129,7 +132,7 @@ class SourceHandler {
       return;
     }
 
-    WebServer.sendPage("text/plain", pageBytes, response);
+    PageUtil.sendStream("text/plain", pageBytes, response);
   }
 
   /**
