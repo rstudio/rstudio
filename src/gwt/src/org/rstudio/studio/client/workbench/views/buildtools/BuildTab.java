@@ -121,6 +121,7 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
                commands.buildAll().remove();
                commands.rebuildAll().remove();
                commands.cleanAll().remove();
+               commands.stopBuild().remove();
                commands.activateBuild().remove();
             }
             
