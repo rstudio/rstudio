@@ -34,7 +34,7 @@ public class CheckboxLabel implements IsWidget
          {
             event.preventDefault();
 
-            checkbox.setValue(!checkbox.getValue());
+            checkbox.setValue(!checkbox.getValue(), true);
          }
       });
    }
