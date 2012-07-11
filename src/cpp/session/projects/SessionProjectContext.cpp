@@ -234,6 +234,15 @@ Error ProjectContext::initialize()
 {
    if (hasProject())
    {
+      // read build options for the side effect of updating buildOptions_
+      RProjectBuildOptions buildOptions;
+      Error error = readBuildOptions(&buildOptions);
+      if (error)
+         LOG_ERROR(error);
+
+      // compute the build target path
+      updateBuildTargetPath();
+
       // compute the default encoding
       updateDefaultEncoding();
 
@@ -244,7 +253,7 @@ Error ProjectContext::initialize()
       if (config().enableCodeIndexing)
       {
          module_context::events().onDeferredInit.connect(
-                          boost::bind(&ProjectContext::onDeferredInit, this));
+                      boost::bind(&ProjectContext::onDeferredInit, this, _1));
       }
    }
 
@@ -328,7 +337,7 @@ void ProjectContext::setLastProjectPath(const FilePath& lastProjectPath)
 }
 
 
-void ProjectContext::onDeferredInit()
+void ProjectContext::onDeferredInit(bool newSession)
 {
    // kickoff file monitoring for this directory
    using namespace boost;
@@ -467,6 +476,37 @@ void ProjectContext::updateDefaultEncoding()
    }
 }
 
+void ProjectContext::updateBuildTargetPath()
+{
+   if (config().buildType == r_util::kBuildTypeNone)
+   {
+      buildTargetPath_ = FilePath();
+   }
+   else
+   {
+      // determine the relative build target
+      std::string buildTarget;
+      if (config().buildType == r_util::kBuildTypePackage)
+         buildTarget = config().packagePath;
+      else if (config().buildType == r_util::kBuildTypeMakefile)
+         buildTarget = config().makefilePath;
+      else if (config().buildType == r_util::kBuildTypeCustom)
+         buildTarget = config().customScriptPath;
+
+      // determine the path
+      if (boost::algorithm::starts_with(buildTarget, "~/") ||
+               FilePath::isRootPath(buildTarget))
+      {
+         buildTargetPath_ = module_context::resolveAliasedPath(buildTarget);
+      }
+      else
+      {
+         buildTargetPath_=  projects::projectContext().directory().childPath(
+                                                                  buildTarget);
+      }
+   }
+}
+
 json::Object ProjectContext::uiPrefs() const
 {
    json::Object uiPrefs;
@@ -565,6 +605,12 @@ Error ProjectContext::readBuildOptions(RProjectBuildOptions* pOptions)
    pOptions->autoRoxygenizeForBuildAndReload = optionsFile.getBool(
                                        "auto_roxygenize_for_build_and_reload",
                                        false);
+   pOptions->autoExecuteLoadAll = optionsFile.getBool(
+                                       "auto_execute_load_all",
+                                       false);
+
+   // opportunistically sync in-memory representation to what we read from disk
+   buildOptions_ = *pOptions;
 
    return Success();
 }
@@ -585,7 +631,12 @@ Error ProjectContext::writeBuildOptions(const RProjectBuildOptions& options)
                    options.autoRoxygenizeForBuildPackage);
    optionsFile.set("auto_roxygenize_for_build_and_reload",
                    options.autoRoxygenizeForBuildAndReload);
+   optionsFile.set("auto_execute_load_all",
+                   options.autoExecuteLoadAll);
    optionsFile.endUpdate();
+
+   // opportunistically sync in-memory representation to what we wrote to disk
+   buildOptions_ = options;
 
    return Success();
 }

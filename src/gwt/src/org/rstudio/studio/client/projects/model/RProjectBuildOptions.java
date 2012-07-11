@@ -50,4 +50,11 @@ public class RProjectBuildOptions extends JavaScriptObject
       this.auto_roxygenize_options = options;
    }-*/;
    
+   public native final boolean getAutoExecuteLoadAll() /*-{
+      return this.auto_execute_load_all;
+   }-*/;
+
+   public native final void setAutoExecuteLoadAll(boolean autoExecute) /*-{
+      this.auto_execute_load_all = autoExecute;
+   }-*/;
 }

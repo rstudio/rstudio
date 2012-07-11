@@ -112,6 +112,8 @@ json::Object projectBuildOptionsJson()
                               buildOptions.autoRoxygenizeForBuildAndReload;
    buildOptionsJson["auto_roxygenize_options"] = autoRoxJson;
 
+   buildOptionsJson["auto_execute_load_all"] = buildOptions.autoExecuteLoadAll;
+
    return buildOptionsJson;
 }
 
@@ -151,6 +153,8 @@ json::Object projectBuildContextJson()
    json::Object contextJson;
    contextJson["roxygen2_installed"] =
                         module_context::isPackageInstalled("roxygen2");
+   contextJson["devtools_installed"] =
+                           module_context::isPackageInstalled("devtools");
    return contextJson;
 }
 
@@ -189,7 +193,8 @@ Error rProjectBuildOptionsFromJson(const json::Object& optionsJson,
        optionsJson,
        "makefile_args", &(pOptions->makefileArgs),
        "cleanup_after_check",&(pOptions->cleanupAfterCheck),
-       "auto_roxygenize_options", &autoRoxJson);
+       "auto_roxygenize_options", &autoRoxJson,
+       "auto_execute_load_all", &(pOptions->autoExecuteLoadAll));
    if (error)
       return error;
 

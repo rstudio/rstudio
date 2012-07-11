@@ -58,6 +58,8 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
       abstract void initialize(BuildState buildState);
       
       abstract void initializeAfterRestart(BuildRestartContext restartContext);
+      
+      abstract void initializeDevtools(String devtoolsLoadAllPath);
    }
 
    @Inject
@@ -125,11 +127,14 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
             // initialize from build state or restart context
             BuildState buildState = sessionInfo.getBuildState();
             BuildRestartContext context = sessionInfo.getBuildRestartContext();
+            String devtoolsLoadPath = sessionInfo.getBuildDevtoolsLoadPath();
             
             if (buildState != null)
                shim.initialize(buildState);
             else if (context != null)
                shim.initializeAfterRestart(context);
+            else if (devtoolsLoadPath != null)
+               shim.initializeDevtools(devtoolsLoadPath);
                
           }
       });

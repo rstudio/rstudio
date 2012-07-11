@@ -26,6 +26,7 @@ namespace build {
 
 core::json::Value buildStateAsJson();
 core::json::Value buildRestartContext();
+core::json::Value buildDevtoolsLoadPath();
 
 core::Error initialize();
                        

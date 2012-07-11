@@ -156,11 +156,11 @@ void reportDeferredDeserializationError(const Error& error)
    REprintf((errMsg + "\n").c_str());
 }
 
-void completeDeferredSessionInit()
+void completeDeferredSessionInit(bool newSession)
 {
    // call external hook
    if (s_callbacks.deferredInit)
-      s_callbacks.deferredInit();
+      s_callbacks.deferredInit(newSession);
 }
 
 void saveClientState(ClientStateCommitType commitType)
@@ -211,7 +211,7 @@ void deferredRestoreSuspendedSession(
       reportDeferredDeserializationError(error);
 
    // complete deferred init
-   completeDeferredSessionInit();
+   completeDeferredSessionInit(false);
 
 }
 
@@ -280,7 +280,7 @@ void deferredRestoreNewSession()
    setImageDirty(false);
 
    // complete deferred init
-   completeDeferredSessionInit();
+   completeDeferredSessionInit(true);
 }
 
 void reportHistoryAccessError(const std::string& context,

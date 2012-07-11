@@ -53,11 +53,11 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       
       add(chkCleanupAfterCheck_ = new CheckBox(
             "Cleanup output after successful R CMD check"));
-      
+        
       roxygenizePanel_ = new VerticalPanel();
       roxygenizePanel_.addStyleName(RES.styles().buildToolsRoxygenize());
       HorizontalPanel rocletPanel = new HorizontalPanel();
-      chkUseRoxygen_ = new CheckBox("Use Roxygen to generate documentation");
+      chkUseRoxygen_ = new CheckBox("Generate documentation with Roxygen");
       rocletPanel.add(chkUseRoxygen_);
       btnConfigureRoxygen_ = new ThemedButton("Configure...");
       btnConfigureRoxygen_.addClickHandler(new ClickHandler() {
@@ -86,6 +86,13 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       
       roxygenizePanel_.add(rocletPanel);
       add(roxygenizePanel_);
+      
+      devtoolsPanel_ = new VerticalPanel();
+      devtoolsPanel_.addStyleName(RES.styles().buildToolsDevtools());
+      chkDevtoolsLoadAll_ = new CheckBox(
+            "Automatically execute devtools load_all when changes occur");
+      devtoolsPanel_.add(chkDevtoolsLoadAll_);
+      add(devtoolsPanel_);
    }
 
    @Override
@@ -125,6 +132,11 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
             }
          }
       });
+      
+      boolean showDevtools = options.getBuildContext().isDevtoolsInstalled();
+      devtoolsPanel_.setVisible(showDevtools);
+      chkDevtoolsLoadAll_.setValue(
+                           options.getBuildOptions().getAutoExecuteLoadAll());
    }
 
    @Override
@@ -142,6 +154,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       buildOptions.setCleanupAfterCheck(chkCleanupAfterCheck_.getValue());
       buildOptions.setAutoRoxyginizeOptions(
                                        roxygenOptions_.getAutoRoxygenize());
+      buildOptions.setAutoExecuteLoadAll(chkDevtoolsLoadAll_.getValue());
    }
 
    private PathSelector pathSelector_;
@@ -158,4 +171,6 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    private CheckBox chkUseRoxygen_;
    private ThemedButton btnConfigureRoxygen_;
    
+   private VerticalPanel devtoolsPanel_;
+   private CheckBox chkDevtoolsLoadAll_;
 }

@@ -34,6 +34,7 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
       String vcsNoOriginUrl();
       String buildToolsAdditionalArguments();
       String buildToolsRoxygenize();
+      String buildToolsDevtools();
    }
   
    @Source("ProjectPreferencesDialog.css")

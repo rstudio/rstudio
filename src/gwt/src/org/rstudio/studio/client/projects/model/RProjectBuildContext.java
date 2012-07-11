@@ -23,4 +23,8 @@ public class RProjectBuildContext extends JavaScriptObject
    public native final boolean isRoxygen2Installed() /*-{
       return this.roxygen2_installed;
    }-*/;
+   
+   public native final boolean isDevtoolsInstalled() /*-{
+      return this.devtools_installed;
+   }-*/;
 }

@@ -62,7 +62,8 @@ struct RProjectBuildOptions
       cleanupAfterCheck(true),
       autoRoxygenizeForCheck(true),
       autoRoxygenizeForBuildPackage(true),
-      autoRoxygenizeForBuildAndReload(false)
+      autoRoxygenizeForBuildAndReload(false),
+      autoExecuteLoadAll(false)
    {
    }
 
@@ -71,6 +72,7 @@ struct RProjectBuildOptions
    bool autoRoxygenizeForCheck;
    bool autoRoxygenizeForBuildPackage;
    bool autoRoxygenizeForBuildAndReload;
+   bool autoExecuteLoadAll;
 };
 
 class ProjectContext : boost::noncopyable
@@ -111,6 +113,7 @@ public:
    {
       config_ = config;
       updateDefaultEncoding();
+      updateBuildTargetPath();
    }
 
    core::Error readVcsOptions(RProjectVcsOptions* pOptions) const;
@@ -127,7 +130,20 @@ public:
    // if necessary
    std::string defaultEncoding() const;
 
+   // computed absolute path to project build target directory
+   const core::FilePath& buildTargetPath() const
+   {
+      return buildTargetPath_;
+   }
+
    core::json::Object uiPrefs() const;
+
+   // current build options (note that these are not synchronized
+   // accross processes!)
+   const RProjectBuildOptions& buildOptions() const
+   {
+      return buildOptions_;
+   }
 
    // does this project context have a file monitor? (might not have one
    // if the user has disabled code indexing or if file monitoring failed
@@ -151,7 +167,7 @@ private:
    // deferred init handler (this allows other modules to reliably subscribe
    // to our file monitoring events with no concern that they'll miss
    // onMonitoringEnabled)
-   void onDeferredInit();
+   void onDeferredInit(bool newSession);
 
    // file monitor event handlers
    void fileMonitorRegistered(core::system::file_monitor::Handle handle,
@@ -164,6 +180,7 @@ private:
    core::Error buildOptionsFile(core::Settings* pOptionsFile) const;
 
    void updateDefaultEncoding();
+   void updateBuildTargetPath();
 
    void augmentRbuildignore();
 
@@ -173,6 +190,8 @@ private:
    core::FilePath scratchPath_;
    core::r_util::RProjectConfig config_;
    std::string defaultEncoding_;
+   core::FilePath buildTargetPath_;
+   RProjectBuildOptions buildOptions_;
 
    bool hasFileMonitor_;
    std::vector<std::string> monitorSubscribers_;

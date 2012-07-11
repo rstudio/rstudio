@@ -469,6 +469,11 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["build_state"] = modules::build::buildStateAsJson();
    sessionInfo["build_restart_context"] = modules::build::buildRestartContext();
+   if (!resumed)
+   {
+      sessionInfo["build_devtools_load_path"]
+                                 = modules::build::buildDevtoolsLoadPath();
+   }
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
@@ -1407,9 +1412,9 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    return Success();
 }
 
-void rDeferredInit()
+void rDeferredInit(bool newSession)
 {
-   module_context::events().onDeferredInit();
+   module_context::events().onDeferredInit(newSession);
 }
    
 void consolePrompt(const std::string& prompt, bool addToHistory)
