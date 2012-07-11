@@ -32,6 +32,7 @@
 #include <core/http/URL.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/Process.hpp>
+#include <core/system/ShellUtils.hpp>
 #include <core/r_util/RPackageInfo.hpp>
 
 #define R_INTERNAL_FUNCTIONS

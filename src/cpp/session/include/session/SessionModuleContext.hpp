@@ -23,7 +23,6 @@
 
 #include <core/system/System.hpp>
 #include <core/system/FileChangeEvent.hpp>
-#include <core/system/ShellUtils.hpp>
 #include <core/http/UriHandler.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/Thread.hpp>
@@ -39,6 +38,9 @@ namespace core {
    class Settings;
    namespace system {
       class ProcessSupervisor;
+   }
+   namespace shell_utils {
+      class ShellCommand;
    }
 }
 

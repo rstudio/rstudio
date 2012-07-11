@@ -39,6 +39,7 @@
 #include <core/system/Process.hpp>
 #include <core/system/FileMonitor.hpp>
 #include <core/system/FileChangeEvent.hpp>
+#include <core/system/ShellUtils.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
