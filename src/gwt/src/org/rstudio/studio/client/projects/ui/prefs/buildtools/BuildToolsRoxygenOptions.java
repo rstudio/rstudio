@@ -28,9 +28,26 @@ public class BuildToolsRoxygenOptions
       autoRoxygenize_ = autoRoxygenize;
    }
    
+   public boolean hasActiveRoclet()
+   {
+      return getRocletRd() || getRocletCollate() || getRocletNamespace();
+   }
+   
+   public void clearRoclets()
+   {
+      setRocletRd(false);
+      setRocletCollate(false);
+      setRocletNamespace(false);
+   }
+   
    public boolean getRocletRd()
    {
       return rocletRd_;
+   }
+   
+   public void setRocletRd(boolean rocletRd)
+   {
+      rocletRd_ = rocletRd;
    }
    
    public boolean getRocletCollate()
@@ -38,9 +55,19 @@ public class BuildToolsRoxygenOptions
       return rocletCollate_;
    }
    
+   public void setRocletCollate(boolean rocletCollate)
+   {
+      rocletCollate_ = rocletCollate;
+   }
+   
    public boolean getRocletNamespace()
    {
       return rocletNamespace_;
+   }
+   
+   public void setRocletNamespace(boolean rocletNamespace)
+   {
+      rocletNamespace_ = rocletNamespace;
    }
    
    public RProjectAutoRoxygenizeOptions getAutoRoxygenize()
@@ -48,8 +75,8 @@ public class BuildToolsRoxygenOptions
       return autoRoxygenize_;
    }
    
-   private final boolean rocletRd_;
-   private final boolean rocletCollate_;
-   private final boolean rocletNamespace_;
+   private boolean rocletRd_;
+   private boolean rocletCollate_;
+   private boolean rocletNamespace_;
    private final RProjectAutoRoxygenizeOptions autoRoxygenize_;
 }

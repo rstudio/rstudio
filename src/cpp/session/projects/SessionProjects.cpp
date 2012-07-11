@@ -103,6 +103,15 @@ json::Object projectBuildOptionsJson()
    json::Object buildOptionsJson;
    buildOptionsJson["makefile_args"] = buildOptions.makefileArgs;
    buildOptionsJson["cleanup_after_check"] = buildOptions.cleanupAfterCheck;
+
+   json::Object autoRoxJson;
+   autoRoxJson["run_on_check"] = buildOptions.autoRoxygenizeForCheck;
+   autoRoxJson["run_on_package_builds"] =
+                              buildOptions.autoRoxygenizeForBuildPackage;
+   autoRoxJson["run_on_build_and_reload"] =
+                              buildOptions.autoRoxygenizeForBuildAndReload;
+   buildOptionsJson["auto_roxygenize_options"] = autoRoxJson;
+
    return buildOptionsJson;
 }
 
@@ -175,10 +184,20 @@ void setProjectConfig(const r_util::RProjectConfig& config)
 Error rProjectBuildOptionsFromJson(const json::Object& optionsJson,
                                    RProjectBuildOptions* pOptions)
 {
+   json::Object autoRoxJson;
+   Error error = json::readObject(
+       optionsJson,
+       "makefile_args", &(pOptions->makefileArgs),
+       "cleanup_after_check",&(pOptions->cleanupAfterCheck),
+       "auto_roxygenize_options", &autoRoxJson);
+   if (error)
+      return error;
+
    return json::readObject(
-        optionsJson,
-        "makefile_args", (&pOptions->makefileArgs),
-        "cleanup_after_check",(&pOptions->cleanupAfterCheck));
+       autoRoxJson,
+       "run_on_check", &(pOptions->autoRoxygenizeForCheck),
+       "run_on_package_builds", &(pOptions->autoRoxygenizeForBuildPackage),
+       "run_on_build_and_reload", &(pOptions->autoRoxygenizeForBuildAndReload));
 }
 
 Error rProjectVcsOptionsFromJson(const json::Object& optionsJson,

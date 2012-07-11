@@ -92,6 +92,8 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                            config.getDefaultLatexProgram());
                 uiPrefs.rootDocument().setProjectValue(
                                            config.getRootDocument());
+                uiPrefs.useRoxygen().setProjectValue(
+                                           config.hasPackageRoxygenize());
                 
                 if (onCompleted != null)
                    onCompleted.execute();

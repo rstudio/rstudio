@@ -14,14 +14,20 @@
 
 package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
+import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.projects.model.RProjectBuildOptions;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
 
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 
@@ -50,17 +56,34 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       
       roxygenizePanel_ = new VerticalPanel();
       roxygenizePanel_.addStyleName(RES.styles().buildToolsRoxygenize());
-      Label roxLabel = new Label("Use Roxygen to automatically generate:");
-      roxygenizePanel_.add(roxLabel);
       HorizontalPanel rocletPanel = new HorizontalPanel();
-      rocletPanel.setWidth("100%");
+      chkUseRoxygen_ = new CheckBox("Use Roxygen to generate documentation");
+      rocletPanel.add(chkUseRoxygen_);
+      btnConfigureRoxygen_ = new ThemedButton("Configure...");
+      btnConfigureRoxygen_.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            new BuildToolsRoxygenOptionsDialog(
+               roxygenOptions_,
+               new OperationWithInput<BuildToolsRoxygenOptions>() {
+
+                  @Override
+                  public void execute(BuildToolsRoxygenOptions input)
+                  {
+                     roxygenOptions_ = input;
+                     chkUseRoxygen_.setValue(input.getRocletRd() || 
+                                             input.getRocletCollate() || 
+                                             input.getRocletNamespace());
+                     
+                  }
+                  
+               }).showModal();
+            
+         } 
+      });
+      rocletPanel.add(btnConfigureRoxygen_);
       
-      chkRoxygenizeRd_ = new CheckBox("Rd files");
-      rocletPanel.add(chkRoxygenizeRd_);
-      chkRoxygenizeCollate_ = new CheckBox("Collate field");
-      rocletPanel.add(chkRoxygenizeCollate_);
-      chkRoxygenizeNamespace_ = new CheckBox("NAMESPACE file");
-      rocletPanel.add(chkRoxygenizeNamespace_);
       roxygenizePanel_.add(rocletPanel);
       add(roxygenizePanel_);
    }
@@ -76,19 +99,32 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       chkCleanupAfterCheck_.setValue(
                            options.getBuildOptions().getCleanupAfterCheck());
       
+      roxygenOptions_ = new BuildToolsRoxygenOptions(
+            config.getPackageRoxygenzieRd(),
+            config.getPackageRoxygenizeCollate(),
+            config.getPackageRoxygenizeNamespace(),
+            options.getBuildOptions().getAutoRogyginizeOptions());
+       
       boolean showRoxygenize = config.hasPackageRoxygenize() ||
                                options.getBuildContext().isRoxygen2Installed();
-      if (showRoxygenize)
-      {
-         roxygenizePanel_.setVisible(true);
-         chkRoxygenizeRd_.setValue(config.getPackageRoxygenzieRd());
-         chkRoxygenizeCollate_.setValue(config.getPackageRoxygenizeCollate());
-         chkRoxygenizeNamespace_.setValue(config.getPackageRoxygenizeNamespace());
-      }
-      else
-      {
-         roxygenizePanel_.setVisible(false);
-      }
+      roxygenizePanel_.setVisible(showRoxygenize);
+      chkUseRoxygen_.setValue(config.hasPackageRoxygenize());
+      chkUseRoxygen_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            if (event.getValue())
+            {
+               if (!roxygenOptions_.hasActiveRoclet())
+                  roxygenOptions_.setRocletRd(true);
+               btnConfigureRoxygen_.click();
+            }
+            else
+            {
+               roxygenOptions_.clearRoclets();
+            }
+         }
+      });
    }
 
    @Override
@@ -99,11 +135,13 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       config.setPackageInstallArgs(installAdditionalArguments_.getText());
       config.setPackageBuildArgs(buildAdditionalArguments_.getText());
       config.setPackageCheckArgs(checkAdditionalArguments_.getText());
-      config.setPackageRoxygenize(chkRoxygenizeRd_.getValue(),
-                                  chkRoxygenizeCollate_.getValue(),
-                                  chkRoxygenizeNamespace_.getValue());
-      options.getBuildOptions().setCleanupAfterCheck(
-                                             chkCleanupAfterCheck_.getValue());
+      config.setPackageRoxygenize(roxygenOptions_.getRocletRd(),
+                                  roxygenOptions_.getRocletCollate(),
+                                  roxygenOptions_.getRocletNamespace());
+      RProjectBuildOptions buildOptions = options.getBuildOptions();
+      buildOptions.setCleanupAfterCheck(chkCleanupAfterCheck_.getValue());
+      buildOptions.setAutoRoxyginizeOptions(
+                                       roxygenOptions_.getAutoRoxygenize());
    }
 
    private PathSelector pathSelector_;
@@ -114,9 +152,10 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    
    private CheckBox chkCleanupAfterCheck_;
    
+   private BuildToolsRoxygenOptions roxygenOptions_;
+   
    private VerticalPanel roxygenizePanel_;
-   private CheckBox chkRoxygenizeRd_;
-   private CheckBox chkRoxygenizeCollate_;
-   private CheckBox chkRoxygenizeNamespace_;
+   private CheckBox chkUseRoxygen_;
+   private ThemedButton btnConfigureRoxygen_;
    
 }

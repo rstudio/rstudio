@@ -157,6 +157,11 @@ public class BuildPresenter extends BasePresenter
       startBuild("build-binary-package");
    }
    
+   void onRoxygenizePackage()
+   {
+      startBuild("roxygenize-package");
+   }
+   
    void onCheckPackage()
    {
       startBuild("check-package");

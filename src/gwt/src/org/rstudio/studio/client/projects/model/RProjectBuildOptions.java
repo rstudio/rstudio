@@ -41,5 +41,13 @@ public class RProjectBuildOptions extends JavaScriptObject
       this.cleanup_after_check = cleanup;
    }-*/;   
 
+   public native final RProjectAutoRoxygenizeOptions getAutoRogyginizeOptions() /*-{
+      return this.auto_roxygenize_options;
+   }-*/;
+   
+   public native final void setAutoRoxyginizeOptions(
+                               RProjectAutoRoxygenizeOptions options)  /*-{
+      this.auto_roxygenize_options = options;
+   }-*/;
    
 }

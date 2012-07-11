@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.views.buildtools;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
@@ -22,6 +24,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildRestartContext;
@@ -46,6 +49,8 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
       @Handler
       public abstract void onBuildBinaryPackage();
       @Handler
+      public abstract void onRoxygenizePackage();
+      @Handler
       public abstract void onStopBuild();
       @Handler
       public abstract void onCheckPackage();
@@ -60,7 +65,8 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
                    final Session session, 
                    Binder binder, 
                    final Commands commands,
-                   EventBus eventBus)
+                   EventBus eventBus,
+                   UIPrefs uiPrefs)
    {
       super("Build", shim);
       session_ = session;
@@ -69,6 +75,17 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
       // stop build always starts out disabled
       commands.stopBuild().setEnabled(false);
       
+      // manage roxygen command
+      commands.roxygenizePackage().setVisible(uiPrefs.useRoxygen().getValue());
+      uiPrefs.useRoxygen().addValueChangeHandler(
+                                       new ValueChangeHandler<Boolean>() {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            commands.roxygenizePackage().setVisible(event.getValue());
+         }       
+      });
+        
       eventBus.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
          public void onSessionInit(SessionInitEvent sie)
          {
@@ -80,6 +97,7 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
             {
                commands.buildSourcePackage().remove();
                commands.buildBinaryPackage().remove();
+               commands.roxygenizePackage().remove();
                commands.checkPackage().remove();
                commands.buildAll().setImageResource(
                                  BuildPaneResources.INSTANCE.iconBuild());
@@ -115,6 +133,8 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
                
           }
       });
+      
+   
    }
    
    @Override

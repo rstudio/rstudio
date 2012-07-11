@@ -174,6 +174,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // root document
          rootDocument().setGlobalValue(
                            newUiPrefs.rootDocument().getGlobalValue());
+         
+         // use roxygen
+         useRoxygen().setGlobalValue(
+                           newUiPrefs.useRoxygen().getGlobalValue());
         
          // pdf preview
          pdfPreview().setGlobalValue(
@@ -237,6 +241,9 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          
          // root document
          rootDocument().setProjectValue(newUiPrefs.rootDocument().getValue());
+         
+         // use roxygen
+         useRoxygen().setProjectValue(newUiPrefs.useRoxygen().getValue());
       }
       else
       {

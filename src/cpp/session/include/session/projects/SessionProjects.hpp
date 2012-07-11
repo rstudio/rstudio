@@ -58,9 +58,19 @@ struct RProjectVcsOptions
 // build options
 struct RProjectBuildOptions
 {
-   RProjectBuildOptions() : cleanupAfterCheck(true) {}
+   RProjectBuildOptions() :
+      cleanupAfterCheck(true),
+      autoRoxygenizeForCheck(true),
+      autoRoxygenizeForBuildPackage(true),
+      autoRoxygenizeForBuildAndReload(false)
+   {
+   }
+
    std::string makefileArgs;
    bool cleanupAfterCheck;
+   bool autoRoxygenizeForCheck;
+   bool autoRoxygenizeForBuildPackage;
+   bool autoRoxygenizeForBuildAndReload;
 };
 
 class ProjectContext : boost::noncopyable

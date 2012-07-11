@@ -93,7 +93,7 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
       for (BuildToolsPanel panel : buildToolsPanels_.values())
          panel.save(options);
      
-      // require reload if the build type changed
+      // require reload if the build type or roxygen settings changed
       return !initialConfig_.getBuildType().equals(buildTypeSelect_.getValue());
    }
    

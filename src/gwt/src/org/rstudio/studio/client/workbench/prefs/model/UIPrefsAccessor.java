@@ -160,6 +160,11 @@ public class UIPrefsAccessor extends Prefs
       return string("root_document", "");
    }
    
+   public PrefValue<Boolean> useRoxygen()
+   {
+      return bool("use_roxygen", false);
+   }
+   
    public static final String PDF_PREVIEW_NONE = "none";
    public static final String PDF_PREVIEW_RSTUDIO = "rstudio";
    public static final String PDF_PREVIEW_DESKTOP_SYNCTEX = "desktop-synctex";

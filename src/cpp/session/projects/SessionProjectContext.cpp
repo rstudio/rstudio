@@ -476,6 +476,7 @@ json::Object ProjectContext::uiPrefs() const
    uiPrefs["default_sweave_engine"] = config_.defaultSweaveEngine;
    uiPrefs["default_latex_program"] = config_.defaultLatexProgram;
    uiPrefs["root_document"] = config_.rootDocument;
+   uiPrefs["use_roxygen"] = !config_.packageRoxygenize.empty();
    return uiPrefs;
 }
 
@@ -552,8 +553,18 @@ Error ProjectContext::readBuildOptions(RProjectBuildOptions* pOptions)
       return error;
 
    pOptions->makefileArgs = optionsFile.get("makefile_args");
-   pOptions->cleanupAfterCheck = optionsFile.getBool("cleanup_after_check",
-                                                     true);
+   pOptions->cleanupAfterCheck = optionsFile.getBool(
+                                       "cleanup_after_check",
+                                       true);
+   pOptions->autoRoxygenizeForCheck = optionsFile.getBool(
+                                       "auto_roxygenize_for_check",
+                                       true);
+   pOptions->autoRoxygenizeForBuildPackage = optionsFile.getBool(
+                                       "auto_roxygenize_for_build_package",
+                                       true);
+   pOptions->autoRoxygenizeForBuildAndReload = optionsFile.getBool(
+                                       "auto_roxygenize_for_build_and_reload",
+                                       false);
 
    return Success();
 }
@@ -568,6 +579,12 @@ Error ProjectContext::writeBuildOptions(const RProjectBuildOptions& options)
    optionsFile.beginUpdate();
    optionsFile.set("makefile_args", options.makefileArgs);
    optionsFile.set("cleanup_after_check", options.cleanupAfterCheck);
+   optionsFile.set("auto_roxygenize_for_check",
+                   options.autoRoxygenizeForCheck);
+   optionsFile.set("auto_roxygenize_for_build_package",
+                   options.autoRoxygenizeForBuildPackage);
+   optionsFile.set("auto_roxygenize_for_build_and_reload",
+                   options.autoRoxygenizeForBuildAndReload);
    optionsFile.endUpdate();
 
    return Success();

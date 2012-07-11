@@ -39,6 +39,12 @@ namespace build {
 
 namespace {
 
+const char * const kRoxygenizePackage = "roxygenize-package";
+const char * const kBuildSourcePackage = "build-source-package";
+const char * const kBuildBinaryPackage = "build-binary-package";
+const char * const kCheckPackage = "check-package";
+const char * const kBuildAndReload = "build-all";
+
 FilePath restartContextFilePath()
 {
    return module_context::scopedScratchPath().childPath(
@@ -255,53 +261,68 @@ private:
          return;
       }
 
-      // bind a function that can be used to build the package
-      boost::function<void()> buildFunction = boost::bind(
-                         &Build::buildPackage, Build::shared_from_this(),
-                             type, packagePath, pkgInfo, options, cb);
-
-
-      // roxygenize first if necessary
-      if (!projectConfig().packageRoxygenize.empty())
+      // if this is a direct roxygenize then execute it
+      if (type == kRoxygenizePackage)
       {
-         FilePath rScriptPath;
-         Error error = module_context::rScriptPath(&rScriptPath);
-         if (error)
-         {
-            terminateWithError("Locating R script", error);
-            return;
-         }
-
-         // build the roxygenize command
-         shell_utils::ShellCommand cmd(rScriptPath);
-         cmd << "--slave";
-         cmd << "--vanilla";
-         cmd << "-e";
-         std::string roxygenizeCall = buildRoxygenizeCall(pkgInfo);
-         boost::format fmt(
-            "suppressPackageStartupMessages({library(roxygen2); %1%;})");
-         cmd << boost::str(fmt % roxygenizeCall);
-
-         // show the user the call to roxygenize
-         enqueCommandString(roxygenizeCall);
-
-         // special callback for roxygenize result
-         system::ProcessCallbacks roxygenizeCb = cb;
-         roxygenizeCb.onExit =  boost::bind(&Build::onRoxygenizeCompleted,
-                                            Build::shared_from_this(),
-                                            _1,
-                                            buildFunction);
-
-         // run it
-         module_context::processSupervisor().runCommand(cmd,
-                                                        options,
-                                                        roxygenizeCb);
-
+         successMessage_ = "Roxygen completed";
+         roxygenize(pkgInfo, options, cb);
       }
       else
       {
-         // execute the build directly
-         buildFunction();
+         // bind a function that can be used to build the package
+         boost::function<void()> buildFunction = boost::bind(
+                            &Build::buildPackage, Build::shared_from_this(),
+                                type, packagePath, pkgInfo, options, cb);
+
+         // roxygenize first if necessary
+         if (roxygenizeRequired(type))
+         {
+            // special callback for roxygenize result
+            system::ProcessCallbacks roxygenizeCb = cb;
+            roxygenizeCb.onExit =  boost::bind(&Build::onRoxygenizeCompleted,
+                                               Build::shared_from_this(),
+                                               _1,
+                                               buildFunction);
+
+            // run it
+            roxygenize(pkgInfo, options, roxygenizeCb);
+         }
+         else
+         {
+            // execute the build directly
+            buildFunction();
+         }
+      }
+   }
+
+   bool roxygenizeRequired(const std::string& type)
+   {
+      if (!projectConfig().packageRoxygenize.empty())
+      {
+         if ((type == kBuildAndReload) &&
+             options_.autoRoxygenizeForBuildAndReload)
+         {
+            return true;
+         }
+         else if ( (type == kBuildSourcePackage ||
+                    type == kBuildBinaryPackage) &&
+                   options_.autoRoxygenizeForBuildPackage)
+         {
+            return true;
+         }
+         else if ( (type == kCheckPackage) &&
+                   options_.autoRoxygenizeForCheck)
+         {
+            return true;
+         }
+         else
+         {
+            return false;
+         }
+      }
+      else
+      {
+         return false;
       }
    }
 
@@ -335,6 +356,39 @@ private:
       }
    }
 
+
+   void roxygenize(const r_util::RPackageInfo& pkgInfo,
+                   const core::system::ProcessOptions& options,
+                   const core::system::ProcessCallbacks& cb)
+   {
+      FilePath rScriptPath;
+      Error error = module_context::rScriptPath(&rScriptPath);
+      if (error)
+      {
+         terminateWithError("Locating R script", error);
+         return;
+      }
+
+      // build the roxygenize command
+      shell_utils::ShellCommand cmd(rScriptPath);
+      cmd << "--slave";
+      cmd << "--no-save";
+      cmd << "--no-restore";
+      cmd << "-e";
+      std::string roxygenizeCall = buildRoxygenizeCall(pkgInfo);
+      boost::format fmt(
+         "suppressPackageStartupMessages({library(roxygen2); %1%;})");
+      cmd << boost::str(fmt % roxygenizeCall);
+
+      // show the user the call to roxygenize
+      enqueCommandString(roxygenizeCall);
+
+      // run it
+      module_context::processSupervisor().runCommand(cmd,
+                                                     options,
+                                                     cb);
+   }
+
    void buildPackage(const std::string& type,
                      const FilePath& packagePath,
                      const r_util::RPackageInfo& pkgInfo,
@@ -351,7 +405,7 @@ private:
       }
 
       // build command
-      if (type == "build-all")
+      if (type == kBuildAndReload)
       {
          // restart R after build is completed
          restartR_ = true;
@@ -375,7 +429,7 @@ private:
                                                         cb);
       }
 
-      else if (type == "build-source-package")
+      else if (type == kBuildSourcePackage)
       {
          // compose the build command
          RCommand rCmd(rBinDir);
@@ -399,7 +453,7 @@ private:
                                                         cb);
       }
 
-      else if (type == "build-binary-package")
+      else if (type == kBuildBinaryPackage)
       {
          // compose the INSTALL --binary
          RCommand rCmd(rBinDir);
@@ -424,7 +478,7 @@ private:
                                                         cb);
       }
 
-      else if (type == "check-package")
+      else if (type == kCheckPackage)
       {
          // first build then check
 
