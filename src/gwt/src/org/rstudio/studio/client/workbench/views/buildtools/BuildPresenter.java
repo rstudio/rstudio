@@ -20,6 +20,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -37,6 +38,8 @@ import org.rstudio.studio.client.workbench.views.buildtools.model.BuildRestartCo
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
+import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 
 public class BuildPresenter extends BasePresenter 
@@ -110,17 +113,25 @@ public class BuildPresenter extends BasePresenter
          }
       });
       
+      // invalidate devtools load all path whenever the project ui prefs
+      // or working directory changes
       eventBus.addHandler(UiPrefsChangedEvent.TYPE, new UiPrefsChangedHandler() 
       {
          @Override
          public void onUiPrefsChanged(UiPrefsChangedEvent e)
          {
-            // invalidate any devtools load all path we have 
-            // whenever project ui prefs change
             if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
                devtoolsLoadAllPath_ = null;
          }
       });
+      eventBus.addHandler(WorkingDirChangedEvent.TYPE, 
+                          new WorkingDirChangedHandler() {
+         @Override
+         public void onWorkingDirChanged(WorkingDirChangedEvent event)
+         {
+            devtoolsLoadAllPath_ = null;
+         }      
+      }); 
       
       
       view_.stopButton().addClickHandler(new ClickHandler() {
