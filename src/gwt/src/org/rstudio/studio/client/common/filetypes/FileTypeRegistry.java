@@ -48,7 +48,9 @@ public class FileTypeRegistry
                        true, // source on save aka preview on save
                        false, false, false, 
                        true, // preview html
-                       false, false, false, false, false, false);
+                       false, false, false, false, 
+                       true, // check spelling
+                       false);
 
    public static final TextFileType SWEAVE =
       new SweaveFileType("sweave", "R Sweave", 
