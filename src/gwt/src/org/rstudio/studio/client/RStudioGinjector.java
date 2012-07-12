@@ -38,6 +38,7 @@ import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.pdfviewer.PDFViewerApplication;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
+import org.rstudio.studio.client.projects.ui.prefs.buildtools.BuildToolsPackagePanel;
 import org.rstudio.studio.client.vcs.VCSApplication;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -72,6 +73,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(RPubsUploadDialog uploadDialog);
    void injectMembers(CompileNotebookOptionsDialog notebookOptionsDialog);
    void injectMembers(ProjectPreferencesPane projectPrefsPane);
+   void injectMembers(BuildToolsPackagePanel buildToolsPackagePanel);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

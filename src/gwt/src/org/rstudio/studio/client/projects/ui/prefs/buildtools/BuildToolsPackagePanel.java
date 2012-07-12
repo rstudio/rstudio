@@ -16,10 +16,12 @@ package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.projects.model.RProjectBuildOptions;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -29,18 +31,34 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.inject.Inject;
 
 
 public class BuildToolsPackagePanel extends BuildToolsPanel
 {
    public BuildToolsPackagePanel()
    {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      
       ProjectPreferencesDialogResources RES =
                               ProjectPreferencesDialogResources.INSTANCE;
       
       pathSelector_ = new DirectorySelector("Package directory:");
       pathSelector_.getElement().getStyle().setMarginBottom(12, Unit.PX);
       add(pathSelector_); 
+      pathSelector_.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            if (pathSelector_.getText().equals(
+                           workbenchContext_.getActiveProjectDir().getPath())) 
+            {
+               pathSelector_.setText("");
+            }
+         }
+         
+      });
       
       add(installAdditionalArguments_ = new AdditionalArguments(
                                        "R CMD INSTALL additional options:"));
@@ -86,6 +104,12 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       
       roxygenizePanel_.add(rocletPanel);
       add(roxygenizePanel_);
+   }
+   
+   @Inject
+   public void initialize(WorkbenchContext workbenchContext)
+   {
+      workbenchContext_ = workbenchContext;
    }
 
    @Override
@@ -157,4 +181,6 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    private VerticalPanel roxygenizePanel_;
    private CheckBox chkUseRoxygen_;
    private ThemedButton btnConfigureRoxygen_;
+   
+   private WorkbenchContext workbenchContext_;
 }
