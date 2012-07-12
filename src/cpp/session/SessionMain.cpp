@@ -469,6 +469,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["build_state"] = modules::build::buildStateAsJson();
    sessionInfo["build_restart_context"] = modules::build::buildRestartContext();
+   sessionInfo["devtools_installed"] = module_context::isPackageInstalled(
+                                                                  "devtools");
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)

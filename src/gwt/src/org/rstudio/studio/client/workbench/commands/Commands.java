@@ -241,6 +241,7 @@ public abstract class
  
    // Build
    public abstract AppCommand buildAll();
+   public abstract AppCommand devtoolsLoadAll();
    public abstract AppCommand rebuildAll();
    public abstract AppCommand cleanAll();
    public abstract AppCommand buildSourcePackage();

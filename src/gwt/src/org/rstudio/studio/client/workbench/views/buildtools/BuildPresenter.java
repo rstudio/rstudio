@@ -19,11 +19,15 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
@@ -106,6 +110,18 @@ public class BuildPresenter extends BasePresenter
          }
       });
       
+      eventBus.addHandler(UiPrefsChangedEvent.TYPE, new UiPrefsChangedHandler() 
+      {
+         @Override
+         public void onUiPrefsChanged(UiPrefsChangedEvent e)
+         {
+            // invalidate any devtools load all path we have 
+            // whenever project ui prefs change
+            if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
+               devtoolsLoadAllPath_ = null;
+         }
+      });
+      
       
       view_.stopButton().addClickHandler(new ClickHandler() {
          @Override
@@ -149,6 +165,19 @@ public class BuildPresenter extends BasePresenter
    void onBuildAll()
    {
       startBuild("build-all");
+   }
+   
+   void onDevtoolsLoadAll()
+   {
+      withDevtoolsLoadAllPath(new CommandWithArg<String>() {
+         @Override
+         public void execute(String loadAllPath)
+         {
+            sendLoadCommandToConsole(
+                           "devtools::load_all(\"" + loadAllPath + "\")");
+            commands_.activateConsole().execute();
+         } 
+      });
    }
    
    void onBuildSourcePackage()
@@ -241,6 +270,29 @@ public class BuildPresenter extends BasePresenter
          }
       });
    }
+   
+   private void withDevtoolsLoadAllPath(
+                                 final CommandWithArg<String> onAvailable)
+   {
+      if (devtoolsLoadAllPath_ != null)
+      {
+         onAvailable.execute(devtoolsLoadAllPath_);
+      }
+      else
+      {
+         server_.devtoolsLoadAllPath(new SimpleRequestCallback<String>() {
+            @Override
+            public void onResponseReceived(String loadAllPath)
+            {
+               devtoolsLoadAllPath_ = loadAllPath;
+               onAvailable.execute(devtoolsLoadAllPath_);
+            }
+         });
+      }
+      
+   }
+   
+   private String devtoolsLoadAllPath_ = null;
    
    private final GlobalDisplay globalDisplay_;
    private final SourceShim sourceShim_;

@@ -65,6 +65,8 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
       else if (type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
       {
          ToolbarPopupMenu buildMenu = new ToolbarPopupMenu();
+         buildMenu.addItem(commands_.devtoolsLoadAll().createMenuItem(false));
+         buildMenu.addSeparator();
          buildMenu.addItem(commands_.buildSourcePackage().createMenuItem(false));
          buildMenu.addItem(commands_.buildBinaryPackage().createMenuItem(false));
          buildMenu.addSeparator();

@@ -2609,6 +2609,13 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, TERMINATE_BUILD, requestCallback);
    }
    
+   @Override
+   public void devtoolsLoadAllPath(
+                              ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, DEVTOOLS_LOAD_ALL_PATH, requestCallback);
+   }
+   
 
    private String clientId_;
    private double clientVersion_ = 0;
@@ -2832,6 +2839,7 @@ public class RemoteServer implements Server
    
    private static final String START_BUILD = "start_build";
    private static final String TERMINATE_BUILD = "terminate_build";
+   private static final String DEVTOOLS_LOAD_ALL_PATH = "devtools_load_all_path";
 
    private static final String LOG = "log";
 }

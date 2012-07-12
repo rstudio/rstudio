@@ -41,6 +41,8 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
       @Handler
       public abstract void onBuildAll();
       @Handler
+      public abstract void onDevtoolsLoadAll();
+      @Handler
       public abstract void onRebuildAll();
       @Handler
       public abstract void onCleanAll();
@@ -91,10 +93,15 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
          {
             SessionInfo sessionInfo = session.getSessionInfo();
 
+            // remove devtools commands if it isn't installed
+            if (!sessionInfo.isDevtoolsInstalled())
+               commands.devtoolsLoadAll().remove();
+            
             // adapt or remove package commands if this isn't a package
             String type = sessionInfo.getBuildToolsType();
             if (!type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
             {
+               commands.devtoolsLoadAll().remove();
                commands.buildSourcePackage().remove();
                commands.buildBinaryPackage().remove();
                commands.roxygenizePackage().remove();

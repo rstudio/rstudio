@@ -788,6 +788,14 @@ Error terminateBuild(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error devtoolsLoadAllPath(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(computeDevtoolsLoadPath());
+
+   return Success();
+}
+
 } // anonymous namespace
 
 
@@ -819,7 +827,8 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "start_build", startBuild))
-      (bind(registerRpcMethod, "terminate_build", terminateBuild));
+      (bind(registerRpcMethod, "terminate_build", terminateBuild))
+      (bind(registerRpcMethod, "devtools_load_all_path", devtoolsLoadAllPath));
    return initBlock.execute();
 }
 

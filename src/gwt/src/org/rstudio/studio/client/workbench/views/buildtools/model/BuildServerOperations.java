@@ -25,4 +25,8 @@ public interface BuildServerOperations
    
    // terminate any running build
    void terminateBuild(ServerRequestCallback<Boolean> requestCallback);
+   
+   
+   // get the devtools::load_all path
+   void devtoolsLoadAllPath(ServerRequestCallback<String> requestCallback);
 }
