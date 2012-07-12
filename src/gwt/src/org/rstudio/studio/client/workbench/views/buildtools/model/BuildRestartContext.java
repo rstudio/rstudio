@@ -25,10 +25,6 @@ public class BuildRestartContext extends JavaScriptObject
       return this.package_name;
    }-*/;
    
-   public final native String getDevtoolsLoadPath() /*-{
-      return this.devtools_load_path;
-   }-*/;
-   
    public final native String getBuildOutput() /*-{
       return this.build_output;
    }-*/;

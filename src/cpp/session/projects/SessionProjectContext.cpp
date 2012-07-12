@@ -605,9 +605,6 @@ Error ProjectContext::readBuildOptions(RProjectBuildOptions* pOptions)
    pOptions->autoRoxygenizeForBuildAndReload = optionsFile.getBool(
                                        "auto_roxygenize_for_build_and_reload",
                                        false);
-   pOptions->autoExecuteLoadAll = optionsFile.getBool(
-                                       "auto_execute_load_all",
-                                       false);
 
    // opportunistically sync in-memory representation to what we read from disk
    buildOptions_ = *pOptions;
@@ -631,8 +628,6 @@ Error ProjectContext::writeBuildOptions(const RProjectBuildOptions& options)
                    options.autoRoxygenizeForBuildPackage);
    optionsFile.set("auto_roxygenize_for_build_and_reload",
                    options.autoRoxygenizeForBuildAndReload);
-   optionsFile.set("auto_execute_load_all",
-                   options.autoExecuteLoadAll);
    optionsFile.endUpdate();
 
    // opportunistically sync in-memory representation to what we wrote to disk

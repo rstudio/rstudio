@@ -55,7 +55,6 @@ FilePath restartContextFilePath()
 }
 
 void saveRestartContext(const FilePath& packageDir,
-                        const std::string& devtoolsLoadPath,
                         const std::string& buildOutput)
 {
    // read package info
@@ -78,7 +77,6 @@ void saveRestartContext(const FilePath& packageDir,
 
    restartSettings.beginUpdate();
    restartSettings.set("package_name", pkgInfo.name());
-   restartSettings.set("devtools_load_path", devtoolsLoadPath);
    restartSettings.set("build_output", buildOutput);
    restartSettings.endUpdate();
 }
@@ -107,7 +105,6 @@ json::Value collectRestartContext()
 
       json::Object restartJson;
       restartJson["package_name"] = restartSettings.get("package_name");
-      restartJson["devtools_load_path"] = restartSettings.get("devtools_load_path");
       restartJson["build_output"] = restartSettings.get("build_output");
       return restartJson;
    }
@@ -715,13 +712,7 @@ private:
       if ((projectConfig().buildType == r_util::kBuildTypePackage) && restartR_)
       {
          FilePath packagePath = projects::projectContext().buildTargetPath();
-
-         // devtools load all if necessary
-         std::string devtoolsLoadPath;
-         if (options_.autoExecuteLoadAll)
-            devtoolsLoadPath = computeDevtoolsLoadPath();
-
-         saveRestartContext(packagePath, devtoolsLoadPath, output_);
+         saveRestartContext(packagePath, output_);
       }
 
       ClientEvent event(client_events::kBuildCompleted, restartR_);
@@ -797,91 +788,6 @@ Error terminateBuild(const json::JsonRpcRequest& request,
    return Success();
 }
 
-void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events,
-                    boost::shared_ptr<bool> pPackageChanged)
-{
-   // do nothing if we aren't monitoring
-   if (!projects::projectContext().buildOptions().autoExecuteLoadAll)
-      return;
-
-   FilePath buildTargetPath = projects::projectContext().buildTargetPath();
-   BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
-   {
-      FilePath changedFilePath(event.fileInfo().absolutePath());
-      if (changedFilePath.isWithin(buildTargetPath))
-      {
-         std::string relativePath =
-                        changedFilePath.relativePath(buildTargetPath);
-         if (boost::algorithm::starts_with(relativePath, "DESCRIPTION") ||
-             boost::algorithm::starts_with(relativePath, "R")   ||
-             boost::algorithm::starts_with(relativePath, "src") ||
-             boost::algorithm::starts_with(relativePath, "data"))
-         {
-            *pPackageChanged = true;
-            break;
-         }
-      }
-   }
-}
-
-void onMonitoringDisabled()
-{
-}
-
-void onDeferredInit(bool newSession,
-                    boost::shared_ptr<bool> pPackageChanged)
-{
-   // tweak the package changed flag to force a refresh
-   // whenever we come back from a suspended session
-   if (!newSession)
-      *pPackageChanged = true;
-}
-
-bool executeLoadAllIfPackageChanged(boost::shared_ptr<bool> pPackageChanged)
-{
-   if (*pPackageChanged)
-   {
-      // reset state
-      *pPackageChanged = false;
-
-      r::session::utils::SuppressOutputInScope suppressOutput;
-
-      r::exec::RFunction loadAll("devtools:::load_all");
-      loadAll.addParam(computeDevtoolsLoadPath());
-      Error error = loadAll.call();
-      if (error)
-         LOG_ERROR(error);
-   }
-
-   return true;
-}
-
-void initializeDevtoolsLoadAllMonitor()
-{
-   // boolean which we'll update
-   boost::shared_ptr<bool> pPackageChanged(new bool(false));
-
-   // subscribe to file_monitor for devtools::load_all
-   projects::FileMonitorCallbacks cb;
-   cb.onFilesChanged = boost::bind(onFilesChanged, _1, pPackageChanged);
-   cb.onMonitoringDisabled = onMonitoringDisabled;
-   projects::projectContext().subscribeToFileMonitor(
-                        "Automatic execution of devtools::load_all", cb);
-
-   // deferred init handler for startup
-   module_context::events().onDeferredInit.connect(
-                           boost::bind(onDeferredInit, _1, pPackageChanged));
-
-
-   // schedule periodic work to check whether there are changes
-   // and execute devtools::load_all
-   module_context::schedulePeriodicWork(
-      boost::posix_time::milliseconds(500),
-      boost::bind(executeLoadAllIfPackageChanged, pPackageChanged),
-      true);
-}
-
-
 } // anonymous namespace
 
 
@@ -905,22 +811,8 @@ json::Value buildRestartContext()
    return collectRestartContext();
 }
 
-json::Value buildDevtoolsLoadPath()
-{
-    if (projects::projectContext().buildOptions().autoExecuteLoadAll)
-    {
-       return computeDevtoolsLoadPath();
-    }
-    else
-    {
-       return json::Value();
-    }
-}
-
 Error initialize()
 {
-   initializeDevtoolsLoadAllMonitor();
-
    // install rpc methods
    using boost::bind;
    using namespace module_context;

@@ -248,8 +248,4 @@ public class SessionInfo extends JavaScriptObject
    public final native BuildRestartContext getBuildRestartContext() /*-{
       return this.build_restart_context;
    }-*/;
-   
-   public final native String getBuildDevtoolsLoadPath() /*-{
-      return this.build_devtools_load_path;
-   }-*/;
 }

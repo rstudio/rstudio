@@ -135,25 +135,10 @@ public class BuildPresenter extends BasePresenter
       view_.buildStarted();
       view_.showOutput(context.getBuildOutput());
       view_.buildCompleted();
-      
-      if (context.getDevtoolsLoadPath().length() > 0)
-      {
-         initializeDevtools(context.getDevtoolsLoadPath());
-      }
-      else
-      {
-         String loadPackage = "library(" + context.getPackageName() + ")";
-         sendLoadCommandToConsole(loadPackage);
-      }
+     
+      String loadPackage = "library(" + context.getPackageName() + ")";
+      sendLoadCommandToConsole(loadPackage); 
    }
-   
-   public void initializeDevtools(String devtoolsLoadPath)
-   {
-      sendLoadCommandToConsole("library(devtools)");
-      sendLoadCommandToConsole("load_all(\"" + devtoolsLoadPath + "\")");
-   }
-   
-  
    
    private void sendLoadCommandToConsole(String loadCommand)
    {

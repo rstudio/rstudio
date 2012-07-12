@@ -469,11 +469,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["build_state"] = modules::build::buildStateAsJson();
    sessionInfo["build_restart_context"] = modules::build::buildRestartContext();
-   if (!resumed)
-   {
-      sessionInfo["build_devtools_load_path"]
-                                 = modules::build::buildDevtoolsLoadPath();
-   }
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)

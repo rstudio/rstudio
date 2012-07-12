@@ -111,9 +111,6 @@ json::Object projectBuildOptionsJson()
    autoRoxJson["run_on_build_and_reload"] =
                               buildOptions.autoRoxygenizeForBuildAndReload;
    buildOptionsJson["auto_roxygenize_options"] = autoRoxJson;
-
-   buildOptionsJson["auto_execute_load_all"] = buildOptions.autoExecuteLoadAll;
-
    return buildOptionsJson;
 }
 
@@ -193,8 +190,7 @@ Error rProjectBuildOptionsFromJson(const json::Object& optionsJson,
        optionsJson,
        "makefile_args", &(pOptions->makefileArgs),
        "cleanup_after_check",&(pOptions->cleanupAfterCheck),
-       "auto_roxygenize_options", &autoRoxJson,
-       "auto_execute_load_all", &(pOptions->autoExecuteLoadAll));
+       "auto_roxygenize_options", &autoRoxJson);
    if (error)
       return error;
 

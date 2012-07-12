@@ -62,8 +62,7 @@ struct RProjectBuildOptions
       cleanupAfterCheck(true),
       autoRoxygenizeForCheck(true),
       autoRoxygenizeForBuildPackage(true),
-      autoRoxygenizeForBuildAndReload(false),
-      autoExecuteLoadAll(false)
+      autoRoxygenizeForBuildAndReload(false)
    {
    }
 
@@ -72,7 +71,6 @@ struct RProjectBuildOptions
    bool autoRoxygenizeForCheck;
    bool autoRoxygenizeForBuildPackage;
    bool autoRoxygenizeForBuildAndReload;
-   bool autoExecuteLoadAll;
 };
 
 class ProjectContext : boost::noncopyable
