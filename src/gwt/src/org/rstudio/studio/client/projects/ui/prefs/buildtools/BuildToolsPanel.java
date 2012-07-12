@@ -25,6 +25,7 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
@@ -170,8 +171,6 @@ public abstract class BuildToolsPanel extends VerticalPanel
    {
       AdditionalArguments(String label)
       {
-         ProjectPreferencesDialogResources RES = 
-                                 ProjectPreferencesDialogResources.INSTANCE;
          VerticalPanel panel = new VerticalPanel();
          panel.addStyleName(RES.styles().buildToolsAdditionalArguments());
          
@@ -196,4 +195,14 @@ public abstract class BuildToolsPanel extends VerticalPanel
       
       private final TextBox textBox_;
    }
+   
+   protected CheckBox checkBox(String caption)
+   {
+      CheckBox chk = new CheckBox(caption);
+      chk.addStyleName(RES.styles().buildToolsCheckBox());
+      return chk;
+   }
+   
+   protected static ProjectPreferencesDialogResources RES = 
+         ProjectPreferencesDialogResources.INSTANCE;
 }

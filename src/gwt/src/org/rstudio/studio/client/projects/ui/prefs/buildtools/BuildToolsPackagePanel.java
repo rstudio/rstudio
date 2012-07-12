@@ -69,13 +69,13 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       add(checkAdditionalArguments_ = new AdditionalArguments(
             "R CMD check additional options:"));
       
-      add(chkCleanupAfterCheck_ = new CheckBox(
+      add(chkCleanupAfterCheck_ = checkBox(
             "Cleanup output after successful R CMD check"));
         
       roxygenizePanel_ = new VerticalPanel();
       roxygenizePanel_.addStyleName(RES.styles().buildToolsRoxygenize());
       HorizontalPanel rocletPanel = new HorizontalPanel();
-      chkUseRoxygen_ = new CheckBox("Generate documentation with Roxygen");
+      chkUseRoxygen_ = checkBox("Generate documentation with Roxygen");
       rocletPanel.add(chkUseRoxygen_);
       btnConfigureRoxygen_ = new ThemedButton("Configure...");
       btnConfigureRoxygen_.addClickHandler(new ClickHandler() {

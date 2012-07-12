@@ -14,6 +14,7 @@ package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
 import java.util.HashMap;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
@@ -22,6 +23,7 @@ import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResou
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
 import org.rstudio.studio.client.workbench.model.Session;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
@@ -44,7 +46,8 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
       
       buildToolsPanel_ = new SimplePanel();
       buildToolsPanel_.addStyleName(RES.styles().buildToolsPanel());
-      nudgeRight(buildToolsPanel_);
+      buildToolsPanel_.getElement().getStyle().setMarginLeft(
+                                 BrowseCap.isFirefox() ? 1 : 4, Unit.PX);
       add(buildToolsPanel_);
       
       buildToolsPanels_.put(RProjectConfig.BUILD_TYPE_PACKAGE, 

@@ -71,6 +71,10 @@
    width: 100%;
 }
 
+.buildToolsCheckBox {
+   margin-left: -5px;
+}
+
 .buildToolsRoxygenize {
    margin-top: 20px;
    width: 100%;
