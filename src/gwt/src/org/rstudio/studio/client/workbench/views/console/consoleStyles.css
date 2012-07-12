@@ -24,6 +24,7 @@
    border: none;
    white-space: pre-wrap !important;
    margin: 0;
+   -webkit-user-select: text;
 }
 .output .command, .input {
 }

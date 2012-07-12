@@ -14,6 +14,7 @@ package org.rstudio.studio.client.projects.ui.prefs;
 
 
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -79,6 +80,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       
       lblOrigin_ = new OriginLabel();
       lblOrigin_.addStyleName(RES.styles().vcsOriginLabel());
+      lblOrigin_.addStyleName(ThemeStyles.INSTANCE.selectableText());
       extraSpaced(lblOrigin_);
       add(lblOrigin_);
       

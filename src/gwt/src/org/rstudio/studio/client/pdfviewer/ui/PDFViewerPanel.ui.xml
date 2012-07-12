@@ -7,6 +7,10 @@
    <ui:image field='StatusBarTile' src='images/StatusBarTile.png' />        
    
    <ui:style>
+      .pdfViewerPanel {
+         -webkit-user-select: auto;
+      }
+   
       .toolbarShadow {
          position: fixed;
          top: 0;
@@ -47,7 +51,7 @@
    </ui:style>
    <ui:with field="res" type="org.rstudio.core.client.theme.res.ThemeResources"/>
 
-   <g:HTMLPanel>
+   <g:HTMLPanel styleName="{style.pdfViewerPanel}">
       <pdf:PDFViewerToolbar ui:field="toolbar_" />
       <div class="{style.toolbarShadow}"></div>
       <div id="controls" style="display: none">

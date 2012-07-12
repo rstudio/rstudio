@@ -148,4 +148,6 @@ public interface ThemeStyles extends CssResource
    
    String selectWidget();
    String textBoxWithButton();
+   
+   String selectableText();
 }

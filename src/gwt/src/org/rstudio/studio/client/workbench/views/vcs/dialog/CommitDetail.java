@@ -30,6 +30,7 @@ import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
@@ -51,6 +52,10 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
       sizeWarning_.setVisible(false);
       progressPanel_ = new ProgressPanel(ProgressImages.createLargeGray());
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
+      
+      ThemeStyles styles = ThemeStyles.INSTANCE;
+      labelId_.addStyleName(styles.selectableText());
+      labelParent_.addStyleName(styles.selectableText());
    }
    
    public void setIdDesc(String idDesc)

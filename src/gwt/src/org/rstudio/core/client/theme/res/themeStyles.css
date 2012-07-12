@@ -107,6 +107,7 @@ body {
 body {
    font-family: proportionalFont;
    font-size: 12px;
+   -webkit-user-select: none;
 }
 
 select {
@@ -132,6 +133,16 @@ button, input[type="reset"], input[type="button"], input[type="submit"] {
 .fixedWidthFont {
    font-family: fixedWidthFont !important;
 }
+
+.gwt-Label {
+   cursor: default;
+}
+
+.selectableText {
+  -webkit-user-select: text;
+  cursor: text;
+}
+
 .gwt-DialogBox input[type=text] {
    border: 1px solid #999;
    height: 17px;
