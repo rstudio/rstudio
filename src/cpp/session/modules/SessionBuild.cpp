@@ -261,37 +261,21 @@ private:
          return;
       }
 
-      // if this is a direct roxygenize then execute it
       if (type == kRoxygenizePackage)
       {
-         successMessage_ = "Roxygen completed";
-         roxygenize(pkgInfo, options, cb);
+         if (roxygenize(pkgInfo, options.workingDir))
+            enqueBuildCompleted();
       }
       else
       {
-         // bind a function that can be used to build the package
-         boost::function<void()> buildFunction = boost::bind(
-                            &Build::buildPackage, Build::shared_from_this(),
-                                type, packagePath, pkgInfo, options, cb);
-
-         // roxygenize first if necessary
          if (roxygenizeRequired(type))
          {
-            // special callback for roxygenize result
-            system::ProcessCallbacks roxygenizeCb = cb;
-            roxygenizeCb.onExit =  boost::bind(&Build::onRoxygenizeCompleted,
-                                               Build::shared_from_this(),
-                                               _1,
-                                               buildFunction);
+            if (!roxygenize(pkgInfo, options.workingDir))
+               return;
+         }
 
-            // run it
-            roxygenize(pkgInfo, options, roxygenizeCb);
-         }
-         else
-         {
-            // execute the build directly
-            buildFunction();
-         }
+         // build the package
+         buildPackage(type, packagePath, pkgInfo, options, cb);
       }
    }
 
@@ -326,8 +310,10 @@ private:
       }
    }
 
-   std::string buildRoxygenizeCall(const r_util::RPackageInfo& pkgInfo)
+   bool roxygenize(const r_util::RPackageInfo& pkgInfo,
+                   const FilePath& workingDir)
    {
+      // build the call to roxygenize
       std::vector<std::string> roclets;
       boost::algorithm::split(roclets,
                               projectConfig().packageRoxygenize,
@@ -336,57 +322,52 @@ private:
       {
          roclet = "'" + roclet + "'";
       }
-
       boost::format fmt("roxygenize('%1%', roclets=c(%2%))");
-      return boost::str(fmt % pkgInfo.name() %
-                              boost::algorithm::join(roclets, ", "));
-   }
-
-   void onRoxygenizeCompleted(int exitStatus,
-                              const boost::function<void()>& buildFunction)
-   {
-      if (exitStatus == EXIT_SUCCESS)
-      {
-         enqueBuildOutput("Roxygen completed\n\n");
-         buildFunction();
-      }
-      else
-      {
-         terminateWithErrorStatus(exitStatus);
-      }
-   }
-
-
-   void roxygenize(const r_util::RPackageInfo& pkgInfo,
-                   const core::system::ProcessOptions& options,
-                   const core::system::ProcessCallbacks& cb)
-   {
-      FilePath rScriptPath;
-      Error error = module_context::rScriptPath(&rScriptPath);
-      if (error)
-      {
-         terminateWithError("Locating R script", error);
-         return;
-      }
-
-      // build the roxygenize command
-      shell_utils::ShellCommand cmd(rScriptPath);
-      cmd << "--slave";
-      cmd << "--no-save";
-      cmd << "--no-restore";
-      cmd << "-e";
-      std::string roxygenizeCall = buildRoxygenizeCall(pkgInfo);
-      boost::format fmt(
-         "suppressPackageStartupMessages({library(roxygen2); %1%;})");
-      cmd << boost::str(fmt % roxygenizeCall);
+      std::string roxygenizeCall = boost::str(
+         fmt % pkgInfo.name() % boost::algorithm::join(roclets, ", "));
 
       // show the user the call to roxygenize
       enqueCommandString(roxygenizeCall);
+      enqueBuildOutput("* checking for changes ... ");
 
-      // run it
-      module_context::processSupervisor().runCommand(cmd,
-                                                     options,
-                                                     cb);
+      // format the command to send to R
+      boost::format cmdFmt(
+         "capture.output(suppressPackageStartupMessages("
+              "{library(roxygen2); %1%;}"
+          "))");
+      std::string cmd = boost::str(cmdFmt % roxygenizeCall);
+
+
+      // change to the package parent (and make sure we restore
+      // before leaving the function)
+      RestoreCurrentPathScope restorePathScope(
+                                 module_context::safeCurrentPath());
+      Error error = workingDir.makeCurrentPath();
+      if (error)
+      {
+         terminateWithError("setting the working directory for roxygenize",
+                            error);
+         return false;
+      }
+
+      // execute it
+      std::string output;
+      error = r::exec::evaluateString(cmd, &output);
+      if (error && (error.code() != r::errc::NoDataAvailableError))
+      {
+         terminateWithError(r::endUserErrorMessage(error));
+         return false;
+      }
+      else
+      {
+         // update progress
+         enqueBuildOutput("DONE\n");
+
+         // show output
+         enqueBuildOutput(output + (output.empty() ? "\n" : "\n\n"));
+
+         return true;
+      }
    }
 
    void buildPackage(const std::string& type,

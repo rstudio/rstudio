@@ -20,7 +20,6 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -230,10 +229,9 @@ public class BuildPresenter extends BasePresenter
          @Override
          public void execute()
          {
-            server_.startBuild(type,
-                  new DelayedProgressRequestCallback<Boolean>("Starting Build...") {
+            server_.startBuild(type, new SimpleRequestCallback<Boolean>() {
                @Override
-               protected void onSuccess(Boolean response)
+               public void onResponseReceived(Boolean response)
                {
                  
                }
