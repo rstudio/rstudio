@@ -470,6 +470,13 @@ private:
          // add extra args if provided
          rCmd << projectConfig().packageBuildArgs;
 
+         // add --no-manual and --no-vignettes if they are in the check options
+         std::string checkArgs = projectConfig().packageCheckArgs;
+         if (checkArgs.find("--no-manual") != std::string::npos)
+            rCmd << "--no-manual";
+         if (checkArgs.find("--no-vignettes") != std::string::npos)
+            rCmd << "--no-vignettes";
+
          // add filename as a FilePath so it is escaped
          rCmd << FilePath(packagePath.filename());
 
