@@ -140,15 +140,39 @@ bool interpretIntValue(const std::string& value, int* pValue)
    }
 }
 
-std::string detectBuildType(const FilePath& projectFilePath)
+
+std::string detectBuildType(const FilePath& projectFilePath,
+                            RProjectConfig* pConfig)
 {
    FilePath projectDir = projectFilePath.parent();
    if (projectDir.childPath("DESCRIPTION").exists())
-      return kBuildTypePackage;
+   {
+      pConfig->buildType = kBuildTypePackage;
+      pConfig->packagePath = "";
+   }
+   else if (projectDir.childPath("pkg/DESCRIPTION").exists())
+   {
+      pConfig->buildType = kBuildTypePackage;
+      pConfig->packagePath = "pkg";
+   }
    else if (projectDir.childPath("Makefile").exists())
-      return kBuildTypeMakefile;
+   {
+      pConfig->buildType = kBuildTypeMakefile;
+      pConfig->makefilePath = "";
+
+   }
    else
-      return kBuildTypeNone;
+   {
+      pConfig->buildType = kBuildTypeNone;
+   }
+
+   return pConfig->buildType;
+}
+
+std::string detectBuildType(const FilePath& projectFilePath)
+{
+   RProjectConfig config;
+   return detectBuildType(projectFilePath, &config);
 }
 
 } // anonymous namespace
@@ -443,7 +467,7 @@ Error readProjectFile(const FilePath& projectFilePath,
    if (pConfig->buildType.empty())
    {
       // try to detect the build type
-      pConfig->buildType = detectBuildType(projectFilePath);
+      pConfig->buildType = detectBuildType(projectFilePath, pConfig);
 
       // set *pProvidedDefaults only if we successfully auto-detected
       // (this will prevent us from writing None into the project file,
