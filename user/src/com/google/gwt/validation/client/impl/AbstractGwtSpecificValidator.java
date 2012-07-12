@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -67,6 +66,13 @@ public abstract class AbstractGwtSpecificValidator<G> implements
     return new AttributeBuilder();
   }
 
+  protected Class<?>[] addDefaultGroupWhenEmpty(Class<?>[] groups) {
+    if (groups.length == 0) {
+      groups = new Class<?>[]{Default.class};
+    }
+    return groups;
+  }
+
   protected <V, T, A extends Annotation> void addSingleViolation(
       GwtValidationContext<T> context, Set<ConstraintViolation<T>> violations,
       G object, V value, ConstraintDescriptorImpl<A> constraintDescriptor) {
@@ -92,15 +98,7 @@ public abstract class AbstractGwtSpecificValidator<G> implements
     ConstraintValidatorContextImpl<A, V> constraintValidatorContext =
         context.createConstraintValidatorContext(constraintDescriptor);
 
-    // TODO(nchalko) set empties to Default earlier.
     Set<Class<?>> constraintGroup = constraintDescriptor.getGroups();
-    if (groups.length == 0) {
-      groups = new Class<?>[]{Default.class};
-    }
-    if (constraintGroup.isEmpty()) {
-      constraintGroup = new HashSet<Class<?>>();
-      constraintGroup.add(Default.class);
-    }
 
     // check groups requested are in the set of constraint groups (including the implicit group)
     if (!containsAny(groups, constraintGroup)

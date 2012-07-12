@@ -71,6 +71,7 @@ import javax.validation.Payload;
 import javax.validation.UnexpectedTypeException;
 import javax.validation.Valid;
 import javax.validation.ValidationException;
+import javax.validation.groups.Default;
 import javax.validation.metadata.BeanDescriptor;
 import javax.validation.metadata.ConstraintDescriptor;
 import javax.validation.metadata.PropertyDescriptor;
@@ -671,9 +672,15 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
         constraint.getAttributes().entrySet()) {
       // .put(key, value)
       sw.print(".put(");
-      sw.print(asLiteral(entry.getKey()));
+      String key = entry.getKey();
+      sw.print(asLiteral(key));
       sw.print(", ");
-      sw.print(asLiteral(entry.getValue()));
+      Object value = entry.getValue();
+      // Add the Default group if it is not already present
+      if ("groups".equals(key) && value instanceof Class[] && ((Class[])value).length == 0) {
+        value = new Class[] { Default.class };
+      }
+      sw.print(asLiteral(value));
       sw.println(")");
     }
 
@@ -1012,6 +1019,9 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.println(beanHelper.getTypeCanonicalName() + " object,");
     sw.println("Class<?>... groups) {");
     sw.outdent();
+    
+    // groups = addDefaultGroupWhenEmpty(groups);
+    sw.println("groups = addDefaultGroupWhenEmpty(groups);");
 
     // try {
     sw.println("try {");
@@ -1569,6 +1579,9 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.print(p.getPropertyName());
     sw.println("\");");
 
+    // groups = addDefaultGroupWhenEmpty(groups);
+    sw.println("groups = addDefaultGroupWhenEmpty(groups);");
+
     // TODO(nchalko) move this out of here to the Validate method
     if (p.isCascaded() && hasValid(p, useField)) {
 
@@ -1658,6 +1671,9 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.println("Object value,");
     sw.println("Class<?>... groups) {");
     sw.outdent();
+
+    // groups = addDefaultGroupWhenEmpty(groups);
+    sw.println("groups = addDefaultGroupWhenEmpty(groups);");
 
     // try {
     sw.println("try {");
