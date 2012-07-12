@@ -284,14 +284,8 @@ public class Shell implements ConsoleInputHandler,
    
    private void processCommandEntry()
    {
-      processCommandEntry(false);
-   }
-   
-   private void processCommandEntry(boolean suppressAddToHistory)
-   {
-      boolean addToHistory = addToHistory_ && !suppressAddToHistory;
       String commandText = view_.processCommandEntry() ;
-      if (addToHistory && (commandText.length() > 0))
+      if (addToHistory_ && (commandText.length() > 0))
          historyManager_.addToHistory(commandText);
 
       // fire event 
@@ -304,7 +298,7 @@ public class Shell implements ConsoleInputHandler,
       display.clear();
       display.setText(event.getCode());
       if (event.shouldExecute())
-         processCommandEntry(event.suppressAddToHistory());
+         processCommandEntry();
       else
       {
          display.setFocus(true);
