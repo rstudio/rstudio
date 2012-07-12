@@ -790,6 +790,19 @@ Error devtoolsLoadAllPath(const json::JsonRpcRequest& request,
    return Success();
 }
 
+void onSuspend(core::Settings* pSettings)
+{
+   std::string lastBuildOutput = s_pBuild ? s_pBuild->output() : "";
+   pSettings->set("build-last-output", lastBuildOutput);
+}
+
+std::string s_suspendedBuildOutput;
+
+void onResume(const core::Settings& settings)
+{
+   s_suspendedBuildOutput = settings.get("build-last-output");
+}
+
 } // anonymous namespace
 
 
@@ -800,6 +813,13 @@ json::Value buildStateAsJson()
       json::Object stateJson;
       stateJson["running"] = s_pBuild->isRunning();
       stateJson["output"] = s_pBuild->output();
+      return stateJson;
+   }
+   else if (!s_suspendedBuildOutput.empty())
+   {
+      json::Object stateJson;
+      stateJson["running"] = false;
+      stateJson["output"] = s_suspendedBuildOutput;
       return stateJson;
    }
    else
@@ -815,6 +835,9 @@ json::Value buildRestartContext()
 
 Error initialize()
 {
+   // add suspend handler
+   addSuspendHandler(module_context::SuspendHandler(onSuspend, onResume));
+
    // install rpc methods
    using boost::bind;
    using namespace module_context;
