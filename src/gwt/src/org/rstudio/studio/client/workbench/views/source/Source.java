@@ -495,17 +495,29 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewRMarkdownDoc()
    {
+      newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, "r_markdown.Rmd");
+   }
+   
+   @Handler
+   public void onNewRHTMLDoc()
+   {
+      newSourceDocWithTemplate(FileTypeRegistry.RHTML, "r_html.Rhtml");
+   }
+   
+   private void newSourceDocWithTemplate(final TextFileType fileType, 
+                                         String template)
+   {
       final ProgressIndicator indicator = new GlobalProgressDelayer(
             globalDisplay_, 500, "Creating new document...").getIndicator();
       
-      server_.getRMarkdownTemplate(new ServerRequestCallback<String>() {
+      server_.getSourceTemplate(template, new ServerRequestCallback<String>() {
          @Override
-         public void onResponseReceived(String rmarkdownTemplate)
+         public void onResponseReceived(String templateContents)
          {
             indicator.onCompleted();
             
-            newDoc(FileTypeRegistry.RMARKDOWN, 
-                  rmarkdownTemplate, 
+            newDoc(fileType, 
+                  templateContents, 
                   new ResultCallback<EditingTarget, ServerError> () {
                   @Override
                   public void onSuccess(EditingTarget target)
@@ -521,12 +533,6 @@ public class Source implements InsertSourceHandler,
             indicator.onError(error.getUserMessage());
          }
       });
-   }
-   
-   @Handler
-   public void onNewRHTMLDoc()
-   {
-      newDoc(FileTypeRegistry.RHTML, null);
    }
    
    

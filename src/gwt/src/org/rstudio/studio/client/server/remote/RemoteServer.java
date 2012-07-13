@@ -1053,6 +1053,12 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, CLOSE_ALL_DOCUMENTS, requestCallback);
    }
+   
+   public void getSourceTemplate(String template,
+                                 ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_SOURCE_TEMPLATE, template, requestCallback);
+   }
 
    public void setSourceDocumentOnSave(String id,
                                        boolean shouldSourceOnSave,
@@ -1161,12 +1167,6 @@ public class RemoteServer implements Server
    public void iconvlist(ServerRequestCallback<IconvListResult> requestCallback)
    {
       sendRequest(RPC_SCOPE, ICONVLIST, requestCallback);      
-   }
-   
-   public void getRMarkdownTemplate(
-                              ServerRequestCallback<String> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, GET_RMARKDOWN_TEMPLATE, requestCallback);
    }
 
    @Override
@@ -2736,6 +2736,7 @@ public class RemoteServer implements Server
    private static final String IGNORE_EXTERNAL_EDIT = "ignore_external_edit";
    private static final String CLOSE_DOCUMENT = "close_document";
    private static final String CLOSE_ALL_DOCUMENTS = "close_all_documents";
+   private static final String GET_SOURCE_TEMPLATE = "get_source_template";
    private static final String SET_SOURCE_DOCUMENT_ON_SAVE = "set_source_document_on_save";
    private static final String SAVE_ACTIVE_DOCUMENT = "save_active_document";
    private static final String MODIFY_DOCUMENT_PROPERTIES = "modify_document_properties";
@@ -2744,7 +2745,6 @@ public class RemoteServer implements Server
    private static final String REMOVE_CONTENT_URL = "remove_content_url";
    private static final String DETECT_FREE_VARS = "detect_free_vars";
    private static final String ICONVLIST = "iconvlist";
-   private static final String GET_RMARKDOWN_TEMPLATE = "get_rmarkdown_template";
    private static final String GET_TEX_CAPABILITIES = "get_tex_capabilities";
    private static final String GET_CHUNK_OPTIONS = "get_chunk_options";
 

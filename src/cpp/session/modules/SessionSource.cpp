@@ -681,6 +681,29 @@ Error closeAllDocuments(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error getSourceTemplate(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   // template name
+   std::string templateName;
+   Error error = json::readParam(request.params, 0, &templateName);
+   if (error)
+      return error;
+
+   FilePath templatePath = session::options().rResourcesPath().complete(
+                                             "templates/" +  templateName);
+   std::string templateContents;
+   error = core::readStringFromFile(templatePath,
+                                          &templateContents,
+                                          string_utils::LineEndingPosix);
+   if (error)
+      return error;
+
+   pResponse->setResult(templateContents);
+
+   return Success();
+}
+
 void enqueFileEditEvent(const std::string& file)
 {
    // ignore if no file passed
@@ -854,6 +877,7 @@ Error initialize()
       (bind(registerRpcMethod, "reopen_with_encoding", reopenWithEncoding))
       (bind(registerRpcMethod, "close_document", closeDocument))
       (bind(registerRpcMethod, "close_all_documents", closeAllDocuments))
+      (bind(registerRpcMethod, "get_source_template", getSourceTemplate))
       (bind(sourceModuleRFile, "SessionSource.R"));
    return initBlock.execute();
 

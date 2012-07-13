@@ -554,23 +554,6 @@ Error getHTMLCapabilities(const json::JsonRpcRequest&,
 }
 
 
-Error getRMarkdownTemplate(const json::JsonRpcRequest&,
-                                    json::JsonRpcResponse* pResponse)
-{
-   FilePath templatePath = session::options().rResourcesPath().complete(
-                                                   "r_markdown_template.Rmd");
-   std::string templateContents;
-   Error error = core::readStringFromFile(templatePath,
-                                          &templateContents,
-                                          string_utils::LineEndingPosix);
-   if (error)
-      return error;
-
-   pResponse->setResult(templateContents);
-
-   return Success();
-}
-
 const char* const MAGIC_GUID = "12861c30b10411e1afa60800200c9a66";
 const char* const FIGURE_DIR = "figure-compile-notebook-12861c30b";
 
@@ -1121,7 +1104,6 @@ Error initialize()
       (bind(registerRpcMethod, "preview_html", previewHTML))
       (bind(registerRpcMethod, "terminate_preview_html", terminatePreviewHTML))
       (bind(registerRpcMethod, "get_html_capabilities", getHTMLCapabilities))
-      (bind(registerRpcMethod, "get_rmarkdown_template", getRMarkdownTemplate))
       (bind(registerRpcMethod, "create_notebook", createNotebook))
       (bind(registerUriHandler, kHTMLPreviewLocation, handlePreviewRequest))
    ;

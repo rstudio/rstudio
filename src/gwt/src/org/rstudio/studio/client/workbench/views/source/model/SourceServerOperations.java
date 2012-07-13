@@ -165,7 +165,8 @@ public interface SourceServerOperations extends FilesServerOperations,
 
    void iconvlist(ServerRequestCallback<IconvListResult> requestCallback);
    
-   void getRMarkdownTemplate(ServerRequestCallback<String> requestCallback);
+   void getSourceTemplate(String template,
+                          ServerRequestCallback<String> requestCallback);
 
    void createNotebook(
          CompileNotebookOptions options,
