@@ -390,25 +390,30 @@ public class TextEditingTarget implements EditingTarget
 
       name_.setValue(getNameFromDocument(document, defaultNameProvider), true);
       docDisplay_.setCode(document.getContents(), false);
-
-      // restore folds, scroll position, and cursor location
+      
+      // restore folds, scroll position, and selection
       final ArrayList<Fold> folds = Fold.decode(document.getFoldSpec());
-      final int lineNumber = document.getLineNumber();
       final int scrollPosition = document.getScrollPosition();
+      final SourceSelection sel = new SourceSelection(document.getSelection()); 
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          @Override
          public void execute()
-         {
+         { 
             for (Fold fold : folds)
                docDisplay_.addFold(fold.getRange());
             
             if (scrollPosition != 0)
                docDisplay_.scrollToY(scrollPosition);
             
-            if (lineNumber != 0)
-               docDisplay_.setCursorPosition(Position.create(lineNumber, 0));
-             
+            if (!sel.isEmpty())
+            {
+               InputEditorSelection selection = docDisplay_.createSelection(
+                       Position.create(sel.beginRow(), sel.beginColumn()),
+                       Position.create(sel.endRow(), sel.endColumn()));              
+               docDisplay_.setSelection(selection);
+            }
+            
             // we seem to need to delay this in order for the painting
             // to always happen correctly
             Scheduler.get().scheduleDeferred(new ScheduledCommand() {

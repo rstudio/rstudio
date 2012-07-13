@@ -241,7 +241,7 @@ Error saveDocumentCore(const std::string& contents,
                        const json::Value& jsonEncoding,
                        const json::Value& jsonFoldSpec,
                        int scrollPosition,
-                       int lineNumber,
+                       const std::string& selection,
                        boost::shared_ptr<SourceDocument> pDoc)
 {
    // check whether we have a path and if we do get/resolve its value
@@ -278,7 +278,7 @@ Error saveDocumentCore(const std::string& contents,
    }
 
    pDoc->setScrollPosition(scrollPosition);
-   pDoc->setLineNumber(lineNumber);
+   pDoc->setSelection(selection);
 
    // handle document (varies depending upon whether we have a path)
    if (hasPath)
@@ -344,7 +344,8 @@ Error saveDocument(const json::JsonRpcRequest& request,
    // params
    std::string id, contents;
    json::Value jsonPath, jsonType, jsonEncoding, jsonFoldSpec;
-   int scrollPosition, lineNumber;
+   int scrollPosition;
+   std::string selection;
    Error error = json::readParams(request.params, 
                                   &id, 
                                   &jsonPath, 
@@ -352,7 +353,7 @@ Error saveDocument(const json::JsonRpcRequest& request,
                                   &jsonEncoding,
                                   &jsonFoldSpec,
                                   &scrollPosition,
-                                  &lineNumber,
+                                  &selection,
                                   &contents);
    if (error)
       return error ;
@@ -364,7 +365,7 @@ Error saveDocument(const json::JsonRpcRequest& request,
       return error ;
    
    error = saveDocumentCore(contents, jsonPath, jsonType, jsonEncoding,
-                            jsonFoldSpec, scrollPosition, lineNumber, pDoc);
+                            jsonFoldSpec, scrollPosition, selection, pDoc);
    if (error)
       return error;
    
@@ -387,8 +388,11 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
    std::string id;
    json::Value jsonPath, jsonType, jsonEncoding, jsonFoldSpec;
 
-   // scroll position and line number
-   int scrollPosition, lineNumber;
+   // scroll position
+   int scrollPosition;
+
+   // selection
+   std::string selection;
    
    // This is a chunk of text that should be inserted into the
    // current document. It replaces the subrange [offset, offset+length).
@@ -408,7 +412,7 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
                                   &jsonEncoding,
                                   &jsonFoldSpec,
                                   &scrollPosition,
-                                  &lineNumber,
+                                  &selection,
                                   &replacement,
                                   &offset,
                                   &length,
@@ -449,7 +453,7 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
       contents.insert(rangeBegin, replacement.begin(), replacement.end());
       
       error = saveDocumentCore(contents, jsonPath, jsonType, jsonEncoding,
-                               jsonFoldSpec, scrollPosition, lineNumber, pDoc);
+                               jsonFoldSpec, scrollPosition, selection, pDoc);
       if (error)
          return error;
       

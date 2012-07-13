@@ -35,6 +35,7 @@ import org.rstudio.studio.client.workbench.events.LastChanceSaveHandler;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Fold;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent;
@@ -261,8 +262,14 @@ public class DocUpdateSentinel
       final int scrollPosition = docDisplay_.getScrollTop();
       int oldScrollPosition = sourceDoc_.getScrollPosition();
       
-      final int lineNumber = docDisplay_.getCurrentLineNum();
-      int oldLineNumber = sourceDoc_.getLineNumber();
+      Position selStart = docDisplay_.getSelectionStart();
+      Position selEnd = docDisplay_.getSelectionEnd();
+      final String selection = new SourceSelection(
+                                             selStart.getRow(), 
+                                             selStart.getColumn(),
+                                             selEnd.getRow(),
+                                             selEnd.getColumn()).encode();
+      String oldSelection = sourceDoc_.getSelection();
       
       //String patch = DiffMatchPatch.diff(oldContents, newContents);
       SubstringDiff diff = new SubstringDiff(oldContents, newContents);
@@ -272,7 +279,7 @@ public class DocUpdateSentinel
       if (path == null && fileType == null && diff.isEmpty()
           && foldSpec.equals(oldFoldSpec)
           && (scrollPosition == oldScrollPosition)
-          && (lineNumber == oldLineNumber))
+          && selection.equals(oldSelection))
       {
          changesPending_ = false;
          return false;
@@ -298,7 +305,7 @@ public class DocUpdateSentinel
             encoding,
             foldSpec,
             scrollPosition,
-            lineNumber,
+            selection,
             diff.getReplacement(),
             diff.getOffset(),
             diff.getLength(),
@@ -330,7 +337,7 @@ public class DocUpdateSentinel
                                         fileType,
                                         encoding,
                                         scrollPosition,
-                                        lineNumber);
+                                        selection);
                      if (progress != null)
                         progress.onCompleted();
                   }
@@ -351,7 +358,7 @@ public class DocUpdateSentinel
                            encoding,
                            foldSpec,
                            scrollPosition,
-                           lineNumber,
+                           selection,
                            newContents,
                            this);
                   }
@@ -367,7 +374,7 @@ public class DocUpdateSentinel
                                    String fileType,
                                    String encoding,
                                    int scrollPosition,
-                                   int lineNumber)
+                                   String selection)
    {
       changesPending_ = false;
       sourceDoc_.setContents(contents);
@@ -385,7 +392,7 @@ public class DocUpdateSentinel
          sourceDoc_.setEncoding(encoding);
       
       sourceDoc_.setScrollPosition(scrollPosition);
-      sourceDoc_.setLineNumber(lineNumber);
+      sourceDoc_.setSelection(selection);
    }
 
    public boolean sourceOnSave()

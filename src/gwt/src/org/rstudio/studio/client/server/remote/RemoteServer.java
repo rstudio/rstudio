@@ -986,7 +986,7 @@ public class RemoteServer implements Server
                             String encoding,
                             String foldSpec,
                             int scrollPosition,
-                            int lineNumber,
+                            String selection,
                             String contents,
                             ServerRequestCallback<String> requestCallback)
    {
@@ -997,7 +997,7 @@ public class RemoteServer implements Server
       params.set(3, encoding == null ? JSONNull.getInstance() : new JSONString(encoding));
       params.set(4, new JSONString(StringUtil.notNull(foldSpec)));
       params.set(5, new JSONNumber(scrollPosition));
-      params.set(6, new JSONNumber(lineNumber));
+      params.set(6, new JSONString(selection));
       params.set(7, new JSONString(contents));
       sendRequest(RPC_SCOPE, SAVE_DOCUMENT, params, requestCallback);
    }
@@ -1008,7 +1008,7 @@ public class RemoteServer implements Server
                                 String encoding,
                                 String foldSpec,
                                 int scrollPosition,
-                                int lineNumber,
+                                String selection,
                                 String replacement,
                                 int offset,
                                 int length,
@@ -1022,7 +1022,7 @@ public class RemoteServer implements Server
       params.set(3, encoding == null ? JSONNull.getInstance() : new JSONString(encoding));
       params.set(4, new JSONString(StringUtil.notNull(foldSpec)));
       params.set(5, new JSONNumber(scrollPosition));
-      params.set(6, new JSONNumber(lineNumber));
+      params.set(6, new JSONString(selection));
       params.set(7, new JSONString(replacement));
       params.set(8, new JSONNumber(offset));
       params.set(9, new JSONNumber(length));

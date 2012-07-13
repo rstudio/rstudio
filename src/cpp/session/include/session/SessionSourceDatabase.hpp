@@ -51,7 +51,7 @@ public:
    const core::json::Object& properties() const { return properties_; }
    const std::string& folds() const { return folds_; }
    int scrollPosition() const { return scrollPosition_; }
-   int lineNumber() const { return lineNumber_; }
+   std::string selection() const { return selection_; }
    std::string getProperty(const std::string& name) const;
 
    // is this an untitled document?
@@ -93,9 +93,9 @@ public:
       scrollPosition_ = scrollPosition;
    }
 
-   void setLineNumber(int lineNumber)
+   void setSelection(const std::string& selection)
    {
-      lineNumber_ = lineNumber;
+      selection_ = selection;
    }
 
    void checkForExternalEdit(std::time_t* pTime);
@@ -131,7 +131,7 @@ private:
    std::string encoding_;
    std::string folds_;
    int scrollPosition_;
-   int lineNumber_;
+   std::string selection_;
    std::time_t lastKnownWriteTime_;
    bool dirty_;
    double created_;

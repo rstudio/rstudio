@@ -121,12 +121,12 @@ public class SourceDocument extends JavaScriptObject
       this.scroll_pos = scrollPos;
    }-*/;
    
-   public native final int getLineNumber() /*-{
-      return this.line_number;
+   public native final String getSelection() /*-{
+      return this.selection;
    }-*/;
 
-   public native final void setLineNumber(int lineNumber) /*-{
-      this.line_number = lineNumber;
+   public native final void setSelection(String selection) /*-{
+      this.selection = selection;
    }-*/;
    
    
