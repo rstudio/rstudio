@@ -46,7 +46,6 @@ import org.rstudio.studio.client.application.ui.impl.header.HeaderPanel;
 import org.rstudio.studio.client.application.ui.impl.header.MenubarPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dialog.WebDialogBuilderFactory;
-import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -64,7 +63,6 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
    @Inject
    public void initialize(
                   final Commands commands,
-                  FileTypeCommands fileTypeCommands,
                   EventBus eventBus,
                   GlobalDisplay globalDisplay,
                   ThemeResources themeResources,
@@ -175,7 +173,6 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       
       // create toolbar
       toolbar_ = new GlobalToolbar(commands, 
-                                   fileTypeCommands,
                                    eventBus,
                                    pCodeSearch);
       toolbar_.addStyleName(themeResources.themeStyles().webGlobalToolbar());

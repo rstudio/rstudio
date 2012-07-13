@@ -16,13 +16,10 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
-import org.rstudio.core.client.command.CommandHandler;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedEvent;
@@ -47,21 +44,11 @@ public class FileTypeCommands
    }
 
    @Inject
-   public FileTypeCommands(EventBus eventBus, 
-                           Commands commands,
-                           Session session,
+   public FileTypeCommands(Session session,
+                           EventBus eventBus,
                            final HTMLPreviewServerOperations server)
    {
-      eventBus_ = eventBus;
-      commands_ = commands;
       session_ = session;
-
-      addRFileType(FileTypeRegistry.RHTML, 
-                   "R _HTML",
-                   "Create a new R HTML file");
-      addRFileType(FileTypeRegistry.RD, 
-                   "R _Documentation",
-                   "Create a new R documentation file");
           
       eventBus.addHandler(InstalledPackagesChangedEvent.TYPE,
                           new InstalledPackagesChangedHandler() {
@@ -84,11 +71,6 @@ public class FileTypeCommands
                   });
          }
       });
-   }
-  
-   public ArrayList<CommandWithId> rFileCommandsWithIds()
-   {
-      return rFileTypeCommands_;
    }
    
    public TextFileType[] statusBarFileTypes()
@@ -123,49 +105,7 @@ public class FileTypeCommands
       htmlCapabilities_ = caps;
    }
    
-   private AppCommand addRFileType(TextFileType fileType, 
-                                   String menuLabel,
-                                   String desc) 
-   {
-      return addType(rFileTypeCommands_, fileType, menuLabel, desc);
-   }
-   
-   private AppCommand addType(ArrayList<CommandWithId> typeList,
-                              final TextFileType fileType, 
-                              String menuLabel,
-                              String desc)
-   {
-      AppCommand command = new AppCommand();
-      command.setMenuLabel(menuLabel);
-      command.setImageResource(fileType.getDefaultIcon());
-      if (desc != null)
-         command.setDesc(desc);
-      command.addHandler(new CommandHandler()
-      {
-         public void onCommand(AppCommand command)
-         {
-            eventBus_.fireEvent(new OpenSourceFileEvent(null,
-                                                        fileType));
-         }
-      });
-
-      String commandId = commandIdForType(fileType);
-      commands_.addCommand(commandId, command);
-      typeList.add(new CommandWithId(commandId, command));
-      return command;
-   }
-   
-   private static String commandIdForType(FileType fileType)
-   {
-      return "filetype_" + fileType.getTypeId();
-   }
-
-   private final EventBus eventBus_;
-   private final Commands commands_;
    private final Session session_;
-   
-   private final ArrayList<CommandWithId> rFileTypeCommands_ =
-         new ArrayList<CommandWithId>();
    
    private HTMLCapabilities htmlCapabilities_;
 

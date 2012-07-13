@@ -29,6 +29,8 @@ public abstract class
    public abstract AppCommand newTextDoc();
    public abstract AppCommand newSweaveDoc();
    public abstract AppCommand newRMarkdownDoc();
+   public abstract AppCommand newRHTMLDoc();
+   public abstract AppCommand newRDocumentationDoc();
    public abstract AppCommand openSourceDoc();
    public abstract AppCommand reopenSourceDocWithEncoding();
    public abstract AppCommand saveSourceDoc();

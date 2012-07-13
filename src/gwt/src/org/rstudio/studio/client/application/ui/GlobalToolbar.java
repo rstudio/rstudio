@@ -12,8 +12,6 @@
  */
 package org.rstudio.studio.client.application.ui;
 
-import java.util.ArrayList;
-
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FocusContext;
@@ -22,7 +20,6 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -35,13 +32,11 @@ import com.google.inject.Provider;
 public class GlobalToolbar extends Toolbar
 {
    public GlobalToolbar(Commands commands, 
-                        FileTypeCommands fileTypeCommands,
                         EventBus eventBus,
                         Provider<CodeSearch> pCodeSearch)
    {
       super();
       commands_ = commands;
-      fileTypeCommands_ = fileTypeCommands;
       pCodeSearch_ = pCodeSearch;
       ThemeResources res = ThemeResources.INSTANCE;
       addStyleName(res.themeStyles().globalToolbar());
@@ -55,7 +50,9 @@ public class GlobalToolbar extends Toolbar
       newMenu_.addSeparator();
       newMenu_.addItem(commands.newSweaveDoc().createMenuItem(false));
       newMenu_.addItem(commands.newRMarkdownDoc().createMenuItem(false));
-           
+      newMenu_.addItem(commands.newRHTMLDoc().createMenuItem(false));
+      newMenu_.addItem(commands.newRDocumentationDoc().createMenuItem(false));
+      
       // create and add new menu
       StandardIcons icons = StandardIcons.INSTANCE;
       ToolbarButton newButton = new ToolbarButton("",
@@ -121,13 +118,6 @@ public class GlobalToolbar extends Toolbar
    
    public void completeInitialization(SessionInfo sessionInfo)
    { 
-      // dynamic file type commands
-      fileTypeCommands_.setHTMLCapabilities(sessionInfo.getHTMLCapabilities());
-      ArrayList<FileTypeCommands.CommandWithId> rFileNewCommands = 
-                                   fileTypeCommands_.rFileCommandsWithIds();
-      for (FileTypeCommands.CommandWithId cmd : rFileNewCommands)
-         newMenu_.addItem(cmd.command.createMenuItem(false));
-            
       // project popup menu
       ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
                                                           commands_);
@@ -148,7 +138,6 @@ public class GlobalToolbar extends Toolbar
      
    private final Commands commands_;
    private final ToolbarPopupMenu newMenu_;
-   private final FileTypeCommands fileTypeCommands_;
    private final Provider<CodeSearch> pCodeSearch_;
    private final Widget searchWidget_;
    private final FocusContext codeSearchFocusContext_ = new FocusContext();

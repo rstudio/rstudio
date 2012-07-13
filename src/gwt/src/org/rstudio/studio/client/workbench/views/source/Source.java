@@ -522,7 +522,20 @@ public class Source implements InsertSourceHandler,
          }
       });
    }
-
+   
+   @Handler
+   public void onNewRHTMLDoc()
+   {
+      newDoc(FileTypeRegistry.RHTML, null);
+   }
+   
+   
+   @Handler
+   public void onNewRDocumentationDoc()
+   {
+      newDoc(FileTypeRegistry.RD, null);
+   }
+   
    private void newDoc(EditableFileType fileType,
                        ResultCallback<EditingTarget, ServerError> callback)
    {
