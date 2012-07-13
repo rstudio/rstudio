@@ -2614,22 +2614,6 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void validateBuildTargetPath(
-                             String buildType,
-                             String targetPath, 
-                             ServerRequestCallback<String> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(buildType));
-      params.set(1, new JSONString(targetPath));
-      sendRequest(RPC_SCOPE, 
-                  VALIDATE_BUILD_TARGET_PATH, 
-                  params, 
-                  requestCallback);
-   }
-   
-   
-   @Override
    public void devtoolsLoadAllPath(
                               ServerRequestCallback<String> requestCallback)
    {
@@ -2859,7 +2843,6 @@ public class RemoteServer implements Server
    
    private static final String START_BUILD = "start_build";
    private static final String TERMINATE_BUILD = "terminate_build";
-   private static final String VALIDATE_BUILD_TARGET_PATH = "validate_build_target_path";
    private static final String DEVTOOLS_LOAD_ALL_PATH = "devtools_load_all_path";
 
    private static final String LOG = "log";

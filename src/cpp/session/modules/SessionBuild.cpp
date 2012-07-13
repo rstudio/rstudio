@@ -798,41 +798,6 @@ Error terminateBuild(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error validateBuildTargetPath(const json::JsonRpcRequest& request,
-                             json::JsonRpcResponse* pResponse)
-{
-   std::string buildType, targetPath;
-   Error error = json::readParams(request.params, &buildType, &targetPath);
-   if (error)
-      return error;
-   FilePath targetFilePath = module_context::resolveAliasedPath(targetPath);
-
-
-   std::string response;
-   if (buildType == r_util::kBuildTypePackage)
-   {
-      if (!targetFilePath.childPath("DESCRIPTION").exists())
-      {
-         response = "The specified directory does not contain a "
-                    "DESCRIPTION file so cannot be configured"
-                    "as a Package build target.";
-      }
-   }
-   else if (buildType == r_util::kBuildTypeMakefile)
-   {
-      if (!targetFilePath.childPath("Makefile").exists())
-      {
-         response = "The specified directory does not contain a "
-                    "Makefile so cannot be configured as a Makefile"
-                    "build target.";
-      }
-   }
-
-   pResponse->setResult(response);
-
-   return Success();
-}
-
 Error devtoolsLoadAllPath(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
@@ -918,7 +883,6 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "start_build", startBuild))
       (bind(registerRpcMethod, "terminate_build", terminateBuild))
-      (bind(registerRpcMethod, "validate_build_target_path", validateBuildTargetPath))
       (bind(registerRpcMethod, "devtools_load_all_path", devtoolsLoadAllPath));
    return initBlock.execute();
 }
