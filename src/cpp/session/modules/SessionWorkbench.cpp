@@ -674,7 +674,8 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    options.environment = shellEnv;
 
    // configure bash command
-   core::shell_utils::ShellCommand bashCommand("/bin/bash");
+   core::shell_utils::ShellCommand bashCommand("/usr/bin/env");
+   bashCommand << "bash";
    bashCommand << "--norc";
 
    // run process
