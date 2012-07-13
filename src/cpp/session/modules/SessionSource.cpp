@@ -31,6 +31,7 @@
 #include <core/FileInfo.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
+#include <core/text/TemplateFilter.hpp>
 
 #include <core/json/JsonRpc.hpp>
 
@@ -684,22 +685,29 @@ Error closeAllDocuments(const json::JsonRpcRequest& request,
 Error getSourceTemplate(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
-   // template name
-   std::string templateName;
-   Error error = json::readParam(request.params, 0, &templateName);
+   // read params
+   std::string name, templateName;
+   Error error = json::readParams(request.params, &name, &templateName);
    if (error)
       return error;
 
+   // setup template filter
+   std::map<std::string,std::string> vars;
+   vars["name"] = name;
+   core::text::TemplateFilter filter(vars);
+
+   // read file with template filter
    FilePath templatePath = session::options().rResourcesPath().complete(
                                              "templates/" +  templateName);
-   std::string templateContents;
+   std::string contents;
    error = core::readStringFromFile(templatePath,
-                                          &templateContents,
-                                          string_utils::LineEndingPosix);
+                                    filter,
+                                    &contents,
+                                    string_utils::LineEndingPosix);
    if (error)
       return error;
 
-   pResponse->setResult(templateContents);
+   pResponse->setResult(contents);
 
    return Success();
 }

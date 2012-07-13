@@ -495,35 +495,71 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewRMarkdownDoc()
    {
-      newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, "r_markdown.Rmd");
+      newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
+                               "", 
+                               "r_markdown.Rmd",
+                               Position.create(3, 0));
    }
    
    @Handler
    public void onNewRHTMLDoc()
    {
-      newSourceDocWithTemplate(FileTypeRegistry.RHTML, "r_html.Rhtml");
+      newSourceDocWithTemplate(FileTypeRegistry.RHTML, 
+                               "", 
+                               "r_html.Rhtml");
+   }
+   
+   
+   @Handler
+   public void onNewRDocumentationDoc()
+   {
+      globalDisplay_.promptForText(
+            "New R Documentation File", 
+            "Topic name:", 
+            "", 
+            new OperationWithInput<String>() {
+               @Override
+               public void execute(String input)
+               {
+                  newSourceDocWithTemplate(FileTypeRegistry.RD, 
+                                           input, 
+                                           "r_documentation.Rd");
+               }
+      });
    }
    
    private void newSourceDocWithTemplate(final TextFileType fileType, 
+                                         String name,
                                          String template)
+   {
+      newSourceDocWithTemplate(fileType, name, template, null);
+   }
+
+   private void newSourceDocWithTemplate(final TextFileType fileType, 
+                                         String name,
+                                         String template,
+                                         final Position cursorPosition)
    {
       final ProgressIndicator indicator = new GlobalProgressDelayer(
             globalDisplay_, 500, "Creating new document...").getIndicator();
-      
-      server_.getSourceTemplate(template, new ServerRequestCallback<String>() {
+
+      server_.getSourceTemplate(name, 
+                                template, 
+                                new ServerRequestCallback<String>() {
          @Override
          public void onResponseReceived(String templateContents)
          {
             indicator.onCompleted();
-            
+
             newDoc(fileType, 
                   templateContents, 
                   new ResultCallback<EditingTarget, ServerError> () {
-                  @Override
-                  public void onSuccess(EditingTarget target)
-                  {
-                     target.setCursorPosition(Position.create(3, 0));
-                  }
+               @Override
+               public void onSuccess(EditingTarget target)
+               {
+                  if (cursorPosition != null)
+                     target.setCursorPosition(cursorPosition);
+               }
             });
          }
 
@@ -534,13 +570,7 @@ public class Source implements InsertSourceHandler,
          }
       });
    }
-   
-   
-   @Handler
-   public void onNewRDocumentationDoc()
-   {
-      newDoc(FileTypeRegistry.RD, null);
-   }
+
    
    private void newDoc(EditableFileType fileType,
                        ResultCallback<EditingTarget, ServerError> callback)

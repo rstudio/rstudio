@@ -165,7 +165,8 @@ public interface SourceServerOperations extends FilesServerOperations,
 
    void iconvlist(ServerRequestCallback<IconvListResult> requestCallback);
    
-   void getSourceTemplate(String template,
+   void getSourceTemplate(String name,
+                          String template,
                           ServerRequestCallback<String> requestCallback);
 
    void createNotebook(

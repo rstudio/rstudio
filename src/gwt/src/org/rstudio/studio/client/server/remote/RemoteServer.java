@@ -1054,10 +1054,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CLOSE_ALL_DOCUMENTS, requestCallback);
    }
    
-   public void getSourceTemplate(String template,
+   public void getSourceTemplate(String name,
+                                 String template,
                                  ServerRequestCallback<String> requestCallback)
    {
-      sendRequest(RPC_SCOPE, GET_SOURCE_TEMPLATE, template, requestCallback);
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(name));
+      params.set(1, new JSONString(template));
+      sendRequest(RPC_SCOPE, GET_SOURCE_TEMPLATE, params, requestCallback);
    }
 
    public void setSourceDocumentOnSave(String id,

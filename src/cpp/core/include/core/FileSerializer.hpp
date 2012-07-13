@@ -17,6 +17,12 @@
 #include <string>
 #include <map>
 #include <iterator>
+#include <istream>
+#include <sstream>
+
+#include <boost/iostreams/copy.hpp>
+#include <boost/iostreams/concepts.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
 
 #include <boost/function.hpp>
 #include <boost/algorithm/string/trim.hpp>
@@ -207,6 +213,53 @@ Error writeStringToFile(const core::FilePath& filePath,
 Error readStringFromFile(const core::FilePath& filePath,
                          std::string* pStr,
                          string_utils::LineEnding lineEnding=string_utils::LineEndingPassthrough);
+
+// read a string from a file with a filter
+template <typename Filter>
+Error readStringFromFile(
+   const core::FilePath& filePath,
+   const Filter& filter,
+   std::string* pContents,
+   string_utils::LineEnding lineEnding=string_utils::LineEndingPassthrough)
+{
+   try
+   {
+      // open the file stream (report errors with exceptions)
+      boost::shared_ptr<std::istream> pIfs;
+      Error error = filePath.open_r(&pIfs);
+      if (error)
+         return error;
+      pIfs->exceptions(std::istream::failbit | std::istream::badbit);
+
+      // output string stream (report errors with exceptions)
+      std::stringstream ostr;
+      ostr.exceptions(std::ostream::failbit | std::ostream::badbit);
+
+      // do the copy
+      boost::iostreams::filtering_ostream filteringOStream ;
+      filteringOStream.push(filter);
+      filteringOStream.push(ostr);
+      boost::iostreams::copy(*pIfs, filteringOStream, 128);
+
+      // return contents with requested line endings
+      *pContents = ostr.str();
+      string_utils::convertLineEndings(pContents, lineEnding);
+
+      return Success();
+   }
+   catch(const std::exception& e)
+   {
+      Error error = systemError(boost::system::errc::io_error,
+                                ERROR_LOCATION);
+      error.addProperty("what", e.what());
+      error.addProperty("path", filePath.absolutePath());
+      return error;
+   }
+
+    return Success();
+}
+
+
 
 bool stripBOM(std::string* pStr);
 
