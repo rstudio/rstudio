@@ -204,7 +204,7 @@ public class RProjectConfig extends JavaScriptObject
    private static final String ROXYGENIZE_RD = "rd";
    private static final String ROXYGENIZE_COLLATE = "collate";
    private static final String ROXYGENIZE_NAMESPACE = "namespace";
-   private static final String ROXYGENIZE_DELIM = ", ";
+   private static final String ROXYGENIZE_DELIM = ",";
  
    private final boolean getPackageRoxygenize(String roclet)
    {
