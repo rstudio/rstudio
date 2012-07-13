@@ -30,6 +30,7 @@
 
 #include <r/RExec.hpp>
 #include <r/session/RSessionUtils.hpp>
+#include <r/session/RConsoleHistory.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -54,6 +55,12 @@ FilePath restartContextFilePath()
                                                    "build_restart_context");
 }
 
+FilePath restartContextHistoryFilePath()
+{
+   return module_context::scopedScratchPath().childPath(
+                                                   "build_restart_history");
+}
+
 void saveRestartContext(const FilePath& packageDir,
                         const std::string& buildOutput)
 {
@@ -65,6 +72,12 @@ void saveRestartContext(const FilePath& packageDir,
       LOG_ERROR(error);
       return;
    }
+
+   // save history file
+   FilePath restartHistoryPath = restartContextHistoryFilePath();
+   error = r::session::consoleHistory().saveToFile(restartHistoryPath);
+   if (error)
+      LOG_ERROR(error); // fail forward
 
    // save restart context
    core::Settings restartSettings;
@@ -83,6 +96,24 @@ void saveRestartContext(const FilePath& packageDir,
 
 json::Value collectRestartContext()
 {
+   FilePath restartHistoryPath = restartContextHistoryFilePath();
+   if (restartHistoryPath.exists())
+   {
+      // always cleanup the history on scope exit
+      BOOST_SCOPE_EXIT( (&restartHistoryPath) )
+      {
+         Error error = restartHistoryPath.remove();
+         if (error)
+            LOG_ERROR(error);
+      }
+      BOOST_SCOPE_EXIT_END
+
+      Error error = r::session::consoleHistory().loadFromFile(
+                                             restartHistoryPath, false);
+      if (error)
+         LOG_ERROR(error); // fail forward
+   }
+
    FilePath restartSettingsPath = restartContextFilePath();
    if (restartSettingsPath.exists())
    {
@@ -835,7 +866,7 @@ json::Value buildStateAsJson()
    }
 }
 
-json::Value buildRestartContext()
+json::Value restoreBuildRestartContext()
 {
    return collectRestartContext();
 }

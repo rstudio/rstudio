@@ -25,7 +25,8 @@ namespace modules {
 namespace build {
 
 core::json::Value buildStateAsJson();
-core::json::Value buildRestartContext();
+
+core::json::Value restoreBuildRestartContext();
 
 core::Error initialize();
                        

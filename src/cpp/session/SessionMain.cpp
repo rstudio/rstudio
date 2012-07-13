@@ -360,13 +360,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // default prompt
    sessionInfo["prompt"] = r::options::getOption<std::string>("prompt");
 
-   // console history
-   json::Array historyArray;
-   r::session::consoleHistory().asJson(&historyArray);
-   sessionInfo["console_history"] = historyArray;
-   sessionInfo["console_history_capacity"] =
-                              r::session::consoleHistory().capacity();
-   
    // client state
    json::Object clientStateObject;
    r::session::clientState().currentState(&clientStateObject);
@@ -468,9 +461,19 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["build_tools_type"] = r_util::kBuildTypeNone;
 
    sessionInfo["build_state"] = modules::build::buildStateAsJson();
-   sessionInfo["build_restart_context"] = modules::build::buildRestartContext();
+   sessionInfo["build_restart_context"] =
+                                 modules::build::restoreBuildRestartContext();
    sessionInfo["devtools_installed"] = module_context::isPackageInstalled(
                                                                   "devtools");
+
+   // console history -- we do this at the end because
+   // restoreBuildRestartContext may have reset it
+   json::Array historyArray;
+   r::session::consoleHistory().asJson(&historyArray);
+   sessionInfo["console_history"] = historyArray;
+   sessionInfo["console_history_capacity"] =
+                              r::session::consoleHistory().capacity();
+
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
