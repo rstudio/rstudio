@@ -27,6 +27,11 @@ public interface BuildServerOperations
    void terminateBuild(ServerRequestCallback<Boolean> requestCallback);
    
    
+   // validate the build configuration
+   void validateBuildTargetPath(String buildType,
+                                String targetPath, 
+                                ServerRequestCallback<String> requestCallback);
+   
    // get the devtools::load_all path
    void devtoolsLoadAllPath(ServerRequestCallback<String> requestCallback);
 }
