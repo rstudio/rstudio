@@ -249,6 +249,11 @@ public class SessionInfo extends JavaScriptObject
       return this.build_restart_context;
    }-*/;
    
+   public final boolean getWasBuildRestart()
+   {
+      return getBuildRestartContext() != null;
+   }
+   
    public final native boolean isDevtoolsInstalled() /*-{
       return this.devtools_installed;
    }-*/;

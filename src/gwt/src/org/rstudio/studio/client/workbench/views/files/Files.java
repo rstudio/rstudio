@@ -238,6 +238,10 @@ public class Files
             String projectFile = session_.getSessionInfo().getActiveProjectFile();
             if (projectFile == null)
                return null;
+               
+            // preserve maximum fidelity for build restarts
+            if (session_.getSessionInfo().getWasBuildRestart())
+               return value;
             
             // ensure that the value is within the project dir (it wouldn't 
             // be if the project directory has been moved or renamed)
