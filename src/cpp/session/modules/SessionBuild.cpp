@@ -265,7 +265,7 @@ private:
       else if (config.buildType == r_util::kBuildTypeMakefile)
       {
          options.workingDir = buildTargetPath;
-         executeMakefileBuild(type, options, cb);
+         executeMakefileBuild(type, buildTargetPath, options, cb);
       }
       else if (config.buildType == r_util::kBuildTypeCustom)
       {
@@ -283,6 +283,19 @@ private:
                             const core::system::ProcessOptions& options,
                             const core::system::ProcessCallbacks& cb)
    {
+      // validate that there is a DESCRIPTION file
+      FilePath descFilePath = packagePath.childPath("DESCRIPTION");
+      if (!descFilePath.exists())
+      {
+         boost::format fmt ("ERROR: The build directory does "
+                            "not contain a DESCRIPTION\n"
+                            "file so cannot be built as a package.\n\n"
+                            "Build directory: %1%\n");
+         terminateWithError(boost::str(
+                 fmt % module_context::createAliasedPath(packagePath)));
+         return;
+      }
+
       // get package info
       r_util::RPackageInfo pkgInfo;
       Error error = pkgInfo.read(packagePath);
@@ -594,9 +607,23 @@ private:
    }
 
    void executeMakefileBuild(const std::string& type,
+                             const FilePath& targetPath,
                              const core::system::ProcessOptions& options,
                              const core::system::ProcessCallbacks& cb)
    {
+      // validate that there is a Makefile file
+      FilePath makefilePath = targetPath.childPath("Makefile");
+      if (!makefilePath.exists())
+      {
+         boost::format fmt ("ERROR: The build directory does "
+                            "not contain a Makefile\n"
+                            "so the target cannot be built.\n\n"
+                            "Build directory: %1%\n");
+         terminateWithError(boost::str(
+                 fmt % module_context::createAliasedPath(targetPath)));
+         return;
+      }
+
       std::string make = "make";
       if (!options_.makefileArgs.empty())
          make += " " + options_.makefileArgs;
