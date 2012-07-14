@@ -386,6 +386,7 @@ private:
       error = r::exec::evaluateString(cmd, &output);
       if (error && (error.code() != r::errc::NoDataAvailableError))
       {
+         enqueBuildOutput("ERROR\n\n");
          terminateWithError(r::endUserErrorMessage(error));
          return false;
       }
