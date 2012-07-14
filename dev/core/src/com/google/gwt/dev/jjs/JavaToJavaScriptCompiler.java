@@ -67,8 +67,8 @@ import com.google.gwt.dev.jjs.impl.AssertionRemover;
 import com.google.gwt.dev.jjs.impl.AstDumper;
 import com.google.gwt.dev.jjs.impl.CastNormalizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
-import com.google.gwt.dev.jjs.impl.CodeSplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.jjs.impl.CodeSplitter;
+import com.google.gwt.dev.jjs.impl.CodeSplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.jjs.impl.CodeSplitter2;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
@@ -103,7 +103,9 @@ import com.google.gwt.dev.jjs.impl.TypeTightener;
 import com.google.gwt.dev.jjs.impl.UnifyAst;
 import com.google.gwt.dev.jjs.impl.VerifySymbolMap;
 import com.google.gwt.dev.jjs.impl.gflow.DataflowOptimizer;
+import com.google.gwt.dev.js.BaselineCoverageGatherer;
 import com.google.gwt.dev.js.ClosureJsRunner;
+import com.google.gwt.dev.js.CoverageInstrumentor;
 import com.google.gwt.dev.js.EvalFunctionsAtTopScope;
 import com.google.gwt.dev.js.JsBreakUpLargeVarStatements;
 import com.google.gwt.dev.js.JsCoerceIntShift;
@@ -147,6 +149,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.soyc.SoycDashboard;
 import com.google.gwt.soyc.io.ArtifactsOutputDirectory;
+import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 
 import org.xml.sax.SAXException;
 
@@ -290,6 +293,12 @@ public class JavaToJavaScriptCompiler {
 
       ResolveRebinds.exec(jprogram, permutation.getOrderedRebindAnswers());
 
+      // Traverse the AST to figure out which lines are instrumentable for
+      // coverage. This has to happen before optimizations because functions might
+      // be optimized out; we want those marked as "not executed", not "not
+      // instrumentable".
+      Multimap<String, Integer> instrumentableLines = BaselineCoverageGatherer.exec(jprogram);
+
       // (4) Optimize the normalized Java AST for each permutation.
       int optimizationLevel = options.getOptimizationLevel();
       if (optimizationLevel == OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
@@ -346,6 +355,11 @@ public class JavaToJavaScriptCompiler {
        * Creates new variables, must run before code splitter and namer.
        */
       JsStackEmulator.exec(jprogram, jsProgram, propertyOracles, jjsmap);
+
+      /*
+       * If coverage is enabled, instrument the AST to record location info.
+       */
+      CoverageInstrumentor.exec(jsProgram, instrumentableLines);
 
       /*
        * Work around Safari 5 bug by rewriting a >> b as ~~a >> b.
@@ -1271,7 +1285,9 @@ public class JavaToJavaScriptCompiler {
           // variable names, some of the are property. At least this
           // this give us a safe approximation. Ideally we need
           // the code removal passes to remove stuff in the scope objects.
-          nameUsed.add(x.getName().getIdent());
+          if (x.isResolved()) {
+            nameUsed.add(x.getName().getIdent());
+          }
         }
         
         @Override
