@@ -109,6 +109,7 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
                commands.buildAll().setImageResource(
                                  BuildPaneResources.INSTANCE.iconBuild());
                commands.buildAll().setMenuLabel("_Build All");
+               commands.buildAll().setButtonLabel("Build All");
                commands.buildAll().setDesc("Build all");
                
             }
