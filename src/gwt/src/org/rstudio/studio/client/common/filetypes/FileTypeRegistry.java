@@ -52,6 +52,11 @@ public class FileTypeRegistry
                        true, // check spelling
                        false);
 
+   public static final TextFileType NAMESPACE =
+     new TextFileType("r_namespace", "NAMESPACE", EditorLanguage.LANG_R, "",
+                      ICONS.iconText(), false, false, false, false, false,
+                      false, false, false, false, false, false, false);
+   
    public static final TextFileType SWEAVE =
       new SweaveFileType("sweave", "R Sweave", 
           EditorLanguage.LANG_SWEAVE, ".Rnw",ICONS.iconRsweave());
@@ -131,6 +136,7 @@ public class FileTypeRegistry
       register("*.r", R, icons.iconRdoc());
       register(".rprofile", R, icons.iconRprofile());
       register("Rprofile.site", R, icons.iconRprofile());
+      register("NAMESPACE", NAMESPACE, icons.iconText());
       register("*.rhistory", RHISTORY, icons.iconRhistory());
       register("*.rproj", RPROJECT, icons.iconRproject());
       register("*.rnw", SWEAVE, icons.iconRsweave());
