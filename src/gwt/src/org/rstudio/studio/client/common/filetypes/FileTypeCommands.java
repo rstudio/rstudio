@@ -82,6 +82,7 @@ public class FileTypeCommands
       types.add(FileTypeRegistry.RHTML);
       types.add(FileTypeRegistry.RD);
       types.add(FileTypeRegistry.TEXT);
+      types.add(FileTypeRegistry.DCF);
       types.add(FileTypeRegistry.TEX);
       types.add(FileTypeRegistry.MARKDOWN);
       types.add(FileTypeRegistry.HTML);

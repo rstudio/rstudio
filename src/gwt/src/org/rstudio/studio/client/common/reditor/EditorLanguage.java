@@ -41,6 +41,8 @@ public class EditorLanguage
          "mode/markdown", false);
    public static final EditorLanguage LANG_RMARKDOWN = new EditorLanguage(
          "mode/rmarkdown", true);
+   public static final EditorLanguage LANG_DCF = new EditorLanguage(
+         "mode/dcf", false);
    public static final EditorLanguage LANG_HTML = new EditorLanguage(
          "ace/mode/html", false);
    public static final EditorLanguage LANG_RHTML = new EditorLanguage(

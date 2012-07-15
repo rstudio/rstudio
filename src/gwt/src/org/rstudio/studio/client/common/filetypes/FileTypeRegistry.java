@@ -52,6 +52,11 @@ public class FileTypeRegistry
                        true, // check spelling
                        false);
 
+   public static final TextFileType DCF =
+         new TextFileType("dcf", "DCF", EditorLanguage.LANG_DCF, ".dcf",
+                          ICONS.iconText(), false, false, false, false, false,
+                          false, false, false, false, false, false, false);
+   
    public static final TextFileType NAMESPACE =
      new TextFileType("r_namespace", "NAMESPACE", EditorLanguage.LANG_R, "",
                       ICONS.iconText(), false, false, false, false, false,
@@ -136,6 +141,7 @@ public class FileTypeRegistry
       register("*.r", R, icons.iconRdoc());
       register(".rprofile", R, icons.iconRprofile());
       register("Rprofile.site", R, icons.iconRprofile());
+      register("DESCRIPTION", DCF, icons.iconText());
       register("NAMESPACE", NAMESPACE, icons.iconText());
       register("*.rhistory", RHISTORY, icons.iconRhistory());
       register("*.rproj", RPROJECT, icons.iconRproject());
@@ -167,6 +173,7 @@ public class FileTypeRegistry
       register("*.rdata", RDATA, icons.iconRdata());
       register("*.rda", RDATA, icons.iconRdata());
       register("*.Rproj", RPROJECT, icons.iconRproject());
+      register("*.dcf", DCF, icons.iconText());
       defaultType_ = BROWSER;
 
       registerIcon(".jpg", icons.iconPng());

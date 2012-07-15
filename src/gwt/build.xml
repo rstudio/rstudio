@@ -62,6 +62,8 @@
             <file name="rmarkdown.js"/>
             <file name="rhtml_highlight_rules.js"/>
             <file name="rhtml.js"/>
+            <file name="dcf_highlight_rules.js"/>
+            <file name="dcf.js"/>
          </sources>
          <sources dir="acesupport/acetheme">
             <file name="default.js"/>
