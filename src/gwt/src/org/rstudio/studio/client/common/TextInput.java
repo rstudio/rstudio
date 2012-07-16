@@ -29,12 +29,14 @@ public interface TextInput
                              ProgressOperationWithInput<String> okOperation,
                              Operation cancelOperation);
 
-   void promptForPassword(String title,
+   void promptForTextWithOption(
+                          String title,
                           String label,
                           String initialValue,
+                          boolean usePasswordMask,
                           // Null or "" means don't prompt for remembering pw
-                          String rememberPasswordPrompt,
-                          boolean rememberByDefault,
+                          String extraOptionPrompt,
+                          boolean extraOptionDefault,
                           int selectionStart,
                           int selectionLength,
                           String okButtonCaption,

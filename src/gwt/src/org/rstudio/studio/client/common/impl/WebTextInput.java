@@ -52,11 +52,13 @@ public class WebTextInput implements TextInput
    }
 
    @Override
-   public void promptForPassword(String title,
+   public void promptForTextWithOption(
+                                 String title,
                                  String label,
                                  String initialValue,
-                                 String rememberPasswordPrompt,
-                                 boolean rememberByDefault,
+                                 boolean usePasswordMask,
+                                 String extraOptionPrompt,
+                                 boolean extraOptionDefault,
                                  int selectionStart,
                                  int selectionLength,
                                  String okButtonCaption,
@@ -72,9 +74,9 @@ public class WebTextInput implements TextInput
             title,
             label,
             initialValue,
-            true,
-            rememberPasswordPrompt,
-            rememberByDefault,
+            usePasswordMask,
+            extraOptionPrompt,
+            extraOptionDefault,
             false,
             selectionStart,
             selectionLength,

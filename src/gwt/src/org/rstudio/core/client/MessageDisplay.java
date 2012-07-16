@@ -42,7 +42,7 @@ public abstract class MessageDisplay
                                       String label,
                                       String initialValue,
                                       ProgressOperationWithInput<String> operation);
-
+  
    public abstract void promptForText(String title,
                                       String label,
                                       String initialValue,
@@ -51,13 +51,34 @@ public abstract class MessageDisplay
                                       String okButtonCaption,
                                       ProgressOperationWithInput<String> operation);
 
-   public abstract void promptForPassword(
+   public void promptForPassword(
          String title,
          String label,
          String initialValue,
-         // Null or "" means don't prompt to remember pw
+         // Null or "" means don't show an extra option
          String rememberPasswordPrompt,
          boolean rememberByDefault,
+         ProgressOperationWithInput<PromptWithOptionResult> okOperation,
+         Operation cancelOperation)
+   {
+      promptForTextWithOption(title, 
+                              label, 
+                              initialValue, 
+                              true,
+                              rememberPasswordPrompt,
+                              rememberByDefault,
+                              okOperation,
+                              cancelOperation);
+   }
+   
+   public abstract void promptForTextWithOption(
+         String title,
+         String label,
+         String initialValue,
+         boolean showPasswordMask,
+         // Null or "" means don't show an extra option
+         String extraOption,
+         boolean extraOptionDefault,
          ProgressOperationWithInput<PromptWithOptionResult> okOperation,
          Operation cancelOperation);
 

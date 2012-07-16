@@ -103,20 +103,23 @@ public class DefaultGlobalDisplay extends GlobalDisplay
    }
 
    @Override
-   public void promptForPassword(String title,
+   public void promptForTextWithOption(
+                                 String title,
                                  String label,
                                  String initialValue,
-                                 String rememberPasswordPrompt,
-                                 boolean rememberByDefault,
+                                 boolean usePasswordMask,
+                                 String extraOptionPrompt,
+                                 boolean extraOptionDefault,
                                  ProgressOperationWithInput<PromptWithOptionResult> okOperation,
                                  Operation cancelOperation)
    {
-      ((TextInput)GWT.create(TextInput.class)).promptForPassword(
+      ((TextInput)GWT.create(TextInput.class)).promptForTextWithOption(
             title,
             label,
             initialValue,
-            rememberPasswordPrompt,
-            rememberByDefault,
+            usePasswordMask,
+            extraOptionPrompt,
+            extraOptionDefault,
             -1,
             -1,
             null,

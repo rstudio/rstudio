@@ -58,11 +58,12 @@ public class DesktopTextInput implements TextInput
    }
 
    @Override
-   public void promptForPassword(String title,
+   public void promptForTextWithOption(String title,
                                  String label,
                                  String initialValue,
-                                 String rememberPasswordPrompt,
-                                 boolean rememberByDefault,
+                                 boolean usePasswordMask,
+                                 String extraOptionPrompt,
+                                 boolean extraOptionDefault,
                                  int selectionStart,
                                  int selectionLength,
                                  String okButtonCaption,
@@ -72,9 +73,9 @@ public class DesktopTextInput implements TextInput
       JsObject result = Desktop.getFrame().promptForText(title,
                                                        label,
                                                        initialValue,
-                                                       true,
-                                                       rememberPasswordPrompt,
-                                                       rememberByDefault,
+                                                       usePasswordMask,
+                                                       extraOptionPrompt,
+                                                       extraOptionDefault,
                                                        false,
                                                        selectionStart,
                                                        selectionLength,
