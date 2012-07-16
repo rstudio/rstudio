@@ -37,10 +37,10 @@ public:
     void setOkButtonLabel(const QString& label);
     void setEchoMode(QLineEdit::EchoMode mode);
     void setNumbersOnly(bool numbersOnly);
-    void setRememberPasswordPrompt(const QString& prompt);
+    void setExtraOptionPrompt(const QString& prompt);
 
-    void setRemember(bool remember);
-    bool remember();
+    void setExtraOption(bool extraOption);
+    bool extraOption();
 
 private:
     Ui::InputDialog *ui;

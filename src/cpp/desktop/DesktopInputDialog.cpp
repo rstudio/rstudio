@@ -30,7 +30,7 @@ InputDialog::InputDialog(QWidget *parent) :
    QPushButton* pCancel = new QPushButton(QString::fromAscii("Cancel"));
    ui->buttonBox->addButton(pCancel, QDialogButtonBox::RejectRole);
 
-   ui->remember->setVisible(false);
+   ui->extraOption->setVisible(false);
 }
 
 InputDialog::~InputDialog()
@@ -85,18 +85,18 @@ void InputDialog::setNumbersOnly(bool numbersOnly)
       ui->lineEdit->setInputMask(QString());
 }
 
-void InputDialog::setRememberPasswordPrompt(const QString& prompt)
+void InputDialog::setExtraOptionPrompt(const QString& prompt)
 {
-   ui->remember->setVisible(!prompt.isEmpty());
-   ui->remember->setText(prompt);
+   ui->extraOption->setVisible(!prompt.isEmpty());
+   ui->extraOption->setText(prompt);
 }
 
-void InputDialog::setRemember(bool remember)
+void InputDialog::setExtraOption(bool extraOption)
 {
-   ui->remember->setCheckState(Qt::Checked);
+   ui->extraOption->setCheckState(Qt::Checked);
 }
 
-bool InputDialog::remember()
+bool InputDialog::extraOption()
 {
-   return ui->remember->checkState() == Qt::Checked;
+   return ui->extraOption->checkState() == Qt::Checked;
 }

@@ -12,7 +12,7 @@
  */
 package org.rstudio.studio.client.common.impl;
 
-import org.rstudio.core.client.MessageDisplay.PasswordResult;
+import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -66,7 +66,7 @@ public class DesktopTextInput implements TextInput
                                  int selectionStart,
                                  int selectionLength,
                                  String okButtonCaption,
-                                 ProgressOperationWithInput<PasswordResult> okOperation,
+                                 ProgressOperationWithInput<PromptWithOptionResult> okOperation,
                                  Operation cancelOperation)
    {
       JsObject result = Desktop.getFrame().promptForText(title,
@@ -86,9 +86,9 @@ public class DesktopTextInput implements TextInput
       }
       else
       {
-         PasswordResult presult = new PasswordResult();
-         presult.password = result.getString("value");
-         presult.remember = result.getBoolean("remember");
+         PromptWithOptionResult presult = new PromptWithOptionResult();
+         presult.input = result.getString("value");
+         presult.extraOption = result.getBoolean("extraOption");
          okOperation.execute(presult,
                              RStudioGinjector.INSTANCE
                                    .getGlobalDisplay()

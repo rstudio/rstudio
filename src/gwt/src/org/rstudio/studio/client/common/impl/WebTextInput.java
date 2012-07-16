@@ -12,7 +12,7 @@
  */
 package org.rstudio.studio.client.common.impl;
 
-import org.rstudio.core.client.MessageDisplay.PasswordResult;
+import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -60,7 +60,7 @@ public class WebTextInput implements TextInput
                                  int selectionStart,
                                  int selectionLength,
                                  String okButtonCaption,
-                                 final ProgressOperationWithInput<PasswordResult> okOperation,
+                                 final ProgressOperationWithInput<PromptWithOptionResult> okOperation,
                                  Operation cancelOperation)
    {
       // This variable introduces a level of pointer indirection that lets us
@@ -85,9 +85,9 @@ public class WebTextInput implements TextInput
                @Override
                public void execute(String input, ProgressIndicator indicator)
                {
-                  PasswordResult result = new PasswordResult();
-                  result.password = input;
-                  result.remember = pDialog.getValue().getExtraOption();
+                  PromptWithOptionResult result = new PromptWithOptionResult();
+                  result.input = input;
+                  result.extraOption = pDialog.getValue().getExtraOption();
                   okOperation.execute(result, indicator);
                }
             },

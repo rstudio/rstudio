@@ -12,7 +12,7 @@
  */
 package org.rstudio.studio.client.common;
 
-import org.rstudio.core.client.MessageDisplay.PasswordResult;
+import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 
@@ -38,6 +38,6 @@ public interface TextInput
                           int selectionStart,
                           int selectionLength,
                           String okButtonCaption,
-                          ProgressOperationWithInput<PasswordResult> okOperation,
+                          ProgressOperationWithInput<PromptWithOptionResult> okOperation,
                           Operation cancelOperation);
 }

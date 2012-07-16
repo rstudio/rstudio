@@ -27,10 +27,10 @@ public abstract class MessageDisplay
    public final static int MSG_QUESTION = 4;
    public final static int MSG_POPUP_BLOCKED = 0;
 
-   public static class PasswordResult
+   public static class PromptWithOptionResult
    {
-      public String password;
-      public boolean remember;
+      public String input;
+      public boolean extraOption;
    }
 
    public abstract void promptForText(String title,
@@ -58,7 +58,7 @@ public abstract class MessageDisplay
          // Null or "" means don't prompt to remember pw
          String rememberPasswordPrompt,
          boolean rememberByDefault,
-         ProgressOperationWithInput<PasswordResult> okOperation,
+         ProgressOperationWithInput<PromptWithOptionResult> okOperation,
          Operation cancelOperation);
 
    public abstract void promptForInteger(

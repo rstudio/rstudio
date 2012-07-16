@@ -108,7 +108,7 @@ public class DefaultGlobalDisplay extends GlobalDisplay
                                  String initialValue,
                                  String rememberPasswordPrompt,
                                  boolean rememberByDefault,
-                                 ProgressOperationWithInput<PasswordResult> okOperation,
+                                 ProgressOperationWithInput<PromptWithOptionResult> okOperation,
                                  Operation cancelOperation)
    {
       ((TextInput)GWT.create(TextInput.class)).promptForPassword(

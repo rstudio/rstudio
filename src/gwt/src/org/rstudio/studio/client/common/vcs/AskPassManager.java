@@ -14,7 +14,7 @@ package org.rstudio.studio.client.common.vcs;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.MessageDisplay.PasswordResult;
+import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -82,19 +82,19 @@ public class AskPassManager
                   "",
                   e.getRememberPasswordPrompt(),
                   rememberByDefault_,
-                  new ProgressOperationWithInput<PasswordResult>()
+                  new ProgressOperationWithInput<PromptWithOptionResult>()
                   {
                      @Override
-                     public void execute(final PasswordResult result,
+                     public void execute(final PromptWithOptionResult result,
                                          final ProgressIndicator indicator)
                      {
                         askpassPending_ = false;
                         
-                        rememberByDefault_ = result.remember;
+                        rememberByDefault_ = result.extraOption;
 
                         RSAEncrypt.encrypt_ServerOnly(
                               server,
-                              result.password,
+                              result.input,
                               new RSAEncrypt.ResponseCallback()
                               {
                                  @Override
@@ -103,7 +103,7 @@ public class AskPassManager
                                     server.askpassCompleted(
                                      encryptedData,
                                      !StringUtil.isNullOrEmpty(e.getRememberPasswordPrompt())
-                                         && result.remember,
+                                         && result.extraOption,
                                      new VoidServerRequestCallback(indicator));
                                     
                                  }

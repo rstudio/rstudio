@@ -37,9 +37,9 @@
     <widget class="QLineEdit" name="lineEdit"/>
    </item>
    <item>
-    <widget class="QCheckBox" name="remember">
+    <widget class="QCheckBox" name="extraOption">
      <property name="text">
-      <string>Remember</string>
+      <string>Extra Option</string>
      </property>
     </widget>
    </item>
