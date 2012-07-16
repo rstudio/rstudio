@@ -148,6 +148,8 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
       ScrollPanel scrollPanel = new ScrollPanel();
       scrollPanel.setStylePrimaryName(RESOURCES.styles().targetScrollPanel());
       scrollPanel.setWidget(targetsCellTable_);
+      if (dataProvider_.getList().size() > 4)
+         scrollPanel.setHeight("280px");
       
       // always save check box (may not be shown)
       chkAlwaysSave_ = new CheckBox(alwaysSaveOption_);
