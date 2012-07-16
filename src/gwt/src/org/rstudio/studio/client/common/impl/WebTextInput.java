@@ -56,7 +56,7 @@ public class WebTextInput implements TextInput
                                  String title,
                                  String label,
                                  String initialValue,
-                                 boolean usePasswordMask,
+                                 final boolean usePasswordMask,
                                  String extraOptionPrompt,
                                  boolean extraOptionDefault,
                                  int selectionStart,
@@ -104,7 +104,10 @@ public class WebTextInput implements TextInput
                   public void setPosition(int offsetWidth, int offsetHeight)
                   {
                      int left = (Window.getClientWidth()/2) - (offsetWidth/2);
-                     int top = 50;
+                     int top = (Window.getClientHeight()/2) - (offsetHeight/2);
+                     
+                     if (usePasswordMask)
+                        top = 50;
                      
                      setPopupPosition(left, top);
                      
