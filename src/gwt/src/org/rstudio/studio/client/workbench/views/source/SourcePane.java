@@ -249,7 +249,7 @@ public class SourcePane extends Composite implements Display,
    public void showUnsavedChangesDialog(
          String title,
          ArrayList<UnsavedChangesTarget> dirtyTargets,
-         OperationWithInput<ArrayList<UnsavedChangesTarget>> saveOperation,
+         OperationWithInput<UnsavedChangesDialog.Result> saveOperation,
          Command onCancelled)
    {
       new UnsavedChangesDialog(title, 

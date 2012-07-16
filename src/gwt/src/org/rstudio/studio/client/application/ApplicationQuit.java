@@ -46,6 +46,7 @@ import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
+import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog.Result;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 
 import com.google.gwt.resources.client.ImageResource;
@@ -161,11 +162,14 @@ public class ApplicationQuit implements SaveActionChangedHandler,
          new UnsavedChangesDialog(
             caption,
             unsaved,
-            new OperationWithInput<ArrayList<UnsavedChangesTarget>>() {
+            new OperationWithInput<UnsavedChangesDialog.Result>() {
 
                @Override
-               public void execute(ArrayList<UnsavedChangesTarget> saveTargets)
+               public void execute(Result result)
                {
+                  ArrayList<UnsavedChangesTarget> saveTargets =
+                                                result.getSaveTargets();       
+                  
                   // remote global env target from list (if specified) and 
                   // compute the saveChanges value
                   boolean saveGlobalEnv = saveAction == SaveAction.SAVE;
@@ -253,13 +257,13 @@ public class ApplicationQuit implements SaveActionChangedHandler,
          new UnsavedChangesDialog(
                "Quit R Session",
                unsavedSourceDocs,
-               new OperationWithInput<ArrayList<UnsavedChangesTarget>>() {
+               new OperationWithInput<UnsavedChangesDialog.Result>() {
                   @Override
-                  public void execute(ArrayList<UnsavedChangesTarget> targets)
+                  public void execute(Result result)
                   {
                      // save specified documents and then quit
                      sourceShim_.handleUnsavedChangesBeforeExit(
-                           targets,
+                           result.getSaveTargets(),
                            new HandleUnsavedCommand(true));
                   }
                 },

@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.views.buildtools;
 
+import java.util.ArrayList;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -20,15 +22,19 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
+import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog.Result;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
@@ -225,7 +231,7 @@ public class BuildPresenter extends BasePresenter
    {
       // attempt to start a build (this will be a silent no-op if there
       // is already a build running)
-      Command buildCommand = new Command() {
+      final Command buildCommand = new Command() {
          @Override
          public void execute()
          {
@@ -245,7 +251,35 @@ public class BuildPresenter extends BasePresenter
       }
       else
       {
-         buildCommand.execute();
+         String alwaysSaveOption = !uiPrefs_.saveAllBeforeBuild().getValue() ?
+                                    "Always save files before build" : null;
+         
+         ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
+               sourceShim_.getUnsavedChanges();
+
+         new UnsavedChangesDialog(
+               "Build",
+               alwaysSaveOption,
+               unsavedSourceDocs,
+               new OperationWithInput<UnsavedChangesDialog.Result>() {
+                  @Override
+                  public void execute(Result result)
+                  {
+                     if (result.getAlwaysSave())
+                     {
+                        uiPrefs_.saveAllBeforeBuild().setGlobalValue(true);
+                        uiPrefs_.writeUIPrefs();
+                     }
+                     
+                     sourceShim_.handleUnsavedChangesBeforeExit(
+                                                   result.getSaveTargets(),
+                                                   buildCommand);
+                     
+                     
+                  }
+                },
+                null
+         ).showModal();      
       }
    }
    

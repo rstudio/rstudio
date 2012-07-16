@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.ui.unsaved;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.SafeHtmlUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -36,6 +37,7 @@ import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.IdentityColumn;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -46,12 +48,45 @@ import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
 
-public class UnsavedChangesDialog extends ModalDialog<ArrayList<UnsavedChangesTarget>>
+public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Result>
 {
+   public class Result
+   {
+      public Result(ArrayList<UnsavedChangesTarget> saveTargets,
+                    boolean alwaysSave)
+      {
+         saveTargets_ = saveTargets;
+         alwaysSave_ = alwaysSave;
+      }
+      
+      public ArrayList<UnsavedChangesTarget> getSaveTargets()
+      {
+         return saveTargets_;
+      }
+      
+      public boolean getAlwaysSave()
+      {
+         return alwaysSave_;
+      }
+      
+      private ArrayList<UnsavedChangesTarget> saveTargets_;
+      private boolean alwaysSave_;
+   }
+   
    public UnsavedChangesDialog(
          String title,
          ArrayList<UnsavedChangesTarget> dirtyTargets,
-         final OperationWithInput<ArrayList<UnsavedChangesTarget>> saveOperation,
+         final OperationWithInput<Result> saveOperation,
+         final Command onCancelled)
+   {
+      this(title, null, dirtyTargets, saveOperation, onCancelled);
+   }
+   
+   public UnsavedChangesDialog(
+         String title,
+         String alwaysSaveOption,
+         ArrayList<UnsavedChangesTarget> dirtyTargets,
+         final OperationWithInput<Result> saveOperation,
          final Command onCancelled)
    {
       super(title, 
@@ -63,6 +98,7 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<UnsavedChangesTa
                                        onCancelled.execute();
                                     }} :
                                   null);
+      alwaysSaveOption_ = StringUtil.notNull(alwaysSaveOption);
       targets_ = dirtyTargets;
       
       setOkButtonCaption("Save Selected");
@@ -72,7 +108,9 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<UnsavedChangesTa
          public void onClick(ClickEvent event)
          {
            closeDialog();
-           saveOperation.execute(new ArrayList<UnsavedChangesTarget>());
+           saveOperation.execute(new Result(
+                                       new ArrayList<UnsavedChangesTarget>(),
+                                       false));
          } 
       }));    
    }
@@ -111,6 +149,9 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<UnsavedChangesTa
       scrollPanel.setStylePrimaryName(RESOURCES.styles().targetScrollPanel());
       scrollPanel.setWidget(targetsCellTable_);
       
+      // always save check box (may not be shown)
+      chkAlwaysSave_ = new CheckBox(alwaysSaveOption_);
+      
       // main widget
       VerticalPanel panel = new VerticalPanel();
       Label captionLabel = new Label(
@@ -118,6 +159,15 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<UnsavedChangesTa
       captionLabel.setStylePrimaryName(RESOURCES.styles().captionLabel());
       panel.add(captionLabel);
       panel.add(scrollPanel);      
+      if (!StringUtil.isNullOrEmpty(alwaysSaveOption_))
+      { 
+         panel.add(chkAlwaysSave_);
+         panel.setCellHeight(chkAlwaysSave_, "30px");
+         panel.setCellVerticalAlignment(chkAlwaysSave_,
+                                        HasVerticalAlignment.ALIGN_MIDDLE);
+
+      }
+      
       return panel;
    }
    
@@ -198,13 +248,15 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<UnsavedChangesTa
    }
    
    @Override
-   protected ArrayList<UnsavedChangesTarget> collectInput()
+   protected Result collectInput()
    {
-      return new ArrayList<UnsavedChangesTarget>(selectionModel_.getSelectedSet());
+      return new Result(new ArrayList<UnsavedChangesTarget>(
+                                          selectionModel_.getSelectedSet()),
+                        chkAlwaysSave_.getValue());
    }
 
    @Override
-   protected boolean validate(ArrayList<UnsavedChangesTarget> input)
+   protected boolean validate(Result input)
    {
       return true;
    }
@@ -245,6 +297,9 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<UnsavedChangesTa
    private CellTable<UnsavedChangesTarget> targetsCellTable_; 
    private ListDataProvider<UnsavedChangesTarget> dataProvider_;
    private MultiSelectionModel<UnsavedChangesTarget> selectionModel_;
+   
+   private final String alwaysSaveOption_;
+   private CheckBox chkAlwaysSave_;
 
 
 }

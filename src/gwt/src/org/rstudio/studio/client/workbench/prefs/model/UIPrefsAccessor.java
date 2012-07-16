@@ -89,7 +89,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Boolean> saveAllBeforeBuild()
    {
-      return bool("save_all_before_build", true);
+      return bool("save_files_before_build", false);
    }
 
    public PrefValue<Double> fontSize()

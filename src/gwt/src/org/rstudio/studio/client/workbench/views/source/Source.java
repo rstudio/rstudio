@@ -62,6 +62,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
@@ -126,7 +127,7 @@ public class Source implements InsertSourceHandler,
       void showUnsavedChangesDialog(
             String title,
             ArrayList<UnsavedChangesTarget> dirtyTargets,
-            OperationWithInput<ArrayList<UnsavedChangesTarget>> saveOperation,
+            OperationWithInput<UnsavedChangesDialog.Result> saveOperation,
             Command onCancelled);
 
       void ensureVisible();
@@ -777,12 +778,12 @@ public class Source implements InsertSourceHandler,
          view_.showUnsavedChangesDialog(
             title,
             unsavedTargets, 
-            new OperationWithInput<ArrayList<UnsavedChangesTarget>>() 
+            new OperationWithInput<UnsavedChangesDialog.Result>() 
             {
                @Override
-               public void execute(ArrayList<UnsavedChangesTarget> targets)
+               public void execute(UnsavedChangesDialog.Result result)
                {
-                  saveChanges(targets, onCompleted);
+                  saveChanges(result.getSaveTargets(), onCompleted);
                }
             },
             onCancelled); 
