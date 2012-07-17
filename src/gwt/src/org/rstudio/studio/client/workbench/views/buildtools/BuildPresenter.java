@@ -257,29 +257,36 @@ public class BuildPresenter extends BasePresenter
          ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
                sourceShim_.getUnsavedChanges();
 
-         new UnsavedChangesDialog(
-               "Build",
-               alwaysSaveOption,
-               unsavedSourceDocs,
-               new OperationWithInput<UnsavedChangesDialog.Result>() {
-                  @Override
-                  public void execute(Result result)
-                  {
-                     if (result.getAlwaysSave())
+         if (unsavedSourceDocs.size() > 0)
+         {
+            new UnsavedChangesDialog(
+                  "Build",
+                  alwaysSaveOption,
+                  unsavedSourceDocs,
+                  new OperationWithInput<UnsavedChangesDialog.Result>() {
+                     @Override
+                     public void execute(Result result)
                      {
-                        uiPrefs_.saveAllBeforeBuild().setGlobalValue(true);
-                        uiPrefs_.writeUIPrefs();
+                        if (result.getAlwaysSave())
+                        {
+                           uiPrefs_.saveAllBeforeBuild().setGlobalValue(true);
+                           uiPrefs_.writeUIPrefs();
+                        }
+                        
+                        sourceShim_.handleUnsavedChangesBeforeExit(
+                                                      result.getSaveTargets(),
+                                                      buildCommand);
+                        
+                        
                      }
-                     
-                     sourceShim_.handleUnsavedChangesBeforeExit(
-                                                   result.getSaveTargets(),
-                                                   buildCommand);
-                     
-                     
-                  }
-                },
-                null
-         ).showModal();      
+                   },
+                   null
+            ).showModal(); 
+         }
+         else
+         {
+            buildCommand.execute();
+         }
       }
    }
    
