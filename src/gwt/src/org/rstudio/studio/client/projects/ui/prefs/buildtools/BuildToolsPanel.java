@@ -203,6 +203,13 @@ public abstract class BuildToolsPanel extends VerticalPanel
       return chk;
    }
    
+   protected Label headerLabel(String text)
+   {
+      Label label = new Label(text);
+      label.addStyleName(RES.styles().buildToolsHeaderLabel());
+      return label;
+   }
+   
    protected static ProjectPreferencesDialogResources RES = 
          ProjectPreferencesDialogResources.INSTANCE;
 }

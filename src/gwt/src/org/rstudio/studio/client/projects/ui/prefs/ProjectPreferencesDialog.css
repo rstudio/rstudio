@@ -3,7 +3,7 @@
 
 .panelContainer {
    width: 525px;
-   height: 360px;
+   height: 425px;
 }
 
 .buildToolsPanel {
@@ -76,7 +76,14 @@
 }
 
 .buildToolsRoxygenize {
-   margin-top: 20px;
    width: 100%;
+   margin-bottom: 4px;
 }
+
+.buildToolsHeaderLabel {
+   font-weight: bold;
+   margin-top: 2px;
+   margin-bottom: 8px;
+}
+
 

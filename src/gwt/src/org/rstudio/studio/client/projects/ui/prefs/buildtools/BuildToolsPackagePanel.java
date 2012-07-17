@@ -44,7 +44,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
                               ProjectPreferencesDialogResources.INSTANCE;
       
       pathSelector_ = new DirectorySelector("Package directory:");
-      pathSelector_.getElement().getStyle().setMarginBottom(12, Unit.PX);
+      pathSelector_.getElement().getStyle().setMarginBottom(10, Unit.PX);
       add(pathSelector_); 
       pathSelector_.addValueChangeHandler(new ValueChangeHandler<String>() {
 
@@ -60,18 +60,6 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
          
       });
       
-      add(installAdditionalArguments_ = new AdditionalArguments(
-                                       "R CMD INSTALL additional options:"));
-      
-      add(buildAdditionalArguments_ = new AdditionalArguments(
-            "R CMD build additional options:"));
-      
-      add(checkAdditionalArguments_ = new AdditionalArguments(
-            "R CMD check additional options:"));
-      
-      add(chkCleanupAfterCheck_ = checkBox(
-            "Cleanup output after successful R CMD check"));
-        
       roxygenizePanel_ = new VerticalPanel();
       roxygenizePanel_.addStyleName(RES.styles().buildToolsRoxygenize());
       HorizontalPanel rocletPanel = new HorizontalPanel();
@@ -101,9 +89,31 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
          } 
       });
       rocletPanel.add(btnConfigureRoxygen_);
-      
       roxygenizePanel_.add(rocletPanel);
       add(roxygenizePanel_);
+      
+      add(headerLabel("Build and Reload"));
+      
+      
+      add(installAdditionalArguments_ = new AdditionalArguments(
+            "R CMD INSTALL additional options:"));
+      
+      add(headerLabel("Source and Binary Package Creation"));
+      
+      add(buildAdditionalArguments_ = new AdditionalArguments(
+            "R CMD build additional options:"));
+
+      // TODO: provide back end implementation of this
+      add(new AdditionalArguments(
+            "R CMD INSTALL --binary additional options:"));
+
+      add(headerLabel("Check Package"));
+      
+      add(checkAdditionalArguments_ = new AdditionalArguments(
+            "R CMD check additional options:"));
+      
+      add(chkCleanupAfterCheck_ = checkBox(
+            "Cleanup output after successful R CMD check"));
    }
    
    @Inject
