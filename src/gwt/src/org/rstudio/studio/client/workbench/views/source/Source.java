@@ -80,6 +80,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Sour
 import org.rstudio.studio.client.workbench.views.source.events.*;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
+import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigationHistory;
@@ -536,38 +537,55 @@ public class Source implements InsertSourceHandler,
    public void onNewRDocumentationDoc()
    {
       globalDisplay_.promptForTextWithOption(
-            "New R Documentation File", 
-            "Object or topic name:", 
-            "", 
-            false,
-            "Automatically generate shell Rd file",
-            autoGenerateRdFile_,
-            new ProgressOperationWithInput<PromptWithOptionResult>() {
-              
-               @Override
-               public void execute(PromptWithOptionResult result,
-                                   ProgressIndicator indicator)
+         "New R Documentation File", 
+         "Object or topic name:", 
+         "", 
+         false,
+         "Automatically generate shell Rd file",
+         autoGenerateRdFile_,
+         new ProgressOperationWithInput<PromptWithOptionResult>() {
+           
+            @Override
+            public void execute(PromptWithOptionResult result,
+                                ProgressIndicator indicator)
+            {
+               indicator.onCompleted();
+               
+               autoGenerateRdFile_ = result.extraOption;
+               
+               if (autoGenerateRdFile_)
                {
-                  indicator.onCompleted();
-                  
-                  autoGenerateRdFile_ = result.extraOption;
-                  
-                  if (autoGenerateRdFile_)
-                  {
-                     newSourceDocWithTemplate(FileTypeRegistry.RD, 
-                        result.input, 
-                        "r_documentation.Rd");
-                  }
-                  else
-                  {
-                     newSourceDocWithTemplate(FileTypeRegistry.RD, 
-                                              result.input, 
-                                              "r_documentation_empty.Rd",
-                                              Position.create(3, 7));
-                  }
+                  server_.createRdShell(
+                     result.input, 
+                     new SimpleRequestCallback<RdShellResult>() {
+                        @Override
+                        public void onResponseReceived(RdShellResult result)
+                        {
+                           if (result.getPath() != null)
+                           {
+                              fileTypeRegistry_.openFile(
+                                 FileSystemItem.createFile(result.getPath()));
+                           }
+                           else
+                           {
+                              newDoc(FileTypeRegistry.RD, 
+                                     result.getContents(),
+                                     null);
+                           }
+                        }  
+                   });
+                 
                }
-             },
-             null);
+               else
+               {
+                  newSourceDocWithTemplate(FileTypeRegistry.RD, 
+                                           result.input, 
+                                           "r_documentation_empty.Rd",
+                                           Position.create(3, 7));
+               }
+            }
+          },
+          null);
    }
    
    private void newSourceDocWithTemplate(final TextFileType fileType, 

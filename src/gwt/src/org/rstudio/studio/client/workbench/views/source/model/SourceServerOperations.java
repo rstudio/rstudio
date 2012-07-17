@@ -168,6 +168,10 @@ public interface SourceServerOperations extends FilesServerOperations,
    void getSourceTemplate(String name,
                           String template,
                           ServerRequestCallback<String> requestCallback);
+   
+   void createRdShell(String object,
+                      ServerRequestCallback<RdShellResult> requestCallback);
+   
 
    void createNotebook(
          CompileNotebookOptions options,

@@ -70,6 +70,7 @@ import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
+import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitCount;
@@ -1062,6 +1063,13 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(name));
       params.set(1, new JSONString(template));
       sendRequest(RPC_SCOPE, GET_SOURCE_TEMPLATE, params, requestCallback);
+   }
+   
+   public void createRdShell(
+                        String object,
+                        ServerRequestCallback<RdShellResult> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, CREATE_RD_SHELL, object, requestCallback);
    }
 
    public void setSourceDocumentOnSave(String id,
@@ -2741,6 +2749,7 @@ public class RemoteServer implements Server
    private static final String CLOSE_DOCUMENT = "close_document";
    private static final String CLOSE_ALL_DOCUMENTS = "close_all_documents";
    private static final String GET_SOURCE_TEMPLATE = "get_source_template";
+   private static final String CREATE_RD_SHELL = "create_rd_shell";
    private static final String SET_SOURCE_DOCUMENT_ON_SAVE = "set_source_document_on_save";
    private static final String SAVE_ACTIVE_DOCUMENT = "save_active_document";
    private static final String MODIFY_DOCUMENT_PROPERTIES = "modify_document_properties";

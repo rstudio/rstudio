@@ -682,6 +682,24 @@ Error closeAllDocuments(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error processSourceTemplate(const std::string& name,
+                            const std::string& templateName,
+                            std::string* pContents)
+{
+   // setup template filter
+   std::map<std::string,std::string> vars;
+   vars["name"] = name;
+   core::text::TemplateFilter filter(vars);
+
+   // read file with template filter
+   FilePath templatePath = session::options().rResourcesPath().complete(
+                                             "templates/" +  templateName);
+   return core::readStringFromFile(templatePath,
+                                   filter,
+                                   pContents,
+                                   string_utils::LineEndingPosix);
+}
+
 Error getSourceTemplate(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
@@ -691,25 +709,34 @@ Error getSourceTemplate(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // setup template filter
-   std::map<std::string,std::string> vars;
-   vars["name"] = name;
-   core::text::TemplateFilter filter(vars);
-
-   // read file with template filter
-   FilePath templatePath = session::options().rResourcesPath().complete(
-                                             "templates/" +  templateName);
    std::string contents;
-   error = core::readStringFromFile(templatePath,
-                                    filter,
-                                    &contents,
-                                    string_utils::LineEndingPosix);
+   error =  processSourceTemplate(name, templateName, &contents);
    if (error)
       return error;
 
    pResponse->setResult(contents);
-
    return Success();
+}
+
+Error createRdShell(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   std::string name;
+   Error error = json::readParam(request.params, 0, &name);
+   if (error)
+      return error;
+
+   std::string contents;
+   error =  processSourceTemplate(name, "r_documentation.Rd", &contents);
+   if (error)
+      return error;
+
+   json::Object resultJson;
+   resultJson["path"] = json::Value();
+   resultJson["contents"] = contents;
+   pResponse->setResult(resultJson);
+   return Success();
+
 }
 
 void enqueFileEditEvent(const std::string& file)
@@ -886,6 +913,7 @@ Error initialize()
       (bind(registerRpcMethod, "close_document", closeDocument))
       (bind(registerRpcMethod, "close_all_documents", closeAllDocuments))
       (bind(registerRpcMethod, "get_source_template", getSourceTemplate))
+      (bind(registerRpcMethod, "create_rd_shell", createRdShell))
       (bind(sourceModuleRFile, "SessionSource.R"));
    return initBlock.execute();
 
