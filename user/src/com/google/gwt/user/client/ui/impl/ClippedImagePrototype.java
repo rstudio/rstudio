@@ -36,6 +36,7 @@ public class ClippedImagePrototype extends AbstractImagePrototype {
   private int top = 0;
   private SafeUri url = null;
   private int width = 0;
+  private boolean isDraggable = false;
 
   public ClippedImagePrototype(SafeUri url, int left, int top, int width, int height) {
     this.url = url;
@@ -72,6 +73,10 @@ public class ClippedImagePrototype extends AbstractImagePrototype {
 
   @Override
   public SafeHtml getSafeHtml() {
-    return impl.getSafeHtml(url, left, top, width, height);
+    return impl.getSafeHtml(url, left, top, width, height, isDraggable);
+  }
+
+  public void setDraggable(boolean isDraggable) {
+    this.isDraggable = isDraggable;
   }
 }

@@ -44,6 +44,7 @@ public class ClippedImagePrototypeTest extends GWTTestCase {
       return onloadEventFireCount;
     }
 
+    @Override
     public void onLoad(LoadEvent event) {
       onloadEventFireCount++;
     }
@@ -93,6 +94,7 @@ public class ClippedImagePrototypeTest extends GWTTestCase {
     };
     image.addLoadHandler(handler);
     image.addErrorHandler(new ErrorHandler() {
+      @Override
       public void onError(ErrorEvent event) {
         fail("The image " + image.getUrl() + " failed to load.");
       }
@@ -176,5 +178,24 @@ public class ClippedImagePrototypeTest extends GWTTestCase {
     assertEquals(16, image.getHeight());
     assertEquals("counting-forwards.png", image.getUrl());
     assertEquals("clipped", ImageTest.getCurrentImageStateName(image));
+  }
+
+  /**
+   * Tests that making clipped images draggable works as intended.
+   */
+  public void testMakingClippedImagesDraggable() {
+    ClippedImagePrototype clippedImage = new ClippedImagePrototype(
+        UriUtils.fromString("test.png"), 0, 0, 0, 0);
+
+    // check that at first the outputted HTML does not contain draggable='true'
+    assertFalse(clippedImage.getSafeHtml().asString().contains("draggable"));
+
+    // set the image to draggable and check that the outputted HTML now contains draggable='true'
+    clippedImage.setDraggable(true);
+    assertTrue(clippedImage.getSafeHtml().asString().contains("draggable"));
+
+    // revert it to non-draggable and check that draggable='true' is gone
+    clippedImage.setDraggable(false);
+    assertFalse(clippedImage.getSafeHtml().asString().contains("draggable"));
   }
 }

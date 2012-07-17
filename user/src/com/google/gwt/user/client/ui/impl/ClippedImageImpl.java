@@ -37,6 +37,12 @@ import com.google.gwt.user.client.ui.Image;
  */
 public class ClippedImageImpl {
 
+  interface DraggableTemplate extends SafeHtmlTemplates {
+    @SafeHtmlTemplates.Template("<img onload='this.__gwtLastUnhandledEvent=\"load\";' src='{0}' "
+        + "style='{1}' border='0' draggable='true'>")
+    SafeHtml image(SafeUri clearImage, SafeStyles style);
+  }
+
   interface Template extends SafeHtmlTemplates {
     @SafeHtmlTemplates.Template("<img onload='this.__gwtLastUnhandledEvent=\"load\";' src='{0}' "
         + "style='{1}' border='0'>")
@@ -46,6 +52,7 @@ public class ClippedImageImpl {
   protected static final SafeUri clearImage =
     UriUtils.fromTrustedString(GWT.getModuleBaseURL() + "clear.cache.gif");
   private static Template template;
+  private static DraggableTemplate draggableTemplate;
 
   public void adjust(Element img, SafeUri url, int left, int top, int width, int height) {
     String style = "url(\"" + url.asString() + "\") no-repeat " + (-left + "px ") + (-top + "px");
@@ -65,12 +72,30 @@ public class ClippedImageImpl {
   }
 
   public SafeHtml getSafeHtml(SafeUri url, int left, int top, int width, int height) {
+    return getSafeHtml(url, left, top, width, height, false);
+  }
+
+  public SafeHtml getSafeHtml(SafeUri url, int left, int top, int width, int height,
+      boolean isDraggable) {
     SafeStylesBuilder builder = new SafeStylesBuilder();
     builder.width(width, Unit.PX).height(height, Unit.PX).trustedNameAndValue("background",
         "url(" + url.asString() + ") " + "no-repeat " + (-left + "px ") + (-top + "px"));
 
-    return getTemplate().image(clearImage,
+    if (!isDraggable) {
+      return getTemplate().image(clearImage,
         SafeStylesUtils.fromTrustedString(builder.toSafeStyles().asString()));
+    } else {
+      return getDraggableTemplate().image(clearImage,
+          SafeStylesUtils.fromTrustedString(builder.toSafeStyles().asString()));
+    }
+  }
+
+  private DraggableTemplate getDraggableTemplate() {
+    // no need to synchronize, JavaScript in the browser is single-threaded
+    if (draggableTemplate == null) {
+      draggableTemplate = GWT.create(DraggableTemplate.class);
+    }
+    return draggableTemplate;
   }
 
   private Template getTemplate() {
