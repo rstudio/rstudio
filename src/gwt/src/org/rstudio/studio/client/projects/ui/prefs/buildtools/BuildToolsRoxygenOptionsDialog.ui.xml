@@ -13,19 +13,21 @@
    </ui:style>
 
    <g:HTMLPanel styleName="{style.panel}">
-      <p>
+      
          <g:Label text="Use roxygen to generate:"/>
          <g:CheckBox ui:field="chkRocletRd_" text="Rd files"/> <br/>
          <g:CheckBox ui:field="chkRocletCollate_" text="Collate field"/> <br/>
          <g:CheckBox ui:field="chkRocletNamespace_" text="NAMESPACE file"/> <br/>
-      </p>
+         
+         <br/>
 
-      <p>
          <g:Label text="Automatically roxygenize when running:"/>
          <g:CheckBox ui:field="chkRunForCheckPackage_" text="R CMD check"/> <br/>
          <g:CheckBox ui:field="chkRunForBuildPackage_" text="Source and binary package builds"/> <br/>
          <g:CheckBox ui:field="chkRunForBuildAndReload_" text="Build &amp; Reload"/> <br/>
-      </p>
+         
+         <br/>
+      
    </g:HTMLPanel>
 
 </ui:UiBinder>
