@@ -130,6 +130,49 @@ public class CssProperty extends CssNode implements CssSubstitution {
   }
 
   /**
+   * Represents a CSS function value.
+   */
+  public static class FunctionValue extends Value {
+    private final String name;
+    private final ListValue values;
+
+    public FunctionValue(String name, ListValue values) {
+      this.name = name;
+      this.values = values;
+    }
+
+    @Override
+    public String getExpression() {
+      // "{name}(" + {valuesExpr} + ")"
+      return String.format("\"%s(\" + %s + \")\"",
+          Generator.escape(name), values.getExpression());
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public ListValue getValues() {
+      return values;
+    }
+
+    @Override
+    public FunctionValue isFunctionValue() {
+      return this;
+    }
+
+    @Override
+    public boolean isStatic() {
+      return values.isStatic();
+    }
+
+    @Override
+    public String toCss() {
+      return name + "(" + values.toCss() + ")";
+    }
+  }
+
+  /**
    * Represents an identifier in the CSS source.
    */
   public static class IdentValue extends Value {
@@ -217,9 +260,16 @@ public class CssProperty extends CssNode implements CssSubstitution {
     public String toCss() {
       StringBuilder sb = new StringBuilder();
       for (Value v : values) {
-        sb.append(" ").append(v.toCss());
+        if (v.isSpaceRequired()) {
+          sb.append(" ");
+        }
+        sb.append(v.toCss());
       }
-      return sb.substring(1);
+      if (sb.charAt(0) == ' ') {
+        return sb.substring(1);
+      } else {
+        return sb.toString();
+      }
     }
   }
 
@@ -386,6 +436,10 @@ public class CssProperty extends CssNode implements CssSubstitution {
     }
 
     public ExpressionValue isExpressionValue() {
+      return null;
+    }
+
+    public FunctionValue isFunctionValue() {
       return null;
     }
 

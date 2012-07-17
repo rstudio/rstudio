@@ -63,6 +63,16 @@ div[foo="bar"] {
     content: 'bar';
 }
 
+@def GREEN #007f00;
+@def BLUE_AT_50PCT rgb(0, 0, 127) 50%;
+@def TO_RIGHT_GREEN_TO_BLUE_50PCT to right, GREEN, BLUE_AT_50PCT;
+@external testSubstitutionsInFunctions;
+.testSubstitutionsInFunctions {
+  background-image: -moz-linear-gradient(left, #007f00, rgb(0, 0, 127) 50%);
+  background-image: -webkit-linear-gradient(left, GREEN, BLUE_AT_50PCT);
+  background-image: linear-gradient(TO_RIGHT_GREEN_TO_BLUE_50PCT);
+}
+
 /* Test structural modifications */
 @if (false) {
   div {

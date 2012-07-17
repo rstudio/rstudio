@@ -23,19 +23,19 @@ import com.google.gwt.resources.css.ast.Context;
 import com.google.gwt.resources.css.ast.CssCompilerException;
 import com.google.gwt.resources.css.ast.CssDef;
 import com.google.gwt.resources.css.ast.CssProperty;
-import com.google.gwt.resources.css.ast.CssUrl;
-import com.google.gwt.resources.css.ast.CssVisitor;
 import com.google.gwt.resources.css.ast.CssProperty.DotPathValue;
 import com.google.gwt.resources.css.ast.CssProperty.ExpressionValue;
+import com.google.gwt.resources.css.ast.CssProperty.FunctionValue;
 import com.google.gwt.resources.css.ast.CssProperty.IdentValue;
 import com.google.gwt.resources.css.ast.CssProperty.ListValue;
 import com.google.gwt.resources.css.ast.CssProperty.Value;
+import com.google.gwt.resources.css.ast.CssUrl;
+import com.google.gwt.resources.css.ast.CssVisitor;
 import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 
 /**
@@ -62,21 +62,33 @@ public class SubstitutionReplacer extends CssVisitor {
       // Nothing to do
       return;
     }
+    x.setValue(substituteDefs(x.getValues()));
+  }
 
-    List<Value> values = new ArrayList<Value>(x.getValues().getValues());
-
-    for (ListIterator<Value> i = values.listIterator(); i.hasNext();) {
-      IdentValue v = i.next().isIdentValue();
-
-      if (v == null) {
-        // Don't try to substitute into anything other than idents
+  private ListValue substituteDefs(ListValue listValue) {
+    List<Value> result = new ArrayList<Value>(listValue.getValues().size());
+    for (Value val : listValue.getValues()) {
+      if (val.isFunctionValue() != null) {
+        // Recursively perform substitution on a function's values
+        FunctionValue fnVal = val.isFunctionValue();
+        ListValue newVals = substituteDefs(fnVal.getValues());
+        result.add(new FunctionValue(fnVal.getName(), newVals));
         continue;
       }
 
-      String value = v.getIdent();
-      CssDef def = substitutions.get(value);
+      IdentValue maybeIdent = val.isIdentValue();
+      if (maybeIdent == null) {
+        // Not an ident, append as-is to result
+        result.add(val);
+        continue;
+      }
+
+      String identStr = maybeIdent.getIdent();
+      CssDef def = substitutions.get(identStr);
 
       if (def == null) {
+        // No substitution found, append as-is to result
+        result.add(val);
         continue;
       } else if (def instanceof CssUrl) {
         assert def.getValues().size() == 1;
@@ -99,16 +111,13 @@ public class SubstitutionReplacer extends CssVisitor {
         expression.append("\"url('\" + ");
         expression.append(instance).append(".getUrl()");
         expression.append(" + \"')\"");
-        i.set(new ExpressionValue(expression.toString()));
-
+        result.add(new ExpressionValue(expression.toString()));
       } else {
-        i.remove();
         for (Value defValue : def.getValues()) {
-          i.add(defValue);
+          result.add(defValue);
         }
       }
     }
-
-    x.setValue(new ListValue(values));
+    return new ListValue(result);
   }
 }

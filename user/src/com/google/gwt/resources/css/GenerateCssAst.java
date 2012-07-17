@@ -36,6 +36,7 @@ import com.google.gwt.resources.css.ast.CssUrl;
 import com.google.gwt.resources.css.ast.HasNodes;
 import com.google.gwt.resources.css.ast.HasProperties;
 import com.google.gwt.resources.css.ast.CssProperty.DotPathValue;
+import com.google.gwt.resources.css.ast.CssProperty.FunctionValue;
 import com.google.gwt.resources.css.ast.CssProperty.IdentValue;
 import com.google.gwt.resources.css.ast.CssProperty.ListValue;
 import com.google.gwt.resources.css.ast.CssProperty.NumberValue;
@@ -1052,11 +1053,10 @@ public class GenerateCssAst {
           return new IdentValue(s);
 
         } else {
-          // Just return a String representation of the original value
           List<Value> parameters = new ArrayList<Value>();
           extractValueOf(parameters, value.getParameters());
-          return new IdentValue(value.getFunctionName() + "("
-              + join(parameters, "") + ")");
+          return new FunctionValue(value.getFunctionName(),
+              new ListValue(parameters));
         }
       }
       case LexicalUnit.SAC_INHERIT:

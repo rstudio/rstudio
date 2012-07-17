@@ -319,6 +319,11 @@ public class CSSResourceTest extends GWTTestCase {
 
     // Check @def substitution
     assertTrue(text.contains("50px"));
+    // Check @def substitution into function arguments
+    // Note that GWT transforms rgb(R, G, B) into #rrggbb form.
+    assertTrue(text.contains("-moz-linear-gradient(left, #007f00, #00007f 50%);"));
+    assertTrue(text.contains("-webkit-linear-gradient(left, #007f00, #00007f 50%);"));
+    assertTrue(text.contains("linear-gradient(to right, #007f00, #00007f 50%);"));
 
     // Check merging semantics
     assertTrue(text.indexOf("static:PASSED") < text.indexOf("runtime:PASSED"));
@@ -334,7 +339,7 @@ public class CSSResourceTest extends GWTTestCase {
         + css.mayNotCombine2()));
 
     // Check commonly-used CSS3 constructs
-    assertTrue(text.contains("background-color:rgba(0,0,0,0.5);"));
+    assertTrue(text.contains("background-color:rgba(0, 0, 0, 0.5);"));
 
     // Check external references
     assertEquals("externalA", css.externalA());
@@ -368,7 +373,7 @@ public class CSSResourceTest extends GWTTestCase {
     assertFalse("10px".equals(defines.overrideIntClass()));
     assertFalse("10".equals(defines.overrideIntClass()));
 
-    assertEquals("1px solid rgba(0,0,0,0.2)", defines.multiValueBorderDef());
+    assertEquals("1px solid rgba(0, 0, 0, 0.2)", defines.multiValueBorderDef());
   }
 
   public void testEnsureInjected() {
