@@ -207,3 +207,81 @@
      freeVars <- c(freeVars, codetools:::walkCode(e, w))
    return(unique(freeVars))
 })
+
+
+.rs.addFunction("createDefaultShellRd", function(`_name`, `_type`)
+{
+  require(utils)
+  
+  # create a tempdir and switch to it for the duration of the function
+  dirName <- tempfile("RdShell")
+  dir.create(dirName)
+  previousWd <- getwd()
+  on.exit(setwd(previousWd))
+  setwd(dirName)
+  
+  if (identical(`_type`, "function"))
+  {
+    assign(`_name`, function(x) {})
+    return (normalizePath(paste(getwd(),
+                                utils::prompt(name = `_name`),
+                                sep="/")))
+  }
+  else if (identical(`_type`, "data"))
+  {
+    assign(`_name`, data.frame(x=integer(), y=integer()))
+    return (normalizePath(paste(getwd(),
+                                utils::promptData(name = `_name`),
+                                sep="/")))
+  }
+  else
+  {
+    return ("")
+  }
+})
+
+.rs.addFunction("createShellRd", function(name, type, package) 
+{  
+  require(utils)
+  
+  # create a tempdir and switch to it for the duration of the function
+  dirName <- tempfile("RdShell")
+  dir.create(dirName)
+  previousWd <- getwd()
+  on.exit(setwd(previousWd))
+  setwd(dirName)
+  
+  if (identical(type, "function"))
+  {
+    func <- .rs.getPackageFunction(name, package)
+    if (!is.null(func))
+    {
+      funcRd <- utils::prompt(func, name = name)
+      return (normalizePath(paste(getwd(),funcRd,sep="/")))
+    }
+    else
+    {
+      return ("")
+    }
+  }
+  else if (identical(type, "data"))
+  {
+    dataRd <- tryCatch(suppressWarnings({
+      library(package,character.only=TRUE)
+      eval(parse(text = paste("data(", name, "); ", 
+                              "utils::promptData(", name, ");", sep="")),
+           envir = globalenv())    
+    }), error = function(e) {print(e); ""})
+    
+    if (nzchar(dataRd) == TRUE)
+      return (normalizePath(paste(getwd(), dataRd, sep="/")))
+    else
+      return ("")
+  }
+  else
+  {
+    return ("")
+  }
+})
+
+

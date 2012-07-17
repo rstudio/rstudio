@@ -169,7 +169,8 @@ public interface SourceServerOperations extends FilesServerOperations,
                           String template,
                           ServerRequestCallback<String> requestCallback);
    
-   void createRdShell(String object,
+   void createRdShell(String name,
+                      String type,
                       ServerRequestCallback<RdShellResult> requestCallback);
    
 

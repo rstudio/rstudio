@@ -32,6 +32,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
 #include <core/text/TemplateFilter.hpp>
+#include <core/r_util/RPackageInfo.hpp>
 
 #include <core/json/JsonRpc.hpp>
 
@@ -42,10 +43,11 @@
 #include <r/RInternal.hpp>
 #include <r/RFunctionHook.hpp>
 #include <r/RUtil.hpp>
+#include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionSourceDatabase.hpp>
-
 #include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 #include "SessionVCS.hpp"
 
@@ -718,25 +720,110 @@ Error getSourceTemplate(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error createRdShell(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
+Error defaultRdResponse(const std::string& name,
+                        const std::string& type,
+                        json::JsonRpcResponse* pResponse)
 {
-   std::string name;
-   Error error = json::readParam(request.params, 0, &name);
+   std::string filePath;
+   Error error = r::exec::RFunction(".rs.createDefaultShellRd", name, type)
+                                              .call(&filePath);
    if (error)
       return error;
 
    std::string contents;
-   error =  processSourceTemplate(name, "r_documentation.Rd", &contents);
+   error = core::readStringFromFile(
+                        FilePath(string_utils::systemToUtf8(filePath)),
+                        &contents,
+                        string_utils::LineEndingPosix);
    if (error)
       return error;
+
 
    json::Object resultJson;
    resultJson["path"] = json::Value();
    resultJson["contents"] = contents;
    pResponse->setResult(resultJson);
    return Success();
+}
 
+
+Error createRdShell(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   std::string name, type;
+   Error error = json::readParams(request.params, &name, &type);
+   if (error)
+      return error;
+
+   // suppress output so that R doesn't write the Rd message to the console
+   r::session::utils::SuppressOutputInScope suppressOutputScope;
+
+   // if we are within a package development environment then use that
+   // as the basis for the new document
+   if (projects::projectContext().config().buildType ==
+       r_util::kBuildTypePackage)
+   {
+      // read package info
+      FilePath packageDir = projects::projectContext().buildTargetPath();
+      r_util::RPackageInfo pkgInfo;
+      Error error = pkgInfo.read(packageDir);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return defaultRdResponse(name, type, pResponse);
+      }
+
+      // lookup the object in the package first
+      std::string filePath;
+      error = r::exec::RFunction(".rs.createShellRd",
+                               name, type, pkgInfo.name()).call(&filePath);
+      if (error)
+         return error;
+
+      // if it was found then read it
+      if (!filePath.empty())
+      {
+         FilePath rdFilePath(string_utils::systemToUtf8(filePath));
+         FilePath manFilePath = packageDir.childPath("man").childPath(
+                                                      rdFilePath.filename());
+         if (!manFilePath.exists())
+         {
+            Error error = rdFilePath.copy(manFilePath);
+            if (error)
+               return error;
+
+            json::Object resultJson;
+            resultJson["path"] = module_context::createAliasedPath(manFilePath);
+            resultJson["contents"] = json::Value();
+            pResponse->setResult(resultJson);
+         }
+         else
+         {
+            std::string contents;
+            error = core::readStringFromFile(rdFilePath,
+                                             &contents,
+                                             string_utils::LineEndingPosix);
+            if (error)
+               return error;
+
+            json::Object resultJson;
+            resultJson["path"] = json::Value();
+            resultJson["contents"] = contents;
+            pResponse->setResult(resultJson);
+         }
+
+         return Success();
+      }
+      else
+      {
+         return defaultRdResponse(name, type, pResponse);
+      }
+
+   }
+   else
+   {
+      return defaultRdResponse(name, type, pResponse);
+   }
 }
 
 void enqueFileEditEvent(const std::string& file)

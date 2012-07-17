@@ -1066,10 +1066,14 @@ public class RemoteServer implements Server
    }
    
    public void createRdShell(
-                        String object,
+                        String name,
+                        String type,
                         ServerRequestCallback<RdShellResult> requestCallback)
    {
-      sendRequest(RPC_SCOPE, CREATE_RD_SHELL, object, requestCallback);
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(name));
+      params.set(1, new JSONString(type));
+      sendRequest(RPC_SCOPE, CREATE_RD_SHELL, params, requestCallback);
    }
 
    public void setSourceDocumentOnSave(String id,

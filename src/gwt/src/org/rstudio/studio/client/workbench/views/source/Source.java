@@ -26,7 +26,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.*;
-import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -61,7 +60,6 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
-import org.rstudio.studio.client.workbench.model.helper.BoolStateValue;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
@@ -77,6 +75,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.File
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRdDialog;
 import org.rstudio.studio.client.workbench.views.source.events.*;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
@@ -357,26 +356,7 @@ public class Source implements InsertSourceHandler,
             return view_.getActiveTabIndex();
          }
       };
-      
-      new BoolStateValue(MODULE_SOURCE, 
-                         KEY_AUTO_RD, 
-                         ClientState.PROJECT_PERSISTENT,
-                         session.getSessionInfo().getClientState())
-      {
-         @Override
-         protected void onInit(Boolean value)
-         {
-            if (value != null)
-               autoGenerateRdFile_ = value;
-         }
-
-         @Override
-         protected Boolean getValue()
-         {
-            return autoGenerateRdFile_;
-         }
-      };
-      
+       
       initialized_ = true;
       // As tabs were added before, manageCommands() was suppressed due to
       // initialized_ being false, so we need to run it explicitly
@@ -536,27 +516,28 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewRDocumentationDoc()
    {
-      globalDisplay_.promptForTextWithOption(
-         "New R Documentation File", 
-         "Object or topic name:", 
-         "", 
-         false,
-         "Automatically generate shell Rd file",
-         autoGenerateRdFile_,
-         new ProgressOperationWithInput<PromptWithOptionResult>() {
+      new NewRdDialog(
+         new OperationWithInput<NewRdDialog.Result>() {
            
             @Override
-            public void execute(PromptWithOptionResult result,
-                                ProgressIndicator indicator)
+            public void execute(final NewRdDialog.Result result)
             {
-               indicator.onCompleted();
+               final Command createEmptyDoc = new Command() {
+                  @Override
+                  public void execute()
+                  {
+                     newSourceDocWithTemplate(FileTypeRegistry.RD, 
+                           result.name, 
+                           "r_documentation_empty.Rd",
+                           Position.create(3, 7));
+                  }  
+               };
                
-               autoGenerateRdFile_ = result.extraOption;
-               
-               if (autoGenerateRdFile_)
+               if (!result.type.equals(NewRdDialog.Result.TYPE_NONE))
                {
                   server_.createRdShell(
-                     result.input, 
+                     result.name, 
+                     result.type,
                      new SimpleRequestCallback<RdShellResult>() {
                         @Override
                         public void onResponseReceived(RdShellResult result)
@@ -566,11 +547,15 @@ public class Source implements InsertSourceHandler,
                               fileTypeRegistry_.openFile(
                                  FileSystemItem.createFile(result.getPath()));
                            }
-                           else
+                           else if (result.getContents() != null)
                            {
                               newDoc(FileTypeRegistry.RD, 
                                      result.getContents(),
                                      null);
+                           }
+                           else
+                           {
+                              createEmptyDoc.execute();
                            }
                         }  
                    });
@@ -578,14 +563,11 @@ public class Source implements InsertSourceHandler,
                }
                else
                {
-                  newSourceDocWithTemplate(FileTypeRegistry.RD, 
-                                           result.input, 
-                                           "r_documentation_empty.Rd",
-                                           Position.create(3, 7));
+                  createEmptyDoc.execute();
                }
+               
             }
-          },
-          null);
+          }).showModal();
    }
    
    private void newSourceDocWithTemplate(final TextFileType fileType, 
@@ -1874,14 +1856,11 @@ public class Source implements InsertSourceHandler,
    private final HashSet<AppCommand> dynamicCommands_;
    private final SourceNavigationHistory sourceNavigationHistory_ = 
                                               new SourceNavigationHistory(30);
-   
-   private boolean autoGenerateRdFile_ = true;
 
    private boolean suspendSourceNavigationAdding_;
   
    private static final String MODULE_SOURCE = "source-pane";
    private static final String KEY_ACTIVETAB = "activeTab";
-   private static final String KEY_AUTO_RD = "autoRd";
    private boolean initialized_;
 
    // If positive, a new tab is about to be created
