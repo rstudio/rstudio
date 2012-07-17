@@ -156,6 +156,15 @@ public class RProjectConfig extends JavaScriptObject
       this.package_build_args = buildArgs;
    }-*/;
    
+   
+   public native final String getPackageBuildBinaryArgs() /*-{
+      return this.package_build_binary_args;
+   }-*/;
+
+   public native final void setPackageBuildBinaryArgs(String buildArgs) /*-{
+      this.package_build_binary_args = buildArgs;
+   }-*/;
+   
    public native final String getPackageCheckArgs() /*-{
       return this.package_check_args;
    }-*/;

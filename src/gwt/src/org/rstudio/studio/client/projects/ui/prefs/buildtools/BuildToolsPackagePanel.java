@@ -103,8 +103,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       add(buildAdditionalArguments_ = new AdditionalArguments(
             "R CMD build additional options:"));
 
-      // TODO: provide back end implementation of this
-      add(new AdditionalArguments(
+      add(buildBinaryAdditionalArguments_ = new AdditionalArguments(
             "R CMD INSTALL --binary additional options:"));
 
       add(headerLabel("Check Package"));
@@ -129,6 +128,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       pathSelector_.setText(config.getPackagePath());
       installAdditionalArguments_.setText(config.getPackageInstallArgs());
       buildAdditionalArguments_.setText(config.getPackageBuildArgs());
+      buildBinaryAdditionalArguments_.setText(config.getPackageBuildBinaryArgs());
       checkAdditionalArguments_.setText(config.getPackageCheckArgs());
       chkCleanupAfterCheck_.setValue(
                            options.getBuildOptions().getCleanupAfterCheck());
@@ -168,6 +168,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       config.setPackagePath(pathSelector_.getText());
       config.setPackageInstallArgs(installAdditionalArguments_.getText());
       config.setPackageBuildArgs(buildAdditionalArguments_.getText());
+      config.setPackageBuildBinaryArgs(buildBinaryAdditionalArguments_.getText());
       config.setPackageCheckArgs(checkAdditionalArguments_.getText());
       config.setPackageRoxygenize(roxygenOptions_.getRocletRd(),
                                   roxygenOptions_.getRocletCollate(),
@@ -182,6 +183,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    
    private AdditionalArguments installAdditionalArguments_;
    private AdditionalArguments buildAdditionalArguments_;
+   private AdditionalArguments buildBinaryAdditionalArguments_;
    private AdditionalArguments checkAdditionalArguments_;
    
    private CheckBox chkCleanupAfterCheck_;

@@ -419,6 +419,17 @@ Error readProjectFile(const FilePath& projectFilePath,
       pConfig->packageBuildArgs = "";
    }
 
+   // extract package build binary args
+   it = dcfFields.find("PackageBuildBinaryArgs");
+   if (it != dcfFields.end())
+   {
+      pConfig->packageBuildBinaryArgs = it->second;
+   }
+   else
+   {
+      pConfig->packageBuildBinaryArgs = "";
+   }
+
    // extract package check args
    it = dcfFields.find("PackageCheckArgs");
    if (it != dcfFields.end())
@@ -547,6 +558,12 @@ Error writeProjectFile(const FilePath& projectFilePath,
             {
                boost::format pkgFmt("PackageBuildArgs: %1%\n");
                build.append(boost::str(pkgFmt % config.packageBuildArgs));
+            }
+
+            if (!config.packageBuildBinaryArgs.empty())
+            {
+               boost::format pkgFmt("PackageBuildBinaryArgs: %1%\n");
+               build.append(boost::str(pkgFmt % config.packageBuildBinaryArgs));
             }
 
             if (!config.packageCheckArgs.empty())

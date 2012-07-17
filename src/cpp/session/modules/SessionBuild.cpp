@@ -487,7 +487,7 @@ private:
          rCmd << "--build";
 
          // add extra args if provided
-         rCmd << projectConfig().packageInstallArgs;
+         rCmd << projectConfig().packageBuildBinaryArgs;
 
          // add filename as a FilePath so it is escaped
          rCmd << FilePath(packagePath.filename());

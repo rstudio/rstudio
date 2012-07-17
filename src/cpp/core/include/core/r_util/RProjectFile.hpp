@@ -57,6 +57,7 @@ struct RProjectConfig
         packagePath(),
         packageInstallArgs(),
         packageBuildArgs(),
+        packageBuildBinaryArgs(),
         packageCheckArgs(),
         packageRoxygenize(),
         makefilePath(),
@@ -79,6 +80,7 @@ struct RProjectConfig
    std::string packagePath;
    std::string packageInstallArgs;
    std::string packageBuildArgs;
+   std::string packageBuildBinaryArgs;
    std::string packageCheckArgs;
    std::string packageRoxygenize;
    std::string makefilePath;

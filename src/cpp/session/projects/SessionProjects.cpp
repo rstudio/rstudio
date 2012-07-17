@@ -94,6 +94,7 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["package_path"] = config.packagePath;
    configJson["package_install_args"] = config.packageInstallArgs;
    configJson["package_build_args"] = config.packageBuildArgs;
+   configJson["package_build_binary_args"] = config.packageBuildBinaryArgs;
    configJson["package_check_args"] = config.packageCheckArgs;
    configJson["package_roxygenize"] = config.packageRoxygenize;
    configJson["makefile_path"] = config.makefilePath;
@@ -252,6 +253,7 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
                     "package_path", &(config.packagePath),
                     "package_install_args", &(config.packageInstallArgs),
                     "package_build_args", &(config.packageBuildArgs),
+                    "package_build_binary_args", &(config.packageBuildBinaryArgs),
                     "package_check_args", &(config.packageCheckArgs),
                     "package_roxygenize", &(config.packageRoxygenize),
                     "makefile_path", &(config.makefilePath),
