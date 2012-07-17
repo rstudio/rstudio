@@ -22,13 +22,11 @@ import com.google.gwt.dev.js.ast.JsArrayAccess;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
 import com.google.gwt.dev.js.ast.JsContext;
-import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsForIn;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
-import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
@@ -40,7 +38,9 @@ import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
+import com.google.gwt.util.tools.Utility;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 
@@ -79,9 +79,6 @@ public class CoverageInstrumentor {
   }
 
   public static void exec(JsProgram jsProgram, Multimap<String, Integer> instrumentableLines) {
-    if (instrumentableLines == null) {
-      return;
-    }
     new CoverageInstrumentor(jsProgram, instrumentableLines).execImpl();
   }
 
@@ -95,17 +92,11 @@ public class CoverageInstrumentor {
   }
 
   private void addBeforeUnloadListener() {
-    JsFunction handler = function(new StringBuilder()
-        .append("function() {")
-        .append("  var coverage = JSON.parse(localStorage.getItem('gwt_coverage'));")
-        .append("  if (coverage !== null)")
-        .append("    merge_coverage($coverage, coverage);")
-        .append("  localStorage.setItem('gwt_coverage', JSON.stringify($coverage));")
-        .append("}").toString());
-    SourceInfo info = dummySourceInfo();
-    JsNameRef lhs = qualifiedRef(info, "window", "onbeforeunload");
-    JsBinaryOperation asg = new JsBinaryOperation(info, JsBinaryOperator.ASG, lhs, handler);
-    makeGlobal(asg.makeStmt());
+    try {
+      parseIntoGlobalBlock(Utility.getFileFromClassPath("com/google/gwt/dev/js/coverage.js"));
+    } catch (IOException e) {
+      throw new InternalCompilerException("Error during coverage instrumentation", e);
+    }
   }
 
   /**
@@ -143,38 +134,7 @@ public class CoverageInstrumentor {
         new Instrumentor().accept(x.getBody());
       }
     }.accept(jsProgram);
-    global("merge", mergeFunction());
-    global("merge_coverage", mergeCoverageFunction());
     addBeforeUnloadListener();
-  }
-
-  /**
-   * Create a function object from a string. Names introduced inside the function
-   * are not obfuscatable.
-   */
-  private JsFunction function(String code) {
-    try {
-      List<JsStatement> stmts =
-          JsParser.parse(SourceOrigin.UNKNOWN, jsProgram.getScope(), new StringReader(code));
-      JsExprStmt stmt = (JsExprStmt) stmts.get(0);
-      JsFunction f = (JsFunction) stmt.getExpression();
-      new JsVisitor() {
-        @Override public void endVisit(JsParameter x, JsContext ctx) {
-          x.getName().setObfuscatable(false);
-        }
-
-        @Override public void endVisit(JsForIn x, JsContext ctx) {
-          x.getIterVarName().setObfuscatable(false);
-        }
-
-        @Override public void endVisit(JsVar x, JsContext ctx) {
-          x.getName().setObfuscatable(false);
-        }
-      }.accept(f);
-      return f;
-    } catch (Exception e) {
-      throw new InternalCompilerException("Unexpected exception parsing '" + code + "'", e);
-    }
   }
 
   /**
@@ -207,36 +167,34 @@ public class CoverageInstrumentor {
     jsProgram.getGlobalBlock().getStatements().add(0, statement);
   }
 
-  private JsFunction mergeCoverageFunction() {
-    return function(new StringBuilder()
-        .append("function (x, y) {")
-        .append("  merge(x, y, function(u, v) {")
-        .append("    return merge(u, v, Math.max);")
-        .append("  });")
-        .append("}").toString());
-  }
+  /**
+   * Parses the given code and adds it to the global block. Any names introduced
+   * are not obfuscatable.
+   */
+  private void parseIntoGlobalBlock(String code) {
+    List<JsStatement> statements = null;
+    try {
+      statements = JsParser.parse(SourceOrigin.UNKNOWN, jsProgram.getScope(),
+          new StringReader(code));
+    } catch (Exception e) {
+      throw new InternalCompilerException("Unexpected exception parsing '" + code + "'", e);
+    }
 
-  private JsFunction mergeFunction() {
-    return function(new StringBuilder()
-        .append("function (x, y, merger) {")
-        .append("  for (var key in y)")
-        .append("    if (x.hasOwnProperty(key))")
-        .append("      x[key] = merger(x[key], y[key]);")
-        .append("    else")
-        .append("      x[key] = y[key];")
-        .append("    return x;")
-        .append("}").toString());
-  }
+    for (JsStatement statement : statements) {
+      new JsVisitor() {
+        @Override public void endVisit(JsParameter x, JsContext ctx) {
+          x.getName().setObfuscatable(false);
+        }
 
-  private JsNameRef qualifiedRef(SourceInfo info, String qualifier, String name) {
-    JsNameRef qualified = ref(info, name);
-    qualified.setQualifier(ref(info, qualifier));
-    return qualified;
-  }
+        @Override public void endVisit(JsForIn x, JsContext ctx) {
+          x.getIterVarName().setObfuscatable(false);
+        }
 
-  private JsNameRef ref(SourceInfo info, String name) {
-    JsName jsName = jsProgram.getScope().declareName(name);
-    jsName.setObfuscatable(false);
-    return jsName.makeRef(info);
+        @Override public void endVisit(JsVar x, JsContext ctx) {
+          x.getName().setObfuscatable(false);
+        }
+      }.accept(statement);
+      makeGlobal(statement);
+    }
   }
 }

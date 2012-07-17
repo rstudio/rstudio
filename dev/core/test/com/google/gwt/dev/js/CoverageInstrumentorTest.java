@@ -62,6 +62,10 @@ public class CoverageInstrumentorTest extends TestCase {
     return program.toSource();
   }
 
+  private String instrumentedProgram() {
+    return instrumentedProgram(HashMultimap.<String, Integer>create());
+  }
+
   private Multimap<String, Integer> parse(String code) throws Exception {
     Iterable<String> lines = Splitter.on('\n').split(code);
     Multimap<String, Integer> instrumentableLines = HashMultimap.create();
@@ -93,6 +97,13 @@ public class CoverageInstrumentorTest extends TestCase {
     assertTrue(instrumentedProgram(baselineCoverage).contains(new StringBuilder()
         .append("var $coverage = {'A.java':{1:0, 2:0, 3:0, 4:0, 5:0}, ")
         .append("'B.java':{1:0, 2:0, 3:0, 4:0, 5:0}}")));
+  }
+
+  public void testBeforeUnloadListenerExists() throws Exception {
+    String program = instrumentedProgram();
+    assertTrue(program.contains("var merge_coverage"));
+    assertTrue(program.contains("var merge"));
+    assertTrue(program.contains("window.onbeforeunload = function()"));
   }
 
   public void testSimpleInstrumentation() throws Exception {

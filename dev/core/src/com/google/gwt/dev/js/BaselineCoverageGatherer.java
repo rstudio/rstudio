@@ -43,9 +43,6 @@ import java.util.Set;
  */
 public class BaselineCoverageGatherer {
   public static Multimap<String, Integer> exec(JProgram jProgram) {
-    if (System.getProperty("gwt.coverage") == null) {
-      return null;
-    }
     return new BaselineCoverageGatherer(jProgram, getCoveredSourceFiles()).execImpl();
   }
 

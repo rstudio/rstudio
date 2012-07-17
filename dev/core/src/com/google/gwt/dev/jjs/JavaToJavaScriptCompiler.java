@@ -297,7 +297,10 @@ public class JavaToJavaScriptCompiler {
       // coverage. This has to happen before optimizations because functions might
       // be optimized out; we want those marked as "not executed", not "not
       // instrumentable".
-      Multimap<String, Integer> instrumentableLines = BaselineCoverageGatherer.exec(jprogram);
+      Multimap<String, Integer> instrumentableLines = null;
+      if (System.getProperty("gwt.coverage") != null) {
+        instrumentableLines = BaselineCoverageGatherer.exec(jprogram);
+      }
 
       // (4) Optimize the normalized Java AST for each permutation.
       int optimizationLevel = options.getOptimizationLevel();
@@ -359,7 +362,9 @@ public class JavaToJavaScriptCompiler {
       /*
        * If coverage is enabled, instrument the AST to record location info.
        */
-      CoverageInstrumentor.exec(jsProgram, instrumentableLines);
+      if (instrumentableLines != null) {
+        CoverageInstrumentor.exec(jsProgram, instrumentableLines);
+      }
 
       /*
        * Work around Safari 5 bug by rewriting a >> b as ~~a >> b.
