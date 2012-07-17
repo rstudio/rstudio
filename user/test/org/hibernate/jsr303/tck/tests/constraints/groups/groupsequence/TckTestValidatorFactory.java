@@ -20,9 +20,17 @@ import com.google.gwt.validation.client.AbstractGwtValidatorFactory;
 import com.google.gwt.validation.client.GwtValidation;
 import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 
+import org.hibernate.jsr303.tck.tests.constraints.groups.groupsequence.SequenceResolutionTest.All;
+import org.hibernate.jsr303.tck.tests.constraints.groups.groupsequence.SequenceResolutionTest.AllReverse;
 import org.hibernate.jsr303.tck.tests.constraints.groups.groupsequence.SequenceResolutionTest.Car;
+import org.hibernate.jsr303.tck.tests.constraints.groups.groupsequence.SequenceResolutionTest.First;
+import org.hibernate.jsr303.tck.tests.constraints.groups.groupsequence.SequenceResolutionTest.InvalidGroupSequence;
+import org.hibernate.jsr303.tck.tests.constraints.groups.groupsequence.SequenceResolutionTest.Mixed;
+import org.hibernate.jsr303.tck.tests.constraints.groups.groupsequence.SequenceResolutionTest.Second;
+import org.hibernate.jsr303.tck.tests.constraints.groups.groupsequence.SequenceResolutionTest.Third;
 
 import javax.validation.Validator;
+import javax.validation.groups.Default;
 
 /**
  * {@link AbstractGwtValidatorFactory} implementation that uses
@@ -32,7 +40,9 @@ public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
   /**
    * Marker Interface to {@link GWT#create(Class)}.
    */
-  @GwtValidation(value = {Car.class, TestEntity.class})
+  @GwtValidation(value = {Car.class, TestEntity.class},
+      groups = {Default.class, InvalidGroupSequence.class, First.class, Second.class, Third.class,
+        All.class, AllReverse.class, Mixed.class, Complete.class})
   public static interface GwtValidator extends Validator {
   }
 

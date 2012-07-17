@@ -23,8 +23,11 @@ import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 import org.hibernate.jsr303.tck.tests.validation.PropertyPathTest.ActorDB;
 import org.hibernate.jsr303.tck.tests.validation.PropertyPathTest.VerySpecialClass;
 import org.hibernate.jsr303.tck.tests.validation.ValidateTest.Car;
+import org.hibernate.jsr303.tck.tests.validation.ValidateTest.First;
+import org.hibernate.jsr303.tck.tests.validation.ValidateTest.Second;
 
 import javax.validation.Validator;
+import javax.validation.groups.Default;
 
 /**
  * {@link AbstractGwtValidatorFactory} implementation that uses
@@ -35,9 +38,10 @@ public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
    * Marker Interface for {@link GWT#create(Class)}.
    */
   @GwtValidation(value = {
-      ActorArrayBased.class, ActorDB.class, ActorListBased.class, Actor.class,
-      Address.class, BadlyBehavedEntity.class, Car.class, Customer.class,
-      Engine.class, Order.class, VerySpecialClass.class})
+        ActorArrayBased.class, ActorDB.class, ActorListBased.class, Actor.class,
+        Address.class, BadlyBehavedEntity.class, Car.class, Customer.class,
+        Engine.class, Order.class, VerySpecialClass.class},
+      groups = {Default.class, First.class, Second.class, Last.class, Address.Minimal.class})
   public static interface GwtValidator extends Validator {
   }
 

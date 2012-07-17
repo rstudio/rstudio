@@ -21,6 +21,7 @@ import com.google.gwt.validation.client.GwtValidation;
 import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 
 import javax.validation.Validator;
+import javax.validation.groups.Default;
 
 /**
  * {@link AbstractGwtValidatorFactory} implementation that uses
@@ -31,9 +32,10 @@ public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
    * Marker Interface for {@link GWT#create(Class)}.
    */
   @GwtValidation(value = {
-      AnimalCaretaker.class, Condor.class, Elephant.class, GameReserve.class,
-      MultiCage.class, MultiCage.class, Order.class, Parent.class,
-      SingleCage.class, User.class, Zebra.class, Zoo.class})
+        AnimalCaretaker.class, Condor.class, Elephant.class, GameReserve.class,
+        MultiCage.class, MultiCage.class, Order.class, Parent.class,
+        SingleCage.class, User.class, Zebra.class, Zoo.class},
+      groups = {Default.class, Parent.ProperOrder.class})
   public static interface GwtValidator extends Validator {
   }
 

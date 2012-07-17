@@ -21,6 +21,7 @@ import com.google.gwt.validation.client.GwtValidation;
 import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 
 import javax.validation.Validator;
+import javax.validation.groups.Default;
 
 /**
  * {@link AbstractGwtValidatorFactory} implementation that uses
@@ -31,7 +32,8 @@ public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
    * Marker Interface for {@link GWT#create(Class)}.
    */
   @GwtValidation(value = {
-      Building.class, SuperWoman.class, Visibility.class, Woman.class})
+      Building.class, SuperWoman.class, Visibility.class, Woman.class},
+      groups = {Default.class, TightSecurity.class, DummyGroup.class})
   public static interface GwtValidator extends Validator {
   }
 

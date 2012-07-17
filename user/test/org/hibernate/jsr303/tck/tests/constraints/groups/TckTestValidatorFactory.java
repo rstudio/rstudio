@@ -21,6 +21,7 @@ import com.google.gwt.validation.client.GwtValidation;
 import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 
 import javax.validation.Validator;
+import javax.validation.groups.Default;
 
 /**
  * {@link AbstractGwtValidatorFactory} implementation that uses
@@ -32,7 +33,10 @@ public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
    */
   @GwtValidation(value = {
       Address.class, Animal.class, Book.class, Car.class, Order.class,
-      User.class})
+        User.class},
+      groups = {Default.class, User.Billable.class, User.BuyInOneClick.class, User.Optional.class, 
+        CyclicGroupSequence.class, Auditable.class, 
+        First.class, Second.class, Last.class, Book.All.class})
   public static interface GwtValidator extends Validator {
   }
 

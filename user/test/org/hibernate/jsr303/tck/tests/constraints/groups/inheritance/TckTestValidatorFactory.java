@@ -20,10 +20,14 @@ import com.google.gwt.validation.client.AbstractGwtValidatorFactory;
 import com.google.gwt.validation.client.GwtValidation;
 import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 
+import org.hibernate.jsr303.tck.tests.constraints.groups.inheritance.GroupInheritanceTest.All;
 import org.hibernate.jsr303.tck.tests.constraints.groups.inheritance.GroupInheritanceTest.MiniaturePart;
 import org.hibernate.jsr303.tck.tests.constraints.groups.inheritance.GroupInheritanceTest.Part;
+import org.hibernate.jsr303.tck.tests.constraints.groups.inheritance.GroupInheritanceTest.PostManufacturing;
+import org.hibernate.jsr303.tck.tests.constraints.groups.inheritance.GroupInheritanceTest.PreManufacturing;
 
 import javax.validation.Validator;
+import javax.validation.groups.Default;
 
 /**
  * {@link AbstractGwtValidatorFactory} implementation that uses
@@ -33,7 +37,8 @@ public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
   /**
    * Marker Interface to {@link GWT#create(Class)}.
    */
-  @GwtValidation(value = {MiniaturePart.class, Part.class})
+  @GwtValidation(value = {MiniaturePart.class, Part.class},
+      groups = {Default.class, All.class, PreManufacturing.class, PostManufacturing.class})
   public static interface GwtValidator extends Validator {
   }
 
