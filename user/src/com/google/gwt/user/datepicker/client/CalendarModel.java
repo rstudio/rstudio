@@ -166,7 +166,7 @@ public class CalendarModel {
    * @return the day of month formatter
    */
   protected DateTimeFormat getDayOfMonthFormatter() {
-    return DateTimeFormat.getFormat(PredefinedFormat.DAY);
+    return DateTimeFormat.getFormat("d");
   }
 
   /**
