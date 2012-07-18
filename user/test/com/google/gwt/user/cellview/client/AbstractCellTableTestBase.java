@@ -27,6 +27,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.dom.client.TableSectionElement;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.AbstractHasData.DefaultKeyboardSelectionHandler;
 import com.google.gwt.user.cellview.client.HasKeyboardPagingPolicy.KeyboardPagingPolicy;
@@ -1168,6 +1169,24 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
 
     // Sort the same column again.
     getHeaderElement(table, 0).dispatchEvent(click);
+    assertEquals(1, sortList.size());
+    assertEquals(table.getColumn(0), sortList.get(0).getColumn());
+    assertFalse(sortList.get(0).isAscending());
+    assertEquals(1, lastSorted.size());
+    lastSorted.clear();
+    
+    // Sort the same column again, this time using the Enter key.
+    NativeEvent enter = Document.get().createKeyDownEvent(false, false, false, false,
+        KeyCodes.KEY_ENTER);
+    getHeaderElement(table, 0).dispatchEvent(enter);
+    assertEquals(1, sortList.size());
+    assertEquals(table.getColumn(0), sortList.get(0).getColumn());
+    assertTrue(sortList.get(0).isAscending());
+    assertEquals(1, lastSorted.size());
+    lastSorted.clear();
+
+    // Sort the same column using the Enter key again.
+    getHeaderElement(table, 0).dispatchEvent(enter);
     assertEquals(1, sortList.size());
     assertEquals(table.getColumn(0), sortList.get(0).getColumn());
     assertFalse(sortList.get(0).isAscending());
