@@ -22,6 +22,8 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import javax.validation.groups.Default;
+
 /**
  * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
  * production code.
@@ -89,9 +91,10 @@ public @interface GwtValidation {
 
   /**
    * The list of Groups which can be processed by the annotated
-   * {@code Validator}, empty means all groups.
+   * {@code Validator}. The default value is {@link Default}.
+   * An empty array is illegal.
    */
-  Class<?>[] groups() default {};
+  Class<?>[] groups() default {Default.class};
 
   /**
    * The list of Classes which can be validated by the annotated

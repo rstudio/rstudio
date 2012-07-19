@@ -15,8 +15,9 @@
  */
 package com.google.gwt.validation.client.impl;
 
+import com.google.gwt.validation.client.GroupInheritanceMap;
+
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.validation.ConstraintValidatorFactory;
@@ -37,17 +38,29 @@ import javax.validation.Validator;
 public abstract class AbstractGwtValidator implements Validator {
 
   private final Set<Class<?>> validGroups;
+  private final GroupInheritanceMap groupInheritanceMap;
   private ConstraintValidatorFactory contraintValidatorFactory;
   private MessageInterpolator messageInterpolator;
   private TraversableResolver traversableResolver;
 
   /**
-   *
-   * @param groups list of valid groups. An empty list defaults to just the
-   *          {@link javax.validation.groups.Default} group.
+   * Creates a validator initialized with the default group inheritance map.
+   * @see #AbstractGwtValidator(GroupInheritanceMap)
    */
-  public AbstractGwtValidator(Class<?>... groups) {
-    validGroups = new HashSet<Class<?>>(Arrays.asList(groups));
+  public AbstractGwtValidator() {
+    this(new GroupInheritanceMap());
+  }
+
+  /**
+   * @param groupInheritanceMap Map of groups to the groups' parents.
+   */
+  public AbstractGwtValidator(GroupInheritanceMap groupInheritanceMap) {
+    validGroups = groupInheritanceMap.getAllGroups();
+    this.groupInheritanceMap = groupInheritanceMap;
+  }
+
+  public GroupInheritanceMap getGroupInheritanceMap() {
+    return groupInheritanceMap;
   }
 
   public void init(ConstraintValidatorFactory factory,
@@ -58,6 +71,7 @@ public abstract class AbstractGwtValidator implements Validator {
     this.traversableResolver = traversableResolver;
   }
 
+  @Override
   public <T> T unwrap(Class<T> type) {
     throw new ValidationException();
   }
@@ -67,9 +81,7 @@ public abstract class AbstractGwtValidator implements Validator {
       throws ValidationException;
 
   protected void checkGroups(Class<?>... groups) {
-    // an empty list of valid groups means all groups are valid.
-    if (!validGroups.isEmpty()
-        && !validGroups.containsAll(Arrays.asList(groups))) {
+    if (!validGroups.containsAll(Arrays.asList(groups))) {
       throw new IllegalArgumentException(this.getClass()
           + " only processes the following groups " + validGroups);
     }

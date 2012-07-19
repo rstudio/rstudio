@@ -25,15 +25,20 @@ import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.validation.client.GwtValidation;
+import com.google.gwt.validation.client.GroupInheritanceMap;
 import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 import com.google.gwt.validation.client.impl.GwtBeanDescriptor;
 import com.google.gwt.validation.client.impl.GwtSpecificValidator;
 import com.google.gwt.validation.client.impl.GwtValidationContext;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.validation.ConstraintViolation;
+import javax.validation.groups.Default;
 import javax.validation.metadata.BeanDescriptor;
 
 /**
@@ -72,7 +77,12 @@ public final class ValidatorCreator extends AbstractCreator {
        GwtBeanDescriptor.class,
        GwtSpecificValidator.class,
        GwtValidationContext.class,
+       GroupInheritanceMap.class,
        Set.class,
+       HashSet.class,
+       Map.class,
+       HashMap.class,
+       Default.class,
        ConstraintViolation.class,
        BeanDescriptor.class);
     composerFactory.setSuperclass(AbstractGwtValidator.class.getCanonicalName());
@@ -82,6 +92,8 @@ public final class ValidatorCreator extends AbstractCreator {
   @Override
   protected void writeClassBody(SourceWriter sourceWriter) {
     writeConstructor(sourceWriter);
+    sourceWriter.println();
+    writeCreateGroupInheritanceMap(sourceWriter);
     sourceWriter.println();
     writeValidate(sourceWriter);
     sourceWriter.println();
@@ -99,18 +111,8 @@ public final class ValidatorCreator extends AbstractCreator {
     sw.println("public " + getSimpleName() + "() {");
     sw.indent();
 
-    // super( <<groups>>);
-    sw.print("super(");
-    boolean first = true;
-    for (Class<?> group : gwtValidation.groups()) {
-      if (!first) {
-        sw.print(", ");
-      } else {
-        first = false;
-      }
-      sw.print(group.getCanonicalName() + ".class");
-    }
-    sw.println(");");
+    // super(createGroupInheritanceMap());
+    sw.println("super(createGroupInheritanceMap());");
 
     sw.outdent();
     sw.println("}");
@@ -143,6 +145,44 @@ public final class ValidatorCreator extends AbstractCreator {
     sw.println("this);");
     sw.outdent();
     sw.outdent();
+  }
+
+  private void writeCreateGroupInheritanceMap(SourceWriter sw) {
+    // private static GroupInheritanceMap creategroupInheritanceMap() {
+    sw.println("private static GroupInheritanceMap createGroupInheritanceMap() {");
+    sw.indent();
+    
+    // GroupInheritanceMap groupInheritanceMap = new GroupInheritanceMap();
+    sw.println("GroupInheritanceMap groupInheritanceMap = new GroupInheritanceMap();");
+    int i = 0; // used only to prevent pointer clobbering
+    for (Class<?> group : gwtValidation.groups()) {
+      Class<?>[] parentInterfaces = group.getInterfaces();
+      if (parentInterfaces.length > 0) {
+        // Set<Class<?>> parents# = new HashSet<Class<?>>();
+        sw.println("Set<Class<?>> parents" + i + " = new HashSet<Class<?>>();");
+        for (Class<?> parent : parentInterfaces) {
+          // parents#.add(<<parent class>>);
+          sw.print("parents" + i + ".add(");
+          sw.print(parent.getCanonicalName() + ".class");
+          sw.println(");");
+        }
+      }
+      // groupInheritanceMap.addGroup(<<group>>, parents#);
+      sw.print("groupInheritanceMap.addGroup(");
+      sw.print(group.getCanonicalName() + ".class");
+      if (parentInterfaces.length > 0) {
+        sw.print(", parents" + i);
+        i++;
+      }
+      sw.println(");");
+    }
+    
+    // return groupInheritanceMap;
+    sw.println("return groupInheritanceMap;");
+    
+    // }
+    sw.outdent();
+    sw.println("}");
   }
 
   private void writeGetConstraintsForClass(SourceWriter sw) {

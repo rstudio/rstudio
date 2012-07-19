@@ -62,6 +62,13 @@ public final class ValidatorGenerator extends Generator {
       throw new UnableToCompleteException();
     }
 
+    if (gwtValidation.groups().length == 0) {
+      logger.log(TreeLogger.ERROR,
+          "The @" + GwtValidation.class.getSimpleName() + "  of " + typeName
+              + "must specify at least one validation group.", null);
+      throw new UnableToCompleteException();
+    }
+
     TreeLogger validatorLogger = logger.branch(TreeLogger.DEBUG,
         "Generating Validator for  '" + validatorType.getQualifiedSourceName()
             + "'", null);

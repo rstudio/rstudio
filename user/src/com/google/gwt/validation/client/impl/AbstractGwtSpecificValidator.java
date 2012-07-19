@@ -15,6 +15,8 @@
  */
 package com.google.gwt.validation.client.impl;
 
+import com.google.gwt.validation.client.GroupInheritanceMap;
+
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Collection;
@@ -98,10 +100,13 @@ public abstract class AbstractGwtSpecificValidator<G> implements
     ConstraintValidatorContextImpl<A, V> constraintValidatorContext =
         context.createConstraintValidatorContext(constraintDescriptor);
 
-    Set<Class<?>> constraintGroup = constraintDescriptor.getGroups();
+    GroupInheritanceMap groupInheritanceMap = context.getValidator().getGroupInheritanceMap();
+    // check against the groups passed in as well as their parent (super) interfaces
+    Set<Class<?>> extendedGroups = groupInheritanceMap.findAllExtendedGroups(Arrays.asList(groups));
+    Set<Class<?>> constraintGroups = constraintDescriptor.getGroups();
 
     // check groups requested are in the set of constraint groups (including the implicit group)
-    if (!containsAny(groups, constraintGroup)
+    if (!containsAny(extendedGroups, constraintGroups)
         && !Arrays.asList(groups).contains(getConstraints().getElementClass())) {
       return false;
     }
@@ -135,7 +140,7 @@ public abstract class AbstractGwtSpecificValidator<G> implements
     }
   }
 
-  private <T> boolean containsAny(T[] left, Collection<T> right) {
+  private <T> boolean containsAny(Collection<T> left, Collection<T> right) {
     for (T t : left) {
       if (right.contains(t)) {
         return true;

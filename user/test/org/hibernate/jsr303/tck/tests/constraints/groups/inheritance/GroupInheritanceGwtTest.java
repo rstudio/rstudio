@@ -26,7 +26,7 @@ import org.hibernate.jsr303.tck.util.client.NonTckTest;
 public class GroupInheritanceGwtTest extends GWTTestCase {
   // TODO(nchalko) causes com.google.gwt.dev.jjs.InternalCompilerException:
   // see http://code.google.com/p/google-web-toolkit/issues/detail?id=6508
-  // private final GroupInheritanceTest delegate = new GroupInheritanceTest();
+  private final GroupInheritanceTest delegate = new GroupInheritanceTest();
 
   @Override
   public String getModuleName() {
@@ -39,13 +39,11 @@ public class GroupInheritanceGwtTest extends GWTTestCase {
     // There must be at least one passing test.
   }
 
-  @Failing(issue = 5801)
   public void testGroupCanInheritGroupsViaInterfaceInheritance() {
-    // delegate.testGroupCanInheritGroupsViaInterfaceInheritance();
-    fail("See http://code.google.com/p/google-web-toolkit/issues/detail?id=6508");
+    delegate.testGroupCanInheritGroupsViaInterfaceInheritance();
   }
 
-  @Failing(issue = 5801)
+  @Failing(issue = 6508)
   public void testGroupMembership() {
     // delegate.testGroupMembership();
     fail("See http://code.google.com/p/google-web-toolkit/issues/detail?id=6508");
