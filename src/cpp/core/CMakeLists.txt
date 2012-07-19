@@ -99,7 +99,12 @@ if (UNIX)
    # platform introspection
    check_symbol_exists(SA_NOCLDWAIT "signal.h" HAVE_SA_NOCLDWAIT)
    check_symbol_exists(SO_PEERCRED "sys/socket.h" HAVE_SO_PEERCRED)
-   check_function_exists(inotify_init1 HAVE_INOTIFY_INIT1)
+   # FreeBSD has an inotify-compatible interface to kqueue
+   if(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+     find_library(INOTIFY_LIBRARIES NAMES inotify HINTS /usr/local/lib)
+   else()
+    check_function_exists(inotify_init1 HAVE_INOTIFY_INIT1)
+   endif()
    check_function_exists(getpeereid HAVE_GETPEEREID)
    if(EXISTS "/proc/self")
       set(HAVE_PROCSELF TRUE)
@@ -128,6 +133,9 @@ if (UNIX)
       ${ZLIB_LIBRARIES}
       ${CORE_SERVICES_LIBRARY}
    )
+   if(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+     set(CORE_SYSTEM_LIBRARIES ${CORE_SYSTEM_LIBRARIES} ${INOTIFY_LIBRARIES})
+   endif()
 
    if(RSTUDIO_SERVER)
       # require openssl (for crypto)
