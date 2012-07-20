@@ -537,7 +537,7 @@ private:
          rCheckCmd << FilePath(pkgInfo.sourcePackageFilename());
 
          // special callback for build result
-         system::ProcessCallbacks buildCb = cb;
+         core::system::ProcessCallbacks buildCb = cb;
          buildCb.onExit =  boost::bind(&Build::onBuildForCheckCompleted,
                                        Build::shared_from_this(),
                                        _1,
