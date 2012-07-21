@@ -211,25 +211,38 @@ public class WebServer {
         handler.handle(target, request, response);
         return;
       }
-      sendOutputFile(target, response);
+      sendOutputFile(target, request, response);
       return;
     }
 
     logger.log(TreeLogger.WARN, "ignored get request: " + target);
   }
 
-  private void sendOutputFile(String target, HttpServletResponse response) throws IOException {
+  private void sendOutputFile(String target, HttpServletRequest request,
+      HttpServletResponse response) throws IOException {
+
     int secondSlash = target.indexOf('/', 1);
     String moduleName = target.substring(1, secondSlash);
+    ModuleState moduleState = modules.get(moduleName);
 
-    File file = modules.get(moduleName).getOutputFile(target);
+    File file = moduleState.getOutputFile(target);
     if (!file.isFile()) {
-      response.sendError(HttpServletResponse.SC_NOT_FOUND);
-      logger.log(TreeLogger.WARN, "not found: " + file.toString());
-      return;
+      // perhaps it's compressed
+      file = moduleState.getOutputFile(target + ".gz");
+      if (!file.isFile()) {
+        response.sendError(HttpServletResponse.SC_NOT_FOUND);
+        logger.log(TreeLogger.WARN, "not found: " + file.toString());
+        return;
+      }
+      if (!request.getHeader("Accept-Encoding").contains("gzip")) {
+        response.sendError(HttpServletResponse.SC_NOT_IMPLEMENTED);
+        logger.log(TreeLogger.WARN, "client doesn't accept gzip; bailing");
+        return;
+      }
+      response.addHeader("Content-Encoding", "gzip");
     }
 
-    String mimeType = guessMimeType(file.getName());
+    String mimeType = guessMimeType(target);
     if (target.endsWith(".cache.js")) {
       response.addHeader("X-SourceMap", SourceHandler.SOURCEMAP_PATH + moduleName +
           "/gwtSourceMap.json");
