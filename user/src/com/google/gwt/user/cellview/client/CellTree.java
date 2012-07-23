@@ -580,6 +580,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
     this(viewModel, rootValue, resources,
         GWT.<CellTreeMessages>create(CellTreeMessages.class));
   }
+
   /**
    * Construct a new {@link CellTree}.
    *
@@ -594,7 +595,26 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
    */
   public <T> CellTree(TreeViewModel viewModel, T rootValue, Resources resources,
       CellTreeMessages messages) {
+    this(viewModel, rootValue, resources, messages, DEFAULT_LIST_SIZE);
+  }
+
+  /**
+   * Construct a new {@link CellTree}.
+   *
+   * @param <T> the type of data in the root node
+   * @param viewModel the {@link TreeViewModel} that backs the tree
+   * @param rootValue the hidden root value of the tree
+   * @param resources the resources used to render the tree
+   * @param messages translation messages. Users should inherit an empty interface from
+   *                 {@link CellTreeMessages} and add annotations needed for their specific
+   *                 translation systems. Then create the new interface with GWT.create and pass
+   *                 as this argument.
+   * @param defaultNodeSize default number of children to display beneath each child node
+   */
+  public <T> CellTree(TreeViewModel viewModel, T rootValue, Resources resources,
+      CellTreeMessages messages, int defaultNodeSize) {
     super(viewModel);
+    this.defaultNodeSize = defaultNodeSize;
     if (template == null) {
       template = GWT.create(Template.class);
     }
@@ -784,7 +804,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
    * Set the default number of children to display beneath each child node. If
    * more nodes are available, a button will appear at the end of the list
    * allowing the user to show more items. Changing this value will not affect
-   * tree nodes that are already open.
+   * other tree nodes that are already open (including the hidden root node).
    *
    * @param defaultNodeSize the max
    * @see #getDefaultNodeSize()
