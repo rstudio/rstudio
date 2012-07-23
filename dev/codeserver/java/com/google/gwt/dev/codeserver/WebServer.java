@@ -65,6 +65,9 @@ public class WebServer {
   private static final Pattern SAFE_MODULE_PATH =
       Pattern.compile("/(" + SAFE_DIRECTORY + ")/$");
 
+  static final Pattern SAFE_DIRECTORY_PATH =
+      Pattern.compile("/(" + SAFE_DIRECTORY + "/)+$");
+
   /* visible for testing */
   static final Pattern SAFE_FILE_PATH =
       Pattern.compile("/(" + SAFE_DIRECTORY + "/)+" + SAFE_FILENAME + "$");
@@ -201,6 +204,13 @@ public class WebServer {
     if (matcher.matches()) {
       setHandled(request);
       sendModulePage(matcher.group(1), response);
+      return;
+    }
+
+    matcher = SAFE_DIRECTORY_PATH.matcher(target);
+    if (matcher.matches() && handler.isSourceMapRequest(target)) {
+      setHandled(request);
+      handler.handle(target, request, response);
       return;
     }
 

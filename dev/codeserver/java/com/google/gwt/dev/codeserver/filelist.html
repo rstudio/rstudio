@@ -17,14 +17,16 @@
 
   <script>
     function updatePage(config) {
-      var title = config.moduleName + " (GWT Code Server)";
+      var title = config.moduleName + " Source (GWT Code Server)";
       document.getElementsByTagName("title")[0].textContent = title;
       document.getElementById("title").textContent = title;
 
       document.getElementById("logLink")
-              .setAttribute("href", "../log/" + config.moduleName);
-      document.getElementById("srcLink")
-              .setAttribute("href", "../sourcemaps/" + config.moduleName + "/");
+              .setAttribute("href", "/log/" + config.moduleName);
+      document.getElementById("topLink")
+              .setAttribute("href", "/sourcemaps/" + config.moduleName + "/");
+      document.getElementById("subhead")
+              .appendChild(document.createTextNode(" in " + config.directory));
       updateFileList(config, document.getElementById("files"));
     }
 
@@ -48,9 +50,9 @@
 <h1 id="title">Loading...</h1>
 
 <p><a id="logLink">Messages</a> from the last time this module was compiled.</p>
-<p><a id="srcLink">Source</a> from the last time this module was compiled.</p>
+<p><a id="topLink">Source Directories</a></p>
 
-<h2>Output Files</h2>
+<h2 id="subhead">Files</h2>
 <p>(From the last successful compile.)</p>
 <ul id="files">
 </ul>
