@@ -595,6 +595,8 @@ public class DatePicker extends Composite implements
     if (value != null) {
       addStyleToDates(css().dayIsValue(), value);
     }
+    getView().setAriaSelectedCell(newValue);
+
     if (fireEvents) {
       DateChangeEvent.fireIfNotEqualDates(this, oldValue, newValue);
     }
@@ -639,6 +641,7 @@ public class DatePicker extends Composite implements
     if (isAttached()) {
       ShowRangeEvent.fire(this, getFirstDate(), getLastDate());
     }
+    getView().setAriaSelectedCell(value);
   }
 
   /**

@@ -16,14 +16,18 @@
 
 package com.google.gwt.user.datepicker.client;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.impl.ElementMapperImpl;
 import com.google.gwt.user.client.ui.Grid;
-import com.google.gwt.user.client.ui.UIObject;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -36,28 +40,43 @@ import java.util.Iterator;
  */
 abstract class CellGridImpl<V> extends Grid {
 
-  /**
-   * Cell type.
-   */
-  public abstract class Cell extends UIObject {
+  abstract class Cell extends Widget {
     private boolean enabled = true;
     private V value;
     private int index;
 
-    /**
-     * Create a cell grid.
-     * 
-     * @param elem the wrapped element
-     * @param value the value
-     */
-    public Cell(Element elem, V value) {
-      this.value = value;
-      Cell current = this;
-      index = cellList.size();
-      cellList.add(current);
+    Cell(V value) {
+      this(Document.get().createDivElement(), value);
+    }
 
-      setElement(elem);
-      elementToCell.put(current);
+    Cell(Element elem, V value) {
+      this.value = value;
+      index = cellList.size();
+      cellList.add(this);
+
+      if (elem != null) {
+        setElement(elem);
+      }
+
+      elementToCell.put(this);
+      addDomHandler(new KeyDownHandler() {
+        @Override
+        public void onKeyDown(KeyDownEvent event) {
+          if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER ||
+             event.getNativeKeyCode() == ' ') {
+            if (isActive(Cell.this)) {
+              setSelected(Cell.this);
+            }
+          }
+        }
+      }, KeyDownEvent.getType());
+
+      addDomHandler(new ClickHandler() {
+          @Override
+          public void onClick(ClickEvent event) {
+            setSelected(Cell.this);
+          }
+        }, ClickEvent.getType());
     }
 
     public V getValue() {
@@ -259,20 +278,6 @@ abstract class CellGridImpl<V> extends Grid {
       selectedCell.onSelected(true);
     }
     onSelected(last, selectedCell);
-  }
-
-  protected void onKeyDown(Cell lastHighlighted, KeyDownEvent event) {
-    if (event.isAnyModifierKeyDown()) {
-      return;
-    }
-    int keyCode = event.getNativeKeyCode();
-    if (lastHighlighted == null) {
-      if (keyCode == KeyCodes.KEY_DOWN && cellList.size() > 0) {
-        setHighlighted(cellList.get(0));
-      }
-    } else {
-      lastHighlighted.verticalNavigation(keyCode);
-    }
   }
 
   protected abstract void onSelected(Cell lastSelected, Cell cell);

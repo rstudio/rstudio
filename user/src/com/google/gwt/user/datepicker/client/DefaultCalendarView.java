@@ -15,8 +15,9 @@
  */
 package com.google.gwt.user.datepicker.client;
 
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.aria.client.SelectedValue;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
 import com.google.gwt.user.datepicker.client.DefaultCalendarView.CellGrid.DateCell;
 
@@ -42,12 +43,15 @@ public final class DefaultCalendarView extends CalendarView {
       private String cellStyle;
       private String dateStyle;
 
-      DateCell(Element td, boolean isWeekend) {
-        super(td, new Date());
+      DateCell(boolean isWeekend) {
+        super(new Date());
         cellStyle = css().day();
+
         if (isWeekend) {
           cellStyle += " " + css().dayIsWeekend();
         }
+        getElement().setTabIndex(isFiller() ? -1 : 0);
+        setAriaSelected(false);
       }
 
       @Override
@@ -85,28 +89,13 @@ public final class DefaultCalendarView extends CalendarView {
         updateStyle();
       }
 
-      public void update(Date current) {
-        setEnabled(true);
-        getValue().setTime(current.getTime());
-        String value = getModel().formatDayOfMonth(getValue());
-        setText(value);
-        dateStyle = cellStyle;
-        if (isFiller()) {
-          dateStyle += " " + css().dayIsFiller();
-        } else {
-          String extraStyle = getDatePicker().getStyleOfDate(current);
-          if (extraStyle != null) {
-            dateStyle += " " + extraStyle;
-          }
-        }
-        // We want to certify that all date styles have " " before and after
-        // them for ease of adding to and replacing them.
-        dateStyle += " ";
-        updateStyle();
+      public void setAriaSelected(boolean value) {
+        Roles.getGridcellRole().setAriaSelectedState(getElement(), SelectedValue.of(value));
       }
 
       @Override
       public void updateStyle() {
+
         String accum = dateStyle;
 
         if (isHighlighted()) {
@@ -120,6 +109,28 @@ public final class DefaultCalendarView extends CalendarView {
           accum += " " + css().dayIsDisabled();
         }
         setStyleName(accum);
+      }
+
+      void update(Date current) {
+        setEnabled(true);
+        getValue().setTime(current.getTime());
+        String value = getModel().formatDayOfMonth(getValue());
+        setText(value);
+        dateStyle = cellStyle;
+        if (isFiller()) {
+          getElement().setTabIndex(-1);
+          dateStyle += " " + css().dayIsFiller();
+        } else {
+          getElement().setTabIndex(0);
+          String extraStyle = getDatePicker().getStyleOfDate(current);
+          if (extraStyle != null) {
+            dateStyle += " " + extraStyle;
+          }
+        }
+        // We want to certify that all date styles have " " before and after
+        // them for ease of adding to and replacing them.
+        dateStyle += " ";
+        updateStyle();
       }
 
       private void setText(String value) {
@@ -141,6 +152,8 @@ public final class DefaultCalendarView extends CalendarView {
   private Date firstDisplayed;
 
   private Date lastDisplayed = new Date();
+
+  private DateCell ariaSelectedCell;
 
   /**
    * Constructor.
@@ -189,11 +202,24 @@ public final class DefaultCalendarView extends CalendarView {
       DateCell cell = (DateCell) grid.getCell(i);
       cell.update(lastDisplayed);
     }
+    setAriaSelectedCell(null);
   }
 
   @Override
   public void removeStyleFromDate(String styleName, Date date) {
     getCell(date).removeStyleName(styleName);
+  }
+
+  @Override
+  public void setAriaSelectedCell(Date date) {
+    if (ariaSelectedCell != null) {
+      ariaSelectedCell.setAriaSelected(false);
+    }
+    DateCell newSelectedCell = date != null ? getCell(date) : null;
+    if (newSelectedCell != null) {
+      newSelectedCell.setAriaSelected(true);
+    }
+    ariaSelectedCell = newSelectedCell;
   }
 
   @Override
@@ -230,10 +256,9 @@ public final class DefaultCalendarView extends CalendarView {
     // Set up the calendar grid.
     for (int row = 1; row <= CalendarModel.WEEKS_IN_MONTH; row++) {
       for (int column = 0; column < CalendarModel.DAYS_IN_WEEK; column++) {
-        // set up formatter.
-        Element e = formatter.getElement(row, column);
-        grid.new DateCell(e, column == weekendStartColumn
+        DateCell cell = grid.new DateCell(column == weekendStartColumn
             || column == weekendEndColumn);
+        grid.setWidget(row, column, cell);
       }
     }
     initWidget(grid);
@@ -242,7 +267,9 @@ public final class DefaultCalendarView extends CalendarView {
 
   private DateCell getCell(Date d) {
     int index = CalendarUtil.getDaysBetween(firstDisplayed, d);
-    assert (index >= 0);
+    if (index < 0 || grid.getNumCells() <= index) {
+      return null;
+    }
 
     DateCell cell = (DateCell) grid.getCell(index);
     if (cell.getValue().getDate() != d.getDate()) {

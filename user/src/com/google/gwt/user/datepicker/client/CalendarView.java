@@ -72,6 +72,15 @@ public abstract class CalendarView extends DatePickerComponent {
   public abstract void removeStyleFromDate(String styleName, Date date);
 
   /**
+   * Sets aria-selected in the given date's cell and clears the other cells.
+   *
+   * @param date the date of the cell where aria-selected should be set,
+   * or null to clear aria-selected.
+   */
+  public void setAriaSelectedCell(Date date) {
+  }
+
+  /**
    * Enables or Disables a particular date. by default all valid dates are
    * enabled after a rendering event. Disabled dates cannot be selected.
    * 

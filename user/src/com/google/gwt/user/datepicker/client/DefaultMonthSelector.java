@@ -16,6 +16,7 @@
 
 package com.google.gwt.user.datepicker.client;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Grid;
@@ -38,7 +39,21 @@ public final class DefaultMonthSelector extends MonthSelector {
    */
   public DefaultMonthSelector() {
   }
- 
+
+  /**
+   * Returns the button for moving to the previous month.
+   */
+  public Element getBackwardButtonElement() {
+    return backwards.getElement();
+  }
+
+  /**
+   * Returns the button for moving to the next month.
+   */
+  public Element getForwardButtonElement() {
+    return forwards.getElement();
+  }
+
   @Override
   protected void refresh() {
     String formattedMonth = getModel().formatCurrentMonth();
@@ -80,5 +95,4 @@ public final class DefaultMonthSelector extends MonthSelector {
     grid.setStyleName(css().monthSelector());
     initWidget(grid);
   }
-
 }
