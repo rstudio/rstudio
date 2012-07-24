@@ -15,7 +15,10 @@
  */
 package com.google.gwt.validation.client.impl;
 
+import com.google.gwt.validation.client.GroupInheritanceMap;
+
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -37,17 +40,17 @@ import javax.validation.metadata.PropertyDescriptor;
 public final class GwtBeanDescriptorImpl<T> implements GwtBeanDescriptor<T> {
 
   /**
-   * Builder for {@link GwtBeanDescriptors}.
+   * Builder for {@link GwtBeanDescriptor}s.
    *
    * @param <T> the bean Type
    */
   public static final class Builder<T> {
 
     private final Class<T> clazz;
-    private final Map<String, PropertyDescriptor> descriptorMap =
-        new HashMap<String, PropertyDescriptor>();
-    private final Set<ConstraintDescriptor<? extends Annotation>> constraints =
-        new HashSet<ConstraintDescriptor<? extends Annotation>>();
+    private final Map<String, PropertyDescriptorImpl> descriptorMap =
+        new HashMap<String, PropertyDescriptorImpl>();
+    private final Set<ConstraintDescriptorImpl<? extends Annotation>> constraints =
+        new HashSet<ConstraintDescriptorImpl<? extends Annotation>>();
     private boolean isConstrained;
 
     private Builder(Class<T> clazz) {
@@ -55,7 +58,7 @@ public final class GwtBeanDescriptorImpl<T> implements GwtBeanDescriptor<T> {
     }
 
     public Builder<T> add(
-        ConstraintDescriptor<? extends Annotation> constraintDescriptor) {
+        ConstraintDescriptorImpl<? extends Annotation> constraintDescriptor) {
       constraints.add(constraintDescriptor);
       return this;
     }
@@ -65,8 +68,8 @@ public final class GwtBeanDescriptorImpl<T> implements GwtBeanDescriptor<T> {
           constraints);
     }
 
-    public Builder<T> put(String key, PropertyDescriptor value) {
-      descriptorMap.put(key, value);
+    public Builder<T> put(String key, PropertyDescriptorImpl value) {
+      descriptorMap.put(key, value.shallowCopy());
       return this;
     }
 
@@ -81,14 +84,16 @@ public final class GwtBeanDescriptorImpl<T> implements GwtBeanDescriptor<T> {
   }
 
   private final Class<T> clazz;
-  private final Set<ConstraintDescriptor<?>> constraints = new HashSet<ConstraintDescriptor<?>>();
+  private final Set<ConstraintDescriptorImpl<?>> constraints = new HashSet<ConstraintDescriptorImpl<?>>();
 
-  private final Map<String, PropertyDescriptor> descriptorMap = new HashMap<String, PropertyDescriptor>();
+  private final Map<String, PropertyDescriptorImpl> descriptorMap = new HashMap<String, PropertyDescriptorImpl>();
   private final boolean isBeanConstrained;
+  
+  private GroupInheritanceMap groupInheritanceMap;
 
   private GwtBeanDescriptorImpl(Class<T> clazz, boolean isConstrained,
-      Map<String, PropertyDescriptor> descriptorMap,
-      Set<ConstraintDescriptor<?>> constraints) {
+      Map<String, PropertyDescriptorImpl> descriptorMap,
+      Set<ConstraintDescriptorImpl<?>> constraints) {
     super();
     this.clazz = clazz;
     this.isBeanConstrained = isConstrained;
@@ -96,33 +101,53 @@ public final class GwtBeanDescriptorImpl<T> implements GwtBeanDescriptor<T> {
     this.constraints.addAll(constraints);
   }
 
+  @Override
   public ConstraintFinder findConstraints() {
-    // TODO(nchalko) implement
-    return null;
+    return new ConstraintFinderImpl(groupInheritanceMap, constraints);
   }
 
+  @Override
   public Set<PropertyDescriptor> getConstrainedProperties() {
-    return new HashSet<PropertyDescriptor>(descriptorMap.values());
+    Collection<PropertyDescriptorImpl> props = descriptorMap.values();
+    for (PropertyDescriptorImpl prop : props) {
+      prop.setGroupInheritanceMap(groupInheritanceMap);
+    }
+    return new HashSet<PropertyDescriptor>(props);
   }
 
+  @Override
   public Set<ConstraintDescriptor<?>> getConstraintDescriptors() {
     // Copy for safety
     return new HashSet<ConstraintDescriptor<?>>(constraints);
   }
 
+  @Override
   public PropertyDescriptor getConstraintsForProperty(String propertyName) {
-    return descriptorMap.get(propertyName);
+    PropertyDescriptorImpl propDesc = descriptorMap.get(propertyName);
+    if (propDesc != null) {
+      propDesc.setGroupInheritanceMap(groupInheritanceMap);
+    }
+    return propDesc;
   }
 
+  @Override
   public Class<?> getElementClass() {
     return clazz;
   }
 
+  @Override
   public boolean hasConstraints() {
     return !constraints.isEmpty();
   }
 
+  @Override
   public boolean isBeanConstrained() {
     return isBeanConstrained;
+  }
+
+  @Override
+  public void setGroupInheritanceMap(GroupInheritanceMap groupInheritanceMap) {
+    // TODO(idol) Find some way to pass this via the constructor rather than after creation
+    this.groupInheritanceMap = groupInheritanceMap;
   }
 }

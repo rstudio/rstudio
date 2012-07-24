@@ -48,7 +48,7 @@ public abstract class AbstractGwtValidator implements Validator {
    * @see #AbstractGwtValidator(GroupInheritanceMap)
    */
   public AbstractGwtValidator() {
-    this(new GroupInheritanceMap());
+    this(GroupInheritanceMap.builder().build());
   }
 
   /**

@@ -107,7 +107,7 @@ public abstract class AbstractGwtSpecificValidator<G> implements
 
     // check groups requested are in the set of constraint groups (including the implicit group)
     if (!containsAny(extendedGroups, constraintGroups)
-        && !Arrays.asList(groups).contains(getConstraints().getElementClass())) {
+        && !Arrays.asList(groups).contains(getConstraints(groupInheritanceMap).getElementClass())) {
       return false;
     }
 

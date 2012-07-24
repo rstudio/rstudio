@@ -30,7 +30,6 @@ public class ElementDescriptorGwtTest extends GWTTestCase {
     return "org.hibernate.jsr303.tck.tests.metadata.TckTest";
   }
 
-  @Failing(issue = 5932)
   public void testDeclaredOn() {
     delegate.testDeclaredOn();
   }
@@ -47,7 +46,6 @@ public class ElementDescriptorGwtTest extends GWTTestCase {
     delegate.testHasConstraints();
   }
 
-  @Failing(issue = 5932)
   public void testLookingAt() {
     delegate.testLookingAt();
   }
@@ -62,7 +60,6 @@ public class ElementDescriptorGwtTest extends GWTTestCase {
     delegate.testUnorderedAndMatchingGroupsWithDefaultGroupOverriding();
   }
 
-  @Failing(issue = 5932)
   public void testUnorderedAndMatchingGroupsWithInheritance() {
     delegate.testUnorderedAndMatchingGroupsWithInheritance();
   }

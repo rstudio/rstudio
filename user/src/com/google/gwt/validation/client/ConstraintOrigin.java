@@ -13,21 +13,25 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client.impl;
-
-import com.google.gwt.validation.client.GroupInheritanceMap;
-
-import javax.validation.metadata.BeanDescriptor;
+package com.google.gwt.validation.client;
 
 /**
  * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
  * production code.
  * <p>
- * Marker interface used by GWT to generate a {@link BeanDescriptor} for a
- * specific class T.
- * 
- * @param <T>
+ * Visibility looked at when discovering constraints.
+ * <p>
+ * Exactly the same as the
+ * <a href="http://docs.jboss.org/hibernate/validator/4.3/api/org/hibernate/validator/internal/metadata/core/ConstraintOrigin.html">
+ * Hibernate implementation</a>.
  */
-public interface GwtBeanDescriptor<T> extends BeanDescriptor {
-  void setGroupInheritanceMap(GroupInheritanceMap groupInheritanceMap);
+public enum ConstraintOrigin {
+  /**
+   * Constraint is defined on the root class
+   */
+  DEFINED_LOCALLY,
+  /**
+   * Constraint is defined in a super-class or interface of the root class.
+   */
+  DEFINED_IN_HIERARCHY
 }

@@ -15,8 +15,9 @@
  */
 package com.google.gwt.validation.client.impl;
 
+import com.google.gwt.validation.client.GroupInheritanceMap;
+
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -31,48 +32,67 @@ import javax.validation.metadata.PropertyDescriptor;
 public final class PropertyDescriptorImpl implements PropertyDescriptor {
 
   private boolean cascaded;
-  private Set<ConstraintDescriptor<?>> descriptors = new HashSet<ConstraintDescriptor<?>>();
+  private Set<ConstraintDescriptorImpl<?>> descriptors;
   private Class<?> elementClass;
   private String name;
+  private GroupInheritanceMap groupInheritanceMap;
 
-  /**
-   * @param name
-   * @param elementClass
-   * @param cascaded
-   * @param descriptors
-   */
   public PropertyDescriptorImpl(String name, Class<?> elementClass,
-      boolean cascaded, ConstraintDescriptor<?>... descriptors) {
+      boolean cascaded, ConstraintDescriptorImpl<?>... descriptors) {
+    this(name, elementClass, cascaded, null, descriptors);
+  }
+
+  public PropertyDescriptorImpl(String name, Class<?> elementClass,
+      boolean cascaded, GroupInheritanceMap groupInheritanceMap,
+      ConstraintDescriptorImpl<?>... descriptors) {
     super();
 
     this.elementClass = elementClass;
     this.cascaded = cascaded;
     this.name = name;
-    this.descriptors = new HashSet<ConstraintDescriptor<?>>(
+    this.groupInheritanceMap = groupInheritanceMap;
+    this.descriptors = new HashSet<ConstraintDescriptorImpl<?>>(
         Arrays.asList(descriptors));
   }
 
+  @Override
   public ConstraintFinder findConstraints() {
-    return null;
+    return new ConstraintFinderImpl(groupInheritanceMap, descriptors);
   }
 
+  @Override
   public Set<ConstraintDescriptor<?>> getConstraintDescriptors() {
-    return Collections.unmodifiableSet(descriptors);
+    return findConstraints().getConstraintDescriptors();
   }
 
+  @Override
   public Class<?> getElementClass() {
     return elementClass;
   }
 
+  @Override
   public String getPropertyName() {
     return name;
   }
 
+  @Override
   public boolean hasConstraints() {
     return !descriptors.isEmpty();
   }
 
+  @Override
   public boolean isCascaded() {
     return cascaded;
+  }
+
+  public void setGroupInheritanceMap(GroupInheritanceMap groupInheritanceMap) {
+    // TODO(idol) Find some way to pass this via the constructor rather than after creation
+    this.groupInheritanceMap = groupInheritanceMap;
+  }
+
+  public PropertyDescriptorImpl shallowCopy() {
+    ConstraintDescriptorImpl<?>[] desc = new ConstraintDescriptorImpl<?>[descriptors.size()];
+    descriptors.toArray(desc);
+    return new PropertyDescriptorImpl(name, elementClass, cascaded, groupInheritanceMap, desc);
   }
 }

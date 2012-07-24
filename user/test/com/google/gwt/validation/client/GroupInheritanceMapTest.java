@@ -26,40 +26,24 @@ import javax.validation.groups.Default;
  * Test case for {@link GroupInheritanceMap}.
  */
 public class GroupInheritanceMapTest extends TestCase {
-  GroupInheritanceMap groupInheritanceMap = new GroupInheritanceMap();
 
-  private void addSomeTestGroups() {
-    Set<Class<?>> part1Parents = new HashSet<Class<?>>();
-    part1Parents.add(MiniPart.class);
-    groupInheritanceMap.addGroup(Part1.class, part1Parents);
-    groupInheritanceMap.addGroup(Part2.class);
-    Set<Class<?>> bigParents = new HashSet<Class<?>>();
-    bigParents.add(Part1.class);
-    bigParents.add(Part2.class);
-    groupInheritanceMap.addGroup(Big.class, bigParents);
-    Set<Class<?>> miniPartParents = new HashSet<Class<?>>();
-    miniPartParents.add(SuperSmall.class);
-    groupInheritanceMap.addGroup(MiniPart.class, miniPartParents);
-    groupInheritanceMap.addGroup(SuperSmall.class);
+  private GroupInheritanceMap createWithTestGroups() {
+    return GroupInheritanceMap.builder()
+        .addGroup(Part1.class, MiniPart.class)
+        .addGroup(Part2.class)
+        .addGroup(Big.class, Part1.class, Part2.class)
+        .addGroup(MiniPart.class, SuperSmall.class)
+        .addGroup(SuperSmall.class)
+        .build();
   }
 
   public void testDefaultGroupExists() {
-    assertTrue(groupInheritanceMap.containsGroup(Default.class));
-  }
-
-  public void testAddingNullThrowsException() {
-    // should throw exception when parents is null
-    try {
-      groupInheritanceMap.addGroup(Big.class, null);
-      fail("Expected an " + IllegalArgumentException.class);
-    } catch (IllegalArgumentException expected) {
-      // expected
-    }
+    assertTrue(GroupInheritanceMap.builder().build().containsGroup(Default.class));
   }
   
   public void testFindAllExtendedGroups() {
     // should get all of the groups and all of their parents recursively
-    addSomeTestGroups();
+    GroupInheritanceMap groupInheritanceMap = createWithTestGroups();
     Set<Class<?>> baseGroups = new HashSet<Class<?>>();
     baseGroups.add(Part1.class);
     baseGroups.add(Part2.class);
@@ -73,6 +57,7 @@ public class GroupInheritanceMapTest extends TestCase {
 
   public void testFindingExtendedGroupsThrowsExceptionWhenUnknown() {
     // should throw exception when the group has not been added to the map
+    GroupInheritanceMap groupInheritanceMap = GroupInheritanceMap.builder().build();
     assertFalse(groupInheritanceMap.containsGroup(MiniPart.class));
     try {
       Set<Class<?>> miniPart = new HashSet<Class<?>>();
@@ -86,7 +71,7 @@ public class GroupInheritanceMapTest extends TestCase {
 
   public void testGetAllGroups() {
     // should return all groups and their parents recursively
-    addSomeTestGroups();
+    GroupInheritanceMap groupInheritanceMap = createWithTestGroups();
     Set<Class<?>> desired = new HashSet<Class<?>>();
     desired.add(Default.class);
     desired.add(Part1.class);

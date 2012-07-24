@@ -15,6 +15,8 @@
  */
 package com.google.gwt.validation.client.impl;
 
+import com.google.gwt.validation.client.ConstraintOrigin;
+
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.util.Arrays;
@@ -53,6 +55,7 @@ public final class ConstraintDescriptorImpl<T extends Annotation> implements
         new HashSet<ConstraintDescriptor<?>>();
     private boolean reportAsSingleViolation;
     private ElementType elementType;
+    private ConstraintOrigin definedOn;
 
     public Builder<T> addComposingConstraint(
         ConstraintDescriptor<?> composingConstraint) {
@@ -69,7 +72,8 @@ public final class ConstraintDescriptorImpl<T extends Annotation> implements
           attributes, //
           composingConstraints, //
           reportAsSingleViolation, //
-          elementType);
+          elementType, //
+          definedOn);
     }
 
     public Builder<T> setAnnotation(T annotation) {
@@ -94,7 +98,12 @@ public final class ConstraintDescriptorImpl<T extends Annotation> implements
       this.constraintValidatorClasses = constraintValidatorClasses;
       return this;
     }
-    
+
+    public Builder<T> setDefinedOn(ConstraintOrigin definedOn) {
+      this.definedOn = definedOn;
+      return this;
+    }
+
     public Builder<T> setElementType(ElementType elementType) {
       this.elementType = elementType;
       return this;
@@ -137,7 +146,8 @@ public final class ConstraintDescriptorImpl<T extends Annotation> implements
   private final Map<String, Object> attributes;
   private final Set<ConstraintDescriptor<?>> composingConstraints;
   private final boolean reportAsSingleViolation;
-  private ElementType elementType;
+  private final ElementType elementType;
+  private final ConstraintOrigin definedOn;
 
   private ConstraintDescriptorImpl(
       T annotation,
@@ -147,7 +157,8 @@ public final class ConstraintDescriptorImpl<T extends Annotation> implements
       Map<String, Object> attributes,
       Set<ConstraintDescriptor<?>> composingConstraints,
       boolean reportAsSingleViolation,
-      ElementType elementType) {
+      ElementType elementType,
+      ConstraintOrigin definedOn) {
     super();
     this.annotation = annotation;
     this.groups = groups;
@@ -157,36 +168,48 @@ public final class ConstraintDescriptorImpl<T extends Annotation> implements
     this.composingConstraints = composingConstraints;
     this.reportAsSingleViolation = reportAsSingleViolation;
     this.elementType = elementType;
+    this.definedOn = definedOn;
   }
 
+  @Override
   public T getAnnotation() {
     return annotation;
   }
 
+  @Override
   public Map<String, Object> getAttributes() {
     return attributes;
   }
 
+  @Override
   public Set<ConstraintDescriptor<?>> getComposingConstraints() {
     return composingConstraints;
   }
 
+  @Override
   public List<Class<? extends ConstraintValidator<T, ?>>> getConstraintValidatorClasses() {
     return constraintValidatorClasses;
+  }
+
+  public ConstraintOrigin getDefinedOn() {
+    return definedOn;
   }
 
   public ElementType getElementType() {
     return elementType;
   }
 
+  @Override
   public Set<Class<?>> getGroups() {
     return groups;
   }
 
+  @Override
   public Set<Class<? extends Payload>> getPayload() {
     return payload;
   }
 
+  @Override
   public boolean isReportAsSingleViolation() {
     return reportAsSingleViolation;
   }

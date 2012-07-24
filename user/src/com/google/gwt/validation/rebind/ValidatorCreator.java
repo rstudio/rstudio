@@ -134,9 +134,9 @@ public final class ValidatorCreator extends AbstractCreator {
     // object,
     sw.println(objectName + ", ");
 
-    // MyBeanValidator.INSTANCE.getConstraints(),
+    // MyBeanValidator.INSTANCE.getConstraints(getGroupInheritanceMap()),
     sw.print(bean.getFullyQualifiedValidatorName());
-    sw.println(".INSTANCE.getConstraints(), ");
+    sw.println(".INSTANCE.getConstraints(getGroupInheritanceMap()), ");
 
     // getMessageInterpolator(),
     sw.println("getMessageInterpolator(), ");
@@ -152,34 +152,29 @@ public final class ValidatorCreator extends AbstractCreator {
     sw.println("private static GroupInheritanceMap createGroupInheritanceMap() {");
     sw.indent();
     
-    // GroupInheritanceMap groupInheritanceMap = new GroupInheritanceMap();
-    sw.println("GroupInheritanceMap groupInheritanceMap = new GroupInheritanceMap();");
-    int i = 0; // used only to prevent pointer clobbering
+    // GroupInheritanceMap groupInheritanceMap = GroupInheritanceMap.builder()
+    sw.println("return GroupInheritanceMap.builder()");
+    sw.indent();
+    sw.indent();
     for (Class<?> group : gwtValidation.groups()) {
-      Class<?>[] parentInterfaces = group.getInterfaces();
-      if (parentInterfaces.length > 0) {
-        // Set<Class<?>> parents# = new HashSet<Class<?>>();
-        sw.println("Set<Class<?>> parents" + i + " = new HashSet<Class<?>>();");
-        for (Class<?> parent : parentInterfaces) {
-          // parents#.add(<<parent class>>);
-          sw.print("parents" + i + ".add(");
-          sw.print(parent.getCanonicalName() + ".class");
-          sw.println(");");
-        }
-      }
-      // groupInheritanceMap.addGroup(<<group>>, parents#);
-      sw.print("groupInheritanceMap.addGroup(");
+      // .addGroup(<<group>>
+      sw.print(".addGroup(");
       sw.print(group.getCanonicalName() + ".class");
-      if (parentInterfaces.length > 0) {
-        sw.print(", parents" + i);
-        i++;
+      Class<?>[] parentInterfaces = group.getInterfaces();
+      for (Class<?> parent : parentInterfaces) {
+        // , <<parent class>>
+        sw.print(", ");
+        sw.print(parent.getCanonicalName() + ".class");
       }
-      sw.println(");");
+      // )
+      sw.println(")");
     }
-    
-    // return groupInheritanceMap;
-    sw.println("return groupInheritanceMap;");
-    
+
+    // .build();
+    sw.println(".build();");
+    sw.outdent();
+    sw.outdent();
+
     // }
     sw.outdent();
     sw.println("}");
@@ -210,10 +205,10 @@ public final class ValidatorCreator extends AbstractCreator {
     sw.println("if (clazz.equals(" + bean.getTypeCanonicalName() + ".class)) {");
     sw.indent();
 
-    // return MyBeanValidator.INSTANCE.getConstraints();
+    // return MyBeanValidator.INSTANCE.getConstraints(getGroupInheritanceMap());
     sw.print("return ");
     sw.print(bean.getFullyQualifiedValidatorName());
-    sw.println(".INSTANCE.getConstraints();");
+    sw.println(".INSTANCE.getConstraints(getGroupInheritanceMap());");
 
     // }
     sw.outdent();

@@ -15,7 +15,9 @@
  */
 package com.google.gwt.validation.client;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.HashMap;
@@ -32,43 +34,52 @@ import javax.validation.groups.Default;
  * Contains all the information known about the inheritance information for validation groups.
  */
 public class GroupInheritanceMap {
-  protected Map<Class<?>, Set<Class<?>>> groupInheritanceMap;
 
   /**
-   * Creates an instance populated only with the {@link Default} group.
+   * Builder for {@link GroupInheritanceMap}
    */
-  public GroupInheritanceMap() {
-    groupInheritanceMap = new HashMap<Class<?>, Set<Class<?>>>();
-    addGroup(Default.class);
-  }
+  public static class Builder {
+    Map<Class<?>, Set<Class<?>>> mapping;
 
-  /**
-   * Adds a group to the inheritance map with no parents.
-   * @param group The validation group to add.
-   */
-  public void addGroup(Class<?> group) {
-    addGroup(group, new HashSet<Class<?>>(0));
-  }
-
-  /**
-   * Adds a group and its parents to the inheritance map.
-   * @param group The root validation group.
-   * @param parents A set of validation groups which {@code group} extends. Must not be null.
-   * @throws IllegalArgumentException If {@code parents} is null.
-   */
-  public void addGroup(Class<?> group, Set<Class<?>> parents) throws IllegalArgumentException {
-    if (parents == null) {
-      throw new IllegalArgumentException("The set of parents must not be null. Use an empty set" +
-          " for a group that has no parents.");
+    private Builder() {
+      mapping = new HashMap<Class<?>, Set<Class<?>>>();
+      addGroup(Default.class);
     }
-    groupInheritanceMap.put(group, parents);
+
+    /**
+     * Adds a group to the inheritance map. May optionally include parents of the group.
+     * @param group The validation group to add.
+     * @param parents A list of validation groups which {@code group} extends. Can be empty if the
+     * group contains no parents.
+     */
+    public Builder addGroup(Class<?> group, Class<?>... parents) {
+      mapping.put(group, new HashSet<Class<?>>(Arrays.asList(parents)));
+      return this;
+    }
+    
+    public GroupInheritanceMap build() {
+      return new GroupInheritanceMap(mapping);
+    }
+  }
+
+  /**
+   * Creates a builder populated only with the {@link Default} group.
+   */
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  private final Map<Class<?>, Set<Class<?>>> mapping;
+
+  private GroupInheritanceMap(Map<Class<?>, Set<Class<?>>> mapping) {
+    this.mapping = Collections.unmodifiableMap(mapping);
   }
 
   /**
    * Checks if a given group has been added to the map.
    */
   public boolean containsGroup(Class<?> group) {
-    return groupInheritanceMap.containsKey(group);
+    return mapping.containsKey(group);
   }
 
   @Override
@@ -80,7 +91,7 @@ public class GroupInheritanceMap {
       return false;
     }
     GroupInheritanceMap otherObj = (GroupInheritanceMap)other;
-    return groupInheritanceMap.equals(otherObj.groupInheritanceMap);
+    return mapping.equals(otherObj.mapping);
   }
 
   /**
@@ -97,7 +108,7 @@ public class GroupInheritanceMap {
     Stack<Class<?>> remaining = new Stack<Class<?>>();
     // initialize
     for (Class<?> group : baseGroups) {
-      if (!groupInheritanceMap.containsKey(group)) {
+      if (!mapping.containsKey(group)) {
         throw new IllegalArgumentException("The collection of groups contains a group which" +
             " was not added to the map. Be sure to call addGroup() for all groups first.");
       }
@@ -109,7 +120,7 @@ public class GroupInheritanceMap {
     while (!remaining.isEmpty()) {
       current = remaining.pop();
       found.add(current);
-      superInterfaces = groupInheritanceMap.get(current);
+      superInterfaces = mapping.get(current);
       for (Class<?> parent : superInterfaces) {
         if (!found.contains(parent)) {
           remaining.push(parent);
@@ -124,7 +135,7 @@ public class GroupInheritanceMap {
    */
   public Set<Class<?>> getAllGroups() {
     Set<Class<?>> allGroups = new HashSet<Class<?>>();
-    for (Map.Entry<Class<?>, Set<Class<?>>> entry : groupInheritanceMap.entrySet()) {
+    for (Map.Entry<Class<?>, Set<Class<?>>> entry : mapping.entrySet()) {
       allGroups.add(entry.getKey());
       allGroups.addAll(entry.getValue());
     }
@@ -139,27 +150,27 @@ public class GroupInheritanceMap {
    * @see #findAllExtendedGroups(Collection)
    */
   public Set<Class<?>> getParentsOfGroup(Class<?> group) {
-    return groupInheritanceMap.get(group);
+    return mapping.get(group);
   }
 
   /**
    * Returns all of the groups added to the map (but not their parents).
    */
   public Set<Class<?>> getRootGroups() {
-    return groupInheritanceMap.keySet();
+    return mapping.keySet();
   }
 
   @Override
   public int hashCode() {
-    return groupInheritanceMap.hashCode();
+    return mapping.hashCode();
   }
 
   public boolean isEmpty() {
-    return groupInheritanceMap.isEmpty();
+    return mapping.isEmpty();
   }
 
   @Override
   public String toString() {
-    return groupInheritanceMap.toString();
+    return mapping.toString();
   }
 }

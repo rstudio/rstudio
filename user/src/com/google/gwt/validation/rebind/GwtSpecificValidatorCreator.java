@@ -41,6 +41,8 @@ import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.google.gwt.thirdparty.guava.common.primitives.Primitives;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
+import com.google.gwt.validation.client.ConstraintOrigin;
+import com.google.gwt.validation.client.GroupInheritanceMap;
 import com.google.gwt.validation.client.impl.AbstractGwtSpecificValidator;
 import com.google.gwt.validation.client.impl.ConstraintDescriptorImpl;
 import com.google.gwt.validation.client.impl.GwtBeanDescriptor;
@@ -266,6 +268,18 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
     return ImmutableSet.copyOf(Maps.filterKeys(map, inBest).values());
   }
 
+  private static ConstraintOrigin convertConstraintOriginEnum(
+      org.hibernate.validator.metadata.ConstraintOrigin definedOn) {
+    switch (definedOn) {
+      case DEFINED_IN_HIERARCHY:
+        return ConstraintOrigin.DEFINED_IN_HIERARCHY;
+      case DEFINED_LOCALLY:
+        return ConstraintOrigin.DEFINED_LOCALLY;
+      default:
+        throw new IllegalArgumentException("Unable to convert: unknown ConstraintOrigin value");
+    }
+  }
+
   /**
    * Gets the best {@link ConstraintValidator}.
    *
@@ -331,7 +345,7 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
   @Override
   protected void compose(ClassSourceFileComposerFactory composerFactory) {
     addImports(composerFactory, Annotation.class, ConstraintViolation.class,
-        GWT.class, GwtBeanDescriptor.class, GwtValidationContext.class,
+        GWT.class, GroupInheritanceMap.class, GwtBeanDescriptor.class, GwtValidationContext.class,
         HashSet.class, IllegalArgumentException.class, Set.class,
         ValidationException.class);
     composerFactory.setSuperclass(AbstractGwtSpecificValidator.class.getCanonicalName()
@@ -489,28 +503,6 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
     return getAnnotation(p, useField, Valid.class) != null;
   }
 
-  /**
-   * Handles returning an {@link ElementType} for a given property constraint.
-   * In the situation where a property has the same constraint type applied to it twice
-   * (once via a field and once via a method), then {@link ElementType#FIELD} is returned first
-   * and {@link ElementType#METHOD} is returned after. This should be safe because the bean
-   * introspection always returns field annotations before getter annotations.
-   */
-  private ElementType inferElementType(PropertyDescriptor propertyDescriptor,
-      boolean seenBefore) {
-    if (beanHelper.hasField(propertyDescriptor)) {
-      if (beanHelper.hasGetter(propertyDescriptor)) {
-        // this property should be validated twice
-        if (seenBefore) {
-          // the FIELD type has already been returned the first time
-          return ElementType.METHOD;
-        }
-      }
-      return ElementType.FIELD;
-    }
-    return ElementType.METHOD;
-  }
-
   private boolean isPropertyConstrained(BeanHelper helper, PropertyDescriptor p) {
     Set<PropertyDescriptor> propertyDescriptors =
         helper.getBeanDescriptor().getConstrainedProperties();
@@ -622,6 +614,7 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
   private void writeConstraintDescriptor(SourceWriter sw,
       ConstraintDescriptor<? extends Annotation> constraint,
       ElementType elementType,
+      ConstraintOrigin origin,
       String constraintDescripotorVar) throws UnableToCompleteException {
     Class<? extends Annotation> annotationType =
         constraint.getAnnotation().annotationType();
@@ -630,7 +623,7 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
     int count = 0;
     for (ConstraintDescriptor<?> composingConstraint :
         constraint.getComposingConstraints()) {
-      writeConstraintDescriptor(sw, composingConstraint, elementType,
+      writeConstraintDescriptor(sw, composingConstraint, elementType, origin,
           constraintDescripotorVar + "_" + count++);
     }
 
@@ -725,6 +718,11 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.print(asLiteral(elementType));
     sw.println(")");
 
+    // .setDefinedOn(origin)
+    sw.print(".setDefinedOn(");
+    sw.print(asLiteral(origin));
+    sw.println(")");
+
     // .build();
     sw.println(".build();");
     sw.outdent();
@@ -774,12 +772,12 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
          beanHelper.getBeanDescriptor().getConstrainedProperties()) {
       int count = 0;
       // Check if the same annotation is applied to the same property twice (getter and field)
-      Set<Object> seen = Sets.newHashSet();
       for (ConstraintDescriptor<?> constraint : p.getConstraintDescriptors()) {
-        writeConstraintDescriptor(sw, constraint,
-            inferElementType(p, seen.contains(constraint.getAnnotation())),
+        org.hibernate.validator.metadata.ConstraintDescriptorImpl<?> constraintHibernate = 
+            (org.hibernate.validator.metadata.ConstraintDescriptorImpl<?>) constraint;
+        writeConstraintDescriptor(sw, constraint, constraintHibernate.getElementType(),
+            convertConstraintOriginEnum(constraintHibernate.getDefinedOn()),
             constraintDescriptorVar(p.getPropertyName(), count++));
-        seen.add(constraint.getAnnotation());
       }
       writePropertyDescriptor(sw, p);
       if (p.isCascaded()) {
@@ -793,7 +791,10 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
     int count = 0;
     for (ConstraintDescriptor<?> constraint :
         beanHelper.getBeanDescriptor().getConstraintDescriptors()) {
+      org.hibernate.validator.metadata.ConstraintDescriptorImpl<?> constraintHibernate =
+          (org.hibernate.validator.metadata.ConstraintDescriptorImpl<?>) constraint;
       writeConstraintDescriptor(sw, constraint, ElementType.TYPE,
+          convertConstraintOriginEnum(constraintHibernate.getDefinedOn()),
           constraintDescriptorVar("this", count++));
     }
 
@@ -829,11 +830,14 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
   }
 
   private void writeGetDescriptor(SourceWriter sw) {
-    // public GwtBeanDescriptor<beanType> getConstraints() {
+    // public GwtBeanDescriptor<beanType> getConstraints(GroupInheritanceMap groupInheritanceMap) {
     sw.print("public ");
     sw.print("GwtBeanDescriptor<" + beanHelper.getTypeCanonicalName() + "> ");
-    sw.println("getConstraints() {");
+    sw.println("getConstraints(GroupInheritanceMap groupInheritanceMap) {");
     sw.indent();
+
+    // beanDescriptor.setGroupInheritanceMap(groupInheritanceMap);
+    sw.println("beanDescriptor.setGroupInheritanceMap(groupInheritanceMap);");
 
     // return beanDescriptor;
     sw.println("return beanDescriptor;");
@@ -957,7 +961,7 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
   private void writePropertyDescriptor(SourceWriter sw, PropertyDescriptor p) {
     // private final PropertyDescriptor myProperty_pd =
     sw.print("private final ");
-    sw.print(PropertyDescriptor.class.getCanonicalName());
+    sw.print(PropertyDescriptorImpl.class.getCanonicalName());
     sw.print(" ");
     sw.print(p.getPropertyName());
     sw.println("_pd =");

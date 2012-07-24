@@ -15,6 +15,8 @@
  */
 package com.google.gwt.validation.client.impl;
 
+import com.google.gwt.validation.client.GroupInheritanceMap;
+
 import java.util.Set;
 
 import javax.validation.ConstraintViolation;
@@ -36,14 +38,15 @@ public interface GwtSpecificValidator<G> {
    * object (and associated objects including
    * <code>ConstraintDescriptor<code>s) are immutable.
    *
-   *
+   * @param groupInheritanceMap The group inheritance map for the validator.
    * @return the bean descriptor for the class associated with this validator.
    *
    * @throws IllegalArgumentException if clazz is null
    * @throws ValidationException if a non recoverable error happens during the
    *           metadata discovery or if some constraints are invalid.
    */
-  GwtBeanDescriptor<G> getConstraints() throws ValidationException;
+  GwtBeanDescriptor<G> getConstraints(GroupInheritanceMap groupInheritanceMap)
+      throws ValidationException;
 
   /**
    * Validates all constraints on <code>object</code>.
