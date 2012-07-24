@@ -127,7 +127,7 @@ target_link_libraries(rserver
 # install binary
 install(TARGETS rserver DESTINATION ${RSTUDIO_INSTALL_BIN})
 
-if (UNIX AND NOT APPLE)
+if (UNIX AND NOT APPLE AND NOT (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD"))
 
    # install configured admin script
    set(RSERVER_ADMIN_SCRIPT "extras/admin/rstudio-server")
