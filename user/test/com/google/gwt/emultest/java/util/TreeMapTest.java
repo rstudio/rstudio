@@ -327,19 +327,14 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
    * @see java.util.TreeMap#TreeMap(Map)
    */
   @SuppressWarnings("unchecked")
-  public void testConstructor_Map_throwsClassCastException() {
-    Map sourceMap = createMap();
+  public void testConstructor_Map_rawType() {
+    Map sourceMap = new HashMap();
     sourceMap.put(getConflictingKey(), getConflictingValue());
+    // In Java, raw types can be used to defeat type checking.
+    // For TreeMap, this works if the key is Comparable and there's
+    // only one entry in the map. If there's more than one entry,
+    // the compare() method will be called and that might throw.
     new TreeMap<K, V>(sourceMap);
-
-    // This does not fail as might be expected.
-    // TODO I don't know of any case where this could happen.
-    // try {
-    // new TreeMap<K, V>(sourceMap);
-    // fail("expected exception");
-    // } catch (ClassCastException e) {
-    // // expected outcome
-    // }
   }
 
   /**
@@ -1062,18 +1057,18 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.util.Map.put(Object, Object)'. This test shows some
-   * bad behavior of the TreeMap class. A mapping with null key can be put in
-   * but several methods are are unusable afterward.
+   * bad behavior of the TreeMap class before JDK 7. A mapping with null key can
+   * be put in but several methods are are unusable afterward.
    * 
    * A SortedMap with natural ordering (no comparator) is supposed to throw a
    * null pointer exception if a null keys are "not supported". For a natural
-   * ordered TreeMap, a null pointer exception is not thrown. But, the map is
-   * left in a state where any other key based methods result in a null pointer
-   * exception.
+   * ordered TreeMap before JDK 7, a null pointer exception is not thrown. But,
+   * the map is left in a state where any other key based methods result in a
+   * null pointer exception.
    * 
    * @see java.util.Map#put(Object, Object)
    */
-  public void testPut_nullKey_poison() {
+  public void testPut_nullKey() {
     SortedMap<K, V> sortedMap = createSortedMap();
 
     if (useNullKey()) {
@@ -1099,7 +1094,42 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
       sortedMap.subMap(getLessThanMinimumKey(), getGreaterThanMaximumKey());
       sortedMap.headMap(getLessThanMinimumKey());
       sortedMap.tailMap(getLessThanMinimumKey());
+    } else if (isJdk7()) {
+      // nulls are rejected immediately and don't poison the map anymore
+      try {
+        assertNull(sortedMap.put(null, getValues()[0]));
+        fail("should have thrown");
+      } catch (NullPointerException e) {
+        // expected outcome
+      }
+      try {
+        assertNull(sortedMap.put(null, getValues()[1]));
+        fail("expected exception adding second null");
+      } catch (NullPointerException e) {
+        // expected outcome
+      }
+      try {
+        sortedMap.containsKey(null);
+        fail("expected exception on containsKey(null)");
+      } catch (NullPointerException e) {
+        // expected outcome
+      }
+      sortedMap.containsKey(getKeys()[0]);
+      try {
+        sortedMap.get(null);
+        fail("expected exception on get(null)");
+      } catch (NullPointerException e) {
+        // expected outcome
+      }
+      sortedMap.get(getKeys()[0]);
+      try {
+        sortedMap.remove(null);
+      } catch (NullPointerException e) {
+        // expected
+      }
+      sortedMap.remove(getKeys()[0]);
     } else {
+      // before JDK 7, nulls poisoned the map
       try {
         assertNull(sortedMap.put(null, getValues()[0]));
         // note: first null added is not required to throw NPE since no
@@ -1395,12 +1425,14 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     // The _throwsUnsupportedOperationException version of this test will
     // verify that the method is not supported.
     if (isPutAllSupported) {
-      Map sourceMap = createMap();
+      Map sourceMap = new HashMap();
       sourceMap.put(getConflictingKey(), getConflictingValue());
 
       Map<K, V> destMap = createMap();
       destMap.put(getKeys()[0], getValues()[0]);
       try {
+        // This throws in dev mode because we're putting a second
+        // entry in the map and the TreeMap calls the compare method.
         destMap.putAll(sourceMap);
         assertTrue("CCE expected in Development Mode", GWT.isScript());
       } catch (ClassCastException e) {

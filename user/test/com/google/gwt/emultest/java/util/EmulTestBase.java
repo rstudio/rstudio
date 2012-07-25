@@ -15,6 +15,7 @@
  */
 package com.google.gwt.emultest.java.util;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.List;
@@ -43,5 +44,9 @@ public class EmulTestBase extends GWTTestCase {
 
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
+  }
+
+  protected boolean isJdk7() {
+    return !GWT.isScript() && System.getProperty("java.version", "none").startsWith("1.7.");
   }
 }

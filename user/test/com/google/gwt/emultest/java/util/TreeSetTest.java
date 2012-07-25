@@ -339,12 +339,14 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
     // The _throwsUnsupportedOperationException version of this test will
     // verify that the method is not supported.
     if (isPutAllSupported) {
-      Set sourceSet = createSet();
+      Set sourceSet = new HashSet();
       sourceSet.add(getConflictingKey());
 
       Set<E> destSet = createSet();
       destSet.add(getKeys()[0]);
       try {
+        // This throws in dev mode because we're putting a second entry in
+        // the set and TreeSet calls the compare method to order them.
         destSet.addAll(sourceSet);
         assertTrue("CCE expected in Development Mode", GWT.isScript());
       } catch (ClassCastException e) {
@@ -490,19 +492,13 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
    * @see java.util.TreeSet#TreeSet(Set)
    */
   @SuppressWarnings("unchecked")
-  public void testConstructor_Set_throwsClassCastException() {
-    Set sourceSet = createSet();
+  public void testConstructor_Set_rawType() {
+    Set sourceSet = new HashSet();
     sourceSet.add(getConflictingKey());
+    // Raw types can be used to defeat the type system, and this will work
+    // so long as the key is Comparable and there's only one entry (so compare()
+    // won't be called.)
     new TreeSet<E>(sourceSet);
-
-    // This does not fail as might be expected.
-    // TODO I don't know of any case where this could happen.
-    // try {
-    // new TreeSet<E, V>(sourceMap);
-    // fail("expected exception");
-    // } catch (ClassCastException e) {
-    // // expected outcome
-    // }
   }
 
   /**
