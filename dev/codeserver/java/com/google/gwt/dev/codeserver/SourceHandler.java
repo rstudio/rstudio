@@ -20,7 +20,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.json.JsonArray;
 import com.google.gwt.dev.json.JsonObject;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -161,34 +160,14 @@ class SourceHandler {
   private void sendSourceFile(String moduleName, String rest, HttpServletResponse response)
       throws IOException {
     ModuleState moduleState = modules.get(moduleName);
-    // generated file?
-    if (rest.startsWith("gen/")) {
-      File fileInGenDir = new File(moduleState.getGenDir(), removePrefix(rest, "gen/"));
-      if (!fileInGenDir.isFile()) {
-        sendNotFound(response, rest);
-        return;
-      }
-      PageUtil.sendFile("text/plain", fileInGenDir, response);
-      return;
-    }
-
-    // regular source file?
     InputStream pageBytes = moduleState.openSourceFile(rest);
+
     if (pageBytes == null) {
-      sendNotFound(response, rest);
+      response.sendError(HttpServletResponse.SC_NOT_FOUND);
+      logger.log(TreeLogger.WARN, "unknown source file: " + rest);
       return;
     }
 
     PageUtil.sendStream("text/plain", pageBytes, response);
-  }
-
-  private void sendNotFound(HttpServletResponse response, String path) throws IOException {
-    response.sendError(HttpServletResponse.SC_NOT_FOUND);
-    logger.log(TreeLogger.WARN, "unknown source file: " + path);
-  }
-
-  private String removePrefix(String s, String prefix) {
-    assert s.startsWith(prefix);
-    return s.substring(prefix.length());
   }
 }

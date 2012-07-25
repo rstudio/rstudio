@@ -31,7 +31,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Writer;
 import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
@@ -302,24 +301,62 @@ public class WebServer {
     out.println(");");
   }
 
-  private static String guessMimeType(String filename) {
-    return URLConnection.guessContentTypeFromName(filename);
-  }
-
   /**
    * Sends the log file as html with errors highlighted in red.
    */
   private void sendLogPage(String moduleName, File file, HttpServletResponse response)
        throws IOException {
+    BufferedReader reader = new BufferedReader(new FileReader(file));
+
     response.setStatus(HttpServletResponse.SC_OK);
     response.setContentType("text/html");
     response.setHeader("Content-Style-Type", "text/css");
-    Writer out = response.getWriter();
-    out.write("<html><head><title>" + moduleName + " compile log</title></head>\n<body>\n<pre>\n");
 
-    BufferedReader reader = new BufferedReader(new FileReader(file));
+    HtmlWriter out = new HtmlWriter(response.getWriter());
+    out.startTag("html").nl();
+    out.startTag("head").nl();
+    out.startTag("title").text(moduleName + " compile log").endTag("title").nl();
+    out.startTag("style").nl();
+    out.text(".error { color: red; font-weight: bold; }").nl();
+    out.endTag("style").nl();
+    out.endTag("head").nl();
+    out.startTag("body").nl();
     sendLogAsHtml(reader, out);
-    out.write("</pre></body></html>\n");
+    out.endTag("body").nl();
+    out.endTag("html").nl();
+  }
+
+  private static final Pattern ERROR_PATTERN = Pattern.compile("\\[ERROR\\]");
+
+  /**
+   * Copies in to out line by line, escaping each line for html characters and highlighting
+   * error lines. Closes <code>in</code> when done.
+   */
+  private static void sendLogAsHtml(BufferedReader in, HtmlWriter out) throws IOException {
+    try {
+      out.startTag("pre").nl();
+      String line = in.readLine();
+      while (line != null) {
+        Matcher m = ERROR_PATTERN.matcher(line);
+        boolean error = m.find();
+        if (error) {
+          out.startTag("span", "class=", "error");
+        }
+        out.text(line);
+        if (error) {
+          out.endTag("span");
+        }
+        out.nl(); // the readLine doesn't include the newline.
+        line = in.readLine();
+      }
+      out.endTag("pre").nl();
+    } finally {
+      in.close();
+    }
+  }
+
+  private static String guessMimeType(String filename) {
+    return URLConnection.guessContentTypeFromName(filename);
   }
 
   /**
@@ -341,63 +378,5 @@ public class WebServer {
     Request baseRequest = (request instanceof Request) ? (Request) request :
         HttpConnection.getCurrentConnection().getRequest();
     baseRequest.setHandled(true);
-  }
-
-  private static final Pattern ERROR_PATTERN = Pattern.compile("\\[ERROR\\]");
-
-  private static final String ERROR_STYLE_START = "<span style='color: red; font-weight: bold;'>";
-  private static final String ERROR_STYLE_END = "</span>";
-
-  /**
-   * Copies in to out line by line, escaping each line for html characters and highlighting
-   * error lines. Closes <code>in</code> when done.
-   */
-  private static void sendLogAsHtml(BufferedReader in, Writer out) throws IOException {
-    try {
-      String line = in.readLine();
-      while (line != null) {
-        line = escapeHtmlCharacters(line);
-        Matcher m = ERROR_PATTERN.matcher(line);
-        boolean error = m.find();
-        if (error) {
-          out.write(ERROR_STYLE_START);
-        }
-        out.write(line);
-        if (error) {
-          out.write(ERROR_STYLE_END);
-        }
-        out.write('\n'); // the readLine doesn't include the newline.
-        line = in.readLine();
-      }
-    } finally {
-      in.close();
-    }
-  }
-
-  /**
-   * Converts any special html characters to escape sequences.
-   */
-  private static String escapeHtmlCharacters(String line) {
-    StringBuilder sb = new StringBuilder(line.length());
-    for (char c : line.toCharArray()) {
-     escapeAndAppendCharacter(c, sb);
-    }
-    return sb.toString();
-  }
-
-  private static void escapeAndAppendCharacter(char c, StringBuilder sb) {
-    switch(c) {
-      case '<':
-        sb.append("&lt;");
-        break;
-      case '>':
-        sb.append("&gt;");
-        break;
-      case '&':
-        sb.append("&amp;");
-        break;
-      default:
-        sb.append(c);
-    }
   }
 }

@@ -21,7 +21,9 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.json.JsonArray;
 import com.google.gwt.dev.json.JsonObject;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -110,13 +112,30 @@ class ModuleState {
   }
 
   /**
-   * Finds a source file (or other resource) in this module's source path.
-   * @param resourceName the relative path to a resource in the module's classpath.
-   * @return a stream for reading the resource, or null if not found.
+   * Finds a source file (or other resource) that's either in this module's source path, or
+   * is a generated file.
+   * @param path location of the file relative to its directory in the classpath, or (if
+   *   it starts with "gen/"), a generated file.
+   * @return bytes in the file, or null if there's no such source file.
    */
-  InputStream openSourceFile(String resourceName) throws IOException {
-    URL resource = recompiler.getResourceLoader().getResource(resourceName);
-    return resource == null ? null : resource.openStream();
+  InputStream openSourceFile(String path) throws IOException {
+
+    if (path.startsWith("gen/")) {
+      // generated file?
+      String rest = path.substring("gen/".length());
+      File fileInGenDir = new File(getGenDir(), rest);
+      if (!fileInGenDir.isFile()) {
+        return null;
+      }
+      return new BufferedInputStream(new FileInputStream(fileInGenDir));
+    } else {
+      // regular source file?
+      URL resource = recompiler.getResourceLoader().getResource(path);
+      if (resource == null) {
+        return null;
+      }
+      return resource.openStream();
+    }
   }
 
   /**
