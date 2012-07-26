@@ -73,6 +73,7 @@ import org.apache.commons.collections.map.ReferenceMap;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -1168,8 +1169,8 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
     addTestResource(CU_Throwable);
     addTestResource(CU_MethodsAndParams);
     buildTypeOracle();
-    JClassType[] types = typeOracle.getTypes();
-    assertEquals(3, types.length);
+    // Throwable has nested classes in JDK 7, so we need to ignore them
+    checkGetTypes("Methods", "Object", "Throwable");
   }
 
   public void testOuterInner() throws TypeOracleException {
@@ -1311,6 +1312,26 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
     if (cup != null) {
       cup.check(classInfo);
     }
+  }
+
+  private void checkGetTypes(String... expectedOuterClassNames) {
+    Set<String> expected = new HashSet<String>();
+    expected.addAll(Arrays.asList(expectedOuterClassNames));
+
+    Set<String> found = new HashSet<String>();
+
+    for (JClassType type : typeOracle.getTypes()) {
+      String name = type.getName();
+      if (name.indexOf('.') > 0) {
+        name = name.substring(0, name.indexOf('.'));
+      }
+      if (!expected.contains(name)) {
+        fail("getTypes() returned an unexpected class: " + type.getName());
+      }
+      found.add(name);
+    }
+
+    assertEquals(expected, found);
   }
 
   private void register(String qualifiedTypeName, CheckedJavaResource cup) {
