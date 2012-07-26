@@ -257,8 +257,10 @@ Error saveDocumentCore(const std::string& contents,
       fullDocPath = module_context::resolveAliasedPath(path);
    }
    
-   // update dirty state: dirty if there was no path (and was thus an autosave)
-   pDoc->setDirty(!hasPath);
+   // update dirty state: dirty if there was no path AND the new contents
+   // are different from the old contents (and was thus a content autosave
+   // as distinct from a fold-spec or scroll-position/selection autosave)
+   pDoc->setDirty(!hasPath && (contents != pDoc->contents()));
    
    bool hasType = json::isType<std::string>(jsonType);
    if (hasType)
