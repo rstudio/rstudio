@@ -499,11 +499,20 @@ public class TextEditingTarget implements EditingTarget
             if (!fileChange.getFile().getPath().equals(getPath()))
                return;
 
+            // check for changes if this is the active editor
+            // always check for changes if this is the active editor
+            if (commandHandlerReg_ != null) 
+            {
+               checkForExternalEdit();
+            }
+            
             // check for changes on all add and modify events (we don't 
             // check on remove in case the remove is really just another
             // editor deleting then recreating the file)
-            if (fileChange.getType() != FileChange.DELETE)
+            else if (fileChange.getType() != FileChange.DELETE)
+            {
                checkForExternalEdit();
+            }
          }
       }));
       
