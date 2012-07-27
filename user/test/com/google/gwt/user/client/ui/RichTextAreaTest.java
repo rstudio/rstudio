@@ -107,6 +107,7 @@ public class RichTextAreaTest extends GWTTestCase {
     });
     RootPanel.get().add(rta);
     rta.setFocus(true);
+    RootPanel.get().remove(rta);
 
     // Webkit based browsers will not fire a focus event if the browser window
     // is behind another window, so we can only test that this doesn't cause
