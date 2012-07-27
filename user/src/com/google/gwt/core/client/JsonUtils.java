@@ -28,7 +28,7 @@ public class JsonUtils {
    * eval(). Control characters, quotes and backslashes are not affected.
    */
   public static native String escapeJsonForEval(String toEscape) /*-{
-    var s = toEscape.replace(/[\xad\u0600-\u0603\u06dd\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202e\u2060-\u2063\u206a-\u206f\ufeff\ufff9-\ufffb]/g, function(x) {
+    var s = toEscape.replace(/[\xad\u0600-\u0603\u06dd\u070f\u17b4\u17b5\u200b-\u200f\u2028-\u202e\u2060-\u2064\u206a-\u206f\ufeff\ufff9-\ufffb]/g, function(x) {
       return @com.google.gwt.core.client.JsonUtils::escapeChar(Ljava/lang/String;)(x);
     });
     return s;
@@ -38,7 +38,7 @@ public class JsonUtils {
    * Returns a quoted, escaped JSON String.
    */
   public static native String escapeValue(String toEscape) /*-{
-    var s = toEscape.replace(/[\x00-\x1f\xad\u0600-\u0603\u06dd\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202e\u2060-\u2063\u206a-\u206f\ufeff\ufff9-\ufffb"\\]/g, function(x) {
+    var s = toEscape.replace(/[\x00-\x1f\xad\u0600-\u0603\u06dd\u070f\u17b4\u17b5\u200b-\u200f\u2028-\u202e\u2060-\u2064\u206a-\u206f\ufeff\ufff9-\ufffb"\\]/g, function(x) {
       return @com.google.gwt.core.client.JsonUtils::escapeChar(Ljava/lang/String;)(x);
     });
     return "\"" + s + "\"";
@@ -149,6 +149,7 @@ public class JsonUtils {
     out[0x70f] = '\\u070f'; // Syriac abbreviation mark
     out[0x17b4] = '\\u17b4'; // Khmer vowel inherent aq
     out[0x17b5] = '\\u17b5'; // Khmer vowel inherent aa
+    out[0x200b] = '\\u200b'; // Zero width space
     out[0x200c] = '\\u200c'; // Zero width non-joiner
     out[0x200d] = '\\u200d'; // Zero width joiner
     out[0x200e] = '\\u200e'; // Left-to-right mark
@@ -164,6 +165,7 @@ public class JsonUtils {
     out[0x2061] = '\\u2061'; // Function application
     out[0x2062] = '\\u2062'; // Invisible times
     out[0x2063] = '\\u2063'; // Invisible separator
+    out[0x2064] = '\\u2064'; // Invisible plus
     out[0x206a] = '\\u206a'; // Inhibit symmetric swapping
     out[0x206b] = '\\u206b'; // Activate symmetric swapping
     out[0x206c] = '\\u206c'; // Inherent Arabic form shaping
