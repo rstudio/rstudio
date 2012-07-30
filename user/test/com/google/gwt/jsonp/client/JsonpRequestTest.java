@@ -301,7 +301,7 @@ public class JsonpRequestTest extends GWTTestCase {
   }
 
   public void testTimeout() {
-    delayTestFinish(jsonp.getTimeout() + 500);
+    delayTestFinish(jsonp.getTimeout() + 1000);
     jsonp.requestString(echoTimeout(),
         new AssertTimeoutExceptionCallback<String>());
   }
