@@ -19,10 +19,13 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
+import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JExpression;
+import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JThisRef;
+import com.google.gwt.dev.jjs.ast.JValueLiteral;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.js.ast.JsContext;
@@ -113,6 +116,20 @@ public class BaselineCoverageGatherer {
             cover(x.getSourceInfo());
           }
         }.accept(x.getFunc());
+      }
+
+      // don't instrument fields whose initializers are literals, because (1) CoverageVisitor
+      // doesn't visit literals because it can introduce syntax errors in some cases, and (2) it's
+      // consistent with other coverage tools, e.g. Emma.
+      @Override public boolean visit(JDeclarationStatement x, Context ctx) {
+        return !(x.getInitializer() instanceof JValueLiteral &&
+            x.getVariableRef().getTarget() instanceof JField);
+      }
+
+      // don't instrument method call arguments; we can get weird coverage results when a call is
+      // spread over several lines
+      @Override public boolean visit(JMethodCall x, Context ctx) {
+        return false;
       }
     }.accept(jProgram);
     return instrumentableLines;
