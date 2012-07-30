@@ -22,16 +22,20 @@ import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
+import com.google.gwt.dev.js.ast.JsName;
+import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.thirdparty.guava.common.base.Splitter;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 
 import junit.framework.TestCase;
 
 import java.io.StringReader;
+import java.util.Map;
 
 /**
  * Tests for CoverageInstrumentor.
@@ -44,6 +48,8 @@ public class CoverageInstrumentorTest extends TestCase {
   public void setUp() {
     program = new JsProgram();
     SourceInfo info = program.createSourceInfo(1, "Test.java");
+    program.setIndexedFields(fields("CoverageUtil.coverage"));
+    program.setIndexedFunctions(functions("CoverageUtil.cover", "CoverageUtil.onBeforeUnload"));
     JsBlock globalBlock = program.getGlobalBlock();
     JsFunction function = new JsFunction(info, program.getScope());
     functionBody = new JsBlock(info);
@@ -51,19 +57,29 @@ public class CoverageInstrumentorTest extends TestCase {
     globalBlock.getStatements().add(new JsExprStmt(info, function));
   }
 
+  private Map<String, JsName> fields(String... names) {
+    Map<String, JsName> fields = Maps.newHashMap();
+    for (String name : names) {
+      JsName n = program.getScope().declareName(name, name);
+      fields.put(name, n);
+    }
+    return fields;
+  }
+
+  private Map<String, JsFunction> functions(String... names) {
+    Map<String, JsFunction> funcs = Maps.newHashMap();
+    for (String name : names) {
+      JsFunction f = new JsFunction(program.getSourceInfo(), program.getScope());
+      f.setName(program.getScope().declareName(name));
+      funcs.put(name, f);
+    }
+    return funcs;
+  }
+
   private String instrument(String code) throws Exception {
     functionBody.getStatements().clear();
     CoverageInstrumentor.exec(program, parse(code));
     return functionBody.toSource().trim().replaceAll("\\s+", " ");
-  }
-
-  private String instrumentedProgram(Multimap<String, Integer> baseline) {
-    CoverageInstrumentor.exec(program, baseline);
-    return program.toSource();
-  }
-
-  private String instrumentedProgram() {
-    return instrumentedProgram(HashMultimap.<String, Integer>create());
   }
 
   private Multimap<String, Integer> parse(String code) throws Exception {
@@ -89,26 +105,22 @@ public class CoverageInstrumentorTest extends TestCase {
   }
 
   public void testBaselineCoverage() throws Exception {
-    Multimap<String, Integer> baselineCoverage = LinkedHashMultimap.create();
+    Multimap<String, Integer> instrumentableLines = LinkedHashMultimap.create();
     for (int i = 1; i < 6; i++) {
-      baselineCoverage.put("A.java", i);
-      baselineCoverage.put("B.java", i);
+      instrumentableLines.put("A.java", i);
+      instrumentableLines.put("B.java", i);
     }
-    assertTrue(instrumentedProgram(baselineCoverage).contains(new StringBuilder()
-        .append("var $coverage = {'A.java':{1:0, 2:0, 3:0, 4:0, 5:0}, ")
-        .append("'B.java':{1:0, 2:0, 3:0, 4:0, 5:0}}")));
-  }
 
-  public void testBeforeUnloadListenerExists() throws Exception {
-    String program = instrumentedProgram();
-    assertTrue(program.contains("var merge_coverage"));
-    assertTrue(program.contains("var merge"));
-    assertTrue(program.contains("window.onbeforeunload = function()"));
+    JsObjectLiteral baseline = CoverageInstrumentor.baselineCoverage(program.getSourceInfo(),
+        instrumentableLines);
+    assertEquals("{'A.java':{1:0, 2:0, 3:0, 4:0, 5:0}, 'B.java':{1:0, 2:0, 3:0, 4:0, 5:0}}",
+        baseline.toSource().trim().replaceAll("\\s+", " "));
   }
 
   public void testSimpleInstrumentation() throws Exception {
-    assertEquals("{ $coverage['Test.java'][1] = 1 , f(); }", instrument("f()"));
-    assertEquals("{ $coverage['Test.java'][1] = 1 , f(); $coverage['Test.java'][2] = 1 , g(); }",
+    assertEquals("{ CoverageUtil.cover('Test.java', 1) , f(); }", instrument("f()"));
+    assertEquals(
+        "{ CoverageUtil.cover('Test.java', 1) , f(); CoverageUtil.cover('Test.java', 2) , g(); }",
         instrument("f() \n g()"));
   }
 

@@ -893,6 +893,11 @@ public class GenerateJavaScriptAST {
       JsExpression rhs = (JsExpression) pop();
       JsName name = names.get(x);
 
+      if (program.getIndexedFields().contains(x)) {
+        indexedFields =
+            Maps.put(indexedFields, x.getEnclosingType().getShortName() + "." + x.getName(), name);
+      }
+
       if (x.isStatic()) {
         // setup a var for the static
         JsVar var = new JsVar(x.getSourceInfo(), name);
@@ -2342,6 +2347,8 @@ public class GenerateJavaScriptAST {
 
   private Map<String, JsFunction> indexedFunctions = Maps.create();
 
+  private Map<String, JsName> indexedFields = Maps.create();
+
   /**
    * Contains JsNames for all interface methods. A special scope is needed so
    * that independent classes will obfuscate their interface implementation
@@ -2626,6 +2633,7 @@ public class GenerateJavaScriptAST {
       }
     }
 
+    jsProgram.setIndexedFields(indexedFields);
     jsProgram.setIndexedFunctions(indexedFunctions);
 
     // TODO(spoon): Instead of gathering the information here, get it via

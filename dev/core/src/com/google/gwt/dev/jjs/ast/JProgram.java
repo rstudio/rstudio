@@ -111,6 +111,9 @@ public class JProgram extends JNode {
       new HashMap<String, JPrimitiveType>();
 
   static {
+    if (System.getProperty("gwt.coverage") != null) {
+      IMMORTAL_CODEGEN_TYPES_SET.add("com.google.gwt.lang.CoverageUtil");
+    }
     CODEGEN_TYPES_SET.addAll(IMMORTAL_CODEGEN_TYPES_SET);
     INDEX_TYPES_SET.addAll(CODEGEN_TYPES_SET);
 
@@ -698,6 +701,10 @@ public class JProgram extends JNode {
       throw new InternalCompilerException("Unable to locate index field: " + string);
     }
     return field;
+  }
+
+  public Collection<JField> getIndexedFields() {
+    return Collections.unmodifiableCollection(indexedFields.values());
   }
 
   public JMethod getIndexedMethod(String string) {

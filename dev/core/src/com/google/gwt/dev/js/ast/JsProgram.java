@@ -30,6 +30,8 @@ public final class JsProgram extends JsNode {
 
   private JsProgramFragment[] fragments;
 
+  private final Map<String, JsName> indexedFields = new HashMap<String, JsName>();
+
   private final Map<String, JsFunction> indexedFunctions = new HashMap<String, JsFunction>();
 
   private final JsScope objectScope;
@@ -90,6 +92,10 @@ public final class JsProgram extends JsNode {
     return getFragmentBlock(0);
   }
 
+  public JsName getIndexedField(String name) {
+    return indexedFields.get(name);
+  }
+
   public JsFunction getIndexedFunction(String name) {
     return indexedFunctions.get(name);
   }
@@ -115,6 +121,11 @@ public final class JsProgram extends JsNode {
     for (int i = 0; i < fragments; i++) {
       this.fragments[i] = new JsProgramFragment(createSourceInfoSynthetic(JsProgram.class));
     }
+  }
+
+  public void setIndexedFields(Map<String, JsName> indexedFields) {
+    this.indexedFields.clear();
+    this.indexedFields.putAll(indexedFields);
   }
 
   public void setIndexedFunctions(Map<String, JsFunction> indexedFunctions) {

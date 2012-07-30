@@ -339,6 +339,14 @@ public class JavaToJavaScriptCompiler {
       // (8) Normalize the JS AST.
       // Fix invalid constructs created during JS AST gen.
       JsNormalizer.exec(jsProgram);
+
+      /*
+       * If coverage is enabled, instrument the AST to record location info.
+       */
+      if (instrumentableLines != null) {
+        CoverageInstrumentor.exec(jsProgram, instrumentableLines);
+      }
+
       // Resolve all unresolved JsNameRefs.
       JsSymbolResolver.exec(jsProgram);
       // Move all function definitions to a top-level scope, to reduce weirdness
@@ -358,13 +366,6 @@ public class JavaToJavaScriptCompiler {
        * Creates new variables, must run before code splitter and namer.
        */
       JsStackEmulator.exec(jprogram, jsProgram, propertyOracles, jjsmap);
-
-      /*
-       * If coverage is enabled, instrument the AST to record location info.
-       */
-      if (instrumentableLines != null) {
-        CoverageInstrumentor.exec(jsProgram, instrumentableLines);
-      }
 
       /*
        * Work around Safari 5 bug by rewriting a >> b as ~~a >> b.
