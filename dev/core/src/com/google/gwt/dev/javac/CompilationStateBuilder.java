@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Manages a centralized cache for compiled units.
@@ -203,23 +204,36 @@ public class CompilationStateBuilder {
 
       ArrayList<CompilationUnit> resultUnits = new ArrayList<CompilationUnit>();
       do {
+        final TreeLogger branch = logger.branch(TreeLogger.TRACE, "Compiling...");
         // Compile anything that needs to be compiled.
         buildQueue = new LinkedBlockingQueue<CompilationUnitBuilder>();
         final ArrayList<CompilationUnit> newlyBuiltUnits = new ArrayList<CompilationUnit>();
         final CompilationUnitBuilder sentinel = CompilationUnitBuilder.create((GeneratedUnit) null);
         final Throwable[] workerException = new Throwable[1];
+        final ProgressLogger progressLogger =
+            new ProgressLogger(branch, TreeLogger.TRACE, builders.size(), 10);
         Thread buildThread = new Thread() {
           @Override
           public void run() {
+            int processedCompilationUnitBuilders = 0;
             try {
               do {
                 CompilationUnitBuilder builder = buildQueue.take();
+                if (!progressLogger.isTimerStarted()) {
+                  // Set start time here, after first job has arrived, since it can take a little
+                  // while for the first job to arrive, and this helps with the accuracy of the
+                  // estimated times.
+                  progressLogger.startTimer();
+                }
                 if (builder == sentinel) {
                   return;
                 }
                 // Expensive, must serialize GWT AST types to bytes.
                 CompilationUnit unit = builder.build();
                 newlyBuiltUnits.add(unit);
+
+                processedCompilationUnitBuilders++;
+                progressLogger.updateProgress(processedCompilationUnitBuilders);
               } while (true);
             } catch (Throwable e) {
               workerException[0] = e;
@@ -229,6 +243,7 @@ public class CompilationStateBuilder {
         buildThread.setName("CompilationUnitBuilder");
         buildThread.start();
         Event jdtCompilerEvent = SpeedTracerLogger.start(eventType);
+        long compilationStartNanos = System.nanoTime();
         try {
           compiler.doCompile(builders);
         } finally {
@@ -237,6 +252,11 @@ public class CompilationStateBuilder {
         buildQueue.add(sentinel);
         try {
           buildThread.join();
+          long compilationNanos = System.nanoTime() - compilationStartNanos;
+          // Convert nanos to seconds.
+          double compilationSeconds = compilationNanos / (double) TimeUnit.SECONDS.toNanos(1);
+          branch.log(TreeLogger.TRACE,
+              String.format("Compilation completed in %.02f seconds", compilationSeconds));
           if (workerException[0] != null) {
             throw workerException[0];
           }
