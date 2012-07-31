@@ -84,7 +84,7 @@ import java.util.List;
  * to know when a suggestion has been chosen from the SuggestBox's list of
  * suggestions. A SuggestBox fires {@link SuggestionEvent SuggestionEvents}
  * whenever a suggestion is chosen, and handlers for these events can be added
- * using the {@link #addValueChangeHandler(ValueChangeHandler)} method.
+ * using the {@link #addSelectionHandler(SelectionHandler)} method.
  * </p>
  *
  * <p>
