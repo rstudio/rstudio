@@ -823,7 +823,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   }
 
   /**
-   * Returns a {@link TakesValueEditor} backed by the DateBox.
+   * Returns a {@link TakesValueEditor} backed by the SuggestBox.
    */
   public LeafValueEditor<String> asEditor() {
     if (editor == null) {
