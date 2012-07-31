@@ -65,8 +65,15 @@ Error createProject(const json::JsonRpcRequest& request,
       return error;
 
    // create the project file
-   return r_util::writeProjectFile(projectFilePath,
-                                   ProjectContext::defaultConfig());
+   if (!projectFilePath.exists())
+   {
+      return r_util::writeProjectFile(projectFilePath,
+                                      ProjectContext::defaultConfig());
+   }
+   else
+   {
+      return Success();
+   }
 }
 
 json::Object projectConfigJson(const r_util::RProjectConfig& config)
