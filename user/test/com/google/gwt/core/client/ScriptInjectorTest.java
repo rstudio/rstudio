@@ -118,7 +118,7 @@ public class ScriptInjectorTest extends GWTTestCase {
    */
   public void testInjectUrlAbsolute() {
     delayTestFinish(TEST_DELAY);
-    final String scriptUrl = "http://www.google.com/jsapi?key=GWTUNITEST";
+    final String scriptUrl = GWT.getModuleBaseForStaticFiles() + "script_injector_test_absolute.js";
     assertFalse(nativeInjectUrlAbsoluteWorked());
     ScriptInjector.fromUrl(scriptUrl).setCallback(new Callback<Void, Exception>() {
 
@@ -142,7 +142,7 @@ public class ScriptInjectorTest extends GWTTestCase {
    */
   public void testInjectUrlAbsoluteTop() {
     delayTestFinish(TEST_DELAY);
-    final String scriptUrl = "http://www.google.com/jsapi?key=GWTUNITEST_ABSOLUTE";
+    final String scriptUrl = GWT.getModuleBaseForStaticFiles() + "script_injector_test_absolute_top.js";
     assertFalse(nativeAbsoluteTopUrlIsLoaded());
     ScriptInjector.fromUrl(scriptUrl).setWindow(ScriptInjector.TOP_WINDOW).setCallback(
         new Callback<Void, Exception>() {
@@ -368,7 +368,7 @@ public class ScriptInjectorTest extends GWTTestCase {
   }
 
   private native boolean nativeAbsoluteTopUrlIsLoaded() /*-{
-    return !!$wnd.google && !!$wnd.google.load;
+    return !!$wnd["__tiabsolutetop_var__"] && $wnd["__tiabsolutetop_var__"] == 102;
   }-*/;
 
   private native JavaScriptObject nativeFindScriptText(JavaScriptObject wnd, String text) /*-{
@@ -395,7 +395,7 @@ public class ScriptInjectorTest extends GWTTestCase {
   }-*/;
 
   private native boolean nativeInjectUrlAbsoluteWorked() /*-{
-    return !!window.google && !!window.google.load;
+    return !!window["__tiabsolute_var__"] && window["__tiabsolute_var__"] == 101;
   }-*/;
 
   private native boolean nativeTest1Worked() /*-{
