@@ -20,7 +20,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.dom.client.HasScrollHandlers;
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
@@ -88,12 +87,11 @@ public abstract class AbstractNativeScrollbar extends Widget implements HasScrol
     // Create a scrollable element and attach it to the body.
     Element scrollable = Document.get().createDivElement();
     scrollable.getStyle().setPosition(Position.ABSOLUTE);
-    scrollable.getStyle().setTop(0.0, Unit.PX);
-    scrollable.getStyle().setLeft(0.0, Unit.PX);
+    scrollable.getStyle().setTop(-1000.0, Unit.PX);
+    scrollable.getStyle().setLeft(-1000.0, Unit.PX);
     scrollable.getStyle().setHeight(100.0, Unit.PX);
     scrollable.getStyle().setWidth(100.0, Unit.PX);
     scrollable.getStyle().setOverflow(Overflow.SCROLL);
-    scrollable.getStyle().setVisibility(Visibility.HIDDEN);
     scrollable.getStyle().setProperty("direction", "rtl");
     Document.get().getBody().appendChild(scrollable);
 
