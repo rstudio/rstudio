@@ -24,7 +24,7 @@ import com.google.gwt.user.client.DeferredCommand;
  */
 public class StyleInjectorTest extends GWTTestCase {
 
-  private static final int TEST_DELAY = 500;
+  private static final int TEST_DELAY = 1000;
 
   @Override
   public String getModuleName() {
