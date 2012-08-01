@@ -52,7 +52,7 @@ function getCompiledCodeFilename() {
     // __PERMUTATIONS_END__
     var idx = strongName.indexOf(':');
     if (idx != -1) {
-      softPermutationId = +(strongName.substring(idx + 1));
+      softPermutationId = parseInt(strongName.substring(idx + 1), 10);
       strongName = strongName.substring(0, idx);
     }
   } catch (e) {
