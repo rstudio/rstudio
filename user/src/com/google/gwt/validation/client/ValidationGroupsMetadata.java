@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
@@ -33,16 +34,18 @@ import javax.validation.groups.Default;
  * <p>
  * Contains all the information known about the inheritance information for validation groups.
  */
-public class GroupInheritanceMap {
+public class ValidationGroupsMetadata {
 
   /**
-   * Builder for {@link GroupInheritanceMap}
+   * Builder for {@link ValidationGroupsMetadata}
    */
   public static class Builder {
-    Map<Class<?>, Set<Class<?>>> mapping;
+    private final Map<Class<?>, Set<Class<?>>> inheritanceinheritanceMap;
+    private final Map<Class<?>, List<Class<?>>> sequenceMap;
 
     private Builder() {
-      mapping = new HashMap<Class<?>, Set<Class<?>>>();
+      inheritanceinheritanceMap = new HashMap<Class<?>, Set<Class<?>>>();
+      sequenceMap = new HashMap<Class<?>, List<Class<?>>>();
       addGroup(Default.class);
     }
 
@@ -53,12 +56,22 @@ public class GroupInheritanceMap {
      * group contains no parents.
      */
     public Builder addGroup(Class<?> group, Class<?>... parents) {
-      mapping.put(group, new HashSet<Class<?>>(Arrays.asList(parents)));
+      inheritanceinheritanceMap.put(group, new HashSet<Class<?>>(Arrays.asList(parents)));
+      return this;
+    }
+
+    /**
+     * Adds a group sequence to the sequence map.
+     * @param groupSequence The class representing the sequence (annotated with &#064;GroupSequence)
+     * @param sequenceGroups The groups in the sequence.
+     */
+    public Builder addSequence(Class<?> groupSequence, Class<?>... sequenceGroups) {
+      sequenceMap.put(groupSequence, Arrays.asList(sequenceGroups));
       return this;
     }
     
-    public GroupInheritanceMap build() {
-      return new GroupInheritanceMap(mapping);
+    public ValidationGroupsMetadata build() {
+      return new ValidationGroupsMetadata(inheritanceinheritanceMap, sequenceMap);
     }
   }
 
@@ -69,17 +82,20 @@ public class GroupInheritanceMap {
     return new Builder();
   }
 
-  private final Map<Class<?>, Set<Class<?>>> mapping;
+  private final Map<Class<?>, Set<Class<?>>> inheritanceMapping;
+  private final Map<Class<?>, List<Class<?>>> sequenceMapping;
 
-  private GroupInheritanceMap(Map<Class<?>, Set<Class<?>>> mapping) {
-    this.mapping = Collections.unmodifiableMap(mapping);
+  private ValidationGroupsMetadata(Map<Class<?>, Set<Class<?>>> inheritanceinheritanceMap,
+      Map<Class<?>, List<Class<?>>> sequenceMap) {
+    this.inheritanceMapping = Collections.unmodifiableMap(inheritanceinheritanceMap);
+    this.sequenceMapping = Collections.unmodifiableMap(sequenceMap);
   }
 
   /**
-   * Checks if a given group has been added to the map.
+   * Checks if a given group has been added to the inheritance map.
    */
   public boolean containsGroup(Class<?> group) {
-    return mapping.containsKey(group);
+    return inheritanceMapping.containsKey(group);
   }
 
   @Override
@@ -87,11 +103,12 @@ public class GroupInheritanceMap {
     if (this == other) {
       return true;
     }
-    if (!(other instanceof GroupInheritanceMap)) {
+    if (!(other instanceof ValidationGroupsMetadata)) {
       return false;
     }
-    GroupInheritanceMap otherObj = (GroupInheritanceMap)other;
-    return mapping.equals(otherObj.mapping);
+    ValidationGroupsMetadata otherObj = (ValidationGroupsMetadata)other;
+    return inheritanceMapping.equals(otherObj.inheritanceMapping)
+        && sequenceMapping.equals(otherObj.sequenceMapping);
   }
 
   /**
@@ -108,7 +125,7 @@ public class GroupInheritanceMap {
     Stack<Class<?>> remaining = new Stack<Class<?>>();
     // initialize
     for (Class<?> group : baseGroups) {
-      if (!mapping.containsKey(group)) {
+      if (!inheritanceMapping.containsKey(group)) {
         throw new IllegalArgumentException("The collection of groups contains a group which" +
             " was not added to the map. Be sure to call addGroup() for all groups first.");
       }
@@ -120,7 +137,7 @@ public class GroupInheritanceMap {
     while (!remaining.isEmpty()) {
       current = remaining.pop();
       found.add(current);
-      superInterfaces = mapping.get(current);
+      superInterfaces = inheritanceMapping.get(current);
       for (Class<?> parent : superInterfaces) {
         if (!found.contains(parent)) {
           remaining.push(parent);
@@ -131,15 +148,24 @@ public class GroupInheritanceMap {
   }
 
   /**
-   * Recursively gets all of the groups in the map (children and parents alike) in one flat set.
+   * Recursively gets all of the groups and sequence groups in the map (children and parents alike)
+   * in one flat set.
    */
-  public Set<Class<?>> getAllGroups() {
+  public Set<Class<?>> getAllGroupsAndSequences() {
     Set<Class<?>> allGroups = new HashSet<Class<?>>();
-    for (Map.Entry<Class<?>, Set<Class<?>>> entry : mapping.entrySet()) {
+    for (Map.Entry<Class<?>, Set<Class<?>>> entry : inheritanceMapping.entrySet()) {
       allGroups.add(entry.getKey());
       allGroups.addAll(entry.getValue());
     }
+    allGroups.addAll(sequenceMapping.keySet());
     return allGroups;
+  }
+
+  /**
+   * Returns all the known group sequence classes.
+   */
+  public Set<Class<?>> getGroupSequences() {
+    return sequenceMapping.keySet();
   }
 
   /**
@@ -150,27 +176,57 @@ public class GroupInheritanceMap {
    * @see #findAllExtendedGroups(Collection)
    */
   public Set<Class<?>> getParentsOfGroup(Class<?> group) {
-    return mapping.get(group);
+    return inheritanceMapping.get(group);
   }
 
   /**
    * Returns all of the groups added to the map (but not their parents).
    */
   public Set<Class<?>> getRootGroups() {
-    return mapping.keySet();
+    return inheritanceMapping.keySet();
+  }
+
+  /**
+   * If the sequence class has been added to the map then the actual sequence list is retrieved.
+   * Otherwise null is returned.
+   */
+  public List<Class<?>> getSequenceList(Class<?> sequence) {
+    return sequenceMapping.get(sequence);
   }
 
   @Override
   public int hashCode() {
-    return mapping.hashCode();
+    int result = inheritanceMapping.hashCode();
+    result = 31 * result + sequenceMapping.hashCode();
+    return result;
   }
 
-  public boolean isEmpty() {
-    return mapping.isEmpty();
+  /**
+   * Checks if a group extends other groups (has parents).
+   */
+  public boolean hasParents(Class<?> group) {
+    Set<Class<?>> possibleParents = getParentsOfGroup(group);
+    return possibleParents != null && !possibleParents.isEmpty();
+  }
+
+  public boolean isInheritanceMapEmpty() {
+    return inheritanceMapping.isEmpty();
+  }
+
+  /**
+   * Checks if a given class is a group sequence map.
+   */
+  public boolean isSeqeuence(Class<?> sequence) {
+    return sequenceMapping.containsKey(sequence);
+  }
+
+  public boolean isSequenceMapEmpty() {
+    return sequenceMapping.isEmpty();
   }
 
   @Override
   public String toString() {
-    return mapping.toString();
+    return "ValidationGroupsMetaData{inheritanceMap=" + inheritanceMapping + ", " +
+        "sequenceMap=" + sequenceMapping + "}";
   }
 }

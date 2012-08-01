@@ -16,16 +16,21 @@
 package com.google.gwt.validation.client.impl;
 
 import com.google.gwt.validation.client.ConstraintOrigin;
-import com.google.gwt.validation.client.GroupInheritanceMap;
+import com.google.gwt.validation.client.Group;
+import com.google.gwt.validation.client.GroupChain;
+import com.google.gwt.validation.client.GroupChainGenerator;
+import com.google.gwt.validation.client.ValidationGroupsMetadata;
 
 import java.lang.annotation.ElementType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import javax.validation.groups.Default;
 import javax.validation.metadata.ConstraintDescriptor;
 import javax.validation.metadata.Scope;
 import javax.validation.metadata.ElementDescriptor.ConstraintFinder;
@@ -37,15 +42,18 @@ import javax.validation.metadata.ElementDescriptor.ConstraintFinder;
  */
 public final class ConstraintFinderImpl implements ConstraintFinder {
   private Set<ConstraintDescriptorImpl<?>> constraintDescriptors;
-  private GroupInheritanceMap groupInheritanceMap;
+  private ValidationGroupsMetadata validationGroupsMetadata;
   private List<Class<?>> groups;
   private Set<ConstraintOrigin> definedInSet;
   private Set<ElementType> elementTypes;
+  private BeanMetadata beanMetadata;
 
-  public ConstraintFinderImpl(GroupInheritanceMap groupInheritanceMap, 
+  public ConstraintFinderImpl(BeanMetadata beanMetadata,
+      ValidationGroupsMetadata validationGroupsMetadata, 
       Set<ConstraintDescriptorImpl<?>> constraintDescriptors) {
-    this.groupInheritanceMap = groupInheritanceMap;
+    this.validationGroupsMetadata = validationGroupsMetadata;
     this.constraintDescriptors = constraintDescriptors;
+    this.beanMetadata = beanMetadata;
     elementTypes = new HashSet<ElementType>();
     elementTypes.add(ElementType.TYPE);
     elementTypes.add(ElementType.METHOD);
@@ -65,10 +73,11 @@ public final class ConstraintFinderImpl implements ConstraintFinder {
 
   @Override
   public Set<ConstraintDescriptor<?>> getConstraintDescriptors() {
-    if (groupInheritanceMap == null) {
-      // sanity check - this could be null if the caller does not set a group inheritance map first
+    if (validationGroupsMetadata == null) {
+      // sanity check - this could be null if the caller does not set group metadata first
       throw new IllegalStateException("ConstraintFinderImpl not initialized properly. A " +
-          "GroupInheritanceMap is required by GWT to properly find all constraint descriptors.");
+          "ValidationGroupsMetadata object is required by GWT to properly find all constraint " +
+          "descriptors.");
     }
     Set<ConstraintDescriptor<?>> matchingDescriptors = new HashSet<ConstraintDescriptor<?>>();
     findMatchingDescriptors(matchingDescriptors);
@@ -90,8 +99,15 @@ public final class ConstraintFinderImpl implements ConstraintFinder {
 
   @Override
   public ConstraintFinder unorderedAndMatchingGroups(Class<?>... groups) {
-    this.groups = new ArrayList<Class<?>>(groups.length);
-    Collections.addAll(this.groups, groups);
+    this.groups = new ArrayList<Class<?>>();
+    for (Class<?> clazz : groups) {
+      if (Default.class.equals(clazz) && beanMetadata.defaultGroupSequenceIsRedefined()) {
+        this.groups.addAll(beanMetadata.getDefaultGroupSequence());
+      }
+      else {
+        this.groups.add(clazz);
+      }
+    }
     return this;
   }
 
@@ -108,10 +124,12 @@ public final class ConstraintFinderImpl implements ConstraintFinder {
 
   private void findMatchingDescriptors(Set<ConstraintDescriptor<?>> matchingDescriptors) {
     if (!groups.isEmpty()) {
-      // TODO(idol) The group sequence ordering will play a part here
-      Set<Class<?>> extendedGroups = groupInheritanceMap.findAllExtendedGroups(groups);
-      for (Class<?> group : extendedGroups) {
-        addMatchingDescriptorsForGroup(group, matchingDescriptors);
+      GroupChain groupChain =
+          new GroupChainGenerator(validationGroupsMetadata).getGroupChainFor(groups);
+      Iterator<Group> groupIterator = groupChain.getGroupIterator();
+      while (groupIterator.hasNext()) {
+        Group g = groupIterator.next();
+        addMatchingDescriptorsForGroup(g.getGroup(), matchingDescriptors);
       }
     }
     else {

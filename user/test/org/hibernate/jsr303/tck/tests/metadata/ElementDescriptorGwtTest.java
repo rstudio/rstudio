@@ -17,8 +17,6 @@ package org.hibernate.jsr303.tck.tests.metadata;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
-
 /**
  * Test wrapper for {@link ElementDescriptorTest}.
  */
@@ -50,12 +48,10 @@ public class ElementDescriptorGwtTest extends GWTTestCase {
     delegate.testLookingAt();
   }
 
-  @Failing(issue = 5932)
   public void testUnorderedAndMatchingGroups() {
     delegate.testUnorderedAndMatchingGroups();
   }
 
-  @Failing(issue = 5932)
   public void testUnorderedAndMatchingGroupsWithDefaultGroupOverriding() {
     delegate.testUnorderedAndMatchingGroupsWithDefaultGroupOverriding();
   }

@@ -17,8 +17,6 @@ package org.hibernate.jsr303.tck.tests.constraints.groups;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
-
 /**
  * Test wrapper for {@link DefaultGroupRedefinitionTest}.
  */
@@ -30,12 +28,10 @@ public class DefaultGroupRedefinitionGwtTest extends GWTTestCase {
     return "org.hibernate.jsr303.tck.tests.constraints.groups.TckTest";
   }
 
-  @Failing(issue = 5801)
   public void testRedefiningDefaultGroup() {
     delegate.testRedefiningDefaultGroup();
   }
 
-  @Failing(issue = 5801)
   public void testValidatingAgainstRedefinedDefaultGroup() {
     delegate.testValidatingAgainstRedefinedDefaultGroup();
   }

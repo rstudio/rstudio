@@ -15,7 +15,7 @@
  */
 package com.google.gwt.validation;
 
-import com.google.gwt.validation.client.GroupInheritanceMapTest;
+import com.google.gwt.validation.client.ValidationGroupsMetadataTest;
 import com.google.gwt.validation.client.impl.NodeImplTest;
 import com.google.gwt.validation.client.impl.PathImplTest;
 
@@ -32,7 +32,7 @@ public class ValidationClientJreSuite {
         "Test suite for validation client code that does not require GWT.");
     suite.addTestSuite(PathImplTest.class);
     suite.addTestSuite(NodeImplTest.class);
-    suite.addTestSuite(GroupInheritanceMapTest.class);
+    suite.addTestSuite(ValidationGroupsMetadataTest.class);
     return suite;
   }
 }

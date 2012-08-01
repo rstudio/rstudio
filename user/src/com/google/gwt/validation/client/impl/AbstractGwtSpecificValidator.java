@@ -15,19 +15,27 @@
  */
 package com.google.gwt.validation.client.impl;
 
-import com.google.gwt.validation.client.GroupInheritanceMap;
+import com.google.gwt.validation.client.Group;
+import com.google.gwt.validation.client.GroupChain;
+import com.google.gwt.validation.client.GroupChainGenerator;
+import com.google.gwt.validation.client.ValidationGroupsMetadata;
 
 import java.lang.annotation.Annotation;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintViolation;
 import javax.validation.MessageInterpolator;
+import javax.validation.ValidationException;
 import javax.validation.groups.Default;
 
 /**
@@ -68,6 +76,63 @@ public abstract class AbstractGwtSpecificValidator<G> implements
     return new AttributeBuilder();
   }
 
+  @Override
+  public <T> Set<ConstraintViolation<T>> validate(
+      GwtValidationContext<T> context,
+      G object,
+      Class<?>... groups) {
+    groups = addDefaultGroupWhenEmpty(groups);
+    context.addValidatedObject(object);
+    try {
+      return validateGroups(context, object, null, false, false, null, null, groups);
+    } catch (IllegalArgumentException e) {
+      throw e;
+    } catch (ValidationException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new ValidationException("Error validating " + object.getClass(), e);
+    }
+  }
+
+  @Override
+  public <T> Set<ConstraintViolation<T>> validateProperty(
+      GwtValidationContext<T> context,
+      G object,
+      String propertyName,
+      Class<?>... groups) throws ValidationException {
+    groups = addDefaultGroupWhenEmpty(groups);
+    try {
+      return validateGroups(context, object, null, true, false, propertyName, null, groups);
+    } catch (IllegalArgumentException e) {
+      throw e;
+    } catch (ValidationException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new ValidationException("Error validating property " + propertyName +
+          " of " + object.getClass(), e);
+    }
+  }
+
+  @Override
+  public <T> Set<ConstraintViolation<T>> validateValue(
+      GwtValidationContext<T> context,
+      Class<G> beanType,
+      String propertyName,
+      Object value,
+      Class<?>... groups) throws ValidationException {
+    groups = addDefaultGroupWhenEmpty(groups);
+    try {
+      return validateGroups(context, null, beanType, false, true, propertyName, value, groups);
+    } catch (IllegalArgumentException e) {
+      throw e;
+    } catch (ValidationException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new ValidationException("Error validating property " + propertyName +
+          " with value " + value + " of " + beanType, e);
+    }
+  }
+
   protected Class<?>[] addDefaultGroupWhenEmpty(Class<?>[] groups) {
     if (groups.length == 0) {
       groups = new Class<?>[]{Default.class};
@@ -100,14 +165,16 @@ public abstract class AbstractGwtSpecificValidator<G> implements
     ConstraintValidatorContextImpl<A, V> constraintValidatorContext =
         context.createConstraintValidatorContext(constraintDescriptor);
 
-    GroupInheritanceMap groupInheritanceMap = context.getValidator().getGroupInheritanceMap();
+    List<Class<?>> groupsList = Arrays.asList(groups);
+    ValidationGroupsMetadata validationGroupsMetadata =
+        context.getValidator().getValidationGroupsMetadata();
     // check against the groups passed in as well as their parent (super) interfaces
-    Set<Class<?>> extendedGroups = groupInheritanceMap.findAllExtendedGroups(Arrays.asList(groups));
+    // Set<Class<?>> extendedGroups = validationGroupsMetadata.findAllExtendedGroups(groupsList);
     Set<Class<?>> constraintGroups = constraintDescriptor.getGroups();
 
     // check groups requested are in the set of constraint groups (including the implicit group)
-    if (!containsAny(extendedGroups, constraintGroups)
-        && !Arrays.asList(groups).contains(getConstraints(groupInheritanceMap).getElementClass())) {
+    if (!containsAny(groupsList, constraintGroups)
+        && !groupsList.contains(getConstraints(validationGroupsMetadata).getElementClass())) {
       return false;
     }
 
@@ -130,7 +197,7 @@ public abstract class AbstractGwtSpecificValidator<G> implements
       ConstraintValidatorContextImpl<A, V> constraintValidatorContext) {
     Set<MessageAndPath> mps = constraintValidatorContext.getMessageAndPaths();
     for (MessageAndPath messageAndPath : mps) {
-      ConstraintViolation<T> violation = createConstraintViolation(//
+      ConstraintViolation<T> violation = createConstraintViolation( // 
           context, //
           object, //
           value, //
@@ -170,5 +237,71 @@ public abstract class AbstractGwtSpecificValidator<G> implements
         .setElementType(constraintDescriptor.getElementType()) //
         .build();
     return violation;
+  }
+
+  private <T> Set<ConstraintViolation<T>> validateGroups(
+      GwtValidationContext<T> context,
+      G object,
+      Class<G> beanType,
+      boolean useProperty,
+      boolean useValue,
+      String propertyName,
+      Object value,
+      Class<?>... groups) {
+    ValidationGroupsMetadata validationGroupsMetadata =
+        context.getValidator().getValidationGroupsMetadata();
+    GroupChain groupChain =
+        new GroupChainGenerator(validationGroupsMetadata).getGroupChainFor(Arrays.asList(groups));
+
+    BeanMetadata beanMetadata = getBeanMetadata();
+    List<Class<?>> defaultGroupSeq = beanMetadata.getDefaultGroupSequence();
+    if (beanMetadata.defaultGroupSequenceIsRedefined()) {
+      groupChain.checkDefaultGroupSequenceIsExpandable(defaultGroupSeq);
+    }
+    
+    Set<ConstraintViolation<T>> violations = new HashSet<ConstraintViolation<T>>();
+    
+    Collection<Group> allGroups = groupChain.getAllGroups();
+    List<Class<?>> justGroups = new ArrayList<Class<?>>(allGroups.size());
+    for (Group g : allGroups) {
+      if (g.isDefaultGroup() && beanMetadata.defaultGroupSequenceIsRedefined()) {
+        List<Group> defaultGroupSeqWrapper = new ArrayList<Group>(defaultGroupSeq.size());
+        for (int i = 0; i < defaultGroupSeq.size(); i++) {
+          defaultGroupSeqWrapper.add(new Group(defaultGroupSeq.get(i), Default.class));
+        }
+        groupChain.insertSequence(defaultGroupSeqWrapper);
+      } else {
+        justGroups.add(g.getGroup());
+      }
+    }
+    Class<?>[] justGroupsArray = justGroups.toArray(new Class<?>[justGroups.size()]);
+    // TODO(idol) Use OOP to avoid having if statement here
+    if (useProperty) {
+      validatePropertyGroups(context, object, propertyName, violations, justGroupsArray);
+    } else if (useValue) {
+      validateValueGroups(context, beanType, propertyName, value, violations, justGroupsArray);
+    } else {
+      validateClassGroups(context, object, violations, justGroupsArray);
+    }
+    Iterator<List<Group>> sequenceIterator = groupChain.getSequenceIterator();
+    while (sequenceIterator.hasNext()) {
+      List<Group> sequence = sequenceIterator.next();
+      for (Group group : sequence) {
+        int numberOfViolations = violations.size();
+        // TODO(idol) Use OOP to avoid having if statement here
+        if (useProperty) {
+          validatePropertyGroups(context, object, propertyName, violations, group.getGroup());
+        } else if (useValue) {
+          validateValueGroups(context, beanType, propertyName, value, violations, group.getGroup());
+        } else {
+          validateClassGroups(context, object, violations, group.getGroup());
+        }
+        if (violations.size() > numberOfViolations) {
+          // stop processing when an error occurs
+          break;
+        }
+      }
+    }
+    return violations;
   }
 }

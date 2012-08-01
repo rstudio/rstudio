@@ -15,7 +15,7 @@
  */
 package com.google.gwt.validation.client.impl;
 
-import com.google.gwt.validation.client.GroupInheritanceMap;
+import com.google.gwt.validation.client.ValidationGroupsMetadata;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -35,29 +35,33 @@ public final class PropertyDescriptorImpl implements PropertyDescriptor {
   private Set<ConstraintDescriptorImpl<?>> descriptors;
   private Class<?> elementClass;
   private String name;
-  private GroupInheritanceMap groupInheritanceMap;
+  private ValidationGroupsMetadata validationGroupsMetadata;
+  private BeanMetadata parentBeanMetadata;
 
   public PropertyDescriptorImpl(String name, Class<?> elementClass,
-      boolean cascaded, ConstraintDescriptorImpl<?>... descriptors) {
-    this(name, elementClass, cascaded, null, descriptors);
+      boolean cascaded, BeanMetadata parentBeanMetadata,
+      ConstraintDescriptorImpl<?>... descriptors) {
+    this(name, elementClass, cascaded, parentBeanMetadata, null, descriptors);
   }
 
   public PropertyDescriptorImpl(String name, Class<?> elementClass,
-      boolean cascaded, GroupInheritanceMap groupInheritanceMap,
+      boolean cascaded, BeanMetadata parentBeanMetadata,
+      ValidationGroupsMetadata validationGroupsMetadata,
       ConstraintDescriptorImpl<?>... descriptors) {
     super();
 
     this.elementClass = elementClass;
     this.cascaded = cascaded;
     this.name = name;
-    this.groupInheritanceMap = groupInheritanceMap;
+    this.validationGroupsMetadata = validationGroupsMetadata;
+    this.parentBeanMetadata = parentBeanMetadata;
     this.descriptors = new HashSet<ConstraintDescriptorImpl<?>>(
         Arrays.asList(descriptors));
   }
 
   @Override
   public ConstraintFinder findConstraints() {
-    return new ConstraintFinderImpl(groupInheritanceMap, descriptors);
+    return new ConstraintFinderImpl(parentBeanMetadata, validationGroupsMetadata, descriptors);
   }
 
   @Override
@@ -85,14 +89,20 @@ public final class PropertyDescriptorImpl implements PropertyDescriptor {
     return cascaded;
   }
 
-  public void setGroupInheritanceMap(GroupInheritanceMap groupInheritanceMap) {
+  public void setValidationGroupsMetadata(ValidationGroupsMetadata validationGroupsMetadata) {
     // TODO(idol) Find some way to pass this via the constructor rather than after creation
-    this.groupInheritanceMap = groupInheritanceMap;
+    this.validationGroupsMetadata = validationGroupsMetadata;
   }
 
   public PropertyDescriptorImpl shallowCopy() {
     ConstraintDescriptorImpl<?>[] desc = new ConstraintDescriptorImpl<?>[descriptors.size()];
     descriptors.toArray(desc);
-    return new PropertyDescriptorImpl(name, elementClass, cascaded, groupInheritanceMap, desc);
+    return new PropertyDescriptorImpl( // 
+        name, // 
+        elementClass, // 
+        cascaded, // 
+        parentBeanMetadata, // 
+        validationGroupsMetadata, // 
+        desc);
   }
 }

@@ -17,7 +17,7 @@ package org.hibernate.jsr303.tck.tests.constraints.groups;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
+import javax.validation.GroupDefinitionException;
 
 /**
  * Test wrapper for {@link GroupTest}.
@@ -39,14 +39,18 @@ public class GroupGwtTest extends GWTTestCase {
   }
 
   public void testCyclicGroupSequence() {
-    delegate.testCyclicGroupSequence();
+    try {
+      delegate.testCyclicGroupSequence();
+      fail("Expected a " + GroupDefinitionException.class);
+    } catch (GroupDefinitionException expected) {
+      // expected
+    }
   }
 
   public void testGroups() {
     delegate.testGroups();
   }
 
-  @Failing(issue = 5801)
   public void testGroupSequence() {
     delegate.testGroupSequence();
   }

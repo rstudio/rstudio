@@ -20,6 +20,9 @@ import com.google.gwt.validation.client.AbstractGwtValidatorFactory;
 import com.google.gwt.validation.client.GwtValidation;
 import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 
+import org.hibernate.jsr303.tck.tests.validation.graphnavigation.Parent.ChildFirst;
+import org.hibernate.jsr303.tck.tests.validation.graphnavigation.Parent.ParentSecond;
+
 import javax.validation.Validator;
 import javax.validation.groups.Default;
 
@@ -35,7 +38,7 @@ public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
         AnimalCaretaker.class, Condor.class, Elephant.class, GameReserve.class,
         MultiCage.class, MultiCage.class, Order.class, Parent.class,
         SingleCage.class, User.class, Zebra.class, Zoo.class},
-      groups = {Default.class, Parent.ProperOrder.class})
+      groups = {Default.class, Parent.ProperOrder.class, ChildFirst.class, ParentSecond.class})
   public static interface GwtValidator extends Validator {
   }
 

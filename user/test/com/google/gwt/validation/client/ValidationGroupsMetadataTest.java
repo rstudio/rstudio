@@ -23,12 +23,12 @@ import java.util.HashSet;
 import javax.validation.groups.Default;
 
 /**
- * Test case for {@link GroupInheritanceMap}.
+ * Test case for {@link ValidationGroupsMetadata}.
  */
-public class GroupInheritanceMapTest extends TestCase {
+public class ValidationGroupsMetadataTest extends TestCase {
 
-  private GroupInheritanceMap createWithTestGroups() {
-    return GroupInheritanceMap.builder()
+  private ValidationGroupsMetadata createWithTestGroups() {
+    return ValidationGroupsMetadata.builder()
         .addGroup(Part1.class, MiniPart.class)
         .addGroup(Part2.class)
         .addGroup(Big.class, Part1.class, Part2.class)
@@ -38,12 +38,12 @@ public class GroupInheritanceMapTest extends TestCase {
   }
 
   public void testDefaultGroupExists() {
-    assertTrue(GroupInheritanceMap.builder().build().containsGroup(Default.class));
+    assertTrue(ValidationGroupsMetadata.builder().build().containsGroup(Default.class));
   }
   
   public void testFindAllExtendedGroups() {
     // should get all of the groups and all of their parents recursively
-    GroupInheritanceMap groupInheritanceMap = createWithTestGroups();
+    ValidationGroupsMetadata groupsMetadata = createWithTestGroups();
     Set<Class<?>> baseGroups = new HashSet<Class<?>>();
     baseGroups.add(Part1.class);
     baseGroups.add(Part2.class);
@@ -52,26 +52,26 @@ public class GroupInheritanceMapTest extends TestCase {
     desired.add(Part2.class);
     desired.add(MiniPart.class);
     desired.add(SuperSmall.class);
-    assertEquals(desired, groupInheritanceMap.findAllExtendedGroups(baseGroups));
+    assertEquals(desired, groupsMetadata.findAllExtendedGroups(baseGroups));
   }
 
   public void testFindingExtendedGroupsThrowsExceptionWhenUnknown() {
     // should throw exception when the group has not been added to the map
-    GroupInheritanceMap groupInheritanceMap = GroupInheritanceMap.builder().build();
-    assertFalse(groupInheritanceMap.containsGroup(MiniPart.class));
+    ValidationGroupsMetadata groupsMetadata = ValidationGroupsMetadata.builder().build();
+    assertFalse(groupsMetadata.containsGroup(MiniPart.class));
     try {
       Set<Class<?>> miniPart = new HashSet<Class<?>>();
       miniPart.add(MiniPart.class);
-      groupInheritanceMap.findAllExtendedGroups(miniPart);
+      groupsMetadata.findAllExtendedGroups(miniPart);
       fail("Expected an " + IllegalArgumentException.class);
     } catch (IllegalArgumentException expected) {
       // expected
     }
   }
 
-  public void testGetAllGroups() {
-    // should return all groups and their parents recursively
-    GroupInheritanceMap groupInheritanceMap = createWithTestGroups();
+  public void testGetAllGroupsAndSequences() {
+    // should return all groups and their parents recursively as well as sequence groups
+    ValidationGroupsMetadata groupsMetadata = createWithTestGroups();
     Set<Class<?>> desired = new HashSet<Class<?>>();
     desired.add(Default.class);
     desired.add(Part1.class);
@@ -79,7 +79,7 @@ public class GroupInheritanceMapTest extends TestCase {
     desired.add(MiniPart.class);
     desired.add(SuperSmall.class);
     desired.add(Big.class);
-    assertEquals(desired, groupInheritanceMap.getAllGroups());
+    assertEquals(desired, groupsMetadata.getAllGroupsAndSequences());
   }
 
   private interface Part1 extends MiniPart {

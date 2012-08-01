@@ -25,7 +25,7 @@ import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.validation.client.GwtValidation;
-import com.google.gwt.validation.client.GroupInheritanceMap;
+import com.google.gwt.validation.client.ValidationGroupsMetadata;
 import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 import com.google.gwt.validation.client.impl.GwtBeanDescriptor;
 import com.google.gwt.validation.client.impl.GwtSpecificValidator;
@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.validation.ConstraintViolation;
+import javax.validation.GroupSequence;
 import javax.validation.groups.Default;
 import javax.validation.metadata.BeanDescriptor;
 
@@ -77,7 +78,7 @@ public final class ValidatorCreator extends AbstractCreator {
        GwtBeanDescriptor.class,
        GwtSpecificValidator.class,
        GwtValidationContext.class,
-       GroupInheritanceMap.class,
+       ValidationGroupsMetadata.class,
        Set.class,
        HashSet.class,
        Map.class,
@@ -93,7 +94,7 @@ public final class ValidatorCreator extends AbstractCreator {
   protected void writeClassBody(SourceWriter sourceWriter) {
     writeConstructor(sourceWriter);
     sourceWriter.println();
-    writeCreateGroupInheritanceMap(sourceWriter);
+    writeCreateValidationGroupsMetadata(sourceWriter);
     sourceWriter.println();
     writeValidate(sourceWriter);
     sourceWriter.println();
@@ -111,8 +112,8 @@ public final class ValidatorCreator extends AbstractCreator {
     sw.println("public " + getSimpleName() + "() {");
     sw.indent();
 
-    // super(createGroupInheritanceMap());
-    sw.println("super(createGroupInheritanceMap());");
+    // super(createValidationGroupsMetadata());
+    sw.println("super(createValidationGroupsMetadata());");
 
     sw.outdent();
     sw.println("}");
@@ -134,9 +135,9 @@ public final class ValidatorCreator extends AbstractCreator {
     // object,
     sw.println(objectName + ", ");
 
-    // MyBeanValidator.INSTANCE.getConstraints(getGroupInheritanceMap()),
+    // MyBeanValidator.INSTANCE.getConstraints(getValidationGroupsMetadata()),
     sw.print(bean.getFullyQualifiedValidatorName());
-    sw.println(".INSTANCE.getConstraints(getGroupInheritanceMap()), ");
+    sw.println(".INSTANCE.getConstraints(getValidationGroupsMetadata()), ");
 
     // getMessageInterpolator(),
     sw.println("getMessageInterpolator(), ");
@@ -147,24 +148,33 @@ public final class ValidatorCreator extends AbstractCreator {
     sw.outdent();
   }
 
-  private void writeCreateGroupInheritanceMap(SourceWriter sw) {
-    // private static GroupInheritanceMap creategroupInheritanceMap() {
-    sw.println("private static GroupInheritanceMap createGroupInheritanceMap() {");
+  private void writeCreateValidationGroupsMetadata(SourceWriter sw) {
+    // private static ValidationGroupsMetadata createValidationGroupsMetadata() {
+    sw.println("private static ValidationGroupsMetadata createValidationGroupsMetadata() {");
     sw.indent();
     
-    // GroupInheritanceMap groupInheritanceMap = GroupInheritanceMap.builder()
-    sw.println("return GroupInheritanceMap.builder()");
+    // return ValidationGroupsMetadata.builder()
+    sw.println("return ValidationGroupsMetadata.builder()");
     sw.indent();
     sw.indent();
     for (Class<?> group : gwtValidation.groups()) {
-      // .addGroup(<<group>>
-      sw.print(".addGroup(");
-      sw.print(group.getCanonicalName() + ".class");
-      Class<?>[] parentInterfaces = group.getInterfaces();
-      for (Class<?> parent : parentInterfaces) {
-        // , <<parent class>>
+      GroupSequence sequenceAnnotation = group.getAnnotation(GroupSequence.class);
+      Class<?>[] groups;
+      if (sequenceAnnotation != null) {
+        // .addSequence(<<sequence>>
+        sw.print(".addSequence(");
+        sw.print(group.getCanonicalName() + ".class");
+        groups = sequenceAnnotation.value();
+      } else {
+        // .addGroup(<<group>>
+        sw.print(".addGroup(");
+        sw.print(group.getCanonicalName() + ".class");
+        groups = group.getInterfaces();
+      }
+      for (Class<?> clazz : groups) {
+        // , <<group class>>
         sw.print(", ");
-        sw.print(parent.getCanonicalName() + ".class");
+        sw.print(clazz.getCanonicalName() + ".class");
       }
       // )
       sw.println(")");
@@ -205,10 +215,10 @@ public final class ValidatorCreator extends AbstractCreator {
     sw.println("if (clazz.equals(" + bean.getTypeCanonicalName() + ".class)) {");
     sw.indent();
 
-    // return MyBeanValidator.INSTANCE.getConstraints(getGroupInheritanceMap());
+    // return MyBeanValidator.INSTANCE.getConstraints(getValidationGroupsMetadata());
     sw.print("return ");
     sw.print(bean.getFullyQualifiedValidatorName());
-    sw.println(".INSTANCE.getConstraints(getGroupInheritanceMap());");
+    sw.println(".INSTANCE.getConstraints(getValidationGroupsMetadata());");
 
     // }
     sw.outdent();

@@ -31,24 +31,20 @@ public class GroupSequenceIsolationGwtTest extends GWTTestCase {
     return "org.hibernate.jsr303.tck.tests.constraints.groups.groupsequenceisolation.TckTest";
   }
 
-  @Failing(issue = 6291)
   public void testCorrectDefaultSequenceContainedCaseWithGroupRedefinitionOnContainedEntity() {
     delegate
         .testCorrectDefaultSequenceContainedCaseWithGroupRedefinitionOnContainedEntity();
   }
 
-  @Failing(issue = 6291)
   public void testCorrectDefaultSequenceContainedCaseWithoutGroupRedefinitionOnContainedEntity() {
     delegate
         .testCorrectDefaultSequenceContainedCaseWithoutGroupRedefinitionOnContainedEntity();
   }
 
-  @Failing(issue = 6291)
   public void testCorrectDefaultSequenceInheritance() {
     delegate.testCorrectDefaultSequenceInheritance();
   }
 
-  @Failing(issue = 6291)
   public void testCorrectDefaultSequenceInheritance2() {
     delegate.testCorrectDefaultSequenceInheritance2();
   }

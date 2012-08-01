@@ -15,9 +15,10 @@
  */
 package com.google.gwt.validation.client.impl;
 
-import com.google.gwt.validation.client.GroupInheritanceMap;
+import com.google.gwt.validation.client.ValidationGroupsMetadata;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.validation.ConstraintValidatorFactory;
@@ -38,29 +39,29 @@ import javax.validation.Validator;
 public abstract class AbstractGwtValidator implements Validator {
 
   private final Set<Class<?>> validGroups;
-  private final GroupInheritanceMap groupInheritanceMap;
+  private final ValidationGroupsMetadata validationGroupsMetadata;
   private ConstraintValidatorFactory contraintValidatorFactory;
   private MessageInterpolator messageInterpolator;
   private TraversableResolver traversableResolver;
 
   /**
    * Creates a validator initialized with the default group inheritance map.
-   * @see #AbstractGwtValidator(GroupInheritanceMap)
+   * @see #AbstractGwtValidator(ValidationGroups)
    */
   public AbstractGwtValidator() {
-    this(GroupInheritanceMap.builder().build());
+    this(ValidationGroupsMetadata.builder().build());
   }
 
   /**
-   * @param groupInheritanceMap Map of groups to the groups' parents.
+   * @param validationGroupsMetadata Validation group metadata.
    */
-  public AbstractGwtValidator(GroupInheritanceMap groupInheritanceMap) {
-    validGroups = groupInheritanceMap.getAllGroups();
-    this.groupInheritanceMap = groupInheritanceMap;
+  public AbstractGwtValidator(ValidationGroupsMetadata validationGroupsMetadata) {
+    validGroups = validationGroupsMetadata.getAllGroupsAndSequences();
+    this.validationGroupsMetadata = validationGroupsMetadata;
   }
 
-  public GroupInheritanceMap getGroupInheritanceMap() {
-    return groupInheritanceMap;
+  public ValidationGroupsMetadata getValidationGroupsMetadata() {
+    return validationGroupsMetadata;
   }
 
   public void init(ConstraintValidatorFactory factory,
@@ -82,8 +83,12 @@ public abstract class AbstractGwtValidator implements Validator {
 
   protected void checkGroups(Class<?>... groups) {
     if (!validGroups.containsAll(Arrays.asList(groups))) {
+      HashSet<Class<?>> unknown = new HashSet<Class<?>>();
+      unknown.addAll(Arrays.asList(groups));
+      unknown.removeAll(validGroups);
       throw new IllegalArgumentException(this.getClass()
-          + " only processes the following groups " + validGroups);
+          + " only processes the following groups " + validGroups + ". "
+          + "The following groups could not be processed " + unknown);
     }
   }
 

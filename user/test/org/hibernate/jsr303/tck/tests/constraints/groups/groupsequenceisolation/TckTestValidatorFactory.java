@@ -30,7 +30,8 @@ public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
   /**
    * Marker Interface to {@link GWT#create(Class)}.
    */
-  @GwtValidation(value = {B1.class, B2.class, B3.class, C.class, E.class})
+  @GwtValidation(value = {B1.class, B2.class, B3.class, C.class, E.class},
+      groups = {Heavy.class, Minimal.class})
   public static interface GwtValidator extends Validator {
   }
 

@@ -15,7 +15,7 @@
  */
 package com.google.gwt.validation.client.impl;
 
-import com.google.gwt.validation.client.GroupInheritanceMap;
+import com.google.gwt.validation.client.ValidationGroupsMetadata;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
@@ -52,6 +52,7 @@ public final class GwtBeanDescriptorImpl<T> implements GwtBeanDescriptor<T> {
     private final Set<ConstraintDescriptorImpl<? extends Annotation>> constraints =
         new HashSet<ConstraintDescriptorImpl<? extends Annotation>>();
     private boolean isConstrained;
+    private BeanMetadata beanMetadata;
 
     private Builder(Class<T> clazz) {
       this.clazz = clazz;
@@ -64,12 +65,17 @@ public final class GwtBeanDescriptorImpl<T> implements GwtBeanDescriptor<T> {
     }
 
     public GwtBeanDescriptorImpl<T> build() {
-      return new GwtBeanDescriptorImpl<T>(clazz, isConstrained, descriptorMap,
+      return new GwtBeanDescriptorImpl<T>(clazz, isConstrained, descriptorMap, beanMetadata,
           constraints);
     }
 
     public Builder<T> put(String key, PropertyDescriptorImpl value) {
       descriptorMap.put(key, value.shallowCopy());
+      return this;
+    }
+
+    public Builder<T> setBeanMetadata(BeanMetadata beanMetadata) {
+      this.beanMetadata = beanMetadata;
       return this;
     }
 
@@ -88,44 +94,45 @@ public final class GwtBeanDescriptorImpl<T> implements GwtBeanDescriptor<T> {
 
   private final Map<String, PropertyDescriptorImpl> descriptorMap = new HashMap<String, PropertyDescriptorImpl>();
   private final boolean isBeanConstrained;
+
+  private final BeanMetadata beanMetadata;
   
-  private GroupInheritanceMap groupInheritanceMap;
+  private ValidationGroupsMetadata validationGroupsMetadata;
 
   private GwtBeanDescriptorImpl(Class<T> clazz, boolean isConstrained,
-      Map<String, PropertyDescriptorImpl> descriptorMap,
+      Map<String, PropertyDescriptorImpl> descriptorMap, BeanMetadata beanMetadata,
       Set<ConstraintDescriptorImpl<?>> constraints) {
-    super();
     this.clazz = clazz;
     this.isBeanConstrained = isConstrained;
+    this.beanMetadata = beanMetadata;
     this.descriptorMap.putAll(descriptorMap);
     this.constraints.addAll(constraints);
   }
 
   @Override
   public ConstraintFinder findConstraints() {
-    return new ConstraintFinderImpl(groupInheritanceMap, constraints);
+    return new ConstraintFinderImpl(beanMetadata, validationGroupsMetadata, constraints);
   }
 
   @Override
   public Set<PropertyDescriptor> getConstrainedProperties() {
     Collection<PropertyDescriptorImpl> props = descriptorMap.values();
     for (PropertyDescriptorImpl prop : props) {
-      prop.setGroupInheritanceMap(groupInheritanceMap);
+      prop.setValidationGroupsMetadata(validationGroupsMetadata);
     }
     return new HashSet<PropertyDescriptor>(props);
   }
 
   @Override
   public Set<ConstraintDescriptor<?>> getConstraintDescriptors() {
-    // Copy for safety
-    return new HashSet<ConstraintDescriptor<?>>(constraints);
+    return findConstraints().getConstraintDescriptors();
   }
 
   @Override
   public PropertyDescriptor getConstraintsForProperty(String propertyName) {
     PropertyDescriptorImpl propDesc = descriptorMap.get(propertyName);
     if (propDesc != null) {
-      propDesc.setGroupInheritanceMap(groupInheritanceMap);
+      propDesc.setValidationGroupsMetadata(validationGroupsMetadata);
     }
     return propDesc;
   }
@@ -146,8 +153,8 @@ public final class GwtBeanDescriptorImpl<T> implements GwtBeanDescriptor<T> {
   }
 
   @Override
-  public void setGroupInheritanceMap(GroupInheritanceMap groupInheritanceMap) {
+  public void setValidationGroupsMetadata(ValidationGroupsMetadata validationGroupsMetadata) {
     // TODO(idol) Find some way to pass this via the constructor rather than after creation
-    this.groupInheritanceMap = groupInheritanceMap;
+    this.validationGroupsMetadata = validationGroupsMetadata;
   }
 }

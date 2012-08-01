@@ -34,8 +34,8 @@ public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
   @GwtValidation(value = {
         Account.class, Customer.class, Man.class, Order.class, Person.class,
         SubClass.class, SuperClass.class, UnconstraintEntity.class},
-      groups = {Default.class, SuperClass.BasicGroup.class, SuperClass.InheritedGroup.class,
-        SuperClass.UnusedGroup.class})
+      groups = {Default.class, SubClass.DefaultGroup.class, SuperClass.BasicGroup.class,
+        SuperClass.InheritedGroup.class, SuperClass.UnusedGroup.class})
   public static interface GwtValidator extends Validator {
   }
 

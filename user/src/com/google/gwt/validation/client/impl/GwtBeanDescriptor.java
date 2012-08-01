@@ -15,7 +15,7 @@
  */
 package com.google.gwt.validation.client.impl;
 
-import com.google.gwt.validation.client.GroupInheritanceMap;
+import com.google.gwt.validation.client.ValidationGroupsMetadata;
 
 import javax.validation.metadata.BeanDescriptor;
 
@@ -29,5 +29,5 @@ import javax.validation.metadata.BeanDescriptor;
  * @param <T>
  */
 public interface GwtBeanDescriptor<T> extends BeanDescriptor {
-  void setGroupInheritanceMap(GroupInheritanceMap groupInheritanceMap);
+  void setValidationGroupsMetadata(ValidationGroupsMetadata validationGroupsMetadata);
 }

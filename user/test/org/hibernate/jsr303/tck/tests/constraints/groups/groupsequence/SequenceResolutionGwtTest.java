@@ -17,7 +17,6 @@ package org.hibernate.jsr303.tck.tests.constraints.groups.groupsequence;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
 import org.hibernate.jsr303.tck.util.client.NonTckTest;
 
 import javax.validation.GroupDefinitionException;
@@ -38,16 +37,10 @@ public class SequenceResolutionGwtTest extends GWTTestCase {
     // There must be at least one passing test.
   }
 
-  @Failing(issue = 6291)
   public void testGroupSequenceContainerOtherGroupSequences() {
-    try {
-      delegate.testGroupSequenceContainerOtherGroupSequences();
-      fail("Expected a " + GroupDefinitionException.class);
-    } catch (GroupDefinitionException expected) {
-    }
+    delegate.testGroupSequenceContainerOtherGroupSequences();
   }
 
-  @Failing(issue = 6291)
   public void testInvalidDefinitionOfDefaultSequenceInEntity() {
     try {
       delegate.testInvalidDefinitionOfDefaultSequenceInEntity();
@@ -56,7 +49,6 @@ public class SequenceResolutionGwtTest extends GWTTestCase {
     }
   }
 
-  @Failing(issue = 6291)
   public void testOnlyFirstGroupInSequenceGetEvaluated() {
     delegate.testOnlyFirstGroupInSequenceGetEvaluated();
   }

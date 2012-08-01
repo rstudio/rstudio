@@ -17,8 +17,6 @@ package org.hibernate.jsr303.tck.tests.validation.graphnavigation;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
-
 /**
  * Test wrapper for {@link GraphNavigationTest}.
  */
@@ -43,7 +41,6 @@ public class GraphNavigationGwtTest extends GWTTestCase {
     delegate.testContainedSet();
   }
 
-  @Failing(issue = 5946)
   public void testFullGraphValidationBeforeNextGroupInSequence() {
     delegate.testFullGraphValidationBeforeNextGroupInSequence();
   }
