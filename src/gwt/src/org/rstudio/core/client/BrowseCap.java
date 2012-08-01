@@ -80,6 +80,11 @@ public class BrowseCap
    {
       return OPERATING_SYSTEM.equals("windows");
    }
+   
+   public static boolean isWindowsDesktop()
+   {
+      return Desktop.isDesktop() && isWindows();
+   }
 
    public static boolean isLinux()
    {
