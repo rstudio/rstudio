@@ -173,7 +173,13 @@ Error createSessionDir(FilePath* pSessionDir)
    if (error)
       return error;
 
-   return s_sessionDirLock.acquire(sessionLockFilePath(*pSessionDir));
+   // attempt to acquire the lock. if we can't then we still continue
+   // so we can support filesystems that don't have file locks.
+   error = s_sessionDirLock.acquire(sessionLockFilePath(*pSessionDir));
+   if (error)
+      LOG_ERROR(error);
+
+   return Success();
 }
 
 Error createSessionDirFromOldSourceDatabase(FilePath* pSessionDir)
@@ -199,8 +205,13 @@ Error createSessionDirFromOldSourceDatabase(FilePath* pSessionDir)
    if (error)
       return error;
 
-   // acquire the lock
-   return s_sessionDirLock.acquire(sessionLockFilePath(*pSessionDir));
+   // attempt to acquire the lock. if we can't then we still continue
+   // so we can support filesystems that don't have file locks.
+   error =  s_sessionDirLock.acquire(sessionLockFilePath(*pSessionDir));
+   if (error)
+      LOG_ERROR(error);
+
+   return Success();
 }
 
 Error createSessionDirFromPersistent(FilePath* pSessionDir)
@@ -254,20 +265,27 @@ bool reclaimOrphanedSession(const std::vector<FilePath>& sessionDirs,
    return false;
 }
 
-bool noLockedSessionsExist(const std::vector<FilePath>& sessionDirs)
-{
-   BOOST_FOREACH(const FilePath& sessionDir, sessionDirs)
-   {
-      FilePath lockFilePath = sessionLockFilePath(sessionDir);
-      if (FileLock::isLocked(lockFilePath))
-         return false;
-   }
-
-   return true;
-}
-
 } // anonymous namespace
 
+
+// NOTE: we attempt to use file locks to coordinate between disperate
+// processes all attempting to open a session in the same context (project
+// or global). Locks are used to implement recovery of crashed sessions
+// as follows: if there is an existing source-db directory on disk that
+// is NOT locked then it's presumed to be an orphan (resulting from a crash)
+// and we should initialize with this directory to "recover" it
+//
+// Unfortunately, some file systems (mostly remote network volumes) don't
+// support file-locking. In these cases we need to gracefully fall back
+// to some sane behavior. To implement this we use the following scheme:
+//
+//  (1) Always attempt to call FileLock::acquire to create an advisory lock
+//      but if it fails we still allow the process to start up.
+//
+//  (2) When checking for "orphan" source-db directories we try to acquire
+//      a lock on them -- for volumes that don't support locks this will
+//      always be an error so we'll never be able to recover an orphan dir
+//
 
 Error attachToSourceDatabase(FilePath* pSessionDir)
 {  
@@ -297,21 +315,13 @@ Error attachToSourceDatabase(FilePath* pSessionDir)
    else if (reclaimOrphanedSession(sessionDirs, pSessionDir))
       return Success();
 
-   // if there are no existing locked sessions then create from persistent
-   else if (noLockedSessionsExist(sessionDirs))
-      return createSessionDirFromPersistent(pSessionDir);
-
-   // otherwise startup with a brand new session dir
+   // attempt to create from persistent
    else
-      return createSessionDir(pSessionDir);
+      return createSessionDirFromPersistent(pSessionDir);
 }
 
 Error detachFromSourceDatabase()
 {
-   // confirm that we are attached
-   if (s_sessionDirLock.lockFilePath().empty())
-      return core::pathNotFoundError(ERROR_LOCATION);
-
    // list all current source docs
    std::vector<boost::shared_ptr<SourceDocument> > sourceDocs;
    Error error = source_database::list(&sourceDocs);
