@@ -346,7 +346,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="insertChunk" value="Cmd+Shift+&lt;"/>
       <shortcut refid="insertSection" value="Cmd+Shift+R"/>
       <shortcut refid="compilePDF" value="Cmd+Shift+I"/>
-      <shortcut refid="executeCode" value="Cmd+R"/>
+      <shortcut refid="executeCode" value="Cmd+R" if="org.rstudio.core.client.BrowseCap.isWindowsDesktop()"/>
       <shortcut refid="executeCode" value="Cmd+Enter"/>
       <shortcut refid="executeAllCode" value="Cmd+Alt+R"/>
       <shortcut refid="executeToCurrentLine" value="Cmd+Alt+B"/>
