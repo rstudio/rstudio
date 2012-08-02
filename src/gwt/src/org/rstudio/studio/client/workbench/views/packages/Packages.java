@@ -283,6 +283,10 @@ public class Packages
                   
                   // append command
                   command.append("\"" + path + "\", repos = NULL");
+                  
+                  // append type = source if needed
+                  if (path.endsWith(".tar.gz"))
+                     command.append(", type = \"source\"");
                }
                
                if (!usingDefaultLibrary)
