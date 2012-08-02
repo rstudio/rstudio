@@ -1347,13 +1347,15 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onCommentUncomment()
    {
-      if (isCursorInTexMode())
-         doCommentUncomment('%');
+      if (fileType_.isCpp())
+         doCommentUncomment("//");
+      else if (isCursorInTexMode())
+         doCommentUncomment("%");
       else if (isCursorInRMode())
-         doCommentUncomment('#');
+         doCommentUncomment("#");
    }
    
-   private void doCommentUncomment(char c)
+   private void doCommentUncomment(String c)
    {
       docDisplay_.fitSelectionToLines(true);
       String selection = docDisplay_.getSelectionValue();

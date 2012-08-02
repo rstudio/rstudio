@@ -12,16 +12,41 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
+import java.util.HashSet;
+
 import com.google.gwt.resources.client.ImageResource;
 
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
+import org.rstudio.studio.client.workbench.commands.Commands;
 
 public class CppFileType extends TextFileType
 {
-   CppFileType(String id, String ext, ImageResource icon)
+   CppFileType(String id, String ext, ImageResource icon, boolean isCpp)
    {
       super(id, "C/C++", EditorLanguage.LANG_CPP, ext, icon,
             false, false, false, false, false, false, 
             false, false, false, false, false, false);
+      
+      isCpp_ = isCpp;
    }
+   
+   @Override
+   public boolean isCpp()
+   {
+      return isCpp_;
+   }
+   
+   
+   @Override
+   public HashSet<AppCommand> getSupportedCommands(Commands commands)
+   {
+      HashSet<AppCommand> result = super.getSupportedCommands(commands);
+      if (isCpp())
+         result.add(commands.commentUncomment());
+      return result;
+   }
+   
+   
+   private final boolean isCpp_;
 }

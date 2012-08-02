@@ -178,6 +178,11 @@ public class TextFileType extends EditableFileType
       return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId()) ||
              FileTypeRegistry.MARKDOWN.getTypeId().equals(getTypeId());
    }
+   
+   public boolean isCpp()
+   {
+      return false;
+   }
 
    public HashSet<AppCommand> getSupportedCommands(Commands commands)
    {

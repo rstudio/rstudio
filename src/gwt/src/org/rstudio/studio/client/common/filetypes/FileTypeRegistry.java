@@ -105,10 +105,10 @@ public class FileTypeRegistry
                           false, false, false, false, false, false, false, false, false, false, false);
 
    
-   public static final TextFileType H = new CppFileType("h", ".h", ICONS.iconH());
-   public static final TextFileType C = new CppFileType("c", ".c", ICONS.iconC());
-   public static final TextFileType HPP = new CppFileType("hpp", ".hpp", ICONS.iconHpp());
-   public static final TextFileType CPP = new CppFileType("cpp", ".cpp", ICONS.iconCpp());
+   public static final TextFileType H = new CppFileType("h", ".h", ICONS.iconH(), false);
+   public static final TextFileType C = new CppFileType("c", ".c", ICONS.iconC(), false);
+   public static final TextFileType HPP = new CppFileType("hpp", ".hpp", ICONS.iconHpp(), true);
+   public static final TextFileType CPP = new CppFileType("cpp", ".cpp", ICONS.iconCpp(), true);
    
    
    
