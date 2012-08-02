@@ -22,6 +22,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.OutputBuffer;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -47,41 +48,44 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
       
       // always include build all
       toolbar.addLeftWidget(commands_.buildAll().createToolbarButton());
+      toolbar.addLeftSeparator();
       
-      // makefiles get extra build menu entries
+      // packages get check package
       String type = session_.getSessionInfo().getBuildToolsType();
+      if (type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
+      {
+         toolbar.addLeftWidget(commands_.checkPackage().createToolbarButton());
+         toolbar.addLeftSeparator();
+      }
+      
+      // create more menu
+      ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
       if (type.equals(SessionInfo.BUILD_TOOLS_MAKEFILE))
       {
-         ToolbarPopupMenu buildMenu = new ToolbarPopupMenu();
-         buildMenu.addItem(commands_.buildAll().createMenuItem(false));
-         buildMenu.addItem(commands_.rebuildAll().createMenuItem(false));
-         buildMenu.addSeparator();
-         buildMenu.addItem(commands_.cleanAll().createMenuItem(false));
-         ToolbarButton buildMenuButton = new ToolbarButton(buildMenu, true);
-         toolbar.addLeftWidget(buildMenuButton);
+         moreMenu.addItem(commands_.rebuildAll().createMenuItem(false));
+         moreMenu.addItem(commands_.cleanAll().createMenuItem(false));
+         moreMenu.addSeparator();
       }
       
       // packages get additional commands 
       else if (type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
       {
-         ToolbarPopupMenu buildMenu = new ToolbarPopupMenu();
-         buildMenu.addItem(commands_.devtoolsLoadAll().createMenuItem(false));
-         buildMenu.addSeparator();
-         buildMenu.addItem(commands_.buildSourcePackage().createMenuItem(false));
-         buildMenu.addItem(commands_.buildBinaryPackage().createMenuItem(false));
-         buildMenu.addSeparator();
-         buildMenu.addItem(commands_.roxygenizePackage().createMenuItem(false));
-         ToolbarButton buildMenuButton = new ToolbarButton(buildMenu, true);
-         toolbar.addLeftWidget(buildMenuButton);
-         toolbar.addLeftSeparator();
-         toolbar.addLeftWidget(commands_.checkPackage().createToolbarButton());
+         moreMenu.addItem(commands_.devtoolsLoadAll().createMenuItem(false));
+         moreMenu.addSeparator();
+         moreMenu.addItem(commands_.buildSourcePackage().createMenuItem(false));
+         moreMenu.addItem(commands_.buildBinaryPackage().createMenuItem(false));
+         moreMenu.addSeparator();
+         moreMenu.addItem(commands_.roxygenizePackage().createMenuItem(false));   
+         moreMenu.addSeparator();
       }
+      moreMenu.addItem(commands_.buildToolsProjectSetup().createMenuItem(false));
       
-      toolbar.addLeftSeparator();
-      
-      // always include configuration
-      toolbar.addLeftWidget(
-               commands_.buildToolsProjectSetup().createToolbarButton());
+      // add more menu
+      ToolbarButton moreButton = new ToolbarButton(
+                                   "More",
+                                   StandardIcons.INSTANCE.more_actions(),
+                                   moreMenu);
+      toolbar.addLeftWidget(moreButton);
       
       // stop button (initially hidden)
       ImageResource stopImage = commands_.interruptR().getImageResource();
