@@ -41,13 +41,16 @@ public interface NewProjectResources extends ClientBundle
    static interface Styles extends CssResource
    {
       String wizardWidget();
-      String wizardTextEntry();
+      String wizardMainColumn();
       String wizardTextEntryLabel();
       String wizardSpacer();
       String vcsSelectorDesktop();
       String wizardCheckbox();
       String vcsNotInstalledWidget();
       String vcsHelpLink();
+      String newProjectDirectoryName();
+      String codeFilesListButton();
+      String codeFilesListBox();
    }
    
    @Source("NewProjectWizard.css")

@@ -13,29 +13,34 @@
 package org.rstudio.studio.client.projects.ui.newproject;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
+import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class NewDirectoryPage extends NewProjectWizardPage
 {
    public NewDirectoryPage()
    {
-      super("New Directory", 
-            "Start a project in a brand new working directory",
+      super("New Project", 
+            "Start a project in a new directory",
             "Create New Project",
             NewProjectResources.INSTANCE.newProjectDirectoryIcon(),
             NewProjectResources.INSTANCE.newProjectDirectoryIconLarge());
-      
-  
    }
 
    @Override
@@ -43,13 +48,48 @@ public class NewDirectoryPage extends NewProjectWizardPage
    {
       NewProjectResources.Styles styles = NewProjectResources.INSTANCE.styles();
       
+      HorizontalPanel panel = new HorizontalPanel();
+      panel.addStyleName(styles.wizardMainColumn());
+      
+      // project type
+      String[] labels = {"(Default)", "Package"};
+      String[] values = {"none", "package"};
+      listProjectType_ = new SelectWidget("Type:",
+                                          labels,
+                                          values,
+                                          false);
+      listProjectType_.addChangeHandler(new ChangeHandler() {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            txtProjectName_.setFocus(true);
+            boolean isPackage = listProjectType_.getValue().equals("package");
+            listCodeFiles_.setVisible(isPackage);
+            if (isPackage)
+               dirNameLabel_.setText("Package name:");
+            else
+               dirNameLabel_.setText("Directory name:");
+         }
+      });
+      panel.add(listProjectType_);
+     
+      
       // dir name
-      Label dirNameLabel = new Label("New project directory name:");
-      dirNameLabel.addStyleName(styles.wizardTextEntryLabel());
-      addWidget(dirNameLabel);
+      VerticalPanel namePanel = new VerticalPanel();
+      namePanel.addStyleName(styles.newProjectDirectoryName());
+      dirNameLabel_ = new Label("Directory name:");
+      dirNameLabel_.addStyleName(styles.wizardTextEntryLabel());
+      namePanel.add(dirNameLabel_);
       txtProjectName_ = new TextBox();
-      txtProjectName_.addStyleName(styles.wizardTextEntry());
-      addWidget(txtProjectName_);
+      txtProjectName_.setWidth("100%");
+      namePanel.add(txtProjectName_);
+      panel.add(namePanel);
+      addWidget(panel);
+      
+      // code files panel
+      listCodeFiles_ = new CodeFilesList();
+      listCodeFiles_.setVisible(false);
+      addWidget(listCodeFiles_);
       
       addSpacer();
       
@@ -114,10 +154,20 @@ public class NewDirectoryPage extends NewProjectWizardPage
          String newDefaultLocation = null;
          if (!dir.equals(defaultNewProjectLocation_))
             newDefaultLocation = dir;
+         
+         NewPackageOptions newPackageOptions = null;
+         if (listProjectType_.getValue().equals("package"))
+         {
+            newPackageOptions = NewPackageOptions.create(
+                     JsUtil.toJsArrayString(listCodeFiles_.getCodeFiles()));
+         }
+         
+         
          return new NewProjectResult(projFile, 
                                      chkGitInit_.getValue(), 
                                      newDefaultLocation, 
-                                     null);
+                                     null,
+                                     newPackageOptions);
       }
       else
       {
@@ -132,7 +182,10 @@ public class NewDirectoryPage extends NewProjectWizardPage
       txtProjectName_.setFocus(true);
    }
    
+   private Label dirNameLabel_;
+   private SelectWidget listProjectType_;
    private TextBox txtProjectName_;
+   private CodeFilesList listCodeFiles_;
    private CheckBox chkGitInit_;
    
    private DirectoryChooserTextBox newProjectParent_;

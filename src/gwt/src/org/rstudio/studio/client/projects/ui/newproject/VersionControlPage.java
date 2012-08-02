@@ -119,7 +119,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
       NewProjectResources.Styles styles = NewProjectResources.INSTANCE.styles();   
       
       VerticalPanel urlPanel = new VerticalPanel();
-      urlPanel.addStyleName(styles.wizardTextEntry());
+      urlPanel.addStyleName(styles.wizardMainColumn());
       Label urlLabel = new Label("Repository URL:");
       urlLabel.addStyleName(styles.wizardTextEntryLabel());
       urlPanel.add(urlLabel);
@@ -144,7 +144,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
       if (includeCredentials())
       {  
          VerticalPanel usernamePanel = new VerticalPanel();
-         usernamePanel.addStyleName(styles.wizardTextEntry());
+         usernamePanel.addStyleName(styles.wizardMainColumn());
          Label usernameLabel = new Label("Username (if required for this repository URL):");
          usernameLabel.addStyleName(styles.wizardTextEntryLabel());
          usernamePanel.add(usernameLabel);
@@ -168,7 +168,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
          }
          
       });
-      txtDirName_.addStyleName(styles.wizardTextEntry());
+      txtDirName_.addStyleName(styles.wizardMainColumn());
       addWidget(txtDirName_);
       
       addSpacer();
@@ -206,7 +206,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
                                                           checkoutDir, 
                                                           dir);
          
-         return new NewProjectResult(projFile, false, dir, options);
+         return new NewProjectResult(projFile, false, dir, options, null);
       }
       else
       {

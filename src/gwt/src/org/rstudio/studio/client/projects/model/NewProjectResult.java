@@ -19,12 +19,14 @@ public class NewProjectResult
    public NewProjectResult(String projectFile, 
                            boolean createGitRepo,
                            String newDefaultProjectLocation,
-                           VcsCloneOptions vcsCloneOptions)
+                           VcsCloneOptions vcsCloneOptions,
+                           NewPackageOptions newPackageOptions)
    {
       projectFile_ = projectFile;
       createGitRepo_ = createGitRepo;
       newDefaultProjectLocation_ = newDefaultProjectLocation;
       vcsCloneOptions_ = vcsCloneOptions;
+      newPackageOptions_ = newPackageOptions;
    }
    
    public String getProjectFile()
@@ -47,8 +49,15 @@ public class NewProjectResult
       return vcsCloneOptions_;
    }
    
+   public NewPackageOptions getNewPackageOptions()
+   {
+      return newPackageOptions_;
+   }
+   
+   
    private final boolean createGitRepo_;
    private final String projectFile_;
    private final String newDefaultProjectLocation_;
    private final VcsCloneOptions vcsCloneOptions_;
+   private final NewPackageOptions newPackageOptions_;
 }

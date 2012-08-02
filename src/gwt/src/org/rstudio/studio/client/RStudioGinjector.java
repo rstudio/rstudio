@@ -37,6 +37,7 @@ import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWi
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.pdfviewer.PDFViewerApplication;
+import org.rstudio.studio.client.projects.ui.newproject.CodeFilesList;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.BuildToolsPackagePanel;
 import org.rstudio.studio.client.vcs.VCSApplication;
@@ -74,6 +75,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(CompileNotebookOptionsDialog notebookOptionsDialog);
    void injectMembers(ProjectPreferencesPane projectPrefsPane);
    void injectMembers(BuildToolsPackagePanel buildToolsPackagePanel);
+   void injectMembers(CodeFilesList codeFilesList);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

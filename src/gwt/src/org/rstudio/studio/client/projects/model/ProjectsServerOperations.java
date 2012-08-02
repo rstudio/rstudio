@@ -21,6 +21,7 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
                                                   SourceServerOperations
 {  
    void createProject(String projectDirectory,
+                      NewPackageOptions newPackageOptions,
                       ServerRequestCallback<Void> callback);
     
    void readProjectOptions(ServerRequestCallback<RProjectOptions> callback);

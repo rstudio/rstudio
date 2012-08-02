@@ -44,6 +44,7 @@ import org.rstudio.studio.client.common.vcs.*;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
+import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.server.*;
@@ -933,9 +934,14 @@ public class RemoteServer implements Server
    }
    
    public void createProject(String projectDirectory,
+                             NewPackageOptions newPackageOptions,
                              ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, CREATE_PROJECT, projectDirectory, requestCallback);
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(projectDirectory));
+      params.set(1, newPackageOptions != null ?
+               new JSONObject(newPackageOptions) : JSONNull.getInstance());
+      sendRequest(RPC_SCOPE, CREATE_PROJECT, params, requestCallback);
    }
    
    public void readProjectOptions(ServerRequestCallback<RProjectOptions> callback)

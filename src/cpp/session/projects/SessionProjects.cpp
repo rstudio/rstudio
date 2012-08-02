@@ -23,6 +23,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 
+#include <r/RExec.hpp>
 #include <r/session/RSessionUtils.hpp>
 
 #include "SessionProjectsInternal.hpp"
@@ -54,25 +55,115 @@ Error createProject(const json::JsonRpcRequest& request,
 {
    // read params
    std::string projectFile;
-   Error error = json::readParam(request.params, 0, &projectFile);
+   json::Value newPackageJson;
+   Error error = json::readParams(request.params,
+                                  &projectFile,
+                                  &newPackageJson);
    if (error)
       return error;
    FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
 
-   // ensure that the parent directory exists
-   error = projectFilePath.parent().ensureDirectory();
-   if (error)
-      return error;
-
-   // create the project file
-   if (!projectFilePath.exists())
+   // default project
+   if (newPackageJson.is_null())
    {
-      return r_util::writeProjectFile(projectFilePath,
-                                      ProjectContext::defaultConfig());
+      // create the project directory if necessary
+      error = projectFilePath.parent().ensureDirectory();
+      if (error)
+         return error;
+
+      // create the project file
+      if (!projectFilePath.exists())
+      {
+         return r_util::writeProjectFile(projectFilePath,
+                                         ProjectContext::defaultConfig());
+      }
+      else
+      {
+         return Success();
+      }
    }
+
+   // package project
    else
    {
-      return Success();
+      // build list of code files
+      json::Array codeFilesJson;
+      Error error = json::readObject(newPackageJson.get_obj(),
+                                     "code_files",
+                                     &codeFilesJson);
+      if (error)
+         return error;
+      std::vector<FilePath> codeFiles;
+      BOOST_FOREACH(const json::Value codeFile, codeFilesJson)
+      {
+         if (!json::isType<std::string>(codeFile))
+         {
+            BOOST_ASSERT(false);
+            continue;
+         }
+
+         FilePath codeFilePath =
+                     module_context::resolveAliasedPath(codeFile.get_str());
+         codeFiles.push_back(codeFilePath);
+      }
+
+      // error if the package dir already exists
+      FilePath packageDir = projectFilePath.parent();
+      if (packageDir.exists())
+         return core::fileExistsError(ERROR_LOCATION);
+
+      // create a temp dir (so we can import the list of code files)
+      FilePath tempDir = module_context::tempFile("newpkg", "dir");
+      error = tempDir.ensureDirectory();
+      if (error)
+         return error;
+
+      // copy the code files into the tempDir and build up a
+      // list of the filenames for passing to package.skeleton
+      std::vector<std::string> codeFileNames;
+      BOOST_FOREACH(const FilePath& codeFilePath, codeFiles)
+      {
+         FilePath targetPath = tempDir.complete(codeFilePath.filename());
+         Error error = codeFilePath.copy(targetPath);
+         if (error)
+            return error;
+
+         codeFileNames.push_back(
+                        string_utils::utf8ToSystem(targetPath.filename()));
+      }
+
+
+      // if the list of code files is empty then add an empty file
+      // with the same name as the package
+      if (codeFiles.empty())
+      {
+         std::string srcFileName = packageDir.filename() + ".R";
+         FilePath srcFilePath = tempDir.complete(srcFileName);
+         Error error = core::writeStringToFile(srcFilePath, "");
+         if (error)
+            return error;
+         codeFileNames.push_back(string_utils::utf8ToSystem(srcFileName));
+      }
+
+      // temporarily switch to the tempDir for package creation
+      RestoreCurrentPathScope pathScope(module_context::safeCurrentPath());
+      tempDir.makeCurrentPath();
+
+      // call package.skeleton
+      r::exec::RFunction pkgSkeleton("utils:::package.skeleton");
+      pkgSkeleton.addParam("name",
+                           string_utils::utf8ToSystem(packageDir.filename()));
+      pkgSkeleton.addParam("path",
+               string_utils::utf8ToSystem(packageDir.parent().absolutePath()));
+      pkgSkeleton.addParam("code_files", codeFileNames);
+      error = pkgSkeleton.call();
+      if (error)
+         return error;
+
+      // create the project file
+      r_util::RProjectConfig projConfig = ProjectContext::defaultConfig();
+      projConfig.buildType = r_util::kBuildTypePackage;
+      return r_util::writeProjectFile(projectFilePath, projConfig);
    }
 }
 

@@ -330,6 +330,7 @@ public class Projects implements OpenProjectFileHandler,
 
             server_.createProject(
                   newProject.getProjectFile(),
+                  newProject.getNewPackageOptions(),
                   new VoidServerRequestCallback(indicator)
                   {
                      @Override

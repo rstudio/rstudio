@@ -7,12 +7,27 @@
    margin-bottom: 2px;
 }
 
-.wizardTextEntry {
+.wizardMainColumn {
    width: 296px;
 }
 
 .wizardSpacer {
    height: 12px;	
+}
+
+
+.newProjectDirectoryName {
+   margin-left: 5px;
+   width: 97%;	
+}
+
+.codeFilesListButton {
+   width: 60px;
+}
+
+.codeFilesListBox {
+   width: 236px;
+   margin-right: 4px;
 }
 
 .vcsSelectorDesktop {
