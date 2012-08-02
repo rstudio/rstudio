@@ -195,23 +195,29 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
                                  RESOURCES.styles().packageFileTextBox());
       packageArchiveTextBox_.setReadOnly(true);
       archivePanel.add(packageArchiveTextBox_);
-      SmallButton browseButton = new SmallButton("Browse...");
+      final SmallButton browseButton = new SmallButton("Browse...");
       browseButton.addStyleName(RESOURCES.styles().packageFileBrowseButton());
       archivePanel.add(browseButton);
       browseButton.addClickHandler(browseForArchiveClickHandler_);
       archiveSourcePanel_.add(archivePanel);
       
+      // create check box here because manageUIState accesses it
+      installDependenciesCheckBox_ = new CheckBox();
+      
       if (defaultInstallOptions_.getInstallFromRepository())
          packageSourceListBox_.setSelectedIndex(0);
       else
          packageSourceListBox_.setSelectedIndex(1);
-      onPackageSourceChanged();
+      manageUIState();
       
       packageSourceListBox_.addChangeHandler(new ChangeHandler() {
          @Override
          public void onChange(ChangeEvent event)
          {
-            onPackageSourceChanged();
+            manageUIState();
+            
+            if (!installFromRepository())
+               browseButton.click();
          } 
       });
       
@@ -241,7 +247,6 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       mainPanel.add(libraryListBox_);
       
       // install dependencies check box
-      installDependenciesCheckBox_ = new CheckBox();
       installDependenciesCheckBox_.addStyleName(RESOURCES.styles().installDependenciesCheckBox());
       installDependenciesCheckBox_.setText("Install dependencies");
       installDependenciesCheckBox_.setValue(
@@ -262,19 +267,21 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
          FocusHelper.setFocusDeferred(packageSourceListBox_);
    }
    
-   private void onPackageSourceChanged()
+   private void manageUIState()
    {
       if (installFromRepository())
       {
          reposCaption_.setHelpVisible(true);
          sourcePanel_.setWidget(reposSourcePanel_);
          FocusHelper.setFocusDeferred(packagesSuggestBox_);
+         installDependenciesCheckBox_.setVisible(true);
       }
       else
       {
          reposCaption_.setHelpVisible(false);
          sourcePanel_.setWidget(archiveSourcePanel_);
          FocusHelper.setFocusDeferred(packageArchiveTextBox_);
+         installDependenciesCheckBox_.setVisible(false);
       }
    }
    

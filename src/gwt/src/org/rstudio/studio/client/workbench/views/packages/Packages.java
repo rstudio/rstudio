@@ -268,12 +268,9 @@ public class Packages
                   if (packages.size() > 1)
                      command.append(")");
                   
-                  if (!usingDefaultLibrary)
-                  {
-                     command.append(", lib=\"");
-                     command.append(request.getOptions().getLibraryPath());
-                     command.append("\"");
-                  }
+                  // dependencies
+                  if (!request.getOptions().getInstallDependencies())
+                     command.append(", dependencies = FALSE");
                }
                // must be a local package
                else
@@ -288,10 +285,13 @@ public class Packages
                   command.append("\"" + path + "\", repos = NULL");
                }
                
-               // dependencies
-               if (!request.getOptions().getInstallDependencies())
-                  command.append(", dependencies = FALSE");
-
+               if (!usingDefaultLibrary)
+               {
+                  command.append(", lib=\"");
+                  command.append(request.getOptions().getLibraryPath());
+                  command.append("\"");
+               }
+               
                command.append(")");
                String cmd = command.toString();
                events_.fireEvent(new SendToConsoleEvent(cmd, true));

@@ -158,9 +158,9 @@
 
    # package archive extension
    if (identical(.Platform$OS.type, "windows"))
-      packageArchiveExtension <- ".zip"
+      packageArchiveExtension <- ".zip; .tar.gz"
    else if (identical(substr(.Platform$pkgType, 1L, 10L), "mac.binary"))
-      packageArchiveExtension <- ".tgz"
+      packageArchiveExtension <- ".tgz; .tar.gz"
    else
       packageArchiveExtension <- ".tar.gz"
 
