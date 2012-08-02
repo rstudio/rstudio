@@ -29,6 +29,7 @@
 #include <core/r_util/RPackageInfo.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
 #include <r/session/RSessionUtils.hpp>
 #include <r/session/RConsoleHistory.hpp>
 
@@ -899,8 +900,57 @@ json::Value restoreBuildRestartContext()
    return collectRestartContext();
 }
 
+bool canBuildCpp()
+{
+   // try to build a simple c file to test whether we have build tools available
+   FilePath cppPath = module_context::tempFile("test", "c");
+   Error error = core::writeStringToFile(cppPath, "void test() {}\n");
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   // get R bin directory
+   FilePath rBinDir;
+   error = module_context::rBinDir(&rBinDir);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   // try to run build tools
+   RCommand rCmd(rBinDir);
+   rCmd << "SHLIB";
+   rCmd << cppPath.filename();
+   core::system::ProcessOptions options;
+   options.workingDir = cppPath.parent();
+   core::system::ProcessResult result;
+   error = core::system::runCommand(rCmd.commandString(), options, &result);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   return result.exitStatus == EXIT_SUCCESS;
+}
+
+SEXP rs_canBuildCpp()
+{
+   r::sexp::Protect rProtect;
+   return r::sexp::create(canBuildCpp(), &rProtect);
+}
+
 Error initialize()
 {
+   R_CallMethodDef methodDef ;
+   methodDef.name = "rs_canBuildCpp" ;
+   methodDef.fun = (DL_FUNC) rs_canBuildCpp ;
+   methodDef.numArgs = 0;
+   r::routines::addCallMethod(methodDef);
+
    // add suspend handler
    addSuspendHandler(module_context::SuspendHandler(onSuspend, onResume));
 

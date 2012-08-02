@@ -28,6 +28,8 @@ core::json::Value buildStateAsJson();
 
 core::json::Value restoreBuildRestartContext();
 
+bool canBuildCpp();
+
 core::Error initialize();
                        
 } // namespace build
