@@ -51,7 +51,11 @@ public:
   static JSBool resolve(JSContext* ctx, JSObject* obj, jsval id);
   static JSBool convert(JSContext* cx, JSObject* obj, JSType type, jsval* vp);
   static JSBool enumerate(JSContext* ctx, JSObject* obj, JSIterateOp op, jsval* statep, jsid* idp);
+#if GECKO_VERSION >= 14000
+  static void finalize(JSFreeOp* fop, JSObject* obj);
+#else
   static void finalize(JSContext* ctx, JSObject* obj);
+#endif //GECKO_VERSION
   static JSBool toString(JSContext* ctx, JSObject* obj, uintN argc, jsval* argv, jsval* rval);
   static JSBool call(JSContext* ctx, JSObject* obj, uintN argc, jsval* argv, jsval* rval);
 

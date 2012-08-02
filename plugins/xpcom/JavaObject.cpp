@@ -301,6 +301,21 @@ JSBool JavaObject::enumerate(JSContext* ctx, JSObject* obj, JSIterateOp op,
   return JS_TRUE;
 }
 
+#if GECKO_VERSION >= 1400
+void JavaObject::finalize(JSFreeOp* fop, JSObject* obj) {
+  // In general use of JS_GetPrivate is not safe but it is OK in the finalizer
+  // according to:
+  // https://developer.mozilla.org/en/SpiderMonkey/JSAPI_Reference/JS_GetPrivate
+  // We will not be using getSession for that reason.
+  SessionData * data = static_cast<SessionData*>(JS_GetPrivate(obj));
+  if (data) {
+    jsval val = JS_GetReservedSlot(obj, 0);
+    int objectId = JSVAL_TO_INT(val);
+    data->freeJavaObject(objectId);
+    MOZ_JS_SetPrivate(/** Post-FF13 requires no ctx anyways*/ NULL, obj, NULL);
+  }
+}
+#else
 void JavaObject::finalize(JSContext* ctx, JSObject* obj) {
   Debug::log(Debug::Spam) << "JavaObject::finalize obj=" << obj
       << " objId=" << JavaObject::getObjectId(ctx, obj) << Debug::flush;
@@ -311,6 +326,7 @@ void JavaObject::finalize(JSContext* ctx, JSObject* obj) {
     MOZ_JS_SetPrivate(ctx, obj, NULL);
   }
 }
+#endif
 
 JSBool JavaObject::toString(JSContext* ctx, JSObject* obj, uintN argc,
     jsval* argv, jsval* rval) {

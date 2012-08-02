@@ -73,5 +73,12 @@ binary-component lib/Darwin-gcc3/ff130/libgwt_dev_ff130.dylib ABI=Darwin_x86_64-
 binary-component lib/Darwin-gcc3/ff130/libgwt_dev_ff130.dylib ABI=Darwin_x86-gcc3 appversion<=13.0.*
 binary-component lib/WINNT_x86-msvc/ff130/xpGwtDevPlugin.dll ABI=WINNT_x86-msvc appversion<=13.0.*
 
+# Firefox 14
+binary-component lib/Linux_x86_64-gcc3/ff140/libgwt_dev_ff140.so ABI=Linux_x86_64-gcc3 appversion<=14.0.*
+binary-component lib/Linux_x86-gcc3/ff140/libgwt_dev_ff140.so ABI=Linux_x86-gcc3 appversion<=14.0.*
+binary-component lib/Darwin-gcc3/ff140/libgwt_dev_ff140.dylib ABI=Darwin_x86_64-gcc3 appversion<=14.0.*
+binary-component lib/Darwin-gcc3/ff140/libgwt_dev_ff140.dylib ABI=Darwin_x86-gcc3 appversion<=14.0.*
+binary-component lib/WINNT_x86-msvc/ff140/xpGwtDevPlugin.dll ABI=WINNT_x86-msvc appversion<=14.0.*
+
 interfaces components/IOOPHM.xpt
 contract @gwt.google.com/ExternalWrapper;1 {028DD88B-6D65-401D-AAFD-17E497D15D09}
