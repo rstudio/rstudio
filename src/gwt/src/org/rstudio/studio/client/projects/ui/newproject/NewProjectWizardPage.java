@@ -16,6 +16,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
@@ -25,7 +26,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 public abstract class NewProjectWizardPage 
-                     extends WizardPage<FileSystemItem,NewProjectResult>
+                     extends WizardPage<NewProjectInput,NewProjectResult>
 {
    public NewProjectWizardPage(String title, 
                                String subTitle, 
@@ -53,9 +54,9 @@ public abstract class NewProjectWizardPage
    
    
    @Override 
-   protected void initialize(FileSystemItem defaultNewProjectLocation)
+   protected void initialize(NewProjectInput input)
    {
-      defaultNewProjectLocation_ = defaultNewProjectLocation;
+      defaultNewProjectLocation_ = input.getDefaultNewProjectLocation();
    }
    
    protected void addWidget(Widget widget)

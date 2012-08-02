@@ -20,6 +20,8 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 public interface ProjectsServerOperations extends PrefsServerOperations,
                                                   SourceServerOperations
 {  
+   void getNewProjectContext(ServerRequestCallback<NewProjectContext> callback);
+   
    void createProject(String projectDirectory,
                       NewPackageOptions newPackageOptions,
                       ServerRequestCallback<Void> callback);

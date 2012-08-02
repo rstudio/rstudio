@@ -20,6 +20,7 @@ import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
+import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -63,7 +64,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
          public void onChange(ChangeEvent event)
          {
             txtProjectName_.setFocus(true);
-            boolean isPackage = listProjectType_.getValue().equals("package");
+            boolean isPackage = !listProjectType_.getValue().equals("none");
             listCodeFiles_.setVisible(isPackage);
             if (isPackage)
                dirNameLabel_.setText("Package name:");
@@ -116,10 +117,14 @@ public class NewDirectoryPage extends NewProjectWizardPage
    }
    
    @Override 
-   protected void initialize(FileSystemItem defaultNewProjectLocation)
+   protected void initialize(NewProjectInput input)
    {
-      super.initialize(defaultNewProjectLocation);
-      newProjectParent_.setText(defaultNewProjectLocation.getPath());
+      super.initialize(input);
+      
+      if (input.getContext().isRcppAvailable())
+         listProjectType_.addChoice("Package w/ Rcpp", "package-rcpp");
+      
+      newProjectParent_.setText(input.getDefaultNewProjectLocation().getPath());
    }
 
 
@@ -156,10 +161,11 @@ public class NewDirectoryPage extends NewProjectWizardPage
             newDefaultLocation = dir;
          
          NewPackageOptions newPackageOptions = null;
-         if (listProjectType_.getValue().equals("package"))
+         if (!listProjectType_.getValue().equals("none"))
          {
             newPackageOptions = NewPackageOptions.create(
-                     JsUtil.toJsArrayString(listCodeFiles_.getCodeFiles()));
+                listProjectType_.getValue().equals("package-rcpp"),  
+                JsUtil.toJsArrayString(listCodeFiles_.getCodeFiles()));
          }
          
          

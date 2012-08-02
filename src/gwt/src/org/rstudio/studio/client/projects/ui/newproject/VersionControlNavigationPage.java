@@ -14,14 +14,14 @@ package org.rstudio.studio.client.projects.ui.newproject;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
+import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 public class VersionControlNavigationPage 
-            extends WizardNavigationPage<FileSystemItem,NewProjectResult>
+            extends WizardNavigationPage<NewProjectInput,NewProjectResult>
 {
 
    public VersionControlNavigationPage(SessionInfo sessionInfo)
@@ -35,11 +35,11 @@ public class VersionControlNavigationPage
    }
 
   
-   private static ArrayList<WizardPage<FileSystemItem, NewProjectResult>>
+   private static ArrayList<WizardPage<NewProjectInput, NewProjectResult>>
                                          createPages(SessionInfo sessionInfo)
    {   
-      ArrayList<WizardPage<FileSystemItem, NewProjectResult>> pages = 
-            new  ArrayList<WizardPage<FileSystemItem, NewProjectResult>>();
+      ArrayList<WizardPage<NewProjectInput, NewProjectResult>> pages = 
+            new  ArrayList<WizardPage<NewProjectInput, NewProjectResult>>();
       
       pages.add(new GitPage());
       pages.add(new SvnPage());

@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
@@ -43,11 +42,6 @@ public class ExistingDirectoryPage extends NewProjectWizardPage
       
    }
    
-   @Override 
-   protected void initialize(FileSystemItem defaultNewProjectLocation)
-   {
-      super.initialize(defaultNewProjectLocation);
-   }
 
    @Override
    protected NewProjectResult collectInput()

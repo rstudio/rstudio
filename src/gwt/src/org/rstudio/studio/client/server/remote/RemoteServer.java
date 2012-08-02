@@ -45,6 +45,7 @@ import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
+import org.rstudio.studio.client.projects.model.NewProjectContext;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.server.*;
@@ -931,6 +932,12 @@ public class RemoteServer implements Server
       params.set(0, new JSONNumber(x));
       params.set(1, new JSONNumber(y));
       sendRequest(RPC_SCOPE, MANIPULATOR_PLOT_CLICKED, params, requestCallback);
+   }
+   
+   public void getNewProjectContext(
+                        ServerRequestCallback<NewProjectContext> callback)
+   {
+      sendRequest(RPC_SCOPE, GET_NEW_PROJECT_CONTEXT, callback);
    }
    
    public void createProject(String projectDirectory,
@@ -2745,6 +2752,7 @@ public class RemoteServer implements Server
    private static final String SET_MANIPULATOR_VALUES = "set_manipulator_values";
    private static final String MANIPULATOR_PLOT_CLICKED = "manipulator_plot_clicked";
 
+   private static final String GET_NEW_PROJECT_CONTEXT = "get_new_project_context";
    private static final String CREATE_PROJECT = "create_project";
    private static final String READ_PROJECT_OPTIONS = "read_project_options";
    private static final String WRITE_PROJECT_OPTIONS = "write_project_options";

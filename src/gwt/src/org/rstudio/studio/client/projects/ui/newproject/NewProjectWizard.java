@@ -12,24 +12,24 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
+import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
-public class NewProjectWizard extends Wizard<FileSystemItem,NewProjectResult>
+public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
 {
    public NewProjectWizard(
          SessionInfo sessionInfo,
          UIPrefs uiPrefs,
-         FileSystemItem defaultNewProjectLocation,
+         NewProjectInput input,
          ProgressOperationWithInput<NewProjectResult> operation)
    {
       super("Create Project", 
             "Create project from:", 
-            defaultNewProjectLocation, 
+            input, 
             operation);
     
       setOkButtonCaption("Create Project");

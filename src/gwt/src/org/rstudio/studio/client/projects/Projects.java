@@ -39,6 +39,8 @@ import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorHandler;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectHandler;
+import org.rstudio.studio.client.projects.model.NewProjectContext;
+import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
@@ -167,22 +169,33 @@ public class Projects implements OpenProjectFileHandler,
            @Override
            public void onReadyToQuit(final boolean saveChanges)
            {
-              NewProjectWizard wiz = new NewProjectWizard(
-                 session_.getSessionInfo(),
-                 pUIPrefs_.get(),
-                 FileSystemItem.createDir(
-                    pUIPrefs_.get().defaultProjectLocation().getValue()),
-                 new ProgressOperationWithInput<NewProjectResult>() {
+              server_.getNewProjectContext(
+                new SimpleRequestCallback<NewProjectContext>() {
+                   @Override
+                   public void onResponseReceived(NewProjectContext context)
+                   {
+                      NewProjectWizard wiz = new NewProjectWizard(
+                         session_.getSessionInfo(),
+                         pUIPrefs_.get(),
+                         new NewProjectInput(
+                            FileSystemItem.createDir(
+                               pUIPrefs_.get().defaultProjectLocation().getValue()), 
+                            context
+                         ),
+                         
+                         new ProgressOperationWithInput<NewProjectResult>() {
 
-                  @Override
-                  public void execute(final NewProjectResult newProject, 
-                                      final ProgressIndicator indicator)
-                  {
-                     indicator.onCompleted();
-                     createNewProject(newProject, saveChanges); 
-                  }
+                          @Override
+                          public void execute(NewProjectResult newProject, 
+                                              ProgressIndicator indicator)
+                          {
+                             indicator.onCompleted();
+                             createNewProject(newProject, saveChanges); 
+                          }
+                      });
+                      wiz.showModal();  
+                   }
               });
-              wiz.showModal();  
            }  
       });
       

@@ -306,6 +306,9 @@ void showContent(const std::string& title, const core::FilePath& filePath);
 int saveWorkspaceAction();
 void syncRSaveAction();
 
+bool canBuildCpp();
+
+
 struct VcsContext
 {
    std::string detectedVcs;

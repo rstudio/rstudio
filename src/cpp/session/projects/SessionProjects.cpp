@@ -50,6 +50,19 @@ void onSuspend(Settings*)
 
 void onResume(const Settings&) {}
 
+Error getNewProjectContext(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   json::Object contextJson;
+
+   contextJson["rcpp_available"] = module_context::canBuildCpp() &&
+                                   module_context::isPackageInstalled("Rcpp");
+
+   pResponse->setResult(contextJson);
+
+   return Success();
+}
+
 Error createProject(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
@@ -87,10 +100,11 @@ Error createProject(const json::JsonRpcRequest& request,
    else
    {
       // build list of code files
+      bool usingRcpp;
       json::Array codeFilesJson;
       Error error = json::readObject(newPackageJson.get_obj(),
-                                     "code_files",
-                                     &codeFilesJson);
+                                     "using_rcpp", &usingRcpp,
+                                     "code_files", &codeFilesJson);
       if (error)
          return error;
       std::vector<FilePath> codeFiles;
@@ -134,8 +148,9 @@ Error createProject(const json::JsonRpcRequest& request,
 
 
       // if the list of code files is empty then add an empty file
-      // with the same name as the package
-      if (codeFiles.empty())
+      // with the same name as the package (but don't do this for
+      // Rcpp since it generates a hello world file)
+      if (codeFiles.empty() && !usingRcpp)
       {
          std::string srcFileName = packageDir.filename() + ".R";
          FilePath srcFilePath = tempDir.complete(srcFileName);
@@ -150,7 +165,10 @@ Error createProject(const json::JsonRpcRequest& request,
       tempDir.makeCurrentPath();
 
       // call package.skeleton
-      r::exec::RFunction pkgSkeleton("utils:::package.skeleton");
+
+      r::exec::RFunction pkgSkeleton(usingRcpp ?
+                                       "Rcpp:::Rcpp.package.skeleton" :
+                                       "utils:::package.skeleton");
       pkgSkeleton.addParam("name",
                            string_utils::utf8ToSystem(packageDir.filename()));
       pkgSkeleton.addParam("path",
@@ -581,6 +599,7 @@ Error initialize()
    using namespace module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
+      (bind(registerRpcMethod, "get_new_project_context", getNewProjectContext))
       (bind(registerRpcMethod, "create_project", createProject))
       (bind(registerRpcMethod, "read_project_options", readProjectOptions))
       (bind(registerRpcMethod, "write_project_options", writeProjectOptions))

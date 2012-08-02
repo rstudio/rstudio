@@ -39,6 +39,64 @@
 using namespace core;
 
 namespace session {
+
+namespace {
+
+// R command invocation -- has two representations, one to be submitted
+// (shellCmd_) and one to show the user (cmdString_)
+class RCommand
+{
+public:
+   explicit RCommand(const FilePath& rBinDir)
+      : shellCmd_(module_context::rCmd(rBinDir))
+   {
+#ifdef _WIN32
+      cmdString_ = "Rcmd.exe";
+#else
+      cmdString_ = "R CMD";
+#endif
+
+      // set escape mode to files-only. this is so that when we
+      // add the group of extra arguments from the user that we
+      // don't put quotes around it.
+      shellCmd_ << shell_utils::EscapeFilesOnly;
+   }
+
+   RCommand& operator<<(const std::string& arg)
+   {
+      if (!arg.empty())
+      {
+         cmdString_ += " " + arg;
+         shellCmd_ << arg;
+      }
+      return *this;
+   }
+
+   RCommand& operator<<(const FilePath& arg)
+   {
+      cmdString_ += " " + arg.absolutePath();
+      shellCmd_ << arg;
+      return *this;
+   }
+
+
+   const std::string& commandString() const
+   {
+      return cmdString_;
+   }
+
+   const shell_utils::ShellCommand& shellCommand() const
+   {
+      return shellCmd_;
+   }
+
+private:
+   std::string cmdString_;
+   shell_utils::ShellCommand shellCmd_;
+};
+
+} // anonymous namespace
+
 namespace modules { 
 namespace build {
 
@@ -145,59 +203,6 @@ json::Value collectRestartContext()
       return json::Value();
    }
 }
-
-// R command invocation -- has two representations, one to be submitted
-// (shellCmd_) and one to show the user (cmdString_)
-class RCommand
-{
-public:
-   explicit RCommand(const FilePath& rBinDir)
-      : shellCmd_(module_context::rCmd(rBinDir))
-   {
-#ifdef _WIN32
-      cmdString_ = "Rcmd.exe";
-#else
-      cmdString_ = "R CMD";
-#endif
-
-      // set escape mode to files-only. this is so that when we
-      // add the group of extra arguments from the user that we
-      // don't put quotes around it.
-      shellCmd_ << shell_utils::EscapeFilesOnly;
-   }
-
-   RCommand& operator<<(const std::string& arg)
-   {
-      if (!arg.empty())
-      {
-         cmdString_ += " " + arg;
-         shellCmd_ << arg;
-      }
-      return *this;
-   }
-
-   RCommand& operator<<(const FilePath& arg)
-   {
-      cmdString_ += " " + arg.absolutePath();
-      shellCmd_ << arg;
-      return *this;
-   }
-
-
-   const std::string& commandString() const
-   {
-      return cmdString_;
-   }
-
-   const shell_utils::ShellCommand& shellCommand() const
-   {
-      return shellCmd_;
-   }
-
-private:
-   std::string cmdString_;
-   shell_utils::ShellCommand shellCmd_;
-};
 
 class Build : boost::noncopyable,
               public boost::enable_shared_from_this<Build>
@@ -900,6 +905,42 @@ json::Value restoreBuildRestartContext()
    return collectRestartContext();
 }
 
+
+
+SEXP rs_canBuildCpp()
+{
+   r::sexp::Protect rProtect;
+   return r::sexp::create(module_context::canBuildCpp(), &rProtect);
+}
+
+Error initialize()
+{
+   R_CallMethodDef methodDef ;
+   methodDef.name = "rs_canBuildCpp" ;
+   methodDef.fun = (DL_FUNC) rs_canBuildCpp ;
+   methodDef.numArgs = 0;
+   r::routines::addCallMethod(methodDef);
+
+   // add suspend handler
+   addSuspendHandler(module_context::SuspendHandler(onSuspend, onResume));
+
+   // install rpc methods
+   using boost::bind;
+   using namespace module_context;
+   ExecBlock initBlock ;
+   initBlock.addFunctions()
+      (bind(registerRpcMethod, "start_build", startBuild))
+      (bind(registerRpcMethod, "terminate_build", terminateBuild))
+      (bind(registerRpcMethod, "devtools_load_all_path", devtoolsLoadAllPath));
+   return initBlock.execute();
+}
+
+
+} // namespace build
+} // namespace modules
+
+namespace module_context {
+
 bool canBuildCpp()
 {
    // try to build a simple c file to test whether we have build tools available
@@ -937,36 +978,7 @@ bool canBuildCpp()
    return result.exitStatus == EXIT_SUCCESS;
 }
 
-SEXP rs_canBuildCpp()
-{
-   r::sexp::Protect rProtect;
-   return r::sexp::create(canBuildCpp(), &rProtect);
 }
 
-Error initialize()
-{
-   R_CallMethodDef methodDef ;
-   methodDef.name = "rs_canBuildCpp" ;
-   methodDef.fun = (DL_FUNC) rs_canBuildCpp ;
-   methodDef.numArgs = 0;
-   r::routines::addCallMethod(methodDef);
-
-   // add suspend handler
-   addSuspendHandler(module_context::SuspendHandler(onSuspend, onResume));
-
-   // install rpc methods
-   using boost::bind;
-   using namespace module_context;
-   ExecBlock initBlock ;
-   initBlock.addFunctions()
-      (bind(registerRpcMethod, "start_build", startBuild))
-      (bind(registerRpcMethod, "terminate_build", terminateBuild))
-      (bind(registerRpcMethod, "devtools_load_all_path", devtoolsLoadAllPath));
-   return initBlock.execute();
-}
-
-
-} // namespace build
-} // namespace modules
 } // namesapce session
 

@@ -21,11 +21,17 @@ public class NewPackageOptions extends JavaScriptObject
    {
    }
    
-   public native final static NewPackageOptions create(JsArrayString codeFiles) 
+   public native final static NewPackageOptions create(boolean usingRcpp,
+                                                       JsArrayString codeFiles) 
    /*-{
       var options = new Object();
+      options.using_rcpp = usingRcpp;
       options.code_files = codeFiles;
       return options;
+   }-*/;
+   
+   public native final boolean getUsingRcpp() /*-{
+      return this.using_rcpp;
    }-*/;
  
    public native final JsArrayString getCodeFiles() /*-{
