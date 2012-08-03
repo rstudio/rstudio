@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link DirectoryRole}.</p>
  */
-class DirectoryRoleImpl extends Role implements DirectoryRole {
+class DirectoryRoleImpl extends RoleImpl implements DirectoryRole {
   DirectoryRoleImpl(String roleName) {
     super(roleName);
   }

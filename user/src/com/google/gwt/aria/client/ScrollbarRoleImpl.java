@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link ScrollbarRole}.</p>
  */
-class ScrollbarRoleImpl extends Role implements ScrollbarRole {
+class ScrollbarRoleImpl extends RoleImpl implements ScrollbarRole {
   ScrollbarRoleImpl(String roleName) {
     super(roleName);
   }

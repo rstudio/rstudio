@@ -20,9 +20,9 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Tests {@link Role} ARIA classes
+ * Tests generic role methods implemented in {@link RoleImpl}.
  */
-public class RoleTest extends GWTTestCase {
+public class RoleImplTest extends GWTTestCase {
   private Element div;
   private RegionRole regionRole;
 

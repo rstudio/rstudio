@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link RadioRole}.</p>
  */
-class RadioRoleImpl extends Role implements RadioRole {
+class RadioRoleImpl extends RoleImpl implements RadioRole {
   RadioRoleImpl(String roleName) {
     super(roleName);
   }

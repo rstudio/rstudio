@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link TabpanelRole}.</p>
  */
-class TabpanelRoleImpl extends Role implements TabpanelRole {
+class TabpanelRoleImpl extends RoleImpl implements TabpanelRole {
   TabpanelRoleImpl(String roleName) {
     super(roleName);
   }

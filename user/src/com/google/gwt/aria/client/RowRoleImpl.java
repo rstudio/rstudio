@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link RowRole}.</p>
  */
-class RowRoleImpl extends Role implements RowRole {
+class RowRoleImpl extends RoleImpl implements RowRole {
   RowRoleImpl(String roleName) {
     super(roleName);
   }

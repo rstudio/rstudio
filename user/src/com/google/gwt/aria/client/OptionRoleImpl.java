@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link OptionRole}.</p>
  */
-class OptionRoleImpl extends Role implements OptionRole {
+class OptionRoleImpl extends RoleImpl implements OptionRole {
   OptionRoleImpl(String roleName) {
     super(roleName);
   }

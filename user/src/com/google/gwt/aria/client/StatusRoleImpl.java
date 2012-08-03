@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link StatusRole}.</p>
  */
-class StatusRoleImpl extends Role implements StatusRole {
+class StatusRoleImpl extends RoleImpl implements StatusRole {
   StatusRoleImpl(String roleName) {
     super(roleName);
   }

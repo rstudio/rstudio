@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link MarqueeRole}.</p>
  */
-class MarqueeRoleImpl extends Role implements MarqueeRole {
+class MarqueeRoleImpl extends RoleImpl implements MarqueeRole {
   MarqueeRoleImpl(String roleName) {
     super(roleName);
   }

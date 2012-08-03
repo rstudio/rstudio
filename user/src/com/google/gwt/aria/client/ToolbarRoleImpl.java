@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link ToolbarRole}.</p>
  */
-class ToolbarRoleImpl extends Role implements ToolbarRole {
+class ToolbarRoleImpl extends RoleImpl implements ToolbarRole {
   ToolbarRoleImpl(String roleName) {
     super(roleName);
   }

@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link ListboxRole}.</p>
  */
-class ListboxRoleImpl extends Role implements ListboxRole {
+class ListboxRoleImpl extends RoleImpl implements ListboxRole {
   ListboxRoleImpl(String roleName) {
     super(roleName);
   }

@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link TimerRole}.</p>
  */
-class TimerRoleImpl extends Role implements TimerRole {
+class TimerRoleImpl extends RoleImpl implements TimerRole {
   TimerRoleImpl(String roleName) {
     super(roleName);
   }

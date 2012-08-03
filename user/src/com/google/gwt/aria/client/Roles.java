@@ -23,8 +23,8 @@ package com.google.gwt.aria.client;
  * An element role is constant and is not supposed to change.</p>
  *
  * <p>This is the central class in this ARIA API because it contains all defined roles which
- * can be set to HTML elements. Each role in this class is a {@link Role} instance.
- * The {@link Role} class contains methods for getting and setting states and properties.</p>
+ * can be set to HTML elements. Each role in this class implements the {@link RoletypeRole}
+ * interface, which contains generic methods for getting and setting states and properties.</p>
  *
  * <p>Lets say we have an image button widget and we want to make it visible to a reader as a
  * button, accompanied with some help text for the button usage. For the purpose we need to add a

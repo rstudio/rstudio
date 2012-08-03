@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link SpinbuttonRole}.</p>
  */
-class SpinbuttonRoleImpl extends Role implements SpinbuttonRole {
+class SpinbuttonRoleImpl extends RoleImpl implements SpinbuttonRole {
   SpinbuttonRoleImpl(String roleName) {
     super(roleName);
   }

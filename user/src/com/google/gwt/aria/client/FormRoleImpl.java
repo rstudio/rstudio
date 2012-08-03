@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link FormRole}.</p>
  */
-class FormRoleImpl extends Role implements FormRole {
+class FormRoleImpl extends RoleImpl implements FormRole {
   FormRoleImpl(String roleName) {
     super(roleName);
   }

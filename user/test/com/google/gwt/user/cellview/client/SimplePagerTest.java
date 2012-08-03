@@ -16,7 +16,6 @@
 package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.aria.client.Property;
-import com.google.gwt.aria.client.Role;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.aria.client.State;
 import com.google.gwt.core.client.GWT;
@@ -43,7 +42,7 @@ public class SimplePagerTest extends AbstractPagerTest {
     NodeList<Element> nodeList = pager.getElement().getElementsByTagName("img");
     for (int i = 0; i < nodeList.getLength(); i++) {
       Element imgElem = nodeList.getItem(i);
-      assertEquals(Roles.getButtonRole().getName(), imgElem.getAttribute(Role.ATTR_NAME_ROLE));
+      assertEquals(Roles.getButtonRole().getName(), imgElem.getAttribute("role"));
       String label = imgElem.getAttribute(Property.LABEL.getName());
       assertNotNull(label);
       if (label.equals(imageButtonConstants.firstPage()) 

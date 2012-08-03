@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link ComboboxRole}.</p>
  */
-class ComboboxRoleImpl extends Role implements ComboboxRole {
+class ComboboxRoleImpl extends RoleImpl implements ComboboxRole {
   ComboboxRoleImpl(String roleName) {
     super(roleName);
   }

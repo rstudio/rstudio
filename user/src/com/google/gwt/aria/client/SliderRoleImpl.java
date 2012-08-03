@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link SliderRole}.</p>
  */
-class SliderRoleImpl extends Role implements SliderRole {
+class SliderRoleImpl extends RoleImpl implements SliderRole {
   SliderRoleImpl(String roleName) {
     super(roleName);
   }

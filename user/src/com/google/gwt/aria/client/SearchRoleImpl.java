@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link SearchRole}.</p>
  */
-class SearchRoleImpl extends Role implements SearchRole {
+class SearchRoleImpl extends RoleImpl implements SearchRole {
   SearchRoleImpl(String roleName) {
     super(roleName);
   }

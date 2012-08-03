@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link ProgressbarRole}.</p>
  */
-class ProgressbarRoleImpl extends Role implements ProgressbarRole {
+class ProgressbarRoleImpl extends RoleImpl implements ProgressbarRole {
   ProgressbarRoleImpl(String roleName) {
     super(roleName);
   }

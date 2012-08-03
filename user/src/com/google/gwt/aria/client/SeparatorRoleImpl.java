@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link SeparatorRole}.</p>
  */
-class SeparatorRoleImpl extends Role implements SeparatorRole {
+class SeparatorRoleImpl extends RoleImpl implements SeparatorRole {
   SeparatorRoleImpl(String roleName) {
     super(roleName);
   }

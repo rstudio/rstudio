@@ -34,11 +34,12 @@ import com.google.gwt.dom.client.Element;
  * <p>For more details about ARIA roles check <a href="http://www.w3.org/TR/wai-aria/roles">
  * The Roles Model </a>.</p>
  */
-public class Role {
-  public static final String ATTR_NAME_ROLE = "role";
+class RoleImpl {
+  private static final String ATTR_NAME_ROLE = "role";
+
   private final String roleName;
 
-  public Role(String roleName) {
+  RoleImpl(String roleName) {
     assert roleName != null : "Role name cannot be null";
     this.roleName = roleName;
   }

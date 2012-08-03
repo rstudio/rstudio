@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link TextboxRole}.</p>
  */
-class TextboxRoleImpl extends Role implements TextboxRole {
+class TextboxRoleImpl extends RoleImpl implements TextboxRole {
   TextboxRoleImpl(String roleName) {
     super(roleName);
   }

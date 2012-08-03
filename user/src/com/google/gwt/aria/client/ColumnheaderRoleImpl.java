@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link ColumnheaderRole}.</p>
  */
-class ColumnheaderRoleImpl extends Role implements ColumnheaderRole {
+class ColumnheaderRoleImpl extends RoleImpl implements ColumnheaderRole {
   ColumnheaderRoleImpl(String roleName) {
     super(roleName);
   }

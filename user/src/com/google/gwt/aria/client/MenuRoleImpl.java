@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link MenuRole}.</p>
  */
-class MenuRoleImpl extends Role implements MenuRole {
+class MenuRoleImpl extends RoleImpl implements MenuRole {
   MenuRoleImpl(String roleName) {
     super(roleName);
   }

@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link MenuitemcheckboxRole}.</p>
  */
-class MenuitemcheckboxRoleImpl extends Role implements MenuitemcheckboxRole {
+class MenuitemcheckboxRoleImpl extends RoleImpl implements MenuitemcheckboxRole {
   MenuitemcheckboxRoleImpl(String roleName) {
     super(roleName);
   }

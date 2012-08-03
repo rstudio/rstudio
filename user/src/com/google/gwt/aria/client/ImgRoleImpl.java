@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link ImgRole}.</p>
  */
-class ImgRoleImpl extends Role implements ImgRole {
+class ImgRoleImpl extends RoleImpl implements ImgRole {
   ImgRoleImpl(String roleName) {
     super(roleName);
   }

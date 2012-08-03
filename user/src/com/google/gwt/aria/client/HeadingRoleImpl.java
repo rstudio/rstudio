@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 /**
  * <p>Implements {@link HeadingRole}.</p>
  */
-class HeadingRoleImpl extends Role implements HeadingRole {
+class HeadingRoleImpl extends RoleImpl implements HeadingRole {
   HeadingRoleImpl(String roleName) {
     super(roleName);
   }

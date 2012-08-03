@@ -14,7 +14,7 @@
 package com.google.gwt.aria;
 
 import com.google.gwt.aria.client.AttributeTest;
-import com.google.gwt.aria.client.RoleTest;
+import com.google.gwt.aria.client.RoleImplTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
@@ -26,7 +26,7 @@ public class AriaSuite {
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite("Test for suite for aria");
     suite.addTestSuite(AttributeTest.class);
-    suite.addTestSuite(RoleTest.class);
+    suite.addTestSuite(RoleImplTest.class);
     return suite;
   }
 }
