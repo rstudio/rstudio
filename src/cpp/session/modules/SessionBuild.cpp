@@ -25,6 +25,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/text/DcfParser.hpp>
 #include <core/system/Process.hpp>
+#include <core/system/Environment.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/r_util/RPackageInfo.hpp>
 
@@ -426,7 +427,14 @@ private:
                      const r_util::RPackageInfo& pkgInfo,
                      const core::system::ProcessOptions& options,
                      const core::system::ProcessCallbacks& cb)
-   {
+   {      
+      // make a copy of options so we can customize the environment
+      core::system::ProcessOptions pkgOptions(options);
+      core::system::Options childEnv;
+      core::system::environment(&childEnv);
+      core::system::setenv(&childEnv, "CYGWIN", "nodosfilewarning");
+      pkgOptions.environment = childEnv;
+
       // get R bin directory
       FilePath rBinDir;
       Error error = module_context::rBinDir(&rBinDir);
@@ -457,7 +465,7 @@ private:
 
          // run R CMD INSTALL <package-dir>
          module_context::processSupervisor().runCommand(rCmd.shellCommand(),
-                                                        options,
+                                                        pkgOptions,
                                                         cb);
       }
 
@@ -481,7 +489,7 @@ private:
 
          // run R CMD build <package-dir>
          module_context::processSupervisor().runCommand(rCmd.shellCommand(),
-                                                        options,
+                                                        pkgOptions,
                                                         cb);
       }
 
@@ -506,7 +514,7 @@ private:
 
          // run R CMD INSTALL --build <package-dir>
          module_context::processSupervisor().runCommand(rCmd.shellCommand(),
-                                                        options,
+                                                        pkgOptions,
                                                         cb);
       }
 
@@ -548,7 +556,7 @@ private:
                                        Build::shared_from_this(),
                                        _1,
                                        rCheckCmd,
-                                       options,
+                                       pkgOptions,
                                        buildCb);
 
          // show the user the command
@@ -567,7 +575,7 @@ private:
 
          // run the source build
          module_context::processSupervisor().runCommand(rCmd.shellCommand(),
-                                                        options,
+                                                        pkgOptions,
                                                         buildCb);
       }
    }
