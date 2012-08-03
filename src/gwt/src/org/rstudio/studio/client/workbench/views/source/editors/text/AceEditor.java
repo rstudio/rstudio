@@ -35,6 +35,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.regex.Match;
@@ -405,6 +406,18 @@ public class AceEditor implements DocDisplay,
    }
 
    public void setCode(String code, boolean preserveCursorPosition)
+   {
+      // Calling setCode("", false) while the editor contains multiple lines of
+      // content causes bug 2928: Flickering console when typing. Empirically,
+      // first setting code to a single line of content and then clearing it,
+      // seems to correct this problem.
+      if (StringUtil.isNullOrEmpty(code))
+         doSetCode(" ", preserveCursorPosition);
+
+      doSetCode(code, preserveCursorPosition);
+   }
+
+   private void doSetCode(String code, boolean preserveCursorPosition)
    {
       // Filter out Escape characters that might have snuck in from an old
       // bug in 0.95. We can choose to remove this when 0.95 ships, hopefully
