@@ -178,9 +178,9 @@ Error createProject(const json::JsonRpcRequest& request,
       if (error)
          return error;
 
-      // create the project file
+      // create the project file (allow auto-detection of the package
+      // to setup the package build type & default options)
       r_util::RProjectConfig projConfig = ProjectContext::defaultConfig();
-      projConfig.buildType = r_util::kBuildTypePackage;
       return r_util::writeProjectFile(projectFilePath, projConfig);
    }
 }

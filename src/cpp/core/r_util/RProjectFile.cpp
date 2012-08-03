@@ -140,6 +140,14 @@ bool interpretIntValue(const std::string& value, int* pValue)
    }
 }
 
+void setBuildPackageDefaults(const std::string& packagePath,
+                             RProjectConfig* pConfig)
+{
+   pConfig->buildType = kBuildTypePackage;
+   pConfig->packagePath = packagePath;
+   pConfig->packageInstallArgs = "--no-multiarch";
+   pConfig->packageBuildBinaryArgs = "--preclean";
+}
 
 std::string detectBuildType(const FilePath& projectFilePath,
                             RProjectConfig* pConfig)
@@ -147,13 +155,11 @@ std::string detectBuildType(const FilePath& projectFilePath,
    FilePath projectDir = projectFilePath.parent();
    if (projectDir.childPath("DESCRIPTION").exists())
    {
-      pConfig->buildType = kBuildTypePackage;
-      pConfig->packagePath = "";
+      setBuildPackageDefaults("", pConfig);
    }
    else if (projectDir.childPath("pkg/DESCRIPTION").exists())
    {
-      pConfig->buildType = kBuildTypePackage;
-      pConfig->packagePath = "pkg";
+      setBuildPackageDefaults("pkg", pConfig);
    }
    else if (projectDir.childPath("Makefile").exists())
    {

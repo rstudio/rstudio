@@ -50,8 +50,9 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
                                  BrowseCap.isFirefox() ? 1 : 4, Unit.PX);
       add(buildToolsPanel_);
       
+      packagePanel_ = new BuildToolsPackagePanel();
       buildToolsPanels_.put(RProjectConfig.BUILD_TYPE_PACKAGE, 
-                            new BuildToolsPackagePanel());
+                            packagePanel_);
       
       buildToolsPanels_.put(RProjectConfig.BUILD_TYPE_MAKEFILE, 
                             new BuildToolsMakefilePanel());
@@ -84,6 +85,11 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
          panel.load(options);
       
       manageBuildToolsPanel(buildType);
+      
+      // if the initial type isn't package then we need to provide package
+      // defaults if the user switches to a package
+      providePackageBuildTypeDefaults_ = 
+            !buildType.equals(RProjectConfig.BUILD_TYPE_PACKAGE);
    }
    
    @Override
@@ -142,13 +148,22 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
             @Override
             public void onChange(ChangeEvent event)
             {
-               manageBuildToolsPanel(getValue());
+               String buildType = getValue();
+               if (buildType.equals(RProjectConfig.BUILD_TYPE_PACKAGE) &&
+                   providePackageBuildTypeDefaults_)
+               {
+                  providePackageBuildTypeDefaults_ = false;
+                  packagePanel_.provideDefaults();
+               }
+               
+               manageBuildToolsPanel(buildType);
             }
          });
       }
    }
    
-   
+   private boolean providePackageBuildTypeDefaults_ = false;
+   private final BuildToolsPanel packagePanel_;
   
    @SuppressWarnings("unused")
    private final Session session_;

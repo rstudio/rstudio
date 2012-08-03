@@ -40,6 +40,10 @@ public abstract class BuildToolsPanel extends VerticalPanel
    abstract void load(RProjectOptions options);
    abstract void save(RProjectOptions options);
    
+   protected void provideDefaults()
+   {
+   }
+   
    boolean validate()
    {
       return true;

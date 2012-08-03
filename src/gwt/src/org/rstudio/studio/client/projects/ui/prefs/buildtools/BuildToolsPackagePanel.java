@@ -104,7 +104,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
             "R CMD build additional options:"));
 
       add(buildBinaryAdditionalArguments_ = new AdditionalArguments(
-            "R CMD INSTALL --binary --preclean additional options:"));
+            "R CMD INSTALL --binary additional options:"));
 
       add(headerLabel("Check Package"));
       
@@ -119,6 +119,13 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    public void initialize(WorkbenchContext workbenchContext)
    {
       workbenchContext_ = workbenchContext;
+   }
+   
+   @Override
+   protected void provideDefaults()
+   {
+      installAdditionalArguments_.setText("--no-multiarch");
+      buildBinaryAdditionalArguments_.setText("--preclean");
    }
 
    @Override
