@@ -72,6 +72,8 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
       {
          moreMenu.addItem(commands_.devtoolsLoadAll().createMenuItem(false));
          moreMenu.addSeparator();
+         moreMenu.addItem(commands_.rebuildAll().createMenuItem(false));
+         moreMenu.addSeparator();
          moreMenu.addItem(commands_.buildSourcePackage().createMenuItem(false));
          moreMenu.addItem(commands_.buildBinaryPackage().createMenuItem(false));
          moreMenu.addSeparator();

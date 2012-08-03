@@ -115,9 +115,13 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
             }
             
             // remove makefile commands if this isn't a makefile
-            if (!type.equals(SessionInfo.BUILD_TOOLS_MAKEFILE))
+            if (type.equals(SessionInfo.BUILD_TOOLS_CUSTOM))
             {
                commands.rebuildAll().remove();
+            }
+            
+            if (!type.equals(SessionInfo.BUILD_TOOLS_MAKEFILE))
+            {
                commands.cleanAll().remove();
             }
             

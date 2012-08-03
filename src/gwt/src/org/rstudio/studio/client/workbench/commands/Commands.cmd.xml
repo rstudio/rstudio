@@ -203,6 +203,7 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="rebuildAll"/>
          <cmd refid="cleanAll"/>
+         <separator/>
          <cmd refid="checkPackage"/>
          <separator/>
          <cmd refid="buildSourcePackage"/>

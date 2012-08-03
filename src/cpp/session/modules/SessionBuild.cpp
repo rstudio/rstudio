@@ -108,6 +108,7 @@ const char * const kBuildSourcePackage = "build-source-package";
 const char * const kBuildBinaryPackage = "build-binary-package";
 const char * const kCheckPackage = "check-package";
 const char * const kBuildAndReload = "build-all";
+const char * const kRebuildAll = "rebuild-all";
 
 FilePath restartContextFilePath()
 {
@@ -334,7 +335,7 @@ private:
    {
       if (!projectConfig().packageRoxygenize.empty())
       {
-         if ((type == kBuildAndReload) &&
+         if ((type == kBuildAndReload || type == kRebuildAll) &&
              options_.autoRoxygenizeForBuildAndReload)
          {
             return true;
@@ -445,7 +446,7 @@ private:
       }
 
       // build command
-      if (type == kBuildAndReload)
+      if (type == kBuildAndReload || type == kRebuildAll)
       {
          // restart R after build is completed
          restartR_ = true;
@@ -453,6 +454,10 @@ private:
          // build command
          RCommand rCmd(rBinDir);
          rCmd << "INSTALL";
+
+         // add --preclean if this is a rebuild all
+         if (type == kRebuildAll)
+            rCmd << "--preclean";
 
          // add extra args if provided
          rCmd << projectConfig().packageInstallArgs;
@@ -499,6 +504,7 @@ private:
          RCommand rCmd(rBinDir);
          rCmd << "INSTALL";
          rCmd << "--build";
+         rCmd << "--preclean";
 
          // add extra args if provided
          rCmd << projectConfig().packageBuildBinaryArgs;
