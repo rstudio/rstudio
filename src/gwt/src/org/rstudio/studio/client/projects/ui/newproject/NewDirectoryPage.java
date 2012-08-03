@@ -106,8 +106,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       chkGitInit_.addStyleName(styles.wizardCheckbox());
       if (sessionInfo.isVcsAvailable(VCSConstants.GIT_ID))
       {
-         for (int i=0; i<2; i++)
-            addSpacer();
+         addSpacer();
          
          UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
          chkGitInit_.setValue(uiPrefs.newProjGitInit().getValue());
