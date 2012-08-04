@@ -267,7 +267,7 @@ private:
 
       smatch match;
       while (regex_search(std::string(inputPos, pContent->end()), match,
-                          regex("\x1B\\[(\\d\\d)?m")))
+                          regex("\x1B\\[(\\d\\d)?m(\x1B\\[K)?")))
       {
          std::string match1 = match[1];
 
