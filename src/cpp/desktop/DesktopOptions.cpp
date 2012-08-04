@@ -43,6 +43,16 @@ void Options::restoreMainWindowBounds(QMainWindow* win)
    QString key = QString::fromAscii("mainwindow/geometry");
    if (settings_.contains(key))
       win->restoreGeometry(settings_.value(key).toByteArray());
+   else
+   {
+      QSize size = QSize(1024, 768).boundedTo(
+            QApplication::desktop()->availableGeometry().size());
+      if (size.width() > 800 && size.height() > 500)
+      {
+         // Only use default size if it seems sane; otherwise let Qt set it
+         win->resize(size);
+      }
+   }
 }
 
 void Options::saveMainWindowBounds(QMainWindow* win)
