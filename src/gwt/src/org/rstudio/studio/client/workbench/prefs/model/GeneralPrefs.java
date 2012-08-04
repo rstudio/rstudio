@@ -19,12 +19,10 @@ public class GeneralPrefs extends JavaScriptObject
    protected GeneralPrefs() {}
 
    public static final native GeneralPrefs create(int saveAction,
-                                                  boolean noSaveRDataForPackages,
                                                   boolean loadRData,
                                                   String initialWorkingDir) /*-{
       var prefs = new Object();
       prefs.save_action = saveAction;
-      prefs.no_save_rdata_for_packages = noSaveRDataForPackages;
       prefs.load_rdata = loadRData;
       prefs.initial_working_dir = initialWorkingDir;
       return prefs ;
@@ -35,11 +33,6 @@ public class GeneralPrefs extends JavaScriptObject
       return this.save_action;
    }-*/;
 
-   public native final boolean getNoSaveRDataForPackages() /*-{
-      return this.no_save_rdata_for_packages;
-   }-*/;
-
-   
    public native final boolean getLoadRData() /*-{
       return this.load_rdata;
    }-*/;

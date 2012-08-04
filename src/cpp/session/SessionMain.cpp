@@ -2299,17 +2299,8 @@ int saveWorkspaceAction()
       }
    }
 
-   // no project override, read from settings (but also respect
-   // the setting which prevents save within package projects)
-   if (projContext.config().buildType == r_util::kBuildTypePackage &&
-       userSettings().noSaveRDataForPackages() == true)
-   {
-      return r::session::kSaveActionNoSave;
-   }
-   else
-   {
-      return userSettings().saveAction();
-   }
+   // no project override, read from settings
+   return userSettings().saveAction();
 }
 
 void syncRSaveAction()

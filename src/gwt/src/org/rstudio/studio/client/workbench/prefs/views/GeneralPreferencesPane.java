@@ -94,10 +94,6 @@ public class GeneralPreferencesPane extends PreferencesPane
             });
       add(saveWorkspace_);
       
-      add(noSaveRDataForPackages_ = new CheckBox(
-                    "Don't save workspace on exit for package projects"));
-      spaced(noSaveRDataForPackages_);
-      
       add(loadRData_ = new CheckBox("Restore .RData into workspace at startup"));
       spaced(loadRData_); 
       alwaysSaveHistory_ = new CheckBox(
@@ -139,7 +135,6 @@ public class GeneralPreferencesPane extends PreferencesPane
       add(restoreLastProject_);
         
       saveWorkspace_.setEnabled(false);
-      noSaveRDataForPackages_.setEnabled(false);
       loadRData_.setEnabled(false);
       dirChooser_.setEnabled(false);
       alwaysSaveHistory_.setEnabled(false);
@@ -155,7 +150,6 @@ public class GeneralPreferencesPane extends PreferencesPane
       GeneralPrefs generalPrefs = rPrefs.getGeneralPrefs();
       
       saveWorkspace_.setEnabled(true);
-      noSaveRDataForPackages_.setEnabled(true);
       loadRData_.setEnabled(true);
       dirChooser_.setEnabled(true);
       
@@ -174,7 +168,7 @@ public class GeneralPreferencesPane extends PreferencesPane
             break; 
       }
       saveWorkspace_.getListBox().setSelectedIndex(saveWorkspaceIndex);
-      noSaveRDataForPackages_.setValue(generalPrefs.getNoSaveRDataForPackages());
+
       loadRData_.setValue(generalPrefs.getLoadRData());
       dirChooser_.setText(generalPrefs.getInitialWorkingDirectory());
         
@@ -232,11 +226,9 @@ public class GeneralPreferencesPane extends PreferencesPane
          }
 
          // set general prefs
-         GeneralPrefs generalPrefs = GeneralPrefs.create(
-                                          saveAction, 
-                                          noSaveRDataForPackages_.getValue(),
-                                          loadRData_.getValue(),
-                                          dirChooser_.getText());
+         GeneralPrefs generalPrefs = GeneralPrefs.create(saveAction, 
+                                                         loadRData_.getValue(),
+                                                         dirChooser_.getText());
          rPrefs.setGeneralPrefs(generalPrefs);
          
          // set history prefs
@@ -269,7 +261,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    private SelectWidget saveWorkspace_;
    private TextBoxWithButton rVersion_;
    private TextBoxWithButton dirChooser_;
-   private CheckBox noSaveRDataForPackages_;
    private CheckBox loadRData_;
    private final CheckBox alwaysSaveHistory_;
    private final CheckBox removeHistoryDuplicates_;

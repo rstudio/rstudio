@@ -328,15 +328,6 @@ void UserSettings::setSaveAction(int saveAction)
    settings_.set(kSaveAction, saveAction);
 }
 
-bool UserSettings::noSaveRDataForPackages() const
-{
-   return settings_.getBool("noSaveRDataForPackages", true);
-}
-
-void UserSettings::setNoSaveRDataForPackages(bool noSave)
-{
-   settings_.set("noSaveRDataForPackages", noSave);
-}
 
 bool UserSettings::loadRData() const
 {
