@@ -78,6 +78,12 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
    invisible (NULL)
 })
 
+.rs.addFunction( "disableSaveCompression", function()
+{
+  options(save.defaults=list(ascii=FALSE, compress=FALSE))
+  options(save.image.defaults=list(ascii=FALSE, safe=TRUE, compress=FALSE))
+})
+
 .rs.addFunction( "attachDataFile", function(filename, name, pos = 2)
 {
    if (!file.exists(filename)) 

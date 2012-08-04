@@ -182,7 +182,8 @@ void saveClientState(ClientStateCommitType commitType)
 
 
  
-bool saveSessionState(const FilePath& suspendedSessionPath)
+bool saveSessionState(const FilePath& suspendedSessionPath,
+                      bool disableSaveCompression)
 {
    // notify client of serialization status
    SerializationCallbackScope cb(kSerializationActionSuspendSession);
@@ -191,7 +192,9 @@ bool saveSessionState(const FilePath& suspendedSessionPath)
    r::exec::IgnoreInterruptsScope ignoreInterrupts;
    
    // save 
-   return r::session::state::save(suspendedSessionPath, s_options.serverMode);
+   return r::session::state::save(suspendedSessionPath,
+                                  s_options.serverMode,
+                                  disableSaveCompression);
 }
    
 void deferredRestoreSuspendedSession(
@@ -1247,14 +1250,24 @@ bool isSuspendable(const std::string& currentPrompt)
 }
    
 
-bool suspend(const FilePath& suspendedSessionPath, bool force)
+bool suspend(const FilePath& suspendedSessionPath,
+             bool disableSaveCompression,
+             bool force)
 {
+   // validate that force == true if disableSaveCompression is specified
+   // this is because save compression is disabled and the previous options
+   // are not restored, so it is only suitable to use this when we know
+   // the process is going to go away completely
+   if (disableSaveCompression)
+      BOOST_ASSERT(force == true);
+
    // commit all client state
    saveClientState(ClientStateCommitAll);
 
    // save the session state. errors are handled internally and reported
    // directly to the end user and written to the server log.
-   bool suspend = saveSessionState(suspendedSessionPath);
+   bool suspend = saveSessionState(suspendedSessionPath,
+                                   disableSaveCompression);
       
    // if we failed to save the data and are being forced then warn user
    if (!suspend && force)
@@ -1288,14 +1301,15 @@ bool suspend(const FilePath& suspendedSessionPath, bool force)
 
 bool suspend(bool force)
 {
-   return suspend(s_suspendedSessionPath, force);
+   return suspend(s_suspendedSessionPath, false, force);
 }
 
 void suspendForRestart()
 {
    suspend(RestartContext::createSessionStatePath(s_options.scopedScratchPath,
                                                   s_options.sessionPort),
-           true);
+           true,  // disable save compression
+           true); // force suspend
 }
 
 // set save action

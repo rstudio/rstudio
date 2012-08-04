@@ -28,7 +28,9 @@ namespace r {
 namespace session {
 namespace state {
         
-bool save(const core::FilePath& statePath, bool serverMode);
+bool save(const core::FilePath& statePath,
+          bool serverMode,
+          bool disableSaveCompression);
    
 bool restore(const core::FilePath& statePath, 
              bool serverMode,

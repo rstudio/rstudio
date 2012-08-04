@@ -119,7 +119,9 @@ struct ErrorRecorder
 } // anonymous namespace
  
    
-bool save(const FilePath& statePath, bool serverMode)
+bool save(const FilePath& statePath,
+          bool serverMode,
+          bool disableSaveCompression)
 {
    // flag indicating whether we succeeded saving
    bool saved = true;
@@ -198,6 +200,14 @@ bool save(const FilePath& statePath, bool serverMode)
       saved = false;
    }
    
+   // disable save compression if requested
+   if (disableSaveCompression)
+   {
+      error = r::exec::RFunction(".rs.disableSaveCompression").call();
+      if (error)
+         LOG_ERROR(error);
+   }
+
    // save search path
    error = search_path::save(statePath);
    if (error)
