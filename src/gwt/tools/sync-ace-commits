@@ -82,5 +82,5 @@ make
 cp build/src/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
 cp build/src/ace-uncompressed.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
 
-sed -i '' 's/"use strict";//g' ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace.js
-sed -i '' 's/"use strict";//g' ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js
+sed -i'' 's/"use strict";//g' ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace.js
+sed -i'' 's/"use strict";//g' ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js
