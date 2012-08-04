@@ -40,39 +40,25 @@ Options& options()
 
 void Options::restoreMainWindowBounds(QMainWindow* win)
 {
-   settings_.beginGroup(QString::fromAscii("mainwindow"));
-
-   // If we restore to a smaller monitor than when we saved, let the system
-   // decide where to position the window.
-   QSize desktopSize = settings_.value(QString::fromAscii("desktopSize"), QSize(0, 0)).toSize();
-   QSize curDesktopSize = QApplication::desktop()->size();
-   if (desktopSize.width() != 0 && desktopSize.height() != 0
-       && desktopSize.width() <= curDesktopSize.width()
-       && desktopSize.height() <= curDesktopSize.height())
+   QString key = QString::fromAscii("mainwindow/geometry");
+   if (settings_.contains(key))
+      win->restoreGeometry(settings_.value(key).toByteArray());
+   else
    {
-      win->move(settings_.value(QString::fromAscii("pos"), QPoint(0, 0)).toPoint());
+      QSize size = QSize(1024, 768).boundedTo(
+            QApplication::desktop()->availableGeometry().size());
+      if (size.width() > 800 && size.height() > 500)
+      {
+         // Only use default size if it seems sane; otherwise let Qt set it
+         win->resize(size);
+      }
    }
-
-   QSize size = settings_.value(QString::fromAscii("size"), QSize(1024, 768)).toSize()
-          .expandedTo(QSize(200, 200))
-          .boundedTo(QApplication::desktop()->availableGeometry(win->pos()).size());
-   win->resize(size);
-
-   if (settings_.value(QString::fromAscii("maximized"), false).toBool())
-      win->setWindowState(Qt::WindowMaximized);
-
-   settings_.endGroup();
 }
 
 void Options::saveMainWindowBounds(QMainWindow* win)
 {
-   settings_.setValue(QString::fromAscii("mainwindow/maximized"), win->isMaximized());
-   if (!win->isMaximized())
-   {
-     settings_.setValue(QString::fromAscii("mainwindow/size"), win->size());
-     settings_.setValue(QString::fromAscii("mainwindow/pos"), win->pos());
-     settings_.setValue(QString::fromAscii("mainwindow/desktopSize"), QApplication::desktop()->size());
-   }
+   settings_.setValue(QString::fromAscii("mainwindow/geometry"),
+                      win->saveGeometry());
 }
 
 QString Options::portNumber() const

@@ -81,3 +81,11 @@ make clean
 make
 cp build/src/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
 cp build/src/ace-uncompressed.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
+
+stripUseStrict() {
+    sed 's/"use strict";//g' "$1" > "$1.stripped"
+    mv "$1.stripped" "$1"
+}
+
+stripUseStrict ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace.js
+stripUseStrict ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js
