@@ -33,6 +33,7 @@ set (CORE_SOURCE_FILES
    FileLogWriter.cpp
    FilePath.cpp
    FileSerializer.cpp
+   FileUtils.cpp
    GitGraph.cpp
    Hash.cpp
    Log.cpp

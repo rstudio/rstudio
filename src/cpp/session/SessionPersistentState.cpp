@@ -41,7 +41,9 @@ Error PersistentState::initialize()
    serverMode_ = (session::options().programMode() ==
                   kSessionProgramModeServer);
 
-   desktopClientId_ = core::system::generateUuid();
+   // always the same so that we can supporrt a restart of
+   // the session without reloading the client page
+   desktopClientId_ = "33e600bb-c1b1-46bf-b562-ab5cba070b0e";
 
    FilePath scratchPath = module_context::scopedScratchPath();
    FilePath statePath = scratchPath.complete("persistent-state");

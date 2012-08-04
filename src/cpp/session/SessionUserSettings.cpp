@@ -107,7 +107,7 @@ Error UserSettings::initialize()
 
    // make sure we have a context id
    if (contextId().empty())
-      setContextId(module_context::generateShortenedUuid());
+      setContextId(core::system::generateShortenedUuid());
 
    return Success();
 }

@@ -322,11 +322,6 @@ std::string normalizeVcsOverride(const std::string& vcsOverride);
 
 core::FilePath shellWorkingDirectory();
 
-std::string generateShortenedUuid();
-
-core::FilePath uniqueFilePath(const core::FilePath& parent,
-                              const std::string& prefix = "");
-
 // persist state accross suspend and resume
    
 typedef boost::function<void (core::Settings*)> SuspendFunction;

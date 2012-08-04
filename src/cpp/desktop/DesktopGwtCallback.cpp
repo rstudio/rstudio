@@ -55,7 +55,7 @@ GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtCallbackOwner* pOwner)
    : pMainWindow_(pMainWindow),
      pOwner_(pOwner),
      pSynctex_(NULL),
-     switchToProjectPending_(false)
+     pendingRestart_(PendingRestartNone)
 {
 }
 
@@ -725,21 +725,22 @@ void GwtCallback::cleanClipboard(bool stripHtml)
 
 #endif
 
-void GwtCallback::setSwitchToProjectPending(bool switchPending)
+void GwtCallback::setPendingRestart(int pendingRestart)
 {
-   switchToProjectPending_ = switchPending;
+   pendingRestart_ = pendingRestart;
 }
 
-bool GwtCallback::collectPendingSwitchToProjectRequest()
+int GwtCallback::collectPendingRestartRequest()
 {
-   if (switchToProjectPending_)
+   if (pendingRestart_ != PendingRestartNone)
    {
-      switchToProjectPending_ = false;
-      return true;
+      int pendingRestart = pendingRestart_;
+      pendingRestart_ = PendingRestartNone;
+      return pendingRestart;
    }
    else
    {
-      return false;
+      return PendingRestartNone;
    }
 }
 

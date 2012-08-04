@@ -64,8 +64,8 @@ private:
    // active rsession process so that we can use it in closeEvent handling
    void setSessionProcess(QProcess* pSessionProcess);
 
-   // allow SessionLauncher to collect switch requests from GwtCallback
-   bool collectPendingSwitchToProjectRequest();
+   // allow SessionLauncher to collect restart requests from GwtCallback
+   int collectPendingRestartRequest();
 
    bool desktopHooksAvailable();
 

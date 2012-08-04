@@ -30,6 +30,8 @@ import org.rstudio.studio.client.application.events.RestartEvent;
 import org.rstudio.studio.client.application.events.RestartHandler;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
+import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
+import org.rstudio.studio.client.application.events.SuspendAndRestartHandler;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -47,17 +49,22 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog.Result;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
+
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
 public class ApplicationQuit implements SaveActionChangedHandler,
                                         HandleUnsavedChangesHandler,
-                                        RestartHandler
+                                        RestartHandler,
+                                        SuspendAndRestartHandler
 {
    public interface Binder extends CommandBinder<Commands, ApplicationQuit> {}
    
@@ -86,6 +93,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       eventBus.addHandler(SaveActionChangedEvent.TYPE, this);   
       eventBus.addHandler(HandleUnsavedChangesEvent.TYPE, this);
       eventBus.addHandler(RestartEvent.TYPE, this);
+      eventBus.addHandler(SuspendAndRestartEvent.TYPE, this);
    }
    
   
@@ -301,6 +309,89 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       });
    }
    
+   
+   @Override
+   public void onSuspendAndRestart(final SuspendAndRestartEvent event)
+   {
+      // set restart pending for desktop
+      setPendingRestart(DesktopFrame.PENDING_RESTART_ONLY);
+      
+      // perform the suspend and restart
+      server_.suspendForRestart(new VoidServerRequestCallback() {
+         @Override 
+         protected void onSuccess()
+         {
+            // send pings until the server restarts
+            sendPing(event.getAfterRestartCommand(), 200, 25);
+         }
+         @Override
+         protected void onFailure()
+         {
+            setPendingRestart(DesktopFrame.PENDING_RESTART_NONE);
+         }
+      });    
+      
+   } 
+   
+   private void setPendingRestart(int pendingRestart)
+   {
+      if (Desktop.isDesktop())
+         Desktop.getFrame().setPendingRestart(pendingRestart);
+   }
+   
+   private void sendPing(final String afterRestartCommand,
+                         int delayMs, 
+                         final int maxRetries)
+   {  
+      Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
+
+         private int retries_ = 0;
+         private boolean pingDelivered_ = false;
+         private boolean pingInFlight_ = false;
+         
+         @Override
+         public boolean execute()
+         {
+            // if we've already delivered the ping or our retry count
+            // is exhausted then return false
+            if (pingDelivered_ || (++retries_ > maxRetries))
+               return false;
+            
+            if (!pingInFlight_)
+            {
+               pingInFlight_ = true;
+               server_.ping(new VoidServerRequestCallback() {
+                  @Override
+                  protected void onSuccess()
+                  {
+                     pingInFlight_ = false;
+                     
+                     if (!pingDelivered_)
+                     {
+                        pingDelivered_ = true;
+                        eventBus_.fireEvent(
+                           new SendToConsoleEvent(afterRestartCommand, true));
+                     }
+                  }
+                  
+                  @Override
+                  protected void onFailure()
+                  {
+                     pingInFlight_ = false;
+                  }
+               });
+            }
+            
+            // keep trying until the ping is delivered
+            return true;
+         }
+         
+      }, delayMs);
+      
+      
+   }
+   
+   
    @Handler
    public void onQuitSession()
    {
@@ -387,8 +478,11 @@ public class ApplicationQuit implements SaveActionChangedHandler,
 
                // if a switch to project path is defined then set it
                if (Desktop.isDesktop() && (switchToProject_ != null))
-                  Desktop.getFrame().setSwitchToProjectPending(true);
-
+               {
+                  Desktop.getFrame().setPendingRestart(
+                                    DesktopFrame.PENDING_RESTART_AND_RELOAD);
+               }
+               
                server_.quitSession(
                   saveChanges_,
                   switchToProject_,
@@ -410,7 +504,10 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                         progress.dismiss();
 
                         if (Desktop.isDesktop())
-                           Desktop.getFrame().setSwitchToProjectPending(false);
+                        {
+                           Desktop.getFrame().setPendingRestart(
+                                         DesktopFrame.PENDING_RESTART_NONE);
+                        }
                      }
                   });
             }
@@ -444,5 +541,4 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    private final SourceShim sourceShim_;
    
    private SaveAction saveAction_ = SaveAction.saveAsk();
-  
 }

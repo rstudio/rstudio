@@ -212,6 +212,7 @@ bool stdoutIsTerminal();
 
 // uuid
 std::string generateUuid(bool includeDashes = true);
+std::string generateShortenedUuid();
 
 // executable and installation path
 

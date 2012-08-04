@@ -52,6 +52,7 @@ const char * const kConsoleActionsFile = "console_actions";
 const char * const kOptionsFile = "options";
 const char * const kHistoryFile = "history";
 const char * const kPlotsFile = "plots";
+const char * const kPlotsDir = "plots_dir";
 const char * const kSearchPath = "search_path";
 
 // settings
@@ -118,7 +119,7 @@ struct ErrorRecorder
 } // anonymous namespace
  
    
-bool save(const FilePath& statePath)
+bool save(const FilePath& statePath, bool serverMode)
 {
    // flag indicating whether we succeeded saving
    bool saved = true;
@@ -140,14 +141,28 @@ bool save(const FilePath& statePath)
       saved = false;
    }
 
-   // save plots
-   error = graphics::plotManager().savePlotsState();
-   if (error)
+
+   // if we are in server mode then we just need to write the plot
+   // state index (because the location of the graphics directory is stable)
+   if (serverMode)
    {
-      reportError(kSaving, kPlotsFile, error, ERROR_LOCATION);
-      saved = false;
+      error = graphics::plotManager().savePlotsState();
+      if (error)
+      {
+         reportError(kSaving, kPlotsFile, error, ERROR_LOCATION);
+         saved = false;
+      }
    }
-   
+   else
+   {
+      error = graphics::plotManager().serialize(statePath.complete(kPlotsDir));
+      if (error)
+      {
+         reportError(kSaving, kPlotsDir, error, ERROR_LOCATION);
+         saved = false;
+      }
+   }
+
    // save options 
    error = r::options::saveOptions(statePath.complete(kOptionsFile));
    if (error)
@@ -190,22 +205,36 @@ bool save(const FilePath& statePath)
       reportError(kSaving, kSearchPath, error, ERROR_LOCATION);
       saved = false;
    }
-   
+
    // return status
    return saved;
 }
 
-Error deferredRestore(const FilePath& statePath)
+Error deferredRestore(const FilePath& statePath, bool serverMode)
 {
    // search path
    Error error = search_path::restore(statePath);
    if (error)
       return error;
 
-   return graphics::plotManager().restorePlotsState();
+   // if we are in server mode we just need to read the plots state
+   // file (because the location of the graphics directory is stable)
+   if (serverMode)
+   {
+      return graphics::plotManager().restorePlotsState();
+   }
+   else
+   {
+      FilePath plotsDir = statePath.complete(kPlotsDir);
+      if (plotsDir.exists())
+         return graphics::plotManager().deserialize(plotsDir);
+      else
+         return Success();
+   }
 }
    
 bool restore(const FilePath& statePath,
+             bool serverMode,
              boost::function<Error()>* pDeferredRestoreAction,
              std::string* pErrorMessages)
 {
@@ -250,7 +279,8 @@ bool restore(const FilePath& statePath,
    // process that are potentially highly latent. this allows clients
    // to bring their UI up and then receive an event indicating that the
    // latent deserialization actions are taking place
-   *pDeferredRestoreAction = boost::bind(deferredRestore, statePath);
+   *pDeferredRestoreAction = boost::bind(deferredRestore,
+                                             statePath, serverMode);
    
    // return true if there were no error messages
    return pErrorMessages->empty();

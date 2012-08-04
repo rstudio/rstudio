@@ -974,32 +974,6 @@ FilePath shellWorkingDirectory()
       return module_context::safeCurrentPath();
 }
 
-std::string generateShortenedUuid()
-{
-   std::string uuid = core::system::generateUuid(false);
-   return core::hash::crc32HexHash(uuid);
-}
-
-FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix)
-{
-   // try up to 100 times then fallback to a uuid
-   for (int i=0; i<100; i++)
-   {
-      // get a shortened uuid
-      std::string shortentedUuid = generateShortenedUuid();
-
-      // form full path
-      FilePath uniqueDir = parent.childPath(prefix + shortentedUuid);
-
-      // return if it doesn't exist
-      if (!uniqueDir.exists())
-         return uniqueDir;
-   }
-
-   // if we didn't succeed then return prefix + uuid
-   return parent.childPath(prefix + core::system::generateUuid(false));
-}
-
 Events& events()
 {
    static Events instance;

@@ -28,6 +28,7 @@
 #include <core/FilePath.hpp>
 #include <core/Hash.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/FileUtils.hpp>
 #include <core/DateTime.hpp>
 
 #include <core/system/System.hpp>
@@ -96,7 +97,7 @@ Error putProperties(const std::string& path, const json::Object& properties)
    std::string propertiesFile = propertiesDB.index[escapedPath];
    if (propertiesFile.empty())
    {
-      FilePath propFile = module_context::uniqueFilePath(propertiesDB.path);
+      FilePath propFile = file_utils::uniqueFilePath(propertiesDB.path);
       propertiesFile = propFile.filename();
       propertiesDB.index[escapedPath] = propertiesFile;
       updateIndex = true;
@@ -161,7 +162,7 @@ Error getProperties(const std::string& path, json::Object* pProperties)
 SourceDocument::SourceDocument(const std::string& type)
 {
    FilePath srcDBPath = source_database::path();
-   FilePath docPath = module_context::uniqueFilePath(srcDBPath);
+   FilePath docPath = file_utils::uniqueFilePath(srcDBPath);
    id_ = docPath.filename();
    type_ = type;
    setContents("");

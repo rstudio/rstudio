@@ -24,6 +24,7 @@
 #include "DesktopUtils.hpp"
 #include "DesktopOptions.hpp"
 #include "DesktopSlotBinders.hpp"
+#include "DesktopGwtCallback.hpp"
 
 using namespace core;
 
@@ -123,19 +124,24 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
 
 void SessionLauncher::onRSessionExited()
 {
-   if (pMainWindow_->collectPendingSwitchToProjectRequest())
+   int pendingRestart = pMainWindow_->collectPendingRestartRequest();
+   if (pendingRestart != PendingRestartNone)
    {
-      // close all satellite windows
-      QWidgetList topLevels = QApplication::topLevelWidgets();
-      for (int i = 0; i < topLevels.size(); i++)
+      // close all satellite windows if we are reloading
+      bool reload = (pendingRestart == PendingRestartAndReload);
+      if (reload)
       {
-         QWidget* pWindow = topLevels.at(i);
-         if (pWindow != pMainWindow_)
-           pWindow->close();
+         QWidgetList topLevels = QApplication::topLevelWidgets();
+         for (int i = 0; i < topLevels.size(); i++)
+         {
+            QWidget* pWindow = topLevels.at(i);
+            if (pWindow != pMainWindow_)
+              pWindow->close();
+         }
       }
 
       // launch next session
-      Error error = launchNextSession();
+      Error error = launchNextSession(reload);
       if (error)
       {
          LOG_ERROR(error);
@@ -154,7 +160,7 @@ void SessionLauncher::onRSessionExited()
    }
 }
 
-Error SessionLauncher::launchNextSession()
+Error SessionLauncher::launchNextSession(bool reload)
 {
    // disconnect the firstWorkbenchInitialized event so it doesn't occur
    // again when we launch the next session
@@ -168,8 +174,9 @@ Error SessionLauncher::launchNextSession()
       pRSessionProcess_ = NULL;
    }
 
-   // build a new new launch context
-   QString host, port;
+   // build a new launch context -- re-use the same port if we aren't reloading
+   QString port = !reload ? options().portNumber() : QString::fromAscii("");
+   QString host;
    QStringList argList;
    QUrl url;
    buildLaunchContext(&host, &port, &argList, &url);
@@ -192,11 +199,14 @@ Error SessionLauncher::launchNextSession()
                          SIGNAL(finished(int,QProcess::ExitStatus)),
                          this, SLOT(onRSessionExited()));
 
-   // laod url -- use a delay because on occation we've seen the
-   // mac client crash during switching of projects and this could
-   // be some type of timing related issue
-   nextSessionUrl_ = url;
-   QTimer::singleShot(100, this, SLOT(onReloadFrameForNextSession()));
+   if (reload)
+   {
+      // load url -- use a delay because on occation we've seen the
+      // mac client crash during switching of projects and this could
+      // be some type of timing related issue
+      nextSessionUrl_ = url;
+      QTimer::singleShot(100, this, SLOT(onReloadFrameForNextSession()));
+   }
 
    return Success();
 }
@@ -258,7 +268,8 @@ void SessionLauncher::buildLaunchContext(QString* pHost,
                                          QUrl* pUrl) const
 {
    *pHost = QString::fromAscii("127.0.0.1");
-   *pPort = desktop::options().newPortNumber();
+   if (pPort->isEmpty())
+      *pPort = desktop::options().newPortNumber();
    *pUrl = QUrl(QString::fromAscii("http://") + *pHost +
                 QString::fromAscii(":") + *pPort + QString::fromAscii("/"));
 

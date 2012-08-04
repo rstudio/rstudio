@@ -251,10 +251,10 @@ void MainWindow::setSessionProcess(QProcess* pSessionProcess)
    pCurrentSessionProcess_ = pSessionProcess;
 }
 
-// allow SessionLauncher to collect switch requests from GwtCallback
-bool MainWindow::collectPendingSwitchToProjectRequest()
+// allow SessionLauncher to collect restart requests from GwtCallback
+int MainWindow::collectPendingRestartRequest()
 {
-   return gwtCallback_.collectPendingSwitchToProjectRequest();
+   return gwtCallback_.collectPendingRestartRequest();
 }
 
 bool MainWindow::desktopHooksAvailable()

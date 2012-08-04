@@ -1,5 +1,5 @@
 /*
- * SessionBuild.hpp
+ * SuspendAndRestartHandler.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -10,26 +10,11 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.application.events;
 
-#ifndef SESSION_BUILD_HPP
-#define SESSION_BUILD_HPP
+import com.google.gwt.event.shared.EventHandler;
 
-#include <core/json/Json.hpp>
-
-namespace core {
-   class Error;
+public interface SuspendAndRestartHandler extends EventHandler
+{
+   void onSuspendAndRestart(SuspendAndRestartEvent event);
 }
- 
-namespace session {
-namespace modules { 
-namespace build {
-
-core::json::Value buildStateAsJson();
-
-core::Error initialize();
-                       
-} // namespace build
-} // namespace modules
-} // namesapce session
-
-#endif // SESSION_BUILD_HPP

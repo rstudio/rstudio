@@ -39,6 +39,7 @@ set (R_SOURCE_FILES
    session/RConsoleActions.cpp
    session/RConsoleHistory.cpp
    session/RDiscovery.cpp
+   session/RRestartContext.cpp
    session/RSearchPath.cpp
    session/RSessionState.cpp
    session/RSession.cpp

@@ -56,6 +56,7 @@ struct ROptions
    core::FilePath userScratchPath;
    core::FilePath scopedScratchPath;
    core::FilePath startupEnvironmentFilePath;
+   std::string sessionPort;
    boost::function<core::Settings&()> persistentState;
    boost::function<core::FilePath()> rEnvironmentDir;
    boost::function<core::FilePath()> rHistoryDir;
@@ -144,6 +145,7 @@ void reportAndLogWarning(const std::string& warning);
 // suspend/resume
 bool isSuspendable(const std::string& prompt);
 bool suspend(bool force);
+void suspendForRestart();
    
 // set save action
 extern const int kSaveActionNoSave;

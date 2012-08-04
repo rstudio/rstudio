@@ -24,6 +24,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -39,7 +40,6 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
-import org.rstudio.studio.client.workbench.views.buildtools.model.BuildRestartContext;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -114,7 +114,10 @@ public class BuildPresenter extends BasePresenter
             view_.bringToFront();
             view_.buildCompleted();
             if (event.getRestartR())
-               commands.restartR().execute();
+            {
+               eventBus_.fireEvent(
+                  new SuspendAndRestartEvent(event.getAfterRestartCommand()));
+            }  
          }
       });
       
@@ -158,18 +161,6 @@ public class BuildPresenter extends BasePresenter
          commands_.stopBuild().setEnabled(true);
          
       
-   }
-   
-   public void initializeAfterRestart(BuildRestartContext context)
-   {
-      view_.bringToFront();
-      
-      view_.buildStarted();
-      view_.showOutput(context.getBuildOutput());
-      view_.buildCompleted();
-     
-      String loadPackage = "library(" + context.getPackageName() + ")";
-      sendLoadCommandToConsole(loadPackage); 
    }
    
    private void sendLoadCommandToConsole(String loadCommand)

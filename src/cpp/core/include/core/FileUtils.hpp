@@ -1,5 +1,5 @@
 /*
- * SessionBuild.hpp
+ * FileUtils.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -11,25 +11,24 @@
  *
  */
 
-#ifndef SESSION_BUILD_HPP
-#define SESSION_BUILD_HPP
+#ifndef CORE_FILEUTILS_HPP
+#define CORE_FILEUTILS_HPP
 
-#include <core/json/Json.hpp>
+#include <string>
+
+
 
 namespace core {
-   class Error;
-}
- 
-namespace session {
-namespace modules { 
-namespace build {
 
-core::json::Value buildStateAsJson();
+class FilePath;
 
-core::Error initialize();
-                       
-} // namespace build
-} // namespace modules
-} // namesapce session
+namespace file_utils {
 
-#endif // SESSION_BUILD_HPP
+FilePath uniqueFilePath(const core::FilePath& parent,
+                        const std::string& prefix = "");
+
+
+} // namespace file_utils
+} // namespace core
+
+#endif // CORE_FILEUTILS_HPP

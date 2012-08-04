@@ -13,6 +13,7 @@
 
 #include <core/system/System.hpp>
 
+#include <core/Hash.hpp>
 #include <core/Log.hpp>
 
 namespace core {
@@ -35,6 +36,13 @@ int exitSuccess()
 {
    return EXIT_SUCCESS;
 }
+
+std::string generateShortenedUuid()
+{
+   std::string uuid = core::system::generateUuid(false);
+   return core::hash::crc32HexHash(uuid);
+}
+
 
 } // namespace system
 } // namespace core

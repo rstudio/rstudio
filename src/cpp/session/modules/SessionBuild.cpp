@@ -110,102 +110,6 @@ const char * const kCheckPackage = "check-package";
 const char * const kBuildAndReload = "build-all";
 const char * const kRebuildAll = "rebuild-all";
 
-FilePath restartContextFilePath()
-{
-   return module_context::scopedScratchPath().childPath(
-                                                   "build_restart_context");
-}
-
-FilePath restartContextHistoryFilePath()
-{
-   return module_context::scopedScratchPath().childPath(
-                                                   "build_restart_history");
-}
-
-void saveRestartContext(const FilePath& packageDir,
-                        const std::string& buildOutput)
-{
-   // read package info
-   r_util::RPackageInfo pkgInfo;
-   Error error = pkgInfo.read(packageDir);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-
-   // save history file
-   FilePath restartHistoryPath = restartContextHistoryFilePath();
-   error = r::session::consoleHistory().saveToFile(restartHistoryPath);
-   if (error)
-      LOG_ERROR(error); // fail forward
-
-   // save restart context
-   core::Settings restartSettings;
-   error = restartSettings.initialize(restartContextFilePath());
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-
-   restartSettings.beginUpdate();
-   restartSettings.set("package_name", pkgInfo.name());
-   restartSettings.set("build_output", buildOutput);
-   restartSettings.endUpdate();
-}
-
-json::Value collectRestartContext()
-{
-   FilePath restartHistoryPath = restartContextHistoryFilePath();
-   if (restartHistoryPath.exists())
-   {
-      // always cleanup the history on scope exit
-      BOOST_SCOPE_EXIT( (&restartHistoryPath) )
-      {
-         Error error = restartHistoryPath.remove();
-         if (error)
-            LOG_ERROR(error);
-      }
-      BOOST_SCOPE_EXIT_END
-
-      Error error = r::session::consoleHistory().loadFromFile(
-                                             restartHistoryPath, false);
-      if (error)
-         LOG_ERROR(error); // fail forward
-   }
-
-   FilePath restartSettingsPath = restartContextFilePath();
-   if (restartSettingsPath.exists())
-   {
-      // always cleanup the restart context on scope exit
-      BOOST_SCOPE_EXIT( (&restartSettingsPath) )
-      {
-         Error error = restartSettingsPath.remove();
-         if (error)
-            LOG_ERROR(error);
-      }
-      BOOST_SCOPE_EXIT_END
-
-      core::Settings restartSettings;
-      Error error = restartSettings.initialize(restartContextFilePath());
-      if (error)
-      {
-         LOG_ERROR(error);
-         return json::Value();
-      }
-
-      json::Object restartJson;
-      restartJson["package_name"] = restartSettings.get("package_name");
-      restartJson["build_output"] = restartSettings.get("build_output");
-      return restartJson;
-   }
-   else
-   {
-      return json::Value();
-   }
-}
-
 class Build : boost::noncopyable,
               public boost::enable_shared_from_this<Build>
 {
@@ -305,8 +209,7 @@ private:
       }
 
       // get package info
-      r_util::RPackageInfo pkgInfo;
-      Error error = pkgInfo.read(packagePath);
+      Error error = pkgInfo_.read(packagePath);
       if (error)
       {
          terminateWithError("Reading package DESCRIPTION", error);
@@ -315,19 +218,19 @@ private:
 
       if (type == kRoxygenizePackage)
       {
-         if (roxygenize(pkgInfo, options.workingDir))
+         if (roxygenize(options.workingDir))
             enqueBuildCompleted();
       }
       else
       {
          if (roxygenizeRequired(type))
          {
-            if (!roxygenize(pkgInfo, options.workingDir))
+            if (!roxygenize(options.workingDir))
                return;
          }
 
          // build the package
-         buildPackage(type, packagePath, pkgInfo, options, cb);
+         buildPackage(type, packagePath, options, cb);
       }
    }
 
@@ -362,8 +265,7 @@ private:
       }
    }
 
-   bool roxygenize(const r_util::RPackageInfo& pkgInfo,
-                   const FilePath& workingDir)
+   bool roxygenize(const FilePath& workingDir)
    {
       // build the call to roxygenize
       std::vector<std::string> roclets;
@@ -376,7 +278,7 @@ private:
       }
       boost::format fmt("roxygenize('%1%', roclets=c(%2%))");
       std::string roxygenizeCall = boost::str(
-         fmt % pkgInfo.name() % boost::algorithm::join(roclets, ", "));
+         fmt % pkgInfo_.name() % boost::algorithm::join(roclets, ", "));
 
       // show the user the call to roxygenize
       enqueCommandString(roxygenizeCall);
@@ -425,7 +327,6 @@ private:
 
    void buildPackage(const std::string& type,
                      const FilePath& packagePath,
-                     const r_util::RPackageInfo& pkgInfo,
                      const core::system::ProcessOptions& options,
                      const core::system::ProcessCallbacks& cb)
    {      
@@ -554,7 +455,7 @@ private:
          rCheckCmd << projectConfig().packageCheckArgs;
 
          // add filename as a FilePath so it is escaped
-         rCheckCmd << FilePath(pkgInfo.sourcePackageFilename());
+         rCheckCmd << FilePath(pkgInfo_.sourcePackageFilename());
 
          // special callback for build result
          core::system::ProcessCallbacks buildCb = cb;
@@ -576,7 +477,7 @@ private:
          {
             successFunction_ = boost::bind(&Build::cleanupAfterCheck,
                                            Build::shared_from_this(),
-                                           pkgInfo);
+                                           pkgInfo_);
          }
 
          // run the source build
@@ -766,14 +667,14 @@ private:
    {
       isRunning_ = false;
 
-      // save the restart context if necessary
-      if ((projectConfig().buildType == r_util::kBuildTypePackage) && restartR_)
-      {
-         FilePath packagePath = projects::projectContext().buildTargetPath();
-         saveRestartContext(packagePath, output_);
-      }
-
-      ClientEvent event(client_events::kBuildCompleted, restartR_);
+      // enque event
+      std::string afterRestartCommand;
+      if (restartR_)
+         afterRestartCommand = "library(" + pkgInfo_.name() + ")";
+      json::Object dataJson;
+      dataJson["restart_r"] = restartR_;
+      dataJson["after_restart_command"] = afterRestartCommand;
+      ClientEvent event(client_events::kBuildCompleted, dataJson);
       module_context::enqueClientEvent(event);
    }
 
@@ -796,6 +697,7 @@ private:
    bool isRunning_;
    bool terminationRequested_;
    std::string output_;
+   r_util::RPackageInfo pkgInfo_;
    projects::RProjectBuildOptions options_;
    std::string successMessage_;
    boost::function<void()> successFunction_;
@@ -913,12 +815,6 @@ json::Value buildStateAsJson()
       return json::Value();
    }
 }
-
-json::Value restoreBuildRestartContext()
-{
-   return collectRestartContext();
-}
-
 
 
 SEXP rs_canBuildCpp()

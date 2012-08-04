@@ -106,6 +106,10 @@ public:
    // manipulate persistent state
    core::Error savePlotsState();
    core::Error restorePlotsState();
+
+   // fully serialize and deserialize to an external directory
+   core::Error serialize(const core::FilePath& saveToPath);
+   core::Error deserialize(const core::FilePath& restoreFromPath);
       
 private:
    

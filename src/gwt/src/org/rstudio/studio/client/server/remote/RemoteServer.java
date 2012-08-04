@@ -234,6 +234,16 @@ public class RemoteServer implements Server
       // return the url
       return GWT.getHostPageBaseURL() + pathName;
    }
+   
+   public void suspendForRestart(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, SUSPEND_FOR_RESTART, requestCallback);
+   }
+   
+   public void ping(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, PING, requestCallback);
+   }
   
    
    public void setWorkbenchMetrics(WorkbenchMetrics metrics,
@@ -2677,6 +2687,8 @@ public class RemoteServer implements Server
    private static final String SUSPEND_SESSION = "suspend_session";
    private static final String HANDLE_UNSAVED_CHANGES_COMPLETED = "handle_unsaved_changes_completed";
    private static final String QUIT_SESSION = "quit_session";
+   private static final String SUSPEND_FOR_RESTART = "suspend_for_restart";
+   private static final String PING="ping";
 
    private static final String SET_WORKBENCH_METRICS = "set_workbench_metrics";
    private static final String SET_PREFS = "set_prefs";

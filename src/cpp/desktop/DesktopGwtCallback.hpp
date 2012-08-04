@@ -25,6 +25,12 @@ class MainWindow;
 class BrowserWindow;
 class Synctex;
 
+enum PendingRestart {
+   PendingRestartNone = 0,
+   PendingRestartOnly = 1,
+   PendingRestartAndReload = 2
+};
+
 class GwtCallback : public QObject
 {
    Q_OBJECT
@@ -37,7 +43,7 @@ public:
    QString proportionalFont();
    QString fixedWidthFont();
 
-   bool collectPendingSwitchToProjectRequest();
+   int collectPendingRestartRequest();
 
 signals:
    void workbenchInitialized();
@@ -102,7 +108,7 @@ public slots:
 
    void cleanClipboard(bool stripHtml);
 
-   void setSwitchToProjectPending(bool switchPending);
+   void setPendingRestart(int pendingRestart);
 
    void openProjectInNewWindow(QString projectFilePath);
 
@@ -133,7 +139,7 @@ private:
    MainWindow* pMainWindow_;
    GwtCallbackOwner* pOwner_;
    Synctex* pSynctex_;
-   bool switchToProjectPending_;
+   int pendingRestart_;
 
 };
 

@@ -19,6 +19,7 @@
 #include <boost/function.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/foreach.hpp>
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
@@ -631,6 +632,58 @@ Error PlotManager::restorePlotsState()
 
    return Success();
 }
+
+namespace {
+
+Error copyDirectory(const FilePath& srcDir, const FilePath& targetDir)
+{
+   Error error = targetDir.removeIfExists();
+   if (error)
+      return error;
+
+   error = targetDir.ensureDirectory();
+   if (error)
+      return error;
+
+   std::vector<FilePath> srcFiles;
+   error = srcDir.children(&srcFiles);
+   if (error)
+      return error;
+   BOOST_FOREACH(const FilePath& srcFile, srcFiles)
+   {
+      FilePath targetFile = targetDir.complete(srcFile.filename());
+      Error error = srcFile.copy(targetFile);
+      if (error)
+         return error;
+   }
+
+   return Success();
+}
+
+} // anonymous namespace
+
+Error PlotManager::serialize(const FilePath& saveToPath)
+{
+   // save plots state
+   Error error = savePlotsState();
+   if (error)
+      return error;
+
+   // copy the plots dir to the save to path
+   return copyDirectory(graphicsPath_, saveToPath);
+}
+
+Error PlotManager::deserialize(const FilePath& restoreFromPath)
+{
+   // copy the restoreFromPath to the graphics path
+   Error error = copyDirectory(restoreFromPath, graphicsPath_);
+   if (error)
+      return error;
+
+   // restore plots state
+   return restorePlotsState();
+}
+
    
 void PlotManager::onDeviceNewPage(SEXP previousPageSnapshot)
 {

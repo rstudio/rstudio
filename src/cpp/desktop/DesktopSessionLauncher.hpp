@@ -43,7 +43,7 @@ public:
    core::Error launchFirstSession(const QString& filename,
                                   ApplicationLaunch* pAppLaunch);
 
-   core::Error launchNextSession();
+   core::Error launchNextSession(bool reload);
 
    QString launchFailedErrorMessage() const;
 

@@ -380,8 +380,8 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.BuildCompleted))
          {
-            boolean restartR = event.<Bool>getData().getValue();
-            eventBus_.fireEvent(new BuildCompletedEvent(restartR));
+            BuildCompletedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new BuildCompletedEvent(data));
          }
          else if (type.equals(ClientEvent.ListChanged))
          {

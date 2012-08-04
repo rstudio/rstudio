@@ -28,9 +28,10 @@ namespace r {
 namespace session {
 namespace state {
         
-bool save(const core::FilePath& statePath);
+bool save(const core::FilePath& statePath, bool serverMode);
    
 bool restore(const core::FilePath& statePath, 
+             bool serverMode,
              boost::function<core::Error()>* pDeferredRestoreAction,
              std::string* pErrorMessages); 
    

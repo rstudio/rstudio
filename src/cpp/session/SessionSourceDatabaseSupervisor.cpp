@@ -23,6 +23,7 @@
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/FileLock.hpp>
+#include <core/FileUtils.hpp>
 #include <core/BoostErrors.hpp>
 
 
@@ -108,8 +109,8 @@ Error removeSessionDir(const FilePath& sessionDir)
 
 FilePath generateSessionDirPath()
 {
-   return module_context::uniqueFilePath(sourceDatabaseRoot(),
-                                         kSessionDirPrefix);
+   return file_utils::uniqueFilePath(sourceDatabaseRoot(),
+                                     kSessionDirPrefix);
 }
 
 bool isNotSessionDir(const FilePath& filePath)
@@ -152,7 +153,7 @@ void attemptToMoveSourceDbFiles(const FilePath& fromPath,
       // new unique filename
       FilePath targetPath = toPath.complete(filePath.filename());
       if (targetPath.exists())
-         targetPath = module_context::uniqueFilePath(toPath);
+         targetPath = file_utils::uniqueFilePath(toPath);
 
       Error error = filePath.move(targetPath);
       if (error)
@@ -355,7 +356,7 @@ Error detachFromSourceDatabase()
          // could have created docs with the same id)
          FilePath targetPath = untitledDir.complete(pDoc->id());
          if (targetPath.exists())
-            targetPath = module_context::uniqueFilePath(untitledDir);
+            targetPath = file_utils::uniqueFilePath(untitledDir);
 
          error = pDoc->writeToFile(targetPath);
          if (error)

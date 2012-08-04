@@ -461,8 +461,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["build_tools_type"] = r_util::kBuildTypeNone;
 
    sessionInfo["build_state"] = modules::build::buildStateAsJson();
-   sessionInfo["build_restart_context"] =
-                                 modules::build::restoreBuildRestartContext();
    sessionInfo["devtools_installed"] = module_context::isPackageInstalled(
                                                                   "devtools");
 
@@ -1188,6 +1186,27 @@ Error bufferConsoleInput(const core::json::JsonRpcRequest& request,
    return extractConsoleInput(request);
 }
 
+
+void doSuspendForRestart()
+{
+   r::session::suspendForRestart();
+}
+
+Error suspendForRestart(const core::json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   pResponse->setAfterResponse(doSuspendForRestart);
+   return Success();
+}
+
+
+Error ping(const core::json::JsonRpcRequest& request,
+           json::JsonRpcResponse* pResponse)
+{
+   return Success();
+}
+
+
 Error startHttpConnectionListener()
 {
    initializeHttpConnectionListener();
@@ -1300,6 +1319,8 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
 
       // json-rpc listeners
       (bind(registerRpcMethod, kConsoleInput, bufferConsoleInput))
+      (bind(registerRpcMethod, "suspend_for_restart", suspendForRestart))
+      (bind(registerRpcMethod, "ping", ping))
 
       // signal handlers
       (registerSignalHandlers)
@@ -2560,6 +2581,7 @@ int main (int argc, char * const argv[])
       rOptions.userHomePath = options.userHomePath();
       rOptions.userScratchPath = userScratchPath;
       rOptions.scopedScratchPath = module_context::scopedScratchPath();
+      rOptions.sessionPort = options.wwwPort();
       rOptions.startupEnvironmentFilePath = getStartupEnvironmentFilePath();
       rOptions.persistentState = boost::bind(&PersistentState::settings,
                                              &(persistentState()));

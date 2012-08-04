@@ -45,6 +45,7 @@
 
 #include "RClientMetrics.hpp"
 #include "RSessionState.hpp"
+#include "RRestartContext.hpp"
 #include "REmbedded.hpp"
 
 #include "graphics/RGraphicsUtils.hpp"
@@ -158,6 +159,9 @@ void reportDeferredDeserializationError(const Error& error)
 
 void completeDeferredSessionInit(bool newSession)
 {
+   // always cleanup any restart context here
+   restartContext().removeSessionState();
+
    // call external hook
    if (s_callbacks.deferredInit)
       s_callbacks.deferredInit(newSession);
@@ -178,7 +182,7 @@ void saveClientState(ClientStateCommitType commitType)
 
 
  
-bool saveSessionState()
+bool saveSessionState(const FilePath& suspendedSessionPath)
 {
    // notify client of serialization status
    SerializationCallbackScope cb(kSerializationActionSuspendSession);
@@ -187,7 +191,7 @@ bool saveSessionState()
    r::exec::IgnoreInterruptsScope ignoreInterrupts;
    
    // save 
-   return r::session::state::save(s_suspendedSessionPath);
+   return r::session::state::save(suspendedSessionPath, s_options.serverMode);
 }
    
 void deferredRestoreSuspendedSession(
@@ -326,6 +330,32 @@ CCODE s_originalPosixQuitFunction;
 SEXP posixQuitHook(SEXP call, SEXP op, SEXP args, SEXP rho);
 #endif
 
+void restoreSession(const FilePath& suspendedSessionPath,
+                    std::string* pErrorMessages)
+{
+   // don't show output during deserialization (packages loaded
+   // during deserialization sometimes print messages)
+   utils::SuppressOutputInScope suppressOutput;
+
+   // deserialize session. if any part of this fails then the errors
+   // will be logged and error messages will be returned in the passed
+   // errorMessages buffer (this mechanism is used because we generally
+   // suppress output during restore but we need a way for the error
+   // messages to make their way back to the user)
+   boost::function<Error()> deferredRestoreAction;
+   r::session::state::restore(suspendedSessionPath,
+                              s_options.serverMode,
+                              &deferredRestoreAction,
+                              pErrorMessages);
+
+   if (deferredRestoreAction)
+   {
+      s_deferredDeserializationAction = boost::bind(
+                                          deferredRestoreSuspendedSession,
+                                          deferredRestoreAction);
+   }
+}
+
 // one-time per session initialization
 Error initialize()
 {
@@ -380,42 +410,30 @@ Error initialize()
    // restore suspended session if we have one
    bool wasResumed = false;
    
-   if (s_suspendedSessionPath.exists())
+   // first check for a pending restart
+   if (restartContext().hasSessionState())
    {
-      std::string errorMessages ;
-      
       // restore session
-      {
-         // don't show output during deserialization (packages loaded
-         // during deserialization sometimes print messages)
-         utils::SuppressOutputInScope suppressOutput;
-         
-         // deserialize session. if any part of this fails then the errors
-         // will be logged and error messages will be returned in the passed
-         // errorMessages buffer (this mechanism is used because we generally
-         // suppress output during restore but we need a way for the error
-         // messages to make their way back to the user)
-         boost::function<Error()> deferredRestoreAction;
-         r::session::state::restore(s_suspendedSessionPath, 
-                                    &deferredRestoreAction, 
-                                    &errorMessages);
-         
-         if (deferredRestoreAction)
-         {
-            s_deferredDeserializationAction = boost::bind(
-                                                deferredRestoreSuspendedSession,
-                                                deferredRestoreAction);
-         }
-      }
+      std::string errorMessages ;
+      restoreSession(restartContext().sessionStatePath(), &errorMessages);
+
+      // show any error messages
+      if (!errorMessages.empty())
+         REprintf(errorMessages.c_str());
+
+      // note we were resumed
+      wasResumed = true;
+   }
+   else if (s_suspendedSessionPath.exists())
+   {  
+      // restore session
+      std::string errorMessages ;
+      restoreSession(s_suspendedSessionPath, &errorMessages);
       
       // show any error messages
       if (!errorMessages.empty())
-      {
          REprintf(errorMessages.c_str());
-         REprintf("IMPORTANT: This error may have resulted in data loss. "
-                  "Please report it immediately!\n");
-      }
-      
+
       // note we were resumed
       wasResumed = true;
    }  
@@ -1121,6 +1139,10 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    FilePath userScratchPath = s_options.userScratchPath;
    s_suspendedSessionPath = userScratchPath.complete("suspended-session");  
    
+   // initialize restart context
+   restartContext().initialize(s_options.scopedScratchPath,
+                               s_options.sessionPort);
+
    // register browseURL method
    R_CallMethodDef browseURLMethod ;
    browseURLMethod.name = "rs_browseURL";
@@ -1136,7 +1158,8 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    r::routines::addCallMethod(createUUIDMethodDef);
 
    // run R
-   bool newSession = !s_suspendedSessionPath.exists();
+   bool newSession = restartContext().hasSessionState()
+                     || !s_suspendedSessionPath.exists();
    r::session::Callbacks cb;
    cb.showMessage = RShowMessage;
    cb.readConsole = RReadConsole;
@@ -1223,14 +1246,15 @@ bool isSuspendable(const std::string& currentPrompt)
       return true;
 }
    
-bool suspend(bool force)
+
+bool suspend(const FilePath& suspendedSessionPath, bool force)
 {
    // commit all client state
    saveClientState(ClientStateCommitAll);
 
    // save the session state. errors are handled internally and reported
    // directly to the end user and written to the server log.
-   bool suspend = saveSessionState();
+   bool suspend = saveSessionState(suspendedSessionPath);
       
    // if we failed to save the data and are being forced then warn user
    if (!suspend && force)
@@ -1260,6 +1284,18 @@ bool suspend(bool force)
    {
       return false;
    }
+}
+
+bool suspend(bool force)
+{
+   return suspend(s_suspendedSessionPath, force);
+}
+
+void suspendForRestart()
+{
+   suspend(RestartContext::createSessionStatePath(s_options.scopedScratchPath,
+                                                  s_options.sessionPort),
+           true);
 }
 
 // set save action
