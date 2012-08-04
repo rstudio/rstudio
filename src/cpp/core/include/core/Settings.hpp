@@ -18,6 +18,7 @@
 #include <map>
 
 #include <boost/utility.hpp>
+#include <boost/function.hpp>
 
 #include <core/FilePath.hpp>
 
@@ -44,6 +45,9 @@ public:
                    const std::string& defaultValue = std::string()) const;
    int getInt(const std::string& name, int defaultValue = 0) const;
    int getBool(const std::string& name, bool defaultValue = false) const; 
+
+   void forEach(const boost::function<void(const std::string&,
+                                           const std::string&)>& func) const;
 
    void beginUpdate();
    void endUpdate();

@@ -106,6 +106,17 @@ int Settings::getBool(const std::string& name, bool defaultValue) const
       return boost::lexical_cast<bool>(value);
 }   
    
+void Settings::forEach(const boost::function<void(const std::string&,
+                                                  const std::string&)>& func)
+                                                                         const
+{
+   for (std::map<std::string,std::string>::const_iterator
+         it = settingsMap_.begin(); it != settingsMap_.end(); ++it)
+   {
+      func(it->first, it->second);
+   }
+}
+
 void Settings::beginUpdate()
 {
    updatePending_ = true ;

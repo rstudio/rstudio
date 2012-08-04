@@ -16,12 +16,14 @@
 #include <algorithm>
 
 #include <boost/function.hpp>
+#include <boost/foreach.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/Settings.hpp>
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
@@ -50,10 +52,56 @@ namespace {
 const char * const kSettingsFile = "settings";
 const char * const kConsoleActionsFile = "console_actions";
 const char * const kOptionsFile = "options";
+const char * const kEnvironmentVars = "environment_vars";
 const char * const kHistoryFile = "history";
 const char * const kPlotsFile = "plots";
 const char * const kPlotsDir = "plots_dir";
 const char * const kSearchPath = "search_path";
+
+
+Error saveEnvironmentVars(const FilePath& envFile)
+{
+   // remove then create settings file
+   Error error = envFile.removeIfExists();
+   if (error)
+      return error;
+   core::Settings envSettings;
+   error = envSettings.initialize(envFile);
+   if (error)
+      return error;
+
+   // get environment and write it to the file
+   core::system::Options env;
+   core::system::environment(&env);
+   envSettings.beginUpdate();
+   BOOST_FOREACH(const core::system::Option& var, env)
+   {
+      envSettings.set(var.first, var.second);
+   }
+   envSettings.endUpdate();
+
+   return Success();
+}
+
+void setEnvVar(const std::string& name, const std::string& value)
+{
+   core::system::setenv(name, value);
+}
+
+Error restoreEnvironmentVars(const FilePath& envFile)
+{
+   // read settings file
+   core::Settings envSettings;
+   Error error = envSettings.initialize(envFile);
+   if (error)
+      return error;
+
+   // set the environment vars
+   envSettings.forEach(setEnvVar);
+
+   return Success();
+}
+
 
 // settings
 const char * const kWorkingDirectory = "working_directory"; 
@@ -143,6 +191,13 @@ bool save(const FilePath& statePath,
       saved = false;
    }
 
+   // save environment variables
+   error = saveEnvironmentVars(statePath.complete(kEnvironmentVars));
+   if (error)
+   {
+      reportError(kSaving, kEnvironmentVars, error, ERROR_LOCATION);
+      saved = false;
+   }
 
    // if we are in server mode then we just need to write the plot
    // state index (because the location of the graphics directory is stable)
@@ -199,16 +254,14 @@ bool save(const FilePath& statePath,
       reportError(kSaving, kConsoleActionsFile, error, ERROR_LOCATION);
       saved = false;
    }
-   
-   // disable save compression if requested
+
+   // save search path (disable save compression if requested)
    if (disableSaveCompression)
    {
       error = r::exec::RFunction(".rs.disableSaveCompression").call();
       if (error)
          LOG_ERROR(error);
    }
-
-   // save search path
    error = search_path::save(statePath);
    if (error)
    {
@@ -284,6 +337,12 @@ bool restore(const FilePath& statePath,
    error = consoleHistory().loadFromFile(historyFilePath, false);
    if (error)
       reportError(kRestoring, kHistoryFile, error, ERROR_LOCATION, er);
+
+
+   // restore environment vars
+   error = restoreEnvironmentVars(statePath.complete(kEnvironmentVars));
+   if (error)
+      reportError(kRestoring, kEnvironmentVars, error, ERROR_LOCATION, er);
 
    // set deferred restore action. this encapsulates parts of the restore
    // process that are potentially highly latent. this allows clients
