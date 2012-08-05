@@ -125,7 +125,6 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    protected void provideDefaults()
    {
       installAdditionalArguments_.setText("--no-multiarch");
-      buildBinaryAdditionalArguments_.setText("--preclean");
    }
 
    @Override
