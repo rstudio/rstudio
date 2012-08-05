@@ -24,6 +24,7 @@ public class BuildToolsCustomPanel extends BuildToolsPanel
    public BuildToolsCustomPanel()
    {
       pathSelector_ = new FileSelector("Custom build script:");
+      pathSelector_.setTextWidth("250px");
       add(pathSelector_);
    }
 
