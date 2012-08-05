@@ -75,7 +75,7 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
   require(utils)
   devToolsPath <- getOption("devtools.path")
   if (is.null(devToolsPath))
-    FALSE
+    return (FALSE)
   devToolsPath <- normalizePath(devToolsPath, winslash = "/", mustWork = FALSE)
   devToolsPath %in% .libPaths()
 })
