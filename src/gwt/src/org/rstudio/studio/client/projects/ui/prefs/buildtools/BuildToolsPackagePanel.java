@@ -104,7 +104,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
             "R CMD build additional options:"));
 
       add(buildBinaryAdditionalArguments_ = new AdditionalArguments(
-            "R CMD INSTALL --binary additional options:"));
+            "R CMD INSTALL --build additional options:"));
 
       add(headerLabel("Check Package"));
       
