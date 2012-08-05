@@ -12,6 +12,7 @@
 
 .workspaceGrid {
    margin-bottom: 10px; 
+   width: 375px;
 }
 
 .enableCodeIndexing {
@@ -59,8 +60,8 @@
 }
 
 .buildToolsAdditionalArguments {
-   width: 350px;
-   margin-bottom: 8px;
+   width: 375px;
+   margin-bottom: 12px;
 }
 
 .buildToolsAdditionalArguments .gwt-Label {
@@ -77,13 +78,8 @@
 
 .buildToolsRoxygenize {
    width: 100%;
-   margin-bottom: 4px;
+   margin-bottom: 12px;
 }
 
-.buildToolsHeaderLabel {
-   font-weight: bold;
-   margin-top: 2px;
-   margin-bottom: 8px;
-}
 
 
