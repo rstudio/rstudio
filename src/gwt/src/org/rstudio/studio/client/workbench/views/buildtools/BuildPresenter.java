@@ -182,7 +182,6 @@ public class BuildPresenter extends BasePresenter
          {
             sendLoadCommandToConsole(
                            "devtools::load_all(\"" + loadAllPath + "\")");
-            commands_.activateConsole().execute();
          } 
       });
    }
