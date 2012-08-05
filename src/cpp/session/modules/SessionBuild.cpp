@@ -43,6 +43,19 @@ namespace session {
 
 namespace {
 
+// see if we need to explicitly specify a library for INSTALL -- right
+// now we do this if .libPaths[0] is not the same as the user's
+// default installation library
+std::string installLibraryOverride()
+{
+   std::string lib;
+   Error error = r::exec::RFunction(".rs.installLibraryOverride").call(&lib);
+   if (error)
+      LOG_ERROR(error);
+   return lib;
+}
+
+
 // R command invocation -- has two representations, one to be submitted
 // (shellCmd_) and one to show the user (cmdString_)
 class RCommand
@@ -363,6 +376,14 @@ private:
          // add extra args if provided
          rCmd << projectConfig().packageInstallArgs;
 
+         // add library option if necessary
+         std::string lib = installLibraryOverride();
+         if (!lib.empty())
+         {
+            rCmd << "-l";
+            rCmd << lib;
+         }
+
          // add filename as a FilePath so it is escaped
          rCmd << FilePath(packagePath.filename());
 
@@ -409,6 +430,14 @@ private:
 
          // add extra args if provided
          rCmd << projectConfig().packageBuildBinaryArgs;
+
+         // add library option if necessary
+         std::string lib = installLibraryOverride();
+         if (!lib.empty())
+         {
+            rCmd << "-l";
+            rCmd << lib;
+         }
 
          // add filename as a FilePath so it is escaped
          rCmd << FilePath(packagePath.filename());
