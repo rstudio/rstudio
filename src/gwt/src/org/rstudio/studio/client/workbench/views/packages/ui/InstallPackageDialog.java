@@ -324,7 +324,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
                      
                      // warn if this is a source package on windows
                      // and we don't have devtools installed
-                     if (archiveFilePath_.getExtension().equals(".tar.gz") &&
+                     if (archiveFilePath_.getPath().endsWith(".tar.gz") &&
                          BrowseCap.isWindowsDesktop() &&
                          !installContext_.canBuildCpp())
                      {
