@@ -48,4 +48,8 @@ public class PackageInstallContext extends JavaScriptObject
    public final native String getDefaultUserLibraryPath() /*-{
       return this.defaultUserLibraryPath[0];
    }-*/;
+   
+   public final native boolean canBuildCpp() /*-{
+      return this.canBuildCpp[0];
+   }-*/;
 }

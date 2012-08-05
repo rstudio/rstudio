@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.packages.ui;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
@@ -19,6 +20,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.FocusHelper;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.MultipleItemSuggestTextBox;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -319,6 +321,23 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
                      // update UI
                      packageArchiveFile_.setText(
                         StringUtil.shortPathName(input, "gwt-TextBox", 280));
+                     
+                     // warn if this is a source package on windows
+                     // and we don't have devtools installed
+                     if (archiveFilePath_.getExtension().equals(".tar.gz") &&
+                         BrowseCap.isWindowsDesktop() &&
+                         !installContext_.canBuildCpp())
+                     {
+                        globalDisplay_.showMessage(
+                           MessageDialog.WARNING,
+                           "Unable to Install Source Packages" ,
+                           "You have selected a source package however you " +
+                           "don't currently have Rtools installed (or it is " +
+                           "not on your PATH).\n\n" +
+                           "See http://cran.r-project.org/bin/windows/Rtools " +
+                           "for more details on installing Rtools.");
+                     }
+                     
                      
                   }
                });

@@ -167,9 +167,12 @@
    # selected repository names
    selectedRepositoryNames <- names(repos)
 
+   # can we build c code
+   canBuildCpp <- .Call("rs_canBuildCpp")
+
    # package archive extension
    if (identical(.Platform$OS.type, "windows"))
-      packageArchiveExtension <- ".zip; .tar.gz"
+      packageArchiveExtension <- ifelse(canBuildCpp,".zip; .tar.gz", ".zip")
    else if (identical(substr(.Platform$pkgType, 1L, 10L), "mac.binary"))
       packageArchiveExtension <- ".tgz; .tar.gz"
    else
@@ -196,7 +199,8 @@
         defaultLibraryPath = defaultLibraryPath,
         defaultLibraryWriteable = defaultLibraryWriteable,
         writeableLibraryPaths = writeableLibraryPaths,
-        defaultUserLibraryPath = defaultUserLibraryPath)
+        defaultUserLibraryPath = defaultUserLibraryPath,
+        canBuildCpp = canBuildCpp)
 })
 
 .rs.addJsonRpcHandler( "get_cran_mirrors", function()
