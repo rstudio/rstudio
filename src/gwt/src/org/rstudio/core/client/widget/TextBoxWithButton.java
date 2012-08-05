@@ -23,7 +23,8 @@ import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 public class TextBoxWithButton extends Composite
-                               implements HasValueChangeHandlers<String>
+                               implements HasValueChangeHandlers<String>,
+                                          CanFocus
 {
    public TextBoxWithButton(String label, String action, ClickHandler handler)
    {
@@ -154,6 +155,12 @@ public class TextBoxWithButton extends Composite
    {
       return textBox_;
    }
+   
+   @Override
+   public void focus()
+   {
+      textBox_.setFocus(true);
+   }
 
    private HorizontalPanel inner_;
    private TextBox textBox_;
@@ -161,4 +168,5 @@ public class TextBoxWithButton extends Composite
    private String emptyLabel_;
    private String useDefaultValue_;
    private String text_ = "";
+  
 }

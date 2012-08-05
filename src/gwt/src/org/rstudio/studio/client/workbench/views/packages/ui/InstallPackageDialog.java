@@ -16,6 +16,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -23,7 +24,7 @@ import org.rstudio.core.client.widget.MultipleItemSuggestTextBox;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
-import org.rstudio.core.client.widget.SmallButton;
+import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -44,15 +45,12 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Focusable;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.SuggestBox;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -185,22 +183,11 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       mainPanel.add(sourcePanel_);
          
       // archive source panel
-      archiveSourcePanel_ = new FlowPanel();
-      Label archiveLabel = new Label("Package archive:");
-      archiveLabel.setStylePrimaryName(RESOURCES.styles().packagesLabel());
-      archiveSourcePanel_.add(archiveLabel);
-      HorizontalPanel archivePanel = new HorizontalPanel();
-      packageArchiveTextBox_ = new TextBox();
-      packageArchiveTextBox_.addStyleName(
-                                 RESOURCES.styles().packageFileTextBox());
-      packageArchiveTextBox_.setReadOnly(true);
-      archivePanel.add(packageArchiveTextBox_);
-      final SmallButton browseButton = new SmallButton("Browse...");
-      browseButton.addStyleName(RESOURCES.styles().packageFileBrowseButton());
-      archivePanel.add(browseButton);
-      browseButton.addClickHandler(browseForArchiveClickHandler_);
-      archiveSourcePanel_.add(archivePanel);
-      
+      packageArchiveFile_ = new TextBoxWithButton(
+                                              "Package archive:", 
+                                              "Browse...",
+                                              browseForArchiveClickHandler_);
+            
       // create check box here because manageUIState accesses it
       installDependenciesCheckBox_ = new CheckBox();
       
@@ -217,7 +204,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
             manageUIState();
             
             if (!installFromRepository())
-               browseButton.click();
+               packageArchiveFile_.click();
          } 
       });
       
@@ -279,8 +266,8 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       else
       {
          reposCaption_.setHelpVisible(false);
-         sourcePanel_.setWidget(archiveSourcePanel_);
-         FocusHelper.setFocusDeferred(packageArchiveTextBox_);
+         sourcePanel_.setWidget(packageArchiveFile_);
+         FocusHelper.setFocusDeferred(packageArchiveFile_);
          installDependenciesCheckBox_.setVisible(false);
       }
    }
@@ -290,12 +277,18 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       return packageSourceListBox_.getSelectedIndex() == 0;
    }
    
-   private Focusable getPackageInputWidget()
+   private CanFocus getPackageInputWidget()
    {
       if (installFromRepository())
-         return packagesSuggestBox_;
+         return new CanFocus() {
+            @Override
+            public void focus()
+            {
+               packagesSuggestBox_.setFocus(true);
+               
+            }};
       else
-         return packageArchiveTextBox_;
+         return packageArchiveFile_;
    }
    
    private ClickHandler browseForArchiveClickHandler_ = new ClickHandler() {
@@ -324,8 +317,8 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
                      archiveFilePath_ = input;
                      
                      // update UI
-                     packageArchiveTextBox_.setValue(
-                           StringUtil.shortPathName(input, "gwt-TextBox", 280));
+                     packageArchiveFile_.setText(
+                        StringUtil.shortPathName(input, "gwt-TextBox", 280));
                      
                   }
                });
@@ -396,11 +389,10 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
    
    private SimplePanel sourcePanel_;
    private FlowPanel reposSourcePanel_;
-   private FlowPanel archiveSourcePanel_;
-  
+   private TextBoxWithButton packageArchiveFile_ = null;
+   
    private MultipleItemSuggestTextBox packagesTextBox_ = null;
    private SuggestBox packagesSuggestBox_ = null;
-   private TextBox packageArchiveTextBox_;
    private ListBox libraryListBox_ = null;
    private CheckBox installDependenciesCheckBox_ = null;
    
