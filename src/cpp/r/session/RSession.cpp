@@ -574,7 +574,7 @@ int RReadConsole (const char *pmt,
          // add prompt to console actions (we do this after consoleRead
          // completes so that we don't send both a console prompt event
          // AND include the same prompt in the actions history)
-         consoleActions().add(kConsoleActionPrompt, promptString);
+         consoleActions().add(kConsoleActionPrompt, prompt);
 
          if (consoleInput.cancel)
          {
