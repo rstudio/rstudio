@@ -53,11 +53,24 @@ const char * const kSettingsFile = "settings";
 const char * const kConsoleActionsFile = "console_actions";
 const char * const kOptionsFile = "options";
 const char * const kEnvironmentVars = "environment_vars";
+const char * const kLibPathsFile = "libpaths";
 const char * const kHistoryFile = "history";
 const char * const kPlotsFile = "plots";
 const char * const kPlotsDir = "plots_dir";
 const char * const kSearchPath = "search_path";
 
+
+Error saveLibPaths(const FilePath& libPathsFile)
+{
+   std::string file = string_utils::utf8ToSystem(libPathsFile.absolutePath());
+   return r::exec::RFunction(".rs.saveLibPaths", file).call();
+}
+
+Error restoreLibPaths(const FilePath& libPathsFile)
+{
+   std::string file = string_utils::utf8ToSystem(libPathsFile.absolutePath());
+   return r::exec::RFunction(".rs.restoreLibPaths", file).call();
+}
 
 Error saveEnvironmentVars(const FilePath& envFile)
 {
@@ -220,6 +233,14 @@ bool save(const FilePath& statePath,
       }
    }
 
+   // save libpaths
+   error = saveLibPaths(statePath.complete(kLibPathsFile));
+   if (error)
+   {
+      reportError(kSaving, kLibPathsFile, error, ERROR_LOCATION);
+      saved = false;
+   }
+
    // save options 
    error = r::options::saveOptions(statePath.complete(kOptionsFile));
    if (error)
@@ -328,6 +349,11 @@ bool restore(const FilePath& statePath,
    if (error)
       reportError(kRestoring, kOptionsFile, error, ERROR_LOCATION, er);
    
+   // restore libpaths
+   error = restoreLibPaths(statePath.complete(kLibPathsFile));
+   if (error)
+      reportError(kRestoring, kLibPathsFile, error, ERROR_LOCATION, er);
+
    // restore client_metrics (must execute after restore of options for
    // console width but prior to graphics::device for device size)
    client_metrics::restore(settings);

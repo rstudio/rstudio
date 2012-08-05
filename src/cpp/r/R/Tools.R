@@ -55,6 +55,20 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
    options(opt)
 })
 
+# save current state of .libPaths() to file
+.rs.addFunction( "saveLibPaths", function(filename)
+{
+  libPaths = .libPaths();
+  save(libPaths, file=filename)
+})
+
+# restore .libPaths() from file
+.rs.addFunction( "restoreLibPaths", function(filename)
+{
+  load(filename)
+  .libPaths(libPaths)
+})
+
 # load a package by name
 .rs.addFunction( "loadPackage", function(packageName)
 {
