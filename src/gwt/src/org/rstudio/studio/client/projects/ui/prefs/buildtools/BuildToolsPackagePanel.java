@@ -29,6 +29,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -93,25 +94,23 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       roxygenizePanel_.add(rocletPanel);
       add(roxygenizePanel_);
       
-      add(headerLabel("Build and Reload"));
-      
       
       add(installAdditionalArguments_ = new AdditionalArguments(
-            "R CMD INSTALL additional options:"));
-      
-      add(headerLabel("Source and Binary Package Creation"));
-      
+        new SafeHtmlBuilder().appendHtmlConstant(
+          "Build and Reload &mdash; R CMD INSTALL additional options:").toSafeHtml()));
+     
       add(buildAdditionalArguments_ = new AdditionalArguments(
-            "R CMD build additional options:"));
-
+        new SafeHtmlBuilder().appendHtmlConstant(
+          "Build Source Package &mdash; R CMD build additional options:").toSafeHtml()));
+           
       add(buildBinaryAdditionalArguments_ = new AdditionalArguments(
-            "R CMD INSTALL --build additional options:"));
-
-      add(headerLabel("Check Package"));
+        new SafeHtmlBuilder().appendHtmlConstant(
+          "Build Binary Package &mdash; R CMD INSTALL additional options:").toSafeHtml()));
       
       add(checkAdditionalArguments_ = new AdditionalArguments(
-            "R CMD check additional options:"));
-      
+            new SafeHtmlBuilder().appendHtmlConstant(
+                "Check Package &mdash; R CMD check additional options:").toSafeHtml()));
+          
       add(chkCleanupAfterCheck_ = checkBox(
             "Cleanup output after successful R CMD check"));
       if (BrowseCap.isWindowsDesktop())
@@ -119,7 +118,10 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
          chkCleanupAfterCheck_.getElement().getStyle().setMarginLeft(0, 
                                                                      Unit.PX);
       }
+
    }
+   
+  
    
    @Inject
    public void initialize(WorkbenchContext workbenchContext)

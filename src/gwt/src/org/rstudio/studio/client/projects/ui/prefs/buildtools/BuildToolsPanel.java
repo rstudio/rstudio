@@ -25,11 +25,14 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 public abstract class BuildToolsPanel extends VerticalPanel
 {
@@ -175,11 +178,21 @@ public abstract class BuildToolsPanel extends VerticalPanel
    {
       AdditionalArguments(String label)
       {
+         this(new Label(label));
+      }
+      
+      AdditionalArguments(SafeHtml label)
+      {
+         this(new HTML(label));
+      }
+      
+      AdditionalArguments(Widget captionWidget)
+      {
          VerticalPanel panel = new VerticalPanel();
          panel.addStyleName(RES.styles().buildToolsAdditionalArguments());
          
-         Label captionLabel = new Label(label);
-         panel.add(captionLabel);
+     
+         panel.add(captionWidget);
          
          textBox_ = new TextBox();
          panel.add(textBox_);
@@ -205,13 +218,6 @@ public abstract class BuildToolsPanel extends VerticalPanel
       CheckBox chk = new CheckBox(caption);
       chk.addStyleName(RES.styles().buildToolsCheckBox());
       return chk;
-   }
-   
-   protected Label headerLabel(String text)
-   {
-      Label label = new Label(text);
-      label.addStyleName(RES.styles().buildToolsHeaderLabel());
-      return label;
    }
    
    protected static ProjectPreferencesDialogResources RES = 

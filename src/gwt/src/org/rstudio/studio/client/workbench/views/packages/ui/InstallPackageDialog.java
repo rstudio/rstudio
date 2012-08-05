@@ -335,7 +335,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
                            "don't currently have Rtools installed (or it is " +
                            "not on your PATH).\n\n" +
                            "See http://cran.r-project.org/bin/windows/Rtools " +
-                           "for more details on installing Rtools.");
+                           "for more details.");
                      }
                      
                      
