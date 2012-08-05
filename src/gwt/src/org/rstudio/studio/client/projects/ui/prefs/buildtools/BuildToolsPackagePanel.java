@@ -14,6 +14,7 @@
 
 package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -113,6 +114,11 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       
       add(chkCleanupAfterCheck_ = checkBox(
             "Cleanup output after successful R CMD check"));
+      if (BrowseCap.isWindowsDesktop())
+      {
+         chkCleanupAfterCheck_.getElement().getStyle().setMarginLeft(0, 
+                                                                     Unit.PX);
+      }
    }
    
    @Inject
