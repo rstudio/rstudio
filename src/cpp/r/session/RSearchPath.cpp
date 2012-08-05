@@ -77,7 +77,8 @@ void reportRestoreError(const std::string& context,
    
 Error saveGlobalEnvironment(const FilePath& environmentFile)
 {
-   std::string envPath = environmentFile.absolutePath();
+   std::string envPath =
+            string_utils::utf8ToSystem(environmentFile.absolutePath());
    return executeSafely(boost::bind(R_SaveGlobalEnvToFile, envPath.c_str()));
 }
    

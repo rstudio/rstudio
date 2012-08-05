@@ -235,9 +235,9 @@ Error saveDefaultGlobalEnvironment()
    r::exec::IgnoreInterruptsScope ignoreInterrupts;
          
    // save global environment
+   std::string path = string_utils::utf8ToSystem(globalEnvPath.absolutePath());
    Error error = r::exec::executeSafely(
-                        boost::bind(R_SaveGlobalEnvToFile,
-                                    globalEnvPath.absolutePath().c_str()));
+                    boost::bind(R_SaveGlobalEnvToFile, path.c_str()));
    
    if (error)
    {
@@ -265,10 +265,10 @@ void deferredRestoreNewSession()
       // what they intended
       r::exec::IgnoreInterruptsScope ignoreInterrupts;
 
-
+      std::string path = string_utils::utf8ToSystem(globalEnvPath.absolutePath());
       Error error = r::exec::executeSafely(boost::bind(
                                         R_RestoreGlobalEnvFromFile,
-                                        globalEnvPath.absolutePath().c_str(),
+                                        path.c_str(),
                                         TRUE));
       if (error)   
       {
