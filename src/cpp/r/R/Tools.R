@@ -69,6 +69,17 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
   .libPaths(libPaths)
 })
 
+
+# try to determine if devtools::dev_mode is on
+.rs.addFunction( "devModeOn", function(){
+  require(utils)
+  devToolsPath <- getOption("devtools.path")
+  if (is.null(devToolsPath))
+    FALSE
+  devToolsPath <- normalizePath(devToolsPath, winslash = "/", mustWork = FALSE)
+  devToolsPath %in% .libPaths()
+})
+
 # load a package by name
 .rs.addFunction( "loadPackage", function(packageName)
 {

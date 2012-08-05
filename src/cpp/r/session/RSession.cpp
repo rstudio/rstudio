@@ -515,13 +515,16 @@ Error initialize()
    }
 }
 
-int RReadConsole (const char *prompt,
+int RReadConsole (const char *pmt,
                   CONSOLE_BUFFER_CHAR* buf,
                   int buflen,
                   int hist)
 {
    try
    {
+      // capture the prompt for later manipulation
+      std::string prompt(pmt);
+
       // invoke one time initialization
       if (!s_initialized)
       {
@@ -549,6 +552,10 @@ int RReadConsole (const char *prompt,
             R_Suicide(error.code().message().c_str());
          }
          
+         // reset the prompt to whatever the default is after we've
+         // fully initialized (and restored suspended options)
+         prompt = r::options::getOption<std::string>("prompt");
+
          // ensure only one initialization 
          s_initialized = true;
       }

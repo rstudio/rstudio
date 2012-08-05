@@ -59,6 +59,10 @@ const char * const kPlotsFile = "plots";
 const char * const kPlotsDir = "plots_dir";
 const char * const kSearchPath = "search_path";
 
+// settings
+const char * const kWorkingDirectory = "working_directory";
+const char * const kDevModeOn = "dev_mode_on";
+
 
 Error saveLibPaths(const FilePath& libPathsFile)
 {
@@ -114,10 +118,6 @@ Error restoreEnvironmentVars(const FilePath& envFile)
 
    return Success();
 }
-
-
-// settings
-const char * const kWorkingDirectory = "working_directory"; 
    
 Error restoreWorkingDirectory(const FilePath& userHomePath, 
                               const std::string& workingDirectory)
@@ -231,6 +231,25 @@ bool save(const FilePath& statePath,
          reportError(kSaving, kPlotsDir, error, ERROR_LOCATION);
          saved = false;
       }
+   }
+
+   // check if dev-mode is on -- if it is then note this and turn it off
+   // (so that at restore time we can explicitly re-enable it)
+   bool devModeOn = false;
+   error = r::exec::RFunction(".rs.devModeOn").call(&devModeOn);
+   if (error)
+      LOG_ERROR(error);
+   if (devModeOn)
+   {
+      // set devmode bit in suspended settings
+      settings.set(kDevModeOn, true);
+
+      // turn dev mode off -- this is important so that dev mode undoes
+      // its manipulations of the prompt and libpaths before they are saved
+      // suppress output to eliminate dev_mode OFF message
+      // ignore error on purpose -- will happen if devtools isn't intalled
+      r::session::utils::SuppressOutputInScope suppressOutput;
+      error = r::exec::RFunction("devtools:::dev_mode", false).call();
    }
 
    // save libpaths
@@ -353,6 +372,13 @@ bool restore(const FilePath& statePath,
    error = restoreLibPaths(statePath.complete(kLibPathsFile));
    if (error)
       reportError(kRestoring, kLibPathsFile, error, ERROR_LOCATION, er);
+
+   // restore devmode
+   if (settings.getBool(kDevModeOn, false))
+   {
+      // ignore error -- will occur if devtools isn't installed
+      error = r::exec::RFunction("devtools:::dev_mode", true).call();
+   }
 
    // restore client_metrics (must execute after restore of options for
    // console width but prior to graphics::device for device size)
