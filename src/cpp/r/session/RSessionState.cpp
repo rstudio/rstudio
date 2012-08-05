@@ -72,6 +72,9 @@ Error saveLibPaths(const FilePath& libPathsFile)
 
 Error restoreLibPaths(const FilePath& libPathsFile)
 {
+   if (!libPathsFile.exists())
+      return Success();
+
    std::string file = string_utils::utf8ToSystem(libPathsFile.absolutePath());
    return r::exec::RFunction(".rs.restoreLibPaths", file).call();
 }
@@ -107,6 +110,9 @@ void setEnvVar(const std::string& name, const std::string& value)
 
 Error restoreEnvironmentVars(const FilePath& envFile)
 {
+   if (!envFile.exists())
+      return Success();
+
    // read settings file
    core::Settings envSettings;
    Error error = envSettings.initialize(envFile);
