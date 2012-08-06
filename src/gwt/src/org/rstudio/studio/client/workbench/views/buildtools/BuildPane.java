@@ -27,7 +27,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.buildtools.ui.BuildPaneResources;
 
 public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
 {
@@ -154,7 +153,4 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
    private SimplePanel panel_;
    private OutputBuffer outputBuffer_;
    private ToolbarButton stopButton_;
-   
-   @SuppressWarnings("unused")
-   private static BuildPaneResources RES = BuildPaneResources.INSTANCE; 
 }
