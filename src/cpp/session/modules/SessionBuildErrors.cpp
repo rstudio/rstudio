@@ -15,7 +15,11 @@
 
 #include <algorithm>
 
+#include <boost/bind.hpp>
+#include <boost/regex.hpp>
+
 #include <core/Error.hpp>
+#include <core/SafeConvert.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -27,10 +31,59 @@ namespace build {
 
 namespace {
 
-std::vector<CompileError> parseGccErrors(const std::string& output)
+std::vector<CompileError> parseGccErrors(const FilePath& basePath,
+                                         const std::string& output)
 {
    std::vector<CompileError> errors;
 
+   boost::regex re("^(.+?):([0-9]+?):(?:([0-9]+?):)? (error|warning): (.+)$");
+   boost::sregex_iterator iter(output.begin(), output.end(), re,
+                               boost::regex_constants::match_not_dot_newline);
+   boost::sregex_iterator end;
+   for (; iter != end; iter++)
+   {
+      boost::smatch match = *iter;
+      std::string file = match[1];
+      std::string line = match[2];
+      std::string column, type, message;
+      if (match.size() == 4)
+      {
+         column = "1";
+         type = match[3];
+         message = match[4];
+      }
+      else
+      {
+         column = match[3];
+         type = match[4];
+         message = match[5];
+      }
+
+      // resolve file path
+      FilePath filePath;
+      if (FilePath::isRootPath(file))
+         filePath = FilePath(file);
+      else
+         filePath = basePath.complete(file);
+      FilePath realPath;
+      Error error = core::system::realPath(filePath, &realPath);
+      if (error)
+         LOG_ERROR(error);
+      else
+         filePath = realPath;
+
+      // resolve type
+      CompileError::Type errType = (type == "warning") ? CompileError::Warning :
+                                                         CompileError::Error;
+
+      // create error and add it
+      CompileError err(errType,
+                       filePath,
+                       core::safe_convert::stringTo<int>(line, 1),
+                       core::safe_convert::stringTo<int>(column, 1),
+                       message);
+      errors.push_back(err);
+   }
 
    return errors;
 }
@@ -42,6 +95,7 @@ json::Value compileErrorJson(const CompileError& compileError)
    obj["type"] = static_cast<int>(compileError.type);
    obj["path"] = module_context::createAliasedPath(compileError.path);
    obj["line"] = compileError.line;
+   obj["column"] = compileError.column;
    obj["message"] = compileError.message;
    obj["log_path"] = "";
    obj["log_line"] = -1;
@@ -63,9 +117,9 @@ json::Array compileErrorsAsJson(const std::vector<CompileError>& errors)
 
 
 
-CompileErrorParser gccErrorParser()
+CompileErrorParser gccErrorParser(const FilePath& basePath)
 {
-   return parseGccErrors;
+   return boost::bind(parseGccErrors, basePath, _1);
 }
 
 

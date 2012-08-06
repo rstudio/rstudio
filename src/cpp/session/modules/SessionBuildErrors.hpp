@@ -38,14 +38,16 @@ struct CompileError
    CompileError(Type type,
                 const core::FilePath& path,
                 int line,
+                int column,
                 const std::string& message)
-      : type(type), path(path), line(line), message(message)
+      : type(type), path(path), line(line), column(column), message(message)
    {
    }
 
    Type type;
    core::FilePath path;
    int line;
+   int column;
    std::string message;
 };
 
@@ -54,7 +56,7 @@ core::json::Array compileErrorsAsJson(const std::vector<CompileError>& errors);
 typedef boost::function<std::vector<CompileError>(const std::string&)>
                                                          CompileErrorParser;
 
-CompileErrorParser gccErrorParser();
+CompileErrorParser gccErrorParser(const core::FilePath& basePath);
 
 
 } // namespace build

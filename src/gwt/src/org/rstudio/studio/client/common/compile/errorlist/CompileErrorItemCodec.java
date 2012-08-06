@@ -47,6 +47,8 @@ public class CompileErrorItemCodec
                       entry.getPath());
       tr.setAttribute(DATA_LINE,
                       entry.getLine() + "");
+      tr.setAttribute(DATA_COLUMN,
+                      entry.getColumn() + "");
       tr.setAttribute(LOG_PATH,
                       entry.getLogPath());
       tr.setAttribute(LOG_LINE,
@@ -140,8 +142,12 @@ public class CompileErrorItemCodec
       int line = Integer.parseInt(row.getAttribute(DATA_LINE));
       if (line < 0) // If we couldn't figure out the line
          line = 1;
+      int column = Integer.parseInt(row.getAttribute(DATA_COLUMN));
+      if (column < 0) // If we couldn't figure out the column
+         column = 1;
+      
       return new CodeNavigationTarget(path,
-                                      FilePosition.create(line, 0));
+                                      FilePosition.create(line, column));
    }
 
    @Override
@@ -152,7 +158,7 @@ public class CompileErrorItemCodec
       if (line < 0) // If we couldn't figure out the line
          line = 1;
       return new CodeNavigationTarget(path,
-                                      FilePosition.create(line, 0));
+                                      FilePosition.create(line, 1));
    }
 
    @Override
@@ -172,6 +178,7 @@ public class CompileErrorItemCodec
 
    private static final String DATA_PATH = "data-path";
    private static final String DATA_LINE = "data-line";
+   private static final String DATA_COLUMN = "data-column";
    private static final String LOG_PATH = "log-path";
    private static final String LOG_LINE = "log-line";
 }

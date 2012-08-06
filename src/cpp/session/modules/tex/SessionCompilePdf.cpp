@@ -253,6 +253,7 @@ json::Object logEntryJson(const core::tex::LogEntry& logEntry)
    obj["type"] = static_cast<int>(logEntry.type());
    obj["path"] = module_context::createAliasedPath(logEntry.filePath());
    obj["line"] = logEntry.line();
+   obj["column"] = 1;
    obj["message"] = logEntry.message();
    obj["log_path"] = module_context::createAliasedPath(logEntry.logFilePath());
    obj["log_line"] = logEntry.logLine();

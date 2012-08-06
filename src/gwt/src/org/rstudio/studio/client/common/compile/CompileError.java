@@ -47,6 +47,10 @@ public class CompileError extends JavaScriptObject
       return this.line;
    }-*/;
    
+   public final native int getColumn() /*-{
+      return this.column;
+   }-*/;
+   
    public final native String getMessage() /*-{
       return this.message;
    }-*/;

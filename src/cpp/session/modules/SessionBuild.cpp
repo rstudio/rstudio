@@ -179,10 +179,6 @@ private:
    void executeBuild(const std::string& type,
                      const core::system::ProcessCallbacks& cb)
    {
-      // for now the only type of errors we know how to parse are gcc
-      // errors so we install the gcc error parser globally
-      errorParser_ = gccErrorParser();
-
       // options
       core::system::ProcessOptions options;
       options.terminateChildren = true;
@@ -351,6 +347,10 @@ private:
                      const core::system::ProcessOptions& options,
                      const core::system::ProcessCallbacks& cb)
    {      
+
+      // install the gcc error parser
+      errorParser_ = gccErrorParser(packagePath.complete("src"));
+
       // make a copy of options so we can customize the environment
       core::system::ProcessOptions pkgOptions(options);
       core::system::Options childEnv;
@@ -581,6 +581,9 @@ private:
                  fmt % module_context::createAliasedPath(targetPath)));
          return;
       }
+
+      // install the gcc error parser
+      errorParser_ = gccErrorParser(targetPath);
 
       std::string make = "make";
       if (!options_.makefileArgs.empty())
