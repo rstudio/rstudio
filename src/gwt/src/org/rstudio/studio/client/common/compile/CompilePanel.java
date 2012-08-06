@@ -80,11 +80,14 @@ public class CompilePanel extends Composite
       toolbar.addRightWidget(showErrorsButton_);
    }
    
-   public void compileStarted(String fileName)
+   // NOTE: targetFileName enables optional suppressing of the file
+   // name header in the error list -- it's fine to pass null for this
+   // and in that case there will always be a header
+   public void compileStarted(String targetFileName)
    {
       clearAll();
       
-      fileName_ = fileName;
+      targetFileName_ = targetFileName;
 
       showOutputButton_.setVisible(false);
       showErrorsButton_.setVisible(false);
@@ -93,7 +96,7 @@ public class CompilePanel extends Composite
 
    public void clearAll()
    {
-      fileName_ = null;
+      targetFileName_ = null;
       showOutputButton_.setVisible(false);
       showErrorsButton_.setVisible(false);
       stopButton_.setVisible(false);
@@ -109,7 +112,7 @@ public class CompilePanel extends Composite
    
    public void showErrors(JsArray<CompileError> errors)
    {
-      errorList_.showErrors(fileName_, errors);
+      errorList_.showErrors(targetFileName_, errors);
 
       if (CompileError.includesErrorType(errors))
       {
@@ -155,7 +158,7 @@ public class CompilePanel extends Composite
    }
    
 
-   private String fileName_;
+   private String targetFileName_;
    
    private ToolbarButton stopButton_;
    private LeftRightToggleButton showOutputButton_;

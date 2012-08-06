@@ -13,15 +13,13 @@
 package org.rstudio.studio.client.workbench.views.buildtools;
 
 import com.google.gwt.event.dom.client.HasClickHandlers;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.studio.client.common.OutputBuffer;
+import org.rstudio.studio.client.common.compile.CompilePanel;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -37,6 +35,7 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
       super("Build");
       commands_ = commands;
       session_ = session;
+      compilePanel_ = new CompilePanel();
       ensureWidget();
    }
    
@@ -88,69 +87,51 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
                                    moreMenu);
       toolbar.addLeftWidget(moreButton);
       
-      // stop button (initially hidden)
-      ImageResource stopImage = commands_.interruptR().getImageResource();
-      stopButton_ = new ToolbarButton(stopImage, null);
-      stopButton_.setVisible(false);
-      toolbar.addRightWidget(stopButton_);
+      // connect compile panel
+      compilePanel_.connectToolbar(toolbar);
+     
       
       return toolbar;
    }
    
    @Override 
    protected Widget createMainWidget()
-   {
-      panel_ = new SimplePanel();
-     
-      outputBuffer_ = new OutputBuffer();
-         
-      panel_.setWidget(outputBuffer_);
- 
-      return panel_;
-      
+   {      
+      return compilePanel_;
    }
    
    @Override
    public void buildStarted()
    {
-     outputBuffer_.clear();
-     stopButton_.setVisible(true);
-      
+      compilePanel_.compileStarted(null);  
    }
 
    @Override
    public void showOutput(String output)
    {
-      outputBuffer_.append(output);
-      
+      compilePanel_.showOutput(output);   
    }
 
    @Override
    public void buildCompleted()
    {
-      stopButton_.setVisible(false);
-      
+      compilePanel_.compileCompleted();  
    }
    
    @Override
    public HasClickHandlers stopButton()
    {
-      return stopButton_;
+      return compilePanel_.stopButton();
    }
    
    @Override
    public void scrollToBottom()
    {
-      outputBuffer_.scrollToBottom();
-      
+      compilePanel_.scrollToBottom();   
    }
-
-
-   
+ 
    private Commands commands_;
    private Session session_;
    
-   private SimplePanel panel_;
-   private OutputBuffer outputBuffer_;
-   private ToolbarButton stopButton_;
+   CompilePanel compilePanel_;
 }
