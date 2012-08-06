@@ -13,6 +13,8 @@
 
 #include "SessionBuild.hpp"
 
+#include <vector>
+
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/format.hpp>
@@ -36,6 +38,8 @@
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
+
+#include "SessionBuildErrors.hpp"
 
 using namespace core;
 
@@ -175,6 +179,10 @@ private:
    void executeBuild(const std::string& type,
                      const core::system::ProcessCallbacks& cb)
    {
+      // for now the only type of errors we know how to parse are gcc
+      // errors so we install the gcc error parser globally
+      errorParser_ = gccErrorParser();
+
       // options
       core::system::ProcessOptions options;
       options.terminateChildren = true;
@@ -640,6 +648,8 @@ public:
 
    const std::string& output() const { return output_; }
 
+   const json::Array& errorsAsJson() const { return errorsJson_; }
+
    void terminate()
    {
       enqueBuildOutput("\n");
@@ -663,6 +673,17 @@ private:
       {
          boost::format fmt("\nExited with status %1%.\n\n");
          enqueBuildOutput(boost::str(fmt % exitStatus));
+
+         // call the error parser if one has been specified
+         if (errorParser_)
+         {
+            std::vector<CompileError> errors = errorParser_(output_);
+            if (!errors.empty())
+            {
+               errorsJson_ = compileErrorsAsJson(errors);
+               enqueBuildErrors(errorsJson_);
+            }
+         }
 
          // never restart R after a failed build
          restartR_ = false;
@@ -690,6 +711,12 @@ private:
    void enqueCommandString(const std::string& cmd)
    {
       enqueBuildOutput("==> " + cmd + "\n\n");
+   }
+
+   void enqueBuildErrors(const json::Array& errors)
+   {
+      ClientEvent event(client_events::kBuildErrors, errors);
+      module_context::enqueClientEvent(event);
    }
 
    void enqueBuildCompleted()
@@ -726,6 +753,8 @@ private:
    bool isRunning_;
    bool terminationRequested_;
    std::string output_;
+   CompileErrorParser errorParser_;
+   json::Array errorsJson_;
    r_util::RPackageInfo pkgInfo_;
    projects::RProjectBuildOptions options_;
    std::string successMessage_;
@@ -811,13 +840,31 @@ void onSuspend(core::Settings* pSettings)
 {
    std::string lastBuildOutput = s_pBuild ? s_pBuild->output() : "";
    pSettings->set("build-last-output", lastBuildOutput);
+
+   json::Array buildLastErrors = s_pBuild ? s_pBuild->errorsAsJson()
+                                          : json::Array();
+   std::ostringstream ostr;
+   json::write(buildLastErrors, ostr);
+   pSettings->set("build-last-errors", ostr.str());
 }
 
 std::string s_suspendedBuildOutput;
+json::Array s_suspendedBuildErrors;
 
 void onResume(const core::Settings& settings)
 {
    s_suspendedBuildOutput = settings.get("build-last-output");
+
+   std::string buildLastErrors = settings.get("build-last-errors");
+   if (!buildLastErrors.empty())
+   {
+      json::Value errorsJson;
+      if (json::parse(buildLastErrors, &errorsJson) &&
+          json::isType<json::Array>(errorsJson))
+      {
+         s_suspendedBuildErrors = errorsJson.get_array();
+      }
+   }
 }
 
 } // anonymous namespace
@@ -830,13 +877,15 @@ json::Value buildStateAsJson()
       json::Object stateJson;
       stateJson["running"] = s_pBuild->isRunning();
       stateJson["output"] = s_pBuild->output();
+      stateJson["errors"] = s_pBuild->errorsAsJson();
       return stateJson;
    }
-   else if (!s_suspendedBuildOutput.empty())
+   else if (!s_suspendedBuildOutput.empty() || !s_suspendedBuildErrors.empty())
    {
       json::Object stateJson;
       stateJson["running"] = false;
       stateJson["output"] = s_suspendedBuildOutput;
+      stateJson["errors"] = s_suspendedBuildErrors;
       return stateJson;
    }
    else

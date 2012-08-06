@@ -61,7 +61,6 @@ public class CompilePdfOutputPresenter extends BasePresenter
       HasClickHandlers stopButton();
       HasClickHandlers showLogButton();
       HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
-      boolean isErrorPanelShowing();
       boolean isEffectivelyVisible();
       void scrollToBottom();
    }

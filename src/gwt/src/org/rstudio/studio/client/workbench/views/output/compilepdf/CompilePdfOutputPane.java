@@ -110,12 +110,6 @@ public class CompilePdfOutputPane extends WorkbenchPane
    }
 
    @Override
-   public boolean isErrorPanelShowing()
-   {
-      return compilePanel_.isErrorPanelShowing();
-   }
-
-   @Override
    public boolean isEffectivelyVisible()
    {
       return DomUtils.isEffectivelyVisible(getElement());

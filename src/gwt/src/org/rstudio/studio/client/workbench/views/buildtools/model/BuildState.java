@@ -13,7 +13,10 @@
 
 package org.rstudio.studio.client.workbench.views.buildtools.model;
 
+import org.rstudio.studio.client.common.compile.CompileError;
+
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
 public class BuildState extends JavaScriptObject
 { 
@@ -23,6 +26,10 @@ public class BuildState extends JavaScriptObject
    
    public final native boolean isRunning() /*-{
       return this.running;
+   }-*/;
+   
+   public final native JsArray<CompileError> getErrors() /*-{
+      return this.errors;
    }-*/;
    
    public final native String getOutput() /*-{

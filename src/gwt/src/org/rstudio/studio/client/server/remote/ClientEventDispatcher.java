@@ -48,6 +48,7 @@ import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
+import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEvent;
@@ -382,6 +383,11 @@ public class ClientEventDispatcher
          {
             BuildCompletedEvent.Data data = event.getData();
             eventBus_.fireEvent(new BuildCompletedEvent(data));
+         }
+         else if (type.equals(ClientEvent.BuildErrors))
+         {
+            JsArray<CompileError> errors = event.getData();
+            eventBus_.fireEvent(new BuildErrorsEvent(errors));
          }
          else if (type.equals(ClientEvent.ListChanged))
          {

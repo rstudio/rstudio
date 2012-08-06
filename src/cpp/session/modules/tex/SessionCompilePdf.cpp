@@ -246,6 +246,7 @@ void enqueErrorsEvent(const json::Array& logEntriesJson)
    module_context::enqueClientEvent(event);
 }
 
+// NOTE: sync changes with SessionBuildErrors.cpp compileErrorJson
 json::Object logEntryJson(const core::tex::LogEntry& logEntry)
 {
    json::Object obj;

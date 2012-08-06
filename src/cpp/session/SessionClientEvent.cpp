@@ -86,6 +86,7 @@ const int kRPubsUploadStatus = 61;
 const int kBuildStarted = 62;
 const int kBuildOutput = 63;
 const int kBuildCompleted = 64;
+const int kBuildErrors = 65;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -223,6 +224,8 @@ std::string ClientEvent::typeName() const
          return "build_output";
       case client_events::kBuildCompleted:
          return "build_completed";
+      case client_events::kBuildErrors:
+         return "build_errors";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              boost::lexical_cast<std::string>(type_));

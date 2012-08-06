@@ -85,6 +85,7 @@ extern const int kRPubsUploadStatus;
 extern const int kBuildStarted;
 extern const int kBuildOutput;
 extern const int kBuildCompleted;
+extern const int kBuildErrors;
 }
    
 class ClientEvent

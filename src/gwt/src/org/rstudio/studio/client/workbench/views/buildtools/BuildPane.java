@@ -12,13 +12,17 @@
  */
 package org.rstudio.studio.client.workbench.views.buildtools;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CodeNavigationTarget;
+import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.common.compile.CompileError;
 import org.rstudio.studio.client.common.compile.CompilePanel;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -111,7 +115,16 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
    {
       compilePanel_.showOutput(output);   
    }
-
+   
+   @Override
+   public void showErrors(JsArray<CompileError> errors, boolean ensureVisible)
+   {
+      compilePanel_.showErrors(errors);
+      
+      if (ensureVisible && CompileError.includesErrorType(errors))
+         ensureVisible();
+   }
+   
    @Override
    public void buildCompleted()
    {
@@ -125,6 +138,12 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
    }
    
    @Override
+   public HasSelectionCommitHandlers<CodeNavigationTarget> errorList()
+   {
+      return compilePanel_.errorList();
+   }
+   
+   @Override
    public void scrollToBottom()
    {
       compilePanel_.scrollToBottom();   
@@ -134,4 +153,5 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
    private Session session_;
    
    CompilePanel compilePanel_;
+
 }

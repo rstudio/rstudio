@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.views.buildtools;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -21,13 +22,20 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.events.HasSelectionCommitHandlers;
+import org.rstudio.core.client.events.SelectionCommitEvent;
+import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.compile.CompileError;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
@@ -38,6 +46,7 @@ import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog.Result;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
+import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
@@ -56,7 +65,10 @@ public class BuildPresenter extends BasePresenter
       void showOutput(String output);
       void scrollToBottom();
       
+      void showErrors(JsArray<CompileError> errors, boolean ensureVisible);
       void buildCompleted();
+      
+      HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
       
       HasClickHandlers stopButton();
    }
@@ -68,7 +80,8 @@ public class BuildPresenter extends BasePresenter
                          UIPrefs uiPrefs,
                          BuildServerOperations server,
                          final Commands commands,
-                         EventBus eventBus)
+                         EventBus eventBus,
+                         FileTypeRegistry fileTypeRegistry)
    {
       super(display);
       view_ = display;
@@ -78,6 +91,7 @@ public class BuildPresenter extends BasePresenter
       uiPrefs_ = uiPrefs;
       eventBus_ = eventBus;
       commands_ = commands;
+      fileTypeRegistry_ = fileTypeRegistry;
         
       eventBus.addHandler(BuildStartedEvent.TYPE, 
                           new BuildStartedEvent.Handler()
@@ -100,6 +114,16 @@ public class BuildPresenter extends BasePresenter
          public void onBuildOutput(BuildOutputEvent event)
          {
             view_.showOutput(event.getOutput());
+         }
+      });
+      
+      eventBus.addHandler(BuildErrorsEvent.TYPE, 
+                          new BuildErrorsEvent.Handler()
+      {         
+         @Override
+         public void onBuildErrors(BuildErrorsEvent event)
+         {
+            view_.showErrors(event.getErrors(), true);
          }
       });
       
@@ -141,7 +165,18 @@ public class BuildPresenter extends BasePresenter
          }      
       }); 
       
-      
+      view_.errorList().addSelectionCommitHandler(
+            new SelectionCommitHandler<CodeNavigationTarget>() {
+         @Override
+         public void onSelectionCommit(
+                     SelectionCommitEvent<CodeNavigationTarget> event)
+         {
+            CodeNavigationTarget target = event.getSelectedItem();
+            FileSystemItem fsi = FileSystemItem.createFile(target.getFile());
+            fileTypeRegistry_.editFile(fsi, target.getPosition());
+         }
+      });
+
       view_.stopButton().addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
@@ -155,6 +190,10 @@ public class BuildPresenter extends BasePresenter
    {
       view_.buildStarted();
       view_.showOutput(buildState.getOutput());
+      
+      if (buildState.getErrors().length() > 0)
+         view_.showErrors(buildState.getErrors(), false);
+      
       if (!buildState.isRunning())
          view_.buildCompleted();
       else
@@ -341,4 +380,5 @@ public class BuildPresenter extends BasePresenter
    private final Display view_ ; 
    private final EventBus eventBus_;
    private final Commands commands_;
+   private final FileTypeRegistry fileTypeRegistry_;
 }

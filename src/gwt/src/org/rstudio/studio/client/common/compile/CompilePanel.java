@@ -124,13 +124,8 @@ public class CompilePanel extends Composite
          showErrorsButton_.setVisible(true);
       }
    }
-
-   public boolean isErrorPanelShowing()
-   {
-      return errorList_.isAttached();
-   }
-
  
+   
    public void scrollToBottom()
    {
       outputBuffer_.scrollToBottom();
@@ -157,6 +152,10 @@ public class CompilePanel extends Composite
       return errorList_;
    }
    
+   private boolean isErrorPanelShowing()
+   {
+      return errorList_.isAttached();
+   }
 
    private String targetFileName_;
    
