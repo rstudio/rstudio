@@ -1,5 +1,5 @@
 /*
- * CompilePdfResources.java
+ * CompileErrorListResources.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.compilepdf;
+package org.rstudio.studio.client.common.compile.errorlist;
 
 
 import com.google.gwt.core.client.GWT;
@@ -18,7 +18,7 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 
-public interface CompilePdfResources extends ClientBundle
+public interface CompileErrorListResources extends ClientBundle
 {  
    public static interface Styles extends CssResource
    {
@@ -43,17 +43,13 @@ public interface CompilePdfResources extends ClientBundle
    @Source("images/badbox.png")
    ImageResource badbox();
 
-   @Source("CompilePdf.css")
+   @Source("CompileErrorList.css")
    Styles styles();
    
    @Source("images/logContextButton.png")
    ImageResource logContextButton();
-   
-   @Source("images/showLogCommand.png")
-   ImageResource showLogCommand();
-   
-   
-   public static CompilePdfResources INSTANCE = 
-      (CompilePdfResources)GWT.create(CompilePdfResources.class) ;
+    
+   public static CompileErrorListResources INSTANCE = 
+      (CompileErrorListResources)GWT.create(CompileErrorListResources.class) ;
   
 }

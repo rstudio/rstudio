@@ -1,5 +1,5 @@
 /*
- * CompilePdfErrorList.java
+ * CompileErrorList.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.compilepdf;
+package org.rstudio.studio.client.common.compile.errorlist;
 
 import java.util.ArrayList;
 
@@ -21,7 +21,7 @@ import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.FastSelectTable;
-import org.rstudio.studio.client.common.compilepdf.model.CompilePdfError;
+import org.rstudio.studio.client.common.compile.CompileError;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Document;
@@ -41,14 +41,14 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ScrollPanel;
 
-public class CompilePdfErrorList extends Composite
+public class CompileErrorList extends Composite
                   implements HasSelectionCommitHandlers<CodeNavigationTarget>
 {
-   public CompilePdfErrorList()
+   public CompileErrorList()
    {
-      codec_ = new CompilePdfErrorItemCodec(res_, false);
+      codec_ = new CompileErrorItemCodec(res_, false);
       
-      errorTable_ = new FastSelectTable<CompilePdfError, CodeNavigationTarget, CodeNavigationTarget>(
+      errorTable_ = new FastSelectTable<CompileError, CodeNavigationTarget, CodeNavigationTarget>(
             codec_,
             res_.styles().selectedRow(),
             true,
@@ -110,11 +110,11 @@ public class CompilePdfErrorList extends Composite
       return addHandler(handler, SelectionCommitEvent.getType());
    }
  
-   public void showErrors(String targetFile, JsArray<CompilePdfError> errors)
+   public void showErrors(String targetFile, JsArray<CompileError> errors)
    {
       boolean showFileHeaders = false;
-      ArrayList<CompilePdfError> errorList = new ArrayList<CompilePdfError>();
-      for (CompilePdfError error : JsUtil.asIterable(errors))
+      ArrayList<CompileError> errorList = new ArrayList<CompileError>();
+      for (CompileError error : JsUtil.asIterable(errors))
       {
          if (!error.getPath().equals(targetFile))
             showFileHeaders = true;
@@ -175,7 +175,7 @@ public class CompilePdfErrorList extends Composite
       SelectionCommitEvent.fire(this, target);
    }
 
-   private final CompilePdfErrorItemCodec codec_;
-   private final FastSelectTable<CompilePdfError, CodeNavigationTarget, CodeNavigationTarget> errorTable_;
-   private final CompilePdfResources res_ = CompilePdfResources.INSTANCE;  
+   private final CompileErrorItemCodec codec_;
+   private final FastSelectTable<CompileError, CodeNavigationTarget, CodeNavigationTarget> errorTable_;
+   private final CompileErrorListResources res_ = CompileErrorListResources.INSTANCE;  
 }

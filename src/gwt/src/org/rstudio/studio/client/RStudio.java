@@ -42,7 +42,7 @@ import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPa
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
 import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
 import org.rstudio.studio.client.common.StudioResources;
-import org.rstudio.studio.client.common.compilepdf.CompilePdfResources;
+import org.rstudio.studio.client.common.compile.errorlist.CompileErrorListResources;
 import org.rstudio.studio.client.common.mirrors.ChooseMirrorDialog;
 import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
@@ -184,7 +184,7 @@ public class RStudio implements EntryPoint
       FilesListCellTableResources.INSTANCE.cellTableStyle().ensureInjected();
       ExportPlotResources.INSTANCE.styles().ensureInjected();
       CodeSearchResources.INSTANCE.styles().ensureInjected();
-      CompilePdfResources.INSTANCE.styles().ensureInjected();
+      CompileErrorListResources.INSTANCE.styles().ensureInjected();
       BuildPaneResources.INSTANCE.styles().ensureInjected();
       
       ProgressDialog.ensureStylesInjected();

@@ -1,5 +1,5 @@
 /*
- * CompilePdfError.java
+ * CompileError.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -11,20 +11,24 @@
  *
  */
 
-package org.rstudio.studio.client.common.compilepdf.model;
+package org.rstudio.studio.client.common.compile;
 
 import org.rstudio.core.client.js.JsUtil;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
-public class CompilePdfError extends JavaScriptObject
+public class CompileError extends JavaScriptObject
 {
+   // all possible errors across all compilation types should be listed
+   // here -- we do this because the way we display error icons is via
+   // css styles and it's a bit complicated to dynamically compose the
+   // stylesheet for different compilation scenarios
    public static final int ERROR = 0;
    public static final int WARNING = 1;
-   public static final int BOX = 2;
+   public static final int BOX = 2;  // LaTeX bad box error
    
-   protected CompilePdfError()
+   protected CompileError()
    {
    }
    
@@ -47,23 +51,29 @@ public class CompilePdfError extends JavaScriptObject
       return this.message;
    }-*/;
    
+   /*
+    * Can return empty string for no log path
+    */
    public final native String getLogPath() /*-{
       return this.log_path;
    }-*/;
 
+   /*
+    * Can return -1 for unknown line
+    */
    public final native int getLogLine() /*-{
       return this.log_line;
    }-*/;
  
    public final static boolean includesErrorType(
-                                          JsArray<CompilePdfError> errors)
+                                          JsArray<CompileError> errors)
    { 
       if (errors == null)
          return false;
       
-      for (CompilePdfError error : JsUtil.asIterable(errors))
+      for (CompileError error : JsUtil.asIterable(errors))
       {  
-         if (error.getType() == CompilePdfError.ERROR)
+         if (error.getType() == CompileError.ERROR)
            return true;
       }
       

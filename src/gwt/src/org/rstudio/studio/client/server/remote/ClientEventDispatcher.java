@@ -24,11 +24,11 @@ import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
+import org.rstudio.studio.client.common.compile.CompileError;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfOutputEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent;
-import org.rstudio.studio.client.common.compilepdf.model.CompilePdfError;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfResult;
 import org.rstudio.studio.client.common.console.ConsoleProcessCreatedEvent;
 import org.rstudio.studio.client.common.console.ServerConsoleOutputEvent;
@@ -340,7 +340,7 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.CompilePdfErrorsEvent))
          {
-            JsArray<CompilePdfError> data = event.getData();
+            JsArray<CompileError> data = event.getData();
             eventBus_.fireEvent(new CompilePdfErrorsEvent(data));
          }
          else if (type.equals(ClientEvent.CompilePdfCompletedEvent))

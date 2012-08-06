@@ -12,7 +12,7 @@
  */
 package org.rstudio.studio.client.common.compilepdf.events;
 
-import org.rstudio.studio.client.common.compilepdf.model.CompilePdfError;
+import org.rstudio.studio.client.common.compile.CompileError;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.EventHandler;
@@ -25,12 +25,12 @@ public class CompilePdfErrorsEvent extends GwtEvent<CompilePdfErrorsEvent.Handle
       void onCompilePdfErrors(CompilePdfErrorsEvent event);
    }
 
-   public CompilePdfErrorsEvent(JsArray<CompilePdfError> errors)
+   public CompilePdfErrorsEvent(JsArray<CompileError> errors)
    {
       errors_ = errors;
    }
    
-   public JsArray<CompilePdfError> getErrors()
+   public JsArray<CompileError> getErrors()
    {
       return errors_;
    }
@@ -47,7 +47,7 @@ public class CompilePdfErrorsEvent extends GwtEvent<CompilePdfErrorsEvent.Handle
       handler.onCompilePdfErrors(this);
    }
    
-   private JsArray<CompilePdfError> errors_;
+   private JsArray<CompileError> errors_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

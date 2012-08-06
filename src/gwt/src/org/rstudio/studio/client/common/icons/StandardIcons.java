@@ -27,4 +27,5 @@ public interface StandardIcons extends ClientBundle
    ImageResource more_actions();
    ImageResource import_dataset();
    ImageResource empty_command();
+   ImageResource show_log();
 }

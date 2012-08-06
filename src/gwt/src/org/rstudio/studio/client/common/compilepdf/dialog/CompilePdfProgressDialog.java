@@ -20,12 +20,12 @@ import org.rstudio.core.client.widget.ProgressDialog;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 
-import org.rstudio.studio.client.common.OutputBuffer;
-import org.rstudio.studio.client.common.compilepdf.CompilePdfErrorList;
+import org.rstudio.studio.client.common.compile.CompileError;
+import org.rstudio.studio.client.common.compile.CompileOutputBuffer;
+import org.rstudio.studio.client.common.compile.errorlist.CompileErrorList;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfOutputEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
-import org.rstudio.studio.client.common.compilepdf.model.CompilePdfError;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfResult;
 
 import com.google.gwt.core.client.JsArray;
@@ -51,7 +51,7 @@ public class CompilePdfProgressDialog extends ProgressDialog
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      errorList_ = new CompilePdfErrorList();
+      errorList_ = new CompileErrorList();
       
       addHandlerRegistration(eventBus_.addHandler(
                                     CompilePdfOutputEvent.TYPE, this));
@@ -94,7 +94,7 @@ public class CompilePdfProgressDialog extends ProgressDialog
       int height = Math.min(500, maxHeight);
       container_.getElement().getStyle().setHeight(height, Unit.PX);
            
-      output_ = new OutputBuffer();
+      output_ = new CompileOutputBuffer();
       container_.setWidget(output_);
       return container_;
    }
@@ -125,7 +125,7 @@ public class CompilePdfProgressDialog extends ProgressDialog
       {   
          // show error list if there are errors
          String label = "Compile PDF failed";
-         if (CompilePdfError.includesErrorType(errors_))
+         if (CompileError.includesErrorType(errors_))
          {
             label +=  " (double-click to view source location of error)";
             errorList_.showErrors(result.getTargetFile(), errors_);
@@ -143,7 +143,7 @@ public class CompilePdfProgressDialog extends ProgressDialog
    private EventBus eventBus_;
    
    private SimplePanel container_;
-   private OutputBuffer output_;
-   private CompilePdfErrorList errorList_;
-   private JsArray<CompilePdfError> errors_;
+   private CompileOutputBuffer output_;
+   private CompileErrorList errorList_;
+   private JsArray<CompileError> errors_;
 }

@@ -12,12 +12,10 @@
  */
 package org.rstudio.studio.client.workbench.views.output.compilepdf;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
@@ -25,12 +23,9 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.widget.*;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.OutputBuffer;
-import org.rstudio.studio.client.common.compilepdf.CompilePdfErrorList;
-import org.rstudio.studio.client.common.compilepdf.CompilePdfResources;
-import org.rstudio.studio.client.common.compilepdf.model.CompilePdfError;
-import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.common.compile.CompileError;
+import org.rstudio.studio.client.common.compile.CompilePanel;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
 public class CompilePdfOutputPane extends WorkbenchPane
@@ -40,20 +35,14 @@ public class CompilePdfOutputPane extends WorkbenchPane
    public CompilePdfOutputPane()
    {
       super("Compile PDF");
-      res_ = GWT.create(CompilePdfResources.class);
+      compilePanel_ = new CompilePanel();
       ensureWidget();
    }
 
    @Override
    protected Widget createMainWidget()
-   {
-      panel_ = new SimplePanel();
-      outputBuffer_ = new OutputBuffer();
-      panel_.setWidget(outputBuffer_);
-
-      errorList_ = new CompilePdfErrorList();
-      
-      return panel_;
+   { 
+      return compilePanel_;
    }
 
    @Override
@@ -63,13 +52,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
       
       fileLabel_ = new ToolbarFileLabel(toolbar, 200);
       
-      Commands commands = RStudioGinjector.INSTANCE.getCommands();
-      ImageResource stopImage = commands.interruptR().getImageResource();
-      stopButton_ = new ToolbarButton(stopImage, null);
-      stopButton_.setVisible(false);
-      toolbar.addRightWidget(stopButton_);
-      
-      ImageResource showLogImage = res_.showLogCommand();
+      ImageResource showLogImage = StandardIcons.INSTANCE.show_log();
       showLogButton_ = new ToolbarButton("View Log", 
                                          showLogImage, 
                                          (ClickHandler) null);
@@ -79,32 +62,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
       setShowLogVisible(false);
       toolbar.addLeftWidget(showLogButton_);
       
-      showOutputButton_ = new LeftRightToggleButton("Output", "Issues", false);
-      showOutputButton_.setVisible(false);
-      showOutputButton_.addClickHandler(new ClickHandler() {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-           showOutputButton_.setVisible(false);
-           showErrorsButton_.setVisible(true);
-           panel_.setWidget(outputBuffer_);
-           outputBuffer_.scrollToBottom();
-         }
-      });
-      toolbar.addRightWidget(showOutputButton_);
-       
-      showErrorsButton_ = new LeftRightToggleButton("Output", "Issues",  true);
-      showErrorsButton_.setVisible(false);
-      showErrorsButton_.addClickHandler(new ClickHandler() {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-           showOutputButton_.setVisible(true);
-           showErrorsButton_.setVisible(false);
-           panel_.setWidget(errorList_);
-         }
-      });
-      toolbar.addRightWidget(showErrorsButton_);
+      compilePanel_.connectToolbar(toolbar);
      
       return toolbar;
    }
@@ -119,58 +77,42 @@ public class CompilePdfOutputPane extends WorkbenchPane
    public void compileStarted(String fileName)
    {
       clearAll();
-      
-      fileName_ = fileName;
-
+     
       fileLabel_.setFileName(fileName);
-      
-      showOutputButton_.setVisible(false);
-      showErrorsButton_.setVisible(false);
-      stopButton_.setVisible(true);
       setShowLogVisible(false);
+      
+      compilePanel_.compileStarted(fileName);
    }
 
    @Override
    public void clearAll()
    {
-      fileName_ = null;
-      showOutputButton_.setVisible(false);
-      showErrorsButton_.setVisible(false);
-      stopButton_.setVisible(false);
       setShowLogVisible(false);
-      outputBuffer_.clear();
-      errorList_.clear();
-      panel_.setWidget(outputBuffer_);  
+      
+      compilePanel_.clearAll();
+  
    }
    
    @Override
    public void showOutput(String output)
    {
-      outputBuffer_.append(output);
+      compilePanel_.showOutput(output);
    }
    
 
    @Override
-   public void showErrors(JsArray<CompilePdfError> errors)
+   public void showErrors(JsArray<CompileError> errors)
    {
-      errorList_.showErrors(fileName_, errors);
-
-      if (CompilePdfError.includesErrorType(errors))
-      {
-         panel_.setWidget(errorList_);
-         showOutputButton_.setVisible(true);
+      compilePanel_.showErrors(errors);
+      
+      if (CompileError.includesErrorType(errors))
          ensureVisible(true);
-      }
-      else
-      {
-         showErrorsButton_.setVisible(true);
-      }
    }
 
    @Override
    public boolean isErrorPanelShowing()
    {
-      return errorList_.isAttached();
+      return compilePanel_.isErrorPanelShowing();
    }
 
    @Override
@@ -182,26 +124,21 @@ public class CompilePdfOutputPane extends WorkbenchPane
    @Override
    public void scrollToBottom()
    {
-      outputBuffer_.scrollToBottom();
+      compilePanel_.scrollToBottom();   
    }
 
    @Override
    public void compileCompleted()
    {
-      stopButton_.setVisible(false);
-      setShowLogVisible(true);
+      compilePanel_.compileCompleted();
       
-      if (isErrorPanelShowing())
-      {
-         errorList_.selectFirstItem();
-         errorList_.focus();
-      }
+      setShowLogVisible(true);
    }
    
    @Override
    public HasClickHandlers stopButton()
    {
-      return stopButton_;
+      return compilePanel_.stopButton();
    }
    
    @Override 
@@ -213,7 +150,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
    @Override
    public HasSelectionCommitHandlers<CodeNavigationTarget> errorList()
    {
-      return errorList_;
+      return compilePanel_.errorList();
    }
    
    private void setShowLogVisible(boolean visible)
@@ -223,16 +160,9 @@ public class CompilePdfOutputPane extends WorkbenchPane
    }
    
    private ToolbarFileLabel fileLabel_;
-   private ToolbarButton stopButton_;
    private Widget showLogSeparator_;
    private ToolbarButton showLogButton_;
-   private LeftRightToggleButton showOutputButton_;
-   private LeftRightToggleButton showErrorsButton_;
-   private SimplePanel panel_;
 
-   private CompilePdfResources res_;
-   private String fileName_;
    
-   private OutputBuffer outputBuffer_;
-   private CompilePdfErrorList errorList_;
+   private CompilePanel compilePanel_;
 }

@@ -1,5 +1,5 @@
 /*
- * CompilePdfErrorItemCodec.java
+ * CompileErrorItemCodec.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -10,19 +10,19 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.compilepdf;
+package org.rstudio.studio.client.common.compile.errorlist;
 
 import com.google.gwt.dom.client.*;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.HeaderBreaksItemCodec;
-import org.rstudio.studio.client.common.compilepdf.model.CompilePdfError;
+import org.rstudio.studio.client.common.compile.CompileError;
 
-public class CompilePdfErrorItemCodec
-      extends HeaderBreaksItemCodec<CompilePdfError, CodeNavigationTarget, CodeNavigationTarget>
+public class CompileErrorItemCodec
+      extends HeaderBreaksItemCodec<CompileError, CodeNavigationTarget, CodeNavigationTarget>
 {
-   public CompilePdfErrorItemCodec(CompilePdfResources resources,
+   public CompileErrorItemCodec(CompileErrorListResources resources,
                                    boolean showFileHeaders)
    {
       resources_ = resources;
@@ -40,7 +40,7 @@ public class CompilePdfErrorItemCodec
    }
 
    @Override
-   public TableRowElement getRowForItem(CompilePdfError entry)
+   public TableRowElement getRowForItem(CompileError entry)
    {
       TableRowElement tr = Document.get().createTRElement();
       tr.setAttribute(DATA_PATH,
@@ -56,8 +56,8 @@ public class CompilePdfErrorItemCodec
       tdIcon.setClassName(resources_.styles().iconCell());
       DivElement iconDiv = Document.get().createDivElement();
       iconDiv.setClassName(
-            entry.getType() == CompilePdfError.ERROR ? resources_.styles().errorIcon() :
-            entry.getType() == CompilePdfError.WARNING ? resources_.styles().warningIcon() :
+            entry.getType() == CompileError.ERROR ? resources_.styles().errorIcon() :
+            entry.getType() == CompileError.WARNING ? resources_.styles().warningIcon() :
             resources_.styles().boxIcon());
       tdIcon.appendChild(iconDiv);
       tr.appendChild(tdIcon);
@@ -81,7 +81,7 @@ public class CompilePdfErrorItemCodec
 
    }
    
-   protected TableCellElement maybeCreateDisclosureButton(CompilePdfError entry)
+   protected TableCellElement maybeCreateDisclosureButton(CompileError entry)
    {
       if (entry.getLogLine() != -1)
       {
@@ -167,7 +167,7 @@ public class CompilePdfErrorItemCodec
       return showFileHeaders_;
    }
 
-   private final CompilePdfResources resources_;
+   private final CompileErrorListResources resources_;
    private boolean showFileHeaders_;
 
    private static final String DATA_PATH = "data-path";
