@@ -106,7 +106,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
    {
       compilePanel_.showErrors(null, errors, CompileErrorList.AUTO_SELECT_FIRST);
       
-      if (CompileError.includesErrorType(errors))
+      if (CompileError.showErrorList(errors))
          ensureVisible(true);
    }
 

@@ -17,9 +17,13 @@
 
 #include <boost/bind.hpp>
 #include <boost/regex.hpp>
+#include <boost/foreach.hpp>
+#include <boost/format.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Error.hpp>
 #include <core/SafeConvert.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -30,6 +34,109 @@ namespace modules {
 namespace build {
 
 namespace {
+
+
+bool isRSourceFile(const FilePath& filePath)
+{
+   return (filePath.extensionLowerCase() == ".q" ||
+           filePath.extensionLowerCase() == ".s" ||
+           filePath.extensionLowerCase() == ".r");
+}
+
+bool isMatchingFile(const std::vector<std::string>& lines,
+                    std::size_t diagLine,
+                    const std::string& lineContents,
+                    const std::string& nextLineContents)
+{
+   // first verify the file has enough lines to match
+   if (lines.size() < (diagLine+1))
+      return false;
+
+   return boost::algorithm::equals(lines[diagLine-1],lineContents) &&
+          boost::algorithm::starts_with(lines[diagLine], nextLineContents);
+}
+
+FilePath scanForRSourceFile(const FilePath& basePath,
+                            std::size_t diagLine,
+                            const std::string& lineContents,
+                            const std::string& nextLineContents)
+{
+   std::vector<FilePath> children;
+   Error error = basePath.children(&children);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return FilePath();
+   }
+
+   BOOST_FOREACH(const FilePath& child, children)
+   {
+      if (isRSourceFile(child))
+      {
+         std::vector<std::string> lines;
+         Error error = core::readStringVectorFromFile(child, &lines, false);
+         if (error)
+         {
+            LOG_ERROR(error);
+            continue;
+         }
+
+         if (isMatchingFile(lines, diagLine, lineContents, nextLineContents))
+            return child;
+      }
+   }
+
+   return FilePath();
+}
+
+std::vector<CompileError> parseRErrors(const FilePath& basePath,
+                                       const std::string& output)
+{
+   std::vector<CompileError> errors;
+
+   boost::regex re("^Error in parse\\(outFile\\) : ([0-9]+?):([0-9]+?): (.+?)\\n"
+                   "([0-9]+?): (.*?)\\n([0-9]+?): (.+?)$");
+   boost::sregex_iterator iter(output.begin(), output.end(), re,
+                               boost::regex_constants::match_not_dot_newline);
+   boost::sregex_iterator end;
+   for (; iter != end; iter++)
+   {
+      boost::smatch match = *iter;
+      BOOST_ASSERT(match.size() == 8);
+
+      // first part is straightforward
+      std::string line = match[1];
+      std::string column = match[2];
+      std::string message = match[3];
+
+      // we need to guess the file based on the contextual information
+      // provided in the error message
+      int diagLine = core::safe_convert::stringTo<int>(match[4], -1);
+      if (diagLine != -1)
+      {
+         FilePath rSrcFile = scanForRSourceFile(basePath,
+                                                diagLine,
+                                                match[5],
+                                                match[7]);
+         if (!rSrcFile.empty())
+         {
+            // create error and add it
+            CompileError err(CompileError::Error,
+                             rSrcFile,
+                             core::safe_convert::stringTo<int>(line, 1),
+                             core::safe_convert::stringTo<int>(column, 1),
+                             message,
+                             false);
+            errors.push_back(err);
+         }
+      }
+
+   }
+
+   return errors;
+
+}
+
 
 std::vector<CompileError> parseGccErrors(const FilePath& basePath,
                                          const std::string& output)
@@ -89,7 +196,8 @@ std::vector<CompileError> parseGccErrors(const FilePath& basePath,
                        filePath,
                        core::safe_convert::stringTo<int>(line, 1),
                        core::safe_convert::stringTo<int>(column, 1),
-                       message);
+                       message,
+                       true);
       errors.push_back(err);
    }
 
@@ -107,6 +215,7 @@ json::Value compileErrorJson(const CompileError& compileError)
    obj["message"] = compileError.message;
    obj["log_path"] = "";
    obj["log_line"] = -1;
+   obj["show_error_list"] = compileError.showErrorList;
    return obj;
 }
 
@@ -123,14 +232,15 @@ json::Array compileErrorsAsJson(const std::vector<CompileError>& errors)
    return errorsJson;
 }
 
-
-
 CompileErrorParser gccErrorParser(const FilePath& basePath)
 {
    return boost::bind(parseGccErrors, basePath, _1);
 }
 
-
+CompileErrorParser rErrorParser(const FilePath& basePath)
+{
+   return boost::bind(parseRErrors, basePath, _1);
+}
 
 
 } // namespace build

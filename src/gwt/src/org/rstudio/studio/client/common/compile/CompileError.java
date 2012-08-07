@@ -68,16 +68,23 @@ public class CompileError extends JavaScriptObject
    public final native int getLogLine() /*-{
       return this.log_line;
    }-*/;
+   
+   public final native boolean getShowErrorList() /*-{
+      if (this.show_error_list === null)
+         return true;
+      else
+         return this.show_error_list;
+   }-*/;
  
-   public final static boolean includesErrorType(
-                                          JsArray<CompileError> errors)
+   public final static boolean showErrorList(JsArray<CompileError> errors)
    { 
       if (errors == null)
          return false;
       
       for (CompileError error : JsUtil.asIterable(errors))
       {  
-         if (error.getType() == CompileError.ERROR)
+         if ((error.getType() == CompileError.ERROR) && 
+             error.getShowErrorList())
            return true;
       }
       

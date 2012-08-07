@@ -18,6 +18,7 @@
 #include <vector>
 
 #include <boost/function.hpp>
+#include <boost/foreach.hpp>
 
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
@@ -39,8 +40,10 @@ struct CompileError
                 const core::FilePath& path,
                 int line,
                 int column,
-                const std::string& message)
-      : type(type), path(path), line(line), column(column), message(message)
+                const std::string& message,
+                bool showErrorList)
+      : type(type), path(path), line(line), column(column), message(message),
+        showErrorList(showErrorList)
    {
    }
 
@@ -49,6 +52,7 @@ struct CompileError
    int line;
    int column;
    std::string message;
+   bool showErrorList;
 };
 
 core::json::Array compileErrorsAsJson(const std::vector<CompileError>& errors);
@@ -56,7 +60,38 @@ core::json::Array compileErrorsAsJson(const std::vector<CompileError>& errors);
 typedef boost::function<std::vector<CompileError>(const std::string&)>
                                                          CompileErrorParser;
 
+class CompileErrorParsers
+{
+public:
+   CompileErrorParsers()
+   {
+   }
+
+   void add(CompileErrorParser parser)
+   {
+      parsers_.push_back(parser);
+   }
+
+public:
+   std::vector<CompileError> operator()(const std::string& output)
+   {
+      std::vector<CompileError> allErrors;
+      BOOST_FOREACH(const CompileErrorParser& parser, parsers_)
+      {
+         std::vector<CompileError> errors = parser(output);
+         std::copy(errors.begin(), errors.end(), std::back_inserter(allErrors));
+      }
+
+      return allErrors;
+   }
+
+private:
+   std::vector<CompileErrorParser> parsers_;
+};
+
 CompileErrorParser gccErrorParser(const core::FilePath& basePath);
+
+CompileErrorParser rErrorParser(const core::FilePath& basePath);
 
 
 } // namespace build

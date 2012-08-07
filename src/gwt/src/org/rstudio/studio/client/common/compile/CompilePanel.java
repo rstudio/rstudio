@@ -119,7 +119,7 @@ public class CompilePanel extends Composite
                             errors,
                             autoSelect);
 
-      if (CompileError.includesErrorType(errors))
+      if (CompileError.showErrorList(errors))
       {
          panel_.setWidget(errorList_);
          showOutputButton_.setVisible(true);

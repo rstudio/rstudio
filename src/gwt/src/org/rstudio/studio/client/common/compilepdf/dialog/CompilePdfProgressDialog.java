@@ -125,7 +125,7 @@ public class CompilePdfProgressDialog extends ProgressDialog
       {   
          // show error list if there are errors
          String label = "Compile PDF failed";
-         if (CompileError.includesErrorType(errors_))
+         if (CompileError.showErrorList(errors_))
          {
             label +=  " (double-click to view source location of error)";
             errorList_.showErrors(result.getTargetFile(), 

@@ -124,7 +124,7 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
    {
       compilePanel_.showErrors(basePath, errors, autoSelect);
       
-      if (ensureVisible && CompileError.includesErrorType(errors))
+      if (ensureVisible && CompileError.showErrorList(errors))
          ensureVisible();
    }
    

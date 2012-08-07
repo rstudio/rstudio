@@ -369,9 +369,11 @@ private:
                      const core::system::ProcessCallbacks& cb)
    {      
 
-      // install the gcc error parser
-      initErrorParser(packagePath,
-                      gccErrorParser(packagePath.complete("src")));
+      // use both the R and gcc error parsers
+      CompileErrorParsers parsers;
+      parsers.add(rErrorParser(packagePath.complete("R")));
+      parsers.add(gccErrorParser(packagePath.complete("src")));
+      initErrorParser(packagePath, parsers);
 
       // make a copy of options so we can customize the environment
       core::system::ProcessOptions pkgOptions(options);
