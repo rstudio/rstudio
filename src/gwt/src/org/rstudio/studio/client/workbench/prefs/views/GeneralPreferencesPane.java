@@ -85,6 +85,13 @@ public class GeneralPreferencesPane extends PreferencesPane
       nudgeRight(dirChooser_);
       textBoxWithChooser(dirChooser_);
 
+      restoreLastProject_ = new CheckBox("Restore most recently opened project at startup");
+      spaced(restoreLastProject_);
+      add(restoreLastProject_);
+        
+      add(loadRData_ = new CheckBox("Restore .RData into workspace at startup"));
+      spaced(loadRData_); 
+      
       saveWorkspace_ = new SelectWidget(
             "Save workspace to .RData on exit:",
             new String[] {
@@ -92,10 +99,9 @@ public class GeneralPreferencesPane extends PreferencesPane
                   "Never",
                   "Ask"
             });
+      extraSpaced(saveWorkspace_);
       add(saveWorkspace_);
       
-      add(loadRData_ = new CheckBox("Restore .RData into workspace at startup"));
-      spaced(loadRData_); 
       alwaysSaveHistory_ = new CheckBox(
             "Always save history (even when not saving .RData)");
       spaced(alwaysSaveHistory_);
@@ -130,9 +136,6 @@ public class GeneralPreferencesPane extends PreferencesPane
       cranMirrorTextBox_.setText("");
       add(cranMirrorTextBox_);
       
-      restoreLastProject_ = new CheckBox("Restore most recently opened project at startup");
-      extraSpaced(restoreLastProject_);
-      add(restoreLastProject_);
         
       saveWorkspace_.setEnabled(false);
       loadRData_.setEnabled(false);
