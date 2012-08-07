@@ -15,6 +15,7 @@
  */
 package com.google.gwt.validation.client.impl;
 
+import com.google.gwt.validation.client.Group;
 import com.google.gwt.validation.client.ValidationGroupsMetadata;
 
 import java.util.Set;
@@ -34,6 +35,56 @@ import javax.validation.ValidationException;
 public interface GwtSpecificValidator<G> {
 
   /**
+   * Helper method used to first expand the Default group sequence and then 
+   * perform validation of a bean using the specific group(s).
+   * @param context GWT validation context.
+   * @param object Object being validated.
+   * @param violations Set of violations to add to.
+   * @param groups What group(s) to validate.
+   */
+  <T> void expandDefaultAndValidateClassGroups(
+      GwtValidationContext<T> context,
+      G object,
+      Set<ConstraintViolation<T>> violations,
+      Group... groups);
+
+  /**
+   * Helper method used to first expand the Default group sequence and then 
+   * perform validation of a bean using the specific group(s).
+   * @param context GWT validation context.
+   * @param object Object being validated.
+   * @param violations Set of violations to add to.
+   * @param groups What group(s) to validate.
+   */
+  <T> void expandDefaultAndValidatePropertyGroups(
+      GwtValidationContext<T> context,
+      G object,
+      String propertyName,
+      Set<ConstraintViolation<T>> violations,
+      Group... groups);
+
+  /**
+   * Helper method used to first expand the Default group sequence and then 
+   * perform validation of a bean using the specific group(s).
+   * @param context GWT validation context.
+   * @param object Object being validated.
+   * @param violations Set of violations to add to.
+   * @param groups What group(s) to validate.
+   */
+  <T> void expandDefaultAndValidateValueGroups(
+      GwtValidationContext<T> context,
+      Class<G> beanType,
+      String propertyName,
+      Object value,
+      Set<ConstraintViolation<T>> violations,
+      Group... groups);
+
+  /**
+   * @return The metadata for the bean class associated with this valdiator.
+   */
+  BeanMetadata getBeanMetadata();
+
+  /**
    * Return the descriptor object describing bean constraints. The returned
    * object (and associated objects including
    * <code>ConstraintDescriptor<code>s) are immutable.
@@ -47,11 +98,6 @@ public interface GwtSpecificValidator<G> {
    */
   GwtBeanDescriptor<G> getConstraints(ValidationGroupsMetadata validationGroupsMetadata)
       throws ValidationException;
-
-  /**
-   * @return The metadata for the bean class associated with this valdiator.
-   */
-  BeanMetadata getBeanMetadata();
 
   /**
    * Validates all constraints on <code>object</code>.
@@ -73,7 +119,8 @@ public interface GwtSpecificValidator<G> {
       G object, Class<?>... groups) throws ValidationException;
 
   /**
-   * Helper method used to perform validation of a bean using specific group(s).
+   * Helper method used to perform validation of a bean using specific group(s). Does not expand
+   * the Default group seqeunce if it is redefined.
    * @param context GWT validation context.
    * @param object Object being validated.
    * @param violations Set of violations to add to.

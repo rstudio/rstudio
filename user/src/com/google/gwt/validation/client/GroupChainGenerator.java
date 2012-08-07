@@ -51,7 +51,7 @@ public class GroupChainGenerator {
    */
   public GroupChain getGroupChainFor(Collection<Class<?>> groups) {
     if (groups == null || groups.size() == 0) {
-      throw new IllegalArgumentException( "At least one groups has to be specified." );
+      throw new IllegalArgumentException("At least one group has to be specified.");
     }
 
     for (Class<?> clazz : groups) {

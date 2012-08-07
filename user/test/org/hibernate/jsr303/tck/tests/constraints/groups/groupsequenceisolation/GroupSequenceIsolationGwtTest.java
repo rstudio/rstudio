@@ -17,7 +17,6 @@ package org.hibernate.jsr303.tck.tests.constraints.groups.groupsequenceisolation
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
 import org.hibernate.jsr303.tck.util.client.NonTckTest;
 
 /**
@@ -49,7 +48,6 @@ public class GroupSequenceIsolationGwtTest extends GWTTestCase {
     delegate.testCorrectDefaultSequenceInheritance2();
   }
 
-  @Failing(issue = 6291)
   public void testCorrectDefaultSequenceInheritance3() {
     delegate.testCorrectDefaultSequenceInheritance3();
   }
