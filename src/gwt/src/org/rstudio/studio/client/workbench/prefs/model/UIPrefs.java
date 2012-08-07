@@ -211,6 +211,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // ignore words with numbers
          ignoreWordsWithNumbers().setGlobalValue(
                     newUiPrefs.ignoreWordsWithNumbers().getGlobalValue());
+         
+         // navigate to build error
+         navigateToBuildError().setGlobalValue(
+                    newUiPrefs.navigateToBuildError().getGlobalValue());
       }
       else if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
       {

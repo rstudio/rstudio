@@ -25,6 +25,7 @@ import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.compile.CompileError;
 import org.rstudio.studio.client.common.compile.CompilePanel;
+import org.rstudio.studio.client.common.compile.errorlist.CompileErrorList;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
@@ -103,7 +104,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
    @Override
    public void showErrors(JsArray<CompileError> errors)
    {
-      compilePanel_.showErrors(null, errors);
+      compilePanel_.showErrors(null, errors, CompileErrorList.AUTO_SELECT_FIRST);
       
       if (CompileError.includesErrorType(errors))
          ensureVisible(true);

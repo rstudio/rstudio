@@ -110,9 +110,14 @@ public class CompilePanel extends Composite
       outputBuffer_.append(output);
    }
    
-   public void showErrors(String basePath, JsArray<CompileError> errors)
+   public void showErrors(String basePath, 
+                          JsArray<CompileError> errors,
+                          int autoSelect)
    {
-      errorList_.showErrors(targetFileName_, basePath, errors);
+      errorList_.showErrors(targetFileName_, 
+                            basePath, 
+                            errors,
+                            autoSelect);
 
       if (CompileError.includesErrorType(errors))
       {
@@ -136,10 +141,7 @@ public class CompilePanel extends Composite
       stopButton_.setVisible(false);
       
       if (isErrorPanelShowing())
-      {
-         errorList_.selectFirstItem();
          errorList_.focus();
-      }
    }
    
    public HasClickHandlers stopButton()

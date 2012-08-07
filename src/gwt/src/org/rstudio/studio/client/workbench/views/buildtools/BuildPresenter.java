@@ -24,6 +24,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
@@ -35,6 +36,7 @@ import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.compile.CompileError;
+import org.rstudio.studio.client.common.compile.errorlist.CompileErrorList;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -67,7 +69,8 @@ public class BuildPresenter extends BasePresenter
       
       void showErrors(String basePath,
                       JsArray<CompileError> errors, 
-                      boolean ensureVisible);
+                      boolean ensureVisible,
+                      int autoSelect);
       void buildCompleted();
       
       HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
@@ -124,10 +127,29 @@ public class BuildPresenter extends BasePresenter
       {         
          @Override
          public void onBuildErrors(BuildErrorsEvent event)
-         {
+         {        
             view_.showErrors(event.getBaseDirectory(),
                              event.getErrors(), 
-                             true);
+                             true,
+                             uiPrefs_.navigateToBuildError().getValue() ?
+                                 CompileErrorList.AUTO_SELECT_FIRST_ERROR :
+                                 CompileErrorList.AUTO_SELECT_NONE);
+            
+            if (uiPrefs_.navigateToBuildError().getValue())
+            {
+               JsArray<CompileError> errors = event.getErrors();
+               for (int i=0; i<errors.length(); i++)
+               {
+                  CompileError error = errors.get(i);
+                  if (error.getType() == CompileError.ERROR)
+                  {
+                     fileTypeRegistry_.editFile(
+                       FileSystemItem.createFile(error.getPath()),
+                       FilePosition.create(error.getLine(), error.getColumn()));
+                     break;
+                  }
+               }
+            }
          }
       });
       
@@ -198,7 +220,8 @@ public class BuildPresenter extends BasePresenter
       if (buildState.getErrors().length() > 0)
          view_.showErrors(buildState.getErrorsBaseDir(),
                           buildState.getErrors(), 
-                          false);
+                          false,
+                          CompileErrorList.AUTO_SELECT_NONE);
       
       if (!buildState.isRunning())
          view_.buildCompleted();

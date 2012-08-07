@@ -206,6 +206,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("ignore_words_with_numbers", true);
    }  
    
+   public PrefValue<Boolean> navigateToBuildError()
+   {
+      return bool("navigate_to_build_error", true);
+   }
+   
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())

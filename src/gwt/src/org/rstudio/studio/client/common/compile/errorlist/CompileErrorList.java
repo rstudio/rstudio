@@ -18,7 +18,6 @@ import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
-import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.FastSelectTable;
 import org.rstudio.studio.client.common.compile.CompileError;
@@ -44,6 +43,10 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 public class CompileErrorList extends Composite
                   implements HasSelectionCommitHandlers<CodeNavigationTarget>
 {
+   public static final int AUTO_SELECT_NONE = 0;
+   public static final int AUTO_SELECT_FIRST = 1;
+   public static final int AUTO_SELECT_FIRST_ERROR = 2;
+   
    public CompileErrorList()
    {
       codec_ = new CompileErrorItemCodec(res_, false);
@@ -112,20 +115,37 @@ public class CompileErrorList extends Composite
  
    public void showErrors(String targetFile, 
                           String basePath,
-                          JsArray<CompileError> errors)
+                          JsArray<CompileError> errors,
+                          int autoSelect)
    {
       boolean showFileHeaders = false;
       ArrayList<CompileError> errorList = new ArrayList<CompileError>();
-      for (CompileError error : JsUtil.asIterable(errors))
+      int firstErrorIndex = -1;
+      for (int i=0; i<errors.length(); i++)
       {
+         CompileError error = errors.get(i);
+         if (firstErrorIndex == -1 && error.getType() == CompileError.ERROR)
+            firstErrorIndex = i;
+         
          if (!error.getPath().equals(targetFile))
             showFileHeaders = true;
+         
          errorList.add(error);
       }
 
       codec_.setShowFileHeaders(showFileHeaders);
       codec_.setFileHeaderBasePath(basePath);
       errorTable_.addItems(errorList, false);
+      
+      if (autoSelect == AUTO_SELECT_FIRST)
+      {
+         selectFirstItem();
+      }
+      else if (autoSelect == AUTO_SELECT_FIRST_ERROR)
+      {
+         if (firstErrorIndex != -1)
+            errorTable_.setSelected(firstErrorIndex, 1, true);
+      }
    }
    
    public void selectFirstItem()

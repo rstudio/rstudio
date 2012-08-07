@@ -36,6 +36,7 @@ import org.rstudio.studio.client.workbench.prefs.model.HistoryPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.PackagesPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.ProjectsPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 /**
  * TODO: Apply new settings
@@ -44,10 +45,12 @@ import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 public class GeneralPreferencesPane extends PreferencesPane
 {
    @Inject
-   public GeneralPreferencesPane(RemoteFileSystemContext fsContext,
+   public GeneralPreferencesPane(UIPrefs prefs,
+                                 RemoteFileSystemContext fsContext,
                                  FileDialogs fileDialogs,
                                  final DefaultCRANMirror defaultCRANMirror)
    {
+      prefs_ = prefs;
       fsContext_ = fsContext;
       fileDialogs_ = fileDialogs;
 
@@ -137,6 +140,10 @@ public class GeneralPreferencesPane extends PreferencesPane
       add(cranMirrorTextBox_);
       
         
+      
+      add(checkboxPref("Automatically navigate to build errors", 
+                       prefs_.navigateToBuildError()));
+      
       cleanupAfterCheck_ = new CheckBox(
             "Cleanup output after successful R CMD check");
       add(cleanupAfterCheck_);
@@ -270,6 +277,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       return "General";
    }
 
+   private final UIPrefs prefs_;
    private final FileSystemContext fsContext_;
    private final FileDialogs fileDialogs_;
    private SelectWidget saveWorkspace_;
