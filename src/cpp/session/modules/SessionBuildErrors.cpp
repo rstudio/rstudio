@@ -36,28 +36,36 @@ std::vector<CompileError> parseGccErrors(const FilePath& basePath,
 {
    std::vector<CompileError> errors;
 
-   boost::regex re("^(.+?):([0-9]+?):(?:([0-9]+?):)? (error|warning): (.+)$");
+   // parse standard gcc errors and warning lines but also pickup "from"
+   // prefixed errors and substitute the from file for the error/warning file
+   boost::regex re("(?:from (.+?):([0-9]+?).+?\\n)?"
+                   "^(.+?):([0-9]+?):(?:([0-9]+?):)? (error|warning): (.+)$");
    boost::sregex_iterator iter(output.begin(), output.end(), re,
                                boost::regex_constants::match_not_dot_newline);
    boost::sregex_iterator end;
    for (; iter != end; iter++)
    {
       boost::smatch match = *iter;
-      std::string file = match[1];
-      std::string line = match[2];
-      std::string column, type, message;
-      if (match.size() == 4)
+      BOOST_ASSERT(match.size() == 8);
+
+      std::string file, line, column, type, message;
+      std::string match1 = match[1];
+      if (!match1.empty())
       {
+         file = match[1];
+         line = match[2];
          column = "1";
-         type = match[3];
-         message = match[4];
       }
       else
       {
-         column = match[3];
-         type = match[4];
-         message = match[5];
+         file = match[3];
+         line = match[4];
+         column = match[5];
+         if (column.empty())
+            column = "1";
       }
+      type = match[6];
+      message = match[7];
 
       // resolve file path
       FilePath filePath;
