@@ -137,12 +137,17 @@ public class GeneralPreferencesPane extends PreferencesPane
       add(cranMirrorTextBox_);
       
         
+      cleanupAfterCheck_ = new CheckBox(
+            "Cleanup output after successful R CMD check");
+      add(cleanupAfterCheck_);
+      
       saveWorkspace_.setEnabled(false);
       loadRData_.setEnabled(false);
       dirChooser_.setEnabled(false);
       alwaysSaveHistory_.setEnabled(false);
       removeHistoryDuplicates_.setEnabled(false);
       cranMirrorTextBox_.setEnabled(false);
+      cleanupAfterCheck_.setEnabled(false);
       restoreLastProject_.setEnabled(false);
    }
    
@@ -193,6 +198,9 @@ public class GeneralPreferencesPane extends PreferencesPane
          cranMirrorTextBox_.setText(cranMirror_.getDisplay());
       }     
       
+      cleanupAfterCheck_.setEnabled(true);
+      cleanupAfterCheck_.setValue(packagesPrefs.getCleanupAfterCMDCheck());
+      
       // projects prefs
      ProjectsPrefs projectsPrefs = rPrefs.getProjectsPrefs();
      restoreLastProject_.setEnabled(true);
@@ -241,7 +249,10 @@ public class GeneralPreferencesPane extends PreferencesPane
          rPrefs.setHistoryPrefs(historyPrefs);
          
          // set packages prefs
-         PackagesPrefs packagesPrefs = PackagesPrefs.create(cranMirror_, null);
+         PackagesPrefs packagesPrefs = PackagesPrefs.create(
+                                             cranMirror_, 
+                                             null,
+                                             cleanupAfterCheck_.getValue());
          rPrefs.setPackagesPrefs(packagesPrefs);
          
          // set projects prefs
@@ -269,5 +280,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    private final CheckBox removeHistoryDuplicates_;
    private CRANMirror cranMirror_ = CRANMirror.empty();
    private TextBoxWithButton cranMirrorTextBox_;
+   private final CheckBox cleanupAfterCheck_;
    private CheckBox restoreLastProject_;
 }

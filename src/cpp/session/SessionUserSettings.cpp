@@ -391,6 +391,16 @@ void UserSettings::setBioconductorMirror(
    setBioconductorReposOption(bioconductorMirror.url);
 }
 
+bool UserSettings::cleanupAfterCheck() const
+{
+   return settings_.getBool("cleanupAfterCheck", true);
+}
+
+void UserSettings::setCleanupAfterCheck(bool cleanupAfterCheck)
+{
+   settings_.set("cleanupAfterCheck", cleanupAfterCheck);
+}
+
 bool UserSettings::vcsEnabled() const
 {
    return settings_.getBool("vcsEnabled", true);

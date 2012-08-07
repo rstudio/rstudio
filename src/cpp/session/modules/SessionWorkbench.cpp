@@ -213,11 +213,13 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 
    // read and set packages prefs
    json::Object cranMirrorJson;
+   bool cleanupAfterCheck;
    error = json::readObject(packagesPrefs,
-                            "cran_mirror", &cranMirrorJson);
+                            "cran_mirror", &cranMirrorJson,
    /* see note on bioconductor below
-                            "bioconductor_mirror", &bioconductorMirrorJson);
+                            "bioconductor_mirror", &bioconductorMirrorJson,
    */
+                            "cleanup_after_check", &cleanupAfterCheck);
    if (error)
        return error;
    userSettings().beginUpdate();
@@ -230,6 +232,7 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().setBioconductorMirror(toBioconductorMirror(
                                                 bioconductorMirrorJson));
    */
+   userSettings().setCleanupAfterCheck(cleanupAfterCheck);
    userSettings().endUpdate();
 
 
@@ -356,6 +359,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
                                       userSettings().cranMirror());
    packagesPrefs["bioconductor_mirror"] = toBioconductorMirrorJson(
                                       userSettings().bioconductorMirror());
+   packagesPrefs["cleanup_after_check"] = userSettings().cleanupAfterCheck();
 
    // get projects prefs
    json::Object projectsPrefs;

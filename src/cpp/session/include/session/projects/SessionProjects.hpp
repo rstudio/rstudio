@@ -59,7 +59,6 @@ struct RProjectVcsOptions
 struct RProjectBuildOptions
 {
    RProjectBuildOptions() :
-      cleanupAfterCheck(true),
       autoRoxygenizeForCheck(true),
       autoRoxygenizeForBuildPackage(true),
       autoRoxygenizeForBuildAndReload(false)
@@ -67,7 +66,6 @@ struct RProjectBuildOptions
    }
 
    std::string makefileArgs;
-   bool cleanupAfterCheck;
    bool autoRoxygenizeForCheck;
    bool autoRoxygenizeForBuildPackage;
    bool autoRoxygenizeForBuildAndReload;
