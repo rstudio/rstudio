@@ -694,21 +694,21 @@ private:
 
    void onCompleted(int exitStatus)
    {
+      // call the error parser if one has been specified
+      if (errorParser_)
+      {
+         std::vector<CompileError> errors = errorParser_(output_);
+         if (!errors.empty())
+         {
+            errorsJson_ = compileErrorsAsJson(errors);
+            enqueBuildErrors(errorsJson_);
+         }
+      }
+
       if (exitStatus != EXIT_SUCCESS)
       {
          boost::format fmt("\nExited with status %1%.\n\n");
          enqueBuildOutput(boost::str(fmt % exitStatus));
-
-         // call the error parser if one has been specified
-         if (errorParser_)
-         {
-            std::vector<CompileError> errors = errorParser_(output_);
-            if (!errors.empty())
-            {
-               errorsJson_ = compileErrorsAsJson(errors);
-               enqueBuildErrors(errorsJson_);
-            }
-         }
 
          // never restart R after a failed build
          restartR_ = false;
