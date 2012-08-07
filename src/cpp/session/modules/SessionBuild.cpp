@@ -48,14 +48,32 @@ namespace session {
 namespace {
 
 // see if we need to explicitly specify a library for INSTALL -- right
-// now we do this if .libPaths[0] is not the same as the user's
+// now we do this if .libPaths[1] is not the same as the user's
 // default installation library
-std::string installLibraryOverride()
+std::string installLibraryOverride(const std::string& userCustomArgs)
 {
-   std::string lib;
-   Error error = r::exec::RFunction(".rs.installLibraryOverride").call(&lib);
+   // don't do an override if the user has already specified a library
+   if (userCustomArgs.find(" -l ") != std::string::npos ||
+       userCustomArgs.find("--library=") != std::string::npos)
+   {
+      return std::string();
+   }
+
+   // do the override if dev mode is on
+   bool devModeOn = false;
+   Error error = r::exec::RFunction(".rs.devModeOn").call(&devModeOn);
    if (error)
       LOG_ERROR(error);
+
+   std::string lib;
+   if (devModeOn)
+   {
+      error = r::exec::RFunction(".rs.defaultLibraryPath").call(&lib);
+      if (error)
+         LOG_ERROR(error);
+   }
+   if (!lib.empty())
+      lib = module_context::createAliasedPath(FilePath(lib));
    return lib;
 }
 
@@ -382,10 +400,11 @@ private:
             rCmd << "--preclean";
 
          // add extra args if provided
-         rCmd << projectConfig().packageInstallArgs;
+         std::string extraArgs = projectConfig().packageInstallArgs;
+         rCmd << extraArgs;
 
          // add library option if necessary
-         std::string lib = installLibraryOverride();
+         std::string lib = installLibraryOverride(extraArgs);
          if (!lib.empty())
          {
             rCmd << "-l";
@@ -437,10 +456,11 @@ private:
          rCmd << "--preclean";
 
          // add extra args if provided
-         rCmd << projectConfig().packageBuildBinaryArgs;
+         std::string extraArgs = projectConfig().packageBuildBinaryArgs;
+         rCmd << extraArgs;
 
          // add library option if necessary
-         std::string lib = installLibraryOverride();
+         std::string lib = installLibraryOverride(extraArgs);
          if (!lib.empty())
          {
             rCmd << "-l";

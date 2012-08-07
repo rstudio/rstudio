@@ -73,9 +73,18 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
 # try to determine if devtools::dev_mode is on
 .rs.addFunction( "devModeOn", function(){
   require(utils)
+
+  # determine devmode path (devtools <= 0.6 hard-coded it)
   devToolsPath <- getOption("devtools.path")
   if (is.null(devToolsPath))
+    if ("devtools" %in% .packages())
+      devToolsPath <- "~/R-dev"
+
+  # no devtools path
+  if (is.null(devToolsPath))
     return (FALSE)
+
+  # is the devtools path active?
   devToolsPath <- normalizePath(devToolsPath, winslash = "/", mustWork = FALSE)
   devToolsPath %in% .libPaths()
 })

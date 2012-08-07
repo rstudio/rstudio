@@ -103,15 +103,9 @@
                               .Platform$path.sep))[1L]
 })
 
-.rs.addFunction("installLibraryOverride", function()
+.rs.addFunction("defaultLibraryPath", function()
 {
-  require(utils)
-  userDefaultLib <- path.expand(.rs.defaultUserLibraryPath())
-  firstLib <- .libPaths()[1]
-  if (!identical(normalizePath(userDefaultLib), normalizePath(firstLib)))
-    firstLib
-  else
-    ""
+  .libPaths()[1]
 })
 
 .rs.addJsonRpcHandler( "is_package_loaded", function(packageName)
