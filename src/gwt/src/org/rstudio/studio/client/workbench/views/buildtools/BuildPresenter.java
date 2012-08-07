@@ -65,7 +65,9 @@ public class BuildPresenter extends BasePresenter
       void showOutput(String output);
       void scrollToBottom();
       
-      void showErrors(JsArray<CompileError> errors, boolean ensureVisible);
+      void showErrors(String basePath,
+                      JsArray<CompileError> errors, 
+                      boolean ensureVisible);
       void buildCompleted();
       
       HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
@@ -123,7 +125,9 @@ public class BuildPresenter extends BasePresenter
          @Override
          public void onBuildErrors(BuildErrorsEvent event)
          {
-            view_.showErrors(event.getErrors(), true);
+            view_.showErrors(event.getBaseDirectory(),
+                             event.getErrors(), 
+                             true);
          }
       });
       
@@ -192,7 +196,9 @@ public class BuildPresenter extends BasePresenter
       view_.showOutput(buildState.getOutput());
       
       if (buildState.getErrors().length() > 0)
-         view_.showErrors(buildState.getErrors(), false);
+         view_.showErrors(buildState.getErrorsBaseDir(),
+                          buildState.getErrors(), 
+                          false);
       
       if (!buildState.isRunning())
          view_.buildCompleted();

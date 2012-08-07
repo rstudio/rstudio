@@ -386,8 +386,8 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.BuildErrors))
          {
-            JsArray<CompileError> errors = event.getData();
-            eventBus_.fireEvent(new BuildErrorsEvent(errors));
+            BuildErrorsEvent.Data data = event.getData();
+            eventBus_.fireEvent(new BuildErrorsEvent(data));
          }
          else if (type.equals(ClientEvent.ListChanged))
          {

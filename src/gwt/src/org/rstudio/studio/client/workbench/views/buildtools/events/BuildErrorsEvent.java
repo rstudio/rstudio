@@ -14,25 +14,47 @@ package org.rstudio.studio.client.workbench.views.buildtools.events;
 
 import org.rstudio.studio.client.common.compile.CompileError;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class BuildErrorsEvent extends GwtEvent<BuildErrorsEvent.Handler>
 {
+   public static class Data extends JavaScriptObject
+   { 
+      protected Data()
+      {
+      }
+      
+      public final native String getBaseDirectory() /*-{
+         return this.base_dir;
+      }-*/;
+      
+      public final native JsArray<CompileError> getErrors() /*-{
+         return this.errors;
+      }-*/;
+   }
+
+   
    public interface Handler extends EventHandler
    {
       void onBuildErrors(BuildErrorsEvent event);
    }
 
-   public BuildErrorsEvent(JsArray<CompileError> errors)
+   public BuildErrorsEvent(Data data)
    {
-      errors_ = errors;
+      data_ = data;
+   }
+   
+   public String getBaseDirectory()
+   {
+      return data_.getBaseDirectory();
    }
    
    public JsArray<CompileError> getErrors()
    {
-      return errors_;
+      return data_.getErrors();
    }
 
    @Override
@@ -47,7 +69,7 @@ public class BuildErrorsEvent extends GwtEvent<BuildErrorsEvent.Handler>
       handler.onBuildErrors(this);
    }
    
-   private JsArray<CompileError> errors_;
+   private Data data_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

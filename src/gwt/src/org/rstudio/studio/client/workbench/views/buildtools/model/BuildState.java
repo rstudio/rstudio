@@ -28,6 +28,10 @@ public class BuildState extends JavaScriptObject
       return this.running;
    }-*/;
    
+   public final native String getErrorsBaseDir() /*-{
+      return this.errors_base_dir;
+   }-*/;
+   
    public final native JsArray<CompileError> getErrors() /*-{
       return this.errors;
    }-*/;

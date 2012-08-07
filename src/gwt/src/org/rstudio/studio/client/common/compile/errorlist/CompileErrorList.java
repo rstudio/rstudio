@@ -110,7 +110,9 @@ public class CompileErrorList extends Composite
       return addHandler(handler, SelectionCommitEvent.getType());
    }
  
-   public void showErrors(String targetFile, JsArray<CompileError> errors)
+   public void showErrors(String targetFile, 
+                          String basePath,
+                          JsArray<CompileError> errors)
    {
       boolean showFileHeaders = false;
       ArrayList<CompileError> errorList = new ArrayList<CompileError>();
@@ -122,6 +124,7 @@ public class CompileErrorList extends Composite
       }
 
       codec_.setShowFileHeaders(showFileHeaders);
+      codec_.setFileHeaderBasePath(basePath);
       errorTable_.addItems(errorList, false);
    }
    

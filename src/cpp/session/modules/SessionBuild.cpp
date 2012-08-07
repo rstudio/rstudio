@@ -367,7 +367,8 @@ private:
    {      
 
       // install the gcc error parser
-      errorParser_ = gccErrorParser(packagePath.complete("src"));
+      initErrorParser(packagePath,
+                      gccErrorParser(packagePath.complete("src")));
 
       // make a copy of options so we can customize the environment
       core::system::ProcessOptions pkgOptions(options);
@@ -603,7 +604,7 @@ private:
       }
 
       // install the gcc error parser
-      errorParser_ = gccErrorParser(targetPath);
+      initErrorParser(targetPath, gccErrorParser(targetPath));
 
       std::string make = "make";
       if (!options_.makefileArgs.empty())
@@ -671,6 +672,7 @@ public:
 
    const std::string& output() const { return output_; }
 
+   const std::string& errorsBaseDir() const { return errorsBaseDir_; }
    const json::Array& errorsAsJson() const { return errorsJson_; }
 
    void terminate()
@@ -738,7 +740,11 @@ private:
 
    void enqueBuildErrors(const json::Array& errors)
    {
-      ClientEvent event(client_events::kBuildErrors, errors);
+      json::Object jsonData;
+      jsonData["base_dir"] = errorsBaseDir_;
+      jsonData["errors"] = errors;
+
+      ClientEvent event(client_events::kBuildErrors, jsonData);
       module_context::enqueClientEvent(event);
    }
 
@@ -772,11 +778,26 @@ private:
       return type + " package written to " + written;
    }
 
+   void initErrorParser(const FilePath& baseDir, CompileErrorParser parser)
+   {
+      // set base dir -- make sure it ends with a / so the slash is
+      // excluded from error display
+      errorsBaseDir_ = module_context::createAliasedPath(baseDir);
+      if (!errorsBaseDir_.empty() &&
+          !boost::algorithm::ends_with(errorsBaseDir_, "/"))
+      {
+         errorsBaseDir_.append("/");
+      }
+
+      errorParser_ = parser;
+   }
+
 private:
    bool isRunning_;
    bool terminationRequested_;
    std::string output_;
    CompileErrorParser errorParser_;
+   std::string errorsBaseDir_;
    json::Array errorsJson_;
    r_util::RPackageInfo pkgInfo_;
    projects::RProjectBuildOptions options_;
@@ -869,15 +890,27 @@ void onSuspend(core::Settings* pSettings)
    std::ostringstream ostr;
    json::write(buildLastErrors, ostr);
    pSettings->set("build-last-errors", ostr.str());
+
+   pSettings->set("build-last-errors-base-dir",
+                  s_pBuild ? s_pBuild->errorsBaseDir() : "" );
 }
 
-std::string s_suspendedBuildOutput;
-json::Array s_suspendedBuildErrors;
+struct SuspendContext
+{
+   bool empty() const { return errors.empty() && output.empty(); }
+   std::string errorsBaseDir;
+   json::Array errors;
+   std::string output;
+};
+
+SuspendContext s_suspendContext;
+
 
 void onResume(const core::Settings& settings)
 {
-   s_suspendedBuildOutput = settings.get("build-last-output");
+   s_suspendContext.output = settings.get("build-last-output");
 
+   s_suspendContext.errorsBaseDir = settings.get("build-last-errors-base-dir");
    std::string buildLastErrors = settings.get("build-last-errors");
    if (!buildLastErrors.empty())
    {
@@ -885,7 +918,7 @@ void onResume(const core::Settings& settings)
       if (json::parse(buildLastErrors, &errorsJson) &&
           json::isType<json::Array>(errorsJson))
       {
-         s_suspendedBuildErrors = errorsJson.get_array();
+         s_suspendContext.errors = errorsJson.get_array();
       }
    }
 }
@@ -900,15 +933,17 @@ json::Value buildStateAsJson()
       json::Object stateJson;
       stateJson["running"] = s_pBuild->isRunning();
       stateJson["output"] = s_pBuild->output();
+      stateJson["errors_base_dir"] = s_pBuild->errorsBaseDir();
       stateJson["errors"] = s_pBuild->errorsAsJson();
       return stateJson;
    }
-   else if (!s_suspendedBuildOutput.empty() || !s_suspendedBuildErrors.empty())
+   else if (!s_suspendContext.empty())
    {
       json::Object stateJson;
       stateJson["running"] = false;
-      stateJson["output"] = s_suspendedBuildOutput;
-      stateJson["errors"] = s_suspendedBuildErrors;
+      stateJson["output"] = s_suspendContext.output;
+      stateJson["errors_base_dir"] = s_suspendContext.errorsBaseDir;
+      stateJson["errors"] = s_suspendContext.errors;
       return stateJson;
    }
    else

@@ -23,7 +23,7 @@ public class CompileErrorItemCodec
       extends HeaderBreaksItemCodec<CompileError, CodeNavigationTarget, CodeNavigationTarget>
 {
    public CompileErrorItemCodec(CompileErrorListResources resources,
-                                   boolean showFileHeaders)
+                                boolean showFileHeaders)
    {
       resources_ = resources;
       showFileHeaders_ = showFileHeaders;
@@ -37,6 +37,11 @@ public class CompileErrorItemCodec
    public void setShowFileHeaders(boolean show)
    {
       showFileHeaders_ = show;
+   }
+   
+   public void setFileHeaderBasePath(String basePath)
+   {
+      fileHeaderBasePath_ = basePath;
    }
 
    @Override
@@ -126,7 +131,14 @@ public class CompileErrorItemCodec
 
       TableCellElement cell = Document.get().createTDElement();
       cell.setColSpan(3);
-      cell.setInnerText(row.getAttribute(DATA_PATH));
+      
+      String path = row.getAttribute(DATA_PATH);
+      if (fileHeaderBasePath_ != null)
+      {
+         if (path.startsWith(fileHeaderBasePath_))
+            path = path.substring(fileHeaderBasePath_.length());
+      }
+      cell.setInnerText(path);
 
       headerRow.appendChild(cell);
 
@@ -175,6 +187,7 @@ public class CompileErrorItemCodec
 
    private final CompileErrorListResources resources_;
    private boolean showFileHeaders_;
+   private String fileHeaderBasePath_ = null;
 
    private static final String DATA_PATH = "data-path";
    private static final String DATA_LINE = "data-line";

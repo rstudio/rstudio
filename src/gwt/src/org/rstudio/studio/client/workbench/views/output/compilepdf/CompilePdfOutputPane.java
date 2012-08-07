@@ -103,7 +103,7 @@ public class CompilePdfOutputPane extends WorkbenchPane
    @Override
    public void showErrors(JsArray<CompileError> errors)
    {
-      compilePanel_.showErrors(errors);
+      compilePanel_.showErrors(null, errors);
       
       if (CompileError.includesErrorType(errors))
          ensureVisible(true);

@@ -117,9 +117,11 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
    }
    
    @Override
-   public void showErrors(JsArray<CompileError> errors, boolean ensureVisible)
+   public void showErrors(String basePath,
+                          JsArray<CompileError> errors, 
+                          boolean ensureVisible)
    {
-      compilePanel_.showErrors(errors);
+      compilePanel_.showErrors(basePath, errors);
       
       if (ensureVisible && CompileError.includesErrorType(errors))
          ensureVisible();

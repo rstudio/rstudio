@@ -110,9 +110,9 @@ public class CompilePanel extends Composite
       outputBuffer_.append(output);
    }
    
-   public void showErrors(JsArray<CompileError> errors)
+   public void showErrors(String basePath, JsArray<CompileError> errors)
    {
-      errorList_.showErrors(targetFileName_, errors);
+      errorList_.showErrors(targetFileName_, basePath, errors);
 
       if (CompileError.includesErrorType(errors))
       {
