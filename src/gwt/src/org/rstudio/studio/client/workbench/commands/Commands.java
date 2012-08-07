@@ -199,6 +199,7 @@ public abstract class
    // Packages
    public abstract AppCommand installPackage();
    public abstract AppCommand updatePackages();
+   public abstract AppCommand refreshPackages();
    public abstract AppCommand activatePackages();
 
    // Version control

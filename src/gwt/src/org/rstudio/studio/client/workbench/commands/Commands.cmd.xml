@@ -945,6 +945,9 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Check for Updates"
         desc="Check for package updates" /> 
         
+   <cmd id ="refreshPackages"
+        desc="Refresh Package listing"/>
+        
    <cmd id="versionControlOptions"
         menuLabel="_Options..."
         desc="Configure version control options"/>

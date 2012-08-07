@@ -19,6 +19,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -92,6 +93,8 @@ public class Packages
                    PackagesServerOperations server,
                    GlobalDisplay globalDisplay,
                    Session session,
+                   Binder binder,
+                   Commands commands,
                    DefaultCRANMirror defaultCRANMirror)
    {
       super(view);
@@ -101,6 +104,7 @@ public class Packages
       view_.setObserver(this) ;
       events_ = events ;
       defaultCRANMirror_ = defaultCRANMirror;
+      binder.bind(commands, this);
 
       events.addHandler(InstalledPackagesChangedEvent.TYPE, this);
       events.addHandler(PackageStatusChangedEvent.TYPE, this);
@@ -420,6 +424,12 @@ public class Packages
       return command.toString();
    }
    
+   
+   @Handler
+   public void onRefreshPackages()
+   {
+      listPackages();
+   }
    
    public void removePackage(final PackageInfo packageInfo)
    {
