@@ -93,7 +93,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 # required on Fedora for AppArmor-related code to compile
-if(NOT APPLE)
+if(NOT APPLE AND NOT (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD"))
    find_library(DL_LIBRARIES dl)
 endif()
 
@@ -127,7 +127,7 @@ target_link_libraries(rserver
 # install binary
 install(TARGETS rserver DESTINATION ${RSTUDIO_INSTALL_BIN})
 
-if (UNIX AND NOT APPLE)
+if (UNIX AND NOT APPLE AND NOT (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD"))
 
    # install configured admin script
    set(RSERVER_ADMIN_SCRIPT "extras/admin/rstudio-server")
