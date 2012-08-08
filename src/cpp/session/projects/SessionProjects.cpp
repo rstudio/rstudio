@@ -219,6 +219,7 @@ json::Object projectBuildOptionsJson()
       LOG_ERROR(error);
    json::Object buildOptionsJson;
    buildOptionsJson["makefile_args"] = buildOptions.makefileArgs;
+   buildOptionsJson["cleanup_after_check"] = buildOptions.cleanupAfterCheck;
 
    json::Object autoRoxJson;
    autoRoxJson["run_on_check"] = buildOptions.autoRoxygenizeForCheck;
@@ -305,6 +306,7 @@ Error rProjectBuildOptionsFromJson(const json::Object& optionsJson,
    Error error = json::readObject(
        optionsJson,
        "makefile_args", &(pOptions->makefileArgs),
+       "cleanup_after_check",&(pOptions->cleanupAfterCheck),
        "auto_roxygenize_options", &autoRoxJson);
    if (error)
       return error;

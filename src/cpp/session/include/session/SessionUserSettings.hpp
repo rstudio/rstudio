@@ -116,9 +116,6 @@ public:
    BioconductorMirror bioconductorMirror() const;
    void setBioconductorMirror(const BioconductorMirror& bioconductorMirror);
 
-   bool cleanupAfterCheck() const;
-   void setCleanupAfterCheck(bool cleanupAfterCheck);
-
    bool vcsEnabled() const;
    void setVcsEnabled(bool enabled);
 

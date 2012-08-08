@@ -23,12 +23,10 @@ public class PackagesPrefs extends JavaScriptObject
 
    public static final native PackagesPrefs create(
                                   CRANMirror cranMirror,
-                                  BioconductorMirror bioconductorMirror,
-                                  boolean cleanupAfterCheck) /*-{
+                                  BioconductorMirror bioconductorMirror) /*-{
       var prefs = new Object();
       prefs.cran_mirror = cranMirror;
       prefs.bioconductor_mirror = bioconductorMirror;
-      prefs.cleanup_after_check = cleanupAfterCheck;
       return prefs ;
    }-*/;
 
@@ -38,9 +36,5 @@ public class PackagesPrefs extends JavaScriptObject
    
    public native final BioconductorMirror getBioconductorMirror() /*-{
       return this.bioconductor_mirror;
-   }-*/;
-   
-   public native final boolean getCleanupAfterCMDCheck() /*-{
-      return this.cleanup_after_check;
    }-*/;
 }

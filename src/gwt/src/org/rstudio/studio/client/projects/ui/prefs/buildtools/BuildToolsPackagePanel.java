@@ -14,6 +14,7 @@
 
 package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -109,6 +110,15 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       add(checkAdditionalArguments_ = new AdditionalArguments(
             new SafeHtmlBuilder().appendHtmlConstant(
                 "Check Package &mdash; R CMD check additional options:").toSafeHtml()));
+          
+      add(chkCleanupAfterCheck_ = checkBox(
+            "Cleanup output after successful R CMD check"));
+      if (BrowseCap.isWindowsDesktop())
+      {
+         chkCleanupAfterCheck_.getElement().getStyle().setMarginLeft(0, 
+                                                                     Unit.PX);
+      }
+
    }
    
   
@@ -134,6 +144,8 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       buildAdditionalArguments_.setText(config.getPackageBuildArgs());
       buildBinaryAdditionalArguments_.setText(config.getPackageBuildBinaryArgs());
       checkAdditionalArguments_.setText(config.getPackageCheckArgs());
+      chkCleanupAfterCheck_.setValue(
+                           options.getBuildOptions().getCleanupAfterCheck());
       
       roxygenOptions_ = new BuildToolsRoxygenOptions(
             config.getPackageRoxygenzieRd(),
@@ -176,6 +188,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
                                   roxygenOptions_.getRocletCollate(),
                                   roxygenOptions_.getRocletNamespace());
       RProjectBuildOptions buildOptions = options.getBuildOptions();
+      buildOptions.setCleanupAfterCheck(chkCleanupAfterCheck_.getValue());
       buildOptions.setAutoRoxyginizeOptions(
                                        roxygenOptions_.getAutoRoxygenize());
    }
@@ -186,6 +199,8 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    private AdditionalArguments buildAdditionalArguments_;
    private AdditionalArguments buildBinaryAdditionalArguments_;
    private AdditionalArguments checkAdditionalArguments_;
+   
+   private CheckBox chkCleanupAfterCheck_;
    
    private BuildToolsRoxygenOptions roxygenOptions_;
    
