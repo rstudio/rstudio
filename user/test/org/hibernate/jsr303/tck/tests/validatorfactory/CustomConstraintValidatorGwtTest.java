@@ -17,7 +17,10 @@ package org.hibernate.jsr303.tck.tests.validatorfactory;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
+import org.hibernate.jsr303.tck.util.client.NotSupported;
+import org.hibernate.jsr303.tck.util.client.NotSupported.Reason;
+
+import javax.validation.ValidationException;
 
 /**
  * Wraps
@@ -37,13 +40,19 @@ public class CustomConstraintValidatorGwtTest extends GWTTestCase {
     delegate.testDefaultConstructorInValidatorCalled();
   }
 
-  @Failing(issue = 5805)
   public void testRuntimeExceptionInValidatorCreationIsWrapped() {
-    delegate.testRuntimeExceptionInValidatorCreationIsWrapped();
+    try {
+      delegate.testRuntimeExceptionInValidatorCreationIsWrapped();
+      fail("Expected a " + ValidationException.class);
+    } catch (ValidationException expected) {
+      Throwable cause = expected.getCause();
+      assertEquals(RuntimeException.class, cause.getClass());
+      assertEquals("Runtime exception in validator creation", cause.getMessage());
+    }
   }
 
-  @Failing(issue = 5805)
+  @NotSupported(reason = Reason.CONSTRAINT_VALIDATOR_FACTORY)
   public void testValidationExceptionIsThrownInCaseFactoryReturnsNull() {
-    delegate.testValidationExceptionIsThrownInCaseFactoryReturnsNull();
+    fail("ConstraintValidatorFactory is not supported. GWT.create() is used in its place.");
   }
 }
