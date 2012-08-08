@@ -137,29 +137,181 @@ public class Assert {
    * @param message the assertion error message
    */
   private static void assertArrayEquals(Object actual, Object expected, String message) {
-    //is called only when expected is an array
-//    if (actual.getClass().isArray()) {
-//      int expectedLength = Array.getLength(expected);
-//      if (expectedLength == Array.getLength(actual)) {
-//         for (int i = 0 ; i < expectedLength ; i++) {
-//            Object _actual = Array.get(actual, i);
-//            Object _expected = Array.get(expected, i);
-//            try {
-//               assertEquals(_actual, _expected);
-//            } catch (AssertionError ae) {
-//               failNotEquals(actual, expected, message == null ? "" : message
-//                        + " (values as index " + i + " are not the same)");
-//            }
-//         }
-//         //array values matched
-//         return;
-//      } else {
-//         failNotEquals(Array.getLength(actual), expectedLength, message == null ? "" : message
-//                  + " (Array lengths are not the same)");
-//      }
-//    }
-//    failNotEquals(actual, expected, message);
-    fail("assertArrayEquals not implemented");
+    // is called only when expected is an array
+    if (actual.getClass().isArray()) {
+      if (actual instanceof Object[] && expected instanceof Object[]) {
+        Object[] actualArray = (Object[]) actual;
+        Object[] expectedArray = (Object[]) expected;
+        int expectedLength = expectedArray.length;
+        if (expectedLength == actualArray.length) {
+          for (int i = 0; i < expectedLength; i++) {
+            Object _actual = actualArray[i];
+            Object _expected = expectedArray[i];
+            try {
+              assertEquals(_actual, _expected);
+            } catch (AssertionError ae) {
+              failArrayValuesAtIndexNotEqual(_actual, _expected, i, message);
+            }
+          }
+          return;
+        } else {
+          failArrayLengthsNotEqual(actualArray.length, expectedLength, message);
+        }
+      }
+      else if (actual instanceof int[] && expected instanceof int[]) {
+        int[] actualArray = (int[]) actual;
+        int[] expectedArray = (int[]) expected;
+        int expectedLength = expectedArray.length;
+        if (expectedLength == actualArray.length) {
+          for (int i = 0; i < expectedLength; i++) {
+            int _actual = actualArray[i];
+            int _expected = expectedArray[i];
+            try {
+              assertEquals(_actual, _expected);
+            } catch (AssertionError ae) {
+              failArrayValuesAtIndexNotEqual(_actual, _expected, i, message);
+            }
+          }
+          return;
+        } else {
+          failArrayLengthsNotEqual(actualArray.length, expectedLength, message);
+        }
+      }
+      else if (actual instanceof float[] && expected instanceof float[]) {
+        float[] actualArray = (float[]) actual;
+        float[] expectedArray = (float[]) expected;
+        int expectedLength = expectedArray.length;
+        if (expectedLength == actualArray.length) {
+          for (int i = 0; i < expectedLength; i++) {
+            float _actual = actualArray[i];
+            float _expected = expectedArray[i];
+            try {
+              assertEquals(_actual, _expected);
+            } catch (AssertionError ae) {
+              failArrayValuesAtIndexNotEqual(_actual, _expected, i, message);
+            }
+          }
+          return;
+        } else {
+          failArrayLengthsNotEqual(actualArray.length, expectedLength, message);
+        }
+      }
+      else if (actual instanceof long[] && expected instanceof long[]) {
+        long[] actualArray = (long[]) actual;
+        long[] expectedArray = (long[]) expected;
+        int expectedLength = expectedArray.length;
+        if (expectedLength == actualArray.length) {
+          for (int i = 0; i < expectedLength; i++) {
+            long _actual = actualArray[i];
+            long _expected = expectedArray[i];
+            try {
+              assertEquals(_actual, _expected);
+            } catch (AssertionError ae) {
+              failArrayValuesAtIndexNotEqual(_actual, _expected, i, message);
+            }
+          }
+          return;
+        } else {
+          failArrayLengthsNotEqual(actualArray.length, expectedLength, message);
+        }
+      }
+      else if (actual instanceof double[] && expected instanceof double[]) {
+        double[] actualArray = (double[]) actual;
+        double[] expectedArray = (double[]) expected;
+        int expectedLength = expectedArray.length;
+        if (expectedLength == actualArray.length) {
+          for (int i = 0; i < expectedLength; i++) {
+            double _actual = actualArray[i];
+            double _expected = expectedArray[i];
+            try {
+              assertEquals(_actual, _expected);
+            } catch (AssertionError ae) {
+              failArrayValuesAtIndexNotEqual(_actual, _expected, i, message);
+            }
+          }
+          return;
+        } else {
+          failArrayLengthsNotEqual(actualArray.length, expectedLength, message);
+        }
+      }
+      else if (actual instanceof boolean[] && expected instanceof boolean[]) {
+        boolean[] actualArray = (boolean[]) actual;
+        boolean[] expectedArray = (boolean[]) expected;
+        int expectedLength = expectedArray.length;
+        if (expectedLength == actualArray.length) {
+          for (int i = 0; i < expectedLength; i++) {
+            boolean _actual = actualArray[i];
+            boolean _expected = expectedArray[i];
+            try {
+              assertEquals(_actual, _expected);
+            } catch (AssertionError ae) {
+              failArrayValuesAtIndexNotEqual(_actual, _expected, i, message);
+            }
+          }
+          return;
+        } else {
+          failArrayLengthsNotEqual(actualArray.length, expectedLength, message);
+        }
+      }
+      else if (actual instanceof byte[] && expected instanceof byte[]) {
+        byte[] actualArray = (byte[]) actual;
+        byte[] expectedArray = (byte[]) expected;
+        int expectedLength = expectedArray.length;
+        if (expectedLength == actualArray.length) {
+          for (int i = 0; i < expectedLength; i++) {
+            byte _actual = actualArray[i];
+            byte _expected = expectedArray[i];
+            try {
+              assertEquals(_actual, _expected);
+            } catch (AssertionError ae) {
+              failArrayValuesAtIndexNotEqual(_actual, _expected, i, message);
+            }
+          }
+          return;
+        } else {
+          failArrayLengthsNotEqual(actualArray.length, expectedLength, message);
+        }
+      }
+      else if (actual instanceof short[] && expected instanceof short[]) {
+        short[] actualArray = (short[]) actual;
+        short[] expectedArray = (short[]) expected;
+        int expectedLength = expectedArray.length;
+        if (expectedLength == actualArray.length) {
+          for (int i = 0; i < expectedLength; i++) {
+            short _actual = actualArray[i];
+            short _expected = expectedArray[i];
+            try {
+              assertEquals(_actual, _expected);
+            } catch (AssertionError ae) {
+              failArrayValuesAtIndexNotEqual(_actual, _expected, i, message);
+            }
+          }
+          return;
+        } else {
+          failArrayLengthsNotEqual(actualArray.length, expectedLength, message);
+        }
+      }
+      else if (actual instanceof char[] && expected instanceof char[]) {
+        char[] actualArray = (char[]) actual;
+        char[] expectedArray = (char[]) expected;
+        int expectedLength = expectedArray.length;
+        if (expectedLength == actualArray.length) {
+          for (int i = 0; i < expectedLength; i++) {
+            char _actual = actualArray[i];
+            char _expected = expectedArray[i];
+            try {
+              assertEquals(_actual, _expected);
+            } catch (AssertionError ae) {
+              failArrayValuesAtIndexNotEqual(_actual, _expected, i, message);
+            }
+          }
+          return;
+        } else {
+          failArrayLengthsNotEqual(actualArray.length, expectedLength, message);
+        }
+      }
+    }
+    failNotEquals(actual, expected, message);
   }
 
 /**
@@ -470,6 +622,18 @@ public class Assert {
    */
   static public void assertNotSame(Object actual, Object expected) {
     assertNotSame(actual, expected, null);
+  }
+
+  static private void failArrayLengthsNotEqual(int actualLength, int expectedLength, 
+      String message) {
+    failNotEquals(actualLength, expectedLength, message == null ? "" : message
+        + " (Array lengths are not the same)");
+  }
+
+  static private void failArrayValuesAtIndexNotEqual(Object actual, Object expected, int index, 
+      String message) {
+    failNotEquals(actual, expected, message == null ? "" : message
+        + " (values as index " + index + " are not the same)");
   }
 
   static private void failSame(Object actual, Object expected, String message) {

@@ -17,8 +17,6 @@ package org.hibernate.jsr303.tck.tests.constraints.validatorresolution;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
-
 /**
  * Wraps {@link ValidatorResolutionTest} .
  */
@@ -33,7 +31,6 @@ public class ValidatorResolutionGwtTest extends GWTTestCase {
     delegate.testResolutionOfMinMaxForDifferentTypes();
   }
 
-  @Failing(issue = 5806)
   public void testResolutionOfMultipleSizeValidators() {
     delegate.testResolutionOfMultipleSizeValidators();
   }
