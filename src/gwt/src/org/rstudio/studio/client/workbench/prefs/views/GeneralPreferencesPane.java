@@ -36,21 +36,14 @@ import org.rstudio.studio.client.workbench.prefs.model.HistoryPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.PackagesPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.ProjectsPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
-/**
- * TODO: Apply new settings
- * TODO: Make sure onApply only does non-desktop settings if in web mode
- */
 public class GeneralPreferencesPane extends PreferencesPane
 {
    @Inject
-   public GeneralPreferencesPane(UIPrefs prefs,
-                                 RemoteFileSystemContext fsContext,
+   public GeneralPreferencesPane(RemoteFileSystemContext fsContext,
                                  FileDialogs fileDialogs,
                                  final DefaultCRANMirror defaultCRANMirror)
    {
-      prefs_ = prefs;
       fsContext_ = fsContext;
       fileDialogs_ = fileDialogs;
 
@@ -139,9 +132,6 @@ public class GeneralPreferencesPane extends PreferencesPane
       cranMirrorTextBox_.setText("");
       add(cranMirrorTextBox_);
             
-      add(checkboxPref("Automatically navigate to build errors", 
-                       prefs_.navigateToBuildError()));
-      
       saveWorkspace_.setEnabled(false);
       loadRData_.setEnabled(false);
       dirChooser_.setEnabled(false);
@@ -264,7 +254,6 @@ public class GeneralPreferencesPane extends PreferencesPane
       return "General";
    }
 
-   private final UIPrefs prefs_;
    private final FileSystemContext fsContext_;
    private final FileDialogs fileDialogs_;
    private SelectWidget saveWorkspace_;
