@@ -105,9 +105,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       chkGitInit_ = new CheckBox("Create a git repository for this project");
       chkGitInit_.addStyleName(styles.wizardCheckbox());
       if (sessionInfo.isVcsAvailable(VCSConstants.GIT_ID))
-      {
-         addSpacer();
-         
+      {  
          UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
          chkGitInit_.setValue(uiPrefs.newProjGitInit().getValue());
          
