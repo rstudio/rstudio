@@ -193,4 +193,12 @@ public class StackTraceCreatorTest extends GWTTestCase {
     assertEquals("functionName@@file.js:1:2",
         c.extractName(" at Type.functionName [as methodName] (file.js:1:2)"));
   }
+
+  public void testFirefox14ExtractName() {
+    StackTraceCreator.CollectorMoz c = new StackTraceCreator.CollectorMoz();
+
+    assertEquals("anonymous", c.extractName("@file.js:1"));
+    assertEquals("functionName",
+        c.extractName("functionName@file.js:1"));
+  }
 }

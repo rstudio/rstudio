@@ -532,11 +532,21 @@ public class StackTraceCreator {
     String toReturn = "";
     fnToString = fnToString.trim();
     int index = fnToString.indexOf("(");
+    int start = fnToString.startsWith("function") ? 8 : 0;
+    if (index == -1) {
+      // Firefox 14 does not include parenthesis and uses '@' symbol instead to terminate symbol
+      index = fnToString.indexOf('@');
+      /**
+       * Firefox 14 doesn't return strings like 'function()' for anonymous methods, so
+       * we assert a space must trail 'function' keyword for a method named 'functionName', e.g.
+       * functionName:file.js:2 won't accidentally strip off the 'function' prefix which is part
+       * of the name.
+       */
+      start = fnToString.startsWith("function ") ? 9 : 0;
+    }
     if (index != -1) {
-      int start = fnToString.startsWith("function") ? 8 : 0;
       toReturn = fnToString.substring(start, index).trim();
     }
-
     return toReturn.length() > 0 ? toReturn : "anonymous";
   }
 
