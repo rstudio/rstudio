@@ -17,6 +17,10 @@
 #include <string>
 #include <unistd.h>
 
+// typdefs (in case we need indirection for porting)
+typedef uid_t  UidType;
+typedef gid_t  GidType;
+
 namespace core {
    class Error;
    class FilePath;
@@ -28,13 +32,28 @@ namespace user {
 
 struct UserIdentity
 {
-   uid_t userId;
-   gid_t groupId;
+   UidType userId;
+   GidType groupId;
 };
 
 UserIdentity currentUserIdentity();
    
 core::Error socketPeerIdentity(int socket, UserIdentity* pIdentity);
+
+struct User
+{
+   UidType userId;
+   GidType groupId;
+   std::string username;
+   std::string homeDirectory;
+};
+
+core::Error currentUser(User* pUser);
+
+bool exists(const std::string& username);
+core::Error userFromUsername(const std::string& username, User* pUser);
+core::Error userFromId(UidType uid, User* pUser);
+
    
 } // namespace user
 } // namespace system

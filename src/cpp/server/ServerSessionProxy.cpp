@@ -36,16 +36,13 @@
 #include <core/http/Response.hpp>
 #include <core/http/LocalStreamAsyncClient.hpp>
 #include <core/http/Util.hpp>
-#include <core/system/System.hpp>
+#include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
 
 #include <core/json/JsonRpc.hpp>
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionLocalStreams.hpp>
-
-#include <server/util/system/System.hpp>
-#include <server/util/system/User.hpp>
 
 #include <server/auth/ServerValidateUser.hpp>
 
@@ -249,7 +246,7 @@ Error initialize()
 Error runVerifyInstallationSession()
 {
    // get current user
-   server::util::system::user::User user;
+   core::system::user::User user;
    Error error = currentUser(&user);
    if (error)
       return error;
@@ -263,7 +260,7 @@ Error runVerifyInstallationSession()
       return error;
 
    // wait for exit
-   return util::system::waitForProcessExit(sessionPid);
+   return core::system::waitForProcessExit(sessionPid);
 }
 
 void proxyContentRequest(

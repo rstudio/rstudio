@@ -77,6 +77,69 @@ Error socketPeerIdentity(int socket, UserIdentity* pIdentity)
 #endif
 
 
+namespace {
+
+const int kNotFoundError = EACCES;
+
+// re-use scaffolding for calls to getpwnam_r and getpwuid_r
+template <typename T>
+Error userFrom(const boost::function<int(
+                 T, struct passwd*, char*, size_t, struct passwd**)>& getPasswd,
+               T value,
+               User* pUser)
+{
+   struct passwd pwd;
+   struct passwd* ptrPwd = &pwd;
+   struct passwd* tempPtrPwd ;
+   int buffSize = ::sysconf(_SC_GETPW_R_SIZE_MAX);
+   if (buffSize == -1)
+      buffSize = 4096; // some systems return -1, be conservative!
+   std::vector<char> buffer(buffSize);
+   int result = getPasswd(value, ptrPwd, &(buffer[0]), buffSize, &tempPtrPwd) ;
+   if (tempPtrPwd == NULL)
+   {
+      if (result == 0) // will happen if user is simply not found
+         result = kNotFoundError;
+      Error error = systemError(result, ERROR_LOCATION);
+      error.addProperty("user-value", boost::lexical_cast<std::string>(value));
+      return error;
+   }
+   else
+   {
+      pUser->userId = pwd.pw_uid;
+      pUser->groupId = pwd.pw_gid;
+      pUser->username = pwd.pw_name;
+      pUser->homeDirectory = pwd.pw_dir;
+      return Success();
+   }
+}
+
+} // anonymous namespace
+
+
+Error currentUser(User* pUser)
+{
+   return userFromId(::geteuid(), pUser);
+}
+
+bool exists(const std::string& username)
+{
+   User user;
+   Error error = userFromUsername(username, &user);
+   return !error;
+}
+
+Error userFromUsername(const std::string& username, User* pUser)
+{
+   return userFrom<const char *>(::getpwnam_r, username.c_str(), pUser);
+}
+
+Error userFromId(uid_t uid, User* pUser)
+{
+   return userFrom<uid_t>(::getpwuid_r, uid, pUser);
+}
+
+
 } // namespace user
 } // namespace system
 } // namespace core

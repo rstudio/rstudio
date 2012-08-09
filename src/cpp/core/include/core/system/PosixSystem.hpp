@@ -1,5 +1,5 @@
 /*
- * System.hpp
+ * PosixSystem.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -11,10 +11,8 @@
  *
  */
 
-#ifndef SERVER_UTIL_SYSTEM_SYSTEM_HPP
-#define SERVER_UTIL_SYSTEM_SYSTEM_HPP
-
-#include <string>
+#ifndef CORE_SYSTEM_POSIX_SYSTEM_HPP
+#define CORE_SYSTEM_POSIX_SYSTEM_HPP
 
 #include <core/system/System.hpp>
 
@@ -28,8 +26,7 @@ namespace core {
    class Error;
 }
 
-namespace server {
-namespace util {
+namespace core {
 namespace system {
 
 // daemonize the process
@@ -40,7 +37,7 @@ core::Error daemonize();
 enum UMask
 {
    OthersNoWriteMask,    // S_IWGRP | S_IWOTH
-   OthersNoneMask,       // S_IWGRP | S_IRWXO
+   OthersNoneMask        // S_IWGRP | S_IRWXO
 };
 void setUMask(UMask mask);
 
@@ -116,10 +113,9 @@ core::Error temporarilyDropPriv(const std::string& newUsername);
 core::Error permanentlyDropPriv(const std::string& newUsername);
 core::Error restorePriv();
 
-         
-} // namespace system
-} // namespace util
-} // namespace server
 
-#endif // SERVER_UTIL_SYSTEM_SYSTEM_HPP
+} // namespace system
+} // namespace core
+
+#endif // CORE_SYSTEM_POSIX_SYSTEM_HPP
 

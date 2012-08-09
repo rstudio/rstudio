@@ -17,14 +17,10 @@
 #include <core/ProgramOptions.hpp>
 #include <core/FilePath.hpp>
 
-#include <core/system/System.hpp>
-
-#include <server/util/system/System.hpp>
-#include <server/util/system/User.hpp>
+#include <core/system/PosixUser.hpp>
+#include <core/system/PosixSystem.hpp>
 
 #include "ServerAppArmor.hpp"
-
-#include "config.h"
 
 using namespace core ;
 
@@ -170,12 +166,12 @@ ProgramStatus Options::read(int argc, char * const argv[])
    if (!serverUser_.empty())
    {
       // if we aren't running as root then forget the programUser
-      if (!util::system::realUserIsRoot())
+      if (!core::system::realUserIsRoot())
       {
          serverUser_ = "";
       }
       // if there is a program user specified and it doesn't exist....
-      else if (!util::system::user::exists(serverUser_))
+      else if (!core::system::user::exists(serverUser_))
       {
          if (serverUser_ == kDefaultProgramUser)
          {

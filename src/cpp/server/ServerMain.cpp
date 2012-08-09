@@ -21,7 +21,7 @@
 
 #include <core/text/TemplateFilter.hpp>
 
-#include <core/system/System.hpp>
+#include <core/system/PosixSystem.hpp>
 #include <core/system/Crypto.hpp>
 
 #include <core/http/URL.hpp>
@@ -33,7 +33,6 @@
 
 #include <session/SessionConstants.hpp>
 
-#include <server/util/system/System.hpp>
 
 #include <server/auth/ServerAuthHandler.hpp>
 #include <server/auth/ServerValidateUser.hpp>
@@ -320,7 +319,7 @@ int main(int argc, char * const argv[])
       // daemonize if requested
       if (options.serverDaemonize())
       {
-         Error error = util::system::daemonize();
+         Error error = core::system::daemonize();
          if (error)
             return core::system::exitFailure(error, ERROR_LOCATION);
 
@@ -329,7 +328,7 @@ int main(int argc, char * const argv[])
             return core::system::exitFailure(error, ERROR_LOCATION);
 
          // set file creation mask to 022 (might have inherted 0 from init)
-         setUMask(util::system::OthersNoWriteMask);
+         setUMask(core::system::OthersNoWriteMask);
       }
 
       // detect R environment variables (calls R (and this forks) so must
@@ -344,9 +343,9 @@ int main(int argc, char * const argv[])
 
       // increase the number of open files allowed (need more files
       // so we can supports lots of concurrent connectins)
-      if (util::system::realUserIsRoot())
+      if (core::system::realUserIsRoot())
       {
-         Error error = setResourceLimit(util::system::FilesLimit, 4096);
+         Error error = setResourceLimit(core::system::FilesLimit, 4096);
          if (error)
             return core::system::exitFailure(error, ERROR_LOCATION);
       }
@@ -414,7 +413,7 @@ int main(int argc, char * const argv[])
       if (!runAsUser.empty())
       {
          // drop root priv
-         Error error = util::system::temporarilyDropPriv(runAsUser);
+         Error error = core::system::temporarilyDropPriv(runAsUser);
          if (error)
             return core::system::exitFailure(error, ERROR_LOCATION);
       }

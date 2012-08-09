@@ -17,8 +17,8 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
-#include <server/util/system/System.hpp>
-#include <server/util/system/User.hpp>
+#include <core/system/PosixSystem.hpp>
+#include <core/system/PosixUser.hpp>
 
 #include <server/ServerOptions.hpp>
 
@@ -34,12 +34,12 @@ bool validateUser(const std::string& username)
       return true;
    
    // get the user
-   util::system::user::User user;
+   core::system::user::User user;
    Error error = userFromUsername(username, &user);
    if (error)
    {
       // log the error only if it is unexpected
-      if (!util::system::isUserNotFoundError(error))
+      if (!core::system::isUserNotFoundError(error))
          LOG_ERROR(error);
 
       // not found either due to non-existence or an unexpected error
@@ -52,7 +52,7 @@ bool validateUser(const std::string& username)
    {    
       // see if they are a member of the "rstudio_users" group
       bool belongsToGroup ;
-      error = util::system::userBelongsToGroup(username,
+      error = core::system::userBelongsToGroup(username,
                                                requiredGroup,
                                                &belongsToGroup);
       if (error)

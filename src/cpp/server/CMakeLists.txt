@@ -85,8 +85,6 @@ foreach(SERVER_ADDIN_TEMPLATE_FILE ${SERVER_ADDIN_TEMPLATE_FILES})
                   COPYONLY)
 endforeach()
 
-# look for setresuid
-check_function_exists(setresuid HAVE_SETRESUID)
 
 # generate config file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
@@ -100,10 +98,6 @@ endif()
 # include directories and libraries
 set(SERVER_SYSTEM_LIBRARIES ${DL_LIBRARIES})
 
-set(SERVER_SOURCE_FILES ${SERVER_SOURCE_FILES}
-   util/system/PosixSystem.cpp
-   util/system/PosixUser.cpp
-)
 
 # set include directories
 include_directories(

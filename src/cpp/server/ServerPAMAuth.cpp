@@ -17,6 +17,7 @@
 #include <core/PeriodicCommand.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/Crypto.hpp>
+#include <core/system/PosixSystem.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -24,7 +25,6 @@
 #include <core/http/AsyncUriHandler.hpp>
 #include <core/text/TemplateFilter.hpp>
 
-#include <server/util/system/System.hpp>
 
 #include <server/auth/ServerValidateUser.hpp>
 #include <server/auth/ServerSecureUriHandler.hpp>
@@ -45,9 +45,9 @@ void assumeRootPriv()
     // running with geteuid != getuid (as is the case when we temporarily
     // drop privileges). We've also seen kerberos on Ubuntu require
     // priv to work correctly -- so, restore privilliges in the child
-    if (util::system::realUserIsRoot())
+    if (core::system::realUserIsRoot())
     {
-       Error error = util::system::restorePriv();
+       Error error = core::system::restorePriv();
        if (error)
        {
           LOG_ERROR(error);

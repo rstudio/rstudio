@@ -22,14 +22,13 @@
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
-#include <core/system/System.hpp>
+#include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
 
 #include <session/SessionConstants.hpp>
 
 #include <server/ServerOptions.hpp>
 
-#include <server/util/system/User.hpp>
 
 #include <server/auth/ServerValidateUser.hpp>
 
@@ -253,18 +252,18 @@ Error launchSession(const std::string& username,
 
    // launch the session
    *pPid = -1;
-   std::string runAsUser = util::system::realUserIsRoot() ? username : "";
-   util::system::ProcessConfig config;
+   std::string runAsUser = core::system::realUserIsRoot() ? username : "";
+   core::system::ProcessConfig config;
    config.args = args;
    config.environment = environment;
-   config.stdStreamBehavior = util::system::StdStreamInherit;
+   config.stdStreamBehavior = core::system::StdStreamInherit;
    config.memoryLimitBytes = static_cast<RLimitType>(
                                options.rsessionMemoryLimitMb() * 1024L * 1024L);
    config.stackLimitBytes = static_cast<RLimitType>(
                                options.rsessionStackLimitMb() * 1024L * 1024L);
    config.userProcessesLimit = static_cast<RLimitType>(
                                options.rsessionUserProcessLimit());
-   return util::system::launchChildProcess(options.rsessionPath(),
+   return core::system::launchChildProcess(options.rsessionPath(),
                                            runAsUser,
                                            config,
                                            pPid) ;

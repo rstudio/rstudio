@@ -31,10 +31,9 @@
 #include <core/http/Util.hpp>
 
 #include <core/system/Crypto.hpp>
-#include <core/system/System.hpp>
+#include <core/system/PosixSystem.hpp>
 #include <core/system/FileMode.hpp>
 
-#include <server/util/system/System.hpp>
 
 namespace server {
 namespace auth {
@@ -227,7 +226,7 @@ Error initialize()
 {
    // determine path to use for secure cookie key file
    FilePath secureCookieKeyPath;
-   if (util::system::effectiveUserIsRoot())
+   if (core::system::effectiveUserIsRoot())
       secureCookieKeyPath = FilePath("/etc/rstudio/secure-cookie-key");
    else
       secureCookieKeyPath = FilePath("/tmp/rstudio-server/secure-cookie-key");

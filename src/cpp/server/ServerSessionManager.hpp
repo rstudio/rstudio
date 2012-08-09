@@ -21,8 +21,7 @@
 #include <boost/signals.hpp>
 
 #include <core/Thread.hpp>
-
-#include <server/util/system/System.hpp>
+#include <core/system/PosixSystem.hpp>
 
 namespace core {
    class Error;
