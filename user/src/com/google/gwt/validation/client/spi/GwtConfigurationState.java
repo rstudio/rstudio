@@ -16,7 +16,12 @@
 package com.google.gwt.validation.client.spi;
 
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Set;
+
+import javax.validation.ConstraintValidatorFactory;
+import javax.validation.MessageInterpolator;
+import javax.validation.TraversableResolver;
 
 /**
  * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
@@ -26,6 +31,13 @@ import java.util.Set;
  */
 public final class GwtConfigurationState extends BaseConfigurationState {
 
+  public GwtConfigurationState(ConstraintValidatorFactory constraintValidatorFactory,
+      MessageInterpolator messageInterpolator, Map<String, String> properties,
+      TraversableResolver traversableResolver) {
+    super(constraintValidatorFactory, messageInterpolator, properties, traversableResolver);
+  }
+
+  @Override
   public Set<InputStream> getMappingStreams() {
     throw new UnsupportedOperationException(
         "GWT Validation does not support getMappingStreams");

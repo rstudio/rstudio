@@ -17,8 +17,6 @@ package org.hibernate.jsr303.tck.tests.bootstrap;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
-
 /**
  * Wraps {@link CustomMessageInterpolatorTest} .
  */
@@ -30,7 +28,6 @@ public class CustomMessageInterpolatorGwtTest extends GWTTestCase {
     return "org.hibernate.jsr303.tck.tests.bootstrap.TckTest";
   }
 
-  @Failing(issue = 6663)
   public void testCustomMessageInterpolatorViaConfiguration() {
     delegate.testCustomMessageInterpolatorViaConfiguration();
   }

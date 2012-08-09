@@ -15,12 +15,23 @@
  */
 package com.google.gwt.validation.client.spi;
 
+import java.util.Map;
 import java.util.Set;
+
+import javax.validation.ConstraintValidatorFactory;
+import javax.validation.MessageInterpolator;
+import javax.validation.TraversableResolver;
 
 /**
  * Only the GWT incompatible parts.
  */
 public final class GwtConfigurationState extends BaseConfigurationState {
+
+  public GwtConfigurationState(ConstraintValidatorFactory constraintValidatorFactory,
+      MessageInterpolator messageInterpolator, Map<String, String> properties,
+      TraversableResolver traversableResolver) {
+    super(constraintValidatorFactory, messageInterpolator, properties, traversableResolver);
+  }
 
   public Set<String> getMappingStreams() {
     throw new UnsupportedOperationException(

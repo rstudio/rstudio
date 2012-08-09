@@ -19,13 +19,15 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.validation.client.spi.GwtConfigurationState;
 import com.google.gwt.validation.client.spi.GwtValidationProvider;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.validation.Configuration;
 import javax.validation.ConstraintValidatorFactory;
 import javax.validation.MessageInterpolator;
 import javax.validation.TraversableResolver;
 import javax.validation.ValidatorFactory;
 import javax.validation.spi.BootstrapState;
-import javax.validation.spi.ConfigurationState;
 
 /**
  * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
@@ -38,6 +40,10 @@ public abstract class BaseGwtConfiguration implements
 
   protected final GwtValidationProvider provider;
   protected final BootstrapState state;
+  protected final Map<String, String> properties = new HashMap<String, String>();
+  protected ConstraintValidatorFactory constraintValidatorFactory;
+  protected MessageInterpolator messageInterpolator;
+  protected TraversableResolver traversableResolver;
 
   public BaseGwtConfiguration(GwtValidationProvider gwtValidationProvider,
       BootstrapState state) {
@@ -45,48 +51,65 @@ public abstract class BaseGwtConfiguration implements
     this.state = state;
   }
 
+  @Override
   public final BaseGwtConfiguration addProperty(String name, String value) {
-    // TODO(nchalko) implement.
+    properties.put(name, value);
     return this;
   }
 
+  @Override
   public final ValidatorFactory buildValidatorFactory() {
-    ConfigurationState configurationState = new GwtConfigurationState();
+    GwtConfigurationState configurationState = new GwtConfigurationState( //
+        constraintValidatorFactory, //
+        messageInterpolator, //
+        properties, //
+        traversableResolver);
     return provider.buildValidatorFactory(configurationState);
   }
 
+  /**
+   * <b>{@link ConstraintValidatorFactory} is unsupported in GWT.</b>
+   * Constraint validators are instead created using GWT.create- with no factory.
+   */
+  @Override
   public final BaseGwtConfiguration constraintValidatorFactory(
       ConstraintValidatorFactory constraintValidatorFactory) {
-    // TODO(nchalko) implement.
+    this.constraintValidatorFactory = constraintValidatorFactory;
     return this;
   }
 
+  @Override
   public final ConstraintValidatorFactory getDefaultConstraintValidatorFactory() {
     return GWT.create(ConstraintValidatorFactory.class);
   }
 
+  @Override
   public final MessageInterpolator getDefaultMessageInterpolator() {
     return GWT.create(MessageInterpolator.class);
   }
 
+  @Override
   public final TraversableResolver getDefaultTraversableResolver() {
     return GWT.create(TraversableResolver.class);
   }
 
+  @Override
   public final BaseGwtConfiguration ignoreXmlConfiguration() {
-    // TODO(nchalko) implement.
+    // Always ignore XML anyway
     return this;
   }
 
+  @Override
   public final BaseGwtConfiguration messageInterpolator(
       MessageInterpolator interpolator) {
-    // TODO(nchalko) implement.
+    this.messageInterpolator = interpolator;
     return this;
   }
 
+  @Override
   public final BaseGwtConfiguration traversableResolver(
       TraversableResolver resolver) {
-    // TODO(nchalko) implement.
+    this.traversableResolver = resolver;
     return this;
   }
 

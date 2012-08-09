@@ -20,7 +20,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 import org.hibernate.jsr303.tck.util.client.Failing;
 
 /**
- * Test wrapper for {@link BuiltinValidatorOverrideGwtTest}.
+ * Test wrapper for {@link BuiltinValidatorOverrideTest}.
  */
 public class BuiltinValidatorOverrideGwtTest extends GWTTestCase {
 

@@ -16,6 +16,7 @@
 package com.google.gwt.validation.client.spi;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.validation.client.AbstractGwtValidatorFactory;
 import com.google.gwt.validation.client.impl.BaseGwtConfiguration;
 import com.google.gwt.validation.client.impl.GwtConfiguration;
 
@@ -34,15 +35,20 @@ import javax.validation.spi.ValidationProvider;
 public final class GwtValidationProvider implements
     ValidationProvider<BaseGwtConfiguration> {
 
-  public ValidatorFactory buildValidatorFactory(
-      ConfigurationState configurationState) {
-    return GWT.create(ValidatorFactory.class);
+  @Override
+  public ValidatorFactory buildValidatorFactory(ConfigurationState configurationState) {
+    AbstractGwtValidatorFactory validatorFactory =
+        (AbstractGwtValidatorFactory) GWT.create(ValidatorFactory.class);
+    validatorFactory.init(configurationState);
+    return validatorFactory;
   }
 
+  @Override
   public Configuration<?> createGenericConfiguration(BootstrapState state) {
     return new GwtConfiguration(this, state);
   }
 
+  @Override
   public GwtConfiguration createSpecializedConfiguration(BootstrapState state) {
     return new GwtConfiguration(this, state);
   }

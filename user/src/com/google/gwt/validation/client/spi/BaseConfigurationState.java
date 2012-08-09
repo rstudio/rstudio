@@ -15,6 +15,7 @@
  */
 package com.google.gwt.validation.client.spi;
 
+import java.util.Collections;
 import java.util.Map;
 
 import javax.validation.ConstraintValidatorFactory;
@@ -28,28 +29,44 @@ import javax.validation.spi.ConfigurationState;
  * <p>
  * Base GWT implementation of {@link ConfigurationState}.
  */
-abstract class BaseConfigurationState implements ConfigurationState {
+public abstract class BaseConfigurationState implements ConfigurationState {
+  private final ConstraintValidatorFactory constraintValidatorFactory;
+  private final MessageInterpolator messageInterpolator;
+  private final Map<String, String> properties;
+  private final TraversableResolver traversableResolver;
 
+  public BaseConfigurationState(
+      ConstraintValidatorFactory constraintValidatorFactory,
+      MessageInterpolator messageInterpolator,
+      Map<String, String> properties,
+      TraversableResolver traversableResolver) {
+    this.constraintValidatorFactory = constraintValidatorFactory;
+    this.messageInterpolator = messageInterpolator;
+    this.properties = Collections.unmodifiableMap(properties);
+    this.traversableResolver = traversableResolver;
+  }
+
+  @Override
   public ConstraintValidatorFactory getConstraintValidatorFactory() {
-    // TODO(nchalko) implement.
-    return null;
+    return constraintValidatorFactory;
   }
 
+  @Override
   public MessageInterpolator getMessageInterpolator() {
-    // TODO(nchalko) implement.
-    return null;
+    return messageInterpolator;
   }
 
+  @Override
   public Map<String, String> getProperties() {
-    // TODO(nchalko) implement.
-    return null;
+    return properties;
   }
 
+  @Override
   public TraversableResolver getTraversableResolver() {
-    // TODO(nchalko) implement.
-    return null;
+    return traversableResolver;
   }
 
+  @Override
   public boolean isIgnoreXmlConfiguration() {
     // Always ignore XML
     return false;

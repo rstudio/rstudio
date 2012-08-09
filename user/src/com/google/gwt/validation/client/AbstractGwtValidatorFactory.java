@@ -25,6 +25,7 @@ import javax.validation.TraversableResolver;
 import javax.validation.Validator;
 import javax.validation.ValidatorContext;
 import javax.validation.ValidatorFactory;
+import javax.validation.spi.ConfigurationState;
 
 /**
  * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
@@ -56,33 +57,38 @@ import javax.validation.ValidatorFactory;
  * </pre>
  */
 public abstract class AbstractGwtValidatorFactory implements ValidatorFactory {
-
-  private final ConstraintValidatorFactory constraintValidatorFactory = GWT
-      .create(ConstraintValidatorFactory.class);
-  private final GwtMessageInterpolator messageInterpolator = new GwtMessageInterpolator();
-  private final TraversableResolver traversableResolver = GWT
-      .create(TraversableResolver.class);;
+  private ConstraintValidatorFactory constraintValidatorFactory;
+  private MessageInterpolator messageInterpolator;
+  private TraversableResolver traversableResolver;
 
   /**
-   * Implement this method to returns a {@link GWT#create}ed {@link Validator}
+   * Implement this method to return a {@link GWT#create}d {@link Validator}
    * annotated with {@link GwtValidation}.
    * 
    * @return newly created Validator
    */
   public abstract AbstractGwtValidator createValidator();
 
+  /**
+   * GWT does not support {@link ConstraintValidatorFactory}, so the object returned by this method
+   * will not work.
+   */
+  @Override
   public final ConstraintValidatorFactory getConstraintValidatorFactory() {
     return constraintValidatorFactory;
   }
 
+  @Override
   public final MessageInterpolator getMessageInterpolator() {
     return messageInterpolator;
   }
 
+  @Override
   public final TraversableResolver getTraversableResolver() {
     return traversableResolver;
   }
 
+  @Override
   public final Validator getValidator() {
     AbstractGwtValidator validator = createValidator();
     validator.init(getConstraintValidatorFactory(), getMessageInterpolator(),
@@ -90,11 +96,27 @@ public abstract class AbstractGwtValidatorFactory implements ValidatorFactory {
     return validator;
   }
 
+  public final void init(ConfigurationState configState) {
+    ConstraintValidatorFactory configConstraintValidatorFactory =
+        configState.getConstraintValidatorFactory();
+    this.constraintValidatorFactory = configConstraintValidatorFactory != null ?
+        configConstraintValidatorFactory : 
+        GWT.<ConstraintValidatorFactory>create(ConstraintValidatorFactory.class);
+    TraversableResolver configTraversableResolver = configState.getTraversableResolver();
+    this.traversableResolver = configTraversableResolver != null ?
+        configTraversableResolver : GWT.<TraversableResolver>create(TraversableResolver.class);
+    MessageInterpolator configMessageInterpolator = configState.getMessageInterpolator();
+    this.messageInterpolator = configMessageInterpolator != null ?
+        configMessageInterpolator : new GwtMessageInterpolator();
+  }
+
+  @Override
   public final <T> T unwrap(Class<T> type) {
     // TODO(nchalko) implement
     return null;
   }
 
+  @Override
   public final ValidatorContext usingContext() {
     return new GwtValidatorContext(this);
   }
