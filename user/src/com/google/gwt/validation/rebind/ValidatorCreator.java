@@ -242,8 +242,7 @@ public final class ValidatorCreator extends AbstractCreator {
     sw.println("checkNotNull(groups, \"groups\");");
     sw.println("checkGroups(groups);");
 
-    for (BeanHelper bean : Util.sortMostSpecificFirst(
-        BeanHelper.getBeanHelpers().values(), BeanHelper.TO_CLAZZ)) {
+    for (BeanHelper bean : BeanHelperCache.getForThread().getAllBeans()) {
       writeGwtValidate(sw, bean);
     }
 

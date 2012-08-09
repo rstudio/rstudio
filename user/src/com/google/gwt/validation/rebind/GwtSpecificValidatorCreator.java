@@ -1932,7 +1932,7 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
   private void writeValidatorCall(SourceWriter sw, Class<?> type, Stage stage,
       PropertyDescriptor p, boolean expandDefaultGroupSequence, String groupsVarName)
       throws UnableToCompleteException {
-    if (BeanHelper.isClassConstrained(type) && !isIterableOrMap(type)) {
+    if (BeanHelperCache.getForThread().isClassConstrained(type) && !isIterableOrMap(type)) {
       BeanHelper helper = createBeanHelper(type);
       beansToValidate.add(helper);
       switch (stage) {

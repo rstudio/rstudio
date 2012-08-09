@@ -70,12 +70,12 @@ public abstract class AbstractCreator extends AbstractSourceCreator {
 
   protected BeanHelper createBeanHelper(Class<?> clazz)
       throws UnableToCompleteException {
-    return BeanHelper.createBeanHelper(clazz, logger, context);
+    return BeanHelperCache.getForThread().createHelper(clazz, logger, context);
   }
 
   protected BeanHelper createBeanHelper(JClassType jType)
       throws UnableToCompleteException {
-    return BeanHelper.createBeanHelper(jType, logger, context);
+    return BeanHelperCache.getForThread().createHelper(jType, logger, context);
   }
 
   protected final String getPackage() {
@@ -93,22 +93,6 @@ public abstract class AbstractCreator extends AbstractSourceCreator {
 
   protected abstract void writeClassBody(SourceWriter sourceWriter)
       throws UnableToCompleteException;
-
-  protected void writeValidatorInstance(SourceWriter sw, BeanHelper bean) {
-  BeanHelper.writeInterface(context, logger, bean);
-  // private final MyBeanValidator myBeanValidator =
-  sw.print("private final " + bean.getFullyQualifiedValidatorName() + " ");
-  sw.print(bean.getValidatorInstanceName());
-  sw.println(" = ");
-  sw.indent();
-  sw.indent();
-
-  // MyBeanValidator.INSTANCE;
-  sw.print(bean.getFullyQualifiedValidatorName());
-  sw.println(".INSTANCE;");
-  sw.outdent();
-  sw.outdent();
-}
 
   private String getQualifiedName() {
     String packageName = getPackage();

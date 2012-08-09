@@ -20,7 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.validation.rebind.BeanHelper;
+import com.google.gwt.validation.rebind.BeanHelperCache;
 import com.google.gwt.validation.rebind.GwtSpecificValidatorGenerator;
 import com.google.gwt.validation.rebind.ValidatorGenerator;
 
@@ -79,14 +79,14 @@ public abstract class TckCompileTestCase extends GWTTestCase {
   @Override
   protected void gwtSetUp() throws Exception {
     super.gwtSetUp();
-    BeanHelper.clearBeanHelpersForTests();
+    BeanHelperCache.getForThread().clear();
     failOnErrorLogger = createFailOnErrorLogger();
     context = createGeneratorContext(getTckTestModuleName(), failOnErrorLogger);
   }
 
   @Override
   protected void gwtTearDown() throws Exception {
-    BeanHelper.clearBeanHelpersForTests();
+    BeanHelperCache.getForThread().clear();
     super.gwtTearDown();
   }
 
@@ -107,7 +107,7 @@ public abstract class TckCompileTestCase extends GWTTestCase {
 
   private String createBeanHelper(Class<?> beanType)
       throws UnableToCompleteException {
-    return BeanHelper.createBeanHelper(beanType, failOnErrorLogger, context)
+    return BeanHelperCache.getForThread().createHelper(beanType, failOnErrorLogger, context)
         .getFullyQualifiedValidatorName();
   }
 

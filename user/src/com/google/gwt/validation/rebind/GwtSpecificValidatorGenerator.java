@@ -51,7 +51,7 @@ public final class GwtSpecificValidatorGenerator extends Generator {
     JClassType gwtSpecificInterface = getGwtSpecificValidator(logger, validator);
     JClassType beanType = getBeanType(logger, validator, gwtSpecificInterface);
 
-    BeanHelper beanHelper = BeanHelper.createBeanHelper(beanType,logger,context);
+    BeanHelper beanHelper = BeanHelperCache.getForThread().createHelper(beanType, logger, context);
 
     if (beanHelper == null) {
       logger.log(TreeLogger.ERROR, "Unable to create BeanHelper for " + beanType
