@@ -5,7 +5,7 @@
       <configuration>
         <setting name="compilerMaxHeapSize" value="128" />
         <setting name="gwtScriptOutputStyle" value="PRETTY" />
-        <setting name="gwtSdkUrl" value="file://$MODULE_DIR$/lib/gwt/2.4.0" />
+        <setting name="gwtSdkUrl" value="file://$MODULE_DIR$/lib/gwt/2.5.0.rc1" />
         <packaging>
           <module name="com.google.gwt.widgetideas.SliderBar" path="/com.google.gwt.widgetideas.SliderBar" />
           <module name="org.rstudio.codemirror.CodeMirror" path="/com.rstudio.codemirror.CodeMirror" />

@@ -13,11 +13,11 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
@@ -58,19 +58,19 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
 
    public void addItem(MenuItem menuItem)
    {
-      Command command = menuItem.getCommand();
+      ScheduledCommand command = menuItem.getScheduledCommand();
       if (command == null && menuItem instanceof AppMenuItem)
-         command = ((AppMenuItem)menuItem).getCommand(true);
+         command = ((AppMenuItem)menuItem).getScheduledCommand(true);
       if (command != null)
-         menuItem.setCommand(new ToolbarPopupMenuCommand(command));
+         menuItem.setScheduledCommand(new ToolbarPopupMenuCommand(command));
       menuBar_.addItem(menuItem);
    }
    
    public void insertItem(MenuItem menuItem, int beforeIndex)
    {
-      Command command = menuItem.getCommand() ;
+     ScheduledCommand command = menuItem.getScheduledCommand() ;
       if (command != null)
-         menuItem.setCommand(new ToolbarPopupMenuCommand(command));
+         menuItem.setScheduledCommand(new ToolbarPopupMenuCommand(command));
       menuBar_.insertItem(menuItem, beforeIndex) ;
    }
    
@@ -104,9 +104,9 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       menuBar_.focus();
    }
 
-   private class ToolbarPopupMenuCommand implements Command
+   private class ToolbarPopupMenuCommand implements ScheduledCommand
    {
-      public ToolbarPopupMenuCommand(Command coreCommand)
+      public ToolbarPopupMenuCommand(ScheduledCommand coreCommand)
       {
          coreCommand_ = coreCommand;
       }
@@ -116,7 +116,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
          hide();
       }
    
-      private Command coreCommand_;
+      private ScheduledCommand coreCommand_;
    }
    
    protected class ToolbarMenuBar extends BaseMenuBar

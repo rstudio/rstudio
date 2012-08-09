@@ -12,7 +12,7 @@
  */
 package org.rstudio.core.client.command;
 
-import com.google.gwt.user.client.Command;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.ui.MenuItem;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
@@ -29,14 +29,14 @@ public class AppMenuItem extends MenuItem
    }
 
    @Override
-   public Command getCommand()
+   public ScheduledCommand getScheduledCommand()
    {
-      return getCommand(false);
+      return getScheduledCommand(false);
    }
 
-   public Command getCommand(boolean evenIfDisabled)
+   public ScheduledCommand getScheduledCommand(boolean evenIfDisabled)
    {
-      return evenIfDisabled || cmd_.isEnabled() ? super.getCommand() : null;
+      return evenIfDisabled || cmd_.isEnabled() ? super.getScheduledCommand() : null;
    }
 
    public void onShow()

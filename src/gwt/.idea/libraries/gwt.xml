@@ -2,16 +2,16 @@
   <library name="gwt">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/junit-4.9b3.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/gwt/2.4.0/gwt-user.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/gwt/2.4.0/validation-api-1.0.0.GA-sources.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/gwt/2.4.0/validation-api-1.0.0.GA.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/gwt/2.4.0/gwt-api-checker.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/gwt/2.4.0/gwt-dev.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/gwt/2.5.0.rc1/gwt-user.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/gwt/2.5.0.rc1/validation-api-1.0.0.GA-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/gwt/2.5.0.rc1/validation-api-1.0.0.GA.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/gwt/2.5.0.rc1/gwt-api-checker.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/gwt/2.5.0.rc1/gwt-dev.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/gwt/2.4.0/gwt-user.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/gwt/2.4.0/gwt-dev.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/gwt/2.5.0.rc1/gwt-user.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/gwt/2.5.0.rc1/gwt-dev.jar!/" />
     </SOURCES>
   </library>
 </component>

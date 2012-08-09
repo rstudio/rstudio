@@ -84,12 +84,12 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
 
                MenuItem selected = menu_.getSelectedItem();
                if (selected != null && selected.isVisible())
-                  selected.getCommand().execute();
+                  selected.getScheduledCommand().execute();
                else
                {
                   ArrayList<MenuItem> visibleItems = menu_.getVisibleItems();
                   if (visibleItems.size() == 1)
-                     visibleItems.get(0).getCommand().execute();
+                     visibleItems.get(0).getScheduledCommand().execute();
                }
                break;
             case KeyCodes.KEY_ESCAPE:
