@@ -18,46 +18,53 @@ package com.google.gwt.aria.client;
 /////////////////////////////////////////////////////////
 
 /**
- * <p>Class containing the ARIA roles as defined by <a href="http://www.w3.org/TR/wai-aria/">
- * W3C ARIA specification</a>. A WAI-ARIA role is set on an element using a <i>role</i> attribute.
- * An element role is constant and is not supposed to change.</p>
+ * <p>A factory providing each concrete role in the ARIA specification. Each role implements
+ * methods that a GWT application can use to modify the appropriate DOM attributes for that
+ * role.</p>
  *
- * <p>This is the central class in this ARIA API because it contains all defined roles which
- * can be set to HTML elements. Each role in this class implements the {@link RoletypeRole}
- * interface, which contains generic methods for getting and setting states and properties.</p>
+ * <p>For example, suppose our GWT app has a image button and we want to make it visible in screen
+ * readers as a button with some help text. To do this, we add a <i>button</i> role to the image and
+ * set the ARIA <i>label</i> property to the help text that the screen reader can use:</p>
  *
- * <p>Lets say we have an image button widget and we want to make it visible to a reader as a
- * button, accompanied with some help text for the button usage. For the purpose we need to add a
- * 'button' role to the image and set label that the reader can interpret. We set the 'button' role
- * for an image (img) with the call: Roles.getButtonRole.set(img.getElement()) and set the
- * 'aria-label' property by calling: Roles.getButtonRole().setAriaLabelProperty(img.getElement,
- * "test")</p>
+ * <pre>
+ *    Roles.getButtonRole().set(img.getElement());
+ *    Roles.getButtonRole().setAriaLabelProperty(img.getElement(), "some help text");
+ * </pre>
  *
- * <p>ARIA states are used similarly to ARIA properties by using the
- * Roles.getButtonRole().setAriaEnabledState(img.getElement(), isEnabled) method.
- * Although States and Properties are structurally the same, they are
- * separated in 2 classes in this API because they are semantically different and have different
- * usage. There exist the concept of extra properties and for now the only
- * example is tabindex. If we want to set the tabindex to 0 for the button,
- * we need to call Roles.getButtonRole().setTabindexExtraAttribute(img.getElement(), 0).</p>
+ * <p>Most ARIA properties have a prefix of "aria-" and only affect screen readers, but there is
+ * one exception: the "tabindex" property is the same one used for tab order in regular widgets.
+ * For example, to set tabindex to 0 for the button:
+ * </p>
  *
- * <p>There are 4 groups of roles:
+ * <pre>
+ *   Roles.getButtonRole().setTabindexExtraAttribute(img.getElement(), 0);
+ * </pre>
+ *
+ * <p>When the button changes state (it's enabled or disabled), we can change the ARIA enabled
+ * state to match, like this:</p>
+ *
+ * <pre>
+ *   Roles.getButtonRole().setAriaEnabledState(img.getElement(), isEnabled);
+ * </pre>
+ *
+ * <p>ARIA distinguishes between properties (which change rarely and could be set in static HTML)
+ * and states (which need to be updated in response to user input). This distinction can get a bit
+ * blurry when a GWT app updates the DOM dynamically. Generally you should update ARIA
+ * attributes at the same time that you change the CSS styles on a DOM node, so that a screen
+ * reader will see the same state as someone viewing the page visually.</p>
+ *
+ * <p>The role interfaces form a hierarchy whose root is the {@link Role} interface, which contains
+ * generic methods that aren't specific to a role. Some abstract roles include:</p>
  * <ol>
- * <li>Abstract roles -- used as base types for applied roles. They are not used by Web Authors
- * and would not be exposed as role definitions for incorporation into a Web page. Base classes are
- * referenced within the taxonomy and are used to build a picture of the role taxonomy class
- * hierarchy within the taxonomy.</li>
- * <li>Widget roles -- act as standalone user interface widgets or as part of larger,
- *  composite widgets</li>
- * <li>Widget container roles -- act as composite user interface widgets. These roles typically act
- *  as containers that manage other, contained widgets</li>
- * <li>Document structure roles -- describe structures that organize content in a page. Document
- * structures are not usually interactive</li>
- * <li>Landmark Roles -- regions of the page intended as navigational landmarks</li>
+ * <li>{@link WidgetRole}, for DOM elements that represent either standalone or composite widgets.
+ * <li>{@link CompositeRole}, for widgets that contain other widgets.</li>
+ * <li>{@link StructureRole}, for DOM elements that are part of the page layout.</li>
+ * <li>{@link LandmarkRole}, for DOM elements defining common regions of a page.</li>
+ * <li>{@link WindowRole}, for DOM elements that define windows and dialogs.</li>
  * </ol>
  * </p>
  *
- * <p>For more details about ARIA roles check <a href="http://www.w3.org/TR/wai-aria/roles"></p>
+ * @see <a href="http://www.w3.org/TR/wai-aria/roles">the W3C specification</a>
  */
 public final class Roles {
   private static final AlertdialogRole ALERTDIALOG = new AlertdialogRoleImpl("alertdialog");

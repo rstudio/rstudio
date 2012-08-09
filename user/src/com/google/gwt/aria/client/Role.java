@@ -20,24 +20,19 @@ package com.google.gwt.aria.client;
 import com.google.gwt.dom.client.Element;
 
 /**
- * RoletypeRole interface.
- * The interface defines methods for setting, getting, removing states and properties.
- * <p>Allows ARIA Accessibility attributes to be added to widgets so that they can be identified by
- * assistive technology.</p>
+ * A generic ARIA Role. This interface defines generic methods for setting, getting, and removing
+ * attributes on DOM Elements so that they can be identified by screen readers. Subtypes
+ * define methods for specific roles.
  *
- * <p>ARIA roles define widgets and page structure that can be interpreted by a reader
- * application/device. There is a set of abstract roles which are used as
- * building blocks of the roles hierarchy structural and define the common properties and states
- * for the concrete roles. Abstract roles cannot be set to HTML elements.</p>
+ * <p>The ARIA specification defines a hierarchy of roles, which is mirrored here as
+ * a hierarchy of Java interfaces. Some roles are abstract and define methods that are common to
+ * their children. Only concrete roles (available via methods in {@link Roles}) should be used to
+ * modify HTML elements.</p>
  *
- * <p>There are states and properties that are defined for a role. As roles are organized in a
- * hierarchy, a role has inherited and own properties and states which can be set to the
- * element.</p>
- *
- * <p>For more details about ARIA roles check <a href="http://www.w3.org/TR/wai-aria/roles">
- * The Roles Model </a>.</p>
+ * <p>For more details, see <a href="http://www.w3.org/TR/wai-aria/roles">The Roles Model</a>
+ * in the ARIA specification.</p>
  */
-public interface RoletypeRole {
+public interface Role {
   String get(Element element);
 
   String getAriaAtomicProperty(Element element);
