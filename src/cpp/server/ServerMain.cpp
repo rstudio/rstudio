@@ -177,8 +177,8 @@ void handleSIGCHLD(int)
 {
 }
 
-// wait for and handle child exit signals
-Error waitForChildExits()
+// wait for and handle signals
+Error waitForSignals()
 {
    // setup bogus handler for SIGCHLD (if we don't do this then
    // we can't successfully block/wait for the signal). This also
@@ -192,17 +192,13 @@ Error waitForChildExits()
    if (result != 0)
       return systemError(errno, ERROR_LOCATION);
 
-   // block SIGCHLD (so we can sigwait on it below). note that on OSX
-   // we also need to wait for termination related signals (otherwise
-   // they are never delivered)
+   // block signals that we want to sigwait on
    sigset_t wait_mask;
    sigemptyset(&wait_mask);
    sigaddset(&wait_mask, SIGCHLD);
-#ifdef __APPLE__
    sigaddset(&wait_mask, SIGINT);
    sigaddset(&wait_mask, SIGQUIT);
    sigaddset(&wait_mask, SIGTERM);
-#endif
    result = ::pthread_sigmask(SIG_BLOCK, &wait_mask, NULL);
    if (result != 0)
       return systemError(result, ERROR_LOCATION);
@@ -222,12 +218,31 @@ Error waitForChildExits()
          sessionManager().notifySIGCHLD();
       }
 
-#ifdef __APPLE__
+      // SIGINT, SIGQUIT, SIGTERM
       else if (sig == SIGINT || sig == SIGQUIT || sig == SIGTERM)
       {
-         ::exit(sig);
+         //
+         // Here is where we can perform server cleanup e.g.
+         // closing pam sessions
+         //
+
+         // clear the signal mask
+         Error error = core::system::clearSignalMask();
+         if (error)
+            LOG_ERROR(error);
+
+         // reset the signal to its default
+         struct sigaction sa;
+         ::memset(&sa, 0, sizeof sa);
+         sa.sa_handler = SIG_DFL;
+         int result = ::sigaction(sig, &sa, NULL);
+         if (result != 0)
+            LOG_ERROR(systemError(result, ERROR_LOCATION));
+
+         // re-raise the signal
+         ::kill(::getpid(), sig);
       }
-#endif
+
       // Unexpected signal
       else
       {
@@ -419,12 +434,12 @@ int main(int argc, char * const argv[])
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
-      // wait for child exits
-      error = waitForChildExits();
+      // wait for signals
+      error = waitForSignals();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
-      // NOTE: we never get here because waitForChildExits waits forever
+      // NOTE: we never get here because waitForSignals waits forever
       return EXIT_SUCCESS;
    }
    CATCH_UNEXPECTED_EXCEPTION
