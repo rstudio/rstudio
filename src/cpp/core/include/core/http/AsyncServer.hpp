@@ -338,7 +338,8 @@ private:
          }
          else
          {
-            LOG_ERROR(Error(ec, ERROR_LOCATION));
+            if (ec != boost::system::errc::operation_canceled)
+               LOG_ERROR(Error(ec, ERROR_LOCATION));
          }
       }
       CATCH_UNEXPECTED_EXCEPTION
