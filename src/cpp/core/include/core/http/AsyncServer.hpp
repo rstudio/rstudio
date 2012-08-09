@@ -54,7 +54,8 @@ public:
         serverName_(serverName),
         baseUri_(baseUri),
         acceptorService_(),
-        scheduledCommandTimer_(acceptorService_.ioService())
+        scheduledCommandTimer_(acceptorService_.ioService()),
+        running_(false)
    {
    }
    
@@ -64,29 +65,34 @@ public:
    
    void setAbortOnResourceError(bool abortOnResourceError)
    {
+      BOOST_ASSERT(!running_);
       abortOnResourceError_ = abortOnResourceError;
    }
    
    void addHandler(const std::string& prefix,
                    const AsyncUriHandlerFunction& handler)
    {
+      BOOST_ASSERT(!running_);
       uriHandlers_.add(AsyncUriHandler(baseUri_ + prefix, handler));
    }
 
    void addBlockingHandler(const std::string& prefix,
                            const UriHandlerFunction& handler)
    {
+      BOOST_ASSERT(!running_);
       addHandler(prefix,
                  boost::bind(handleAsyncConnectionSynchronously, handler, _1));
    }
 
    void setDefaultHandler(const AsyncUriHandlerFunction& handler)
    {
+      BOOST_ASSERT(!running_);
       defaultHandler_ = handler;
    }
 
    void setBlockingDefaultHandler(const UriHandlerFunction& handler)
    {
+      BOOST_ASSERT(!running_);
       setDefaultHandler(boost::bind(handleAsyncConnectionSynchronously,
                                     handler,
                                     _1));
@@ -94,6 +100,7 @@ public:
 
    void addScheduledCommand(boost::shared_ptr<ScheduledCommand> pCmd)
    {
+      BOOST_ASSERT(!running_);
       scheduledCommands_.push_back(pCmd);
    }
 
@@ -101,6 +108,9 @@ public:
    {
       try
       {
+         // update state
+         running_ = true;
+
          // get ready for next connection
          acceptNextConnection();
 
@@ -145,6 +155,9 @@ public:
       
       // stop the server 
       acceptorService_.ioService().stop();
+
+      // update state
+      running_ = false;
    }
    
    void waitUntilStopped()
@@ -409,6 +422,7 @@ private:
    SocketAcceptorService<ProtocolType> acceptorService_;
    boost::asio::deadline_timer scheduledCommandTimer_;
    std::vector<boost::shared_ptr<ScheduledCommand> > scheduledCommands_;
+   bool running_;
 };
 
 } // namespace http
