@@ -42,6 +42,7 @@
 
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
+#include <server/ServerScheduler.hpp>
 
 #include "ServerAddins.hpp"
 #include "ServerAppArmor.hpp"
@@ -269,6 +270,17 @@ void setBlockingDefault(const http::UriHandlerFunction& handler)
 }
 
 } // namespace uri_handlers
+
+namespace scheduler {
+
+void addCommand(boost::shared_ptr<ScheduledCommand> pCmd)
+{
+   s_pHttpServer->addScheduledCommand(pCmd);
+}
+
+} // namespace scheduler
+
+
 } // namespace server
 
 

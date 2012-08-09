@@ -22,11 +22,13 @@
 
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/placeholders.hpp>
+#include <boost/asio/deadline_timer.hpp>
 
 #include <core/BoostThread.hpp>
 #include <core/Error.hpp>
 #include <core/BoostErrors.hpp>
 #include <core/Log.hpp>
+#include <core/ScheduledCommand.hpp>
 #include <core/system/System.hpp>
 
 #include <core/http/Request.hpp>
@@ -50,7 +52,9 @@ public:
                const std::string& baseUri = std::string())
       : abortOnResourceError_(false),
         serverName_(serverName),
-        baseUri_(baseUri)
+        baseUri_(baseUri),
+        acceptorService_(),
+        scheduledCommandTimer_(acceptorService_.ioService())
    {
    }
    
@@ -88,13 +92,20 @@ public:
                                     _1));
    }
 
-   
+   void addScheduledCommand(boost::shared_ptr<ScheduledCommand> pCmd)
+   {
+      scheduledCommands_.push_back(pCmd);
+   }
+
    Error run(std::size_t threadPoolSize = 1)
    {
       try
       {
          // get ready for next connection
          acceptNextConnection();
+
+         // initialize scheduled command timer
+         waitForScheduledCommandTimer();
          
          // block all signals for the creation of the thread pool
          // (prevents signals from occurring on any of the handler threads)
@@ -280,6 +291,60 @@ private:
       pResponse->setHeader("Server", std::string(serverName_.c_str()));
    }
 
+   void waitForScheduledCommandTimer()
+   {
+      // set expiration time for 3 seconds from now
+      boost::system::error_code ec;
+      scheduledCommandTimer_.expires_from_now(boost::posix_time::seconds(3),
+                                              ec);
+
+      // attempt to schedule timer (should always succeed but
+      // include error check to be paranoid/robust)
+      if (!ec)
+      {
+         scheduledCommandTimer_.async_wait(boost::bind(
+               &AsyncServer<ProtocolType>::handleScheduledCommandTimer,
+               this,
+               boost::asio::placeholders::error));
+      }
+      else
+      {
+         // unexpected error setting timer. log it
+         LOG_ERROR(Error(ec, ERROR_LOCATION));
+      }
+   }
+
+   void handleScheduledCommandTimer(const boost::system::error_code& ec)
+   {
+      try
+      {
+         if (!ec)
+         {
+            // execute all commands
+            std::for_each(scheduledCommands_.begin(),
+                          scheduledCommands_.end(),
+                          boost::bind(&ScheduledCommand::execute, _1));
+
+            // remove any commands which are finished
+            scheduledCommands_.erase(
+                 std::remove_if(scheduledCommands_.begin(),
+                                scheduledCommands_.end(),
+                                boost::bind(&ScheduledCommand::finished, _1)),
+                 scheduledCommands_.end());
+
+           // wait for the timer again
+           waitForScheduledCommandTimer();
+
+         }
+         else
+         {
+            LOG_ERROR(Error(ec, ERROR_LOCATION));
+         }
+      }
+      CATCH_UNEXPECTED_EXCEPTION
+   }
+
+
 protected: 
    SocketAcceptorService<ProtocolType>& acceptorService()
    {
@@ -341,6 +406,8 @@ private:
    AsyncUriHandlerFunction defaultHandler_;
    std::vector<boost::shared_ptr<boost::thread> > threads_;
    SocketAcceptorService<ProtocolType> acceptorService_;
+   boost::asio::deadline_timer scheduledCommandTimer_;
+   std::vector<boost::shared_ptr<ScheduledCommand> > scheduledCommands_;
 };
 
 } // namespace http

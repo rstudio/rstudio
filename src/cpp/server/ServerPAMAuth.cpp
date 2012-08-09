@@ -14,6 +14,7 @@
 
 
 #include <core/Error.hpp>
+#include <core/PeriodicCommand.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/Crypto.hpp>
 
@@ -32,6 +33,7 @@
 
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
+#include <server/ServerScheduler.hpp>
 
 namespace server {
 namespace pam_auth {
@@ -301,7 +303,15 @@ void signOut(const std::string&,
    pResponse->setMovedTemporarily(request, auth::handler::kSignIn);
 }
 
+bool timeoutSessions()
+{
+
+
+   return true; // always run again
+}
+
 } // anonymous namespace
+
 
 Error initialize()
 {
@@ -319,6 +329,12 @@ Error initialize()
    // add pam-specific auth handlers
    uri_handlers::addBlocking(kDoSignIn, doSignIn);
    uri_handlers::addBlocking(kPublicKey, publicKey);
+
+   // schedule command to periodically look for timed out user sessions
+   boost::shared_ptr<ScheduledCommand> pTimeoutSessionsCmd(
+                  new PeriodicCommand(boost::posix_time::seconds(10),
+                                      timeoutSessions));
+   scheduler::addCommand(pTimeoutSessionsCmd);
 
    // initialize crypto
    return core::system::crypto::rsaInit();
