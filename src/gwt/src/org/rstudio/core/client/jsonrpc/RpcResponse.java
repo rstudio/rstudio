@@ -26,8 +26,15 @@ public class RpcResponse extends JavaScriptObject
    
    public final static RpcResponse parse(String json) 
    {      
-      JSONValue val = JSONParser.parseStrict(json);
-      return val.isObject().getJavaScriptObject().cast();
+      try
+      {
+         JSONValue val = JSONParser.parseStrict(json);
+         return val.isObject().getJavaScriptObject().cast();
+      }
+      catch(Exception e)
+      {
+         return null;
+      }
    }
     
    public final native static RpcResponse create(RpcError error) /*-{
