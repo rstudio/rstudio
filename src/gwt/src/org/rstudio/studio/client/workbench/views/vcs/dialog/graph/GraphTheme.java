@@ -51,9 +51,9 @@ public class GraphTheme
                randomColorValue(),
                randomColorValue(),
                randomColorValue()
-         ));
+         ).value());
       }
-      return colors_.get(id);
+      return CssColor.make(colors_.get(id));
    }
 
    private int randomColorValue()
@@ -73,5 +73,5 @@ public class GraphTheme
 
    private final String className_;
 
-   private static HashMap<Integer, CssColor> colors_ = new HashMap<Integer, CssColor>();
+   private static HashMap<Integer, String> colors_ = new HashMap<Integer, String>();
 }
