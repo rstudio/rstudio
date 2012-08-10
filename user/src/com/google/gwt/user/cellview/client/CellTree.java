@@ -45,6 +45,7 @@ import com.google.gwt.user.client.ui.Focusable;
 import com.google.gwt.user.client.ui.HasAnimation;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.view.client.TreeViewModel;
+import com.google.gwt.aria.client.Roles;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -653,6 +654,8 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
         getElement(), rootValue, messages);
     keyboardSelectedNode = rootNode = root;
     root.setOpen(true, false);
+
+    Roles.getTreeRole().set(getElement());
   }
 
   /**

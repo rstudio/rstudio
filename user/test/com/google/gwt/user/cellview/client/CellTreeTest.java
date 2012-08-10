@@ -159,6 +159,33 @@ public class CellTreeTest extends AbstractCellTreeTestBase {
     assertEquals("new", newNodeImpl.getCellParent().getInnerText());
   }
 
+  public void testAriaSelectedAndExpanded() {
+    CellTree cellTree = (CellTree) tree;
+    TreeNode root = cellTree.getRootTreeNode();
+
+    TreeNode newNode = root.setChildOpen(1, true);
+    cellTree.rootNode.getChildNode(1).setSelected(true);
+    model.getRootDataProvider().refresh();
+    model.getRootDataProvider().flush();
+    root.setChildOpen(1, true);
+    CellTreeNodeView<?> newNodeImpl = cellTree.rootNode.getChildNode(1);
+    assertEquals("true", newNodeImpl.getElement().getAttribute("aria-selected"));
+    // Check aria-expanded on open
+    assertEquals("true", newNodeImpl.getElement().getAttribute("aria-expanded"));
+
+    // Check aria-expanded on close
+    root.setChildOpen(1, false);
+    newNodeImpl = cellTree.rootNode.getChildNode(1);
+    assertEquals("false", newNodeImpl.getElement().getAttribute("aria-expanded"));
+
+    cellTree.rootNode.getChildNode(1).setSelected(false);
+    model.getRootDataProvider().refresh();
+    model.getRootDataProvider().flush();
+    root.setChildOpen(1, true);
+    newNodeImpl = cellTree.rootNode.getChildNode(1);
+    assertEquals("false", newNodeImpl.getElement().getAttribute("aria-selected"));
+  }
+
   public void testSetDefaultNodeSize() {
     CellTree cellTree = (CellTree) tree;
     TreeNode root = cellTree.getRootTreeNode();
@@ -173,6 +200,68 @@ public class CellTreeTest extends AbstractCellTreeTestBase {
     assertEquals(10, b.getChildCount());
     TreeNode d = root.setChildOpen(3, true);
     assertEquals(5, d.getChildCount());
+  }
+
+  public void testAriaAttributes() {
+    CellTree cellTree = (CellTree) tree;
+    TreeNode rootNode = cellTree.getRootTreeNode();
+
+    // Open a child node.
+    TreeNode aNode = rootNode.setChildOpen(0, true);
+
+    // Check role="tree"
+    assertEquals("tree", cellTree.rootNode.getElement().getAttribute("role"));
+
+    // Check 1st level
+    CellTreeNodeView<?> aView = cellTree.rootNode.getChildNode(0);
+    CellTreeNodeView<?> bView = cellTree.rootNode.getChildNode(1);
+
+    // Check treeitem role, level, posinset, and setsize
+    assertEquals("treeitem", aView.getElement().getAttribute("role"));
+    assertEquals("1", aView.getElement().getAttribute("aria-level"));
+    assertEquals("1", aView.getElement().getAttribute("aria-posinset"));
+    assertEquals("10", aView.getElement().getAttribute("aria-setsize"));
+
+    assertEquals("treeitem", bView.getElement().getAttribute("role"));
+    assertEquals("1", bView.getElement().getAttribute("aria-level"));
+    assertEquals("2", bView.getElement().getAttribute("aria-posinset"));
+    assertEquals("10", bView.getElement().getAttribute("aria-setsize"));
+
+    // Check 2nd level
+    assertTrue(aNode.getChildCount() != 0);
+    assertEquals(aNode, aView.getTreeNode());
+    assertTrue(aView.getChildCount() != 0);
+    CellTreeNodeView<?> aViewChild = aView.getChildNode(0);
+
+    // Check treeitem role, level, posinset, and setsize
+    assertEquals("treeitem", aViewChild.getElement().getAttribute("role"));
+    assertEquals("2", aViewChild.getElement().getAttribute("aria-level"));
+    assertEquals("1", aViewChild.getElement().getAttribute("aria-posinset"));
+    assertEquals("10", aViewChild.getElement().getAttribute("aria-setsize"));
+
+    // Check aria-expanded
+    assertEquals("true", aView.getElement().getAttribute("aria-expanded"));
+    assertEquals("false", aViewChild.getElement().getAttribute("aria-expanded"));
+    while (!aNode.isChildLeaf(0)) {
+      aNode = aNode.setChildOpen(0, true);
+      aView = aView.getChildNode(0);
+    }
+    assertEquals(aNode, aView.getTreeNode());
+    assertEquals("", aView.getChildNode(0).getElement().getAttribute("aria-expanded"));
+
+    // Change default size and check aria-setsize and aria-posinset
+    cellTree.setDefaultNodeSize(5);
+    TreeNode cNode = rootNode.setChildOpen(3, true);
+    CellTreeNodeView<?> cView = cellTree.rootNode.getChildNode(3);
+    assertEquals(5, cNode.getChildCount());
+
+    CellTreeNodeView<?> cViewChildFirst = cView.getChildNode(0);
+    assertEquals("1", cViewChildFirst.getElement().getAttribute("aria-posinset"));
+    assertEquals("5", cViewChildFirst.getElement().getAttribute("aria-setsize"));
+
+    CellTreeNodeView<?> cViewChildLast = cView.getChildNode(cView.getChildCount() - 1);
+    assertEquals("5", cViewChildLast.getElement().getAttribute("aria-posinset"));
+    assertEquals("5", cViewChildLast.getElement().getAttribute("aria-setsize"));
   }
 
   @Override
