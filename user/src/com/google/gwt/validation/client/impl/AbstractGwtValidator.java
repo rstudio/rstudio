@@ -15,7 +15,7 @@
  */
 package com.google.gwt.validation.client.impl;
 
-import com.google.gwt.validation.client.ValidationGroupsMetadata;
+import com.google.gwt.validation.client.impl.metadata.ValidationGroupsMetadata;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -46,7 +46,7 @@ public abstract class AbstractGwtValidator implements Validator {
 
   /**
    * Creates a validator initialized with the default group inheritance map.
-   * @see #AbstractGwtValidator(ValidationGroups)
+   * @see #AbstractGwtValidator(ValidationGroupsMetadata)
    */
   public AbstractGwtValidator() {
     this(ValidationGroupsMetadata.builder().build());

@@ -15,7 +15,8 @@
  */
 package com.google.gwt.validation.client.impl;
 
-import com.google.gwt.validation.client.ValidationGroupsMetadata;
+import com.google.gwt.validation.client.impl.metadata.BeanMetadata;
+import com.google.gwt.validation.client.impl.metadata.ValidationGroupsMetadata;
 
 import java.util.Arrays;
 import java.util.HashSet;

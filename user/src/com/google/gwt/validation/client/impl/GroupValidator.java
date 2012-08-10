@@ -13,9 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client;
+package com.google.gwt.validation.client.impl;
 
-import com.google.gwt.validation.client.impl.GwtValidationContext;
 
 import java.util.Set;
 

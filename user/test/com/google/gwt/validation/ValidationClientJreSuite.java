@@ -15,9 +15,9 @@
  */
 package com.google.gwt.validation;
 
-import com.google.gwt.validation.client.ValidationGroupsMetadataTest;
 import com.google.gwt.validation.client.impl.NodeImplTest;
 import com.google.gwt.validation.client.impl.PathImplTest;
+import com.google.gwt.validation.client.impl.metadata.ValidationGroupsMetadataTest;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;

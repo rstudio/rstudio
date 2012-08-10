@@ -15,7 +15,8 @@
  */
 package com.google.gwt.validation.client.impl;
 
-import com.google.gwt.validation.client.ValidationGroupsMetadata;
+import com.google.gwt.validation.client.impl.metadata.BeanMetadata;
+import com.google.gwt.validation.client.impl.metadata.ValidationGroupsMetadata;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
@@ -142,6 +143,7 @@ public final class GwtBeanDescriptorImpl<T> implements GwtBeanDescriptor<T> {
     return clazz;
   }
 
+  
   @Override
   public boolean hasConstraints() {
     return !constraints.isEmpty();

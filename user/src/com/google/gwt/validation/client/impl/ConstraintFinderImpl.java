@@ -16,10 +16,8 @@
 package com.google.gwt.validation.client.impl;
 
 import com.google.gwt.validation.client.ConstraintOrigin;
-import com.google.gwt.validation.client.Group;
-import com.google.gwt.validation.client.GroupChain;
-import com.google.gwt.validation.client.GroupChainGenerator;
-import com.google.gwt.validation.client.ValidationGroupsMetadata;
+import com.google.gwt.validation.client.impl.metadata.BeanMetadata;
+import com.google.gwt.validation.client.impl.metadata.ValidationGroupsMetadata;
 
 import java.lang.annotation.ElementType;
 import java.util.ArrayList;
