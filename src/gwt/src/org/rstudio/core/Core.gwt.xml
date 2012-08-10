@@ -56,6 +56,4 @@
       <when-property-is name="rstudio.desktop" value="true"/>
    </replace-with>
 
-   <script src="../js/json2.min.js"/>
-
 </module>

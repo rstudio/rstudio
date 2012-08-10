@@ -25,7 +25,6 @@
    <property name="gwt.extra.args" value=""/>
    <property name="gwt.main.module" value="org.rstudio.studio.RStudio"/>
    <property name="ace.bin" value="src/org/rstudio/studio/client/workbench/views/source/editors/text/ace"/>
-   <property name="json2.bin" value="www/js"/>
 
    <path id="project.class.path">
       <pathelement location="bin"/>
@@ -67,13 +66,6 @@
          </sources>
          <sources dir="acesupport/acetheme">
             <file name="default.js"/>
-         </sources>
-      </jscomp>
-
-      <jscomp compilationLevel="simple" warning="default"
-              debug="false" output="${json2.bin}/json2.min.js">
-         <sources dir="tools">
-            <file name="json2.js"/>
          </sources>
       </jscomp>
 
@@ -194,7 +186,6 @@
       <delete dir="gwt-unitCache" failonerror="false" />
       <delete dir="www/rstudio" failonerror="false" />
       <delete file="${ace.bin}/acesupport.js" failonerror="false" />
-      <delete file="${json2.bin}/json2.min.js" failonerror="false" />
       <delete dir="gen" failonerror="false" />
       <delete dir="extras" failonerror="false" />
    </target>

@@ -14,31 +14,22 @@
 package org.rstudio.core.client.jsonrpc;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.json.client.JSONValue;
 
 public class RpcResponse extends JavaScriptObject
 {
    protected RpcResponse()
    {
+      
    }
    
-   public final native static RpcResponse parse(String json) /*-{
-      try
-      {
-         return eval('(' + json + ')');
-      }
-      catch( ex )
-      {
-         try
-         {
-            return $wnd.JSON.parse(json);
-         }
-         catch (ex2)
-         {
-            return null;
-         }
-      }
-   }-*/;
-   
+   public final static RpcResponse parse(String json) 
+   {      
+      JSONValue val = JSONParser.parseStrict(json);
+      return val.isObject().getJavaScriptObject().cast();
+   }
+    
    public final native static RpcResponse create(RpcError error) /*-{
       var response = new Object();
       response.error = error ;
