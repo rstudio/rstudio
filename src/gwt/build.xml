@@ -148,6 +148,24 @@
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioDesktop"/>
       </antcall>
    </target>
+	
+	
+   <target name="superdevmode" description="Run super dev mode">
+   	<antcall target="gwtc">
+          <param name="gwt.main.module" value="org.rstudio.studio.RStudioSuperDevMode"/>
+   	</antcall>
+      <java failonerror="true" fork="true" classname="com.google.gwt.dev.codeserver.CodeServer">
+         <classpath>
+            <pathelement location="src"/>
+            <path refid="project.class.path"/>
+         </classpath>
+         <jvmarg value="-Xmx2048M"/>
+      	<arg value="-src"/>
+      	<arg value = "src"/>
+         <arg value="org.rstudio.studio.RStudioSuperDevMode"/>
+      </java>
+   </target>
+	
 
    <target name="devmode" depends="ext,javac" description="Run development mode">
       <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
