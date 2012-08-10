@@ -12,6 +12,7 @@
  */
 package org.rstudio.core.client.command;
 
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuItem;
 
@@ -30,7 +31,7 @@ public class DisabledMenuItem extends MenuItem
    }
 
    @Override
-   public Command getCommand()
+   public ScheduledCommand getScheduledCommand()
    {
       return null;
    }
