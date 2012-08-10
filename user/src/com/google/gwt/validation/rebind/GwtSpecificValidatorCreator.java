@@ -343,8 +343,8 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
 
   public GwtSpecificValidatorCreator(JClassType validatorType,
       JClassType beanType, BeanHelper beanHelper, TreeLogger logger,
-      GeneratorContext context) {
-    super(context, logger, validatorType);
+      GeneratorContext context, BeanHelperCache cache) {
+    super(context, logger, validatorType, cache);
     this.beanType = beanType;
     this.beanHelper = beanHelper;
   }
@@ -1932,7 +1932,7 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
   private void writeValidatorCall(SourceWriter sw, Class<?> type, Stage stage,
       PropertyDescriptor p, boolean expandDefaultGroupSequence, String groupsVarName)
       throws UnableToCompleteException {
-    if (BeanHelperCache.getForThread().isClassConstrained(type) && !isIterableOrMap(type)) {
+    if (cache.isClassConstrained(type) && !isIterableOrMap(type)) {
       BeanHelper helper = createBeanHelper(type);
       beansToValidate.add(helper);
       switch (stage) {

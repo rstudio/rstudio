@@ -34,6 +34,18 @@ import com.google.gwt.validation.client.impl.GwtSpecificValidator;
  */
 public final class GwtSpecificValidatorGenerator extends Generator {
 
+  private final BeanHelperCache cache;
+
+  // called by compiler via reflection
+  public GwtSpecificValidatorGenerator() {
+    this.cache = BeanHelperCache.getForThread();
+  }
+
+  // called by tests
+  public GwtSpecificValidatorGenerator(BeanHelperCache cache) {
+    this.cache = cache;
+  }
+
   @Override
   public String generate(TreeLogger logger, GeneratorContext context,
       String typeName) throws UnableToCompleteException {
@@ -51,7 +63,7 @@ public final class GwtSpecificValidatorGenerator extends Generator {
     JClassType gwtSpecificInterface = getGwtSpecificValidator(logger, validator);
     JClassType beanType = getBeanType(logger, validator, gwtSpecificInterface);
 
-    BeanHelper beanHelper = BeanHelperCache.getForThread().createHelper(beanType, logger, context);
+    BeanHelper beanHelper = cache.createHelper(beanType, logger, context);
 
     if (beanHelper == null) {
       logger.log(TreeLogger.ERROR, "Unable to create BeanHelper for " + beanType
@@ -61,7 +73,7 @@ public final class GwtSpecificValidatorGenerator extends Generator {
     }
 
     AbstractCreator creator = new GwtSpecificValidatorCreator(validatorType,
-        beanType, beanHelper, logger, context);
+        beanType, beanHelper, logger, context, cache);
     return creator.create();
   }
 

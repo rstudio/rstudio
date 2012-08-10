@@ -36,18 +36,20 @@ import java.io.PrintWriter;
  */
 public abstract class AbstractCreator extends AbstractSourceCreator {
 
-  protected final GeneratorContext context;
+  final GeneratorContext context;
 
-  protected final TreeLogger logger;
+  final TreeLogger logger;
 
-  protected final JClassType validatorType;
+  final JClassType validatorType;
 
-  public AbstractCreator(GeneratorContext context, TreeLogger logger,
-      JClassType validatorType) {
-    super();
+  final BeanHelperCache cache;
+
+  AbstractCreator(GeneratorContext context, TreeLogger logger,
+      JClassType validatorType, BeanHelperCache cache) {
     this.context = context;
     this.logger = branch(logger, "Creating " + validatorType);
     this.validatorType = validatorType;
+    this.cache = cache;
   }
 
   public final String create() throws UnableToCompleteException {
@@ -70,18 +72,17 @@ public abstract class AbstractCreator extends AbstractSourceCreator {
 
   protected BeanHelper createBeanHelper(Class<?> clazz)
       throws UnableToCompleteException {
-    return BeanHelperCache.getForThread().createHelper(clazz, logger, context);
+    return cache.createHelper(clazz, logger, context);
   }
 
   protected BeanHelper createBeanHelper(JClassType jType)
       throws UnableToCompleteException {
-    return BeanHelperCache.getForThread().createHelper(jType, logger, context);
+    return cache.createHelper(jType, logger, context);
   }
 
   protected final String getPackage() {
     JPackage serviceIntfPkg = validatorType.getPackage();
-    String packageName = serviceIntfPkg == null ? "" : serviceIntfPkg.getName();
-    return packageName;
+    return serviceIntfPkg == null ? "" : serviceIntfPkg.getName();
   }
 
   protected String getSimpleName() {
@@ -110,8 +111,6 @@ public abstract class AbstractCreator extends AbstractSourceCreator {
     ClassSourceFileComposerFactory composerFactory = new ClassSourceFileComposerFactory(
         packageName, simpleName);
     compose(composerFactory);
-    SourceWriter sourceWriter = composerFactory.createSourceWriter(ctx,
-        printWriter);
-    return sourceWriter;
+    return composerFactory.createSourceWriter(ctx, printWriter);
   }
 }

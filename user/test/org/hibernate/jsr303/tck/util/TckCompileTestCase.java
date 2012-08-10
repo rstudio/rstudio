@@ -39,6 +39,7 @@ import javax.validation.Validator;
  */
 public abstract class TckCompileTestCase extends TestCase {
 
+  private BeanHelperCache cache;
   private StandardGeneratorContext context;
   private TreeLogger failOnErrorLogger;
 
@@ -46,13 +47,14 @@ public abstract class TckCompileTestCase extends TestCase {
       Class<? extends Validator> validatorClass, Class<?> beanType,
       Class<? extends ValidationException> expectedException,
       String expectedMessage) throws UnableToCompleteException {
-    ValidatorGenerator generator = new ValidatorGenerator();
+    ValidatorGenerator generator = new ValidatorGenerator(cache);
     generator.generate(failOnErrorLogger, context,
         validatorClass.getCanonicalName());
     context.finish(failOnErrorLogger);
 
     // Now create the validator that is going to fail
-    GwtSpecificValidatorGenerator specificGenerator = new GwtSpecificValidatorGenerator();
+    GwtSpecificValidatorGenerator specificGenerator =
+        new GwtSpecificValidatorGenerator(cache);
     String beanHelperName = createBeanHelper(beanType);
     assertUnableToComplete(expectedException, expectedMessage,
         specificGenerator, beanHelperName);
@@ -62,7 +64,7 @@ public abstract class TckCompileTestCase extends TestCase {
       Class<? extends Validator> validatorClass,
       Class<? extends ValidationException> expectedException,
       String expectedMessage) {
-    ValidatorGenerator generator = new ValidatorGenerator();
+    ValidatorGenerator generator = new ValidatorGenerator(cache);
     assertUnableToComplete(expectedException, expectedMessage, generator,
         validatorClass.getCanonicalName());
   }
@@ -70,15 +72,9 @@ public abstract class TckCompileTestCase extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    BeanHelperCache.getForThread().clear();
+    cache = new BeanHelperCache();
     failOnErrorLogger = createFailOnErrorLogger();
     context = createGeneratorContext(getTckTestModuleName(), failOnErrorLogger);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    BeanHelperCache.getForThread().clear();
-    super.tearDown();
   }
 
   private void assertUnableToComplete(
@@ -98,7 +94,7 @@ public abstract class TckCompileTestCase extends TestCase {
 
   private String createBeanHelper(Class<?> beanType)
       throws UnableToCompleteException {
-    return BeanHelperCache.getForThread().createHelper(beanType, failOnErrorLogger, context)
+    return cache.createHelper(beanType, failOnErrorLogger, context)
         .getFullyQualifiedValidatorName();
   }
 

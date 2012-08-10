@@ -54,17 +54,21 @@ public class BeanHelperCache { // public for testing
   };
 
   /**
-   * Returns the cache for the current thread.
-   * (Public for testing.)
+   * Returns the cache for the current thread. (This is a hack because we have two generators
+   * that need to share state.)
    */
-  public static BeanHelperCache getForThread() {
+  static BeanHelperCache getForThread() {
     return threadLocal.get();
   }
 
   private final Map<JClassType, BeanHelper> cache;
   private final Validator serverSideValidator;
 
-  private BeanHelperCache() {
+  /**
+   * Creates a cache. There should be one cache per compiler run.
+   * (public for tests.)
+   */
+  public BeanHelperCache() {
     cache = new HashMap<JClassType, BeanHelper>();
     serverSideValidator = Validation.buildDefaultValidatorFactory().getValidator();
   }

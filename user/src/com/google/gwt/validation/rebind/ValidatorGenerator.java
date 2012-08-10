@@ -34,6 +34,18 @@ import com.google.gwt.validation.client.GwtValidation;
  */
 public final class ValidatorGenerator extends Generator {
 
+  private final BeanHelperCache cache;
+
+  // called by the compiler via reflection
+  public ValidatorGenerator() {
+    this.cache = BeanHelperCache.getForThread();
+  }
+
+  // called from tests
+  public ValidatorGenerator(BeanHelperCache cache) {
+    this.cache = cache;
+  }
+
   @Override
   public String generate(TreeLogger logger, GeneratorContext context,
       String typeName) throws UnableToCompleteException {
@@ -75,7 +87,7 @@ public final class ValidatorGenerator extends Generator {
     AbstractCreator creator = new ValidatorCreator(validatorType,
         gwtValidation,
         validatorLogger,
-        context);
+        context, cache);
     return creator.create();
   }
 }
