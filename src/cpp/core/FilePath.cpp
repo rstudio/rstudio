@@ -20,15 +20,8 @@
 #include <windows.h>
 #endif
 
-#include <boost/version.hpp>
-#ifdef __APPLE__
-#define BOOST_FILESYSTEM_VERSION 2
-#elif BOOST_VERSION >= 104400
-#define BOOST_FILESYSTEM_VERSION 3
-#endif
-#define BOOST_FILESYSTEM_NARROW_ONLY
-#define BOOST_FILESYSTEM2_NARROW_ONLY
 #define BOOST_FILESYSTEM_NO_DEPRECATED
+
 #include <boost/filesystem.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>

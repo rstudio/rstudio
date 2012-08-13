@@ -22,13 +22,14 @@ INSTALL_DIR=`pwd`
 PLATFORM=`uname`
 
 # vars
-BOOST_VERSION_NUMBER=1.44.0
-BOOST_VERSION=boost_1_44_0
+BOOST_VERSION_NUMBER=1.50.0
+BOOST_VERSION=boost_1_50_0
+BOOST_DIR=/opt/rstudio-tools/boost/$BOOST_VERSION
 BOOST_TAR=$BOOST_VERSION.tar.bz2
 BOOST_BUILD_DIR=boost-build
 
 # install if we aren't already installed
-if ! test -e /usr/local/include/boost
+if ! test -e $BOOST_DIR
 then
    # download boost
    BOOST_URL=http://sourceforge.net/projects/boost/files/boost/$BOOST_VERSION_NUMBER/$BOOST_TAR/download?use_mirror=autoselect
@@ -40,9 +41,8 @@ then
    fi
    
    # remove existing boost installation
-   sudo rm -rf /usr/local/include/boost
-   sudo rm -rf /usr/local/lib/libboost_*
-
+   sudo rm -rf $BOOST_DIR
+  
    # untar source (remove existing)
    rm -rf $BOOST_BUILD_DIR
    mkdir -p $BOOST_BUILD_DIR
@@ -56,9 +56,9 @@ then
    # special variation of build for osx (multi-arch, tied to 10.5)
    if [ "$PLATFORM" == "Darwin" ]
    then
-     sudo ./bjam variant=release threading=multi link=static install
+     sudo ./bjam --prefix=$BOOST_DIR toolset=clang variant=release threading=multi link=static install
    else
-     sudo ./bjam variant=release install
+     sudo ./bjam --prefix=$BOOST_DIR variant=release install
    fi
 
    # go back to the original install dir and remove build dir
@@ -68,7 +68,7 @@ then
 
 else
 
-   echo "boost already installed in /usr/local (remove /usr/local/include/boost to force re-install)"
+   echo "$BOOST_VERSION_NUMBER already installed in $BOOST_DIR"
 
 fi
 

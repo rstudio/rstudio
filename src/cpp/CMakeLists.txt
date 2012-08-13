@@ -100,13 +100,12 @@ if(APPLE OR WIN32 OR RSTUDIO_PACKAGE_BUILD)
    set(Boost_USE_STATIC_LIBS ON)
 endif()
 
-if(APPLE OR WIN32)
-   # Require Boost 1.44 on Windows and Mac to avoid bugs in Boost Filesystem v2
-   # that cause the process to abort instead of returning errors
-   set(BOOST_VERSION 1.44.0)
+if(UNIX)
+   set(BOOST_VERSION 1.50.0)
 else()
-   set(BOOST_VERSION 1.42.0)
+   set(BOOST_VERSION 1.44.0)
 endif()
+
 list(APPEND BOOST_LIBS
    date_time
    filesystem
@@ -120,17 +119,16 @@ list(APPEND BOOST_LIBS
 
 # UNIX BOOST
 if(UNIX)
-   # prefer static link to /usr/local/include/boost (our custom built version)
-   if(EXISTS /usr/local/include/boost AND
-      EXISTS /usr/local/lib/libboost_system.a)
-
+   # prefer static link to our custom built version
+   set(RSTUDIO_TOOLS_BOOST /opt/rstudio-tools/boost/boost_1_50_0)
+   if(EXISTS ${RSTUDIO_TOOLS_BOOST})
       # find headers
       set(Boost_USE_STATIC_LIBS ON)
-      set(BOOST_INCLUDEDIR /usr/local/include)
+      set(BOOST_INCLUDEDIR  ${RSTUDIO_TOOLS_BOOST}/include)
       find_package(Boost ${BOOST_VERSION} REQUIRED)
 
       # define library list manually (find_package doesn't always pick them up)
-      set(BOOST_LIB_DIR /usr/local/lib)
+      set(BOOST_LIB_DIR ${RSTUDIO_TOOLS_BOOST}/lib)
       foreach(BOOST_LIB ${BOOST_LIBS})
          list(APPEND Boost_LIBRARIES ${BOOST_LIB_DIR}/libboost_${BOOST_LIB}.a)
       endforeach()
