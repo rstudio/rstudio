@@ -347,7 +347,8 @@ private:
             // continue reading content
             readSomeContent();
          }
-         else if (ec == boost::asio::error::eof)
+         else if (ec == boost::asio::error::eof ||
+                  isShutdownError(ec))
          {
             close();
 
@@ -360,7 +361,12 @@ private:
          }
       }
       CATCH_UNEXPECTED_ASYNC_CLIENT_EXCEPTION
-  }
+   }
+
+   virtual bool isShutdownError(const boost::system::error_code& ec)
+   {
+      return false;
+   }
 
 // struct and instance variable to track connection retry state
 private:

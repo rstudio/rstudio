@@ -110,6 +110,20 @@ private:
       return boost::shared_static_cast<TcpIpAsyncClientSsl>(ptrShared);
    }
 
+   virtual bool isShutdownError(const boost::system::error_code& ec)
+   {
+      // boost returns "short_read" when the peer calls SSL_shutdown()
+      if (ec.category() == boost::asio::error::get_ssl_category() &&
+          ec.value() == ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SHORT_READ))
+      {
+         return true;
+      }
+      else
+      {
+         return false;
+      }
+   }
+
 private:
    boost::asio::ssl::context sslContext_;
    boost::scoped_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> > ptrSslStream_;
