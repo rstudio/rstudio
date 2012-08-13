@@ -14,6 +14,59 @@
 #ifndef CORE_JSON_JSON_RPC_HPP
 #define CORE_JSON_JSON_RPC_HPP
 
+#include <boost/system/error_code.hpp>
+
+namespace core {
+namespace json {
+namespace errc {
+
+enum errc_t {
+   Success = 0,           // request succeeded
+
+   //
+   //	Invocation Errors -- All of these errors are guaranteed to have occurred
+   //	prior to the execution of the method on the service
+   //
+   ConnectionError = 1,   // unable to connect to the service
+   Unavailable = 2,       // service is currently unavailable
+   Unauthorized = 3,      // client does not have required credentials
+   InvalidClientId = 4,   // provided client id is invalid
+   ParseError = 5,        // invalid json or an unexpected error during parsing
+   InvalidRequest = 6,    // invalid json-rpc request
+   MethodNotFound = 7,    // specified method not found on the server
+   ParamMissing = 8,      // parameter missing
+   ParamTypeMismatch = 9, // parameter type mismatch
+   ParamInvalid = 10,     // parameter invalid
+   MethodUnexpected = 11, // method unexpected for current application state
+   InvalidClientVersion = 12, // client is running an invalid version
+   ServerOffline = 13,    // server is offline
+
+   // Execution errors -- These errors occurred during execution of the method.
+   // Application state is therefore known based on the expected behavior
+   // of the error which occurred. More details are provided within the
+   // optional "error" field of the result
+   ExecutionError = 100,
+
+   // Transmission errors -- These errors leave the application in an unknown
+   // state (it is not known whether the method finished all, some, or none
+   // of its work).
+   TransmissionError = 200
+};
+
+} // namespace errc
+} // namespace json
+} // namespace core
+
+namespace boost {
+namespace system {
+template <>
+struct is_error_code_enum<core::json::errc::errc_t>
+ { static const bool value = true; };
+} // namespace system
+} // namespace boost
+
+
+
 #include <string>
 
 #include <boost/bind.hpp>
@@ -47,38 +100,6 @@ const boost::system::error_category& jsonRpcCategory() ;
 // json error codes
 //
 namespace errc {
-enum errc_t {
-   Success = 0,           // request succeeded
-   
-   // 
-   //	Invocation Errors -- All of these errors are guaranteed to have occurred 
-   //	prior to the execution of the method on the service
-   //
-   ConnectionError = 1,   // unable to connect to the service
-   Unavailable = 2,       // service is currently unavailable
-   Unauthorized = 3,      // client does not have required credentials
-   InvalidClientId = 4,   // provided client id is invalid
-   ParseError = 5,        // invalid json or an unexpected error during parsing
-   InvalidRequest = 6,    // invalid json-rpc request
-   MethodNotFound = 7,    // specified method not found on the server
-   ParamMissing = 8,      // parameter missing
-   ParamTypeMismatch = 9, // parameter type mismatch
-   ParamInvalid = 10,     // parameter invalid
-   MethodUnexpected = 11, // method unexpected for current application state
-   InvalidClientVersion = 12, // client is running an invalid version
-   ServerOffline = 13,    // server is offline
-  
-   // Execution errors -- These errors occurred during execution of the method.
-   // Application state is therefore known based on the expected behavior
-   // of the error which occurred. More details are provided within the
-   // optional "error" field of the result
-   ExecutionError = 100,
-
-   // Transmission errors -- These errors leave the application in an unknown
-   // state (it is not known whether the method finished all, some, or none
-   // of its work).
-   TransmissionError = 200
-};
 
 inline boost::system::error_code make_error_code( errc_t e )
 {
@@ -92,15 +113,6 @@ inline boost::system::error_condition make_error_condition( errc_t e )
 } // namespace errc
 } // namespace json
 } // namespace core
-
-namespace boost {
-namespace system {
-template <>
-struct is_error_code_enum<core::json::errc::errc_t>
- { static const bool value = true; };
-} // namespace system
-} // namespace boost
-
 
 namespace core {
 namespace json {

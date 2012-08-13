@@ -43,15 +43,6 @@ namespace {
    const size_t OUTPUT_BUFFER_SIZE = 8192;
    typedef std::map<std::string, boost::shared_ptr<ConsoleProcess> > ProcTable;
    ProcTable s_procs;
-
-   core::system::ProcessOptions procOptions()
-   {
-      core::system::ProcessOptions options;
-#ifndef _WIN32
-      options.detachSession = true;
-#endif
-      return options;
-   }
 } // anonymous namespace
 
 const int kDefaultMaxOutputLines = 500;

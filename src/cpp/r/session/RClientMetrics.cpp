@@ -32,15 +32,7 @@ namespace {
 const char * const kConsoleWidth = "r.session.client_metrics.console-width";
 const char * const kGraphicsWidth = "r.session.client_metrics.graphics-width";
 const char * const kGraphicsHeight = "r.session.client_metrics.graphics-height";
-   
-std::ostream& operator << (std::ostream& os, const RClientMetrics& m)
-{
-   os << "console: " << m.consoleWidth << " "
-      << "graphics: " << m.graphicsWidth << "," << m.graphicsHeight ;
-   
-   return os;
-}
-   
+
 }   
    
 RClientMetrics get()

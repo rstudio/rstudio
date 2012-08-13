@@ -61,7 +61,7 @@ public:
    std::size_t offset() const { return offset_; }
 
    // checked access to rnw lines from tex lines
-   int rnwLine(std::size_t texLine) const
+   int rnwLine(int texLine) const
    {
       // subtract 1 to normalize lines to C array indexes
       texLine--;

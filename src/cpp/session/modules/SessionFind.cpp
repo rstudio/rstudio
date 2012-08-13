@@ -58,7 +58,7 @@ public:
       return handle_;
    }
 
-   size_t resultCount() const
+   int resultCount() const
    {
       return files_.size();
    }
@@ -308,7 +308,7 @@ private:
       json::Array matchOns;
       json::Array matchOffs;
 
-      size_t recordsToProcess = MAX_COUNT + 1 - findResults().resultCount();
+      int recordsToProcess = MAX_COUNT + 1 - findResults().resultCount();
       if (recordsToProcess < 0)
          recordsToProcess = 0;
 

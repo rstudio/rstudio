@@ -155,6 +155,33 @@ core::Error getNamedListElement(SEXP listSEXP,
    }
 }
 
+
+// protect R expressions
+class Protect : boost::noncopyable
+{
+public:
+   Protect()
+   : protectCount_(0)
+   {
+   }
+   
+   explicit Protect(SEXP sexp)
+   : protectCount_(0)
+   {
+      add(sexp);
+   }
+   
+   virtual ~Protect();
+   
+   // COPYING: boost::noncopyable
+   
+   void add(SEXP sexp);
+   void unprotectAll();
+   
+private:
+   int protectCount_ ;
+};
+
 // set list element by name. note that the specified element MUST already
 // exist before the call
 template <typename T>
@@ -185,31 +212,6 @@ core::Error setNamedListElement(SEXP listSEXP,
 }
 
 
-// protect R expressions
-class Protect : boost::noncopyable
-{
-public:
-   Protect()
-   : protectCount_(0)
-   {
-   }
-   
-   explicit Protect(SEXP sexp)
-   : protectCount_(0)
-   {
-      add(sexp);
-   }
-   
-   virtual ~Protect();
-   
-   // COPYING: boost::noncopyable
-   
-   void add(SEXP sexp);
-   void unprotectAll();
-   
-private:
-   int protectCount_ ;
-};
 
 class PreservedSEXP : boost::noncopyable
 {

@@ -187,11 +187,6 @@ bool isNonProjectFilename(QString filename)
    return filePath.exists() && filePath.extensionLowerCase() != ".rproj";
 }
 
-bool dummy(const FileInfo& file)
-{
-   return true;
-}
-
 } // anonymous namespace
 
 int main(int argc, char* argv[])

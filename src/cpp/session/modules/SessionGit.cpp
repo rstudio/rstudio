@@ -27,10 +27,10 @@
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/function.hpp>
-#include <boost/lambda/lambda.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional.hpp>
 #include <boost/regex.hpp>
+#include <core/BoostLamda.hpp>
 
 #include <core/json/JsonRpc.hpp>
 #include <core/system/Crypto.hpp>
@@ -43,6 +43,7 @@
 #include <core/GitGraph.hpp>
 #include <core/Scope.hpp>
 #include <core/StringUtils.hpp>
+
 
 #include <r/RExec.hpp>
 #include <r/RUtil.hpp>
@@ -221,14 +222,6 @@ Error gitExec(const ShellArgs& args,
                         options,
                         pResult);
 #endif
-}
-
-void afterCommit(const FilePath& tempFile)
-{
-   Error removeError = tempFile.remove();
-   if (removeError)
-      LOG_ERROR(removeError);
-   enqueRefreshEventWithDelay(200);
 }
 
 bool commitIsMatch(const std::vector<std::string>& patterns,
@@ -1934,24 +1927,6 @@ Error vcsInitRepo(const json::JsonRpcRequest& request,
    {
       return Success();
    }
-}
-
-std::string toBashPath(const std::string& path)
-{
-#ifdef _WIN32
-   std::string result(path);
-   for (std::string::iterator it = result.begin();
-        it != result.end();
-        it++)
-   {
-      if (*it == '\\')
-         *it = '/';
-   }
-
-   return boost::regex_replace(result, boost::regex("^([A-Za-z]):"), "/\\1");
-#else
-   return path;
-#endif
 }
 
 bool ensureSSHAgentIsRunning()

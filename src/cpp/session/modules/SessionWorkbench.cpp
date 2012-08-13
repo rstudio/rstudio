@@ -121,6 +121,7 @@ CRANMirror toCRANMirror(const json::Object& cranMirrorJson)
    return cranMirror;
 }
 
+/* Call to this is commented out below
 BioconductorMirror toBioconductorMirror(const json::Object& mirrorJson)
 {
    BioconductorMirror mirror;
@@ -129,6 +130,7 @@ BioconductorMirror toBioconductorMirror(const json::Object& mirrorJson)
                     "url", &mirror.url);
    return mirror;
 }
+*/
 
 // try to detect a terminal on linux desktop
 FilePath detectedTerminalPath()

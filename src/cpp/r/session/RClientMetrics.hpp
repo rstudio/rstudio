@@ -21,7 +21,7 @@ namespace core {
 namespace r {
 namespace session {
    
-class RClientMetrics;
+struct RClientMetrics;
    
 namespace client_metrics {
 

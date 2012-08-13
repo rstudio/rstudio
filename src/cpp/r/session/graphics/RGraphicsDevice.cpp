@@ -574,23 +574,6 @@ DisplaySize displaySize()
    return DisplaySize(s_width, s_height);
 }
 
-void deviceConvert(double* x,
-                   double* y,
-                   const boost::function<double(double,pGEDevDesc)>& xConv,
-                   const boost::function<double(double,pGEDevDesc)>& yConv)
-{
-   if (s_pGEDevDesc != NULL)
-   {
-      *x = xConv(*x, s_pGEDevDesc);
-      *y = yConv(*y, s_pGEDevDesc);
-   }
-   else
-   {
-      LOG_WARNING_MESSAGE(
-            "deviceConvert called with no active graphics device");
-   }
-}
-
 double grconvert(double val,
                  const std::string& type,
                  const std::string& from,

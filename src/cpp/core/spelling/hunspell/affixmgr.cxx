@@ -14,6 +14,10 @@
 
 #include "csutil.hxx"
 
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wsizeof-pointer-memaccess"
+#endif
+
 AffixMgr::AffixMgr(const char * affpath, HashMgr** ptr, int * md, const char * key) 
 {
   // register hash manager and load affix data from aff file

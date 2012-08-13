@@ -271,6 +271,7 @@ Error synctexInverseSearch(const json::JsonRpcRequest& request,
    return Success();
 }
 
+#ifdef _WIN32
 void rsinversePostback(const std::string& arguments,
                        const module_context::PostbackHandlerContinuation& cont)
 {
@@ -293,6 +294,7 @@ void rsinversePostback(const std::string& arguments,
 
    cont(EXIT_SUCCESS, "");
 }
+#endif
 
 } // anonymous namespace
 

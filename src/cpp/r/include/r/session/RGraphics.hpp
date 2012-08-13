@@ -14,6 +14,39 @@
 #ifndef R_SESSION_GRAPHICS_HPP
 #define R_SESSION_GRAPHICS_HPP
 
+#include <boost/system/error_code.hpp>
+
+namespace r {
+namespace session {
+namespace graphics {
+namespace errc {
+
+enum errc_t
+{
+   Success = 0,
+   IncompatibleGraphicsEngine,
+   DeviceNotAvailable,
+   NoActivePlot,
+   InvalidPlotIndex,
+   InvalidPlotImageType,
+   PlotRenderingError,
+   PlotFileError
+};
+
+} // namespace errc
+} // namespace graphics
+} // namespace session
+} // namespace r
+
+namespace boost {
+namespace system {
+template <>
+struct is_error_code_enum<r::session::graphics::errc::errc_t>
+ { static const bool value = true; };
+} // namespace system
+} // namespace boost
+
+
 #include <string>
 #include <vector>
 
@@ -122,18 +155,6 @@ const boost::system::error_category& rGraphicsCategory() ;
 
 namespace errc {
    
-enum errc_t 
-{
-   Success = 0,
-   IncompatibleGraphicsEngine,
-   DeviceNotAvailable,
-   NoActivePlot,
-   InvalidPlotIndex,
-   InvalidPlotImageType,
-   PlotRenderingError,
-   PlotFileError
-};
-
 inline boost::system::error_code make_error_code( errc_t e )
 {
    return boost::system::error_code( e, rGraphicsCategory() ); }
@@ -148,14 +169,6 @@ inline boost::system::error_condition make_error_condition( errc_t e )
 } // namespace graphics
 } // namespace session
 } // namespace r
-
-namespace boost {
-namespace system {
-template <>
-struct is_error_code_enum<r::session::graphics::errc::errc_t>
- { static const bool value = true; };
-} // namespace system
-} // namespace boost
 
 #endif // R_SESSION_GRAPHICS_HPP 
 

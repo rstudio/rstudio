@@ -20,8 +20,17 @@
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Woverloaded-virtual"
+#endif
+
 #include <boost/program_options/detail/convert.hpp>
 #include <boost/program_options/detail/utf8_codecvt_facet.hpp>
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 namespace core {
 namespace string_utils {

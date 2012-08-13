@@ -11,10 +11,10 @@
 #
 #
 
-# force gcc on os x (in preference to clang)
+# use clang on osx
 if(APPLE)
-  set(CMAKE_C_COMPILER /usr/bin/gcc)
-  set(CMAKE_CXX_COMPILER /usr/bin/g++)
+  set(CMAKE_C_COMPILER /usr/bin/clang)
+  set(CMAKE_CXX_COMPILER /usr/bin/clang++)
 endif()
 
 cmake_minimum_required(VERSION 2.6)

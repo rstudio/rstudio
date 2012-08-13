@@ -194,7 +194,7 @@ public:
       : tokenizer_(code)
    {
       RToken token;
-      while (token = tokenizer_.nextToken())
+      while ((token = tokenizer_.nextToken()))
       {
          if ((flags & StripWhitespace) && token.type() == RToken::WHITESPACE)
             continue;

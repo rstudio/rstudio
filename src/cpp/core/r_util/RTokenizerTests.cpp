@@ -45,7 +45,7 @@ public:
 
       RTokenizer rt(prefix_ + value + suffix_) ;
       RToken t ;
-      while (t = rt.nextToken())
+      while ((t = rt.nextToken()))
       {
          if (t.offset() == prefix_.length())
          {

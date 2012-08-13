@@ -14,12 +14,9 @@
 #ifndef R_R_ERROR_CATEGORY_HPP
 #define R_R_ERROR_CATEGORY_HPP
 
-#include <core/Error.hpp>
+#include <boost/system/error_code.hpp>
 
 namespace r {
-
-const boost::system::error_category& rCategory() ;
-
 namespace errc {
 
 enum errc_t {
@@ -33,6 +30,28 @@ enum errc_t {
    UnexpectedDataTypeError,
    NoDataAvailableError
 };
+
+} // namespace errc
+} // namespace r
+
+
+namespace boost {
+namespace system {
+template <>
+struct is_error_code_enum<r::errc::errc_t>
+ { static const bool value = true; };
+} // namespace system
+} // namespace boost
+
+
+
+#include <core/Error.hpp>
+
+namespace r {
+
+const boost::system::error_category& rCategory() ;
+
+namespace errc {
 
 inline boost::system::error_code make_error_code( errc_t e )
 {
@@ -58,14 +77,6 @@ std::string endUserErrorMessage(const core::Error& error);
    
 
 } // namespace r
-
-namespace boost {
-namespace system {
-template <>
-struct is_error_code_enum<r::errc::errc_t>
- { static const bool value = true; };
-} // namespace system
-} // namespace boost
 
 
 #endif // R_R_ERROR_CATEGORY_HPP

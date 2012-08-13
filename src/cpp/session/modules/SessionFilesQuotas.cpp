@@ -56,17 +56,7 @@ struct QuotaInfo
    size_type quota;
    size_type limit;
 };
-   
-std::ostream& operator << (std::ostream& os, const QuotaInfo& quotaInfo)
-{
-   os << "used: " << quotaInfo.used << ", " <<
-         "quota: " << quotaInfo.quota << ", " <<
-         "limit: " << quotaInfo.limit ;
-   
-   return os;
-}
-   
-   
+    
 void quotaInfoToJson(const QuotaInfo& quotaInfo,
                      json::Object* pQuotaInfoJson)
 {

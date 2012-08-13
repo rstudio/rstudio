@@ -21,8 +21,8 @@
 #include <boost/scoped_ptr.hpp>
 
 #include <boost/asio/ip/tcp.hpp>
-#include <boost/asio/ssl/context.hpp>
-#include <boost/asio/ssl/stream.hpp>
+
+#include "BoostAsioSsl.hpp"
 
 #include <core/http/AsyncClient.hpp>
 #include <core/http/TcpIpAsyncConnector.hpp>

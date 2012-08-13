@@ -245,7 +245,7 @@ void doSignIn(const http::Request& request,
    }
 
    size_t splitAt = plainText.find('\n');
-   if (splitAt < 0)
+   if (splitAt == std::string::npos)
    {
       LOG_ERROR_MESSAGE("Didn't find newline in plaintext");
       pResponse->setMovedTemporarily(

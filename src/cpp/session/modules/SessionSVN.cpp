@@ -22,8 +22,8 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
 #include <boost/date_time.hpp>
-#include <boost/lambda/lambda.hpp>
 #include <boost/regex.hpp>
+#include <core/BoostLamda.hpp>
 
 #include <core/FileSerializer.hpp>
 #include <core/rapidxml/rapidxml.hpp>
@@ -96,13 +96,6 @@ std::vector<FilePath> resolveAliasedPaths(const json::Array& paths,
       results.push_back(resolveAliasedPath(it->get_str()));
    }
    return results;
-}
-
-void addGitBinDirToPath(core::system::Options* pEnv)
-{
-   FilePath gitExePath = git::detectedGitExePath();
-   if (!gitExePath.empty())
-      core::system::addToPath(pEnv, gitExePath.parent().absolutePath());
 }
 
 core::system::ProcessOptions procOptions(bool requiresSsh)

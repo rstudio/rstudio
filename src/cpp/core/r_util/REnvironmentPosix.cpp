@@ -439,6 +439,7 @@ bool detectRLocationsUsingScript(const FilePath& rScriptPath,
    return true;
 }
 
+#ifndef __APPLE__
 bool detectRLocationsUsingR(const std::string& rScriptPath,
                             FilePath* pHomePath,
                             FilePath* pLibPath,
@@ -543,6 +544,7 @@ bool detectRLocationsUsingR(const std::string& rScriptPath,
 
    return true;
 }
+#endif
 
 } // anonymous namespace
 
