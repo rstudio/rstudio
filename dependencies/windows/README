@@ -48,14 +48,14 @@ http://download.opensuse.org/repositories/windows:/mingw:/win32/openSUSE_Factory
 http://download.opensuse.org/repositories/windows:/mingw:/win64/openSUSE_Factory/noarch/
 
 
-NOTE: How to upgrade boost-win.zip
+NOTE: How to upgrade boost-1.50-win.zip
 =============================================================================
 
-boost-win.zip is a prepackaged set of boost 1.44 windows headers and
+boost-1.50-win.zip is a prepackaged set of boost 1.50 windows headers and
 binaries (32 and 64 bit) built for MinGW 4.4. To upgrade to either a new
 boost or MinGW version you should download the appropriate boost windows
-source archive as well as the pre-built bjam for windows then follow the 
-instructions below for 32/64 bit
+source archive, boostrap the boost build system (note that this
+requires MSFT Visual C++) then follow the instructions below 
 
 Win32
 ---------

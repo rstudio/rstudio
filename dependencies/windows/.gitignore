@@ -1,5 +1,5 @@
 mingw64/
-boost-win/
+boost*win/
 gnudiff/
 gnugrep/
 msys_ssh/

@@ -100,11 +100,8 @@ if(APPLE OR WIN32 OR RSTUDIO_PACKAGE_BUILD)
    set(Boost_USE_STATIC_LIBS ON)
 endif()
 
-if(UNIX)
-   set(BOOST_VERSION 1.50.0)
-else()
-   set(BOOST_VERSION 1.44.0)
-endif()
+# require boost 1.50
+set(BOOST_VERSION 1.50.0)
 
 list(APPEND BOOST_LIBS
    date_time
@@ -115,6 +112,7 @@ list(APPEND BOOST_LIBS
    signals
    system
    thread
+   chrono
 )
 
 # UNIX BOOST
@@ -140,11 +138,11 @@ if(UNIX)
 else()
      # hard-code to our own prebuilt boost libs
      if(RSTUDIO_SESSION_WIN64)
-        set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-win/boost64")
+        set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.50-win/boost64")
      else()
-        set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-win/boost32")
+        set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.50-win/boost32")
      endif()
-     set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_44")
+     set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_50")
 
    find_package(Boost ${BOOST_VERSION} REQUIRED COMPONENTS ${BOOST_LIBS})
 endif()
