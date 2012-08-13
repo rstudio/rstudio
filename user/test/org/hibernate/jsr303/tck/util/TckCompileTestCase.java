@@ -25,7 +25,6 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 import com.google.gwt.validation.rebind.BeanHelperCache;
-import com.google.gwt.validation.rebind.GwtSpecificValidatorGenerator;
 import com.google.gwt.validation.rebind.ValidatorGenerator;
 
 import junit.framework.Assert;
@@ -53,8 +52,7 @@ public abstract class TckCompileTestCase extends TestCase {
     context.finish(failOnErrorLogger);
 
     // Now create the validator that is going to fail
-    GwtSpecificValidatorGenerator specificGenerator =
-        new GwtSpecificValidatorGenerator(cache);
+    ValidatorGenerator specificGenerator = new ValidatorGenerator(cache);
     String beanHelperName = createBeanHelper(beanType);
     assertUnableToComplete(expectedException, expectedMessage,
         specificGenerator, beanHelperName);

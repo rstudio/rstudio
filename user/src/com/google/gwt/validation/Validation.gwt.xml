@@ -45,13 +45,12 @@
     <when-type-is class="javax.validation.spi.ValidationProvider" />
   </replace-with>
 
-  <!-- Generators -->
+  <!-- Generator -->
   <generate-with class="com.google.gwt.validation.rebind.ValidatorGenerator">
-    <when-type-assignable class="javax.validation.Validator" />
-  </generate-with>
-  <generate-with
-    class="com.google.gwt.validation.rebind.GwtSpecificValidatorGenerator">
-    <when-type-assignable
-      class="com.google.gwt.validation.client.impl.GwtSpecificValidator" />
+    <any>
+      <when-type-assignable class="javax.validation.Validator" />
+      <when-type-assignable
+        class="com.google.gwt.validation.client.impl.GwtSpecificValidator" />
+    </any>
   </generate-with>
 </module>

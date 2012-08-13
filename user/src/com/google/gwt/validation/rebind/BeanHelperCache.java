@@ -39,27 +39,12 @@ import javax.validation.metadata.PropertyDescriptor;
  * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
  * production code.
  *
- * <p> A cache containing BeanHelpers created in the current compilation run.
- * (Assumes that each compile happens in a different thread.)
- * Also acts as a factory for BeanHelpers. </p>
+ * <p> A cache and factory for BeanHelpers. There should be one BeanHelperCache per
+ * compilation run.</p>
+ *
+ * <p>(public for tests.)</p>
  */
 public class BeanHelperCache { // public for testing
-
-  // Each GWT module lives in its own thread in DevMode and should have a separate cache
-  private static final ThreadLocal<BeanHelperCache> threadLocal = new ThreadLocal<BeanHelperCache>() {
-    @Override
-    protected BeanHelperCache initialValue() {
-      return new BeanHelperCache();
-    }
-  };
-
-  /**
-   * Returns the cache for the current thread. (This is a hack because we have two generators
-   * that need to share state.)
-   */
-  static BeanHelperCache getForThread() {
-    return threadLocal.get();
-  }
 
   private final Map<JClassType, BeanHelper> cache;
   private final Validator serverSideValidator;

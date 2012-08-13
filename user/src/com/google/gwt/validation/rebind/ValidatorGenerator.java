@@ -20,14 +20,18 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.validation.client.GwtValidation;
+import com.google.gwt.validation.client.impl.GwtSpecificValidator;
+
+import javax.validation.Validator;
 
 /**
  * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
  * production code.
  * <p>
- * Generates the generic {@link javax.validation.Validator}. The generic
+ * Generates subclasses of {@link Validator} and {@link GwtSpecificValidator}. The generic
  * validator only handles the classes listed in the
  * {@link com.google.gwt.validation.client.GwtValidation} annotation. See
  * {@link com.google.gwt.validation.client.GwtValidation} for usage.
@@ -38,7 +42,7 @@ public final class ValidatorGenerator extends Generator {
 
   // called by the compiler via reflection
   public ValidatorGenerator() {
-    this.cache = BeanHelperCache.getForThread();
+    this.cache = new BeanHelperCache();
   }
 
   // called from tests
@@ -52,12 +56,37 @@ public final class ValidatorGenerator extends Generator {
     TypeOracle typeOracle = context.getTypeOracle();
     assert (typeOracle != null);
 
-    JClassType validatorType = typeOracle.findType(typeName);
-    if (validatorType == null) {
+    JClassType validatorType = findType(logger, typeOracle, typeName);
+    JClassType genericType = findType(logger, typeOracle, Validator.class.getName());
+    JClassType gwtSpecificType =
+        findType(logger, typeOracle, GwtSpecificValidator.class.getName());
+
+    if (validatorType.isAssignableTo(genericType)) {
+      return generateGenericValidator(logger, context, validatorType);
+    } else if (validatorType.isAssignableTo(gwtSpecificType)) {
+      return generateGwtSpecificValidator(logger, context, validatorType);
+    } else {
+      logger.log(TreeLogger.ERROR,
+          "type is not a ValidatorGenerator or GwtSpecificValidatorGenerator: '" + typeName + "'",
+          null);
+      throw new UnableToCompleteException();
+    }
+  }
+
+  private JClassType findType(TreeLogger logger, TypeOracle typeOracle, String typeName)
+      throws UnableToCompleteException {
+    JClassType result = typeOracle.findType(typeName);
+    if (result == null) {
       logger.log(TreeLogger.ERROR, "Unable to find metadata for type '"
           + typeName + "'", null);
       throw new UnableToCompleteException();
     }
+    return result;
+  }
+
+  private String generateGenericValidator(TreeLogger logger, GeneratorContext context,
+      JClassType validatorType) throws UnableToCompleteException {
+    String typeName = validatorType.getName();
 
     GwtValidation gwtValidation = validatorType.findAnnotationInTypeHierarchy(GwtValidation.class);
 
@@ -89,5 +118,51 @@ public final class ValidatorGenerator extends Generator {
         validatorLogger,
         context, cache);
     return creator.create();
+  }
+
+  private String generateGwtSpecificValidator(TreeLogger logger, GeneratorContext context,
+      JClassType validatorType) throws UnableToCompleteException {
+
+    JClassType gwtSpecificInterface = getGwtSpecificValidator(logger, validatorType);
+    JClassType beanType = getBeanType(logger, validatorType, gwtSpecificInterface);
+
+    BeanHelper beanHelper = cache.createHelper(beanType, logger, context);
+
+    if (beanHelper == null) {
+      logger.log(TreeLogger.ERROR, "Unable to create BeanHelper for " + beanType
+          + " " + GwtSpecificValidator.class.getSimpleName()
+          + ".", null);
+      throw new UnableToCompleteException();
+    }
+
+    AbstractCreator creator = new GwtSpecificValidatorCreator(validatorType,
+        beanType, beanHelper, logger, context, cache);
+    return creator.create();
+  }
+
+  private JClassType getBeanType(TreeLogger logger, JClassType validator,
+      JClassType gwtSpecificInterface) throws UnableToCompleteException {
+    if (gwtSpecificInterface instanceof JParameterizedType) {
+      JParameterizedType paramType = (JParameterizedType) gwtSpecificInterface;
+      return paramType.getTypeArgs()[0];
+    }
+    logger.log(TreeLogger.ERROR, validator.getQualifiedSourceName()
+        + " must implement " + GwtSpecificValidator.class.getCanonicalName()
+        + " with a one generic parameter.", null);
+    throw new UnableToCompleteException();
+  }
+
+  private JClassType getGwtSpecificValidator(TreeLogger logger,
+      JClassType validator) throws UnableToCompleteException {
+    for (JClassType interfaceType : validator.getImplementedInterfaces()) {
+      if (interfaceType.getQualifiedSourceName().endsWith(
+          GwtSpecificValidator.class.getCanonicalName())) {
+        return interfaceType;
+      }
+    }
+    logger.log(TreeLogger.ERROR, validator.getQualifiedSourceName()
+        + " must implement " + GwtSpecificValidator.class.getCanonicalName(),
+        null);
+    throw new UnableToCompleteException();
   }
 }
