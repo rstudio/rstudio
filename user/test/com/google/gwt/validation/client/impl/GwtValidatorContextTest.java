@@ -18,7 +18,7 @@ package com.google.gwt.validation.client.impl;
 import com.google.gwt.validation.client.AbstractGwtValidatorFactory;
 import com.google.gwt.validation.client.GwtConstraintValidatorFactory;
 import com.google.gwt.validation.client.GwtMessageInterpolator;
-import com.google.gwt.validation.client.GwtTraversableResolver;
+import com.google.gwt.validation.client.DefaultTraversableResolver;
 import com.google.gwt.validation.client.ValidationClientGwtTestCase;
 
 import java.util.Set;
@@ -96,7 +96,7 @@ public class GwtValidatorContextTest extends ValidationClientGwtTestCase {
   private ValidatorContext validatorContext;
 
   public void testCustom() throws Exception {
-    final TraversableResolver traversableResolver = new GwtTraversableResolver();
+    final TraversableResolver traversableResolver = new DefaultTraversableResolver();
     final ConstraintValidatorFactory constraintValidatorFactory = new GwtConstraintValidatorFactory();
     final MessageInterpolator messageInterpolator = new GwtMessageInterpolator();
 
@@ -125,7 +125,7 @@ public class GwtValidatorContextTest extends ValidationClientGwtTestCase {
   }
 
   public void testReset() throws Exception {
-    final TraversableResolver traversableResolver = new GwtTraversableResolver();
+    final TraversableResolver traversableResolver = new DefaultTraversableResolver();
     final ConstraintValidatorFactory constraintValidatorFactory = new GwtConstraintValidatorFactory();
     final MessageInterpolator messageInterpolator = new GwtMessageInterpolator();
 

@@ -49,6 +49,7 @@ import com.google.gwt.validation.client.impl.GroupChainGenerator;
 import com.google.gwt.validation.client.impl.GwtBeanDescriptor;
 import com.google.gwt.validation.client.impl.GwtBeanDescriptorImpl;
 import com.google.gwt.validation.client.impl.GwtValidationContext;
+import com.google.gwt.validation.client.impl.PathImpl;
 import com.google.gwt.validation.client.impl.PropertyDescriptorImpl;
 import com.google.gwt.validation.client.impl.metadata.BeanMetadata;
 import com.google.gwt.validation.client.impl.metadata.ValidationGroupsMetadata;
@@ -76,6 +77,7 @@ import javax.validation.Constraint;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintViolation;
 import javax.validation.GroupSequence;
+import javax.validation.Path.Node;
 import javax.validation.Payload;
 import javax.validation.UnexpectedTypeException;
 import javax.validation.Valid;
@@ -352,8 +354,8 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
   @Override
   protected void compose(ClassSourceFileComposerFactory composerFactory) {
     addImports(composerFactory, Annotation.class, ConstraintViolation.class,
-        GWT.class, ValidationGroupsMetadata.class, Group.class, GroupChain.class,
-        GroupChainGenerator.class, GwtBeanDescriptor.class, BeanMetadata.class, 
+        GWT.class, ValidationGroupsMetadata.class, Group.class, GroupChain.class, PathImpl.class,
+        Node.class, GroupChainGenerator.class, GwtBeanDescriptor.class, BeanMetadata.class, 
         GwtValidationContext.class, ArrayList.class, HashSet.class, IllegalArgumentException.class,
         Set.class, Collection.class, Iterator.class, List.class, ValidationException.class);
     composerFactory.setSuperclass(AbstractGwtSpecificValidator.class.getCanonicalName()
@@ -526,6 +528,29 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
         helper.getBeanDescriptor().getConstrainedProperties();
     Predicate<PropertyDescriptor> nameMatches = newPropertyNameMatches(p);
     return Iterables.any(propertyDescriptors, nameMatches);
+  }
+
+  private boolean isPropertyConstrained(PropertyDescriptor p, boolean useField) {
+    // cascaded counts as constrained
+    // we must know if the @Valid annotation is on a field or a getter
+    JClassType jClass = beanHelper.getJClass();
+    if (useField &&
+        jClass.findField(p.getPropertyName()).isAnnotationPresent(Valid.class)) {
+      return true;
+    } else if (!useField &&
+        jClass.findMethod(asGetter(p),NO_ARGS).isAnnotationPresent(Valid.class)) {
+      return true;
+    }
+    // for non-cascaded properties
+    for (ConstraintDescriptor<?> constraint : p.getConstraintDescriptors()) {
+      org.hibernate.validator.metadata.ConstraintDescriptorImpl<?> constraintHibernate = 
+          (org.hibernate.validator.metadata.ConstraintDescriptorImpl<?>) constraint;
+      if (constraintHibernate.getElementType() ==
+          (useField ? ElementType.FIELD : ElementType.METHOD)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private Predicate<PropertyDescriptor> newPropertyNameMatches(
@@ -1016,7 +1041,6 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
     for (PropertyDescriptor p :
          beanHelper.getBeanDescriptor().getConstrainedProperties()) {
       int count = 0;
-      // Check if the same annotation is applied to the same property twice (getter and field)
       for (ConstraintDescriptor<?> constraint : p.getConstraintDescriptors()) {
         org.hibernate.validator.metadata.ConstraintDescriptorImpl<?> constraintHibernate = 
             (org.hibernate.validator.metadata.ConstraintDescriptorImpl<?>) constraint;
@@ -1395,7 +1419,7 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
       sw.print("validate(myContext, ");
       sw.print(violationsVar);
       sw.print(", object, value, ");
-      sw.print("new "); // TODO(nchalko) use ConstraintValidatorFactory
+      sw.print("new ");
       sw.print(validatorClass.getCanonicalName());
       sw.print("(), ");
       sw.print(constraintDescriptorVar);
@@ -1801,80 +1825,142 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.println("Class<?>... groups) {");
     sw.outdent();
 
-    // context = context.append("myProperty");
-    sw.print("final GwtValidationContext<T> myContext = context.append(\"");
-    sw.print(p.getPropertyName());
-    sw.println("\");");
+    // only write the checks if the property is constrained in some way
+    if (isPropertyConstrained(p, useField)) {
+      // context = context.append("myProperty");
+      sw.print("final GwtValidationContext<T> myContext = context.append(\"");
+      sw.print(p.getPropertyName());
+      sw.println("\");");
+  
+      // only check this property if the TraversableResolver says we can
 
-    // TODO(nchalko) move this out of here to the Validate method
-    if (p.isCascaded() && hasValid(p, useField)) {
-
-      // if(honorValid && value != null) {
-      sw.println("if(honorValid && value != null) {");
+      // Node leafNode = myContext.getPath().getLeafNode();
+      sw.println("Node leafNode = myContext.getPath().getLeafNode();");
+      // PathImpl path = myContext.getPath().getPathWithoutLeafNode();
+      sw.println("PathImpl path = myContext.getPath().getPathWithoutLeafNode();");
+      // boolean isReachable;
+      sw.println("boolean isReachable;");
+      // try {
+      sw.println("try {");
       sw.indent();
-
-      if (isIterableOrMap(elementClass)) {
-        JClassType associationType = beanHelper.getAssociationType(p,
-            useField);
-        createBeanHelper(associationType);
-        if (Map.class.isAssignableFrom(elementClass)) {
-          writeValidateMap(sw, p);
-        } else {
-          writeValidateIterable(sw, p);
-        }
-      } else {
-        createBeanHelper(elementClass);
-
-        // if (!context.alreadyValidated(value)) {
-        sw.println(" if (!context.alreadyValidated(value)) {");
+      // isReachable = myContext.getTraversableResolver().isReachable(object, leafNode,
+      //       myContext.getRootBeanClass(), path, ElementType);
+      sw.println("isReachable = myContext.getTraversableResolver().isReachable(object, " +
+          "leafNode, myContext.getRootBeanClass(), path, " + 
+          (useField ? asLiteral(ElementType.FIELD) : asLiteral(ElementType.METHOD)) + ");");
+      // } catch (Exception e) {
+      sw.outdent();
+      sw.println("} catch (Exception e) {");
+      sw.indent();
+      // throw new ValidationException("TraversableResolver isReachable caused an exception", e);
+      sw.println("throw new ValidationException(\"TraversableResolver isReachable caused an " +
+          "exception\", e);");
+      // }
+      sw.outdent();
+      sw.println("}");
+      // if (isReachable) {
+      sw.println("if (isReachable) {");
+      sw.indent();
+  
+      // TODO(nchalko) move this out of here to the Validate method
+      if (p.isCascaded() && hasValid(p, useField)) {
+  
+        // if (honorValid && value != null) {
+        sw.println("if (honorValid && value != null) {");
         sw.indent();
-
-        // violations.addAll(myContext.getValidator().validate(context, value,
-        // groups));
-        sw.print("violations.addAll(");
-        sw.println("myContext.getValidator().validate(myContext, value, groups));");
+        // boolean isCascadable;
+        sw.println("boolean isCascadable;");
+        // try {
+        sw.println("try {");
+        sw.indent();
+        // isCascadable = myContext.getTraversableResolver().isCascadable(object, leafNode,
+        //       myContext.getRootBeanClass(), path, ElementType)
+        sw.println("isCascadable = myContext.getTraversableResolver().isCascadable(object, " +
+            "leafNode, myContext.getRootBeanClass(), path, " + 
+          (useField ? asLiteral(ElementType.FIELD) : asLiteral(ElementType.METHOD)) + ");");
+        // } catch (Exception e) {
+        sw.outdent();
+        sw.println("} catch (Exception e) {");
+        sw.indent();
+        // throw new ValidationException("TraversableResolver isReachable caused an exception", e);
+        sw.println("throw new ValidationException(\"TraversableResolver isCascadable caused an " +
+            "exception\", e);");
+        // }
+        sw.outdent();
+        sw.println("}");
+        // if (isCascadable) {
+        sw.println("if (isCascadable) {");
+        sw.indent();
+  
+        if (isIterableOrMap(elementClass)) {
+          JClassType associationType = beanHelper.getAssociationType(p,
+              useField);
+          createBeanHelper(associationType);
+          if (Map.class.isAssignableFrom(elementClass)) {
+            writeValidateMap(sw, p);
+          } else {
+            writeValidateIterable(sw, p);
+          }
+        } else {
+          createBeanHelper(elementClass);
+  
+          // if (!context.alreadyValidated(value)) {
+          sw.println(" if (!context.alreadyValidated(value)) {");
+          sw.indent();
+  
+          // violations.addAll(myContext.getValidator().validate(context, value,
+          // groups));
+          sw.print("violations.addAll(");
+          sw.println("myContext.getValidator().validate(myContext, value, groups));");
+  
+          // }
+          sw.outdent();
+          sw.println("}");
+        }
 
         // }
         sw.outdent();
         sw.println("}");
+        // }
+        sw.outdent();
+        sw.println("}");
       }
-
-      // }
-      sw.outdent();
-      sw.println("}");
-    }
-
-    // It is possible for an annotation with the exact same values to be set on
-    // both the field and the getter.
-    // Keep track of the ones we have used to make sure we don't duplicate.
-    Set<Object> includedAnnotations = Sets.newHashSet();
-    int count = 0;
-    for (ConstraintDescriptor<?> constraint : p.getConstraintDescriptors()) {
-      Object annotation = constraint.getAnnotation();
-      if (hasMatchingAnnotation(p, useField, constraint)) {
-        String constraintDescriptorVar = constraintDescriptorVar(p.getPropertyName(), count);
-        if (!includedAnnotations.contains(annotation)) {
-          if (useField) {
-            writeValidateConstraint(sw, p, elementClass, constraint, constraintDescriptorVar);
+  
+      // It is possible for an annotation with the exact same values to be set on
+      // both the field and the getter.
+      // Keep track of the ones we have used to make sure we don't duplicate.
+      Set<Object> includedAnnotations = Sets.newHashSet();
+      int count = 0;
+      for (ConstraintDescriptor<?> constraint : p.getConstraintDescriptors()) {
+        Object annotation = constraint.getAnnotation();
+        if (hasMatchingAnnotation(p, useField, constraint)) {
+          String constraintDescriptorVar = constraintDescriptorVar(p.getPropertyName(), count);
+          if (!includedAnnotations.contains(annotation)) {
+            if (useField) {
+              writeValidateConstraint(sw, p, elementClass, constraint, constraintDescriptorVar);
+            } else {
+              // The annotation hasn't been looked at twice (yet) and we are validating a getter
+              // Write the call if only the getter has this constraint applied to it
+              boolean hasField = beanHelper.hasField(p);
+              if (!hasField ||
+                  (hasField && !hasMatchingAnnotation(p, true, constraint))) {
+                writeValidateConstraint(sw, p, elementClass, constraint, constraintDescriptorVar);
+              }
+            }
           } else {
-            // The annotation hasn't been looked at twice (yet) and we are validating a getter
-            // Write the call if only the getter has this constraint applied to it
-            boolean hasField = beanHelper.hasField(p);
-            if (!hasField ||
-                (hasField && !hasMatchingAnnotation(p, true, constraint))) {
+            // The annotation has been looked at once already during this validate property call
+            // so we know the field and the getter are both annotated with the same constraint.
+            if (!useField) {
               writeValidateConstraint(sw, p, elementClass, constraint, constraintDescriptorVar);
             }
           }
-        } else {
-          // The annotation has been looked at once already during this validate property call
-          // so we know the field and the getter are both annotated with the same constraint.
-          if (!useField) {
-            writeValidateConstraint(sw, p, elementClass, constraint, constraintDescriptorVar);
-          }
+          includedAnnotations.add(annotation);
         }
-        includedAnnotations.add(annotation);
+        count++;
       }
-      count++;
+      // }
+      sw.outdent();
+      sw.println("}");
     }
     sw.outdent();
     sw.println("}");

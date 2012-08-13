@@ -104,7 +104,7 @@ public abstract class AbstractGwtValidatorFactory implements ValidatorFactory {
         GWT.<ConstraintValidatorFactory>create(ConstraintValidatorFactory.class);
     TraversableResolver configTraversableResolver = configState.getTraversableResolver();
     this.traversableResolver = configTraversableResolver != null ?
-        configTraversableResolver : GWT.<TraversableResolver>create(TraversableResolver.class);
+        configTraversableResolver : new DefaultTraversableResolver();
     MessageInterpolator configMessageInterpolator = configState.getMessageInterpolator();
     this.messageInterpolator = configMessageInterpolator != null ?
         configMessageInterpolator : new GwtMessageInterpolator();

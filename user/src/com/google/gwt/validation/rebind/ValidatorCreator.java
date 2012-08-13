@@ -143,6 +143,9 @@ public final class ValidatorCreator extends AbstractCreator {
     // getMessageInterpolator(),
     sw.println("getMessageInterpolator(), ");
 
+    // getTraversableResolver(),
+    sw.println("getTraversableResolver(), ");
+
     // this);
     sw.println("this);");
     sw.outdent();

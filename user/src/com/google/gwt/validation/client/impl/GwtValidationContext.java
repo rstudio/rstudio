@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.validation.MessageInterpolator;
+import javax.validation.TraversableResolver;
 import javax.validation.metadata.BeanDescriptor;
 import javax.validation.metadata.ConstraintDescriptor;
 
@@ -42,6 +43,7 @@ public final class GwtValidationContext<T> {
   private final Class<T> rootBeanClass;
   private final T rootBean;
   private final MessageInterpolator messageInterpolator;
+  private final TraversableResolver traversableResolver;
   private final AbstractGwtValidator validator;
 
   /**
@@ -49,25 +51,26 @@ public final class GwtValidationContext<T> {
    * <p>
    * This set is shared with and updated by children contexts created by
    * {@link #append(String)}, {@link #appendIndex(String, int)} and
-   * {@link #appendKey(String, String)}.
+   * {@link #appendKey(String, Object)}.
    */
   private final Set<Object> validatedObjects;
 
-  public GwtValidationContext(Class<T> rootBeanClass, T rootBean,
-      BeanDescriptor beanDescriptor,
-      MessageInterpolator messageInterpolator, AbstractGwtValidator validator) {
-    this(rootBeanClass, rootBean, beanDescriptor, messageInterpolator,
+  public GwtValidationContext(Class<T> rootBeanClass, T rootBean, BeanDescriptor beanDescriptor,
+      MessageInterpolator messageInterpolator, TraversableResolver traversableResolver,
+      AbstractGwtValidator validator) {
+    this(rootBeanClass, rootBean, beanDescriptor, messageInterpolator, traversableResolver,
         validator,
         new HashSet<Object>());
   }
 
   private GwtValidationContext(Class<T> rootBeanClass, T rootBean, BeanDescriptor beanDescriptor,
-      MessageInterpolator messageInterpolator, AbstractGwtValidator validator,
-      Set<Object> validatedObjects) {
+      MessageInterpolator messageInterpolator, TraversableResolver traversableResolver, 
+      AbstractGwtValidator validator, Set<Object> validatedObjects) {
     this.rootBeanClass = rootBeanClass;
     this.rootBean = rootBean;
     this.beanDescriptor = beanDescriptor;
     this.messageInterpolator = messageInterpolator;
+    this.traversableResolver = traversableResolver;
     this.validator = validator;
     this.validatedObjects = new HashSet<Object>(validatedObjects);
   }
@@ -87,7 +90,7 @@ public final class GwtValidationContext<T> {
    */
   public GwtValidationContext<T> append(String name) {
     GwtValidationContext<T> temp = new GwtValidationContext<T>(rootBeanClass,
-        rootBean, beanDescriptor, messageInterpolator, validator,
+        rootBean, beanDescriptor, messageInterpolator, traversableResolver, validator,
         validatedObjects);
     temp.path = path.append(name);
     return temp;
@@ -100,7 +103,7 @@ public final class GwtValidationContext<T> {
    */
   public GwtValidationContext<T> appendIndex(String name, int index) {
     GwtValidationContext<T> temp = new GwtValidationContext<T>(rootBeanClass,
-        rootBean, beanDescriptor, messageInterpolator, validator,
+        rootBean, beanDescriptor, messageInterpolator, traversableResolver, validator,
         validatedObjects);
     temp.path = path.appendIndex(name, index);
     return temp;
@@ -113,7 +116,7 @@ public final class GwtValidationContext<T> {
    */
   public GwtValidationContext<T> appendIterable(String name) {
     GwtValidationContext<T> temp = new GwtValidationContext<T>(rootBeanClass,
-        rootBean, beanDescriptor, messageInterpolator, validator,
+        rootBean, beanDescriptor, messageInterpolator, traversableResolver, validator,
         validatedObjects);
     temp.path = path.appendIterable(name);
     return temp;
@@ -126,7 +129,7 @@ public final class GwtValidationContext<T> {
    */
   public GwtValidationContext<T> appendKey(String name, Object key) {
     GwtValidationContext<T> temp = new GwtValidationContext<T>(rootBeanClass,
-        rootBean, beanDescriptor, messageInterpolator, validator,
+        rootBean, beanDescriptor, messageInterpolator, traversableResolver, validator,
         validatedObjects);
     temp.path = path.appendKey(name, key);
     return temp;
@@ -141,12 +144,20 @@ public final class GwtValidationContext<T> {
     return messageInterpolator;
   }
 
+  public PathImpl getPath() {
+    return path;
+  }
+
   public T getRootBean() {
     return rootBean;
   }
 
   public Class<T> getRootBeanClass() {
     return rootBeanClass;
+  }
+
+  public TraversableResolver getTraversableResolver() {
+    return traversableResolver;
   }
 
   public AbstractGwtValidator getValidator() {

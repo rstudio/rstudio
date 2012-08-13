@@ -31,10 +31,6 @@
     class="com.google.gwt.validation.client.GwtMessageInterpolator">
     <when-type-is class="javax.validation.MessageInterpolator" />
   </replace-with>
-  <replace-with
-    class="com.google.gwt.validation.client.GwtTraversableResolver">
-    <when-type-is class="javax.validation.TraversableResolver" />
-  </replace-with>
 
   <replace-with
     class="com.google.gwt.validation.client.GwtValidationProviderResolver">

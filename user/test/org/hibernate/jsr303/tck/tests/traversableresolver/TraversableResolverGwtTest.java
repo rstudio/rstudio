@@ -17,7 +17,7 @@ package org.hibernate.jsr303.tck.tests.traversableresolver;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
+import javax.validation.ValidationException;
 
 /**
  * Test wrapper for {@link TraversableResolverTest}.
@@ -30,18 +30,23 @@ public class TraversableResolverGwtTest extends GWTTestCase {
     return "org.hibernate.jsr303.tck.tests.traversableresolver.TckTest";
   }
 
-  @Failing(issue = 6544)
   public void testCorrectNumberOfCallsToIsReachableAndIsCascadable() {
     delegate.testCorrectNumberOfCallsToIsReachableAndIsCascadable();
   }
 
-  @Failing(issue = 6544)
   public void testCustomTraversableResolverViaConfiguration() {
     delegate.testCustomTraversableResolverViaConfiguration();
   }
 
   public void testResolverExceptionsGetWrappedInValidationException() {
-    delegate.testResolverExceptionsGetWrappedInValidationException();
+    try {
+      delegate.testResolverExceptionsGetWrappedInValidationException();
+    } catch (ValidationException expected) {
+      Throwable cause = expected.getCause();
+      assertEquals(RuntimeException.class, cause.getClass());
+      assertTrue("isReachable failed".equals(cause.getMessage()) || 
+          "isCascadable failed".equals(cause.getMessage()));
+    }
   }
 
 }

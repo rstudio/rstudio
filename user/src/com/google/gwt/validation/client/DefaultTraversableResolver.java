@@ -25,22 +25,22 @@ import javax.validation.TraversableResolver;
  * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
  * production code.
  * <p>
- * GWT {@link TraversableResolver}.
+ * Default {@link TraversableResolver}. Always allows full traversal.
  */
-public final class GwtTraversableResolver implements TraversableResolver {
+public final class DefaultTraversableResolver implements TraversableResolver {
 
+  @Override
   public boolean isCascadable(Object traversableObject,
       Node traversableProperty, Class<?> rootBeanType,
       Path pathToTraversableObject, ElementType elementType) {
-    // TODO(nchalko) implement
-    return false;
+    return true;
   }
 
+  @Override
   public boolean isReachable(Object traversableObject,
       Node traversableProperty, Class<?> rootBeanType,
       Path pathToTraversableObject, ElementType elementType) {
-    // TODO(nchalko) implement
-    return false;
+    return true;
   }
 
 }
