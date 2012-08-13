@@ -23,11 +23,13 @@
 #include <core/FilePath.hpp>
 #include <core/BoostThread.hpp>
 
+#include "config.h"
+
 namespace core {
 namespace system {
 
 namespace {
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(HAVE_SCANDIR_POSIX)
 int entryFilter(struct dirent *entry)
 #else
 int entryFilter(const struct dirent *entry)

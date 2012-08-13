@@ -17,4 +17,5 @@
 #cmakedefine HAVE_GETPEEREID
 #cmakedefine HAVE_PROCSELF
 #cmakedefine HAVE_SETRESUID
+#cmakedefine HAVE_SCANDIR_POSIX
 #cmakedefine RSTUDIO_SERVER

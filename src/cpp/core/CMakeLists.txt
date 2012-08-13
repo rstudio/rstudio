@@ -97,6 +97,22 @@ set (CORE_SOURCE_FILES
 # UNIX specific
 if (UNIX)
 
+   include (CheckCXXSourceCompiles)
+   CHECK_CXX_SOURCE_COMPILES (
+   "# include <dirent.h>
+   int func (const char *d, dirent ***list, void *sort)
+   {
+      int n = scandir(d, list, 0, (int(*)(const dirent **, const dirent **))sort);
+      return n;
+   }
+
+   int main (int, char **)
+   {
+      return 0;
+   }
+   "
+   HAVE_SCANDIR_POSIX)
+
    # platform introspection
    check_symbol_exists(SA_NOCLDWAIT "signal.h" HAVE_SA_NOCLDWAIT)
    check_symbol_exists(SO_PEERCRED "sys/socket.h" HAVE_SO_PEERCRED)
