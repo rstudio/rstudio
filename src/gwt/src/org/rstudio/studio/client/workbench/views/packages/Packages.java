@@ -645,7 +645,7 @@ public class Packages
    {
       final ProgressIndicator indicator = 
          globalDisplay_.getProgressIndicator("Error");
-      indicator.onProgress("Retreiving package installation context...");
+      indicator.onProgress("Retrieving package installation context...");
 
       server_.getPackageInstallContext(
          new SimpleRequestCallback<PackageInstallContext>() {
