@@ -31,6 +31,13 @@ if(NOT WIN32)
          endif()
       endif()
    endif()
+else()
+   if(NOT QT_QMAKE_EXECUTABLE)
+      set(QMAKE_QT48_SDK "C:\\Qt\\4.8.2\\bin\\qmake.exe")
+      if(EXISTS ${QMAKE_QT48_SDK})
+         set(QT_QMAKE_EXECUTABLE ${QMAKE_QT48_SDK})
+      endif()
+   endif()
 endif()
 
 # find and include Qt
