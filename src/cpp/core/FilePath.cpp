@@ -312,6 +312,10 @@ uintmax_t FilePath::size() const
    }
    catch(const boost::filesystem::filesystem_error& e) 
    {
+#ifdef _WIN32
+      if (e.code().value() == ERROR_NOT_SUPPORTED)
+         return 0;
+#endif
       logError(pImpl_->path, e, ERROR_LOCATION) ;
       return 0;
    }
