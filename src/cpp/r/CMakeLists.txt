@@ -78,7 +78,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
 include_directories(
    include
    ${CMAKE_CURRENT_BINARY_DIR}
-   ${Boost_INCLUDE_DIRS}
    ${CORE_SOURCE_DIR}/include
    ${LIBR_INCLUDE_DIRS}
 )

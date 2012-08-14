@@ -147,6 +147,10 @@ else()
    find_package(Boost ${BOOST_VERSION} REQUIRED COMPONENTS ${BOOST_LIBS})
 endif()
 
+
+# add boost as system include directory
+include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
+
 # core library
 add_subdirectory(core)
 

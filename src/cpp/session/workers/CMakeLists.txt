@@ -26,7 +26,6 @@ set(SESSION_WORKERS_SOURCE_FILES
 
 # include directories
 include_directories(
-   ${Boost_INCLUDE_DIRS}
    ${CORE_SOURCE_DIR}/include
    ${SESSION_SOURCE_DIR}/include/session/worker_safe
 )

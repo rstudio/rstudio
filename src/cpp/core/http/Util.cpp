@@ -11,10 +11,6 @@
  *
  */
 
-// for boost posix_time
-#ifndef __clang__
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
-#endif
 
 #include <core/http/Util.hpp>
 

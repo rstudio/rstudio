@@ -145,7 +145,6 @@ endif(WIN32)
 # include directories
 include_directories(
   include
-  ${Boost_INCLUDE_DIRS}
   ${CORE_SOURCE_DIR}/include
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}

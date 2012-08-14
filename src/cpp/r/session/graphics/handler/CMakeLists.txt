@@ -42,7 +42,6 @@ set(R_GRAPHICS_HANDLER_SOURCE_FILES ${R_GRAPHICS_HANDLER_SOURCE_FILES}
 # include directories
 include_directories(
    ${R_GRAPHICS_HANDLER_SYSTEM_INCLUDE_DIRS}
-   ${Boost_INCLUDE_DIRS}
    ${CORE_SOURCE_DIR}/include
    ${R_SOURCE_DIR}/include
    ${LIBR_INCLUDE_DIRS}

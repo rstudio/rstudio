@@ -236,7 +236,6 @@ endif()
 include_directories(
    ${CORE_INCLUDE_DIRS}
    ${CMAKE_CURRENT_BINARY_DIR}
-   ${Boost_INCLUDE_DIRS}
 )
 
 # define shared library

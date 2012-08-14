@@ -165,7 +165,6 @@ endforeach()
 # set include directories
 include_directories(
    include
-   ${Boost_INCLUDE_DIRS}
    ${LIBR_INCLUDE_DIRS}
    ${CORE_INCLUDE_DIRS}
    ${R_SOURCE_DIR}/include

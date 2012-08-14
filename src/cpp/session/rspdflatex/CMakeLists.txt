@@ -18,7 +18,6 @@ file(GLOB_RECURSE RSPDFLATEX_HEADER_FILES "*.h*")
 
 # set include directories
 include_directories(
-   ${Boost_INCLUDE_DIRS}
    ${CORE_SOURCE_DIR}/include
 )
 

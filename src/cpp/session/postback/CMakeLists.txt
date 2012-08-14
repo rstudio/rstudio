@@ -24,7 +24,6 @@ set(POSTBACK_SOURCE_FILES
 
 # set include directories
 include_directories(
-   ${Boost_INCLUDE_DIRS}
    ${CORE_SOURCE_DIR}/include
    ${SESSION_SOURCE_DIR}/include
 )
