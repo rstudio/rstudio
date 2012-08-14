@@ -29,7 +29,7 @@ public class AceCompletionAdapter
       var noop = {command: "null"};
       return {
          handleKeyboard: $entry(function(data, hashId, keyOrText, keyCode, e) {
-            if (hashId || keyCode) {
+            if (hashId != -1 || keyCode) {
                if (self.@org.rstudio.studio.client.workbench.views.source.editors.text.AceCompletionAdapter::onKeyDown(Lcom/google/gwt/dom/client/NativeEvent;)(e)) {
                   event.stopEvent(e);
                   return noop; // perform a no-op
