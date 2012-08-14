@@ -16,7 +16,7 @@ set JUNIT_FILE=junit-4.9b3.jar
 set GNUDIFF_FILE=gnudiff.zip
 set GNUGREP_FILE=gnugrep-2.5.4.zip
 set MSYS_SSH_FILE=msys_ssh.zip
-set SUMATRA_PDF_FILE=SumatraPDF-2.0.1.zip
+set SUMATRA_PDF_FILE=SumatraPDF-2.1.1.zip
 
 if not exist boost-1.50-win (
   wget %WGET_ARGS% "%BASEURL%%BOOST_FILE%"
@@ -56,11 +56,11 @@ if not exist msys_ssh (
   del "%MSYS_SSH_FILE%"
 )
 
-if not exist sumatra (
+if not exist sumatra\2.1.1 (
   wget %WGET_ARGS% "%BASEURL%%SUMATRA_PDF_FILE%"
-  mkdir sumatra
+  mkdir sumatra\2.1.1
   echo Unzipping %SUMATRA_PDF_FILE%
-  unzip %UNZIP_ARGS% "%SUMATRA_PDF_FILE%" -d sumatra
+  unzip %UNZIP_ARGS% "%SUMATRA_PDF_FILE%" -d sumatra\2.1.1
   del "%SUMATRA_PDF_FILE%"
 )
 
