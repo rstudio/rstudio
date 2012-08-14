@@ -1241,20 +1241,22 @@ public final class CompilingClassLoader extends ClassLoader implements
       return javaScriptHostBytes;
     }
 
-    if (classRewriter != null && classRewriter.isJsoIntf(className)) {
-      // Generate a synthetic JSO interface class.
-      byte[] newBytes = classRewriter.writeJsoIntf(className);
-      if (CLASS_DUMP) {
-        classDump(className, newBytes);
-      }
-      return newBytes;
-    }
 
     // A JSO impl class needs the class bytes for the original class.
     String lookupClassName = canonicalizeClassName(className);
 
     CompiledClass compiledClass = compilationState.getClassFileMap().get(
         lookupClassName);
+
+    if (classRewriter != null && classRewriter.isJsoIntf(className)) {
+      // Generate a synthetic JSO interface class.
+      byte[] newBytes = classRewriter.writeJsoIntf(className, compiledClass != null ?
+        compiledClass.getBytes() : null);
+      if (CLASS_DUMP) {
+        classDump(className, newBytes);
+      }
+      return newBytes;
+    }
 
     CompilationUnit unit = (compiledClass == null)
         ? getUnitForClassName(lookupClassName) : compiledClass.getUnit();

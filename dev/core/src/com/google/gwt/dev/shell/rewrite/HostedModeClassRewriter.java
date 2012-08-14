@@ -16,16 +16,20 @@
 package com.google.gwt.dev.shell.rewrite;
 
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.asm.ClassAdapter;
 import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.ClassVisitor;
 import com.google.gwt.dev.asm.ClassWriter;
 import com.google.gwt.dev.asm.Opcodes;
+import com.google.gwt.dev.asm.commons.EmptyVisitor;
 import com.google.gwt.dev.asm.commons.Method;
+import com.google.gwt.dev.asm.util.TraceClassVisitor;
 import com.google.gwt.dev.shell.JsValueGlue;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
+import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -231,7 +235,6 @@ public class HostedModeClassRewriter {
 
     // v = new CheckClassAdapter(v);
     // v = new TraceClassVisitor(v, new PrintWriter(System.out));
-
     v = new UseMirroredClasses(v, className);
     
     v = new RewriteSingleJsoImplDispatches(v, typeOracle, jsoData);
@@ -253,7 +256,7 @@ public class HostedModeClassRewriter {
     return writer.toByteArray();
   }
 
-  public byte[] writeJsoIntf(String className) {
+  public byte[] writeJsoIntf(final String className, byte classBytes[]) {
     String desc = toDescriptor(className);
     assert (jsoIntfDescs.contains(desc));
     assert (jsoSuperDescs.containsKey(desc));
@@ -263,7 +266,7 @@ public class HostedModeClassRewriter {
 
     // The ASM model is to chain a bunch of visitors together.
     ClassWriter writer = new ClassWriter(0);
-    ClassVisitor v = writer;
+    final ClassVisitor v = writer;
 
     // v = new CheckClassAdapter(v);
     // v = new TraceClassVisitor(v, new PrintWriter(System.out));
@@ -277,6 +280,24 @@ public class HostedModeClassRewriter {
     }
     v.visit(Opcodes.V1_5, Opcodes.ACC_PUBLIC | Opcodes.ACC_INTERFACE, desc,
         null, "java/lang/Object", interfaces);
+    if (classBytes != null) {
+      // Java7 enforces innerclass/outerclass consistency. In order to fix this, copy from original
+      ClassAdapter cv = new ClassAdapter(new EmptyVisitor()) {
+        @Override
+        public void visitInnerClass(String name, String outerName, String innerName,
+            int access) {
+          // copy inner class table from original JSO to synthetic interface
+          v.visitInnerClass(name, outerName, innerName, access);
+        }
+
+        @Override
+        public void visitOuterClass(String owner, String name, String desc) {
+          // copy outer class table from original JSO to synthetic interface
+          v.visitOuterClass(owner, name, desc);
+        }
+      };
+      new ClassReader(classBytes).accept(cv, 0);
+    }
     v.visitEnd();
     return writer.toByteArray();
   }
