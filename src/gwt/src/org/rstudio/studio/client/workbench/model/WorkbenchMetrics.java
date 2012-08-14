@@ -22,11 +22,13 @@ public class WorkbenchMetrics extends JavaScriptObject
    
    public static final native WorkbenchMetrics create(int consoleWidth,
                                                       int graphicsWidth,
-                                                      int graphicsHeight) /*-{
+                                                      int graphicsHeight,
+                                                      int graphicsPointSize) /*-{
       var clientMetrics = new Object();
       clientMetrics.consoleWidth = consoleWidth ;
       clientMetrics.graphicsWidth = graphicsWidth ;
       clientMetrics.graphicsHeight = graphicsHeight ;
+      clientMetrics.graphicsPointSize = graphicsPointSize;
       return clientMetrics ;
    }-*/;
    
@@ -42,12 +44,17 @@ public class WorkbenchMetrics extends JavaScriptObject
       return this.graphicsHeight;
    }-*/;
    
+   public final native int getGraphicsPointSize() /*-{
+      return this.graphicsPointSize;
+   }-*/;
+   
    public final boolean equalTo(WorkbenchMetrics other)
    {  
       return (other != null &&
               getConsoleWidth() == other.getConsoleWidth() &&
               getGraphicsWidth() == other.getGraphicsWidth() && 
-              getGraphicsHeight() == other.getGraphicsHeight());
+              getGraphicsHeight() == other.getGraphicsHeight() &&
+              getGraphicsPointSize() == other.getGraphicsPointSize());
    }
    
    // are the metrics "close enough"to the previous ones such that we don't 

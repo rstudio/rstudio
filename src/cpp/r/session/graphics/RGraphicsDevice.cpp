@@ -69,6 +69,7 @@ boost::function<bool(double*,double*)> s_locatorFunction;
 // global size attributes (used to initialize new devices)
 int s_width = 0;
 int s_height = 0;   
+int s_pointSize = 0;
    
 // provide GraphicsDeviceEvents for plot manager
 GraphicsDeviceEvents s_graphicsDeviceEvents;   
@@ -386,7 +387,7 @@ void resyncDisplayList()
    pDev->deviceSpecific = pDC;
 
    // re-create with the correct size (don't set a file path)
-   if (!handler::initialize(s_width, s_height, true, pDC))
+   if (!handler::initialize(s_width, s_height, s_pointSize, true, pDC))
    {
       // if this fails we are dead so close the device
       close();
@@ -483,7 +484,7 @@ SEXP createGD()
 
       // allocate and initialize context
       DeviceContext* pDC = handler::allocate(pDev);
-      if (!handler::initialize(s_width, s_height, true, pDC))
+      if (!handler::initialize(s_width, s_height, s_pointSize, true, pDC))
       {
          handler::destroy(pDC);
 
@@ -682,6 +683,7 @@ bool usePangoCairoHandler()
     
 const int kDefaultWidth = 500;   
 const int kDefaultHeight = 500; 
+const int kDefaultPointSize = 16;
    
 Error initialize(
             const FilePath& graphicsPath,
@@ -718,7 +720,7 @@ Error initialize(
       return error;
    
    // set size
-   setSize(kDefaultWidth, kDefaultHeight);
+   setSize(kDefaultWidth, kDefaultHeight, kDefaultPointSize);
 
    // check for an incompatible graphics version before fully initializing.
    std::string message;
@@ -761,14 +763,15 @@ Error initialize(
 }
 
 
-void setSize(int width, int height)
+void setSize(int width, int height, int pointSize)
 {
    // only set if the values have changed (prevents unnecessary plot 
    // invalidations from occuring)
-   if ( width != s_width || height != s_height )
+   if ( width != s_width || height != s_height || pointSize != s_pointSize)
    {
       s_width = width;
       s_height = height;
+      s_pointSize = pointSize;
       
       // if there is a device active sync its size
       if (s_pGEDevDesc != NULL)
@@ -784,6 +787,11 @@ int getWidth()
 int getHeight()
 {
    return s_height;
+}
+
+int getPointSize()
+{
+   return s_pointSize;
 }
    
 void close()

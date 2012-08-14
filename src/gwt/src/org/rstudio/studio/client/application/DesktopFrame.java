@@ -77,6 +77,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    String chooseRVersion();
    boolean canChooseRVersion();
 
+   boolean isRetina();
+   
    void cleanClipboard();
    
    public static final int PENDING_RESTART_NONE = 0;

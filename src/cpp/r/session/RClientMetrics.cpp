@@ -32,6 +32,7 @@ namespace {
 const char * const kConsoleWidth = "r.session.client_metrics.console-width";
 const char * const kGraphicsWidth = "r.session.client_metrics.graphics-width";
 const char * const kGraphicsHeight = "r.session.client_metrics.graphics-height";
+const char * const kGraphicsPointSize = "r.session.client_metrics.graphics-pointsize";
 
 }   
    
@@ -41,6 +42,7 @@ RClientMetrics get()
    metrics.consoleWidth = r::options::getOptionWidth();
    metrics.graphicsWidth = graphics::device::getWidth();
    metrics.graphicsHeight = graphics::device::getHeight();
+   metrics.graphicsPointSize = graphics::device::getPointSize();
    return metrics;
 }
    
@@ -70,7 +72,7 @@ void set(const RClientMetrics& metrics)
       height = std::min(height, 10000);
 
       // set device size
-      graphics::device::setSize(width, height);
+      graphics::device::setSize(width, height, metrics.graphicsPointSize);
    }
 }
       
@@ -84,6 +86,7 @@ void save(Settings* pSettings)
    pSettings->set(kConsoleWidth, metrics.consoleWidth);
    pSettings->set(kGraphicsWidth, metrics.graphicsWidth);
    pSettings->set(kGraphicsHeight, metrics.graphicsHeight);
+   pSettings->set(kGraphicsPointSize, metrics.graphicsPointSize);
    pSettings->endUpdate();
 }
    
@@ -99,6 +102,8 @@ void restore(const Settings& settings)
    
    metrics.graphicsHeight = settings.getInt(kGraphicsHeight,
                                             graphics::device::kDefaultHeight);
+   metrics.graphicsPointSize = settings.getInt(kGraphicsPointSize,
+                                            graphics::device::kDefaultPointSize);
    
    // set them
    set(metrics);

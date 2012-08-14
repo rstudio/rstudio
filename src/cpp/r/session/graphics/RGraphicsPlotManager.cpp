@@ -262,6 +262,7 @@ Error PlotManager::savePlotAsImage(const FilePath& filePath,
       return savePlotAsFile(boost::bind(file_device::create,
                                         widthPx,
                                         heightPx,
+                                        16,
                                         filePath));
    }
    else if (format == kPngFormat ||

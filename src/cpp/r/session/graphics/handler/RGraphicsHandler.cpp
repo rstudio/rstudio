@@ -24,6 +24,7 @@ void (*destroy)(DeviceContext* pDC);
 bool (*initializeWithFile)(const core::FilePath& filePath,
                            int width,
                            int height,
+                           int pointSize,
                            bool displayListOn,
                            DeviceContext* pDC);
 

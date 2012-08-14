@@ -236,6 +236,7 @@ bool completeInitialization(CairoDeviceData* pCDD)
 bool initializeWithFile(const FilePath& filePath,
                         int width,
                         int height,
+                        int pointSize,
                         bool displayListOn,
                         DeviceContext* pDC)
 {
@@ -243,6 +244,7 @@ bool initializeWithFile(const FilePath& filePath,
    pDC->targetPath = filePath;
    pDC->width = width;
    pDC->height = height;
+   pDC->pointSize = pointSize;
 
    // initialize cairo context
    CairoDeviceData* pCDD = (CairoDeviceData*)pDC->pDeviceSpecific;

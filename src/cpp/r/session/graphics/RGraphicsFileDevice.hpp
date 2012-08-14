@@ -29,6 +29,7 @@ namespace file_device {
 
 core::Error create(int width,
                    int height,
+                   int pointSize,
                    const core::FilePath& targetPath);
 
 

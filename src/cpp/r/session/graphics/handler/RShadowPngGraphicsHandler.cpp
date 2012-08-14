@@ -113,11 +113,12 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
       PreserveCurrentDeviceScope preserveCurrentDeviceScope;
 
       // create PNG device (completely bail on error)
-      boost::format fmt("grDevices:::png(\"%1%\", %2%, %3%, pointsize = 16)");
+      boost::format fmt("grDevices:::png(\"%1%\", %2%, %3%, pointsize = %4%)");
       std::string code = boost::str(fmt %
                                     string_utils::utf8ToSystem(pDC->targetPath.absolutePath()) %
                                     pDC->width %
-                                    pDC->height);
+                                    pDC->height %
+                                    pDC->pointSize);
       Error err = r::exec::executeString(code);
       if (err)
          return err;
@@ -200,6 +201,7 @@ void shadowDevSync(DeviceContext* pDC)
 bool initializeWithFile(const FilePath& filePath,
                         int width,
                         int height,
+                        int pointSize,
                         bool displayListon,
                         DeviceContext* pDC)
 {
@@ -210,6 +212,7 @@ bool initializeWithFile(const FilePath& filePath,
       pDC->targetPath = filePath;
    pDC->width = width;
    pDC->height = height;
+   pDC->pointSize = pointSize;
 
    return true;
 }
@@ -335,12 +338,13 @@ Error writeToPNG(const FilePath& targetPath,
       pDevDesc dev = pDC->dev;
       int width = pDC->width;
       int height = pDC->height;
+      int pointSize = pDC->pointSize;
       handler::destroy(pDC);
       pDC = handler::allocate(dev);
       dev->deviceSpecific = pDC;
 
       // re-create with the correct size (don't set a file path)
-      if (!handler::initialize(width, height, true, pDC))
+      if (!handler::initialize(width, height, pointSize, true, pDC))
          return systemError(boost::system::errc::not_connected, ERROR_LOCATION);
 
       // now update the device structure

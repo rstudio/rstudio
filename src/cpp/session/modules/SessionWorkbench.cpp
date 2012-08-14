@@ -100,7 +100,8 @@ Error setWorkbenchMetrics(const json::JsonRpcRequest& request,
    Error error = json::readObjectParam(request.params, 0,
                                  "consoleWidth", &(metrics.consoleWidth),
                                  "graphicsWidth", &(metrics.graphicsWidth),
-                                 "graphicsHeight", &(metrics.graphicsHeight));
+                                 "graphicsHeight", &(metrics.graphicsHeight),
+                                 "graphicsPointSize", &(metrics.graphicsPointSize));
    if (error)
       return error;
    

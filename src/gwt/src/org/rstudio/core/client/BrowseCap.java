@@ -111,6 +111,28 @@ public class BrowseCap
       return isUserAgent("chromeframe");
    }
    
+   public static boolean isRetina() 
+   {
+      if (Desktop.isDesktop())
+         return Desktop.getFrame().isRetina();
+      else
+         return getIsRetina();
+   }
+   
+   private static native final boolean getIsRetina() /*-{
+      try
+      {
+         return ((('devicePixelRatio' in $wnd) && 
+                  ($wnd.devicePixelRatio == 2)) ||
+                (('matchMedia' in $wnd) && 
+                 $wnd.matchMedia("(min-resolution:144dpi)").matches));
+      }
+      catch(ex)
+      {
+         return false;
+      }
+   }-*/;
+   
    private static native final boolean isUserAgent(String uaTest) /*-{
       var ua = navigator.userAgent.toLowerCase();
       if (ua.indexOf(uaTest) != -1)

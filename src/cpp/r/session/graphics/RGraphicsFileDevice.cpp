@@ -130,7 +130,7 @@ int CFD_HoldFlush(pDevDesc dd, int level)
 }
 
 
-void createDevice(int width, int height, const FilePath& targetPath)
+void createDevice(int width, int height, int pointSize, const FilePath& targetPath)
 {
    R_CheckDeviceAvailable();
 
@@ -184,6 +184,7 @@ void createDevice(int width, int height, const FilePath& targetPath)
       initialized = handler::initializeWithFile(targetPath,
                                                 width,
                                                 height,
+                                                pointSize,
                                                 false,
                                                 pDC);
       if (!initialized)
@@ -225,13 +226,14 @@ void createDevice(int width, int height, const FilePath& targetPath)
 } // anonymous namespace
     
 
-Error create(int width, int height, const FilePath& targetPath)
+Error create(int width, int height, int pointSize, const FilePath& targetPath)
 {
    // execute but catch R errors and convert them to native errors
 
    return r::exec::executeSafely(boost::bind(createDevice,
                                                 width,
                                                 height,
+                                                pointSize,
                                                 targetPath));
 
 }

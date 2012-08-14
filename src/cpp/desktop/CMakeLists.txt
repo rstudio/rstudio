@@ -149,6 +149,12 @@ else()
   endif()
 endif(WIN32)
 
+if(APPLE)
+  set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
+    DesktopUtilsMac.mm
+  )
+endif()
+
 # include directories
 include_directories(
   include
@@ -210,7 +216,7 @@ if(WIN32)
 
 elseif(APPLE)
    find_library(APPLICATION_SERVICES_LIBRARY NAMES ApplicationServices)
-   set(LINK_FLAGS ${APPLICATION_SERVICES_LIBRARY})
+   find_library(COCOA_LIBRARY NAMES Cocoa)
 endif(WIN32)
 
 
@@ -275,7 +281,8 @@ else()
    target_link_libraries(RStudio
       ${QT_LIBRARIES}
       rstudio-core
-      ${LINK_FLAGS})
+      ${APPLICATION_SERVICES_LIBRARY}
+      ${COCOA_LIBRARY})
 
 endif()
 

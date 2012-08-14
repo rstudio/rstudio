@@ -27,7 +27,8 @@ namespace graphics {
 namespace device {
    
 extern const int kDefaultWidth;
-extern const int kDefaultHeight;    
+extern const int kDefaultHeight;
+extern const int kDefaultPointSize;
    
 // initialize
 core::Error initialize(
@@ -35,9 +36,10 @@ core::Error initialize(
           const boost::function<bool(double*,double*)>& locatorFunction);
    
 // device size
-void setSize(int width, int height);
+void setSize(int width, int height, int pointSize);
 int getWidth();
 int getHeight();
+int getPointSize();
 
 // reset
 void close();
