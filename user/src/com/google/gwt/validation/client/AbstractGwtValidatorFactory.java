@@ -110,10 +110,14 @@ public abstract class AbstractGwtValidatorFactory implements ValidatorFactory {
         configMessageInterpolator : new GwtMessageInterpolator();
   }
 
+  /**
+   * Unsupported. Always throws an {@link UnsupportedOperationException}.
+   * 
+   * @throws UnsupportedOperationException
+   */
   @Override
   public final <T> T unwrap(Class<T> type) {
-    // TODO(nchalko) implement
-    return null;
+    throw new UnsupportedOperationException("GWT Validation does not support upwrap()");
   }
 
   @Override

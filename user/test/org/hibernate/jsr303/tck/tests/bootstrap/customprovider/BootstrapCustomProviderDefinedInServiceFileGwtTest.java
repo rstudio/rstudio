@@ -17,8 +17,9 @@ package org.hibernate.jsr303.tck.tests.bootstrap.customprovider;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
 import org.hibernate.jsr303.tck.util.client.NonTckTest;
+import org.hibernate.jsr303.tck.util.client.NotSupported;
+import org.hibernate.jsr303.tck.util.client.NotSupported.Reason;
 
 /**
  * Wraps {@link BootstrapCustomProviderDefinedInServiceFileTest} .
@@ -31,14 +32,14 @@ public class BootstrapCustomProviderDefinedInServiceFileGwtTest extends
     return "org.hibernate.jsr303.tck.tests.bootstrap.customprovider.TckTest";
   }
 
-  @Failing(issue = 6663)
+  @NotSupported(reason = Reason.CUSTOM_PROVIDERS)
   public void testGetFactoryByProviderSpecifiedProgrammatically() {
-    fail("TODO(nchalko) figure out how to test this in GWT");
+    fail("Custom validation providers are not supported");
   }
 
-  @Failing(issue = 6663)
+  @NotSupported(reason = Reason.CUSTOM_PROVIDERS)
   public void testProviderResolverReturnsListOfAvailableProviders() {
-    fail("TODO(nchalko) figure out how to test this in GWT");
+    fail("Custom validation providers are not supported");
   }
 
   @NonTckTest

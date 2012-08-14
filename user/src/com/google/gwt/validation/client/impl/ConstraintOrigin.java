@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client;
+package com.google.gwt.validation.client.impl;
 
 /**
  * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in

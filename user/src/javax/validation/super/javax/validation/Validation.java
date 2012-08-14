@@ -16,7 +16,7 @@
 package javax.validation;
 
 /**
- * Pass through to GWT version {@link com.google.gwt.validation.client.Validation}.
+ * Pass through to GWT version {@link com.google.gwt.validation.client.impl.Validation}.
  */
-public class Validation  extends com.google.gwt.validation.client.impl.Validation {
+public class Validation extends com.google.gwt.validation.client.impl.Validation {
 }

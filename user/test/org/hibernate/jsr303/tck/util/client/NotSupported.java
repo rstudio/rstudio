@@ -37,7 +37,7 @@ public @interface NotSupported {
    * Constants for why a test is not supported.
    */
   public enum Reason {
-    XML, IO, CALENDAR, CONSTRAINT_VALIDATOR_FACTORY
+    XML, IO, CALENDAR, CONSTRAINT_VALIDATOR_FACTORY, CUSTOM_PROVIDERS
   }
 
   /**

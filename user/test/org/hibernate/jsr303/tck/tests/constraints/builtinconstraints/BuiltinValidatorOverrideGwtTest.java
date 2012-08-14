@@ -17,7 +17,8 @@ package org.hibernate.jsr303.tck.tests.constraints.builtinconstraints;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
+import org.hibernate.jsr303.tck.util.client.NotSupported;
+import org.hibernate.jsr303.tck.util.client.NotSupported.Reason;
 
 /**
  * Test wrapper for {@link BuiltinValidatorOverrideTest}.
@@ -30,8 +31,8 @@ public class BuiltinValidatorOverrideGwtTest extends GWTTestCase {
     return "org.hibernate.jsr303.tck.tests.constraints.builtinconstraints.TckTest";
   }
 
-  @Failing(issue = 6285)
+  @NotSupported(reason = Reason.XML)
   public void testXmlConfiguredValidatorConfigurationHasPrecedence() {
-    fail("TODO(nchalko): Pass the overrides to hibernate at gwt compile time fromthe GWT module.");
+    fail("XML configuration is not supported");
   }
 }

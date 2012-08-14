@@ -32,73 +32,37 @@ import javax.validation.spi.ValidationProvider;
  * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
  * production code.
  * <p>
- * This class is the entry point for Bean Validation. There are three ways to
- * bootstrap it:
- * <ul>
- * <li>
- * The easiest approach is to build the default <code>ValidatorFactory</code>.
+ * This class is the entry point for Bean Validation. Bootstrapping is done as follows:
  * 
  * <pre>{@code ValidatorFactory factory = Validation.buildDefaultValidatorFactory();}</pre>
- * In this case, the default validation provider resolver will be used to locate
- * available providers. The chosen provider is defined as followed:
- * <ul>
- * <li>Since GWT does not support XML configuration, the first provider returned
- * by the <code>ValidationProviderResolver</code> instance is used.</li>
- * </ul>
- * </li>
- * <li>
- * The second bootstrap approach allows to choose a custom
- * <code>ValidationProviderResolver</code>. The chosen
- * <code>ValidationProvider</code> is then determined in the same way as in the
- * default bootstrapping case (see above).
+ * 
+ * Or, equivalently:
  * 
  * <pre>{@code
  * Configuration<?> configuration = Validation
  *    .byDefaultProvider()
- *    .providerResolver( new MyResolverStrategy() )
  *    .configure();
  * ValidatorFactory factory = configuration.buildValidatorFactory();}
  * </pre>
- * </li>
- * <li>
- * The third approach allows you to specify explicitly and in a type safe
- * fashion the expected provider.
- * <p/>
- * Optionally you can choose a custom <code>ValidationProviderResolver</code>.
  * 
- * <pre>{@code
- * ACMEConfiguration configuration = Validation
- *    .byProvider(ACMEProvider.class)
- *    .providerResolver( new MyResolverStrategy() )  // optionally set the provider resolver
- *    .configure();
- * ValidatorFactory factory = configuration.buildValidatorFactory();}
- * </pre>
- * </li>
- * </ul>
- * Note:<br/>
- * <ul>
- * <li>
- * The <code>ValidatorFactory</code> object built by the bootstrap process
- * should be cached and shared amongst <code>Validator</code> consumers.</li>
- * <li>
- * This class is thread-safe.</li>
- * </ul>
- * 
+ * Only the default provider is available for use, and thus the {@code byProvider} and 
+ * {@code providerResolver} methods are not supported. Calling either of these methods will
+ * generate an exception.
+ * <p>
  * This class was modified by Google from the original
  * javax.validation.Validation source to make it suitable for GWT.
  */
 public class Validation {
 
   // private class, not exposed
-  private static class GenericBootstrapImpl implements GenericBootstrap,
+  private static class GenericGWTBootstrapImpl implements GenericBootstrap,
       BootstrapState {
 
     private ValidationProviderResolver defaultResolver;
-    private ValidationProviderResolver resolver;
 
+    @Override
     public Configuration<?> configure() {
-      ValidationProviderResolver aResolver = this.resolver == null
-          ? getDefaultValidationProviderResolver() : this.resolver;
+      ValidationProviderResolver aResolver = getDefaultValidationProviderResolver();
 
       List<ValidationProvider<?>> resolvers;
       try {
@@ -125,6 +89,7 @@ public class Validation {
       return config;
     }
 
+    @Override
     public ValidationProviderResolver getDefaultValidationProviderResolver() {
       if (defaultResolver == null) {
         defaultResolver = GWT.create(ValidationProviderResolver.class);
@@ -132,81 +97,20 @@ public class Validation {
       return defaultResolver;
     }
 
+    @Override
     public ValidationProviderResolver getValidationProviderResolver() {
-      return resolver;
+      return getDefaultValidationProviderResolver();
     }
 
+    /**
+     * Unsupported. Always throws an {@link UnsupportedOperationException}.
+     * 
+     * @throws UnsupportedOperationException
+     */
+    @Override
     public GenericBootstrap providerResolver(ValidationProviderResolver resolver) {
-      this.resolver = resolver;
-      return this;
-    }
-  }
-
-  // private class, not exposed
-  private static class ProviderSpecificBootstrapImpl
-      <T extends Configuration<T>, U extends ValidationProvider<T>>
-      implements ProviderSpecificBootstrap<T> {
-
-    private ValidationProviderResolver resolver;
-    private final Class<U> validationProviderClass;
-
-    public ProviderSpecificBootstrapImpl(Class<U> validationProviderClass) {
-      this.validationProviderClass = validationProviderClass;
-    }
-
-    /**
-     * Determine the provider implementation suitable for byProvider(Class) and
-     * delegate the creation of this specific Configuration subclass to the
-     * provider.
-     *
-     * @return a Configuration sub interface implementation
-     */
-    public T configure() {
-      if (validationProviderClass == null) {
-        throw new ValidationException(
-            "builder is mandatory. Use Validation.byDefaultProvider() to use the generic provider discovery mechanism");
-      }
-      // used mostly as a BootstrapState
-      GenericBootstrapImpl state = new GenericBootstrapImpl();
-      if (resolver == null) {
-        resolver = state.getDefaultValidationProviderResolver();
-      } else {
-        // stay null if no resolver is defined
-        state.providerResolver(resolver);
-      }
-
-      List<ValidationProvider<?>> resolvers;
-      try {
-        resolvers = resolver.getValidationProviders();
-      } catch (RuntimeException re) {
-        throw new ValidationException(
-            "Unable to get available provider resolvers.", re);
-      }
-
-      for (ValidationProvider<?> provider : resolvers) {
-        // GWT validation only support exact matches.
-        if (validationProviderClass.equals(provider.getClass())) {
-          @SuppressWarnings("unchecked")
-          ValidationProvider<T> specificProvider = (ValidationProvider<T>) provider;
-          return specificProvider.createSpecializedConfiguration(state);
-        }
-      }
-      throw new ValidationException("Unable to find provider: "
-          + validationProviderClass);
-    }
-
-    /**
-     * Optionally define the provider resolver implementation used. If not
-     * defined, use the default ValidationProviderResolver
-     *
-     * @param resolver ValidationProviderResolver implementation used
-     *
-     * @return self
-     */
-    public ProviderSpecificBootstrap<T> providerResolver(
-        ValidationProviderResolver resolver) {
-      this.resolver = resolver;
-      return this;
+      throw new UnsupportedOperationException("GWT Validation does not support custom validator " +
+          "provider resolvers");
     }
   }
 
@@ -229,13 +133,11 @@ public class Validation {
   }
 
   /**
-   * Build a <code>Configuration</code>. The provider list is resolved using the
-   * strategy provided to the bootstrap state.
+   * Build a <code>Configuration</code>.
    *
    * <pre>
    * Configuration&lt?&gt; configuration = Validation
    *    .byDefaultProvider()
-   *    .providerResolver( new MyResolverStrategy() )
    *    .configure();
    * ValidatorFactory factory = configuration.buildValidatorFactory();
    * </pre>
@@ -246,35 +148,18 @@ public class Validation {
    *         with the bootstrap state provided.
    */
   public static GenericBootstrap byDefaultProvider() {
-    return new GenericBootstrapImpl();
+    return new GenericGWTBootstrapImpl();
   }
 
   /**
-   * Build a <code>Configuration</code> for a particular provider
-   * implementation. Optionally overrides the provider resolution strategy used
-   * to determine the provider.
-   * <p/>
-   * Used by applications targeting a specific provider programmatically.
-   * <p/>
-   *
-   * <pre>
-   * ACMEConfiguration configuration =
-   *     Validation.byProvider(ACMEProvider.class)
-   *             .providerResolver( new MyResolverStrategy() )
-   *             .configure();
-   * </pre>
-   * , where <code>ACMEConfiguration</code> is the <code>Configuration</code>
-   * sub interface uniquely identifying the ACME Bean Validation provider. and
-   * <code>ACMEProvider</code> is the <code>ValidationProvider</code>
-   * implementation of the ACME provider.
-   *
-   * @param providerType the <code>ValidationProvider</code> implementation type
-   *
-   * @return instance building a provider specific <code>Configuration</code>
-   *         sub interface implementation.
+   * Unsupported. Always throws an {@link UnsupportedOperationException}.
+   * @param providerType 
+   * 
+   * @throws UnsupportedOperationException
    */
   public static <T extends Configuration<T>,U extends ValidationProvider<T>>
       ProviderSpecificBootstrap<T> byProvider(Class<U> providerType) {
-    return new ProviderSpecificBootstrapImpl<T, U>(providerType);
+    throw new UnsupportedOperationException("GWT Validation does not support custom validator " +
+        "providers");
   }
 }

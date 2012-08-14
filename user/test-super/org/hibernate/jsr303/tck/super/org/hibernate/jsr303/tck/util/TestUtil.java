@@ -36,7 +36,7 @@ import javax.validation.Path;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 import javax.validation.Validation;
-import javax.validation.bootstrap.ProviderSpecificBootstrap;
+import javax.validation.bootstrap.GenericBootstrap;
 import javax.validation.metadata.ConstraintDescriptor;
 import javax.validation.metadata.ElementDescriptor;
 import javax.validation.metadata.PropertyDescriptor;
@@ -79,8 +79,7 @@ public final class TestUtil {
       instantiateValidationProviderUnderTest();
     }
 
-    ProviderSpecificBootstrap<?> bootstrap =
-    Validation.byProvider(validationProviderUnderTest.getClass());
+    GenericBootstrap bootstrap = Validation.byDefaultProvider();
     return bootstrap.configure();
   }
 

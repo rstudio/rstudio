@@ -17,8 +17,9 @@ package org.hibernate.jsr303.tck.tests.bootstrap;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
 import org.hibernate.jsr303.tck.util.client.NonTckTest;
+import org.hibernate.jsr303.tck.util.client.NotSupported;
+import org.hibernate.jsr303.tck.util.client.NotSupported.Reason;
 
 /**
  * Wraps {@link ValidationProviderResolverTest} .
@@ -30,9 +31,9 @@ public class ValidationProviderResolverGwtTest extends GWTTestCase {
     return "org.hibernate.jsr303.tck.tests.bootstrap.TckTest";
   }
 
-  @Failing(issue = 6663)
+  @NotSupported(reason = Reason.IO)
   public void testServiceFileExists() {
-    fail("TODO(nchalko) figure out how to test this in GWT");
+    fail("Customization via a file is not possible in GWT");
   }
 
   @NonTckTest

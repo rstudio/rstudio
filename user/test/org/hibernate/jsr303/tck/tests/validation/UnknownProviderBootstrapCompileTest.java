@@ -16,10 +16,9 @@
 package org.hibernate.jsr303.tck.tests.validation;
 
 import org.hibernate.jsr303.tck.util.TckCompileTestCase;
-import org.hibernate.jsr303.tck.util.client.Failing;
 import org.hibernate.jsr303.tck.util.client.NonTckTest;
-
-import javax.validation.ValidationException;
+import org.hibernate.jsr303.tck.util.client.NotSupported;
+import org.hibernate.jsr303.tck.util.client.NotSupported.Reason;
 
 /**
  * Test wrapper for {@link UnknownProviderBootstrapTest} methods that are
@@ -30,10 +29,8 @@ public class UnknownProviderBootstrapCompileTest extends TckCompileTestCase {
   @NonTckTest
   public void testThereMustBeOnePassingTest() {}
 
-  @Failing(issue = 6573)
+  @NotSupported(reason = Reason.CUSTOM_PROVIDERS)
   public void testUnknownProviderThrowsValidationException() {
-    assertValidatorFailsToCompile(TckTestValidatorFactory.GwtValidator.class,
-        ValidationException.class,
-        "TODO(nchalko): get this to actually fail in the test.");
+    fail("Custom validation providers are not supported so an unknown provider should never occur");
   }
 }

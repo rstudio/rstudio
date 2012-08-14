@@ -15,7 +15,6 @@
  */
 package com.google.gwt.validation.client.impl;
 
-import com.google.gwt.validation.client.ConstraintOrigin;
 import com.google.gwt.validation.client.impl.metadata.BeanMetadata;
 import com.google.gwt.validation.client.impl.metadata.ValidationGroupsMetadata;
 

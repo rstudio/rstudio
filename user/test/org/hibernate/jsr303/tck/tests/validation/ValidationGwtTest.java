@@ -15,8 +15,9 @@
  */
 package org.hibernate.jsr303.tck.tests.validation;
 
+import org.hibernate.jsr303.tck.util.client.NotSupported;
+import org.hibernate.jsr303.tck.util.client.NotSupported.Reason;
 import org.hibernate.jsr303.tck.util.client.TestNotCompatible;
-import org.hibernate.jsr303.tck.util.client.TestNotCompatible.Reason;
 
 /**
  * Test wrapper for {@link ValidationTest}.
@@ -29,15 +30,17 @@ public class ValidationGwtTest extends AbstractValidationTest {
     delegate.testBuildDefaultValidatorFactory();
   }
 
+  @NotSupported(reason = Reason.CUSTOM_PROVIDERS)
   public void testCustomValidationProviderResolution() {
-    delegate.testCustomValidationProviderResolution();
+    fail("Custom validation providers are not supported");
   }
 
+  @NotSupported(reason = Reason.CUSTOM_PROVIDERS)
   public void testSpecificValidationProvider() {
-    delegate.testSpecificValidationProvider();
+    fail("Custom validation providers are not supported");
   }
 
-  @TestNotCompatible(reason = Reason.REFLECTION, 
+  @TestNotCompatible(reason = TestNotCompatible.Reason.REFLECTION, 
       whereTested = "This test checks the methods of the API itself, it does not need to be tested here also.")
   public void testVerifyMethodsOfValidationObjects() {
     // This method is excluded because it does not compile.

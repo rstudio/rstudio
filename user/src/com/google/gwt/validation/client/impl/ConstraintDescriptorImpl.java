@@ -15,8 +15,6 @@
  */
 package com.google.gwt.validation.client.impl;
 
-import com.google.gwt.validation.client.ConstraintOrigin;
-
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.util.Arrays;

@@ -15,8 +15,6 @@
  */
 package org.hibernate.jsr303.tck.tests.validation;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
-
 /**
  * Test wrapper for {@link PropertyPathTest}.
  */
