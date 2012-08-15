@@ -26,6 +26,13 @@ using namespace core;
 
 namespace desktop {
 
+#ifndef Q_OS_MAC
+bool isRetina(QMainWindow* pMainWindow)
+{
+   return false;
+}
+#endif
+
 void raiseAndActivateWindow(QWidget* pWindow)
 {
    // WId wid = pWindow->effectiveWinId(); -- gets X11 window id

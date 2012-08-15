@@ -16,8 +16,11 @@
 
 #include <QUrl>
 #include <QMessageBox>
+#include <QMainWindow>
 
 namespace desktop {
+
+bool isRetina(QMainWindow* pMainWindow);
 
 void raiseAndActivateWindow(QWidget* pWindow);
 

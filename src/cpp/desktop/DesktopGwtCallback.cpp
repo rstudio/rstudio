@@ -377,6 +377,11 @@ bool GwtCallback::canChooseRVersion()
 #endif
 }
 
+bool GwtCallback::isRetina()
+{
+   return desktop::isRetina(pMainWindow_);
+}
+
 void GwtCallback::openMinimalWindow(QString name,
                                     QString url,
                                     int width,

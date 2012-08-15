@@ -73,6 +73,8 @@ public slots:
    QString chooseRVersion();
    bool canChooseRVersion();
 
+   bool isRetina();
+
    void openMinimalWindow(QString name, QString url, int width, int height);
    void activateSatelliteWindow(QString name);
    void prepareForSatelliteWindow(QString name, int width, int height);
