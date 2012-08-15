@@ -198,8 +198,8 @@ well as menu structures (for main menu and popup menus).
       </menu>
       
       <menu label="_Build">
-         <cmd refid="buildAll"/>
          <cmd refid="devtoolsLoadAll"/>
+         <cmd refid="buildAll"/>
          <separator/>
          <cmd refid="rebuildAll"/>
          <cmd refid="cleanAll"/>
@@ -1049,8 +1049,8 @@ well as menu structures (for main menu and popup menus).
         desc="Build and reload the package"/>
         
    <cmd id="rebuildAll"
-        menuLabel="_Rebuild All"
-        desc="Rebuild all"/>
+        menuLabel="Clean and _Rebuild"
+        desc="Clean prevoius output and rebuild all"/>
         
    <cmd id="cleanAll"
         menuLabel="_Clean All"
