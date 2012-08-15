@@ -24,7 +24,7 @@ void (*destroy)(DeviceContext* pDC);
 bool (*initializeWithFile)(const core::FilePath& filePath,
                            int width,
                            int height,
-                           int pointSize,
+                           bool isRetina,
                            bool displayListOn,
                            DeviceContext* pDC);
 

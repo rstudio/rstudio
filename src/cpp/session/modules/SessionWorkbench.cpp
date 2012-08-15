@@ -101,7 +101,7 @@ Error setWorkbenchMetrics(const json::JsonRpcRequest& request,
                                  "consoleWidth", &(metrics.consoleWidth),
                                  "graphicsWidth", &(metrics.graphicsWidth),
                                  "graphicsHeight", &(metrics.graphicsHeight),
-                                 "graphicsPointSize", &(metrics.graphicsPointSize));
+                                 "isRetina", &(metrics.isRetina));
    if (error)
       return error;
    

@@ -39,7 +39,7 @@ struct DeviceContext
          pDeviceSpecific(NULL),
          width(0),
          height(0),
-         pointSize(0),
+         isRetina(false),
          dev(ownerDev) {}
 
    // platform specific device info
@@ -49,7 +49,7 @@ struct DeviceContext
    core::FilePath targetPath;
    int width;
    int height;
-   int pointSize;
+   bool isRetina;
 
    // back pointer to owning device
    pDevDesc dev;
@@ -61,20 +61,20 @@ extern void (*destroy)(DeviceContext* pDC);
 extern bool (*initializeWithFile)(const core::FilePath& filePath,
                                   int width,
                                   int height,
-                                  int pointSize,
+                                  bool isRetina,
                                   bool displayListOn,
                                   DeviceContext* pDC);
 
 inline bool initialize(int width,
                        int height,
-                       int pointSize,
+                       bool isRetina,
                        bool displayListOn,
                        DeviceContext* pDC)
 {
    return initializeWithFile(core::FilePath(),
                              width,
                              height,
-                             pointSize,
+                             isRetina,
                              displayListOn,
                              pDC);
 }

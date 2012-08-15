@@ -28,7 +28,7 @@ namespace device {
    
 extern const int kDefaultWidth;
 extern const int kDefaultHeight;
-extern const int kDefaultPointSize;
+extern const bool kDefaultIsRetina;
    
 // initialize
 core::Error initialize(
@@ -36,10 +36,10 @@ core::Error initialize(
           const boost::function<bool(double*,double*)>& locatorFunction);
    
 // device size
-void setSize(int width, int height, int pointSize);
+void setSize(int width, int height, bool isRetina);
 int getWidth();
 int getHeight();
-int getPointSize();
+int isRetina();
 
 // reset
 void close();

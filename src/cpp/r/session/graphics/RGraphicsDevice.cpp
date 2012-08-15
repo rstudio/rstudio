@@ -69,7 +69,7 @@ boost::function<bool(double*,double*)> s_locatorFunction;
 // global size attributes (used to initialize new devices)
 int s_width = 0;
 int s_height = 0;   
-int s_pointSize = 0;
+bool s_isRetina = 0;
    
 // provide GraphicsDeviceEvents for plot manager
 GraphicsDeviceEvents s_graphicsDeviceEvents;   
@@ -387,7 +387,7 @@ void resyncDisplayList()
    pDev->deviceSpecific = pDC;
 
    // re-create with the correct size (don't set a file path)
-   if (!handler::initialize(s_width, s_height, s_pointSize, true, pDC))
+   if (!handler::initialize(s_width, s_height, s_isRetina, true, pDC))
    {
       // if this fails we are dead so close the device
       close();
@@ -484,7 +484,7 @@ SEXP createGD()
 
       // allocate and initialize context
       DeviceContext* pDC = handler::allocate(pDev);
-      if (!handler::initialize(s_width, s_height, s_pointSize, true, pDC))
+      if (!handler::initialize(s_width, s_height, s_isRetina, true, pDC))
       {
          handler::destroy(pDC);
 
@@ -683,7 +683,7 @@ bool usePangoCairoHandler()
     
 const int kDefaultWidth = 500;   
 const int kDefaultHeight = 500; 
-const int kDefaultPointSize = 16;
+const bool kDefaultIsRetina = false;
    
 Error initialize(
             const FilePath& graphicsPath,
@@ -720,7 +720,7 @@ Error initialize(
       return error;
    
    // set size
-   setSize(kDefaultWidth, kDefaultHeight, kDefaultPointSize);
+   setSize(kDefaultWidth, kDefaultHeight, kDefaultIsRetina);
 
    // check for an incompatible graphics version before fully initializing.
    std::string message;
@@ -763,15 +763,15 @@ Error initialize(
 }
 
 
-void setSize(int width, int height, int pointSize)
+void setSize(int width, int height, bool isRetina)
 {
    // only set if the values have changed (prevents unnecessary plot 
    // invalidations from occuring)
-   if ( width != s_width || height != s_height || pointSize != s_pointSize)
+   if ( width != s_width || height != s_height || isRetina != s_isRetina)
    {
       s_width = width;
       s_height = height;
-      s_pointSize = pointSize;
+      s_isRetina = isRetina;
       
       // if there is a device active sync its size
       if (s_pGEDevDesc != NULL)
@@ -789,9 +789,9 @@ int getHeight()
    return s_height;
 }
 
-int getPointSize()
+int isRetina()
 {
-   return s_pointSize;
+   return s_isRetina;
 }
    
 void close()

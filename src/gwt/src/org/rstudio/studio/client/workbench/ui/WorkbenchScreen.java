@@ -250,21 +250,11 @@ public class WorkbenchScreen extends Composite
       Size plotsSize = new Size(
                Math.max(deckPanelSize.width, 0),
                Math.max(deckPanelSize.height - Toolbar.DEFAULT_HEIGHT, 0));
-   
-      int width = plotsSize.width;
-      int height = plotsSize.height;
-      int pointSize = 16;
-      if (BrowseCap.isRetina())
-      {
-         width = width * 2;
-         height = height * 2;
-         pointSize = pointSize * 2;
-      }
       
       WorkbenchMetrics metrics = WorkbenchMetrics.create(consoleWidth,
-                                                         width,
-                                                         height,
-                                                         pointSize);
+                                                         plotsSize.width,
+                                                         plotsSize.height,
+                                                         BrowseCap.isRetina());
 
       // make sure we don't send very similar metrics values twice (it is
       // an expensive operation since it involves at least 2 http requests)
@@ -325,7 +315,7 @@ public class WorkbenchScreen extends Composite
 
    private TimeBufferedCommand paneSizesChangedCommand_;
 
-   private WorkbenchMetrics lastMetrics_ = WorkbenchMetrics.create(0,0,0,0);
+   private WorkbenchMetrics lastMetrics_ = WorkbenchMetrics.create(0,0,0,false);
    
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;

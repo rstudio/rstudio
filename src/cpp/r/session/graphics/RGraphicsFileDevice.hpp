@@ -29,7 +29,7 @@ namespace file_device {
 
 core::Error create(int width,
                    int height,
-                   int pointSize,
+                   bool isRetina,
                    const core::FilePath& targetPath);
 
 

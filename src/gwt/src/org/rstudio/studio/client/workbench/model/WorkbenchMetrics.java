@@ -23,12 +23,12 @@ public class WorkbenchMetrics extends JavaScriptObject
    public static final native WorkbenchMetrics create(int consoleWidth,
                                                       int graphicsWidth,
                                                       int graphicsHeight,
-                                                      int graphicsPointSize) /*-{
+                                                      boolean isRetina) /*-{
       var clientMetrics = new Object();
       clientMetrics.consoleWidth = consoleWidth ;
       clientMetrics.graphicsWidth = graphicsWidth ;
       clientMetrics.graphicsHeight = graphicsHeight ;
-      clientMetrics.graphicsPointSize = graphicsPointSize;
+      clientMetrics.isRetina = isRetina;
       return clientMetrics ;
    }-*/;
    
@@ -44,8 +44,8 @@ public class WorkbenchMetrics extends JavaScriptObject
       return this.graphicsHeight;
    }-*/;
    
-   public final native int getGraphicsPointSize() /*-{
-      return this.graphicsPointSize;
+   public final native int isRetina() /*-{
+      return this.isRetina;
    }-*/;
    
    public final boolean equalTo(WorkbenchMetrics other)
@@ -54,7 +54,7 @@ public class WorkbenchMetrics extends JavaScriptObject
               getConsoleWidth() == other.getConsoleWidth() &&
               getGraphicsWidth() == other.getGraphicsWidth() && 
               getGraphicsHeight() == other.getGraphicsHeight() &&
-              getGraphicsPointSize() == other.getGraphicsPointSize());
+              isRetina() == other.isRetina());
    }
    
    // are the metrics "close enough"to the previous ones such that we don't 
