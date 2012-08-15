@@ -69,7 +69,7 @@ boost::function<bool(double*,double*)> s_locatorFunction;
 // global size attributes (used to initialize new devices)
 int s_width = 0;
 int s_height = 0;   
-bool s_isRetina = 0;
+bool s_isRetina = false;
    
 // provide GraphicsDeviceEvents for plot manager
 GraphicsDeviceEvents s_graphicsDeviceEvents;   
