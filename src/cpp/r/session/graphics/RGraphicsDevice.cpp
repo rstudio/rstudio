@@ -387,7 +387,7 @@ void resyncDisplayList()
    pDev->deviceSpecific = pDC;
 
    // re-create with the correct size (don't set a file path)
-   if (!handler::initialize(s_width, s_height, s_isRetina, true, pDC))
+   if (!handler::initialize(s_width, s_height, s_isRetina, pDC))
    {
       // if this fails we are dead so close the device
       close();
@@ -484,7 +484,7 @@ SEXP createGD()
 
       // allocate and initialize context
       DeviceContext* pDC = handler::allocate(pDev);
-      if (!handler::initialize(s_width, s_height, s_isRetina, true, pDC))
+      if (!handler::initialize(s_width, s_height, s_isRetina, pDC))
       {
          handler::destroy(pDC);
 
@@ -624,16 +624,9 @@ Error saveSnapshot(const core::FilePath& snapshotFile,
    if (error)
       return error;
 
-   // resync display list before saving png if necessary. for unknown reasons
-   // there are permutations of plotting code which leaves the underlying PNG
-   // in the RCairoGraphicsHandler not containing the full graphics context, so
-   // we need to perform a re-synch of display list before rendering the PNG
-   if (handler::resyncDisplayListBeforeWriteToPNG())
-      resyncDisplayList();
-
    // save png file
    DeviceContext* pDC = (DeviceContext*)s_pGEDevDesc->dev->deviceSpecific;
-   return handler::writeToPNG(imageFile, pDC, true);
+   return handler::writeToPNG(imageFile, pDC);
 }
 
 Error restoreSnapshot(const core::FilePath& snapshotFile)
@@ -669,16 +662,6 @@ void onBeforeExecute()
    }
 }
 
-bool usePangoCairoHandler()
-{
-#ifdef PANGO_CAIRO_FOUND
-   // use pango cairo for versions of R < 2.14
-   return !r::util::hasRequiredVersion("2.14");
-#else
-   return false;
-#endif
-}
-
 } // anonymous namespace
     
 const int kDefaultWidth = 500;   
@@ -689,11 +672,8 @@ Error initialize(
             const FilePath& graphicsPath,
             const boost::function<bool(double*,double*)>& locatorFunction)
 {      
-   // initialize appropriate back-end
-   if (usePangoCairoHandler())
-      r::session::graphics::handler::installCairoHandler();
-   else
-      r::session::graphics::handler::installShadowHandler();
+   // initialize shadow handler
+   r::session::graphics::handler::installShadowHandler();
 
    // save reference to locator function
    s_locatorFunction = locatorFunction;

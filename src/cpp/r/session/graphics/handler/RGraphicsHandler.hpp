@@ -58,26 +58,11 @@ struct DeviceContext
 extern DeviceContext* (*allocate)(pDevDesc dev);
 extern void (*destroy)(DeviceContext* pDC);
 
-extern bool (*initializeWithFile)(const core::FilePath& filePath,
-                                  int width,
-                                  int height,
-                                  bool isRetina,
-                                  bool displayListOn,
-                                  DeviceContext* pDC);
+extern bool (*initialize)(int width,
+                          int height,
+                          bool isRetina,
+                          DeviceContext* pDC);
 
-inline bool initialize(int width,
-                       int height,
-                       bool isRetina,
-                       bool displayListOn,
-                       DeviceContext* pDC)
-{
-   return initializeWithFile(core::FilePath(),
-                             width,
-                             height,
-                             isRetina,
-                             displayListOn,
-                             pDC);
-}
 
 
 extern void (*setSize)(pDevDesc pDev);
@@ -86,11 +71,8 @@ extern void (*setDeviceAttributes)(pDevDesc pDev);
 extern void (*onBeforeAddDevice)(DeviceContext* pDC);
 extern void (*onAfterAddDevice)(DeviceContext* pDC);
 
-extern bool (*resyncDisplayListBeforeWriteToPNG)();
-
 extern core::Error (*writeToPNG)(const core::FilePath& targetPath,
-                                 DeviceContext* pDC,
-                                 bool keepContextAlive);
+                                 DeviceContext* pDC);
 
 extern void (*circle)(double x,
                       double y,
