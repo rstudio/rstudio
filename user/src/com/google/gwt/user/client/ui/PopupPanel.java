@@ -1375,6 +1375,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       }
 
       case Event.ONMOUSEDOWN:
+      case Event.ONTOUCHSTART:
         // Don't eat events if event capture is enabled, as this can
         // interfere with dialog dragging, for example.
         if (DOM.getCaptureElement() != null) {
@@ -1390,7 +1391,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       case Event.ONMOUSEUP:
       case Event.ONMOUSEMOVE:
       case Event.ONCLICK:
-      case Event.ONDBLCLICK: {
+      case Event.ONDBLCLICK:
+      case Event.ONTOUCHEND: {
         // Don't eat events if event capture is enabled, as this can
         // interfere with dialog dragging, for example.
         if (DOM.getCaptureElement() != null) {
