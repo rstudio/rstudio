@@ -209,7 +209,7 @@ public abstract class GWTTestCase extends TestCase {
    * where exceptions are originating.
    *
    * @return <code>true</code> for normal JUnit behavior, or <code>false</code>
-   *         to disable normal JUnit getException reporting
+   *         to disable normal JUnit exception reporting
    */
   public boolean catchExceptions() {
     return true;
@@ -349,8 +349,8 @@ public abstract class GWTTestCase extends TestCase {
    * <ol>
    * <li> If {@link #finishTest()} is called before the delay period expires,
    * the test will succeed.</li>
-   * <li> If any getException escapes from an event handler during the delay
-   * period, the test will error with the thrown getException.</li>
+   * <li> If any exception escapes from an event handler during the delay
+   * period, the test will error with the thrown exception.</li>
    * <li> If the delay period expires and neither of the above has happened, the
    * test will error with a {@link TimeoutException}. </li>
    * </ol>
