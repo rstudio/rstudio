@@ -46,6 +46,10 @@ bool isFixedWidthFont(const QFont& font);
 
 void openUrl(const QUrl& url);
 
+#ifdef Q_OS_MAC
+void enableFullscreenMode(QMainWindow* pMainWindow, bool primary);
+#endif
+
 
 } // namespace desktop
 

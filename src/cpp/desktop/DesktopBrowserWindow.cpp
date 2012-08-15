@@ -15,6 +15,8 @@
 #include <QWebFrame>
 #include "DesktopWebView.hpp"
 
+#include "DesktopUtils.hpp"
+
 namespace desktop {
 
 BrowserWindow::BrowserWindow(bool showToolbar,
@@ -44,6 +46,10 @@ BrowserWindow::BrowserWindow(bool showToolbar,
 
    setCentralWidget(pView_);
    setUnifiedTitleAndToolBarOnMac(true);
+
+#ifdef Q_OS_MAC
+   desktop::enableFullscreenMode(this, false);
+#endif
 
    QShortcut* copyShortcut = new QShortcut(QKeySequence::Copy, this);
    connect(copyShortcut, SIGNAL(activated()),

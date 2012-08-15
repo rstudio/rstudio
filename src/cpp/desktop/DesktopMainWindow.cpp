@@ -81,6 +81,8 @@ MainWindow::MainWindow(QUrl url) :
 #ifdef Q_OS_MAC
    QMenuBar* pDefaultMenu = new QMenuBar();
    pDefaultMenu->addMenu(new WindowMenu());
+
+   desktop::enableFullscreenMode(this, true);
 #endif
 
    //setContentsMargins(10000, 0, -10000, 0);

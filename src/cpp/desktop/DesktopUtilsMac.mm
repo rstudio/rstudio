@@ -33,4 +33,18 @@ bool isRetina(QMainWindow* pMainWindow)
    }
 }
 
+// see: https://bugreports.qt-project.org/browse/QTBUG-21607
+// see: https://developer.apple.com/library/mac/#documentation/General/Conceptual/MOSXAppProgrammingGuide/FullScreenApp/FullScreenApp.html
+void enableFullscreenMode(QMainWindow* pMainWindow, bool primary)
+{
+   OSWindowRef macWindow = qt_mac_window_for(pMainWindow);
+   NSWindow* pWindow = (NSWindow*)macWindow;
+
+   NSWindowCollectionBehavior behavior = [pWindow collectionBehavior];
+   behavior = behavior | (primary ?
+                             NSWindowCollectionBehaviorFullScreenPrimary :
+                             NSWindowCollectionBehaviorFullScreenAuxiliary);
+   [pWindow setCollectionBehavior:behavior];
+}
+
 } // namespace desktop
