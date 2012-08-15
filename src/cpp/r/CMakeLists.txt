@@ -45,7 +45,6 @@ set (R_SOURCE_FILES
    session/RSession.cpp
    session/graphics/RGraphicsDevice.cpp
    session/graphics/RGraphicsErrorCategory.cpp
-   session/graphics/RGraphicsFileDevice.cpp
    session/graphics/RGraphicsPlot.cpp
    session/graphics/RGraphicsPlotManipulator.cpp
    session/graphics/RGraphicsPlotManipulatorManager.cpp

@@ -33,11 +33,6 @@ if(UNIX)
    include(CheckFunctionExists REQUIRED)
    include(CheckSymbolExists REQUIRED)
 
-   # need pkgconfig for pango cairo on linux
-   if(NOT APPLE)
-      find_package(PkgConfig REQUIRED)
-   endif()
-
    # compiler flags
    add_definitions(-Wall -pthread)
 

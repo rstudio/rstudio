@@ -21,11 +21,7 @@ namespace handler {
 DeviceContext* (*allocate)(pDevDesc dev);
 void (*destroy)(DeviceContext* pDC);
 
-bool (*initializeWithFile)(const core::FilePath& filePath,
-                           int width,
-                           int height,
-                           bool displayListOn,
-                           DeviceContext* pDC);
+bool (*initialize)(int width, int height, DeviceContext* pDC);
 
 void (*setSize)(pDevDesc pDev);
 void (*setDeviceAttributes)(pDevDesc pDev);
@@ -33,11 +29,8 @@ void (*setDeviceAttributes)(pDevDesc pDev);
 void (*onBeforeAddDevice)(DeviceContext* pDC);
 void (*onAfterAddDevice)(DeviceContext* pDC);
 
-bool (*resyncDisplayListBeforeWriteToPNG)();
-
 core::Error (*writeToPNG)(const core::FilePath& targetPath,
-                                 DeviceContext* pDC,
-                                 bool keepContextAlive);
+                                 DeviceContext* pDC);
 
 void (*circle)(double x,
                       double y,

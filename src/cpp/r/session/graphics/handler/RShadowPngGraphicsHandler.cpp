@@ -197,17 +197,9 @@ void shadowDevSync(DeviceContext* pDC)
 } // anonymous namespace
 
 
-bool initializeWithFile(const FilePath& filePath,
-                        int width,
-                        int height,
-                        bool displayListon,
-                        DeviceContext* pDC)
+bool initialize(int width, int height, DeviceContext* pDC)
 {
-   // initialize file info
-   if (filePath.empty())
-      pDC->targetPath = tempFile("png");
-   else
-      pDC->targetPath = filePath;
+   pDC->targetPath = tempFile("png");
    pDC->width = width;
    pDC->height = height;
 
@@ -292,16 +284,7 @@ void onAfterAddDevice(DeviceContext* pDC)
       LOG_ERROR(error);
 }
 
-// we do our own internal re-sync via shadowDevSync so we don't
-// need the graphics device controlling code to do it for us
-bool resyncDisplayListBeforeWriteToPNG()
-{
-   return false;
-}
-
-Error writeToPNG(const FilePath& targetPath,
-                 DeviceContext* pDC,
-                 bool keepContextAlive)
+Error writeToPNG(const FilePath& targetPath, DeviceContext* pDC)
 {
    // sync the shadow device to ensure we have the full playlist,
    shadowDevSync(pDC);
@@ -329,26 +312,23 @@ Error writeToPNG(const FilePath& targetPath,
       }
    }
 
-   if (keepContextAlive)
-   {
-      // regenerate the shadow device
-      pDevDesc dev = pDC->dev;
-      int width = pDC->width;
-      int height = pDC->height;
-      handler::destroy(pDC);
-      pDC = handler::allocate(dev);
-      dev->deviceSpecific = pDC;
+   // regenerate the shadow device
+   pDevDesc dev = pDC->dev;
+   int width = pDC->width;
+   int height = pDC->height;
+   handler::destroy(pDC);
+   pDC = handler::allocate(dev);
+   dev->deviceSpecific = pDC;
 
-      // re-create with the correct size (don't set a file path)
-      if (!handler::initialize(width, height, true, pDC))
-         return systemError(boost::system::errc::not_connected, ERROR_LOCATION);
+   // re-create with the correct size
+   if (!handler::initialize(width, height, pDC))
+      return systemError(boost::system::errc::not_connected, ERROR_LOCATION);
 
-      // now update the device structure
-      handler::setSize(dev);
+   // now update the device structure
+   handler::setSize(dev);
 
-      // replay the rstudio graphics device context onto the png
-      shadowDevSync(pDC);
-   }
+   // replay the rstudio graphics device context onto the png
+   shadowDevSync(pDC);
 
    // return status
    return error;
@@ -524,12 +504,11 @@ void installShadowHandler()
 {
    handler::allocate = shadow::allocate;
    handler::destroy = shadow::destroy;
-   handler::initializeWithFile = shadow::initializeWithFile;
+   handler::initialize = shadow::initialize;
    handler::setSize = shadow::setSize;
    handler::setDeviceAttributes = shadow::setDeviceAttributes;
    handler::onBeforeAddDevice = shadow::onBeforeAddDevice;
    handler::onAfterAddDevice = shadow::onAfterAddDevice;
-   handler::resyncDisplayListBeforeWriteToPNG = shadow::resyncDisplayListBeforeWriteToPNG;
    handler::writeToPNG = shadow::writeToPNG;
    handler::circle = shadow::circle;
    handler::line = shadow::line;

@@ -32,7 +32,6 @@
 
 #include "RGraphicsUtils.hpp"
 #include "RGraphicsDevice.hpp"
-#include "RGraphicsFileDevice.hpp"
 #include "RGraphicsPlotManipulatorManager.hpp"
 
 using namespace core;
@@ -255,19 +254,10 @@ Error PlotManager::savePlotAsImage(const FilePath& filePath,
                                    int widthPx,
                                    int heightPx)
 {
-   // use special file device for R < 2.14 (so we can get anti-aliasing
-   // for png text and symbols)
-   if ((format == kPngFormat) && !r::util::hasRequiredVersion("2.14"))
-   {
-      return savePlotAsFile(boost::bind(file_device::create,
-                                        widthPx,
-                                        heightPx,
-                                        filePath));
-   }
-   else if (format == kPngFormat ||
-            format == kBmpFormat ||
-            format == kJpegFormat ||
-            format == kTiffFormat)
+   if (format == kPngFormat ||
+       format == kBmpFormat ||
+       format == kJpegFormat ||
+       format == kTiffFormat)
    {
       return savePlotAsBitmapFile(filePath, format, widthPx, heightPx);
    }
