@@ -68,16 +68,17 @@ git merge \
     
 git merge \
     origin/patch/mousewheel3 \
-    origin/patch/consistent-gutter-width2 \
+    origin/patch/consistent-gutter-width3 \
     origin/patch/suppress-native-scroll \
     origin/patch/build \
     origin/patch/remove-webfont \
+    origin/patch/eclipse-selectedword
 
 
 node ./Makefile.dryice.js normal
-cp build/src/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
 node ./Makefile.dryice.js -m normal
 cp build/src/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js
+cp build/src-min/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace.js
 
 stripUseStrict() {
     sed 's/"use strict";//g' "$1" > "$1.stripped"

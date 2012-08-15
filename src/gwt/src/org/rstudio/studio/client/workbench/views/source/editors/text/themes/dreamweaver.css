@@ -21,7 +21,6 @@
 }
 
 .ace_text-layer {
-  cursor: text;
 }
 
 .ace_cursor {
@@ -37,6 +36,7 @@
   color: rgb(191, 191, 191);
 }
 
+.ace_line .ace_storage,
 .ace_line .ace_keyword {
   color: blue;
 }
@@ -180,6 +180,10 @@
 .ace_string.ace_regex {
   color: rgb(255, 0, 0)
 }
+
+.ace_indent-guide {
+  background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAE0lEQVQImWP4////f4bLly//BwAmVgd1/w11/gAAAABJRU5ErkJggg==") right repeat-y;
+}
 .nocolor.ace_editor .ace_line span {color: blue !important;}
 .ace_bracket {margin: 0 !important; border: 0 !important; background-color: rgb(192, 192, 192);}
-.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(248, 248, 248);}
+.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(242, 242, 242);}

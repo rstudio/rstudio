@@ -7,7 +7,7 @@
 }
 
 .ace_gutter {
-  background: #e8e8e8;
+  background: #f0f0f0;
   color: #333;
 }
 
@@ -17,11 +17,10 @@
 }
 
 .ace_fold {
-    background-color: #86AAE0;
+    background-color: #6B72E6;
 }
 
 .ace_text-layer {
-  cursor: text;
 }
 
 .ace_cursor {
@@ -37,8 +36,13 @@
   color: rgb(191, 191, 191);
 }
 
+.ace_line .ace_storage,
 .ace_line .ace_keyword {
   color: blue;
+}
+
+.ace_line .ace_constant {
+  color: rgb(197, 6, 11);
 }
 
 .ace_line .ace_constant.ace_buildin {
@@ -54,8 +58,8 @@
 }
 
 .ace_line .ace_invalid {
-  background-color: rgb(153, 0, 0);
-  color: white;
+  background-color: rgba(255, 0, 0, 0.1);
+  color: red;
 }
 
 .ace_line .ace_support.ace_function {
@@ -122,7 +126,10 @@
 .ace_marker-layer .ace_selection {
   background: rgb(181, 213, 255);
 }
-
+.multiselect .ace_selection.start {
+  box-shadow: 0 0 3px 0px white;
+  border-radius: 2px;
+}
 .ace_marker-layer .ace_step {
   background: rgb(252, 255, 0);
 }
@@ -140,18 +147,27 @@
   background: rgba(0, 0, 0, 0.07);
 }
 
+.ace_gutter_active_line {
+    background-color : #dcdcdc;
+}
+
 .ace_marker-layer .ace_selected_word {
   background: rgb(250, 250, 255);
   border: 1px solid rgb(200, 200, 250);
 }
 
 .ace_meta.ace_tag {
-  color:rgb(28, 2, 255);
+  color:rgb(0, 22, 142);
 }
 
 .ace_string.ace_regex {
   color: rgb(255, 0, 0)
 }
+
+.ace_indent-guide {
+  background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAE0lEQVQImWP4////f4bLly//BwAmVgd1/w11/gAAAABJRU5ErkJggg==") right repeat-y;
+}
+
 .nocolor.ace_editor .ace_line span {color: blue !important;}
 .ace_bracket {margin: 0 !important; border: 0 !important; background-color: rgb(192, 192, 192);}
-.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(248, 248, 248);}
+.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(242, 242, 242);}

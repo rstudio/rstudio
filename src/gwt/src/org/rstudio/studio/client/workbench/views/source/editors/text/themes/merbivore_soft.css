@@ -8,13 +8,13 @@
 }
 
 .ace_gutter {
-  background: #e8e8e8;
-  color: #333;
+  background: #262424;
+  color: #E6E1DC;
 }
 
 .ace_print_margin {
   width: 1px;
-  background: #e8e8e8;
+  background: #262424;
 }
 
 .ace_scroller {
@@ -22,7 +22,6 @@
 }
 
 .ace_text-layer {
-  cursor: text;
   color: #E6E1DC;
 }
 
@@ -34,13 +33,18 @@
   border-left: 0px;
   border-bottom: 1px solid #FFFFFF;
 }
- 
+
 .ace_marker-layer .ace_selection {
   background: #494949;
 }
 
+.multiselect .ace_selection.start {
+  box-shadow: 0 0 3px 0px #1C1C1C;
+  border-radius: 2px;
+}
+
 .ace_marker-layer .ace_step {
-  background: rgb(198, 219, 174);
+  background: rgb(102, 82, 0);
 }
 
 .ace_marker-layer .ace_bracket {
@@ -52,19 +56,31 @@
   background: #333435;
 }
 
+.ace_gutter_active_line {
+  background-color: #333435;
+}
+
 .ace_marker-layer .ace_selected_word {
   border: 1px solid #494949;
 }
-       
+
 .ace_invisible {
   color: #404040;
 }
 
-.ace_keyword {
+.ace_keyword, .ace_meta {
   color:#FC803A;
 }
 
-.ace_constant {
+.ace_constant, .ace_constant.ace_other {
+  color:#68C1D8;
+}
+
+.ace_constant.ace_character,  {
+  color:#68C1D8;
+}
+
+.ace_constant.ace_character.ace_escape,  {
   color:#68C1D8;
 }
 
@@ -90,9 +106,17 @@ background-color:#FE3838;
 background-color:#FE3838;
 }
 
+.ace_support.ace_constant {
+  color:#8EC65F;
+}
+
 .ace_fold {
     background-color: #FC803A;
     border-color: #E6E1DC;
+}
+
+.ace_storage {
+  color:#FC803A;
 }
 
 .ace_string {
@@ -120,6 +144,10 @@ color:#AC4BB8;
 .ace_markup.ace_underline {
     text-decoration:underline;
 }
+
+.ace_indent-guide {
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAEklEQVQImWOQkZH5zzBz5sz/AA8EBB6crd1rAAAAAElFTkSuQmCC) right repeat-y;
+}
 .nocolor.ace_editor .ace_line span {color:#FC803A !important;}
 .ace_bracket {margin: 0 !important; border: 0 !important; background-color: #404040;}
-.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(48, 47, 47);}
+.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(68, 67, 66);}

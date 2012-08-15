@@ -14953,7 +14953,7 @@ var Gutter = function(parentEl) {
                 breakpoints[i] ? " ace_breakpoint " : " ",
                 annotation.className,
                 "' title='", annotation.text.join("\n"),
-                "' style='height:", this.session.getRowLength(i) * config.lineHeight, "px;'>", this.pad(i));
+                "' style='height:", this.session.getRowLength(i) * config.lineHeight, "px;'>", this.pad(i+1));
 
             if (foldWidgets) {
                 var c = foldWidgets[i];
