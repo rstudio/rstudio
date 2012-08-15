@@ -17,7 +17,6 @@ package com.google.gwt.aria.client;
 // This is auto-generated code.  Do not manually edit! //
 /////////////////////////////////////////////////////////
 
-
 /**
  * A type that represents the <a href="http://www.w3.org/TR/wai-aria/roles#widget">widget</a>
  * role in the ARIA specification.

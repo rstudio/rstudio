@@ -20,21 +20,10 @@ package com.google.gwt.aria.client;
 import com.google.gwt.dom.client.Element;
 
 /**
- * <p>Allows ARIA Accessibility attributes to be added to widgets so that they can be identified by
- * assistive technology.</p>
- *
- * <p>ARIA roles define widgets and page structure that can be interpreted by a reader
- * application/device. There is a set of abstract roles which are used as
- * building blocks of the roles hierarchy structural and define the common properties and states
- * for the concrete roles. Abstract roles cannot be set to HTML elements.</p>
- *
- * <p>This class defines some of the supported operations for a role -- set/get/remove
- * role to/from a DOM element.</p>
- *
- * <p>For more details about ARIA roles check <a href="http://www.w3.org/TR/wai-aria/roles">
- * The Roles Model </a>.</p>
+ * The base class for implementing a Role. Includes basic operations for modifying
+ * the "role" attribute and methods that are common to all roles.
  */
-class RoleImpl {
+class RoleImpl implements Role {
   private static final String ATTR_NAME_ROLE = "role";
 
   private final String roleName;
@@ -50,9 +39,90 @@ class RoleImpl {
    * @param element HTML element
    * @return The role attribute value
    */
+  @Override
   public String get(Element element) {
     assert element != null : "Element cannot be null.";
     return element.getAttribute(ATTR_NAME_ROLE);
+  }
+
+  @Override
+  public String getAriaAtomicProperty(Element element) {
+    return Property.ATOMIC.get(element);
+  }
+
+  @Override
+  public String getAriaBusyState(Element element) {
+    return State.BUSY.get(element);
+  }
+
+  @Override
+  public String getAriaControlsProperty(Element element) {
+    return Property.CONTROLS.get(element);
+  }
+
+  @Override
+  public String getAriaDescribedbyProperty(Element element) {
+    return Property.DESCRIBEDBY.get(element);
+  }
+
+  @Override
+  public String getAriaDisabledState(Element element) {
+    return State.DISABLED.get(element);
+  }
+
+  @Override
+  public String getAriaDropeffectProperty(Element element) {
+    return Property.DROPEFFECT.get(element);
+  }
+
+  @Override
+  public String getAriaFlowtoProperty(Element element) {
+    return Property.FLOWTO.get(element);
+  }
+
+  @Override
+  public String getAriaGrabbedState(Element element) {
+    return State.GRABBED.get(element);
+  }
+
+  @Override
+  public String getAriaHaspopupProperty(Element element) {
+    return Property.HASPOPUP.get(element);
+  }
+
+  @Override
+  public String getAriaHiddenState(Element element) {
+    return State.HIDDEN.get(element);
+  }
+
+  @Override
+  public String getAriaInvalidState(Element element) {
+    return State.INVALID.get(element);
+  }
+
+  @Override
+  public String getAriaLabelledbyProperty(Element element) {
+    return Property.LABELLEDBY.get(element);
+  }
+
+  @Override
+  public String getAriaLabelProperty(Element element) {
+    return Property.LABEL.get(element);
+  }
+
+  @Override
+  public String getAriaLiveProperty(Element element) {
+    return Property.LIVE.get(element);
+  }
+
+  @Override
+  public String getAriaOwnsProperty(Element element) {
+    return Property.OWNS.get(element);
+  }
+
+  @Override
+  public String getAriaRelevantProperty(Element element) {
+    return Property.RELEVANT.get(element);
   }
 
   /**
@@ -60,8 +130,14 @@ class RoleImpl {
    *
    * @return The role name
    */
+  @Override
   public String getName() {
     return roleName;
+  }
+
+  @Override
+  public String getTabindexExtraAttribute(Element element) {
+    return ExtraAttribute.TABINDEX.get(element);
   }
 
   /**
@@ -69,9 +145,95 @@ class RoleImpl {
    *
    * @param element HTML element
    */
+  @Override
   public void remove(Element element) {
     assert element != null : "Element cannot be null.";
     element.removeAttribute(ATTR_NAME_ROLE);
+  }
+
+  @Override
+  public void removeAriaAtomicProperty(Element element) {
+    Property.ATOMIC.remove(element);
+  }
+
+  @Override
+  public void removeAriaBusyState(Element element) {
+    State.BUSY.remove(element);
+  }
+
+  @Override
+  public void removeAriaControlsProperty(Element element) {
+    Property.CONTROLS.remove(element);
+  }
+
+  @Override
+  public void removeAriaDescribedbyProperty(Element element) {
+    Property.DESCRIBEDBY.remove(element);
+  }
+
+  @Override
+  public void removeAriaDisabledState(Element element) {
+    State.DISABLED.remove(element);
+  }
+
+  @Override
+  public void removeAriaDropeffectProperty(Element element) {
+    Property.DROPEFFECT.remove(element);
+  }
+
+  @Override
+  public void removeAriaFlowtoProperty(Element element) {
+    Property.FLOWTO.remove(element);
+  }
+
+  @Override
+  public void removeAriaGrabbedState(Element element) {
+    State.GRABBED.remove(element);
+  }
+
+  @Override
+  public void removeAriaHaspopupProperty(Element element) {
+    Property.HASPOPUP.remove(element);
+  }
+
+  @Override
+  public void removeAriaHiddenState(Element element) {
+    State.HIDDEN.remove(element);
+  }
+
+  @Override
+  public void removeAriaInvalidState(Element element) {
+    State.INVALID.remove(element);
+  }
+
+  @Override
+  public void removeAriaLabelledbyProperty(Element element) {
+    Property.LABELLEDBY.remove(element);
+  }
+
+  @Override
+  public void removeAriaLabelProperty(Element element) {
+    Property.LABEL.remove(element);
+  }
+
+  @Override
+  public void removeAriaLiveProperty(Element element) {
+    Property.LIVE.remove(element);
+  }
+
+  @Override
+  public void removeAriaOwnsProperty(Element element) {
+    Property.OWNS.remove(element);
+  }
+
+  @Override
+  public void removeAriaRelevantProperty(Element element) {
+    Property.RELEVANT.remove(element);
+  }
+
+  @Override
+  public void removeTabindexExtraAttribute(Element element) {
+    ExtraAttribute.TABINDEX.remove(element);
   }
 
   /**
@@ -79,8 +241,94 @@ class RoleImpl {
    *
    * @param element HTML element
    */
+  @Override
   public void set(Element element) {
     assert element != null : "Element cannot be null.";
     element.setAttribute(ATTR_NAME_ROLE, roleName);
+  }
+
+  @Override
+  public void setAriaAtomicProperty(Element element, boolean value) {
+    Property.ATOMIC.set(element, value);
+  }
+
+  @Override
+  public void setAriaBusyState(Element element, boolean value) {
+    State.BUSY.set(element, value);
+  }
+
+  @Override
+  public void setAriaControlsProperty(Element element, IdReference... value) {
+    Property.CONTROLS.set(element, value);
+  }
+
+  @Override
+  public void setAriaDescribedbyProperty(Element element, IdReference... value) {
+    Property.DESCRIBEDBY.set(element, value);
+  }
+
+  @Override
+  public void setAriaDisabledState(Element element, boolean value) {
+    State.DISABLED.set(element, value);
+  }
+
+  @Override
+  public void setAriaDropeffectProperty(Element element, DropeffectValue... value) {
+    Property.DROPEFFECT.set(element, value);
+  }
+
+  @Override
+  public void setAriaFlowtoProperty(Element element, IdReference... value) {
+    Property.FLOWTO.set(element, value);
+  }
+
+  @Override
+  public void setAriaGrabbedState(Element element, GrabbedValue value) {
+    State.GRABBED.set(element, value);
+  }
+
+  @Override
+  public void setAriaHaspopupProperty(Element element, boolean value) {
+    Property.HASPOPUP.set(element, value);
+  }
+
+  @Override
+  public void setAriaHiddenState(Element element, boolean value) {
+    State.HIDDEN.set(element, value);
+  }
+
+  @Override
+  public void setAriaInvalidState(Element element, InvalidValue value) {
+    State.INVALID.set(element, value);
+  }
+
+  @Override
+  public void setAriaLabelledbyProperty(Element element, IdReference... value) {
+    Property.LABELLEDBY.set(element, value);
+  }
+
+  @Override
+  public void setAriaLabelProperty(Element element, String value) {
+    Property.LABEL.set(element, value);
+  }
+
+  @Override
+  public void setAriaLiveProperty(Element element, LiveValue value) {
+    Property.LIVE.set(element, value);
+  }
+
+  @Override
+  public void setAriaOwnsProperty(Element element, IdReference... value) {
+    Property.OWNS.set(element, value);
+  }
+
+  @Override
+  public void setAriaRelevantProperty(Element element, RelevantValue... value) {
+    Property.RELEVANT.set(element, value);
+  }
+
+  @Override
+  public void setTabindexExtraAttribute(Element element, int value) {
+    ExtraAttribute.TABINDEX.set(element, value);
   }
 }
