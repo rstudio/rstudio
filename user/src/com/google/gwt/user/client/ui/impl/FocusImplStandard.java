@@ -42,6 +42,7 @@ public class FocusImplStandard extends FocusImpl {
     var input = $doc.createElement('input');
     input.type = 'text';
     input.tabIndex = -1;
+    input.setAttribute('role', 'presentation');
     var style = input.style;
     style.opacity = 0;
     style.height = '1px';
