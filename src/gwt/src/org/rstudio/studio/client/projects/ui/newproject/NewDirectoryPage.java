@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
@@ -25,8 +26,10 @@ import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.DomEvent;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -183,6 +186,13 @@ public class NewDirectoryPage extends NewProjectWizardPage
    public void focus()
    {
       txtProjectName_.setFocus(true);
+      
+      // workaround qt crash on mac desktop
+      if (BrowseCap.isMacintoshDesktop())
+      {
+         DomEvent.fireNativeEvent(Document.get().createChangeEvent(), 
+                                  listProjectType_.getListBox());
+      }
    }
    
    private Label dirNameLabel_;
