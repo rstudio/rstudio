@@ -61,15 +61,18 @@ public interface SelectionModel<T> extends HasSelectionChangedHandlers, Provides
       this.keyProvider = keyProvider;
     }
 
+    @Override
     public HandlerRegistration addSelectionChangeHandler(
         SelectionChangeEvent.Handler handler) {
       return handlerManager.addHandler(SelectionChangeEvent.getType(), handler);
     }
 
+    @Override
     public void fireEvent(GwtEvent<?> event) {
       handlerManager.fireEvent(event);
     }
 
+    @Override
     public Object getKey(T item) {
       return (keyProvider == null || item == null) ? item
           : keyProvider.getKey(item);
@@ -159,6 +162,7 @@ public interface SelectionModel<T> extends HasSelectionChangedHandlers, Provides
    * @param handler the handler
    * @return the registration for the event
    */
+  @Override
   HandlerRegistration addSelectionChangeHandler(SelectionChangeEvent.Handler handler);
 
   /**

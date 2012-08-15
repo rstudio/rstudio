@@ -17,12 +17,16 @@ package com.google.gwt.view.client;
 
 import com.google.gwt.view.client.SelectionModel.AbstractSelectionModel;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * A simple selection model that allows only one item to be selected a a time.
  * 
  * @param <T> the record data type
  */
-public class SingleSelectionModel<T> extends AbstractSelectionModel<T> {
+public class SingleSelectionModel<T> extends AbstractSelectionModel<T>
+    implements SetSelectionModel<T> {
 
   private Object curKey;
   private T curSelection;
@@ -49,6 +53,11 @@ public class SingleSelectionModel<T> extends AbstractSelectionModel<T> {
     super(keyProvider);
   }
 
+  @Override
+  public void clear() {
+    setSelected(getSelectedObject(), false);
+  }
+
   /**
    * Gets the currently-selected item.
    * 
@@ -57,6 +66,15 @@ public class SingleSelectionModel<T> extends AbstractSelectionModel<T> {
   public T getSelectedObject() {
     resolveChanges();
     return curSelection;
+  }
+
+  @Override
+  public Set<T> getSelectedSet() {
+    Set<T> set = new HashSet<T>();
+    if (curSelection != null) {
+      set.add(curSelection);
+    }
+    return set;
   }
 
   @Override

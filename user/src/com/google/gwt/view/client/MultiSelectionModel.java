@@ -27,7 +27,8 @@ import java.util.Set;
  * 
  * @param <T> the data type of the items
  */
-public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
+public class MultiSelectionModel<T> extends AbstractSelectionModel<T>
+    implements SetSelectionModel<T> {
 
   /**
    * Stores an item and its pending selection state.
@@ -97,6 +98,7 @@ public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
   /**
    * Deselect all selected values.
    */
+  @Override
   public void clear() {
     // Clear the current list of pending changes.
     selectionChanges.clear();
@@ -119,6 +121,7 @@ public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
    * 
    * @return the set of selected items
    */
+  @Override
   public Set<T> getSelectedSet() {
     resolveChanges();
     return new HashSet<T>(selectedSet.values());

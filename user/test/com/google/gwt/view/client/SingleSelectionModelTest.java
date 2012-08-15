@@ -38,9 +38,11 @@ public class SingleSelectionModelTest extends AbstractSelectionModelTest {
 
     model.setSelected("test", true);
     assertEquals("test", model.getSelectedObject());
+    assertEquals("test", model.getSelectedSet().iterator().next());
 
     model.setSelected("test", false);
     assertNull(model.getSelectedObject());
+    assertEquals(0, model.getSelectedSet().size());
   }
 
   public void testSelectedChangeEvent() {
@@ -91,14 +93,18 @@ public class SingleSelectionModelTest extends AbstractSelectionModelTest {
 
     model.setSelected("test0", true);
     assertTrue(model.isSelected("test0"));
+    assertEquals("test0", model.getSelectedSet().iterator().next());
 
     model.setSelected("test1", true);
     assertTrue(model.isSelected("test1"));
     assertFalse(model.isSelected("test0"));
+    assertEquals("test1", model.getSelectedSet().iterator().next());
+    assertEquals(1, model.getSelectedSet().size());
 
     model.setSelected("test1", false);
     assertFalse(model.isSelected("test1"));
     assertFalse(model.isSelected("test0"));
+    assertEquals(0, model.getSelectedSet().size());
   }
 
   public void testSetSelectedNull() {
@@ -112,6 +118,7 @@ public class SingleSelectionModelTest extends AbstractSelectionModelTest {
     assertNull(model.getSelectedObject());
     assertFalse(model.isSelected("test"));
     assertFalse(model.isSelected(null));
+    assertEquals(0, model.getSelectedSet().size());
   }
 
   public void testSetSelectedWithKeyProvider() {
