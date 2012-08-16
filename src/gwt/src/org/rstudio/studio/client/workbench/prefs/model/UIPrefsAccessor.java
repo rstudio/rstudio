@@ -71,6 +71,11 @@ public class UIPrefsAccessor extends Prefs
    {
       return integer("print_margin_column", 80);
    }
+   
+   public PrefValue<Boolean> showInvisibles()
+   {
+      return bool("show_invisibles", false);
+   }
 
    public PrefValue<Boolean> insertMatching()
    {

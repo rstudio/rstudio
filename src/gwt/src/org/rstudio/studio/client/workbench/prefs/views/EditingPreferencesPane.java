@@ -47,6 +47,7 @@ public class EditingPreferencesPane extends PreferencesPane
       add(indent(tabWidth_ = numericPref("Tab width", prefs.numSpacesForTab())));
       add(tight(showMargin_ = checkboxPref("Show margin", prefs.showMargin())));
       add(indent(marginCol_ = numericPref("Margin column", prefs.printMarginColumn())));
+      add(checkboxPref("Show whitespace characters", prefs_.showInvisibles()));
       add(checkboxPref("Insert matching parens/quotes", prefs_.insertMatching()));
       add(checkboxPref("Soft-wrap R source files", prefs_.softWrapRFiles()));
       add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));

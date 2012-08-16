@@ -100,6 +100,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setTabSize(int tabSize);
    void setShowPrintMargin(boolean on);
    void setPrintMarginColumn(int column);
+   void setShowInvisibles(boolean show);
 
    JsArray<AceFold> getFolds();
    void addFold(Range range);

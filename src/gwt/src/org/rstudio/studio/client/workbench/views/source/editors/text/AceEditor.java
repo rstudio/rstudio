@@ -1061,6 +1061,11 @@ public class AceEditor implements DocDisplay,
       getSession().setTabSize(tabSize);
    }
 
+   public void setShowInvisibles(boolean show)
+   {
+      widget_.getEditor().getRenderer().setShowInvisibles(show);
+   }
+   
    public void setShowPrintMargin(boolean on)
    {
       widget_.getEditor().getRenderer().setShowPrintMargin(on);

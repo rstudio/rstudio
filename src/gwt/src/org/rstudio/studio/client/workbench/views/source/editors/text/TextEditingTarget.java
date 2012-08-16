@@ -2606,6 +2606,11 @@ public class TextEditingTarget implements EditingTarget
                public void execute(Integer arg) {
                   docDisplay.setPrintMarginColumn(arg);
                }}));
+      releaseOnDismiss.add(prefs.showInvisibles().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.setShowInvisibles(arg);
+               }}));
    }
    
    public static void syncFontSize(
