@@ -1066,6 +1066,11 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().getRenderer().setShowInvisibles(show);
    }
    
+   public void setShowIndentGuides(boolean show)
+   {
+      widget_.getEditor().getRenderer().setShowIndentGuides(show);
+   }
+   
    public void setShowPrintMargin(boolean on)
    {
       widget_.getEditor().getRenderer().setShowPrintMargin(on);

@@ -2611,6 +2611,11 @@ public class TextEditingTarget implements EditingTarget
                public void execute(Boolean arg) {
                   docDisplay.setShowInvisibles(arg);
                }}));
+      releaseOnDismiss.add(prefs.showIndentGuides().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.setShowIndentGuides(arg);
+               }}));
    }
    
    public static void syncFontSize(

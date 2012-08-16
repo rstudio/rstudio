@@ -77,6 +77,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_invisibles", false);
    }
 
+   public PrefValue<Boolean> showIndentGuides()
+   {
+      return bool("show_indent_guides", false);
+   }
+   
    public PrefValue<Boolean> insertMatching()
    {
       return bool("insert_matching", true);

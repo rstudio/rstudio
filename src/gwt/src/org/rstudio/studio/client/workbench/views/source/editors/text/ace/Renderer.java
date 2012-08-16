@@ -72,6 +72,10 @@ public class Renderer extends JavaScriptObject
    public native final void setShowInvisibles(boolean show) /*-{
       this.setShowInvisibles(show); 
    }-*/;
+   
+   public native final void setShowIndentGuides(boolean show) /*-{
+      this.setDisplayIndentGuides(show); 
+   }-*/;
 
    public native final void setPadding(int padding) /*-{
       this.setPadding(padding);

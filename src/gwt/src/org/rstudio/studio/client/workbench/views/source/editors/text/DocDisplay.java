@@ -101,6 +101,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setShowPrintMargin(boolean on);
    void setPrintMarginColumn(int column);
    void setShowInvisibles(boolean show);
+   void setShowIndentGuides(boolean show);
 
    JsArray<AceFold> getFolds();
    void addFold(Range range);
