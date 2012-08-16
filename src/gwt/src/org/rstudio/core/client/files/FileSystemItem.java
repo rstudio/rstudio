@@ -335,6 +335,9 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "dcf",   "text/debian-control-file" );
       MIME_TYPES.put( "txt",   "text/plain" );
       MIME_TYPES.put( "mml",   "text/mathml" );
+      MIME_TYPES.put( "log",   "text/plain");
+      MIME_TYPES.put( "out",   "text/plain");
+      MIME_TYPES.put( "Rout",   "text/plain");
      
       MIME_TYPES.put( "tif",   "image/tiff" );
       MIME_TYPES.put( "tiff",  "image/tiff" );

@@ -399,6 +399,9 @@ MimeType s_mimeTypes[] =
    { "dcf",   "text/debian-control-file" },
    { "txt",   "text/plain" },
    { "mml",   "text/mathml" },
+   { "log",   "text/plain" },
+   { "out",   "text/plain" },
+   { "Rout",   "text/plain" },
   
    { "tif",   "image/tiff" },
    { "tiff",  "image/tiff" },
