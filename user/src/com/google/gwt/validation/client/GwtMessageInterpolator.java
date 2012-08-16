@@ -20,9 +20,6 @@ import com.google.gwt.core.client.GWT;
 import java.util.Locale;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Simple GWT {@link javax.validation.MessageInterpolator}.
  */
 public final class GwtMessageInterpolator extends BaseMessageInterpolator {
@@ -49,6 +46,7 @@ public final class GwtMessageInterpolator extends BaseMessageInterpolator {
     super(userValidationMessagesResolver);
   }
 
+  @Override
   public final String interpolate(String messageTemplate, Context context,
       Locale locale) {
     // The super sourced GWT version of this calls

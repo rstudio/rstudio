@@ -32,6 +32,7 @@ public abstract class AbstractDigitsValidator<T> implements
   private int fraction;
   private int integer;
 
+  @Override
   public final void initialize(Digits constraintAnnotation) {
     if (!(constraintAnnotation.fraction() >= 0)) {
       throw new IllegalArgumentException(

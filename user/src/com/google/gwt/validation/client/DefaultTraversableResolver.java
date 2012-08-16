@@ -22,9 +22,6 @@ import javax.validation.Path.Node;
 import javax.validation.TraversableResolver;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Default {@link TraversableResolver}. Always allows full traversal.
  */
 public final class DefaultTraversableResolver implements TraversableResolver {

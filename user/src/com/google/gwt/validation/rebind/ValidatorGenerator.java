@@ -28,9 +28,6 @@ import com.google.gwt.validation.client.impl.GwtSpecificValidator;
 import javax.validation.Validator;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Generates subclasses of {@link Validator} and {@link GwtSpecificValidator}. The generic
  * validator only handles the classes listed in the
  * {@link com.google.gwt.validation.client.GwtValidation} annotation. See

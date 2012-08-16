@@ -24,9 +24,6 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Pattern.Flag;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * {@link Pattern} constraint validator implementation.
  * <p>
  * Note this implementation uses {@link RegExp} which differs from
@@ -36,6 +33,7 @@ public class PatternValidator implements
     ConstraintValidator<Pattern, String> {
   private RegExp pattern;
 
+  @Override
   public final void initialize(Pattern annotation) {
     Pattern.Flag flags[] = annotation.flags();
     String flagString = "";
@@ -45,6 +43,7 @@ public class PatternValidator implements
     pattern = RegExp.compile(annotation.regexp(), flagString);
   }
 
+  @Override
   public final boolean isValid(String value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;

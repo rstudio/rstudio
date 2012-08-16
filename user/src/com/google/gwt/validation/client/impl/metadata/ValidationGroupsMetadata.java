@@ -29,9 +29,6 @@ import javax.validation.groups.Default;
 
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Contains all the information known about the inheritance information for validation groups.
  */
 public class ValidationGroupsMetadata {

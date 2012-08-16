@@ -28,10 +28,8 @@ import javax.validation.GroupDefinitionException;
 import javax.validation.ValidationException;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
- * Helper class used to resolve groups and sequences into a single chain of groups which can then be validated.
+ * Helper class used to resolve groups and sequences into a single chain of groups which can then
+ * be validated.
  * <p>
  * Modified from the Hibernate validator for use with GWT.
  */

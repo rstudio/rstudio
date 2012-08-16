@@ -29,9 +29,6 @@ import javax.validation.spi.BootstrapState;
 import javax.validation.spi.ValidationProvider;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * This class is the entry point for Bean Validation. Bootstrapping is done as follows:
  * 
  * <pre>{@code ValidatorFactory factory = Validation.buildDefaultValidatorFactory();}</pre>

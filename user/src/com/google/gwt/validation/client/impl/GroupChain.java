@@ -26,9 +26,6 @@ import javax.validation.GroupDefinitionException;
 import javax.validation.groups.Default;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * An instance of {@code GroupChain} defines the group order during one full validation call.
  * <p>
  * Modified from the Hibernate validator for use with GWT.

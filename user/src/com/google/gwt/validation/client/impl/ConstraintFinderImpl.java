@@ -33,9 +33,7 @@ import javax.validation.metadata.Scope;
 import javax.validation.metadata.ElementDescriptor.ConstraintFinder;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
+ * Finds constraints declared on an element using specified criteria.
  */
 public final class ConstraintFinderImpl implements ConstraintFinder {
   private Set<ConstraintDescriptorImpl<?>> constraintDescriptors;

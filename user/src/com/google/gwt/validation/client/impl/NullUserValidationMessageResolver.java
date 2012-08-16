@@ -18,14 +18,12 @@ package com.google.gwt.validation.client.impl;
 import com.google.gwt.validation.client.UserValidationMessagesResolver;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Always resolves message keys to null.
  */
 public final class NullUserValidationMessageResolver implements
     UserValidationMessagesResolver {
 
+  @Override
   public String get(String key) {
     return null;
   }

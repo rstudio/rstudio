@@ -22,8 +22,7 @@ import javax.validation.ConstraintValidator;
 import javax.validation.constraints.Min;
 
 /**
- * Abstract {@link Min} constraint validator implementation for a <code>T</code>
- * .
+ * Abstract {@link Min} constraint validator implementation for a <code>T</code>.
  *
  * @param <T> the type of object to validate
  */
@@ -32,6 +31,7 @@ public abstract class AbstractMinValidator<T> implements
 
   private long min;
 
+  @Override
   public final void initialize(Min constraintAnnotation) {
     min = constraintAnnotation.value();
   }

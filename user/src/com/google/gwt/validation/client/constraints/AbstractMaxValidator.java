@@ -22,6 +22,7 @@ import javax.validation.ConstraintValidator;
 import javax.validation.constraints.Max;
 
 /**
+ * Abstract {@link Max} constraint validator implementation for a <code>T</code>.
  *
  * @param <T> the type of object to validate
  */
@@ -30,6 +31,7 @@ public abstract class AbstractMaxValidator<T> implements
 
   private long max;
 
+  @Override
   public final void initialize(Max constraintAnnotation) {
     max = constraintAnnotation.value();
   }

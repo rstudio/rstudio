@@ -19,9 +19,6 @@ import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorFactory;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * GWT does not support {@link ConstraintValidatorFactory} use
  * {@link com.google.gwt.core.client.GWT#create(Class) GWT.create(Class)} instead. Using this
  * class throws a {@link UnsupportedOperationException}.

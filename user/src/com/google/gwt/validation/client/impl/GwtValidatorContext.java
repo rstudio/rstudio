@@ -24,9 +24,6 @@ import javax.validation.Validator;
 import javax.validation.ValidatorContext;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * GWT {@link ValidatorContext}.
  */
 public final class GwtValidatorContext implements ValidatorContext {
@@ -56,6 +53,7 @@ public final class GwtValidatorContext implements ValidatorContext {
     traversableResolver = validatorFactory.getTraversableResolver();
   }
 
+  @Override
   public ValidatorContext constraintValidatorFactory(
       ConstraintValidatorFactory constraintValidatorfactory) {
     if (constraintValidatorfactory == null) {
@@ -66,6 +64,7 @@ public final class GwtValidatorContext implements ValidatorContext {
     return this;
   }
 
+  @Override
   public Validator getValidator() {
     AbstractGwtValidator validator = validatorFactory.createValidator();
     validator.init(constraintValidatorfactory, messageInterpolator,
@@ -73,6 +72,7 @@ public final class GwtValidatorContext implements ValidatorContext {
     return validator;
   }
 
+  @Override
   public ValidatorContext messageInterpolator(
       MessageInterpolator messageInterpolator) {
     if (messageInterpolator == null) {
@@ -83,6 +83,7 @@ public final class GwtValidatorContext implements ValidatorContext {
     return this;
   }
 
+  @Override
   public ValidatorContext traversableResolver(
       TraversableResolver traversableResolver) {
     if (traversableResolver == null) {

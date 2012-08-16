@@ -20,16 +20,15 @@ import javax.validation.ConstraintValidatorContext;
 import javax.validation.constraints.Null;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * {@link Null} constraint validator implementation.
  */
 public class NullValidator implements ConstraintValidator<Null, Object> {
 
+  @Override
   public final void initialize(Null constraintAnnotation) {
   }
 
+  @Override
   public final boolean isValid(Object value, ConstraintValidatorContext context) {
     return value == null;
   }

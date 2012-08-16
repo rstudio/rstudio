@@ -21,9 +21,6 @@ import java.util.Set;
 import javax.validation.ConstraintViolation;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Does shallow group-specific validation. Group sequences and Default group overriding are not
  * directly supported by implementations of this interface. Instead, this is used by higher-level
  * validators to delegate the validation of specific areas.

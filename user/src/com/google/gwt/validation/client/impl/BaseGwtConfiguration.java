@@ -31,9 +31,6 @@ import javax.validation.ValidatorFactory;
 import javax.validation.spi.BootstrapState;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Base GWT {@link Configuration}.
  */
 public abstract class BaseGwtConfiguration implements

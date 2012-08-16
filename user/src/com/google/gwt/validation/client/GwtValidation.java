@@ -25,17 +25,15 @@ import java.lang.annotation.Target;
 import javax.validation.groups.Default;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Annotates a {@code javax.validation.Validator} explicitly listing the classes
  * that can be validated in GWT.
  * <p>
- * Define the Validator you want, explicitly listing the class you want to
- * validate.
+ * Define the Validator you want, explicitly listing the classes and groups 
+ * you want to validate.
  * 
  * <pre>
- * &#064;GwtValidation(MyBean.class, MyOther.class)
+ * &#064;GwtValidation(value = {MyBean.class, MyOther.class},
+ *     groups = {Default.class, OtherGroup.class})
  * public interface MyValidator extends javax.validation.Validator {
  * }
  * </pre>
@@ -47,6 +45,12 @@ import javax.validation.groups.Default;
  * ...
  * Set&lt;ConstraintViolation&lt;MyBean>> violations = validator.validate(bean);
  * </pre>
+ * 
+ * <p>
+ * You must list all validation groups you are using (as well as groups
+ * making up a group sequence)&ndash; unless you are only using the Default group,
+ * in which case you may omit the "groups" field of the {@link GwtValidation}
+ * annotation.
  * 
  * <p>
  * NOTE: Validation is done using only the Constraints found on the Classes

@@ -25,9 +25,6 @@ import java.util.Map;
 import javax.validation.MessageInterpolator;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Base GWT {@link MessageInterpolator}.
  */
 abstract class BaseMessageInterpolator implements MessageInterpolator {
@@ -48,6 +45,7 @@ abstract class BaseMessageInterpolator implements MessageInterpolator {
       final Map<String, Object> map) {
     return new Function<String, String>() {
 
+      @Override
       public String apply(String from) {
         Object object = map.get(from);
         return object == null ? null : object.toString();
@@ -58,6 +56,7 @@ abstract class BaseMessageInterpolator implements MessageInterpolator {
   private static Function<String, String> createReplacer(
       final ValidationMessageResolver messageResolver) {
     return new Function<String, String>() {
+      @Override
       public String apply(String from) {
         Object object = messageResolver.get(from);
         return object == null ? null : object.toString();
@@ -82,6 +81,7 @@ abstract class BaseMessageInterpolator implements MessageInterpolator {
     userReplacer = createReplacer(userValidationMessagesResolver);
   }
 
+  @Override
   public final String interpolate(String messageTemplate, Context context) {
     return gwtInterpolate(messageTemplate, context, null);
   }

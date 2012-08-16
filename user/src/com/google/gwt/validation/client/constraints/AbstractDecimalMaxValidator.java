@@ -36,6 +36,7 @@ public abstract class AbstractDecimalMaxValidator<T> implements
     super();
   }
 
+  @Override
   public final void initialize(DecimalMax constraintAnnotation) {
     try {
       max = new BigDecimal(constraintAnnotation.value());

@@ -18,9 +18,6 @@ package com.google.gwt.validation.client.impl;
 import javax.validation.groups.Default;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Encapsulates a single validation group.
  * <p>
  * Modified from the Hibernate validator for use with GWT.

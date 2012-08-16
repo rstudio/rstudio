@@ -30,9 +30,6 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Static utilities for the validation rebind package.
  */
 final class Util {
@@ -50,6 +47,7 @@ final class Util {
       final Iterable<T> source, final Function<T, Class<?>> toClass) {
     return new Predicate<T>() {
 
+      @Override
       public boolean apply(T input) {
         Class<?> inputClass = toClass.apply(input);
         for (Class<?> match : Iterables.transform(source, toClass)) {

@@ -25,9 +25,6 @@ import javax.validation.ValidationProviderResolver;
 import javax.validation.spi.ValidationProvider;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * The default GWT {@link ValidationProviderResolver}. This always returns the
  * single default ValidationProvider using {@link GWT#create(Class)}.
  */
@@ -44,6 +41,7 @@ public final class GwtValidationProviderResolver implements
     return temp;
   }
 
+  @Override
   public List<ValidationProvider<?>> getValidationProviders() {
     return defaultList;
   }

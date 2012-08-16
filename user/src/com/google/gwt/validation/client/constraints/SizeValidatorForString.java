@@ -18,14 +18,12 @@ package com.google.gwt.validation.client.constraints;
 import javax.validation.ConstraintValidatorContext;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * {@link javax.validation.constraints.Size} constraint validator implementation
  * for a {@link String}.
  */
 public class SizeValidatorForString extends AbstractSizeValidator<String> {
 
+  @Override
   public final boolean isValid(String value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;

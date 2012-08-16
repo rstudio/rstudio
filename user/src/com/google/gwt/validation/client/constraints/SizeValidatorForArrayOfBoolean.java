@@ -18,15 +18,13 @@ package com.google.gwt.validation.client.constraints;
 import javax.validation.ConstraintValidatorContext;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * {@link javax.validation.constraints.Size} constraint validator implementation
  * for a array of {@code boolean}s.
  */
 public class SizeValidatorForArrayOfBoolean extends
     AbstractSizeValidator<boolean[]> {
 
+  @Override
   public final boolean isValid(boolean[] value,
       ConstraintValidatorContext context) {
     if (value == null) {

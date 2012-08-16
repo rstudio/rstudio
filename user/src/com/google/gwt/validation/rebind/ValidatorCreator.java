@@ -43,10 +43,7 @@ import javax.validation.groups.Default;
 import javax.validation.metadata.BeanDescriptor;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
- * Class that creates the validator for the given input class.
+ * Creates the validator for the given input class.
  */
 public final class ValidatorCreator extends AbstractCreator {
 

@@ -20,17 +20,16 @@ import javax.validation.ConstraintValidatorContext;
 import javax.validation.constraints.AssertFalse;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * {@link AssertFalse} constraint validator implementation.
  */
 public class AssertFalseValidator implements
     ConstraintValidator<AssertFalse, Boolean> {
 
+  @Override
   public final void initialize(AssertFalse constraintAnnotation) {
   }
 
+  @Override
   public final boolean isValid(Boolean value, ConstraintValidatorContext context) {
     return value == null || !value.booleanValue();
   }

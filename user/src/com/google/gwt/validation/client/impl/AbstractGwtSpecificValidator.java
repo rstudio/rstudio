@@ -38,9 +38,6 @@ import javax.validation.ValidationException;
 import javax.validation.groups.Default;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Base methods for implementing a {@link GwtSpecificValidator}.
  * <p>
  * All methods that do not need to be generated go here.

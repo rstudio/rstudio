@@ -20,9 +20,6 @@ import java.io.Serializable;
 import javax.validation.Path.Node;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * An immutable GWT safe implementation of {@link Node}.
  */
 final class NodeImpl implements Node, Serializable {
@@ -75,14 +72,17 @@ final class NodeImpl implements Node, Serializable {
         && this.isInIterable == that.isInIterable;
   }
 
+  @Override
   public Integer getIndex() {
     return index;
   }
 
+  @Override
   public Object getKey() {
     return key;
   }
 
+  @Override
   public String getName() {
     return name;
   }
@@ -98,6 +98,7 @@ final class NodeImpl implements Node, Serializable {
     return result;
   }
 
+  @Override
   public boolean isInIterable() {
     return isInIterable;
   }

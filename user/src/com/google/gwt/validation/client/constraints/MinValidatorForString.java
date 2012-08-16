@@ -20,14 +20,12 @@ import java.math.BigDecimal;
 import javax.validation.ConstraintValidatorContext;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * {@link javax.validation.constraints.Min} constraint validator implementation
  * for a {@link String}.
  */
 public class MinValidatorForString extends AbstractMinValidator<String> {
 
+  @Override
   public final boolean isValid(String value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;

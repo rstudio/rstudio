@@ -25,9 +25,6 @@ import javax.validation.metadata.BeanDescriptor;
 import javax.validation.metadata.ConstraintDescriptor;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Context for a {@link com.google.gwt.validation.client.GwtValidation}.
  * 
  * <p>

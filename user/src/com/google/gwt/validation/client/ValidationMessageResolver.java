@@ -16,9 +16,6 @@
 package com.google.gwt.validation.client;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Users and Validation providers implement this to resolve ValidationMessages.
  */
 public interface ValidationMessageResolver {

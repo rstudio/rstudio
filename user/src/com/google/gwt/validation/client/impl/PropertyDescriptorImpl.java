@@ -26,9 +26,7 @@ import javax.validation.metadata.ConstraintDescriptor;
 import javax.validation.metadata.PropertyDescriptor;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
+ * Describes a constrained bean property.
  */
 public final class PropertyDescriptorImpl implements PropertyDescriptor {
 

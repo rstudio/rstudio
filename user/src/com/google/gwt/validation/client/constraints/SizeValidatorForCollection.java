@@ -20,15 +20,13 @@ import java.util.Collection;
 import javax.validation.ConstraintValidatorContext;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * {@link javax.validation.constraints.Size} constraint validator implementation
  * for a {@link Collection}.
  */
 public class SizeValidatorForCollection extends
     AbstractSizeValidator<Collection<?>> {
 
+  @Override
   public final boolean isValid(Collection<?> value,
       ConstraintValidatorContext context) {
     if (value == null) {

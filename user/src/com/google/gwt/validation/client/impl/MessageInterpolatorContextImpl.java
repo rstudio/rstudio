@@ -31,10 +31,12 @@ public final class MessageInterpolatorContextImpl implements Context {
     this.value = value;
   }
 
+  @Override
   public ConstraintDescriptor<?> getConstraintDescriptor() {
     return constraintDescriptor;
   }
 
+  @Override
   public Object getValidatedValue() {
     return value;
   }

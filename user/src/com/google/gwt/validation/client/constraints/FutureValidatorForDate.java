@@ -22,18 +22,17 @@ import javax.validation.ConstraintValidatorContext;
 import javax.validation.constraints.Future;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * {@link Future} constraint validator implementation for a
  * {@link java.util.Date}.
  */
 public class FutureValidatorForDate implements
     ConstraintValidator<Future, Date> {
 
+  @Override
   public final void initialize(Future constraintAnnotation) {
   }
 
+  @Override
   public final boolean isValid(Date value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;

@@ -21,9 +21,6 @@ import com.google.gwt.i18n.shared.GwtLocale;
 import javax.validation.MessageInterpolator.Context;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Simple GWT {@link javax.validation.MessageInterpolator}.
  */
 public final class GwtMessageInterpolator extends BaseMessageInterpolator {

@@ -20,9 +20,6 @@ import com.google.gwt.i18n.client.ConstantsWithLookup;
 import java.util.MissingResourceException;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * ValidationMessageResolver using a {@link ConstantsWithLookup} source.
  */
 public abstract class AbstractValidationMessageResolver {

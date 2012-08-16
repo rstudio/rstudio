@@ -22,10 +22,7 @@ import java.util.List;
 import javax.validation.groups.Default;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
- * Describes information about a bean.
+ * Describes information about a bean which is used for validation purposes.
  */
 public class BeanMetadata {
   private final Class<?> beanClass;

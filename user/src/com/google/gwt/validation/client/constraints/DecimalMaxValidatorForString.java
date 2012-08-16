@@ -20,15 +20,13 @@ import java.math.BigDecimal;
 import javax.validation.ConstraintValidatorContext;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * {@link javax.validation.constraints.DecimalMax} constraint validator
  * implementation for a {@link String}.
  */
 public class DecimalMaxValidatorForString extends
     AbstractDecimalMaxValidator<String> {
 
+  @Override
   public final boolean isValid(String value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;

@@ -20,9 +20,6 @@ import com.google.gwt.validation.client.impl.metadata.ValidationGroupsMetadata;
 import javax.validation.metadata.BeanDescriptor;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Marker interface used by GWT to generate a {@link BeanDescriptor} for a
  * specific class T.
  * 

@@ -28,9 +28,6 @@ import javax.validation.ValidatorFactory;
 import javax.validation.spi.ConfigurationState;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Abstract {@link ValidatorFactory} that delegates to a GWT generated
  * {@link Validator}.
  * <p>

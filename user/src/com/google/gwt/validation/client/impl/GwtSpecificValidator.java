@@ -24,9 +24,6 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ValidationException;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Defines GWT version of {@link javax.validation.Validator}. This used by
  * generate a specific Validator for a given class G.
  * 

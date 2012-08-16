@@ -18,9 +18,6 @@ package com.google.gwt.validation.client.impl.metadata;
 import javax.validation.Path;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Holds as Message and a Path.
  * <p>
  * Used to build a {@link javax.validation.ConstraintViolation}

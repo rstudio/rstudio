@@ -24,9 +24,6 @@ import javax.validation.TraversableResolver;
 import javax.validation.spi.ConfigurationState;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Base GWT implementation of {@link ConfigurationState}.
  */
 public abstract class BaseConfigurationState implements ConfigurationState {

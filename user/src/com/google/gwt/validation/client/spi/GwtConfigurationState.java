@@ -24,9 +24,6 @@ import javax.validation.MessageInterpolator;
 import javax.validation.TraversableResolver;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Only the GWT incompatible parts.
  */
 public final class GwtConfigurationState extends BaseConfigurationState {

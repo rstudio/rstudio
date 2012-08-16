@@ -16,9 +16,6 @@
 package com.google.gwt.validation.client;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Validation Providers implement this to resolve Validation Messages. including
  * overriding the default {@link ProviderValidationMessageResolver}.
  */

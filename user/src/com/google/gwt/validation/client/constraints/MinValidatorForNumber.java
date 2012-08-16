@@ -18,14 +18,12 @@ package com.google.gwt.validation.client.constraints;
 import javax.validation.ConstraintValidatorContext;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * {@link javax.validation.constraints.Min} constraint validator implementation
  * for a {@link Number}.
  */
 public class MinValidatorForNumber extends AbstractMinValidator<Number> {
 
+  @Override
   public final boolean isValid(Number value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;

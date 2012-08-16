@@ -23,9 +23,6 @@ import java.util.List;
 import javax.validation.Path;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * An immutable GWT safe implementation of {@link Path}.
  */
 public final class PathImpl implements Path, Serializable {

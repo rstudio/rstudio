@@ -33,6 +33,7 @@ public abstract class AbstractSizeValidator<T> implements
     super();
   }
 
+  @Override
   public final void initialize(Size annotation) {
     if (!(annotation.min() >= 0)) {
       throw new IllegalArgumentException(

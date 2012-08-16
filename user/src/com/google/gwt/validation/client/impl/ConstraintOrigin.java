@@ -16,14 +16,12 @@
 package com.google.gwt.validation.client.impl;
 
 /**
- * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
- * production code.
- * <p>
  * Visibility looked at when discovering constraints.
  * <p>
  * Exactly the same as the
  * <a href="http://docs.jboss.org/hibernate/validator/4.3/api/org/hibernate/validator/internal/metadata/core/ConstraintOrigin.html">
  * Hibernate implementation</a>.
+ * Duplicated here to avoid dependency.
  */
 public enum ConstraintOrigin {
   /**
