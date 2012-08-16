@@ -31,6 +31,7 @@ public interface PreferencesDialogBaseResources extends ClientBundle
       String tight();
       String nudgeRight();
       String spaced();
+      String lessSpaced();
       String extraSpaced();
       String textBoxWithChooser();
       String infoLabel();

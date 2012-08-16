@@ -81,6 +81,12 @@ implements HasEnsureVisibleHandlers
       widget.addStyleName(res_.styles().tight());
       return widget;
    }
+   
+   protected Widget lessSpaced(Widget widget)
+   {
+      widget.addStyleName(res_.styles().lessSpaced());
+      return widget;
+   }
 
    protected Widget spaced(Widget widget)
    {

@@ -35,7 +35,7 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<RPrefs>
                                    final PrefValue<Boolean> prefValue)
    {
       final CheckBox checkBox = new CheckBox(label, false);
-      spaced(checkBox);
+      lessSpaced(checkBox);
       checkBox.setValue(prefValue.getGlobalValue());
       onApplyCommands_.add(new Command()
       {
@@ -52,7 +52,7 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<RPrefs>
                                             final PrefValue<Integer> prefValue)
    {
       final NumericValueWidget widget = new NumericValueWidget(label);
-      spaced(widget);
+      lessSpaced(widget);
       registerEnsureVisibleHandler(widget);
       widget.setValue(prefValue.getGlobalValue() + "");
       onApplyCommands_.add(new Command()
