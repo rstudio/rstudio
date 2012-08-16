@@ -28,12 +28,17 @@ We've also added support for building packages with [Rcpp](http://dirk.eddelbuet
 - Quick navigation to gcc errors and warnings
 - New project option to create "Package w/Rcpp"
 
+### Source Editor
+
+- New options to show whitespace and indent guides 
+- Middle-button paste for Linux
+- Preserve editor selection and scroll position across reloads of the IDE
+
 ### Miscellaneous
 
 - New Restart R command
 - Install Packages dialog can now install both source and binary packages
 - Support for OS X Lion full screen mode
-- Preserve editor selection and scroll position across reloads of the IDE
 - Always use native R png device on Linux
 
 ### Bug Fixes
