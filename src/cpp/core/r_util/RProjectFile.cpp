@@ -374,8 +374,7 @@ Error readProjectFile(const FilePath& projectFilePath,
    }
    else
    {
-      pConfig->rootDocument = defaultConfig.rootDocument;
-      *pProvidedDefaults = true;
+      pConfig->rootDocument = "";
    }
 
    // extract build type
@@ -513,8 +512,7 @@ Error writeProjectFile(const FilePath& projectFilePath,
       "Encoding: %8%\n"
       "\n"
       "RnwWeave: %9%\n"
-      "LaTeX: %10%\n"
-      "RootDocument: %11%\n");
+      "LaTeX: %10%\n");
 
    std::string contents = boost::str(fmt %
         boost::io::group(std::fixed, std::setprecision(1), config.version) %
@@ -526,8 +524,15 @@ Error writeProjectFile(const FilePath& projectFilePath,
         config.numSpacesForTab %
         config.encoding %
         config.defaultSweaveEngine %
-        config.defaultLatexProgram %
-        config.rootDocument);
+        config.defaultLatexProgram);
+
+   // add root-document if provided
+   if (!config.rootDocument.empty())
+   {
+      boost::format rootDocFmt("RootDocument: %1%\n");
+      std::string rootDoc = boost::str(rootDocFmt % config.rootDocument);
+      contents.append(rootDoc);
+   }
 
    // add build-specific settings if necessary
    if (!config.buildType.empty())
