@@ -107,6 +107,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void unfold(AceFold fold);
    void unfold(int row);
    void unfold(Range range);
+   
+   void toggleCommentLines();
 
    void forceImmediateRender();
    

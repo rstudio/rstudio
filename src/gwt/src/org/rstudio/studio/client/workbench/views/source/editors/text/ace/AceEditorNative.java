@@ -56,6 +56,10 @@ public class AceEditorNative extends JavaScriptObject {
    public native final void setReadOnly(boolean readOnly) /*-{
       this.setReadOnly(readOnly);
    }-*/;
+   
+   public native final void toggleCommentLines() /*-{
+      this.toggleCommentLines();
+   }-*/;
 
    public native final void focus() /*-{
       this.focus();

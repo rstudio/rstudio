@@ -1348,7 +1348,7 @@ public class TextEditingTarget implements EditingTarget
    void onCommentUncomment()
    {
       if (fileType_.isCpp())
-         doCommentUncomment("//");
+         docDisplay_.toggleCommentLines();
       else if (isCursorInTexMode())
          doCommentUncomment("%");
       else if (isCursorInRMode())

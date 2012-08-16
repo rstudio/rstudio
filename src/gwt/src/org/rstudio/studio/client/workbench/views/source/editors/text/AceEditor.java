@@ -929,6 +929,12 @@ public class AceEditor implements DocDisplay,
       if (emptySelection)
          moveSelectionToNextLine(false);
    }
+   
+   @Override
+   public void toggleCommentLines()
+   {
+      widget_.getEditor().toggleCommentLines();
+   }
 
    public ChangeTracker getChangeTracker()
    {
