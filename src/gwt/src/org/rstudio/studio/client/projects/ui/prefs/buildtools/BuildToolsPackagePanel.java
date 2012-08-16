@@ -132,7 +132,6 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    @Override
    protected void provideDefaults()
    {
-      installAdditionalArguments_.setText("--no-multiarch");
    }
 
    @Override
