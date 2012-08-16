@@ -52,7 +52,7 @@ public class EditorLanguage
    public static final EditorLanguage LANG_JAVASCRIPT = new EditorLanguage(
          "ace/mode/javascript", true);
    public static final EditorLanguage LANG_CPP = new EditorLanguage(
-         "ace/mode/c_cpp", false);
+         "mode/c_cpp", false);
 
    /**
     *
