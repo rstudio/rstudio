@@ -113,15 +113,17 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
           
       add(chkCleanupAfterCheck_ = checkBox(
             "Cleanup output after successful R CMD check"));
+      chkCleanupAfterCheck_.getElement().getStyle().setMarginBottom(12, Unit.PX);
+      add(viewDirAfterFailedCheck_ = checkBox(
+            "View Rcheck directory after failed R CMD check"));
+      
       if (BrowseCap.isWindowsDesktop())
       {
-         chkCleanupAfterCheck_.getElement().getStyle().setMarginLeft(0, 
-                                                                     Unit.PX);
+         adjustCheckboxMargin(chkCleanupAfterCheck_);
+         adjustCheckboxMargin(viewDirAfterFailedCheck_);
       }
 
    }
-   
-  
    
    @Inject
    public void initialize(WorkbenchContext workbenchContext)
@@ -145,6 +147,8 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       checkAdditionalArguments_.setText(config.getPackageCheckArgs());
       chkCleanupAfterCheck_.setValue(
                            options.getBuildOptions().getCleanupAfterCheck());
+      viewDirAfterFailedCheck_.setValue(
+                      options.getBuildOptions().getViewDirAfterFailedCheck());
       
       roxygenOptions_ = new BuildToolsRoxygenOptions(
             config.getPackageRoxygenzieRd(),
@@ -188,10 +192,16 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
                                   roxygenOptions_.getRocletNamespace());
       RProjectBuildOptions buildOptions = options.getBuildOptions();
       buildOptions.setCleanupAfterCheck(chkCleanupAfterCheck_.getValue());
+      buildOptions.setViewDirAfterFailedCheck(viewDirAfterFailedCheck_.getValue());
       buildOptions.setAutoRoxyginizeOptions(
                                        roxygenOptions_.getAutoRoxygenize());
    }
 
+   private void adjustCheckboxMargin(CheckBox checkBox)
+   {
+      checkBox.getElement().getStyle().setMarginLeft(0, Unit.PX);
+   }
+   
    private PathSelector pathSelector_;
    
    private AdditionalArguments installAdditionalArguments_;
@@ -200,6 +210,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    private AdditionalArguments checkAdditionalArguments_;
    
    private CheckBox chkCleanupAfterCheck_;
+   private CheckBox viewDirAfterFailedCheck_;
    
    private BuildToolsRoxygenOptions roxygenOptions_;
    

@@ -87,6 +87,7 @@ const int kBuildStarted = 62;
 const int kBuildOutput = 63;
 const int kBuildCompleted = 64;
 const int kBuildErrors = 65;
+const int kDirectoryNavigate = 66;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -226,6 +227,8 @@ std::string ClientEvent::typeName() const
          return "build_completed";
       case client_events::kBuildErrors:
          return "build_errors";
+      case client_events::kDirectoryNavigate:
+         return "directory_navigate";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              boost::lexical_cast<std::string>(type_));

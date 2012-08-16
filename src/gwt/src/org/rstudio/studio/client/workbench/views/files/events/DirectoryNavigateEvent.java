@@ -12,23 +12,56 @@
  */
 package org.rstudio.studio.client.workbench.views.files.events;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.GwtEvent;
 
 import org.rstudio.core.client.files.FileSystemItem;
 
 public class DirectoryNavigateEvent extends GwtEvent<DirectoryNavigateHandler>
 {
+   public static class Data extends JavaScriptObject
+   {
+      protected Data()
+      {
+      }
+      
+      public final native String getDirectory() /*-{
+         return this.directory;
+      }-*/;
+      
+      public final native boolean getActivate() /*-{
+         return this.activate;
+      }-*/;      
+   }
+   
    public static final GwtEvent.Type<DirectoryNavigateHandler> TYPE =
       new GwtEvent.Type<DirectoryNavigateHandler>();
    
+   public DirectoryNavigateEvent(Data data)
+   {
+      this(FileSystemItem.createDir(data.getDirectory()), data.getActivate());
+   }
+   
    public DirectoryNavigateEvent(FileSystemItem directory)
    {
+      this(directory, false);
+   }
+   
+   public DirectoryNavigateEvent(FileSystemItem directory,
+                                 boolean activate)
+   {
       directory_ = directory;
+      activate_ = activate;
    }
    
    public FileSystemItem getDirectory()
    {
       return directory_;
+   }
+   
+   public boolean getActivate()
+   {
+      return activate_;
    }
    
    @Override
@@ -44,4 +77,5 @@ public class DirectoryNavigateEvent extends GwtEvent<DirectoryNavigateHandler>
    }
    
    private final FileSystemItem directory_;
+   private final boolean activate_;
 }

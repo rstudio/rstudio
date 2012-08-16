@@ -531,6 +531,8 @@ public class Files
    public void onDirectoryNavigate(DirectoryNavigateEvent event)
    {
       navigateToDirectory(event.getDirectory());
+      if (event.getActivate())
+         view_.bringToFront();
    }
   
    private void navigateToDirectory(FileSystemItem directoryEntry)

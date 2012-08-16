@@ -77,6 +77,7 @@ class ClientEvent extends JavaScriptObject
    public static final String BuildOutput = "build_output";
    public static final String BuildCompleted = "build_completed";
    public static final String BuildErrors = "build_errors";
+   public static final String DirectoryNavigate = "directory_navigate";
 
    protected ClientEvent()
    {

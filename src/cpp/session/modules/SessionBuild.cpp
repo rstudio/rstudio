@@ -540,6 +540,13 @@ private:
                                            pkgInfo_);
          }
 
+         if (options_.viewDirAfterFailedCheck)
+         {
+            failureFunction_ = boost::bind(&Build::viewDirAfterFailedCheck,
+                                           Build::shared_from_this(),
+                                           pkgInfo_);
+         }
+
          // run the source build
          module_context::processSupervisor().runCommand(rCmd.shellCommand(),
                                                         pkgOptions,
@@ -585,6 +592,19 @@ private:
       error = chkDirPath.removeIfExists();
       if (error)
          LOG_ERROR(error);
+   }
+
+   void viewDirAfterFailedCheck(const r_util::RPackageInfo& pkgInfo)
+   {
+      FilePath buildPath = projects::projectContext().buildTargetPath().parent();
+      FilePath chkDirPath = buildPath.childPath(pkgInfo.name() + ".Rcheck");
+
+      json::Object dataJson;
+      dataJson["directory"] = module_context::createAliasedPath(chkDirPath);
+      dataJson["activate"] = true;
+      ClientEvent event(client_events::kDirectoryNavigate, dataJson);
+
+      module_context::enqueClientEvent(event);
    }
 
    void executeMakefileBuild(const std::string& type,
@@ -714,6 +734,10 @@ private:
 
          // never restart R after a failed build
          restartR_ = false;
+
+         // take other actions
+         if (failureFunction_)
+            failureFunction_();
       }
       else
       {
@@ -805,6 +829,7 @@ private:
    projects::RProjectBuildOptions options_;
    std::string successMessage_;
    boost::function<void()> successFunction_;
+   boost::function<void()> failureFunction_;
    bool restartR_;
 };
 

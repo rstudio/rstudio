@@ -59,6 +59,7 @@ import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.model.DataView;
 import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
 import org.rstudio.studio.client.workbench.views.edit.model.ShowEditorData;
+import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
@@ -388,6 +389,11 @@ public class ClientEventDispatcher
          {
             BuildErrorsEvent.Data data = event.getData();
             eventBus_.fireEvent(new BuildErrorsEvent(data));
+         }
+         else if (type.equals(ClientEvent.DirectoryNavigate))
+         {
+            DirectoryNavigateEvent.Data data = event.getData();
+            eventBus_.fireEvent(new DirectoryNavigateEvent(data));
          }
          else if (type.equals(ClientEvent.ListChanged))
          {
