@@ -63,6 +63,7 @@ public class AceEditorWidget extends Composite
       editor_.setShowPrintMargin(false);
       editor_.setPrintMarginColumn(0);
       editor_.setHighlightActiveLine(false);
+      editor_.setHighlightGutterLine(false);
       editor_.delegateEventsTo(AceEditorWidget.this);
       editor_.onChange(new Command()
       {
