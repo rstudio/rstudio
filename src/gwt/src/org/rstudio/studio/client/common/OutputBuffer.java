@@ -12,13 +12,12 @@
  */
 package org.rstudio.studio.client.common;
 
+import com.google.gwt.user.client.ui.Composite;
 import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
-
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.ScrollPanel;
 
 public class OutputBuffer extends Composite
 {
@@ -29,7 +28,7 @@ public class OutputBuffer extends Composite
                         ConsoleResources.INSTANCE.consoleStyles().output());
       FontSizer.applyNormalFontSize(output_);
     
-      scrollPanel_ = new ScrollPanel();
+      scrollPanel_ = new BottomScrollPanel();
       scrollPanel_.setSize("100%", "100%");
       scrollPanel_.add(output_);
       
@@ -38,14 +37,10 @@ public class OutputBuffer extends Composite
    
    public void append(String output)
    {
-      boolean isAtBottom = scrollPanel_.getVerticalScrollPosition() == 
-                           scrollPanel_.getMaximumVerticalScrollPosition();
-      
       virtualConsole_.submit(output);
       output_.setText(virtualConsole_.toString()); 
-      
-      if (isAtBottom)
-         scrollPanel_.scrollToBottom();
+
+      scrollPanel_.onContentSizeChanged();
    }
    
    public void scrollToBottom()
@@ -61,5 +56,5 @@ public class OutputBuffer extends Composite
  
    private PreWidget output_;
    private VirtualConsole virtualConsole_ = new VirtualConsole();
-   private ScrollPanel scrollPanel_;
+   private BottomScrollPanel scrollPanel_;
 }

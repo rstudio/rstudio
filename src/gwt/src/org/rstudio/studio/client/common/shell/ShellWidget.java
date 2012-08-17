@@ -214,50 +214,22 @@ public class ShellWidget extends Composite implements ShellDisplay,
    
    public void consoleWriteError(final String error)
    {
-      withAutoScroll(new Command() {
-         @Override
-         public void execute()
-         {
-            clearPendingInput();
-            output(error, styles_.error(), false);
-         } 
-      });
+      clearPendingInput();
+      output(error, styles_.error(), false);
    }
 
    public void consoleWriteOutput(final String output)
    {
-      withAutoScroll(new Command() {
-         @Override
-         public void execute()
-         {
-            clearPendingInput();
-            output(output, styles_.output(), false);
-         } 
-      });
+      clearPendingInput();
+      output(output, styles_.output(), false);
    }
 
    public void consoleWriteInput(final String input)
    {
-      withAutoScroll(new Command() {
-         @Override
-         public void execute()
-         {
-            clearPendingInput();
-            output(input, styles_.command() + KEYWORD_CLASS_NAME, false);    
-         } 
-      });
+      clearPendingInput();
+      output(input, styles_.command() + KEYWORD_CLASS_NAME, false);
    }
    
-   private void withAutoScroll(Command command)
-   {
-      boolean isAtBottom = scrollPanel_.isScrolledToBottom();
-      
-      command.execute();
-      
-      if (isAtBottom)
-         scrollToBottomCommand_.nudge();    
-   }
-
    private void clearPendingInput()
    {
       pendingInput_.setText("");
@@ -266,13 +238,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
    public void consoleWritePrompt(final String prompt)
    {
-      withAutoScroll(new Command() {
-         @Override
-         public void execute()
-         {
-            output(prompt, styles_.prompt() + KEYWORD_CLASS_NAME, false);
-         } 
-      });
+      output(prompt, styles_.prompt() + KEYWORD_CLASS_NAME, false);
    }
 
    public void consolePrompt(String prompt, boolean showInput)
@@ -381,7 +347,13 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
          lines_ += DomUtils.countLines(node, true);
       }
-      return !trimExcess();
+      boolean result = !trimExcess();
+
+      scrollPanel_.onContentSizeChanged();
+      if (scrollPanel_.isScrolledToBottom())
+         scrollToBottomCommand_.nudge();
+
+      return result;
    }
 
    private String ensureNewLine(String s)
