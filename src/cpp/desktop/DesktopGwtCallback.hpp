@@ -133,6 +133,9 @@ public slots:
                             int line,
                             int column);
 
+   bool supportsFullscreenMode();
+   void toggleFullscreenMode();
+
 private:
    Synctex& synctex();
 

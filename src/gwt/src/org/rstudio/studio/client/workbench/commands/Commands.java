@@ -158,6 +158,7 @@ public abstract class
    public abstract AppCommand firstTab();
    public abstract AppCommand lastTab();
    public abstract AppCommand goToLine();
+   public abstract AppCommand toggleFullScreen();
 
    // History
    public abstract AppCommand historySendToSource();

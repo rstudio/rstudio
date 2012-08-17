@@ -33,18 +33,50 @@ bool isRetina(QMainWindow* pMainWindow)
    }
 }
 
+namespace {
+
+NSWindow* nsWindowForMainWindow(QMainWindow* pMainWindow)
+{
+   OSWindowRef macWindow = qt_mac_window_for(pMainWindow);
+   NSWindow* pWindow = (NSWindow*)macWindow;
+   return pWindow;
+}
+
+bool supportsFullscreenMode(NSWindow* pWindow)
+{
+   return [pWindow respondsToSelector:@selector(toggleFullScreen:)];
+}
+
+} // anonymous namespace
+
+
+bool supportsFullscreenMode(QMainWindow* pMainWindow)
+{
+   NSWindow* pWindow = nsWindowForMainWindow(pMainWindow);
+   return supportsFullscreenMode(pWindow);
+}
+
 // see: https://bugreports.qt-project.org/browse/QTBUG-21607
 // see: https://developer.apple.com/library/mac/#documentation/General/Conceptual/MOSXAppProgrammingGuide/FullScreenApp/FullScreenApp.html
 void enableFullscreenMode(QMainWindow* pMainWindow, bool primary)
 {
-   OSWindowRef macWindow = qt_mac_window_for(pMainWindow);
-   NSWindow* pWindow = (NSWindow*)macWindow;
+   NSWindow* pWindow = nsWindowForMainWindow(pMainWindow);
 
-   NSWindowCollectionBehavior behavior = [pWindow collectionBehavior];
-   behavior = behavior | (primary ?
+   if (supportsFullscreenMode(pWindow))
+   {
+      NSWindowCollectionBehavior behavior = [pWindow collectionBehavior];
+      behavior = behavior | (primary ?
                              NSWindowCollectionBehaviorFullScreenPrimary :
                              NSWindowCollectionBehaviorFullScreenAuxiliary);
-   [pWindow setCollectionBehavior:behavior];
+      [pWindow setCollectionBehavior:behavior];
+   }
+}
+
+void toggleFullscreenMode(QMainWindow* pMainWindow)
+{
+   NSWindow* pWindow = nsWindowForMainWindow(pMainWindow);
+   if (supportsFullscreenMode(pWindow))
+      [pWindow toggleFullScreen:nil];
 }
 
 } // namespace desktop

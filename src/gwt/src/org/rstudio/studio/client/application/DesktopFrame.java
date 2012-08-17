@@ -105,4 +105,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
                             String srcFile, 
                             int line,
                             int column);
+   
+   boolean supportsFullscreenMode();
+   void toggleFullscreenMode();
 }

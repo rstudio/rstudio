@@ -149,6 +149,8 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="showToolbar"/>
          <cmd refid="hideToolbar"/>
          <separator/>
+         <cmd refid="toggleFullScreen"/>
+         <separator/>
          <cmd refid="switchToTab"/>
          <cmd refid="nextTab"/>
          <cmd refid="previousTab"/>
@@ -405,6 +407,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="buildAll" value="Cmd+Shift+B"/>
       <shortcut refid="devtoolsLoadAll" value="Cmd+Shift+L"/>
       <shortcut refid="checkPackage" value="Cmd+Shift+E"/>
+      <shortcut refid="toggleFullScreen" value="Ctrl+Cmd+F" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/> 
    </shortcuts>
 
    <!--
@@ -607,6 +610,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Last Tab"/>
    <cmd id="goToLine"
         menuLabel="_Go to Line..."/>
+   <cmd id="toggleFullScreen"
+        menuLabel="Toggle Full Screen"/>
 
    <cmd id="find"
         menuLabel="_Find..."/>

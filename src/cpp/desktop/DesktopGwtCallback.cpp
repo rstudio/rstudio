@@ -563,6 +563,15 @@ void GwtCallback::checkForUpdates()
    pMainWindow_->checkForUpdates();
 }
 
+bool GwtCallback::supportsFullscreenMode()
+{
+   return desktop::supportsFullscreenMode(pMainWindow_);
+}
+
+void GwtCallback::toggleFullscreenMode()
+{
+   desktop::toggleFullscreenMode(pMainWindow_);
+}
 
 void GwtCallback::showAboutDialog()
 {

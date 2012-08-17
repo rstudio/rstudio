@@ -317,6 +317,14 @@ public class Workbench implements BusyHandler,
          });
       }
    }
+   
+   @Handler
+   public void onToggleFullScreen()
+   {
+      if (Desktop.isDesktop() && Desktop.getFrame().supportsFullscreenMode())
+         Desktop.getFrame().toggleFullscreenMode();
+   }
+    
 
    private final Server server_;
    private final EventBus eventBus_;

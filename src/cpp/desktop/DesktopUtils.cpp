@@ -31,6 +31,22 @@ bool isRetina(QMainWindow* pMainWindow)
 {
    return false;
 }
+
+void enableFullscreenMode(QMainWindow* pMainWindow, bool primary)
+{
+
+}
+
+void toggleFullscreenMode(QMainWindow* pMainWindow)
+{
+
+}
+
+bool supportsFullscreenMode(QMainWindow* pMainWindow)
+{
+   return false;
+}
+
 #endif
 
 void raiseAndActivateWindow(QWidget* pWindow)
