@@ -60,7 +60,7 @@ struct RProjectBuildOptions
 {
    RProjectBuildOptions() :
       cleanupAfterCheck(true),
-      viewDirAfterFailedCheck(true),
+      viewDirAfterFailedCheck(false),
       autoRoxygenizeForCheck(true),
       autoRoxygenizeForBuildPackage(true),
       autoRoxygenizeForBuildAndReload(false)

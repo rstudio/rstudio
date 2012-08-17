@@ -598,7 +598,7 @@ Error ProjectContext::readBuildOptions(RProjectBuildOptions* pOptions)
                                        true);
    pOptions->viewDirAfterFailedCheck = optionsFile.getBool(
                                        "view_dir_after_failed_check",
-                                       true);
+                                       false);
    pOptions->autoRoxygenizeForCheck = optionsFile.getBool(
                                        "auto_roxygenize_for_check",
                                        true);
