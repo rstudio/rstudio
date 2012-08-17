@@ -28,12 +28,26 @@ public class RpcResponse extends JavaScriptObject
    {      
       try
       {
+         // we first call parseStrict so we can use the browser
+         // json parser (for performance) whenever possible)
          JSONValue val = JSONParser.parseStrict(json);
          return val.isObject().getJavaScriptObject().cast();
       }
       catch(Exception e)
       {
-         return null;
+         try
+         {
+            // there are some cases where json emitted by our 
+            // server isn't parsable by parseStrict (for example,
+            // see bug #3025). for these situations we call 
+            // parseLenient (which in turn calls eval)
+            JSONValue val = JSONParser.parseLenient(json);
+            return val.isObject().getJavaScriptObject().cast();
+         }
+         catch(Exception e2)
+         {
+            return null;
+         }
       }
    }
     
