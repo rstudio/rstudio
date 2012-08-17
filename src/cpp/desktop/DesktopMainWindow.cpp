@@ -52,8 +52,8 @@ MainWindow::MainWindow(QUrl url) :
    pMainMenuStub->addMenu(QString::fromUtf8("Code"));
    pMainMenuStub->addMenu(QString::fromUtf8("View"));
    pMainMenuStub->addMenu(QString::fromUtf8("Plots"));
+   pMainMenuStub->addMenu(QString::fromUtf8("Session"));
    pMainMenuStub->addMenu(QString::fromUtf8("Project"));
-   pMainMenuStub->addMenu(QString::fromUtf8("Workspace"));
    pMainMenuStub->addMenu(QString::fromUtf8("Build"));
    pMainMenuStub->addMenu(QString::fromUtf8("VCS"));
    pMainMenuStub->addMenu(QString::fromUtf8("Tools"));

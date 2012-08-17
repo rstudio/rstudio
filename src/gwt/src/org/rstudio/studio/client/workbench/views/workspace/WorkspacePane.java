@@ -56,35 +56,13 @@ public class WorkspacePane extends WorkbenchPane
    {
       return new Toolbar(
             new Widget[] {
-                  createLoadMenu(),
-                  createSaveMenu(),
                   createImportMenu(),
                   commands_.clearWorkspace().createToolbarButton()
             },
             new Widget[] {
-                  commands_.refreshWorkspace().createToolbarButton(),
+                  commands_.refreshWorkspace().createToolbarButton()
             }
       );
-   }
-
-   private Widget createLoadMenu()
-   {
-      ToolbarPopupMenu menu = new ToolbarPopupMenu();
-      menu.addItem(commands_.loadWorkspace().createMenuItem(false));
-      menu.addItem(commands_.loadDefaultWorkspace().createMenuItem(false));
-      return new ToolbarButton(
-            "Load", commands_.openSourceDoc().getImageResource(),
-            menu);
-   }
-
-   private Widget createSaveMenu()
-   {
-      ToolbarPopupMenu menu = new ToolbarPopupMenu();
-      menu.addItem(commands_.saveWorkspace().createMenuItem(false));
-      menu.addItem(commands_.saveDefaultWorkspace().createMenuItem(false));
-      return new ToolbarButton(
-            "Save", commands_.saveSourceDoc().getImageResource(),
-            menu);
    }
    
    private Widget createImportMenu()

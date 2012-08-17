@@ -36,11 +36,7 @@ public class WorkspaceTab extends DelayLoadWorkbenchTab<Workspace>
       @Handler
       public abstract void onLoadWorkspace();
       @Handler
-      public abstract void onLoadDefaultWorkspace();
-      @Handler
       public abstract void onSaveWorkspace();
-      @Handler
-      public abstract void onSaveDefaultWorkspace();
       @Handler
       public abstract void onImportDatasetFromFile();
       @Handler

@@ -178,8 +178,6 @@ public abstract class
    public abstract AppCommand refreshWorkspace();
    public abstract AppCommand saveWorkspace();
    public abstract AppCommand loadWorkspace();
-   public abstract AppCommand saveDefaultWorkspace();
-   public abstract AppCommand loadDefaultWorkspace();
    public abstract AppCommand importDatasetFromFile();
    public abstract AppCommand importDatasetFromURL();
    public abstract AppCommand activateWorkspace();

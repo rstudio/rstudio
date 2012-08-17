@@ -193,13 +193,6 @@ public class Workspace
                                                       "save.image");
    }
 
-  
-   void onSaveDefaultWorkspace()
-   {
-      view_.bringToFront();
-      sendDefaultWorkspaceCommandToConsole("save.image");
-   }
-
 
    void onLoadWorkspace()
    {
@@ -207,12 +200,6 @@ public class Workspace
       consoleDispatcher_.chooseFileThenExecuteCommand("Load Workspace", "load");
    }
 
-
-   void onLoadDefaultWorkspace()
-   {
-      view_.bringToFront();
-      sendDefaultWorkspaceCommandToConsole("load");
-   }
    
    public void onOpenDataFile(OpenDataFileEvent event)
    {
@@ -236,13 +223,6 @@ public class Workspace
            },
            
            true);   
-   }
-   
-   private void sendDefaultWorkspaceCommandToConsole(String command)
-   {
-      String renvPath = workbenchContext_.getREnvironmentPath();
-      consoleDispatcher_.executeCommand(command, 
-                                        FileSystemItem.createFile(renvPath));
    }
    
    

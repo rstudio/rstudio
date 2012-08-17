@@ -192,6 +192,23 @@ well as menu structures (for main menu and popup menus).
       
       <separator/>
       
+      <menu label="_Session">
+         <cmd refid="interruptR"/>
+         <cmd refid="restartR"/>
+         <separator/>
+         <menu label="Set _Working Directory">
+            <cmd refid="setWorkingDirToActiveDoc"/>
+            <cmd refid="setWorkingDirToFilesPane"/>
+            <separator/>
+            <cmd refid="setWorkingDir"/>
+         </menu>
+         <separator/>
+         <cmd refid="loadWorkspace"/>
+         <cmd refid="saveWorkspace"/>
+         <separator/>
+         <cmd refid="clearWorkspace"/>
+      </menu>
+      
       <menu label="_Project">
          <cmd refid="newProject"/>
          <separator/>
@@ -215,21 +232,6 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="closeProject"/>
          <separator/>
          <cmd refid="projectOptions"/>
-      </menu>
-
-      <menu label="_Workspace">
-         <cmd refid="loadWorkspace"/>
-         <cmd refid="loadDefaultWorkspace"/>
-         <separator/>
-         <cmd refid="saveWorkspace"/>
-         <cmd refid="saveDefaultWorkspace"/>
-         <separator/>
-         <menu label="_Import Dataset">
-            <cmd refid="importDatasetFromFile"/>
-            <cmd refid="importDatasetFromURL"/>
-         </menu>
-         <separator/>
-         <cmd refid="clearWorkspace"/>
       </menu>
          
       <separator/>
@@ -274,14 +276,9 @@ well as menu structures (for main menu and popup menus).
       <separator/>
       
       <menu label="_Tools">
-         <cmd refid="interruptR"/>
-         <cmd refid="restartR"/>
-         <separator/>
-         <menu label="Set _Working Directory">
-            <cmd refid="setWorkingDirToActiveDoc"/>
-            <cmd refid="setWorkingDirToFilesPane"/>
-            <separator/>
-            <cmd refid="setWorkingDir"/>
+         <menu label="_Import Dataset">
+            <cmd refid="importDatasetFromFile"/>
+            <cmd refid="importDatasetFromURL"/>
          </menu>
          <separator/>
          <cmd refid="installPackage"/>
@@ -922,16 +919,12 @@ well as menu structures (for main menu and popup menus).
         desc="Show the manipulator for this plot"/>
         
    <cmd id="clearWorkspace"
-        menuLabel="_Clear All..."
+        menuLabel="_Clear Workspace..."
         buttonLabel="Clear All"/>
    <cmd id="loadWorkspace"
         menuLabel="_Load Workspace..."/>
-   <cmd id="loadDefaultWorkspace"
-        menuLabel="Load _Default Workspace"/>
    <cmd id="saveWorkspace"
         menuLabel="_Save Workspace As..."/>
-   <cmd id="saveDefaultWorkspace"
-        menuLabel="Save _As Default Workspace"/>
    <cmd id="importDatasetFromFile"
         menuLabel="From _Text File..."/>
    <cmd id="importDatasetFromURL"
