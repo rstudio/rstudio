@@ -198,27 +198,6 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="projectOptions"/>
       </menu>
-      
-      <menu label="_Build">
-         <cmd refid="devtoolsLoadAll"/>
-         <cmd refid="buildAll"/>
-         <separator/>
-         <cmd refid="rebuildAll"/>
-         <cmd refid="cleanAll"/>
-         <separator/>
-         <cmd refid="checkPackage"/>
-         <separator/>
-         <cmd refid="buildSourcePackage"/>
-         <cmd refid="buildBinaryPackage"/>
-         <separator/>
-         <cmd refid="roxygenizePackage"/>
-         <separator/>
-         <cmd refid="stopBuild"/>
-         <separator/>
-         <cmd refid="buildToolsProjectSetup"/>
-      </menu>
-      
-      <separator/>
 
       <menu label="_Workspace">
          <cmd refid="loadWorkspace"/>
@@ -251,6 +230,27 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="removePlot"/>
          <separator/>
          <cmd refid="clearPlots"/>
+      </menu>
+      
+      <separator/>
+      
+      <menu label="_Build">
+         <cmd refid="devtoolsLoadAll"/>
+         <cmd refid="buildAll"/>
+         <separator/>
+         <cmd refid="rebuildAll"/>
+         <cmd refid="cleanAll"/>
+         <separator/>
+         <cmd refid="checkPackage"/>
+         <separator/>
+         <cmd refid="buildSourcePackage"/>
+         <cmd refid="buildBinaryPackage"/>
+         <separator/>
+         <cmd refid="roxygenizePackage"/>
+         <separator/>
+         <cmd refid="stopBuild"/>
+         <separator/>
+         <cmd refid="buildToolsProjectSetup"/>
       </menu>
       
       <separator/>
