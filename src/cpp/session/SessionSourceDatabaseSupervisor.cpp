@@ -149,11 +149,25 @@ void attemptToMoveSourceDbFiles(const FilePath& fromPath,
    // move the files
    BOOST_FOREACH(const FilePath& filePath, children)
    {
-      // if the target path already exists then just generate a
-      // new unique filename
+      // if the target path already exists then skip it and log
+      // (we used to generate a new uniqueFilePath however this
+      // caused the filename and id (stored in the source doc)
+      // to get out of sync, making documents unclosable. The
+      // chance of file with the same name already existing is
+      // close to zero (collision probability of uniqueFilePath)
+      // so it's no big deal to punt here.
       FilePath targetPath = toPath.complete(filePath.filename());
       if (targetPath.exists())
-         targetPath = file_utils::uniqueFilePath(toPath);
+      {
+         LOG_WARNING_MESSAGE("Skipping source db move for: " +
+                             filePath.absolutePath());
+
+         Error error = filePath.remove();
+         if (error)
+            LOG_ERROR(error);
+
+         continue;
+      }
 
       Error error = filePath.move(targetPath);
       if (error)
