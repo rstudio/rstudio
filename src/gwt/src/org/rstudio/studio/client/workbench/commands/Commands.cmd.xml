@@ -255,6 +255,24 @@ well as menu structures (for main menu and popup menus).
       
       <separator/>
       
+      <menu label="_VCS">
+         <cmd refid="vcsFileDiff"/>
+         <cmd refid="vcsFileLog"/>
+         <cmd refid="vcsFileRevert"/>
+         <separator/>
+         <cmd refid="vcsCommit"/>
+         <separator/>
+         <cmd refid="vcsPull"/>
+         <cmd refid="vcsCleanup"/>
+         <cmd refid="vcsPush"/>
+         <separator/>
+         <cmd refid="vcsShowHistory"/>
+         <separator/>
+         <cmd refid="versionControlProjectSetup"/>
+      </menu>
+      
+      <separator/>
+      
       <menu label="_Tools">
          <cmd refid="interruptR"/>
          <cmd refid="restartR"/>
@@ -268,22 +286,6 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="installPackage"/>
          <cmd refid="updatePackages"/>
-         <separator/>
-         <menu label="_Version Control">
-            <cmd refid="vcsFileDiff"/>
-            <cmd refid="vcsFileLog"/>
-            <cmd refid="vcsFileRevert"/>
-            <separator/>
-            <cmd refid="vcsCommit"/>
-            <separator/>
-            <cmd refid="vcsPull"/>
-            <cmd refid="vcsCleanup"/>
-            <cmd refid="vcsPush"/>
-            <separator/>
-            <cmd refid="vcsShowHistory"/>
-            <separator/>
-            <cmd refid="versionControlProjectSetup"/>
-         </menu>
          <separator/>
          <cmd refid="showShellDialog"/>
          <separator/>
@@ -966,7 +968,7 @@ well as menu structures (for main menu and popup menus).
         desc="Show RSA public key"/>     
         
    <cmd id="versionControlProjectSetup"
-        menuLabel="Project _Setup..."
+        menuLabel="Configure _Version Control..."
         desc="Setup version control for the current project"/>
 
    <cmd id="showShellDialog"
