@@ -40,6 +40,7 @@ We've also added support for building packages with [Rcpp](http://dirk.eddelbuet
 - Install Packages dialog can now install both source and binary packages
 - Support for OS X Lion full screen mode
 - Always use native R png device on Linux
+- Improved auto-scroll behavior in the console
 
 ### Bug Fixes
 

@@ -22,6 +22,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Text;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.StringUtil;
@@ -172,11 +173,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       }
    }-*/;
 
-   private void scrollToBottomAsync()
-   {
-      scrollToBottomCommand_.nudge();
-   }
-
+ 
    public void scrollToBottom()
    {
       scrollPanel_.scrollToBottom();
@@ -215,25 +212,50 @@ public class ShellWidget extends Composite implements ShellDisplay,
       suppressPendingInput_ = suppressPendingInput;
    }
    
-   public void consoleWriteError(String error)
+   public void consoleWriteError(final String error)
    {
-      clearPendingInput();
-      output(error, styles_.error(), false);
-      scrollToBottomAsync();
+      withAutoScroll(new Command() {
+         @Override
+         public void execute()
+         {
+            clearPendingInput();
+            output(error, styles_.error(), false);
+         } 
+      });
    }
 
-   public void consoleWriteOutput(String output)
+   public void consoleWriteOutput(final String output)
    {
-      clearPendingInput();
-      output(output, styles_.output(), false);
-      scrollToBottomAsync();
+      withAutoScroll(new Command() {
+         @Override
+         public void execute()
+         {
+            clearPendingInput();
+            output(output, styles_.output(), false);
+         } 
+      });
    }
 
-   public void consoleWriteInput(String input)
+   public void consoleWriteInput(final String input)
    {
-      clearPendingInput();
-      output(input, styles_.command() + KEYWORD_CLASS_NAME, false);
-      scrollToBottomAsync();
+      withAutoScroll(new Command() {
+         @Override
+         public void execute()
+         {
+            clearPendingInput();
+            output(input, styles_.command() + KEYWORD_CLASS_NAME, false);    
+         } 
+      });
+   }
+   
+   private void withAutoScroll(Command command)
+   {
+      boolean isAtBottom = scrollPanel_.isScrolledToBottom();
+      
+      command.execute();
+      
+      if (isAtBottom)
+         scrollToBottomCommand_.nudge();    
    }
 
    private void clearPendingInput()
@@ -242,10 +264,15 @@ public class ShellWidget extends Composite implements ShellDisplay,
       pendingInput_.setVisible(false);
    }
 
-   public void consoleWritePrompt(String prompt)
+   public void consoleWritePrompt(final String prompt)
    {
-      output(prompt, styles_.prompt() + KEYWORD_CLASS_NAME, false);
-      scrollToBottomAsync();
+      withAutoScroll(new Command() {
+         @Override
+         public void execute()
+         {
+            output(prompt, styles_.prompt() + KEYWORD_CLASS_NAME, false);
+         } 
+      });
    }
 
    public void consolePrompt(String prompt, boolean showInput)

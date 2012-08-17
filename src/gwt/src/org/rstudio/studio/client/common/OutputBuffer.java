@@ -38,9 +38,14 @@ public class OutputBuffer extends Composite
    
    public void append(String output)
    {
+      boolean isAtBottom = scrollPanel_.getVerticalScrollPosition() == 
+                           scrollPanel_.getMaximumVerticalScrollPosition();
+      
       virtualConsole_.submit(output);
       output_.setText(virtualConsole_.toString()); 
-      scrollPanel_.scrollToBottom();
+      
+      if (isAtBottom)
+         scrollPanel_.scrollToBottom();
    }
    
    public void scrollToBottom()
