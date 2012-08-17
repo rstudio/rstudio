@@ -14,7 +14,7 @@
 
 <module rename-to='validation'>
 
-  <inherits name='com.google.gwt.rpc.RPC' />
+  <inherits name='com.google.gwt.user.RemoteService' />
   <inherits name='com.google.gwt.user.User' />
   <inherits name='com.google.gwt.user.theme.standard.Standard' />
   <inherits name='org.hibernate.validator.HibernateValidator' />

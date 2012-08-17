@@ -15,12 +15,14 @@
  */
 package com.google.gwt.sample.validation.server;
 
-import com.google.gwt.rpc.server.RpcServlet;
+import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.sample.validation.client.GreetingService;
 import com.google.gwt.sample.validation.shared.Person;
 import com.google.gwt.sample.validation.shared.ServerGroup;
+
+import org.hibernate.validator.engine.ValidationSupport;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -35,7 +37,7 @@ import javax.validation.groups.Default;
  * The server side implementation of the RPC service.
  */
 @SuppressWarnings("serial")
-public class GreetingServiceImpl extends RpcServlet implements
+public class GreetingServiceImpl extends RemoteServiceServlet implements
     GreetingService {
 
   private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
@@ -66,5 +68,10 @@ public class GreetingServiceImpl extends RpcServlet implements
     .appendEscaped(userAgent)//
     .toSafeHtml();
     return safeHtml;
+  }
+
+  @Override
+  public ValidationSupport dummy() {
+    return null;
   }
 }

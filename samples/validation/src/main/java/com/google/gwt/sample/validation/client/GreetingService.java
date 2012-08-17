@@ -15,10 +15,12 @@
  */
 package com.google.gwt.sample.validation.client;
 
-import com.google.gwt.rpc.client.RpcService;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.sample.validation.shared.Person;
+import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
+
+import org.hibernate.validator.engine.ValidationSupport;
 
 import javax.validation.ConstraintViolationException;
 
@@ -26,7 +28,14 @@ import javax.validation.ConstraintViolationException;
  * The client side stub for the RPC service.
  */
 @RemoteServiceRelativePath("greet")
-public interface GreetingService extends RpcService {
+public interface GreetingService extends RemoteService {
   SafeHtml greetServer(Person name) throws IllegalArgumentException,
       ConstraintViolationException;
+  
+  /**
+   * Force hibernate validator imple1metations to be available for
+   * serialization.
+   */
+  ValidationSupport dummy();
+
 }

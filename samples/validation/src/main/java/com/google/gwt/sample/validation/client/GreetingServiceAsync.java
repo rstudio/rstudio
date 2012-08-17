@@ -19,6 +19,8 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.sample.validation.shared.Person;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
+import org.hibernate.validator.engine.ValidationSupport;
+
 import javax.validation.ConstraintViolationException;
 
 /**
@@ -27,4 +29,6 @@ import javax.validation.ConstraintViolationException;
 public interface GreetingServiceAsync {
   void greetServer(Person person, AsyncCallback<SafeHtml> callback)
       throws IllegalArgumentException, ConstraintViolationException;
+
+  void dummy(AsyncCallback<ValidationSupport> callback);
 }
