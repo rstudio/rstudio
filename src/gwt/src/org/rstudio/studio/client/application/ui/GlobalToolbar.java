@@ -114,6 +114,9 @@ public class GlobalToolbar extends Toolbar
       
       searchWidget_ = codeSearch.getSearchWidget();
       addLeftWidget(searchWidget_);
+      
+      addLeftSeparator();
+      addLeftWidget(commands.restartR().createToolbarButton());
    }
    
    public void completeInitialization(SessionInfo sessionInfo)
