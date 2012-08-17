@@ -35,4 +35,10 @@ public class StatusBarPopupMenu extends ScrollableToolbarPopupMenu
          }
       });
    }
+   
+   @Override
+   protected int getMaxHeight()
+   {
+      return 350;
+   }
 }
