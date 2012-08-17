@@ -54,15 +54,17 @@ public class WorkspacePane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      return new Toolbar(
-            new Widget[] {
-                  createImportMenu(),
-                  commands_.clearWorkspace().createToolbarButton()
-            },
-            new Widget[] {
-                  commands_.refreshWorkspace().createToolbarButton()
-            }
-      );
+      Toolbar toolbar = new Toolbar();
+      toolbar.addLeftWidget(commands_.loadWorkspace().createToolbarButton());
+      toolbar.addLeftWidget(commands_.saveWorkspace().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(createImportMenu());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
+      
+      toolbar.addRightWidget(commands_.refreshWorkspace().createToolbarButton());
+      
+      return toolbar;
    }
    
    private Widget createImportMenu()
