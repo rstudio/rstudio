@@ -8,6 +8,7 @@ This release includes a variety of tools to support R package development, inclu
 - Build and Reload command that rebuilds the package and reloads it in a fresh R session
 - Incremental reload is very fast and preserves the state of the previous R session, providing quick turnarounds and a much more interactive workflow for package development
 - Additional commands for checking packages and building source and binary packages
+- Ability to create a new package based on existing R source files
      
 There are also a number of features aimed at making it easier to write R documentation:
   
