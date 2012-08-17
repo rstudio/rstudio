@@ -91,6 +91,11 @@ public class BrowseCap
       return OPERATING_SYSTEM.equals("linux");
    }
    
+   public static boolean isLinuxDesktop()
+   {
+      return Desktop.isDesktop() && isLinux();
+   }
+   
    public static boolean hasUbuntuFonts()
    {
       return FIXED_UBUNTU_MONO;

@@ -12,6 +12,7 @@
  */
 package org.rstudio.core.client.prefs;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
@@ -84,8 +85,15 @@ implements HasEnsureVisibleHandlers
    
    protected Widget lessSpaced(Widget widget)
    {
-      widget.addStyleName(res_.styles().lessSpaced());
-      return widget;
+      if (!BrowseCap.isLinuxDesktop())
+      {
+         widget.addStyleName(res_.styles().lessSpaced());
+         return widget;
+      }
+      else
+      {
+         return widget;
+      }
    }
 
    protected Widget spaced(Widget widget)
