@@ -12,8 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
-import java.util.ArrayList;
-
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Cursor;
@@ -36,10 +34,12 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.BeforeShowCallback;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.studio.client.common.AutoGlassPanel;
+import org.rstudio.studio.client.common.AutoGlassAttacher;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.source.Source.Display;
+
+import java.util.ArrayList;
 
 public class SourcePane extends Composite implements Display,
                                                      HasEnsureVisibleHandlers,
@@ -54,6 +54,8 @@ public class SourcePane extends Composite implements Display,
       final int UTILITY_AREA_SIZE = 74;
 
       panel_ = new LayoutPanel();
+
+      new AutoGlassAttacher(panel_);
 
       tabPanel_ = new DocTabLayoutPanel(true, 65, UTILITY_AREA_SIZE);
       panel_.add(tabPanel_);
@@ -94,9 +96,7 @@ public class SourcePane extends Composite implements Display,
                                 52, Unit.PX,
                                 chevron_.getWidth(), Unit.PX);
 
-      AutoGlassPanel glassPanel = new AutoGlassPanel(panel_);
-      glassPanel.setSize("100%", "100%");
-      initWidget(glassPanel);
+      initWidget(panel_);
    }
 
    @Override
