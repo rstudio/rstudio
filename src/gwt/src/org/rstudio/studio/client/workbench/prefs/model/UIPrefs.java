@@ -97,6 +97,14 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          printMarginColumn().setGlobalValue(
                               newUiPrefs.printMarginColumn().getGlobalValue());
       
+         // show invisibles
+         showInvisibles().setGlobalValue(
+                              newUiPrefs.showInvisibles().getGlobalValue());
+         
+         // show indent guides
+         showIndentGuides().setGlobalValue(
+                              newUiPrefs.showIndentGuides().getGlobalValue());
+         
          // insert matching
          insertMatching().setGlobalValue(
                                  newUiPrefs.insertMatching().getGlobalValue());

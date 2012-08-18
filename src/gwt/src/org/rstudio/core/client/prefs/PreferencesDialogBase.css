@@ -13,6 +13,10 @@
    margin-bottom: 12px;
 }
 
+.lessSpaced {
+   margin-bottom: 10px;
+}
+
 .extraSpaced {
    margin-bottom: 23px;
 }

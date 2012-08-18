@@ -48,6 +48,10 @@ public class AceEditorNative extends JavaScriptObject {
    public native final void setHighlightActiveLine(boolean highlight) /*-{
       this.setHighlightActiveLine(highlight);
    }-*/;
+   
+   public native final void setHighlightGutterLine(boolean highlight) /*-{
+      this.setHighlightGutterLine(highlight);
+   }-*/;
 
    public native final void setHighlightSelectedWord(boolean highlight) /*-{
       this.setHighlightSelectedWord(highlight);
