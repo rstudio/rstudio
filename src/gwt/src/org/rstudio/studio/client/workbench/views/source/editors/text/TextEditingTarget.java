@@ -1789,6 +1789,12 @@ public class TextEditingTarget implements EditingTarget
             },
             null);
    }
+   
+   @Handler
+   void onCodeCompletion()
+   {
+      docDisplay_.codeCompletion();
+   }
 
    @Handler
    void onGoToFunctionDefinition()

@@ -17,6 +17,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
@@ -239,6 +240,8 @@ public class Source implements InsertSourceHandler,
       commands.find().setShortcut(new KeyboardShortcut(mod, 'F'));
       commands.findReplace().setShortcut(new KeyboardShortcut(mod, 'F'));
       commands.goToFunctionDefinition().setShortcut(new KeyboardShortcut(113));
+      commands.codeCompletion().setShortcut(
+                                    new KeyboardShortcut(KeyCodes.KEY_TAB));
              
       events.addHandler(ShowContentEvent.TYPE, this);
       events.addHandler(ShowDataEvent.TYPE, this);

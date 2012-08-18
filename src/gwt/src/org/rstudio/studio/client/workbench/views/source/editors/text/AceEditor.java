@@ -106,7 +106,7 @@ public class AceEditor implements DocDisplay,
          // line (e.g. only zero or more whitespace characters between the
          // beginning of the line and the cursor)
 
-         if (event.getKeyCode() != KeyCodes.KEY_TAB)
+         if (event != null && event.getKeyCode() != KeyCodes.KEY_TAB)
             return true;
 
          int col = range.getStart().getColumn();
@@ -541,6 +541,12 @@ public class AceEditor implements DocDisplay,
    public void focus()
    {
       widget_.getEditor().focus();
+   }
+   
+   
+   public void codeCompletion()
+   {
+      completionManager_.codeCompletion();
    }
    
    public void goToFunctionDefinition()

@@ -143,6 +143,12 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
             // navigate to the function at this position (if any)
             navigateToFunction(lineWithPos);  
          }
+         
+         @Override
+         public void codeCompletion()
+         {
+            // no-op since this is a code browser
+         }
 
          @Override
          public boolean previewKeyPress(char charCode)

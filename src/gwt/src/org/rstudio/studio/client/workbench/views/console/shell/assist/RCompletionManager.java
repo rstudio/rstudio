@@ -152,6 +152,12 @@ public class RCompletionManager implements CompletionManager
       popup_.hide();
    }
    
+   public void codeCompletion()
+   {
+      if (initFilter_ == null || initFilter_.shouldComplete(null))
+         beginSuggest(true, false);
+   }
+   
    public void goToFunctionDefinition()
    {   
       // determine current line and cursor position

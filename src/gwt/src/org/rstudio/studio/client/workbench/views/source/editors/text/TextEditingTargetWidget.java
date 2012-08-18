@@ -212,6 +212,8 @@ public class TextEditingTargetWidget
          ImageResource icon = ThemeResources.INSTANCE.codeTransform();
 
          ToolbarPopupMenu menu = new ToolbarPopupMenu();
+         menu.addItem(commands_.codeCompletion().createMenuItem(false));
+         menu.addSeparator();
          menu.addItem(commands_.goToFunctionDefinition().createMenuItem(false));
          menu.addSeparator();
          menu.addItem(commands_.extractFunction().createMenuItem(false));

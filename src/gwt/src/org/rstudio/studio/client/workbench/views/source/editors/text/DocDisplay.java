@@ -64,6 +64,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void insertCode(String code, boolean blockMode);
    void focus();
    void print();
+   void codeCompletion();
    void goToFunctionDefinition();
    String getSelectionValue();
    String getCurrentLine();

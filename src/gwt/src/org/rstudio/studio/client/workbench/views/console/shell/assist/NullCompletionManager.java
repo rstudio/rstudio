@@ -23,6 +23,10 @@ public class NullCompletionManager implements CompletionManager
    public void goToFunctionDefinition()
    {
    }
+   
+   public void codeCompletion()
+   {
+   }
 
    public boolean previewKeyDown(NativeEvent event)
    {

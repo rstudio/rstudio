@@ -80,6 +80,7 @@ public abstract class
    public abstract AppCommand reindent();
    public abstract AppCommand reflowComment();
    public abstract AppCommand setWorkingDirToActiveDoc();
+   public abstract AppCommand codeCompletion();
  
    // Projects
    public abstract AppCommand newProject();
