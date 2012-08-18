@@ -22,7 +22,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Text;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.StringUtil;
