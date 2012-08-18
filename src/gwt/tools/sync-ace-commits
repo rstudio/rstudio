@@ -52,7 +52,7 @@ git fetch origin
 git fetch upstream
 
 # Point this to the upstream commit that we've tested
-git checkout 4d024f49758f851423ac69d61ba631590dd4f54d
+git checkout fc01cc624296c1b1be59b55ce03051fa29b5bd96
 
 git submodule update --init --recursive
 
@@ -62,25 +62,23 @@ git merge \
     origin/bugfix-updatefontsize2 \
     origin/bugfix-active-line-back \
     origin/patch-advanced-indent4 \
-    origin/patch/invisible-colors2 \
-    origin/patch-normalizeinput3 \
-    origin/bugfix/search-regexp \
-    origin/bugfix/selected-word-colors2 \
+    origin/patch/normalizeinput4 \
     origin/bugfix/no-paste-event-on-indent \
-    origin/patch/build-matchingbraceoutdent2
+    origin/patch/build-matchingbraceoutdent3
     
 git merge \
     origin/patch/mousewheel3 \
-    origin/patch/consistent-gutter-width \
+    origin/patch/consistent-gutter-width3 \
     origin/patch/suppress-native-scroll \
     origin/patch/build \
     origin/patch/remove-webfont \
+    origin/patch/eclipse-selectedword
 
 
-make clean
-make
-cp build/src/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
-cp build/src/ace-uncompressed.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
+node ./Makefile.dryice.js normal
+node ./Makefile.dryice.js -m normal
+cp build/src/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js
+cp build/src-min/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace.js
 
 stripUseStrict() {
     sed 's/"use strict";//g' "$1" > "$1.stripped"

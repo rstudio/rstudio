@@ -8,13 +8,13 @@
 }
 
 .ace_gutter {
-  background: #e8e8e8;
-  color: #333;
+  background: #1a1a1a;
+  color: white;
 }
 
 .ace_print_margin {
   width: 1px;
-  background: #e8e8e8;
+  background: #1a1a1a;
 }
 
 .ace_scroller {
@@ -22,7 +22,6 @@
 }
 
 .ace_text-layer {
-  cursor: text;
   color: #FFFFFF;
 }
 
@@ -34,13 +33,18 @@
   border-left: 0px;
   border-bottom: 1px solid #FFFFFF;
 }
- 
+
 .ace_marker-layer .ace_selection {
   background: #6699CC;
 }
 
+.multiselect .ace_selection.start {
+  box-shadow: 0 0 3px 0px #0F0F0F;
+  border-radius: 2px;
+}
+
 .ace_marker-layer .ace_step {
-  background: rgb(198, 219, 174);
+  background: rgb(102, 82, 0);
 }
 
 .ace_marker-layer .ace_bracket {
@@ -52,19 +56,31 @@
   background: #333333;
 }
 
+.ace_gutter_active_line {
+  background-color: #333333;
+}
+
 .ace_marker-layer .ace_selected_word {
   border: 1px solid #6699CC;
 }
-       
+
 .ace_invisible {
   color: #404040;
 }
 
-.ace_keyword {
+.ace_keyword, .ace_meta {
   color:#FF6600;
 }
 
-.ace_constant {
+.ace_constant, .ace_constant.ace_other {
+  color:#339999;
+}
+
+.ace_constant.ace_character,  {
+  color:#339999;
+}
+
+.ace_constant.ace_character.ace_escape,  {
   color:#339999;
 }
 
@@ -91,6 +107,14 @@ background-color:#000000;
   color:#FFCC00;
 }
 
+.ace_variable {
+  color:#FFCC00;
+}
+
+.ace_variable.ace_parameter {
+  font-style:italic;
+}
+
 .ace_string {
   color:#66FF00;
 }
@@ -115,6 +139,10 @@ color:#99CC99;
 .ace_markup.ace_underline {
     text-decoration:underline;
 }
+
+.ace_indent-guide {
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAEklEQVQImWPg5+f/z7Bq1ar/AA5lBCqoLxsgAAAAAElFTkSuQmCC) right repeat-y;
+}
 .nocolor.ace_editor .ace_line span {color:#FF6600 !important;}
 .ace_bracket {margin: 0 !important; border: 0 !important; background-color: #404040;}
-.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(38, 38, 38);}
+.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(62, 62, 62);}

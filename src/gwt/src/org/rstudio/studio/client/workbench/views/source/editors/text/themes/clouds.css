@@ -8,7 +8,7 @@
 }
 
 .ace_gutter {
-  background: #e8e8e8;
+  background: #ebebeb;
   color: #333;
 }
 
@@ -22,7 +22,6 @@
 }
 
 .ace_text-layer {
-  cursor: text;
   color: #000000;
 }
 
@@ -34,17 +33,18 @@
   border-left: 0px;
   border-bottom: 1px solid #000000;
 }
- 
+
 .ace_marker-layer .ace_selection {
   background: #BDD5FC;
 }
 
-.ace_marker-layer .ace_selected_word {
-  border: 1px solid #BDD5FC;
+.multiselect .ace_selection.start {
+  box-shadow: 0 0 3px 0px #FFFFFF;
+  border-radius: 2px;
 }
 
 .ace_marker-layer .ace_step {
-  background: rgb(198, 219, 174);
+  background: rgb(255, 255, 0);
 }
 
 .ace_marker-layer .ace_bracket {
@@ -56,15 +56,19 @@
   background: #FFFBD1;
 }
 
+.ace_gutter_active_line {
+  background-color : #dcdcdc;
+}
+
 .ace_marker-layer .ace_selected_word {
   border: 1px solid #BDD5FC;
 }
-       
+
 .ace_invisible {
   color: #BFBFBF;
 }
 
-.ace_keyword {
+.ace_keyword, .ace_meta {
   color:#AF956F;
 }
 
@@ -93,6 +97,10 @@
   color:#C52727;
 }
 
+.ace_storage {
+  color:#C52727;
+}
+
 .ace_string {
   color:#5D90CD;
 }
@@ -108,6 +116,10 @@
 .ace_markup.ace_underline {
     text-decoration:underline;
 }
+
+.ace_indent-guide {
+  background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAE0lEQVQImWP4////f4bLly//BwAmVgd1/w11/gAAAABJRU5ErkJggg==") right repeat-y;
+}
 .nocolor.ace_editor .ace_line span {color:#AF956F !important;}
 .ace_bracket {margin: 0 !important; border: 0 !important; background-color: #BFBFBF;}
-.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(229, 229, 229);}
+.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(204, 204, 204);}

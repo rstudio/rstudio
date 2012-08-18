@@ -40,14 +40,18 @@ OutDir = '../src/org/rstudio/studio/client/workbench/views/source/editors/text/t
 
 Find.find('ace/lib/ace/theme/') do |file|
   next if FileTest.directory?(file)
+  next unless file =~ /([^\\\/]+)\.css$/
 
-  contents = File.read(file)
-  next unless contents =~ /cssText = "(.*?)";/m
-  rules = $1
-  rules.gsub!(/\\$/, '')
+  style_name = "ace-#{$1.gsub(/_/, '-')}"
 
-  next unless contents =~ /exports\.cssClass = "(.*?)";/
-  style_name = $1
+  next if style_name == 'ace-github'
+  style_name = 'ace-tm' if style_name == 'ace-textmate'
+
+  puts style_name
+
+  rules = File.read(file)
+
+  raise "File #{file} needs explicit style name" unless rules =~ /\.#{style_name}\b/
 
   rules.gsub!(/\.#{style_name} ?/, '')
   
@@ -66,7 +70,7 @@ Find.find('ace/lib/ace/theme/') do |file|
   foreground = $1
   background = parse_css_color(background)
   foreground = parse_css_color(foreground)
-  foreign_bg = format_css_color(mix_colors(background, foreground, 0.9))
+  foreign_bg = format_css_color(mix_colors(background, foreground, 0.8))
   rules += "\n.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: #{foreign_bg};}"
 
   newfile = "#{OutDir}/#{File.basename(file).gsub(/\.js$/, '.css')}"

@@ -8,8 +8,8 @@
 }
 
 .ace_gutter {
-  background: #e8e8e8;
-  color: #333;
+  background: #1d2521;
+  color: #fff;
 }
 
 .ace_print_margin {
@@ -22,7 +22,6 @@
 }
 
 .ace_text-layer {
-  cursor: text;
   color: #FFFFFF;
 }
 
@@ -34,17 +33,18 @@
   border-left: 0px;
   border-bottom: 1px solid #FFFFFF;
 }
- 
+
 .ace_marker-layer .ace_selection {
   background: rgba(145, 153, 148, 0.40);
 }
 
-.ace_marker-layer .ace_selected_word {
-  border: 1px solid rgba(145, 153, 148, 0.40);
+.multiselect .ace_selection.start {
+  box-shadow: 0 0 3px 0px #222C28;
+  border-radius: 2px;
 }
 
 .ace_marker-layer .ace_step {
-  background: rgb(198, 219, 174);
+  background: rgb(102, 82, 0);
 }
 
 .ace_marker-layer .ace_bracket {
@@ -56,15 +56,19 @@
   background: rgba(12, 13, 12, 0.25);
 }
 
+.ace_gutter_active_line {
+  background-color: rgba(12, 13, 12, 0.25);
+}
+
 .ace_marker-layer .ace_selected_word {
   border: 1px solid rgba(145, 153, 148, 0.40);
 }
-       
+
 .ace_invisible {
   color: rgba(102, 108, 104, 0.50);
 }
 
-.ace_keyword {
+.ace_keyword, .ace_meta {
   color:#A39E64;
 }
 
@@ -72,7 +76,15 @@
   color:#A8B3AB;
 }
 
-.ace_constant {
+.ace_constant, .ace_constant.ace_other {
+  color:#E98800;
+}
+
+.ace_constant.ace_character,  {
+  color:#E98800;
+}
+
+.ace_constant.ace_character.ace_escape,  {
   color:#E98800;
 }
 
@@ -85,6 +97,10 @@
 background-color:rgba(153, 0, 0, 0.68);
 }
 
+.ace_support.ace_constant {
+  color:#C87500;
+}
+
 .ace_fold {
     background-color: #A8B3AB;
     border-color: #FFFFFF;
@@ -92,6 +108,18 @@ background-color:rgba(153, 0, 0, 0.68);
 
 .ace_support.ace_function {
   color:#588E60;
+}
+
+.ace_storage {
+  color:#C23B00;
+}
+
+.ace_variable {
+  color:#A8B3AB;
+}
+
+.ace_variable.ace_parameter {
+  color:#648BD2;
 }
 
 .ace_comment {
@@ -118,6 +146,10 @@ background-color:#151C19;
 .ace_markup.ace_underline {
     text-decoration:underline;
 }
+
+.ace_indent-guide {
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAEklEQVQImWNQ0tH4zzBz5sz/ABAOBECKH+evAAAAAElFTkSuQmCC) right repeat-y;
+}
 .nocolor.ace_editor .ace_line span {color:#A39E64 !important;}
 .ace_bracket {margin: 0 !important; border: 0 !important; background-color: rgba(102, 108, 104, 0.50);}
-.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(56, 65, 61);}
+.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(78, 86, 82);}

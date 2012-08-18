@@ -8,13 +8,13 @@
 }
 
 .ace_gutter {
-  background: #e8e8e8;
-  color: #333;
+  background: #011e3a;
+  color: #fff;
 }
 
 .ace_print_margin {
   width: 1px;
-  background: #e8e8e8;
+  background: #011e3a;
 }
 
 .ace_scroller {
@@ -22,7 +22,6 @@
 }
 
 .ace_text-layer {
-  cursor: text;
   color: #FFFFFF;
 }
 
@@ -34,41 +33,54 @@
   border-left: 0px;
   border-bottom: 1px solid #FFFFFF;
 }
- 
+
 .ace_marker-layer .ace_selection {
   background: rgba(179, 101, 57, 0.75);
 }
 
-.ace_marker-layer .ace_selected_word {
-  border: 1px solid rgba(179, 101, 57, 0.75);
+.multiselect .ace_selection.start {
+  box-shadow: 0 0 3px 0px #002240;
+  border-radius: 2px;
 }
 
 .ace_marker-layer .ace_step {
-  background: rgb(198, 219, 174);
+  background: rgb(127, 111, 19);
 }
 
 .ace_marker-layer .ace_bracket {
   margin: -1px 0 0 -1px;
-  border: 1px solid rgba(255, 255, 255, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .ace_marker-layer .ace_active_line {
   background: rgba(0, 0, 0, 0.35);
 }
 
+.ace_gutter_active_line {
+  background-color : rgba(0, 0, 0, 0.35);
+}
+
 .ace_marker-layer .ace_selected_word {
   border: 1px solid rgba(179, 101, 57, 0.75);
 }
-       
+
 .ace_invisible {
-  color: rgba(255, 255, 255, 0.34);
+  color: rgba(255, 255, 255, 0.15);
 }
 
-.ace_keyword {
+.ace_keyword, .ace_meta {
   color:#FF9D00;
 }
 
-.ace_constant {
+.ace_constant, .ace_constant.ace_other {
+  color:#FF628C;
+}
+
+.ace_constant.ace_character,  {
+  color:#FF628C;
+}
+
+.ace_constant.ace_character.ace_escape,  {
   color:#FF628C;
 }
 
@@ -81,6 +93,10 @@ background-color:#800F00;
   color:#80FFBB;
 }
 
+.ace_support.ace_constant {
+  color:#EB939A;
+}
+
 .ace_fold {
     background-color: #FF9D00;
     border-color: #FFFFFF;
@@ -88,6 +104,10 @@ background-color:#800F00;
 
 .ace_support.ace_function {
   color:#FFB054;
+}
+
+.ace_storage {
+  color:#FFEE80;
 }
 
 .ace_string.ace_regexp {
@@ -123,6 +143,10 @@ background-color:#001221;
 .ace_markup.ace_list {
   background-color:#130D26;
 }
+
+.ace_indent-guide {
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAEklEQVQImWNgUHL4zzBz5sz/AA80BCzv+WXhAAAAAElFTkSuQmCC) right repeat-y;
+}
 .nocolor.ace_editor .ace_line span {color:#FF9D00 !important;}
-.ace_bracket {margin: 0 !important; border: 0 !important; background-color: rgba(255, 255, 255, 0.34);}
-.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(25, 56, 83);}
+.ace_bracket {margin: 0 !important; border: 0 !important; background-color: rgba(255, 255, 255, 0.15);}
+.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(50, 78, 102);}

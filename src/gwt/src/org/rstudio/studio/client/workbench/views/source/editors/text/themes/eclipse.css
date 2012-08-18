@@ -7,14 +7,14 @@
 }
 
 .ace_gutter {
-  background: rgb(227, 227, 227);
+  background: #ebebeb;
   border-right: 1px solid rgb(159, 159, 159);
   color: rgb(136, 136, 136);
 }
 
 .ace_print_margin {
   width: 1px;
-  background: #b1b4ba;
+  background: #ebebeb;
 }
 
 .ace_fold {
@@ -22,14 +22,15 @@
 }
 
 .ace_text-layer {
-  cursor: text;
 }
 
 .ace_cursor {
-  border-left: 1px solid black;
+  border-left: 2px solid black;
 }
 
-.ace_line .ace_keyword, .ace_line .ace_variable {
+.ace_line .ace_storage,
+.ace_line .ace_keyword,
+.ace_line .ace_variable {
   color: rgb(127, 0, 85);
 }
 
@@ -92,10 +93,21 @@
 .ace_entity.ace_other.ace_attribute-name {
   color:rgb(127, 0, 127);
 }
+.ace_marker-layer .ace_step {
+  background: rgb(255, 255, 0);
+}
 
 .ace_marker-layer .ace_active_line {
   background: rgb(232, 242, 254);
 }
+
+.ace_marker-layer .ace_selected_word {
+  border: 1px solid rgb(181, 213, 255);
+}
+
+.ace_indent-guide {
+  background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAE0lEQVQImWP4////f4bLly//BwAmVgd1/w11/gAAAABJRU5ErkJggg==") right repeat-y;
+}
 .nocolor.ace_editor .ace_line span {color: rgb(127, 0, 85) !important;}
 .ace_bracket {margin: 0 !important; border: 0 !important; background-color: rgb(192, 192, 192);}
-.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(242, 229, 238);}
+.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(229, 204, 221);}

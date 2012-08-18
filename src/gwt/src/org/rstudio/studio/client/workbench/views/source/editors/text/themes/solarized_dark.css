@@ -8,8 +8,8 @@
 }
 
 .ace_gutter {
-  background: #e8e8e8;
-  color: #333;
+  background: #01313f;
+  color: #d0edf7;
 }
 
 .ace_print_margin {
@@ -22,7 +22,6 @@
 }
 
 .ace_text-layer {
-  cursor: text;
   color: #93A1A1;
 }
 
@@ -34,17 +33,18 @@
   border-left: 0px;
   border-bottom: 1px solid #D30102;
 }
- 
+
 .ace_marker-layer .ace_selection {
   background: #073642;
 }
 
-.ace_marker-layer .ace_selected_word {
-  border: 1px solid #073642;
+.multiselect .ace_selection.start {
+  box-shadow: 0 0 3px 0px #002B36;
+  border-radius: 2px;
 }
 
 .ace_marker-layer .ace_step {
-  background: rgb(198, 219, 174);
+  background: rgb(102, 82, 0);
 }
 
 .ace_marker-layer .ace_bracket {
@@ -56,15 +56,19 @@
   background: #073642;
 }
 
+.ace_gutter_active_line {
+  background-color: #0d3440;
+}
+
 .ace_marker-layer .ace_selected_word {
   border: 1px solid #073642;
 }
-       
+
 .ace_invisible {
   color: rgba(147, 161, 161, 0.50);
 }
 
-.ace_keyword {
+.ace_keyword, .ace_meta {
   color:#859900;
 }
 
@@ -76,12 +80,24 @@
   color:#D33682;
 }
 
+.ace_constant.ace_other {
+  color:#CB4B16;
+}
+
 .ace_fold {
     background-color: #268BD2;
     border-color: #93A1A1;
 }
 
 .ace_support.ace_function {
+  color:#268BD2;
+}
+
+.ace_storage {
+  color:#93A1A1;
+}
+
+.ace_variable {
   color:#268BD2;
 }
 
@@ -113,6 +129,10 @@ color:#657B83;
 .ace_markup.ace_underline {
     text-decoration:underline;
 }
+
+.ace_indent-guide {
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAEklEQVQImWNg0Db7zzBz5sz/AA82BCv7wOIDAAAAAElFTkSuQmCC) right repeat-y;
+}
 .nocolor.ace_editor .ace_line span {color:#859900 !important;}
 .ace_bracket {margin: 0 !important; border: 0 !important; background-color: rgba(147, 161, 161, 0.50);}
-.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(14, 54, 64);}
+.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(29, 66, 75);}

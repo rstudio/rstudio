@@ -30,7 +30,7 @@ var MarkdownHighlightRules = function() {
             token : "empty_line",
             regex : '^$'
         }, { // code span `
-            token : "support.function",
+            token : ["support.function", "support.function", "support.function"],
             regex : "(`+)([^\\r]*?[^`])(\\1)"
         }, { // code block
             token : "support.function",
@@ -57,7 +57,7 @@ var MarkdownHighlightRules = function() {
             next  : "blockquote"
         }, { // reference
             token : ["text", "constant", "text", "url", "string", "text"],
-            regex : "^([ ]{0,3}\\[)([^\\]]+)(\\]:\\s*)([^ ]+)(\\s*(?:[\"][^\"]+[\"])?\\s*)$"
+            regex : "^([ ]{0,3}\\[)([^\\]]+)(\\]:\\s*)([^ ]+)(\\s*(?:[\"][^\"]+[\"])?(\\s*))$"
         }, { // link by reference
             token : ["text", "keyword", "text", "constant", "text"],
             regex : "(\\[)((?:[[^\\]]*\\]|[^\\[\\]])*)(\\][ ]?(?:\\n[ ]*)?\\[)(.*?)(\\])"
@@ -105,10 +105,10 @@ var MarkdownHighlightRules = function() {
             regex : "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+",
             next  : "listblock"
         }, { // strong ** __
-            token : "constant.numeric",
+            token : ["constant.numeric", "constant.numeric", "constant.numeric"],
             regex : "([*]{2}|[_]{2}(?=\\S))([^\\r]*?\\S[*_]*)(\\1)"
         }, { // emphasis * _
-            token : "constant.language.boolean",
+            token : ["constant.language.boolean", "constant.language.boolean", "constant.language.boolean"],
             regex : "([*]|[_](?=\\S))([^\\r]*?\\S[*_]*)(\\1)"
         }, { // 
             token : ["text", "url", "text"],
