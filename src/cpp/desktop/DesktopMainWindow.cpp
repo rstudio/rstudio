@@ -55,7 +55,6 @@ MainWindow::MainWindow(QUrl url) :
    pMainMenuStub->addMenu(QString::fromUtf8("Session"));
    pMainMenuStub->addMenu(QString::fromUtf8("Project"));
    pMainMenuStub->addMenu(QString::fromUtf8("Build"));
-   pMainMenuStub->addMenu(QString::fromUtf8("VCS"));
    pMainMenuStub->addMenu(QString::fromUtf8("Tools"));
    pMainMenuStub->addMenu(QString::fromUtf8("Help"));
    setMenuBar(pMainMenuStub);
