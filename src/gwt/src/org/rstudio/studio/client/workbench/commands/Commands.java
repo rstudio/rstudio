@@ -27,6 +27,7 @@ public abstract class
    // Source
    public abstract AppCommand newSourceDoc();
    public abstract AppCommand newTextDoc();
+   public abstract AppCommand newCppDoc();
    public abstract AppCommand newSweaveDoc();
    public abstract AppCommand newRMarkdownDoc();
    public abstract AppCommand newRHTMLDoc();

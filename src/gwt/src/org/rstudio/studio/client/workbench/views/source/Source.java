@@ -467,6 +467,12 @@ public class Source implements InsertSourceHandler,
    }
    
    @Handler
+   public void onNewCppDoc()
+   {
+      newDoc(FileTypeRegistry.C, null);
+   }
+   
+   @Handler
    public void onNewSweaveDoc()
    {
       String concordance = new String();
