@@ -37,17 +37,6 @@ running the following script:
 
 install-dependencies.cmd
 
-
-NOTE: Hunspell
-=============================================================================
-
-Our builds of Hunspell are from the Open Suse Build System 
-cross-complier build:
-
-http://download.opensuse.org/repositories/windows:/mingw:/win32/openSUSE_Factory/noarch/
-http://download.opensuse.org/repositories/windows:/mingw:/win64/openSUSE_Factory/noarch/
-
-
 NOTE: How to upgrade boost-1.50-win.zip
 =============================================================================
 
