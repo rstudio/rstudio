@@ -82,11 +82,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
                                   prefs_.insertNumberedLatexSections());
       spaced(chkNumberedSections);
       add(chkNumberedSections);
-      
-      chkUseTexi2Dvi_ = new CheckBox( "Invoke compiler via texi2dvi script");
-      spaced(chkUseTexi2Dvi_);
-      add(chkUseTexi2Dvi_);
-      
+            
       Label previwingOptionsLabel = new Label("PDF preview");
       previwingOptionsLabel.addStyleName(baseRes.styles().headerLabel());
       nudgeRight(previwingOptionsLabel);
@@ -142,7 +138,6 @@ public class CompilePdfPreferencesPane extends PreferencesPane
    protected void initialize(RPrefs prefs)
    {
       CompilePdfPrefs compilePdfPrefs = prefs.getCompilePdfPrefs();
-      chkUseTexi2Dvi_.setValue(compilePdfPrefs.getUseTexi2Dvi());
       chkCleanTexi2DviOutput_.setValue(compilePdfPrefs.getCleanOutput());
       chkEnableShellEscape_.setValue(compilePdfPrefs.getEnableShellEscape());
       
@@ -177,7 +172,6 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       prefs_.pdfPreview().setGlobalValue(pdfPreview_.getValue());
          
       CompilePdfPrefs prefs = CompilePdfPrefs.create(
-                                       chkUseTexi2Dvi_.getValue(), 
                                        chkCleanTexi2DviOutput_.getValue(),
                                        chkEnableShellEscape_.getValue());
       rPrefs.setCompilePdfPrefs(prefs);
@@ -192,7 +186,6 @@ public class CompilePdfPreferencesPane extends PreferencesPane
    
    private RnwWeaveSelectWidget defaultSweaveEngine_;
    private LatexProgramSelectWidget defaultLatexProgram_;
-   private CheckBox chkUseTexi2Dvi_;
    private CheckBox chkCleanTexi2DviOutput_;
    private CheckBox chkEnableShellEscape_;
    private PdfPreviewSelectWidget pdfPreview_;

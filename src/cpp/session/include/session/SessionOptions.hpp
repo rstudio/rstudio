@@ -173,11 +173,6 @@ public:
       return core::FilePath(rpostbackPath_.c_str());
    }
 
-   core::FilePath rspdflatexPath() const
-   {
-      return core::FilePath(rspdflatexPath_.c_str());
-   }
-
    core::FilePath consoleIoPath() const
    {
       return core::FilePath(consoleIoPath_.c_str());
@@ -324,7 +319,6 @@ private:
    
    // external
    std::string rpostbackPath_;
-   std::string rspdflatexPath_;
    std::string consoleIoPath_;
    std::string gnudiffPath_;
    std::string gnugrepPath_;

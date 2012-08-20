@@ -18,18 +18,12 @@ public class CompilePdfPrefs extends JavaScriptObject
 {
    protected CompilePdfPrefs() {}
 
-   public static final native CompilePdfPrefs create(boolean useTexi2Dvi, 
-                                                     boolean cleanOutput,
+   public static final native CompilePdfPrefs create(boolean cleanOutput,
                                                      boolean enableShellEscape) /*-{
       var prefs = new Object();
-      prefs.use_texi2dvi = useTexi2Dvi;
       prefs.clean_output = cleanOutput;
       prefs.enable_shell_escape = enableShellEscape;
       return prefs ;
-   }-*/;
-   
-   public native final boolean getUseTexi2Dvi() /*-{
-      return this.use_texi2dvi;
    }-*/;
    
    public native final boolean getCleanOutput() /*-{

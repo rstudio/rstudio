@@ -131,9 +131,6 @@ public:
    bool vcsUseGitBash() const;
    void setVcsUseGitBash(bool useGitBash);
 
-   bool useTexi2Dvi() const;
-   void setUsetexi2Dvi(bool useTexi2Dvi);
-
    bool cleanTexi2DviOutput() const;
    void setCleanTexi2DviOutput(bool cleanTexi2DviOutput);
 

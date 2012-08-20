@@ -38,7 +38,6 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include "SessionPdfLatex.hpp"
-#include "SessionTexi2Dvi.hpp"
 #include "SessionRnwWeave.hpp"
 #include "SessionRnwConcordance.hpp"
 #include "SessionSynctex.hpp"
@@ -671,57 +670,33 @@ private:
 
       // run latex compile
 
+      // this is our "simulated" texi2dvi -- this was originally
+      // coded as a sequence of sync calls to pdflatex, bibtex, and
+      // makeindex. re-coding it as async is going to be a bit
+      // involved so considering that this is not the default
+      // codepath we'll leave it sync for now (and then just call
+      // the (typically) async callback function onLatexCompileCompleted
+      // directly after the function returns
 
-      // try to use texi2dvi if we can
-      if (userSettings().useTexi2Dvi() && tex::texi2dvi::isAvailable())
+      enqueOutputEvent("Running " + texProgramPath_.filename() +
+                       " on " + texFilePath.filename() + "...");
+
+      error = tex::pdflatex::texToPdf(texProgramPath_,
+                                      texFilePath,
+                                      options,
+                                      &result);
+
+      if (error)
       {
-         enqueOutputEvent("Running texi2dvi on " +
-                          texFilePath.filename() + "...");
-
-         Error error = tex::texi2dvi::texToPdf(
-                           texProgramPath_,
-                           texFilePath,
-                           options,
-                           boost::bind(
-                              &AsyncPdfCompiler::onLatexCompileCompleted,
-                                 AsyncPdfCompiler::shared_from_this(),
-                                 _1,
-                                 texFilePath,
-                                 concordances));
-         if (error)
-            terminateWithError("Unable to compile pdf: " + error.summary());
+         terminateWithError("Unable to compile pdf: " + error.summary());
       }
-
-      // call pdflatex directly (but still try to run bibtex as necessary)
       else
       {
-         // this is our "simulated" texi2dvi -- this was originally
-         // coded as a sequence of sync calls to pdflatex, bibtex, and
-         // makeindex. re-coding it as async is going to be a bit
-         // involved so considering that this is not the default
-         // codepath we'll leave it sync for now (and then just call
-         // the (typically) async callback function onLatexCompileCompleted
-         // directly after the function returns
-
-         enqueOutputEvent("Running " + texProgramPath_.filename() +
-                          " on " + texFilePath.filename() + "...");
-
-         Error error = tex::pdflatex::texToPdf(texProgramPath_,
-                                               texFilePath,
-                                               options,
-                                               &result);
-
-         if (error)
-         {
-            terminateWithError("Unable to compile pdf: " + error.summary());
-         }
-         else
-         {
-            onLatexCompileCompleted(result.exitStatus,
-                                    texFilePath,
-                                    concordances);
-         }
+         onLatexCompileCompleted(result.exitStatus,
+                                 texFilePath,
+                                 concordances);
       }
+
    }
 
    void onLatexCompileCompleted(int exitStatus,

@@ -453,16 +453,6 @@ void UserSettings::setVcsUseGitBash(bool useGitBash)
    settings_.set("vcsUseGitBash", useGitBash);
 }
 
-bool UserSettings::useTexi2Dvi() const
-{
-   return settings_.getBool("invokeTexi2Dvi", false);
-}
-
-void UserSettings::setUsetexi2Dvi(bool useTexi2Dvi)
-{
-   settings_.set("invokeTexi2Dvi", useTexi2Dvi);
-}
-
 bool UserSettings::cleanTexi2DviOutput() const
 {
    return settings_.getBool("cleanTexi2DviOutput", true);

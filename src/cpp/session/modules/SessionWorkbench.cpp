@@ -283,15 +283,13 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 
 
    // read and update compile pdf prefs
-   bool useTexi2Dvi, cleanOutput, enableShellEscape;
+   bool cleanOutput, enableShellEscape;
    error = json::readObject(compilePdfPrefs,
-                            "use_texi2dvi", &useTexi2Dvi,
                             "clean_output", &cleanOutput,
                             "enable_shell_escape", &enableShellEscape);
    if (error)
       return error;
    userSettings().beginUpdate();
-   userSettings().setUsetexi2Dvi(useTexi2Dvi);
    userSettings().setCleanTexi2DviOutput(cleanOutput);
    userSettings().setEnableLaTeXShellEscape(enableShellEscape);
    userSettings().endUpdate();
@@ -392,7 +390,6 @@ Error getRPrefs(const json::JsonRpcRequest& request,
 
    // get compile pdf prefs
    json::Object compilePdfPrefs;
-   compilePdfPrefs["use_texi2dvi"] = userSettings().useTexi2Dvi();
    compilePdfPrefs["clean_output"] = userSettings().cleanTexi2DviOutput();
    compilePdfPrefs["enable_shell_escape"] = userSettings().enableLaTeXShellEscape();
 
