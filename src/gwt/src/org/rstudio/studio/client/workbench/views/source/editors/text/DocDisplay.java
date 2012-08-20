@@ -113,8 +113,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void toggleCommentLines();
 
-   void forceImmediateRender();
-   
    HandlerRegistration addCommandClickHandler(CommandClickEvent.Handler handler);
    
    HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);

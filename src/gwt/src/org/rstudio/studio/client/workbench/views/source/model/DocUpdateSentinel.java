@@ -35,9 +35,6 @@ import org.rstudio.studio.client.workbench.events.LastChanceSaveHandler;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Fold;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 
@@ -45,7 +42,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DocUpdateSentinel
-      implements ValueChangeHandler<Void>,FoldChangeEvent.Handler,CursorChangedHandler
+      implements ValueChangeHandler<Void>,FoldChangeEvent.Handler
 {
    private class ReopenFileCallback extends ServerRequestCallback<SourceDocument>
    {
@@ -112,8 +109,7 @@ public class DocUpdateSentinel
 
       docDisplay_.addValueChangeHandler(this);
       docDisplay_.addFoldChangeHandler(this);
-      docDisplay_.addCursorChangedHandler(this);
-      
+
       // Web only
       closeHandlerReg_ = Window.addWindowClosingHandler(new ClosingHandler()
       {
@@ -259,27 +255,13 @@ public class DocUpdateSentinel
       final String foldSpec = Fold.encode(Fold.flatten(docDisplay_.getFolds()));
       String oldFoldSpec = sourceDoc_.getFoldSpec();
 
-      final int scrollPosition = docDisplay_.getScrollTop();
-      int oldScrollPosition = sourceDoc_.getScrollPosition();
-      
-      Position selStart = docDisplay_.getSelectionStart();
-      Position selEnd = docDisplay_.getSelectionEnd();
-      final String selection = new SourceSelection(
-                                             selStart.getRow(), 
-                                             selStart.getColumn(),
-                                             selEnd.getRow(),
-                                             selEnd.getColumn()).encode();
-      String oldSelection = sourceDoc_.getSelection();
-      
       //String patch = DiffMatchPatch.diff(oldContents, newContents);
       SubstringDiff diff = new SubstringDiff(oldContents, newContents);
 
       // Don't auto-save when there are no changes. In addition to being
       // wasteful, it causes the server to think the document is dirty.
       if (path == null && fileType == null && diff.isEmpty()
-          && foldSpec.equals(oldFoldSpec)
-          && (scrollPosition == oldScrollPosition)
-          && selection.equals(oldSelection))
+          && foldSpec.equals(oldFoldSpec))
       {
          changesPending_ = false;
          return false;
@@ -304,8 +286,6 @@ public class DocUpdateSentinel
             fileType,
             encoding,
             foldSpec,
-            scrollPosition,
-            selection,
             diff.getReplacement(),
             diff.getOffset(),
             diff.getLength(),
@@ -335,9 +315,7 @@ public class DocUpdateSentinel
                                         newHash,
                                         path,
                                         fileType,
-                                        encoding,
-                                        scrollPosition,
-                                        selection);
+                                        encoding);
                      if (progress != null)
                         progress.onCompleted();
                   }
@@ -357,8 +335,6 @@ public class DocUpdateSentinel
                            fileType,
                            encoding,
                            foldSpec,
-                           scrollPosition,
-                           selection,
                            newContents,
                            this);
                   }
@@ -372,9 +348,7 @@ public class DocUpdateSentinel
                                    String hash,
                                    String path,
                                    String fileType,
-                                   String encoding,
-                                   int scrollPosition,
-                                   String selection)
+                                   String encoding)
    {
       changesPending_ = false;
       sourceDoc_.setContents(contents);
@@ -390,9 +364,6 @@ public class DocUpdateSentinel
       }
       if (encoding != null)
          sourceDoc_.setEncoding(encoding);
-      
-      sourceDoc_.setScrollPosition(scrollPosition);
-      sourceDoc_.setSelection(selection);
    }
 
    public boolean sourceOnSave()
@@ -500,13 +471,6 @@ public class DocUpdateSentinel
 
    @Override
    public void onFoldChange(FoldChangeEvent event)
-   {
-      changesPending_ = true;
-      bufferedCommand_.nudge();
-   }
-   
-   @Override
-   public void onCursorChanged(CursorChangedEvent event)
    {
       changesPending_ = true;
       bufferedCommand_.nudge();
