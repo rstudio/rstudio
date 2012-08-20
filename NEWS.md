@@ -31,6 +31,7 @@ We've also added support for building packages with [Rcpp](http://dirk.eddelbuet
 
 ### Source Editor
 
+- Vim editing mode
 - New options to show whitespace and indent guides 
 - Middle-button paste for Linux
 - Preserve editor selection and scroll position across reloads of the IDE

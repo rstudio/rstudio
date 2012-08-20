@@ -110,14 +110,30 @@ oop.inherits(RStudioEditSession, EditSession);
       this.replace(new Range(lineNum, 0, lineNum, matchLen), indent);
    };
 
-   this.$disableOverwrite = false;
    this.setDisableOverwrite = function(disableOverwrite) {
-      this.$disableOverwrite = disableOverwrite;
-      this.setOverwrite(this.$overwrite);
-   };
 
-   this.setOverwrite = function(overwrite) {
-      EditSession.prototype.setOverwrite(overwrite && !this.$disableOverwrite);
+      // Note that 'this' refers to the instance, not the prototype. It's
+      // important that we override set/getOverwrite on a per-instance basis
+      // only.
+
+      if (disableOverwrite) {
+         // jcheng 08/21/2012: The old way we did this (see git history) caused
+         // a weird bug: the console would pick up the overwrite/insert mode of
+         // the active source document iff vim mode was enabled. I could not
+         // figure out why.
+
+         // In case we are already in overwrite mode; set it to false so events
+         // will be fired.
+         this.setOverwrite(false);
+
+         this.setOverwrite = function() { /* no-op */ };
+         this.getOverwrite = function() { return false; }
+      }
+      else {
+         // Restore the standard methods
+         this.setOverwrite = EditSession.prototype.setOverwrite;
+         this.getOverwrite = EditSession.prototype.getOverwrite;
+      }
    };
 }).call(RStudioEditSession.prototype);
 

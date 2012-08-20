@@ -76,6 +76,11 @@ public class AceEditorNative extends JavaScriptObject {
    public native final void setKeyboardHandler(KeyboardHandler keyboardHandler) /*-{
       this.setKeyboardHandler(keyboardHandler);
    }-*/;
+   
+   public native final void addKeyboardHandler(KeyboardHandler keyboardHandler) /*-{
+      this.keyBinding.addKeyboardHandler(keyboardHandler);
+   }-*/;
+
 
    public native final void onChange(Command command) /*-{
       this.getSession().on("change",

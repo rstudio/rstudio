@@ -49,6 +49,7 @@ public class EditingPreferencesPane extends PreferencesPane
       add(indent(marginCol_ = numericPref("Margin column", prefs.printMarginColumn())));
       add(checkboxPref("Show whitespace characters", prefs_.showInvisibles()));
       add(checkboxPref("Show indent guides", prefs_.showIndentGuides()));
+      add(checkboxPref("Enable vim editing mode", prefs_.useVimMode()));
       add(checkboxPref("Insert matching parens/quotes", prefs_.insertMatching()));
       add(checkboxPref("Soft-wrap R source files", prefs_.softWrapRFiles()));
       add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
