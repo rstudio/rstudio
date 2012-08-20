@@ -22,6 +22,7 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -153,6 +154,11 @@ public class MultiWordSuggestOracle extends SuggestOracle {
 
   private Response defaultResponse;
 
+  /*
+   * Comparator used for sorting candidates from search.
+   */
+  private Comparator<String> comparator = null;
+
   /**
    * Constructor for <code>MultiWordSuggestOracle</code>. This uses a space as
    * the whitespace character.
@@ -263,6 +269,15 @@ public class MultiWordSuggestOracle extends SuggestOracle {
     response.setMoreSuggestionsCount(numberTruncated);
 
     callback.onSuggestionsReady(request, response);
+  }
+
+  /**
+   * Sets the comparator used for sorting candidates from search.
+   *
+   * @param comparator the comparator to use.
+   */
+  public void setComparator(Comparator<String> comparator) {
+    this.comparator = comparator;
   }
 
   /**
@@ -398,7 +413,7 @@ public class MultiWordSuggestOracle extends SuggestOracle {
     }
     if (candidateSet != null) {
       candidates.addAll(candidateSet);
-      Collections.sort(candidates);
+      Collections.sort(candidates, comparator);
     }
     return candidates;
   }

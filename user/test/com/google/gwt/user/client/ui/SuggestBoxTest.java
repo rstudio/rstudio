@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -26,6 +26,7 @@ import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -66,7 +67,7 @@ public class SuggestBoxTest extends WidgetTestBase {
 
     /**
      * Get the suggestion at the specified index.
-     * 
+     *
      * @param index the index
      * @return the {@link Suggestion} at the index
      */
@@ -77,7 +78,7 @@ public class SuggestBoxTest extends WidgetTestBase {
     /**
      * Get the number of suggestions that are currently showing. Used for
      * testing.
-     * 
+     *
      * @return the number of suggestions currently showing, 0 if there are none
      */
     public int getSuggestionCount() {
@@ -172,11 +173,34 @@ public class SuggestBoxTest extends WidgetTestBase {
     box.showSuggestionList();
     assertTrue(display.isSuggestionListShowing());
     assertEquals(3, display.getSuggestionCount());
-    assertEquals("<strong>Hark</strong>, Shark and <strong>Herald</strong>", 
+    assertEquals("<strong>Hark</strong>, Shark and <strong>Herald</strong>",
         display.getSuggestion(0).getDisplayString());
     assertEquals("<strong>Hark</strong>! The <strong>Herald</strong> Angels Sing",
         display.getSuggestion(1).getDisplayString());
     assertEquals("<strong>Herald</strong>ings and <strong>Hark</strong>ings",
+        display.getSuggestion(2).getDisplayString());
+  }
+
+  public void testMatchCustomSort() {
+    MultiWordSuggestOracle oracle = new MultiWordSuggestOracle(",! ");
+    oracle.add("Hark, Shark and Herald");
+    oracle.add("Hark! The Herald Angels Sing");
+    oracle.add("Heraldings and Harkings");
+    oracle.add("Send my regards to Herald");
+    oracle.setComparator(Collections.<String>reverseOrder());
+
+    TestSuggestionDisplay display = new TestSuggestionDisplay();
+    SuggestBox box = new SuggestBox(oracle, new TextBox(), display);
+    RootPanel.get().add(box);
+    box.setText("Herald! Hark");
+    box.showSuggestionList();
+    assertTrue(display.isSuggestionListShowing());
+    assertEquals(3, display.getSuggestionCount());
+    assertEquals("<strong>Herald</strong>ings and <strong>Hark</strong>ings",
+        display.getSuggestion(0).getDisplayString());
+    assertEquals("<strong>Hark</strong>! The <strong>Herald</strong> Angels Sing",
+        display.getSuggestion(1).getDisplayString());
+    assertEquals("<strong>Hark</strong>, Shark and <strong>Herald</strong>",
         display.getSuggestion(2).getDisplayString());
   }
 
@@ -275,7 +299,7 @@ public class SuggestBoxTest extends WidgetTestBase {
     assertEquals("A", display.getSuggestion(0).getReplacementString());
     assertEquals("B", display.getSuggestion(1).getReplacementString());
   }
-  
+
   public void testSuggestionSelection() {
     MultiWordSuggestOracle oracle = new MultiWordSuggestOracle();
     oracle.setDefaultSuggestionsFromText(Arrays.asList("A", "B"));
@@ -289,7 +313,7 @@ public class SuggestBoxTest extends WidgetTestBase {
     assertNull(display.getCurrentSelection());
     display.moveSelectionDown();
     assertEquals("A", display.getCurrentSelection().getReplacementString());
-    
+
     // Once something is selected, selections are made as expected, but we do
     // not move outside the box
     display.moveSelectionDown();
@@ -300,12 +324,12 @@ public class SuggestBoxTest extends WidgetTestBase {
     assertEquals("A", display.getCurrentSelection().getReplacementString());
     display.moveSelectionUp();
     assertEquals("A", display.getCurrentSelection().getReplacementString());
-    
+
     // Reset the suggestions so that nothing is selected again
     display.hideSuggestions();
     box.showSuggestionList();
     assertNull(display.getCurrentSelection());
-    
+
     // If nothing is selected, moving up will select the last item
     display.moveSelectionUp();
     assertEquals("B", display.getCurrentSelection().getReplacementString());
