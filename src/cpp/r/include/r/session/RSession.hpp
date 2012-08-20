@@ -145,7 +145,14 @@ void reportAndLogWarning(const std::string& warning);
 // suspend/resume
 bool isSuspendable(const std::string& prompt);
 bool suspend(bool force);
-void suspendForRestart();
+
+struct RSuspendOptions
+{
+   RSuspendOptions() : saveMinimal(false), saveWorkspace(false) {}
+   bool saveMinimal;
+   bool saveWorkspace;
+};
+void suspendForRestart(const RSuspendOptions& options);
    
 // set save action
 extern const int kSaveActionNoSave;

@@ -24,6 +24,7 @@ namespace session {
 namespace search_path {
 
 core::Error save(const core::FilePath& statePath);
+core::Error saveGlobalEnvironment(const core::FilePath& statePath);
 core::Error restore(const core::FilePath& statePath);
    
 } // namespace search_path

@@ -87,6 +87,7 @@ extern const int kBuildOutput;
 extern const int kBuildCompleted;
 extern const int kBuildErrors;
 extern const int kDirectoryNavigate;
+extern const int kDeferredInitCompleted;
 }
    
 class ClientEvent

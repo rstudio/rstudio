@@ -23,21 +23,20 @@ import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.HandleUnsavedChangesEvent;
 import org.rstudio.studio.client.application.events.HandleUnsavedChangesHandler;
-import org.rstudio.studio.client.application.events.RestartEvent;
-import org.rstudio.studio.client.application.events.RestartHandler;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
 import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
 import org.rstudio.studio.client.application.events.SuspendAndRestartHandler;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.SaveAction;
+import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
-import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -45,10 +44,10 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
-import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog.Result;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleRestartRCompletedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 
@@ -63,7 +62,6 @@ import com.google.inject.Singleton;
 @Singleton
 public class ApplicationQuit implements SaveActionChangedHandler,
                                         HandleUnsavedChangesHandler,
-                                        RestartHandler,
                                         SuspendAndRestartHandler
 {
    public interface Binder extends CommandBinder<Commands, ApplicationQuit> {}
@@ -72,7 +70,6 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    public ApplicationQuit(ApplicationServerOperations server,
                           GlobalDisplay globalDisplay,
                           EventBus eventBus,
-                          Session session,
                           WorkbenchContext workbenchContext,
                           SourceShim sourceShim,
                           Commands commands,
@@ -82,7 +79,6 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       server_ = server;
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
-      session_ = session;
       workbenchContext_ = workbenchContext;
       sourceShim_ = sourceShim;
       
@@ -92,7 +88,6 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       // subscribe to events
       eventBus.addHandler(SaveActionChangedEvent.TYPE, this);   
       eventBus.addHandler(HandleUnsavedChangesEvent.TYPE, this);
-      eventBus.addHandler(RestartEvent.TYPE, this);
       eventBus.addHandler(SuspendAndRestartEvent.TYPE, this);
    }
    
@@ -287,28 +282,13 @@ public class ApplicationQuit implements SaveActionChangedHandler,
      
    @Handler
    public void onRestartR()
-   {
-      eventBus_.fireEvent(new RestartEvent());
-   }
-   
-   @Override
-   public void onRestart(RestartEvent event)
-   {
-      prepareForQuit("Restart R Session", new QuitContext() {
+   {   
+      boolean saveChanges = saveAction_.getAction() != SaveAction.NOSAVE;
+      eventBus_.fireEvent(new SuspendAndRestartEvent(
+                                 SuspendOptions.create(true, saveChanges),
+                                 null));  
 
-         @Override
-         public void onReadyToQuit(boolean saveChanges)
-         {
-            String projFile = session_.getSessionInfo().getActiveProjectFile();
-            performQuit("Restarting R...", 
-                        saveChanges, 
-                        projFile != null ? projFile : Projects.NONE);
-            
-         }
-         
-      });
    }
-   
    
    @Override
    public void onSuspendAndRestart(final SuspendAndRestartEvent event)
@@ -316,8 +296,14 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       // set restart pending for desktop
       setPendingRestart(DesktopFrame.PENDING_RESTART_ONLY);
       
+      ProgressIndicator progress = new GlobalProgressDelayer(
+                                             globalDisplay_,
+                                             200,
+                                             "Restarting R...").getIndicator();
+                                       
       // perform the suspend and restart
-      server_.suspendForRestart(new VoidServerRequestCallback() {
+      server_.suspendForRestart(event.getSuspendOptions(),
+                                new VoidServerRequestCallback(progress) {
          @Override 
          protected void onSuccess()
          {
@@ -369,8 +355,21 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                      if (!pingDelivered_)
                      {
                         pingDelivered_ = true;
-                        eventBus_.fireEvent(
-                           new SendToConsoleEvent(afterRestartCommand, true));
+                        
+                        // issue after restart command
+                        if (afterRestartCommand != null)
+                        {
+                           eventBus_.fireEvent(
+                                 new SendToConsoleEvent(afterRestartCommand, 
+                                                        true));
+                        }
+                        // otherwise make sure the console knows we 
+                        // restarted (ensure prompt and set focus)
+                        else 
+                        {
+                           eventBus_.fireEvent(
+                                          new ConsoleRestartRCompletedEvent());
+                        }
                      }
                   }
                   
@@ -537,7 +536,6 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
    private final WorkbenchContext workbenchContext_;
-   private final Session session_;
    private final SourceShim sourceShim_;
    
    private SaveAction saveAction_ = SaveAction.saveAsk();

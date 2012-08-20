@@ -1,5 +1,5 @@
 /*
- * RestartEvent.java
+ * DeferredInitCompletedEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,27 +12,31 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class RestartEvent extends GwtEvent<RestartHandler>
+public class DeferredInitCompletedEvent extends GwtEvent<DeferredInitCompletedEvent.Handler>
 {
-   public static final GwtEvent.Type<RestartHandler> TYPE =
-      new GwtEvent.Type<RestartHandler>();
-   
-   public RestartEvent()
+   public interface Handler extends EventHandler
    {
+      void onDeferredInitCompleted(DeferredInitCompletedEvent event);
    }
- 
-   
-   @Override
-   protected void dispatch(RestartHandler handler)
+
+   public DeferredInitCompletedEvent()
    {
-      handler.onRestart(this);
    }
 
    @Override
-   public GwtEvent.Type<RestartHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
+
+   @Override
+   protected void dispatch(Handler handler)
+   {
+      handler.onDeferredInitCompleted(this);
+   }
+
+   public static final Type<Handler> TYPE = new Type<Handler>();
 }

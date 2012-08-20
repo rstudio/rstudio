@@ -75,7 +75,7 @@ void reportRestoreError(const std::string& context,
    REprintf(report.c_str());
 }   
    
-Error saveGlobalEnvironment(const FilePath& environmentFile)
+Error saveGlobalEnvironmentToFile(const FilePath& environmentFile)
 {
    std::string envPath =
             string_utils::utf8ToSystem(environmentFile.absolutePath());
@@ -220,7 +220,7 @@ Error save(const FilePath& statePath)
 {
    // save the global environment
    FilePath environmentFile = statePath.complete(kEnvironmentFile);
-   Error error = saveGlobalEnvironment(environmentFile);
+   Error error = saveGlobalEnvironmentToFile(environmentFile);
    if (error)
       return error;
    
@@ -283,6 +283,12 @@ Error save(const FilePath& statePath)
    return writeStringVectorToFile(elementsPath, searchPathElements);
 }
 
+
+Error saveGlobalEnvironment(const FilePath& statePath)
+{
+   FilePath environmentFile = statePath.complete(kEnvironmentFile);
+   return saveGlobalEnvironmentToFile(environmentFile);
+}
 
 Error restore(const FilePath& statePath)
 {

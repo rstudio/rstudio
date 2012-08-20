@@ -182,7 +182,8 @@ void saveClientState(ClientStateCommitType commitType)
 
 
  
-bool saveSessionState(const FilePath& suspendedSessionPath,
+bool saveSessionState(const RSuspendOptions& options,
+                      const FilePath& suspendedSessionPath,
                       bool disableSaveCompression)
 {
    // notify client of serialization status
@@ -192,9 +193,19 @@ bool saveSessionState(const FilePath& suspendedSessionPath,
    r::exec::IgnoreInterruptsScope ignoreInterrupts;
    
    // save 
-   return r::session::state::save(suspendedSessionPath,
-                                  s_options.serverMode,
-                                  disableSaveCompression);
+   if (options.saveMinimal)
+   {
+      // save minimal
+      return r::session::state::saveMinimal(suspendedSessionPath,
+                                            options.saveWorkspace);
+
+   }
+   else
+   {
+      return r::session::state::save(suspendedSessionPath,
+                                     s_options.serverMode,
+                                     disableSaveCompression);
+   }
 }
    
 void deferredRestoreSuspendedSession(
@@ -1257,7 +1268,8 @@ bool isSuspendable(const std::string& currentPrompt)
 }
    
 
-bool suspend(const FilePath& suspendedSessionPath,
+bool suspend(const RSuspendOptions& options,
+             const FilePath& suspendedSessionPath,
              bool disableSaveCompression,
              bool force)
 {
@@ -1271,9 +1283,16 @@ bool suspend(const FilePath& suspendedSessionPath,
    // commit all client state
    saveClientState(ClientStateCommitAll);
 
+   // if we are saving minimal then clear the graphics device
+   if (options.saveMinimal)
+   {
+      r::session::graphics::display().clear();
+   }
+
    // save the session state. errors are handled internally and reported
    // directly to the end user and written to the server log.
-   bool suspend = saveSessionState(suspendedSessionPath,
+   bool suspend = saveSessionState(options,
+                                   suspendedSessionPath,
                                    disableSaveCompression);
       
    // if we failed to save the data and are being forced then warn user
@@ -1308,12 +1327,13 @@ bool suspend(const FilePath& suspendedSessionPath,
 
 bool suspend(bool force)
 {
-   return suspend(s_suspendedSessionPath, false, force);
+   return suspend(RSuspendOptions(), s_suspendedSessionPath, false, force);
 }
 
-void suspendForRestart()
+void suspendForRestart(const RSuspendOptions& options)
 {
-   suspend(RestartContext::createSessionStatePath(s_options.scopedScratchPath,
+   suspend(options,
+           RestartContext::createSessionStatePath(s_options.scopedScratchPath,
                                                   s_options.sessionPort),
            true,  // disable save compression
            true); // force suspend

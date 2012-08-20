@@ -29,6 +29,7 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.jsonrpc.*;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.*;
+import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
@@ -235,9 +236,10 @@ public class RemoteServer implements Server
       return GWT.getHostPageBaseURL() + pathName;
    }
    
-   public void suspendForRestart(ServerRequestCallback<Void> requestCallback)
+   public void suspendForRestart(SuspendOptions options,
+                                 ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, SUSPEND_FOR_RESTART, requestCallback);
+      sendRequest(RPC_SCOPE, SUSPEND_FOR_RESTART, options, requestCallback);
    }
    
    public void ping(ServerRequestCallback<Void> requestCallback)

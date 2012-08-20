@@ -26,6 +26,7 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -67,6 +68,7 @@ public class Packages
       extends BasePresenter
       implements InstalledPackagesChangedHandler,
                  PackageStatusChangedHandler,
+                 DeferredInitCompletedEvent.Handler,
                  PackagesDisplayObserver
 {
    public interface Binder extends CommandBinder<Commands, Packages> {}
@@ -108,6 +110,7 @@ public class Packages
 
       events.addHandler(InstalledPackagesChangedEvent.TYPE, this);
       events.addHandler(PackageStatusChangedEvent.TYPE, this);
+      events.addHandler(DeferredInitCompletedEvent.TYPE, this);
       
       // make the install options persistent
       new JSObjectStateValue("packages-pane", "installOptions", ClientState.PROJECT_PERSISTENT,
@@ -550,6 +553,12 @@ public class Packages
    public void onInstalledPackagesChanged(InstalledPackagesChangedEvent event)
    {
       listPackages() ;
+   }
+   
+   @Override
+   public void onDeferredInitCompleted(DeferredInitCompletedEvent event)
+   {
+      listPackages();
    }
    
    public void onPackageFilterChanged(String filter)

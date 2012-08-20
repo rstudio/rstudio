@@ -52,6 +52,7 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    // get an application URL
    String getApplicationURL(String pathName);
    
-   void suspendForRestart(ServerRequestCallback<Void> requestCallback);
+   void suspendForRestart(SuspendOptions options,
+                          ServerRequestCallback<Void> requestCallback);
    void ping(ServerRequestCallback<Void> requestCallback);
 }

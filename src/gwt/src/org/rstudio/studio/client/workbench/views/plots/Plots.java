@@ -33,6 +33,8 @@ import org.rstudio.core.client.widget.HasCustomizableToolbar;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
+import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -64,7 +66,8 @@ import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.Manipulato
 
 public class Plots extends BasePresenter implements PlotsChangedHandler,
                                                     LocatorHandler,
-                                                    ConsolePromptHandler
+                                                    ConsolePromptHandler,
+                                                    DeferredInitCompletedEvent.Handler
 {
    public interface Parent extends HasWidgets, HasCustomizableToolbar
    {
@@ -92,6 +95,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                 WorkbenchContext workbenchContext,
                 Provider<UIPrefs> uiPrefs,
                 Commands commands,
+                EventBus events,
                 final PlotsServerOperations server,
                 Session session)
    {
@@ -145,6 +149,8 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
             }   
          }
       );
+      
+      events.addHandler(DeferredInitCompletedEvent.TYPE, this);
 }
    
    public void onPlotsChanged(PlotsChangedEvent event)
@@ -424,6 +430,12 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    {
       view_.bringToFront();
       view_.setProgress(true);
+      server_.refreshPlot(new PlotRequestCallback());
+   }
+   
+   @Override
+   public void onDeferredInitCompleted(DeferredInitCompletedEvent event)
+   {
       server_.refreshPlot(new PlotRequestCallback());
    }
    

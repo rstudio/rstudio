@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import org.rstudio.studio.client.application.model.SuspendOptions;
+
 import com.google.gwt.event.shared.GwtEvent;
 
 public class SuspendAndRestartEvent extends GwtEvent<SuspendAndRestartHandler>
@@ -19,11 +21,23 @@ public class SuspendAndRestartEvent extends GwtEvent<SuspendAndRestartHandler>
    public static final GwtEvent.Type<SuspendAndRestartHandler> TYPE =
       new GwtEvent.Type<SuspendAndRestartHandler>();
    
-   public SuspendAndRestartEvent(String afterRestartCommand)
+   public SuspendAndRestartEvent(SuspendOptions suspendOptions,
+                                 String afterRestartCommand)
    {
+      suspendOptions_ = suspendOptions;
       afterRestartCommand_ = afterRestartCommand;
    }
+   
+   public SuspendAndRestartEvent(String afterRestartCommand)
+   {
+      this(SuspendOptions.create(false, false), afterRestartCommand);
+   }
  
+   public SuspendOptions getSuspendOptions()
+   {
+      return suspendOptions_;
+   }
+   
    public String getAfterRestartCommand()
    {
       return afterRestartCommand_;
@@ -41,5 +55,6 @@ public class SuspendAndRestartEvent extends GwtEvent<SuspendAndRestartHandler>
       return TYPE;
    }
    
+   private final SuspendOptions suspendOptions_;
    private final String afterRestartCommand_;
 }

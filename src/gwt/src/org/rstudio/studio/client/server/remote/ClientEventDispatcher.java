@@ -395,6 +395,10 @@ public class ClientEventDispatcher
             DirectoryNavigateEvent.Data data = event.getData();
             eventBus_.fireEvent(new DirectoryNavigateEvent(data));
          }
+         else if (type.equals(ClientEvent.DeferredInitCompleted))
+         {
+            eventBus_.fireEvent(new DeferredInitCompletedEvent());
+         }
          else if (type.equals(ClientEvent.ListChanged))
          {
             eventBus_.fireEvent(new ListChangedEvent(event.<JsObject>getData()));

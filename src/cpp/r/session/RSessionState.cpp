@@ -58,6 +58,7 @@ const char * const kHistoryFile = "history";
 const char * const kPlotsFile = "plots";
 const char * const kPlotsDir = "plots_dir";
 const char * const kSearchPath = "search_path";
+const char * const kGlobalEnvironment = "global_environment";
 
 // settings
 const char * const kWorkingDirectory = "working_directory";
@@ -182,36 +183,98 @@ struct ErrorRecorder
    
    std::string* pMessages_ ;
 };
-   
-} // anonymous namespace
- 
-   
-bool save(const FilePath& statePath,
-          bool serverMode,
-          bool disableSaveCompression)
+
+void saveDevMode(Settings* pSettings)
 {
-   // flag indicating whether we succeeded saving
-   bool saved = true;
-   
-   // ensure the context exists (if we fail this is fatal)
+   // check if dev-mode is on -- if it is then note this and turn it off
+   // (so that at restore time we can explicitly re-enable it)
+   bool devModeOn = false;
+   Error error = r::exec::RFunction(".rs.devModeOn").call(&devModeOn);
+   if (error)
+      LOG_ERROR(error);
+   if (devModeOn)
+   {
+      // set devmode bit in suspended settings
+      pSettings->set(kDevModeOn, true);
+
+      // turn dev mode off -- this is important so that dev mode undoes
+      // its manipulations of the prompt and libpaths before they are saved
+      // suppress output to eliminate dev_mode OFF message
+      // ignore error on purpose -- will happen if devtools isn't intalled
+      r::session::utils::SuppressOutputInScope suppressOutput;
+      error = r::exec::RFunction("devtools:::dev_mode", false).call();
+   }
+
+}
+
+void initSaveContext(const FilePath& statePath,
+                     Settings* pSettings,
+                     bool* pSaved)
+{
+   // ensure the context exists
    Error error = statePath.ensureDirectory();
    if (error)
    {
       reportError(kSaving, "creating directory", error, ERROR_LOCATION);
-      saved = false;
-   }   
-      
-   // init session settings (used below)
-   Settings settings ;
-   error = settings.initialize(statePath.complete(kSettingsFile));
+      *pSaved = false;
+   }
+
+   // init session settings
+   error = pSettings->initialize(statePath.complete(kSettingsFile));
    if (error)
    {
       reportError(kSaving, kSettingsFile, error, ERROR_LOCATION);
-      saved = false;
+      *pSaved = false;
+   }
+}
+
+void saveWorkingContext(const FilePath& statePath,
+                        Settings* pSettings,
+                        bool* pSaved)
+{
+   // save history
+   FilePath historyPath = statePath.complete(kHistoryFile);
+   Error error = consoleHistory().saveToFile(historyPath);
+   if (error)
+   {
+      reportError(kSaving, kHistoryFile, error, ERROR_LOCATION);
+      *pSaved = false;
    }
 
+   // save client metrics
+   client_metrics::save(pSettings);
+
+   // save aliased path to current working directory
+   std::string workingDirectory = FilePath::createAliasedPath(
+                                       utils::safeCurrentPath(),
+                                       r::session::utils::userHomePath());
+   pSettings->set(kWorkingDirectory, workingDirectory);
+
+   // save console actions
+   FilePath consoleActionsPath = statePath.complete(kConsoleActionsFile);
+   error = consoleActions().saveToFile(consoleActionsPath);
+   if (error)
+   {
+      reportError(kSaving, kConsoleActionsFile, error, ERROR_LOCATION);
+      *pSaved = false;
+   }
+}
+   
+} // anonymous namespace
+ 
+   
+
+bool save(const FilePath& statePath,
+          bool serverMode,
+          bool disableSaveCompression)
+{
+   // initialize context
+   Settings settings;
+   bool saved = true;
+   initSaveContext(statePath, &settings, &saved);
+   
    // save environment variables
-   error = saveEnvironmentVars(statePath.complete(kEnvironmentVars));
+   Error error = saveEnvironmentVars(statePath.complete(kEnvironmentVars));
    if (error)
    {
       reportError(kSaving, kEnvironmentVars, error, ERROR_LOCATION);
@@ -239,24 +302,10 @@ bool save(const FilePath& statePath,
       }
    }
 
-   // check if dev-mode is on -- if it is then note this and turn it off
-   // (so that at restore time we can explicitly re-enable it)
-   bool devModeOn = false;
-   error = r::exec::RFunction(".rs.devModeOn").call(&devModeOn);
-   if (error)
-      LOG_ERROR(error);
-   if (devModeOn)
-   {
-      // set devmode bit in suspended settings
-      settings.set(kDevModeOn, true);
-
-      // turn dev mode off -- this is important so that dev mode undoes
-      // its manipulations of the prompt and libpaths before they are saved
-      // suppress output to eliminate dev_mode OFF message
-      // ignore error on purpose -- will happen if devtools isn't intalled
-      r::session::utils::SuppressOutputInScope suppressOutput;
-      error = r::exec::RFunction("devtools:::dev_mode", false).call();
-   }
+   // handle dev mode -- note that this MUST be executed before
+   // save libpaths and save options because it manipulates them
+   // (by disabling devmode)
+   saveDevMode(&settings);
 
    // save libpaths
    error = saveLibPaths(statePath.complete(kLibPathsFile));
@@ -274,32 +323,8 @@ bool save(const FilePath& statePath,
       saved = false;
    }
    
-   // save history
-   FilePath historyPath = statePath.complete(kHistoryFile);
-   error = consoleHistory().saveToFile(historyPath);
-   if (error)
-   {
-      reportError(kSaving, kHistoryFile, error, ERROR_LOCATION);
-      saved = false;
-   }
-
-   // save client metrics
-   client_metrics::save(&settings);
-   
-   // save aliased path to current working directory
-   std::string workingDirectory = FilePath::createAliasedPath(
-                                       utils::safeCurrentPath(),
-                                       r::session::utils::userHomePath());
-   settings.set(kWorkingDirectory, workingDirectory);
-   
-   // save console actions
-   FilePath consoleActionsPath = statePath.complete(kConsoleActionsFile);
-   error = consoleActions().saveToFile(consoleActionsPath);
-   if (error)
-   {
-      reportError(kSaving, kConsoleActionsFile, error, ERROR_LOCATION);
-      saved = false;
-   }
+   // save working context
+   saveWorkingContext(statePath, &settings, &saved);
 
    // save search path (disable save compression if requested)
    if (disableSaveCompression)
@@ -314,6 +339,43 @@ bool save(const FilePath& statePath,
       reportError(kSaving, kSearchPath, error, ERROR_LOCATION);
       saved = false;
    }
+
+   // return status
+   return saved;
+}
+
+
+bool saveMinimal(const core::FilePath& statePath,
+                 bool saveGlobalEnvironment)
+{
+   // initialize context
+   Settings settings;
+   bool saved = true;
+   initSaveContext(statePath, &settings, &saved);
+
+   // handle dev mode
+   saveDevMode(&settings);
+
+   // save working context
+   saveWorkingContext(statePath, &settings, &saved);
+
+   // save global environment if requested
+   if (saveGlobalEnvironment)
+   {
+      // disable save compression
+      Error error = r::exec::RFunction(".rs.disableSaveCompression").call();
+      if (error)
+         LOG_ERROR(error);
+
+      error = search_path::saveGlobalEnvironment(statePath);
+      if (error)
+      {
+         reportError(kSaving, kGlobalEnvironment, error, ERROR_LOCATION);
+         saved = false;
+      }
+   }
+
+
 
    // return status
    return saved;
@@ -370,9 +432,13 @@ bool restore(const FilePath& statePath,
       reportError(kRestoring, kWorkingDirectory, error, ERROR_LOCATION, er);
    
    // restore options
-   error = r::options::restoreOptions(statePath.complete(kOptionsFile));
-   if (error)
-      reportError(kRestoring, kOptionsFile, error, ERROR_LOCATION, er);
+   FilePath optionsPath = statePath.complete(kOptionsFile);
+   if (optionsPath.exists())
+   {
+      error = r::options::restoreOptions(optionsPath);
+      if (error)
+         reportError(kRestoring, kOptionsFile, error, ERROR_LOCATION, er);
+   }
    
    // restore libpaths
    error = restoreLibPaths(statePath.complete(kLibPathsFile));
@@ -395,7 +461,6 @@ bool restore(const FilePath& statePath,
    error = consoleHistory().loadFromFile(historyFilePath, false);
    if (error)
       reportError(kRestoring, kHistoryFile, error, ERROR_LOCATION, er);
-
 
    // restore environment vars
    error = restoreEnvironmentVars(statePath.complete(kEnvironmentVars));

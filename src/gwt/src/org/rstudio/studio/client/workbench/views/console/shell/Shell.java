@@ -60,6 +60,7 @@ public class Shell implements ConsoleInputHandler,
                               ConsoleWriteInputHandler,
                               ConsolePromptHandler,
                               ConsoleResetHistoryHandler,
+                              ConsoleRestartRCompletedEvent.Handler,
                               SendToConsoleHandler,
                               BusyHandler
 {
@@ -112,6 +113,7 @@ public class Shell implements ConsoleInputHandler,
       eventBus.addHandler(ConsoleWriteInputEvent.TYPE, this);
       eventBus.addHandler(ConsolePromptEvent.TYPE, this);
       eventBus.addHandler(ConsoleResetHistoryEvent.TYPE, this);
+      eventBus.addHandler(ConsoleRestartRCompletedEvent.TYPE, this);
       eventBus.addHandler(SendToConsoleEvent.TYPE, this);
       eventBus.addHandler(BusyEvent.TYPE, this);
       
@@ -280,6 +282,15 @@ public class Shell implements ConsoleInputHandler,
    public void onConsoleResetHistory(ConsoleResetHistoryEvent event)
    {
       setHistory(event.getHistory());
+   }
+   
+   @Override
+   public void onRestartRCompleted(ConsoleRestartRCompletedEvent event)
+   {
+      if (view_.isPromptEmpty())
+         eventBus_.fireEvent(new SendToConsoleEvent("", true));
+         
+      focus();
    }
    
    private void processCommandEntry()

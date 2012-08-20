@@ -1187,15 +1187,23 @@ Error bufferConsoleInput(const core::json::JsonRpcRequest& request,
 }
 
 
-void doSuspendForRestart()
+void doSuspendForRestart(const r::session::RSuspendOptions& options)
 {
-   r::session::suspendForRestart();
+   r::session::suspendForRestart(options);
 }
 
 Error suspendForRestart(const core::json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
-   pResponse->setAfterResponse(doSuspendForRestart);
+   r::session::RSuspendOptions options;
+   Error error = json::readObjectParam(
+                                  request.params, 0,
+                                  "save_minimal", &(options.saveMinimal),
+                                  "save_workspace", &(options.saveWorkspace));
+   if (error)
+      return error;
+
+   pResponse->setAfterResponse(boost::bind(doSuspendForRestart, options));
    return Success();
 }
 
@@ -1436,6 +1444,10 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
 void rDeferredInit(bool newSession)
 {
    module_context::events().onDeferredInit(newSession);
+
+   // fire an event to the client
+   ClientEvent event(client_events::kDeferredInitCompleted);
+   module_context::enqueClientEvent(event);
 }
    
 void consolePrompt(const std::string& prompt, bool addToHistory)

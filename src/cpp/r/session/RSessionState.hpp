@@ -31,6 +31,9 @@ namespace state {
 bool save(const core::FilePath& statePath,
           bool serverMode,
           bool disableSaveCompression);
+
+bool saveMinimal(const core::FilePath& statePath,
+                 bool saveGlobalEnvironment);
    
 bool restore(const core::FilePath& statePath, 
              bool serverMode,
