@@ -7,9 +7,8 @@ therefore likely to only correctly configure and build on more recent Linux
 systems. Specific version requirements for various components include:
 
 - R 2.11.1
-- CMake 2.6
-- Pango 1.14
-- Boost 1.42
+- CMake 2.8
+- Boost 1.50
 - Qt 4.8 [Required only for Desktop]
 
 
@@ -52,18 +51,11 @@ SDK be sure to specify the --exclude-qt-sdk flag as described above).
    ./install-dependencies-yum
    ./install-dependencies-zypper
    
-The version of Boost (1.42) required by RStudio is relatively recent. If 
-you install Boost using your system package manager then the following 
-minimum OS versions are required:
-
-   - Debian 6
-   - Ubuntu 10.10
-   - Fedora 14
-   - OpenSUSE 11.4
-   
-If you aren't building on one of these more recent system versions then
-you can satisfy the Boost requirement by running the install-boost script
-in dependencies/linux/older (described below).
+Note that this script will install Boost 1.50 in the /opt/rstudio-tools/boost
+directory (the /opt/rstudio-tools directory is used to insure that this 
+installation of boost doesn't conflict with other versions of boost installed
+on the system). This part of the installation will take a few minutes since
+it requires that boost be built from source for your system.
 
 
 Installing Dependencies for Other Systems
@@ -88,18 +80,22 @@ ensure that all of the referenced libraries are available on your system.
       common
          install-dictionaries
 
-4) If your system doesn't meet the minimum version requirements for Boost (1.42)
-and/or Qt (4.8) then install them using the scripts provided here:
+4) Install Mathjax using the following script:
+
+   dependencies
+      common
+        install-mathjax
+
+5) If your system doesn't meet the minimum version requirements for 
+Boost (1.50) and/or Qt (4.8) then you can install them using the scripts
+provided here:
 
    dependencies
       linux
          install-boost
          install-qt-sdk
          
-NOTE: The Boost libraries are not built if the directory 
-/usr/local/include/boost already exists.
-
-5) If your system doesn't meet the minimum version requirements for CMake (2.6)
+6) If your system doesn't meet the minimum version requirements for CMake (2.8)
 you can download a Linux binary of the latest version of CMake here:
 
   - http://www.cmake.org/cmake/resources/software.html

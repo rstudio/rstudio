@@ -47,6 +47,9 @@ cd ../common
 ./install-mathjax
 cd ../linux
 
+# boost
+./install-boost
+
 # desktop dependencies (qt)
 if [ "$1" != "--exclude-qt-sdk" ]
 then
@@ -54,6 +57,5 @@ then
    # not conflict with any other installed versions of Qt on the system)
    ./install-qt-sdk
 fi
-
 
 
