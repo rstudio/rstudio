@@ -23,6 +23,7 @@ import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 import org.hibernate.jsr303.tck.tests.constraints.groups.DefaultGroupRedefinitionTest.AddressWithDefaultInGroupSequence;
 
 import javax.validation.Validator;
+import javax.validation.groups.Default;
 
 /**
  * ValidatorFactory for
@@ -35,7 +36,8 @@ public final class GroupSequenceWithNoImplicitDefaultGroupValidatorFactory exten
    * Validator for
    * {@link DefaultGroupRedefinitionTest#testGroupSequenceWithNoImplicitDefaultGroup()}
    */
-  @GwtValidation(value = {AddressWithDefaultInGroupSequence.class})
+  @GwtValidation(value = {AddressWithDefaultInGroupSequence.class},
+      groups = {Default.class, Address.HighLevelCoherence.class, Address.Complete.class})
   public static interface TestValidator extends Validator {
   }
 

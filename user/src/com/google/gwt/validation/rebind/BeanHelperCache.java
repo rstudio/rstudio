@@ -127,6 +127,8 @@ public class BeanHelperCache { // public for testing
 
       // now recurse on all Cascaded elements
       for (PropertyDescriptor p : bean.getConstrainedProperties()) {
+        // TODO(idol) only bother creating objects for properties that have constrains in the groups
+        // specified in @GwtValidation, but not others
         if (p.isCascaded()) {
           doCreateHelperForProp(p, helper, logger, context);
         }

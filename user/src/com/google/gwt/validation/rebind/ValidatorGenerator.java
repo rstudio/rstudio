@@ -39,15 +39,18 @@ import javax.validation.Validator;
 public final class ValidatorGenerator extends Generator {
 
   private final BeanHelperCache cache;
+  private Class<?>[] validGroups;
 
   // called by the compiler via reflection
   public ValidatorGenerator() {
     this.cache = new BeanHelperCache();
+    this.validGroups = new Class<?>[]{ };
   }
 
   // called from tests
-  public ValidatorGenerator(BeanHelperCache cache) {
+  public ValidatorGenerator(BeanHelperCache cache, Class<?>[] validGroups) {
     this.cache = cache;
+    this.validGroups = validGroups;
   }
 
   @Override
@@ -110,6 +113,8 @@ public final class ValidatorGenerator extends Generator {
       throw new UnableToCompleteException();
     }
 
+    this.validGroups = gwtValidation.groups();
+
     TreeLogger validatorLogger = logger.branch(TreeLogger.DEBUG,
         "Generating Validator for  '" + validatorType.getQualifiedSourceName()
             + "'", null);
@@ -136,7 +141,7 @@ public final class ValidatorGenerator extends Generator {
     }
 
     AbstractCreator creator = new GwtSpecificValidatorCreator(validatorType,
-        beanType, beanHelper, logger, context, cache);
+        beanType, beanHelper, logger, context, cache, validGroups);
     return creator.create();
   }
 

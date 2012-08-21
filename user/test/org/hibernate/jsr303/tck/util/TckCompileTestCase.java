@@ -41,18 +41,19 @@ public abstract class TckCompileTestCase extends TestCase {
   private BeanHelperCache cache;
   private StandardGeneratorContext context;
   private TreeLogger failOnErrorLogger;
+  private Class<?>[] validGroups;
 
   protected void assertBeanValidatorFailsToCompile(
       Class<? extends Validator> validatorClass, Class<?> beanType,
       Class<? extends ValidationException> expectedException,
       String expectedMessage) throws UnableToCompleteException {
-    ValidatorGenerator generator = new ValidatorGenerator(cache);
+    ValidatorGenerator generator = new ValidatorGenerator(cache, validGroups);
     generator.generate(failOnErrorLogger, context,
         validatorClass.getCanonicalName());
     context.finish(failOnErrorLogger);
 
     // Now create the validator that is going to fail
-    ValidatorGenerator specificGenerator = new ValidatorGenerator(cache);
+    ValidatorGenerator specificGenerator = new ValidatorGenerator(cache, validGroups);
     String beanHelperName = createBeanHelper(beanType);
     assertUnableToComplete(expectedException, expectedMessage,
         specificGenerator, beanHelperName);
@@ -62,7 +63,7 @@ public abstract class TckCompileTestCase extends TestCase {
       Class<? extends Validator> validatorClass,
       Class<? extends ValidationException> expectedException,
       String expectedMessage) {
-    ValidatorGenerator generator = new ValidatorGenerator(cache);
+    ValidatorGenerator generator = new ValidatorGenerator(cache, validGroups);
     assertUnableToComplete(expectedException, expectedMessage, generator,
         validatorClass.getCanonicalName());
   }
@@ -73,6 +74,7 @@ public abstract class TckCompileTestCase extends TestCase {
     cache = new BeanHelperCache();
     failOnErrorLogger = createFailOnErrorLogger();
     context = createGeneratorContext(getTckTestModuleName(), failOnErrorLogger);
+    validGroups = new Class<?>[]{ };
   }
 
   private void assertUnableToComplete(

@@ -35,8 +35,8 @@ public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
       Address.class, Animal.class, Book.class, Car.class, Order.class,
         User.class},
       groups = {Default.class, User.Billable.class, User.BuyInOneClick.class, User.Optional.class, 
-        CyclicGroupSequence.class, Auditable.class, 
-        First.class, Second.class, Last.class, Book.All.class})
+        CyclicGroupSequence.class, Auditable.class, First.class, Second.class, Last.class,
+        Book.All.class, Address.HighLevelCoherence.class, Address.Complete.class, Car.Test.class})
   public static interface GwtValidator extends Validator {
   }
 

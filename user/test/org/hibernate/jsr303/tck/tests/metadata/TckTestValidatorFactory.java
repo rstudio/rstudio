@@ -20,6 +20,8 @@ import com.google.gwt.validation.client.AbstractGwtValidatorFactory;
 import com.google.gwt.validation.client.GwtValidation;
 import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 
+import org.hibernate.jsr303.tck.tests.metadata.Person.PersonValidation;
+
 import javax.validation.Validator;
 import javax.validation.groups.Default;
 
@@ -35,7 +37,7 @@ public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
         Account.class, Customer.class, Man.class, Order.class, Person.class,
         SubClass.class, SuperClass.class, UnconstraintEntity.class},
       groups = {Default.class, SubClass.DefaultGroup.class, SuperClass.BasicGroup.class,
-        SuperClass.InheritedGroup.class, SuperClass.UnusedGroup.class})
+        SuperClass.InheritedGroup.class, SuperClass.UnusedGroup.class, PersonValidation.class})
   public static interface GwtValidator extends Validator {
   }
 

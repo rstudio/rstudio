@@ -18,6 +18,7 @@ package com.google.gwt.validation.example;
 import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.validation.example.client.AuthorTest;
 import com.google.gwt.validation.example.client.BookTest;
+import com.google.gwt.validation.example.client.NotSpecifiedGroupsTest;
 
 import junit.framework.Test;
 
@@ -30,6 +31,7 @@ public class ExampleValidationClientGwtSuite {
         "Validation Example tests that require GWT");
     suite.addTestSuite(AuthorTest.class);
     suite.addTestSuite(BookTest.class);
+    suite.addTestSuite(NotSpecifiedGroupsTest.class);
     return suite;
   }
 
