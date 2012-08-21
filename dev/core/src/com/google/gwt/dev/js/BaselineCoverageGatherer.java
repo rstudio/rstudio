@@ -32,6 +32,7 @@ import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.thirdparty.guava.common.base.Charsets;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.google.gwt.thirdparty.guava.common.io.Files;
@@ -51,6 +52,9 @@ public class BaselineCoverageGatherer {
 
   private static Set<String> getCoveredSourceFiles() {
     String filename = System.getProperty("gwt.coverage");
+    if (filename.indexOf(',') != -1) {
+      return ImmutableSet.copyOf(filename.split(","));
+    }
     File instrumentationFile = new File(filename);
     try {
       return Sets.newHashSet(Files.readLines(instrumentationFile, Charsets.UTF_8));

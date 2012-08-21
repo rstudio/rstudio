@@ -559,6 +559,23 @@
     </gwt.junit>
   </target>
 
+  <target name="test.coverage.htmlunit"
+      depends="compile, compile.tests"
+      description="Run tests for coverage support">
+      <fileset id="test.coverage.htmlunit.tests" dir="${javac.junit.out}"
+          includes="com/google/gwt/dev/js/client/CoverageTest.class"
+          excludes="" />
+      <gwt.junit test.name="test.coverage.htmlunit"
+        test.args="${test.args} -draftCompile -out www -prod -runStyle HtmlUnit:FF3.6"
+        test.jvmargs="${test.jvmargs} -Dgwt.coverage=com/google/gwt/dev/js/client/CoverageTestModule.java,"
+        test.out="${junit.out}/coverage-htmlunit"
+        test.cases="test.coverage.htmlunit.tests" >
+      <extraclasspaths>
+        <path refid="test.extraclasspath" />
+      </extraclasspaths>
+    </gwt.junit>
+  </target>
+
   <target name="test"
       depends="compile, compile.tests"
       description="Run all tests for this project.">
@@ -593,6 +610,7 @@
       <antcall target="test.draft.htmlunit"/>
       <antcall target="test.nometa.htmlunit"/>
       <antcall target="test.nongwt"/>
+      <antcall target="test.coverage.htmlunit"/>
     </parallel>
     </limit>
   </target>
@@ -614,6 +632,7 @@
       <antcall target="test.web.htmlunit"/>
       <antcall target="test.draft.htmlunit"/>
       <antcall target="test.nometa.htmlunit"/>
+      <antcall target="test.coverage.htmlunit"/>
     </parallel>
     </limit>
   </target>
