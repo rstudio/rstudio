@@ -120,9 +120,9 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="goToFunctionDefinition"/>
          <separator/>
          <cmd refid="extractFunction"/>
-         <cmd refid="commentUncomment"/>
          <cmd refid="reindent"/>
          <cmd refid="reflowComment"/>
+         <cmd refid="commentUncomment"/>
          <separator/>
          <cmd refid="executeCode"/>
          <cmd refid="executeLastCode"/>

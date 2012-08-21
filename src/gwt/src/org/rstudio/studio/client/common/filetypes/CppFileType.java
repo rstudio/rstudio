@@ -43,7 +43,10 @@ public class CppFileType extends TextFileType
    {
       HashSet<AppCommand> result = super.getSupportedCommands(commands);
       if (isCpp())
+      {
          result.add(commands.commentUncomment());
+         result.add(commands.reflowComment());
+      }
       return result;
    }
    

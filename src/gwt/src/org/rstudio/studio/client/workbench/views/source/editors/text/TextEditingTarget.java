@@ -1366,6 +1366,14 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onReflowComment()
    {
+      if (fileType_.isCpp())
+         doReflowComment("(//)");
+      else
+         doReflowComment("(#)");
+   }
+
+   void doReflowComment(String commentPrefix)
+   {
       docDisplay_.focus();
 
       InputEditorSelection originalSelection = docDisplay_.getSelection();
@@ -1373,7 +1381,7 @@ public class TextEditingTarget implements EditingTarget
 
       if (selection.isEmpty())
       {
-         selection = selection.growToIncludeLines("^\\s*#.*$");
+         selection = selection.growToIncludeLines("^\\s*" + commentPrefix + ".*$");
       }
       else
       {
@@ -1384,9 +1392,11 @@ public class TextEditingTarget implements EditingTarget
       if (selection.isEmpty())
          return;
 
-      reflowComments(selection, originalSelection.isEmpty() ?
-                                originalSelection.getStart() :
-                                null);
+      reflowComments(commentPrefix, 
+                     selection, 
+                     originalSelection.isEmpty() ?
+                     originalSelection.getStart() :
+                     null);
    }
 
    private Position selectionToPosition(InputEditorPosition pos)
@@ -1394,13 +1404,14 @@ public class TextEditingTarget implements EditingTarget
       return docDisplay_.selectionToPosition(pos);
    }
 
-   private void reflowComments(InputEditorSelection selection,
+   private void reflowComments(String commentPrefix,
+                               InputEditorSelection selection,
                                final InputEditorPosition cursorPos)
    {
       String code = docDisplay_.getCode(selection);
       String[] lines = code.split("\n");
       String prefix = StringUtil.getCommonPrefix(lines, true);
-      Pattern pattern = Pattern.create("^\\s*#+('?)\\s*");
+      Pattern pattern = Pattern.create("^\\s*" + commentPrefix + "+('?)\\s*");
       Match match = pattern.match(prefix, 0);
       // Selection includes non-comments? Abort.
       if (match == null)

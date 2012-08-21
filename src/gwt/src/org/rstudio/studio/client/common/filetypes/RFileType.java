@@ -56,6 +56,7 @@ public class RFileType extends TextFileType
       result.add(commands.jumpTo());
       result.add(commands.goToFunctionDefinition());
       result.add(commands.insertSection());
+      result.add(commands.codeCompletion());
       return result;
    }
 }

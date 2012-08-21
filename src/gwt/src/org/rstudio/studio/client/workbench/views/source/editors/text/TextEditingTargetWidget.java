@@ -217,9 +217,9 @@ public class TextEditingTargetWidget
          menu.addItem(commands_.goToFunctionDefinition().createMenuItem(false));
          menu.addSeparator();
          menu.addItem(commands_.extractFunction().createMenuItem(false));
-         menu.addItem(commands_.commentUncomment().createMenuItem(false));
          menu.addItem(commands_.reindent().createMenuItem(false));
          menu.addItem(commands_.reflowComment().createMenuItem(false));
+         menu.addItem(commands_.commentUncomment().createMenuItem(false));
          codeTransform_ = new ToolbarButton("", icon, menu);
          codeTransform_.setTitle("Code Tools");
       }
@@ -239,7 +239,10 @@ public class TextEditingTargetWidget
          srcOnSaveLabel_.setText("Preview on Save");
       else
          srcOnSaveLabel_.setText("Source on Save");
-      codeTransform_.setVisible(canExecuteCode && !fileType.canAuthorContent());   
+      codeTransform_.setVisible(
+            (canExecuteCode && !fileType.canAuthorContent()) ||
+            fileType.isCpp());   
+     
       sourceButton_.setVisible(canExecuteCode && !canExecuteChunks);
       sourceMenuButton_.setVisible(canExecuteCode && !canExecuteChunks);
    
