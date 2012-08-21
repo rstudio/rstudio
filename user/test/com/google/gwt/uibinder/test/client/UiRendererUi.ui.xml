@@ -21,6 +21,10 @@
     .enabled { color:black; }
     .disabled { color:gray; }
   </ui:style>
+  <ui:style field="uiStyle2" type="com.google.gwt.uibinder.test.client.UiRendererUi.UiStyle2">
+    .ok { color:blue; }
+    .bad { color:red; }
+  </ui:style>
 
   <div ui:field='root' class="{res.style.bodyColor} {res.style.bodyFont}"
       title="The title of this div is localizable">

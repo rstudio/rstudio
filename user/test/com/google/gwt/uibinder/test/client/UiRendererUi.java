@@ -86,10 +86,19 @@ public class UiRendererUi {
   }
 
   /**
+   * Another style defined within the UiBinder file.
+   */
+  public interface UiStyle2 extends CssResource {
+    String ok();
+    String bad();
+  }
+
+  /**
    * A UiRinder Cell renderer.
    */
   public interface HtmlRenderer extends UiRenderer {
     UiStyle getUiStyle();
+    UiStyle2 getUiStyle2();
     SpanElement getNameSpan(Element owner);
     TableColElement getNarrowColumn(Element owner);
     DivElement getRoot(Element owner);

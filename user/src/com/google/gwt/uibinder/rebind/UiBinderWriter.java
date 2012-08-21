@@ -76,8 +76,6 @@ import java.util.Map;
  */
 public class UiBinderWriter implements Statements {
 
-  static final String RENDER_PARAM_HOLDER_PREFIX = "_renderer_param_holder_";
-
   private static final String SAFE_VAR_PREFIX =
     "somethingUnlikelyToCollideWithParamNamesWefio";
 
@@ -1935,8 +1933,28 @@ public class UiBinderWriter implements Statements {
     w.newline();
 
     JParameter[] renderParameters = findRenderParameters(baseClass);
+    for (JParameter param : renderParameters) {
+      // Prevent fields from render() parameters from being optimized.
+      fieldManager.disableOptimization(param.getName());
+    }
 
-    writeRenderParameterDefinitions(w, renderParameters);
+    // public UiRendererImplClass() {
+    w.write("public %s() {", implClassName);
+    w.indent();
+    w.write("build_fields();");
+    w.outdent();
+    // }
+    w.write("}");
+    w.newline();
+
+    // private build_fields() {
+    w.write("private void build_fields() {");
+    w.indent();
+    fieldManager.initializeWidgetsInnerClass(w, getOwnerClass());
+    w.outdent();
+    // }
+    w.write("}");
+    w.newline();
 
     String renderParameterDeclarations = renderMethodParameters(renderParameters);
     w.write("public void render(final %s sb%s%s) {", SafeHtmlBuilder.class.getName(),
@@ -1949,7 +1967,7 @@ public class UiBinderWriter implements Statements {
     w.write("uiId = com.google.gwt.dom.client.Document.get().createUniqueId();");
     w.newline();
 
-    fieldManager.initializeWidgetsInnerClass(w, getOwnerClass());
+    w.write("build_fields();");
     w.newline();
 
     String safeHtml = rootField.getSafeHtml();
@@ -2245,20 +2263,13 @@ public class UiBinderWriter implements Statements {
     }
   }
 
-  private void writeRenderParameterDefinitions(IndentedWriter w, JParameter[] renderParameters) {
-    for (int i = 0; i < renderParameters.length; i++) {
-      JParameter parameter = renderParameters[i];
-      w.write("private %s %s%s;", parameter.getType().getQualifiedSourceName(),
-          RENDER_PARAM_HOLDER_PREFIX, parameter.getName());
-      w.newline();
-    }
-  }
-
   private void writeRenderParameterInitializers(IndentedWriter w, JParameter[] renderParameters) {
     for (int i = 0; i < renderParameters.length; i++) {
       JParameter parameter = renderParameters[i];
-      w.write("%s%s = %s;", RENDER_PARAM_HOLDER_PREFIX, parameter.getName(), parameter.getName());
-      w.newline();
+      if (fieldManager.lookup(parameter.getName()) != null) {
+        w.write("this.%s = %s;", parameter.getName(), parameter.getName());
+        w.newline();
+      }
     }
   }
 

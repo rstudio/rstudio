@@ -256,6 +256,12 @@ public class UiRendererTest extends GWTTestCase {
     assertEquals(renderer.getUiStyle().disabled(), nameSpan.getClassName());
   }
 
+  public void testGetStyleBeforeRender() {
+    HtmlRenderer renderer = GWT.create(HtmlRenderer.class);
+    assertNotNull(renderer.getUiStyle().enabled());
+    assertNotNull(renderer.getUiStyle2().ok());
+  }
+
   @Override
   protected void gwtTearDown() {
     docDiv.removeFromParent();

@@ -394,7 +394,9 @@ public class UiBinderParser {
 
     fieldWriter = fieldManager.registerField(
         FieldWriterType.IMPORTED, matchingResourceType.getErasedType(), resourceName);
-    fieldWriter.setInitializer(UiBinderWriter.RENDER_PARAM_HOLDER_PREFIX + resourceName);
+    // Sets initialization as a NOOP. These fields are set from
+    // parameters passed to UiRenderer#render(), instead.
+    fieldWriter.setInitializer(resourceName);
   }
 
   private void createSingleImport(XMLElement elem, JClassType enclosingType,
