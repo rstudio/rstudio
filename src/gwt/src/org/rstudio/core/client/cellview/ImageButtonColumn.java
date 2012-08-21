@@ -24,7 +24,8 @@ import com.google.gwt.user.client.ui.AbstractImagePrototype;
 public class ImageButtonColumn<T> extends Column<T, String>
 {
    public ImageButtonColumn(final AbstractImagePrototype imagePrototype,
-                            final OperationWithInput<T> onClick)
+                            final OperationWithInput<T> onClick,
+                            final String title)
    {
       super(new ButtonCell(){
          @Override
@@ -34,7 +35,7 @@ public class ImageButtonColumn<T> extends Column<T, String>
          {   
             if (value != null)
             {
-               sb.appendHtmlConstant("<span title=\"Uninstall package\" " +
+               sb.appendHtmlConstant("<span title=\"" + title + "\" " +
                                      "style=\"cursor: pointer;\">");
                sb.appendHtmlConstant(imagePrototype.getHTML());
                sb.appendHtmlConstant("</span>");

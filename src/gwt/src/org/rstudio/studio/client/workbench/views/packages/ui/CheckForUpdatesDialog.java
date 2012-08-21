@@ -158,7 +158,8 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
                 globalDisplay_.openWindow(update.getUpdateInfo().getNewsUrl(),
                                           options);
              }  
-           }) 
+           },
+           "Show package NEWS") 
            {
                @Override
                protected boolean showButton(PendingUpdate update)

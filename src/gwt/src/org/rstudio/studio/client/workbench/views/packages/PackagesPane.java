@@ -183,7 +183,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
             {
                observer_.removePackage(packageInfo);          
             }  
-          });
+          },
+          "Remove package");
       packagesTable_.addColumn(removeColumn);
       
      
