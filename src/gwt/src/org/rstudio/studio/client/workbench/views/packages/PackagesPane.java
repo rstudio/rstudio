@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.views.packages;
 
 import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.cellview.client.CellTable;
@@ -186,6 +187,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
           },
           "Remove package");
       packagesTable_.addColumn(removeColumn);
+      packagesTable_.setColumnWidth(removeColumn, 30, Unit.PX);
       
      
       packagesDataProvider_.addDataDisplay(packagesTable_);
