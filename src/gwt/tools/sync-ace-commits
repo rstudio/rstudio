@@ -72,7 +72,8 @@ git merge \
     origin/patch/suppress-native-scroll \
     origin/patch/build \
     origin/patch/remove-webfont \
-    origin/patch/eclipse-selectedword
+    origin/patch/eclipse-selectedword \
+    origin/patch/emacs-vim-keybindings
 
 
 node ./Makefile.dryice.js normal

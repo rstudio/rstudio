@@ -2608,6 +2608,11 @@ public class TextEditingTarget implements EditingTarget
                public void execute(Boolean arg) {
                   docDisplay.setShowIndentGuides(arg);
                }}));
+      releaseOnDismiss.add(prefs.useVimMode().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.setUseVimMode(arg);
+               }}));
    }
    
    public static void syncFontSize(

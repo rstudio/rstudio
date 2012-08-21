@@ -17,4 +17,9 @@ import com.google.gwt.core.client.JavaScriptObject;
 public class KeyboardHandler extends JavaScriptObject
 {
    protected KeyboardHandler() {}
+   
+   public static native KeyboardHandler vim() /*-{
+      var vim = $wnd.require('ace/keyboard/vim').handler;
+      return vim;
+   }-*/;
 }

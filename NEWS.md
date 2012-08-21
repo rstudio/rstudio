@@ -31,6 +31,7 @@ We've also added support for building packages with [Rcpp](http://dirk.eddelbuet
 
 ### Source Editor
 
+- Vim editing mode
 - New options to show whitespace and indent guides 
 
 ### Miscellaneous
