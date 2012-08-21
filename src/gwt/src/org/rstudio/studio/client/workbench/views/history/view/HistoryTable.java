@@ -81,7 +81,7 @@ public class HistoryTable extends FastSelectTable<HistoryEntry, String, Long>
       createAndAppendCol("100%");
       createAndAppendCol("105");
       if (searchResult_)
-         createAndAppendCol("18");
+         createAndAppendCol("23");
    }
 
    private TableColElement createAndAppendCol(String width)
