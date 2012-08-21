@@ -113,6 +113,18 @@ oop.inherits(Mode, TextMode);
     this.autoOutdent = function(state, doc, row) {
         this.$outdent.autoOutdent(doc, row);
     };
+    
+    this.transformAction = function(state, action, editor, session, text) {
+       if (action === 'insertion' && text === "\n") {
+          // If newline in a doxygen comment, continue the comment
+          var pos = editor.getSelectionRange().start;
+          var match = /^((\s*\/\/+')\s*)/.exec(session.doc.getLine(pos.row));
+          if (match && editor.getSelectionRange().start.column >= match[2].length) {
+             return {text: "\n" + match[1]};
+          }
+       }
+       return false;
+    };
 
 }).call(Mode.prototype);
 
