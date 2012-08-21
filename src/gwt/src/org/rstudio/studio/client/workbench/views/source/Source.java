@@ -470,7 +470,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewCppDoc()
    {
-      newDoc(FileTypeRegistry.C, null);
+      newDoc(FileTypeRegistry.CPP, null);
    }
    
    @Handler
