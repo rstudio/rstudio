@@ -32,8 +32,6 @@ We've also added support for building packages with [Rcpp](http://dirk.eddelbuet
 ### Source Editor
 
 - New options to show whitespace and indent guides 
-- Middle-button paste for Linux
-- Preserve editor selection and scroll position across reloads of the IDE
 
 ### Miscellaneous
 
@@ -46,6 +44,7 @@ We've also added support for building packages with [Rcpp](http://dirk.eddelbuet
 ### Bug Fixes
 
 - Don't allow console width to be set to an invalid value
+- Auto-scroll console buffer only when already at the bottom
 - Prevent selection of user-interface elements (only text can be selected)
 
 
