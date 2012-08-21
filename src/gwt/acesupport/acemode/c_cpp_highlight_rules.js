@@ -30,6 +30,7 @@ var oop = require("ace/lib/oop");
 var lang = require("ace/lib/lang");
 var DocCommentHighlightRules = require("mode/doc_comment_highlight_rules").DocCommentHighlightRules;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
+var TexHighlightRules = require("mode/tex_highlight_rules").TexHighlightRules;
 
 var c_cppHighlightRules = function() {
 
@@ -53,7 +54,12 @@ var c_cppHighlightRules = function() {
 
     this.$rules = {
         "start" : [
-            {
+           {
+               // Roxygen
+               token : "comment",
+               regex : "\\/\\/'",
+               next : "rd-start"
+            }, {
                 token : "comment",
                 regex : "\\/\\/.*$"
             },
@@ -154,6 +160,33 @@ var c_cppHighlightRules = function() {
             }
         ]
     };
+    
+    var rdRules = new TexHighlightRules("comment").getRules();
+
+    // Make all embedded TeX virtual-comment so they don't interfere with
+    // auto-indent.
+    for (var i = 0; i < rdRules["start"].length; i++) {
+       rdRules["start"][i].token += ".virtual-comment";
+    }
+
+    this.addRules(rdRules, "rd-");
+    this.$rules["rd-start"].unshift({
+       token: "text",
+       regex: "^",
+       next: "start"
+    });
+    this.$rules["rd-start"].unshift({
+       token : "keyword",
+       regex : "@(?!@)[^ ]*"
+    });
+    this.$rules["rd-start"].unshift({
+       token : "comment",
+       regex : "@@"
+    });
+    this.$rules["rd-start"].push({
+       token : "comment",
+       regex : "[^%\\\\[({\\])}]+"
+    });
     
     this.embedRules(DocCommentHighlightRules, "doc-",
         [ DocCommentHighlightRules.getEndRule("start") ]);
