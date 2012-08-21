@@ -401,7 +401,9 @@ MimeType s_mimeTypes[] =
    { "mml",   "text/mathml" },
    { "log",   "text/plain" },
    { "out",   "text/plain" },
-   { "Rout",   "text/plain" },
+   { "Rout",  "text/plain" },
+   { "po",    "text/plain" },
+   { "pot",   "text/plain"},
   
    { "tif",   "image/tiff" },
    { "tiff",  "image/tiff" },
