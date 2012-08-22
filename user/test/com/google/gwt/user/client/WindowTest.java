@@ -221,7 +221,7 @@ public class WindowTest extends GWTTestCase {
     final Label largeDOM = new Label();
     largeDOM.setPixelSize(oldClientWidth + 100, oldClientHeight + 100);
     RootPanel.get().add(largeDOM);
-    delayTestFinish(200);
+    delayTestFinish(1000);
     DeferredCommand.addCommand(new Command() {
       public void execute() {
         int newClientHeight = Window.getClientHeight();
