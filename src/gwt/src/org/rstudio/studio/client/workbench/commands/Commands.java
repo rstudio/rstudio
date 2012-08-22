@@ -232,6 +232,7 @@ public abstract class
    public abstract AppCommand logFocusedElement();
    public abstract AppCommand debugDumpContents();
    public abstract AppCommand debugImportDump();
+   public abstract AppCommand refreshSuperDevMode();
 
    // Application
    public abstract AppCommand quitSession();

@@ -279,7 +279,18 @@ public class Application implements ApplicationEventHandlers
       Element el = DomUtils.getActiveElement();
       DomUtils.dump(el, "Focused Element: ");
    }
- 
+
+   @Handler
+   public final native void onRefreshSuperDevMode() /*-{
+      $wnd.__gwt_bookmarklet_params = {
+         server_url:'http://localhost:9876/',
+         module_name:'rstudio'
+      }; 
+      
+      var s = $doc.createElement('script'); 
+      s.src = 'http://localhost:9876/dev_mode_on.js'; 
+      void($doc.getElementsByTagName('head')[0].appendChild(s));
+   }-*/ ;
    
    public void onSessionSerialization(SessionSerializationEvent event)
    {
