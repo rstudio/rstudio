@@ -248,9 +248,15 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    {
       defaultForward_ = defaultForward;
       
-      focusFindField(false);
-      
-      txtFind_.setValue(searchText);
+      if (searchText != null)
+      {
+         focusFindField(false);
+         txtFind_.setValue(searchText);
+      }
+      else
+      {
+         focusFindField(true);
+      }
    }
 
    private void focusFindField(boolean selectAll)

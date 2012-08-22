@@ -72,6 +72,8 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       void showFunction(SearchPathFunctionDefinition functionDef);
       void showFind(boolean defaultForward);
+      void findNext();
+      void findPrevious();
       void scrollToLeft();
    }
 
@@ -224,6 +226,19 @@ public class CodeBrowserEditingTarget implements EditingTarget
       view_.showFind(true);
    }
 
+   @Handler
+   void onFindNext()
+   {
+      view_.findNext();
+   }
+   
+   @Handler
+   void onFindPrevious()
+   {
+      view_.findPrevious();
+   }
+   
+   
    @Override
    public String getId()
    {

@@ -217,6 +217,8 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.popoutDoc());
       dynamicCommands_.add(commands.find());
       dynamicCommands_.add(commands.findReplace());
+      dynamicCommands_.add(commands.findNext());
+      dynamicCommands_.add(commands.findPrevious());
       dynamicCommands_.add(commands.extractFunction());
       dynamicCommands_.add(commands.commentUncomment());
       dynamicCommands_.add(commands.reindent());

@@ -96,6 +96,9 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="find"/>
          <cmd refid="findReplace"/>
+         <cmd refid="findNext"/>
+         <cmd refid="findPrevious"/>
+         <separator/>
          <cmd refid="findInFiles"/>
          <separator/>
          <cmd refid="checkSpelling"/>
@@ -362,6 +365,10 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="sourceActiveDocumentWithEcho" value="Cmd+Shift+Enter"/>;
       <shortcut refid="extractFunction" value="Cmd+Shift+U"/>
       <shortcut refid="executeLastCode" value="Cmd+Shift+P"/>
+      <shortcut refid="findNext" value="Cmd+G" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/> 
+      <shortcut refid="findNext" value="F3" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/> 
+      <shortcut refid="findPrevious" value="Cmd+Shift+G" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/> 
+      <shortcut refid="findPrevious" value="Shift+F3" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/> 
       <shortcut refid="findInFiles" value="Cmd+Shift+F"/>
       <shortcut refid="commentUncomment" value="Cmd+Shift+C"/>
       <shortcut refid="reindent" value="Cmd+I"/>
@@ -386,7 +393,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="nextTab" value="Ctrl+PageDown" if="org.rstudio.core.client.BrowseCap.isLinux()"/>
       <shortcut refid="firstTab" value="Ctrl+Alt+Shift+Left"/>
       <shortcut refid="lastTab" value="Ctrl+Alt+Shift+Right"/>
-      <shortcut refid="goToLine" value="Cmd+G"/>
+      <shortcut refid="goToLine" value="Ctrl+G"/>
       <shortcut refid="previousPlot" value="Cmd+Shift+PageUp" />
       <shortcut refid="nextPlot" value="Cmd+Shift+PageDown" />
       <shortcut refid="showRequestLog" value="Ctrl+`" />
@@ -620,6 +627,10 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Find..."/>
    <cmd id="findReplace"
         menuLabel="_Find and Replace..."/>
+   <cmd id="findNext"
+        menuLabel="Find _Next"/>
+   <cmd id="findPrevious"
+        menuLabel="Find _Previous"/>     
    <cmd id="findInFiles"
         menuLabel="Find _in Files..."/>
    <cmd id="fold"

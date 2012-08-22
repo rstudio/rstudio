@@ -209,6 +209,19 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    }
    
    @Override
+   public void findNext()
+   {
+      findReplace_.findNext();
+      
+   }
+
+   @Override
+   public void findPrevious()
+   {
+      findReplace_.findPrevious();
+   }
+   
+   @Override
    public void scrollToLeft()
    {
       new Timer() {
@@ -402,4 +415,5 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    private final DocDisplay docDisplay_;
    private final TextEditingTargetFindReplace findReplace_;
    private String currentFunctionNamespace_ = null;
+   
 }

@@ -131,7 +131,9 @@ public class TextEditingTarget implements EditingTarget
       HasValue<Boolean> getSourceOnSave();
       void ensureVisible();
       void showFindReplace(boolean defaultForward);
-    
+      void findNext();
+      void findPrevious();
+      
       StatusBar getStatusBar();
 
       boolean isAttached();
@@ -2228,7 +2230,19 @@ public class TextEditingTarget implements EditingTarget
    {
       view_.showFindReplace(true);
    }
+   
+   @Handler
+   void onFindNext()
+   {
+      view_.findNext();
+   }
 
+   @Handler
+   void onFindPrevious()
+   {
+      view_.findPrevious();
+   }
+   
    @Handler
    void onFold()
    {

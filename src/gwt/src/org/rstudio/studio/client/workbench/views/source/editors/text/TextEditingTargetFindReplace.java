@@ -67,10 +67,11 @@ public class TextEditingTargetFindReplace
       if (findReplaceBar_ == null)
       {
          findReplaceBar_ = new FindReplaceBar(showReplace_, defaultForward);
-         new FindReplace(container_.getEditor(),
-                         findReplaceBar_,
-                         RStudioGinjector.INSTANCE.getGlobalDisplay(),
-                         showReplace_);
+         findReplace_ = new FindReplace(
+                               container_.getEditor(),
+                               findReplaceBar_,
+                               RStudioGinjector.INSTANCE.getGlobalDisplay(),
+                               showReplace_);
          container_.insertFindReplace(findReplaceBar_);
          findReplaceBar_.getCloseButton().addClickHandler(new ClickHandler()
          {
@@ -84,7 +85,10 @@ public class TextEditingTargetFindReplace
       }
       
       String selection = container_.getEditor().getSelectionValue();
-      String searchText = selection.indexOf('\n') == -1 ? selection : "";
+      
+      String searchText = null;
+      if (selection.length() != 0 && selection.indexOf('\n') == -1)
+         searchText = selection;
       findReplaceBar_.activate(searchText, defaultForward);
    }
    
@@ -98,14 +102,28 @@ public class TextEditingTargetFindReplace
       if (findReplaceBar_ != null)
       {
          container_.removeFindReplace(findReplaceBar_);
+         findReplace_ = null;
          findReplaceBar_ = null;
          findReplaceButton_.setLeftImage(FindReplaceBar.getFindIcon());
       }
       container_.getEditor().focus();
    }
    
+   public void findNext()
+   {
+      if (findReplace_ != null)
+         findReplace_.findNext();
+   }
+   
+   public void findPrevious()
+   {
+      if (findReplace_ != null)
+         findReplace_.findPrevious();
+   }
+   
    private final Container container_;
    private final boolean showReplace_;
+   private FindReplace findReplace_;
    private FindReplaceBar findReplaceBar_;
    private ToolbarButton findReplaceButton_;
 }

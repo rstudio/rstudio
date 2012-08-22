@@ -114,6 +114,16 @@ public class FindReplace
          }
       });
    }
+   
+   public void findNext()
+   {
+      find(FindType.Forward);
+   }
+   
+   public void findPrevious()
+   {
+      find(FindType.Reverse);
+   }
 
    private void addClickHandler(HasClickHandlers hasClickHandlers,
                                 ClickHandler clickHandler)

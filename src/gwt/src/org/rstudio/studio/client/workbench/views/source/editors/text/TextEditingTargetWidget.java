@@ -312,6 +312,18 @@ public class TextEditingTargetWidget
    {
       findReplace_.showFindReplace(defaultForward);
    }
+   
+   @Override
+   public void findNext()
+   {
+      findReplace_.findNext();
+   }
+
+   @Override
+   public void findPrevious()
+   {
+      findReplace_.findPrevious();
+   }
 
    public void onActivate()
    {
