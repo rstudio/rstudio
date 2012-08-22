@@ -243,8 +243,17 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       else
          return 23;
    }
+   
+   public void activate(String searchText, boolean defaultForward)
+   {
+      defaultForward_ = defaultForward;
+      
+      focusFindField(false);
+      
+      txtFind_.setValue(searchText);
+   }
 
-   public void focusFindField(boolean selectAll)
+   private void focusFindField(boolean selectAll)
    {
       WindowEx.get().focus();
       txtFind_.focus();
@@ -252,10 +261,6 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
          txtFind_.selectAll();
    }
    
-   public void setDefaultForward(boolean defaultForward)
-   {
-      defaultForward_ = defaultForward;
-   }
 
    public static void ensureStylesInjected()
    {

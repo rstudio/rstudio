@@ -83,8 +83,9 @@ public class TextEditingTargetFindReplace
          findReplaceButton_.setLeftImage(FindReplaceBar.getFindLatchedIcon());
       }
       
-      findReplaceBar_.setDefaultForward(defaultForward);
-      findReplaceBar_.focusFindField(true);
+      String selection = container_.getEditor().getSelectionValue();
+      String searchText = selection.indexOf('\n') == -1 ? selection : "";
+      findReplaceBar_.activate(searchText, defaultForward);
    }
    
    public boolean isShowing()
