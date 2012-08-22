@@ -433,7 +433,16 @@ private:
          rCmd << "build";
 
          // add extra args if provided
-         rCmd << projectConfig().packageBuildArgs;
+         std::string extraArgs = projectConfig().packageBuildArgs;
+         rCmd << extraArgs;
+
+         // add library option if necessary
+         std::string lib = installLibraryOverride(extraArgs);
+         if (!lib.empty())
+         {
+            rCmd << "-l";
+            rCmd << lib;
+         }
 
          // add filename as a FilePath so it is escaped
          rCmd << FilePath(packagePath.filename());
@@ -512,7 +521,16 @@ private:
          rCheckCmd << "check";
 
          // add extra args if provided
-         rCheckCmd << projectConfig().packageCheckArgs;
+         std::string extraArgs = projectConfig().packageCheckArgs;
+         rCheckCmd << extraArgs;
+
+         // add library option if necessary
+         std::string lib = installLibraryOverride(extraArgs);
+         if (!lib.empty())
+         {
+            rCmd << "-l";
+            rCmd << lib;
+         }
 
          // add filename as a FilePath so it is escaped
          rCheckCmd << FilePath(pkgInfo_.sourcePackageFilename());
