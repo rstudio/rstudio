@@ -64,6 +64,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       if (showReplace)
          findReplacePanel.addStyleName(RES.styles().findPanelWithReplace());
       findReplacePanel.add(txtFind_ = new FindTextBox("Find"));
+      txtFind_.setIconVisible(true);
       findReplacePanel.add(btnFindNext_ = new SmallButton("Next", true));
       findReplacePanel.add(btnFindPrev_ = new SmallButton("Prev", true));
       findReplacePanel.add(txtReplace_ = new FindTextBox("Replace"));
