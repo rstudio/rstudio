@@ -54,6 +54,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.CodeBrowserContents;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -70,7 +71,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    public interface Display extends TextDisplay                                                      
    {
       void showFunction(SearchPathFunctionDefinition functionDef);
-      void showFind();
+      void showFind(boolean defaultForward);
       void scrollToLeft();
    }
 
@@ -113,6 +114,15 @@ public class CodeBrowserEditingTarget implements EditingTarget
                event.stopPropagation();
                commands_.find().execute();
             }
+         }
+      });
+      
+      docDisplay_.addFindRequestedHandler(new FindRequestedEvent.Handler() {
+         
+         @Override
+         public void onFindRequested(FindRequestedEvent event)
+         {
+            view_.showFind(event.getDefaultForward());
          }
       });
    }
@@ -211,7 +221,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Handler
    void onFind()
    {
-      view_.showFind();
+      view_.showFind(true);
    }
 
    @Override

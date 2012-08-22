@@ -18,6 +18,7 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -77,6 +78,11 @@ public class FindTextBox extends Composite implements HasValue<String>,
    public void focus()
    {
       textBox_.setFocus(true);
+   }
+   
+   public void setTabIndex(int index)
+   {
+      textBox_.setTabIndex(index);
    }
 
    public void addKeyDownHandler(KeyDownHandler keyDownHandler)

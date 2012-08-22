@@ -28,6 +28,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spellin
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasFoldChangeHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
 
@@ -115,6 +116,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void toggleCommentLines();
 
    HandlerRegistration addCommandClickHandler(CommandClickEvent.Handler handler);
+   
+   HandlerRegistration addFindRequestedHandler(FindRequestedEvent.Handler handler);
    
    HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
    Position getCursorPosition();

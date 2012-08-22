@@ -25,7 +25,6 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CheckboxLabel;
 import org.rstudio.core.client.widget.FindTextBox;
 import org.rstudio.core.client.widget.SmallButton;
-import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.workbench.views.history.view.Shelf;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplace.Display;
 
@@ -43,46 +42,83 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    interface Styles extends CssResource
    {
       String findReplaceBar();
-      String regexLabel();
-      String matchCaseLabel();
+      String replaceTextBox();
+      String findPanelWithReplace();
+      String optionsPanel();
+      String optionsPanelWithReplace();
       String checkboxLabel();
       String closeButton();
    }
 
-   public FindReplaceBar(boolean showReplace)
+   public FindReplaceBar(boolean showReplace, final boolean defaultForward)
    {
-      Shelf shelf = new Shelf();
+      showReplace_ = showReplace;
+      defaultForward_ = defaultForward;
+      
+      Shelf shelf = new Shelf(showReplace);
       shelf.setWidth("100%");
 
-      shelf.addLeftWidget(txtFind_ = new FindTextBox("Find"));
-      btnFindPrev_ = null;
-      //shelf.addLeftWidget(btnFindPrev_ = new SmallButton("&lt;", true));
-      shelf.addLeftWidget(btnFindNext_ = new SmallButton("Find", true));
-      shelf.addLeftWidget(chkCaseSensitive_ = new CheckBox());
+      CellPanel panel = showReplace ? new VerticalPanel() : new HorizontalPanel();
+     
+      HorizontalPanel findReplacePanel = new HorizontalPanel();
+      if (showReplace)
+         findReplacePanel.addStyleName(RES.styles().findPanelWithReplace());
+      findReplacePanel.add(txtFind_ = new FindTextBox("Find"));
+      findReplacePanel.add(btnFindNext_ = new SmallButton("Next", true));
+      findReplacePanel.add(btnFindPrev_ = new SmallButton("Prev", true));
+      findReplacePanel.add(txtReplace_ = new FindTextBox("Replace"));
+      txtReplace_.addStyleName(RES.styles().replaceTextBox());
+      findReplacePanel.add(btnReplace_ = new SmallButton("Replace"));
+      findReplacePanel.add(btnReplaceAll_ = new SmallButton("All"));
+      
+      panel.add(findReplacePanel);
+      
+      HorizontalPanel optionsPanel = new HorizontalPanel();
+      if (showReplace)
+         optionsPanel.addStyleName(RES.styles().optionsPanelWithReplace());
+      else
+         optionsPanel.addStyleName(RES.styles().optionsPanel());
+      
+          
+      optionsPanel.add(chkCaseSensitive_ = new CheckBox());
       Label matchCaseLabel =
                   new CheckboxLabel(chkCaseSensitive_, "Match case").getLabel();
       matchCaseLabel.addStyleName(RES.styles().checkboxLabel());
-      matchCaseLabel.addStyleName(RES.styles().matchCaseLabel());
-      shelf.addLeftWidget(matchCaseLabel);
-      shelf.addLeftWidget(chkRegEx_ = new CheckBox());
+      optionsPanel.add(matchCaseLabel);
+      
+      optionsPanel.add(chkWholeWord_ = new CheckBox());
+      Label wholeWordLabel = 
+             new CheckboxLabel(chkWholeWord_, "Whole word").getLabel();
+      wholeWordLabel.addStyleName(RES.styles().checkboxLabel());
+      optionsPanel.add(wholeWordLabel);
+      
+      optionsPanel.add(chkRegEx_ = new CheckBox());
       Label regexLabel = new CheckboxLabel(chkRegEx_, "Regex").getLabel();
       regexLabel.addStyleName(RES.styles().checkboxLabel());
-      regexLabel.addStyleName(RES.styles().regexLabel());
-      shelf.addLeftWidget(regexLabel);
-      shelf.addLeftWidget(txtReplace_ = new FindTextBox("Replace"));
-      shelf.addLeftWidget(btnReplace_ = new SmallButton("Replace"));
-      shelf.addLeftWidget(btnReplaceAll_ = new SmallButton("All"));
       
-      // pad after regex check box
-     
+      optionsPanel.add(regexLabel);
+      
+      panel.add(optionsPanel);
+      
+      shelf.addLeftWidget(panel);
+      
+      // fixup tab indexes of controls
+      txtFind_.setTabIndex(100);
+      txtReplace_.setTabIndex(101);
+      chkCaseSensitive_.setTabIndex(102);
+      chkWholeWord_.setTabIndex(103);
+      chkRegEx_.setTabIndex(104);
       
       // remove SmallButton instances from tab order since (a) they aren't
       // capable of showing a focused state; and (b) enter is already a
       // keyboard shortcut for both find and replace
       btnFindNext_.setTabIndex(-1);
+      btnFindPrev_.setTabIndex(-1);
       btnReplace_.setTabIndex(-1);
       btnReplaceAll_.setTabIndex(-1);
      
+      if (showReplace)
+         shelf.setRightVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
       shelf.addRightWidget(btnClose_ = new Button());
       btnClose_.setStyleName(RES.styles().closeButton());
       btnClose_.addStyleName(ThemeStyles.INSTANCE.closeTabButton());
@@ -97,7 +133,10 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
             {
                event.preventDefault();
                event.stopPropagation();
-               btnFindNext_.click();
+               if (defaultForward_)
+                  btnFindNext_.click();
+               else
+                  btnFindPrev_.click();
                focusFindField(false);
             }
          }
@@ -160,19 +199,14 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       return chkCaseSensitive_;
    }
 
+   public HasValue<Boolean> getWholeWord()
+   {
+      return chkWholeWord_;
+   }
+   
    public HasValue<Boolean> getRegex()
    {
       return chkRegEx_;
-   }
-
-   public HasValue<Boolean> getFindBackwards()
-   {
-      return new Value<Boolean>(false);
-   }
-
-   public HasClickHandlers getFindButton()
-   {
-      return null;
    }
 
    public HasClickHandlers getFindNextButton()
@@ -203,7 +237,10 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
 
    public double getHeight()
    {
-      return 23;
+      if (showReplace_)
+         return 56;
+      else
+         return 23;
    }
 
    public void focusFindField(boolean selectAll)
@@ -212,6 +249,11 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       txtFind_.focus();
       if (selectAll)
          txtFind_.selectAll();
+   }
+   
+   public void setDefaultForward(boolean defaultForward)
+   {
+      defaultForward_ = defaultForward;
    }
 
    public static void ensureStylesInjected()
@@ -222,7 +264,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    public void onResize()
    {
       int width = getOffsetWidth();
-      setNarrowMode(width > 0 && width < 555);
+      setNarrowMode(width > 0 && width < 520);
    }
 
    private void setNarrowMode(boolean narrow)
@@ -234,8 +276,8 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       }
       else
       {
-         txtFind_.setOverrideWidth(140);
-         txtReplace_.setOverrideWidth(140);
+         txtFind_.setOverrideWidth(160);
+         txtReplace_.setOverrideWidth(160);
       }
    }
 
@@ -255,8 +297,11 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    private SmallButton btnFindPrev_;
    private SmallButton btnReplace_;
    private SmallButton btnReplaceAll_;
+   private CheckBox chkWholeWord_;
    private CheckBox chkCaseSensitive_;
    private CheckBox chkRegEx_;
    private Button btnClose_;
    private static Resources RES = GWT.create(Resources.class);
+   private final boolean showReplace_;
+   private boolean defaultForward_;
 }

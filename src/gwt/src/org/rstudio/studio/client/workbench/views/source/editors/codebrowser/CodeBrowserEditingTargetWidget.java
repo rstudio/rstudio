@@ -203,9 +203,9 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    }
    
    @Override
-   public void showFind()
+   public void showFind(boolean defaultForward)
    {
-      findReplace_.showFindReplace();
+      findReplace_.showFindReplace(defaultForward);
    }
    
    @Override

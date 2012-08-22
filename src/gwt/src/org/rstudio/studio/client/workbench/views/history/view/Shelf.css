@@ -5,7 +5,16 @@
    padding: 0 8px 1px 8px;
 }
 
+@sprite .largeShelf {
+   gwt-image: 'shelfbgLarge';
+   padding: 0 8px 1px 8px;
+}
+
 .shelf .gwt-Label {
+   font-size: 10px;
+}
+
+.largeShelf .gwt-Label {
    font-size: 10px;
 }
 

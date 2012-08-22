@@ -37,9 +37,8 @@ public class FindReplace
       HasValue<String> getFindValue();
       HasValue<String> getReplaceValue();
       HasValue<Boolean> getCaseSensitive();
+      HasValue<Boolean> getWholeWord();
       HasValue<Boolean> getRegex();
-      HasValue<Boolean> getFindBackwards();
-      HasClickHandlers getFindButton();
       HasClickHandlers getFindNextButton();
       HasClickHandlers getFindPrevButton();
       HasClickHandlers getReplace();
@@ -64,21 +63,22 @@ public class FindReplace
             defaultCaseSensitive_ = event.getValue();
          }
       });
+      
+      HasValue<Boolean> wholeWord = display_.getWholeWord();
+      wholeWord.setValue(defaultWholeWord_);
+      wholeWord.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            defaultWholeWord_ = event.getValue();
+         }
+      });
+      
       HasValue<Boolean> regex = display_.getRegex();
       regex.setValue(defaultRegex_);
       regex.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
             defaultRegex_ = event.getValue();
-         }
-      });
-      
-      addClickHandler(display.getFindButton(), new ClickHandler()
-      {
-         public void onClick(ClickEvent event)
-         {
-            find(display_.getFindBackwards().getValue() ? FindType.Reverse
-                                                        : FindType.Forward);
          }
       });
 
@@ -132,12 +132,13 @@ public class FindReplace
       
       boolean ignoreCase = !display_.getCaseSensitive().getValue();
       boolean regex = display_.getRegex().getValue();
+      boolean wholeWord = display_.getWholeWord().getValue();
 
       Search search = Search.create(searchString,
                                     findType != FindType.Forward,
                                     true,
                                     !ignoreCase,
-                                    false,
+                                    wholeWord,
                                     true,
                                     false,
                                     regex);
@@ -311,4 +312,5 @@ public class FindReplace
    
    private static boolean defaultCaseSensitive_ = false;
    private static boolean defaultRegex_ = false;
+   private static boolean defaultWholeWord_ = false;
 }

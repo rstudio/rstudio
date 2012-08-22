@@ -308,9 +308,9 @@ public class TextEditingTargetWidget
       }
    }
 
-   public void showFindReplace()
+   public void showFindReplace(boolean defaultForward)
    {
-      findReplace_.showFindReplace();
+      findReplace_.showFindReplace(defaultForward);
    }
 
    public void onActivate()

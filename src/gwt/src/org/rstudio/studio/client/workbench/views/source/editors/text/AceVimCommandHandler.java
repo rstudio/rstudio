@@ -13,26 +13,41 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.studio.client.RStudioGinjector;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.NativeEvent;
 
 public class AceVimCommandHandler implements AceKeyboardPreviewer.Handler
 {
+   public AceVimCommandHandler(CommandWithArg<Boolean> onFindCommand)
+   {
+      onFindCommand_ = onFindCommand;
+   }
+   
 
    @Override
    public boolean previewKeyDown(JavaScriptObject data, NativeEvent event)
    {
-      if ((event.getKeyCode() == 191 /* '/' key */) && 
-          (KeyboardShortcut.getModifierValue(event) == KeyboardShortcut.NONE) &&
-          isNormalMode(data))
+      if (event.getKeyCode() == 191) /* '/' or '?' */
       {
-         executeFind();
-         return true;
+         if (isNormalMode(data))
+         {
+            int modifier = KeyboardShortcut.getModifierValue(event);
+            if (modifier == KeyboardShortcut.NONE)
+            {
+               onFindCommand_.execute(true);
+               return true;
+            }
+            else if (modifier == KeyboardShortcut.SHIFT)
+            {
+               onFindCommand_.execute(false);
+               return true;
+            }
+         }
       }
-         
+      
       return false;
    }
 
@@ -41,23 +56,27 @@ public class AceVimCommandHandler implements AceKeyboardPreviewer.Handler
    {
       if (charCode == '/' && isNormalMode(data))
       {
-         executeFind();
+         onFindCommand_.execute(true);
          return true;
       }
-      
-      return false;
+      else if (charCode == '?' && isNormalMode(data))
+      {
+         onFindCommand_.execute(false);
+         return true;
+      }
+      else
+      {
+         return false;
+      }
    }
+  
    
    private boolean isNormalMode(JavaScriptObject data)
    {
       VimHandlerData vimData = data.cast();
-      return "start".equals(vimData.getState());
+      return "start".equals(vimData.getState()); 
    }
-   
-   private void executeFind()
-   {
-      RStudioGinjector.INSTANCE.getCommands().findReplace().execute();
-   }
+  
 
    private static final class VimHandlerData extends JavaScriptObject
    {
@@ -70,5 +89,7 @@ public class AceVimCommandHandler implements AceKeyboardPreviewer.Handler
       }-*/;
 
    }
+   
+   private  CommandWithArg<Boolean> onFindCommand_;
    
 }

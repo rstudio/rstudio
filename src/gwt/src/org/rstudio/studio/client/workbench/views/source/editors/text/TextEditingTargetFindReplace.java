@@ -51,7 +51,7 @@ public class TextEditingTargetFindReplace
                   public void onClick(ClickEvent event)
                   {
                      if (findReplaceBar_ == null)
-                        showFindReplace();
+                        showFindReplace(true);
                      else
                         hideFindReplace();
                   }
@@ -62,11 +62,11 @@ public class TextEditingTargetFindReplace
       return findReplaceButton_;
    }
    
-   public void showFindReplace()
+   public void showFindReplace(boolean defaultForward)
    {
       if (findReplaceBar_ == null)
       {
-         findReplaceBar_ = new FindReplaceBar(showReplace_);
+         findReplaceBar_ = new FindReplaceBar(showReplace_, defaultForward);
          new FindReplace(container_.getEditor(),
                          findReplaceBar_,
                          RStudioGinjector.INSTANCE.getGlobalDisplay(),
@@ -82,6 +82,8 @@ public class TextEditingTargetFindReplace
 
          findReplaceButton_.setLeftImage(FindReplaceBar.getFindLatchedIcon());
       }
+      
+      findReplaceBar_.setDefaultForward(defaultForward);
       findReplaceBar_.focusFindField(true);
    }
    

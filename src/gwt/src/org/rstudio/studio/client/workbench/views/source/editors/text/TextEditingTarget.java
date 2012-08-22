@@ -130,7 +130,7 @@ public class TextEditingTarget implements EditingTarget
    {
       HasValue<Boolean> getSourceOnSave();
       void ensureVisible();
-      void showFindReplace();
+      void showFindReplace(boolean defaultForward);
     
       StatusBar getStatusBar();
 
@@ -313,6 +313,14 @@ public class TextEditingTarget implements EditingTarget
             {
                docDisplay_.goToFunctionDefinition();
             }
+         }
+      });
+      
+      docDisplay_.addFindRequestedHandler(new FindRequestedEvent.Handler() {  
+         @Override
+         public void onFindRequested(FindRequestedEvent event)
+         {
+            view_.showFindReplace(event.getDefaultForward());
          }
       });
    }
@@ -2218,7 +2226,7 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onFindReplace()
    {
-      view_.showFindReplace();
+      view_.showFindReplace(true);
    }
 
    @Handler

@@ -24,6 +24,7 @@ import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -35,6 +36,9 @@ public class Shelf extends Composite
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
       ImageResource shelfbg();
 
+      @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
+      ImageResource shelfbgLarge();
+      
       @Source("Shelf.css")
       Styles styles();
    }
@@ -42,19 +46,30 @@ public class Shelf extends Composite
    interface Styles extends CssResource
    {
       String shelf();
+      String largeShelf();
       String left();
       String right();
    }
 
    public static void ensureStylesInjected()
    {
-      ((Resources)GWT.create(Resources.class)).styles().ensureInjected();
+      RES.styles().ensureInjected();
    }
 
    public Shelf()
    {
+      this(false);
+   }
+   
+   public Shelf(boolean large)
+   {
+      large_ = large;
       HorizontalPanel mainPanel = binder.createAndBindUi(this);
+      if (large_)
+         mainPanel.setStyleName(RES.styles().largeShelf());
+  
       initWidget(mainPanel);
+      
 
       left_.setHeight("100%");
       right_.setHeight("100%");
@@ -75,10 +90,19 @@ public class Shelf extends Composite
    {
       right_.add(w);
    }
+   
+   public void setRightVerticalAlignment(VerticalAlignmentConstant alignment)
+   {
+      right_.setVerticalAlignment(alignment);
+   }
 
    public int getHeight()
    {
-      return ((Resources)GWT.create(Resources.class)).shelfbg().getHeight();
+
+      if (large_)
+         return RES.shelfbgLarge().getHeight();
+      else
+         return RES.shelfbg().getHeight();
    }
 
    public HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
@@ -92,4 +116,8 @@ public class Shelf extends Composite
    HorizontalPanel left_;
    @UiField
    HorizontalPanel right_;
+   
+   private boolean large_ = false;
+   
+   private static final Resources RES = (Resources)GWT.create(Resources.class);
 }

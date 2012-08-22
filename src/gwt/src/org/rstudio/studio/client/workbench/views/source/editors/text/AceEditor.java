@@ -32,6 +32,8 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
@@ -414,7 +416,14 @@ public class AceEditor implements DocDisplay,
       if (useVimMode_)
       {
          widget_.getEditor().addKeyboardHandler(KeyboardHandler.vim());
-         previewer.addHandler(new AceVimCommandHandler());
+         previewer.addHandler(
+            new AceVimCommandHandler(new CommandWithArg<Boolean>() {
+               @Override
+               public void execute(Boolean arg)
+               {
+                 fireEvent(new FindRequestedEvent(arg));
+               }             
+            }));
       }
       
       // add the previewer's handler
@@ -1355,6 +1364,13 @@ public class AceEditor implements DocDisplay,
                                              CommandClickEvent.Handler handler)
    {
       return handlers_.addHandler(CommandClickEvent.TYPE, handler);
+   }
+   
+   @Override
+   public HandlerRegistration addFindRequestedHandler(
+                                 FindRequestedEvent.Handler handler)
+   {
+      return handlers_.addHandler(FindRequestedEvent.TYPE, handler);
    }
    
    public void setFontSize(double size)

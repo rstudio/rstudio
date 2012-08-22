@@ -17,9 +17,26 @@
    white-space: nowrap;
 }
 
+.replaceTextBox {
+   margin-left: 10px;
+}
+
+.findPanelWithReplace {
+   margin-top: 4px;
+}
+
+.optionsPanel {
+   margin-left: 7px;
+   margin-top: 2px;
+}
+
+.optionsPanelWithReplace {
+   margin-top: 9px;	
+}
 
 .checkboxLabel {
-   margin-top: 1px;
+   margin-top: 2px;
+   margin-right: 8px;
    font-size: 9px;
 }
 
@@ -31,13 +48,6 @@
    font-size: 10px;
 }
 
-.matchCaseLabel {
-   margin-right: 2px;	
-}
-
-.regexLabel {
-   margin-right: 10px;
-}
 
 .closeButton {
    position: relative;

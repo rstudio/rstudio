@@ -137,7 +137,7 @@ public class ViewFilePanel extends Composite implements TextDisplay
                {
                   event.preventDefault();
                   event.stopPropagation();
-                  findReplace_.showFindReplace();
+                  findReplace_.showFindReplace(true);
                }
                else if (ne.getKeyCode() == 'S')
                {
