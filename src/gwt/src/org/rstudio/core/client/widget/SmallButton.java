@@ -64,6 +64,7 @@ public class SmallButton extends FocusWidget
    {
       this();
       setText(command.getButtonLabel());
+      setTitle(command.getTooltip());
       addClickHandler(command);
    }
 

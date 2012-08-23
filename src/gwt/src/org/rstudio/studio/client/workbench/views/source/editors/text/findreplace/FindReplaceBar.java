@@ -25,6 +25,8 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CheckboxLabel;
 import org.rstudio.core.client.widget.FindTextBox;
 import org.rstudio.core.client.widget.SmallButton;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.history.view.Shelf;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplace.Display;
 
@@ -49,24 +51,28 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       String checkboxLabel();
       String closeButton();
    }
-
+   
    public FindReplaceBar(boolean showReplace, final boolean defaultForward)
    {
       showReplace_ = showReplace;
       defaultForward_ = defaultForward;
       
+      
       Shelf shelf = new Shelf(showReplace);
       shelf.setWidth("100%");
 
       CellPanel panel = showReplace ? new VerticalPanel() : new HorizontalPanel();
-     
+      
       HorizontalPanel findReplacePanel = new HorizontalPanel();
       if (showReplace)
          findReplacePanel.addStyleName(RES.styles().findPanelWithReplace());
       findReplacePanel.add(txtFind_ = new FindTextBox("Find"));
       txtFind_.setIconVisible(true);
-      findReplacePanel.add(btnFindNext_ = new SmallButton("Next", true));
-      findReplacePanel.add(btnFindPrev_ = new SmallButton("Prev", true));
+      
+      Commands cmds = RStudioGinjector.INSTANCE.getCommands();
+      findReplacePanel.add(btnFindNext_ = new SmallButton(cmds.findNext()));
+      findReplacePanel.add(btnFindPrev_ = new SmallButton(cmds.findPrevious()));
+      
       findReplacePanel.add(txtReplace_ = new FindTextBox("Replace"));
       txtReplace_.addStyleName(RES.styles().replaceTextBox());
       findReplacePanel.add(btnReplace_ = new SmallButton("Replace"));
@@ -208,16 +214,6 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    public HasValue<Boolean> getRegex()
    {
       return chkRegEx_;
-   }
-
-   public HasClickHandlers getFindNextButton()
-   {
-      return btnFindNext_;
-   }
-
-   public HasClickHandlers getFindPrevButton()
-   {
-      return btnFindPrev_;
    }
 
    public HasClickHandlers getReplace()
