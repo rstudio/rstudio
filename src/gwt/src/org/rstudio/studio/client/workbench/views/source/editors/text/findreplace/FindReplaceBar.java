@@ -107,7 +107,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       
       optionsPanel.add(chkWrapSearch_ = new CheckBox());
       Label wrapSearchLabel = new CheckboxLabel(chkWrapSearch_, 
-                                                "Wrap around").getLabel();
+                                                "Wrap").getLabel();
       wrapSearchLabel.addStyleName(RES.styles().checkboxLabel());   
       optionsPanel.add(wrapSearchLabel);
       
