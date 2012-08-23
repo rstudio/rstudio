@@ -120,8 +120,8 @@ public class TextEditingTargetCompilePdfHelper
                                           true,    // wrap
                                           false,   // case sensitive
                                           false,   // whole word
-                                          true,    // from selection
-                                          false,   // selection only
+                                          null,    // from selection
+                                          null,    // range (search all)
                                           true);   // regexp mode
             if (doc != null)
             {  

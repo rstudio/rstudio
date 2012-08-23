@@ -19,6 +19,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 public class TextEditingTargetFindReplace
@@ -39,6 +41,15 @@ public class TextEditingTargetFindReplace
    {
       container_ = container;
       showReplace_ = showReplace;
+      
+      container_.getEditor().addEditorFocusHandler(new FocusHandler() {
+         @Override
+         public void onFocus(FocusEvent event)
+         {
+            if (findReplace_ != null)
+               findReplace_.notifyEditorFocused();
+         } 
+      });
    }
    
    public Widget createFindReplaceButton()
@@ -85,11 +96,13 @@ public class TextEditingTargetFindReplace
       }
       
       String selection = container_.getEditor().getSelectionValue();
+      boolean multiLineSelection = selection.indexOf('\n') != -1;
       
       String searchText = null;
-      if (selection.length() != 0 && selection.indexOf('\n') == -1)
+      if ((selection.length() != 0) && !multiLineSelection)
          searchText = selection;
-      findReplaceBar_.activate(searchText, defaultForward);
+      
+      findReplace_.activate(searchText, defaultForward, multiLineSelection);
    }
    
    public boolean isShowing()
@@ -102,6 +115,7 @@ public class TextEditingTargetFindReplace
       if (findReplaceBar_ != null)
       {
          container_.removeFindReplace(findReplaceBar_);
+         findReplace_.notifyClosing();
          findReplace_ = null;
          findReplaceBar_ = null;
          findReplaceButton_.setLeftImage(FindReplaceBar.getFindIcon());
@@ -126,6 +140,7 @@ public class TextEditingTargetFindReplace
       if (findReplace_ != null)
          findReplace_.replaceAndFind();
    }
+  
    
    private final Container container_;
    private final boolean showReplace_;

@@ -21,8 +21,8 @@ public class Search extends JavaScriptObject
                                       boolean wrap,
                                       boolean caseSensitive,
                                       boolean wholeWord,
-                                      boolean fromSelection,
-                                      boolean selectionOnly,
+                                      Position start,
+                                      Range range,
                                       boolean regexpMode) /*-{
       var Search = $wnd.require('ace/search').Search;
       return new Search().set({
@@ -31,8 +31,8 @@ public class Search extends JavaScriptObject
          wrap: wrap,
          caseSensitive: caseSensitive,
          wholeWord: wholeWord,
-         start: fromSelection ? null : {row: 0, column: 0},
-         scope: selectionOnly ? Search.SELECTION : Search.ALL,
+         start: start,
+         range: range,
          regExp: regexpMode
       })
    }-*/;

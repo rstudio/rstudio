@@ -297,6 +297,8 @@ public class CodeBrowserEditingTarget implements EditingTarget
       HashSet<AppCommand> commands = new HashSet<AppCommand>();
       commands.add(commands_.printSourceDoc());
       commands.add(commands_.findReplace());
+      commands.add(commands_.findNext());
+      commands.add(commands_.findPrevious());
       commands.add(commands_.goToFunctionDefinition());
       return commands;
    }

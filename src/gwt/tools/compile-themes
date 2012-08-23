@@ -73,6 +73,10 @@ Find.find('ace/lib/ace/theme/') do |file|
   foreign_bg = format_css_color(mix_colors(background, foreground, 0.8))
   rules += "\n.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: #{foreign_bg};}"
 
+  find_bg = format_css_color(mix_colors(background, foreground, 0.5))
+  rules += "\n.ace_marker-layer .ace_find_line {position: absolute; z-index: -1; background-color: #{find_bg};}"
+  
+
   newfile = "#{OutDir}/#{File.basename(file).gsub(/\.js$/, '.css')}"
   File.open(newfile, 'w') {|f| f.write(rules)}
 end

@@ -45,27 +45,23 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    {
       String findReplaceBar();
       String replaceTextBox();
-      String findPanelWithReplace();
+      String findPanel();
       String optionsPanel();
-      String optionsPanelWithReplace();
       String checkboxLabel();
       String closeButton();
    }
    
    public FindReplaceBar(boolean showReplace, final boolean defaultForward)
    {
-      showReplace_ = showReplace;
       defaultForward_ = defaultForward;
       
-      
-      Shelf shelf = new Shelf(showReplace);
+      Shelf shelf = new Shelf(true);
       shelf.setWidth("100%");
 
-      CellPanel panel = showReplace ? new VerticalPanel() : new HorizontalPanel();
+      VerticalPanel panel = new VerticalPanel();
       
       HorizontalPanel findReplacePanel = new HorizontalPanel();
-      if (showReplace)
-         findReplacePanel.addStyleName(RES.styles().findPanelWithReplace());
+      findReplacePanel.addStyleName(RES.styles().findPanel());
       findReplacePanel.add(txtFind_ = new FindTextBox("Find"));
       txtFind_.setIconVisible(true);
       
@@ -81,12 +77,14 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       panel.add(findReplacePanel);
       
       HorizontalPanel optionsPanel = new HorizontalPanel();
-      if (showReplace)
-         optionsPanel.addStyleName(RES.styles().optionsPanelWithReplace());
-      else
-         optionsPanel.addStyleName(RES.styles().optionsPanel());
+      optionsPanel.addStyleName(RES.styles().optionsPanel());
+        
+      optionsPanel.add(chkInSelection_ = new CheckBox());
+      Label inSelectionLabel = new CheckboxLabel(chkInSelection_, 
+                                                 "In selection").getLabel();
+      inSelectionLabel.addStyleName(RES.styles().checkboxLabel());
+      optionsPanel.add(inSelectionLabel);
       
-          
       optionsPanel.add(chkCaseSensitive_ = new CheckBox());
       Label matchCaseLabel =
                   new CheckboxLabel(chkCaseSensitive_, "Match case").getLabel();
@@ -119,10 +117,11 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       // fixup tab indexes of controls
       txtFind_.setTabIndex(100);
       txtReplace_.setTabIndex(101);
-      chkCaseSensitive_.setTabIndex(102);
-      chkWholeWord_.setTabIndex(103);
-      chkRegEx_.setTabIndex(104);
-      chkWrapSearch_.setTabIndex(105);
+      chkInSelection_.setTabIndex(102);
+      chkCaseSensitive_.setTabIndex(103);
+      chkWholeWord_.setTabIndex(104);
+      chkRegEx_.setTabIndex(105);
+      chkWrapSearch_.setTabIndex(106);
       
       // remove SmallButton instances from tab order since (a) they aren't
       // capable of showing a focused state; and (b) enter is already a
@@ -132,8 +131,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       btnReplace_.setTabIndex(-1);
       btnReplaceAll_.setTabIndex(-1);
      
-      if (showReplace)
-         shelf.setRightVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
+      shelf.setRightVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
       shelf.addRightWidget(btnClose_ = new Button());
       btnClose_.setStyleName(RES.styles().closeButton());
       btnClose_.addStyleName(ThemeStyles.INSTANCE.closeTabButton());
@@ -208,6 +206,11 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    {
       return txtReplace_;
    }
+   
+   public HasValue<Boolean> getInSelection()
+   {
+      return chkInSelection_;
+   }
 
    public HasValue<Boolean> getCaseSensitive()
    {
@@ -242,13 +245,12 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
 
    public double getHeight()
    {
-      if (showReplace_)
-         return 56;
-      else
-         return 23;
+      return 56;
    }
    
-   public void activate(String searchText, boolean defaultForward)
+   public void activate(String searchText, 
+                        boolean defaultForward,
+                        boolean inSelection)
    {
       defaultForward_ = defaultForward;
       
@@ -261,9 +263,11 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       {
          focusFindField(true);
       }
+      
+      chkInSelection_.setValue(inSelection, true);
    }
 
-   private void focusFindField(boolean selectAll)
+   public void focusFindField(boolean selectAll)
    {
       WindowEx.get().focus();
       txtFind_.focus();
@@ -317,8 +321,8 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    private CheckBox chkCaseSensitive_;
    private CheckBox chkRegEx_;
    private CheckBox chkWrapSearch_;
+   private CheckBox chkInSelection_;
    private Button btnClose_;
    private static Resources RES = GWT.create(Resources.class);
-   private final boolean showReplace_;
    private boolean defaultForward_;
 }

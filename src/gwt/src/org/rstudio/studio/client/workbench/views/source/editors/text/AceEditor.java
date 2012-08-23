@@ -139,7 +139,7 @@ public class AceEditor implements DocDisplay,
                getRange());
       }
 
-      private Range getRange()
+      public Range getRange()
       {
          return Range.fromPoints(start_.getPosition(), end_.getPosition());
       }
@@ -531,8 +531,8 @@ public class AceEditor implements DocDisplay,
                                       boolean wrap,
                                       boolean caseSensitive,
                                       boolean wholeWord,
-                                      boolean fromSelection,
-                                      boolean selectionOnly,
+                                      Position start,
+                                      Range range,
                                       boolean regexpMode)
    {
       Search search = Search.create(needle, 
@@ -540,14 +540,14 @@ public class AceEditor implements DocDisplay,
                                     wrap, 
                                     caseSensitive, 
                                     wholeWord, 
-                                    fromSelection,
-                                    selectionOnly, 
+                                    start,
+                                    range, 
                                     regexpMode);
 
-      Range range = search.find(getSession());
-      if (range != null)
+      Range resultRange = search.find(getSession());
+      if (resultRange != null)
       {
-         return createSelection(range.getStart(), range.getEnd());
+         return createSelection(resultRange.getStart(), resultRange.getEnd());
       }
       else
       {
@@ -1188,6 +1188,11 @@ public class AceEditor implements DocDisplay,
    public HandlerRegistration addCursorChangedHandler(final CursorChangedHandler handler)
    {
       return widget_.addCursorChangedHandler(handler);
+   }
+   
+   public HandlerRegistration addEditorFocusHandler(FocusHandler handler)
+   {
+      return widget_.addFocusHandler(handler);
    }
 
    public Scope getCurrentScope()

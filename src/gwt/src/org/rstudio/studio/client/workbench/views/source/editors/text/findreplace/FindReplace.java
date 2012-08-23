@@ -18,12 +18,15 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.HasValue;
+
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.regex.Pattern.ReplaceOperation;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Search;
 
@@ -36,11 +39,18 @@ public class FindReplace
    {
       HasValue<String> getFindValue();
       HasValue<String> getReplaceValue();
+      HasValue<Boolean> getInSelection();
       HasValue<Boolean> getCaseSensitive();
       HasValue<Boolean> getWrapSearch();
       HasValue<Boolean> getWholeWord();
       HasValue<Boolean> getRegex();
       HasClickHandlers getReplaceAll();
+      
+      void activate(String searchText, 
+                    boolean defaultForward, 
+                    boolean inSelection);
+      
+      void focusFindField(boolean selectAll);
    }
 
    public FindReplace(AceEditor editor,
@@ -88,7 +98,22 @@ public class FindReplace
             defaultWrapSearch_ = event.getValue();
          }
       });
-
+      
+      HasValue<Boolean> inSelection = display_.getInSelection();
+      inSelection.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {     
+            if (event.getValue())
+            {
+               resetTargetSelection();
+               display_.focusFindField(true);
+            }
+            else
+               clearTargetSelection();
+         }
+      });
+      
+      
       addClickHandler(display.getReplaceAll(), new ClickHandler()
       {
          public void onClick(ClickEvent event)
@@ -96,6 +121,14 @@ public class FindReplace
             replaceAll();
          }
       });
+   }
+   
+   public void activate(String searchText, 
+                        boolean defaultForward,
+                        boolean inSelection)
+   {
+      defaultForward_ = defaultForward;
+      display_.activate(searchText, defaultForward, inSelection);
    }
    
    public void findNext()
@@ -111,6 +144,16 @@ public class FindReplace
    public void replaceAndFind()
    {
       replace();
+   }
+   
+   public void notifyEditorFocused()
+   {
+      display_.getInSelection().setValue(false, true);
+   }
+   
+   public void notifyClosing()
+   {
+      clearTargetSelection();
    }
 
    private void addClickHandler(HasClickHandlers hasClickHandlers,
@@ -132,19 +175,43 @@ public class FindReplace
       boolean regex = display_.getRegex().getValue();
       boolean wholeWord = display_.getWholeWord().getValue();
       boolean wrap = display_.getWrapSearch().getValue();
-
+     
+      // if we are searching in a selection then create a custom position
+      // (based on the current selection) and range (based on the originally
+      // saved selection range)
+      Position position = null;
+      Range range = null;
+      if (display_.getInSelection().getValue() && (targetSelection_ != null))
+      {       
+         range = targetSelection_.getRange();
+         
+         if (findType == FindType.Forward)
+         {
+            Position selectionEnd = editor_.getSelectionEnd();
+            if (selectionEnd.isBefore(range.getEnd()))
+               position = selectionEnd;
+         }
+         else
+         {
+            Position selectionStart = editor_.getSelectionStart();
+            if (selectionStart.isAfter(range.getStart()))
+               position = selectionStart;
+         }
+      }
+      
+      // do the search
       Search search = Search.create(searchString,
                                     findType != FindType.Forward,
                                     wrap,
                                     !ignoreCase,
                                     wholeWord,
-                                    true,
-                                    false,
+                                    position,
+                                    range,
                                     regex);
 
-      Range range = search.find(editor_.getSession());
+      Range resultRange = search.find(editor_.getSession());
 
-      if (range == null)
+      if (resultRange == null)
       {
          globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
                                     errorCaption_,
@@ -153,7 +220,7 @@ public class FindReplace
       }
       else
       {
-         editor_.getSession().getSelection().setSelectionRange(range);
+         editor_.getSession().getSelection().setSelectionRange(resultRange);
          return true;
       }
    }
@@ -176,9 +243,12 @@ public class FindReplace
          editor_.replaceSelection(display_.getRegex().getValue()
                                   ? substitute(m, replacement, line)
                                   : replacement);
+         
+         if (targetSelection_ != null)
+            targetSelection_.syncMarker();
       }
 
-      find(FindType.Forward);
+      find(defaultForward_ ? FindType.Forward : FindType.Reverse);
    }
 
    private Pattern createPattern()
@@ -194,7 +264,17 @@ public class FindReplace
 
    private void replaceAll()
    {
-      String code = editor_.getCode();
+      String code = null; 
+      if (targetSelection_ != null)
+      {
+         Range range = targetSelection_.getRange();
+         code = editor_.getCode(range.getStart(), range.getEnd());
+      }
+      else
+      {
+         code = editor_.getCode();
+      }
+
       boolean regex = display_.getRegex().getValue();
       String find = display_.getFindValue().getValue();
       String repl = display_.getReplaceValue().getValue();
@@ -227,7 +307,22 @@ public class FindReplace
          }
          result.append(code, pos, code.length());
 
-         editor_.replaceCode(result.toString());
+         String newCode = result.toString();
+         
+         // either replace all or replace just the target range
+         if (targetSelection_ != null)
+         {
+            // restore and then replace the selection
+            editor_.setSelectionRange(targetSelection_.getRange());
+            editor_.replaceSelection(newCode, false);
+            
+            // reset the target selection
+            resetTargetSelection();
+         }
+         else
+         {
+            editor_.replaceCode(newCode);
+         }      
       }
       globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
                                  errorCaption_,
@@ -308,6 +403,70 @@ public class FindReplace
    private final Display display_;
    private final GlobalDisplay globalDisplay_;
    private final String errorCaption_;
+   private boolean defaultForward_ = true;
+   
+   private class TargetSelectionTracker
+   {
+      public TargetSelectionTracker()
+      { 
+         // expand the selection to include lines (ace will effectively do
+         // this for a range based search)
+         editor_.fitSelectionToLines(true);
+         Position start = editor_.getSelectionStart();
+         Position end = editor_.getSelectionEnd();
+         if (end.getRow() < editor_.getRowCount())
+            end = Position.create(end.getRow()+1, 0);
+         
+         // save the range
+         anchoredSelection_ = editor_.createAnchoredSelection(start,end);
+         
+         // collapse the cursor to the beginning or end
+         editor_.collapseSelection(defaultForward_);
+         
+         // sync marker
+         syncMarker();
+      }
+      
+      public Range getRange()
+      {
+         return anchoredSelection_.getRange();
+      }
+      
+      public void syncMarker()
+      {
+         clear();
+         
+         markerId_ = editor_.getSession().addMarker(getRange(),
+                                                   "ace_find_line",
+                                                   "background",
+                                                   false);
+      }
+      
+      public void clear()
+      {
+         if (markerId_ != null)
+            editor_.getSession().removeMarker(markerId_);
+      }
+      
+      private Integer markerId_ = null;
+      private AnchoredSelection anchoredSelection_ = null;
+      
+   }
+   private TargetSelectionTracker targetSelection_ = null;
+   
+   private void clearTargetSelection()
+   {
+      if (targetSelection_ != null)
+         targetSelection_.clear();
+      targetSelection_ = null;
+   }
+   
+   private void resetTargetSelection()
+   {
+      clearTargetSelection();
+      targetSelection_ = new TargetSelectionTracker();
+   }
+   
    
    private static boolean defaultCaseSensitive_ = false;
    private static boolean defaultWrapSearch_ = true;

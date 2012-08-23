@@ -34,6 +34,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Undo
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.HasFocusHandlers;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
@@ -52,6 +53,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    public interface AnchoredSelection
    {
       String getValue();
+      Range getRange();
       void apply();
       void detach();
    }
@@ -115,6 +117,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void toggleCommentLines();
 
+   HandlerRegistration addEditorFocusHandler(FocusHandler handler);
+   
    HandlerRegistration addCommandClickHandler(CommandClickEvent.Handler handler);
    
    HandlerRegistration addFindRequestedHandler(FindRequestedEvent.Handler handler);
@@ -130,8 +134,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
                                boolean wrap,
                                boolean caseSensitive,
                                boolean wholeWord,
-                               boolean fromSelection,
-                               boolean selectionOnly,
+                               Position start,
+                               Range range,
                                boolean regexpModex);
    
    void insertCode(InputEditorPosition position, String code);

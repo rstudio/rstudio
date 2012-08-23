@@ -21,17 +21,12 @@
    margin-left: 10px;
 }
 
-.findPanelWithReplace {
+.findPanel {
    margin-top: 4px;
 }
 
 .optionsPanel {
-   margin-left: 7px;
-   margin-top: 2px;
-}
-
-.optionsPanelWithReplace {
-   margin-top: 9px;	
+   margin-top: 9px; 
 }
 
 .checkboxLabel {
