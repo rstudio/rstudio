@@ -1,5 +1,5 @@
 @external gwt-CheckBox;
-@external windows, ubuntu_mono;
+@external macintosh, windows, ubuntu_mono;
 
 .findReplaceBar div, .findReplaceBar td {
    white-space: nowrap;
@@ -50,6 +50,14 @@
    margin-top: 3px;
 }
 
+@if rstudio.desktop true {
+.macintosh .checkboxLabel {
+   margin-top: 5px;	
+}
+.macintosh .optionsPanelWithReplace {
+   margin-top: 7px;
+}
+}
 
 .closeButton {
    position: relative;
