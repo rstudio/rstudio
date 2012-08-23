@@ -57,6 +57,10 @@ public class AceEditorNative extends JavaScriptObject {
       this.setHighlightSelectedWord(highlight);
    }-*/;
 
+   public native final boolean getReadOnly() /*-{
+      return this.getReadOnly();
+   }-*/;
+
    public native final void setReadOnly(boolean readOnly) /*-{
       this.setReadOnly(readOnly);
    }-*/;

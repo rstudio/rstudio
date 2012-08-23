@@ -1121,6 +1121,11 @@ public class AceEditor implements DocDisplay,
    @Override
    public void setUseVimMode(boolean use)
    {
+      // no-op if the editor is read-only (since vim mode doesn't
+      // work for read-only ace instances)
+      if (widget_.getEditor().getReadOnly())
+         return;
+      
       useVimMode_ = use;
       updateKeyboardHandlers();
    }
