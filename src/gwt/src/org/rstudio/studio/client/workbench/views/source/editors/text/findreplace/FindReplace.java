@@ -414,10 +414,6 @@ public class FindReplace
          editor_.fitSelectionToLines(true);
          Position start = editor_.getSelectionStart();
          Position end = editor_.getSelectionEnd();
-         if (end.getRow() < editor_.getRowCount())
-            end = Position.create(end.getRow()+1, 0);
-         
-         // save the range
          anchoredSelection_ = editor_.createAnchoredSelection(start,end);
          
          // collapse the cursor to the beginning or end
