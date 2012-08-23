@@ -37,6 +37,7 @@ public class FindReplace
       HasValue<String> getFindValue();
       HasValue<String> getReplaceValue();
       HasValue<Boolean> getCaseSensitive();
+      HasValue<Boolean> getWrapSearch();
       HasValue<Boolean> getWholeWord();
       HasValue<Boolean> getRegex();
       HasClickHandlers getReplaceAll();
@@ -76,6 +77,15 @@ public class FindReplace
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
             defaultRegex_ = event.getValue();
+         }
+      });
+      
+      HasValue<Boolean> wrapSearch = display_.getWrapSearch();
+      wrapSearch.setValue(defaultWrapSearch_);
+      wrapSearch.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            defaultWrapSearch_ = event.getValue();
          }
       });
 
@@ -121,10 +131,11 @@ public class FindReplace
       boolean ignoreCase = !display_.getCaseSensitive().getValue();
       boolean regex = display_.getRegex().getValue();
       boolean wholeWord = display_.getWholeWord().getValue();
+      boolean wrap = display_.getWrapSearch().getValue();
 
       Search search = Search.create(searchString,
                                     findType != FindType.Forward,
-                                    true,
+                                    wrap,
                                     !ignoreCase,
                                     wholeWord,
                                     true,
@@ -299,6 +310,7 @@ public class FindReplace
    private final String errorCaption_;
    
    private static boolean defaultCaseSensitive_ = false;
+   private static boolean defaultWrapSearch_ = true;
    private static boolean defaultRegex_ = false;
    private static boolean defaultWholeWord_ = false;
 }

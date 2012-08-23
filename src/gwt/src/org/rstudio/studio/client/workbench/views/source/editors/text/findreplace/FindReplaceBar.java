@@ -105,6 +105,13 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       
       optionsPanel.add(regexLabel);
       
+      optionsPanel.add(chkWrapSearch_ = new CheckBox());
+      Label wrapSearchLabel = new CheckboxLabel(chkWrapSearch_, 
+                                                "Wrap around").getLabel();
+      wrapSearchLabel.addStyleName(RES.styles().checkboxLabel());   
+      optionsPanel.add(wrapSearchLabel);
+      
+      
       panel.add(optionsPanel);
       
       shelf.addLeftWidget(panel);
@@ -115,6 +122,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       chkCaseSensitive_.setTabIndex(102);
       chkWholeWord_.setTabIndex(103);
       chkRegEx_.setTabIndex(104);
+      chkWrapSearch_.setTabIndex(105);
       
       // remove SmallButton instances from tab order since (a) they aren't
       // capable of showing a focused state; and (b) enter is already a
@@ -215,6 +223,11 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    {
       return chkRegEx_;
    }
+   
+   public HasValue<Boolean> getWrapSearch()
+   {
+      return chkWrapSearch_;
+   }
 
    public HasClickHandlers getReplaceAll()
    {
@@ -303,6 +316,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    private CheckBox chkWholeWord_;
    private CheckBox chkCaseSensitive_;
    private CheckBox chkRegEx_;
+   private CheckBox chkWrapSearch_;
    private Button btnClose_;
    private static Resources RES = GWT.create(Resources.class);
    private final boolean showReplace_;
