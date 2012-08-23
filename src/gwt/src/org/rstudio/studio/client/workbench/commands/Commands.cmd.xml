@@ -633,7 +633,7 @@ well as menu structures (for main menu and popup menus).
         desc="Find next occurance"/>
    <cmd id="findPrevious"
         buttonLabel="Prev"
-        menuLabel="Find _Previous"
+        menuLabel="Find Pre_vious"
         desc="Find previous occurance"/>     
    <cmd id="findInFiles"
         menuLabel="Find _in Files..."/>
