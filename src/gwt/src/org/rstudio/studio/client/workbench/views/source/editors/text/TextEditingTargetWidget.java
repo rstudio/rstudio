@@ -324,6 +324,12 @@ public class TextEditingTargetWidget
    {
       findReplace_.findPrevious();
    }
+   
+   @Override
+   public void replaceAndFind()
+   {
+      findReplace_.replaceAndFind();
+   }
 
    public void onActivate()
    {

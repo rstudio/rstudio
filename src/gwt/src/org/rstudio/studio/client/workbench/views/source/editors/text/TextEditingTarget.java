@@ -133,6 +133,7 @@ public class TextEditingTarget implements EditingTarget
       void showFindReplace(boolean defaultForward);
       void findNext();
       void findPrevious();
+      void replaceAndFind();
       
       StatusBar getStatusBar();
 
@@ -2241,6 +2242,12 @@ public class TextEditingTarget implements EditingTarget
    void onFindPrevious()
    {
       view_.findPrevious();
+   }
+   
+   @Handler
+   void onReplaceAndFind()
+   {
+      view_.replaceAndFind();
    }
    
    @Handler

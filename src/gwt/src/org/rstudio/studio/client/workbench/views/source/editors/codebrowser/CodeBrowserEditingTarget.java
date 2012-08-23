@@ -114,7 +114,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
             {
                event.preventDefault();
                event.stopPropagation();
-               commands_.find().execute();
+               commands_.findReplace().execute();
             }
          }
       });
@@ -221,7 +221,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    } 
 
    @Handler
-   void onFind()
+   void onFindReplace()
    {
       view_.showFind(true);
    }
@@ -296,7 +296,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       HashSet<AppCommand> commands = new HashSet<AppCommand>();
       commands.add(commands_.printSourceDoc());
-      commands.add(commands_.find());
+      commands.add(commands_.findReplace());
       commands.add(commands_.goToFunctionDefinition());
       return commands;
    }

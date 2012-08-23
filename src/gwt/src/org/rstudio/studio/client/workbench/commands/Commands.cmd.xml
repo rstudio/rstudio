@@ -94,10 +94,10 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="goToLine"/>
          <separator/>
-         <cmd refid="find"/>
          <cmd refid="findReplace"/>
          <cmd refid="findNext"/>
          <cmd refid="findPrevious"/>
+         <cmd refid="replaceAndFind"/>
          <separator/>
          <cmd refid="findInFiles"/>
          <separator/>
@@ -365,10 +365,12 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="sourceActiveDocumentWithEcho" value="Cmd+Shift+Enter"/>;
       <shortcut refid="extractFunction" value="Cmd+Shift+U"/>
       <shortcut refid="executeLastCode" value="Cmd+Shift+P"/>
+      <shortcut refid="findReplace" value="Cmd+F"/>
       <shortcut refid="findNext" value="Cmd+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/> 
       <shortcut refid="findNext" value="F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/> 
       <shortcut refid="findPrevious" value="Cmd+Shift+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/> 
       <shortcut refid="findPrevious" value="Shift+F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/> 
+      <shortcut refid="replaceAndFind" value="Cmd+="/>
       <shortcut refid="findInFiles" value="Cmd+Shift+F"/>
       <shortcut refid="commentUncomment" value="Cmd+Shift+C"/>
       <shortcut refid="reindent" value="Cmd+I"/>
@@ -623,18 +625,20 @@ well as menu structures (for main menu and popup menus).
    <cmd id="toggleFullScreen"
         menuLabel="Toggle Full Screen"/>
 
-   <cmd id="find"
-        menuLabel="_Find..."/>
    <cmd id="findReplace"
-        menuLabel="_Find and Replace..."/>
+        menuLabel="_Find..."/>
    <cmd id="findNext"
         buttonLabel="Next"
         menuLabel="Find _Next"
-        desc="Find next occurance"/>
+        desc="Find next occurrence"/>
    <cmd id="findPrevious"
         buttonLabel="Prev"
         menuLabel="Find Pre_vious"
-        desc="Find previous occurance"/>     
+        desc="Find previous occurrence"/>   
+   <cmd id="replaceAndFind"
+        buttonLabel="Replace"
+        menuLabel="_Replace and Find"
+        desc="Replace and find next occurrence"/>  
    <cmd id="findInFiles"
         menuLabel="Find _in Files..."/>
    <cmd id="fold"

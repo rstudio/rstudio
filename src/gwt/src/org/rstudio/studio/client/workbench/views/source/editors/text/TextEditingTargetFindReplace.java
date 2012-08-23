@@ -121,6 +121,12 @@ public class TextEditingTargetFindReplace
          findReplace_.findPrevious();
    }
    
+   public void replaceAndFind()
+   {
+      if (findReplace_ != null)
+         findReplace_.replaceAndFind();
+   }
+   
    private final Container container_;
    private final boolean showReplace_;
    private FindReplace findReplace_;

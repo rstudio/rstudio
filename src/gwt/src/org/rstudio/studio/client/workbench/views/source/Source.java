@@ -215,10 +215,10 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.compileNotebook());
       dynamicCommands_.add(commands.synctexSearch());
       dynamicCommands_.add(commands.popoutDoc());
-      dynamicCommands_.add(commands.find());
       dynamicCommands_.add(commands.findReplace());
       dynamicCommands_.add(commands.findNext());
       dynamicCommands_.add(commands.findPrevious());
+      dynamicCommands_.add(commands.replaceAndFind());
       dynamicCommands_.add(commands.extractFunction());
       dynamicCommands_.add(commands.commentUncomment());
       dynamicCommands_.add(commands.reindent());
@@ -238,10 +238,6 @@ public class Source implements InsertSourceHandler,
       }
       
       // fake shortcuts for commands which we handle at a lower level
-      int mod = BrowseCap.hasMetaKey() ? KeyboardShortcut.META : 
-                                         KeyboardShortcut.CTRL;
-      commands.find().setShortcut(new KeyboardShortcut(mod, 'F'));
-      commands.findReplace().setShortcut(new KeyboardShortcut(mod, 'F'));
       commands.goToFunctionDefinition().setShortcut(new KeyboardShortcut(113));
       commands.codeCompletion().setShortcut(
                                     new KeyboardShortcut(KeyCodes.KEY_TAB));

@@ -39,7 +39,6 @@ public class FindReplace
       HasValue<Boolean> getCaseSensitive();
       HasValue<Boolean> getWholeWord();
       HasValue<Boolean> getRegex();
-      HasClickHandlers getReplace();
       HasClickHandlers getReplaceAll();
    }
 
@@ -80,14 +79,6 @@ public class FindReplace
          }
       });
 
-      addClickHandler(display.getReplace(), new ClickHandler()
-      {
-         public void onClick(ClickEvent event)
-         {
-            replace();
-         }
-      });
-
       addClickHandler(display.getReplaceAll(), new ClickHandler()
       {
          public void onClick(ClickEvent event)
@@ -105,6 +96,11 @@ public class FindReplace
    public void findPrevious()
    {
       find(FindType.Reverse);
+   }
+   
+   public void replaceAndFind()
+   {
+      replace();
    }
 
    private void addClickHandler(HasClickHandlers hasClickHandlers,
