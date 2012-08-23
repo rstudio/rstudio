@@ -71,9 +71,12 @@ public class TextEditingTargetWidget
             @Override
             public void insertFindReplace(FindReplaceBar findReplaceBar)
             {
+               Widget beforeWidget = null;
+               if (warningBar_ != null && warningBar_.isAttached())
+                  beforeWidget = warningBar_;
                panel_.insertNorth(findReplaceBar,
                                   findReplaceBar.getHeight(),
-                                  warningBar_);
+                                  beforeWidget);
                
             }
             
