@@ -15,6 +15,7 @@ package org.rstudio.studio.client.vcs.ui;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
@@ -59,6 +60,9 @@ public class VCSApplicationWindow extends SatelliteWindow
    {
       // set our window title
       Window.setTitle("RStudio: Review Changes");
+      
+      // always show scrollbars on the mac
+      mainPanel.addStyleName(ThemeStyles.INSTANCE.forceMacScrollbars());
             
       // show the vcs ui in our main panel
       VCSApplicationParams vcsParams = params.<VCSApplicationParams>cast();

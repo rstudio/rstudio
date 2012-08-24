@@ -143,6 +143,25 @@ button, input[type="reset"], input[type="button"], input[type="submit"] {
   cursor: text;
 }
 
+@if rstudio.desktop false {
+.macintosh .forceMacScrollbars ::-webkit-scrollbar { 
+   -webkit-appearance: none; 
+   width: 11px; 
+   height: 11px; 
+}
+   
+.macintosh .forceMacScrollbars ::-webkit-scrollbar-thumb { 
+	border-radius: 8px; 
+	border: 2px solid white; 
+	background-color: rgba(0, 0, 0, .22); 
+}
+}
+@else {
+.forceMacScrollbars {
+
+}
+}
+
 .gwt-DialogBox input[type=text] {
    border: 1px solid #999;
    height: 17px;

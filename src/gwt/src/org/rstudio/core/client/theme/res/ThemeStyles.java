@@ -150,4 +150,5 @@ public interface ThemeStyles extends CssResource
    String textBoxWithButton();
    
    String selectableText();
+   String forceMacScrollbars();
 }
