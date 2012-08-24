@@ -213,7 +213,7 @@ T readPref(const json::Object& prefs,
            const std::string& name,
            const T& defaultValue)
 {
-   T value;
+   T value = defaultValue;
    Error error = json::readObject(prefs,
                                   name,
                                   defaultValue,
