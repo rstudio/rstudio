@@ -31,8 +31,8 @@ public class BottomScrollPanel extends ScrollPanel
       {
          public void onScroll(ScrollEvent event)
          {
-            scrolledToBottom_ = getVerticalScrollPosition() + getOffsetHeight()
-                == getElement().getScrollHeight();
+            scrolledToBottom_ = 
+             getVerticalScrollPosition() == getMaximumVerticalScrollPosition();
          }
       });
    }
