@@ -144,22 +144,34 @@ button, input[type="reset"], input[type="button"], input[type="submit"] {
 }
 
 @if rstudio.desktop false {
+@if user.agent safari {
 .macintosh .forceMacScrollbars ::-webkit-scrollbar { 
    -webkit-appearance: none; 
-   width: 11px; 
-   height: 11px; 
+   width: 12px; 
+   height: 12px; 
 }
    
+.macintosh .forceMacScrollbars ::-webkit-scrollbar-track {
+   
+   background: rgb(251,251,251);
+   -webkit-box-shadow: 0 1px 0 0 rgba(255,255,255,0.35);
+   -webkit-border-radius: 5px;
+}   
+   
 .macintosh .forceMacScrollbars ::-webkit-scrollbar-thumb { 
-	border-radius: 8px; 
-	border: 2px solid white; 
-	background-color: rgba(0, 0, 0, .22); 
+  
+   border: 2px solid rgb(251,251,251);
+   background: rgba(0,0,0,.22);
+   -webkit-border-radius: 6px;
+   -webkit-background-clip: padding-box;
 }
 }
 @else {
-.forceMacScrollbars {
-
+.forceMacScrollbars {}	
 }
+}
+@else {
+.forceMacScrollbars {}
 }
 
 .gwt-DialogBox input[type=text] {
