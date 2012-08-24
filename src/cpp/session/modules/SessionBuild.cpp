@@ -436,14 +436,6 @@ private:
          std::string extraArgs = projectConfig().packageBuildArgs;
          rCmd << extraArgs;
 
-         // add library option if necessary
-         std::string lib = installLibraryOverride(extraArgs);
-         if (!lib.empty())
-         {
-            rCmd << "-l";
-            rCmd << lib;
-         }
-
          // add filename as a FilePath so it is escaped
          rCmd << FilePath(packagePath.filename());
 
@@ -528,8 +520,12 @@ private:
          std::string lib = installLibraryOverride(extraArgs);
          if (!lib.empty())
          {
-            rCmd << "-l";
-            rCmd << lib;
+            // for R CMD check we need to actually set the R_LIBS_USER
+            // environment variable because the -l option doesn't affect
+            // where it looks up package dependencies
+            core::system::setenv(&(pkgOptions.environment.get()),
+                                 "R_LIBS_USER",
+                                 lib);
          }
 
          // add filename as a FilePath so it is escaped
