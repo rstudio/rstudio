@@ -164,6 +164,9 @@
    # can we build c code
    canBuildCpp <- .Call("rs_canBuildCpp")
 
+   # are we in dev mode
+   devModeOn <- .rs.devModeOn()
+
    # package archive extension
    if (identical(.Platform$OS.type, "windows"))
       packageArchiveExtension <- ifelse(canBuildCpp,".zip; .tar.gz", ".zip")
@@ -194,7 +197,8 @@
         defaultLibraryWriteable = defaultLibraryWriteable,
         writeableLibraryPaths = writeableLibraryPaths,
         defaultUserLibraryPath = defaultUserLibraryPath,
-        canBuildCpp = canBuildCpp)
+        canBuildCpp = canBuildCpp,
+        devModeOn = devModeOn)
 })
 
 .rs.addJsonRpcHandler( "get_cran_mirrors", function()

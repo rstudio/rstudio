@@ -52,4 +52,8 @@ public class PackageInstallContext extends JavaScriptObject
    public final native boolean canBuildCpp() /*-{
       return this.canBuildCpp[0];
    }-*/;
+   
+   public final native boolean isDevModeOn() /*-{
+      return this.devModeOn[0];
+   }-*/;
 }
