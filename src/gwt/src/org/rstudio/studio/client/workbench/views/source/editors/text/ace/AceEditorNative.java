@@ -188,6 +188,10 @@ public class AceEditorNative extends JavaScriptObject {
    public final native void scrollToLine(int line, boolean center) /*-{
       this.scrollToLine(line, center);
    }-*/;
+   
+   public native final void revealRange(Range range, boolean animate) /*-{
+      this.revealRange(range, animate);
+   }-*/;
 
    public final native void autoHeight() /*-{
       var editor = this;

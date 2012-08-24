@@ -274,17 +274,20 @@ public class FindReplace
 
       Range resultRange = search.find(editor_.getSession());
 
-      if (resultRange == null && !incremental)
+      if (resultRange == null)
       {
-         globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
-                                    errorCaption_,
-                                    "No more occurrences.");
+         if (!incremental)
+         {
+            globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
+                                       errorCaption_,
+                                       "No more occurrences.");
+         }
          
          return false;
       }
       else
       {
-         editor_.getSession().getSelection().setSelectionRange(resultRange);
+         editor_.revealRange(resultRange, false);
          return true;
       }
    }

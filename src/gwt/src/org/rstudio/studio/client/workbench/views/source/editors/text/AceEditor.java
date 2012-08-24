@@ -1246,6 +1246,11 @@ public class AceEditor implements DocDisplay,
       SourcePosition pos = SourcePosition.create(getCurrentLineCount() - 1, 0);
       navigate(pos, false);
    }
+   
+   public void revealRange(Range range, boolean animate)
+   {
+      widget_.getEditor().revealRange(range, animate);
+   }
 
    public JsArray<Scope> getScopeTree()
    {
