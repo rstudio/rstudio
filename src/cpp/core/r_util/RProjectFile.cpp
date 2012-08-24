@@ -145,6 +145,7 @@ void setBuildPackageDefaults(const std::string& packagePath,
 {
    pConfig->buildType = kBuildTypePackage;
    pConfig->packagePath = packagePath;
+   pConfig->packageInstallArgs = "--no-multiarch";
 }
 
 std::string detectBuildType(const FilePath& projectFilePath,
