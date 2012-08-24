@@ -301,7 +301,7 @@ JSBool JavaObject::enumerate(JSContext* ctx, JSObject* obj, JSIterateOp op,
   return JS_TRUE;
 }
 
-#if GECKO_VERSION >= 1400
+#if GECKO_VERSION >= 14000
 void JavaObject::finalize(JSFreeOp* fop, JSObject* obj) {
   // In general use of JS_GetPrivate is not safe but it is OK in the finalizer
   // according to:
