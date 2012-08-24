@@ -118,6 +118,17 @@
    name %in% .packages(all.available = TRUE)
 })
 
+.rs.addFunction("forceUnloadPackage", function(name)
+{
+   if (name %in% .packages())
+   {
+      fullName <- paste("package:", name, sep="")
+      detach(fullName, character.only=TRUE, force=TRUE)
+      pkgDLL <- getLoadedDLLs()[[name]]
+      if (!is.null(pkgDLL))
+         dyn.unload(pkgDLL[["path"]])
+   }
+})
 
 .rs.addJsonRpcHandler( "list_packages", function()
 {

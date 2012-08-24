@@ -366,6 +366,20 @@ private:
                      const core::system::ProcessCallbacks& cb)
    {      
 
+      // if this action is going to INSTALL the package then on
+      // windows we need to unload the library first
+#ifdef _WIN32
+      if (packagePath.childPath("src").exists() &&
+         (type == kBuildAndReload || type == kRebuildAll ||
+          type == kBuildBinaryPackage))
+      {
+         std::string pkg = pkgInfo_.name();
+         Error error = r::exec::RFunction(".rs.forceUnloadPackage", pkg).call();
+         if (error)
+            LOG_ERROR(error);
+      }
+#endif
+
       // use both the R and gcc error parsers
       CompileErrorParsers parsers;
       parsers.add(rErrorParser(packagePath.complete("R")));
