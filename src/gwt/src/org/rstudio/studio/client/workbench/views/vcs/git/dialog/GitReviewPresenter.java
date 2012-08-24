@@ -42,6 +42,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.vcs.DiffResult;
@@ -782,6 +783,12 @@ public class GitReviewPresenter implements ReviewPresenter
                             view_.getChangelistTable().getSelectedItems());
    }
 
+   @Handler
+   public void onRefreshSuperDevMode()
+   {
+      SuperDevMode.refresh();
+   }
+   
    private final Invalidation diffInvalidation_ = new Invalidation();
    private final GitServerOperations server_;
    private final GitPresenterCore gitPresenterCore_;

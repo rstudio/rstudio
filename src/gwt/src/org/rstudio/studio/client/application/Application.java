@@ -41,6 +41,7 @@ import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.server.*;
@@ -281,17 +282,11 @@ public class Application implements ApplicationEventHandlers
    }
 
    @Handler
-   public final native void onRefreshSuperDevMode() /*-{
-      $wnd.__gwt_bookmarklet_params = {
-         server_url:'http://localhost:9876/',
-         module_name:'rstudio'
-      }; 
-      
-      var s = $doc.createElement('script'); 
-      s.src = 'http://localhost:9876/dev_mode_on.js'; 
-      void($doc.getElementsByTagName('head')[0].appendChild(s));
-   }-*/ ;
-   
+   public void onRefreshSuperDevMode()
+   {
+      SuperDevMode.refresh();
+   }
+  
    public void onSessionSerialization(SessionSerializationEvent event)
    {
       switch(event.getAction().getType())
