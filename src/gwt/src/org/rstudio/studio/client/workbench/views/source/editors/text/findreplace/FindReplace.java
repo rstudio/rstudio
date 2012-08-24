@@ -15,6 +15,9 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.findreplac
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.HasValue;
@@ -38,6 +41,7 @@ public class FindReplace
    public interface Display
    {
       HasValue<String> getFindValue();
+      void addFindKeyUpHandler(KeyUpHandler keyUpHandler);
       HasValue<String> getReplaceValue();
       HasValue<Boolean> getInSelection();
       HasValue<Boolean> getCaseSensitive();
@@ -121,6 +125,29 @@ public class FindReplace
             replaceAll();
          }
       });
+      
+      display_.addFindKeyUpHandler(new KeyUpHandler() {
+
+         @Override
+         public void onKeyUp(KeyUpEvent event)
+         {
+            // bail on navigational keys
+            if (event.getNativeKeyCode() == KeyCodes.KEY_TAB ||
+                event.getNativeKeyCode() == KeyCodes.KEY_ENTER ||
+                event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE ||
+                event.getNativeKeyCode() == KeyCodes.KEY_HOME ||
+                event.getNativeKeyCode() == KeyCodes.KEY_END ||
+                event.getNativeKeyCode() == KeyCodes.KEY_RIGHT ||
+                event.getNativeKeyCode() == KeyCodes.KEY_LEFT)
+            {
+               return ;
+            }
+            
+            // perform incremental search
+            find(defaultForward_ ? FindType.Forward : FindType.Reverse, true);
+         }
+         
+      });
    }
    
    public void activate(String searchText, 
@@ -167,9 +194,22 @@ public class FindReplace
 
    private boolean find(FindType findType)
    {
+      return find(findType, false);
+   }
+   
+   private boolean find(FindType findType, boolean incremental)
+   {
       String searchString = display_.getFindValue().getValue();
       if (searchString.length() == 0)
+      {
+         // if this was an incremental search and the user has cleared
+         // out the searching string then return to the original position
+         if (incremental && (incrementalSearchPosition_ != null))
+            editor_.setSelectionRange(Range.fromPoints(
+                  incrementalSearchPosition_, incrementalSearchPosition_));
+         
          return false;
+      }
       
       boolean ignoreCase = !display_.getCaseSensitive().getValue();
       boolean regex = display_.getRegex().getValue();
@@ -199,6 +239,29 @@ public class FindReplace
          }
       }
       
+      // if this is an incremental search and we don't have a previous
+      // incremental start position then set it, otherwise clear it
+      if (incremental)
+      {
+         if (incrementalSearchPosition_ == null)
+         {
+            if (position != null)
+               incrementalSearchPosition_ = position;
+            else
+               incrementalSearchPosition_ = defaultForward_ ? 
+                                          editor_.getSelectionStart() :
+                                          editor_.getSelectionEnd();
+         }
+        
+         // incremental searches always continue searching from the
+         // original search position
+         position = incrementalSearchPosition_;
+      }
+      else
+      {
+         incrementalSearchPosition_ = null;
+      }
+      
       // do the search
       Search search = Search.create(searchString,
                                     findType != FindType.Forward,
@@ -211,11 +274,12 @@ public class FindReplace
 
       Range resultRange = search.find(editor_.getSession());
 
-      if (resultRange == null)
+      if (resultRange == null && !incremental)
       {
          globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
                                     errorCaption_,
                                     "No more occurrences.");
+         
          return false;
       }
       else
@@ -404,6 +468,7 @@ public class FindReplace
    private final GlobalDisplay globalDisplay_;
    private final String errorCaption_;
    private boolean defaultForward_ = true;
+   private Position incrementalSearchPosition_ = null;
    
    private class TargetSelectionTracker
    {

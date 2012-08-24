@@ -201,6 +201,11 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    {
       return txtFind_;
    }
+   
+   public void addFindKeyUpHandler(KeyUpHandler keyUpHandler)
+   {
+      txtFind_.addKeyUpHandler(keyUpHandler);
+   }
 
    public HasValue<String> getReplaceValue()
    {
