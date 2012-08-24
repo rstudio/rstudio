@@ -427,10 +427,9 @@ Error writeProjectVcsOptions(const json::JsonRpcRequest& request,
 }
 
 
-void onShutdown(bool terminatedNormally)
+void onQuit()
 {
-   if (terminatedNormally)
-      s_projectContext.setLastProjectPath(s_projectContext.file());
+   s_projectContext.setLastProjectPath(s_projectContext.file());
 }
 
 void syncProjectFileChanges()
@@ -594,8 +593,8 @@ Error initialize()
    cb.onMonitoringDisabled = onMonitoringDisabled;
    s_projectContext.subscribeToFileMonitor("", cb);
 
-   // subscribe to shutdown for setting lastProjectPath
-   module_context::events().onShutdown.connect(onShutdown);
+   // subscribe to quit for setting last project path
+   module_context::events().onQuit.connect(onQuit);
 
    using boost::bind;
    using namespace module_context;

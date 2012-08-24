@@ -1821,6 +1821,9 @@ void rQuit()
    if (s_wasForked)
       return;
 
+   // notify modules
+   module_context::events().onQuit();
+
    // enque a quit event
    bool switchProjects =
          !session::projects::projectContext().nextSessionProject().empty();

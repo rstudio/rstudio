@@ -203,6 +203,7 @@ struct Events : boost::noncopyable
    boost::signal<void(bool)>           onBackgroundProcessing;
    boost::signal<void(bool)>           onShutdown;
    boost::signal<void ()>              onSysSleep;
+   boost::signal<void ()>              onQuit;
 };
 
 Events& events();
