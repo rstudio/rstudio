@@ -361,7 +361,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                         {
                            eventBus_.fireEvent(
                                  new SendToConsoleEvent(afterRestartCommand, 
-                                                        true));
+                                                        true, true));
                         }
                         // otherwise make sure the console knows we 
                         // restarted (ensure prompt and set focus)

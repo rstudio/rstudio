@@ -310,7 +310,8 @@ public class Shell implements ConsoleInputHandler,
       display.setText(event.getCode());
       if (event.shouldExecute())
          processCommandEntry();
-      else
+      
+      if (!event.shouldExecute() || event.shouldFocus())
       {
          display.setFocus(true);
          display.collapseSelection(false);
