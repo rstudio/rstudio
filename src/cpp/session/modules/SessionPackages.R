@@ -130,6 +130,11 @@
    }
 })
 
+.rs.addFunction("libPathsString", function()
+{
+   paste(.libPaths(), collapse = .Platform$path.sep)
+})
+
 .rs.addJsonRpcHandler( "list_packages", function()
 {
    # calculate unique libpaths

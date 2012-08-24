@@ -47,49 +47,38 @@ namespace session {
 
 namespace {
 
-// see if we need to explicitly specify a library for INSTALL -- right
-// now we do this if .libPaths[1] is not the same as the user's
-// default installation library
-std::string installLibraryOverride(const std::string& userCustomArgs)
+std::string libPathsString()
 {
-   // don't do an override if the user has already specified a library
-   if (userCustomArgs.find(" -l ") != std::string::npos ||
-       userCustomArgs.find("--library=") != std::string::npos)
+   // call into R to get the string
+   std::string libPaths;
+   Error error = r::exec::RFunction(".rs.libPathsString").call(&libPaths);
+   if (error)
    {
+      LOG_ERROR(error);
       return std::string();
    }
 
-   // do the override if dev mode is on
-   bool devModeOn = false;
-   Error error = r::exec::RFunction(".rs.devModeOn").call(&devModeOn);
-   if (error)
-      LOG_ERROR(error);
-
-   std::string lib;
-   if (devModeOn)
-   {
-      error = r::exec::RFunction(".rs.defaultLibraryPath").call(&lib);
-      if (error)
-         LOG_ERROR(error);
-   }
-   if (!lib.empty())
-      lib = module_context::createAliasedPath(FilePath(lib));
-   return lib;
+   // this is presumably system-encoded, so convert this to utf8 before return
+   return string_utils::systemToUtf8(libPaths);
 }
-
 
 // R command invocation -- has two representations, one to be submitted
 // (shellCmd_) and one to show the user (cmdString_)
 class RCommand
 {
 public:
-   explicit RCommand(const FilePath& rBinDir)
+   explicit RCommand(const FilePath& rBinDir, bool vanilla = true)
       : shellCmd_(module_context::rCmd(rBinDir))
    {
 #ifdef _WIN32
       cmdString_ = "Rcmd.exe";
+      if (vanilla)
+         cmdString_.append(" --vanilla");
 #else
-      cmdString_ = "R CMD";
+      cmdString_ = "R";
+      if (vanilla)
+         cmdString_.append(" --vanilla");
+      cmdString_.append(" CMD");
 #endif
 
       // set escape mode to files-only. this is so that when we
@@ -390,7 +379,12 @@ private:
       core::system::ProcessOptions pkgOptions(options);
       core::system::Options childEnv;
       core::system::environment(&childEnv);
+      core::system::setenv(&childEnv,"LC_ALL", "C");
+      std::string libPaths = libPathsString();
+      if (!libPaths.empty())
+         core::system::setenv(&childEnv, "R_LIBS", libPaths);
       core::system::setenv(&childEnv, "CYGWIN", "nodosfilewarning");
+      core::system::setenv(&childEnv, "R_TESTS", "");
       pkgOptions.environment = childEnv;
 
       // get R bin directory
@@ -419,14 +413,6 @@ private:
          // add extra args if provided
          std::string extraArgs = projectConfig().packageInstallArgs;
          rCmd << extraArgs;
-
-         // add library option if necessary
-         std::string lib = installLibraryOverride(extraArgs);
-         if (!lib.empty())
-         {
-            rCmd << "-l";
-            rCmd << lib;
-         }
 
          // add filename as a FilePath so it is escaped
          rCmd << FilePath(packagePath.filename());
@@ -477,14 +463,6 @@ private:
          std::string extraArgs = projectConfig().packageBuildBinaryArgs;
          rCmd << extraArgs;
 
-         // add library option if necessary
-         std::string lib = installLibraryOverride(extraArgs);
-         if (!lib.empty())
-         {
-            rCmd << "-l";
-            rCmd << lib;
-         }
-
          // add filename as a FilePath so it is escaped
          rCmd << FilePath(packagePath.filename());
 
@@ -529,18 +507,6 @@ private:
          // add extra args if provided
          std::string extraArgs = projectConfig().packageCheckArgs;
          rCheckCmd << extraArgs;
-
-         // add library option if necessary
-         std::string lib = installLibraryOverride(extraArgs);
-         if (!lib.empty())
-         {
-            // for R CMD check we need to actually set the R_LIBS_USER
-            // environment variable because the -l option doesn't affect
-            // where it looks up package dependencies
-            core::system::setenv(&(pkgOptions.environment.get()),
-                                 "R_LIBS_USER",
-                                 lib);
-         }
 
          // add filename as a FilePath so it is escaped
          rCheckCmd << FilePath(pkgInfo_.sourcePackageFilename());
