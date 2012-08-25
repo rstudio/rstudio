@@ -62,13 +62,30 @@ std::string libPathsString()
    return string_utils::systemToUtf8(libPaths);
 }
 
+shell_utils::ShellCommand buildRCmd(const core::FilePath& rBinDir)
+{
+#if defined(_WIN32)
+   shell_utils::ShellCommand rCmd(rBinDir.childPath("Rcmd.exe"));
+#elif defined(__APPLE__)
+   // on osx we only support 64-bit R so we specify the path to R64
+   // directly. if we don't do this then when building with --no-multiarch
+   // then the main architecture is misinterpreted as i386
+   shell_utils::ShellCommand rCmd(rBinDir.childPath("R64"));
+   rCmd << "CMD";
+#else
+   shell_utils::ShellCommand rCmd(rBinDir.childPath("R"));
+   rCmd << "CMD";
+#endif
+   return rCmd;
+}
+
 // R command invocation -- has two representations, one to be submitted
 // (shellCmd_) and one to show the user (cmdString_)
 class RCommand
 {
 public:
    explicit RCommand(const FilePath& rBinDir)
-      : shellCmd_(module_context::rCmd(rBinDir))
+      : shellCmd_(buildRCmd(rBinDir))
    {
 #ifdef _WIN32
       cmdString_ = "Rcmd.exe";
