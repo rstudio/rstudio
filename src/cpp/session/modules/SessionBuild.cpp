@@ -375,7 +375,7 @@ private:
       core::system::Options childEnv;
       core::system::environment(&childEnv);
 
-      // NOTE: this is done by the R-force build-package script (in their
+      // NOTE: this is done by the mlr build-package script (in their
       // words "to avoid R encoding 'bugs'") and is also done by the devtools
       // package building functions.
       core::system::setenv(&childEnv,"LC_ALL", "C");
