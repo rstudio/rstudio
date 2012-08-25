@@ -198,6 +198,12 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
   .Call("rs_createUUID")
 })
 
+# check the current R architecture
+.rs.addFunction( "getRArch", function()
+{
+   .Platform$r_arch
+})
+
 # view a pdf (based on implementation in RShowDoc and print.vignette)
 .rs.addFunction( "shellViewPdf", function(path)
 {

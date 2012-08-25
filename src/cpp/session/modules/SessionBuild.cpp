@@ -67,10 +67,17 @@ shell_utils::ShellCommand buildRCmd(const core::FilePath& rBinDir)
 #if defined(_WIN32)
    shell_utils::ShellCommand rCmd(rBinDir.childPath("Rcmd.exe"));
 #elif defined(__APPLE__)
-   // on osx we only support 64-bit R so we specify the path to R64
-   // directly. if we don't do this then when building with --no-multiarch
-   // then the main architecture is misinterpreted as i386
-   shell_utils::ShellCommand rCmd(rBinDir.childPath("R64"));
+   // on osx we need to explicitly call the correct R script depending
+   // on the current architecture (on windows this is already handled
+   // by the bin dir and on linux this tends not to be an issue because
+   // nearly all installations of R are single-arch)
+   const char * const k64BitArch = "x86_64";
+   std::string rArch = k64BitArch;
+   Error error = r::exec::RFunction(".rs.getRArch").call(&rArch);
+   if (error)
+      LOG_ERROR(error);
+   std::string rScript = (rArch == k64BitArch) ? "R64" : "R";
+   shell_utils::ShellCommand rCmd(rBinDir.childPath(rScript));
    rCmd << "CMD";
 #else
    shell_utils::ShellCommand rCmd(rBinDir.childPath("R"));
