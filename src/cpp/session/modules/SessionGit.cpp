@@ -2304,9 +2304,23 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
    if (!gitIgnoreFile.exists())
    {
       // If no .gitignore exists, add this stuff
+
+      // standard R and RStudio files
       filesToIgnore.push_back(".Rproj.user");
       filesToIgnore.push_back(".Rhistory");
       filesToIgnore.push_back(".RData");
+
+      // if this is a package dir with a src directory then
+      // also ignore native code build artifacts
+      FilePath gitIgnoreParent = gitIgnoreFile.parent();
+      if (gitIgnoreParent.childPath("DESCRIPTION").exists() &&
+          gitIgnoreParent.childPath("src").exists())
+      {
+         filesToIgnore.push_back("src/*.o");
+         filesToIgnore.push_back("src/*.so");
+         filesToIgnore.push_back("src/*.dll");
+      }
+
       return addFilesToGitIgnore(gitIgnoreFile, filesToIgnore, false);
    }
    else
