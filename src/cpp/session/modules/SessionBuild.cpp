@@ -67,18 +67,13 @@ std::string libPathsString()
 class RCommand
 {
 public:
-   explicit RCommand(const FilePath& rBinDir, bool vanilla = true)
+   explicit RCommand(const FilePath& rBinDir)
       : shellCmd_(module_context::rCmd(rBinDir))
    {
 #ifdef _WIN32
       cmdString_ = "Rcmd.exe";
-      if (vanilla)
-         cmdString_.append(" --vanilla");
 #else
-      cmdString_ = "R";
-      if (vanilla)
-         cmdString_.append(" --vanilla");
-      cmdString_.append(" CMD");
+      cmdString_ = "R CMD";
 #endif
 
       // set escape mode to files-only. this is so that when we
@@ -384,7 +379,6 @@ private:
       if (!libPaths.empty())
          core::system::setenv(&childEnv, "R_LIBS", libPaths);
       core::system::setenv(&childEnv, "CYGWIN", "nodosfilewarning");
-      core::system::setenv(&childEnv, "R_TESTS", "");
       pkgOptions.environment = childEnv;
 
       // get R bin directory
