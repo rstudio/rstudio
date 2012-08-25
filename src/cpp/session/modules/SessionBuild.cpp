@@ -392,9 +392,8 @@ private:
       core::system::Options childEnv;
       core::system::environment(&childEnv);
 
-      // NOTE: this is done by the mlr build-package script (in their
-      // words "to avoid R encoding 'bugs'") and is also done by the devtools
-      // package building functions.
+      // ensure consistent collation and sort orders accross all
+      // package builds (devtools does this as well)
       core::system::setenv(&childEnv,"LC_ALL", "C");
 
       // allow child process to inherit our R_LIBS
