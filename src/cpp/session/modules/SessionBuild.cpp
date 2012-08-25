@@ -374,11 +374,22 @@ private:
       core::system::ProcessOptions pkgOptions(options);
       core::system::Options childEnv;
       core::system::environment(&childEnv);
+
+      // NOTE: this is done by the R-force build-package script (in their
+      // words "to avoid R encoding 'bugs'") and is also done by the devtools
+      // package building functions.
       core::system::setenv(&childEnv,"LC_ALL", "C");
+
+      // allow child process to inherit our R_LIBS
       std::string libPaths = libPathsString();
       if (!libPaths.empty())
          core::system::setenv(&childEnv, "R_LIBS", libPaths);
+
+      // prevent spurious cygwin warnings on windows
+#ifdef _WIN32
       core::system::setenv(&childEnv, "CYGWIN", "nodosfilewarning");
+#endif
+
       pkgOptions.environment = childEnv;
 
       // get R bin directory
