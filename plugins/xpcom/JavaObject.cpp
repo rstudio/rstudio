@@ -382,7 +382,7 @@ JSBool JavaObject::call(JSContext* ctx, JSObject*, uintN argc, jsval* argv,
 #ifdef JSVAL_IS_OBJECT
   !JSVAL_IS_OBJECT(argv[1])) {
 #else
-  JSVAL_IS_PRIMITIVE(argv[1])) {
+    (JSVAL_IS_PRIMITIVE(argv[1]) && !JSVAL_IS_NULL(argv[1]))) {
 #endif
     Debug::log(Debug::Error) << "JavaObject::call incorrect arguments" << Debug::flush;
     return JS_FALSE;

@@ -280,6 +280,7 @@ linuxplatforms:
 	$(MAKE) lib BROWSER=ff120 ARCH=x86
 	$(MAKE) lib BROWSER=ff130 ARCH=x86
 	$(MAKE) lib BROWSER=ff140 ARCH=x86
+	$(MAKE) lib BROWSER=ff150 ARCH=x86
 	$(MAKE) lib BROWSER=ff3 ARCH=x86_64
 	$(MAKE) lib BROWSER=ff3+ ARCH=x86_64
 	$(MAKE) lib BROWSER=ff35 ARCH=x86_64
