@@ -2145,7 +2145,14 @@ bool detectGitExeDirOnPath(FilePath* pPath)
    wcscpy(&(path[0]), L"git.exe");
    if (::PathFindOnPathW(&(path[0]), NULL))
    {
-      *pPath = FilePath(&(path[0])).parent();
+      // As of version 20120710 of msysgit, the cmd directory contains a
+      // git.exe wrapper that, if used by us, causes console windows to
+      // flash
+      FilePath filePath(&(path[0]));
+      if (filePath.parent().filename() == "cmd")
+        return false;
+
+      *pPath = filePath.parent();
       return true;
    }
    else
@@ -2165,6 +2172,15 @@ bool detectGitBinDirFromPath(FilePath* pPath)
 {
    std::vector<wchar_t> path(MAX_PATH+2);
    wcscpy(&(path[0]), L"git.cmd");
+
+   if (::PathFindOnPathW(&(path[0]), NULL))
+   {
+      *pPath = FilePath(&(path[0])).parent().parent().childPath("bin");
+      return true;
+   }
+
+   // Look for cmd/git.exe and redirect to bin/
+   wcscpy(&(path[0]), L"git.exe");
 
    if (::PathFindOnPathW(&(path[0]), NULL))
    {
