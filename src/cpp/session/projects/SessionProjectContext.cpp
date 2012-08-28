@@ -185,6 +185,7 @@ void ProjectContext::augmentRbuildignore()
    if (directory().childPath("DESCRIPTION").exists())
    {
       // constants
+      const char * const kIgnoreRproj = "^.*\\.Rproj$";
       const char * const kIgnoreRprojUser = "^\\.Rproj\\.user$";
 
       // create the file if it doesn't exists
@@ -192,6 +193,7 @@ void ProjectContext::augmentRbuildignore()
       if (!rbuildIgnorePath.exists())
       {
          Error error = writeStringToFile(rbuildIgnorePath,
+                                         kIgnoreRproj + std::string("\n") +
                                          kIgnoreRprojUser + std::string("\n"),
                                          string_utils::LineEndingNative);
          if (error)
@@ -199,7 +201,9 @@ void ProjectContext::augmentRbuildignore()
       }
       else
       {
-         // if .Rbuildignore exists, add .Rproj.user unless already there
+         // if .Rbuildignore exists, add *.Rproj and .Rproj.user unless
+         // they are already there
+
          std::string strIgnore;
          Error error = core::readStringFromFile(
                                              rbuildIgnorePath,
@@ -211,7 +215,12 @@ void ProjectContext::augmentRbuildignore()
             return;
          }
 
-         if (strIgnore.find(kIgnoreRprojUser) != std::string::npos)
+         // NOTE: we don't search for the full kIgnoreRproj to account
+         // for previous less precisely specified .Rproj entries
+         bool hasRProj = strIgnore.find("\\.Rproj$") != std::string::npos;
+         bool hasRProjUser = strIgnore.find(kIgnoreRprojUser) != std::string::npos;
+
+         if (hasRProj && hasRProjUser)
             return;
 
          bool addExtraNewline = strIgnore.size() > 0
@@ -219,8 +228,10 @@ void ProjectContext::augmentRbuildignore()
 
          if (addExtraNewline)
             strIgnore += "\n";
-         strIgnore += kIgnoreRprojUser;
-         strIgnore += "\n";
+         if (!hasRProj)
+            strIgnore += kIgnoreRproj + std::string("\n");
+         if (!hasRProjUser)
+            strIgnore += kIgnoreRprojUser + std::string("\n");
          error = core::writeStringToFile(rbuildIgnorePath,
                                          strIgnore,
                                          string_utils::LineEndingNative);
