@@ -404,6 +404,8 @@ MimeType s_mimeTypes[] =
    { "Rout",  "text/plain" },
    { "po",    "text/plain" },
    { "pot",   "text/plain"},
+   { "gitignore", "text/plain"},
+   { "Rbuildignore", "text/plain"},
   
    { "tif",   "image/tiff" },
    { "tiff",  "image/tiff" },
