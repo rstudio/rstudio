@@ -40,7 +40,11 @@ std::string dumpJsVal(JSContext* ctx, jsval v) {
     strncpy(buf, "undef", sizeof(buf));
   } else if (JSVAL_IS_NULL(v)) {
     strncpy(buf, "null", sizeof(buf));
+#ifdef JSVAL_IS_OBJECT
   } else if (JSVAL_IS_OBJECT(v)) {
+#else
+  } else if (!JSVAL_IS_PRIMITIVE(v)) {
+#endif
     JSObject* obj = JSVAL_TO_OBJECT(v);
     if (JavaObject::isJavaObject(ctx, obj)) {
       int oid = JavaObject::getObjectId(ctx, obj);

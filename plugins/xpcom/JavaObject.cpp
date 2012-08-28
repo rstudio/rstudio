@@ -31,8 +31,13 @@ static JSClass JavaObjectClass = {
 
   JS_PropertyStub, /* add property */
   JS_PropertyStub, /* delete property */
+#if GECKO_VERSION < 15000
   JavaObject::getProperty, /* get property */
   JavaObject::setProperty, /* set property */
+#else
+  JavaObject::getPropertyWrapper,
+  JavaObject::setPropertyWrapper,
+#endif //GECHO_VERSION
 
   reinterpret_cast<JSEnumerateOp>(JavaObject::enumerate), /* enumerate */
   JS_ResolveStub, /* resolve */
@@ -139,6 +144,13 @@ JSObject* JavaObject::construct(JSContext* ctx, SessionData* data, int objectRef
   return obj;
 }
 
+#if GECKO_VERSION >= 15000
+JSBool JavaObject::getPropertyWrapper(JSContext* ctx, JSHandleObject obj,
+    JSHandleId id, jsval *vp) {
+  return JavaObject::getProperty(ctx, obj.value(), id.value(), vp);
+}
+#endif
+
 JSBool JavaObject::getProperty(JSContext* ctx, JSObject* obj, jsid id,
     jsval* rval) {
   Debug::log(Debug::Spam) << "JavaObject::getProperty obj=" << obj << Debug::flush;
@@ -189,6 +201,13 @@ JSBool JavaObject::getProperty(JSContext* ctx, JSObject* obj, jsid id,
   data->makeJsvalFromValue(*rval, ctx, value);
   return JS_TRUE;
 }
+
+#if GECKO_VERSION >= 15000
+JSBool JavaObject::setPropertyWrapper(JSContext* ctx, JSHandleObject obj,
+    JSHandleId id, JSBool strict, jsval *vp) {
+  return setProperty(ctx, obj.value(), id.value(), strict, vp);
+}
+#endif
 
 #if GECKO_VERSION < 2000
 JSBool JavaObject::setProperty(JSContext* ctx, JSObject* obj, jsid id,
@@ -359,7 +378,12 @@ JSBool JavaObject::call(JSContext* ctx, JSObject*, uintN argc, jsval* argv,
     jsval* rval) {
   // Get the JavaObject called as a function
   JSObject* obj = JSVAL_TO_OBJECT(argv[-2]);
-  if (argc < 2 || !JSVAL_IS_INT(argv[0]) || !JSVAL_IS_OBJECT(argv[1])) {
+  if (argc < 2 || !JSVAL_IS_INT(argv[0]) ||
+#ifdef JSVAL_IS_OBJECT
+  !JSVAL_IS_OBJECT(argv[1])) {
+#else
+  JSVAL_IS_PRIMITIVE(argv[1])) {
+#endif
     Debug::log(Debug::Error) << "JavaObject::call incorrect arguments" << Debug::flush;
     return JS_FALSE;
   }

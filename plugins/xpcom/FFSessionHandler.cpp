@@ -167,7 +167,12 @@ void FFSessionHandler::freeValue(HostChannel& channel, int idCount, const int* i
     int objId = ids[i];
     dbg << objId << " ";
     jsval toRemove;
-    if (JS_GetElement(ctx, jsObjectsById, objId, &toRemove) && JSVAL_IS_OBJECT(toRemove)) {
+    if (JS_GetElement(ctx, jsObjectsById, objId, &toRemove) && 
+#ifdef JSVAL_IS_OBJECT
+       JSVAL_IS_OBJECT(toRemove)) {
+#else
+       !JSVAL_IS_PRIMITIVE(toRemove)) { 
+#endif
       jsIdsByObject.erase(identityFromObject(JSVAL_TO_OBJECT(toRemove)));
       JS_DeleteElement(ctx, jsObjectsById, objId);
     } else {
@@ -455,7 +460,11 @@ void FFSessionHandler::makeValueFromJsval(gwt::Value& retVal, JSContext* ctx,
 #endif //GECKO_VERSION
   } else if (JSVAL_IS_DOUBLE(value)) {
     retVal.setDouble(JSVAL_TO_DOUBLE(value));
+#ifdef JSVAL_IS_OBJECT
   } else if (JSVAL_IS_OBJECT(value)) {
+#else
+  } else if (!JSVAL_IS_PRIMITIVE(value)) {
+#endif
     JSObject* obj = JSVAL_TO_OBJECT(value);
     if (JavaObject::isJavaObject(ctx, obj)) {
       retVal.setJavaObject(JavaObject::getObjectId(ctx, obj));
@@ -555,7 +564,11 @@ void FFSessionHandler::makeJsvalFromValue(jsval& retVal, JSContext* ctx,
         if (!JS_GetElement(ctx, jsObjectsById, jsId, &retVal)) {
           Debug::log(Debug::Error) << "Error getting jsObject with id " << jsId << Debug::flush;
         }
+#ifdef JSVAL_IS_OBJECT
         if (!JSVAL_IS_OBJECT(retVal)) {
+#else
+        if (JSVAL_IS_PRIMITIVE(retVal)) {
+#endif
           Debug::log(Debug::Error) << "Missing jsObject with id " << jsId << Debug::flush;
         }
       }
@@ -625,7 +638,11 @@ void* FFSessionHandler::identityFromObject(JSObject* obj) {
   jsval rval;
   void* returnValue = obj;
   if (JS_GetProperty(ctx, obj, "wrappedJSObject", &rval)
+#ifdef JSVAL_IS_OBJECT
       && JSVAL_IS_OBJECT(rval)) {
+#else
+      && !JSVAL_IS_PRIMITIVE(rval)) {
+#endif
     returnValue = JSVAL_TO_OBJECT(rval);
     Debug::log(Debug::Info) << "identityFromObject mapped " << obj << " to "
         << returnValue << Debug::flush;
