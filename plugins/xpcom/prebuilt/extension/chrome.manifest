@@ -83,6 +83,7 @@ binary-component lib/WINNT_x86-msvc/ff140/xpGwtDevPlugin.dll ABI=WINNT_x86-msvc 
 # Firefox 15
 binary-component lib/Linux_x86_64-gcc3/ff150/libgwt_dev_ff150.so ABI=Linux_x86_64-gcc3 appversion<=15.0.*
 binary-component lib/Linux_x86-gcc3/ff150/libgwt_dev_ff150.so ABI=Linux_x86-gcc3 appversion<=15.0.*
+binary-component lib/WINNT_x86-msvc/ff150/xpGwtDevPlugin.dll ABI=WINNT_x86-msvc appversion<=15.0.*
 
 
 interfaces components/IOOPHM.xpt
