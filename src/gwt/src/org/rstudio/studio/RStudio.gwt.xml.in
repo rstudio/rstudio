@@ -114,7 +114,7 @@
    </replace-with>
 
 
-   <set-property name="compiler.emulatedStack" value="${GWT_EMULATED_STACK}"/>
+   <set-property name="compiler.stackMode" value="${GWT_COMPILER_STACK_MODE}"/>
    <set-configuration-property name="compiler.emulatedStack.recordLineNumbers" value="true"/>
    <set-configuration-property name="compiler.emulatedStack.recordFileNames" value="true"/>
    <!--<set-configuration-property name="CssResource.style" value="pretty" />-->

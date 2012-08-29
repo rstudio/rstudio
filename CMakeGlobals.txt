@@ -155,9 +155,9 @@ endif()
 # within src/gwt/CMakeLists.txt so that even in src/cpp only configs (i.e.
 # development mode) we get the RStudio.gwt.xml.in file configured
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-   set(GWT_EMULATED_STACK "true")
+   set(GWT_COMPILER_STACK_MODE "emulated")
 else()
-   set(GWT_EMULATED_STACK "false")
+   set(GWT_COMPILER_STACK_MODE "native")
 endif()
 configure_file(${ROOT_SRC_DIR}/src/gwt/src/org/rstudio/studio/RStudio.gwt.xml.in
                ${ROOT_SRC_DIR}/src/gwt/src/org/rstudio/studio/RStudio.gwt.xml)
