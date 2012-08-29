@@ -88,7 +88,7 @@ ALLARCHCFLAGS= -m$(FLAG32BIT)
 endif
 ifeq ($(shell uname),Darwin)
 OS=mac
-BASECFLAGS= $(DEBUGCFLAGS) -O2 -fPIC $(INC) -D__mac -mmacosx-version-min=10.5
+BASECFLAGS= $(DEBUGCFLAGS) -O2 -fPIC $(INC) -D__mac -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk
 ARCHCFLAGS=-arch $(MARCH)
 ALLARCHCFLAGS=-arch i386 -arch ppc -arch x86_64
 AR=libtool
