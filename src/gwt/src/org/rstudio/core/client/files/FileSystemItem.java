@@ -317,6 +317,9 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "mdtxt",    "text/x-markdown" );
       MIME_TYPES.put( "markdown", "text/x-markdown" );
       
+      // programming languages
+      MIME_TYPES.put( "f",         "text/x-fortran" );
+ 
       // other types we are likely to serve
       MIME_TYPES.put( "xml",   "text/xml" );
       MIME_TYPES.put( "csv",   "text/csv" );

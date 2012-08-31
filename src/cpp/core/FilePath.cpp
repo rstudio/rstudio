@@ -381,6 +381,9 @@ MimeType s_mimeTypes[] =
    { "mdtxt",    "text/x-markdown" },
    { "markdown", "text/x-markdown" },
 
+   // programming language types
+   { "f",        "text/x-fortran" },
+
    // other types we are likely to serve
    { "xml",   "text/xml" },
    { "csv",   "text/csv" },
