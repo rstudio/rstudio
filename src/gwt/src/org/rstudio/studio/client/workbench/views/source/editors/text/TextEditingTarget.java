@@ -2622,6 +2622,11 @@ public class TextEditingTarget implements EditingTarget
                public void execute(Boolean arg) {
                   docDisplay.setShowPrintMargin(arg);
                }}));
+      releaseOnDismiss.add(prefs.blinkingCursor().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.setBlinkingCursor(arg);
+               }}));
       releaseOnDismiss.add(prefs.printMarginColumn().bind(
             new CommandWithArg<Integer>() {
                public void execute(Integer arg) {

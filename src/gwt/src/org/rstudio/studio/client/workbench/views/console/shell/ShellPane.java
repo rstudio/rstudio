@@ -47,6 +47,14 @@ public class ShellPane extends ShellWidget implements Shell.Display
                inputWidget.addStyleName("nocolor");
          }
       });    
+      
+      uiPrefs.blinkingCursor().bind(new CommandWithArg<Boolean>()
+      {
+         public void execute(Boolean arg)
+         {
+            editor.setBlinkingCursor(arg);
+         }
+      });  
    }
 
    @Override

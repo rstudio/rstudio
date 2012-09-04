@@ -75,6 +75,9 @@ git merge \
     origin/patch/eclipse-selectedword \
     origin/patch/emacs-vim-keybindings
 
+git merge \
+    origin/patch/disable-blinking-cursor
+
 
 node ./Makefile.dryice.js normal
 node ./Makefile.dryice.js -m normal

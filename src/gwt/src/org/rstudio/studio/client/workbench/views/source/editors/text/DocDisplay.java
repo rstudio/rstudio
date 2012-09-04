@@ -107,6 +107,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setShowInvisibles(boolean show);
    void setShowIndentGuides(boolean show);
    void setUseVimMode(boolean use);
+   void setBlinkingCursor(boolean blinking);
 
    JsArray<AceFold> getFolds();
    void addFold(Range range);

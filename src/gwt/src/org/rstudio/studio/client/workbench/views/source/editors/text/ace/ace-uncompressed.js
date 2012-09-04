@@ -17728,6 +17728,7 @@ var Cursor = function(parentEl) {
     parentEl.appendChild(this.element);
 
     this.isVisible = false;
+    this.isBlinking = true;
 
     this.cursors = [];
     this.cursor = this.addCursor();
@@ -17742,6 +17743,10 @@ var Cursor = function(parentEl) {
 
     this.setSession = function(session) {
         this.session = session;
+    };
+
+    this.setBlinking = function(blinking) {
+        this.isBlinking = blinking;
     };
 
     this.addCursor = function() {
@@ -17784,6 +17789,8 @@ var Cursor = function(parentEl) {
 
     this.restartTimer = function() {
         clearInterval(this.blinkId);
+        if (!this.isBlinking)
+            return;
         if (!this.isVisible)
             return;
 
