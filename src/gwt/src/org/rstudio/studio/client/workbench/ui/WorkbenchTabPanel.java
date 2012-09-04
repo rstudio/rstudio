@@ -160,8 +160,21 @@ class WorkbenchTabPanel
    public void selectTab(int tabIndex)
    {
       if (tabPanel_.getSelectedIndex() == tabIndex)
+      {
+         // if it's already selected then we still want to fire the
+         // onBeforeSelected and onSelected methods (so that actions 
+         // like auto-focus are always taken)
+         int selected = getSelectedIndex();
+         if (selected != -1)
+         {
+            WorkbenchTab tab = tabs_.get(selected);
+            tab.onBeforeSelected();
+            tab.onSelected();
+         }
+        
          return;
-
+      }
+      
       // deal with migrating from n+1 to n tabs, and with -1 values
       int safeIndex = Math.min(Math.max(0, tabIndex), tabs_.size() - 1);
       

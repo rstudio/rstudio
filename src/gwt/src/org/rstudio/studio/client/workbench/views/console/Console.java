@@ -17,6 +17,7 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.layout.DelayFadeInHelper;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -80,6 +81,7 @@ public class Console
    @Handler
    void onActivateConsole()
    {
+      WindowEx.get().focus();
       view_.bringToFront();
       view_.focus();
    }

@@ -50,6 +50,7 @@ public class Help extends BasePresenter implements ShowHelpHandler
       void print() ;
       void popout() ;
       void refresh() ;
+      void focus();
       
       LinkMenu getHistory() ;
 

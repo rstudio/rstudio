@@ -200,12 +200,16 @@ bool handleRShowDocFile(const core::FilePath& filePath)
    }
 }
 
-// javascript callbacks to inject into page so that next/prev buttons work
-const char * const kJsNavigateCallbacks =
+// javascript callbacks to inject into page
+const char * const kJsCallbacks =
       "<script type=\"text/javascript\">\n"
       "if (window.parent.helpNavigated)\n"
-      "   window.parent.helpNavigated(document, window);"
-      "</script>";
+      "   window.parent.helpNavigated(document, window);\n"
+      "if (window.parent.helpKeydown)\n"
+      "   window.onkeydown = function(e) {window.parent.helpKeydown(e);}\n"
+      "</script>\n";
+
+
    
 class HelpContentsFilter : public boost::iostreams::aggregate_filter<char>
 {
@@ -239,7 +243,7 @@ public:
             "src=\"" + baseUrl + "/");
       
       // append javascript callbacks
-      std::string js(kJsNavigateCallbacks);
+      std::string js(kJsCallbacks);
       std::copy(js.begin(), js.end(), std::back_inserter(dest));
    }
 private:
@@ -252,7 +256,7 @@ class CustomHelprContentsFilter
 {
    void do_filter(const std::vector<char>& src, std::vector<char>& dest)
    {
-      std::string js(kJsNavigateCallbacks);
+      std::string js(kJsCallbacks);
       std::copy(src.begin(), src.end(), std::back_inserter(dest));
       std::copy(js.begin(), js.end(), std::back_inserter(dest));
    }

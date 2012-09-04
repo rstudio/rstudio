@@ -52,6 +52,13 @@ public class WindowEx extends JavaScriptObject
       this.history.forward() ;
    }-*/;
    
+   public final native void removeSelection() /*-{
+      selection = this.getSelection();
+      if (selection != null) {
+         selection.removeAllRanges();
+      }
+   }-*/;
+   
    public final native boolean find(String term, 
                                     boolean matchCase,
                                     boolean searchUpward,

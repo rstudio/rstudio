@@ -24,6 +24,8 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -35,9 +37,12 @@ import com.google.inject.Provider;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.ElementEx;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
@@ -126,7 +131,7 @@ public class HelpPane extends WorkbenchPane
       {
          initialized_ = true;
 
-         initHelpNavigateCallback() ;
+         initHelpCallbacks() ;
 
          Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
@@ -138,7 +143,7 @@ public class HelpPane extends WorkbenchPane
       }
    }
    
-   public final native void initHelpNavigateCallback() /*-{
+   public final native void initHelpCallbacks() /*-{
       function addEventHandler(subject, eventName, handler) {
          if (subject.addEventListener) {
             subject.addEventListener(eventName, handler, false);
@@ -158,7 +163,44 @@ public class HelpPane extends WorkbenchPane
       $wnd.helpNavigate = function(url) {
          thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::showHelp(Ljava/lang/String;)(url);
       } ;
+      
+      $wnd.helpKeydown = function(e) {
+         thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::handleKeyDown(Lcom/google/gwt/dom/client/NativeEvent;)(e);
+      } ;
    }-*/;
+   
+   
+   
+   // delegate shortcuts which occur while Help has focus
+    
+   private void handleKeyDown(NativeEvent e)
+   { 
+      // determine whether this key-combination means we should focus find
+      int mod = KeyboardShortcut.getModifierValue(e);
+      if ((mod == (BrowseCap.hasMetaKey() ? KeyboardShortcut.META
+                                          : KeyboardShortcut.CTRL)) &&
+           e.getKeyCode() == 'F')
+      {
+         e.preventDefault();
+         e.stopPropagation();
+         WindowEx.get().focus();
+         findTextBox_.focus();
+         findTextBox_.selectAll();
+      }
+      
+      // delegate to the shortcut manager
+      else
+      {
+         NativeKeyDownEvent evt = new NativeKeyDownEvent(e);
+         ShortcutManager.INSTANCE.onKeyDown(evt);
+         if (evt.isCanceled())
+         {
+            e.preventDefault();
+            e.stopPropagation();
+         }
+         
+      }
+   }
    
    private void helpNavigated(Document doc)
    {
@@ -271,67 +313,196 @@ public class HelpPane extends WorkbenchPane
       title_.addClickHandler(clickHandler);
       image.addClickHandler(clickHandler);
       
-      if (BrowseCap.INSTANCE.hasWindowFind())
+      if (isFindSupported())
       {
-         final FindTextBox findTextBox = new FindTextBox("Find in Topic");
-         findTextBox.setOverrideWidth(90);
-         toolbar.addLeftWidget(findTextBox);
-         final SmallButton findButton = new SmallButton("Find");
-         findButton.setVisible(false);
-         findButton.addClickHandler(new ClickHandler() {
-   
+         final SmallButton btnNext = new SmallButton("&gt;", true);
+         btnNext.setTitle("Find next (Enter)");
+         btnNext.setVisible(false);
+         btnNext.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event)
             {
-               // prevent two enter keys in rapid succession from 
-               // maximizing or minimizing the help tab
-               event.stopPropagation();
-               event.preventDefault();
-               
-               // do the find
-               findInTopic(findTextBox.getValue().trim(), findTextBox);
+               findNext();
+            }  
+         });
+         
+         final SmallButton btnPrev = new SmallButton("&lt;", true);
+         btnPrev.setTitle("Find previous");
+         btnPrev.setVisible(false);
+         btnPrev.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event)
+            {
+               findPrev();
+            }  
+         });
+         
+         
+         findTextBox_ = new FindTextBox("Find in Topic");
+         findTextBox_.setOverrideWidth(90);
+         toolbar.addLeftWidget(findTextBox_);
+         findTextBox_.addKeyUpHandler(new KeyUpHandler() { 
+            
+            @Override
+            public void onKeyUp(KeyUpEvent event)
+            {     
+               WindowEx contentWindow = getContentWindow();
+               if (contentWindow != null)
+               {
+                  // escape or tab means exit find mode and put focus 
+                  // into the main content window
+                  if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE ||
+                      event.getNativeKeyCode() == KeyCodes.KEY_TAB)
+                  {
+                     event.preventDefault();
+                     event.stopPropagation();
+                     if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE)
+                        clearTerm();
+                     contentWindow.focus();
+                  }
+                  else
+                  {
+                     // prevent two enter keys in rapid succession from 
+                     // minimizing or maximizing the help pane
+                     if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
+                     {
+                        event.preventDefault();
+                        event.stopPropagation();
+                     }
+                      
+                     // check for term
+                     String term = findTextBox_.getValue().trim();
+                     
+                     // if there is a term then search for it
+                     if (term.length() > 0)
+                     { 
+                        // make buttons visible
+                        setButtonVisibility(true);
+                        
+                        // perform the find (check for incremental)
+                        if (isIncrementalFindSupported())
+                        {
+                           boolean incremental = 
+                            !event.isAnyModifierKeyDown() &&
+                            (event.getNativeKeyCode() != KeyCodes.KEY_ENTER);   
+                           
+                           performFind(term, true, incremental);
+                        }
+                        else
+                        {
+                           if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
+                              performFind(term, true, false);
+                        }
+                     }
+                     
+                     // no term means clear term and remove selection
+                     else
+                     {
+                        if (isIncrementalFindSupported())
+                        {
+                           clearTerm();
+                           contentWindow.removeSelection();
+                        }
+                     }
+                  }
+               }
             }
             
+            private void clearTerm()
+            {
+               findTextBox_.setValue("");
+               setButtonVisibility(false);
+            }
+            
+            private void setButtonVisibility(final boolean visible)
+            {
+               Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+                  @Override
+                  public void execute()
+                  {
+                     btnNext.setVisible(visible);
+                     btnPrev.setVisible(visible);
+                  }
+               });
+            }
          });
-         toolbar.addLeftWidget(findButton);      
-         
-         
-         findTextBox.addKeyDownHandler(new KeyDownHandler() {
+       
+         findTextBox_.addKeyDownHandler(new KeyDownHandler() {
+
             @Override
             public void onKeyDown(KeyDownEvent event)
-            {
-               // enter key triggers a find
-               if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
+            { 
+               // we handle these directly so prevent the browser
+               // from handling them
+               if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE ||
+                   event.getNativeKeyCode() == KeyCodes.KEY_TAB ||
+                   event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
                {
                   event.preventDefault();
                   event.stopPropagation();
-                  findButton.click();
-                  findTextBox.focus();
                }
-               else if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE)
-               {
-                  findTextBox.setValue("");
-                  findButton.setVisible(false);
-               }
-               else
-               {
-                  // other keys trigger visibility chagne of find button
-                  Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-                     @Override
-                     public void execute()
-                     {
-                        findButton.setVisible(
-                                   findTextBox.getValue().trim().length() > 0);
-                        
-                     }    
-                  });
-               }       
             }
             
          });
+         
+         if (isIncrementalFindSupported())
+         {
+            btnPrev.getElement().getStyle().setMarginRight(3, Unit.PX);
+            toolbar.addLeftWidget(btnPrev);
+            toolbar.addLeftWidget(btnNext);
+         }
+       
       }
 
       return toolbar ;
+   }
+   
+   private String getTerm()
+   {
+      return findTextBox_.getValue().trim();
+   }
+   
+   private void findNext()
+   {
+      String term = getTerm();
+      if (term.length() > 0)
+         performFind(term, true, false);
+   }
+   
+   private void findPrev()
+   {
+      String term = getTerm();
+      if (term.length() > 0)
+         performFind(term, false, false);
+   }
+   
+   private void performFind(String term,
+                            boolean forwards, 
+                            boolean incremental)
+   {
+      WindowEx contentWindow = getContentWindow();
+      if (contentWindow == null)
+         return;
+      
+      // if this is an incremental search then reset the selection first
+      if (incremental)
+         contentWindow.removeSelection();
+      
+      contentWindow.find(term, false, !forwards, true, false);
+   }
+   
+   private boolean isFindSupported()
+   {
+      return BrowseCap.INSTANCE.hasWindowFind();
+   }
+   
+   // Firefox changes focus during our typeahead search (it must take
+   // focus when you set the selection into the iframe) which breaks 
+   // typeahead entirely. rather than code around this we simply
+   // disable it for Firefox
+   private boolean isIncrementalFindSupported()
+   {
+      return isFindSupported() && !BrowseCap.isFirefox();
    }
 
    public String getUrl()
@@ -356,6 +527,20 @@ public class HelpPane extends WorkbenchPane
       navigated_ = true;
    }
      
+   @Override
+   public void bringToFront()
+   {
+      super.bringToFront();
+      focus();
+   }
+   
+   @Override
+   public void onSelected()
+   {
+      super.onSelected();
+      focus();
+   }
+   
    private void setLocation(final String url)
    {
       // allow subsequent calls to setLocation to override any previous 
@@ -433,6 +618,14 @@ public class HelpPane extends WorkbenchPane
       globalDisplay_.openWindow(href, options);
    }
    
+   @Override
+   public void focus()
+   {
+      WindowEx contentWindow = getContentWindow();
+      if (contentWindow != null)
+         contentWindow.focus();
+   }
+   
    public HandlerRegistration addHelpNavigateHandler(HelpNavigateHandler handler)
    {
       return addHandler(handler, HelpNavigateEvent.TYPE) ;
@@ -470,11 +663,13 @@ public class HelpPane extends WorkbenchPane
       }     
    }
 
+
    private final VirtualHistory navStack_ = new VirtualHistory() ;
    private final ToolbarLinkMenu history_ ;
  
    private Label title_ ;
    private Frame frame_ ;
+   private FindTextBox findTextBox_;
    private final Provider<HelpSearch> searchProvider_ ;
    private GlobalDisplay globalDisplay_;
    private final Commands commands_;

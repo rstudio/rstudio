@@ -21,7 +21,7 @@ public class NativeKeyDownEvent extends GwtEvent<NativeKeyDownHandler>
    public static final GwtEvent.Type<NativeKeyDownHandler> TYPE =
       new GwtEvent.Type<NativeKeyDownHandler>();
 
-   protected NativeKeyDownEvent(NativeEvent event)
+   public NativeKeyDownEvent(NativeEvent event)
    {
       event_ = event;
    }
