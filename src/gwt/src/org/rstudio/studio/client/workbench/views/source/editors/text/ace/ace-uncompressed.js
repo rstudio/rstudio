@@ -17747,6 +17747,8 @@ var Cursor = function(parentEl) {
 
     this.setBlinking = function(blinking) {
         this.isBlinking = blinking;
+        if (blinking)
+            this.restartTimer();
     };
 
     this.addCursor = function() {

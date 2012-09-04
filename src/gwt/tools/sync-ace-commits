@@ -76,7 +76,7 @@ git merge \
     origin/patch/emacs-vim-keybindings
 
 git merge \
-    origin/patch/disable-blinking-cursor
+    origin/patch/blinking-cursor
 
 
 node ./Makefile.dryice.js normal
