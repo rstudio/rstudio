@@ -29,6 +29,12 @@ FileLogWriter::FileLogWriter(const std::string& programIdentity,
    logDir.ensureDirectory();
 
    logFile_ = logDir.childPath(programIdentity + ".log");
+
+   if (!logFile_.exists())
+   {
+      // swallow errors -- we can't log so it doesn't matter
+      core::appendToFile(logFile_, "");
+   }
 }
 
 FileLogWriter::~FileLogWriter()
