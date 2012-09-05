@@ -76,7 +76,7 @@
    <item>
     <widget class="QLabel" name="label_4">
      <property name="text">
-      <string>&lt;b&gt;&amp;copy; 2009-2011 RStudio, Inc.&lt;/b&gt;&lt;br&gt;
+      <string>&lt;b&gt;&amp;copy; 2009-2012 RStudio, Inc.&lt;/b&gt;&lt;br&gt;
 This program is licensed to you under the terms of&lt;br&gt;
 version 3 of the GNU &lt;a href=&quot;http://www.gnu.org/licenses/agpl-3.0.txt&quot;&gt;Affero General Public License&lt;/a&gt;</string>
      </property>
