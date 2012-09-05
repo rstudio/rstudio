@@ -1351,6 +1351,7 @@ public class TextEditingTarget implements EditingTarget
    
    private void doCommentUncomment(String c)
    {
+      boolean selectionCollapsed = docDisplay_.isSelectionCollapsed();
       docDisplay_.fitSelectionToLines(true);
       String selection = docDisplay_.getSelectionValue();
 
@@ -1373,6 +1374,11 @@ public class TextEditingTarget implements EditingTarget
       }
 
       docDisplay_.replaceSelection(selection);
+      
+      if (selectionCollapsed)
+         docDisplay_.collapseSelection(true);
+      
+      docDisplay_.focus();
    }
 
    @Handler
