@@ -27,7 +27,7 @@ using namespace core;
 namespace server {
 namespace browser {
 
-const char * const kBrowserUnsupported = "/browser.htm";
+const char * const kBrowserUnsupported = "/unsupported_browser.htm";
 
 bool supportedBrowserFilter(const http::Request& request,
                             http::Response* pResponse)

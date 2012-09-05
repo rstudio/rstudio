@@ -20,7 +20,7 @@ public class BrowserFenceUnsupported implements BrowserFence
 {
    public void go(Command command)
    { 
-      String url = GWT.getHostPageBaseURL() + "browser.htm";
+      String url = GWT.getHostPageBaseURL() + "unsupported_browser.htm";
       Window.Location.replace(url);
    }
 }
