@@ -23,6 +23,7 @@ public class HistoryPopupPanel extends ThemedPopupPanel
 {
    public HistoryPopupPanel(String[] entries)
    {
+      super(true);
       list_ = new CompletionList<String>(entries, 10, false, true);
       setWidget(list_);
    }

@@ -14,6 +14,9 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
@@ -166,6 +169,16 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
                         input_.setText(e.getSelectedItem());
                         dismiss();
                      }
+                  });
+                  
+                  popup_.addCloseHandler(new CloseHandler<PopupPanel>() {
+
+                     @Override
+                     public void onClose(CloseEvent<PopupPanel> event)
+                     {
+                        popup_ = null;          
+                     }
+                     
                   });
                }
             });
