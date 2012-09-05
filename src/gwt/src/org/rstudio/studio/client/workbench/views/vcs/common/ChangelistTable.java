@@ -269,7 +269,10 @@ public abstract class ChangelistTable extends Composite
          @Override
          public String getValue(StatusAndPath object)
          {
-            return object.getPath();
+            String path = object.getPath();
+            if (object.isDirectory() && !path.endsWith("/"))
+               path = path + "/";
+            return path;
          }
       };
       pathColumn.setSortable(true);
