@@ -71,8 +71,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void showAboutDialog();
    void bringMainFrameToFront();
 
-   boolean suppressSyntaxHighlighting();
-
    String getRVersion();
    String chooseRVersion();
    boolean canChooseRVersion();

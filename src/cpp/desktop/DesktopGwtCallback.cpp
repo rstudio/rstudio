@@ -594,17 +594,6 @@ void GwtCallback::bringMainFrameToFront()
    desktop::raiseAndActivateWindow(pMainWindow_);
 }
 
-bool GwtCallback::suppressSyntaxHighlighting()
-{
-#ifdef Q_WS_X11
-   // Fix bug 1228: "on ubuntu 10.04 desktop cursor's position
-   // horizontally off by progressively more as line gets longer"
-   return QString::fromAscii(qVersion()).startsWith(QString::fromAscii("4.6."));
-#else
-   return false;
-#endif
-}
-
 QString GwtCallback::filterText(QString text)
 {
    // Ace doesn't do well with NFD Unicode text. To repro on

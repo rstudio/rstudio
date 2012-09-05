@@ -44,7 +44,6 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
@@ -399,7 +398,7 @@ public class AceEditor implements DocDisplay,
      
       getSession().setEditorMode(
             fileType_.getEditorLanguage().getParserName(),
-            Desktop.isDesktop() && Desktop.getFrame().suppressSyntaxHighlighting());
+            false);
       getSession().setUseWrapMode(fileType_.getWordWrap());
    }   
    
