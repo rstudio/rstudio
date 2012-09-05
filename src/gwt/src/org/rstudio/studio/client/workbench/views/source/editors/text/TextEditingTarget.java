@@ -1557,8 +1557,9 @@ public class TextEditingTarget implements EditingTarget
          selectionRange = Range.fromPoints(
                Position.create(row, 0),
                Position.create(row, docDisplay_.getLength(row)));
-         // TODO: This should skip to next line of R code in Sweave docs
-         docDisplay_.moveSelectionToNextLine(true);
+                
+         if (!docDisplay_.moveSelectionToNextLine(true))
+            docDisplay_.moveSelectionToBlankLine();
       }
 
       executeRange(selectionRange);
