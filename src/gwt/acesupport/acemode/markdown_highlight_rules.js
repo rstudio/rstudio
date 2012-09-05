@@ -100,10 +100,6 @@ var MarkdownHighlightRules = function() {
         }, { // MathJax $...$ (org-mode style)
             token : ["markup.list","support.function","markup.list"],
             regex : "(\\$)" + "((?!\\s)[^$]*[^$\\s])" + "(\\$)" + "(?![\\w\\d`])"
-        }, { // list
-            token : "text",
-            regex : "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+",
-            next  : "listblock"
         }, { // strong ** __
             token : ["constant.numeric", "constant.numeric", "constant.numeric"],
             regex : "([*]{2}|[_]{2}(?=\\S))([^\\r]*?\\S[*_]*)(\\1)"
@@ -123,15 +119,6 @@ var MarkdownHighlightRules = function() {
         } , {
             token : "text",
             regex : "\\\\"
-        } ],
-        
-        "listblock" : [ { // Lists only escape on completely blank lines.
-            token : "empty_line",
-            regex : "^$",
-            next  : "start"
-        }, {
-            token : "text",
-            regex : ".+"
         } ],
         
         "blockquote" : [ { // BLockquotes only escape on blank lines.

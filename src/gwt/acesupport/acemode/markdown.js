@@ -30,16 +30,7 @@ oop.inherits(Mode, TextMode);
 
 (function() {
     this.getNextLineIndent = function(state, line, tab) {
-        if (state == "listblock") {
-            var match = /^((?:.+)?)([-+*][ ]+)/.exec(line);
-            if (match) {
-                return new Array(match[1].length + 1).join(" ") + match[2];
-            } else {
-                return "";
-            }
-        } else {
-            return this.$getIndent(line);
-        }
+      return this.$getIndent(line);
     };
 }).call(Mode.prototype);
 
