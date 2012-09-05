@@ -282,6 +282,10 @@ public class FindReplace
                                        errorCaption_,
                                        "No more occurrences.");
          }
+         else
+         {
+            editor_.collapseSelection(true);
+         }
          
          return false;
       }
