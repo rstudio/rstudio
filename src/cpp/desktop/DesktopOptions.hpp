@@ -60,6 +60,8 @@ public:
    core::FilePath executablePath() const;
    core::FilePath supportingFilePath() const;
 
+   core::FilePath wwwDocsPath() const;
+
 #ifdef _WIN32
    core::FilePath urlopenerPath() const;
    core::FilePath rsinversePath() const;

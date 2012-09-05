@@ -135,6 +135,7 @@ public slots:
 
    bool supportsFullscreenMode();
    void toggleFullscreenMode();
+   void showKeyboardShortcutHelp();
 
 private:
    Synctex& synctex();

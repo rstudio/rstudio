@@ -204,7 +204,10 @@ public class Application implements ApplicationEventHandlers
    @Handler
    public void onHelpKeyboardShortcuts()
    {
-      openApplicationURL("docs/keyboard.htm");
+      if (Desktop.isDesktop())
+         Desktop.getFrame().showKeyboardShortcutHelp();
+      else
+         openApplicationURL("docs/keyboard.htm");
    }
    
    private void showAgreement()

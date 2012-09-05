@@ -259,6 +259,15 @@ FilePath Options::supportingFilePath() const
    return supportingFilePath_;
 }
 
+FilePath Options::wwwDocsPath() const
+{
+   FilePath supportingFilePath = desktop::options().supportingFilePath();
+   FilePath wwwDocsPath = supportingFilePath.complete("www/docs");
+   if (!wwwDocsPath.exists())
+      wwwDocsPath = supportingFilePath.complete("../gwt/www/docs");
+   return wwwDocsPath;
+}
+
 #ifdef _WIN32
 
 FilePath Options::urlopenerPath() const
