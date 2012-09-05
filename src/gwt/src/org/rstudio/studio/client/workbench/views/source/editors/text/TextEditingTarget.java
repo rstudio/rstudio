@@ -600,6 +600,14 @@ public class TextEditingTarget implements EditingTarget
                docUpdateSentinel_.changeFileType(
                      type.getTypeId(),
                      new SaveProgressIndicator(null, type, null));  
+               
+               Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+                  @Override
+                  public void execute()
+                  {
+                     focus(); 
+                  } 
+               });
             }
          });
       
