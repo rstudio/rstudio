@@ -89,6 +89,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          numSpacesForTab().setGlobalValue(
                newUiPrefs.numSpacesForTab().getGlobalValue());
    
+         // blinking cursor
+         blinkingCursor().setGlobalValue(
+               newUiPrefs.blinkingCursor().getGlobalValue());
+         
          // show margin
          showMargin().setGlobalValue(
                                  newUiPrefs.showMargin().getGlobalValue());

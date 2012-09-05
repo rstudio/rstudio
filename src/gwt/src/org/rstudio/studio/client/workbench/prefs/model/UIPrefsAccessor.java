@@ -67,6 +67,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_margin", false);
    }
 
+   public PrefValue<Boolean> blinkingCursor()
+   {
+      return bool("blinking_cursor", true);
+   }
+   
    public PrefValue<Integer> printMarginColumn()
    {
       return integer("print_margin_column", 80);

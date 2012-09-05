@@ -76,6 +76,10 @@ public class Renderer extends JavaScriptObject
    public native final void setShowIndentGuides(boolean show) /*-{
       this.setDisplayIndentGuides(show); 
    }-*/;
+   
+   public native final void setBlinkingCursor(boolean blinking) /*-{
+      this.$cursorLayer.setBlinking(blinking);
+   }-*/;
 
    public native final void setPadding(int padding) /*-{
       this.setPadding(padding);

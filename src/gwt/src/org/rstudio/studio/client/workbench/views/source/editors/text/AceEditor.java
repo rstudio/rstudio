@@ -1113,6 +1113,11 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().getRenderer().setShowIndentGuides(show);
    }
    
+   public void setBlinkingCursor(boolean blinking)
+   {
+      widget_.getEditor().getRenderer().setBlinkingCursor(blinking);
+   }
+   
    public void setShowPrintMargin(boolean on)
    {
       widget_.getEditor().getRenderer().setShowPrintMargin(on);
