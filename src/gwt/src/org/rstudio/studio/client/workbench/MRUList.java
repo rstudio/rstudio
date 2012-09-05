@@ -89,6 +89,30 @@ public class MRUList
    {
       mruList_.clear();
    }
+   
+   public String getQualifiedLabel(String mruEntry)
+   { 
+      // make a copy of the existing mru entries and prepend the specified
+      // entry if it doesn't exist. we need to do this because at startup
+      // the most recently loaded project may not be in the list yet
+      @SuppressWarnings("unchecked")
+      ArrayList<String> mruEntries = (ArrayList<String>)mruEntries_.clone();
+      if (!mruEntries.contains(mruEntry))
+         mruEntries.add(mruEntry);
+      
+      // save the index of the entry
+      int index = mruEntries.indexOf(mruEntry);
+      
+      // transform paths
+      for (int i=0; i<mruEntries.size(); i++)
+         mruEntries.set(i, transformMruEntryPath(mruEntries.get(i)));
+      
+      // generate labels
+      mruEntries = DuplicateHelper.getPathLabels(mruEntries, includeExt_);
+      
+      // return the label
+      return mruEntries.get(index);    
+   }
 
    private void updateCommands()
    {

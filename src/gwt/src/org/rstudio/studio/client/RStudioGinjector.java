@@ -19,6 +19,7 @@ import com.google.gwt.inject.client.Ginjector;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.studio.client.application.Application;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.ui.ProjectPopupMenu;
 import org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader;
 import org.rstudio.studio.client.application.ui.impl.WebApplicationHeader;
 import org.rstudio.studio.client.common.FileDialogs;
@@ -76,6 +77,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(ProjectPreferencesPane projectPrefsPane);
    void injectMembers(BuildToolsPackagePanel buildToolsPackagePanel);
    void injectMembers(CodeFilesList codeFilesList);
+   void injectMembers(ProjectPopupMenu projectPopupMenu);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

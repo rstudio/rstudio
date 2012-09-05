@@ -16,17 +16,22 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.projects.ProjectMRUList;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.inject.Inject;
 
 public class ProjectPopupMenu extends ToolbarPopupMenu
 {
    public ProjectPopupMenu(SessionInfo sessionInfo, Commands commands)
    {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      
       addItem(commands.newProject().createMenuItem(false));
       addSeparator();
       addItem(commands.openProject().createMenuItem(false));
@@ -52,13 +57,18 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       
    }
    
+   @Inject
+   void initialize(ProjectMRUList mruList)
+   {
+      mruList_ = mruList;
+   }
+   
    public ToolbarButton getToolbarButton()
    {
       if (toolbarButton_ == null)
       {
          String buttonText = activeProjectFile_ != null ?
-                  FileSystemItem.createFile(
-                        activeProjectFile_).getParentPath().getStem() :
+                  mruList_.getQualifiedLabel(activeProjectFile_) :
                   "Project: (None)";
           
          toolbarButton_ = new ToolbarButton(
@@ -89,4 +99,5 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
                               (Resources) GWT.create(Resources.class);
    private final String activeProjectFile_;
    private ToolbarButton toolbarButton_ = null;
+   private ProjectMRUList mruList_ ;
 }
