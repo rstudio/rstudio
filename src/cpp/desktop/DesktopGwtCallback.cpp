@@ -400,6 +400,8 @@ void GwtCallback::openMinimalWindow(QString name,
       browser = new BrowserWindow(false, true);
       browser->setAttribute(Qt::WA_DeleteOnClose);
       browser->setAttribute(Qt::WA_QuitOnClose, false);
+      browser->connect(browser->webView(), SIGNAL(onCloseWindowShortcut()),
+                       browser, SLOT(onCloseRequested()));
       if (named)
          windowTracker.addWindow(name, browser);
    }

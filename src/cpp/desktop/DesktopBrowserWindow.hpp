@@ -42,6 +42,8 @@ protected slots:
      virtual void onJavaScriptWindowObjectCleared() {}
      void printRequested(QWebFrame* frame);
 
+     void onCloseRequested();
+
 protected:
      void avoidMoveCursorIfNecessary();
 

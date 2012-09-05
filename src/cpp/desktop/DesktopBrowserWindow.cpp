@@ -66,6 +66,11 @@ void BrowserWindow::printRequested(QWebFrame* frame)
    dialog.exec();
 }
 
+void BrowserWindow::onCloseRequested()
+{
+   close();
+}
+
 void BrowserWindow::adjustTitle()
 {
    if (adjustTitle_)
