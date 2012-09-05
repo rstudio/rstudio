@@ -190,7 +190,7 @@
 	<key>CFBundleExecutable</key>
 	<string>RStudio</string>
 	<key>CFBundleGetInfoString</key>
-   <string>RStudio ${CPACK_PACKAGE_VERSION}, © 2009-2011 RStudio, Inc.</string>
+   <string>RStudio ${CPACK_PACKAGE_VERSION}, © 2009-2012 RStudio, Inc.</string>
 	<key>CFBundleIconFile</key>
 	<string>RStudio.icns</string>
 	<key>CFBundleIdentifier</key>
@@ -214,7 +214,7 @@
 	<key>LSRequiresCarbon</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
-  <string>RStudio ${CPACK_PACKAGE_VERSION}, © 2009-2011 RStudio, Inc.</string>
+  <string>RStudio ${CPACK_PACKAGE_VERSION}, © 2009-2012 RStudio, Inc.</string>
   <key>NSHighResolutionCapable</key>
   <true/>
 </dict>
