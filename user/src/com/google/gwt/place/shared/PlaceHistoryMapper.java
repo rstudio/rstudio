@@ -21,7 +21,7 @@ package com.google.gwt.place.shared;
  * <p>
  * You can annotate subinterfaces of PlaceHistoryMapper with
  * {@link WithTokenizers} to have their implementation automatically generated
- * via a call to {@link com.google.gwt.core.client.GWT#create(Class)}.
+ * via a call to {@link com.google.gwt.core.shared.GWT#create(Class)}.
  */
 public interface PlaceHistoryMapper {
 

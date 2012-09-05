@@ -15,7 +15,7 @@
  */
 package com.google.web.bindery.autobean.shared;
 
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.shared.GWT;
 
 /**
  * Provides reflection-based operation for server (JVM) implementation. There is

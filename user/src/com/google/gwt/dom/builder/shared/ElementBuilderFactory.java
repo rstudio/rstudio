@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dom.builder.shared;
 
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.shared.GWT;
 
 /**
  * Factory for creating element builders.

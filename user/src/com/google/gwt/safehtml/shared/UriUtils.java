@@ -15,7 +15,7 @@
  */
 package com.google.gwt.safehtml.shared;
 
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.shared.GWT;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.regexp.shared.RegExp;
 
