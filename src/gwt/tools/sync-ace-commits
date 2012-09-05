@@ -52,6 +52,12 @@ git fetch origin
 git fetch upstream
 
 # Point this to the upstream commit that we've tested
+# NOTE: the following commits have been merged by upstream
+# so should be removed the next time we sync:
+#
+#  origin/patch/eclipse-selectedword
+#  origin/patch/blinking-cursor
+#
 git checkout fc01cc624296c1b1be59b55ce03051fa29b5bd96
 
 git submodule update --init --recursive
