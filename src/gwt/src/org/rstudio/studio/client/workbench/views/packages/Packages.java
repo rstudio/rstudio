@@ -571,6 +571,17 @@ public class Packages
    {
       PackageStatus status = event.getPackageStatus();
       view_.setPackageStatus(status.getName(), status.isLoaded());
+      
+      // also update the list of allPackages_
+      for (int i = 0; i<allPackages_.size(); i++)
+      {
+         PackageInfo packageInfo = allPackages_.get(i);
+         if (packageInfo.getName().equals(status.getName()))
+         {
+            allPackages_.set(i, status.isLoaded() ? packageInfo.asLoaded() :
+                                                    packageInfo.asUnloaded());
+         }
+      }
    }
    
    private void setViewPackageList()
