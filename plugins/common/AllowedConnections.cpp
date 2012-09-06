@@ -80,8 +80,15 @@ std::string AllowedConnections::getCodeServerFromUrl(const std::string& url) {
   paramStart += 12;
 
   int colon = url.find(':', paramStart);
-  int variableEnd = url.find('&', paramStart);
+  // After navigation, the URL parameter could be encoded.
+  // ex: gwt.codesvr=127.0.0.1:9997 -> gwt.codesvr=127.0.0.1%3A9997.
+  int colonEncoded = url.find("%3A", paramStart);
+  if (colonEncoded != std::string::npos
+      && (colon == std::string::npos || colonEncoded < colon)) {
+    colon = colonEncoded;
+  }
 
+  int variableEnd = url.find('&', paramStart);
   if ( variableEnd == std::string::npos || colon < variableEnd) {
     variableEnd = colon; //could be std::string::npos!
   }
