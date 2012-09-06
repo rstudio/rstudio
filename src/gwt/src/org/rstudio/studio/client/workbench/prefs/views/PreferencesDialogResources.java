@@ -26,7 +26,6 @@ public interface PreferencesDialogResources extends ClientBundle
       String sshKeyWidget();
       String usingVcsHelp();
       String newSection();
-      String encodingChooser();
    }
 
    @Source("PreferencesDialog.css")
