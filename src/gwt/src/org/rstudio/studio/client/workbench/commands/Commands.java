@@ -53,6 +53,7 @@ public abstract class
    public abstract AppCommand insertSection();
    public abstract AppCommand executeCurrentChunk();
    public abstract AppCommand executeNextChunk();
+   public abstract AppCommand goToHelp();
    public abstract AppCommand goToFunctionDefinition();
    public abstract AppCommand sourceNavigateBack();
    public abstract AppCommand sourceNavigateForward();

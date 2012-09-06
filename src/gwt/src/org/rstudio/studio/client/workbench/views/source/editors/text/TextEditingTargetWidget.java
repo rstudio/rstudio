@@ -217,6 +217,7 @@ public class TextEditingTargetWidget
          ToolbarPopupMenu menu = new ToolbarPopupMenu();
          menu.addItem(commands_.codeCompletion().createMenuItem(false));
          menu.addSeparator();
+         menu.addItem(commands_.goToHelp().createMenuItem(false));
          menu.addItem(commands_.goToFunctionDefinition().createMenuItem(false));
          menu.addSeparator();
          menu.addItem(commands_.extractFunction().createMenuItem(false));

@@ -578,6 +578,11 @@ public class AceEditor implements DocDisplay,
       completionManager_.codeCompletion();
    }
    
+   public void goToHelp()
+   {
+      completionManager_.goToHelp();
+   }
+   
    public void goToFunctionDefinition()
    {
       completionManager_.goToFunctionDefinition();

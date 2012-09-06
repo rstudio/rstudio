@@ -117,12 +117,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
             {
                if (event.getKeyCode() == 112) // F1
                {
-                  InputEditorLineWithCursorPosition linePos = 
-                        InputEditorUtil.getLineWithCursorPosition(docDisplay);
-              
-                  server.getHelpAtCursor(
-                     linePos.getLine(), linePos.getPosition(),
-                     new SimpleRequestCallback<Void>("Help"));  
+                  goToHelp();
                }
                else if (event.getKeyCode() == 113) // F2
                {
@@ -131,6 +126,17 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
             }
             
             return false;
+         }
+         
+         @Override
+         public void goToHelp()
+         {
+            InputEditorLineWithCursorPosition linePos = 
+                  InputEditorUtil.getLineWithCursorPosition(docDisplay);
+        
+            server.getHelpAtCursor(
+               linePos.getLine(), linePos.getPosition(),
+               new SimpleRequestCallback<Void>("Help")); 
          }
          
          @Override

@@ -1807,6 +1807,12 @@ public class TextEditingTarget implements EditingTarget
    {
       docDisplay_.codeCompletion();
    }
+   
+   @Handler
+   void onGoToHelp()
+   {
+      docDisplay_.goToHelp();
+   } 
 
    @Handler
    void onGoToFunctionDefinition()
