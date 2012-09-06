@@ -79,6 +79,7 @@ public abstract class
    public abstract AppCommand unfold();
    public abstract AppCommand foldAll();
    public abstract AppCommand unfoldAll();
+   public abstract AppCommand jumpToMatching();
    public abstract AppCommand extractFunction();
    public abstract AppCommand commentUncomment();
    public abstract AppCommand reindent();

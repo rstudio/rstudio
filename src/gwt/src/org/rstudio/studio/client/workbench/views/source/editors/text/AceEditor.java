@@ -1291,6 +1291,12 @@ public class AceEditor implements DocDisplay,
    }
 
    @Override
+   public void jumpToMatching()
+   {
+      widget_.getEditor().jumpToMatching();
+   }
+   
+   @Override
    public SourcePosition findFunctionPositionFromCursor(String functionName)
    {
       Scope func =

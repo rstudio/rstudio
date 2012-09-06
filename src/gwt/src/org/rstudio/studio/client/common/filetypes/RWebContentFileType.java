@@ -57,6 +57,7 @@ public class RWebContentFileType extends TextFileType
       if (isMarkdown_)
          result.add(commands.markdownHelp());
       result.add(commands.jumpTo());
+      result.add(commands.jumpToMatching());
       result.add(commands.goToHelp());
       result.add(commands.goToFunctionDefinition());
       return result;

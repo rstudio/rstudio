@@ -412,6 +412,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="unfold" value="Shift+Alt+L" />
       <shortcut refid="foldAll" value="Alt+A" />
       <shortcut refid="unfoldAll" value="Shift+Alt+A"/> 
+      <shortcut refid="jumpToMatching" value="Ctrl+P"/>
       <shortcut refid="buildAll" value="Cmd+Shift+B"/>
       <shortcut refid="devtoolsLoadAll" value="Cmd+Shift+L"/>
       <shortcut refid="checkPackage" value="Cmd+Shift+E"/>
@@ -650,6 +651,9 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Collapse All"/>
    <cmd id="unfoldAll"
         menuLabel="Expand All"/>
+   <cmd id="jumpToMatching"
+        menuLabel="Jump To _Matching"
+        desc="Jump to matching brace or paren"/>
    <cmd id="executeAllCode"
         buttonLabel=""
         menuLabel="Run _All"

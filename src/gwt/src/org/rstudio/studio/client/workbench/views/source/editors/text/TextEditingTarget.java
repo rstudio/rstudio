@@ -1337,6 +1337,12 @@ public class TextEditingTarget implements EditingTarget
          }
       });
    }
+   
+   @Handler
+   void onJumpToMatching()
+   {
+      docDisplay_.jumpToMatching();
+   }
 
    @Handler
    void onCommentUncomment()
