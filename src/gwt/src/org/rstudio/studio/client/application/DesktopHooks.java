@@ -21,6 +21,7 @@ import org.rstudio.core.client.js.JsObjectInjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
+import org.rstudio.studio.client.application.events.SuicideEvent;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -140,6 +141,10 @@ public class DesktopHooks
       commands_.quitSession().execute();
    }
   
+   void notifyRCrashed()
+   {
+      events_.fireEvent(new SuicideEvent(""));
+   }
    
    int getSaveAction()
    {

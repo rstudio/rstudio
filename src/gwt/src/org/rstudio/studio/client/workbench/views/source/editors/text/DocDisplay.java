@@ -68,6 +68,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void focus();
    void print();
    void codeCompletion();
+   void goToHelp();
    void goToFunctionDefinition();
    String getSelectionValue();
    String getCurrentLine();
@@ -157,6 +158,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void foldAll();
    void unfoldAll();
    void toggleFold();
+   
+   void jumpToMatching();
 
    HandlerRegistration addUndoRedoHandler(UndoRedoHandler handler);
    JavaScriptObject getCleanStateToken();

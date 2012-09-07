@@ -235,6 +235,19 @@ public class ApplicationQuit implements SaveActionChangedHandler,
          @Override
          public void execute()
          {
+            // this codepath is for when the user quits R using the q() 
+            // function -- in this case our standard client quit codepath
+            // isn't invoked, and as a result the desktop is not notified
+            // that there is a pending quit (so thinks R has crashed when
+            // the process exits). since this codepath is only for the quit
+            // case (and not the restart or restart and reload cases)
+            // we can set the pending quit bit here
+            if (Desktop.isDesktop())
+            {
+               Desktop.getFrame().setPendingQuit(
+                        DesktopFrame.PENDING_QUIT_AND_EXIT);
+            }
+            
             server_.handleUnsavedChangesCompleted(
                                           handled_, 
                                           new VoidServerRequestCallback());  
@@ -294,7 +307,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    public void onSuspendAndRestart(final SuspendAndRestartEvent event)
    {
       // set restart pending for desktop
-      setPendingRestart(DesktopFrame.PENDING_RESTART_ONLY);
+      setPendinqQuit(DesktopFrame.PENDING_QUIT_AND_RESTART);
       
       ProgressIndicator progress = new GlobalProgressDelayer(
                                              globalDisplay_,
@@ -313,16 +326,16 @@ public class ApplicationQuit implements SaveActionChangedHandler,
          @Override
          protected void onFailure()
          {
-            setPendingRestart(DesktopFrame.PENDING_RESTART_NONE);
+            setPendinqQuit(DesktopFrame.PENDING_QUIT_NONE);
          }
       });    
       
    } 
    
-   private void setPendingRestart(int pendingRestart)
+   private void setPendinqQuit(int pendingQuit)
    {
       if (Desktop.isDesktop())
-         Desktop.getFrame().setPendingRestart(pendingRestart);
+         Desktop.getFrame().setPendingQuit(pendingQuit);
    }
    
    private void sendPing(final String afterRestartCommand,
@@ -475,11 +488,12 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                // All last chance save operations have completed (or possibly
                // failed). Now do the real quit.
 
-               // if a switch to project path is defined then set it
-               if (Desktop.isDesktop() && (switchToProject_ != null))
+               // notify the desktop frame that we are about to quit
+               if (Desktop.isDesktop())
                {
-                  Desktop.getFrame().setPendingRestart(
-                                    DesktopFrame.PENDING_RESTART_AND_RELOAD);
+                  Desktop.getFrame().setPendingQuit(switchToProject_ != null ?
+                           DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD :
+                           DesktopFrame.PENDING_QUIT_AND_EXIT);   
                }
                
                server_.quitSession(
@@ -504,8 +518,8 @@ public class ApplicationQuit implements SaveActionChangedHandler,
 
                         if (Desktop.isDesktop())
                         {
-                           Desktop.getFrame().setPendingRestart(
-                                         DesktopFrame.PENDING_RESTART_NONE);
+                           Desktop.getFrame().setPendingQuit(
+                                         DesktopFrame.PENDING_QUIT_NONE);
                         }
                      }
                   });

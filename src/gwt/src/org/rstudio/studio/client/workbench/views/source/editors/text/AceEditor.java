@@ -578,6 +578,11 @@ public class AceEditor implements DocDisplay,
       completionManager_.codeCompletion();
    }
    
+   public void goToHelp()
+   {
+      completionManager_.goToHelp();
+   }
+   
    public void goToFunctionDefinition()
    {
       completionManager_.goToFunctionDefinition();
@@ -1285,6 +1290,12 @@ public class AceEditor implements DocDisplay,
       getSession().toggleFold();
    }
 
+   @Override
+   public void jumpToMatching()
+   {
+      widget_.getEditor().jumpToMatching();
+   }
+   
    @Override
    public SourcePosition findFunctionPositionFromCursor(String functionName)
    {

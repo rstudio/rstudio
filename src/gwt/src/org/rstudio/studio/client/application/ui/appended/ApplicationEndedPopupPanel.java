@@ -31,6 +31,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.widget.CenterPanel;
 import org.rstudio.core.client.widget.FocusHelper;
+import org.rstudio.studio.client.application.Desktop;
 
 public class ApplicationEndedPopupPanel extends PopupPanel
 {
@@ -41,9 +42,10 @@ public class ApplicationEndedPopupPanel extends PopupPanel
    
    public static void showSuicide(String reason)
    {
-      String description = "<p>R encoutered a fatal error: " + reason + "</p>" +
-                           "The session was terminated.";
-
+      String description = "<p>R encoutered a fatal error";
+      if (reason.length() > 0)
+         description += ": " + reason;
+      description += "</p>The session was terminated.";
       asyncShow(SUICIDE, description, null);
    }
    
@@ -108,6 +110,7 @@ public class ApplicationEndedPopupPanel extends PopupPanel
       super(false, false);
       setStylePrimaryName(RESOURCES.styles().applicationEndedPopupPanel());
       setGlassEnabled(true);
+      setGlassStyleName(RESOURCES.styles().glass());
       
       // main panel
       HorizontalPanel horizontalPanel = new HorizontalPanel(); 
@@ -197,12 +200,20 @@ public class ApplicationEndedPopupPanel extends PopupPanel
    
    private void reloadApplication()
    {
-      Window.Location.reload();
+      if (Desktop.isDesktop())
+      {
+         Desktop.getFrame().launchSession(true);
+      }
+      else
+      {
+         Window.Location.reload();
+      }
    }
       
    static interface Styles extends CssResource
    {
       String applicationEndedPopupPanel();
+      String glass();
       String mainPanel();
       String contentPanel();
       String captionLabel();

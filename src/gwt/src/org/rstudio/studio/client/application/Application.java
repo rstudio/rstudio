@@ -441,6 +441,8 @@ public class Application implements ApplicationEventHandlers
                {
                   if (Desktop.isDesktop())
                   {
+                     Desktop.getFrame().setPendingQuit(
+                                       DesktopFrame.PENDING_QUIT_AND_EXIT);
                      server_.quitSession(false,
                                          null,
                                          new SimpleRequestCallback<Void>());

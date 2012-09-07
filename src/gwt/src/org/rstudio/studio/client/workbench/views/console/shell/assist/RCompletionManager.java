@@ -158,6 +158,16 @@ public class RCompletionManager implements CompletionManager
          beginSuggest(true, false);
    }
    
+   public void goToHelp()
+   {
+      InputEditorLineWithCursorPosition linePos = 
+            InputEditorUtil.getLineWithCursorPosition(input_);
+
+      server_.getHelpAtCursor(
+            linePos.getLine(), linePos.getPosition(),
+            new SimpleRequestCallback<Void>("Help"));
+   }
+   
    public void goToFunctionDefinition()
    {   
       // determine current line and cursor position
@@ -263,12 +273,7 @@ public class RCompletionManager implements CompletionManager
          else if (event.getKeyCode() == 112 // F1
                   && modifier == KeyboardShortcut.NONE)
          {
-            InputEditorLineWithCursorPosition linePos = 
-                        InputEditorUtil.getLineWithCursorPosition(input_);
-           
-            server_.getHelpAtCursor(
-                  linePos.getLine(), linePos.getPosition(),
-                  new SimpleRequestCallback<Void>("Help"));
+            goToHelp();
          }
          else if (event.getKeyCode() == 113 // F2
                   && modifier == KeyboardShortcut.NONE)

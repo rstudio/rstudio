@@ -54,6 +54,8 @@ public class RFileType extends TextFileType
    {
       HashSet<AppCommand> result = super.getSupportedCommands(commands);
       result.add(commands.jumpTo());
+      result.add(commands.jumpToMatching());
+      result.add(commands.goToHelp());
       result.add(commands.goToFunctionDefinition());
       result.add(commands.insertSection());
       result.add(commands.codeCompletion());

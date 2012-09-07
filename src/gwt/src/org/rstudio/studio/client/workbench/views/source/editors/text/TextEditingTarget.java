@@ -1337,6 +1337,12 @@ public class TextEditingTarget implements EditingTarget
          }
       });
    }
+   
+   @Handler
+   void onJumpToMatching()
+   {
+      docDisplay_.jumpToMatching();
+   }
 
    @Handler
    void onCommentUncomment()
@@ -1807,6 +1813,12 @@ public class TextEditingTarget implements EditingTarget
    {
       docDisplay_.codeCompletion();
    }
+   
+   @Handler
+   void onGoToHelp()
+   {
+      docDisplay_.goToHelp();
+   } 
 
    @Handler
    void onGoToFunctionDefinition()

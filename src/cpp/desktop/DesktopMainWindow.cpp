@@ -28,6 +28,7 @@
 #include "DesktopOptions.hpp"
 #include "DesktopSlotBinders.hpp"
 #include "DesktopUtils.hpp"
+#include "DesktopSessionLauncher.hpp"
 
 using namespace core;
 
@@ -38,6 +39,7 @@ MainWindow::MainWindow(QUrl url) :
       menuCallback_(this),
       gwtCallback_(this, this),
       updateChecker_(this),
+      pSessionLauncher_(NULL),
       pCurrentSessionProcess_(NULL)
 {
    quitConfirmed_ = false;
@@ -95,6 +97,22 @@ QString MainWindow::getSumatraPdfExePath()
    QString sumatraPath = pMainFrame->evaluateJavaScript(QString::fromAscii(
                     "window.desktopHooks.getSumatraPdfExePath()")).toString();
    return sumatraPath;
+}
+
+void MainWindow::launchSession(bool reload)
+{
+   Error error = pSessionLauncher_->launchNextSession(reload);
+   if (error)
+   {
+      LOG_ERROR(error);
+
+      showMessageBox(QMessageBox::Critical,
+                     this,
+                     QString::fromUtf8("RStudio"),
+                     QString::fromUtf8("The R session failed to start."));
+
+      quit();
+   }
 }
 
 void MainWindow::onCloseWindowShortcut()
@@ -180,6 +198,12 @@ void MainWindow::manageCommand(QString cmdId, QAction* action)
          QString::fromAscii("window.desktopHooks.getCommandLabel('") + cmdId + QString::fromAscii("')")).toString());
 }
 
+void MainWindow::evaluateJavaScript(QString jsCode)
+{
+   QWebFrame* pMainFrame = webView()->page()->mainFrame();
+   pMainFrame->evaluateJavaScript(jsCode);
+}
+
 void MainWindow::closeEvent(QCloseEvent* pEvent)
 {
    QWebFrame* pFrame = webView()->page()->mainFrame();
@@ -248,15 +272,20 @@ void MainWindow::onPdfViewerSyncSource(QString srcFile, int line, int column)
 
 // private interface for SessionLauncher
 
+void MainWindow::setSessionLauncher(SessionLauncher* pSessionLauncher)
+{
+   pSessionLauncher_ = pSessionLauncher;
+}
+
 void MainWindow::setSessionProcess(QProcess* pSessionProcess)
 {
    pCurrentSessionProcess_ = pSessionProcess;
 }
 
 // allow SessionLauncher to collect restart requests from GwtCallback
-int MainWindow::collectPendingRestartRequest()
+int MainWindow::collectPendingQuitRequest()
 {
-   return gwtCallback_.collectPendingRestartRequest();
+   return gwtCallback_.collectPendingQuitRequest();
 }
 
 bool MainWindow::desktopHooksAvailable()

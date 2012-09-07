@@ -215,6 +215,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
    
    @Handler
+   void onGoToHelp()
+   {
+      docDisplay_.goToHelp();
+   } 
+   
+   @Handler
    void onGoToFunctionDefinition()
    {
       docDisplay_.goToFunctionDefinition();
@@ -299,6 +305,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
       commands.add(commands_.findReplace());
       commands.add(commands_.findNext());
       commands.add(commands_.findPrevious());
+      commands.add(commands_.goToHelp());
       commands.add(commands_.goToFunctionDefinition());
       return commands;
    }

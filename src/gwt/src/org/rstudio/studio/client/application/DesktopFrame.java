@@ -79,11 +79,13 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void cleanClipboard();
    
-   public static final int PENDING_RESTART_NONE = 0;
-   public static final int PENDING_RESTART_ONLY = 1;
-   public static final int PENDING_RESTART_AND_RELOAD = 2;
+   public static final int PENDING_QUIT_NONE = 0;
+   public static final int PENDING_QUIT_AND_EXIT = 1;
+   public static final int PENDING_QUIT_AND_RESTART = 2;
+   public static final int PENDING_QUIT_RESTART_AND_RELOAD = 3;
    
-   void setPendingRestart(int pendingRestart);
+   void setPendingQuit(int pendingQuit);
+   void launchSession(boolean reload);
    
    void openProjectInNewWindow(String projectFilePath);
    

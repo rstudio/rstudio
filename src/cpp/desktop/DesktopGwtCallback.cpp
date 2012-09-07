@@ -55,7 +55,7 @@ GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtCallbackOwner* pOwner)
    : pMainWindow_(pMainWindow),
      pOwner_(pOwner),
      pSynctex_(NULL),
-     pendingRestart_(PendingRestartNone)
+     pendingQuit_(PendingQuitNone)
 {
 }
 
@@ -738,22 +738,22 @@ void GwtCallback::cleanClipboard(bool stripHtml)
 
 #endif
 
-void GwtCallback::setPendingRestart(int pendingRestart)
+void GwtCallback::setPendingQuit(int pendingQuit)
 {
-   pendingRestart_ = pendingRestart;
+   pendingQuit_ = pendingQuit;
 }
 
-int GwtCallback::collectPendingRestartRequest()
+int GwtCallback::collectPendingQuitRequest()
 {
-   if (pendingRestart_ != PendingRestartNone)
+   if (pendingQuit_ != PendingQuitNone)
    {
-      int pendingRestart = pendingRestart_;
-      pendingRestart_ = PendingRestartNone;
-      return pendingRestart;
+      int pendingQuit = pendingQuit_;
+      pendingQuit_ = PendingQuitNone;
+      return pendingQuit;
    }
    else
    {
-      return PendingRestartNone;
+      return PendingQuitNone;
    }
 }
 
@@ -899,6 +899,11 @@ void GwtCallback::externalSynctexView(const QString& pdfFile,
    synctex().syncView(resolveAliasedPath(pdfFile),
                       resolveAliasedPath(srcFile),
                       QPoint(line, column));
+}
+
+void GwtCallback::launchSession(bool reload)
+{
+   pMainWindow_->launchSession(reload);
 }
 
 } // namespace desktop

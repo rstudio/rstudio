@@ -80,6 +80,7 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
    //QNetworkProxyFactory::setApplicationProxyFactory(pProxyFactory);
 
    pMainWindow_ = new MainWindow(url);
+   pMainWindow_->setSessionLauncher(this);
    pMainWindow_->setSessionProcess(pRSessionProcess_);
    pAppLaunch->setActivationWindow(pMainWindow_);
 
@@ -110,7 +111,7 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
 
    pMainWindow_->connect(pRSessionProcess_,
                          SIGNAL(finished(int,QProcess::ExitStatus)),
-                         this, SLOT(onRSessionExited()));
+                         this, SLOT(onRSessionExited(int,QProcess::ExitStatus)));
 
 
 
@@ -121,24 +122,44 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
    return Success();
 }
 
-
-void SessionLauncher::onRSessionExited()
+void SessionLauncher::closeAllSatillites()
 {
-   int pendingRestart = pMainWindow_->collectPendingRestartRequest();
-   if (pendingRestart != PendingRestartNone)
+   QWidgetList topLevels = QApplication::topLevelWidgets();
+   for (int i = 0; i < topLevels.size(); i++)
+   {
+      QWidget* pWindow = topLevels.at(i);
+      if (pWindow != pMainWindow_)
+        pWindow->close();
+   }
+}
+
+
+void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
+{
+   int pendingQuit = pMainWindow_->collectPendingQuitRequest();
+
+   // if there was no pending quit set then this is a crash
+   if (pendingQuit == PendingQuitNone)
+   {
+      closeAllSatillites();
+
+      pMainWindow_->evaluateJavaScript(
+               QString::fromAscii("window.desktopHooks.notifyRCrashed()"));
+   }
+
+   // quit and exit means close the main window
+   else if (pendingQuit == PendingQuitAndExit)
+   {
+      pMainWindow_->quit();
+   }
+
+   // otherwise this is a restart so we need to launch the next session
+   else
    {
       // close all satellite windows if we are reloading
-      bool reload = (pendingRestart == PendingRestartAndReload);
+      bool reload = (pendingQuit == PendingQuitRestartAndReload);
       if (reload)
-      {
-         QWidgetList topLevels = QApplication::topLevelWidgets();
-         for (int i = 0; i < topLevels.size(); i++)
-         {
-            QWidget* pWindow = topLevels.at(i);
-            if (pWindow != pMainWindow_)
-              pWindow->close();
-         }
-      }
+         closeAllSatillites();
 
       // launch next session
       Error error = launchNextSession(reload);
@@ -153,10 +174,6 @@ void SessionLauncher::onRSessionExited()
 
          pMainWindow_->quit();
       }
-   }
-   else
-   {
-      pMainWindow_->quit();
    }
 }
 
@@ -197,7 +214,7 @@ Error SessionLauncher::launchNextSession(bool reload)
    // connect to quit event
    pMainWindow_->connect(pRSessionProcess_,
                          SIGNAL(finished(int,QProcess::ExitStatus)),
-                         this, SLOT(onRSessionExited()));
+                         this, SLOT(onRSessionExited(int,QProcess::ExitStatus)));
 
    if (reload)
    {

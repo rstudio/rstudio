@@ -118,8 +118,9 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="insertSection"/>
          <separator/>
          <cmd refid="jumpTo"/>
-         <separator/>
          <cmd refid="goToFileFunction"/>
+         <separator/>
+         <cmd refid="goToHelp"/>
          <cmd refid="goToFunctionDefinition"/>
          <separator/>
          <cmd refid="extractFunction"/>
@@ -411,6 +412,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="unfold" value="Shift+Alt+L" />
       <shortcut refid="foldAll" value="Alt+A" />
       <shortcut refid="unfoldAll" value="Shift+Alt+A"/> 
+      <shortcut refid="jumpToMatching" value="Ctrl+P"/>
       <shortcut refid="buildAll" value="Cmd+Shift+B"/>
       <shortcut refid="devtoolsLoadAll" value="Cmd+Shift+L"/>
       <shortcut refid="checkPackage" value="Cmd+Shift+E"/>
@@ -585,7 +587,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="hideToolbar"
         menuLabel="Hide _Toolbar"/>
    <cmd id="goToFileFunction"
-        menuLabel="Go to File/F_unction..."/>   
+        menuLabel="Go To File/F_unction..."/>   
    <cmd id="activateSource"
         menuLabel="Move Cursor to Sou_rce"/>
    <cmd id="activateConsole"
@@ -649,6 +651,9 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Collapse All"/>
    <cmd id="unfoldAll"
         menuLabel="Expand All"/>
+   <cmd id="jumpToMatching"
+        menuLabel="Jump To _Matching"
+        desc="Jump to matching brace or paren"/>
    <cmd id="executeAllCode"
         buttonLabel=""
         menuLabel="Run _All"
@@ -681,9 +686,12 @@ well as menu structures (for main menu and popup menus).
    <cmd id="executeNextChunk"
         menuLabel="Run _Next Chunk"
         desc="Run the next code chunk"/>
+   <cmd id ="goToHelp"
+        menuLabel="Go To _Help"
+        desc="Go to help for the currently selected function"/>
    <cmd id ="goToFunctionDefinition"
         menuLabel="_Go To Function Definition"
-        desc="Go to to the definition of the currently highlighted function"/>
+        desc="Go to to the definition of the currently selected function"/>
    <cmd id="codeCompletion"
         menuLabel="Code Completion"
         desc="Show code completions at the current cursor location"/>
