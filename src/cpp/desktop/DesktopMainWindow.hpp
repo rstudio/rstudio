@@ -23,6 +23,8 @@
 
 namespace desktop {
 
+class SessionLauncher;
+
 class MainWindow : public GwtWindow
 {
    Q_OBJECT
@@ -32,6 +34,8 @@ public:
 
 public:
    QString getSumatraPdfExePath();
+   void evaluateJavaScript(QString jsCode);
+   void launchSession(bool reload);
 
 public slots:
    void quit();
@@ -60,12 +64,16 @@ protected:
 private:
    friend class SessionLauncher;
 
+   // allow SessionLauncher to give us a reference to itself (so we can
+   // call launchProcess back on it)
+   void setSessionLauncher(SessionLauncher* pSessionLauncher);
+
    // allow SessionLauncher to give us a reference to the currently
    // active rsession process so that we can use it in closeEvent handling
    void setSessionProcess(QProcess* pSessionProcess);
 
    // allow SessionLauncher to collect restart requests from GwtCallback
-   int collectPendingRestartRequest();
+   int collectPendingQuitRequest();
 
    bool desktopHooksAvailable();
 
@@ -76,6 +84,7 @@ private:
    MenuCallback menuCallback_;
    GwtCallback gwtCallback_;
    UpdateChecker updateChecker_;
+   SessionLauncher* pSessionLauncher_;
    QProcess* pCurrentSessionProcess_;
 };
 

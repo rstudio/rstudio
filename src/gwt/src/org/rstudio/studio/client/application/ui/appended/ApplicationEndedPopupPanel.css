@@ -4,6 +4,13 @@
    z-index: 1001;
 }
 
+.glass {
+   background-color: black;
+   filter: literal("alpha(opacity = 15)") !important;
+   opacity: 0.15; /* non-IE */
+   z-index: 1000;
+}
+
 .mainPanel {
    width: 530px;
    height: 350px;

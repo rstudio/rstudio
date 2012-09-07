@@ -50,10 +50,12 @@ public:
    void cleanupAtExit();
 
 public slots:
-   void onRSessionExited();
+   void onRSessionExited(int exitCode, QProcess::ExitStatus exitStatus);
    void onReloadFrameForNextSession();
 
 private:
+
+   void closeAllSatillites();
 
    core::Error launchSession(const QStringList& argList,
                              QProcess** ppRSessionProcess);
