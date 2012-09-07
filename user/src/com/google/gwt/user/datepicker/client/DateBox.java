@@ -38,6 +38,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HasEnabled;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -65,7 +66,7 @@ import java.util.Date;
  * {@example com.google.gwt.examples.DateBoxExample}
  * </p>
  */
-public class DateBox extends Composite implements HasValue<Date>,
+public class DateBox extends Composite implements HasEnabled, HasValue<Date>,
     IsEditor<LeafValueEditor<Date>> {
   /**
    * Default {@link DateBox.Format} class. The date is first parsed using the
@@ -384,6 +385,13 @@ public class DateBox extends Composite implements HasValue<Date>,
    */
   public boolean isDatePickerShowing() {
     return popup.isShowing();
+  }
+
+  /**
+   * Returns true if the date box is enabled, false if not.
+   */
+  public boolean isEnabled() {
+    return box.isEnabled();
   }
 
   /**
