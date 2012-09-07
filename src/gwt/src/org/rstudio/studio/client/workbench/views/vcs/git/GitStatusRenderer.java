@@ -76,10 +76,44 @@ public class GitStatusRenderer implements SafeHtmlRenderer<String>
 
    private String descForStatus(String str)
    {
-      // We could provide a suitable tooltip value for status here
-      return "";
+      String indexDesc = descForStatus(str.charAt(0));
+      String treeDesc = descForStatus(str.charAt(1));
+      
+      if (indexDesc.length() > 0 && treeDesc.length() > 0)
+         return indexDesc + "/" + treeDesc;
+      else if (indexDesc.length() > 0)
+         return indexDesc;
+      else if (treeDesc.length() > 0)
+         return treeDesc;
+      else
+         return "";
    }
 
+   private String descForStatus(char c)
+   {
+      switch (c)
+      {
+         case 'A':
+            return "Added";
+         case 'M':
+            return "Modified";
+         case 'D':
+            return "Deleted";
+         case 'R':
+            return "Renamed";
+         case 'C':
+            return "Copied";
+         case '?':
+            return "Untracked";
+         case 'U':
+            return "Unmerged";
+         case ' ':
+            return "";
+         default:
+            return "";
+      }
+   }
+   
    private ImageResource imgForStatus(char c)
    {
       switch (c)

@@ -83,10 +83,40 @@ public class SVNStatusRenderer implements SafeHtmlRenderer<String>
 
    private String descForStatus(String str)
    {
-      // We could provide a suitable tooltip value for status here
-      return "";
+      char c = str.charAt(0);
+      
+      switch (c)
+      {
+         case 'A':
+            return "Added";
+         case 'C':
+            return "Conflicted";
+         case 'D':
+            return "Deleted";
+         case 'X':
+            return "External";
+         case 'I':
+            return "Ignored";
+         case '!':
+            return "Missing";
+//         case 'G':
+//            return resources_.statusMerged();
+         case 'M':
+            return "Modified";
+         case ' ':
+            return "";
+         case '~':
+            return "Obstructed";
+         case '?':
+            return "Unversioned";
+         default:
+            return "";
+      }
+      
    }
 
+  
+   
    private ImageResource imgForStatus(char c)
    {
       switch (c)
