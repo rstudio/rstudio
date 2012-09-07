@@ -122,6 +122,8 @@
       <arg value="com.google.web.bindery.requestfactory.shared.BoxesAndPrimitivesTest.Factory" />
       <arg value="com.google.web.bindery.requestfactory.shared.ComplexKeysTest.Factory" />
       <arg value="com.google.web.bindery.requestfactory.shared.LocatorTest.Factory" />
+      <arg value="com.google.web.bindery.requestfactory.shared.MultipleFactoriesTest.Factory1" />
+      <arg value="com.google.web.bindery.requestfactory.shared.MultipleFactoriesTest.Factory2" />
       <arg value="com.google.web.bindery.requestfactory.shared.ServiceInheritanceTest$Factory" />
       <arg value="com.google.web.bindery.requestfactory.shared.SimpleRequestFactory" />
     </java>
