@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.HelpButton;
@@ -24,8 +25,10 @@ import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.DomEvent;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
@@ -69,6 +72,16 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
       defaultSweaveEngine_.setValue(config.getDefaultSweaveEngine());
       defaultLatexProgram_.setValue(config.getDefaultLatexProgram());
       rootDoc_.setText(config.getRootDocument());
+      
+      // workaround qt crash on mac desktop
+      if (BrowseCap.isMacintoshDesktop())
+      {
+         DomEvent.fireNativeEvent(Document.get().createChangeEvent(), 
+                                  defaultSweaveEngine_.getListBox());
+         
+         DomEvent.fireNativeEvent(Document.get().createChangeEvent(), 
+                                  defaultLatexProgram_.getListBox());
+      }
    }
    
    @Override

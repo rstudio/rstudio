@@ -12,11 +12,14 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.event.dom.client.DomEvent;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -157,6 +160,16 @@ public class CompilePdfPreferencesPane extends PreferencesPane
                             UIPrefsAccessor.PDF_PREVIEW_SYSTEM);
       
       pdfPreview_.setValue(prefs_.pdfPreview().getValue());
+      
+      // workaround qt crash on mac desktop
+      if (BrowseCap.isMacintoshDesktop())
+      {
+         DomEvent.fireNativeEvent(Document.get().createChangeEvent(), 
+                                  defaultSweaveEngine_.getListBox());
+         
+         DomEvent.fireNativeEvent(Document.get().createChangeEvent(), 
+                                  defaultLatexProgram_.getListBox());
+      }
    }
    
    @Override
