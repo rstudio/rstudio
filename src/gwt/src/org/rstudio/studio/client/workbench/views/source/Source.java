@@ -1246,6 +1246,7 @@ public class Source implements InsertSourceHandler,
                public void onError(ServerError error)
                {
                   dismissProgress.execute();
+                  pMruList_.get().remove(file.getPath());
                   Debug.logError(error);
                   if (resultCallback != null)
                      resultCallback.onFailure(error);
