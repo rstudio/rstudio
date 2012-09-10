@@ -24,7 +24,6 @@ import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Triad;
-import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.layout.DualWindowLayoutPanel;
 import org.rstudio.core.client.layout.LogicalWindow;
@@ -255,7 +254,6 @@ public class PaneManager
 
    public void activateTab(Tab tab)
    {
-      WindowEx.get().focus();
       tabToPanel_.get(tab).selectTab(tabToIndex_.get(tab));
    }
 

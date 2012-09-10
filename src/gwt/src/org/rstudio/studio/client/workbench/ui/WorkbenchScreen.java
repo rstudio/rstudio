@@ -54,6 +54,7 @@ import org.rstudio.studio.client.workbench.ui.PaneManager.Tab;
 import org.rstudio.studio.client.workbench.views.edit.Edit;
 import org.rstudio.studio.client.workbench.views.edit.Edit.Shim;
 import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
+import org.rstudio.studio.client.workbench.views.help.events.ActivateHelpEvent;
 import org.rstudio.studio.client.workbench.views.plots.PlotsTab;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedHandler;
@@ -289,7 +290,11 @@ public class WorkbenchScreen extends Composite
    @Handler
    void onActivatePackages() { paneManager_.activateTab(Tab.Packages); }
    @Handler
-   void onActivateHelp() { paneManager_.activateTab(Tab.Help); }
+   void onActivateHelp() 
+   { 
+      paneManager_.activateTab(Tab.Help); 
+      eventBus_.fireEvent(new ActivateHelpEvent());
+   }
    @Handler
    void onActivateVcs() { paneManager_.activateTab(Tab.VCS); }
    @Handler

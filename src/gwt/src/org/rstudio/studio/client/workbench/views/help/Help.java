@@ -154,6 +154,8 @@ public class Help extends BasePresenter implements ShowHelpHandler
    // Home handled by Shim for activation from main menu context
    public void onHelpHome() { view_.bringToFront(); home(); }
    
+    
+   
    @Handler public void onHelpBack() { view_.back(); }
    @Handler public void onHelpForward() { view_.forward(); }
    @Handler public void onPrintHelp() { view_.print(); }
@@ -172,6 +174,12 @@ public class Help extends BasePresenter implements ShowHelpHandler
    {
       showHelp(event.getTopicUrl());
       view_.bringToFront();
+   }
+   
+   public void onActivateHelp(ActivateHelpEvent event)
+   {
+      view_.bringToFront();
+      view_.focus();
    }
 
    private void home()

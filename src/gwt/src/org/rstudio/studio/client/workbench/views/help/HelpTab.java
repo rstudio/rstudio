@@ -19,13 +19,16 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
+import org.rstudio.studio.client.workbench.views.help.events.ActivateHelpEvent;
+import org.rstudio.studio.client.workbench.views.help.events.ActivateHelpHandler;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpHandler;
 
 public class HelpTab extends DelayLoadWorkbenchTab<Help>
 {
    public abstract static class Shim extends DelayLoadTabShim<Help, HelpTab>
-                                     implements ShowHelpHandler
+                                     implements ShowHelpHandler,
+                                                ActivateHelpHandler
    {
       @Handler public abstract void onHelpHome();
    }
@@ -41,5 +44,6 @@ public class HelpTab extends DelayLoadWorkbenchTab<Help>
       super("Help", shim);
       binder.bind(commands, shim);
       events.addHandler(ShowHelpEvent.TYPE, shim);
+      events.addHandler(ActivateHelpEvent.TYPE, shim);
    }
 }

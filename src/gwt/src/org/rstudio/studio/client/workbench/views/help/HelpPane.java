@@ -197,6 +197,10 @@ public class HelpPane extends WorkbenchPane
          {
             e.preventDefault();
             e.stopPropagation();
+            
+            // since this is a shortcut handled by the main window
+            // we set focus to it
+            WindowEx.get().focus();
          }
          
       }
@@ -527,20 +531,6 @@ public class HelpPane extends WorkbenchPane
       navigated_ = true;
    }
      
-   @Override
-   public void bringToFront()
-   {
-      super.bringToFront();
-      focus();
-   }
-   
-   @Override
-   public void onSelected()
-   {
-      super.onSelected();
-      focus();
-   }
-   
    private void setLocation(final String url)
    {
       // allow subsequent calls to setLocation to override any previous 
