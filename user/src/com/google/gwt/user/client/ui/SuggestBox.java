@@ -97,11 +97,9 @@ import java.util.List;
  * <dd>the suggest box itself</dd>
  * </dl>
  *
- * TODO(pdr): Add SafeHtml support to this and implementing classes.
- *
  * @see SuggestOracle
  * @see MultiWordSuggestOracle
- * @see TextBoxBase
+ * @see ValueBoxBase
  */
 @SuppressWarnings("deprecation")
 public class SuggestBox extends Composite implements HasText, HasFocus,
@@ -666,7 +664,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   private String currentText;
   private LeafValueEditor<String> editor;
   private final SuggestionDisplay display;
-  private final TextBoxBase box;
+  private final ValueBoxBase<String> box;
   private final Callback callback = new Callback() {
     public void onSuggestionsReady(Request request, Response response) {
       // If disabled while request was in-flight, drop it
@@ -713,7 +711,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    *          text widget
    * @param box the text widget
    */
-  public SuggestBox(SuggestOracle oracle, TextBoxBase box) {
+  public SuggestBox(SuggestOracle oracle, ValueBoxBase<String> box) {
     this(oracle, box, new DefaultSuggestionDisplay());
   }
 
@@ -726,7 +724,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    * @param box the text widget
    * @param suggestDisplay the class used to display suggestions
    */
-  public SuggestBox(SuggestOracle oracle, TextBoxBase box,
+  public SuggestBox(SuggestOracle oracle, ValueBoxBase<String> box,
       SuggestionDisplay suggestDisplay) {
     this.box = box;
     this.display = suggestDisplay;
@@ -873,13 +871,26 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    * Get the text box associated with this suggest box.
    *
    * @return this suggest box's text box
+   * @throws ClassCastException if this suggest box's value box is not an
+   *     instance of TextBoxBase
+   * @deprecated in favour of getValueBox
    */
+  @Deprecated
   public TextBoxBase getTextBox() {
-    return box;
+    return (TextBoxBase) box;
   }
 
   public String getValue() {
     return box.getValue();
+  }
+
+  /**
+   * Get the ValueBoxBase associated with this suggest box.
+   *
+   * @return this suggest box's value box
+   */
+  public ValueBoxBase<String> getValueBox() {
+    return box;
   }
 
   /**
