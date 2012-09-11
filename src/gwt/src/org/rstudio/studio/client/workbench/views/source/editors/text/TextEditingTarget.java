@@ -1574,8 +1574,19 @@ public class TextEditingTarget implements EditingTarget
 
       executeRange(selectionRange);
       
-      if (!docDisplay_.moveSelectionToNextLine(true))
-         docDisplay_.moveSelectionToBlankLine();
+      // if the end of the selection is at column 0 then just collapse
+      // the selection to it (because if we advance we'd be skipping
+      // a line of code)
+      if (!selectionRange.isEmpty() &&
+          (selectionRange.getEnd().getColumn() == 0))
+      {
+         docDisplay_.collapseSelection(false);
+      }
+      else
+      {
+         if (!docDisplay_.moveSelectionToNextLine(true))
+            docDisplay_.moveSelectionToBlankLine();
+      }
    }
 
    private void executeRange(Range range)
