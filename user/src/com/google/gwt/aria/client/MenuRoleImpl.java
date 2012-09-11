@@ -48,7 +48,7 @@ class MenuRoleImpl extends RoleImpl implements MenuRole {
   }
 
   @Override
-  public void setAriaActivedescendantProperty(Element element, IdReference value) {
+  public void setAriaActivedescendantProperty(Element element, Id value) {
     Property.ACTIVEDESCENDANT.set(element, value);
   }
 

@@ -36,7 +36,7 @@ public class RoleImplTest extends GWTTestCase {
 
   public void testSetGetRemoveProperty() {
     assertEquals("", regionRole.getAriaLabelledbyProperty(div));
-    regionRole.setAriaLabelledbyProperty(div, IdReference.of("test1"));
+    regionRole.setAriaLabelledbyProperty(div, Id.of("test1"));
     assertEquals("test1", regionRole.getAriaLabelledbyProperty(div));
     regionRole.removeAriaLabelledbyProperty(div);
     assertEquals("", regionRole.getAriaLabelledbyProperty(div));

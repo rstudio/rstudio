@@ -31,5 +31,5 @@ public interface GroupRole extends SectionRole {
 
   void removeAriaActivedescendantProperty(Element element);
 
-  void setAriaActivedescendantProperty(Element element, IdReference value);
+  void setAriaActivedescendantProperty(Element element, Id value);
 }

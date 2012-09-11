@@ -31,5 +31,5 @@ public interface CompositeRole extends WidgetRole {
 
   void removeAriaActivedescendantProperty(Element element);
 
-  void setAriaActivedescendantProperty(Element element, IdReference value);
+  void setAriaActivedescendantProperty(Element element, Id value);
 }

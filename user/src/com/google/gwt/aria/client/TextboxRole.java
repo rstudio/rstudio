@@ -47,7 +47,7 @@ public interface TextboxRole extends InputRole {
 
   void removeAriaRequiredProperty(Element element);
 
-  void setAriaActivedescendantProperty(Element element, IdReference value);
+  void setAriaActivedescendantProperty(Element element, Id value);
 
   void setAriaAutocompleteProperty(Element element, AutocompleteValue value);
 

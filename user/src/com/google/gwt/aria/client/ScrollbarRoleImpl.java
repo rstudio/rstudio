@@ -88,7 +88,7 @@ class ScrollbarRoleImpl extends RoleImpl implements ScrollbarRole {
   }
 
   @Override
-  public void setAriaControlsProperty(Element element, IdReference... value) {
+  public void setAriaControlsProperty(Element element, Id... value) {
     Property.CONTROLS.set(element, value);
   }
 

@@ -113,15 +113,15 @@ public interface Role {
 
   void setAriaBusyState(Element element, boolean value);
 
-  void setAriaControlsProperty(Element element, IdReference... value);
+  void setAriaControlsProperty(Element element, Id... value);
 
-  void setAriaDescribedbyProperty(Element element, IdReference... value);
+  void setAriaDescribedbyProperty(Element element, Id... value);
 
   void setAriaDisabledState(Element element, boolean value);
 
   void setAriaDropeffectProperty(Element element, DropeffectValue... value);
 
-  void setAriaFlowtoProperty(Element element, IdReference... value);
+  void setAriaFlowtoProperty(Element element, Id... value);
 
   void setAriaGrabbedState(Element element, GrabbedValue value);
 
@@ -131,13 +131,13 @@ public interface Role {
 
   void setAriaInvalidState(Element element, InvalidValue value);
 
-  void setAriaLabelledbyProperty(Element element, IdReference... value);
+  void setAriaLabelledbyProperty(Element element, Id... value);
 
   void setAriaLabelProperty(Element element, String value);
 
   void setAriaLiveProperty(Element element, LiveValue value);
 
-  void setAriaOwnsProperty(Element element, IdReference... value);
+  void setAriaOwnsProperty(Element element, Id... value);
 
   void setAriaRelevantProperty(Element element, RelevantValue... value);
 

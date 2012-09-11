@@ -258,12 +258,12 @@ class RoleImpl implements Role {
   }
 
   @Override
-  public void setAriaControlsProperty(Element element, IdReference... value) {
+  public void setAriaControlsProperty(Element element, Id... value) {
     Property.CONTROLS.set(element, value);
   }
 
   @Override
-  public void setAriaDescribedbyProperty(Element element, IdReference... value) {
+  public void setAriaDescribedbyProperty(Element element, Id... value) {
     Property.DESCRIBEDBY.set(element, value);
   }
 
@@ -278,7 +278,7 @@ class RoleImpl implements Role {
   }
 
   @Override
-  public void setAriaFlowtoProperty(Element element, IdReference... value) {
+  public void setAriaFlowtoProperty(Element element, Id... value) {
     Property.FLOWTO.set(element, value);
   }
 
@@ -303,7 +303,7 @@ class RoleImpl implements Role {
   }
 
   @Override
-  public void setAriaLabelledbyProperty(Element element, IdReference... value) {
+  public void setAriaLabelledbyProperty(Element element, Id... value) {
     Property.LABELLEDBY.set(element, value);
   }
 
@@ -318,7 +318,7 @@ class RoleImpl implements Role {
   }
 
   @Override
-  public void setAriaOwnsProperty(Element element, IdReference... value) {
+  public void setAriaOwnsProperty(Element element, Id... value) {
     Property.OWNS.set(element, value);
   }
 

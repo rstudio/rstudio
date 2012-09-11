@@ -78,7 +78,7 @@ class TextboxRoleImpl extends RoleImpl implements TextboxRole {
   }
 
   @Override
-  public void setAriaActivedescendantProperty(Element element, IdReference value) {
+  public void setAriaActivedescendantProperty(Element element, Id value) {
     Property.ACTIVEDESCENDANT.set(element, value);
   }
 

@@ -41,8 +41,8 @@ package com.google.gwt.aria.client;
  * </p>
  */
 public final class Property {
-  public static final Attribute<IdReference> ACTIVEDESCENDANT =
-      new AriaValueAttribute<IdReference>("aria-activedescendant", "");
+  public static final Attribute<Id> ACTIVEDESCENDANT =
+      new AriaValueAttribute<Id>("aria-activedescendant", "");
 
   public static final Attribute<Boolean> ATOMIC =
       new PrimitiveValueAttribute<Boolean>("aria-atomic", "false");
@@ -50,17 +50,17 @@ public final class Property {
   public static final Attribute<AutocompleteValue> AUTOCOMPLETE =
       new AriaValueAttribute<AutocompleteValue>("aria-autocomplete", "none");
 
-  public static final Attribute<IdReference> CONTROLS =
-      new AriaValueAttribute<IdReference>("aria-controls", "");
+  public static final Attribute<Id> CONTROLS =
+      new AriaValueAttribute<Id>("aria-controls", "");
 
-  public static final Attribute<IdReference> DESCRIBEDBY =
-      new AriaValueAttribute<IdReference>("aria-describedby", "");
+  public static final Attribute<Id> DESCRIBEDBY =
+      new AriaValueAttribute<Id>("aria-describedby", "");
 
   public static final Attribute<DropeffectValue> DROPEFFECT =
       new AriaValueAttribute<DropeffectValue>("aria-dropeffect", "none");
 
-  public static final Attribute<IdReference> FLOWTO =
-      new AriaValueAttribute<IdReference>("aria-flowto", "");
+  public static final Attribute<Id> FLOWTO =
+      new AriaValueAttribute<Id>("aria-flowto", "");
 
   public static final Attribute<Boolean> HASPOPUP =
       new PrimitiveValueAttribute<Boolean>("aria-haspopup", "false");
@@ -68,8 +68,8 @@ public final class Property {
   public static final Attribute<String> LABEL =
       new PrimitiveValueAttribute<String>("aria-label", "");
 
-  public static final Attribute<IdReference> LABELLEDBY =
-      new AriaValueAttribute<IdReference>("aria-labelledby", "");
+  public static final Attribute<Id> LABELLEDBY =
+      new AriaValueAttribute<Id>("aria-labelledby", "");
 
   public static final Attribute<Integer> LEVEL =
       new PrimitiveValueAttribute<Integer>("aria-level", "");
@@ -86,8 +86,8 @@ public final class Property {
   public static final Attribute<OrientationValue> ORIENTATION =
       new AriaValueAttribute<OrientationValue>("aria-orientation", "vertical");
 
-  public static final Attribute<IdReference> OWNS =
-      new AriaValueAttribute<IdReference>("aria-owns", "");
+  public static final Attribute<Id> OWNS =
+      new AriaValueAttribute<Id>("aria-owns", "");
 
   public static final Attribute<Integer> POSINSET =
       new PrimitiveValueAttribute<Integer>("aria-posinset", "");

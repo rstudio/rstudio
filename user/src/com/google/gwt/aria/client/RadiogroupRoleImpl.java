@@ -58,7 +58,7 @@ class RadiogroupRoleImpl extends RoleImpl implements RadiogroupRole {
   }
 
   @Override
-  public void setAriaActivedescendantProperty(Element element, IdReference value) {
+  public void setAriaActivedescendantProperty(Element element, Id value) {
     Property.ACTIVEDESCENDANT.set(element, value);
   }
 

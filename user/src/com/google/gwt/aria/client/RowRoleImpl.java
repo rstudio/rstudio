@@ -68,7 +68,7 @@ class RowRoleImpl extends RoleImpl implements RowRole {
   }
 
   @Override
-  public void setAriaActivedescendantProperty(Element element, IdReference value) {
+  public void setAriaActivedescendantProperty(Element element, Id value) {
     Property.ACTIVEDESCENDANT.set(element, value);
   }
 

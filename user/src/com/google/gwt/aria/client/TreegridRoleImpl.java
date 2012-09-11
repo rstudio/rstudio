@@ -88,7 +88,7 @@ class TreegridRoleImpl extends RoleImpl implements TreegridRole {
   }
 
   @Override
-  public void setAriaActivedescendantProperty(Element element, IdReference value) {
+  public void setAriaActivedescendantProperty(Element element, Id value) {
     Property.ACTIVEDESCENDANT.set(element, value);
   }
 
