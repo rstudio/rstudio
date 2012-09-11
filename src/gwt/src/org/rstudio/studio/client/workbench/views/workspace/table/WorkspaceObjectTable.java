@@ -37,7 +37,6 @@ public class WorkspaceObjectTable
    {
       void editObject(String objectName);
       void viewObject(String objectName);
-      void removeObject(String objectName);
    }
    /**
     * The RowManager takes care of figuring out what values should go

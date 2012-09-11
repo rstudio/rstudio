@@ -126,30 +126,7 @@ public class Workspace
    {
       executeFunctionForObject("View", objectName);
    }
-
-   public void removeObject(final String objectName)
-   {
-      if (objectName == null)
-         return;
-      // confirm the user wants to do the remove
-      String message = "Are you sure you want to remove the object \"" +
-                       objectName +
-                       "\"? This operation cannot be undone.";
-      globalDisplay_.showYesNoMessage(
-         GlobalDisplay.MSG_QUESTION,
-         "Confirm Remove",
-         message,
-         new Operation() {
-
-            // perform the remove with progress
-            public void execute()
-            {
-               executeFunctionForObject("remove", objectName);
-            }
-         },
-       true);
-   }
-   
+ 
    private void executeFunctionForObject(String function, String objectName)
    {
       String editCode = function + "(" + StringUtil.toRSymbolName(objectName) + ")";
