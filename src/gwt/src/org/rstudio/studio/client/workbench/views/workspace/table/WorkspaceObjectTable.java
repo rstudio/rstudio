@@ -23,11 +23,12 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceObjectInfo;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -68,7 +69,7 @@ public class WorkspaceObjectTable
             table_.getRowFormatter().setStylePrimaryName(
                   i,
                   ThemeResources.INSTANCE.themeStyles().workspaceSectionHead());
-            sections_.add(new ArrayList<String>()) ;
+            sections_.add(new ArrayList<WorkspaceObjectInfo>()) ;
             manageHeadingVisibility(i);
          }
       }
@@ -83,8 +84,8 @@ public class WorkspaceObjectTable
       {
          int sectionId = chooseSection(obj) ;
          
-         ArrayList<String> section = sections_.get(sectionId) ;
-         int index = Collections.binarySearch(section, obj.getName()) ;
+         ArrayList<WorkspaceObjectInfo> section = sections_.get(sectionId) ;
+         int index = searchSection(section, obj.getName()) ;
          if (index >= 0)
             return index + getSectionStart(sectionId) ;
          
@@ -92,7 +93,7 @@ public class WorkspaceObjectTable
          removeRow(obj.getName()) ;
          
          index = -(index+1) ;
-         section.add(index, obj.getName()) ;
+         section.add(index, obj) ;
          int tableIndex = index + getSectionStart(sectionId) ;
          table_.insertRow(tableIndex) ;
          table_.getRowFormatter().setStylePrimaryName(
@@ -109,7 +110,7 @@ public class WorkspaceObjectTable
       {
          for (int i = 0; i < sections_.size(); i++)
          {
-            int index = Collections.binarySearch(sections_.get(i), name) ;
+            int index = searchSection(sections_.get(i), name) ;
             if (index >= 0)
             {
                table_.removeRow(getSectionStart(i) + index) ;
@@ -125,11 +126,16 @@ public class WorkspaceObjectTable
       {
          ArrayList<String> objectNames = new ArrayList<String>();
          for (int i = 0; i < sections_.size(); i++)
-            objectNames.addAll(sections_.get(i));
+         {
+            ArrayList<WorkspaceObjectInfo> section = sections_.get(i);
+            for (int j = 0; j<section.size(); j++)
+               objectNames.add(section.get(j).getName());
+         }
+            
         return objectNames;
       }
       
-      public String getObjectNameForIndex(int index)
+      public WorkspaceObjectInfo getObjectForIndex(int index)
       {
          int pos = 0 ;
          for (int i = 0; i < sections_.size(); i++)
@@ -138,13 +144,23 @@ public class WorkspaceObjectTable
             if (index < pos)
                return null ;
             
-            ArrayList<String> section = sections_.get(i) ;
+            ArrayList<WorkspaceObjectInfo> section = sections_.get(i) ;
             if (index - pos < section.size())
                return section.get(index - pos) ;
             
             pos += section.size();
          }
          return null ;
+      }
+      
+      private int searchSection(ArrayList<WorkspaceObjectInfo> section,
+                                String name)
+      {
+         for (int i = 0; i<section.size(); i++)
+            if (section.get(i).getName().equals(name))
+               return i;
+        
+         return -1;     
       }
 
       private int getSectionStart(int section)
@@ -187,8 +203,8 @@ public class WorkspaceObjectTable
                                              sections_.get(section).size() > 0);
       }
 
-      private final ArrayList<ArrayList<String>> sections_
-                                          = new ArrayList<ArrayList<String>>();
+      private final ArrayList<ArrayList<WorkspaceObjectInfo>> sections_
+                                          = new ArrayList<ArrayList<WorkspaceObjectInfo>>();
       private static final int SEC_DATA = 0 ;
       private static final int SEC_VAL = 1 ;
       private static final int SEC_FUNC = 2 ;
@@ -219,9 +235,14 @@ public class WorkspaceObjectTable
                return;
             
             int row = cell.getRowIndex();
-            String objectName = rowManager_.getObjectNameForIndex(row);
+            WorkspaceObjectInfo object = rowManager_.getObjectForIndex(row);
+            if (object == null)
+               return;
+            
+            final String objectName = object.getName();
             if (objectName == null)
                return;
+            
 
             if (editHandlers_.containsKey(objectName))
             {
@@ -234,9 +255,33 @@ public class WorkspaceObjectTable
 
             int section = rowManager_.getSectionForRow(row);
             if (section == RowManager.SEC_DATA)
+            {
                observer_.viewObject(objectName);
+            }
             else
-               observer_.editObject(objectName);
+            {
+               if (object.getLength() > 100)
+               {
+                  globalDisplay_.showYesNoMessage(
+                        MessageDialog.WARNING, 
+                        "Confirm Edit Object",
+                        "Are you sure you want to interactively edit the '" +
+                        objectName + "' object? (it has a length of " + 
+                        object.getLength() + ")",
+                        new Operation() {
+                           @Override
+                           public void execute()
+                           {
+                              observer_.editObject(objectName);
+                           }
+                        },
+                        true);           
+               }
+               else
+               {
+                  observer_.editObject(objectName);
+               }
+            }
          }
       });
       
