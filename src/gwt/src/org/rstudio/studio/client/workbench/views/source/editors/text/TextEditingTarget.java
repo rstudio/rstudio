@@ -624,7 +624,8 @@ public class TextEditingTarget implements EditingTarget
 
       if (funcs.length() == 0 && includeNoFunctionsMessage)
       {
-         MenuItem noFunctions = new MenuItem("(No functions defined)",
+         String type = fileType_.canExecuteChunks() ? "chunks" : "functions";
+         MenuItem noFunctions = new MenuItem("(No " + type + " defined)",
                                              false,
                                              (Command) null);
          noFunctions.setEnabled(false);
