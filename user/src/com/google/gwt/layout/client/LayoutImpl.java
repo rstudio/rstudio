@@ -19,6 +19,7 @@ import static com.google.gwt.dom.client.Style.Unit.EM;
 import static com.google.gwt.dom.client.Style.Unit.EX;
 import static com.google.gwt.dom.client.Style.Unit.PX;
 
+import com.google.gwt.aria.client.State;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -62,6 +63,8 @@ class LayoutImpl {
     // extra precision.
     style.setWidth(10, widthUnit);
     style.setHeight(10, heightUnit);
+
+    State.HIDDEN.set(ruler, true);
     return ruler;
   }
 

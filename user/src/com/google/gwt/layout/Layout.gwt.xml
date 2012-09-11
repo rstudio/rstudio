@@ -14,9 +14,12 @@
 
 <module>
   <inherits name="com.google.gwt.core.Core"/>
-  <inherits name="com.google.gwt.user.UserAgent"/>
+  <inherits name="com.google.gwt.useragent.UserAgent"/>
   <inherits name="com.google.gwt.dom.DOM"/>
   <inherits name="com.google.gwt.animation.Animation"/>
+  <inherits name="com.google.gwt.aria.Aria"/>
+  <!--  LayoutImplIE6 uses c.g.g.u.c.Window -->
+  <inherits name="com.google.gwt.user.Window"/>
 
   <replace-with class="com.google.gwt.layout.client.LayoutImplIE8">
     <when-type-is class="com.google.gwt.layout.client.LayoutImpl"/>
