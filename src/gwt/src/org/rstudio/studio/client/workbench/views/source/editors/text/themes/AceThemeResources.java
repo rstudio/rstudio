@@ -38,33 +38,18 @@ public interface AceThemeResources extends ClientBundle
    @Source("solarized_dark.css")
    StaticDataResource solarizedDark();
 
-//   @Source("clouds.css")
-//   StaticDataResource clouds();
-//
-//   @Source("clouds_midnight.css")
-//   StaticDataResource clouds_midnight();
-//
-//   @Source("dawn.css")
-//   StaticDataResource dawn();
-//
-//   @Source("kr_theme.css")
-//   StaticDataResource kr_theme();
-//
-//   @Source("merbivore.css")
-//   StaticDataResource merbivore();
-//
-//   @Source("merbivore_soft.css")
-//   StaticDataResource merbivore_soft();
-//
-//   @Source("mono_industrial.css")
-//   StaticDataResource mono_industrial();
-//
-//   @Source("monokai.css")
-//   StaticDataResource monokai();
-//
-//   @Source("pastel_on_dark.css")
-//   StaticDataResource pastel_on_dark();
-//
-//   @Source("vibrant_ink.css")
-//   StaticDataResource vibrant_ink();
+   @Source("tomorrow.css")
+   StaticDataResource tomorrow();
+
+   @Source("tomorrow_night.css")
+   StaticDataResource tomorrow_night();
+   
+   @Source("tomorrow_night_blue.css")
+   StaticDataResource tomorrow_night_blue();
+   
+   @Source("tomorrow_night_bright.css")
+   StaticDataResource tomorrow_night_bright();  
+   
+   @Source("tomorrow_night_eighties.css")
+   StaticDataResource tomorrow_night_eighties(); 
 }

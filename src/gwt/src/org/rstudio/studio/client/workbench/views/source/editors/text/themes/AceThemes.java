@@ -38,22 +38,21 @@ public class AceThemes
 
       addTheme("TextMate", res.textmate());
       addTheme("Eclipse", res.eclipse());
+      addTheme("Tomorrow", res.tomorrow());
       addTheme("Cobalt", res.cobalt());
-      addTheme("Solarized", res.solarized());
-      addTheme("Solarized (dark)", res.solarizedDark());
       addTheme("Idle Fingers", res.idle_fingers());
       addTheme("Twilight", res.twilight());
+      addTheme("Tomorrow Night", res.tomorrow_night());
+      addTheme("Tomorrow Night Blue", res.tomorrow_night_blue());
+      addTheme("Tomorrow Night Bright", res.tomorrow_night_bright());
+      addTheme("Tomorrow Night 80's", res.tomorrow_night_eighties());
       
-//      addTheme("Clouds", res.clouds());
-//      addTheme("Clouds Midnight", res.clouds_midnight());
-//      addTheme("Dawn", res.dawn());
-//      addTheme("krTheme", res.kr_theme());
-//      addTheme("Merbivore", res.merbivore());
-//      addTheme("Merbivore Soft", res.merbivore_soft());
-//      addTheme("Mono Industrial", res.mono_industrial());
-//      addTheme("Monokai", res.monokai());
-//      addTheme("Pastel on Dark", res.pastel_on_dark());
-//      addTheme("Vibrant Ink", res.vibrant_ink());
+      addTheme("Solarized", res.solarized());
+      addTheme("Solarized Dark", res.solarizedDark());
+    
+      
+      
+     
 
       prefs.get().theme().bind(new CommandWithArg<String>()
       {
