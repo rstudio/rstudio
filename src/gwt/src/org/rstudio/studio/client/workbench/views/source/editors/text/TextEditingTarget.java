@@ -1569,12 +1569,12 @@ public class TextEditingTarget implements EditingTarget
          selectionRange = Range.fromPoints(
                Position.create(row, 0),
                Position.create(row, docDisplay_.getLength(row)));
-                
-         if (!docDisplay_.moveSelectionToNextLine(true))
-            docDisplay_.moveSelectionToBlankLine();
       }
 
       executeRange(selectionRange);
+      
+      if (!docDisplay_.moveSelectionToNextLine(true))
+         docDisplay_.moveSelectionToBlankLine();
    }
 
    private void executeRange(Range range)
