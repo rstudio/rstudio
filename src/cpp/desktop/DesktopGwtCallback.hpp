@@ -143,6 +143,8 @@ public slots:
 private:
    Synctex& synctex();
 
+   void activateAndFocusOwner();
+
 private:
    void doAction(QKeySequence::StandardKey key);
    MainWindow* pMainWindow_;
