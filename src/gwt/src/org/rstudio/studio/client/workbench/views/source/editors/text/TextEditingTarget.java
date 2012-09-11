@@ -1586,7 +1586,10 @@ public class TextEditingTarget implements EditingTarget
                     ? scopeHelper_.getSweaveChunkText(sweaveChunk, range)
                     : docDisplay_.getCode(range.getStart(), range.getEnd());
       setLastExecuted(range.getStart(), range.getEnd());
-      events_.fireEvent(new SendToConsoleEvent(code, true));
+      events_.fireEvent(new SendToConsoleEvent(
+                                  code, 
+                                  true, 
+                                  prefs_.focusConsoleAfterExec().getValue()));
    }
 
    private void setLastExecuted(Position start, Position end)

@@ -40,6 +40,7 @@ public class EditingPreferencesPane extends PreferencesPane
       add(checkboxPref("Blinking cursor", prefs_.blinkingCursor()));
       add(checkboxPref("Insert matching parens/quotes", prefs_.insertMatching()));
       add(checkboxPref("Soft-wrap R source files", prefs_.softWrapRFiles()));
+      add(checkboxPref("Focus console after executing from source", prefs_.focusConsoleAfterExec()));
       add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
       add(checkboxPref("Save all files before build", prefs_.saveAllBeforeBuild()));
       add(checkboxPref("Automatically navigate to build errors", prefs_.navigateToBuildError()));
