@@ -168,7 +168,8 @@ QString GwtCallback::getOpenFileName(const QString& caption,
                                                  caption,
                                                  resolvedDir,
                                                  filter);
-   pOwner_->webPage()->mainFrame()->setFocus();
+
+   activateAndFocusOwner();
    return createAliasedPath(result);
 }
 
@@ -182,7 +183,7 @@ QString GwtCallback::getSaveFileName(const QString& caption,
    while (true)
    {
       QString result = QFileDialog::getSaveFileName(pOwner_->asWidget(), caption, resolvedDir);
-      pOwner_->webPage()->mainFrame()->setFocus();
+      activateAndFocusOwner();
       if (result.isEmpty())
          return result;
 
@@ -251,7 +252,7 @@ QString GwtCallback::getExistingDirectory(const QString& caption,
    result = QFileDialog::getExistingDirectory(pOwner_->asWidget(), caption, resolvedDir);
 #endif
 
-   pOwner_->webPage()->mainFrame()->setFocus();
+   activateAndFocusOwner();
    return createAliasedPath(result);
 }
 
@@ -904,6 +905,13 @@ void GwtCallback::externalSynctexView(const QString& pdfFile,
 void GwtCallback::launchSession(bool reload)
 {
    pMainWindow_->launchSession(reload);
+}
+
+
+void GwtCallback::activateAndFocusOwner()
+{
+   desktop::raiseAndActivateWindow(pOwner_->asWidget());
+   pOwner_->webPage()->mainFrame()->setFocus();
 }
 
 } // namespace desktop
