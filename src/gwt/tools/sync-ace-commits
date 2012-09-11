@@ -57,6 +57,7 @@ git fetch upstream
 #
 #  origin/patch/eclipse-selectedword
 #  origin/patch/blinking-cursor
+#  origin/patch/vim-ctrl-behavior
 #
 git checkout fc01cc624296c1b1be59b55ce03051fa29b5bd96
 
@@ -82,7 +83,8 @@ git merge \
     origin/patch/emacs-vim-keybindings
 
 git merge \
-    origin/patch/blinking-cursor
+    origin/patch/blinking-cursor \
+    origin/patch/vim-ctrl-behavior
 
 
 node ./Makefile.dryice.js normal

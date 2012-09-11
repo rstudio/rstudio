@@ -9083,7 +9083,9 @@ exports.handler = {
         if (hashId == 1)
             key = "ctrl-" + key;
 
-        if (data.state == "start") {
+        if ((key == "esc" && hashId == 0) || key == "ctrl-[") {
+            return {command: coreCommands.stop};
+        } else if (data.state == "start") {
             if (hashId == -1 || hashId == 1) {
                 if (cmds.inputBuffer.idle && startCommands[key])
                     return startCommands[key];
@@ -9098,10 +9100,7 @@ exports.handler = {
                 return {command: coreCommands.stop};
             }
         } else {
-            if (key == "esc" || key == "ctrl-[") {
-                data.state = "start";
-                return {command: coreCommands.stop};
-            } else if (key == "ctrl-w") {
+            if (key == "ctrl-w") {
                 return {command: "removewordleft"};
             }
         }
