@@ -23,6 +23,7 @@ import com.google.gwt.validation.client.impl.ConstraintViolationImpl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -193,6 +194,22 @@ public class EditorErrorTest extends GWTTestCase {
     driver.edit(p);
     driver.flush();
     assertEquals(0, editor.errors.size());
+    assertFalse(driver.hasErrors());
+    assertNotNull(driver.getErrors());
+    assertEquals(0, driver.getErrors().size());
+
+    assertFalse(driver.setConstraintViolations(Collections.<ConstraintViolation<?>>emptyList()));
+    assertEquals(0, editor.errors.size());
+    assertFalse(driver.hasErrors());
+    assertNotNull(driver.getErrors());
+    assertEquals(0, driver.getErrors().size());
+
+    // Test no NPE is thrown; see issue 6578
+    assertFalse(driver.setConstraintViolations(null));
+    assertEquals(0, editor.errors.size());
+    assertFalse(driver.hasErrors());
+    assertNotNull(driver.getErrors());
+    assertEquals(0, driver.getErrors().size());
   }
 
   public void testSimpleError() {

@@ -109,6 +109,10 @@ public abstract class SimpleViolation {
    */
   public static void pushViolations(Iterable<SimpleViolation> violations,
       EditorDriver<?> driver, KeyMethod keyMethod) {
+    if (violations == null) {
+      return;
+    }
+
     DelegateMap delegateMap = DelegateMap.of(driver, keyMethod);
 
     // For each violation

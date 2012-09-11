@@ -64,7 +64,8 @@ public abstract class BaseEditorDriver<T, E extends Editor<T>> {
   }
 
   public boolean setConstraintViolations(final Iterable<ConstraintViolation<?>> violations) {
-    return doSetViolations(SimpleViolation.iterableFromConstrantViolations(violations));
+    return doSetViolations(violations == null ? null : SimpleViolation
+        .iterableFromConstrantViolations(violations));
   }
 
   @Override

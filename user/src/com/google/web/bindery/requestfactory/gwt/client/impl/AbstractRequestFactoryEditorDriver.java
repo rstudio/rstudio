@@ -196,7 +196,7 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
   @SuppressWarnings("deprecation")
   public boolean setViolations(
       Iterable<com.google.web.bindery.requestfactory.shared.Violation> violations) {
-    return doSetViolations(new ViolationIterable(violations));
+    return doSetViolations(violations == null ? null : new ViolationIterable(violations));
   }
 
   protected void checkSaveRequest() {
