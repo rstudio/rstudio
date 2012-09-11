@@ -78,10 +78,10 @@
    return ("")
 })
 
-.rs.addJsonRpcHandler("remove_all_objects", function()
+.rs.addJsonRpcHandler("remove_all_objects", function(includeHidden)
 {
    env = globalenv()
-   rm(list=ls(envir=env, all.names=TRUE), envir=env)
+   rm(list=ls(envir=env, all.names=includeHidden), envir=env)
 })
 
 .rs.addFunction("getSingleClass", function(obj)

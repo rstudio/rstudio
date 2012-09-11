@@ -52,6 +52,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPreviewHtmlHelper;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
+import org.rstudio.studio.client.workbench.views.workspace.ClearAllDialog;
 
 @GinModules(RStudioGinModule.class)
 public interface RStudioGinjector extends Ginjector
@@ -78,6 +79,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(BuildToolsPackagePanel buildToolsPackagePanel);
    void injectMembers(CodeFilesList codeFilesList);
    void injectMembers(ProjectPopupMenu projectPopupMenu);
+   void injectMembers(ClearAllDialog clearAllDialog);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

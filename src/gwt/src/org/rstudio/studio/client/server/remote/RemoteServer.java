@@ -466,10 +466,12 @@ public class RemoteServer implements Server
    }
 
   
-   public void removeAllObjects(ServerRequestCallback<Void> requestCallback)
+   public void removeAllObjects(boolean includeHidden,
+                                ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   REMOVE_ALL_OBJECTS,
+                  includeHidden,
                   requestCallback);
    }
 

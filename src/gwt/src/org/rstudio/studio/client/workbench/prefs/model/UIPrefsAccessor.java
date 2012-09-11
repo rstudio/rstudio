@@ -148,6 +148,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("source_with_echo", false);
    }
    
+   public PrefValue<Boolean> clearHidden()
+   {
+      return bool("clear_hidden", false);
+   }
+   
    public PrefValue<ExportPlotOptions> exportPlotOptions()
    {
       return object("export_plot_options", ExportPlotOptions.createDefault());

@@ -22,7 +22,8 @@ public interface WorkspaceServerOperations
    void listObjects(
          ServerRequestCallback<RpcObjectList<WorkspaceObjectInfo>> requestCallback);
    
-   void removeAllObjects(ServerRequestCallback<Void> requestCallback);
+   void removeAllObjects(boolean includeHidden,
+                         ServerRequestCallback<Void> requestCallback);
       
    // set the value of an object in the global namespace
    void setObjectValue(String objectName,

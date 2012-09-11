@@ -166,22 +166,18 @@ public class Workspace
    void onClearWorkspace()
    {
       view_.bringToFront();
-      globalDisplay_.showYesNoMessage(
-         GlobalDisplay.MSG_WARNING,
-         "Confirm Clear Workspace",
-         "Are you sure you want to remove all objects from the workspace?",
-  
-         new ProgressOperation() {
-            public void execute(final ProgressIndicator indicator)
-            {
-               indicator.onProgress("Removing objects...");
-               server_.removeAllObjects(
-                     new VoidServerRequestCallback(indicator));
-            }
-         },
-         
-         true
-      );
+      
+      new ClearAllDialog(new ProgressOperationWithInput<Boolean>() {
+
+         @Override
+         public void execute(Boolean includeHidden, ProgressIndicator indicator)
+         {
+            indicator.onProgress("Removing objects...");
+            server_.removeAllObjects(
+                  includeHidden,
+                  new VoidServerRequestCallback(indicator));
+         }
+      }).showModal();
    }
 
    void onSaveWorkspace()
