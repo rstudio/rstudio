@@ -74,6 +74,7 @@ public class HistoryEntryItemCodec extends HeaderBreaksItemCodec<HistoryEntry, S
       td.setVAlign("middle");
 
       DivElement div = Document.get().createDivElement();
+      div.setTitle("Show command in original context");
       div.setClassName(res_.styles().disclosure());
 
       td.appendChild(div);
