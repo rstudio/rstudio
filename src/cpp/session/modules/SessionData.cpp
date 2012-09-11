@@ -245,12 +245,18 @@ SEXP dataViewerHook(SEXP call, SEXP op, SEXP args, SEXP rho)
       // append document footer
       html += "</body></html>\n";
 
+
+      // compute variables based on presence of row.names
+      int variables = columnCount;
+      if (columnNames.size() > 0 && columnNames[0] == "row.names")
+         variables--;
+
       // fire show data event
       json::Object dataItem;
       dataItem["title"] = title;
       dataItem["totalObservations"] = rowCount;
       dataItem["displayedObservations"] = displayedRows;
-      dataItem["variables"] = columnCount;
+      dataItem["variables"] = variables;
       dataItem["displayedVariables"] = displayedColumns;
       dataItem["contentUrl"] = content_urls::provision(title, html, ".htm");
       ClientEvent event(client_events::kShowData, dataItem);
