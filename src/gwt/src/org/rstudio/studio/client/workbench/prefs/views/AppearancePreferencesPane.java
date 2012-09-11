@@ -114,7 +114,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       previewPanel.setSize("100%", "100%");
       preview_ = new AceEditorPreview(CODE_SAMPLE);
       preview_.setHeight("375px");
-      preview_.setWidth("288px");
+      preview_.setWidth("278px");
       preview_.setTheme(themes.getThemeUrl(uiPrefs_.theme().getGlobalValue()));
       preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
       previewPanel.add(preview_);
@@ -122,7 +122,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       HorizontalPanel hpanel = new HorizontalPanel();
       hpanel.setWidth("100%");
       hpanel.add(leftPanel);
-      hpanel.setCellWidth(leftPanel, "150px");
+      hpanel.setCellWidth(leftPanel, "160px");
       hpanel.add(previewPanel);
 
       add(hpanel);
