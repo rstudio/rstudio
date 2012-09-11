@@ -1010,6 +1010,11 @@ SEXP rs_canBuildCpp()
 
 Error initialize()
 {
+   // on OSX set the R_ARCH (required for inline to work correctly)
+#ifdef __APPLE__
+   core::system::setenv("R_ARCH", "/x86_64");
+#endif
+
    R_CallMethodDef methodDef ;
    methodDef.name = "rs_canBuildCpp" ;
    methodDef.fun = (DL_FUNC) rs_canBuildCpp ;

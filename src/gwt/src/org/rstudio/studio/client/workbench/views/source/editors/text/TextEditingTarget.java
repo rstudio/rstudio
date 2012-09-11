@@ -624,7 +624,8 @@ public class TextEditingTarget implements EditingTarget
 
       if (funcs.length() == 0 && includeNoFunctionsMessage)
       {
-         MenuItem noFunctions = new MenuItem("(No functions defined)",
+         String type = fileType_.canExecuteChunks() ? "chunks" : "functions";
+         MenuItem noFunctions = new MenuItem("(No " + type + " defined)",
                                              false,
                                              (Command) null);
          noFunctions.setEnabled(false);
@@ -1569,12 +1570,23 @@ public class TextEditingTarget implements EditingTarget
          selectionRange = Range.fromPoints(
                Position.create(row, 0),
                Position.create(row, docDisplay_.getLength(row)));
-                
-         if (!docDisplay_.moveSelectionToNextLine(true))
-            docDisplay_.moveSelectionToBlankLine();
       }
 
       executeRange(selectionRange);
+      
+      // if the end of the selection is at column 0 then just collapse
+      // the selection to it (because if we advance we'd be skipping
+      // a line of code)
+      if (!selectionRange.isEmpty() &&
+          (selectionRange.getEnd().getColumn() == 0))
+      {
+         docDisplay_.collapseSelection(false);
+      }
+      else
+      {
+         if (!docDisplay_.moveSelectionToNextLine(true))
+            docDisplay_.moveSelectionToBlankLine();
+      }
    }
 
    private void executeRange(Range range)
@@ -1585,7 +1597,10 @@ public class TextEditingTarget implements EditingTarget
                     ? scopeHelper_.getSweaveChunkText(sweaveChunk, range)
                     : docDisplay_.getCode(range.getStart(), range.getEnd());
       setLastExecuted(range.getStart(), range.getEnd());
-      events_.fireEvent(new SendToConsoleEvent(code, true));
+      events_.fireEvent(new SendToConsoleEvent(
+                                  code, 
+                                  true, 
+                                  prefs_.focusConsoleAfterExec().getValue()));
    }
 
    private void setLastExecuted(Position start, Position end)

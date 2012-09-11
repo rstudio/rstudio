@@ -121,6 +121,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          softWrapRFiles().setGlobalValue(
                                  newUiPrefs.softWrapRFiles().getGlobalValue());
          
+         // focus console after exec
+         focusConsoleAfterExec().setGlobalValue(
+                         newUiPrefs.focusConsoleAfterExec().getGlobalValue());
+         
          // syntax color console
          syntaxColorConsole().setGlobalValue(
                              newUiPrefs.syntaxColorConsole().getGlobalValue());
