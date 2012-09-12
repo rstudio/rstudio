@@ -346,11 +346,22 @@ core::FilePath UserSettings::initialWorkingDirectory() const
 
 CRANMirror UserSettings::cranMirror() const
 {
+   // get the settings
    CRANMirror mirror;
    mirror.name = settings_.get(kCRANMirrorName);
    mirror.host = settings_.get(kCRANMirrorHost);
    mirror.url = settings_.get(kCRANMirrorUrl);
    mirror.country = settings_.get(kCRANMirrorCountry);
+
+   // if there is no URL then return the default RStudio mirror
+   if (mirror.url.empty())
+   {
+      mirror.name = "Amazon CloudFront";
+      mirror.host = "RStudio";
+      mirror.url = "http://cran.rstudio.org";
+      mirror.country = "us";
+   }
+
    return mirror;
 }
 

@@ -219,12 +219,23 @@
 
 .rs.addJsonRpcHandler( "get_cran_mirrors", function()
 {
+   # RStudio mirror
+   rstudioDF <- data.frame(name = "Amazon CloudFront",
+                           host = "RStudio",
+                           url = "http://cran.rstudio.org",
+                           country = "us",
+                           stringsAsFactors = FALSE)
+
+   # CRAN mirrors
    cranMirrors <- utils::getCRANmirrors()
-   data.frame(name = cranMirrors$Name,
-              host = cranMirrors$Host,
-              url = cranMirrors$URL,
-              country = cranMirrors$CountryCode,
-              stringsAsFactors = FALSE)
+   cranDF <- data.frame(name = cranMirrors$Name,
+                        host = cranMirrors$Host,
+                        url = cranMirrors$URL,
+                        country = cranMirrors$CountryCode,
+                        stringsAsFactors = FALSE)
+
+   # return mirrors
+   rbind(rstudioDF, cranDF)
 })
 
 .rs.addJsonRpcHandler( "init_default_user_library", function()
