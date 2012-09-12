@@ -740,7 +740,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
     if (nodeView != null) {
       if (isMouseDown) {
         Element showMoreElem = nodeView.getShowMoreElement();
-        if (nodeView.getImageElement().isOrHasChild(target)) {
+        if (!nodeView.isRootNode() && nodeView.getImageElement().isOrHasChild(target)) {
           // Open the node when the open image is clicked.
           nodeView.setOpen(!nodeView.isOpen(), true);
           return;
