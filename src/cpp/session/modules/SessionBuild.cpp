@@ -66,19 +66,6 @@ shell_utils::ShellCommand buildRCmd(const core::FilePath& rBinDir)
 {
 #if defined(_WIN32)
    shell_utils::ShellCommand rCmd(rBinDir.childPath("Rcmd.exe"));
-#elif defined(__APPLE__)
-   // on osx we need to explicitly call the correct R script depending
-   // on the current architecture (on windows this is already handled
-   // by the bin dir and on linux this tends not to be an issue because
-   // nearly all installations of R are single-arch)
-   const char * const k64BitArch = "x86_64";
-   std::string rArch = k64BitArch;
-   Error error = r::exec::RFunction(".rs.getRArch").call(&rArch);
-   if (error)
-      LOG_ERROR(error);
-   std::string rScript = (rArch == k64BitArch) ? "R64" : "R";
-   shell_utils::ShellCommand rCmd(rBinDir.childPath(rScript));
-   rCmd << "CMD";
 #else
    shell_utils::ShellCommand rCmd(rBinDir.childPath("R"));
    rCmd << "CMD";
@@ -1010,11 +997,6 @@ SEXP rs_canBuildCpp()
 
 Error initialize()
 {
-   // on OSX set the R_ARCH (required for inline to work correctly)
-#ifdef __APPLE__
-   core::system::setenv("R_ARCH", "/x86_64");
-#endif
-
    R_CallMethodDef methodDef ;
    methodDef.name = "rs_canBuildCpp" ;
    methodDef.fun = (DL_FUNC) rs_canBuildCpp ;
