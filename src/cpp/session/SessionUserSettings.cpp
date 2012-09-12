@@ -41,6 +41,7 @@ const char * const kAgreementHash = kAgreementPrefix "agreedToHash";
 const char * const kAutoCreatedProfile = "autoCreatedProfile";
 const char * const kUiPrefs = "uiPrefs";
 const char * const kAlwaysRestoreLastProject = "restoreLastProject";
+const char * const kRProfileOnResume = "rprofileOnResume";
 const char * const kSaveAction = "saveAction";
 const char * const kLoadRData = "loadRData";
 const char * const kInitialWorkingDirectory = "initialWorkingDirectory";
@@ -316,6 +317,17 @@ bool UserSettings::alwaysRestoreLastProject() const
 void UserSettings::setAlwaysRestoreLastProject(bool alwaysRestore)
 {
    settings_.set(kAlwaysRestoreLastProject, alwaysRestore);
+}
+
+bool UserSettings::rProfileOnResume() const
+{
+   return settings_.getBool(kRProfileOnResume,
+                            session::options().rProfileOnResumeDefault());
+}
+
+void UserSettings::setRprofileOnResume(bool rProfileOnResume)
+{
+   settings_.set(kRProfileOnResume, rProfileOnResume);
 }
 
 int UserSettings::saveAction() const

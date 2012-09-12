@@ -61,7 +61,8 @@ struct InternalCallbacks
 
 void runEmbeddedR(const core::FilePath& rHome,
                   const core::FilePath& userHome,
-                  bool newSession,
+                  bool quiet,
+                  bool loadInitFile,
                   SA_TYPE defaultSaveAction,
                   const Callbacks& callbacks,
                   InternalCallbacks* pInternal);

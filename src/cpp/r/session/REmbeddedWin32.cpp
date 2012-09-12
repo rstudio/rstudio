@@ -315,7 +315,8 @@ void setMemoryLimit()
 
 void runEmbeddedR(const core::FilePath& rHome,
                   const core::FilePath& userHome,
-                  bool newSession,
+                  bool quiet,
+                  bool loadInitFile,
                   SA_TYPE defaultSaveAction,
                   const Callbacks& callbacks,
                   InternalCallbacks* pInternal)
@@ -343,11 +344,11 @@ void runEmbeddedR(const core::FilePath& rHome,
    // more configuration
    pRP->CharacterMode = RGui;
    pRP->R_Slave = FALSE;
-   pRP->R_Quiet = newSession ? FALSE : TRUE;
+   pRP->R_Quiet = quiet ? TRUE : FALSE;
    pRP->R_Interactive = TRUE;
    pRP->SaveAction = defaultSaveAction;
    pRP->RestoreAction = SA_NORESTORE;
-   pRP->LoadInitFile = newSession ? TRUE : FALSE;
+   pRP->LoadInitFile = loadInitFile ? TRUE : FALSE;
 
    // hooks
    pRP->ReadConsole = callbacks.readConsole;

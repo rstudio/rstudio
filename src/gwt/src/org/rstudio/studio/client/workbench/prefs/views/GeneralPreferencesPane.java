@@ -117,6 +117,11 @@ public class GeneralPreferencesPane extends PreferencesPane
       spaced(removeHistoryDuplicates_);
       add(removeHistoryDuplicates_);
 
+      rProfileOnResume_ = new CheckBox("Run Rprofile when resuming suspended session");
+      spaced(rProfileOnResume_);
+      if (!Desktop.isDesktop())
+         add(rProfileOnResume_);
+      
       cranMirrorTextBox_ = new TextBoxWithButton(
             "CRAN mirror:",
             "Change...",
@@ -184,6 +189,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       dirChooser_.setEnabled(false);
       alwaysSaveHistory_.setEnabled(false);
       removeHistoryDuplicates_.setEnabled(false);
+      rProfileOnResume_.setEnabled(false);
       cranMirrorTextBox_.setEnabled(false);
       restoreLastProject_.setEnabled(false);
    }
@@ -225,6 +231,9 @@ public class GeneralPreferencesPane extends PreferencesPane
       
       alwaysSaveHistory_.setValue(historyPrefs.getAlwaysSave());
       removeHistoryDuplicates_.setValue(historyPrefs.getRemoveDuplicates());
+      
+      rProfileOnResume_.setValue(generalPrefs.getRprofileOnResume());
+      rProfileOnResume_.setEnabled(true);
       
       // packages prefs
       PackagesPrefs packagesPrefs = rPrefs.getPackagesPrefs();
@@ -275,6 +284,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          // set general prefs
          GeneralPrefs generalPrefs = GeneralPrefs.create(saveAction, 
                                                          loadRData_.getValue(),
+                                                         rProfileOnResume_.getValue(),
                                                          dirChooser_.getText());
          rPrefs.setGeneralPrefs(generalPrefs);
          
@@ -325,6 +335,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CRANMirror cranMirror_ = CRANMirror.empty();
    private TextBoxWithButton cranMirrorTextBox_;
    private CheckBox restoreLastProject_;
+   private CheckBox rProfileOnResume_;
    private final SourceServerOperations server_;
    private final UIPrefs prefs_;
    private final TextBoxWithButton encoding_;

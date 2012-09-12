@@ -92,6 +92,9 @@ public:
    std::string defaultLatexProgram() const;
    bool alwaysEnableRnwCorcordance() const;
 
+   bool rProfileOnResume() const;
+   void setRprofileOnResume(bool rProfileOnResume);
+
    bool alwaysRestoreLastProject() const;
    void setAlwaysRestoreLastProject(bool alwaysRestore);
 

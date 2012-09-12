@@ -2610,6 +2610,7 @@ int main (int argc, char * const argv[])
       rOptions.autoReloadSource = options.autoReloadSource();
       rOptions.restoreWorkspace = restoreWorkspaceOption();
       rOptions.saveWorkspace = saveWorkspaceOption();
+      rOptions.rProfileOnResume = userSettings().rProfileOnResume();
       
       // r callbacks
       r::session::RCallbacks rCallbacks;

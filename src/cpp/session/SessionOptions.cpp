@@ -150,7 +150,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          "session preflight script")
       ("session-create-public-folder",
          value<bool>(&createPublicFolder_)->default_value(false),
-         "automatically create public folder");
+         "automatically create public folder")
+      ("session-rprofile-on-resume-default",
+          value<bool>(&rProfileOnResumeDefault_)->default_value(true),
+          "default user setting for running Rprofile on resume");
 
    // r options
    bool rShellEscape; // no longer works but don't want to break any
