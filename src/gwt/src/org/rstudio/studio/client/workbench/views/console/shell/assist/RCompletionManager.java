@@ -381,7 +381,7 @@ public class RCompletionManager implements CompletionManager
                }
             });
          }
-         else if (input_.hasSelection())
+         else if (!input_.isSelectionCollapsed())
          {
             switch(c)
             {
