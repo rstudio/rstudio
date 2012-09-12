@@ -27,8 +27,8 @@ import org.rstudio.studio.client.server.ServerError;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.DoubleClickEvent;
+import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.ListBox;
@@ -116,19 +116,23 @@ public class ChooseMirrorDialog<T extends JavaScriptObject> extends ModalDialog<
                   String value = mirrorSource_.getURL(mirror);
                   listBox_.addItem(item, value);
                }
+               
+               listBox_.setSelectedIndex(0);
+               enableOkButton(true);
             }
             
             // set it into the panel
             panel.setWidget(listBox_);
             
             // update ok button on changed
-            listBox_.addChangeHandler(new ChangeHandler() {
+            listBox_.addDoubleClickHandler(new DoubleClickHandler() {
                @Override
-               public void onChange(ChangeEvent event)
+               public void onDoubleClick(DoubleClickEvent event)
                {
-                  enableOkButton(listBox_.getSelectedIndex() != -1);
+                  clickOkButton();              
                }
             });
+            
             
             // if the list box is larger than the space we initially allocated
             // then increase the panel height
