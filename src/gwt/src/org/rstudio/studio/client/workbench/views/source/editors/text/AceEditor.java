@@ -246,35 +246,13 @@ public class AceEditor implements DocDisplay,
                      break;
                   case 'Y':
                      event.preventDefault();
-                     Position start = getSelectionStart();
                      InputEditorUtil.pasteYanked(AceEditor.this);
-                     indentPastedRange(Range.fromPoints(start,
-                                                        getSelectionEnd()));
                      break;
                }
             }
-
          }
       });
 
-      addPasteHandler(new PasteEvent.Handler()
-      {
-         @Override
-         public void onPaste(PasteEvent event)
-         {
-            final Position start = getSelectionStart();
-
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  Range range = Range.fromPoints(start, getSelectionEnd());
-                  indentPastedRange(range);
-               }
-            });
-         }
-      });
       
       // handle click events
       addAceClickHandler(new AceClickEvent.Handler()
@@ -307,27 +285,6 @@ public class AceEditor implements DocDisplay,
          }
       });
       
-   }
-
-   private void indentPastedRange(Range range)
-   {
-      if (fileType_ == null || !fileType_.canAutoIndent())
-         return;
-
-      String firstLinePrefix = getSession().getTextRange(
-            Range.fromPoints(Position.create(range.getStart().getRow(), 0),
-                             range.getStart()));
-
-      if (firstLinePrefix.trim().length() != 0)
-      {
-         Position newStart = Position.create(range.getStart().getRow() + 1, 0);
-         if (newStart.compareTo(range.getEnd()) >= 0)
-            return;
-
-         range = Range.fromPoints(newStart, range.getEnd());
-      }
-
-      getSession().reindent(range);
    }
 
    @Inject
