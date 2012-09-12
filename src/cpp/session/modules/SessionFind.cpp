@@ -429,10 +429,10 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    core::system::setenv(&childEnv, "GREP_COLOR", "01");
    core::system::setenv(&childEnv, "GREP_COLORS", "ne:fn=:ln=:se=:mt=01");
 #ifdef _WIN32
+   FilePath gnuGrepPath = session::options().gnugrepPath();
    core::system::addToPath(
             &childEnv,
-            string_utils::utf8ToSystem(
-               session::options().gnugrepPath().absolutePath()));
+            string_utils::utf8ToSystem(gnuGrepPath.absolutePath()));
 #endif
    options.environment = childEnv;
 
@@ -465,7 +465,11 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    core::system::ProcessCallbacks callbacks =
                                        ptrGrepOp->createProcessCallbacks();
 
+#ifdef _WIN32
+   shell_utils::ShellCommand cmd(gnuGrepPath.complete("grep"));
+#else
    shell_utils::ShellCommand cmd("grep");
+#endif
    cmd << "-rHn" << "--binary-files=without-match" << "--color=always";
 #ifndef _WIN32
    cmd << "--devices=skip";
