@@ -14,6 +14,8 @@ package org.rstudio.studio.client.workbench;
 
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.events.BusyEvent;
+import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
@@ -43,8 +45,17 @@ public class WorkbenchContext
             defaultFileDialogDir_ = FileSystemItem.createDir(event.getPath());;
          }      
       }); 
+      
+      eventBus.addHandler(BusyEvent.TYPE, new BusyHandler() {
+         @Override
+         public void onBusy(BusyEvent event)
+         {
+            isServerBusy_ = event.isBusy();
+         } 
+      });
    }
    
+  
   
    public FileSystemItem getCurrentWorkingDir()
    {
@@ -114,10 +125,15 @@ public class WorkbenchContext
       return sessionInfo != null && sessionInfo.getActiveProjectFile() != null;
    }
    
+   public boolean isServerBusy()
+   {
+      return isServerBusy_;
+   }
    
+   private boolean isServerBusy_ = false;
+   private FileSystemItem currentWorkingDir_ = FileSystemItem.home();
+   private FileSystemItem defaultFileDialogDir_ = FileSystemItem.home();
+   private FileSystemItem activeProjectDir_ = null;
+   private Session session_; 
    
-   FileSystemItem currentWorkingDir_ = FileSystemItem.home();
-   FileSystemItem defaultFileDialogDir_ = FileSystemItem.home();
-   FileSystemItem activeProjectDir_ = null;
-   Session session_;   
 }

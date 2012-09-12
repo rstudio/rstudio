@@ -21,6 +21,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.BarrierReleasedEvent;
 import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -98,8 +99,31 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       void onReadyToQuit(boolean saveChanges);
    }
    
-   public void prepareForQuit(String caption,
+   public void prepareForQuit(final String caption,
                               final QuitContext quitContext)
+   {
+      if (workbenchContext_.isServerBusy())
+      {
+         globalDisplay_.showYesNoMessage(
+               MessageDialog.QUESTION,
+               caption, 
+               "The R session is currently busy. Are you sure you want to quit?", 
+               new Operation() {
+                  @Override
+                  public void execute()
+                  {
+                     handleUnsavedChanges(caption, quitContext);
+                  }}, 
+               true);
+      }
+      else
+      {
+         handleUnsavedChanges(caption, quitContext);
+      }
+   }
+   
+   private void handleUnsavedChanges(String caption,
+                                     final QuitContext quitContext)
    {   
       // see what the unsaved changes situation is and prompt accordingly
       final int saveAction = saveAction_.getAction();
