@@ -354,6 +354,7 @@ Error PlotManager::savePlotAsPostscript(const FilePath& targetPath,
    // generate code for creating postscript device
    boost::format fmt("{ require(grDevices, quietly=TRUE); "
                      "  postscript(file=\"%1%\", width=%2%, height=%3%, "
+                     "             onefile = FALSE, "
                      "             paper = \"special\", "
                      "             horizontal = FALSE); }");
    std::string deviceCreationCode = boost::str(fmt % string_utils::utf8ToSystem(targetPath.absolutePath()) %
