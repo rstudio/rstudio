@@ -381,8 +381,36 @@ public class RCompletionManager implements CompletionManager
                }
             });
          }
+         else if (input_.hasSelection())
+         {
+            switch(c)
+            {
+            case '"':
+            case '\'':
+               encloseSelection(c, c);
+               return true;
+            case '(':
+               encloseSelection('(', ')');
+               return true;
+            case '{':
+               encloseSelection('{', '}');
+               return true;
+            case '[':
+               encloseSelection('[', ']');
+               return true;     
+            }
+         }
       }
       return false ;
+   }
+   
+   private void encloseSelection(char beginChar, char endChar) 
+   {
+      StringBuilder builder = new StringBuilder();
+      builder.append(beginChar);
+      builder.append(input_.getSelectionValue());
+      builder.append(endChar);
+      input_.replaceSelection(builder.toString(), true);
    }
 
    private boolean isRoxygenTagValidHere()
