@@ -151,7 +151,7 @@ public class XMLHttpRequest extends JavaScriptObject {
       }
     }
     if (xhr && responseType) {
-      xhr.responsetype = responseType;
+      xhr.responseType = responseType;
     }
     return xhr;
   }-*/;
