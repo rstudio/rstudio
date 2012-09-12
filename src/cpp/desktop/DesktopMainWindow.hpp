@@ -16,6 +16,8 @@
 
 #include <QProcess>
 #include <QtGui>
+#include <QSessionManager>
+
 #include "DesktopGwtCallback.hpp"
 #include "DesktopGwtWindow.hpp"
 #include "DesktopMenuCallback.hpp"
@@ -56,6 +58,7 @@ protected slots:
    void onJavaScriptWindowObjectCleared();
    void onWorkbenchInitialized();
    void resetMargins();
+   void commitDataRequest(QSessionManager &manager);
 
 protected:
    virtual void closeEvent(QCloseEvent*);

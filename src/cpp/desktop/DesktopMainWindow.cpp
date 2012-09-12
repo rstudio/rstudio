@@ -76,6 +76,10 @@ MainWindow::MainWindow(QUrl url) :
    connect(webView(), SIGNAL(onCloseWindowShortcut()),
            this, SLOT(onCloseWindowShortcut()));
 
+   connect(qApp, SIGNAL(commitDataRequest(QSessionManager&)),
+           this, SLOT(commitDataRequest(QSessionManager&)),
+           Qt::DirectConnection);
+
    setWindowIcon(QIcon(QString::fromAscii(":/icons/RStudio.ico")));
 
    setWindowTitle(QString::fromAscii("RStudio"));
@@ -155,6 +159,19 @@ void MainWindow::onWorkbenchInitialized()
 void MainWindow::resetMargins()
 {
    setContentsMargins(0, 0, 0, 0);
+}
+
+// this notification occurs when windows or X11 is shutting
+// down -- in this case we want to be a good citizen and just
+// exit right away so we notify the gwt callback that a legit
+// quit and exit is on the way and we set the quitConfirmed_
+// flag so no prompting occurs (note that source documents
+// have already been auto-saved so will be restored next time
+// the current project context is opened)
+void MainWindow::commitDataRequest(QSessionManager &manager)
+{
+   gwtCallback_.setPendingQuit(PendingQuitAndExit);
+   quitConfirmed_ = true;
 }
 
 void MainWindow::loadUrl(const QUrl& url)
