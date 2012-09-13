@@ -23,10 +23,6 @@ namespace desktop {
 
 bool prepareEnvironment(Options& settings);
 
-#ifdef _WIN32
-bool chooseRHomeAndPrepareEnvironment(QWidget* parent);
-#endif
-
 } // namespace desktop
 
 
