@@ -41,6 +41,10 @@
 #include "DesktopUtils.hpp"
 #include "DesktopSynctex.hpp"
 
+#ifdef _WIN32
+#include "DesktopDetectRHome.hpp"
+#endif
+
 #ifdef __APPLE__
 #include <Carbon/Carbon.h>
 #endif
@@ -359,8 +363,7 @@ QString GwtCallback::getRVersion()
 QString GwtCallback::chooseRVersion()
 {
 #ifdef Q_OS_WIN32
-   RVersion rVersion = desktop::detectRVersion(true, pOwner_->asWidget());
-   if (rVersion.isValid())
+   if (desktop::chooseRHomeAndPrepareEnvironment(pOwner_->asWidget()))
       return getRVersion();
    else
       return QString();
