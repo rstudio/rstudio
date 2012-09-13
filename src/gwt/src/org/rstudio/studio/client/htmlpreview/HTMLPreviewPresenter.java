@@ -78,13 +78,16 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
                        String htmlFile, 
                        boolean enableSaveAs,
                        boolean enablePublish,
-                       boolean enableRefresh);
+                       boolean enableRefresh,
+                       boolean enableShowLog);
       
       void print();
       
       String getDocumentTitle();
 
       void setPublishButtonLabel(String label);
+      
+      void showLog(String log);
    }
    
    @Inject
@@ -151,6 +154,7 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
          public void onHTMLPreviewStarted(HTMLPreviewStartedEvent event)
          {
             previewRunning_ = true;
+            lastPreviewOutput_ = new StringBuilder();
             view_.showProgress("Knitting...");
             view_.addProgressClickHandler(new ClickHandler() {
                @Override
@@ -172,7 +176,9 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
          @Override
          public void onHTMLPreviewOutput(HTMLPreviewOutputEvent event)
          {
-            view_.showProgressOutput(event.getOutput());
+            String output = event.getOutput();
+            view_.showProgressOutput(output);
+            lastPreviewOutput_.append(output);
          }
       });
       
@@ -194,7 +200,8 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
                   result.getHtmlFile(),
                   result.getEnableSaveAs(),
                   isMarkdownFile(result.getSourceFile()),
-                  result.getEnableRefresh());
+                  result.getEnableRefresh(),
+                  lastPreviewOutput_.length() > 0);
 
                isPublished_ = result.getPreviouslyPublished();
                if (isPublished_)
@@ -350,6 +357,12 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
                           new SimpleRequestCallback<Boolean>());
    }
    
+   @Handler
+   public void onShowHtmlPreviewLog()
+   {
+      view_.showLog(lastPreviewOutput_.toString());
+   }
+   
    @Override
    public String getTitle()
    {
@@ -386,6 +399,7 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
    private boolean previewRunning_ = false;
    private HTMLPreviewParams lastPreviewParams_;
    private HTMLPreviewResult lastSuccessfulPreview_;
+   private StringBuilder lastPreviewOutput_ = new StringBuilder();
    
    private String savePreviewDir_;
    private boolean isPublished_;

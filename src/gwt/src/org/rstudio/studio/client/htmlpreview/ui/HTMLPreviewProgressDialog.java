@@ -31,7 +31,12 @@ public class HTMLPreviewProgressDialog extends ProgressDialog
 {
    public HTMLPreviewProgressDialog(String caption)
    {
-      super(caption);        
+      this(caption, -1);
+   }
+   
+   public HTMLPreviewProgressDialog(String caption, int maxHeight)
+   {
+      super(caption, new Integer(maxHeight));  
    }
    
    @Override
@@ -65,11 +70,13 @@ public class HTMLPreviewProgressDialog extends ProgressDialog
    }
 
    @Override
-   protected Widget createDisplayWidget()
+   protected Widget createDisplayWidget(Object param)
    {
       SimplePanel panel = new SimplePanel();
-      int maxHeight = Window.getClientHeight() - 150;
-      int height = Math.min(500, maxHeight);
+      int height = Window.getClientHeight() - 150;
+      int maxHeight = (Integer)param;
+      if (maxHeight != -1)
+         height = Math.min(maxHeight, height);
       panel.getElement().getStyle().setHeight(height, Unit.PX);
            
       output_ = new OutputBuffer();

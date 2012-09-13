@@ -63,11 +63,16 @@ public abstract class ProgressDialog extends ModalDialogBase
 
    public ProgressDialog(String title)
    {
+      this(title, null);
+   }
+
+   public ProgressDialog(String title, Object param)
+   {
       addStyleName(resources_.styles().progressDialog());
 
       setText(title);
 
-      display_ = createDisplayWidget();
+      display_ = createDisplayWidget(param);
       display_.addStyleName(resources_.styles().displayWidget());
       Style style = display_.getElement().getStyle();
       double skewFactor = (12 + BrowseCap.getFontSkew()) / 12.0;
@@ -88,7 +93,7 @@ public abstract class ProgressDialog extends ModalDialogBase
       return centralWidget_;
    }
    
-   protected abstract Widget createDisplayWidget();
+   protected abstract Widget createDisplayWidget(Object param);
 
    @Override
    protected void onUnload()

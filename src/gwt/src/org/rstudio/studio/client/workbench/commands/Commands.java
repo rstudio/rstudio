@@ -152,6 +152,7 @@ public abstract class
    public abstract AppCommand saveHtmlPreviewAsLocalFile();
    public abstract AppCommand saveHtmlPreviewAs();
    public abstract AppCommand refreshHtmlPreview();
+   public abstract AppCommand showHtmlPreviewLog();
    
    // View
    public abstract AppCommand showToolbar();

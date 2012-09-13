@@ -15,6 +15,7 @@ package org.rstudio.studio.client.htmlpreview.ui;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -78,6 +79,10 @@ public class HTMLPreviewPanel extends ResizeComposite
       
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands.openHtmlExternal().createToolbarButton());
+      
+      showLogButtonSeparator_ = toolbar.addLeftSeparator();
+      showLogButton_ = commands.showHtmlPreviewLog().createToolbarButton();
+      toolbar.addLeftWidget(showLogButton_);
       
       saveHtmlPreviewAsSeparator_ = toolbar.addLeftSeparator();
       if (Desktop.isDesktop())
@@ -155,11 +160,30 @@ public class HTMLPreviewPanel extends ResizeComposite
       return toolbar;
    }
    
+   
+   @Override
+   public void showLog(String log)
+   {
+      final HTMLPreviewProgressDialog dialog = 
+                              new HTMLPreviewProgressDialog("Log");
+      dialog.showOutput(log);
+      dialog.stopProgress();
+      dialog.addClickHandler(new ClickHandler() {
+
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            dialog.dismiss(); 
+         }
+      });
+      
+   }
+   
    @Override
    public void showProgress(String caption)
    {
       closeProgress();
-      activeProgressDialog_ = new HTMLPreviewProgressDialog(caption);
+      activeProgressDialog_ = new HTMLPreviewProgressDialog(caption, 500);
    }
    
    @Override
@@ -201,13 +225,16 @@ public class HTMLPreviewPanel extends ResizeComposite
                            String htmlFile,
                            boolean enableSaveAs,
                            boolean enablePublish,
-                           boolean enableRefresh)
+                           boolean enableRefresh,
+                           boolean enableShowLog)
    {
       String shortFileName = StringUtil.shortPathName(
             FileSystemItem.createFile(htmlFile), 
             ThemeStyles.INSTANCE.subtitle(), 
             300);
       fileLabel_.setText(shortFileName);
+      showLogButtonSeparator_.setVisible(enableShowLog);
+      showLogButton_.setVisible(enableShowLog);
       saveHtmlPreviewAsSeparator_.setVisible(enableSaveAs);
       saveHtmlPreviewAs_.setVisible(enableSaveAs);
       publishButtonSeparator_.setVisible(enablePublish);
@@ -311,6 +338,8 @@ public class HTMLPreviewPanel extends ResizeComposite
    private Widget saveHtmlPreviewAs_;
    private Widget publishButtonSeparator_;
    private ToolbarButton publishButton_;
+   private Widget showLogButtonSeparator_;
+   private ToolbarButton showLogButton_;
    private Widget refreshButtonSeparator_;
    private ToolbarButton refreshButton_;
    private HTMLPreviewProgressDialog activeProgressDialog_;

@@ -87,7 +87,7 @@ public class CompilePdfProgressDialog extends ProgressDialog
    }
    
    @Override
-   protected Widget createDisplayWidget()
+   protected Widget createDisplayWidget(Object param)
    {
       container_ = new SimplePanel();
       int maxHeight = Window.getClientHeight() - 150;

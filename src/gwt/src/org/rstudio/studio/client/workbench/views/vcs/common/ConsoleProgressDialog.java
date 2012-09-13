@@ -150,7 +150,7 @@ public class ConsoleProgressDialog extends ProgressDialog
    }
    
    @Override
-   protected Widget createDisplayWidget()
+   protected Widget createDisplayWidget(Object param)
    {
       display_ = new ConsoleProgressWidget(); 
       display_.setMaxOutputLines(getMaxOutputLines());
