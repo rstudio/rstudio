@@ -21,6 +21,11 @@ public class SuspendAndRestartEvent extends GwtEvent<SuspendAndRestartHandler>
    public static final GwtEvent.Type<SuspendAndRestartHandler> TYPE =
       new GwtEvent.Type<SuspendAndRestartHandler>();
    
+   public SuspendAndRestartEvent()
+   {
+      this(SuspendOptions.create(false, false), null);
+   }
+   
    public SuspendAndRestartEvent(SuspendOptions suspendOptions,
                                  String afterRestartCommand)
    {
