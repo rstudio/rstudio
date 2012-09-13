@@ -571,9 +571,6 @@ int RReadConsole (const char *pmt,
          s_initialized = true;
       }
 
-      // ensure rstudio tools are loaded before prompting
-      r::sourceManager().ensureToolsLoaded();
-
       std::string promptString(prompt);
       promptString = util::rconsole2utf8(promptString);
 
