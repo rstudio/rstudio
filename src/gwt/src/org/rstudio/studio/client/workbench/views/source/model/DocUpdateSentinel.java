@@ -77,6 +77,9 @@ public class DocUpdateSentinel
          {
             progress_.onError(error.getUserMessage());
          }
+         
+         if (onCompleted_ != null)
+            onCompleted_.execute();
       }
       
       private Command onCompleted_ = null;
