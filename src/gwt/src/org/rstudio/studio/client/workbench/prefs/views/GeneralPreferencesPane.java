@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -29,7 +30,6 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.FileDialogs;
@@ -53,8 +53,8 @@ public class GeneralPreferencesPane extends PreferencesPane
    @Inject
    public GeneralPreferencesPane(RemoteFileSystemContext fsContext,
                                  FileDialogs fileDialogs,
-                                 final EventBus eventBus,
                                  final GlobalDisplay globalDisplay,
+                                 final EventBus eventBus,
                                  UIPrefs prefs,
                                  SourceServerOperations server,
                                  final DefaultCRANMirror defaultCRANMirror)
