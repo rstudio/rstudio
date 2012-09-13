@@ -30,15 +30,14 @@ import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
-import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
-import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.GeneralPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.HistoryPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.PackagesPrefs;
@@ -54,7 +53,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    @Inject
    public GeneralPreferencesPane(RemoteFileSystemContext fsContext,
                                  FileDialogs fileDialogs,
-                                 final Session session,
                                  final EventBus eventBus,
                                  final GlobalDisplay globalDisplay,
                                  UIPrefs prefs,
@@ -97,11 +95,8 @@ public class GeneralPreferencesPane extends PreferencesPane
                                           @Override
                                           public void execute()
                                           {
-                                             SwitchToProjectEvent event = 
-                                               new SwitchToProjectEvent(
-                                                session.getSessionInfo().
-                                                     getActiveProjectFile());
-                                             eventBus.fireEvent(event);
+                                             eventBus.fireEvent(
+                                                new SuspendAndRestartEvent());
                                              
                                           }    
                                        });
