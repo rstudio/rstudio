@@ -1,3 +1,7 @@
+.panel {
+   z-index: 1001;	
+}
+
 .glass {
    background-color: black;
    filter: literal("alpha(opacity = 0)") !important;

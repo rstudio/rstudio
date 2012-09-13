@@ -32,6 +32,7 @@ public class ApplicationSerializationProgress extends PopupPanel
                                            int delayMs)
    {
       super(false, modal);
+      addStyleName(RESOURCES.styles().panel());
       
       if (modal)
       {
@@ -84,6 +85,7 @@ public class ApplicationSerializationProgress extends PopupPanel
    
    public interface Styles extends CssResource
    {
+      String panel();
       String glass();
       String spinner();
       String label();
