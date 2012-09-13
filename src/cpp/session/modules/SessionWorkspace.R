@@ -132,7 +132,14 @@
 
 .rs.addFunction("parseDataFile", function(path, header, sep, dec, quote, nrows) {
    data <- tryCatch(
-      read.table(path, header=header, sep=sep, dec=dec, quote=quote, nrows=nrows),
+      # try to use read.csv directly if possible (since this is a common case
+      # and since LibreOffice spreadsheet exports produce files unparsable
+      # by read.table). check Workspace.makeCommand if we want to deduce
+      # other more concrete read calls.
+      if (identical(sep,",") && identical(dec,".") && identical(quote,"\""))
+         read.csv(path, header=header, nrows=nrows)
+      else
+         read.table(path, header=header, sep=sep, dec=dec, quote=quote, nrows=nrows),
       error=function(e) {
          data.frame(Error=e$message)
       })
