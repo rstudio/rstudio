@@ -20,24 +20,29 @@
 #include <windows.h>
 
 #include <boost/bind.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
 #include "DesktopRVersion.hpp"
+#include "DesktopUtils.hpp"
 
 using namespace core;
 
 namespace desktop {
 
-bool prepareEnvironment(Options &options)
-{
-   bool forceUi = ::GetAsyncKeyState(VK_CONTROL) & ~1;
+namespace {
 
-   RVersion rVersion = detectRVersion(forceUi);
+bool prepareEnvironment(Options&, bool forceUi, QWidget* parent)
+{
+   // save the previous RBinDir so we can strip it off the front
+   // of the path if we set another R bin dir
+   std::string s_previousRBinDir;
+
+   RVersion rVersion = detectRVersion(forceUi, parent);
    if (!rVersion.isValid())
       return false;
-
 
    // get the short path version of the home dir
    std::string homePath =
@@ -60,12 +65,37 @@ bool prepareEnvironment(Options &options)
    // set R_HOME
    system::setenv("R_HOME", homePath);
 
-   std::string path =
-         QDir::toNativeSeparators(rVersion.binDir()).toStdString() + ";" +
-         system::getenv("PATH");
+   // get PATH and remove preiovus RBinDir if it's there
+   std::string path = system::getenv("PATH");
+   if (!s_previousRBinDir.empty())
+   {
+      std::string strip = s_previousRBinDir + ";";
+      if (boost::algorithm::starts_with(path, strip))
+         path = path.substr(strip.length());
+   }
+
+   // determine new R bin dir then prepend it to the path
+   std::string rBinDir = QDir::toNativeSeparators(
+                                       rVersion.binDir()).toStdString();
+   s_previousRBinDir = rBinDir;
+   path = rBinDir + ";" + path;
    system::setenv("PATH", path);
 
    return true;
+}
+
+} // anonymous namespace
+
+bool prepareEnvironment(Options &options)
+{
+   return prepareEnvironment(options,
+                             ::GetAsyncKeyState(VK_CONTROL) & ~1,
+                             NULL);
+}
+
+bool chooseRHomeAndPrepareEnvironment(QWidget* parent)
+{
+   return prepareEnvironment(desktop::options(), true, parent);
 }
 
 } // namespace desktop
