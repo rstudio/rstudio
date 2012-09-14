@@ -1581,6 +1581,10 @@ public class TextEditingTarget implements EditingTarget
           (selectionRange.getEnd().getColumn() == 0))
       {
          docDisplay_.collapseSelection(false);
+         
+         // if we are on a blank line then move to the next line
+         if (docDisplay_.getLength(selectionRange.getEnd().getRow()) == 0)
+            docDisplay_.moveSelectionToNextLine(true);        
       }
       else
       {
