@@ -347,7 +347,7 @@ public class Shell implements ConsoleInputHandler,
 
          if (event.isUpArrow() && modifiers == 0)
          {
-            if (input_.getCurrentLineNum() == 0)
+            if ((input_.getCurrentLineNum() == 0) || input_.isCursorAtEnd())
             {
                event.preventDefault();
                event.stopPropagation();
@@ -357,7 +357,8 @@ public class Shell implements ConsoleInputHandler,
          }
          else if (event.isDownArrow() && modifiers == 0)
          {
-            if (input_.getCurrentLineNum() == input_.getCurrentLineCount() - 1)
+            if ((input_.getCurrentLineNum() == input_.getCurrentLineCount() - 1)
+                || input_.isCursorAtEnd())
             {
                event.preventDefault();
                event.stopPropagation();

@@ -44,4 +44,6 @@ public interface InputEditorDisplay extends HasAllFocusHandlers,
 
    int getCurrentLineNum();
    int getCurrentLineCount();
+   
+   boolean isCursorAtEnd();
 }

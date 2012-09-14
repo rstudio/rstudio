@@ -803,6 +803,14 @@ public class AceEditor implements DocDisplay,
       return getSession().getSelection().isEmpty();
    }
 
+   public boolean isCursorAtEnd()
+   {
+      int lastRow = getRowCount() - 1;
+      Position cursorPos = getCursorPosition();
+      return cursorPos.compareTo(Position.create(lastRow, 
+                                                 getLength(lastRow))) == 0;
+   }
+   
    public void clear()
    {
       setCode("", false);
