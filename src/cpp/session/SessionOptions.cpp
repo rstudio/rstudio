@@ -152,7 +152,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          value<bool>(&createPublicFolder_)->default_value(false),
          "automatically create public folder")
       ("session-rprofile-on-resume-default",
-          value<bool>(&rProfileOnResumeDefault_)->default_value(true),
+          value<bool>(&rProfileOnResumeDefault_)->default_value(false),
           "default user setting for running Rprofile on resume");
 
    // r options
