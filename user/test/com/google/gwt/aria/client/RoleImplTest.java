@@ -32,6 +32,12 @@ public class RoleImplTest extends GWTTestCase {
     assertEquals(regionRole.getName(), regionRole.get(div));
     regionRole.remove(div);
     assertEquals("", regionRole.get(div));
+    div.setAttribute("role", "region fallback1 fallback2");
+    assertEquals("region", regionRole.get(div));
+    div.setAttribute("role", "fallback1 region fallback2");
+    assertEquals("region", regionRole.get(div));
+    div.setAttribute("role", "fallback1 fallback2 fallback3");
+    assertEquals("", regionRole.get(div));
   }
 
   public void testSetGetRemoveProperty() {

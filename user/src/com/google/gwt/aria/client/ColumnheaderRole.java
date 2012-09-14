@@ -27,9 +27,25 @@ import com.google.gwt.dom.client.Element;
  * @see Roles
  */
 public interface ColumnheaderRole extends GridcellRole, SectionheadRole, WidgetRole {
+  /**
+   * Returns the value of the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-sort">
+   * aria-sort</a> attribute for the {@code element} or "" if no
+   * such attribute is present.
+   */
   String getAriaSortProperty(Element element);
 
+  /**
+   * Removes the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-sort">
+   * aria-sort</a> attribute from the {@code element}.
+   */
   void removeAriaSortProperty(Element element);
 
+  /**
+   * Sets the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-sort">
+   * aria-sort</a> attribute for the {@code element} to the given {@code value}.
+   */
   void setAriaSortProperty(Element element, SortValue value);
 }

@@ -27,9 +27,25 @@ import com.google.gwt.dom.client.Element;
  * @see Roles
  */
 public interface SliderRole extends InputRole, RangeRole {
+  /**
+   * Returns the value of the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-orientation">
+   * aria-orientation</a> attribute for the {@code element} or "" if no
+   * such attribute is present.
+   */
   String getAriaOrientationProperty(Element element);
 
+  /**
+   * Removes the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-orientation">
+   * aria-orientation</a> attribute from the {@code element}.
+   */
   void removeAriaOrientationProperty(Element element);
 
+  /**
+   * Sets the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-orientation">
+   * aria-orientation</a> attribute for the {@code element} to the given {@code value}.
+   */
   void setAriaOrientationProperty(Element element, OrientationValue value);
 }

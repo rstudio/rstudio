@@ -17,8 +17,6 @@ package com.google.gwt.aria.client;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.Label;
 
 /**
  * Tests {@link Attribute} ARIA class
@@ -73,15 +71,6 @@ public class AttributeTest extends GWTTestCase {
     ref2.setId("ref2");
     attribute5.set(div, Id.of(ref1), Id.of(ref2));
     assertEquals("ref1 ref2", attribute5.get(div));
-
-    Button b = new Button();
-    b.getElement().setId("b");
-    Label l1 = new Label();
-    l1.getElement().setId("l1");
-    Label l2 = new Label();
-    l2.getElement().setId("l2");
-    attribute5.set(b.getElement(), Id.of(l1), Id.of(l2));
-    assertEquals("l1 l2", attribute5.get(b.getElement()));
   }
 
   public void testSetDefaultValue_noSet() {

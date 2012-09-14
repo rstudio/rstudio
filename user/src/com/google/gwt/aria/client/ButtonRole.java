@@ -27,15 +27,47 @@ import com.google.gwt.dom.client.Element;
  * @see Roles
  */
 public interface ButtonRole extends CommandRole {
+  /**
+   * Returns the value of the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-expanded">
+   * aria-expanded</a> attribute for the {@code element} or "" if no
+   * such attribute is present.
+   */
   String getAriaExpandedState(Element element);
 
+  /**
+   * Returns the value of the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-pressed">
+   * aria-pressed</a> attribute for the {@code element} or "" if no
+   * such attribute is present.
+   */
   String getAriaPressedState(Element element);
 
+  /**
+   * Removes the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-expanded">
+   * aria-expanded</a> attribute from the {@code element}.
+   */
   void removeAriaExpandedState(Element element);
 
+  /**
+   * Removes the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-pressed">
+   * aria-pressed</a> attribute from the {@code element}.
+   */
   void removeAriaPressedState(Element element);
 
+  /**
+   * Sets the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-expanded">
+   * aria-expanded</a> attribute for the {@code element} to the given {@code value}.
+   */
   void setAriaExpandedState(Element element, ExpandedValue value);
 
+  /**
+   * Sets the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-pressed">
+   * aria-pressed</a> attribute for the {@code element} to the given {@code value}.
+   */
   void setAriaPressedState(Element element, PressedValue value);
 }

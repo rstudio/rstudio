@@ -27,9 +27,25 @@ import com.google.gwt.dom.client.Element;
  * @see Roles
  */
 public interface HeadingRole extends SectionheadRole {
+  /**
+   * Returns the value of the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-level">
+   * aria-level</a> attribute for the {@code element} or "" if no
+   * such attribute is present.
+   */
   String getAriaLevelProperty(Element element);
 
+  /**
+   * Removes the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-level">
+   * aria-level</a> attribute from the {@code element}.
+   */
   void removeAriaLevelProperty(Element element);
 
+  /**
+   * Sets the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-level">
+   * aria-level</a> attribute for the {@code element} to the given {@code value}.
+   */
   void setAriaLevelProperty(Element element, int value);
 }

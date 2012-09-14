@@ -27,15 +27,47 @@ import com.google.gwt.dom.client.Element;
  * @see Roles
  */
 public interface ListboxRole extends ListRole, SelectRole {
+  /**
+   * Returns the value of the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-multiselectable">
+   * aria-multiselectable</a> attribute for the {@code element} or "" if no
+   * such attribute is present.
+   */
   String getAriaMultiselectableProperty(Element element);
 
+  /**
+   * Returns the value of the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-required">
+   * aria-required</a> attribute for the {@code element} or "" if no
+   * such attribute is present.
+   */
   String getAriaRequiredProperty(Element element);
 
+  /**
+   * Removes the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-multiselectable">
+   * aria-multiselectable</a> attribute from the {@code element}.
+   */
   void removeAriaMultiselectableProperty(Element element);
 
+  /**
+   * Removes the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-required">
+   * aria-required</a> attribute from the {@code element}.
+   */
   void removeAriaRequiredProperty(Element element);
 
+  /**
+   * Sets the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-multiselectable">
+   * aria-multiselectable</a> attribute for the {@code element} to the given {@code value}.
+   */
   void setAriaMultiselectableProperty(Element element, boolean value);
 
+  /**
+   * Sets the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-required">
+   * aria-required</a> attribute for the {@code element} to the given {@code value}.
+   */
   void setAriaRequiredProperty(Element element, boolean value);
 }

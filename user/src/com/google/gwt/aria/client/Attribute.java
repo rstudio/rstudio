@@ -58,7 +58,7 @@ public abstract class Attribute<T> {
    * Gets the HTML attribute value for the attribute with name {@code name} for element
    * {@code element}
    *
-   * @param element HTM element
+   * @param element HTML element
    * @return The attribute value for {@code element}
    */
   public String get(Element element) {
@@ -112,17 +112,20 @@ public abstract class Attribute<T> {
     element.setAttribute(name, defaultValue);
   }
 
+  /**
+   * Gets the string representation of {@code value} to be set as an attribute value
+   * to an HTML element.
+   *
+   * @param value The item to be stringified
+   * @return the stringified representation of {@code value}
+   */
   protected abstract String getSingleValue(T value);
 
   private String getAriaValue(T... value) {
-    if (value.length == 1) {
-      return getSingleValue(value[0]);
-    } else {
-      StringBuffer buf = new StringBuffer();
-      for (T item : value) {
-        buf.append(getSingleValue(item)).append(" ");
-      }
-      return buf.toString().trim();
+    StringBuffer buf = new StringBuffer();
+    for (T item : value) {
+      buf.append(getSingleValue(item)).append(" ");
     }
+    return buf.toString().trim();
   }
 }

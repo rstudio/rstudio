@@ -27,9 +27,25 @@ import com.google.gwt.dom.client.Element;
  * @see Roles
  */
 public interface TabRole extends SectionheadRole, WidgetRole {
+  /**
+   * Returns the value of the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-selected">
+   * aria-selected</a> attribute for the {@code element} or "" if no
+   * such attribute is present.
+   */
   String getAriaSelectedState(Element element);
 
+  /**
+   * Removes the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-selected">
+   * aria-selected</a> attribute from the {@code element}.
+   */
   void removeAriaSelectedState(Element element);
 
+  /**
+   * Sets the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-selected">
+   * aria-selected</a> attribute for the {@code element} to the given {@code value}.
+   */
   void setAriaSelectedState(Element element, SelectedValue value);
 }

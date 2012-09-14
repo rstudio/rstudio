@@ -33,16 +33,16 @@ class RoleImpl implements Role {
     this.roleName = roleName;
   }
 
-  /**
-   * Gets the role for the element {@code element}. If none is set, "" is returned.
-   *
-   * @param element HTML element
-   * @return The role attribute value
-   */
   @Override
   public String get(Element element) {
     assert element != null : "Element cannot be null.";
-    return element.getAttribute(ATTR_NAME_ROLE);
+    String roleAttributeValue = element.getAttribute(ATTR_NAME_ROLE);
+    for (String testRoleName : roleAttributeValue.split(" ")) {
+      if (Roles.isRoleName(testRoleName)) {
+        return testRoleName;
+      }
+    }
+    return "";
   }
 
   @Override
@@ -125,11 +125,6 @@ class RoleImpl implements Role {
     return Property.RELEVANT.get(element);
   }
 
-  /**
-   * Gets the role name
-   *
-   * @return The role name
-   */
   @Override
   public String getName() {
     return roleName;
@@ -140,11 +135,6 @@ class RoleImpl implements Role {
     return ExtraAttribute.TABINDEX.get(element);
   }
 
-  /**
-   * Removes the role for element {@code element}
-   *
-   * @param element HTML element
-   */
   @Override
   public void remove(Element element) {
     assert element != null : "Element cannot be null.";
@@ -236,11 +226,6 @@ class RoleImpl implements Role {
     ExtraAttribute.TABINDEX.remove(element);
   }
 
-  /**
-   * Sets the role to element {@code element}
-   *
-   * @param element HTML element
-   */
   @Override
   public void set(Element element) {
     assert element != null : "Element cannot be null.";

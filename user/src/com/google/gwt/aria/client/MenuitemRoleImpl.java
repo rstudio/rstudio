@@ -24,5 +24,4 @@ class MenuitemRoleImpl extends RoleImpl implements MenuitemRole {
   MenuitemRoleImpl(String roleName) {
     super(roleName);
   }
-
 }

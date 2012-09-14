@@ -27,9 +27,25 @@ import com.google.gwt.dom.client.Element;
  * @see Roles
  */
 public interface CheckboxRole extends InputRole {
+  /**
+   * Returns the value of the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-checked">
+   * aria-checked</a> attribute for the {@code element} or "" if no
+   * such attribute is present.
+   */
   String getAriaCheckedState(Element element);
 
+  /**
+   * Removes the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-checked">
+   * aria-checked</a> attribute from the {@code element}.
+   */
   void removeAriaCheckedState(Element element);
 
+  /**
+   * Sets the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-checked">
+   * aria-checked</a> attribute for the {@code element} to the given {@code value}.
+   */
   void setAriaCheckedState(Element element, CheckedValue value);
 }

@@ -27,21 +27,69 @@ import com.google.gwt.dom.client.Element;
  * @see Roles
  */
 public interface ListitemRole extends SectionRole {
+  /**
+   * Returns the value of the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-level">
+   * aria-level</a> attribute for the {@code element} or "" if no
+   * such attribute is present.
+   */
   String getAriaLevelProperty(Element element);
 
+  /**
+   * Returns the value of the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-posinset">
+   * aria-posinset</a> attribute for the {@code element} or "" if no
+   * such attribute is present.
+   */
   String getAriaPosinsetProperty(Element element);
 
+  /**
+   * Returns the value of the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-setsize">
+   * aria-setsize</a> attribute for the {@code element} or "" if no
+   * such attribute is present.
+   */
   String getAriaSetsizeProperty(Element element);
 
+  /**
+   * Removes the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-level">
+   * aria-level</a> attribute from the {@code element}.
+   */
   void removeAriaLevelProperty(Element element);
 
+  /**
+   * Removes the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-posinset">
+   * aria-posinset</a> attribute from the {@code element}.
+   */
   void removeAriaPosinsetProperty(Element element);
 
+  /**
+   * Removes the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-setsize">
+   * aria-setsize</a> attribute from the {@code element}.
+   */
   void removeAriaSetsizeProperty(Element element);
 
+  /**
+   * Sets the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-level">
+   * aria-level</a> attribute for the {@code element} to the given {@code value}.
+   */
   void setAriaLevelProperty(Element element, int value);
 
+  /**
+   * Sets the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-posinset">
+   * aria-posinset</a> attribute for the {@code element} to the given {@code value}.
+   */
   void setAriaPosinsetProperty(Element element, int value);
 
+  /**
+   * Sets the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-setsize">
+   * aria-setsize</a> attribute for the {@code element} to the given {@code value}.
+   */
   void setAriaSetsizeProperty(Element element, int value);
 }

@@ -27,27 +27,91 @@ import com.google.gwt.dom.client.Element;
  * @see Roles
  */
 public interface RangeRole extends WidgetRole {
+  /**
+   * Returns the value of the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-valuemax">
+   * aria-valuemax</a> attribute for the {@code element} or "" if no
+   * such attribute is present.
+   */
   String getAriaValuemaxProperty(Element element);
 
+  /**
+   * Returns the value of the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-valuemin">
+   * aria-valuemin</a> attribute for the {@code element} or "" if no
+   * such attribute is present.
+   */
   String getAriaValueminProperty(Element element);
 
+  /**
+   * Returns the value of the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-valuenow">
+   * aria-valuenow</a> attribute for the {@code element} or "" if no
+   * such attribute is present.
+   */
   String getAriaValuenowProperty(Element element);
 
+  /**
+   * Returns the value of the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-valuetext">
+   * aria-valuetext</a> attribute for the {@code element} or "" if no
+   * such attribute is present.
+   */
   String getAriaValuetextProperty(Element element);
 
+  /**
+   * Removes the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-valuemax">
+   * aria-valuemax</a> attribute from the {@code element}.
+   */
   void removeAriaValuemaxProperty(Element element);
 
+  /**
+   * Removes the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-valuemin">
+   * aria-valuemin</a> attribute from the {@code element}.
+   */
   void removeAriaValueminProperty(Element element);
 
+  /**
+   * Removes the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-valuenow">
+   * aria-valuenow</a> attribute from the {@code element}.
+   */
   void removeAriaValuenowProperty(Element element);
 
+  /**
+   * Removes the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-valuetext">
+   * aria-valuetext</a> attribute from the {@code element}.
+   */
   void removeAriaValuetextProperty(Element element);
 
+  /**
+   * Sets the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-valuemax">
+   * aria-valuemax</a> attribute for the {@code element} to the given {@code value}.
+   */
   void setAriaValuemaxProperty(Element element, Number value);
 
+  /**
+   * Sets the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-valuemin">
+   * aria-valuemin</a> attribute for the {@code element} to the given {@code value}.
+   */
   void setAriaValueminProperty(Element element, Number value);
 
+  /**
+   * Sets the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-valuenow">
+   * aria-valuenow</a> attribute for the {@code element} to the given {@code value}.
+   */
   void setAriaValuenowProperty(Element element, Number value);
 
+  /**
+   * Sets the
+   * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-valuetext">
+   * aria-valuetext</a> attribute for the {@code element} to the given {@code value}.
+   */
   void setAriaValuetextProperty(Element element, String value);
 }

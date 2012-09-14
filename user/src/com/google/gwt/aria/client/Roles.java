@@ -17,6 +17,9 @@ package com.google.gwt.aria.client;
 // This is auto-generated code.  Do not manually edit! //
 /////////////////////////////////////////////////////////
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * <p>A factory providing each concrete role in the ARIA specification. Each role implements
  * methods that a GWT application can use to modify the appropriate DOM attributes for that
@@ -128,6 +131,84 @@ public final class Roles {
   private static final TreegridRole TREEGRID = new TreegridRoleImpl("treegrid");
   private static final TreeitemRole TREEITEM = new TreeitemRoleImpl("treeitem");
   private static final TreeRole TREE = new TreeRoleImpl("tree");
+
+  private static List<String> ROLE_NAMES = new ArrayList();
+
+  static {
+    ROLE_NAMES.add("roletype");
+    ROLE_NAMES.add("structure");
+    ROLE_NAMES.add("section");
+    ROLE_NAMES.add("region");
+    ROLE_NAMES.add("alert");
+    ROLE_NAMES.add("window");
+    ROLE_NAMES.add("dialog");
+    ROLE_NAMES.add("alertdialog");
+    ROLE_NAMES.add("landmark");
+    ROLE_NAMES.add("application");
+    ROLE_NAMES.add("document");
+    ROLE_NAMES.add("article");
+    ROLE_NAMES.add("banner");
+    ROLE_NAMES.add("widget");
+    ROLE_NAMES.add("command");
+    ROLE_NAMES.add("button");
+    ROLE_NAMES.add("input");
+    ROLE_NAMES.add("checkbox");
+    ROLE_NAMES.add("gridcell");
+    ROLE_NAMES.add("sectionhead");
+    ROLE_NAMES.add("columnheader");
+    ROLE_NAMES.add("composite");
+    ROLE_NAMES.add("group");
+    ROLE_NAMES.add("select");
+    ROLE_NAMES.add("combobox");
+    ROLE_NAMES.add("complementary");
+    ROLE_NAMES.add("contentinfo");
+    ROLE_NAMES.add("definition");
+    ROLE_NAMES.add("list");
+    ROLE_NAMES.add("directory");
+    ROLE_NAMES.add("form");
+    ROLE_NAMES.add("grid");
+    ROLE_NAMES.add("heading");
+    ROLE_NAMES.add("img");
+    ROLE_NAMES.add("link");
+    ROLE_NAMES.add("listbox");
+    ROLE_NAMES.add("listitem");
+    ROLE_NAMES.add("log");
+    ROLE_NAMES.add("main");
+    ROLE_NAMES.add("marquee");
+    ROLE_NAMES.add("math");
+    ROLE_NAMES.add("menu");
+    ROLE_NAMES.add("menubar");
+    ROLE_NAMES.add("menuitem");
+    ROLE_NAMES.add("menuitemcheckbox");
+    ROLE_NAMES.add("option");
+    ROLE_NAMES.add("radio");
+    ROLE_NAMES.add("menuitemradio");
+    ROLE_NAMES.add("navigation");
+    ROLE_NAMES.add("note");
+    ROLE_NAMES.add("presentation");
+    ROLE_NAMES.add("range");
+    ROLE_NAMES.add("progressbar");
+    ROLE_NAMES.add("radiogroup");
+    ROLE_NAMES.add("row");
+    ROLE_NAMES.add("rowgroup");
+    ROLE_NAMES.add("rowheader");
+    ROLE_NAMES.add("search");
+    ROLE_NAMES.add("separator");
+    ROLE_NAMES.add("scrollbar");
+    ROLE_NAMES.add("slider");
+    ROLE_NAMES.add("spinbutton");
+    ROLE_NAMES.add("status");
+    ROLE_NAMES.add("tab");
+    ROLE_NAMES.add("tablist");
+    ROLE_NAMES.add("tabpanel");
+    ROLE_NAMES.add("textbox");
+    ROLE_NAMES.add("timer");
+    ROLE_NAMES.add("toolbar");
+    ROLE_NAMES.add("tooltip");
+    ROLE_NAMES.add("tree");
+    ROLE_NAMES.add("treegrid");
+    ROLE_NAMES.add("treeitem");
+  }
 
   public static AlertdialogRole getAlertdialogRole() {
     return ALERTDIALOG;
@@ -371,5 +452,9 @@ public final class Roles {
 
   public static TreeRole getTreeRole() {
     return TREE;
+  }
+
+  public static boolean isRoleName(String testRoleName) {
+    return ROLE_NAMES.contains(testRoleName);
   }
 }

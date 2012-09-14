@@ -24,5 +24,4 @@ class PresentationRoleImpl extends RoleImpl implements PresentationRole {
   PresentationRoleImpl(String roleName) {
     super(roleName);
   }
-
 }
