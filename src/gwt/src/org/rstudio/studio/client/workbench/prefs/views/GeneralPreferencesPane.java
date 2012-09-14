@@ -22,12 +22,14 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.FileDialogs;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
@@ -48,6 +50,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    public GeneralPreferencesPane(RemoteFileSystemContext fsContext,
                                  FileDialogs fileDialogs,
                                  UIPrefs prefs,
+                                 final GlobalDisplay globalDisplay,
                                  SourceServerOperations server,
                                  final DefaultCRANMirror defaultCRANMirror)
    {
@@ -69,7 +72,14 @@ public class GeneralPreferencesPane extends PreferencesPane
                      {
                         String ver = Desktop.getFrame().chooseRVersion();
                         if (!StringUtil.isNullOrEmpty(ver))
+                        {
                            rVersion_.setText(ver);
+
+                           globalDisplay.showMessage(MessageDialog.INFO,
+                                 "Change R Version",
+                                 "You need to quit and re-open RStudio " +
+                                 "in order for this change to take effect.");
+                        }
                      }
                   });
             rVersion_.setWidth("100%");
