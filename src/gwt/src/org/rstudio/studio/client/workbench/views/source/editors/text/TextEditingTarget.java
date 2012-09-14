@@ -1597,6 +1597,12 @@ public class TextEditingTarget implements EditingTarget
                     ? scopeHelper_.getSweaveChunkText(sweaveChunk, range)
                     : docDisplay_.getCode(range.getStart(), range.getEnd());
       setLastExecuted(range.getStart(), range.getEnd());
+      
+      // trim intelligently
+      code = code.trim();
+      if (code.length() == 0)
+         code = "\n";
+      
       events_.fireEvent(new SendToConsoleEvent(
                                   code, 
                                   true, 
