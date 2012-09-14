@@ -56,12 +56,17 @@ public class XMLHttpRequest extends JavaScriptObject {
     Text("text");
     */
 
-    protected final String responseTypeString;
+    private final String responseTypeString;
 
     private ResponseType(String responseTypeString) {
       this.responseTypeString = responseTypeString;
     }
+
+    public String getResponseTypeString() {
+      return responseTypeString;
+    }
   }
+
   /*
    * NOTE: Testing discovered that for some bizarre reason, on Mozilla, the
    * JavaScript <code>XmlHttpRequest.onreadystatechange</code> handler
@@ -116,27 +121,7 @@ public class XMLHttpRequest extends JavaScriptObject {
    * 
    * @return the created object
    */
-  public static XMLHttpRequest create() {
-    return create(ResponseType.Default);
-  }
-
-  /**
-   * Creates an XMLHttpRequest object.
-   * 
-   * @param responseType the type of response desired.  See {@link ResponseType}
-   *     for limitations on using the different values
-   * @return the created object
-   */
-  public static XMLHttpRequest create(ResponseType responseType) {
-    return create(responseType.responseTypeString);
-  }
-
-  /**
-   * Creates an XMLHttpRequest object.
-   * 
-   * @return the created object
-   */
-  private static native XMLHttpRequest create(String responseType) /*-{
+  public static native XMLHttpRequest create() /*-{
     // Don't check window.XMLHttpRequest, because it can
     // cause cross-site problems on IE8 if window's URL
     // is javascript:'' .
@@ -150,9 +135,6 @@ public class XMLHttpRequest extends JavaScriptObject {
         xhr = new $wnd.ActiveXObject("Microsoft.XMLHTTP");
       }
     }
-    if (xhr && responseType) {
-      xhr.responseType = responseType;
-    }
     return xhr;
   }-*/;
 
@@ -162,8 +144,8 @@ public class XMLHttpRequest extends JavaScriptObject {
   /**
    * Aborts the current request.
    * <p>
-   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#abort"
-   * >http://www.w3.org/TR/XMLHttpRequest/#abort</a>.
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#the-abort-method"
+   * >http://www.w3.org/TR/XMLHttpRequest/#the-abort-method</a>.
    */
   public final native void abort() /*-{
     this.abort();
@@ -172,8 +154,8 @@ public class XMLHttpRequest extends JavaScriptObject {
   /**
    * Clears the {@link ReadyStateChangeHandler}.
    * <p>
-   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#onreadystatechange"
-   * >http://www.w3.org/TR/XMLHttpRequest/#onreadystatechange</a>.
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#handler-xhr-onreadystatechange"
+   * >http://www.w3.org/TR/XMLHttpRequest/#handler-xhr-onreadystatechange</a>.
    * 
    * @see #clearOnReadyStateChange()
    */
@@ -189,8 +171,8 @@ public class XMLHttpRequest extends JavaScriptObject {
   /**
    * Gets all the HTTP response headers, as a single string.
    * <p>
-   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#getallresponseheaders"
-   * >http://www.w3.org/TR/XMLHttpRequest/#getallresponseheaders</a>.
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#the-getallresponseheaders-method"
+   * >http://www.w3.org/TR/XMLHttpRequest/#the-getallresponseheaders-method</a>.
    * 
    * @return the response headers.
    */
@@ -201,8 +183,8 @@ public class XMLHttpRequest extends JavaScriptObject {
   /**
    * Get's the current ready-state.
    * <p>
-   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#readystate"
-   * >http://www.w3.org/TR/XMLHttpRequest/#readystate</a>.
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#dom-xmlhttprequest-readystate"
+   * >http://www.w3.org/TR/XMLHttpRequest/#dom-xmlhttprequest-state</a>.
    * 
    * @return the ready-state constant
    */
@@ -223,8 +205,8 @@ public class XMLHttpRequest extends JavaScriptObject {
   /**
    * Gets an HTTP response header.
    * <p>
-   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#getresponseheader"
-   * >http://www.w3.org/TR/XMLHttpRequest/#getresponseheader</a>.
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#the-getresponseheader-method"
+   * >http://www.w3.org/TR/XMLHttpRequest/#the-getresponseheader-method</a>.
    * 
    * @param header the response header to be retrieved
    * @return the header value
@@ -236,8 +218,8 @@ public class XMLHttpRequest extends JavaScriptObject {
   /**
    * Gets the response text.
    * <p>
-   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#responsetext"
-   * >http://www.w3.org/TR/XMLHttpRequest/#responsetext</a>.
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#the-responsetext-attribute"
+   * >http://www.w3.org/TR/XMLHttpRequest/#the-responsetext-attribute</a>.
    * 
    * @return the response text
    */
@@ -246,10 +228,22 @@ public class XMLHttpRequest extends JavaScriptObject {
   }-*/;
 
   /**
+   * Gets the response type.
+   * <p>
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#the-responsetype-attribute"
+   * >http://www.w3.org/TR/XMLHttpRequest/#the-responsetype-attribute</a>
+   *
+   * @return the response type
+   */
+  public final native String getResponseType() /*-{
+    return this.responseType || "";
+  }-*/;
+
+  /**
    * Gets the status code.
    * <p>
-   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#status"
-   * >http://www.w3.org/TR/XMLHttpRequest/#status</a>.
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#the-status-attribute"
+   * >http://www.w3.org/TR/XMLHttpRequest/#the-status-attribute</a>.
    * 
    * @return the status code
    */
@@ -260,8 +254,8 @@ public class XMLHttpRequest extends JavaScriptObject {
   /**
    * Gets the status text.
    * <p>
-   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#statustext"
-   * >http://www.w3.org/TR/XMLHttpRequest/#statustext</a>.
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#the-statustext-attribute"
+   * >http://www.w3.org/TR/XMLHttpRequest/#the-statustext-attribute</a>.
    * 
    * @return the status text
    */
@@ -272,8 +266,8 @@ public class XMLHttpRequest extends JavaScriptObject {
   /**
    * Opens an asynchronous connection.
    * <p>
-   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#open"
-   * >http://www.w3.org/TR/XMLHttpRequest/#open</a>.
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#the-open-method"
+   * >http://www.w3.org/TR/XMLHttpRequest/#the-open-method</a>.
    * 
    * @param httpMethod the HTTP method to use
    * @param url the URL to be opened
@@ -285,8 +279,8 @@ public class XMLHttpRequest extends JavaScriptObject {
   /**
    * Opens an asynchronous connection.
    * <p>
-   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#open"
-   * >http://www.w3.org/TR/XMLHttpRequest/#open</a>.
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#the-open-method"
+   * >http://www.w3.org/TR/XMLHttpRequest/#the-open-method</a>.
    * 
    * @param httpMethod the HTTP method to use
    * @param url the URL to be opened
@@ -299,8 +293,8 @@ public class XMLHttpRequest extends JavaScriptObject {
   /**
    * Opens an asynchronous connection.
    * <p>
-   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#open"
-   * >http://www.w3.org/TR/XMLHttpRequest/#open</a>.
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#the-open-method"
+   * >http://www.w3.org/TR/XMLHttpRequest/#the-open-method</a>.
    * 
    * @param httpMethod the HTTP method to use
    * @param url the URL to be opened
@@ -324,8 +318,8 @@ public class XMLHttpRequest extends JavaScriptObject {
   /**
    * Initiates a request with data.  If there is no data, specify null.
    * <p>
-   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#send"
-   * >http://www.w3.org/TR/XMLHttpRequest/#send</a>.
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#the-send-method"
+   * >http://www.w3.org/TR/XMLHttpRequest/#the-send-method</a>.
    * 
    * @param requestData the data to be sent with the request
    */
@@ -337,8 +331,8 @@ public class XMLHttpRequest extends JavaScriptObject {
    * Sets the {@link ReadyStateChangeHandler} to be notified when the object's
    * ready-state changes.
    * <p>
-   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#onreadystatechange"
-   * >http://www.w3.org/TR/XMLHttpRequest/#onreadystatechange</a>.
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#handler-xhr-onreadystatechange"
+   * >http://www.w3.org/TR/XMLHttpRequest/#handler-xhr-onreadystatechange</a>.
    * 
    * <p>
    * Note: Applications <em>must</em> call {@link #clearOnReadyStateChange()}
@@ -361,13 +355,39 @@ public class XMLHttpRequest extends JavaScriptObject {
   /**
    * Sets a request header.
    * <p>
-   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#setrequestheader"
-   * >http://www.w3.org/TR/XMLHttpRequest/#setrequestheader</a>.
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#the-setrequestheader-method"
+   * >http://www.w3.org/TR/XMLHttpRequest/#the-setrequestheader-method</a>.
    * 
    * @param header the header to be set
    * @param value the header's value
    */
   public final native void setRequestHeader(String header, String value) /*-{
     this.setRequestHeader(header, value);
+  }-*/;
+
+  /**
+   * Sets the response type.
+   * <p>
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#the-responsetype-attribute"
+   * >http://www.w3.org/TR/XMLHttpRequest/#the-responsetype-attribute</a>
+   *
+   * @param responseType the type of response desired.  See {@link ResponseType}
+   *     for limitations on using the different values
+   */
+  public final void setResponseType(ResponseType responseType) {
+    this.setResponseType(responseType.getResponseTypeString());
+  }
+
+  /**
+   * Sets the response type.
+   * <p>
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#the-responsetype-attribute"
+   * >http://www.w3.org/TR/XMLHttpRequest/#the-responsetype-attribute</a>
+   *
+   * @param responseType the type of response desired.  See {@link ResponseType}
+   *     for limitations on using the different values
+   */
+  public final native void setResponseType(String responseType) /*-{
+    this.responseType = responseType;
   }-*/;
 }
