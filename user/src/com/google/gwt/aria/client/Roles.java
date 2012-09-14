@@ -17,8 +17,10 @@ package com.google.gwt.aria.client;
 // This is auto-generated code.  Do not manually edit! //
 /////////////////////////////////////////////////////////
 
-import java.util.ArrayList;
-import java.util.List;
+import com.google.gwt.dom.client.Element;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * <p>A factory providing each concrete role in the ARIA specification. Each role implements
@@ -132,82 +134,70 @@ public final class Roles {
   private static final TreeitemRole TREEITEM = new TreeitemRoleImpl("treeitem");
   private static final TreeRole TREE = new TreeRoleImpl("tree");
 
-  private static List<String> ROLE_NAMES = new ArrayList();
+  private static final Map<String, Role> ROLES_MAP = new HashMap<String, Role>();
 
   static {
-    ROLE_NAMES.add("roletype");
-    ROLE_NAMES.add("structure");
-    ROLE_NAMES.add("section");
-    ROLE_NAMES.add("region");
-    ROLE_NAMES.add("alert");
-    ROLE_NAMES.add("window");
-    ROLE_NAMES.add("dialog");
-    ROLE_NAMES.add("alertdialog");
-    ROLE_NAMES.add("landmark");
-    ROLE_NAMES.add("application");
-    ROLE_NAMES.add("document");
-    ROLE_NAMES.add("article");
-    ROLE_NAMES.add("banner");
-    ROLE_NAMES.add("widget");
-    ROLE_NAMES.add("command");
-    ROLE_NAMES.add("button");
-    ROLE_NAMES.add("input");
-    ROLE_NAMES.add("checkbox");
-    ROLE_NAMES.add("gridcell");
-    ROLE_NAMES.add("sectionhead");
-    ROLE_NAMES.add("columnheader");
-    ROLE_NAMES.add("composite");
-    ROLE_NAMES.add("group");
-    ROLE_NAMES.add("select");
-    ROLE_NAMES.add("combobox");
-    ROLE_NAMES.add("complementary");
-    ROLE_NAMES.add("contentinfo");
-    ROLE_NAMES.add("definition");
-    ROLE_NAMES.add("list");
-    ROLE_NAMES.add("directory");
-    ROLE_NAMES.add("form");
-    ROLE_NAMES.add("grid");
-    ROLE_NAMES.add("heading");
-    ROLE_NAMES.add("img");
-    ROLE_NAMES.add("link");
-    ROLE_NAMES.add("listbox");
-    ROLE_NAMES.add("listitem");
-    ROLE_NAMES.add("log");
-    ROLE_NAMES.add("main");
-    ROLE_NAMES.add("marquee");
-    ROLE_NAMES.add("math");
-    ROLE_NAMES.add("menu");
-    ROLE_NAMES.add("menubar");
-    ROLE_NAMES.add("menuitem");
-    ROLE_NAMES.add("menuitemcheckbox");
-    ROLE_NAMES.add("option");
-    ROLE_NAMES.add("radio");
-    ROLE_NAMES.add("menuitemradio");
-    ROLE_NAMES.add("navigation");
-    ROLE_NAMES.add("note");
-    ROLE_NAMES.add("presentation");
-    ROLE_NAMES.add("range");
-    ROLE_NAMES.add("progressbar");
-    ROLE_NAMES.add("radiogroup");
-    ROLE_NAMES.add("row");
-    ROLE_NAMES.add("rowgroup");
-    ROLE_NAMES.add("rowheader");
-    ROLE_NAMES.add("search");
-    ROLE_NAMES.add("separator");
-    ROLE_NAMES.add("scrollbar");
-    ROLE_NAMES.add("slider");
-    ROLE_NAMES.add("spinbutton");
-    ROLE_NAMES.add("status");
-    ROLE_NAMES.add("tab");
-    ROLE_NAMES.add("tablist");
-    ROLE_NAMES.add("tabpanel");
-    ROLE_NAMES.add("textbox");
-    ROLE_NAMES.add("timer");
-    ROLE_NAMES.add("toolbar");
-    ROLE_NAMES.add("tooltip");
-    ROLE_NAMES.add("tree");
-    ROLE_NAMES.add("treegrid");
-    ROLE_NAMES.add("treeitem");
+    ROLES_MAP.put("region", REGION);
+    ROLES_MAP.put("alert", ALERT);
+    ROLES_MAP.put("dialog", DIALOG);
+    ROLES_MAP.put("alertdialog", ALERTDIALOG);
+    ROLES_MAP.put("application", APPLICATION);
+    ROLES_MAP.put("document", DOCUMENT);
+    ROLES_MAP.put("article", ARTICLE);
+    ROLES_MAP.put("banner", BANNER);
+    ROLES_MAP.put("button", BUTTON);
+    ROLES_MAP.put("checkbox", CHECKBOX);
+    ROLES_MAP.put("gridcell", GRIDCELL);
+    ROLES_MAP.put("columnheader", COLUMNHEADER);
+    ROLES_MAP.put("group", GROUP);
+    ROLES_MAP.put("combobox", COMBOBOX);
+    ROLES_MAP.put("complementary", COMPLEMENTARY);
+    ROLES_MAP.put("contentinfo", CONTENTINFO);
+    ROLES_MAP.put("definition", DEFINITION);
+    ROLES_MAP.put("list", LIST);
+    ROLES_MAP.put("directory", DIRECTORY);
+    ROLES_MAP.put("form", FORM);
+    ROLES_MAP.put("grid", GRID);
+    ROLES_MAP.put("heading", HEADING);
+    ROLES_MAP.put("img", IMG);
+    ROLES_MAP.put("link", LINK);
+    ROLES_MAP.put("listbox", LISTBOX);
+    ROLES_MAP.put("listitem", LISTITEM);
+    ROLES_MAP.put("log", LOG);
+    ROLES_MAP.put("main", MAIN);
+    ROLES_MAP.put("marquee", MARQUEE);
+    ROLES_MAP.put("math", MATH);
+    ROLES_MAP.put("menu", MENU);
+    ROLES_MAP.put("menubar", MENUBAR);
+    ROLES_MAP.put("menuitem", MENUITEM);
+    ROLES_MAP.put("menuitemcheckbox", MENUITEMCHECKBOX);
+    ROLES_MAP.put("option", OPTION);
+    ROLES_MAP.put("radio", RADIO);
+    ROLES_MAP.put("menuitemradio", MENUITEMRADIO);
+    ROLES_MAP.put("navigation", NAVIGATION);
+    ROLES_MAP.put("note", NOTE);
+    ROLES_MAP.put("presentation", PRESENTATION);
+    ROLES_MAP.put("progressbar", PROGRESSBAR);
+    ROLES_MAP.put("radiogroup", RADIOGROUP);
+    ROLES_MAP.put("row", ROW);
+    ROLES_MAP.put("rowgroup", ROWGROUP);
+    ROLES_MAP.put("rowheader", ROWHEADER);
+    ROLES_MAP.put("search", SEARCH);
+    ROLES_MAP.put("separator", SEPARATOR);
+    ROLES_MAP.put("scrollbar", SCROLLBAR);
+    ROLES_MAP.put("slider", SLIDER);
+    ROLES_MAP.put("spinbutton", SPINBUTTON);
+    ROLES_MAP.put("status", STATUS);
+    ROLES_MAP.put("tab", TAB);
+    ROLES_MAP.put("tablist", TABLIST);
+    ROLES_MAP.put("tabpanel", TABPANEL);
+    ROLES_MAP.put("textbox", TEXTBOX);
+    ROLES_MAP.put("timer", TIMER);
+    ROLES_MAP.put("toolbar", TOOLBAR);
+    ROLES_MAP.put("tooltip", TOOLTIP);
+    ROLES_MAP.put("tree", TREE);
+    ROLES_MAP.put("treegrid", TREEGRID);
+    ROLES_MAP.put("treeitem", TREEITEM);
   }
 
   public static AlertdialogRole getAlertdialogRole() {
@@ -454,7 +444,21 @@ public final class Roles {
     return TREE;
   }
 
-  public static boolean isRoleName(String testRoleName) {
-    return ROLE_NAMES.contains(testRoleName);
+  /**
+   * Returns the WAI-ARIA role for the {@code element}. If no 'role' attribute is set to the
+   * {@code element} or if the set role tokens do not include a WAI-ARIA role,
+   * null is returned. Otherwise, if a WAI_ARIA role is among the role tokens in the the 'role'
+   * attribute token list, a {@link Role} corresponding the WAI-ARIA role is returned.
+   */
+  public static Role roleOf(Element element) {
+    assert element != null : "Element cannot be null.";
+    String roleAttributeValue = element.getAttribute("role");
+    for (String testRoleName : roleAttributeValue.split("\\s+")) {
+      Role role = ROLES_MAP.get(testRoleName);
+      if (role != null) {
+        return role;
+      }
+    }
+    return null;
   }
 }

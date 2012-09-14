@@ -34,14 +34,6 @@ import com.google.gwt.dom.client.Element;
  */
 public interface Role {
   /**
-   * Returns the value of the 'role' attribute for the {@code element}
-   * or the empty string if no 'role' attribute is present.
-   *
-   * @see <a href="http://www.w3.org/TR/wai-aria/roles">Roles documentation</a>
-   */
-   String get(Element element);
-
-  /**
    * Returns the value of the
    * <a href="http://www.w3.org/TR/wai-aria/states_and_properties#aria-atomic">
    * aria-atomic</a> attribute for the {@code element} or "" if no

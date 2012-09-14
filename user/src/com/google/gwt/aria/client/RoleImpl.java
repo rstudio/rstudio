@@ -34,18 +34,6 @@ class RoleImpl implements Role {
   }
 
   @Override
-  public String get(Element element) {
-    assert element != null : "Element cannot be null.";
-    String roleAttributeValue = element.getAttribute(ATTR_NAME_ROLE);
-    for (String testRoleName : roleAttributeValue.split(" ")) {
-      if (Roles.isRoleName(testRoleName)) {
-        return testRoleName;
-      }
-    }
-    return "";
-  }
-
-  @Override
   public String getAriaAtomicProperty(Element element) {
     return Property.ATOMIC.get(element);
   }

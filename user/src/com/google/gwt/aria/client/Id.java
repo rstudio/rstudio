@@ -18,7 +18,6 @@ package com.google.gwt.aria.client;
 /////////////////////////////////////////////////////////
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Id reference attribute type
@@ -43,18 +42,6 @@ public class Id implements AriaAttributeType {
    */
   public static Id of(String elementId) {
     return new Id(elementId);
-  }
-
-  /**
-   * Creates an Id instance for the {@code element} by getting
-   * the element 'id' attribute.
-   *
-   * @param widget An widget associated with a DOM element which should have a
-   *        non empty, unique 'id' attribute set.
-   */
-  public static Id of(Widget widget) {
-    assert widget != null : "Widget cannot be null";
-    return new Id(widget.getElement());
   }
 
   private String id;
