@@ -70,3 +70,8 @@
          return ("")
    }
 })
+
+.rs.addFunction("usingUtf8Charset", function()
+{
+   l10n_info()$`UTF-8` || identical(utils::localeToCharset(), "UTF-8")
+})
