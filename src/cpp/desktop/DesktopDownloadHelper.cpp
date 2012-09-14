@@ -19,6 +19,36 @@
 
 namespace desktop {
 
+namespace {
+
+bool handleReplyError(QNetworkReply* pReply)
+{
+   if (pReply->error() != QNetworkReply::NoError)
+   {
+      showWarning(NULL,
+                  QString::fromUtf8("Download Failed"),
+                  QString::fromUtf8("An error occurred during download:\n\n")
+                  + pReply->errorString());
+      return false;
+   }
+   else
+   {
+      return true;
+   }
+}
+
+void writeReply(QNetworkReply* pReply, QString fileName)
+{
+   QFile file(fileName);
+   if (file.open(QFile::ReadWrite))
+   {
+      file.write(pReply->readAll());
+      file.close();
+   }
+}
+
+} // anonymous namespace
+
 DownloadHelper::DownloadHelper(QNetworkReply* pReply,
                                QString fileName) :
     QObject(pReply),
@@ -27,22 +57,26 @@ DownloadHelper::DownloadHelper(QNetworkReply* pReply,
    connect(pReply, SIGNAL(finished()), this, SLOT(onDownloadFinished()));
 }
 
+void DownloadHelper::handleDownload(QNetworkReply* pReply, QString fileName)
+{
+   if (!handleReplyError(pReply))
+      return;
+
+   writeReply(pReply, fileName);
+
+   pReply->close();
+   pReply->deleteLater();
+}
+
+
 void DownloadHelper::onDownloadFinished()
 {
    QNetworkReply* pReply = static_cast<QNetworkReply*>(sender());
 
-   if (pReply->error() != QNetworkReply::NoError)
-   {
-      showWarning(NULL,
-                  QString::fromUtf8("Download Failed"),
-                  QString::fromUtf8("An error occurred during download:\n\n")
-                  + pReply->errorString());
+   if (!handleReplyError(pReply))
       return;
-   }
 
-   QFile file(fileName_);
-   if (file.open(QFile::ReadWrite))
-      file.write(pReply->readAll());
+   writeReply(pReply, fileName_);
 
    downloadFinished(fileName_);
 

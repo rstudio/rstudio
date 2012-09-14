@@ -176,12 +176,22 @@ void WebView::unsupportedContent(QNetworkReply* pReply)
 
       QTemporaryFile pdfFile(QString::fromUtf8(
             dir.childPath("rstudio-XXXXXX.pdf").absolutePath().c_str()));
+      pdfFile.setAutoRemove(false);
       pdfFile.open();
       pdfFile.close();
-      // DownloadHelper frees itself when downloading is done
-      pDownloadHelper = new DownloadHelper(pReply, pdfFile.fileName());
-      connect(pDownloadHelper, SIGNAL(downloadFinished(QString)),
-              this, SLOT(openFile(QString)));
+
+      if (pReply->isFinished())
+      {
+         DownloadHelper::handleDownload(pReply, pdfFile.fileName());
+         openFile(pdfFile.fileName());
+      }
+      else
+      {
+         // DownloadHelper frees itself when downloading is done
+         pDownloadHelper = new DownloadHelper(pReply, pdfFile.fileName());
+         connect(pDownloadHelper, SIGNAL(downloadFinished(QString)),
+                 this, SLOT(openFile(QString)));
+      }
    }
    else
    {

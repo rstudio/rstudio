@@ -27,6 +27,8 @@ public:
     DownloadHelper(QNetworkReply* pReply,
                    QString fileName);
 
+    static void handleDownload(QNetworkReply* pReply, QString fileName);
+
 protected slots:
     void onDownloadFinished();
 
