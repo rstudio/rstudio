@@ -515,16 +515,18 @@ public class AutoBeanCodexImpl {
   }
 
   public static Coder doCoderFor(AutoBean<?> bean, String propertyName) {
-    String key = key(bean, propertyName);
-    Coder toReturn = coderFor.get(key);
-    if (toReturn == null) {
-      bean.accept(new PropertyCoderCreator());
-      toReturn = coderFor.get(key);
+    synchronized (coderFor) {
+      String key = key(bean, propertyName);
+      Coder toReturn = coderFor.get(key);
       if (toReturn == null) {
-        throw new IllegalArgumentException(propertyName);
+        bean.accept(new PropertyCoderCreator());
+        toReturn = coderFor.get(key);
+        if (toReturn == null) {
+          throw new IllegalArgumentException(propertyName);
+        }
       }
+      return toReturn;
     }
-    return toReturn;
   }
 
   public static <T> AutoBean<T> doDecode(EncodeState state, Class<T> clazz, Splittable data) {
@@ -562,12 +564,14 @@ public class AutoBeanCodexImpl {
   }
 
   public static <E extends Enum<?>> Coder enumCoder(Class<E> type) {
-    Coder toReturn = coders.get(type);
-    if (toReturn == null) {
-      toReturn = new EnumCoder<E>(type);
-      coders.put(type, toReturn);
+    synchronized (coders) {
+      Coder toReturn = coders.get(type);
+      if (toReturn == null) {
+        toReturn = new EnumCoder<E>(type);
+        coders.put(type, toReturn);
+      }
+      return toReturn;
     }
-    return toReturn;
   }
 
   public static Coder mapCoder(Coder valueCoder, Coder keyCoder) {
@@ -575,12 +579,14 @@ public class AutoBeanCodexImpl {
   }
 
   public static Coder objectCoder(Class<?> type) {
-    Coder toReturn = coders.get(type);
-    if (toReturn == null) {
-      toReturn = new ObjectCoder(type);
-      coders.put(type, toReturn);
+    synchronized (coders) {
+      Coder toReturn = coders.get(type);
+      if (toReturn == null) {
+        toReturn = new ObjectCoder(type);
+        coders.put(type, toReturn);
+      }
+      return toReturn;
     }
-    return toReturn;
   }
 
   public static Coder splittableCoder() {
@@ -588,12 +594,14 @@ public class AutoBeanCodexImpl {
   }
 
   public static Coder valueCoder(Class<?> type) {
-    Coder toReturn = coders.get(type);
-    if (toReturn == null) {
-      toReturn = new ValueCoder(type);
-      coders.put(type, toReturn);
+    synchronized (coders) {
+      Coder toReturn = coders.get(type);
+      if (toReturn == null) {
+        toReturn = new ValueCoder(type);
+        coders.put(type, toReturn);
+      }
+      return toReturn;
     }
-    return toReturn;
   }
 
   static Splittable tryExtractSplittable(Object value) {
