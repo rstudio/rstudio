@@ -36,6 +36,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
@@ -77,6 +78,7 @@ public class Application implements ApplicationEventHandlers
                       Provider<EventBus> eventBusProvider,
                       Provider<ClientStateUpdater> clientStateUpdater,
                       Provider<ApplicationClientInit> pClientInit,
+                      Provider<ApplicationQuit> pApplicationQuit,
                       Provider<AceThemes> pAceThemes)
    {
       // save references
@@ -92,6 +94,7 @@ public class Application implements ApplicationEventHandlers
       workbench_ = workbench;
       eventBusProvider_ = eventBusProvider;
       pClientInit_ = pClientInit;
+      pApplicationQuit_ = pApplicationQuit;
       pAceThemes_ = pAceThemes;
 
       // bind to commands
@@ -188,7 +191,21 @@ public class Application implements ApplicationEventHandlers
     
    public void onLogoutRequested(LogoutRequestedEvent event)
    {
-      navigateWindowTo("auth-sign-out");
+      final ApplicationQuit applicationQuit = pApplicationQuit_.get();
+      applicationQuit.prepareForQuit("Sign Out and Quit R Session", 
+                                     new QuitContext() {
+         public void onReadyToQuit(boolean saveChanges)
+         {
+            applicationQuit.performQuit(null, saveChanges, null, new Command() {
+
+               @Override
+               public void execute()
+               {
+                  navigateWindowTo("auth-sign-out");
+               }
+            });
+         }   
+      });
    }
    
    @Handler
@@ -576,6 +593,7 @@ public class Application implements ApplicationEventHandlers
    private final Provider<Workbench> workbench_;
    private final Provider<EventBus> eventBusProvider_;
    private final Provider<ApplicationClientInit> pClientInit_;
+   private final Provider<ApplicationQuit> pApplicationQuit_;
    private final Provider<AceThemes> pAceThemes_;
 
    private ClientStateUpdater clientStateUpdaterInstance_;

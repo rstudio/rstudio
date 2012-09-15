@@ -236,7 +236,18 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                            boolean saveChanges, 
                            String switchToProject)
    {
-      new QuitCommand(progressMessage, saveChanges, switchToProject).execute();
+      performQuit(progressMessage, saveChanges, switchToProject, null);
+   }
+   
+   public void performQuit(String progressMessage,
+                           boolean saveChanges, 
+                           String switchToProject,
+                           Command onQuitAcknowledged)
+   {
+      new QuitCommand(progressMessage, 
+                      saveChanges, 
+                      switchToProject,
+                      onQuitAcknowledged).execute();
    }
    
    @Override
@@ -480,11 +491,13 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    { 
       public QuitCommand(String progressMessage, 
                          boolean saveChanges, 
-                         String switchToProject)
+                         String switchToProject,
+                         Command onQuitAcknowledged)
       {
          progressMessage_ = progressMessage;
          saveChanges_ = saveChanges;
          switchToProject_ = switchToProject;
+         onQuitAcknowledged_ = onQuitAcknowledged;
       }
       
       public void execute()
@@ -533,6 +546,10 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                         // the app reloads)
                         if (switchToProject_ == null)
                            progress.dismiss();
+                        
+                        // fire onQuitAcknowledged
+                        if (onQuitAcknowledged_ != null)
+                           onQuitAcknowledged_.execute();
                      }
 
                      @Override
@@ -567,6 +584,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       private final boolean saveChanges_;
       private final String switchToProject_;
       private final String progressMessage_;
+      private final Command onQuitAcknowledged_;
 
    };
 
