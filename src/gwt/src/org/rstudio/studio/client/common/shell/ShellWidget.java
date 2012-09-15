@@ -214,7 +214,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    public void consoleWriteError(final String error)
    {
       clearPendingInput();
-      output(error, styles_.error(), false);
+      output(error, styles_.error() + ERROR_CLASS_NAME, false);
    }
 
    public void consoleWriteOutput(final String output)
@@ -687,4 +687,5 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private boolean suppressPendingInput_;
 
    private static final String KEYWORD_CLASS_NAME = " ace_keyword";
+   private static final String ERROR_CLASS_NAME = " ace_constant";
 }
