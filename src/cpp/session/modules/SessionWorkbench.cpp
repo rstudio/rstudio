@@ -183,11 +183,12 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 
    // read and set general prefs
    int saveAction;
-   bool loadRData;
+   bool loadRData, rProfileOnResume;
    std::string initialWorkingDir;
    error = json::readObject(generalPrefs,
                             "save_action", &saveAction,
                             "load_rdata", &loadRData,
+                            "rprofile_on_resume", &rProfileOnResume,
                             "initial_working_dir", &initialWorkingDir);
    if (error)
       return error;
@@ -195,6 +196,7 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().beginUpdate();
    userSettings().setSaveAction(saveAction);
    userSettings().setLoadRData(loadRData);
+   userSettings().setRprofileOnResume(rProfileOnResume);
    userSettings().setInitialWorkingDirectory(FilePath(initialWorkingDir));
    userSettings().endUpdate();
 
@@ -342,6 +344,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    json::Object generalPrefs;
    generalPrefs["save_action"] = userSettings().saveAction();
    generalPrefs["load_rdata"] = userSettings().loadRData();
+   generalPrefs["rprofile_on_resume"] = userSettings().rProfileOnResume();
    generalPrefs["initial_working_dir"] = module_context::createAliasedPath(
          userSettings().initialWorkingDirectory());
 

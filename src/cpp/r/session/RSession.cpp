@@ -1176,8 +1176,12 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    r::routines::addCallMethod(createUUIDMethodDef);
 
    // run R
-   bool newSession = restartContext().hasSessionState()
-                     || !s_suspendedSessionPath.exists();
+   bool loadInitFile = restartContext().hasSessionState()
+                       || !s_suspendedSessionPath.exists()
+                       || options.rProfileOnResume;
+
+   bool quiet = s_suspendedSessionPath.exists();
+
    r::session::Callbacks cb;
    cb.showMessage = RShowMessage;
    cb.readConsole = RReadConsole;
@@ -1193,7 +1197,8 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    cb.cleanUp = RCleanUp;
    r::session::runEmbeddedR(FilePath(rLocations.homePath),
                             options.userHomePath,
-                            newSession,
+                            quiet,
+                            loadInitFile,
                             s_options.saveWorkspace,
                             cb,
                             &s_internalCallbacks);

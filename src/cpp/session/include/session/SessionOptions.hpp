@@ -110,6 +110,8 @@ public:
 
    bool createPublicFolder() const { return createPublicFolder_; }
 
+   bool rProfileOnResumeDefault() const { return rProfileOnResumeDefault_; }
+
    unsigned int minimumUserId() const { return 100; }
    
    core::FilePath coreRSourcePath() const 
@@ -298,6 +300,7 @@ private:
    std::string preflightScript_;
    int timeoutMinutes_;
    bool createPublicFolder_;
+   bool rProfileOnResumeDefault_;
 
    // r
    std::string coreRSourcePath_;

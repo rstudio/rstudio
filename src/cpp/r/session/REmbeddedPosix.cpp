@@ -46,7 +46,8 @@ namespace session {
 
 void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
                   const core::FilePath& /*userHome*/, // ignored on posix
-                  bool newSession,
+                  bool quiet,
+                  bool loadInitFile,
                   SA_TYPE defaultSaveAction,
                   const Callbacks& callbacks,
                   InternalCallbacks* pInternal)
@@ -102,11 +103,11 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    Rstart Rp = &rp;
    R_DefParams(Rp) ;
    Rp->R_Slave = FALSE ;
-   Rp->R_Quiet = newSession ? FALSE : TRUE;
+   Rp->R_Quiet = quiet ? TRUE : FALSE;
    Rp->R_Interactive = TRUE ;
    Rp->SaveAction = defaultSaveAction ;
    Rp->RestoreAction = SA_NORESTORE; // handled within initialize()
-   Rp->LoadInitFile = newSession ? TRUE : FALSE;
+   Rp->LoadInitFile = loadInitFile ? TRUE : FALSE;
    R_SetParams(Rp) ;
 
    // redirect console

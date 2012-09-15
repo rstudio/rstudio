@@ -49,7 +49,8 @@ struct ROptions
          serverMode(false),
          autoReloadSource(false),
          restoreWorkspace(true),
-         saveWorkspace(SA_SAVEASK)
+         saveWorkspace(SA_SAVEASK),
+         rProfileOnResume(false)
    {
    }
    core::FilePath userHomePath;
@@ -70,6 +71,7 @@ struct ROptions
    bool autoReloadSource ;
    bool restoreWorkspace;
    SA_TYPE saveWorkspace;
+   bool rProfileOnResume;
 };
       
 struct RInitInfo

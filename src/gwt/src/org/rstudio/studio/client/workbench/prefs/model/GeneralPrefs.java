@@ -20,10 +20,12 @@ public class GeneralPrefs extends JavaScriptObject
 
    public static final native GeneralPrefs create(int saveAction,
                                                   boolean loadRData,
+                                                  boolean rProfileOnResume,
                                                   String initialWorkingDir) /*-{
       var prefs = new Object();
       prefs.save_action = saveAction;
       prefs.load_rdata = loadRData;
+      prefs.rprofile_on_resume = rProfileOnResume;
       prefs.initial_working_dir = initialWorkingDir;
       return prefs ;
    }-*/;
@@ -35,6 +37,10 @@ public class GeneralPrefs extends JavaScriptObject
 
    public native final boolean getLoadRData() /*-{
       return this.load_rdata;
+   }-*/;
+   
+   public native final boolean getRprofileOnResume() /*-{
+      return this.rprofile_on_resume;
    }-*/;
 
    public native final String getInitialWorkingDirectory() /*-{
