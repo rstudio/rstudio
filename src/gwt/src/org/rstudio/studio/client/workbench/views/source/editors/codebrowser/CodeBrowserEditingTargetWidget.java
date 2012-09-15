@@ -18,6 +18,7 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ResizeComposite;
@@ -27,8 +28,11 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.regex.Pattern.ReplaceOperation;
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
@@ -307,9 +311,18 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    {
       Toolbar toolbar = new EditingTargetToolbar(commands_);
       
-      toolbar.addLeftWidget(commands_.printSourceDoc().createToolbarButton());  
+      toolbar.addLeftWidget(commands_.printSourceDoc().createToolbarButton()); 
+      toolbar.addLeftSeparator();
       toolbar.addLeftWidget(findReplace_.createFindReplaceButton());
-      toolbar.addLeftWidget(commands_.goToFunctionDefinition().createToolbarButton());
+     
+      ImageResource icon = ThemeResources.INSTANCE.codeTransform();
+
+      ToolbarPopupMenu menu = new ToolbarPopupMenu();
+      menu.addItem(commands_.goToHelp().createMenuItem(false));
+      menu.addItem(commands_.goToFunctionDefinition().createMenuItem(false));
+      ToolbarButton codeTools = new ToolbarButton("", icon, menu);
+      codeTools.setTitle("Code Tools");
+      toolbar.addLeftWidget(codeTools);
       
       Label readOnlyLabel = new Label("(Read-only)");
       readOnlyLabel.addStyleName(RES.styles().readOnly());
