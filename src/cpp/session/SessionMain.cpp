@@ -157,6 +157,9 @@ bool s_rSessionResumed = false;
 // manage global state indicating whether R is processing input
 volatile sig_atomic_t s_rProcessingInput = 0;
 
+// did we fail to coerce the charset to UTF-8
+bool s_printCharsetWarning = false;
+
 std::queue<r::session::RConsoleInput> s_consoleInputBuffer;
 
 // superivsor is a module level static so that we can terminateChildren
@@ -1301,16 +1304,6 @@ Error runPreflightScript()
    // always return success
    return Success();
 }
-
-bool usingUTF8Charset()
-{
-   bool usingUTF8 = false;
-   Error error = r::exec::RFunction(".rs.usingUtf8Charset").call(&usingUTF8);
-   if (error)
-      LOG_ERROR(error);
-
-   return usingUTF8;
-}
       
 Error rInit(const r::session::RInitInfo& rInitInfo) 
 {
@@ -1431,10 +1424,8 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       session::clientEventQueue().add(abendWarningEvent);
    }
 
-#ifndef _WIN32
-   if (!usingUTF8Charset())
+   if (s_printCharsetWarning)
       r::exec::warning("Character set is not UTF-8; please change your locale");
-#endif
 
    // propagate console history options
    r::session::consoleHistory().setRemoveDuplicates(
@@ -2372,6 +2363,76 @@ int sessionExitFailure(const core::Error& cause,
    return EXIT_FAILURE;
 }
 
+std::string ctypeEnvName()
+{
+   if (!core::system::getenv("LC_ALL").empty())
+      return "LC_ALL";
+   if (!core::system::getenv("LC_CTYPE").empty())
+      return "LC_CTYPE";
+   if (!core::system::getenv("LANG").empty())
+      return "LANG";
+   return "LC_CTYPE";
+}
+
+/*
+If possible, we want to coerce the character set to UTF-8.
+We can't do this by directly calling setlocale because R
+will override those settings when it starts up. Instead we
+set the corresponding environment variables, which R will
+use.
+
+The exception is Win32, which doesn't allow UTF-8 to be used
+as an ANSI codepage.
+
+Returns false if we tried and failed to set the charset to
+UTF-8, either because we didn't recognize the locale string
+format or because the system didn't accept our new locale
+string.
+*/
+bool ensureUtf8Charset()
+{
+#if _WIN32
+   return true;
+#else
+   std::string charset(locale2charset(NULL));
+   if (charset == "UTF-8")
+      return true;
+
+   std::string name = ctypeEnvName();
+   std::string ctype = core::system::getenv(name);
+
+   std::string newCType;
+   if (ctype.empty() || ctype == "C" || ctype == "POSIX")
+   {
+      newCType = "en_US.UTF-8";
+   }
+   else
+   {
+      using namespace boost;
+
+      smatch match;
+      if (regex_match(ctype, match, regex("(\\w+_\\w+)(\\.[^@]+)?(@.+)?")))
+      {
+         // Try to replace the charset while keeping everything else the same.
+         newCType = match[1] + ".UTF-8" + match[3];
+      }
+   }
+
+   if (!newCType.empty())
+   {
+      if (setlocale(LC_CTYPE, newCType.c_str()))
+      {
+         core::system::setenv(name, newCType);
+         setlocale(LC_CTYPE, "");
+         return true;
+      }
+   }
+
+   return false;
+#endif
+}
+
+
 } // anonymous namespace
 
 // run session
@@ -2393,6 +2454,9 @@ int main (int argc, char * const argv[])
       // get main thread id (used to distinguish forks which occur
       // from the main thread vs. child threads)
       s_mainThreadId = boost::this_thread::get_id();
+
+      // determine character set
+      s_printCharsetWarning = !ensureUtf8Charset();
 
       // read program options
       Options& options = session::options();
