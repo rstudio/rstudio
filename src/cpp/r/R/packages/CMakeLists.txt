@@ -31,12 +31,31 @@ add_custom_command(OUTPUT ${MANIPULATE_OUTPUT}
                    COMMAND R
                    ARGS CMD INSTALL -l ${PACKAGES_LIBRARY_DIR} manipulate)
 
+# rstudio package
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rstudio/DESCRIPTION.in
+               ${CMAKE_CURRENT_SOURCE_DIR}/rstudio/DESCRIPTION)
+
+set(RSTUDIO_OUTPUT ${PACKAGES_LIBRARY_DIR}/rstudio/DESCRIPTION)
+file(GLOB_RECURSE RSTUDIO_DEPENDENCIES rstudio/*.*)
+set_source_files_properties(${RSTUDIO_DEPENDENCIES} PROPERTIES
+                            SYMBOLIC TRUE)
+add_custom_command(OUTPUT ${RSTUDIO_OUTPUT}
+                   DEPENDS ${RSTUDIO_DEPENDENCIES}
+                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                   COMMAND R
+                   ARGS CMD INSTALL -l ${PACKAGES_LIBRARY_DIR} rstudio)
+
+
 # add target for building packages
 add_custom_target(build_packages ALL
-                  DEPENDS ${MANIPULATE_OUTPUT})
+                  DEPENDS ${MANIPULATE_OUTPUT} ${RSTUDIO_OUTPUT})
 
 # install manipulate package
 install(DIRECTORY ${PACKAGES_LIBRARY_DIR}/manipulate
+        DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/library)
+
+# install rstudio package
+install(DIRECTORY ${PACKAGES_LIBRARY_DIR}/rstudio
         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/library)
 
 

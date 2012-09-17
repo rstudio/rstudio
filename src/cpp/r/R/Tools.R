@@ -317,7 +317,11 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
 
 .rs.addFunction( "libPathsAppend", function(path)
 {
-  .libPaths(append(.libPaths(), path))
+   # remove it if it already exists
+   .libPaths(.libPaths()[.libPaths() != path])
+
+   # append it
+   .libPaths(append(.libPaths(), path))
 })
 
 

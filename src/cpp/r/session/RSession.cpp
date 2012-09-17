@@ -389,11 +389,12 @@ Error initialize()
    if (error)
       return error ;
 
-   // append any extra library to the libpaths
+   // make sure the extra lib paths are at the end
    if (!s_options.rLibsExtra.empty())
    {
       error = r::exec::RFunction(".rs.libPathsAppend",
-                                 s_options.rLibsExtra.absolutePath()).call();
+         core::string_utils::utf8ToSystem(s_options.rLibsExtra.absolutePath()))
+                                                                        .call();
       if (error)
          return error;
    }
@@ -1137,6 +1138,21 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    
    // R_DOC_DIR (required by help-links.sh)
    core::system::setenv("R_DOC_DIR", rLocations.docPath);
+
+   // Append our special extra lib path to R_LIBS
+   if (!s_options.rLibsExtra.empty())
+   {
+      std::string rLibs = core::system::getenv("R_LIBS");
+      if (!rLibs.empty())
+   #ifdef _WIN32
+         rLibs.append(";");
+   #else
+         rLibs.append(":");
+   #endif
+      rLibs.append(core::string_utils::utf8ToSystem(
+                                    s_options.rLibsExtra.absolutePath()));
+      core::system::setenv("R_LIBS", rLibs);
+   }
 
    // R_LIBS_USER
    if (!s_options.rLibsUser.empty())

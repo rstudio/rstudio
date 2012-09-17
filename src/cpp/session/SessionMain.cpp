@@ -2479,6 +2479,10 @@ int main (int argc, char * const argv[])
       // set version
       s_version = installedVersion();
 
+      // set the rstudio environment variable so code can check for
+      // whether rstudio is running
+      core::system::setenv("RSTUDIO", "1");
+
       // set the rstudio user identity environment variable (can differ from
       // username in debug configurations). this is provided so that 
       // rpostback knows what local stream to connect back to
