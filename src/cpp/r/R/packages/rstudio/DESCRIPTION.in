@@ -7,6 +7,7 @@ Author: RStudio
 Maintainer: RStudio <info@rstudio.org>
 Description: Interactive Plots for RStudio
 Depends: R (>= 2.11.1)
+Imports: utils
 License: AGPL-3
 LazyLoad: yes
 

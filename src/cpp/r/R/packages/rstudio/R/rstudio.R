@@ -1,13 +1,11 @@
 
 
 #' @export
-programMode <- function() {
-  .Call(getNativeSymbolInfo("rs_rstudioProgramMode", 
-                            PACKAGE="")) 
-}
-
-#' @export
 versionInfo <- function() {
-  packageVersion("rstudio")
+  info <- list()
+  info$version <- utils::packageVersion("rstudio")
+  info$mode <- .Call(getNativeSymbolInfo("rs_rstudioProgramMode", 
+                                         PACKAGE=""))
+  info
 }
 
