@@ -172,11 +172,11 @@ SEXP rs_threadSleep(SEXP secondsSEXP)
    return R_NilValue;
 }
 
-// get rstudio version from R
-SEXP rs_rstudioVersion()
+// get rstudio mode
+SEXP rs_rstudioProgramMode()
 {
    r::sexp::Protect rProtect;
-   return r::sexp::create(std::string(RSTUDIO_VERSION), &rProtect);
+   return r::sexp::create(session::options().programMode(), &rProtect);
 }
 
 // ensure file hidden
@@ -381,10 +381,10 @@ Error initialize()
    methodDef6.numArgs = 1;
    r::routines::addCallMethod(methodDef6);
 
-   // register rs_rstudioVersion with R
+   // register rs_rstudioProgramMode with R
    R_CallMethodDef methodDef7 ;
-   methodDef7.name = "rs_rstudioVersion" ;
-   methodDef7.fun = (DL_FUNC) rs_rstudioVersion ;
+   methodDef7.name = "rs_rstudioProgramMode" ;
+   methodDef7.fun = (DL_FUNC) rs_rstudioProgramMode ;
    methodDef7.numArgs = 0;
    r::routines::addCallMethod(methodDef7);
 

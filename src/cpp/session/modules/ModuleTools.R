@@ -31,11 +31,6 @@
    .Call("rs_logWarningMessage", message)
 })
 
-.rs.addGlobalFunction("RStudio.version", function()
-{
-   .Call("rs_rstudioVersion")
-})
-
 .rs.addFunction("getSignature", function(obj)
 {
    sig = capture.output(print(args(obj)))
