@@ -1,6 +1,6 @@
 -- Option A: Import your project into Eclipse (recommended) --
 
-Configure Eclipse following the instructions at 
+Configure Eclipse following the instructions at
 http://code.google.com/p/google-web-toolkit/wiki/WorkingWithMaven#Using_Maven_with_Google_Plugin_for_Eclipse
 
 In Eclipse, go to the File menu and choose:
@@ -12,6 +12,11 @@ In Eclipse, go to the File menu and choose:
   Click Finish.
 
 You can now browse the project in Eclipse.
+
+Now, you need to enable m2Eclipse's annotation processing functionality.
+Under project properties, select Maven > Annotation Processing > Enable Project-Specific Settings,
+and choose the "Automatically configure JDT APT". Click "Finish", and then right-click on the project,
+and select click Maven > Update project.
 
 To launch your web app in GWT development mode
 
@@ -36,7 +41,7 @@ specified in the POM.
   Still in the Java Build Path dialog, click the Order and Export tab
 
   Move gwt-dev and gwt-user above Maven Dependencies
-  
+
 GWT developers can also use tools/scripts/maven_script.sh to push their
 own GWT jars into their local maven repo.
 

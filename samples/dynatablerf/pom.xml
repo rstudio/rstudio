@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project
    xmlns="http://maven.apache.org/POM/4.0.0"
-   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
@@ -51,15 +51,6 @@
       <version>${gwtVersion}</version>
     </dependency>
 
-    <!-- Generate the decoder needed by RequestFactory Server -->
-    <!-- Doesn't yet work in eclipse. See maven-processor-plugin below.
-    <dependency>
-      <groupId>com.google.web.bindery</groupId>
-      <artifactId>requestfactory-apt</artifactId>
-      <version>${gwtVersion}</version>
-    </dependency>
--->
-
     <!-- RequestFactory will use JSR 303 javax.validation if you let it -->
     <dependency>
       <groupId>javax.validation</groupId>
@@ -96,33 +87,23 @@
       <version>1.6.1</version>
     </dependency>
   </dependencies>
-  
+
   <build>
     <!-- Generate compiled stuff in the folder used for development mode -->
     <outputDirectory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</outputDirectory>
-    
+
     <plugins>
-      <!-- requestfactory-apt runs an annotation processor (APT) to
-           instrument its service interfaces so that
-           RequestFactoryServer can decode client requests. Normally
-           you would just have a dependency on requestfactory-apt
-           with <scope>provided</scope>, but that won't work in
-           eclipse due to m2e bug
-           https://bugs.eclipse.org/bugs/show_bug.cgi?id=335036 -->
+
       <plugin>
-        <groupId>org.bsc.maven</groupId>
-        <artifactId>maven-processor-plugin</artifactId>
-        <version>2.0.5</version>
-        <executions>
-          <execution>
-            <id>process</id>
-            <goals>
-              <goal>process</goal>
-            </goals>
-            <phase>generate-sources</phase>
-          </execution>
-        </executions>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.4</version>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+        </configuration>
         <dependencies>
+          <!-- Need to run the RF Validation tool. This works on both the command-line
+               and in Eclipse, provided that m2e-apt is installed. -->
           <dependency>
             <groupId>com.google.web.bindery</groupId>
             <artifactId>requestfactory-apt</artifactId>
@@ -131,33 +112,11 @@
         </dependencies>
       </plugin>
 
-      <!-- Google Plugin for Eclipse (GPE) won't see the source
-           generated above by requestfactory-apt unless it is exposed
-           as an additional source dir-->
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
-        <version>1.7</version>
-        <executions>
-          <execution>
-            <id>add-source</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>add-source</goal>
-            </goals>
-            <configuration>
-              <sources>
-                <source>${project.build.directory}/generated-sources/apt</source>
-              </sources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
       <!-- GWT Maven Plugin-->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
+        <!-- TODO: Update version to 2.5.0 once gwt-maven-plugin 2.5.0 final is released (post-GWT 2.5.0) -->
         <version>2.3.0-1</version>
         <dependencies>
           <dependency>
@@ -170,13 +129,8 @@
             <artifactId>gwt-dev</artifactId>
             <version>${gwtVersion}</version>
           </dependency>
-          <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-servlet</artifactId>
-            <version>${gwtVersion}</version>
-          </dependency>
         </dependencies>
-        <!-- JS is only needed in the package phase, this speeds up testing --> 
+        <!-- JS is only needed in the package phase, this speeds up testing -->
         <executions>
           <execution>
             <phase>prepare-package</phase>
@@ -186,8 +140,8 @@
           </execution>
         </executions>
 
-        <!-- Plugin configuration. There are many available options, 
-             see gwt-maven-plugin documentation at codehaus.org --> 
+        <!-- Plugin configuration. There are many available options,
+             see gwt-maven-plugin documentation at codehaus.org -->
         <configuration>
           <!-- URL that should be automatically opened in the GWT shell (gwt:run). -->
           <runTarget>DynaTableRf.html</runTarget>
@@ -222,55 +176,7 @@
           </execution>
         </executions>
       </plugin>
-
-      <!-- Mark the project for Google Plugin for Eclipse (GPE) -->
-      <plugin>
-        <artifactId>maven-eclipse-plugin</artifactId>
-        <version>2.8</version>
-        <configuration>
-          <downloadSources>true</downloadSources>
-          <downloadJavadocs>false</downloadJavadocs>
-          <wtpversion>2.0</wtpversion>
-          <additionalBuildcommands>
-            <buildCommand>
-              <name>com.google.gwt.eclipse.core.gwtProjectValidator</name>
-            </buildCommand>
-          </additionalBuildcommands>
-          <additionalProjectnatures>
-            <projectnature>com.google.gwt.eclipse.core.gwtNature</projectnature>
-          </additionalProjectnatures>
-        </configuration>
-      </plugin>
     </plugins>
 
-    <!-- Required by m2e for import into eclipse. No effect on command line builds  -->
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.eclipse.m2e</groupId>
-          <artifactId>lifecycle-mapping</artifactId>
-          <version>1.0.0</version>
-          <configuration>
-            <lifecycleMappingMetadata>
-              <pluginExecutions>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>org.bsc.maven</groupId>
-                    <artifactId>maven-processor-plugin</artifactId>
-                    <versionRange>[2.0.5,)</versionRange>
-                    <goals>
-                      <goal>process</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <execute />
-                  </action>
-                </pluginExecution>
-              </pluginExecutions>
-            </lifecycleMappingMetadata>
-          </configuration>
-        </plugin>
-      </plugins>
-    </pluginManagement>
   </build>
 </project>

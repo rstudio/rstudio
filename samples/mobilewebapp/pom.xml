@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
@@ -18,7 +18,7 @@
     <maven.compiler.target>1.6</maven.compiler.target>
 
     <!-- GAE properties -->
-    <gae.version>1.5.3</gae.version>
+    <gae.version>1.7.1</gae.version>
     <gae.home>${user.home}/.m2/repository/com/google/appengine/appengine-java-sdk/${gae.version}/appengine-java-sdk-${gae.version}</gae.home>
     <gae.application.version>1</gae.application.version>
 
@@ -63,15 +63,6 @@
       <artifactId>requestfactory-server</artifactId>
       <version>${gwtVersion}</version>
     </dependency>
-
-    <!-- Generate the decoder needed by RequestFactory Server -->
-    <!-- Doesn't yet work in eclipse. See maven-processor-plugin below.
-    <dependency>
-      <groupId>com.google.web.bindery</groupId>
-      <artifactId>requestfactory-apt</artifactId>
-      <version>${gwtVersion}</version>
-    </dependency>
--->
 
     <!-- RequestFactory will use JSR 303 javax.validation if you let it -->
     <dependency>
@@ -174,27 +165,17 @@
     <outputDirectory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</outputDirectory>
 
     <plugins>
-      <!-- requestfactory-apt runs an annotation processor (APT) to
-           instrument its service interfaces so that
-           RequestFactoryServer can decode client requests. Normally
-           you would just have a dependency on requestfactory-apt
-           with <scope>provided</scope>, but that won't work in
-           eclipse due to m2e bug
-           https://bugs.eclipse.org/bugs/show_bug.cgi?id=335036 -->
+
       <plugin>
-        <groupId>org.bsc.maven</groupId>
-        <artifactId>maven-processor-plugin</artifactId>
-        <version>2.0.5</version>
-        <executions>
-          <execution>
-            <id>process</id>
-            <goals>
-              <goal>process</goal>
-            </goals>
-            <phase>generate-sources</phase>
-          </execution>
-        </executions>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.4</version>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+        </configuration>
         <dependencies>
+          <!-- Need to run the RF Validation tool. This works on both the command-line
+               and in Eclipse, provided that m2e-apt is installed. -->
           <dependency>
             <groupId>com.google.web.bindery</groupId>
             <artifactId>requestfactory-apt</artifactId>
@@ -203,33 +184,11 @@
         </dependencies>
       </plugin>
 
-      <!-- Google Plugin for Eclipse (GPE) won't see the source
-           generated above by requestfactory-apt unless it is exposed
-           as an additional source dir-->
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
-        <version>1.7</version>
-        <executions>
-          <execution>
-            <id>add-source</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>add-source</goal>
-            </goals>
-            <configuration>
-              <sources>
-                <source>${project.build.directory}/generated-sources/apt</source>
-              </sources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
       <!-- GWT Maven Plugin-->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
+        <!-- TODO: Update version to 2.5.0 once gwt-maven-plugin 2.5.0 final is released (post-GWT 2.5.0) -->
         <version>2.3.0-1</version>
         <dependencies>
           <dependency>
@@ -240,11 +199,6 @@
           <dependency>
             <groupId>com.google.gwt</groupId>
             <artifactId>gwt-dev</artifactId>
-            <version>${gwtVersion}</version>
-          </dependency>
-          <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-servlet</artifactId>
             <version>${gwtVersion}</version>
           </dependency>
         </dependencies>
@@ -335,26 +289,6 @@
           </execution>
         </executions>
       </plugin>
-
-      <!-- Mark the project for Google Plugin for Eclipse (GPE) -->
-      <plugin>
-        <artifactId>maven-eclipse-plugin</artifactId>
-        <version>2.8</version>
-        <configuration>
-          <downloadSources>true</downloadSources>
-          <downloadJavadocs>false</downloadJavadocs>
-          <wtpversion>2.0</wtpversion>
-          <additionalBuildcommands>
-            <buildCommand>
-              <name>com.google.gwt.eclipse.core.gwtProjectValidator</name>
-            </buildCommand>
-          </additionalBuildcommands>
-          <additionalProjectnatures>
-            <projectnature>com.google.gwt.eclipse.core.gwtNature</projectnature>
-            <projectnature>com.google.appengine.eclipse.core.gaeNature</projectnature>
-          </additionalProjectnatures>
-        </configuration>
-      </plugin>
     </plugins>
 
     <!-- Required by m2e for import into eclipse. No effect on command line builds  -->
@@ -374,20 +308,6 @@
                     <versionRange>[0.7.3,)</versionRange>
                     <goals>
                       <goal>unpack</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <execute />
-                  </action>
-                </pluginExecution>
-
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>org.bsc.maven</groupId>
-                    <artifactId>maven-processor-plugin</artifactId>
-                    <versionRange>[2.0.5,)</versionRange>
-                    <goals>
-                      <goal>process</goal>
                     </goals>
                   </pluginExecutionFilter>
                   <action>
