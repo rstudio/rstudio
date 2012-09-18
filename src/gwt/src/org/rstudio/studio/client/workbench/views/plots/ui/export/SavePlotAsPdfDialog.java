@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.plots.ui.export;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ModalDialogBase;
@@ -64,6 +65,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       setText("Save Plot as PDF");
       
       globalDisplay_ = globalDisplay;
+      sessionInfo_ = sessionInfo;
       server_ = server;
       defaultDirectory_ = defaultDirectory;
       defaultPlotName_ = defaultPlotName;
@@ -85,6 +87,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
                                              paperSize.getWidth(),
                                              paperSize.getHeight(),
                                              isPortraitOrientation(),
+                                             useCairoPdf(),
                                              viewAfterSaveCheckBox_.getValue());
                
                   onClose.execute(pdfOptions);
@@ -129,7 +132,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
    {
       ExportPlotResources.Styles styles = ExportPlotResources.INSTANCE.styles();
       
-      Grid grid = new Grid(6, 2);
+      Grid grid = new Grid(7, 2);
       grid.setStylePrimaryName(styles.savePdfMainWidget());
       
       // paper size
@@ -152,12 +155,27 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       orientationPanel.add(orientationGroupPanel);
       grid.setWidget(1, 1, orientationPanel);
       
-      grid.setWidget(2, 0, new HTML("&nbsp;"));
+      boolean haveCairoPdf = sessionInfo_.isCairoPdfAvailable();
+      if (haveCairoPdf)
+         grid.setWidget(2,  0, new Label("Options:"));
+      HorizontalPanel cairoPdfPanel = new HorizontalPanel();
+      String label = "Use cairo_pdf device";
+      if (BrowseCap.isMacintoshDesktop())
+         label = label + " (requires X11)";
+      chkCairoPdf_ = new CheckBox(label);
+      chkCairoPdf_.getElement().getStyle().setMarginLeft(kComponentSpacing, 
+                                                         Unit.PX);
+      cairoPdfPanel.add(chkCairoPdf_);
+      chkCairoPdf_.setValue(haveCairoPdf && options_.getCairoPdf());
+      if (haveCairoPdf)
+         grid.setWidget(2, 1, cairoPdfPanel);
+      
+      grid.setWidget(3, 0, new HTML("&nbsp;"));
       
       ThemedButton directoryButton = new ThemedButton("Directory...");
       directoryButton.setStylePrimaryName(styles.directoryButton());
       directoryButton.getElement().getStyle().setMarginLeft(-2, Unit.PX);
-      grid.setWidget(3, 0, directoryButton);
+      grid.setWidget(4, 0, directoryButton);
       directoryButton.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
@@ -191,15 +209,15 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       directoryLabel_ = new Label();
       setDirectory(defaultDirectory_);
       directoryLabel_.setStylePrimaryName(styles.savePdfDirectoryLabel());
-      grid.setWidget(3, 1, directoryLabel_);
+      grid.setWidget(4, 1, directoryLabel_);
       
       Label fileNameLabel = new Label("File name:");
       fileNameLabel.setStylePrimaryName(styles.savePdfFileNameLabel());
-      grid.setWidget(4, 0, fileNameLabel);
+      grid.setWidget(5, 0, fileNameLabel);
       fileNameTextBox_ = new TextBox();
       fileNameTextBox_.setText(defaultPlotName_);
       fileNameTextBox_.setStylePrimaryName(styles.savePdfFileNameTextBox());
-      grid.setWidget(4, 1, fileNameTextBox_);
+      grid.setWidget(5, 1, fileNameTextBox_);
       
       
       // view after size
@@ -207,7 +225,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       viewAfterSaveCheckBox_.setStylePrimaryName(
                                        styles.savePdfViewAfterCheckbox());
       viewAfterSaveCheckBox_.setValue(options_.getViewAfterSave());
-      grid.setWidget(5, 1, viewAfterSaveCheckBox_);
+      grid.setWidget(6, 1, viewAfterSaveCheckBox_);
       
       // set default value
       if (options_.getPortrait())
@@ -269,6 +287,11 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       return portraitRadioButton_.getValue();
    }
    
+   private boolean useCairoPdf()
+   {
+      return chkCairoPdf_.getValue();
+   }
+   
    private class PaperSize
    {
       public PaperSize(String name, double width, double height)
@@ -312,6 +335,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
                server_.savePlotAsPdf(targetPath, 
                                      width,
                                      height,
+                                     chkCairoPdf_.getValue(),
                                      overwrite,
                                      requestCallback);
             }
@@ -493,6 +517,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
   
    
    private final GlobalDisplay globalDisplay_;
+   private final SessionInfo sessionInfo_;
    private final PlotsServerOperations server_;
    private final SavePlotAsPdfOptions options_;
    private final FileSystemItem defaultDirectory_;
@@ -506,6 +531,8 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
   
    private RadioButton portraitRadioButton_ ;
    private RadioButton landscapeRadioButton_;
+   
+   private CheckBox chkCairoPdf_;
    private CheckBox viewAfterSaveCheckBox_;
    
    final int kComponentSpacing = 7; 

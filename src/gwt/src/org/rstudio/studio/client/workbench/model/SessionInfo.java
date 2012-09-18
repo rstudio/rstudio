@@ -247,4 +247,8 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean isDevtoolsInstalled() /*-{
       return this.devtools_installed;
    }-*/;
+   
+   public final native boolean isCairoPdfAvailable() /*-{
+      return this.have_cairo_pdf;
+   }-*/;
 }

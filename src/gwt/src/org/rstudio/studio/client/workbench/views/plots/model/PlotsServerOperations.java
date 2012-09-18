@@ -66,6 +66,7 @@ public interface PlotsServerOperations
    void savePlotAsPdf(FileSystemItem file,
                       double widthInches,
                       double heightInches,
+                      boolean useCairoPdf,
                       boolean overwrite,
                       ServerRequestCallback<Bool> requestCallback);
    

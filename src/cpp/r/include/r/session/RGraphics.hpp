@@ -118,7 +118,8 @@ public:
 
    virtual core::Error savePlotAsPdf(const core::FilePath& filePath,
                                      double widthInches,
-                                     double heightInches) = 0;
+                                     double heightInches,
+                                     bool useCairoPdf) = 0;
 
    virtual core::Error savePlotAsMetafile(const core::FilePath& filePath,
                                           int widthPx,

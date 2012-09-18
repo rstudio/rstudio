@@ -882,6 +882,7 @@ public class RemoteServer implements Server
    public void savePlotAsPdf(FileSystemItem file,
                              double widthInches,
                              double heightInches,
+                             boolean useCairoPdf,
                              boolean overwrite,
                              ServerRequestCallback<Bool> requestCallback)
    {
@@ -889,7 +890,8 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(file.getPath()));
       params.set(1, new JSONNumber(widthInches));
       params.set(2, new JSONNumber(heightInches));
-      params.set(3, JSONBoolean.getInstance(overwrite));
+      params.set(3, JSONBoolean.getInstance(useCairoPdf));
+      params.set(4, JSONBoolean.getInstance(overwrite));
       sendRequest(RPC_SCOPE, SAVE_PLOT_AS_PDF, params, requestCallback);
    }
    

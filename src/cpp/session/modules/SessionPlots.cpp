@@ -24,6 +24,8 @@
 #include <core/BoostErrors.hpp>
 #include <core/FileSerializer.hpp>
 
+#include <core/system/Environment.hpp>
+
 #include <core/text/TemplateFilter.hpp>
 
 #include <core/http/Request.hpp>
@@ -154,11 +156,12 @@ Error savePlotAsPdf(const json::JsonRpcRequest& request,
    // get args
    std::string path;
    double width, height;
-   bool overwrite;
+   bool useCairoPdf, overwrite;
    Error error = json::readParams(request.params,
                                   &path,
                                   &width,
                                   &height,
+                                  &useCairoPdf,
                                   &overwrite);
    if (error)
       return error;
@@ -176,7 +179,7 @@ Error savePlotAsPdf(const json::JsonRpcRequest& request,
    // save plot
    using namespace r::session::graphics;
    Display& display = r::session::graphics::display();
-   error = display.savePlotAsPdf(plotPath, width, height);
+   error = display.savePlotAsPdf(plotPath, width, height, useCairoPdf);
    if (error)
    {
       LOG_ERROR_MESSAGE(r::endUserErrorMessage(error));
@@ -715,6 +718,28 @@ Error manipulatorPlotClicked(const json::JsonRpcRequest& request,
 
 } // anonymous namespace  
    
+bool haveCairoPdf()
+{
+   // make sure there is a real x server running on osx
+#ifdef __APPLE__
+   std::string display = core::system::getenv("DISPLAY");
+   if (display.empty() || (display == ":0"))
+      return false;
+#endif
+
+   SEXP functionSEXP = R_NilValue;
+   r::sexp::Protect rProtect;
+   r::exec::RFunction f(".rs.getPackageFunction", "cairo_pdf", "grDevices");
+   Error error = f.call(&functionSEXP, &rProtect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   return functionSEXP != R_NilValue;
+}
+
 Error initialize()
 {
    // subscribe to events

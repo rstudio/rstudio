@@ -311,12 +311,17 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
 
 Error PlotManager::savePlotAsPdf(const FilePath& filePath, 
                                  double widthInches,
-                                 double heightInches)
+                                 double heightInches,
+                                 bool useCairoPdf)
 {
    // generate code for creating pdf file device
-   boost::format fmt("{ require(grDevices, quietly=TRUE); "
-                     "  pdf(file=\"%1%\", width=%2%, height=%3%, "
-                     "      useDingbats=FALSE); }");
+   std::string code("{ require(grDevices, quietly=TRUE); ");
+   if (useCairoPdf)
+      code += "cairo_pdf(file=\"%1%\", width=%2%, height=%3%); }";
+   else
+      code += " pdf(file=\"%1%\", width=%2%, height=%3%, "
+             "      useDingbats=FALSE); }";
+   boost::format fmt(code);
    std::string deviceCreationCode = boost::str(fmt % string_utils::utf8ToSystem(filePath.absolutePath()) %
                                                      widthInches % 
                                                      heightInches);

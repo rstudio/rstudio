@@ -27,18 +27,20 @@ public class SavePlotAsPdfOptions extends JavaScriptObject
    
    public static final SavePlotAsPdfOptions create(double width, double height)
    {
-      return create(width, height, true, false);
+      return create(width, height, true, false, false);
    }
    
    public static final native SavePlotAsPdfOptions create(
                                                   double width, 
                                                   double height,
                                                   boolean portrait,
+                                                  boolean cairoPdf,
                                                   boolean viewAfterSave) /*-{
       var options = new Object();
       options.width = width ;
       options.height = height ;
       options.portrait = portrait;
+      options.cairo_pdf = cairoPdf;
       options.viewAfterSave = viewAfterSave;
       return options ;
    }-*/;
@@ -51,6 +53,7 @@ public class SavePlotAsPdfOptions extends JavaScriptObject
       return a.width === b.width &&
              a.height === b.height &&
              a.portrait === b.portrait &&
+             a.cairo_pdf === b.cairo_pdf &&
              a.viewAfterSave === b.viewAfterSave;    
    }-*/;
    
@@ -65,6 +68,11 @@ public class SavePlotAsPdfOptions extends JavaScriptObject
    public final native boolean getPortrait() /*-{
       return this.portrait;
    }-*/;
+   
+   public final native boolean getCairoPdf() /*-{
+      return this.cairo_pdf;
+   }-*/;
+
    
    public final native boolean getViewAfterSave() /*-{
       return this.viewAfterSave;

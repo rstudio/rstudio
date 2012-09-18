@@ -22,6 +22,8 @@ namespace session {
 namespace modules {
 namespace plots {
       
+bool haveCairoPdf();
+
 core::Error initialize();
    
 } // namespace plots
