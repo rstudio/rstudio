@@ -981,7 +981,6 @@ Error launchChildProcess(std::string path,
       copyEnvironmentVar("PATH", &env);
       copyEnvironmentVar("MANPATH", &env);
       copyEnvironmentVar("LANG", &env);
-      copyEnvironmentVar("DISPLAY", &env);
       env.push_back("USER=" + user.username);
       env.push_back("LOGNAME=" + user.username);
       env.push_back("HOME=" + user.homeDirectory);
