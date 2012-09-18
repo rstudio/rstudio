@@ -315,7 +315,8 @@ Error PlotManager::savePlotAsPdf(const FilePath& filePath,
 {
    // generate code for creating pdf file device
    boost::format fmt("{ require(grDevices, quietly=TRUE); "
-                     "  pdf(file=\"%1%\", width=%2%, height=%3%); }");
+                     "  pdf(file=\"%1%\", width=%2%, height=%3%, "
+                     "      useDingbats=FALSE); }");
    std::string deviceCreationCode = boost::str(fmt % string_utils::utf8ToSystem(filePath.absolutePath()) %
                                                      widthInches % 
                                                      heightInches);

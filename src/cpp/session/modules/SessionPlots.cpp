@@ -178,7 +178,10 @@ Error savePlotAsPdf(const json::JsonRpcRequest& request,
    Display& display = r::session::graphics::display();
    error = display.savePlotAsPdf(plotPath, width, height);
    if (error)
+   {
+      LOG_ERROR_MESSAGE(r::endUserErrorMessage(error));
       return error;
+   }
 
    // set success result
    pResponse->setResult(boolObject(true));
