@@ -174,6 +174,8 @@ public abstract class ModalDialogBase extends DialogBox
    
    protected void onDialogShown()
    {
+      if (okButton_ != null)
+         FocusHelper.setFocusDeferred(okButton_);
    }
    
    protected void addOkButton(ThemedButton okButton)
