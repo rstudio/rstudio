@@ -353,7 +353,11 @@ void handleClientInit(const boost::function<void()>& initFunction,
    }
 
    // temp dir
-   sessionInfo["temp_dir"] = r::session::utils::tempDir().absolutePath();
+   FilePath tempDir = r::session::utils::tempDir();
+   Error error = tempDir.ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
+   sessionInfo["temp_dir"] = tempDir.absolutePath();
    
    // installed version
    sessionInfo["version"] = installedVersion();
