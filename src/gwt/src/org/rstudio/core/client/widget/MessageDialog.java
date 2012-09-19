@@ -138,6 +138,12 @@ public class MessageDialog extends ModalDialogBase
       return label;
    }
     
+   @Override
+   protected void onDialogShown()
+   {
+      focusOkButton();
+   }
+   
    private int type_ ;
    private Widget messageWidget_ ;
    private ProgressIndicator progress_ ;
