@@ -14,16 +14,24 @@
 # use html help 
 options(help_type = "html")
 
-# stop the help server if it was previously started e.g. by .Rprofile
-if (tools:::httpdPort > 0L)
-  suppressMessages(tools::startDynamicHelp(start=FALSE))
-
-# now restart the help server (this ensures that it picks up the
-# options("help.ports") value that we set in SessionHelp.cpp)
-suppressMessages(tools::startDynamicHelp())
-
-.rs.addFunction( "setHelprLoadHook", function()
+.rs.addFunction( "httpdPort", function()
 {
+   as.character(tools:::httpdPort)
+})
+
+.rs.addFunction("initHelp", function(port)
+{
+   # stop the help server if it was previously started e.g. by .Rprofile
+   if (tools:::httpdPort > 0)
+     suppressMessages(tools::startDynamicHelp(start=FALSE))
+
+   # set the help port directly
+   env <- environment(tools::startDynamicHelp)
+   unlockBinding("httpdPort", env)
+   assign("httpdPort", port, envir = env)
+   lockBinding("httpdPort", env)
+
+   # set helpr load hook
    setHook(packageEvent("helpr", "onLoad"),
       function(...)
       {

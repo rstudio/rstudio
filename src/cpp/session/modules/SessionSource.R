@@ -284,4 +284,12 @@
   }
 })
 
+.rs.addFunction("fileEdit", function(file, title)
+{
+   .Call("rs_fileEdit", file, title)
+})
 
+.rs.addFunction("setEditorOption", function()
+{
+   options(editor = .rs.fileEdit)
+})

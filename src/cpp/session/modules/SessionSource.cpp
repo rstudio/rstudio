@@ -43,6 +43,7 @@
 #include <r/RInternal.hpp>
 #include <r/RFunctionHook.hpp>
 #include <r/RUtil.hpp>
+#include <r/RRoutines.hpp>
 #include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionSourceDatabase.hpp>
@@ -838,37 +839,6 @@ void enqueFileEditEvent(const std::string& file)
    module_context::enqueClientEvent(event);
 }
 
-SEXP fileEditHook(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-   // file.edit(..., title = file, editor = getOption("editor"))
-   // see do_fileedit in platform.c
-   r::function_hook::checkArity(op, args, call);
-
-   try
-   {
-      // read and validate file name (we ignore all other parameters)
-      SEXP filenamesSEXP = CAR(args);
-      if (!r::sexp::isString(filenamesSEXP))
-         throw r::exec::RErrorException("invalid filename specification");
-
-      // extract string vector
-      std::vector<std::string> filenames;
-      Error error = r::sexp::extract(filenamesSEXP, &filenames);
-      if (error)
-         throw r::exec::RErrorException(error.summary());
-
-      // fire events
-      std::for_each(filenames.begin(), filenames.end(), enqueFileEditEvent);
-   }
-   catch(const r::exec::RErrorException& e)
-   {
-      r::exec::errorCall(call, e.message());
-   }
-   CATCH_UNEXPECTED_EXCEPTION
-
-   return R_NilValue;
-}
-
 void onSuspend(Settings*)
 {
 }
@@ -906,6 +876,36 @@ void onShutdown(bool terminatedNormally)
    Error error = activeDocumentFile.removeIfExists();
    if (error)
       LOG_ERROR(error);
+}
+
+SEXP rs_fileEdit(SEXP fileSEXP, SEXP)
+{
+   try
+   {
+      // read and validate file name (we ignore all other parameters)
+      if (!r::sexp::isString(fileSEXP))
+         throw r::exec::RErrorException("invalid filename specification");
+
+      // extract string vector
+      std::vector<std::string> filenames;
+      Error error = r::sexp::extract(fileSEXP, &filenames);
+      if (error)
+         throw r::exec::RErrorException(error.summary());
+
+      // fire events
+      std::for_each(filenames.begin(), filenames.end(), enqueFileEditEvent);
+
+      // done
+      return R_NilValue;
+   }
+   catch(r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   // keep compiler happy
+   return R_NilValue;
 }
 
 } // anonymous namespace
@@ -966,12 +966,18 @@ Error initialize()
    // add suspend/resume handler
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
 
+   // register fileEdit method
+   R_CallMethodDef methodDef ;
+   methodDef.name = "rs_fileEdit" ;
+   methodDef.fun = (DL_FUNC) rs_fileEdit ;
+   methodDef.numArgs = 2;
+   r::routines::addCallMethod(methodDef);
+
    // install rpc methods
    using boost::bind;
    using namespace r::function_hook;
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(registerReplaceHook, "file.edit", fileEditHook, (CCODE*)NULL))
       (bind(registerRpcMethod, "new_document", newDocument))
       (bind(registerRpcMethod, "open_document", openDocument))
       (bind(registerRpcMethod, "save_document", saveDocument))
@@ -987,8 +993,15 @@ Error initialize()
       (bind(registerRpcMethod, "get_source_template", getSourceTemplate))
       (bind(registerRpcMethod, "create_rd_shell", createRdShell))
       (bind(sourceModuleRFile, "SessionSource.R"));
-   return initBlock.execute();
+   Error error = initBlock.execute();
+   if (error)
+      return error;
 
+   // set editor option
+   error = r::exec::RFunction(".rs.setEditorOption").call();
+   if (error)
+      LOG_ERROR(error);
+   return Success();
 }
 
 

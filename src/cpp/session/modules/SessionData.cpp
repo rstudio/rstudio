@@ -33,6 +33,7 @@
 #include <r/RJson.hpp>
 #include <r/ROptions.hpp>
 #include <r/RFunctionHook.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -46,27 +47,6 @@ namespace data {
 
 namespace {   
      
-   
-SEXP dataEntryHook(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-   // dataentry(data, modes)
-   // see in_RX11_dataentry in modules/X11/dataentry.c for X11 impl
-   // see Raqua_dataentry in modules/aqua/dataentry.c for aqua impl
-   // see do_dataentry in gnuwin32/dataentry.c for win32 impl
-   r::function_hook::checkArity(op, args, call);
-   
-   // currently not supported
-   r::exec::errorCall(call, "Editing of matrix and data.frame objects is not "
-                            "currently supported in RStudio");
-   
-   
-   // NOTE: see implementation of dataViewerHook below for how to 
-   // properly merge exception/error strategies for the runtime
-   // context of a hook
-   
-   return R_NilValue;
-}
-
 void appendTag(std::string* pHTML,
                const std::string& text,
                const std::string& tag,
@@ -94,21 +74,16 @@ void appendTH(std::string* pHTML, const std::string& text)
    appendTag(pHTML, text, "th");
 }
 
-SEXP dataViewerHook(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-   // dataviewer(x, title)
-   // (see in_R_X11_dataviewer in modules/X11/dataentry.c for X11 impl)
-   r::function_hook::checkArity(op, args, call);
-      
+
+SEXP rs_viewData(SEXP dataSEXP, SEXP titleSEXP)
+{    
    try
    {
       // validate title
-      SEXP titleSEXP = CADR(args);
       if (!Rf_isString(titleSEXP) || Rf_length(titleSEXP) != 1)
          throw r::exec::RErrorException("invalid title argument");
            
       // validate data
-      SEXP dataSEXP = CAR(args);
       if (TYPEOF(dataSEXP) != VECSXP)
          throw r::exec::RErrorException("invalid data argument (not a list)");
       
@@ -267,7 +242,7 @@ SEXP dataViewerHook(SEXP call, SEXP op, SEXP args, SEXP rho)
    }
    catch(r::exec::RErrorException& e)
    {
-      r::exec::errorCall(call, e.message());
+      r::exec::error(e.message());
    }
    CATCH_UNEXPECTED_EXCEPTION
    
@@ -280,13 +255,18 @@ SEXP dataViewerHook(SEXP call, SEXP op, SEXP args, SEXP rho)
    
 Error initialize()
 {
+   // register viewData method
+   R_CallMethodDef methodDef ;
+   methodDef.name = "rs_viewData" ;
+   methodDef.fun = (DL_FUNC) rs_viewData ;
+   methodDef.numArgs = 2;
+   r::routines::addCallMethod(methodDef);
+
    using boost::bind;
    using namespace r::function_hook ;
    using namespace session::module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(registerReplaceHook, "dataentry", dataEntryHook, (CCODE*)NULL))
-      (bind(registerReplaceHook, "dataviewer", dataViewerHook,(CCODE*)NULL))
       (bind(sourceModuleRFile, "SessionData.R"));
    
    return initBlock.execute();

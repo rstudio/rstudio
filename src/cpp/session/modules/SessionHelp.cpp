@@ -59,8 +59,6 @@ namespace help {
 namespace {   
 
 // save computed help url prefix for comparison in rHelpUrlHandler
-std::string s_localIP;
-std::string s_localPort;
 const char * const kHelpLocation = "/help";
 const char * const kCustomLocation = "/custom";
 const char * const kSessionLocation = "/session";
@@ -70,9 +68,26 @@ const char * const kCustomHelprLocation = "/custom/helpr";
 // (only do this for 2.13 or higher)
 bool s_provideHeaders = false;
 
-std::string localURL(const std::string& address)
+
+std::string rLocalHelpPort()
 {
-   return "http://" + address + ":" + s_localPort + "/";
+   std::string port;
+   Error error = r::exec::RFunction(".rs.httpdPort").call(&port);
+   if (error)
+      LOG_ERROR(error);
+   return port;
+}
+
+std::string localURL(const std::string& address, const std::string& port)
+{
+   return "http://" + address + ":" + port + "/";
+}
+
+std::string replaceRPort(const std::string& url, const std::string& rPort)
+{
+   std::string newUrl = url;
+   boost::algorithm::replace_last(newUrl, rPort, session::options().wwwPort());
+   return newUrl;
 }
 
 bool isLocalURL(const std::string& url,
@@ -80,20 +95,23 @@ bool isLocalURL(const std::string& url,
                 std::string* pLocalURLPath)
 {
    // first look for local ip prefix
-   std::string urlPrefix = localURL(s_localIP);
+   std::string rPort = rLocalHelpPort();
+   std::string urlPrefix = localURL("127.0.0.1", rPort);
    size_t pos = url.find(urlPrefix + scope);
    if (pos != std::string::npos)
    {
-      *pLocalURLPath = url.substr(urlPrefix.length());
+      std::string relativeUrl = url.substr(urlPrefix.length());
+      *pLocalURLPath = replaceRPort(relativeUrl, rPort);
       return true;
    }
 
    // next look for localhost
-   urlPrefix = localURL("localhost");
+   urlPrefix = localURL("localhost", rPort);
    pos = url.find(urlPrefix + scope);
    if (pos != std::string::npos)
    {
-      *pLocalURLPath = url.substr(urlPrefix.length());
+      std::string relativeUrl = url.substr(urlPrefix.length());
+      *pLocalURLPath = replaceRPort(relativeUrl, rPort);
       return true;
    }
 
@@ -101,46 +119,12 @@ bool isLocalURL(const std::string& url,
    return false;
 }
 
-// replace the internal startHTTPD function (called from startDynamicHelp
-// to run the http server). we simply record the ip/port info for future
-// reference (comparision in rBrowseHelpUrlHandler)
-SEXP startHTTPDHook(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-   // startHTTPD(ip, port)
-   r::function_hook::checkArity(op, args, call);
-   
-   try
-   {
-      // save ip and port
-      s_localIP = r::sexp::asString(CAR(args));
-      s_localPort = r::sexp::asString(CADR(args));
-   }
-   CATCH_UNEXPECTED_EXCEPTION
-  
-   // return status 0L to indicate success
-   r::sexp::Protect rProtect;
-   return r::sexp::create(0, &rProtect);
-}   
-
-// replace the internal stopHTTPD function 
-SEXP stopHTTPDHook(SEXP call, SEXP op, SEXP args, SEXP rho)
-{   
-   // stopHTTPD()
-   r::function_hook::checkArity(op, args, call);
-   
-   return R_NilValue;
-}    
-   
 
 // hook the browseURL function to look for calls to the R internal http
 // server. for custom URLs remap the address to remote and then fire
 // the browse_url event. for help URLs fire the appropraite show_help event
 bool handleLocalHttpUrl(const std::string& url)
 {
-   // return false if the help url prefix hasn't been set yet
-   if (s_localPort.empty())
-      return false;
-   
    // check for helpr
    std::string helprPath;
    if (isLocalURL(url, "custom/helpr", &helprPath))
@@ -824,20 +808,6 @@ void handleHelpRequest(const http::Request& request, http::Response* pResponse)
                       pResponse);
 }
 
-Error setHelpPort()
-{
-   Options& options = session::options();
-   if (options.programMode() == kSessionProgramModeDesktop)
-   {
-      int port = boost::lexical_cast<int>(session::options().wwwPort());
-      return r::options::setOption("help.ports", port);
-   }
-   else
-   {
-      return Success();
-   }
-}
-   
 } // anonymous namespace
    
 Error initialize()
@@ -851,22 +821,20 @@ Error initialize()
    using namespace r::function_hook ;
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(registerReplaceHook, "startHTTPD", startHTTPDHook, (CCODE*)NULL))
-      (bind(registerReplaceHook, "stopHTTPD", stopHTTPDHook, (CCODE*)NULL))
       (bind(registerRBrowseUrlHandler, handleLocalHttpUrl))
       (bind(registerRBrowseFileHandler, handleRShowDocFile))
       (bind(registerUriHandler, kHelpLocation, handleHelpRequest))
       (bind(registerUriHandler, kCustomHelprLocation, handleCustomHelprRequest))
       (bind(registerUriHandler, kCustomLocation, handleCustomRequest))
       (bind(registerUriHandler, kSessionLocation, handleSessionRequest))
-      (bind(setHelpPort))
       (bind(sourceModuleRFile, "SessionHelp.R"));
    Error error = initBlock.execute();
    if (error)
       return error;
 
-   // set the helpr load hook
-   error = r::exec::RFunction(".rs.setHelprLoadHook").call();
+   // complete initialization
+   int port = safe_convert::stringTo<int>(session::options().wwwPort(), 0);
+   error = r::exec::RFunction(".rs.initHelp", port).call();
    if (error)
       LOG_ERROR(error);
 
