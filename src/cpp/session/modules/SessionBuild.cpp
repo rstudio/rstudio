@@ -248,14 +248,14 @@ private:
 
       if (type == kRoxygenizePackage)
       {
-         if (roxygenize(options.workingDir))
+         if (roxygenize(packagePath))
             enqueBuildCompleted();
       }
       else
       {
          if (roxygenizeRequired(type))
          {
-            if (!roxygenize(options.workingDir))
+            if (!roxygenize(packagePath))
                return;
          }
 
@@ -295,7 +295,7 @@ private:
       }
    }
 
-   bool roxygenize(const FilePath& workingDir)
+   bool roxygenize(const FilePath& packagePath)
    {
       // build the call to roxygenize
       std::vector<std::string> roclets;
@@ -306,9 +306,9 @@ private:
       {
          roclet = "'" + roclet + "'";
       }
-      boost::format fmt("roxygenize('%1%', roclets=c(%2%))");
+      boost::format fmt("roxygenize('.', roclets=c(%1%))");
       std::string roxygenizeCall = boost::str(
-         fmt % pkgInfo_.name() % boost::algorithm::join(roclets, ", "));
+         fmt % boost::algorithm::join(roclets, ", "));
 
       // show the user the call to roxygenize
       enqueCommandString(roxygenizeCall);
@@ -322,11 +322,11 @@ private:
       std::string cmd = boost::str(cmdFmt % roxygenizeCall);
 
 
-      // change to the package parent (and make sure we restore
+      // change to the package dir (and make sure we restore
       // before leaving the function)
       RestoreCurrentPathScope restorePathScope(
                                  module_context::safeCurrentPath());
-      Error error = workingDir.makeCurrentPath();
+      Error error = packagePath.makeCurrentPath();
       if (error)
       {
          terminateWithError("setting the working directory for roxygenize",
