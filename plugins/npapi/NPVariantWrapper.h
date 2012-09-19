@@ -98,13 +98,13 @@ public:
     return NPVariantUtil::getAsNPString(variant);
   }
 
-  Value getAsValue(ScriptableInstance& scriptInstance, bool unwrapJava = true) const {
+  gwt::Value getAsValue(ScriptableInstance& scriptInstance, bool unwrapJava = true) const {
     return getAsValue(variant, scriptInstance, unwrapJava);
   }
 
-  static Value getAsValue(const NPVariant& variant, ScriptableInstance& scriptInstance,
+  static gwt::Value getAsValue(const NPVariant& variant, ScriptableInstance& scriptInstance,
       bool unwrapJava = true) {
-    Value val;
+    gwt::Value val;
     if (NPVARIANT_IS_VOID(variant)) {
       val.setUndefined();
     } else if (NPVARIANT_IS_NULL(variant)) {
@@ -218,12 +218,12 @@ public:
     assignFrom(variant, newvar);
   }
 
-  NPVariantProxy& operator=(const Value& newval) {
+  NPVariantProxy& operator=(const gwt::Value& newval) {
     assignFrom(plugin, variant, newval);
     return *this;
   }
 
-  static void assignFrom(ScriptableInstance& plugin, NPVariant& variant, const Value& newval) {
+  static void assignFrom(ScriptableInstance& plugin, NPVariant& variant, const gwt::Value& newval) {
     NPVariant newvar;
     VOID_TO_NPVARIANT(newvar);
     if (newval.isBoolean()) {
@@ -431,7 +431,7 @@ public:
     return NPVariantUtil::getAsNPString(variant);
   }
 
-  Value getAsValue(ScriptableInstance& scriptInstance, bool unwrapJava = true) const {
+  gwt::Value getAsValue(ScriptableInstance& scriptInstance, bool unwrapJava = true) const {
     return NPVariantProxy::getAsValue(variant, scriptInstance, unwrapJava);
   }
 
@@ -445,7 +445,7 @@ public:
     return *this;
   }
 
-  NPVariantWrapper& operator=(const Value& newval) {
+  NPVariantWrapper& operator=(const gwt::Value& newval) {
     NPVariantProxy::assignFrom(plugin, variant, newval);
     return *this;
   }

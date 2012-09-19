@@ -126,11 +126,11 @@ bool ScriptableInstance::tryGetStringPrimitive(NPObject* obj, NPVariant& result)
   return false;
 }
 
-bool ScriptableInstance::makeResult(bool isException, const Value& value, NPVariant* result) {
+bool ScriptableInstance::makeResult(bool isException, const gwt::Value& value, NPVariant* result) {
   Debug::log(Debug::Debugging) << "makeResult(" << isException << ", " << value << ")"
       << Debug::flush;
-  Value temp;
-  if (value.getType() == Value::JAVA_OBJECT) {
+  gwt::Value temp;
+  if (value.getType() == gwt::Value::JAVA_OBJECT) {
     int javaId = value.getJavaObjectId();
     // We may have previously released the proxy for the same object id,
     // but have not yet sent a free message back to the server.
@@ -498,14 +498,14 @@ void ScriptableInstance::loadJsni(HostChannel& channel, const string& js) {
   }
 }
 
-Value ScriptableInstance::clientMethod_getProperty(HostChannel& channel, int numArgs, const Value* const args) {
+gwt::Value ScriptableInstance::clientMethod_getProperty(HostChannel& channel, int numArgs, const gwt::Value* const args) {
   if (numArgs != 2 || !args[0].isInt() || (!args[1].isString() && !args[1].isInt())) {
     Debug::log(Debug::Error) << "Incorrect invocation of getProperty: #args=" << numArgs << ":";
     for (int i = 0; i < numArgs; ++i) {
       Debug::log(Debug::Error) << " " << i << "=" << args[i].toString();
     }
     Debug::log(Debug::Error) << Debug::flush;
-    return Value();
+    return gwt::Value();
   }
   int id = args[0].getInt();
   NPObject* obj = localObjects.getById(id);
@@ -521,12 +521,12 @@ Value ScriptableInstance::clientMethod_getProperty(HostChannel& channel, int num
   if (!NPN_GetProperty(getNPP(), obj, propID, npResult.addressForReturn())) {
     Debug::log(Debug::Warning) << "getProperty(id=" << id << ", prop="
         << NPN_UTF8FromIdentifier(propID) << ") failed" << Debug::flush;
-    return Value();
+    return gwt::Value();
   }
   return npResult.getAsValue(*this);
 }
 
-Value ScriptableInstance::clientMethod_setProperty(HostChannel& channel, int numArgs, const Value* const args) {
+gwt::Value ScriptableInstance::clientMethod_setProperty(HostChannel& channel, int numArgs, const gwt::Value* const args) {
   if (numArgs != 2 || !args[0].isInt() || (!args[1].isString() && !args[1].isInt())) {
     Debug::log(Debug::Error) << "Incorrect invocation of setProperty: #args="
         << numArgs << ":";
@@ -534,7 +534,7 @@ Value ScriptableInstance::clientMethod_setProperty(HostChannel& channel, int num
       Debug::log(Debug::Error) << " " << i << "=" << args[i].toString();
     }
     Debug::log(Debug::Error) << Debug::flush;
-    return Value();
+    return gwt::Value();
   }
   int id = args[0].getInt();
   NPObject* obj = localObjects.getById(id);
@@ -552,9 +552,9 @@ Value ScriptableInstance::clientMethod_setProperty(HostChannel& channel, int num
     Debug::log(Debug::Warning) << "setProperty(id=" << id << ", prop="
         << NPN_UTF8FromIdentifier(propID) << ", val=" << args[2].toString()
         << ") failed" << Debug::flush;
-    return Value();
+    return gwt::Value();
   }
-  return Value();
+  return gwt::Value();
 }
 
 /**
@@ -562,7 +562,7 @@ Value ScriptableInstance::clientMethod_setProperty(HostChannel& channel, int num
  * requests to invoke methods in Javascript or the plugin.
  */
 bool ScriptableInstance::invokeSpecial(HostChannel& channel, SpecialMethodId dispatchId,
-    int numArgs, const Value* const args, Value* returnValue) {
+    int numArgs, const gwt::Value* const args, gwt::Value* returnValue) {
   switch (dispatchId) {
   case SessionHandler::HasMethod:
   case SessionHandler::HasProperty:
@@ -590,9 +590,9 @@ bool ScriptableInstance::invokeSpecial(HostChannel& channel, SpecialMethodId dis
   return true;
 }
 
-bool ScriptableInstance::invoke(HostChannel& channel, const Value& thisRef,
-    const string& methodName, int numArgs, const Value* const args,
-    Value* returnValue) {
+bool ScriptableInstance::invoke(HostChannel& channel, const gwt::Value& thisRef,
+    const string& methodName, int numArgs, const gwt::Value* const args,
+    gwt::Value* returnValue) {
   Debug::log(Debug::Debugging) << "invokeJS(" << methodName << ", this=" 
       << thisRef.toString() << ", numArgs=" << numArgs << ")" << Debug::flush;
   NPVariantArray varArgs(*this, numArgs + 2);
@@ -654,14 +654,14 @@ bool ScriptableInstance::JavaObject_invoke(int objectId, int dispId,
     isRawToString = true;
   }
 
-  Value javaThis;
+  gwt::Value javaThis;
   javaThis.setJavaObject(objectId);
-  scoped_array<Value> vargs(new Value[numArgs]);
+  scoped_array<gwt::Value> vargs(new gwt::Value[numArgs]);
   for (unsigned i = 0; i < numArgs; ++i) {
     vargs[i] = NPVariantProxy::getAsValue(args[i], *this);
   }
   bool isException = false;
-  Value returnValue;
+  gwt::Value returnValue;
   if (!InvokeMessage::send(*_channel, javaThis, dispId, numArgs, vargs.get())) {
     Debug::log(Debug::Error) << "JavaObject_invoke: failed to send invoke message" << Debug::flush;
   } else {
@@ -688,7 +688,7 @@ bool ScriptableInstance::JavaObject_getProperty(int objectId, int dispId,
   Debug::log(Debug::Debugging) << "JavaObject_getProperty(objectid="
       << objectId << ", dispId=" << dispId << ")" << Debug::flush;
   VOID_TO_NPVARIANT(*result);
-  Value propertyValue = ServerMethods::getProperty(*_channel, this, objectId, dispId);
+  gwt::Value propertyValue = ServerMethods::getProperty(*_channel, this, objectId, dispId);
   if (propertyValue.isJsObject()) {
     // TODO(jat): special-case for testing
     NPObject* npObj = localObjects.getById(propertyValue.getJsObjectId());
@@ -717,7 +717,7 @@ bool ScriptableInstance::JavaObject_setProperty(int objectId, int dispId,
     Debug::log(Debug::Debugging) << "  before localObj: refcount = "
         << NPVariantUtil::getAsObject(*npValue)->referenceCount << Debug::flush;
   }
-  Value value = NPVariantProxy::getAsValue(*npValue, *this, true);
+  gwt::Value value = NPVariantProxy::getAsValue(*npValue, *this, true);
   if (NPVariantUtil::isObject(*npValue)) {
     Debug::log(Debug::Debugging) << "  after localObj: refcount = "
         << NPVariantUtil::getAsObject(*npValue)->referenceCount << Debug::flush;
@@ -734,7 +734,7 @@ bool ScriptableInstance::JavaObject_getToStringTearOff(NPVariant* result) {
   Debug::log(Debug::Debugging) << "JavaObject_getToStringTearOff()" << Debug::flush;
   VOID_TO_NPVARIANT(*result);
 
-  Value temp;
+  gwt::Value temp;
   NPVariantArray varArgs(*this, 3);
   temp.setNull();  varArgs[0] = temp; // proxy: no proxy needed
   temp.setInt(0);  varArgs[1] = temp; // dispId: always 0 for toString()

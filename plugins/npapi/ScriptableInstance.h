@@ -118,14 +118,14 @@ private:
   NPObject* window;
   void dupString(const char* str, NPString& npString);
   void dumpObjectBytes(NPObject* obj);
-  bool makeResult(bool isException, const Value& value, NPVariant* result);
+  bool makeResult(bool isException, const gwt::Value& value, NPVariant* result);
   
   // SessionHandler methods
-  virtual bool invoke(HostChannel& channel, const Value& thisObj,
-      const std::string& methodName, int numArgs, const Value* const args,
-      Value* returnValue);
+  virtual bool invoke(HostChannel& channel, const gwt::Value& thisObj,
+      const std::string& methodName, int numArgs, const gwt::Value* const args,
+      gwt::Value* returnValue);
   virtual bool invokeSpecial(HostChannel& channel, SpecialMethodId dispatchId,
-      int numArgs, const Value* const args, Value* returnValue);
+      int numArgs, const gwt::Value* const args, gwt::Value* returnValue);
   virtual void freeValue(HostChannel& channel, int idCount, const int* ids);
   virtual void sendFreeValues(HostChannel& channel);
   virtual void loadJsni(HostChannel& channel, const std::string& js);
@@ -136,8 +136,8 @@ private:
   void loadHostEntries(const NPVariant* args, unsigned argCount, NPVariant* result);
   void getHostPermission(const NPVariant* args, unsigned argCount, NPVariant* result);
   void testJsIdentity(const NPVariant* args, unsigned argCount, NPVariant* result);
-  Value clientMethod_getProperty(HostChannel& channel, int numArgs, const Value* const args);
-  Value clientMethod_setProperty(HostChannel& channel, int numArgs, const Value* const args);
+  gwt::Value clientMethod_getProperty(HostChannel& channel, int numArgs, const gwt::Value* const args);
+  gwt::Value clientMethod_setProperty(HostChannel& channel, int numArgs, const gwt::Value* const args);
   
   void JavaObject_invalidate(int objectId);
   bool JavaObject_invoke(int objectId, int dispId, const NPVariant* args,
