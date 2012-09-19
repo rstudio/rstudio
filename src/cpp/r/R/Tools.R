@@ -204,6 +204,20 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
    .Platform$r_arch
 })
 
+# pager
+.rs.addFunction( "pager", function(files, header, title, delete.file)
+{
+   for (i in 1:length(files)) {
+      if ((i > length(header)) || !nzchar(header[[i]]))
+         fileTitle <- title
+      else
+         fileTitle <- header[[i]]
+
+      .Call("rs_showFile", fileTitle, files[[i]], delete.file)
+   }
+})
+
+
 # view a pdf (based on implementation in RShowDoc and print.vignette)
 .rs.addFunction( "shellViewPdf", function(path)
 {

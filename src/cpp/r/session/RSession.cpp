@@ -58,7 +58,7 @@
 #include <R_ext/RStartup.h>
 extern "C" SA_TYPE SaveAction;
 
-#define CTXT_BROWSER 16 // from Defn.h
+#define CTXT_BROWSER 16
 
 // get rid of windows TRUE and FALSE definitions
 #undef TRUE
@@ -684,6 +684,31 @@ int REditFile(const char* file)
    return 1 ;
 }
 
+SEXP rs_showFile(SEXP titleSEXP, SEXP fileSEXP, SEXP delSEXP)
+{
+   try
+   {
+      std::string file = r::util::fixPath(r::sexp::asString(fileSEXP));
+      FilePath filePath = utils::safeCurrentPath().complete(file);
+      if (!filePath.exists())
+      {
+          throw r::exec::RErrorException(
+                             "File " + file + " does not exist.");
+      }
+
+      s_callbacks.showFile(r::sexp::asString(titleSEXP),
+                           filePath,
+                           r::sexp::asLogical(delSEXP));
+   }
+   catch(r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   return R_NilValue;
+}
+
 // NOTE: Win32 doesn't receive this callback
 int RShowFiles (int nfile, 
                 const char **file, 
@@ -1183,6 +1208,13 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    browseURLMethod.fun = (DL_FUNC)rs_browseURL;
    browseURLMethod.numArgs = 1;
    r::routines::addCallMethod(browseURLMethod);
+
+   // register showFile method
+   R_CallMethodDef showFileMethod;
+   showFileMethod.name = "rs_showFile";
+   showFileMethod.fun = (DL_FUNC)rs_showFile;
+   showFileMethod.numArgs = 3;
+   r::routines::addCallMethod(showFileMethod);
 
    // register createUUID method
    R_CallMethodDef createUUIDMethodDef ;

@@ -18,7 +18,6 @@
 
 typedef struct SEXPREC *SEXP;
 
-// R-INTERNAL-IMPORT: from Defn.h
 typedef SEXP (*CCODE)(SEXP, SEXP, SEXP, SEXP);
 
 namespace core {

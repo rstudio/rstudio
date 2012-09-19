@@ -17,6 +17,9 @@ options(browser = function(url)
    .Call("rs_browseURL", url) ;
 })
 
+# custom pager implementation
+options(pager = .rs.pager)
+
 # never allow graphical menus
 options(menu.graphics = FALSE)
 

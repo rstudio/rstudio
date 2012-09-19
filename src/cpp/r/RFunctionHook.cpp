@@ -23,11 +23,8 @@
 #include <r/RExec.hpp>
 #include <r/RErrorCategory.hpp>
 
-// R-INTERNAL-IMPORT: from memory.c
 extern "C" CCODE (PRIMFUN)(SEXP x) ;
 extern "C" void (SET_PRIMFUN)(SEXP x, CCODE f) ;
-
-// R-INTERNAL-IMPORT: from util.c
 extern "C" void Rf_checkArityCall(SEXP op, SEXP args, SEXP call);
 
 using namespace core ;

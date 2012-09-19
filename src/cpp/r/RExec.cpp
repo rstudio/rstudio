@@ -24,7 +24,6 @@
 
 #include <R_ext/Parse.h>
 
-// R-INTERNAL-IMPORT: from Defn.h (via main.c)
 #include <R_ext/libextern.h> 
 LibExtern Rboolean R_interrupts_suspended;
 LibExtern int R_interrupts_pending;
@@ -32,7 +31,6 @@ LibExtern int R_interrupts_pending;
 LibExtern int UserBreak;
 #endif
 
-// R-INTERNAL-IMPORT: from Defn.h
 extern "C" void Rf_PrintWarnings();
 
 using namespace core ;
