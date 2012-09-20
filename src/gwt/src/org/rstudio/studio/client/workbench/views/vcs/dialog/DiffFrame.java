@@ -76,7 +76,7 @@ public class DiffFrame extends Composite
       headerLabel_.setText(filename1);
      
       // if the file is text file then show a view link for it
-      FileType fileType = fileTypeRegistry.getTypeForFile(fsItem, false);
+      FileType fileType = fileTypeRegistry.getTypeForFile(fsItem);
       boolean showLink = !suppressViewLink
                          && fileType != null
                          && fileType instanceof TextFileType;

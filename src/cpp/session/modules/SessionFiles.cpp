@@ -40,6 +40,9 @@
 
 #include <core/json/Json.hpp>
 
+#include <core/system/ShellUtils.hpp>
+#include <core/system/Process.hpp>
+
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
@@ -140,6 +143,55 @@ core::Error stat(const json::JsonRpcRequest& request,
    pResponse->setResult(module_context::createFileSystemItem(targetPath));
    return Success();
 }
+
+core::Error isTextFile(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   std::string path;
+   Error error = json::readParams(request.params, &path);
+   if (error)
+      return error;
+
+   FilePath targetPath = module_context::resolveAliasedPath(path);
+
+#ifndef _WIN32
+   core::shell_utils::ShellCommand cmd("file");
+   cmd << "--mime-type";
+   cmd << "--brief";
+   cmd << targetPath;
+   core::system::ProcessResult result;
+   error = core::system::runCommand(cmd,
+                                    core::system::ProcessOptions(),
+                                    &result);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   pResponse->setResult(boost::algorithm::starts_with(result.stdOut, "text/") ||
+                        boost::algorithm::ends_with(result.stdOut, "+xml"));
+#else
+
+   // read contents of file
+   std::string contents;
+   error = core::readStringFromFile(targetPath, &contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
+   // does it have any incidences of 2 consecutive nulls?
+   std::string twoNulls;
+   twoNulls.push_back('\0');
+   twoNulls.push_back('\0');
+   pResponse->setResult(!boost::algorithm::contains(contents, twoNulls));
+
+#endif
+
+   return Success();
+}
+
    
 Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
 {
@@ -849,6 +901,7 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "stat", stat))
+      (bind(registerRpcMethod, "is_text_file", isTextFile))
       (bind(registerRpcMethod, "list_files", listFiles))
       (bind(registerRpcMethod, "create_folder", createFolder))
       (bind(registerRpcMethod, "delete_files", deleteFiles))

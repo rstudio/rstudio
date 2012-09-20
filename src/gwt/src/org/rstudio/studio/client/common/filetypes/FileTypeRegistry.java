@@ -14,6 +14,7 @@ package org.rstudio.studio.client.common.filetypes;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -23,6 +24,9 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
 import java.util.HashMap;
 
@@ -123,10 +127,12 @@ public class FileTypeRegistry
    
    @Inject
    public FileTypeRegistry(EventBus eventBus,
-                           Satellite satellite)
+                           Satellite satellite,
+                           FilesServerOperations server)
    {
       eventBus_ = eventBus;
       satellite_ = satellite;
+      server_ = server;
       
       if (!satellite_.isCurrentWindowSatellite())
          exportEditFileCallback();
@@ -176,7 +182,6 @@ public class FileTypeRegistry
       register("*.rda", RDATA, icons.iconRdata());
       register("*.Rproj", RPROJECT, icons.iconRproject());
       register("*.dcf", DCF, icons.iconText());
-      defaultType_ = BROWSER;
 
       registerIcon(".jpg", icons.iconPng());
       registerIcon(".jpeg", icons.iconPng());
@@ -201,17 +206,44 @@ public class FileTypeRegistry
       openFile(file, true);
    }
    
-   public boolean openFile(FileSystemItem file, boolean canUseDefault)
+   public void openFile(final FileSystemItem file, final boolean canUseBrowser)
    {
-      FileType fileType = getTypeForFile(file, canUseDefault);
+      FileType fileType = getTypeForFile(file);
       if (fileType != null)
       {
          fileType.openFile(file, eventBus_);
-         return true;
       }
       else
       {
-         return false;
+         // build default command to use if we have an error or the 
+         // file is not a text file
+         final Command defaultCommand = new Command() {
+            @Override
+            public void execute()
+            {   
+               if (canUseBrowser)
+                  BROWSER.openFile(file, eventBus_);
+            }
+         };
+         
+         // check with the server to see if this is likely to be a text file
+         server_.isTextFile(file.getPath(), 
+                            new ServerRequestCallback<Boolean>() {
+            @Override
+            public void onResponseReceived(Boolean isText)
+            {
+               if (isText)
+                  TEXT.openFile(file, eventBus_);
+               else
+                  defaultCommand.execute();
+            }
+            
+            @Override
+            public void onError(ServerError error)
+            {
+               defaultCommand.execute();
+            }
+         }); 
       }
    }
 
@@ -230,7 +262,7 @@ public class FileTypeRegistry
       else
       {
          FileType fileType = getTypeForFile(file);
-         if (!(fileType instanceof TextFileType))
+         if (fileType != null && !(fileType instanceof TextFileType))
             fileType = TEXT;
    
          if (fileType != null)
@@ -269,11 +301,6 @@ public class FileTypeRegistry
 
    public FileType getTypeForFile(FileSystemItem file)
    {
-      return getTypeForFile(file, true);
-   }
-   
-   public FileType getTypeForFile(FileSystemItem file, boolean canUseDefault)
-   {
       if (file != null)
       {
          String filename = file.getName().toLowerCase();
@@ -298,16 +325,13 @@ public class FileTypeRegistry
             return TEXT;
       }
       
-      if (canUseDefault)
-         return defaultType_;
-      else
-         return null;
+      return null;
    }
 
    public TextFileType getTextTypeForFile(FileSystemItem file)
    {
       FileType type = getTypeForFile(file);
-      if (type instanceof TextFileType)
+      if (type != null && type instanceof TextFileType)
          return (TextFileType) type;
       else
          return TEXT;
@@ -381,7 +405,7 @@ public class FileTypeRegistry
          new HashMap<String, ImageResource>();
    private final HashMap<String, ImageResource> iconsByFilename_ =
          new HashMap<String, ImageResource>();
-   private final FileType defaultType_;
    private final EventBus eventBus_;
    private final Satellite satellite_;
+   private final FilesServerOperations server_;
 }

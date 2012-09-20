@@ -24,6 +24,9 @@ public interface FilesServerOperations
 {
    void stat(String path,
              ServerRequestCallback<FileSystemItem> requestCallback);
+   
+   void isTextFile(String path,
+                   ServerRequestCallback<Boolean> requestCallback);
 
    // get a file listing
    void listFiles(FileSystemItem directory,

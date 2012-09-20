@@ -256,8 +256,9 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
       FileSystemItem fsi = FileSystemItem.createFile(file);
       FileTypeRegistry ftReg = RStudioGinjector.INSTANCE.getFileTypeRegistry();
       FileType fileType = ftReg.getTypeForFile(fsi);
-      return fileType.equals(FileTypeRegistry.MARKDOWN) ||
-             fileType.equals(FileTypeRegistry.RMARKDOWN);
+      return (fileType != null) &&
+             (fileType.equals(FileTypeRegistry.MARKDOWN) ||
+              fileType.equals(FileTypeRegistry.RMARKDOWN));
    }
    
    public void onActivated(HTMLPreviewParams params)
