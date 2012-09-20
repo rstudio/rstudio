@@ -22,6 +22,8 @@
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <boost/filesystem.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
@@ -371,7 +373,7 @@ MimeType s_mimeTypes[] =
    { "jpeg",  "image/jpeg" },
    { "jpe",   "image/jpeg" },
    { "png",   "image/png" },
-   { "js",    "application/x-javascript" },
+   { "js",    "text/javascript" },
    { "pdf",   "application/pdf" },
    { "svg",   "image/svg+xml" },
    { "swf",   "application/x-shockwave-flash" },
@@ -474,6 +476,13 @@ std::string FilePath::mimeContentType(const std::string& defaultType) const
       // no extension
       return defaultType;
    }
+}
+
+bool FilePath::hasTextMimeType() const
+{
+   std::string mimeType = mimeContentType("application/octet-stream");
+   return boost::algorithm::starts_with(mimeType, "text/") ||
+          boost::algorithm::ends_with(mimeType, "+xml");
 }
    
 std::time_t FilePath::lastWriteTime() const

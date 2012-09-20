@@ -423,12 +423,19 @@ private:
    {
       FilePath filePath(fileInfo.absolutePath());
       std::string ext = filePath.extensionLowerCase();
+      std::string filename = filePath.filename();
       return !filePath.isDirectory() &&
               (ext == ".r" || ext == ".rnw" ||
                ext == ".rmd" || ext == ".rmarkdown" ||
                ext == ".rhtml" || ext == ".rd" ||
                ext == ".h" || ext == ".hpp" ||
-               ext == ".c" || ext == ".cpp");
+               ext == ".c" || ext == ".cpp" ||
+               filename == "DESCRIPTION" ||
+               filename == "NAMESPACE" ||
+               filename == "README" ||
+               filename == "NEWS" ||
+               filename == "Makefile" ||
+               filePath.hasTextMimeType());
    }
 
    static bool isIndexableSourceFile(const FileInfo& fileInfo)

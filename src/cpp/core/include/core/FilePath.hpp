@@ -93,6 +93,8 @@ public:
    // mime types
    std::string mimeContentType(
                      const std::string& defaultType = "text/plain") const;
+
+   bool hasTextMimeType() const;
    
    // last write time
    std::time_t lastWriteTime() const;
