@@ -743,12 +743,12 @@ public class TextEditingTarget implements EditingTarget
 
    public long getFileSizeLimit()
    {
-      return 5 * 1024 * 1024;
+      return 2 * 1024 * 1024;
    }
 
    public long getLargeFileSize()
    {
-      return Desktop.isDesktop() ? 1024 * 1024 : 512 * 1024;
+      return 512 * 1024;
    }
 
    public void insertCode(String source, boolean blockMode)

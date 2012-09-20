@@ -458,6 +458,58 @@ bool isSourceDocument(const FilePath& filePath)
       return true;
 }
 
+void logUnsafeSourceDocument(const FilePath& filePath,
+                             const std::string& reason)
+{
+   std::string msg = "Excluded unsafe source document";
+   if (!filePath.empty())
+      msg += " (" + filePath.absolutePath() + ")";
+   msg += ": " + reason;
+   LOG_WARNING_MESSAGE(msg);
+}
+
+bool isSafeSourceDocument(const FilePath& docDbPath,
+                          boost::shared_ptr<SourceDocument> pDoc)
+{
+   // get a filepath and use it for filtering if we can
+   FilePath filePath;
+   if (!pDoc->path().empty())
+   {
+      filePath = FilePath(pDoc->path());
+      if (filePath.extensionLowerCase() == ".rdata")
+      {
+         logUnsafeSourceDocument(filePath, ".RData file");
+         return false;
+      }
+   }
+
+   // get the size of the file in KB
+   uintmax_t docSizeKb = docDbPath.size() / 1024;
+   std::string kbStr = boost::lexical_cast<std::string>(docSizeKb);
+
+   // if it's larger than 2MB then always drop it (that's the limit
+   // enforced by the editor)
+   if (docSizeKb > (2 * 1024))
+   {
+      logUnsafeSourceDocument(filePath, "File too large (" + kbStr + ")");
+      return false;
+   }
+
+   // if it's larger then 500K and not dirty then drop it as well
+   // (that's the file size considered "large" on the client)
+   else if (!pDoc->dirty() && (docSizeKb > 512))
+   {
+      logUnsafeSourceDocument(filePath, "File too large (" + kbStr + ")");
+      return false;
+   }
+
+   else
+   {
+      return true;
+   }
+}
+
+
 Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs)
 {
    std::vector<FilePath> files ;
@@ -473,7 +525,11 @@ Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs)
          boost::shared_ptr<SourceDocument> pDoc(new SourceDocument()) ;
          Error error = source_database::get(filePath.filename(), pDoc);
          if (!error)
-            pDocs->push_back(pDoc);
+         {
+            // safety filter
+            if (isSafeSourceDocument(filePath, pDoc))
+               pDocs->push_back(pDoc);
+         }
          else
             LOG_ERROR(error);
       }
