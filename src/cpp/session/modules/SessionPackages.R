@@ -220,7 +220,7 @@
 .rs.addJsonRpcHandler( "get_cran_mirrors", function()
 {
    # RStudio mirror
-   rstudioDF <- data.frame(name = "Amazon CloudFront",
+   rstudioDF <- data.frame(name = "Global (CDN)",
                            host = "RStudio",
                            url = "http://cran.rstudio.org",
                            country = "us",

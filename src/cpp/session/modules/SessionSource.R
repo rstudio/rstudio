@@ -284,12 +284,17 @@
   }
 })
 
-.rs.addFunction("fileEdit", function(file, title)
+.rs.addFunction("initSource", function()
 {
-   .Call("rs_fileEdit", file, title)
+   .rs.registerReplaceHook("file.edit", "utils", function(original, ...)
+   {
+      # just take unnamed arguments (those are the files)
+      args <- c(...)
+      args <- args[names(args) == ""]
+
+      # call rstudio fileEdit function
+      files <- path.expand(args)
+      invisible(.Call("rs_fileEdit", files))
+   })
 })
 
-.rs.addFunction("setEditorOption", function()
-{
-   options(editor = .rs.fileEdit)
-})

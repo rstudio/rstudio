@@ -368,7 +368,7 @@ CRANMirror UserSettings::cranMirror() const
    // if there is no URL then return the default RStudio mirror
    if (mirror.url.empty())
    {
-      mirror.name = "Amazon CloudFront";
+      mirror.name = "Global (CDN)";
       mirror.host = "RStudio";
       mirror.url = "http://cran.rstudio.org";
       mirror.country = "us";

@@ -878,7 +878,7 @@ void onShutdown(bool terminatedNormally)
       LOG_ERROR(error);
 }
 
-SEXP rs_fileEdit(SEXP fileSEXP, SEXP)
+SEXP rs_fileEdit(SEXP fileSEXP)
 {
    try
    {
@@ -970,7 +970,7 @@ Error initialize()
    R_CallMethodDef methodDef ;
    methodDef.name = "rs_fileEdit" ;
    methodDef.fun = (DL_FUNC) rs_fileEdit ;
-   methodDef.numArgs = 2;
+   methodDef.numArgs = 1;
    r::routines::addCallMethod(methodDef);
 
    // install rpc methods
@@ -997,8 +997,8 @@ Error initialize()
    if (error)
       return error;
 
-   // set editor option
-   error = r::exec::RFunction(".rs.setEditorOption").call();
+   // init source
+   error = r::exec::RFunction(".rs.initSource").call();
    if (error)
       LOG_ERROR(error);
    return Success();
