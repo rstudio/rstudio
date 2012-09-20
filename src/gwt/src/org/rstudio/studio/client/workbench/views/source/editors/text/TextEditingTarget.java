@@ -1054,19 +1054,56 @@ public class TextEditingTarget implements EditingTarget
                      workbenchContext_.setDefaultFileDialogDir(
                            saveItem.getParentPath());
 
-                     TextFileType fileType =
+                     final TextFileType fileType =
                            fileTypeRegistry_.getTextTypeForFile(saveItem);
 
-                     docUpdateSentinel_.save(
-                           saveItem.getPath(),
-                           fileType.getTypeId(),
-                           encoding,
-                           new SaveProgressIndicator(saveItem,
-                                                     fileType,
-                                                     executeOnSuccess));
+                     final Command saveCommand = new Command() {
 
-                     events_.fireEvent(
-                           new SourceFileSavedEvent(saveItem.getPath()));
+                        @Override
+                        public void execute()
+                        {
+                           docUpdateSentinel_.save(
+                                 saveItem.getPath(),
+                                 fileType.getTypeId(),
+                                 encoding,
+                                 new SaveProgressIndicator(saveItem,
+                                                           fileType,
+                                                           executeOnSuccess));
+
+                           events_.fireEvent(
+                                 new SourceFileSavedEvent(saveItem.getPath()));
+                           
+                        }
+ 
+                     };
+                     
+                     // if we are switching from an R file type 
+                     // to a non-R file type then confirm
+                     if (fileType_.isR() && !fileType.isR())
+                     {
+                        globalDisplay_.showYesNoMessage(
+                              MessageDialog.WARNING, 
+                              "Confirm Change File Type", 
+                              "This file was created as an R script however " +
+                              "the file extension you specified will change " +
+                              "it into another file type that will no longer " +
+                              "open as as an R script.\n\n" +
+                              "Are you sure you want to change the type of " +
+                              "the file so that it is no longer an R script?",
+                              new Operation() {
+
+                                 @Override
+                                 public void execute()
+                                 {
+                                    saveCommand.execute();
+                                 }
+                              },
+                              false);
+                     }
+                     else
+                     {
+                        saveCommand.execute();
+                     }
                   }
                   catch (Exception e)
                   {

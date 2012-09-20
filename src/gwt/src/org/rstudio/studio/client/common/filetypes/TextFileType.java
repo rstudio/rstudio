@@ -157,6 +157,11 @@ public class TextFileType extends EditableFileType
       return canShowScopeTree_;
    }
 
+   public boolean isR()
+   {
+      return FileTypeRegistry.R.getTypeId().equals(getTypeId());
+   }
+   
    public boolean isRnw()
    {
       return FileTypeRegistry.SWEAVE.getTypeId().equals(getTypeId());
