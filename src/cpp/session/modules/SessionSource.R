@@ -290,7 +290,9 @@
    {
       # just take unnamed arguments (those are the files)
       args <- c(...)
-      args <- args[names(args) == ""]
+      names <- names(args)
+      if (!is.null(names))
+        args <- args[names(args) == ""]
 
       # call rstudio fileEdit function
       files <- path.expand(args)
