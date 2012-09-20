@@ -181,11 +181,10 @@ core::Error isTextFile(const json::JsonRpcRequest& request,
       return error;
    }
 
-   // does it have any incidences of 2 consecutive nulls?
-   std::string twoNulls;
-   twoNulls.push_back('\0');
-   twoNulls.push_back('\0');
-   pResponse->setResult(!boost::algorithm::contains(contents, twoNulls));
+   // does it have null bytes?
+   std::string nullByte;
+   nullByte.push_back('\0');
+   pResponse->setResult(!boost::algorithm::contains(contents, nullType));
 
 #endif
 
