@@ -135,6 +135,15 @@
    paste(.libPaths(), collapse = .Platform$path.sep)
 })
 
+.rs.addFunction("packageVersion", function(name, libPath, pkgs)
+{
+   pkgs <- subset(pkgs, Package == name & LibPath == libPath)
+   if (nrow(pkgs) == 1)
+      pkgs$Version
+   else
+      ""
+})
+
 .rs.addJsonRpcHandler( "list_packages", function()
 {
    # calculate unique libpaths
@@ -155,9 +164,20 @@
    loaded.pkgs <- .packages()
    pkgs.loaded <- !is.na(match(pkgs.name, loaded.pkgs))
    
+
+   # build up vector of package versions
+   instPkgs <- as.data.frame(installed.packages(), stringsAsFactors=F)
+   pkgs.version <- character(length=length(pkgs.name))
+   for (i in 1:length(pkgs.name)) {
+      pkgs.version[[i]] <- .rs.packageVersion(pkgs.name[[i]],
+                                              pkgs.library[[i]],
+                                              instPkgs)
+   }
+
    # return data frame sorted by name
    packages = data.frame(name=pkgs.name,
                          library=pkgs.library,
+                         version=pkgs.version,
                          desc=pkgs.desc,
                          url=pkgs.url,
                          loaded=pkgs.loaded,

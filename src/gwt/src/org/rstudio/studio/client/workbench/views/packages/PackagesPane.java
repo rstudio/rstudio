@@ -12,11 +12,13 @@
  */
 package org.rstudio.studio.client.workbench.views.packages;
 
+import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.TextColumn;
@@ -29,6 +31,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
@@ -149,6 +152,23 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       return toolbar;
    }
    
+   private class VersionCell extends AbstractCell<PackageInfo>
+   {
+      @Override
+      public void render(Context context, PackageInfo value, SafeHtmlBuilder sb)
+      {
+         sb.appendHtmlConstant("<div title=\"");
+         sb.appendEscaped(value.getLibrary());
+         sb.appendHtmlConstant("\"");
+         sb.appendHtmlConstant(" class=\"");
+         sb.appendEscaped(ThemeStyles.INSTANCE.adornedText());
+         sb.appendHtmlConstant("\"");
+         sb.appendHtmlConstant(">");
+         sb.appendEscaped(value.getVersion());
+         sb.appendHtmlConstant("</div>"); 
+      }
+   }
+   
    @Override
    protected Widget createMainWidget()
    {
@@ -175,6 +195,18 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       };  
       
       packagesTable_.addColumn(descColumn);
+      
+      Column<PackageInfo, PackageInfo> versionColumn = 
+         new Column<PackageInfo, PackageInfo>(new VersionCell()) {
+
+            @Override
+            public PackageInfo getValue(PackageInfo object)
+            {
+               return object;
+            }
+      };
+      
+      packagesTable_.addColumn(versionColumn);
       
       ImageButtonColumn<PackageInfo> removeColumn = 
         new ImageButtonColumn<PackageInfo>(

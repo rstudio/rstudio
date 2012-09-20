@@ -30,6 +30,10 @@ public class PackageInfo extends JavaScriptObject
       return this.library;
    }-*/;
 
+   public final native String getVersion() /*-{
+      return this.version;
+   }-*/;
+   
    public final native String getDesc() /*-{
       return this.desc;
    }-*/;
@@ -56,6 +60,7 @@ public class PackageInfo extends JavaScriptObject
       var packageInfo = new Object();
       packageInfo.name = this.name;
       packageInfo.library = this.library;
+      packageInfo.version = this.version;
       packageInfo.desc = this.desc;
       packageInfo.url = this.url;
       packageInfo.loaded = loaded;

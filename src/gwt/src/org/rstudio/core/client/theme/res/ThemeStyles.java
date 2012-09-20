@@ -151,4 +151,6 @@ public interface ThemeStyles extends CssResource
    
    String selectableText();
    String forceMacScrollbars();
+   
+   String adornedText();
 }
