@@ -298,8 +298,23 @@ public class FileTypeRegistry
    {
       return fileTypesByTypeName_.get(name);
    }
+   
+   
+
 
    public FileType getTypeForFile(FileSystemItem file)
+   {
+      // last ditch default type -- see if this either a known text file type
+      // or (for server mode) NOT a known binary type. the result of this is
+      // that unknown files types are treated as text and opened in the editor
+      // (we don't do this on desktop because  in that case users have the
+      // recourse of using a local editor)
+      String defaultType = Desktop.isDesktop() ? "application/octet-stream" :
+                                                 "text/plain";
+      return getTypeForFile(file, defaultType);
+   }
+
+   public FileType getTypeForFile(FileSystemItem file, String defaultType)
    {
       if (file != null)
       {
@@ -313,16 +328,12 @@ public class FileTypeRegistry
          if (result != null)
             return result;
          
-         // last ditch -- see if this either a known text file type
-         // or (for server mode) NOT a known binary type. the result of
-         // this is that unknown files types are treated as text and
-         // opened in the editor (we don't do this on desktop because
-         // in that case users have the recourse of using a local editor)
-         String defaultType = Desktop.isDesktop() ? "application/octet-stream" :
-                                                    "text/plain";
-         String mimeType = file.mimeType(defaultType);
-         if (mimeType.startsWith("text/"))
-            return TEXT;
+         if (defaultType != null)
+         {
+            String mimeType = file.mimeType(defaultType);
+            if (mimeType.startsWith("text/"))
+               return TEXT;
+         }
       }
       
       return null;
