@@ -804,6 +804,14 @@ SEXP rs_browseURL(SEXP urlSEXP)
          // fire browseFile
          s_callbacks.browseFile(filePath);
       }
+      // urls with no protocol are assumed to be file references
+      else if (URL.find("://") == std::string::npos)
+      {
+         std::string file = r::util::expandFileName(URL);
+         FilePath filePath = utils::safeCurrentPath().complete(
+                                                   r::util::fixPath(file));
+         s_callbacks.browseFile(filePath);
+      }
       else
       {
          s_callbacks.browseURL(URL) ;
