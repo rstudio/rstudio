@@ -468,6 +468,14 @@ void logUnsafeSourceDocument(const FilePath& filePath,
    LOG_WARNING_MESSAGE(msg);
 }
 
+bool hasNullByteSequence(const std::string& contents)
+{
+   std::string nullBytes;
+   nullBytes.push_back('\0');
+   nullBytes.push_back('\0');
+   return boost::algorithm::contains(contents, nullBytes);
+}
+
 bool isSafeSourceDocument(const FilePath& docDbPath,
                           boost::shared_ptr<SourceDocument> pDoc)
 {
@@ -500,6 +508,14 @@ bool isSafeSourceDocument(const FilePath& docDbPath,
    else if (!pDoc->dirty() && (docSizeKb > 512))
    {
       logUnsafeSourceDocument(filePath, "File too large (" + kbStr + ")");
+      return false;
+   }
+
+   // if it has a sequence of 2 null bytes then drop it
+   else if (hasNullByteSequence(pDoc->contents()))
+   {
+      logUnsafeSourceDocument(filePath,
+                              "File is binary (has null byte sequence)");
       return false;
    }
 
