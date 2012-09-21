@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.ui.export;
 
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 
@@ -21,6 +22,7 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.CellPanel;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
@@ -175,7 +177,7 @@ public class ExportPlotSizeEditor extends Composite
       
       // image and sizer in layout panel (create now so we can call
       // setSize in update button click handler)
-      final LayoutPanel previewPanel = new LayoutPanel(); 
+      previewPanel_ = new LayoutPanel(); 
      
       
       // update button
@@ -183,8 +185,8 @@ public class ExportPlotSizeEditor extends Composite
                                                     new ClickHandler(){
          public void onClick(ClickEvent event) 
          {
-            previewPanel.setSize((getImageWidth() + IMAGE_INSET) + "px", 
-                                (getImageHeight() + IMAGE_INSET) + "px");
+            setPreviewPanelSize(getImageWidth(), getImageHeight());
+           
             updateImage();
             
             observer.onPlotResized(false);
@@ -214,14 +216,14 @@ public class ExportPlotSizeEditor extends Composite
       
       
 
-      previewPanel.add(glassPanel);
-      previewPanel.setWidgetLeftRight(glassPanel,
+      previewPanel_.add(glassPanel);
+      previewPanel_.setWidgetLeftRight(glassPanel,
                                       0, Unit.PX, 
                                       IMAGE_INSET, Unit.PX);
-      previewPanel.setWidgetTopBottom(glassPanel,
+      previewPanel_.setWidgetTopBottom(glassPanel,
                                       0, Unit.PX, 
                                       IMAGE_INSET, Unit.PX);
-      previewPanel.getWidgetContainerElement(
+      previewPanel_.getWidgetContainerElement(
                      glassPanel).getStyle().setOverflow(Overflow.VISIBLE);
       
       // resize gripper
@@ -264,8 +266,7 @@ public class ExportPlotSizeEditor extends Composite
             setHeightTextBox(newHeight);  
             
             // set image preview size
-            previewPanel.setSize(newWidth + IMAGE_INSET + "px", 
-                                 newHeight + IMAGE_INSET + "px");
+            setPreviewPanelSize(newWidth,  newHeight);
          }
 
          @Override
@@ -281,11 +282,11 @@ public class ExportPlotSizeEditor extends Composite
       });
       
       // layout gripper
-      previewPanel.add(gripper);
-      previewPanel.setWidgetRightWidth(gripper, 
+      previewPanel_.add(gripper);
+      previewPanel_.setWidgetRightWidth(gripper, 
                                       0, Unit.PX, 
                                       gripper.getImageWidth(), Unit.PX);
-      previewPanel.setWidgetBottomHeight(gripper, 
+      previewPanel_.setWidgetBottomHeight(gripper, 
                                         0, Unit.PX, 
                                         gripper.getImageHeight(), Unit.PX);
      
@@ -298,10 +299,9 @@ public class ExportPlotSizeEditor extends Composite
       setHeightTextBox(initialHeight);
  
       // initialize preview
-      previewPanel.setSize((initialWidth + IMAGE_INSET) + "px", 
-                          (initialHeight + IMAGE_INSET) + "px");
-      
-      verticalPanel.add(previewPanel);
+      setPreviewPanelSize(initialWidth, initialHeight);
+     
+      verticalPanel.add(previewPanel_);
       
       // set initial focus widget
       if (extraWidget == null)
@@ -401,6 +401,23 @@ public class ExportPlotSizeEditor extends Composite
       }
    }
    
+   private void setPreviewPanelSize(int width, int height)
+   {
+      Size maxSize = new Size(Window.getClientWidth() - 100,
+                              Window.getClientHeight() - 250);
+      
+      if (width <= maxSize.width && height <= maxSize.height)
+      {
+         previewPanel_.setVisible(true);
+         previewPanel_.setSize((width + IMAGE_INSET) + "px", 
+                               (height + IMAGE_INSET) + "px");
+      }
+      else
+      {
+         previewPanel_.setVisible(false);
+      }
+   }
+   
    private Label createImageOptionLabel(String text)
    {
       Label label = new Label(text);
@@ -452,4 +469,5 @@ public class ExportPlotSizeEditor extends Composite
    private boolean settingDimenensionInProgress_ = false;
    
    private final int MIN_SIZE = 100;
+   private LayoutPanel previewPanel_;
 }
