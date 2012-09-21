@@ -42,6 +42,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOptions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallRequest;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
@@ -84,20 +85,31 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                                operation).showModal();
    }
    
-   public void setPackageStatus(String packageName, boolean loaded)
+   public void setPackageStatus(PackageStatus status)
    {
-      int row = packageRow(packageName) ;
+      int row = packageRow(status.getName(), status.getLib()) ;
       
       if (row != -1)
       {
          List<PackageInfo> packages = packagesDataProvider_.getList();
         
-         packages.set(row, loaded ? packages.get(row).asLoaded() :
-                                    packages.get(row).asUnloaded());
+         packages.set(row, status.isLoaded() ? packages.get(row).asLoaded() :
+                                               packages.get(row).asUnloaded());
+      }
+      
+      // go through any duplicates to reconcile their status
+      List<PackageInfo> packages = packagesDataProvider_.getList();
+      for (int i=0; i<packages.size(); i++)
+      {
+         if (packages.get(i).getName().equals(status.getName()) &&
+             i != row)
+         {
+            packages.set(i, packages.get(i).asUnloaded());
+         }
       }
    }
    
-   private int packageRow(String packageName)
+   private int packageRow(String packageName, String packageLib)
    {
       // if we haven't retreived packages yet then return not found
       if (packagesDataProvider_ == null)
@@ -110,7 +122,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       for (int i=0; i<packages.size(); i++)
       {
          PackageInfo packageInfo = packages.get(i);
-         if (packageInfo.getName().equals(packageName))
+         if (packageInfo.getName().equals(packageName) &&
+             packageInfo.getLibrary().equals(packageLib))
          {
             row = i ;
             break;
@@ -240,9 +253,11 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
             public void update(int index, PackageInfo packageInfo, Boolean value)
             {
                if (value.booleanValue())
-                  observer_.loadPackage(packageInfo.getName()) ;
+                  observer_.loadPackage(packageInfo.getName(),
+                                        packageInfo.getLibrary()) ;
                else
-                  observer_.unloadPackage(packageInfo.getName()) ;
+                  observer_.unloadPackage(packageInfo.getName(),
+                                          packageInfo.getLibrary()) ;
                
             }    
          });

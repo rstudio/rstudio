@@ -29,7 +29,7 @@ public interface PackagesServerOperations
          String repository,
          ServerRequestCallback<JsArrayString> requestCallback);
    
-   void isPackageLoaded(String packageName,
+   void isPackageLoaded(String packageName, String libName,
                         ServerRequestCallback<Boolean> requestCallback);
    
    void checkForPackageUpdates(

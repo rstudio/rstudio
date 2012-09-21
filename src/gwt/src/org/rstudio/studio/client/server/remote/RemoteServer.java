@@ -562,10 +562,15 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_PACKAGE_INSTALL_CONTEXT, requestCallback);
    }
    
-   public void isPackageLoaded(String packageName,
-                               ServerRequestCallback<Boolean> requestCallback)
+   public void isPackageLoaded(
+                       String packageName,
+                       String libName,
+                       ServerRequestCallback<Boolean> requestCallback)
    {
-      sendRequest(RPC_SCOPE, IS_PACKAGE_LOADED, packageName, requestCallback);
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(packageName));
+      params.set(1, new JSONString(libName));
+      sendRequest(RPC_SCOPE, IS_PACKAGE_LOADED, params, requestCallback);
    }
    
    public void availablePackages(

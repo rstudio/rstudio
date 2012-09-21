@@ -16,7 +16,9 @@
    reportPackageStatus <- function(status)
       function(pkgname, ...)
       {
-         packageStatus = list(name=pkgname, loaded=status)
+         packageStatus = list(name=pkgname,
+                              path=path.package(pkgname, quiet=TRUE),
+                              loaded=status)
          .rs.enqueClientEvent("package_status_changed", packageStatus)
       }
    
@@ -108,9 +110,12 @@
   .libPaths()[1]
 })
 
-.rs.addJsonRpcHandler( "is_package_loaded", function(packageName)
+.rs.addJsonRpcHandler( "is_package_loaded", function(packageName, libName)
 {
-   .rs.scalar(packageName %in% .packages())
+   .rs.scalar( (packageName %in% .packages()) &&
+               identical(path.package(packageName, quiet=TRUE),
+                         paste(libName, packageName, sep="/"))
+             )
 })
 
 .rs.addFunction("isPackageInstalled", function(name)
@@ -161,8 +166,9 @@
                          pkgs.name, 
                          "html", 
                          "00Index.html")
-   loaded.pkgs <- .packages()
-   pkgs.loaded <- !is.na(match(pkgs.name, loaded.pkgs))
+   loaded.pkgs <- path.package()
+   pkgs.loaded <- !is.na(match(paste(pkgs.library,pkgs.name, sep="/"),
+                               loaded.pkgs))
    
 
    # build up vector of package versions

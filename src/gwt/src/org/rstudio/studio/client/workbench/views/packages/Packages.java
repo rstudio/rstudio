@@ -83,7 +83,7 @@ public class Packages
                           GlobalDisplay globalDisplay,
                           OperationWithInput<PackageInstallRequest> operation);
       
-      void setPackageStatus(String packageName, boolean loaded);
+      void setPackageStatus(PackageStatus status);
   
       void setObserver(PackagesDisplayObserver observer) ;
       void setProgress(boolean showProgress);
@@ -517,30 +517,33 @@ public class Packages
       });
    }
 
-   
-   
-   public void loadPackage(final String packageName)
+   public void loadPackage(final String packageName, final String libName)
    {  
-      // check status to make sure the package was loaded
-      checkPackageStatusOnNextConsolePrompt(packageName);
+      // check status to make sure the package was unloaded
+      checkPackageStatusOnNextConsolePrompt(packageName, libName);
       
       // send the command
       StringBuilder command = new StringBuilder();
       command.append("library(\"");
       command.append(packageName);
-      command.append("\")");
+      command.append("\"");
+      command.append(", lib.loc=\"");
+      command.append(libName);
+      command.append("\"");
+      command.append(")");
       events_.fireEvent(new SendToConsoleEvent(command.toString(), true));
+     
    }
 
-   public void unloadPackage(final String packageName)
+   public void unloadPackage(String packageName, String libName)
    { 
       // check status to make sure the package was unloaded
-      checkPackageStatusOnNextConsolePrompt(packageName);
+      checkPackageStatusOnNextConsolePrompt(packageName, libName);
       
       StringBuilder command = new StringBuilder();
       command.append("detach(\"package:");
       command.append(packageName);
-      command.append("\")");
+      command.append("\", unload=TRUE)");
       events_.fireEvent(new SendToConsoleEvent(command.toString(), true));
    }
    
@@ -570,13 +573,14 @@ public class Packages
    public void onPackageStatusChanged(PackageStatusChangedEvent event)
    {
       PackageStatus status = event.getPackageStatus();
-      view_.setPackageStatus(status.getName(), status.isLoaded());
+      view_.setPackageStatus(status);
       
       // also update the list of allPackages_
       for (int i = 0; i<allPackages_.size(); i++)
       {
          PackageInfo packageInfo = allPackages_.get(i);
-         if (packageInfo.getName().equals(status.getName()))
+         if (packageInfo.getName().equals(status.getName()) &&
+             packageInfo.getLibrary().equals(status.getLib()))
          {
             allPackages_.set(i, status.isLoaded() ? packageInfo.asLoaded() :
                                                     packageInfo.asUnloaded());
@@ -619,7 +623,9 @@ public class Packages
       view_.listPackages(packages);
    }
    
-   private void checkPackageStatusOnNextConsolePrompt(final String packageName)
+   private void checkPackageStatusOnNextConsolePrompt(
+                                         final String packageName,
+                                         final String libName)
    {
       // remove any existing handler
       removeConsolePromptHandler();
@@ -633,12 +639,17 @@ public class Packages
                removeConsolePromptHandler();
                
                // check status and set it
-               server_.isPackageLoaded(packageName, 
-                                       new ServerRequestCallback<Boolean>() {
+               server_.isPackageLoaded(
+                         packageName, 
+                         libName,
+                         new ServerRequestCallback<Boolean>() {
                   @Override
-                  public void onResponseReceived(Boolean loaded)
+                  public void onResponseReceived(Boolean status)
                   {
-                     view_.setPackageStatus(packageName, loaded);
+                     PackageStatus pkgStatus = PackageStatus.create(packageName, 
+                                                                    libName, 
+                                                                    status);
+                     view_.setPackageStatus(pkgStatus);
                   }
 
                   @Override
