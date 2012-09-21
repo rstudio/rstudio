@@ -90,9 +90,12 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
 })
 
 # load a package by name
-.rs.addFunction( "loadPackage", function(packageName)
+.rs.addFunction( "loadPackage", function(packageName, lib)
 {
-   library(packageName, character.only = TRUE)
+   if (nzchar(lib))
+      library(packageName, lib.loc = lib, character.only = TRUE)
+   else
+      library(packageName, character.only = TRUE)
 })
 
 # unload a package by name

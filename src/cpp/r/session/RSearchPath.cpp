@@ -54,6 +54,7 @@ const char * const kEnvironmentFile = "environment";
 const char * const kSearchPathDir = "search_path";
    
 const char * const kSearchPathElementsDir = "search_path_elements";
+const char * const kPackagePaths = "package_paths";
 const char * const kEnvDataDir = "environment_data";
 
 void reportRestoreError(const std::string& context, 
@@ -178,9 +179,14 @@ bool packageIsLoaded(const std::string& packageElementName,
    
 }
    
-void loadPackage(const std::string& packageName)
+void loadPackage(const std::string& packageName, const std::string& path)
 {
-   Error error = r::exec::RFunction(".rs.loadPackage", packageName).call();
+   // calculate the lib
+   std::string lib;
+   if (!path.empty())
+      lib = string_utils::utf8ToSystem(FilePath(path).parent().absolutePath());
+
+   Error error = r::exec::RFunction(".rs.loadPackage", packageName, lib).call();
    if (error)
    {
       reportRestoreError("loading package " + packageName,
@@ -241,6 +247,7 @@ Error save(const FilePath& statePath)
    // is based on the implementation of do_search)
    std::vector<std::string> searchPathElements;
    searchPathElements.push_back(".GlobalEnv");
+   std::map<std::string,std::string> packagePaths;
    for (SEXP envSEXP = ENCLOS(R_GlobalEnv); 
         envSEXP != R_BaseEnv ; 
         envSEXP = ENCLOS(envSEXP))
@@ -258,6 +265,25 @@ Error save(const FilePath& statePath)
          elementName = "(unknown)";
       else
          elementName = r::sexp::asString(nameSEXP);
+
+      // if this is a package also save it's path
+      if (boost::algorithm::starts_with(elementName, "package:"))
+      {
+         std::string name = boost::algorithm::replace_first_copy(elementName,
+                                                                 "package:",
+                                                                 "");
+         std::string path;
+         Error error = r::exec::RFunction("path.package", name).call(&path);
+         if (error)
+            LOG_ERROR(error);
+
+         if (!path.empty())
+         {
+            path = core::string_utils::systemToUtf8(path);
+            packagePaths[name] = path;
+         }
+      }
+
       searchPathElements.push_back(elementName);
 
       // save the environment's data if necessary
@@ -280,7 +306,13 @@ Error save(const FilePath& statePath)
    
    // save the search path list
    FilePath elementsPath = searchPathDir.complete(kSearchPathElementsDir);
-   return writeStringVectorToFile(elementsPath, searchPathElements);
+   error =  writeStringVectorToFile(elementsPath, searchPathElements);
+   if (error)
+      return error;
+
+   // save the package paths list
+   FilePath packagePathsFile = searchPathDir.complete(kPackagePaths);
+   return writeStringMapToFile(packagePathsFile, packagePaths);
 }
 
 
@@ -309,7 +341,17 @@ Error restore(const FilePath& statePath)
    error = readStringVectorFromFile(elementsPath, &savedSearchPathList);
    if (error)
       return error;
-   
+
+   // read the package paths list
+   std::map<std::string,std::string> packagePaths;
+   FilePath packagePathsFile = searchPathDir.complete(kPackagePaths);
+   if (packagePathsFile.exists())
+   {
+      error = readStringMapFromFile(packagePathsFile, &packagePaths);
+      if (error)
+         return error;
+   }
+
    // get the current search path
    std::vector<std::string> currentSearchPathList;
    error = r::exec::RFunction("search").call(&currentSearchPathList);
@@ -337,7 +379,7 @@ Error restore(const FilePath& statePath)
       if ( isPackage(pathElement, &packageName) )
       {
          if ( !packageIsLoaded(packageName, currentSearchPathList) )
-            loadPackage(packageName);
+            loadPackage(packageName, packagePaths[packageName]);
       }
       
       // else if it has external environment data then load it
