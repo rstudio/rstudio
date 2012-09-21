@@ -22,7 +22,7 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
 {  
    void getNewProjectContext(ServerRequestCallback<NewProjectContext> callback);
    
-   void createProject(String projectDirectory,
+   void createProject(String projectFile,
                       NewPackageOptions newPackageOptions,
                       ServerRequestCallback<Void> callback);
     

@@ -968,12 +968,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_NEW_PROJECT_CONTEXT, callback);
    }
    
-   public void createProject(String projectDirectory,
+   public void createProject(String projectFile,
                              NewPackageOptions newPackageOptions,
                              ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(projectDirectory));
+      params.set(0, new JSONString(projectFile));
       params.set(1, newPackageOptions != null ?
                new JSONObject(newPackageOptions) : JSONNull.getInstance());
       sendRequest(RPC_SCOPE, CREATE_PROJECT, params, requestCallback);
