@@ -82,7 +82,7 @@ public abstract class NewProjectWizardPage
    {
       FileSystemItem dirItem = FileSystemItem.createDir(dir);
       return FileSystemItem.createFile(
-        dirItem.completePath(dirItem.getStem() + ".Rproj")).getPath();
+        dirItem.completePath(dirItem.getName() + ".Rproj")).getPath();
    }
    
    protected FileSystemItem defaultNewProjectLocation_;
