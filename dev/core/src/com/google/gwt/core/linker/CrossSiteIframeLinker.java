@@ -347,12 +347,14 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     throws UnableToCompleteException {
     TextOutput out = new DefaultTextOutput(context.isOutputCompact());
 
-    // We assume that the $wnd has been set in the same scope as this code is
-    // executing in. $wnd is the main window which the GWT code is affecting. It
-    // is also usually the location the bootstrap function was defined in.
-    // In iframe based linkers, $wnd = window.parent;
-    // Usually, in others, $wnd = window;
+    // $wnd is the main window that the GWT code will affect and also the
+    // location where the bootstrap function was defined. In iframe-based linkers,
+    // $wnd is set to window.parent. Usually, in others, $wnd = window.
+    // By default, $wnd is not set when the module starts, but a replacement for
+    // installLocationIframe.js may set it.
 
+    out.print("var $wnd = $wnd || window.parent;");
+    out.newlineOpt();
     out.print("var __gwtModuleFunction = $wnd." + context.getModuleFunctionName() + ";");
     out.newlineOpt();
     out.print("var $sendStats = __gwtModuleFunction.__sendStats;");

@@ -1,12 +1,17 @@
-// The GWT code can be installed anywhere, although an iFrame is the best
-// approach if you want both variable isolation (useful in general, but
-// critical if you want more than one GWT module on your page) and runAsync
-// which will need to be able to install additional chunks of code into that
-// isolated environment later on.
-
-// The items that must be provided in any install location are:
-// $wnd - the location where the bootstrap module is defined. Should also
-//        be the location where the __gwtStatsEvent is defined
+// GWT code can be installed anywhere, but an iFrame is the best place if you
+// want both variable isolation and runAsync support. Variable isolation is
+// useful for avoiding conflicts with JavaScript libraries and critical if
+// you want more than one GWT module on your page. The runAsync implementation
+// will need to install additional chunks of code into the same iFrame later.
+//
+// By default, CrossSiteIFrameLinker will use this script to create the iFrame.
+// It may be replaced by overriding CrossSiteIframeLinker.getJsInstallLocation()
+// to return the name of a different resource file. The replacement script may
+// optionally set this variable inside the iframe:
+//
+// $wnd - the location where the bootstrap module is defined. It should also
+//        be the location where the __gwtStatsEvent function is defined.
+//        If not set, the module will set $wnd to window.parent.
 
 var frameDoc;
 
@@ -44,11 +49,4 @@ function setupInstallLocation() {
   frameDoc.open();
   frameDoc.write('<html><head></head><body></body></html>');
   frameDoc.close();
-
-  var frameDocbody = frameDoc.getElementsByTagName('body')[0];
-  var script = frameDoc.createElement('script');
-  script.language='javascript';
-  var temp = "var $wnd = window.parent;";
-  script.text = temp;
-  frameDocbody.appendChild(script);
 }
