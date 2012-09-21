@@ -184,7 +184,7 @@ core::Error isTextFile(const json::JsonRpcRequest& request,
    // does it have null bytes?
    std::string nullByte;
    nullByte.push_back('\0');
-   pResponse->setResult(!boost::algorithm::contains(contents, nullType));
+   pResponse->setResult(!boost::algorithm::contains(contents, nullByte));
 
 #endif
 
