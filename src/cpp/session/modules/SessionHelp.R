@@ -140,7 +140,7 @@ options(help_type = "html")
    }
    else
    {
-      paste("doc/html/Search?name=",
+      paste("help/doc/html/Search?pattern=",
             utils::URLencode(query, reserved = TRUE),
             "&title=1&keyword=1&alias=1",
             sep = "")
