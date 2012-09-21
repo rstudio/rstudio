@@ -298,6 +298,16 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     }
   }
 
+  class TaggedItemAddressEditor implements Editor<TaggedItem<Address>> {
+    @Path("item.city") SimpleEditor<String> itemCityEditor = SimpleEditor.of(UNINITIALIZED);   
+    @Path("item.street") SimpleEditor<String> itemStreetEditor = SimpleEditor.of(UNINITIALIZED);   
+    @Path("tag") SimpleEditor<String> tagEditor = SimpleEditor.of(UNINITIALIZED);   
+  }
+
+  interface TaggedItemAddressEditorDriver extends
+      SimpleBeanEditorDriver<TaggedItem<Address>, TaggedItemAddressEditor> {
+  }
+
   Person person;
   Address personAddress;
   Person manager;
@@ -730,6 +740,30 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     testLeafAddressEditor(driver, personEditor, addressEditor, true);
     assertEquals(1, addressEditor.flushCalled);
     assertEquals(1, addressEditor.setDelegateCalled);
+  }
+
+  public void testEditorWithParameterizedModel() {
+    TaggedItemAddressEditorDriver driver = GWT.create(TaggedItemAddressEditorDriver.class);
+    TaggedItemAddressEditor editor = new TaggedItemAddressEditor();
+    driver.initialize(editor);
+
+    TaggedItem<Address> taggedAddress = new TaggedItem<Address>();
+    taggedAddress.setTag("tag1");
+    taggedAddress.setItem(personAddress);
+    driver.edit(taggedAddress);
+
+    assertEquals("tag1", editor.tagEditor.getValue());
+    assertEquals("City", editor.itemCityEditor.getValue());
+    assertEquals("Street", editor.itemStreetEditor.getValue());
+
+    editor.tagEditor.setValue("tag2");
+    editor.itemCityEditor.setValue("Town");
+    editor.itemStreetEditor.setValue("Road");
+    driver.flush();
+
+    assertEquals("tag2", taggedAddress.getTag());
+    assertEquals("Town", taggedAddress.getItem().getCity());
+    assertEquals("Road", taggedAddress.getItem().getStreet());
   }
 
   @Override
