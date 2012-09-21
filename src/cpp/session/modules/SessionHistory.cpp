@@ -459,7 +459,9 @@ Error searchHistoryArchiveByPrefix(const json::JsonRpcRequest& request,
    // get the query
    std::string prefix;
    int maxEntries;
-   Error error = json::readParams(request.params, &prefix, &maxEntries);
+   bool uniqueOnly;
+   Error error = json::readParams(request.params,
+                                  &prefix, &maxEntries, &uniqueOnly);
    if (error)
       return error;
    
@@ -468,6 +470,7 @@ Error searchHistoryArchiveByPrefix(const json::JsonRpcRequest& request,
    
    // examine the items in the history for matches
    const std::vector<HistoryEntry>& allEntries = historyArchive().entries();
+   std::set<std::string> matchedCommands;
    std::vector<HistoryEntry> matchingEntries;
    for (std::vector<HistoryEntry>::const_reverse_iterator 
         it = allEntries.rbegin();
@@ -478,9 +481,15 @@ Error searchHistoryArchiveByPrefix(const json::JsonRpcRequest& request,
       if (matchingEntries.size() >= static_cast<std::size_t>(maxEntries))
          break;
       
-      // look for match
+      // look for match 
       if (boost::algorithm::starts_with(it->command, prefix))
-         matchingEntries.push_back(*it);
+      {
+         if (!uniqueOnly || (matchedCommands.count(it->command) == 0))
+         {
+            matchingEntries.push_back(*it);
+            matchedCommands.insert(it->command);
+         }
+      }
    }
    
    // return json

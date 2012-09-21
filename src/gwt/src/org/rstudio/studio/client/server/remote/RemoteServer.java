@@ -1287,11 +1287,13 @@ public class RemoteServer implements Server
    public void searchHistoryArchiveByPrefix(
          String prefix,
          long maxEntries,
+         boolean uniqueOnly,
          ServerRequestCallback<RpcObjectList<HistoryEntry>> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(prefix));
       params.set(1, new JSONNumber(maxEntries));
+      params.set(2, JSONBoolean.getInstance(uniqueOnly));
       sendRequest(RPC_SCOPE, SEARCH_HISTORY_ARCHIVE_BY_PREFIX, params, requestCallback);
    }
 

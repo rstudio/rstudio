@@ -124,7 +124,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
 
       String value = input_.getText();
       server_.searchHistoryArchiveByPrefix(
-            value, 20,
+            value, 20, true,
             new SimpleRequestCallback<RpcObjectList<HistoryEntry>>()
             {
                @Override

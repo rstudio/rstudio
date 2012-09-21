@@ -78,5 +78,6 @@ public interface HistoryServerOperations
    void searchHistoryArchiveByPrefix(
          String prefix,
          long maxEntries,
+         boolean uniqueOnly,
          ServerRequestCallback<RpcObjectList<HistoryEntry>> requestCallback);
 }
