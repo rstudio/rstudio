@@ -166,11 +166,11 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activateConsole"/>
          <cmd refid="activateHelp"/>
          <separator/>
-         <cmd refid="activateWorkspace"/>
          <cmd refid="activateHistory"/>
          <cmd refid="activateFiles"/>
          <cmd refid="activatePlots"/>
          <cmd refid="activatePackages"/>
+         <cmd refid="activateWorkspace"/>
          <cmd refid="activateVcs"/>
          <cmd refid="activateBuild"/>
          <separator/>
