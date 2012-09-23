@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -99,11 +101,7 @@ public class TextEditingTargetWidget
 
    private Toolbar createToolbar(TextFileType fileType)
    {
-      // exclude back and forward buttons for authoring file types 
-      // (because they have too many other commands)
-      Toolbar toolbar = fileType.canAuthorContent() ?
-                           new Toolbar() :
-                           new EditingTargetToolbar(commands_);
+      Toolbar toolbar = new EditingTargetToolbar(commands_);
        
       toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
       sourceOnSave_.getElement().getStyle().setMarginRight(0, Unit.PX);
@@ -122,8 +120,8 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(commands_.markdownHelp().createToolbarButton());
       
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.previewHTML().createToolbarButton());
-      toolbar.addLeftWidget(commands_.knitToHTML().createToolbarButton());
+      toolbar.addLeftWidget(previewHTMLButton_ = commands_.previewHTML().createToolbarButton());
+      toolbar.addLeftWidget(knitToHTMLButton_ = commands_.knitToHTML().createToolbarButton());
       toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
@@ -271,6 +269,12 @@ public class TextEditingTargetWidget
    {
       super.onResize();
       
+      manageToolbarSizes();
+     
+   }
+
+   private void manageToolbarSizes()
+   {
       // sometimes width is passed in as 0 (not sure why)
       int width = getOffsetWidth();
       if (width == 0)
@@ -279,14 +283,18 @@ public class TextEditingTargetWidget
       texToolbarButton_.setText(width < 520 ? "" : "Format");
       runButton_.setText(width < 480 ? "" : "Run");
       compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
+      previewHTMLButton_.setText(width < 450 ? "" : "Preview HTML");
+      knitToHTMLButton_.setText(width < 450 ? "" : "Knit HTML");
+      
       if (editor_.getFileType().isRd())
          srcOnSaveLabel_.setText(width < 450 ? "Preview" : "Preview on Save");
       else
          srcOnSaveLabel_.setText(width < 450 ? "Source" : "Source on Save");
       sourceButton_.setText(width < 400 ? "" : "Source");
-     
+      chunksButton_.setText(width < 400 ? "" : "Chunks");
    }
-
+   
+   
    public void showWarningBar(String warning)
    {
       if (warningBar_ == null)
@@ -338,6 +346,15 @@ public class TextEditingTargetWidget
    public void onActivate()
    {
       editor_.onActivate();
+      
+      Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+
+         @Override
+         public void execute()
+         {
+            manageToolbarSizes(); 
+         }
+      });
    }
 
    public void setFontSize(double size)
@@ -413,6 +430,8 @@ public class TextEditingTargetWidget
    private final TextEditingTargetFindReplace findReplace_;
    private ToolbarButton codeTransform_;
    private ToolbarButton compilePdfButton_;
+   private ToolbarButton previewHTMLButton_;
+   private ToolbarButton knitToHTMLButton_;
    private ToolbarButton runButton_;
    private ToolbarButton sourceButton_;
    private ToolbarButton sourceMenuButton_;
