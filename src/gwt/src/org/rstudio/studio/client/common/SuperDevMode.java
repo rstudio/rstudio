@@ -13,9 +13,13 @@
 
 package org.rstudio.studio.client.common;
 
+import org.rstudio.studio.client.application.Desktop;
+
+import com.google.gwt.core.client.GWT;
+
 public class SuperDevMode
 {
-   public final static native void refresh() /*-{
+   public final static native void reload() /*-{
       $wnd.__gwt_bookmarklet_params = {
          server_url:'http://localhost:9876/',
          module_name:'rstudio'
@@ -25,4 +29,13 @@ public class SuperDevMode
       s.src = 'http://localhost:9876/dev_mode_on.js'; 
       void($doc.getElementsByTagName('head')[0].appendChild(s));
    }-*/ ;
+   
+   
+   public static boolean isActive()
+   {
+      return 
+        !Desktop.isDesktop() &&
+        GWT.getModuleBaseURL().equals("http://localhost:8787/rstudio/") &&
+        GWT.getModuleBaseForStaticFiles().equals("http://localhost:9876/rstudio/");
+   }
 }

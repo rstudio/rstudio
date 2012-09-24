@@ -289,7 +289,7 @@ public class Application implements ApplicationEventHandlers
    @Handler
    public void onRefreshSuperDevMode()
    {
-      SuperDevMode.refresh();
+      SuperDevMode.reload();
    }
   
    public void onSessionSerialization(SessionSerializationEvent event)
@@ -362,7 +362,8 @@ public class Application implements ApplicationEventHandlers
    public void onReload(ReloadEvent event)
    {
       cleanupWorkbench();
-      Window.Location.reload();
+      
+      reloadWindow();
    }
    
    public void onQuit(QuitEvent event)
@@ -381,7 +382,7 @@ public class Application implements ApplicationEventHandlers
                @Override
                public void run()
                {
-                  Window.Location.reload();
+                  reloadWindow();
                }
             }.schedule(100);
          }
@@ -390,6 +391,15 @@ public class Application implements ApplicationEventHandlers
             view_.showApplicationQuit();
          }
       }
+   }
+   
+   
+   private void reloadWindow()
+   {
+      if (SuperDevMode.isActive())
+         SuperDevMode.reload();
+      else
+         Window.Location.reload();
    }
    
    public void onSuicide(SuicideEvent event)

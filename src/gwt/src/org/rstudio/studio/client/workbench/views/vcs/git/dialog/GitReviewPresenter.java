@@ -786,7 +786,7 @@ public class GitReviewPresenter implements ReviewPresenter
    @Handler
    public void onRefreshSuperDevMode()
    {
-      SuperDevMode.refresh();
+      SuperDevMode.reload();
    }
    
    private final Invalidation diffInvalidation_ = new Invalidation();
