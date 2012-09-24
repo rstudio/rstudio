@@ -78,6 +78,7 @@ public class Application implements ApplicationEventHandlers
                       Provider<ClientStateUpdater> clientStateUpdater,
                       Provider<ApplicationClientInit> pClientInit,
                       Provider<ApplicationQuit> pApplicationQuit,
+                      Provider<ApplicationInterrupt> pApplicationInterrupt,
                       Provider<AceThemes> pAceThemes)
    {
       // save references
@@ -94,6 +95,7 @@ public class Application implements ApplicationEventHandlers
       eventBusProvider_ = eventBusProvider;
       pClientInit_ = pClientInit;
       pApplicationQuit_ = pApplicationQuit;
+      pApplicationInterrupt_ = pApplicationInterrupt;
       pAceThemes_ = pAceThemes;
 
       // bind to commands
@@ -363,7 +365,7 @@ public class Application implements ApplicationEventHandlers
    {
       cleanupWorkbench();
       
-      reloadWindow();
+      reloadWindowWithDelay();
    }
    
    public void onQuit(QuitEvent event)
@@ -378,13 +380,7 @@ public class Application implements ApplicationEventHandlers
          // the R session to fully exit on the server)
          if (event.getSwitchProjects())
          {
-            new Timer() {
-               @Override
-               public void run()
-               {
-                  reloadWindow();
-               }
-            }.schedule(100);
+            reloadWindowWithDelay();
          }
          else
          {
@@ -394,12 +390,18 @@ public class Application implements ApplicationEventHandlers
    }
    
    
-   private void reloadWindow()
+   private void reloadWindowWithDelay()
    {
-      if (SuperDevMode.isActive())
-         SuperDevMode.reload();
-      else
-         Window.Location.reload();
+      new Timer() {
+         @Override
+         public void run()
+         { 
+            if (SuperDevMode.isActive())
+               SuperDevMode.reload();
+            else
+               Window.Location.reload(); 
+         }
+      }.schedule(100);
    }
    
    public void onSuicide(SuicideEvent event)
@@ -589,6 +591,7 @@ public class Application implements ApplicationEventHandlers
    private final Provider<EventBus> eventBusProvider_;
    private final Provider<ApplicationClientInit> pClientInit_;
    private final Provider<ApplicationQuit> pApplicationQuit_;
+   private final Provider<ApplicationInterrupt> pApplicationInterrupt_;
    private final Provider<AceThemes> pAceThemes_;
 
    private ClientStateUpdater clientStateUpdaterInstance_;

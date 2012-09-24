@@ -28,7 +28,6 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.HandleUnsavedChangesEvent;
 import org.rstudio.studio.client.application.events.HandleUnsavedChangesHandler;
-import org.rstudio.studio.client.application.events.ReloadEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
 import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
@@ -337,32 +336,6 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                                  SuspendOptions.create(true, saveChanges),
                                  null));  
 
-   }
-   
-   @Handler
-   public void onTerminateR()
-   {  
-      setPendinqQuit(DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD);
-      
-      ProgressIndicator progress = new GlobalProgressDelayer(
-                                             globalDisplay_,
-                                             200,
-                                             "Terminating R...").getIndicator();
-                                       
-      // force the abort
-      server_.abort(new VoidServerRequestCallback(progress) {
-         @Override 
-         protected void onSuccess()
-         {
-            if (!Desktop.isDesktop())
-               eventBus_.fireEvent(new ReloadEvent());
-         }
-         @Override
-         protected void onFailure()
-         {
-            setPendinqQuit(DesktopFrame.PENDING_QUIT_NONE);
-         }
-      });
    }
    
    @Override

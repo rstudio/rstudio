@@ -16,6 +16,8 @@ import com.google.gwt.inject.client.AbstractGinModule;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
+
+import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationView;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -163,6 +165,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(WorkbenchContext.class).asEagerSingleton();
       bind(WorkbenchListManager.class).asEagerSingleton();
       bind(ApplicationQuit.class).asEagerSingleton();
+      bind(ApplicationInterrupt.class).asEagerSingleton();
       bind(ClientStateUpdater.class).asEagerSingleton();
       bind(ConsoleProcessFactory.class).asEagerSingleton();
       bind(RnwWeaveRegistry.class).asEagerSingleton();

@@ -94,7 +94,7 @@ public class ApplicationClientInit
                new Operation() { public void execute() {
                   
                   // call interrupt then call this method back on success
-                  server_.abort(new ServerRequestCallback<Void>() {
+                  server_.abort(null, new ServerRequestCallback<Void>() {
 
                      @Override
                      public void onResponseReceived(Void response)

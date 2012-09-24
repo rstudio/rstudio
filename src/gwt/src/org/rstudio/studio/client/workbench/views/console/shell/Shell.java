@@ -197,13 +197,6 @@ public class Shell implements ConsoleInputHandler,
 
    }
 
-   
-   @Handler
-   void onInterruptR()
-   {
-      server_.interrupt(new VoidServerRequestCallback());
-   }
-
    public void addKeyDownPreviewHandler(KeyDownPreviewHandler handler)
    {
       keyDownPreviewHandlers_.add(handler) ;

@@ -28,7 +28,11 @@
 #include <core/BoostErrors.hpp>
 #include <core/system/System.hpp>
 
+#include <core/json/JsonRpc.hpp>
+
 #include <core/http/SocketAcceptorService.hpp>
+
+#include <core/FileSerializer.hpp>
 
 #include <session/SessionOptions.hpp>
 #include <session/SessionConstants.hpp>
@@ -288,6 +292,44 @@ private:
                                          "events/get_events");
    }
 
+   static void handleAbortNextProjParam(
+                  boost::shared_ptr<HttpConnection> ptrConnection)
+   {
+      std::string nextProj;
+      core::json::JsonRpcRequest jsonRpcRequest;
+      core::Error error = core::json::parseJsonRpcRequest(
+                                            ptrConnection->request().body(),
+                                            &jsonRpcRequest);
+      if (!error)
+      {
+         error = core::json::readParam(jsonRpcRequest.params, 0, &nextProj);
+         if (error)
+            LOG_ERROR(error);
+
+         if (!nextProj.empty())
+         {
+            // NOTE: this must be synchronized with the implementation of
+            // ProjectContext::setNextSessionProject -- we do this using
+            // constants rather than code so that this code (which runs in
+            // a background thread) don't call into the projects module (which
+            // is designed to be foreground and single-threaded)
+            core::FilePath userScratch = session::options().userScratchPath();
+            core::FilePath settings = userScratch.complete(kProjectsSettings);
+            error = settings.ensureDirectory();
+            if (error)
+               LOG_ERROR(error);
+            core::FilePath writePath = settings.complete(kNextSessionProject);
+            core::Error error = core::writeStringToFile(writePath, nextProj);
+            if (error)
+               LOG_ERROR(error);
+         }
+      }
+      else
+      {
+         LOG_ERROR(error);
+      }
+   }
+
    bool checkForAbort(
                   boost::shared_ptr<HttpConnection> ptrConnection)
    {
@@ -296,6 +338,9 @@ private:
          // respond and log (try/catch so we are ALWAYS guaranteed to abort)
          try
          {
+            // handle the nextProj param if it's specified
+            handleAbortNextProjParam(ptrConnection);
+
             // respond
             ptrConnection->sendJsonRpcResponse();
 

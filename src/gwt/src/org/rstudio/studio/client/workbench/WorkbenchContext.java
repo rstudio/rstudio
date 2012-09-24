@@ -104,6 +104,11 @@ public class WorkbenchContext
       }
    }
    
+   public String getActiveProjectFile()
+   {
+      return session_.getSessionInfo().getActiveProjectFile();
+   }
+   
    public FileSystemItem getActiveProjectDir()
    {
       if (activeProjectDir_ == null)

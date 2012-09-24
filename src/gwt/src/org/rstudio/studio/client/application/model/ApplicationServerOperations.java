@@ -27,7 +27,8 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    void interrupt(ServerRequestCallback<Void> requestCallback);
    
    // abort the current session
-   void abort(ServerRequestCallback<Void> requestCallback);
+   void abort(String nextSessionProject,
+              ServerRequestCallback<Void> requestCallback);
      
    // agree to the application agreement
    void acceptAgreement(Agreement agreement, 

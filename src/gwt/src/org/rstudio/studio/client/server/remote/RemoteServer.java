@@ -430,9 +430,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, INTERRUPT, requestCallback);
    }
    
-   public void abort(ServerRequestCallback<Void> requestCallback)
+   public void abort(String nextProj,
+                     ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, ABORT, requestCallback);
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(nextProj)));
+      sendRequest(RPC_SCOPE, ABORT, params, requestCallback);
    }
    
    public void getCompletions(String line, int cursorPos,

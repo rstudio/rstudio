@@ -273,13 +273,18 @@ Error ProjectContext::initialize()
 
 
 namespace {
-const char * const kNextSessionProject = "next-session-project";
 const char * const kLastProjectPath = "last-project-path";
 
+
+// NOTE: the HttpConnectionListener relies on this path as well as the
+// kNextSessionProject constant in order to write the next session project
+// in the case of a forced abort (the two implementations are synchronized
+// using constants so that the connection listener doesn't call into modules
+// that are single threaded by convention
 FilePath settingsPath()
 {
-   FilePath settingsPath = module_context::userScratchPath().complete(
-                                                        "projects_settings");
+   FilePath settingsPath = session::options().userScratchPath().complete(
+                                                        kProjectsSettings);
    Error error = settingsPath.ensureDirectory();
    if (error)
       LOG_ERROR(error);
