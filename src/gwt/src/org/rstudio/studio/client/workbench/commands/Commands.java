@@ -110,6 +110,7 @@ public abstract class
    public abstract AppCommand consoleClear();
    public abstract AppCommand interruptR();
    public abstract AppCommand restartR();
+   public abstract AppCommand terminateR();
    public abstract AppCommand activateConsole();
 
    // Files
