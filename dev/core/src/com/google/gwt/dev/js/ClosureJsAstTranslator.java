@@ -117,7 +117,6 @@ public class ClosureJsAstTranslator {
     Node script = IR.script();
     script.putBooleanProp(Node.SYNTHETIC_BLOCK_PROP, true);
     script.setInputId(inputId);
-    script.putProp(Node.SOURCENAME_PROP, source);
     script.setStaticSourceFile(getClosureSourceFile(source));
     for (JsStatement s : fragment.getGlobalBlock().getStatements()) {
       script.addChildToBack(transform(s));
