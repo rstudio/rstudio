@@ -47,6 +47,14 @@ signals:
     void manageCommand(QString commandId, QAction* action);
     void commandInvoked(QString commandId);
 
+    void zoomIn();
+    void zoomOut();
+
+private:
+    QAction* addCustomAction(QString commandId,
+                             QString label,
+                             QString tooltip);
+
 private:
     QMenuBar* pMainMenu_;
     QStack<QMenu*> menuStack_;

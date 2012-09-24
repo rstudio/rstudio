@@ -154,6 +154,9 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="showToolbar"/>
          <cmd refid="hideToolbar"/>
          <separator/>
+         <cmd refid="zoomIn"/>
+         <cmd refid="zoomOut"/>
+         <separator/>
          <cmd refid="toggleFullScreen"/>
          <separator/>
          <cmd refid="switchToTab"/>
@@ -588,6 +591,10 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Show _Toolbar"/>
    <cmd id="hideToolbar"
         menuLabel="Hide _Toolbar"/>
+   <cmd id="zoomIn"
+        menuLabel="_Zoom In"/>
+   <cmd id="zoomOut"
+        menuLabel="Zoom O_ut"/>
    <cmd id="goToFileFunction"
         menuLabel="Go To File/F_unction..."/>   
    <cmd id="activateSource"

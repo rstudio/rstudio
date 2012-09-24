@@ -158,6 +158,8 @@ public abstract class
    // View
    public abstract AppCommand showToolbar();
    public abstract AppCommand hideToolbar();
+   public abstract AppCommand zoomIn();
+   public abstract AppCommand zoomOut();
    public abstract AppCommand jumpTo();
    public abstract AppCommand goToFileFunction();
    public abstract AppCommand switchToTab();

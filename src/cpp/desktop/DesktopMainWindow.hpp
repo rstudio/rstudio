@@ -44,6 +44,8 @@ public slots:
    void loadUrl(const QUrl& url);
    void setMenuBar(QMenuBar *pMenuBar);
    void invokeCommand(QString commandId);
+   void zoomIn();
+   void zoomOut();
    void manageCommand(QString cmdId, QAction* pAction);
    void openFileInRStudio(QString path);
    void checkForUpdates();

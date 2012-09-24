@@ -293,6 +293,18 @@ public class Application implements ApplicationEventHandlers
    {
       SuperDevMode.reload();
    }
+   
+   @Handler
+   public void onZoomIn()
+   {
+      // fake handler (this is intercepted by Qt)
+   }
+   
+   @Handler
+   public void onZoomOut()
+   {
+      // fake handler (this is intercepted by Qt)
+   }
   
    public void onSessionSerialization(SessionSerializationEvent event)
    {
@@ -526,6 +538,13 @@ public class Application implements ApplicationEventHandlers
          
       // show workbench
       view_.showWorkbenchView(wb.getMainView().asWidget());
+      
+      // hide zoom in and zoom out in web mode
+      if (!Desktop.isDesktop())
+      {
+         commands_.zoomIn().remove();
+         commands_.zoomOut().remove();
+      }
       
       // toolbar (must be after call to showWorkbenchView because
       // showing the toolbar repositions the workbench view widget)

@@ -68,6 +68,9 @@ MainWindow::MainWindow(QUrl url) :
    connect(&menuCallback_, SIGNAL(manageCommand(QString,QAction*)),
            this, SLOT(manageCommand(QString,QAction*)));
 
+   connect(&menuCallback_, SIGNAL(zoomIn()), this, SLOT(zoomIn()));
+   connect(&menuCallback_, SIGNAL(zoomOut()), this, SLOT(zoomOut()));
+
    connect(&gwtCallback_, SIGNAL(workbenchInitialized()),
            this, SIGNAL(firstWorkbenchInitialized()));
    connect(&gwtCallback_, SIGNAL(workbenchInitialized()),
@@ -202,6 +205,20 @@ void MainWindow::invokeCommand(QString commandId)
 {
    webView()->page()->mainFrame()->evaluateJavaScript(
          QString::fromAscii("window.desktopHooks.invokeCommand('") + commandId + QString::fromAscii("');"));
+}
+
+void MainWindow::zoomIn()
+{
+   desktop::showInfo(this,
+                     QString::fromAscii("Not Yet Implemented"),
+                     QString::fromAscii("Not Yet Implemented"));
+}
+
+void MainWindow::zoomOut()
+{
+   desktop::showInfo(this,
+                     QString::fromAscii("Not Yet Implemented"),
+                     QString::fromAscii("Not Yet Implemented"));
 }
 
 void MainWindow::manageCommand(QString cmdId, QAction* action)

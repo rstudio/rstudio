@@ -51,6 +51,42 @@ void MenuCallback::beginMenu(QString label)
    menuStack_.push(pMenu);
 }
 
+QAction* MenuCallback::addCustomAction(QString commandId,
+                                       QString label,
+                                       QString tooltip)
+{
+
+   QAction* pAction = NULL;
+   if (commandId == QString::fromAscii("zoomIn"))
+   {
+      pAction = menuStack_.top()->addAction(QIcon(),
+                                            label,
+                                            this,
+                                            SIGNAL(zoomIn()),
+                                            QKeySequence::ZoomIn);
+   }
+   else if (commandId == QString::fromAscii("zoomOut"))
+   {
+      pAction = menuStack_.top()->addAction(QIcon(),
+                                            label,
+                                            this,
+                                            SIGNAL(zoomOut()),
+                                            QKeySequence::ZoomOut);
+   }
+
+   if (pAction != NULL)
+   {
+      pAction->setData(commandId);
+      pAction->setToolTip(tooltip);
+      return pAction;
+   }
+   else
+   {
+      return NULL;
+   }
+}
+
+
 void MenuCallback::addCommand(QString commandId,
                               QString label,
                               QString tooltip,
@@ -67,17 +103,25 @@ void MenuCallback::addCommand(QString commandId,
    }
 #endif
 
-   QAction* pAction = menuStack_.top()->addAction(QIcon(),
-                                                  label,
-                                                  this,
-                                                  SLOT(actionInvoked()),
-                                                  keySequence);
-   pAction->setData(commandId);
-   pAction->setToolTip(tooltip);
+   // allow custom action handlers first shot
+   QAction* pAction = addCustomAction(commandId, label, tooltip);
 
-   MenuActionBinder* pBinder = new MenuActionBinder(menuStack_.top(), pAction);
-   connect(pBinder, SIGNAL(manageCommand(QString,QAction*)),
-           this, SIGNAL(manageCommand(QString,QAction*)));
+   // if there was no custom handler then do stock command-id processing
+   if (pAction == NULL)
+   {
+      pAction = menuStack_.top()->addAction(QIcon(),
+                                            label,
+                                            this,
+                                            SLOT(actionInvoked()),
+                                            keySequence);
+      pAction->setData(commandId);
+      pAction->setToolTip(tooltip);
+
+      MenuActionBinder* pBinder = new MenuActionBinder(menuStack_.top(), pAction);
+      connect(pBinder, SIGNAL(manageCommand(QString,QAction*)),
+              this, SIGNAL(manageCommand(QString,QAction*)));
+
+   }
 }
 
 void MenuCallback::actionInvoked()
