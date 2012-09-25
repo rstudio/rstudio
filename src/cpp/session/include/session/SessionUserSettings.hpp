@@ -143,6 +143,9 @@ public:
    std::string spellingLanguage() const;
    std::vector<std::string> spellingCustomDictionaries() const;
 
+   bool useInternet2() const;
+   void setUseInternet2(bool useInternet2);
+
 private:
 
    void onSettingsFileChanged(

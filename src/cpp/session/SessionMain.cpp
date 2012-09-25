@@ -2614,6 +2614,7 @@ int main (int argc, char * const argv[])
       rOptions.rCRANRepos = userSettings().cranMirror().url;
       if (rOptions.rCRANRepos.empty())
          rOptions.rCRANRepos = options.rCRANRepos();
+      rOptions.useInternet2 = userSettings().useInternet2();
       rOptions.rCompatibleGraphicsEngineVersion =
                               options.rCompatibleGraphicsEngineVersion();
       rOptions.serverMode = serverMode;

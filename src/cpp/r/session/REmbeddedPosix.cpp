@@ -150,7 +150,7 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    Rf_mainloop();
 }
 
-Error completeEmbeddedRInitialization()
+Error completeEmbeddedRInitialization(bool useInternet2)
 {
    return Success();
 }

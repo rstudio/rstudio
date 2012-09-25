@@ -496,6 +496,16 @@ void UserSettings::setEnableLaTeXShellEscape(bool enableShellEscape)
    settings_.set("enableLaTeXShellEscape", enableShellEscape);
 }
 
+bool UserSettings::useInternet2() const
+{
+   return settings_.getBool("useInternet2", true);
+}
+
+void UserSettings::setUseInternet2(bool useInternet2)
+{
+   settings_.set("useInternet2", useInternet2);
+}
+
 bool UserSettings::alwaysSaveHistory() const
 {
    return settings_.getBool(kAlwaysSaveHistory, true);

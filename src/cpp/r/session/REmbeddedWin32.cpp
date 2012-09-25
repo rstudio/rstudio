@@ -24,6 +24,7 @@
 #include <stdio.h>
 
 #include <boost/bind.hpp>
+#include <boost/format.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 
 #include <core/FilePath.hpp>
@@ -200,13 +201,14 @@ void runEmbeddedR(const core::FilePath& rHome,
    ::run_Rmainloop();
 }
 
-Error completeEmbeddedRInitialization()
+Error completeEmbeddedRInitialization(bool useInternet2)
 {
    // set memory limit
    setMemoryLimit();
 
-   // use IE proxy settings
-   Error error = r::exec::executeString("suppressWarnings(utils::setInternet2())");
+   // use IE proxy settings if requested
+   boost::format fmt("suppressWarnings(utils::setInternet2(%1%))");
+   Error error = r::exec::executeString(boost::str(fmt % useInternet2));
    if (error)
       LOG_ERROR(error);
 

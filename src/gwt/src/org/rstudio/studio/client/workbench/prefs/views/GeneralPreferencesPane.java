@@ -14,10 +14,14 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
@@ -58,6 +62,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       fileDialogs_ = fileDialogs;
       prefs_ = prefs;
       server_ = server;
+      globalDisplay_ = globalDisplay;
 
       if (Desktop.isDesktop())
       {
@@ -150,13 +155,25 @@ public class GeneralPreferencesPane extends PreferencesPane
                  
                }
             });
-      spaced(cranMirrorTextBox_);
       nudgeRight(cranMirrorTextBox_);
       textBoxWithChooser(cranMirrorTextBox_);
       cranMirrorTextBox_.setText("");
       add(cranMirrorTextBox_);
       
-
+      useInternet2_ = new CheckBox(
+                        "Use Internet Explorer library/proxy for HTTP",
+                        true);
+      if (BrowseCap.isWindowsDesktop())
+      {     
+         lessSpaced(cranMirrorTextBox_);
+         spaced(useInternet2_);
+         add(useInternet2_);
+      }
+      else
+      {
+         spaced(cranMirrorTextBox_);
+      }
+      
       encodingValue_ = prefs_.defaultEncoding().getGlobalValue();
       add(encoding_ = new TextBoxWithButton(
             "Default text encoding:",
@@ -202,6 +219,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       removeHistoryDuplicates_.setEnabled(false);
       rProfileOnResume_.setEnabled(false);
       cranMirrorTextBox_.setEnabled(false);
+      useInternet2_.setEnabled(false);
       restoreLastProject_.setEnabled(false);
    }
    
@@ -253,8 +271,21 @@ public class GeneralPreferencesPane extends PreferencesPane
       {
          cranMirror_ = packagesPrefs.getCRANMirror();
          cranMirrorTextBox_.setText(cranMirror_.getDisplay());
-      }     
-      
+      }
+      useInternet2_.setEnabled(true);
+      useInternet2_.setValue(packagesPrefs.getUseInternet2());
+      useInternet2_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            globalDisplay_.showMessage(
+                  MessageDialog.INFO, 
+                  "Restart R Required",
+                  "You must restart your R session for this setting " +
+                  "to take effect.");
+         }
+      });
+     
       // projects prefs
      ProjectsPrefs projectsPrefs = rPrefs.getProjectsPrefs();
      restoreLastProject_.setEnabled(true);
@@ -306,7 +337,10 @@ public class GeneralPreferencesPane extends PreferencesPane
          rPrefs.setHistoryPrefs(historyPrefs);
          
          // set packages prefs
-         PackagesPrefs packagesPrefs = PackagesPrefs.create(cranMirror_, null);
+         PackagesPrefs packagesPrefs = PackagesPrefs.create(
+                                                 cranMirror_, 
+                                                 useInternet2_.getValue(),
+                                                 null);
          rPrefs.setPackagesPrefs(packagesPrefs);
          
          // set projects prefs
@@ -344,6 +378,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private final CheckBox alwaysSaveHistory_;
    private final CheckBox removeHistoryDuplicates_;
    private CRANMirror cranMirror_ = CRANMirror.empty();
+   private CheckBox useInternet2_;
    private TextBoxWithButton cranMirrorTextBox_;
    private CheckBox restoreLastProject_;
    private CheckBox rProfileOnResume_;
@@ -351,4 +386,5 @@ public class GeneralPreferencesPane extends PreferencesPane
    private final UIPrefs prefs_;
    private final TextBoxWithButton encoding_;
    private String encodingValue_;
+   private final GlobalDisplay globalDisplay_;
 }

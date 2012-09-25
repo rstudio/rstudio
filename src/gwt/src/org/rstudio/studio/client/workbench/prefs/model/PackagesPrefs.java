@@ -23,15 +23,21 @@ public class PackagesPrefs extends JavaScriptObject
 
    public static final native PackagesPrefs create(
                                   CRANMirror cranMirror,
+                                  boolean useInternet2,
                                   BioconductorMirror bioconductorMirror) /*-{
       var prefs = new Object();
       prefs.cran_mirror = cranMirror;
+      prefs.use_internet2 = useInternet2;
       prefs.bioconductor_mirror = bioconductorMirror;
       return prefs ;
    }-*/;
 
    public native final CRANMirror getCRANMirror() /*-{
       return this.cran_mirror;
+   }-*/;
+   
+   public native final boolean getUseInternet2() /*-{
+      return this.use_internet2;
    }-*/;
    
    public native final BioconductorMirror getBioconductorMirror() /*-{

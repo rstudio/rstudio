@@ -216,9 +216,11 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().endUpdate();
 
    // read and set packages prefs
+   bool useInternet2;
    json::Object cranMirrorJson;
    error = json::readObject(packagesPrefs,
-                            "cran_mirror", &cranMirrorJson);
+                            "cran_mirror", &cranMirrorJson,
+                            "use_internet2", &useInternet2);
    /* see note on bioconductor below
                             "bioconductor_mirror", &bioconductorMirrorJson);
    */
@@ -226,6 +228,7 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
        return error;
    userSettings().beginUpdate();
    userSettings().setCRANMirror(toCRANMirror(cranMirrorJson));
+   userSettings().setUseInternet2(useInternet2);
 
    // NOTE: currently there is no UI for bioconductor mirror so we
    // don't want to set it (would have side effect of overwriting
@@ -357,6 +360,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    json::Object packagesPrefs;
    packagesPrefs["cran_mirror"] = toCRANMirrorJson(
                                       userSettings().cranMirror());
+   packagesPrefs["use_internet2"] = userSettings().useInternet2();
    packagesPrefs["bioconductor_mirror"] = toBioconductorMirrorJson(
                                       userSettings().bioconductorMirror());
 

@@ -505,7 +505,7 @@ Error initialize()
 
 
    // complete embedded r initialization
-   error = r::session::completeEmbeddedRInitialization();
+   error = r::session::completeEmbeddedRInitialization(s_options.useInternet2);
    if (error)
       return error;
 
