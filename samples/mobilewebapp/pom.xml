@@ -11,7 +11,7 @@
 
   <properties>
     <!-- Convenience property to set the GWT version -->
-    <gwtVersion>2.5.0-rc1</gwtVersion>
+    <gwtVersion>2.5.0-rc2</gwtVersion>
 
     <!-- GWT needs at least java 1.6 -->
     <maven.compiler.source>1.6</maven.compiler.source>
@@ -189,7 +189,7 @@
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
         <!-- TODO: Update version to 2.5.0 once gwt-maven-plugin 2.5.0 final is released (post-GWT 2.5.0) -->
-        <version>2.3.0-1</version>
+        <version>2.5.0-rc1</version>
         <dependencies>
           <dependency>
             <groupId>com.google.gwt</groupId>
