@@ -180,6 +180,19 @@ QString Options::fixedWidthFont() const
 }
 
 
+double Options::zoomLevel() const
+{
+   QVariant zoom = settings_.value(QString::fromAscii("view.zoomLevel"), 1.0);
+   return zoom.toDouble();
+}
+
+void Options::setZoomLevel(double zoomLevel)
+{
+   settings_.setValue(QString::fromAscii("view.zoomLevel"), zoomLevel);
+}
+
+
+
 #ifdef _WIN32
 QString Options::rBinDir() const
 {

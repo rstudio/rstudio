@@ -16,6 +16,7 @@
 #include "DesktopWebView.hpp"
 
 #include "DesktopUtils.hpp"
+#include "DesktopOptions.hpp"
 
 namespace desktop {
 
@@ -37,6 +38,11 @@ BrowserWindow::BrowserWindow(bool showToolbar,
    connect(pView_, SIGNAL(loadFinished(bool)), SLOT(finishLoading(bool)));
    connect(pView_->page(), SIGNAL(printRequested(QWebFrame*)),
            this, SLOT(printRequested(QWebFrame*)));
+
+   // set zoom factor
+   double zoomLevel = options().zoomLevel();
+   if (zoomLevel != pView_->zoomFactor())
+      pView_->setZoomFactor(options().zoomLevel());
 
    // Kind of a hack to new up a toolbar and not attach it to anything.
    // Once it is clear what secondary browser windows look like we can

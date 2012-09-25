@@ -14,6 +14,8 @@
 #ifndef DESKTOP_MAIN_WINDOW_HPP
 #define DESKTOP_MAIN_WINDOW_HPP
 
+#include <vector>
+
 #include <QProcess>
 #include <QtGui>
 #include <QSessionManager>
@@ -38,6 +40,8 @@ public:
    QString getSumatraPdfExePath();
    void evaluateJavaScript(QString jsCode);
    void launchSession(bool reload);
+
+   const std::vector<double>& zoomLevels() const { return zoomLevels_; }
 
 public slots:
    void quit();
@@ -85,6 +89,7 @@ private:
    virtual void onActivated();
 
 private:
+   std::vector<double> zoomLevels_;
    bool quitConfirmed_;
    MenuCallback menuCallback_;
    GwtCallback gwtCallback_;

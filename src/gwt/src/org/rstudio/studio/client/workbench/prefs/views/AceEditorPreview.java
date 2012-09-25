@@ -37,10 +37,12 @@ public class AceEditorPreview extends DynamicIFrame
    protected void onFrameLoaded()
    {
       isFrameLoaded_ = true;
-      if (initialThemeUrl_ != null)
-         setTheme(initialThemeUrl_);
-      if (initialFontSize_ != null)
-         setFontSize(initialFontSize_);
+      if (themeUrl_ != null)
+         setTheme(themeUrl_);
+      if (fontSize_ != null)
+         setFontSize(fontSize_);
+      if (zoomLevel_ != null)
+         setZoomLevel(zoomLevel_);
 
       final Document doc = getDocument();
       final BodyElement body = doc.getBody();
@@ -82,6 +84,7 @@ public class AceEditorPreview extends DynamicIFrame
                               "editor.renderer.setTheme({});\n" +
                               "editor.setHighlightActiveLine(false);\n" +
                               "editor.renderer.setShowGutter(false);\n" +
+                              "editor.renderer.setDisplayIndentGuides(false);\n" +
                               "var RMode = require('mode/r').Mode;\n" +
                               "editor.getSession().setMode(new RMode(false, editor.getSession().getDocument()));"));
                      }
@@ -92,11 +95,9 @@ public class AceEditorPreview extends DynamicIFrame
 
    public void setTheme(String themeUrl)
    {
+      themeUrl_ = themeUrl;
       if (!isFrameLoaded_)
-      {
-         initialThemeUrl_ = themeUrl;
          return;
-      }
 
       if (currentStyleLink_ != null)
          currentStyleLink_.removeFromParent();
@@ -111,11 +112,9 @@ public class AceEditorPreview extends DynamicIFrame
 
    public void setFontSize(double fontSize)
    {
+      fontSize_ = fontSize;
       if (!isFrameLoaded_)
-      {
-         initialFontSize_ = fontSize;
          return;
-      }
 
       FontSizer.setNormalFontSize(getDocument(), fontSize);
    }
@@ -141,9 +140,43 @@ public class AceEditorPreview extends DynamicIFrame
       style.setId(STYLE_EL_ID);
    }
 
+   public void setZoomLevel(double zoomLevel)
+   {
+      zoomLevel_ = zoomLevel;
+      if (!isFrameLoaded_)
+         return;
+   
+      final String STYLE_EL_ID = "__rstudio_zoom_level";
+      Document document = getDocument();
+
+      Element oldStyle = document.getElementById(STYLE_EL_ID);
+
+      StyleElement style = document.createStyleElement();
+      style.setAttribute("type", "text/css");
+      String zoom = Double.toString(zoomLevel);
+      style.setInnerText(".ace_line {\n" +
+                         "  -webkit-transform: scale(" + zoom + ");\n" +
+                         "}");
+
+      document.getBody().appendChild(style);
+
+      if (oldStyle != null)
+         oldStyle.removeFromParent();
+
+      style.setId(STYLE_EL_ID);
+   }
+   
+   public void reload()
+   {
+      getWindow().reload();
+   }
+   
+ 
+ 
    private LinkElement currentStyleLink_;
    private boolean isFrameLoaded_;
-   private String initialThemeUrl_;
-   private Double initialFontSize_;
+   private String themeUrl_;
+   private Double fontSize_;
+   private Double zoomLevel_;
    private final String code_;
 }

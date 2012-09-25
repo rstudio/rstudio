@@ -123,6 +123,10 @@ public slots:
    QString getFixedWidthFont();
    void setFixedWidthFont(QString font);
 
+   QVariant getZoomLevels();
+   double getZoomLevel();
+   void setZoomLevel(double zoomLevel);
+
    bool forceFastScrollFactor();
 
    QString getDesktopSynctexViewer();

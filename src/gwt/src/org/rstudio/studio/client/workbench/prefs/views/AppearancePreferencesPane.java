@@ -43,6 +43,46 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       if (Desktop.isDesktop())
       {
+         int initialIndex = -1;
+         int normalIndex = -1;
+         String[] zoomValues = 
+               JsUtil.toStringArray(Desktop.getFrame().getZoomLevels());
+         String[] zoomLabels = new String[zoomValues.length];
+         for (int i=0; i<zoomValues.length; i++)
+         {
+            double zoomValue = Double.parseDouble(zoomValues[i]);
+            
+            if (zoomValue == 1.0)
+               normalIndex = i;
+            
+            if (zoomValue == Desktop.getFrame().getZoomLevel())
+               initialIndex = i;
+            
+            zoomLabels[i] = StringUtil.formatPercent(zoomValue);
+         }
+         
+         if (initialIndex == -1)
+            initialIndex = normalIndex;
+         
+         zoomLevel_ = new SelectWidget("Zoom:",
+                                       zoomLabels,
+                                       zoomValues,
+                                       false);
+         zoomLevel_.getListBox().setSelectedIndex(initialIndex);
+         initialZoomLevel_ = zoomValues[initialIndex];
+         
+         leftPanel.add(zoomLevel_);
+         
+         zoomLevel_.getListBox().addChangeHandler(new ChangeHandler() {
+            @Override
+            public void onChange(ChangeEvent event)
+            {
+               updatePreviewZoomLevel();
+               preview_.reload();
+            }
+         });
+         
+         
          String[] fonts =
                JsUtil.toStringArray(Desktop.getFrame().getFontList(true));
 
@@ -117,6 +157,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       preview_.setWidth("278px");
       preview_.setTheme(themes.getThemeUrl(uiPrefs_.theme().getGlobalValue()));
       preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
+      updatePreviewZoomLevel();
       previewPanel.add(preview_);
 
       HorizontalPanel hpanel = new HorizontalPanel();
@@ -126,6 +167,13 @@ public class AppearancePreferencesPane extends PreferencesPane
       hpanel.add(previewPanel);
 
       add(hpanel);
+   }
+   
+   
+   private void updatePreviewZoomLevel()
+   {
+      preview_.setZoomLevel(Double.parseDouble(zoomLevel_.getValue()) /
+                            Desktop.getFrame().getZoomLevel());
    }
 
    @Override
@@ -154,6 +202,13 @@ public class AppearancePreferencesPane extends PreferencesPane
             Desktop.getFrame().setFixedWidthFont(fontFace_.getValue());
             restartRequired = true;
          }
+         
+         if (!initialZoomLevel_.equals(zoomLevel_.getValue()))
+         {
+            double zoomLevel = Double.parseDouble(zoomLevel_.getValue());
+            Desktop.getFrame().setZoomLevel(zoomLevel);
+            restartRequired = true;
+         }
       }
 
       return restartRequired;
@@ -172,6 +227,8 @@ public class AppearancePreferencesPane extends PreferencesPane
    private AceEditorPreview preview_;
    private SelectWidget fontFace_;
    private String initialFontFace_;
+   private SelectWidget zoomLevel_;
+   private String initialZoomLevel_;
 
    private static final String CODE_SAMPLE =
          "# plotting of R objects\n" +

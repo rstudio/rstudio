@@ -103,6 +103,11 @@ public class StringUtil
       return NumberFormat.getFormat("0,000").format(number);
    }
    
+   public static String formatPercent(double number)
+   {
+      return NumberFormat.getPercentFormat().format(number);
+   }
+   
    public static Size characterExtent(String text)
    {
       // split into lines and find the maximum line width

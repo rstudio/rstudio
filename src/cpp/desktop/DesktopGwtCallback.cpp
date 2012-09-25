@@ -872,6 +872,27 @@ void GwtCallback::setFixedWidthFont(QString font)
    options().setFixedWidthFont(font);
 }
 
+QVariant GwtCallback::getZoomLevels()
+{
+   QStringList zoomLevels;
+   BOOST_FOREACH(double zoomLevel, pMainWindow_->zoomLevels())
+   {
+      zoomLevels.append(QString::fromStdString(
+                           boost::lexical_cast<std::string>(zoomLevel)));
+   }
+   return QVariant(zoomLevels);
+}
+
+double GwtCallback::getZoomLevel()
+{
+   return options().zoomLevel();
+}
+
+void GwtCallback::setZoomLevel(double zoomLevel)
+{
+   options().setZoomLevel(zoomLevel);
+}
+
 bool GwtCallback::forceFastScrollFactor()
 {
 #ifdef Q_WS_MACX

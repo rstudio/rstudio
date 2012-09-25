@@ -45,6 +45,9 @@ public:
    QString fixedWidthFont() const;
    void setFixedWidthFont(QString font);
 
+   double zoomLevel() const;
+   void setZoomLevel(double zoomLevel);
+
 #ifdef _WIN32
    // If "", then use automatic detection
    QString rBinDir() const;

@@ -13,6 +13,8 @@
 
 #include "DesktopMainWindow.hpp"
 
+#include <algorithm>
+
 #include <QtGui>
 #include <QtWebKit>
 
@@ -44,6 +46,19 @@ MainWindow::MainWindow(QUrl url) :
 {
    quitConfirmed_ = false;
    pToolbar_->setVisible(false);
+
+   // initialize zoom levels
+   zoomLevels_.push_back(0.7);
+   zoomLevels_.push_back(0.8);
+   zoomLevels_.push_back(0.9);
+   zoomLevels_.push_back(1.0);
+   zoomLevels_.push_back(1.1);
+   zoomLevels_.push_back(1.20);
+   zoomLevels_.push_back(1.30);
+   zoomLevels_.push_back(1.40);
+   zoomLevels_.push_back(1.50);
+   zoomLevels_.push_back(1.75);
+   zoomLevels_.push_back(2.00);
 
    // Dummy menu bar to deal with the fact that
    // the real menu bar isn't ready until well
@@ -191,6 +206,10 @@ void MainWindow::quit()
 
 void MainWindow::onJavaScriptWindowObjectCleared()
 {
+   double zoomLevel = options().zoomLevel();
+   if (zoomLevel != webView()->zoomFactor())
+      webView()->setZoomFactor(zoomLevel);
+
    webView()->page()->mainFrame()->addToJavaScriptWindowObject(
          QString::fromAscii("desktop"),
          &gwtCallback_,
@@ -209,16 +228,26 @@ void MainWindow::invokeCommand(QString commandId)
 
 void MainWindow::zoomIn()
 {
-   desktop::showInfo(this,
-                     QString::fromAscii("Not Yet Implemented"),
-                     QString::fromAscii("Not Yet Implemented"));
+   // get next greatest value
+   std::vector<double>::const_iterator it = std::upper_bound(
+            zoomLevels_.begin(), zoomLevels_.end(), options().zoomLevel());
+   if (it != zoomLevels_.end())
+   {
+      options().setZoomLevel(*it);
+      webView()->reload();
+   }
 }
 
 void MainWindow::zoomOut()
 {
-   desktop::showInfo(this,
-                     QString::fromAscii("Not Yet Implemented"),
-                     QString::fromAscii("Not Yet Implemented"));
+   // get next smallest value
+   std::vector<double>::const_iterator it = std::lower_bound(
+            zoomLevels_.begin(), zoomLevels_.end(), options().zoomLevel());
+   if (it != zoomLevels_.begin() && it != zoomLevels_.end())
+   {
+      options().setZoomLevel(*(it-1));
+      webView()->reload();
+   }
 }
 
 void MainWindow::manageCommand(QString cmdId, QAction* action)
