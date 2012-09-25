@@ -404,7 +404,7 @@ public class ExportPlotSizeEditor extends Composite
    private void setPreviewPanelSize(int width, int height)
    {
       Size maxSize = new Size(Window.getClientWidth() - 100,
-                              Window.getClientHeight() - 250);
+                              Window.getClientHeight() - 200);
       
       if (width <= maxSize.width && height <= maxSize.height)
       {

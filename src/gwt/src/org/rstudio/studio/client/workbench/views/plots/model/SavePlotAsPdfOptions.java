@@ -45,6 +45,18 @@ public class SavePlotAsPdfOptions extends JavaScriptObject
       return options ;
    }-*/;
    
+   public static final SavePlotAsPdfOptions adaptToSize(
+                                            SavePlotAsPdfOptions options,
+                                            double width,
+                                            double height)
+   {
+      return SavePlotAsPdfOptions.create(width, 
+                                         height, 
+                                         options.getPortrait(),
+                                         options.getCairoPdf(),
+                                         options.getViewAfterSave());
+   }
+   
    public static native boolean areEqual(SavePlotAsPdfOptions a, SavePlotAsPdfOptions b) /*-{
       if (a === null ^ b === null)
          return false;

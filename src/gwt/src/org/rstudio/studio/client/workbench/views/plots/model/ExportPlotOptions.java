@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.model;
 
+import org.rstudio.core.client.Size;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class ExportPlotOptions extends JavaScriptObject
@@ -41,6 +43,17 @@ public class ExportPlotOptions extends JavaScriptObject
       options.copyAsMetafile = copyAsMetafile;
       return options ;
    }-*/;
+   
+   public static final ExportPlotOptions adaptToSize(ExportPlotOptions options,
+                                                     Size size)
+   {
+      return ExportPlotOptions.create(size.width,
+                                      size.height,
+                                      options.getKeepRatio(),
+                                      options.getFormat(),
+                                      options.getViewAfterSave(),
+                                      options.getCopyAsMetafile());
+   }
 
    public static native boolean areEqual(ExportPlotOptions a, ExportPlotOptions b) /*-{
       if (a === null ^ b === null)

@@ -37,7 +37,7 @@ public class ExportPlotDialog extends ModalDialogBase
    
       // enforce maximum initial dimensions based on screen size
       Size maxSize = new Size(Window.getClientWidth() - 100,
-                              Window.getClientHeight() - 250);
+                              Window.getClientHeight() - 200);
       
       int width = Math.min(options_.getWidth(), maxSize.width);
       int height = Math.min(options_.getHeight(), maxSize.height);

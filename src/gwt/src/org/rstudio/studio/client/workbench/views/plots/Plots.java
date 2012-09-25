@@ -46,7 +46,6 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
@@ -285,7 +284,9 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                exportPlot_.savePlotAsImage(globalDisplay_,
                      server_, 
                      context, 
-                     uiPrefs_.get().exportPlotOptions().getValue(), 
+                     ExportPlotOptions.adaptToSize(
+                           uiPrefs_.get().exportPlotOptions().getValue(),
+                           getPlotSize()),
                      saveExportOptionsOperation_);  
             }
 
@@ -319,8 +320,13 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
             {
                indicator.onCompleted();
 
-               final PrefValue<SavePlotAsPdfOptions> currentOptions = 
-                                        uiPrefs_.get().savePlotAsPdfOptions();
+               Size size = getPlotSize();
+               final SavePlotAsPdfOptions currentOptions = 
+                   SavePlotAsPdfOptions.adaptToSize(
+                         uiPrefs_.get().savePlotAsPdfOptions().getValue(),
+                         pixelsToInches(size.width),
+                         pixelsToInches(size.height));
+               
                
                exportPlot_.savePlotAsPdf(
                  globalDisplay_,
@@ -328,17 +334,18 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                  session_.getSessionInfo(),
                  defaultDir,
                  stem,
-                 currentOptions.getValue(), 
+                 currentOptions, 
                  new OperationWithInput<SavePlotAsPdfOptions>() {
                     @Override
                     public void execute(SavePlotAsPdfOptions options)
                     {
                        if (!SavePlotAsPdfOptions.areEqual(
                                                 options,
-                                                currentOptions.getValue()))
+                                                currentOptions))
                        {
-                          currentOptions.setGlobalValue(options);
-                          uiPrefs_.get().writeUIPrefs();    
+                          UIPrefs prefs = uiPrefs_.get();
+                          prefs.savePlotAsPdfOptions().setGlobalValue(options);
+                          prefs.writeUIPrefs();    
                        }
                     }    
                  }) ;  
@@ -360,8 +367,15 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       
       exportPlot_.copyPlotToClipboard(
                               server_, 
-                              uiPrefs_.get().exportPlotOptions().getValue(),
+                              ExportPlotOptions.adaptToSize(
+                                    uiPrefs_.get().exportPlotOptions().getValue(),
+                                    getPlotSize()),
                               saveExportOptionsOperation_);    
+   }
+   
+   private double pixelsToInches(int pixels)
+   {
+      return (double)pixels / 96.0;
    }
    
    private OperationWithInput<ExportPlotOptions> saveExportOptionsOperation_ =
