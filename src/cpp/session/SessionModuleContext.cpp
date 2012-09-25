@@ -921,8 +921,7 @@ void showFile(const FilePath& filePath, const std::string& window)
       }
       else
       {
-         // Send to the client, the desktop frame will handle it
-         ClientEvent event = browseUrlEvent("file://" + filePath.absolutePath());
+         ClientEvent event = browseUrlEvent("file:///" + filePath.absolutePath());
          module_context::enqueClientEvent(event);
       }
    }

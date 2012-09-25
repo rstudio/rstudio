@@ -127,6 +127,7 @@ void safePosixCall(const boost::function<T()>& func,
 bool isWin64();
 Error makeFileHidden(const FilePath& path);
 Error copyMetafileToClipboard(const FilePath& path);
+void ensureLongPath(FilePath* pFilePath);
 #endif
 
 void initHook();

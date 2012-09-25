@@ -624,6 +624,19 @@ Error copyMetafileToClipboard(const FilePath& path)
    return Success();
 }
 
+void ensureLongPath(FilePath* pFilePath)
+{
+   const std::size_t kBuffSize = (MAX_PATH*2) + 1;
+   char buffer[kBuffSize];
+   std::string path = string_utils::utf8ToSystem(pFilePath->absolutePath());
+   if (::GetLongPathName(path.c_str(),
+                         buffer,
+                         kBuffSize) > 0)
+   {
+      *pFilePath = FilePath(string_utils::systemToUtf8(buffer));
+   }
+}
+
 Error terminateProcess(PidType pid)
 {
    HANDLE hProc = ::OpenProcess(PROCESS_TERMINATE, false, pid);

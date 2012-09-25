@@ -28,6 +28,7 @@
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/http/Util.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RUtil.hpp>
@@ -797,10 +798,21 @@ SEXP rs_browseURL(SEXP urlSEXP)
       std::string filePrefix("file://");
       if (URL.find(filePrefix) == 0)
       {
+         // also look for more complete prefix
+         if (URL.find(filePrefix + "/") == 0)
+             filePrefix = filePrefix + "/";
+
          // transform into FilePath
          std::string path = URL.substr(filePrefix.length());
+         path = core::http::util::urlDecode(path);
          FilePath filePath(r::util::fixPath(path));
-         
+
+         // sometimes R passes short paths (like for files within the
+         // R home directory). Convert these to long paths
+#ifdef _WIN32
+         core::system::ensureLongPath(&filePath);
+#endif
+
          // fire browseFile
          s_callbacks.browseFile(filePath);
       }
