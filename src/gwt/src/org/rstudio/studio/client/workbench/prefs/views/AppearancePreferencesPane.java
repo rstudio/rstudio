@@ -172,8 +172,12 @@ public class AppearancePreferencesPane extends PreferencesPane
    
    private void updatePreviewZoomLevel()
    {
-      preview_.setZoomLevel(Double.parseDouble(zoomLevel_.getValue()) /
-                            Desktop.getFrame().getZoomLevel());
+      // no zoom preview on desktop
+      if (Desktop.isDesktop())
+      {
+         preview_.setZoomLevel(Double.parseDouble(zoomLevel_.getValue()) /
+                               Desktop.getFrame().getZoomLevel());
+      }
    }
 
    @Override
