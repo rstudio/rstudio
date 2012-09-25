@@ -192,6 +192,7 @@ public class GeneralPreferencesPane extends PreferencesPane
                }
             }));
       nudgeRight(encoding_);
+      textBoxWithChooser(encoding_);
       setEncoding(prefs.defaultEncoding().getGlobalValue());
             
       saveWorkspace_.setEnabled(false);
