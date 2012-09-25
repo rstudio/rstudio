@@ -21,8 +21,31 @@
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <link rel="shortcut icon" href="images/favicon.ico" />
     <title>RStudio</title>
+    <script type="text/javascript" src="js/require.js"></script>
+    <script>
+       window.require = require;
+       window.define = define;
+      require.config({
+         paths: {
+            "ace": "js/ace"
+         }
+      });
+
+      require(['js/acesupport.js'], function() {
+         require(['rstudio/loader'], function() {
+            require(['mode/r_code_model', 'ace/document', 'mode/r', 'mode/auto_brace_insert'], function() {
+               var script = document.createElement('script');
+               script.setAttribute('src', 'rstudio/rstudio.nocache.js');
+               document.head.appendChild(script);
+            });
+          });
+      });
+
+    </script>
+
+    <script type="text/javascript" language="javascript" src="js/acesupport.js"></script>
     <script type="text/javascript" language="javascript" src="rstudio/rstudio.nocache.js"></script>
-  
+
   </head>
                                      
   <body>

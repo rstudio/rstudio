@@ -18,15 +18,16 @@
          };
       }
 
-define("rstudio/loader", function(require, exports, module) {
+define("rstudio/loader", ["ace/lib/oop", "ace/lib/event", "ace/lib/event_emitter", "ace/editor", "ace/edit_session", "ace/undomanager", "ace/range", "ace/virtual_renderer", "ace/mode/text"],
+       function(oop, event, event_emitter, editor, edit_session, undomanager, range, virtual_renderer, text_mode) {
 
-var oop = require("ace/lib/oop");
-var event = require("ace/lib/event");
-var EventEmitter = require("ace/lib/event_emitter").EventEmitter;
-var Editor = require("ace/editor").Editor;
-var EditSession = require("ace/edit_session").EditSession;
-var UndoManager = require("ace/undomanager").UndoManager;
-var Range = require("ace/range").Range;
+var exports = {};
+
+var EventEmitter = event_emitter.EventEmitter;
+var Editor = editor.Editor;
+var EditSession = edit_session.EditSession;
+var UndoManager = undomanager.UndoManager;
+var Range = range.Range;
 
 var RStudioEditor = function(renderer, session) {
    Editor.call(this, renderer, session);
@@ -154,9 +155,9 @@ oop.inherits(RStudioUndoManager, UndoManager);
 function loadEditor(container) {
    var env = {};
 
-	var Renderer = require("ace/virtual_renderer").VirtualRenderer;
+	var Renderer = virtual_renderer.VirtualRenderer;
 
-	var TextMode = require("ace/mode/text").Mode;
+	var TextMode = text_mode.Mode;
 	var theme = {}; // prevent default textmate theme from loading
 
 	env.editor = new RStudioEditor(new Renderer(container, theme), new RStudioEditSession(""));
@@ -182,4 +183,6 @@ function loadEditor(container) {
 }
 
 exports.loadEditor = loadEditor;
+
+return exports;
 });
