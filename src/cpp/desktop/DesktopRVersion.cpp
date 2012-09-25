@@ -362,6 +362,17 @@ RVersion autoDetect()
 
       RVersion ver;
 
+      // rBinDir is getting set to null whenever it is empty
+      // (perhaps a change in Qt behavior?). we therefore
+      // need to look for 32bit first when preferR64 is false
+      if (!options.preferR64())
+      {
+         // Preferred R
+         ver = autoDetect(ArchX86, true);
+         if (ver.isValid())
+            return ver;
+      }
+
       // Preferred R64
       ver = autoDetect(ArchX64, true);
       if (ver.isValid())
