@@ -38,12 +38,16 @@ if (NOT RSTUDIO_SESSION_WIN64)
                       \"${CMAKE_CURRENT_BINARY_DIR}/SOURCE\")
     ")
 
+   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/VERSION.in
+                  ${CMAKE_CURRENT_BINARY_DIR}/VERSION)
+
    # install root docs
    install(FILES README.md
                  INSTALL
                  COPYING
                  NOTICE
                  ${CMAKE_CURRENT_BINARY_DIR}/SOURCE
+                 ${CMAKE_CURRENT_BINARY_DIR}/VERSION
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})
 endif()
 

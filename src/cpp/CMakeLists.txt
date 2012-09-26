@@ -157,6 +157,9 @@ if(RSTUDIO_CONFIG_CORE_DEV)
 
 else()
 
+   # diagnostics
+   add_subdirectory(diagnostics)
+
    # find LibR
    if(RSTUDIO_SESSION_WIN64)
       set(LIBR_FIND_WINDOWS_64BIT TRUE)

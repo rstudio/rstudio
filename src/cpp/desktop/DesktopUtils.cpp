@@ -28,6 +28,9 @@ using namespace core;
 
 namespace desktop {
 
+
+// NOTE: this code is duplicated in diagnostics as well (and also in
+// SessionOptions.hpp although the code path isn't exactly the same)
 FilePath userLogPath()
 {
    FilePath userHomePath = core::system::userHomePath("R_USER|HOME");
