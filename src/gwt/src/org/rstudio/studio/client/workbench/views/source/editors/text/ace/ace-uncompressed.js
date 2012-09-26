@@ -16167,10 +16167,12 @@ var VirtualRenderer = function(container, theme) {
         if (this.showGutter)
             posLeft += this.$gutterLayer.gutterWidth;
 
+        var bounds = this.container.getBoundingClientRect();
+
         this.textarea.style.height = this.lineHeight + "px";
         this.textarea.style.width = w + "px";
-        this.textarea.style.left = posLeft + "px";
-        this.textarea.style.top = posTop - 1 + "px";
+        this.textarea.style.left = posLeft + bounds.left + "px";
+        this.textarea.style.top = posTop + bounds.top - 1 + "px";
     };
     this.getFirstVisibleRow = function() {
         return this.layerConfig.firstRow;
@@ -18090,7 +18092,7 @@ define("text!ace/css/editor.css", [], ".ace_editor {\n" +
   "}\n" +
   "\n" +
   ".ace_editor > textarea {\n" +
-  "    position: absolute;\n" +
+  "    position: fixed;\n" +
   "    z-index: 0;\n" +
   "    width: 0.5em;\n" +
   "    height: 1em;\n" +
