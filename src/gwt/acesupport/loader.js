@@ -158,6 +158,7 @@ function loadEditor(container) {
 	var Renderer = virtual_renderer.VirtualRenderer;
    if (!Renderer.prototype.setDisplayIndentGuides)
       Renderer.prototype.setDisplayIndentGuides = function() {};
+   Renderer.prototype.$updateGutterLineHighlight = function() {};
 
 	var TextMode = text_mode.Mode;
 	var theme = {}; // prevent default textmate theme from loading
