@@ -33,7 +33,7 @@
    </path>
 
    <target name="ext">
-      <jscomp compilationLevel="simple" warning="default"
+      <jscomp compilationLevel="whitespace" warning="default"
               debug="false" output="${ace.bin}/acesupport.js">
          <externs dir="acesupport">
             <file name="extern.js"/>

@@ -32,8 +32,11 @@
       });
 
       require(['js/acesupport.js'], function() {
+         console.log('a');
          require(['rstudio/loader'], function() {
+            console.log('b');
             require(['mode/r_code_model', 'ace/document', 'mode/r', 'mode/auto_brace_insert'], function() {
+               console.log('c');
                var script = document.createElement('script');
                script.setAttribute('src', 'rstudio/rstudio.nocache.js');
                document.head.appendChild(script);

@@ -156,6 +156,8 @@ function loadEditor(container) {
    var env = {};
 
 	var Renderer = virtual_renderer.VirtualRenderer;
+   if (!Renderer.prototype.setDisplayIndentGuides)
+      Renderer.prototype.setDisplayIndentGuides = function() {};
 
 	var TextMode = text_mode.Mode;
 	var theme = {}; // prevent default textmate theme from loading
