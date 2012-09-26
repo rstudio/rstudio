@@ -18,7 +18,13 @@
 #include <QMessageBox>
 #include <QMainWindow>
 
+namespace core {
+   class FilePath;
+}
+
 namespace desktop {
+
+core::FilePath userLogPath();
 
 bool isRetina(QMainWindow* pMainWindow);
 

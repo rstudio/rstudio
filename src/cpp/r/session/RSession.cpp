@@ -492,17 +492,17 @@ Error initialize()
 
    // hook the quit function if we are on win32 (used so we can
    // call our RCleanUp function which otherwise couldn't be called on
-   // Windows where no cleanup hook is supported)
+   // Windows where no cleanup hook is supported). on posix we do
+   // do this so we can prompt for save changes
 #ifdef _WIN32
    error = r::function_hook::registerReplaceHook("quit", win32QuitHook, NULL);
-   if (error)
-      return error;
 #else
    error = r::function_hook::registerReplaceHook("quit",
                                                  posixQuitHook,
                                                  &s_originalPosixQuitFunction);
 #endif
-
+   if (error)
+      return error;
 
    // complete embedded r initialization
    error = r::session::completeEmbeddedRInitialization(s_options.useInternet2);
@@ -526,6 +526,20 @@ Error initialize()
    {
       return Success();
    }
+}
+
+void rSuicide(const std::string& msg)
+{
+   FilePath abendLogPath = s_options.logPath.complete("rsession_abort_msg.log");
+   Error error = core::writeStringToFile(abendLogPath, msg);
+   if (error)
+      LOG_ERROR(error);
+   R_Suicide(msg.c_str());
+}
+
+void rSuicide(const Error& error)
+{
+   rSuicide(core::log::errorAsLogEntry(error));
 }
 
 int RReadConsole (const char *pmt,
@@ -562,7 +576,7 @@ int RReadConsole (const char *pmt,
             // terminate the session (use suicide so that no special
             // termination code runs -- i.e. call to setAbnormalEnd(false)
             // or call to client::quitSession)
-            R_Suicide(error.code().message().c_str());
+            rSuicide(error);
          }
          
          // reset the prompt to whatever the default is after we've
@@ -629,13 +643,22 @@ int RReadConsole (const char *pmt,
    }
    catch(r::exec::InterruptException)
    {
+      // this will result in a longjmp
       r::exec::setInterruptsPending(true);
       r::exec::checkUserInterrupt();
    }
-   CATCH_UNEXPECTED_EXCEPTION
-
-   // if we get this far then this was an unexpected error
-   R_Suicide("Unexpected error reading console input");
+   catch(const std::exception& e)
+   {
+      std::string msg = std::string("Unexpected exception: ") + e.what();
+      LOG_ERROR_MESSAGE(msg);
+      rSuicide(msg);
+   }
+   catch(...)
+   {
+      std::string msg = "Unknown exception";
+      LOG_ERROR_MESSAGE(msg);
+      rSuicide(msg);
+   }
       
    return 0 ; // keep compiler happy
 }

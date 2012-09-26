@@ -16,6 +16,7 @@
 #include <boost/bind.hpp>
 
 #include <core/WaitUtils.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
 
 #include <QProcess>
@@ -49,6 +50,11 @@ core::WaitResult serverReady(QString host, QString port)
    socket.connectToHost(host, port.toInt());
    return WaitResult(socket.waitForConnected() ? WaitSuccess : WaitContinue,
                      Success());
+}
+
+FilePath abendLogPath()
+{
+   return desktop::userLogPath().complete("rsession_abort_msg.log");
 }
 
 } // anonymous namespace
@@ -145,6 +151,14 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
 
       pMainWindow_->evaluateJavaScript(
                QString::fromAscii("window.desktopHooks.notifyRCrashed()"));
+
+      if (abendLogPath().exists())
+      {
+         showMessageBox(QMessageBox::Critical,
+                        pMainWindow_,
+                        QString::fromUtf8("RStudio"),
+                        launchFailedErrorMessage());
+      }
    }
 
    // quit and exit means close the main window
@@ -235,9 +249,15 @@ void SessionLauncher::onReloadFrameForNextSession()
 }
 
 
+
 Error SessionLauncher::launchSession(const QStringList& argList,
                                      QProcess** ppRSessionProcess)
 {
+   // always remove the abend log path before launching
+   Error error = abendLogPath().removeIfExists();
+   if (error)
+      LOG_ERROR(error);
+
    return  parent_process_monitor::wrapFork(
          boost::bind(launchProcess,
                      sessionPath_.absolutePath(),
@@ -255,8 +275,26 @@ Error SessionLauncher::waitForSession(const QString& host,
 
 QString SessionLauncher::launchFailedErrorMessage() const
 {
-   QString errMsg = QString::fromUtf8("The R session failed to start.");
+   QString errMsg = QString::fromUtf8("The R session had a fatal error.");
 
+   // check for abend log
+   FilePath abendLog = abendLogPath();
+   if (abendLog.exists())
+   {
+      std::string contents;
+      Error error = core::readStringFromFile(abendLog, &contents);
+      if (error)
+         LOG_ERROR(error);
+      if (!contents.empty())
+         errMsg.append(QString::fromAscii("\n\n").append(
+                       QString::fromStdString(contents)));
+
+      error = abendLog.removeIfExists();
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   // check for stderr
    if (pRSessionProcess_)
    {
       QString errmsgs = QString::fromLocal8Bit(

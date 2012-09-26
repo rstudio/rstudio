@@ -57,6 +57,7 @@ struct ROptions
    core::FilePath userHomePath;
    core::FilePath userScratchPath;
    core::FilePath scopedScratchPath;
+   core::FilePath logPath;
    core::FilePath startupEnvironmentFilePath;
    std::string sessionPort;
    boost::function<core::Settings&()> persistentState;

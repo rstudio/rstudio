@@ -18,13 +18,24 @@
 #include <QDesktopServices>
 
 #include <core/Error.hpp>
+#include <core/FilePath.hpp>
 #include <core/system/Process.hpp>
+#include <core/system/System.hpp>
 
 #include "DesktopOptions.hpp"
 
 using namespace core;
 
 namespace desktop {
+
+FilePath userLogPath()
+{
+   FilePath userHomePath = core::system::userHomePath("R_USER|HOME");
+   FilePath logPath = core::system::userSettingsPath(
+         userHomePath,
+         "RStudio-Desktop").childPath("log");
+   return logPath;
+}
 
 #ifndef Q_OS_MAC
 bool isRetina(QMainWindow* pMainWindow)

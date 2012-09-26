@@ -198,13 +198,9 @@ int main(int argc, char* argv[])
       QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 
       // initialize log
-      FilePath userHomePath = core::system::userHomePath("R_USER|HOME");
-      FilePath logPath = core::system::userSettingsPath(
-            userHomePath,
-            "RStudio-Desktop").childPath("log");
       core::system::initializeLog("rdesktop",
                                   core::system::kLogLevelWarning,
-                                  logPath);
+                                  desktop::userLogPath());
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);
