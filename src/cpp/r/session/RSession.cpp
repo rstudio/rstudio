@@ -530,10 +530,17 @@ Error initialize()
 
 void rSuicide(const std::string& msg)
 {
-   FilePath abendLogPath = s_options.logPath.complete("rsession_abort_msg.log");
-   Error error = core::writeStringToFile(abendLogPath, msg);
-   if (error)
-      LOG_ERROR(error);
+   // log abort message if we are in desktop mode
+   if (!s_options.serverMode)
+   {
+      FilePath abendLogPath = s_options.logPath.complete(
+                                                 "rsession_abort_msg.log");
+      Error error = core::writeStringToFile(abendLogPath, msg);
+      if (error)
+         LOG_ERROR(error);
+   }
+
+
    R_Suicide(msg.c_str());
 }
 
