@@ -12,5 +12,5 @@
 
 <!-- The rest should be kept in sync with DevModeOptions.google.xml -->
   <set-property name='user.agent' value='safari' />
-  <add-linker name="xsiframe" />
+  <add-linker name="direct_install" />
 </module>

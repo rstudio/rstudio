@@ -1,6 +1,8 @@
 {
   "name": "GWT Developer Plugin",
   "version": "GWT_DEV_PLUGIN_VERSION",
+  "manifest_version": 2,
+
   "description": "A plugin to enable debugging with GWT's Development Mode",
   "update_url": "https://dl-ssl.google.com/gwt/plugins/chrome/updates.xml",
   "icons": {
@@ -10,8 +12,11 @@
     "64": "gwt64.png",
     "128": "gwt128.png"
   },
+
   "key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDi6RrEy9YllRLM8bGBcIEk5ECAG2z+8ngTz7wwzRAQJpOzDp1Alq8fQFjH0+dzxok4RFLrWKHjxGqvXzWyWyTEo2nY3ScHLN/RoANMs8pl9X6TygRyO+3naqZOtLCrYHfV49JKXnYoFVbY5eBVYxHYY3BHAOKJj9onyAM4UPmMzQIDAQAB",
-  "background_page": "background.html",
+  "background": {
+     "page": "background.html"
+   },
   "options_page" : "DevModeOptions.html",
   "page_action" : {
     "default_icon" : "gwt32.png",

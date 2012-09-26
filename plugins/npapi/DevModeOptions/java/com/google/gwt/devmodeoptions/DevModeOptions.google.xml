@@ -1,4 +1,4 @@
 <!-- A fragment of DevModeOptions.gwt.xml used by the Google build.
      This should be kept in sync with DevModeOptions.gwt.xml. -->
 <set-property name='user.agent' value='safari' />
-<add-linker name="xsiframe" />
+<add-linker name="direct_install" />

@@ -85,6 +85,7 @@ OS=linux
 BASECFLAGS= $(DEBUGCFLAGS) -O2 -fPIC $(INC) -rdynamic
 ARCHCFLAGS= -m$(FLAG32BIT)
 ALLARCHCFLAGS= -m$(FLAG32BIT)
+#CXX=clang # for better build error messages
 endif
 ifeq ($(shell uname),Darwin)
 OS=mac

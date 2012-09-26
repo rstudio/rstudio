@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <project name="DevModeOptions" default="prebuilt" basedir=".">
   <!-- Arguments to gwtc and devmode targets -->
-  <property name="gwt.args" value="" />
+  <property name="gwt.args" value="-style PRETTY" />
 
   <!-- Configure path to GWT SDK -->
   <property name="gwt.sdk" location="../../../build/staging/gwt-0.0.0" />
