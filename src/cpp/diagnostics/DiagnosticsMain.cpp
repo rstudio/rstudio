@@ -39,11 +39,7 @@ FilePath userLogPath()
 {
    FilePath logPath = core::system::userSettingsPath(
          homePath(),
-#ifdef RSTUDIO_SERVER
-         "RStudio"
-#else
          "RStudio-Desktop"
-#endif
          ).childPath("log");
    return logPath;
 }
