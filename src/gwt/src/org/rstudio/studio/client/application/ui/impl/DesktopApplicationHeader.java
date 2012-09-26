@@ -18,6 +18,7 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -40,6 +41,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.files.events.ShowFolderEvent;
 import org.rstudio.studio.client.workbench.views.files.events.ShowFolderHandler;
 
@@ -65,6 +67,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
                           Provider<CodeSearch> pCodeSearch)
    {
       session_ = session;
+      eventBus_= events;
       binder_.bind(commands, this);
       commands.mainMenu(new DesktopMenuCallback());
 
@@ -79,6 +82,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
    
       commands.checkForUpdates().setVisible(true);
       commands.showLogFiles().setVisible(true);
+      commands.diagnosticsReport().setVisible(true);
       commands.showFolder().setVisible(true);
 
       commands.showAboutDialog().setVisible(true);
@@ -184,6 +188,22 @@ public class DesktopApplicationHeader implements ApplicationHeader
    {
       Desktop.getFrame().showFolder(session_.getSessionInfo().getLogDir());
    }
+   
+   @Handler
+   void onDiagnosticsReport()
+   {
+      eventBus_.fireEvent(
+         new SendToConsoleEvent("rstudio::diagnosticsReport()", true));
+      
+      new Timer() {
+         @Override
+         public void run()
+         {
+            Desktop.getFrame().showFolder("~/rstudio-diagnostics");
+         }
+      }.schedule(1000);
+      
+   }
 
    @Handler
    void onCheckForUpdates()
@@ -211,5 +231,6 @@ public class DesktopApplicationHeader implements ApplicationHeader
    }
 
    private Session session_;
+   private EventBus eventBus_;
    private GlobalToolbar toolbar_;
 }

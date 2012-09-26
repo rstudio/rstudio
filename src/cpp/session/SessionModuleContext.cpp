@@ -196,6 +196,19 @@ SEXP rs_ensureFileHidden(SEXP fileSEXP)
    return R_NilValue;
 }
 
+SEXP rs_sourceDiagnostics()
+{
+   r::exec::RFunction sourceFx("source");
+   sourceFx.addParam(string_utils::utf8ToSystem(
+       options().coreRSourcePath().childPath("Diagnostics.R").absolutePath()));
+   sourceFx.addParam("chdir", true);
+   Error error = sourceFx.call();
+   if (error)
+      LOG_ERROR(error);
+
+   return R_NilValue;
+}
+
 // override of Sys.sleep to notify listeners of a sleep
 CCODE s_originalSysSleepFunction;
 SEXP sysSleepHook(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -394,6 +407,13 @@ Error initialize()
    methodDef8.fun = (DL_FUNC) rs_ensureFileHidden ;
    methodDef8.numArgs = 1;
    r::routines::addCallMethod(methodDef8);
+
+   // register rs_sourceDiagnostics
+   R_CallMethodDef methodDef9;
+   methodDef9.name = "rs_sourceDiagnostics" ;
+   methodDef9.fun = (DL_FUNC) rs_sourceDiagnostics;
+   methodDef9.numArgs = 0;
+   r::routines::addCallMethod(methodDef9);
    
    // register Sys.sleep() hook to notify modules of sleep (currently
    // used by plots to check for changes on sleep so we can support the

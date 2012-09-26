@@ -9,3 +9,7 @@ versionInfo <- function() {
   info
 }
 
+#' @export
+diagnosticsReport <- function() {
+  invisible(.Call(getNativeSymbolInfo("rs_sourceDiagnostics", PACKAGE="")))
+}

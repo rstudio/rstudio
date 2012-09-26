@@ -13,10 +13,8 @@
 
 # capture output into a file
 require(utils)
-diagnosticsFile <- normalizePath(paste("~/rstudio-diagnostics-",
-                                       Sys.Date(),
-                                       ".txt",
-                                       sep=""),
+dir.create("~/rstudio-diagnostics", showWarnings=FALSE)
+diagnosticsFile <- normalizePath(paste("~/rstudio-diagnostics/diagnostics-report.txt"),
                                  mustWork = FALSE)
 
 capture.output({

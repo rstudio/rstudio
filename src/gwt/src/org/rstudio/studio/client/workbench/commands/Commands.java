@@ -245,6 +245,7 @@ public abstract class
    // Application
    public abstract AppCommand quitSession();
    public abstract AppCommand updateCredentials();
+   public abstract AppCommand diagnosticsReport();
    public abstract AppCommand showLogFiles();
    public abstract AppCommand rstudioSupport();
    public abstract AppCommand rstudioAgreement();

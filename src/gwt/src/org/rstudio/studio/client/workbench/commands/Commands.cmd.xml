@@ -314,9 +314,10 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="rstudioAgreement"/>
          <separator/>
          <menu label="Dia_gnostics">
+            <cmd refid="showRequestLog"/>
             <cmd refid="showLogFiles"/>
             <cmd refid="updateCredentials"/>
-            <cmd refid="showRequestLog"/>
+            <cmd refid="diagnosticsReport"/>
             <separator/>
             <cmd refid="debugDumpContents"/>
             <cmd refid="debugImportDump"/>
@@ -1065,6 +1066,9 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Show warning bar"/>
    <cmd id="showRequestLog"
         menuLabel="_Request Log"/>
+   <cmd id="diagnosticsReport"
+        menuLabel="_Write Diagnostics Report"
+        visible="false"/>
    <cmd id="logFocusedElement"
         menuLabel="Log focused element"/>
    <cmd id="debugDumpContents"

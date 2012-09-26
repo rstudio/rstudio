@@ -157,9 +157,6 @@ if(RSTUDIO_CONFIG_CORE_DEV)
 
 else()
 
-   # diagnostics
-   add_subdirectory(diagnostics)
-
    # find LibR
    if(RSTUDIO_SESSION_WIN64)
       set(LIBR_FIND_WINDOWS_64BIT TRUE)
@@ -191,7 +188,7 @@ else()
 
    # add desktop subprojects if we aren't building in server only mode
    if(RSTUDIO_DESKTOP)
-
+      add_subdirectory(diagnostics)
       add_subdirectory(desktop)
       configure_file(rdesktop-dev.in ${CMAKE_CURRENT_BINARY_DIR}/rdesktop-dev)
       configure_file(conf/rdesktop-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf)
