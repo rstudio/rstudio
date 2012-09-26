@@ -1,0 +1,4 @@
+1) If rstudio/src/gwt/tools/ace doesn't exist, clone github:ajaxorg/ace into it
+2) In rstudio/src/gwt/www/js, call ./copy_ace
+3) Run rdesktop
+4) If an error about $pixelPos, go into virtual_renderer and add checks for undefined above both references to this.$cursorLayer.$pixelPos.top (if (!this.$cursorLayer || !this.$cursorLayer.$pixelPos) return;)
