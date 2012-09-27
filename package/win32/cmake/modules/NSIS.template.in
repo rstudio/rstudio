@@ -724,6 +724,15 @@ Section "-Core installation"
 @CPACK_NSIS_CREATE_ICONS@
 @CPACK_NSIS_CREATE_ICONS_EXTRA@
   CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
+  
+  ;
+  ; RSTUDIO CHANGE - add shortcut to diagnostics
+  ;
+  CreateShortCut "$INSTDIR\bin\Run Diagnostics.lnk" \
+                 "$WINDIR\system32\cmd.exe" \
+                 "/K $\"$INSTDIR\bin\rstudio.exe$\" --verify-installation" \
+                 "$WINDIR\system32\cmd.exe" 0 \
+                 SW_SHOWNORMAL
 
   ;
   ; RSTUDIO CHANGE - add shortcut to SSH Command Prompt
@@ -874,7 +883,8 @@ Section "Uninstall"
   Delete "$INSTDIR\Uninstall.exe"
   DeleteRegKey SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\@CPACK_PACKAGE_NAME@"
 
-  ;Remove the SSH Command Prompt Shortcut
+  ;Remove shortcuts
+  Delete "$INSTDIR\bin\Run Diagnostics.lnk"
   Delete "$INSTDIR\bin\msys_ssh\SSH Command Prompt.lnk" 
   RMDir /r "$INSTDIR\bin\"
   
