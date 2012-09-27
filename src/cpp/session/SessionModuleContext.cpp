@@ -999,7 +999,7 @@ core::system::ProcessSupervisor& processSupervisor()
    return instance;
 }
 
-std::string sourceDiagnostics()
+FilePath sourceDiagnostics()
 {
    r::exec::RFunction sourceFx("source");
    sourceFx.addParam(string_utils::utf8ToSystem(
@@ -1009,14 +1009,14 @@ std::string sourceDiagnostics()
    if (error)
    {
       LOG_ERROR(error);
-      return std::string();
+      return FilePath();
    }
    else
    {
       // note this path is also in Diagnostics.R so changes to the path
       // need to be synchronized there
       return module_context::resolveAliasedPath(
-         "~/rstudio-diagnostics/diagnostics-report.txt").absolutePath();
+                        "~/rstudio-diagnostics/diagnostics-report.txt");
    }
 }
    

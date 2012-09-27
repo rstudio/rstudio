@@ -1407,10 +1407,16 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       {
          std::cout << "Successfully initialized R session."
                    << std::endl << std::endl;
-         std::string diagFile = module_context::sourceDiagnostics();
+         FilePath diagFile = module_context::sourceDiagnostics();
          if (!diagFile.empty())
-            std::cout << "Diagnostics report written to: " << diagFile
-                      << std::endl << std::endl;
+         {
+            std::cout << "Diagnostics report written to: "
+                      << diagFile << std::endl << std::endl;
+
+            Error error = r::exec::RFunction(".rs.showDiagnostics").call();
+            if (error)
+               LOG_ERROR(error);
+         }
       }
 
       session::options().verifyInstallationHomeDir().removeIfExists();

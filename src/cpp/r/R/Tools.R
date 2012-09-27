@@ -414,6 +414,18 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
 })
 
 
+.rs.addFunction("showDiagnostics", function()
+{
+  require(utils)
+  diagPath <- shQuote(normalizePath("~/rstudio-diagnostics"))
+  sysName <- Sys.info()[['sysname']]
+  if (identical(sysName, "Windows"))
+    shell.exec(diagPath)
+  else if (identical(sysName, "Darwin"))
+    system(paste("open", diagPath))
+  else if (nzchar(Sys.which("nautilus")))
+    system(paste("nautilus", diagPath))
+})
 
 
 

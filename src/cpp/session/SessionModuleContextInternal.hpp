@@ -18,6 +18,7 @@
 
 namespace core {
    class Error;
+   class FilePath;
    class Settings;
 }
 
@@ -35,7 +36,7 @@ void onResumed(const core::Settings& persistentState);
 void onBackgroundProcessing(bool isIdle);
 
 // source diagnostics
-std::string sourceDiagnostics();
+core::FilePath sourceDiagnostics();
 
 } // namespace module_context
 } // namespace session
