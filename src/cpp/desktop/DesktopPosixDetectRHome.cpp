@@ -28,6 +28,7 @@
 #include <core/r_util/REnvironment.hpp>
 
 #include "DesktopUtils.hpp"
+#include "DesktopOptions.hpp"
 
 using namespace core;
 
@@ -60,17 +61,24 @@ bool prepareEnvironment(Options& options)
       rLdScriptPath = supportingFilePath.complete("session/r-ldpath");
 
    // attempt to detect R environment
-   std::string errMsg;
+   std::string rScriptPath, errMsg;
    r_util::EnvironmentVars rEnvVars;
    bool success = r_util::detectREnvironment(rWhichRPath,
                                              rLdScriptPath,
                                              std::string(),
+                                             &rScriptPath,
                                              &rEnvVars,
                                              &errMsg);
    if (!success)
    {
       showRNotFoundError(errMsg);
       return false;
+   }
+
+   if (desktop::options().verifyInstallation())
+   {
+      std::cout << std::endl << "Using R script: " << rScriptPath
+                << std::endl;
    }
 
    // set environment and return true

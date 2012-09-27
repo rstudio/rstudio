@@ -198,14 +198,7 @@ SEXP rs_ensureFileHidden(SEXP fileSEXP)
 
 SEXP rs_sourceDiagnostics()
 {
-   r::exec::RFunction sourceFx("source");
-   sourceFx.addParam(string_utils::utf8ToSystem(
-       options().coreRSourcePath().childPath("Diagnostics.R").absolutePath()));
-   sourceFx.addParam("chdir", true);
-   Error error = sourceFx.call();
-   if (error)
-      LOG_ERROR(error);
-
+   module_context::sourceDiagnostics();
    return R_NilValue;
 }
 
@@ -1004,6 +997,27 @@ core::system::ProcessSupervisor& processSupervisor()
 {
    static core::system::ProcessSupervisor instance;
    return instance;
+}
+
+std::string sourceDiagnostics()
+{
+   r::exec::RFunction sourceFx("source");
+   sourceFx.addParam(string_utils::utf8ToSystem(
+       options().coreRSourcePath().childPath("Diagnostics.R").absolutePath()));
+   sourceFx.addParam("chdir", true);
+   Error error = sourceFx.call();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return std::string();
+   }
+   else
+   {
+      // note this path is also in Diagnostics.R so changes to the path
+      // need to be synchronized there
+      return module_context::resolveAliasedPath(
+         "~/rstudio-diagnostics/diagnostics-report.txt").absolutePath();
+   }
 }
    
 namespace {

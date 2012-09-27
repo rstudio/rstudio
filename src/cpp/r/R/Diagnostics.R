@@ -11,7 +11,8 @@
 #
 #
 
-# capture output into a file
+# capture output into a file (note this path is in module_context::sourceDiagnostics
+# so changes to the path should be synchronized there)
 require(utils)
 dir.create("~/rstudio-diagnostics", showWarnings=FALSE)
 diagnosticsFile <- normalizePath(paste("~/rstudio-diagnostics/diagnostics-report.txt"),
@@ -66,6 +67,6 @@ capture.output({
   
 }, file=diagnosticsFile)
 
-cat("Diagnostics written to:", diagnosticsFile, "\n")
+cat("Diagnostics report written to:", diagnosticsFile, "\n")
 
 

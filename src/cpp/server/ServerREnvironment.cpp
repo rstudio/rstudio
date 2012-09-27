@@ -46,11 +46,11 @@ bool initialize(std::string* pErrMsg)
    std::string ldLibraryPath = server::options().rsessionLdLibraryPath();
 
    // attempt to detect R environment
-   std::string errMsg;
-   r_util::EnvironmentVars rEnvVars;
+   std::string rScriptPath;
    return r_util::detectREnvironment(rWhichRPath,
                                      rLdScriptPath,
                                      ldLibraryPath,
+                                     &rScriptPath,
                                      &s_rEnvironmentVars,
                                      pErrMsg);
 }

@@ -1402,6 +1402,17 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    // if we are in verify installation mode then we should exit (successfully) now
    if (session::options().verifyInstallation())
    {
+      // in desktop mode we write a success message and execute diagnostics
+      if (session::options().programMode() == kSessionProgramModeDesktop)
+      {
+         std::cout << "Successfully initialized R session."
+                   << std::endl << std::endl;
+         std::string diagFile = module_context::sourceDiagnostics();
+         if (!diagFile.empty())
+            std::cout << "Diagnostics report written to: " << diagFile
+                      << std::endl << std::endl;
+      }
+
       session::options().verifyInstallationHomeDir().removeIfExists();
       ::exit(EXIT_SUCCESS);
    }
@@ -2477,9 +2488,17 @@ int main (int argc, char * const argv[])
       // re-initialize log for desktop mode
       if (desktopMode)
       {
-         initializeLog(options.programIdentity(),
-                       core::system::kLogLevelWarning,
-                       options.userLogPath());
+         if (options.verifyInstallation())
+         {
+            initializeStderrLog(options.programIdentity(),
+                                core::system::kLogLevelWarning);
+         }
+         else
+         {
+            initializeLog(options.programIdentity(),
+                          core::system::kLogLevelWarning,
+                          options.userLogPath());
+         }
       }
 
       // set version

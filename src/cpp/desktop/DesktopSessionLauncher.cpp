@@ -19,6 +19,7 @@
 
 #include <core/WaitUtils.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/system/Environment.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
 
 #include <QProcess>
@@ -28,6 +29,9 @@
 #include "DesktopOptions.hpp"
 #include "DesktopSlotBinders.hpp"
 #include "DesktopGwtCallback.hpp"
+
+#define VERIFY_INSTALLATION_LOG(message) if (desktop::options().verifyInstallation()) \
+             std::cout << (message) << std::endl;
 
 using namespace core;
 
@@ -62,6 +66,13 @@ FilePath abendLogPath()
    return desktop::userLogPath().complete("rsession_abort_msg.log");
 }
 
+void logEnvVar(const std::string& name)
+{
+   std::string value = core::system::getenv(name);
+   if (!value.empty())
+      VERIFY_INSTALLATION_LOG("  " + name + "=" + value);
+}
+
 } // anonymous namespace
 
 
@@ -77,10 +88,29 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
    QUrl url;
    buildLaunchContext(&host, &port, &argList, &url);
 
+   VERIFY_INSTALLATION_LOG("\nAttempting to launch R session...");
+   logEnvVar("RSTUDIO_WHICH_R");
+   logEnvVar("R_HOME");
+   logEnvVar("R_DOC_DIR");
+   logEnvVar("R_INCLUDE_DIR");
+   logEnvVar("R_SHARE_DIR");
+   logEnvVar("R_LIBS");
+   logEnvVar("R_LIBS_USER");
+   logEnvVar("DYLD_LIBRARY_PATH");
+   logEnvVar("LD_LIBRARY_PATH");
+   logEnvVar("PATH");
+   logEnvVar("HOME");
+   logEnvVar("R_USER");
+
    // launch the process
    Error error = launchSession(argList, &pRSessionProcess_);
    if (error)
      return error;
+
+   VERIFY_INSTALLATION_LOG("\nR session launched, "
+                           "attempting to connect on port "
+                           + port.toStdString() +
+                           "...");
 
    // jcheng 03/16/2011: Due to crashing caused by authenticating
    // proxies, bypass all proxies from Qt until we can get the problem
@@ -100,6 +130,8 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
    error = waitForSession(host, port);
    if (error)
       return error;
+
+   VERIFY_INSTALLATION_LOG("\nConnected to R session, attempting to initialize...\n");
 
    // one-time workbench intiailized hook for startup file association
    if (!filename.isNull() && !filename.isEmpty())
@@ -153,10 +185,6 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
    // if this is a verify-installation session then just quit
    if (options().verifyInstallation())
    {
-      QString abendLogMessage = collectAbendLogMessage();
-      if (!abendLogMessage.isEmpty())
-         std::cerr << abendLogMessage.toStdString() << std::endl;
-
       pMainWindow_->quit();
       return;
    }

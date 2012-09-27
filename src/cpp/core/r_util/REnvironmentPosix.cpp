@@ -549,25 +549,14 @@ bool detectRLocationsUsingR(const std::string& rScriptPath,
 } // anonymous namespace
 
 
-bool detectREnvironment(const FilePath& ldPathsScript,
-                        EnvironmentVars* pVars,
-                        std::string* pErrMsg)
-{
-   return detectREnvironment(FilePath(),
-                             ldPathsScript,
-                             std::string(),
-                             pVars,
-                             pErrMsg);
-}
-
 bool detectREnvironment(const FilePath& whichRScript,
                         const FilePath& ldPathsScript,
                         const std::string& ldLibraryPath,
+                        std::string* pRScriptPath,
                         EnvironmentVars* pVars,
                         std::string* pErrMsg)
 {
    // if there is a which R script override then validate it
-   std::string rScriptPath;
    if (!whichRScript.empty())
    {
       // validate
@@ -575,7 +564,7 @@ bool detectREnvironment(const FilePath& whichRScript,
          return false;
 
       // set it
-      rScriptPath = whichRScript.absolutePath();
+      *pRScriptPath = whichRScript.absolutePath();
    }
    // otherwise use the system default (after validating it as well)
    else
@@ -589,14 +578,14 @@ bool detectREnvironment(const FilePath& whichRScript,
          return false;
 
       // set it
-      rScriptPath = sysRScript.absolutePath();
+      *pRScriptPath = sysRScript.absolutePath();
    }
 
    // detect R locations
    FilePath rHomePath, rLibPath;
    config_utils::Variables scriptVars;
 #ifdef __APPLE__
-   if (!detectRLocationsUsingScript(FilePath(rScriptPath),
+   if (!detectRLocationsUsingScript(FilePath(*pRScriptPath),
                                     &rHomePath,
                                     &rLibPath,
                                     &scriptVars,
@@ -607,7 +596,7 @@ bool detectREnvironment(const FilePath& whichRScript,
       rLibPath = FilePath();
       scriptVars.clear();
       std::string scriptErrMsg;
-      rScriptPath = "/Library/Frameworks/R.framework/Resources/bin/R";
+      *pRScriptPath = "/Library/Frameworks/R.framework/Resources/bin/R";
       if (!detectRLocationsUsingFramework(&rHomePath,
                                           &rLibPath,
                                           &scriptVars,
@@ -618,7 +607,7 @@ bool detectREnvironment(const FilePath& whichRScript,
       }
    }
 #else
-   if (!detectRLocationsUsingR(rScriptPath,
+   if (!detectRLocationsUsingR(*pRScriptPath,
                                &rHomePath,
                                &rLibPath,
                                &scriptVars,
@@ -630,7 +619,7 @@ bool detectREnvironment(const FilePath& whichRScript,
       rLibPath = FilePath();
       scriptVars.clear();
       std::string scriptErrMsg;
-      if (!detectRLocationsUsingScript(FilePath(rScriptPath),
+      if (!detectRLocationsUsingScript(FilePath(*pRScriptPath),
                                        &rHomePath,
                                        &rLibPath,
                                        &scriptVars,

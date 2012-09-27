@@ -255,6 +255,12 @@ int main(int argc, char* argv[])
       // init options from command line
       desktop::options().initFromCommandLine(pApp->arguments());
 
+      // reset log if we are in verify-installation mode
+      if (desktop::options().verifyInstallation())
+      {
+         initializeStderrLog("rdesktop", core::system::kLogLevelWarning);
+      }
+
       pApp->setAttribute(Qt::AA_MacDontSwapCtrlAndMeta);
 
       initializeSharedSecret();

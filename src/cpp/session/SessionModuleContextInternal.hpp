@@ -34,6 +34,9 @@ void onResumed(const core::Settings& persistentState);
 // notify of backgound processing
 void onBackgroundProcessing(bool isIdle);
 
+// source diagnostics
+std::string sourceDiagnostics();
+
 } // namespace module_context
 } // namespace session
 

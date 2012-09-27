@@ -26,13 +26,10 @@ namespace r_util {
 
 typedef std::vector<std::pair<std::string,std::string> > EnvironmentVars;
 
-bool detectREnvironment(const FilePath& ldPathsScript,
-                        EnvironmentVars* pVars,
-                        std::string* pErrMsg);
-
 bool detectREnvironment(const FilePath& whichRScript,
                         const FilePath& ldPathsScript,
                         const std::string& ldLibraryPath,
+                        std::string* pRScriptPath,
                         EnvironmentVars* pVars,
                         std::string* pErrMsg);
 
