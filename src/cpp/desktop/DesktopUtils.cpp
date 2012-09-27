@@ -24,10 +24,35 @@
 
 #include "DesktopOptions.hpp"
 
+#ifdef Q_WS_WIN
+#include <windows.h>
+#endif
+
 using namespace core;
 
 namespace desktop {
 
+#ifdef Q_WS_WIN
+
+void reattachConsoleIfNecessary()
+{
+   if (::AttachConsole(ATTACH_PARENT_PROCESS))
+   {
+      freopen("CONOUT$","wb",stdout);
+      freopen("CONOUT$","wb",stderr);
+      freopen("CONIN$","rb",stdin);
+      std::ios::sync_with_stdio();
+   }
+}
+
+#else
+
+void reattachConsoleIfNecessary()
+{
+
+}
+
+#endif
 
 // NOTE: this code is duplicated in diagnostics as well (and also in
 // SessionOptions.hpp although the code path isn't exactly the same)

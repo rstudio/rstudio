@@ -24,6 +24,8 @@ namespace core {
 
 namespace desktop {
 
+void reattachConsoleIfNecessary();
+
 core::FilePath userLogPath();
 
 bool isRetina(QMainWindow* pMainWindow);

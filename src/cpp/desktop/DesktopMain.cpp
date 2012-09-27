@@ -11,12 +11,6 @@
  *
  */
 
-// TODO: open project in new window command
-
-// TODO: open -a RStudio on the Mac (reboot / test on other system)
-
-// TODO: periodic crashing when switching projects on ubuntu (enable cores)
-
 #include <QtGui>
 #include <QtWebKit>
 
@@ -258,6 +252,7 @@ int main(int argc, char* argv[])
       // reset log if we are in verify-installation mode
       if (desktop::options().verifyInstallation())
       {
+         desktop::reattachConsoleIfNecessary();
          initializeStderrLog("rdesktop", core::system::kLogLevelWarning);
       }
 
