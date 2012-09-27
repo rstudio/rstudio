@@ -79,4 +79,16 @@ void toggleFullscreenMode(QMainWindow* pMainWindow)
       [pWindow toggleFullScreen:nil];
 }
 
+bool getCurrentLocaleId(std::string* pLocale)
+{
+   id locale = [NSLocale currentLocale];
+   NSString* identifier = [locale localeIdentifier];
+   const char* pIdent = [identifier cStringUsingEncoding:NSASCIIStringEncoding];
+   [locale release];
+   if (!pIdent)
+      return false;
+   *pLocale = pIdent;
+   return true;
+}
+
 } // namespace desktop

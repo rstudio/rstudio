@@ -2417,12 +2417,17 @@ bool ensureUtf8Charset()
 #if _WIN32
    return true;
 #else
-   std::string charset(locale2charset(NULL));
-   if (charset == "UTF-8")
-      return true;
-
    std::string name = ctypeEnvName();
    std::string ctype = core::system::getenv(name);
+
+   if (boost::regex_search(ctype, boost::regex("UTF-8$")))
+      return true;
+
+#if __APPLE__
+   // For Mac, we attempt to do the fixup in DesktopMain.cpp. If it didn't
+   // work, let's not do anything rash here--just let the UTF-8 warning show.
+   return false;
+#else
 
    std::string newCType;
    if (ctype.empty() || ctype == "C" || ctype == "POSIX")
@@ -2452,6 +2457,7 @@ bool ensureUtf8Charset()
    }
 
    return false;
+#endif
 #endif
 }
 
