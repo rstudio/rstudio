@@ -22,7 +22,6 @@ import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.core.client.widget.CheckboxLabel;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.MultiLineLabel;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -90,7 +89,7 @@ public class ClearAllDialog extends ModalDialogBase
       optionStyle.setMarginLeft(image.getWidth(), Unit.PX);
       optionStyle.setMarginBottom(10, Unit.PX);
       
-      chkIncludeHidden_ = new CheckBox();
+      chkIncludeHidden_ = new CheckBox("Include hidden objects");
       chkIncludeHidden_.setValue(prefs_.clearHidden().getValue());
       chkIncludeHidden_.addValueChangeHandler(new ValueChangeHandler<Boolean>(){
          @Override
@@ -101,10 +100,6 @@ public class ClearAllDialog extends ModalDialogBase
          }
       });
       optionPanel.add(chkIncludeHidden_);
-      CheckboxLabel lblIncludeHidden = new CheckboxLabel(
-                                                   chkIncludeHidden_, 
-                                                   "Include hidden objects");
-      optionPanel.add(lblIncludeHidden);
       panel.add(optionPanel);
       
       return panel;
