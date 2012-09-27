@@ -75,7 +75,7 @@ bool prepareEnvironment(Options& options)
       return false;
    }
 
-   if (desktop::options().verifyInstallation())
+   if (desktop::options().runDiagnostics())
    {
       std::cout << std::endl << "Using R script: " << rScriptPath
                 << std::endl;
