@@ -13,6 +13,8 @@
 
 #include "DesktopSessionLauncher.hpp"
 
+#include <iostream>
+
 #include <boost/bind.hpp>
 
 #include <core/WaitUtils.hpp>
@@ -123,14 +125,13 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
                          this, SLOT(onRSessionExited(int,QProcess::ExitStatus)));
 
 
-   // if we are doing a verify installation then return prior
-   // to actually showing the main window
-   if (options().verifyInstallation())
-      return Success();
-
-   pMainWindow_->show();
-   pAppLaunch->activateWindow();
-   pMainWindow_->loadUrl(url);
+   // show the window (but don't if we are doing a --verify-installation)
+   if (!options().verifyInstallation())
+   {
+      pMainWindow_->show();
+      pAppLaunch->activateWindow();
+      pMainWindow_->loadUrl(url);
+   }
 
    return Success();
 }
@@ -152,6 +153,10 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
    // if this is a verify-installation session then just quit
    if (options().verifyInstallation())
    {
+      QString abendLogMessage = collectAbendLogMessage();
+      if (!abendLogMessage.isEmpty())
+         std::cerr << abendLogMessage.toStdString() << std::endl;
+
       pMainWindow_->quit();
       return;
    }
@@ -287,26 +292,32 @@ Error SessionLauncher::waitForSession(const QString& host,
 }
 
 
-QString SessionLauncher::launchFailedErrorMessage() const
+QString SessionLauncher::collectAbendLogMessage() const
 {
-   QString errMsg = QString::fromUtf8("The R session had a fatal error.");
-
-   // check for abend log
+   std::string contents;
    FilePath abendLog = abendLogPath();
    if (abendLog.exists())
    {
-      std::string contents;
       Error error = core::readStringFromFile(abendLog, &contents);
       if (error)
          LOG_ERROR(error);
-      if (!contents.empty())
-         errMsg.append(QString::fromAscii("\n\n").append(
-                       QString::fromStdString(contents)));
 
       error = abendLog.removeIfExists();
       if (error)
          LOG_ERROR(error);
    }
+
+   return QString::fromStdString(contents);
+}
+
+QString SessionLauncher::launchFailedErrorMessage() const
+{
+   QString errMsg = QString::fromUtf8("The R session had a fatal error.");
+
+   // check for abend log
+   QString abendLogMessage = collectAbendLogMessage();
+   if (!abendLogMessage.isEmpty())
+      errMsg.append(QString::fromAscii("\n\n").append(abendLogMessage));
 
    // check for stderr
    if (pRSessionProcess_)

@@ -55,6 +55,8 @@ public slots:
 
 private:
 
+   QString collectAbendLogMessage() const;
+
    void closeAllSatillites();
 
    core::Error launchSession(const QStringList& argList,
