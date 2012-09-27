@@ -23,7 +23,7 @@
 
 #include <core/FilePath.hpp>
 
-#define kVerifyInstallationOption "--verify-installation"
+#define kRunDiagnosticsOption "--run-diagnostics"
 
 #if defined(__APPLE__)
 #define FORMAT QSettings::NativeFormat
@@ -83,13 +83,13 @@ public:
 
    bool webkitDevTools();
 
-   bool verifyInstallation() { return verifyInstallation_; }
+   bool runDiagnostics() { return runDiagnostics_; }
 
 private:
    Options() : settings_(FORMAT, QSettings::UserScope,
                          QString::fromAscii("RStudio"),
                          QString::fromAscii("desktop")),
-               verifyInstallation_(false)
+               runDiagnostics_(false)
    {
    }
    friend Options& options();
@@ -99,7 +99,7 @@ private:
    mutable core::FilePath executablePath_;
    mutable core::FilePath supportingFilePath_;
    mutable QString portNumber_;
-   bool verifyInstallation_;
+   bool runDiagnostics_;
 };
 
 } // namespace desktop

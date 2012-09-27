@@ -228,7 +228,7 @@ int main(int argc, char* argv[])
          if (pApp->arguments().size() > 1)
          {
             QString arg = pApp->arguments().last();
-            if (arg != QString::fromAscii(kVerifyInstallationOption))
+            if (arg != QString::fromAscii(kRunDiagnosticsOption))
                filename = verifyAndNormalizeFilename(arg);
          }
       }
@@ -249,8 +249,8 @@ int main(int argc, char* argv[])
       // init options from command line
       desktop::options().initFromCommandLine(pApp->arguments());
 
-      // reset log if we are in verify-installation mode
-      if (desktop::options().verifyInstallation())
+      // reset log if we are in run-diagnostics mode
+      if (desktop::options().runDiagnostics())
       {
          desktop::reattachConsoleIfNecessary();
          initializeStderrLog("rdesktop", core::system::kLogLevelWarning);

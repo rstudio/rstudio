@@ -30,7 +30,7 @@
 #include "DesktopSlotBinders.hpp"
 #include "DesktopGwtCallback.hpp"
 
-#define VERIFY_INSTALLATION_LOG(message) if (desktop::options().verifyInstallation()) \
+#define RUN_DIAGNOSTICS_LOG(message) if (desktop::options().runDiagnostics()) \
              std::cout << (message) << std::endl;
 
 using namespace core;
@@ -44,7 +44,7 @@ void launchProcess(std::string absPath,
                    QProcess** ppProc)
 {
    QProcess* pProcess = new QProcess();
-   if (options().verifyInstallation())
+   if (options().runDiagnostics())
       pProcess->setProcessChannelMode(QProcess::ForwardedChannels);
    else
       pProcess->setProcessChannelMode(QProcess::SeparateChannels);
@@ -70,7 +70,7 @@ void logEnvVar(const std::string& name)
 {
    std::string value = core::system::getenv(name);
    if (!value.empty())
-      VERIFY_INSTALLATION_LOG("  " + name + "=" + value);
+      RUN_DIAGNOSTICS_LOG("  " + name + "=" + value);
 }
 
 } // anonymous namespace
@@ -88,7 +88,7 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
    QUrl url;
    buildLaunchContext(&host, &port, &argList, &url);
 
-   VERIFY_INSTALLATION_LOG("\nAttempting to launch R session...");
+   RUN_DIAGNOSTICS_LOG("\nAttempting to launch R session...");
    logEnvVar("RSTUDIO_WHICH_R");
    logEnvVar("R_HOME");
    logEnvVar("R_DOC_DIR");
@@ -107,7 +107,7 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
    if (error)
      return error;
 
-   VERIFY_INSTALLATION_LOG("\nR session launched, "
+   RUN_DIAGNOSTICS_LOG("\nR session launched, "
                            "attempting to connect on port "
                            + port.toStdString() +
                            "...");
@@ -131,7 +131,7 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
    if (error)
       return error;
 
-   VERIFY_INSTALLATION_LOG("\nConnected to R session, attempting to initialize...\n");
+   RUN_DIAGNOSTICS_LOG("\nConnected to R session, attempting to initialize...\n");
 
    // one-time workbench intiailized hook for startup file association
    if (!filename.isNull() && !filename.isEmpty())
@@ -157,8 +157,8 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
                          this, SLOT(onRSessionExited(int,QProcess::ExitStatus)));
 
 
-   // show the window (but don't if we are doing a --verify-installation)
-   if (!options().verifyInstallation())
+   // show the window (but don't if we are doing a --run-diagnostics)
+   if (!options().runDiagnostics())
    {
       pMainWindow_->show();
       pAppLaunch->activateWindow();
@@ -183,7 +183,7 @@ void SessionLauncher::closeAllSatillites()
 void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
 {
    // if this is a verify-installation session then just quit
-   if (options().verifyInstallation())
+   if (options().runDiagnostics())
    {
       pMainWindow_->quit();
       return;
@@ -400,7 +400,7 @@ void SessionLauncher::buildLaunchContext(QString* pHost,
 
    *pArgList << QString::fromAscii("--www-port") << *pPort;
 
-   if (options().verifyInstallation())
+   if (options().runDiagnostics())
       *pArgList << QString::fromAscii("--verify-installation") <<
                    QString::fromAscii("1");
 }

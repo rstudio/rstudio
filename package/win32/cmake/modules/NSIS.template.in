@@ -730,7 +730,7 @@ Section "-Core installation"
   ;
   CreateShortCut "$INSTDIR\bin\Run Diagnostics.lnk" \
                  "$WINDIR\system32\cmd.exe" \
-                 "/K $\"$INSTDIR\bin\rstudio.exe$\" --verify-installation" \
+                 "/K $\"$INSTDIR\bin\rstudio.exe$\" --run-diagnostics" \
                  "$WINDIR\system32\cmd.exe" 0 \
                  SW_SHOWNORMAL
 
