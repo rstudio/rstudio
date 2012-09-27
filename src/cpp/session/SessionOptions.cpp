@@ -292,13 +292,19 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    // provide special home path in temp directory if we are verifying
    if (verifyInstallation_)
    {
-      Error error = FilePath(kVerifyInstallationHomeDir).ensureDirectory();
-      if (error)
+      // we create a special home directory in server mode (since the
+      // user we are running under might not have a home directory)
+      if (programMode_ == kSessionProgramModeServer)
       {
-         LOG_ERROR(error);
-         return ProgramStatus::exitFailure();
+         verifyInstallationHomeDir_ = "/tmp/rstudio-verify-installation";
+         Error error = FilePath(verifyInstallationHomeDir_).ensureDirectory();
+         if (error)
+         {
+            LOG_ERROR(error);
+            return ProgramStatus::exitFailure();
+         }
+         core::system::setenv("R_USER", verifyInstallationHomeDir_);
       }
-      core::system::setenv("R_USER", kVerifyInstallationHomeDir);
    }
 
    // compute user home path

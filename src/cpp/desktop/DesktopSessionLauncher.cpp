@@ -38,7 +38,10 @@ void launchProcess(std::string absPath,
                    QProcess** ppProc)
 {
    QProcess* pProcess = new QProcess();
-   pProcess->setProcessChannelMode(QProcess::SeparateChannels);
+   if (options().verifyInstallation())
+      pProcess->setProcessChannelMode(QProcess::ForwardedChannels);
+   else
+      pProcess->setProcessChannelMode(QProcess::SeparateChannels);
    pProcess->start(QString::fromUtf8(absPath.c_str()), argList);
    *ppProc = pProcess;
 }
@@ -120,6 +123,10 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
                          this, SLOT(onRSessionExited(int,QProcess::ExitStatus)));
 
 
+   // if we are doing a verify installation then return prior
+   // to actually showing the main window
+   if (options().verifyInstallation())
+      return Success();
 
    pMainWindow_->show();
    pAppLaunch->activateWindow();
@@ -142,6 +149,13 @@ void SessionLauncher::closeAllSatillites()
 
 void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
 {
+   // if this is a verify-installation session then just quit
+   if (options().verifyInstallation())
+   {
+      pMainWindow_->quit();
+      return;
+   }
+
    int pendingQuit = pMainWindow_->collectPendingQuitRequest();
 
    // if there was no pending quit set then this is a crash
@@ -346,6 +360,10 @@ void SessionLauncher::buildLaunchContext(QString* pHost,
                 QString::fromAscii("desktop");
 
    *pArgList << QString::fromAscii("--www-port") << *pPort;
+
+   if (options().verifyInstallation())
+      *pArgList << QString::fromAscii("--verify-installation") <<
+                   QString::fromAscii("1");
 }
 
 

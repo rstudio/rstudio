@@ -28,7 +28,6 @@
 #define kUserIdentitySessionOptionShort   "u"
 
 #define kVerifyInstallationSessionOption  "verify-installation"
-#define kVerifyInstallationHomeDir        "/tmp/rstudio-verify-installation"
 
 // NOTE: literal versions of these are depended upon by the desktop/rsinverse
 // project so they should be updated there as well if they are changed

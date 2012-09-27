@@ -58,6 +58,14 @@ public:
       return verifyInstallation_;
    }
 
+   core::FilePath verifyInstallationHomeDir() const
+   {
+      if (!verifyInstallationHomeDir_.empty())
+         return core::FilePath(verifyInstallationHomeDir_.c_str());
+      else
+         return core::FilePath();
+   }
+
    std::string programIdentity() const 
    { 
       return std::string(programIdentity_.c_str()); 
@@ -280,6 +288,7 @@ public:
 private:
    // verify
    bool verifyInstallation_;
+   std::string verifyInstallationHomeDir_;
 
    // program
    std::string programIdentity_;

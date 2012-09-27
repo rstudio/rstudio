@@ -1402,7 +1402,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    // if we are in verify installation mode then we should exit (successfully) now
    if (session::options().verifyInstallation())
    {
-      FilePath(kVerifyInstallationHomeDir).removeIfExists();
+      session::options().verifyInstallationHomeDir().removeIfExists();
       ::exit(EXIT_SUCCESS);
    }
 

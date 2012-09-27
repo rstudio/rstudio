@@ -19,8 +19,11 @@
 #include <QDir>
 #include <QMainWindow>
 #include <QSettings>
+#include <QStringList>
 
 #include <core/FilePath.hpp>
+
+#define kVerifyInstallationOption "--verify-installation"
 
 #if defined(__APPLE__)
 #define FORMAT QSettings::NativeFormat
@@ -36,6 +39,8 @@ Options& options();
 class Options : boost::noncopyable
 {
 public:
+   void initFromCommandLine(const QStringList& arguments);
+
    void restoreMainWindowBounds(QMainWindow* window);
    void saveMainWindowBounds(QMainWindow* window);
    QString portNumber() const;
@@ -78,10 +83,13 @@ public:
 
    bool webkitDevTools();
 
+   bool verifyInstallation() { return verifyInstallation_; }
+
 private:
    Options() : settings_(FORMAT, QSettings::UserScope,
                          QString::fromAscii("RStudio"),
-                         QString::fromAscii("desktop"))
+                         QString::fromAscii("desktop")),
+               verifyInstallation_(false)
    {
    }
    friend Options& options();
@@ -91,6 +99,7 @@ private:
    mutable core::FilePath executablePath_;
    mutable core::FilePath supportingFilePath_;
    mutable QString portNumber_;
+   bool verifyInstallation_;
 };
 
 } // namespace desktop

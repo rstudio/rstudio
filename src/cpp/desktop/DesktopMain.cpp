@@ -232,7 +232,11 @@ int main(int argc, char* argv[])
       {
          // get filename from command line arguments
          if (pApp->arguments().size() > 1)
-            filename = verifyAndNormalizeFilename(pApp->arguments().last());
+         {
+            QString arg = pApp->arguments().last();
+            if (arg != QString::fromAscii(kVerifyInstallationOption))
+               filename = verifyAndNormalizeFilename(arg);
+         }
       }
 
       // if we have a filename and it is NOT a project file then see
@@ -247,6 +251,9 @@ int main(int argc, char* argv[])
          // try to register ourselves as a peer for others
          pAppLaunch->attemptToRegisterPeer();
       }
+
+      // init options from command line
+      desktop::options().initFromCommandLine(pApp->arguments());
 
       pApp->setAttribute(Qt::AA_MacDontSwapCtrlAndMeta);
 

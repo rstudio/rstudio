@@ -38,6 +38,16 @@ Options& options()
    return singleton;
 }
 
+void Options::initFromCommandLine(const QStringList& arguments)
+{
+   for (int i=1; i<arguments.size(); i++)
+   {
+      QString arg = arguments.at(i);
+      if (arg == QString::fromAscii(kVerifyInstallationOption))
+         verifyInstallation_ = true;
+   }
+}
+
 void Options::restoreMainWindowBounds(QMainWindow* win)
 {
    QString key = QString::fromAscii("mainwindow/geometry");
