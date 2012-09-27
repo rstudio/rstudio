@@ -394,7 +394,8 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="activateWorkspace" value="Ctrl+8"/>
       <shortcut refid="activateVcs" value="Ctrl+9"/>
       <shortcut refid="activateBuild" value="Ctrl+0"/>
-      <shortcut refid="jumpTo" value="Shift+Alt+J"/>
+      <shortcut refid="jumpTo" value="Shift+Alt+J" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+      <shortcut refid="jumpTo" value="Cmd+Shift+Alt+J" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
       <shortcut refid="switchToTab" value="Ctrl+Alt+Down"/>
       <shortcut refid="previousTab" value="Ctrl+Alt+Left" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
       <shortcut refid="nextTab" value="Ctrl+Alt+Right" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
@@ -402,7 +403,8 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="nextTab" value="Ctrl+PageDown" if="org.rstudio.core.client.BrowseCap.isLinux()"/>
       <shortcut refid="firstTab" value="Ctrl+Alt+Shift+Left"/>
       <shortcut refid="lastTab" value="Ctrl+Alt+Shift+Right"/>
-      <shortcut refid="goToLine" value="Shift+Alt+G"/>
+      <shortcut refid="goToLine" value="Shift+Alt+G" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+      <shortcut refid="goToLine" value="Cmd+Shift+Alt+G" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
       <shortcut refid="previousPlot" value="Cmd+Shift+PageUp" />
       <shortcut refid="nextPlot" value="Cmd+Shift+PageDown" />
       <shortcut refid="showRequestLog" value="Ctrl+`" />
@@ -427,7 +429,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="devtoolsLoadAll" value="Cmd+Shift+L"/>
       <shortcut refid="checkPackage" value="Cmd+Shift+E"/>
       <shortcut refid="toggleFullScreen" value="Ctrl+Cmd+F" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/> 
-      <shortcut refid="refreshSuperDevMode" value="Ctrl+Alt+0"/>
+      <shortcut refid="refreshSuperDevMode" value="Cmd+Shift+F5"/>
    </shortcuts>
 
    <!--
