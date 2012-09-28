@@ -15,6 +15,8 @@
 
 #include <QWidget>
 
+#include <core/system/Environment.hpp>
+
 namespace desktop {
 
 bool isRetina(QMainWindow* pMainWindow)
@@ -77,6 +79,66 @@ void toggleFullscreenMode(QMainWindow* pMainWindow)
    NSWindow* pWindow = nsWindowForMainWindow(pMainWindow);
    if (supportsFullscreenMode(pWindow))
       [pWindow toggleFullScreen:nil];
+}
+
+void initializeLang()
+{
+   // Not sure what the memory management rules are here, i.e. whether an
+   // autorelease pool is active. Just let it leak, since we're only calling
+   // this once (at the time of this writing).
+
+   // We try to simulate the behavior of R.app.
+
+   NSString* lang = nil;
+
+   // Highest precedence: force.LANG. If it has a value, use it.
+   NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+   [defaults addSuiteNamed:@"org.R-project.R"];
+   lang = [defaults stringForKey:@"force.LANG"];
+   if (lang && ![lang length])
+   {
+      // If force.LANG is present but empty, don't touch LANG at all.
+      return;
+   }
+
+   // Next highest precedence: ignore.system.locale. If it has a value,
+   // hardcode to en_US.UTF-8.
+   if (!lang && [defaults boolForKey:@"ignore.system.locale"])
+   {
+      lang = @"en_US.UTF-8";
+   }
+
+   // Next highest precedence: LANG environment variable.
+   if (!lang)
+   {
+      std::string envLang = getenv("LANG");
+      if (!envLang.empty())
+      {
+         lang = [NSString stringWithCString:envLang.c_str()
+                          encoding:NSASCIIStringEncoding];
+      }
+   }
+
+   // Next highest precedence: Try to figure out language from the current
+   // locale.
+   if (!lang)
+   {
+      NSString* lcid = [[NSLocale currentLocale] localeIdentifier];
+      if (lcid)
+      {
+         lang = [lcid stringByAppendingString:@".UTF-8"];
+      }
+   }
+
+   // None of the above worked. Just hard code it.
+   if (!lang)
+   {
+      lang = @"en_US.UTF-8";
+   }
+
+   const char* clang = [lang cStringUsingEncoding:NSASCIIStringEncoding];
+   core::system::setenv("LANG", clang);
+   core::system::setenv("LC_CTYPE", clang);
 }
 
 } // namespace desktop

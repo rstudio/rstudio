@@ -189,6 +189,7 @@ int main(int argc, char* argv[])
 
    try
    {
+      initializeLang();
       QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 
       // initialize log

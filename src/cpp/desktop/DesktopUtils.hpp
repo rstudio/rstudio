@@ -58,6 +58,7 @@ void enableFullscreenMode(QMainWindow* pMainWindow, bool primary);
 void toggleFullscreenMode(QMainWindow* pMainWindow);
 bool supportsFullscreenMode(QMainWindow* pMainWindow);
 
+void initializeLang();
 
 } // namespace desktop
 

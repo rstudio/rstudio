@@ -86,6 +86,10 @@ bool supportsFullscreenMode(QMainWindow* pMainWindow)
    return false;
 }
 
+void initializeLang()
+{
+}
+
 #endif
 
 void raiseAndActivateWindow(QWidget* pWindow)
