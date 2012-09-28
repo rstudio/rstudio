@@ -40,7 +40,7 @@ FilePath scanForRScript(const std::vector<std::string>& rScriptPaths,
         ++it)
    {
       FilePath rScriptPath(*it);
-      if (rScriptPath.exists())
+      if (rScriptPath.exists() && !rScriptPath.isDirectory())
       {
          // verify that the alias points to a real version of R
          Error error = core::system::realPath(*it, &rScriptPath);
