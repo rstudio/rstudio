@@ -93,7 +93,10 @@ void addRtoolsToPathIfNecessary(core::system::Options* pEnvironment)
 
 #else
 
-void addRtoolsToPathIfNecessary(core::system::Options* pEnvironment);
+void addRtoolsToPathIfNecessary(core::system::Options* pEnvironment)
+{
+
+}
 
 #endif
 
