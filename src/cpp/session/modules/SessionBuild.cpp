@@ -31,6 +31,11 @@
 #include <core/system/ShellUtils.hpp>
 #include <core/r_util/RPackageInfo.hpp>
 
+
+#ifdef _WIN32
+#include <core/r_util/RToolsInfo.hpp>
+#endif
+
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 #include <r/session/RSessionUtils.hpp>
@@ -47,6 +52,51 @@ using namespace core;
 namespace session {
 
 namespace {
+
+#ifdef _WIN32
+
+void addRtoolsToPathIfNecessary(core::system::Options* pEnvironment)
+{
+    // can we find ls.exe and gcc.exe on the path? if so then
+    // we assume Rtools are already there (this is the same test
+    // used by devtools)
+    bool rToolsOnPath = false;
+    Error error = r::exec::RFunction(".rs.isRtoolsOnPath").call(&rToolsOnPath);
+    if (error)
+       LOG_ERROR(error);
+    if (rToolsOnPath)
+       return;
+
+    // ok so scan for R tools
+    std::vector<r_util::RToolsInfo> rTools;
+    error = core::r_util::discoverRTools(&rTools);
+    if (error)
+    {
+       LOG_ERROR(error);
+       return;
+    }
+
+    // enumerate them to see if we have a compatible version
+    // (go in reverse order for most recent first)
+    std::vector<r_util::RToolsInfo>::const_reverse_iterator it = rTools.rbegin();
+    for ( ; it != rTools.rend(); ++it)
+    {
+       bool isCompatible = false;
+       error = r::exec::evaluateString(it->versionPredicate(), &isCompatible);
+       if (isCompatible)
+       {
+          r_util::prependToSystemPath(*it, pEnvironment);
+          return;
+       }
+    }
+ }
+
+#else
+
+void addRtoolsToPathIfNecessary(core::system::Options* pEnvironment);
+
+#endif
+
 
 std::string libPathsString()
 {
@@ -400,6 +450,9 @@ private:
 #ifdef _WIN32
       core::system::setenv(&childEnv, "CYGWIN", "nodosfilewarning");
 #endif
+
+      // add r tools to path if necessary
+      addRtoolsToPathIfNecessary(&childEnv);
 
       pkgOptions.environment = childEnv;
 
@@ -1048,8 +1101,14 @@ bool canBuildCpp()
    RCommand rCmd(rBinDir);
    rCmd << "SHLIB";
    rCmd << cppPath.filename();
+
    core::system::ProcessOptions options;
    options.workingDir = cppPath.parent();
+   core::system::Options childEnv;
+   core::system::environment(&childEnv);
+   addRtoolsToPathIfNecessary(&childEnv);
+   options.environment = childEnv;
+
    core::system::ProcessResult result;
    error = core::system::runCommand(rCmd.commandString(), options, &result);
    if (error)

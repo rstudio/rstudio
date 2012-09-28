@@ -27,8 +27,11 @@ namespace r_util {
 class RToolsInfo
 {
 public:
+   RToolsInfo() {}
    RToolsInfo(const std::string& name,
               const FilePath& installPath);
+
+   bool empty() const { return name_.empty(); }
 
    bool isRecognized() const { return !versionPredicate().empty(); }
 

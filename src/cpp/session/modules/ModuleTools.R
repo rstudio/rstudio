@@ -70,3 +70,9 @@
 {
    l10n_info()$`UTF-8` || identical(utils::localeToCharset(), "UTF-8")
 })
+
+
+.rs.addFunction("isRtoolsOnPath", function()
+{
+   return (nzchar(Sys.which("ls.exe")) && nzchar(Sys.which("gcc.exe")))
+})
