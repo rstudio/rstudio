@@ -99,7 +99,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    @Override
    public String getName()
    {
-      return "Version Control";
+      return "Git/SVN";
    }
 
    @Override

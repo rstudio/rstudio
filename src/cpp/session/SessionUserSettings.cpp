@@ -506,6 +506,26 @@ void UserSettings::setUseInternet2(bool useInternet2)
    settings_.set("useInternet2", useInternet2);
 }
 
+bool UserSettings::cleanupAfterRCmdCheck() const
+{
+   return settings_.getBool("cleanupAfterRCmdCheck", true);
+}
+
+void UserSettings::setCleanupAfterRCmdCheck(bool cleanup)
+{
+   settings_.set("cleanupAfterRCmdCheck", cleanup);
+}
+
+bool UserSettings::viewDirAfterRCmdCheck() const
+{
+   return settings_.getBool("viewDirAfterRCmdCheck", false);
+}
+
+void UserSettings::setViewDirAfterRCmdCheck(bool viewDir)
+{
+   settings_.set("viewDirAfterRCmdCheck", viewDir);
+}
+
 bool UserSettings::alwaysSaveHistory() const
 {
    return settings_.getBool(kAlwaysSaveHistory, true);

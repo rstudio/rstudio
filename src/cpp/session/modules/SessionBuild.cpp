@@ -37,6 +37,7 @@
 #include <r/session/RConsoleHistory.hpp>
 
 #include <session/projects/SessionProjects.hpp>
+#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 
 #include "SessionBuildErrors.hpp"
@@ -542,14 +543,14 @@ private:
          successMessage_ = "R CMD check succeeded\n";
 
          // bind a success function if appropriate
-         if (options_.cleanupAfterCheck)
+         if (userSettings().cleanupAfterRCmdCheck())
          {
             successFunction_ = boost::bind(&Build::cleanupAfterCheck,
                                            Build::shared_from_this(),
                                            pkgInfo_);
          }
 
-         if (options_.viewDirAfterFailedCheck)
+         if (userSettings().viewDirAfterRCmdCheck())
          {
             failureFunction_ = boost::bind(&Build::viewDirAfterFailedCheck,
                                            Build::shared_from_this(),

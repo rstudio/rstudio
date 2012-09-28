@@ -24,11 +24,15 @@ public class PackagesPrefs extends JavaScriptObject
    public static final native PackagesPrefs create(
                                   CRANMirror cranMirror,
                                   boolean useInternet2,
-                                  BioconductorMirror bioconductorMirror) /*-{
+                                  BioconductorMirror bioconductorMirror,
+                                  boolean cleanupAfterCheckSuccess,
+                                  boolean viewDirAfterCheckFailure) /*-{
       var prefs = new Object();
       prefs.cran_mirror = cranMirror;
       prefs.use_internet2 = useInternet2;
       prefs.bioconductor_mirror = bioconductorMirror;
+      prefs.cleanup_after_check_success = cleanupAfterCheckSuccess;
+      prefs.viewdir_after_check_failure = viewDirAfterCheckFailure;
       return prefs ;
    }-*/;
 
@@ -39,6 +43,15 @@ public class PackagesPrefs extends JavaScriptObject
    public native final boolean getUseInternet2() /*-{
       return this.use_internet2;
    }-*/;
+   
+   public native final boolean getCleanupAfterCheckSuccess() /*-{
+      return this.cleanup_after_check_success;
+   }-*/;
+   
+   public native final boolean getViewDirAfterCheckFailure() /*-{
+      return this.viewdir_after_check_failure;
+   }-*/;
+
    
    public native final BioconductorMirror getBioconductorMirror() /*-{
       return this.bioconductor_mirror;

@@ -146,6 +146,12 @@ public:
    bool useInternet2() const;
    void setUseInternet2(bool useInternet2);
 
+   bool cleanupAfterRCmdCheck() const;
+   void setCleanupAfterRCmdCheck(bool cleanup);
+
+   bool viewDirAfterRCmdCheck() const;
+   void setViewDirAfterRCmdCheck(bool viewDir);
+
 private:
 
    void onSettingsFileChanged(

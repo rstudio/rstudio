@@ -609,12 +609,6 @@ Error ProjectContext::readBuildOptions(RProjectBuildOptions* pOptions)
       return error;
 
    pOptions->makefileArgs = optionsFile.get("makefile_args");
-   pOptions->cleanupAfterCheck = optionsFile.getBool(
-                                       "cleanup_after_check",
-                                       true);
-   pOptions->viewDirAfterFailedCheck = optionsFile.getBool(
-                                       "view_dir_after_failed_check",
-                                       false);
    pOptions->autoRoxygenizeForCheck = optionsFile.getBool(
                                        "auto_roxygenize_for_check",
                                        true);
@@ -640,9 +634,6 @@ Error ProjectContext::writeBuildOptions(const RProjectBuildOptions& options)
 
    optionsFile.beginUpdate();
    optionsFile.set("makefile_args", options.makefileArgs);
-   optionsFile.set("cleanup_after_check", options.cleanupAfterCheck);
-   optionsFile.set("view_dir_after_failed_check",
-                   options.viewDirAfterFailedCheck);
    optionsFile.set("auto_roxygenize_for_check",
                    options.autoRoxygenizeForCheck);
    optionsFile.set("auto_roxygenize_for_build_package",

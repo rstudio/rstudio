@@ -36,6 +36,7 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
                             CompilePdfPreferencesPane compilePdf,
                             AppearancePreferencesPane appearance,
                             PaneLayoutPreferencesPane paneLayout,
+                            PackagesPreferencesPane packages,
                             SourceControlPreferencesPane sourceControl,
                             SpellingPreferencesPane spelling)
    {
@@ -46,6 +47,7 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
                                    source, 
                                    appearance, 
                                    paneLayout,
+                                   packages,
                                    compilePdf,
                                    spelling,
                                    sourceControl}); 

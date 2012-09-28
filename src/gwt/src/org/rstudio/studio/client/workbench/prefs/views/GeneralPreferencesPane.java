@@ -14,14 +14,11 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
@@ -35,12 +32,9 @@ import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
-import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.prefs.model.GeneralPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.HistoryPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.PackagesPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.ProjectsPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -55,14 +49,12 @@ public class GeneralPreferencesPane extends PreferencesPane
                                  FileDialogs fileDialogs,
                                  UIPrefs prefs,
                                  final GlobalDisplay globalDisplay,
-                                 SourceServerOperations server,
-                                 final DefaultCRANMirror defaultCRANMirror)
+                                 SourceServerOperations server)
    {
       fsContext_ = fsContext;
       fileDialogs_ = fileDialogs;
       prefs_ = prefs;
       server_ = server;
-      globalDisplay_ = globalDisplay;
 
       if (Desktop.isDesktop())
       {
@@ -136,44 +128,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       spaced(rProfileOnResume_);
       if (!Desktop.isDesktop())
          add(rProfileOnResume_);
-      
-      cranMirrorTextBox_ = new TextBoxWithButton(
-            "CRAN mirror:",
-            "Change...",
-            new ClickHandler()
-            {
-               public void onClick(ClickEvent event)
-               {
-                  defaultCRANMirror.choose(new OperationWithInput<CRANMirror>(){
-                     @Override
-                     public void execute(CRANMirror cranMirror)
-                     {
-                        cranMirror_ = cranMirror;
-                        cranMirrorTextBox_.setText(cranMirror_.getDisplay());
-                     }     
-                  });
-                 
-               }
-            });
-      nudgeRight(cranMirrorTextBox_);
-      textBoxWithChooser(cranMirrorTextBox_);
-      cranMirrorTextBox_.setText("");
-      add(cranMirrorTextBox_);
-      
-      useInternet2_ = new CheckBox(
-                        "Use Internet Explorer library/proxy for HTTP",
-                        true);
-      if (BrowseCap.isWindowsDesktop())
-      {     
-         lessSpaced(cranMirrorTextBox_);
-         spaced(useInternet2_);
-         add(useInternet2_);
-      }
-      else
-      {
-         spaced(cranMirrorTextBox_);
-      }
-      
+           
       encodingValue_ = prefs_.defaultEncoding().getGlobalValue();
       add(encoding_ = new TextBoxWithButton(
             "Default text encoding:",
@@ -218,8 +173,6 @@ public class GeneralPreferencesPane extends PreferencesPane
       alwaysSaveHistory_.setEnabled(false);
       removeHistoryDuplicates_.setEnabled(false);
       rProfileOnResume_.setEnabled(false);
-      cranMirrorTextBox_.setEnabled(false);
-      useInternet2_.setEnabled(false);
       restoreLastProject_.setEnabled(false);
    }
    
@@ -263,33 +216,11 @@ public class GeneralPreferencesPane extends PreferencesPane
       
       rProfileOnResume_.setValue(generalPrefs.getRprofileOnResume());
       rProfileOnResume_.setEnabled(true);
-      
-      // packages prefs
-      PackagesPrefs packagesPrefs = rPrefs.getPackagesPrefs();
-      cranMirrorTextBox_.setEnabled(true);
-      if (!packagesPrefs.getCRANMirror().isEmpty())
-      {
-         cranMirror_ = packagesPrefs.getCRANMirror();
-         cranMirrorTextBox_.setText(cranMirror_.getDisplay());
-      }
-      useInternet2_.setEnabled(true);
-      useInternet2_.setValue(packagesPrefs.getUseInternet2());
-      useInternet2_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
-         {
-            globalDisplay_.showMessage(
-                  MessageDialog.INFO, 
-                  "Restart R Required",
-                  "You must restart your R session for this setting " +
-                  "to take effect.");
-         }
-      });
      
       // projects prefs
-     ProjectsPrefs projectsPrefs = rPrefs.getProjectsPrefs();
-     restoreLastProject_.setEnabled(true);
-     restoreLastProject_.setValue(projectsPrefs.getRestoreLastProject());
+      ProjectsPrefs projectsPrefs = rPrefs.getProjectsPrefs();
+      restoreLastProject_.setEnabled(true);
+      restoreLastProject_.setValue(projectsPrefs.getRestoreLastProject());
    }
    
 
@@ -336,12 +267,6 @@ public class GeneralPreferencesPane extends PreferencesPane
                                           removeHistoryDuplicates_.getValue());
          rPrefs.setHistoryPrefs(historyPrefs);
          
-         // set packages prefs
-         PackagesPrefs packagesPrefs = PackagesPrefs.create(
-                                                 cranMirror_, 
-                                                 useInternet2_.getValue(),
-                                                 null);
-         rPrefs.setPackagesPrefs(packagesPrefs);
          
          // set projects prefs
          ProjectsPrefs projectsPrefs = ProjectsPrefs.create(
@@ -377,14 +302,10 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox loadRData_;
    private final CheckBox alwaysSaveHistory_;
    private final CheckBox removeHistoryDuplicates_;
-   private CRANMirror cranMirror_ = CRANMirror.empty();
-   private CheckBox useInternet2_;
-   private TextBoxWithButton cranMirrorTextBox_;
    private CheckBox restoreLastProject_;
    private CheckBox rProfileOnResume_;
    private final SourceServerOperations server_;
    private final UIPrefs prefs_;
    private final TextBoxWithButton encoding_;
    private String encodingValue_;
-   private final GlobalDisplay globalDisplay_;
 }

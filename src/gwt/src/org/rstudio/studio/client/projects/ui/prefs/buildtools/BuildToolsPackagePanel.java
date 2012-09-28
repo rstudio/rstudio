@@ -14,7 +14,6 @@
 
 package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -99,6 +98,10 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
         new SafeHtmlBuilder().appendHtmlConstant(
           "Build and Reload &mdash; R CMD INSTALL additional options:").toSafeHtml()));
      
+      add(checkAdditionalArguments_ = new AdditionalArguments(
+            new SafeHtmlBuilder().appendHtmlConstant(
+                "Check Package &mdash; R CMD check additional options:").toSafeHtml()));
+      
       add(buildAdditionalArguments_ = new AdditionalArguments(
         new SafeHtmlBuilder().appendHtmlConstant(
           "Build Source Package &mdash; R CMD build additional options:").toSafeHtml()));
@@ -107,23 +110,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
         new SafeHtmlBuilder().appendHtmlConstant(
           "Build Binary Package &mdash; R CMD INSTALL additional options:").toSafeHtml()));
       
-      add(checkAdditionalArguments_ = new AdditionalArguments(
-            new SafeHtmlBuilder().appendHtmlConstant(
-                "Check Package &mdash; R CMD check additional options:").toSafeHtml()));
-          
-      add(chkCleanupAfterCheck_ = checkBox(
-            "Cleanup output after successful R CMD check"));
-      chkCleanupAfterCheck_.getElement().getStyle().setMarginBottom(12, Unit.PX);
-      add(viewDirAfterFailedCheck_ = checkBox(
-            "View Rcheck directory after failed R CMD check"));
-      
-      if (BrowseCap.isWindowsDesktop())
-      {
-         adjustCheckboxMargin(chkCleanupAfterCheck_);
-         adjustCheckboxMargin(viewDirAfterFailedCheck_);
-      }
-
-   }
+     }
    
    @Inject
    public void initialize(WorkbenchContext workbenchContext)
@@ -146,11 +133,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       buildAdditionalArguments_.setText(config.getPackageBuildArgs());
       buildBinaryAdditionalArguments_.setText(config.getPackageBuildBinaryArgs());
       checkAdditionalArguments_.setText(config.getPackageCheckArgs());
-      chkCleanupAfterCheck_.setValue(
-                           options.getBuildOptions().getCleanupAfterCheck());
-      viewDirAfterFailedCheck_.setValue(
-                      options.getBuildOptions().getViewDirAfterFailedCheck());
-      
+   
       roxygenOptions_ = new BuildToolsRoxygenOptions(
             config.getPackageRoxygenzieRd(),
             config.getPackageRoxygenizeCollate(),
@@ -192,27 +175,17 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
                                   roxygenOptions_.getRocletCollate(),
                                   roxygenOptions_.getRocletNamespace());
       RProjectBuildOptions buildOptions = options.getBuildOptions();
-      buildOptions.setCleanupAfterCheck(chkCleanupAfterCheck_.getValue());
-      buildOptions.setViewDirAfterFailedCheck(viewDirAfterFailedCheck_.getValue());
       buildOptions.setAutoRoxyginizeOptions(
                                        roxygenOptions_.getAutoRoxygenize());
    }
 
-   private void adjustCheckboxMargin(CheckBox checkBox)
-   {
-      checkBox.getElement().getStyle().setMarginLeft(0, Unit.PX);
-   }
-   
    private PathSelector pathSelector_;
    
    private AdditionalArguments installAdditionalArguments_;
    private AdditionalArguments buildAdditionalArguments_;
    private AdditionalArguments buildBinaryAdditionalArguments_;
    private AdditionalArguments checkAdditionalArguments_;
-   
-   private CheckBox chkCleanupAfterCheck_;
-   private CheckBox viewDirAfterFailedCheck_;
-   
+     
    private BuildToolsRoxygenOptions roxygenOptions_;
    
    private VerticalPanel roxygenizePanel_;
