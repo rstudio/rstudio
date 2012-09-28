@@ -86,9 +86,8 @@ bool supportsFullscreenMode(QMainWindow* pMainWindow)
    return false;
 }
 
-bool getCurrentLocaleId(std::string* pLocale)
+void initializeLang()
 {
-   return false;
 }
 
 #endif

@@ -45,31 +45,6 @@ using namespace desktop;
 
 namespace {
 
-void initializeLang()
-{
-#ifdef __APPLE__
-   // When Mac apps are launched from the dock, none of the LANG or LC_*
-   // environment variables are set. We set LANG and LC_CTYPE based on the
-   // current OS X locale. It's especially important that the ctype is
-   // set to UTF-8 as we assume this throughout the rsession process.
-
-   std::string lcid;
-   if (getCurrentLocaleId(&lcid))
-   {
-      core::system::setenv("LANG", lcid + ".UTF-8");
-      core::system::setenv("LC_CTYPE", lcid + ".UTF-8");
-   }
-   else
-   {
-      // Something bad happened
-      std::cerr << "Couldn't read locale, defaulting to en_US.UTF-8"
-                << std::endl;
-      core::system::setenv("LANG", "en_US.UTF-8");
-      core::system::setenv("LC_CTYPE", "en_US.UTF-8");
-   }
-#endif
-}
-
 void initializeSharedSecret()
 {
    sharedSecret = QString::number(rand())

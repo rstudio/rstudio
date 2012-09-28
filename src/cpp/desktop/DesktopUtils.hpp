@@ -58,7 +58,7 @@ void enableFullscreenMode(QMainWindow* pMainWindow, bool primary);
 void toggleFullscreenMode(QMainWindow* pMainWindow);
 bool supportsFullscreenMode(QMainWindow* pMainWindow);
 
-bool getCurrentLocaleId(std::string* pLocale);
+void initializeLang();
 
 } // namespace desktop
 
