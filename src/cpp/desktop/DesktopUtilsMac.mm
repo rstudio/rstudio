@@ -111,7 +111,7 @@ void initializeLang()
    // Next highest precedence: LANG environment variable.
    if (!lang)
    {
-      std::string envLang = getenv("LANG");
+      std::string envLang = core::system::getenv("LANG");
       if (!envLang.empty())
       {
          lang = [NSString stringWithCString:envLang.c_str()
