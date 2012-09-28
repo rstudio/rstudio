@@ -85,20 +85,32 @@ void unsetenv(Options* pEnvironment, const std::string& name)
 }
 
 void addToPath(std::string* pPath,
-               const std::string& filePath)
+               const std::string& filePath,
+               bool prepend)
 {
-   if (!pPath->empty())
-      pPath->append(kPathSeparator);
+   if (prepend)
+   {
+      *pPath = filePath + kPathSeparator + *pPath;
+   }
+   else
+   {
+      if (!pPath->empty())
+         pPath->append(kPathSeparator);
 
-   pPath->append(filePath);
+      pPath->append(filePath);
+   }
 }
 
 // add to the PATH within an Options struture
 void addToPath(Options* pEnvironment,
-               const std::string& filePath)
+               const std::string& filePath,
+               bool prepend)
 {
    std::string path = getenv(*pEnvironment, "PATH");
-   path = path + kPathSeparator + filePath;
+   if (prepend)
+      path = filePath + kPathSeparator + path;
+   else
+      path = path + kPathSeparator + filePath;
    setenv(pEnvironment, "PATH", path);
 }
 

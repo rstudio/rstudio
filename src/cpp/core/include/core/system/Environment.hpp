@@ -64,11 +64,13 @@ void getModifiedEnv(const Options& extraVars, Options* pEnv);
 
 // add to the PATH within a string
 void addToPath(std::string* pPath,
-               const std::string& filePath);
+               const std::string& filePath,
+               bool prepend = false);
 
 // add to the PATH within an Options struture
 void addToPath(Options* pEnvironment,
-               const std::string& filePath);
+               const std::string& filePath,
+               bool prepend = false);
 
 
 /****************************************************************

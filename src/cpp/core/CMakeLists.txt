@@ -212,6 +212,7 @@ else()
       system/Win32System.cpp
       system/Win32ChildProcess.cpp
       system/file_monitor/Win32FileMonitor.cpp
+      r_util/RToolsInfo.cpp
    )
 
 endif()
