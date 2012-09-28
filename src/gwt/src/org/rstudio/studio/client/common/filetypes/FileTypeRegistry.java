@@ -146,6 +146,8 @@ public class FileTypeRegistry
       register(".gitignore", TEXT, icons.iconText());
       register(".Rbuildignore", TEXT, icons.iconText());
       register("*.r", R, icons.iconRdoc());
+      register("*.q", R, icons.iconRdoc());
+      register("*.s", R, icons.iconRdoc());
       register(".rprofile", R, icons.iconRprofile());
       register("Rprofile.site", R, icons.iconRprofile());
       register("DESCRIPTION", DCF, icons.iconText());
