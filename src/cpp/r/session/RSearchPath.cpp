@@ -273,7 +273,7 @@ Error save(const FilePath& statePath)
                                                                  "package:",
                                                                  "");
          std::string path;
-         Error error = r::exec::RFunction("path.package", name).call(&path);
+         Error error = r::exec::RFunction(".path.package", name).call(&path);
          if (error)
             LOG_ERROR(error);
 
