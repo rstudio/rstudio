@@ -25,10 +25,6 @@
 #include <R_ext/GraphicsEngine.h>
 #include <R_ext/GraphicsDevice.h>
 
-#ifdef __APPLE__
-#include <R_ext/QuartzDevice.h>
-#endif
-
 #include <r/RErrorCategory.hpp>
 
 using namespace core;
@@ -53,14 +49,10 @@ public:
       {
          checked_ = true;
 
-         QuartzFunctions_t* pQuartzFunctions = NULL;
-         Error error = r::exec::executeSafely<QuartzFunctions_t*>(
-                                                         &getQuartzFunctions,
-                                                         &pQuartzFunctions);
+         Error error = r::exec::RFunction("capabilities",
+                                          "aqua").call(&installed_);
          if (error)
             LOG_ERROR(error);
-
-         installed_ = pQuartzFunctions != NULL;
       }
 
       return installed_;
