@@ -81,10 +81,12 @@ void toggleFullscreenMode(QMainWindow* pMainWindow)
 
 bool getCurrentLocaleId(std::string* pLocale)
 {
+   // Not sure what the memory management rules are here, i.e. whether an
+   // autorelease pool is active. Just let it leak, since we're only calling
+   // this once (at the time of this writing).
    id locale = [NSLocale currentLocale];
    NSString* identifier = [locale localeIdentifier];
    const char* pIdent = [identifier cStringUsingEncoding:NSASCIIStringEncoding];
-   [locale release];
    if (!pIdent)
       return false;
    *pLocale = pIdent;
