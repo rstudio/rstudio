@@ -20,6 +20,8 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.*;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.json.client.JSONString;
+import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -1125,9 +1127,20 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onFailure(ServerError error)
                {
+                  String message = error.getUserMessage();
+                  
+                  // see if a special message was provided
+                  JSONValue errValue = error.getClientInfo();
+                  if (errValue != null)
+                  {
+                     JSONString errMsg = errValue.isString();
+                     if (errMsg != null)
+                        message = errMsg.stringValue();
+                  }
+                  
                   globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
                                              "Error while opening file",
-                                             error.getUserMessage());
+                                             message);
                  
                }
             });  

@@ -70,6 +70,9 @@ core::FilePath tempFile(const std::string& prefix,
 // find out the location of a binary
 core::FilePath findProgram(const std::string& name);
 
+// is the file a text file
+bool isTextFile(const core::FilePath& targetPath);
+
 // find the location of the R script
 core::Error rBinDir(core::FilePath* pRBinDirPath);
 core::Error rScriptPath(core::FilePath* pRScriptPath);

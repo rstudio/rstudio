@@ -154,39 +154,7 @@ core::Error isTextFile(const json::JsonRpcRequest& request,
 
    FilePath targetPath = module_context::resolveAliasedPath(path);
 
-#ifndef _WIN32
-   core::shell_utils::ShellCommand cmd("file");
-   cmd << "--mime-type";
-   cmd << "--brief";
-   cmd << targetPath;
-   core::system::ProcessResult result;
-   error = core::system::runCommand(cmd,
-                                    core::system::ProcessOptions(),
-                                    &result);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return error;
-   }
-   pResponse->setResult(boost::algorithm::starts_with(result.stdOut, "text/") ||
-                        boost::algorithm::ends_with(result.stdOut, "+xml"));
-#else
-
-   // read contents of file
-   std::string contents;
-   error = core::readStringFromFile(targetPath, &contents);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return error;
-   }
-
-   // does it have null bytes?
-   std::string nullByte;
-   nullByte.push_back('\0');
-   pResponse->setResult(!boost::algorithm::contains(contents, nullByte));
-
-#endif
+   pResponse->setResult(module_context::isTextFile(targetPath));
 
    return Success();
 }

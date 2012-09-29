@@ -202,6 +202,16 @@ Error openDocument(const json::JsonRpcRequest& request,
                          ERROR_LOCATION);
    }
    
+   // ensure the file is not binary
+   if (!module_context::isTextFile(documentPath))
+   {
+      Error error = systemError(boost::system::errc::illegal_byte_sequence,
+                                ERROR_LOCATION);
+      pResponse->setError(error, "File is binary rather than text so cannot "
+                                 "be opened by the source editor.");
+      return Success();
+   }
+
    // set the doc contents to the specified file
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument(type)) ;
    pDoc->setEncoding(encoding);
