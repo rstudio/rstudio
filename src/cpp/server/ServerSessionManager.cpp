@@ -22,6 +22,7 @@
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
+#include <core/SafeConvert.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
 
@@ -241,7 +242,7 @@ Error launchSession(const std::string& username,
    uid_t uid = core::system::user::currentUserIdentity().userId;
    environment.push_back(std::make_pair(
                            kRStudioLimitRpcClientUid,
-                           boost::lexical_cast<std::string>(uid)));
+                           safe_convert::numberToString(uid)));
 
    // pass extra params
    std::copy(extraArgs.begin(), extraArgs.end(), std::back_inserter(args));

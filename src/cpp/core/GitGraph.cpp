@@ -73,7 +73,7 @@ std::string Line::string() const
             output.append("-");
       }
 
-      output.append(boost::lexical_cast<std::string>(c.id));
+      output.append(safe_convert::numberToString(c.id));
 
       if (i < size() - 1)
          output.append(" ");

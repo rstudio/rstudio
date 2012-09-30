@@ -52,6 +52,7 @@
 #include <core/SyslogLogWriter.hpp>
 #include <core/StderrLogWriter.hpp>
 #include <core/StringUtils.hpp>
+#include <core/SafeConvert.hpp>
 
 #include <core/system/ProcessArgs.hpp>
 #include <core/system/Environment.hpp>
@@ -868,7 +869,7 @@ Error waitForProcessExit(PidType processId)
                            boost::system::errc::state_not_recoverable,
                            ERROR_LOCATION);
          error.addProperty("result",
-                           boost::lexical_cast<std::string>(result));
+                           safe_convert::numberToString(result));
          return error;
       }
    }

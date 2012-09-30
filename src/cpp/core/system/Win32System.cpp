@@ -42,6 +42,7 @@
 #include <core/FileInfo.hpp>
 #include <core/DateTime.hpp>
 #include <core/StringUtils.hpp>
+#include <core/SafeConvert.hpp>
 #include <core/system/Environment.hpp>
 
 #ifndef JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
@@ -243,7 +244,7 @@ FilePath userHomePath(std::string envOverride)
    else
    {
       LOG_ERROR_MESSAGE("Unable to retreive user home path. HRESULT:  " +
-                        boost::lexical_cast<std::string>(hr));
+                        safe_convert::numberToString(hr));
       return FilePath();
    }
 }
@@ -264,7 +265,7 @@ FilePath userSettingsPath(const FilePath& userHomeDirectory,
    if (hr != S_OK)
    {
       LOG_ERROR_MESSAGE("Unable to retreive user home path. HRESULT:  " +
-                        boost::lexical_cast<std::string>(hr));
+                        safe_convert::numberToString(hr));
       return FilePath();
    }
 

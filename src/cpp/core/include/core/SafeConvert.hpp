@@ -22,6 +22,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 
+#include <core/Log.hpp>
+#include <core/Error.hpp>
 
 namespace core {
 namespace safe_convert {
@@ -54,11 +56,18 @@ T stringTo(const std::string& str,
 template <typename T>
 std::string numberToString(T input, bool localeIndependent = true)
 {
-   std::ostringstream stream;
-   if (localeIndependent)
-      stream.imbue(std::locale::classic()); // force locale-independence
-   stream << input;
-   return stream.str();
+   try
+   {
+      std::ostringstream stream;
+      if (localeIndependent)
+         stream.imbue(std::locale::classic()); // force locale-independence
+      stream << input;
+      return stream.str();
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   // return empty string for unexpected error
+   return std::string();
 }
 
 template <typename TInput, typename TOutput>

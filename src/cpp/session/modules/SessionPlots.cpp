@@ -465,9 +465,9 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
 
    // define variables
    std::map<std::string,std::string> variables;
-   variables["width"] = boost::lexical_cast<std::string>(width);
-   variables["height"] = boost::lexical_cast<std::string>(height);
-   variables["scale"] = boost::lexical_cast<std::string>(scale);;
+   variables["width"] = safe_convert::numberToString(width);
+   variables["height"] = safe_convert::numberToString(height);
+   variables["scale"] = safe_convert::numberToString(scale);;
    text::TemplateFilter filter(variables);
 
    pResponse->setNoCacheHeaders();

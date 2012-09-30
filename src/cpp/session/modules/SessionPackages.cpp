@@ -123,7 +123,7 @@ void downloadAvailablePackages(const std::string& contribUrl,
    http::Response pkgResponse;
 
    Error error = http::sendRequest(url.hostname(),
-                                   boost::lexical_cast<std::string>(url.port()),
+                                   safe_convert::numberToString(url.port()),
                                    pkgRequest,
                                    &pkgResponse);
 

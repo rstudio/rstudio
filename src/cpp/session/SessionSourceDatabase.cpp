@@ -493,7 +493,7 @@ bool isSafeSourceDocument(const FilePath& docDbPath,
 
    // get the size of the file in KB
    uintmax_t docSizeKb = docDbPath.size() / 1024;
-   std::string kbStr = boost::lexical_cast<std::string>(docSizeKb);
+   std::string kbStr = safe_convert::numberToString(docSizeKb);
 
    // if it's larger than 2MB then always drop it (that's the limit
    // enforced by the editor)

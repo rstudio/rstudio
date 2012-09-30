@@ -18,6 +18,7 @@
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 #include <core/DateTime.hpp>
+#include <core/SafeConvert.hpp>
 
 #include <DesktopMainWindow.hpp>
 #include <DesktopUtils.hpp>
@@ -137,7 +138,7 @@ void EvinceSynctex::syncView(EvinceWindow* pWindow, const SyncRequest& req)
       QStringList args;
       args.append(QString::fromAscii("-i"));
       args.append(QString::fromStdString(
-                           boost::lexical_cast<std::string>(req.page)));
+                           safe_convert::numberToString(req.page)));
       args.append(req.pdfFile);
       QProcess::startDetached(QString::fromAscii("evince"), args);
    }

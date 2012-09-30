@@ -18,6 +18,7 @@
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/FilePath.hpp>
+#include <core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 
@@ -234,7 +235,7 @@ std::string ClientEvent::typeName() const
          return "deferred_init_completed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
-                             boost::lexical_cast<std::string>(type_));
+                             safe_convert::numberToString(type_));
          return "";
    }
 }

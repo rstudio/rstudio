@@ -246,7 +246,7 @@ Error waitForSignals()
       else
       {
          LOG_WARNING_MESSAGE("Unexpected signal returned from sigwait: " +
-                             boost::lexical_cast<std::string>(sig));
+                             safe_convert::numberToString(sig));
       }
    }
 

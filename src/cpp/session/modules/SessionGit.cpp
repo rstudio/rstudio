@@ -742,7 +742,7 @@ public:
                           std::string* pOutput)
    {
       ShellArgs args = ShellArgs() << "diff";
-      args << "-U" + boost::lexical_cast<std::string>(contextLines);
+      args << "-U" + safe_convert::numberToString(contextLines);
       if (mode == PatchModeStage)
          args << "--cached";
       args << "--";
@@ -913,15 +913,15 @@ public:
          // if we know that all commits are included.
          if (skip > 0)
          {
-            args << "--skip=" + boost::lexical_cast<std::string>(skip);
+            args << "--skip=" + safe_convert::numberToString(skip);
             skip = 0;
          }
          if (maxentries >= 0)
          {
-            args << "--max-count=" + boost::lexical_cast<std::string>(maxentries);
+            args << "--max-count=" + safe_convert::numberToString(maxentries);
             maxentries = -1;
 
-            revListArgs << "--max-count=" + boost::lexical_cast<std::string>(
+            revListArgs << "--max-count=" + safe_convert::numberToString(
                   (skip < 0 ? 0 : skip) + maxentries);
          }
       }

@@ -30,7 +30,7 @@ std::vector<int> s_writeOnExit;
 
 int setFdEnv(std::string name, int val)
 {
-   std::string strVal = boost::lexical_cast<std::string>(val);
+   std::string strVal = safe_convert::numberToString(val);
    return ::setenv(name.c_str(), strVal.c_str(), strVal.size());
 }
 

@@ -48,7 +48,7 @@ ShellCommand& ShellCommand::operator<<(const std::string& arg)
 ShellCommand& ShellCommand::operator<<(int arg)
 {
    output_.push_back(' ');
-   output_.append(boost::lexical_cast<std::string>(arg));
+   output_.append(safe_convert::numberToString(arg));
    return *this;
 }
 
@@ -90,7 +90,7 @@ ShellArgs& ShellArgs::operator<<(const std::string& arg)
 
 ShellArgs& ShellArgs::operator<<(int arg)
 {
-   args_.push_back(boost::lexical_cast<std::string>(arg));
+   args_.push_back(safe_convert::numberToString(arg));
    return *this;
 }
 

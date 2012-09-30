@@ -27,6 +27,7 @@
 #include <core/Log.hpp>
 #include <core/Exec.hpp>
 #include <core/FilePath.hpp>
+#include <core/SafeConvert.hpp>
 #include <core/system/System.hpp>
 
 #include "config.h"
@@ -101,7 +102,7 @@ Error userFrom(const boost::function<int(
       if (result == 0) // will happen if user is simply not found
          result = kNotFoundError;
       Error error = systemError(result, ERROR_LOCATION);
-      error.addProperty("user-value", boost::lexical_cast<std::string>(value));
+      error.addProperty("user-value", safe_convert::numberToString(value));
       return error;
    }
    else

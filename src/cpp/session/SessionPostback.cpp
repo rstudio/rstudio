@@ -69,7 +69,7 @@ void endHandlePostback(const http::UriHandlerFunctionContinuation& cont,
    response.setStatusCode(http::status::Ok);
    response.setContentType("text/plain");
    response.setHeader(kPostbackExitCodeHeader,
-                        boost::lexical_cast<std::string>(exitCode));
+                        safe_convert::numberToString(exitCode));
    response.setBody(output);
    cont(&response);
 }

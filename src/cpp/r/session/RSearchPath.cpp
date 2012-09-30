@@ -32,6 +32,7 @@
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
+#include <core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 
 #define R_INTERNAL_FUNCTIONS
@@ -290,7 +291,7 @@ Error save(const FilePath& statePath)
       if (hasEnvironmentData(elementName))
       {
          // determine file path (index of item within list)
-         std::string itemIndex = boost::lexical_cast<std::string>(
+         std::string itemIndex = safe_convert::numberToString(
                                                 searchPathElements.size()-1);
          FilePath dataFilePath = environmentDataPath.complete(itemIndex);
          
@@ -385,7 +386,7 @@ Error restore(const FilePath& statePath)
       // else if it has external environment data then load it
       else if (hasEnvironmentData(pathElement))
       {
-         std::string itemIndex = boost::lexical_cast<std::string>(i);
+         std::string itemIndex = safe_convert::numberToString(i);
          FilePath dataFilePath = environmentDataPath.complete(itemIndex);
          attachEnvironmentData(dataFilePath, pathElement);
       }

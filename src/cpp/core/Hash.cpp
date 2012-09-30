@@ -18,6 +18,8 @@
 #include <boost/crc.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include <core/SafeConvert.hpp>
+
 namespace core {
 namespace hash {   
 
@@ -25,7 +27,7 @@ std::string crc32Hash(const std::string& content)
 {
    boost::crc_32_type result;
    result.process_bytes(content.data(), content.length());
-   return boost::lexical_cast<std::string>(result.checksum());
+   return safe_convert::numberToString(result.checksum());
 }
 
 std::string crc32HexHash(const std::string& content)

@@ -299,7 +299,7 @@ void writeLogEntriesOutput(const core::tex::LogEntries& logEntries)
       output += logEntry.filePath().filename();
       int line = logEntry.line();
       if (line >= 0)
-         output += ":" + boost::lexical_cast<std::string>(line);
+         output += ":" + safe_convert::numberToString(line);
 
       output += ": " + logEntry.message() + "\n";
    }

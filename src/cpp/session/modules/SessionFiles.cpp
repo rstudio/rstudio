@@ -724,7 +724,7 @@ void handleMultipleFileExportRequest(const http::Request& request,
    for (int i=0; ;i++)
    {
       // get next file (terminate when we stop finding files)
-      std::string fileParam = "file" + boost::lexical_cast<std::string>(i);
+      std::string fileParam = "file" + safe_convert::numberToString(i);
       std::string file = request.queryParamValue(fileParam);
       if (file.empty())
          break;

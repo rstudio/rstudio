@@ -183,7 +183,7 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP titleSEXP)
          html += "<tr>\n";
 
          // row number
-         appendTD(&html, boost::lexical_cast<std::string>(row+1), "rn");
+         appendTD(&html, safe_convert::numberToString(row+1), "rn");
 
          // output a data element from each column where this row is available
          for (int col=0; col<Rf_length(formattedDataSEXP); col++)

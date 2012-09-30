@@ -20,6 +20,8 @@
 #include <boost/function.hpp>
 #include <boost/asio/buffer.hpp>
 
+#include <core/SafeConvert.hpp>
+
 namespace core {
 namespace http {
   
@@ -107,7 +109,7 @@ void Message::setHeader(const std::string& name, const std::string& value)
    
 void Message::setHeader(const std::string& name, int value)
 {
-   setHeader(name, boost::lexical_cast<std::string>(value));
+   setHeader(name, safe_convert::numberToString(value));
 }
 
 void Message::replaceHeader(const std::string& name, const std::string& value) 

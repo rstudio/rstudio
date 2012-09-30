@@ -72,7 +72,7 @@ void Response::setCacheForeverHeaders(bool publicAccessiblity)
    int durationSeconds = yearDuration.total_seconds();
    std::string accessibility = publicAccessiblity ? "public" : "private";
    std::string cacheControl(accessibility + ", max-age=" + 
-                            boost::lexical_cast<std::string>(durationSeconds));
+                            safe_convert::numberToString(durationSeconds));
    setHeader("Cache-Control", cacheControl);   
 }
 

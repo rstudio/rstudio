@@ -995,7 +995,7 @@ Error svnDiffFile(const json::JsonRpcRequest& request,
    if (contextLines < 0)
       contextLines = 999999999;
 
-   std::string extArgs = "-U " + boost::lexical_cast<std::string>(contextLines);
+   std::string extArgs = "-U " + safe_convert::numberToString(contextLines);
 
    std::string stdOut, stdErr;
    int exitCode;
@@ -1229,7 +1229,7 @@ void history(int rev,
    args << options.args();
 
    if (rev > 0)
-      args << "-r" << boost::lexical_cast<std::string>(rev) + ":1";
+      args << "-r" << safe_convert::numberToString(rev) + ":1";
    else
       args << "-r" << "HEAD:1";
 
@@ -1418,7 +1418,7 @@ void svnHistory(const json::JsonRpcRequest& request,
    if (searchText.empty())
    {
       int limit = skip + maxentries;
-      options << "--limit" << boost::lexical_cast<std::string>(limit);
+      options << "--limit" << safe_convert::numberToString(limit);
    }
 
    FilePath fileFilter = fileFilterPath(fileFilterJson);
@@ -1517,7 +1517,7 @@ void svnShowFile(const json::JsonRpcRequest& request,
    }
 
    ShellArgs args;
-   args << "cat" << "-r" << boost::lexical_cast<std::string>(rev)
+   args << "cat" << "-r" << safe_convert::numberToString(rev)
         << "--" << filename;
    runSvnAsync(args,
                "SVN Show File",

@@ -17,6 +17,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include <core/Log.hpp>
+#include <core/SafeConvert.hpp>
 #include <core/system/System.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -71,7 +72,7 @@ void handleLogRequest(const std::string& username,
          break;
       default:
          LOG_WARNING_MESSAGE("Unexpected log level: " + 
-                             boost::lexical_cast<std::string>(level));
+                             safe_convert::numberToString(level));
          logLevel = kLogLevelError; 
          logLevelStr = "ERROR";
          break;

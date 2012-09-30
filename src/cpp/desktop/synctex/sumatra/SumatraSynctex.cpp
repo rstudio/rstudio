@@ -17,6 +17,7 @@
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
+#include <core/SafeConvert.hpp>
 #include <core/system/Environment.hpp>
 
 #include "DesktopUtils.hpp"
@@ -55,7 +56,7 @@ QStringList inverseSearchArgs(WId mainWindowId)
 
    // main window handle
    unsigned int hwnd = reinterpret_cast<unsigned int>(mainWindowId);
-   std::string hwndStr = boost::lexical_cast<std::string>(hwnd);
+   std::string hwndStr = safe_convert::numberToString(hwnd);
    cmdFormat.append(QString::fromStdString(hwndStr));
    cmdFormat.append(space);
 
@@ -91,7 +92,7 @@ void SumatraSynctex::syncView(const QString& pdfFile,
    args.append(QString::fromAscii("-forward-search"));
    args.append(srcFile);
    args.append(
-      QString::fromStdString(boost::lexical_cast<std::string>(srcLoc.x())));
+      QString::fromStdString(safe_convert::numberToString(srcLoc.x())));
    args.append(inverseSearchArgs(mainWindowId()));
    args.append(pdfFile);
    QProcess::startDetached(sumatraExePath_, args);
@@ -101,7 +102,7 @@ void SumatraSynctex::syncView(const QString& pdfFile, int page)
 {
    QStringList args = standardSumatraArgs();
    args.append(QString::fromAscii("-page"));
-   args.append(QString::fromStdString(boost::lexical_cast<std::string>(page)));
+   args.append(QString::fromStdString(safe_convert::numberToString(page)));
    args.append(inverseSearchArgs(mainWindowId()));
    args.append(pdfFile);
    QProcess::startDetached(sumatraExePath_, args);

@@ -17,6 +17,7 @@
 
 #include <core/Log.hpp>
 #include <core/FilePath.hpp>
+#include <core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 
 namespace core {
@@ -64,12 +65,12 @@ void Settings::set(const std::string& name, const std::string& value)
    
 void Settings::set(const std::string& name, int value)
 {
-   set(name, boost::lexical_cast<std::string>(value));
+   set(name, safe_convert::numberToString(value));
 }
 
 void Settings::set(const std::string& name, bool value)
 {
-   set(name, boost::lexical_cast<std::string>(value));
+   set(name, safe_convert::numberToString(value));
 }
    
 bool Settings::contains(const std::string& name) const

@@ -105,7 +105,7 @@ int main(int argc, char** argv)
       core::http::Fields args;
       args.push_back(std::make_pair("source-file", sourceFile));
       args.push_back(std::make_pair("line",
-                                     boost::lexical_cast<std::string>(line)));
+                                     safe_convert::numberToString(line)));
       http::util::buildQueryString(args, &requestBody);
 
 

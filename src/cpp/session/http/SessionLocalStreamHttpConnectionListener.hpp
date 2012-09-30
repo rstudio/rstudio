@@ -88,7 +88,7 @@ private:
 
          // didn't find it in the list
          LOG_WARNING_MESSAGE("Connection attempted by invalid user-id: " +
-                             boost::lexical_cast<std::string>(clientUid));
+                             safe_convert::numberToString(clientUid));
          return false;
       }
       else

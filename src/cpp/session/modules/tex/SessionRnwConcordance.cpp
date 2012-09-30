@@ -315,7 +315,7 @@ std::string fixup_formatter(const Concordances& concordances,
          {
             result.replace(what.position(i) - what.position(),
                            what.length(i),
-                           boost::lexical_cast<std::string>(dest.line()));
+                           safe_convert::numberToString(dest.line()));
          }
       }
    }

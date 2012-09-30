@@ -17,6 +17,7 @@
 #include <core/Error.hpp>
 
 #include <core/FilePath.hpp>
+#include <core/SafeConvert.hpp>
 
 #include <boost/lexical_cast.hpp>
 
@@ -108,7 +109,7 @@ void Error::addProperty(const std::string& name, const FilePath& value)
    
 void Error::addProperty(const std::string& name, int value)
 {
-   addProperty(name, boost::lexical_cast<std::string>(value));
+   addProperty(name, safe_convert::numberToString(value));
 }
 
    
