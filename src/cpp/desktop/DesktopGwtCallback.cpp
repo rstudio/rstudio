@@ -27,6 +27,7 @@
 
 #include <core/FilePath.hpp>
 #include <core/DateTime.hpp>
+#include <core/SafeConvert.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
@@ -878,7 +879,7 @@ QVariant GwtCallback::getZoomLevels()
    BOOST_FOREACH(double zoomLevel, pMainWindow_->zoomLevels())
    {
       zoomLevels.append(QString::fromStdString(
-                           boost::lexical_cast<std::string>(zoomLevel)));
+                           safe_convert::numberToString(zoomLevel)));
    }
    return QVariant(zoomLevels);
 }

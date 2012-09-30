@@ -17,6 +17,7 @@
 #include <string>
 #include <ios>
 #include <iostream>
+#include <locale>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/numeric/conversion/cast.hpp>
@@ -48,6 +49,16 @@ T stringTo(const std::string& str,
    if ((iss >> f >> result).fail())
       return defaultValue;
    return result;
+}
+
+template <typename T>
+std::string numberToString(T input, bool localeIndependent = true)
+{
+   std::ostringstream stream;
+   if (localeIndependent)
+      stream.imbue(std::locale::classic()); // force locale-independence
+   stream << input;
+   return stream.str();
 }
 
 template <typename TInput, typename TOutput>
