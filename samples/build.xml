@@ -14,10 +14,6 @@
     <gwt.ant dir="dynatablerf" target="source" />
   </target>
 
-  <target name="expenses" description="Build expenses">
-    <gwt.ant dir="expenses" target="source" />
-  </target>
-
   <target name="hello" description="Build hello">
     <gwt.ant dir="hello" />
   </target>
@@ -61,7 +57,6 @@
   <target name="-do" description="Run all subprojects" >
     <antcall target="dynatable" />
     <antcall target="dynatablerf" />
-    <antcall target="expenses" />
     <antcall target="hello" />
     <antcall target="json" />
     <antcall target="logexample" />
