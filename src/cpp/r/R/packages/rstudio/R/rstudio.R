@@ -1,6 +1,5 @@
 
 
-#' @export
 versionInfo <- function() {
   info <- list()
   info$version <- utils::packageVersion("rstudio")
@@ -9,7 +8,6 @@ versionInfo <- function() {
   info
 }
 
-#' @export
 diagnosticsReport <- function() {
   invisible(.Call(getNativeSymbolInfo("rs_sourceDiagnostics", PACKAGE="")))
 }
