@@ -49,7 +49,7 @@ private:
 
 std::ostream& operator<<(std::ostream& os, const RToolsInfo& info);
 
-Error discoverRTools(std::vector<RToolsInfo>* pRTools);
+Error scanRegistryForRTools(std::vector<RToolsInfo>* pRTools);
 
 void prependToSystemPath(const RToolsInfo& toolsInfo,
                          core::system::Options* pEnvironment);

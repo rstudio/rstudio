@@ -55,7 +55,71 @@ namespace {
 
 #ifdef _WIN32
 
-void addRtoolsToPathIfNecessary(core::system::Options* pEnvironment)
+bool isRtoolsCompatible(const r_util::RToolsInfo& rTools)
+{
+   bool isCompatible = false;
+   Error error = r::exec::evaluateString(rTools.versionPredicate(),
+                                         &isCompatible);
+   if (error)
+      LOG_ERROR(error);
+   return isCompatible;
+}
+
+r_util::RToolsInfo scanPathForRTools()
+{
+   // first confirm ls.exe is in Rtools
+   r_util::RToolsInfo noToolsFound;
+   FilePath lsPath = module_context::findProgram("ls.exe");
+   if (lsPath.empty())
+      return noToolsFound;
+
+   // we have a candidate installPath
+   FilePath installPath = lsPath.parent().parent();
+   core::system::ensureLongPath(&installPath);
+   if (!installPath.childPath("Rtools.txt").exists())
+      return noToolsFound;
+
+   // find the version path
+   FilePath versionPath = installPath.childPath("VERSION.txt");
+   if (!versionPath.exists())
+      return noToolsFound;
+
+   // further verify that gcc is in Rtools
+   FilePath gccPath = module_context::findProgram("gcc.exe");
+   if (!gccPath.exists())
+      return noToolsFound;
+   if (!gccPath.parent().parent().parent().childPath("Rtools.txt").exists())
+      return noToolsFound;
+
+   // Rtools is in the path -- now crack the VERSION file
+   std::string contents;
+   Error error = core::readStringFromFile(versionPath, &contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return noToolsFound;
+   }
+
+   // extract the version
+   boost::algorithm::trim(contents);
+   boost::regex pattern("Rtools version (\\d\\.\\d\\d)[\\d\\.]+$");
+   boost::smatch match;
+   if (boost::regex_search(contents, match, pattern))
+      return r_util::RToolsInfo(match[1], installPath);
+   else
+      return noToolsFound;
+}
+
+std::string formatPath(const FilePath& filePath)
+{
+   FilePath displayPath = filePath;
+   core::system::ensureLongPath(&displayPath);
+   return boost::algorithm::replace_all_copy(
+                                 displayPath.absolutePath(), "/", "\\");
+}
+
+void addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
+                                std::string* pWarningMessage)
 {
     // can we find ls.exe and gcc.exe on the path? if so then
     // we assume Rtools are already there (this is the same test
@@ -65,11 +129,31 @@ void addRtoolsToPathIfNecessary(core::system::Options* pEnvironment)
     if (error)
        LOG_ERROR(error);
     if (rToolsOnPath)
+    {
+       // perform an extra check to see if the version on the path is not
+       // compatible with the currenly running version of R
+       r_util::RToolsInfo rTools = scanPathForRTools();
+       if (!rTools.empty())
+       {
+          if (!isRtoolsCompatible(rTools))
+          {
+            boost::format fmt(
+             "WARNING: Rtools version %1% is on the PATH (at %2%) however is "
+             "not compatible with the version of R you are currently running."
+             "\n\nYou should install a compatible version of Rtools to ensure "
+             "that packages are built correctly."
+             "\n\nhttp://cran.r-project.org/bin/windows/Rtools/");
+            *pWarningMessage = boost::str(
+               fmt % rTools.name() % formatPath(rTools.installPath()));
+          }
+       }
+
        return;
+    }
 
     // ok so scan for R tools
     std::vector<r_util::RToolsInfo> rTools;
-    error = core::r_util::discoverRTools(&rTools);
+    error = core::r_util::scanRegistryForRTools(&rTools);
     if (error)
     {
        LOG_ERROR(error);
@@ -81,9 +165,7 @@ void addRtoolsToPathIfNecessary(core::system::Options* pEnvironment)
     std::vector<r_util::RToolsInfo>::const_reverse_iterator it = rTools.rbegin();
     for ( ; it != rTools.rend(); ++it)
     {
-       bool isCompatible = false;
-       error = r::exec::evaluateString(it->versionPredicate(), &isCompatible);
-       if (isCompatible)
+       if (isRtoolsCompatible(*it))
        {
           r_util::prependToSystemPath(*it, pEnvironment);
           return;
@@ -93,7 +175,8 @@ void addRtoolsToPathIfNecessary(core::system::Options* pEnvironment)
 
 #else
 
-void addRtoolsToPathIfNecessary(core::system::Options* pEnvironment)
+void addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
+                                std::string* pWarningMessage)
 {
 
 }
@@ -487,7 +570,7 @@ private:
 #endif
 
       // add r tools to path if necessary
-      addRtoolsToPathIfNecessary(&childEnv);
+      addRtoolsToPathIfNecessary(&childEnv, &postBuildWarning_);
 
       pkgOptions.environment = childEnv;
 
@@ -936,6 +1019,10 @@ private:
    {
       isRunning_ = false;
 
+      if (!postBuildWarning_.empty())
+         enqueBuildOutput(kBuildOutputError,
+                          "\n" + postBuildWarning_ + "\n");
+
       // enque event
       std::string afterRestartCommand;
       if (restartR_)
@@ -986,6 +1073,7 @@ private:
    r_util::RPackageInfo pkgInfo_;
    projects::RProjectBuildOptions options_;
    std::string successMessage_;
+   std::string postBuildWarning_;
    boost::function<void()> successFunction_;
    boost::function<void()> failureFunction_;
    boost::function<bool(const std::string&)> errorOutputFilterFunction_;
@@ -1232,7 +1320,8 @@ bool canBuildCpp()
    options.workingDir = cppPath.parent();
    core::system::Options childEnv;
    core::system::environment(&childEnv);
-   addRtoolsToPathIfNecessary(&childEnv);
+   std::string warningMsg;
+   addRtoolsToPathIfNecessary(&childEnv, &warningMsg);
    options.environment = childEnv;
 
    core::system::ProcessResult result;

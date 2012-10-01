@@ -111,7 +111,7 @@ std::ostream& operator<<(std::ostream& os, const RToolsInfo& info)
    return os;
 }
 
-Error discoverRTools(std::vector<RToolsInfo>* pRTools)
+Error scanRegistryForRTools(std::vector<RToolsInfo>* pRTools)
 {
    core::system::RegistryKey regKey;
    Error error = regKey.open(HKEY_LOCAL_MACHINE,
