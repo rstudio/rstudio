@@ -41,4 +41,6 @@ public interface ConsoleResources extends ClientBundle
       String error();
       String selected();
    }
+   
+   public static final String KEYWORD_CLASS_NAME = " ace_keyword";
 }

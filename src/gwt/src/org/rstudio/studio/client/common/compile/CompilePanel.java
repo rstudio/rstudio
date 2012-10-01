@@ -35,10 +35,16 @@ public class CompilePanel extends Composite
 {
    public CompilePanel()
    {
-      panel_ = new SimplePanel();
+      this(new CompileOutputBuffer());
+   }
+   
+   public CompilePanel(CompileOutputDisplay outputDisplay)
+   {
       
-      outputBuffer_ = new CompileOutputBuffer();
-      panel_.setWidget(outputBuffer_);
+      panel_ = new SimplePanel();
+      outputDisplay_ = outputDisplay;
+      
+      panel_.setWidget(outputDisplay_.asWidget());
       errorList_ = new CompileErrorList();
       
       initWidget(panel_);
@@ -60,8 +66,8 @@ public class CompilePanel extends Composite
          {
            showOutputButton_.setVisible(false);
            showErrorsButton_.setVisible(true);
-           panel_.setWidget(outputBuffer_);
-           outputBuffer_.scrollToBottom();
+           panel_.setWidget(outputDisplay_.asWidget());
+           outputDisplay_.scrollToBottom();
          }
       });
       toolbar.addRightWidget(showOutputButton_);
@@ -100,14 +106,24 @@ public class CompilePanel extends Composite
       showOutputButton_.setVisible(false);
       showErrorsButton_.setVisible(false);
       stopButton_.setVisible(false);
-      outputBuffer_.clear();
+      outputDisplay_.clear();
       errorList_.clear();
-      panel_.setWidget(outputBuffer_);  
+      panel_.setWidget(outputDisplay_.asWidget());  
+   }
+   
+   public void showCommand(String command)
+   {
+      outputDisplay_.writeCommand(command);
    }
    
    public void showOutput(String output)
    {
-      outputBuffer_.append(output);
+      outputDisplay_.writeOutput(output);
+   }
+   
+   public void showError(String error)
+   {
+      outputDisplay_.writeError(error);
    }
    
    public void showErrors(String basePath, 
@@ -133,7 +149,7 @@ public class CompilePanel extends Composite
    
    public void scrollToBottom()
    {
-      outputBuffer_.scrollToBottom();
+      outputDisplay_.scrollToBottom();
    }
 
    public void compileCompleted()
@@ -165,6 +181,6 @@ public class CompilePanel extends Composite
    private LeftRightToggleButton showOutputButton_;
    private LeftRightToggleButton showErrorsButton_;
    private SimplePanel panel_;
-   private CompileOutputBuffer outputBuffer_;
+   private CompileOutputDisplay outputDisplay_;
    private CompileErrorList errorList_;
 }

@@ -24,10 +24,6 @@ public class BuildOutputEvent extends GwtEvent<BuildOutputEvent.Handler>
       void onBuildOutput(BuildOutputEvent event);
    }
    
-   static final int kBuildOutputCommand = 0;
-   static final int kBuildOutputNormal = 1;
-   static final int kBuildOutputError = 2;
-
    public BuildOutputEvent(BuildOutput output)
    {
       output_ = output;

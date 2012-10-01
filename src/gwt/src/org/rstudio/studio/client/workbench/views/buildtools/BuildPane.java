@@ -40,7 +40,7 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
       super("Build");
       commands_ = commands;
       session_ = session;
-      compilePanel_ = new CompilePanel();
+      compilePanel_ = new CompilePanel(new BuildOutputDisplay());
       ensureWidget();
    }
    
@@ -114,7 +114,18 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
    @Override
    public void showOutput(BuildOutput output)
    {
-      compilePanel_.showOutput(output.getOutput());   
+      switch(output.getType())
+      {
+      case BuildOutput.kCommand:
+         compilePanel_.showCommand(output.getOutput());
+         break;
+      case BuildOutput.kNormal:
+         compilePanel_.showOutput(output.getOutput());
+         break;
+      case BuildOutput.kError:
+         compilePanel_.showError(output.getOutput());
+         break;
+      }
    }
    
    @Override
@@ -157,5 +168,4 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
    private Session session_;
    
    CompilePanel compilePanel_;
-
 }

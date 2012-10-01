@@ -32,6 +32,7 @@ import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
@@ -214,7 +215,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    public void consoleWriteError(final String error)
    {
       clearPendingInput();
-      output(error, styles_.error() + ERROR_CLASS_NAME, false);
+      output(error, getErrorClass(), false);
    }
 
    public void consoleWriteOutput(final String output)
@@ -260,6 +261,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
    public void ensureInputVisible()
    {
       scrollPanel_.scrollToBottom();
+   }
+   
+   private String getErrorClass()
+   {
+      return styles_.error() + " " + 
+             RStudioGinjector.INSTANCE.getUIPrefs().getThemeErrorClass();
    }
 
    private boolean output(String text,
@@ -686,6 +693,5 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private final TimeBufferedCommand scrollToBottomCommand_;
    private boolean suppressPendingInput_;
 
-   private static final String KEYWORD_CLASS_NAME = " ace_keyword";
-   private static final String ERROR_CLASS_NAME = " ace_constant";
+   private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;
 }

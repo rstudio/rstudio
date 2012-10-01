@@ -21,6 +21,10 @@ public class BuildOutput extends JavaScriptObject
    {
    }
    
+   public static final int kCommand = 0;
+   public static final int kNormal = 1;
+   public static final int kError = 2;
+
    public native final int getType() /*-{
       return this.type;
    }-*/;

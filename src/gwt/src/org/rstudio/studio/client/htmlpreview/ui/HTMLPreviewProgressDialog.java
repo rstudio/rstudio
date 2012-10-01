@@ -14,7 +14,7 @@ package org.rstudio.studio.client.htmlpreview.ui;
 
 
 import org.rstudio.core.client.widget.ProgressDialog;
-import org.rstudio.studio.client.common.OutputBuffer;
+import org.rstudio.studio.client.common.compile.CompileOutputBuffer;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -79,10 +79,10 @@ public class HTMLPreviewProgressDialog extends ProgressDialog
          height = Math.min(maxHeight, height);
       panel.getElement().getStyle().setHeight(height, Unit.PX);
            
-      output_ = new OutputBuffer();
+      output_ = new CompileOutputBuffer();
       panel.setWidget(output_);
       return panel;
    } 
 
-   private OutputBuffer output_;  
+   private CompileOutputBuffer output_;  
 }

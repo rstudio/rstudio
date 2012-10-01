@@ -28,6 +28,19 @@ import java.util.HashMap;
 @Singleton
 public class AceThemes
 {
+   public static final String TEXTMATE = "TextMate";
+   public static final String ECLIPSE = "Eclipse";
+   public static final String TOMORROW = "Tomorrow";
+   public static final String COBALT = "Cobalt";
+   public static final String IDLE_FINGERS = "Idle Fingers";
+   public static final String TWILIGHT = "Twilight";
+   public static final String TOMORROW_NIGHT = "Tomorrow Night";
+   public static final String TOMORROW_NIGHT_BLUE = "Tomorrow Night Blue";
+   public static final String TOMORROW_NIGHT_BRIGHT = "Tomorrow Night Bright";
+   public static final String TOMORROW_NIGHT_80S = "Tomorrow Night 80's";
+   public static final String SOLARIZED = "Solarized";
+   public static final String SOLARIZED_DARK = "Solarized Dark";
+   
    @Inject
    public AceThemes(AceThemeResources res,
                     final Provider<UIPrefs> prefs,
@@ -36,23 +49,19 @@ public class AceThemes
       themes_ = new ArrayList<String>();
       themesByName_ = new HashMap<String, String>();
 
-      addTheme("TextMate", res.textmate());
-      addTheme("Eclipse", res.eclipse());
-      addTheme("Tomorrow", res.tomorrow());
-      addTheme("Cobalt", res.cobalt());
-      addTheme("Idle Fingers", res.idle_fingers());
-      addTheme("Twilight", res.twilight());
-      addTheme("Tomorrow Night", res.tomorrow_night());
-      addTheme("Tomorrow Night Blue", res.tomorrow_night_blue());
-      addTheme("Tomorrow Night Bright", res.tomorrow_night_bright());
-      addTheme("Tomorrow Night 80's", res.tomorrow_night_eighties());
-      
-      addTheme("Solarized", res.solarized());
-      addTheme("Solarized Dark", res.solarizedDark());
+      addTheme(TEXTMATE, res.textmate());
+      addTheme(ECLIPSE, res.eclipse());
+      addTheme(TOMORROW, res.tomorrow());
+      addTheme(COBALT, res.cobalt());
+      addTheme(IDLE_FINGERS, res.idle_fingers());
+      addTheme(TWILIGHT, res.twilight());
+      addTheme(TOMORROW_NIGHT, res.tomorrow_night());
+      addTheme(TOMORROW_NIGHT_BLUE, res.tomorrow_night_blue());
+      addTheme(TOMORROW_NIGHT_BRIGHT, res.tomorrow_night_bright());
+      addTheme(TOMORROW_NIGHT_80S, res.tomorrow_night_eighties());
+      addTheme(SOLARIZED, res.solarized());
+      addTheme(SOLARIZED_DARK, res.solarizedDark());
     
-      
-      
-     
 
       prefs.get().theme().bind(new CommandWithArg<String>()
       {

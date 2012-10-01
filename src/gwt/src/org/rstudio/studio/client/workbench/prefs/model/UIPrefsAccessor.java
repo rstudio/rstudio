@@ -20,6 +20,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.gwt.core.client.JsArrayString;
 
@@ -126,7 +127,15 @@ public class UIPrefsAccessor extends Prefs
    {
       return string("theme", null);
    }
-
+   
+   public String getThemeErrorClass()
+   {    
+      if (AceThemes.TEXTMATE.equals(theme().getValue()))
+         return " ace_constant";
+      else  
+         return " ace_constant ace_language";
+   }
+   
    // NOTE: UserSettings.cpp depends on the name of this value
    public PrefValue<String> defaultEncoding()
    {

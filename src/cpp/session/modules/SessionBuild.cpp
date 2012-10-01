@@ -127,6 +127,14 @@ shell_utils::ShellCommand buildRCmd(const core::FilePath& rBinDir)
    return rCmd;
 }
 
+
+bool isPackageBuildError(const std::string& output)
+{
+   return boost::algorithm::istarts_with(output, "warning: ") ||
+          boost::algorithm::istarts_with(output, "error: ") ||
+          boost::algorithm::ends_with(output, "WARNING");
+}
+
 // R command invocation -- has two representations, one to be submitted
 // (shellCmd_) and one to show the user (cmdString_)
 class RCommand
@@ -209,7 +217,7 @@ struct BuildOutput
    std::string output;
 };
 
-json::Value buildOutputAsJson(const BuildOutput& buildOutput)
+json::Object buildOutputAsJson(const BuildOutput& buildOutput)
 {
    json::Object buildOutputJson;
    buildOutputJson["type"] = buildOutput.type;
@@ -272,7 +280,6 @@ private:
       // options
       core::system::ProcessOptions options;
       options.terminateChildren = true;
-      options.redirectStdErrToStdOut = true;
 
       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
       const core::r_util::RProjectConfig& config = projectConfig();
@@ -491,6 +498,10 @@ private:
          terminateWithError("attempting to locate R binary", error);
          return;
       }
+
+      // install an error filter (because R package builds produce much
+      // of their output on stderr)
+      errorOutputFilterFunction_ = isPackageBuildError;
 
       // build command
       if (type == kBuildAndReload || type == kRebuildAll)
@@ -816,14 +827,44 @@ private:
       return !terminationRequested_;
    }
 
+   void outputWithFilter(const std::string& output)
+   {
+      // split into lines
+      std::vector<std::string> lines;
+      boost::algorithm::split(lines, output,  boost::algorithm::is_any_of("\n"));
+
+      // apply filter to each line
+      int size = lines.size();
+      for (int i=0; i<size; i++)
+      {
+         // apply filter
+         std::string line = lines.at(i);
+         int type = errorOutputFilterFunction_(line) ?
+                                 kBuildOutputError : kBuildOutputNormal;
+
+         // add newline if this wasn't the last line
+         if (i != (size-1))
+            line.append("\n");
+
+         // enque the output
+         enqueBuildOutput(type, line);
+      }
+   }
+
    void onStandardOutput(const std::string& output)
    {
-      enqueBuildOutput(kBuildOutputNormal, output);
+      if (errorOutputFilterFunction_)
+         outputWithFilter(output);
+      else
+         enqueBuildOutput(kBuildOutputNormal, output);
    }
 
    void onStandardError(const std::string& output)
    {
-      enqueBuildOutput(kBuildOutputError, output);
+      if (errorOutputFilterFunction_)
+         outputWithFilter(output);
+      else
+         enqueBuildOutput(kBuildOutputError, output);
    }
 
    void onCompleted(int exitStatus)
@@ -946,6 +987,7 @@ private:
    std::string successMessage_;
    boost::function<void()> successFunction_;
    boost::function<void()> failureFunction_;
+   boost::function<bool(const std::string&)> errorOutputFilterFunction_;
    bool restartR_;
 };
 
@@ -1023,25 +1065,8 @@ Error devtoolsLoadAllPath(const json::JsonRpcRequest& request,
    return Success();
 }
 
-void onSuspend(core::Settings* pSettings)
-{
-   json::Array buildLastOutputs = s_pBuild ? s_pBuild->outputAsJson()
-                                          : json::Array();
-   std::ostringstream ostr;
-   json::write(buildLastOutputs, ostr);
-   pSettings->set("build-last-outputs", ostr.str());
 
-   json::Array buildLastErrors = s_pBuild ? s_pBuild->errorsAsJson()
-                                          : json::Array();
-   std::ostringstream ostrErrors;
-   json::write(buildLastErrors, ostrErrors);
-   pSettings->set("build-last-errors", ostrErrors.str());
-
-   pSettings->set("build-last-errors-base-dir",
-                  s_pBuild ? s_pBuild->errorsBaseDir() : "" );
-}
-
-struct SuspendContext
+struct BuildContext
 {
    bool empty() const { return errors.empty() && outputs.empty(); }
    std::string errorsBaseDir;
@@ -1049,8 +1074,43 @@ struct SuspendContext
    json::Array outputs;
 };
 
-SuspendContext s_suspendContext;
+BuildContext s_suspendBuildContext;
 
+
+void writeBuildContext(const BuildContext& buildContext,
+                       core::Settings* pSettings)
+{
+   std::ostringstream ostr;
+   json::write(buildContext.outputs, ostr);
+   pSettings->set("build-last-outputs", ostr.str());
+
+   std::ostringstream ostrErrors;
+   json::write(buildContext.errors, ostrErrors);
+   pSettings->set("build-last-errors", ostrErrors.str());
+
+   pSettings->set("build-last-errors-base-dir", buildContext.errorsBaseDir);
+}
+
+void onSuspend(core::Settings* pSettings)
+{
+   if (s_pBuild)
+   {
+      BuildContext buildContext;
+      buildContext.outputs = s_pBuild->outputAsJson();
+      buildContext.errors = s_pBuild->errorsAsJson();
+      buildContext.errorsBaseDir = s_pBuild->errorsBaseDir();
+      writeBuildContext(buildContext, pSettings);
+   }
+   else if (!s_suspendBuildContext.empty())
+   {
+      writeBuildContext(s_suspendBuildContext, pSettings);
+   }
+   else
+   {
+      BuildContext emptyBuildContext;
+      writeBuildContext(emptyBuildContext, pSettings);
+   }
+}
 
 void onResume(const core::Settings& settings)
 {
@@ -1061,11 +1121,11 @@ void onResume(const core::Settings& settings)
       if (json::parse(buildLastOutputs, &outputsJson) &&
           json::isType<json::Array>(outputsJson))
       {
-         s_suspendContext.outputs = outputsJson.get_array();
+         s_suspendBuildContext.outputs = outputsJson.get_array();
       }
    }
 
-   s_suspendContext.errorsBaseDir = settings.get("build-last-errors-base-dir");
+   s_suspendBuildContext.errorsBaseDir = settings.get("build-last-errors-base-dir");
    std::string buildLastErrors = settings.get("build-last-errors");
    if (!buildLastErrors.empty())
    {
@@ -1073,7 +1133,7 @@ void onResume(const core::Settings& settings)
       if (json::parse(buildLastErrors, &errorsJson) &&
           json::isType<json::Array>(errorsJson))
       {
-         s_suspendContext.errors = errorsJson.get_array();
+         s_suspendBuildContext.errors = errorsJson.get_array();
       }
    }
 }
@@ -1092,13 +1152,13 @@ json::Value buildStateAsJson()
       stateJson["errors"] = s_pBuild->errorsAsJson();
       return stateJson;
    }
-   else if (!s_suspendContext.empty())
+   else if (!s_suspendBuildContext.empty())
    {
       json::Object stateJson;
       stateJson["running"] = false;
-      stateJson["outputs"] = s_suspendContext.outputs;
-      stateJson["errors_base_dir"] = s_suspendContext.errorsBaseDir;
-      stateJson["errors"] = s_suspendContext.errors;
+      stateJson["outputs"] = s_suspendBuildContext.outputs;
+      stateJson["errors_base_dir"] = s_suspendBuildContext.errorsBaseDir;
+      stateJson["errors"] = s_suspendBuildContext.errors;
       return stateJson;
    }
    else
