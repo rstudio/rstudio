@@ -12,22 +12,28 @@
  */
 package org.rstudio.studio.client.workbench.views.buildtools.events;
 
+import org.rstudio.studio.client.workbench.views.buildtools.model.BuildOutput;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class BuildOutputEvent extends GwtEvent<BuildOutputEvent.Handler>
-{
+{  
    public interface Handler extends EventHandler
    {
       void onBuildOutput(BuildOutputEvent event);
    }
+   
+   static final int kBuildOutputCommand = 0;
+   static final int kBuildOutputNormal = 1;
+   static final int kBuildOutputError = 2;
 
-   public BuildOutputEvent(String output)
+   public BuildOutputEvent(BuildOutput output)
    {
       output_ = output;
    }
    
-   public String getOutput()
+   public BuildOutput getOutput()
    {
       return output_;
    }
@@ -44,7 +50,7 @@ public class BuildOutputEvent extends GwtEvent<BuildOutputEvent.Handler>
       handler.onBuildOutput(this);
    }
    
-   private String output_;
+   private final BuildOutput output_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

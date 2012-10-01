@@ -51,6 +51,7 @@ import org.rstudio.studio.client.workbench.views.buildtools.events.BuildComplete
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
+import org.rstudio.studio.client.workbench.views.buildtools.model.BuildOutput;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -64,7 +65,7 @@ public class BuildPresenter extends BasePresenter
    {
       void buildStarted();
       
-      void showOutput(String output);
+      void showOutput(BuildOutput output);
       void scrollToBottom();
       
       void showErrors(String basePath,
@@ -215,7 +216,10 @@ public class BuildPresenter extends BasePresenter
    public void initialize(BuildState buildState)
    {
       view_.buildStarted();
-      view_.showOutput(buildState.getOutput());
+      
+      JsArray<BuildOutput> outputs = buildState.getOutputs();
+      for (int i = 0; i<outputs.length(); i++)
+         view_.showOutput(outputs.get(i));
       
       if (buildState.getErrors().length() > 0)
          view_.showErrors(buildState.getErrorsBaseDir(),

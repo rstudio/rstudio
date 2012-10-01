@@ -29,6 +29,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.buildtools.model.BuildOutput;
 
 public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
 {
@@ -111,9 +112,9 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
    }
 
    @Override
-   public void showOutput(String output)
+   public void showOutput(BuildOutput output)
    {
-      compilePanel_.showOutput(output);   
+      compilePanel_.showOutput(output.getOutput());   
    }
    
    @Override

@@ -1,5 +1,5 @@
 /*
- * BuildState.java
+ * BuildOutput.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,30 +13,19 @@
 
 package org.rstudio.studio.client.workbench.views.buildtools.model;
 
-import org.rstudio.studio.client.common.compile.CompileError;
-
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 
-public class BuildState extends JavaScriptObject
+public class BuildOutput extends JavaScriptObject
 { 
-   protected BuildState()
+   protected BuildOutput()
    {
    }
    
-   public final native boolean isRunning() /*-{
-      return this.running;
+   public native final int getType() /*-{
+      return this.type;
    }-*/;
-   
-   public final native String getErrorsBaseDir() /*-{
-      return this.errors_base_dir;
-   }-*/;
-   
-   public final native JsArray<CompileError> getErrors() /*-{
-      return this.errors;
-   }-*/;
-   
-   public final native JsArray<BuildOutput> getOutputs() /*-{
-      return this.outputs;
+
+   public native final String getOutput() /*-{
+      return this.output;
    }-*/;
 }

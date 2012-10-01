@@ -51,6 +51,7 @@ import org.rstudio.studio.client.workbench.views.buildtools.events.BuildComplete
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
+import org.rstudio.studio.client.workbench.views.buildtools.model.BuildOutput;
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEvent;
 import org.rstudio.studio.client.workbench.views.console.events.*;
 import org.rstudio.studio.client.workbench.views.console.model.ConsolePrompt;
@@ -377,8 +378,8 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.BuildOutput))
          {
-            String output = event.getData();
-            eventBus_.fireEvent(new BuildOutputEvent(output));
+            BuildOutput data = event.getData();
+            eventBus_.fireEvent(new BuildOutputEvent(data));
          }
          else if (type.equals(ClientEvent.BuildCompleted))
          {

@@ -194,6 +194,29 @@ const char * const kCheckPackage = "check-package";
 const char * const kBuildAndReload = "build-all";
 const char * const kRebuildAll = "rebuild-all";
 
+const int kBuildOutputCommand = 0;
+const int kBuildOutputNormal = 1;
+const int kBuildOutputError = 2;
+
+struct BuildOutput
+{
+   BuildOutput(int type, const std::string& output)
+      : type(type), output(output)
+   {
+   }
+
+   int type;
+   std::string output;
+};
+
+json::Value buildOutputAsJson(const BuildOutput& buildOutput)
+{
+   json::Object buildOutputJson;
+   buildOutputJson["type"] = buildOutput.type;
+   buildOutputJson["output"] = buildOutput.output;
+   return buildOutputJson;
+}
+
 class Build : boost::noncopyable,
               public boost::enable_shared_from_this<Build>
 {
@@ -230,9 +253,9 @@ private:
       core::system::ProcessCallbacks cb;
       cb.onContinue = boost::bind(&Build::onContinue,
                                   Build::shared_from_this());
-      cb.onStdout = boost::bind(&Build::onOutput,
+      cb.onStdout = boost::bind(&Build::onStandardOutput,
                                 Build::shared_from_this(), _2);
-      cb.onStderr = boost::bind(&Build::onOutput,
+      cb.onStderr = boost::bind(&Build::onStandardError,
                                 Build::shared_from_this(), _2);
       cb.onExit =  boost::bind(&Build::onCompleted,
                                 Build::shared_from_this(),
@@ -366,7 +389,7 @@ private:
 
       // show the user the call to roxygenize
       enqueCommandString(roxygenizeCall);
-      enqueBuildOutput("* checking for changes ... ");
+      enqueBuildOutput(kBuildOutputNormal, "* checking for changes ... ");
 
       // format the command to send to R
       boost::format cmdFmt(
@@ -393,17 +416,18 @@ private:
       error = r::exec::evaluateString(cmd, &output);
       if (error && (error.code() != r::errc::NoDataAvailableError))
       {
-         enqueBuildOutput("ERROR\n\n");
+         enqueBuildOutput(kBuildOutputError, "ERROR\n\n");
          terminateWithError(r::endUserErrorMessage(error));
          return false;
       }
       else
       {
          // update progress
-         enqueBuildOutput("DONE\n");
+         enqueBuildOutput(kBuildOutputNormal, "DONE\n");
 
          // show output
-         enqueBuildOutput(output + (output.empty() ? "\n" : "\n\n"));
+         enqueBuildOutput(kBuildOutputNormal,
+                          output + (output.empty() ? "\n" : "\n\n"));
 
          return true;
       }
@@ -734,7 +758,7 @@ private:
    void terminateWithErrorStatus(int exitStatus)
    {
       boost::format fmt("\nExited with status %1%.\n\n");
-      enqueBuildOutput(boost::str(fmt % exitStatus));
+      enqueBuildOutput(kBuildOutputError, boost::str(fmt % exitStatus));
       enqueBuildCompleted();
    }
 
@@ -747,7 +771,7 @@ private:
 
    void terminateWithError(const std::string& msg)
    {
-      enqueBuildOutput(msg);
+      enqueBuildOutput(kBuildOutputError, msg);
       enqueBuildCompleted();
    }
 
@@ -758,14 +782,31 @@ public:
 
    bool isRunning() const { return isRunning_; }
 
-   const std::string& output() const { return output_; }
-
    const std::string& errorsBaseDir() const { return errorsBaseDir_; }
    const json::Array& errorsAsJson() const { return errorsJson_; }
+   json::Array outputAsJson() const
+   {
+      json::Array outputJson;
+      std::transform(output_.begin(),
+                     output_.end(),
+                     std::back_inserter(outputJson),
+                     buildOutputAsJson);
+      return outputJson;
+   }
+
+   std::string outputAsText()
+   {
+      std::string output;
+      BOOST_FOREACH(const BuildOutput& buildOutput, output_)
+      {
+         output.append(buildOutput.output);
+      }
+      return output;
+   }
 
    void terminate()
    {
-      enqueBuildOutput("\n");
+      enqueBuildOutput(kBuildOutputNormal, "\n");
       terminationRequested_ = true;
    }
 
@@ -775,9 +816,14 @@ private:
       return !terminationRequested_;
    }
 
-   void onOutput(const std::string& output)
+   void onStandardOutput(const std::string& output)
    {
-      enqueBuildOutput(output);
+      enqueBuildOutput(kBuildOutputNormal, output);
+   }
+
+   void onStandardError(const std::string& output)
+   {
+      enqueBuildOutput(kBuildOutputError, output);
    }
 
    void onCompleted(int exitStatus)
@@ -785,7 +831,7 @@ private:
       // call the error parser if one has been specified
       if (errorParser_)
       {
-         std::vector<CompileError> errors = errorParser_(output_);
+         std::vector<CompileError> errors = errorParser_(outputAsText());
          if (!errors.empty())
          {
             errorsJson_ = compileErrorsAsJson(errors);
@@ -796,7 +842,7 @@ private:
       if (exitStatus != EXIT_SUCCESS)
       {
          boost::format fmt("\nExited with status %1%.\n\n");
-         enqueBuildOutput(boost::str(fmt % exitStatus));
+         enqueBuildOutput(kBuildOutputError, boost::str(fmt % exitStatus));
 
          // never restart R after a failed build
          restartR_ = false;
@@ -808,7 +854,7 @@ private:
       else
       {
          if (!successMessage_.empty())
-            enqueBuildOutput(successMessage_ + "\n");
+            enqueBuildOutput(kBuildOutputNormal, successMessage_ + "\n");
 
          if (successFunction_)
             successFunction_();
@@ -817,17 +863,21 @@ private:
       enqueBuildCompleted();
    }
 
-   void enqueBuildOutput(const std::string& output)
+   void enqueBuildOutput(int type, const std::string& output)
    {
-      output_.append(output);
+      BuildOutput buildOutput(type, output);
 
-      ClientEvent event(client_events::kBuildOutput, output);
+      output_.push_back(buildOutput);
+
+      ClientEvent event(client_events::kBuildOutput,
+                        buildOutputAsJson(buildOutput));
+
       module_context::enqueClientEvent(event);
    }
 
    void enqueCommandString(const std::string& cmd)
    {
-      enqueBuildOutput("==> " + cmd + "\n\n");
+      enqueBuildOutput(kBuildOutputCommand, "==> " + cmd + "\n\n");
    }
 
    void enqueBuildErrors(const json::Array& errors)
@@ -887,7 +937,7 @@ private:
 private:
    bool isRunning_;
    bool terminationRequested_;
-   std::string output_;
+   std::vector<BuildOutput> output_;
    CompileErrorParser errorParser_;
    std::string errorsBaseDir_;
    json::Array errorsJson_;
@@ -975,14 +1025,17 @@ Error devtoolsLoadAllPath(const json::JsonRpcRequest& request,
 
 void onSuspend(core::Settings* pSettings)
 {
-   std::string lastBuildOutput = s_pBuild ? s_pBuild->output() : "";
-   pSettings->set("build-last-output", lastBuildOutput);
+   json::Array buildLastOutputs = s_pBuild ? s_pBuild->outputAsJson()
+                                          : json::Array();
+   std::ostringstream ostr;
+   json::write(buildLastOutputs, ostr);
+   pSettings->set("build-last-outputs", ostr.str());
 
    json::Array buildLastErrors = s_pBuild ? s_pBuild->errorsAsJson()
                                           : json::Array();
-   std::ostringstream ostr;
-   json::write(buildLastErrors, ostr);
-   pSettings->set("build-last-errors", ostr.str());
+   std::ostringstream ostrErrors;
+   json::write(buildLastErrors, ostrErrors);
+   pSettings->set("build-last-errors", ostrErrors.str());
 
    pSettings->set("build-last-errors-base-dir",
                   s_pBuild ? s_pBuild->errorsBaseDir() : "" );
@@ -990,10 +1043,10 @@ void onSuspend(core::Settings* pSettings)
 
 struct SuspendContext
 {
-   bool empty() const { return errors.empty() && output.empty(); }
+   bool empty() const { return errors.empty() && outputs.empty(); }
    std::string errorsBaseDir;
    json::Array errors;
-   std::string output;
+   json::Array outputs;
 };
 
 SuspendContext s_suspendContext;
@@ -1001,7 +1054,16 @@ SuspendContext s_suspendContext;
 
 void onResume(const core::Settings& settings)
 {
-   s_suspendContext.output = settings.get("build-last-output");
+   std::string buildLastOutputs = settings.get("build-last-outputs");
+   if (!buildLastOutputs.empty())
+   {
+      json::Value outputsJson;
+      if (json::parse(buildLastOutputs, &outputsJson) &&
+          json::isType<json::Array>(outputsJson))
+      {
+         s_suspendContext.outputs = outputsJson.get_array();
+      }
+   }
 
    s_suspendContext.errorsBaseDir = settings.get("build-last-errors-base-dir");
    std::string buildLastErrors = settings.get("build-last-errors");
@@ -1025,7 +1087,7 @@ json::Value buildStateAsJson()
    {
       json::Object stateJson;
       stateJson["running"] = s_pBuild->isRunning();
-      stateJson["output"] = s_pBuild->output();
+      stateJson["outputs"] = s_pBuild->outputAsJson();
       stateJson["errors_base_dir"] = s_pBuild->errorsBaseDir();
       stateJson["errors"] = s_pBuild->errorsAsJson();
       return stateJson;
@@ -1034,7 +1096,7 @@ json::Value buildStateAsJson()
    {
       json::Object stateJson;
       stateJson["running"] = false;
-      stateJson["output"] = s_suspendContext.output;
+      stateJson["outputs"] = s_suspendContext.outputs;
       stateJson["errors_base_dir"] = s_suspendContext.errorsBaseDir;
       stateJson["errors"] = s_suspendContext.errors;
       return stateJson;
