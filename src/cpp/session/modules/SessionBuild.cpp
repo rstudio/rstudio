@@ -130,9 +130,10 @@ shell_utils::ShellCommand buildRCmd(const core::FilePath& rBinDir)
 
 bool isPackageBuildError(const std::string& output)
 {
-   return boost::algorithm::istarts_with(output, "warning: ") ||
-          boost::algorithm::istarts_with(output, "error: ") ||
-          boost::algorithm::ends_with(output, "WARNING");
+   std::string input = boost::algorithm::trim_copy(output);
+   return boost::algorithm::istarts_with(input, "warning: ") ||
+          boost::algorithm::istarts_with(input, "error: ") ||
+          boost::algorithm::ends_with(input, "WARNING");
 }
 
 // R command invocation -- has two representations, one to be submitted
