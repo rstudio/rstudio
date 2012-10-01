@@ -258,6 +258,16 @@ typedef enum {
 } NPDrawingModel;
 #endif
 
+// copied from newer npapi.h - skybrian
+#ifdef XP_MACOSX
+typedef enum {
+#ifndef NP_NO_CARBON
+  NPEventModelCarbon = 0,
+#endif
+  NPEventModelCocoa = 1
+} NPEventModel;
+#endif
+
 typedef unsigned char	NPBool;
 typedef int16			NPError;
 typedef int16			NPReason;
@@ -450,6 +460,15 @@ typedef enum {
   /* Used for negotiating drawing models */
   , NPPVpluginDrawingModel = 1000
 #endif
+
+  // copied from newer npapi.h - skybrian
+#if defined(XP_MACOSX)
+  /* Used for negotiating event models */
+  , NPPVpluginEventModel = 1001
+  /* In the NPDrawingModelCoreAnimation drawing model, the browser asks the plug-in for a Core Animation layer. */
+  , NPPVpluginCoreAnimationLayer = 1003
+#endif
+
 } NPPVariable;
 
 /*
@@ -485,6 +504,13 @@ typedef enum {
   , NPNVsupportsQuickDrawBool = 2000
 #endif
   , NPNVsupportsCoreGraphicsBool = 2001
+#endif
+  // Copied from newer npapi - skybrian
+#if defined(XP_MACOSX)
+#ifndef NP_NO_CARBON
+  , NPNVsupportsCarbonBool = 3000 /* TRUE if the browser supports the Carbon event model */
+#endif
+  , NPNVsupportsCocoaBool = 3001 /* TRUE if the browser supports the Cocoa event model */
 #endif
 } NPNVariable;
 

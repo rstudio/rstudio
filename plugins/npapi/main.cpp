@@ -184,6 +184,31 @@ extern "C" {
 //    }
     instance->pdata = obj;
 
+#ifdef __APPLE_CC__
+    // On the Mac, we need to negotiate CoreGraphics and Cocoa even though
+    // we don't use them.
+    // See: http://code.google.com/p/chromium/issues/detail?id=134761
+
+    // select the right drawing model if necessary
+    NPBool supportsCoreGraphics = false;
+    if (browser->getvalue(instance, NPNVsupportsCoreGraphicsBool,
+      &supportsCoreGraphics) == NPERR_NO_ERROR && supportsCoreGraphics) {
+
+      browser->setvalue(instance, NPPVpluginDrawingModel,
+        (void*)NPDrawingModelCoreGraphics);
+    }
+
+    // select the Cocoa event model
+    NPBool supportsCocoaEvents = false;
+    if (browser->getvalue(instance, NPNVsupportsCocoaBool,
+      &supportsCocoaEvents) == NPERR_NO_ERROR && supportsCocoaEvents) {
+
+      browser->setvalue(instance, NPPVpluginEventModel,
+        (void*)NPEventModelCocoa);
+    }
+
+#endif
+
     // Make this a windowless plugin.
     return NPN_SetValue(instance, NPPVpluginWindowBool, NULL);
   }

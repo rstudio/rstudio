@@ -12,12 +12,17 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+ifeq ($(shell uname),Darwin)
+# We seem to be using 32-bit plugins on the Mac, so compile this way even if host is 64-bit.
+ARCH=x86
+endif
+
 include ../config.mk
 
 ifeq ($(OS),mac)
 RUN_PATH_FLAG = -executable_path
 DLL_SUFFIX = .dylib
-DLLFLAGS = -bundle $(ARCHCFLAGS) -mmacosx-version-min=10.5
+DLLFLAGS = -bundle $(ARCHCFLAGS) -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk
 CFLAGS += -DXP_MACOSX $(ARCHCFLAGS)
 CXXFLAGS += -DXP_MACOSX $(ARCHCFLAGS)
 # Mac puts multiple architectures into the same files
@@ -120,7 +125,7 @@ $(OBJ_OUTDIR)/%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ -I. -I../common $<
 
 common $(COMMON):
-	(cd ../common && $(MAKE))
+	(cd ../common && ARCH=$(ARCH) $(MAKE))
 
 clean:
 	rm -rf build
