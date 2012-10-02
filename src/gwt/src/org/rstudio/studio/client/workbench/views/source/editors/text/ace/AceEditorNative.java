@@ -220,4 +220,9 @@ public class AceEditorNative extends JavaScriptObject {
    public static native void setInsertMatching(boolean insertMatching) /*-{
       $wnd.require("mode/auto_brace_insert").setInsertMatching(insertMatching);
    }-*/;
+
+   public static native void setVerticallyAlignFunctionArgs(
+         boolean verticallyAlign) /*-{
+      $wnd.require("mode/r_code_model").setVerticallyAlignFunctionArgs(verticallyAlign);
+   }-*/;
 }

@@ -73,6 +73,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSou
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
@@ -363,6 +364,15 @@ public class Source implements InsertSourceHandler,
             return view_.getActiveTabIndex();
          }
       };
+
+      uiPrefs_.verticallyAlignArgumentIndent().bind(new CommandWithArg<Boolean>()
+      {
+         @Override
+         public void execute(Boolean arg)
+         {
+            AceEditorNative.setVerticallyAlignFunctionArgs(arg);
+         }
+      });
        
       initialized_ = true;
       // As tabs were added before, manageCommands() was suppressed due to
