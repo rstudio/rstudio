@@ -39,7 +39,7 @@ public class EditingPreferencesPane extends PreferencesPane
       add(checkboxPref("Enable vim editing mode", prefs_.useVimMode()));
       add(checkboxPref("Blinking cursor", prefs_.blinkingCursor()));
       add(checkboxPref("Insert matching parens/quotes", prefs_.insertMatching()));
-      add(checkboxPref("Automatically reindent pasted code", prefs_.reindentOnPaste()));
+      add(checkboxPref("Auto-indent code after paste", prefs_.reindentOnPaste()));
       add(checkboxPref("Soft-wrap R source files", prefs_.softWrapRFiles()));
       add(checkboxPref("Focus console after executing from source", prefs_.focusConsoleAfterExec()));
       add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
