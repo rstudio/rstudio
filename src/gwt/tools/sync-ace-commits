@@ -85,7 +85,8 @@ git merge \
 git merge \
     origin/patch/blinking-cursor \
     origin/patch/vim-ctrl-behavior \
-    origin/patch/laggy-typing
+    origin/patch/laggy-typing \
+    origin/bugfix/outdent-newline
 
 
 node ./Makefile.dryice.js normal

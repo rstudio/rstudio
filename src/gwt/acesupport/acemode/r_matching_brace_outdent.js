@@ -26,10 +26,13 @@ define("mode/r_matching_brace_outdent", function(require, exports, module)
    (function()
    {
       this.checkOutdent = function(state, line, input) {
-         if (! /^\s+$/.test(line))
-            return false;
+         if (/^\s+$/.test(line) && /^\s*[\{\}\)]/.test(input))
+            return true;
 
-         return /^\s*[\{\}\)]/.test(input);
+         if (/^\s*}\s*$/.test(line) && input == "\n")
+            return true;
+
+         return false;
       };
 
       this.autoOutdent = function(state, doc, row) {
