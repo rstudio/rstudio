@@ -16,9 +16,6 @@ project (R)
 # custom R packages for RStudio
 add_subdirectory(R/packages)
 
-#include graphics handler subproject
-add_subdirectory(session/graphics/handler)
-
 # include files
 file(GLOB_RECURSE R_HEADER_FILES "*.h*")
 
@@ -50,6 +47,9 @@ set (R_SOURCE_FILES
    session/graphics/RGraphicsPlotManipulatorManager.cpp
    session/graphics/RGraphicsPlotManager.cpp
    session/graphics/RGraphicsUtils.cpp
+   session/graphics/RGraphicsDevDesc.cpp
+   session/graphics/RGraphicsHandler.cpp
+   session/graphics/RShadowPngGraphicsHandler.cpp
 )
 
 
@@ -88,7 +88,6 @@ add_library(rstudio-r STATIC ${R_SOURCE_FILES} ${R_HEADER_FILES})
 target_link_libraries(rstudio-r
    ${LIBR_LIBRARIES}
    rstudio-core
-   rstudio-r-graphics-handler
 )
 
 # install rules

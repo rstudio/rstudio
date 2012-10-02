@@ -27,6 +27,7 @@
 
 #include <r/RExec.hpp>
 #include <r/RUtil.hpp>
+#include <r/ROptions.hpp>
 #include <r/RErrorCategory.hpp>
 #include <r/session/RSessionUtils.hpp>
 
@@ -291,9 +292,8 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
    if (bitmapFileType == kJpegFormat)
       extraParams = ", quality = 100";
 
-#ifdef __APPLE__
-   extraParams += ", type = \"quartz\", antialias=\"default\"";
-#endif
+   // add extra bitmap params
+   extraParams += r::session::graphics::extraBitmapParams();
 
    // generate code for creating bitmap file device
    boost::format fmt(

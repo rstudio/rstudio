@@ -25,18 +25,9 @@
 #undef FALSE
 
 #include "RGraphicsHandler.hpp"
+#include "RGraphicsUtils.hpp"
 
 #include <Rembedded.h>
-
-// import r::exec::executeString for creating the PNG device
-// (we do this with a direct declaration because generally
-// speaking we don't want back-depencies on the r library
-// from within this "sub-library"
-namespace r {
-namespace exec {
-core::Error executeString(const std::string& str);
-}
-}
 
 using namespace core ;
 
@@ -113,11 +104,12 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
       PreserveCurrentDeviceScope preserveCurrentDeviceScope;
 
       // create PNG device (completely bail on error)
-      boost::format fmt("grDevices:::png(\"%1%\", %2%, %3%, pointsize = 16)");
+      boost::format fmt("grDevices:::png(\"%1%\", %2%, %3% %4%, pointsize = 16)");
       std::string code = boost::str(fmt %
                                     string_utils::utf8ToSystem(pDC->targetPath.absolutePath()) %
                                     pDC->width %
-                                    pDC->height);
+                                    pDC->height %
+                                    r::session::graphics::extraBitmapParams());
       Error err = r::exec::executeString(code);
       if (err)
          return err;

@@ -19,6 +19,8 @@
 #include <core/Error.hpp>
 
 #include <r/RExec.hpp>
+#include <r/ROptions.hpp>
+#include <r/RUtil.hpp>
 
 #include <Rinternals.h>
 #define R_USE_PROTOTYPES 1
@@ -141,6 +143,33 @@ bool validateRequirements(std::string* pMessage)
    {
       return hasRequiredGraphicsDevices(pMessage);
    }
+}
+
+std::string extraBitmapParams()
+{
+#if defined(_WIN32)
+
+   // no extra params for windows
+
+#elif defined(__APPLE__)
+
+   return ", type = \"quartz\", antialias=\"default\"";
+
+#else
+
+   // if bitmapType is Xlib then force cairo if we can
+   if (r::options::getOption<std::string>("bitmapType") == "Xlib")
+   {
+      if (r::util::hasRequiredVersion("2.14") &&
+          r::util::hasCapability("cairo"))
+      {
+         return ", type = \"cairo\"";
+      }
+   }
+
+#endif
+
+   return "";
 }
 
 struct RestorePreviousGraphicsDeviceScope::Impl

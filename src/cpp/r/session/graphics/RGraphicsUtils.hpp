@@ -29,6 +29,8 @@ namespace graphics {
 void setCompatibleEngineVersion(int version);
 bool validateRequirements(std::string* pMessage = NULL);
 
+std::string extraBitmapParams();
+
 class RestorePreviousGraphicsDeviceScope
 {
 public:

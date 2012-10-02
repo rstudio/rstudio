@@ -29,7 +29,7 @@
 
 #include "RGraphicsUtils.hpp"
 #include "RGraphicsPlotManager.hpp"
-#include "handler/RGraphicsHandler.hpp"
+#include "RGraphicsHandler.hpp"
 
 #include "config.h"
 

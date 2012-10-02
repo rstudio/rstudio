@@ -59,6 +59,15 @@ bool hasRequiredVersion(const std::string& version)
    }
 }
 
+bool hasCapability(const std::string& capability)
+{
+   bool hasCap = false;
+   Error error = r::exec::RFunction("capabilities", capability).call(&hasCap);
+   if (error)
+      LOG_ERROR(error);
+   return hasCap;
+}
+
 std::string rconsole2utf8(const std::string& encoded)
 {
    boost::regex utf8("\x02\xFF\xFE(.*?)(\x03\xFF\xFE|\\')");

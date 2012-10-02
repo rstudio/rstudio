@@ -30,6 +30,8 @@ std::string fixPath(const std::string& path);
 
 bool hasRequiredVersion(const std::string& version);
 
+bool hasCapability(const std::string& capability);
+
 std::string rconsole2utf8(const std::string& encoded);
 
 core::Error iconvstr(const std::string& value,
