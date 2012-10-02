@@ -1805,12 +1805,22 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onExecuteCurrentChunk()
    {
+      // HACK: This is just to force the entire function tree to be built.
+      // It's the easiest way to make sure getCurrentScope() returns
+      // a Scope with an end.
+      docDisplay_.getScopeTree();
+      
       executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(), false);
    }
    
    @Handler
    void onExecuteNextChunk()
    {
+      // HACK: This is just to force the entire function tree to be built.
+      // It's the easiest way to make sure getCurrentScope() returns
+      // a Scope with an end.
+      docDisplay_.getScopeTree();
+      
       executeSweaveChunk(scopeHelper_.getNextSweaveChunk(), true);
    }
 
