@@ -60,11 +60,13 @@ define("mode/auto_brace_insert", function(require, exports, module)
          }
 
          var prevChar = null;
+         var lineBegin = null;
          if (typing)
          {
             var rangeBegin = this.$moveLeft(session.doc, position);
             prevChar = session.doc.getTextRange(Range.fromPoints(rangeBegin,
                                                                  position));
+            lineBegin = session.doc.getLine(position.row).substring(0, position.column);
          }
 
          var endPos = __insert.call(session, position, text);
@@ -85,15 +87,52 @@ define("mode/auto_brace_insert", function(require, exports, module)
          }
          else if (typing && text === "\n") {
             var rangeEnd = this.$moveRight(session.doc, endPos);
-            if (prevChar == "{" && "}" == session.doc.getTextRange(Range.fromPoints(endPos, rangeEnd)))
-            {
+            if ("}" == session.doc.getTextRange(Range.fromPoints(endPos, rangeEnd))) {
                var indent;
-               if (this.getIndentForOpenBrace)
-                  indent = this.getIndentForOpenBrace(this.$moveLeft(session.doc, position));
-               else
-                  indent = this.$getIndent(session.doc.getLine(endPos.row - 1));
-               session.doc.insert(endPos, "\n" + indent);
-               session.selection.moveCursorTo(endPos.row, endPos.column, false);
+               var match;
+               if (prevChar == "{") {
+                  if (this.getIndentForOpenBrace)
+                     indent = this.getIndentForOpenBrace(this.$moveLeft(session.doc, position));
+                  else
+                     indent = this.$getIndent(session.doc.getLine(endPos.row - 1));
+                  session.doc.insert(endPos, "\n" + indent);
+                  session.selection.moveCursorTo(endPos.row, endPos.column, false);
+               }
+               else if (!/^\s*$/.test(lineBegin)) {
+                  // This handles the case where you have some content, then a
+                  // closing brace, on the same line; and the user hits Enter
+                  // right before the closing brace.
+                  //
+                  // Start:
+                  //
+                  // foo <- function() {
+                  //   hello|}
+                  //
+                  // After user hits Enter:
+                  //
+                  // foo <- function() {
+                  //   hello
+                  //   |
+                  // }
+                  //
+                  // The value for "indent" below is the amount that the final
+                  // } should be indented. Implementation note: the line is
+                  // actually indented further during editor.insert, and then
+                  // outdented using autoOutdent.
+
+                  // Find the corresponding {, if one exists
+                  var openBracePos = session.findMatchingBracket(rangeEnd);
+                  if (openBracePos) {
+
+                     // We want to indent the } to the same level as the {
+                     if (this.getIndentForOpenBrace)
+                        indent = this.getIndentForOpenBrace(openBracePos);
+                     else
+                        indent = this.$getIndent(session.doc.getLine(openBracePos.row));
+                     session.doc.insert(endPos, "\n" + indent);
+                     session.selection.moveCursorTo(endPos.row, endPos.column, false);
+                  }
+               }
             }
          }
          return endPos;
