@@ -97,6 +97,11 @@ public class UIPrefsAccessor extends Prefs
    {
       return bool("insert_matching", true);
    }
+   
+   public PrefValue<Boolean> reindentOnPaste()
+   {
+      return bool("reindent_on_paste", true);
+   }
 
    public PrefValue<Boolean> softWrapRFiles()
    {
