@@ -2610,11 +2610,12 @@ var Editor = function(renderer, session) {
         // if (cursor.row !== end.row) {
         if (session.getDocument().isNewLine(text)) {
             this.moveCursorTo(cursor.row+1, 0);
+            cursor = this.getCursorPosition();
 
             var size = session.getTabSize();
             var minIndent = Number.MAX_VALUE;
 
-            for (var row = cursor.row + 1; row <= end.row; ++row) {
+            for (var row = cursor.row; row <= end.row; ++row) {
                 var indent = 0;
 
                 line = session.getLine(row);
@@ -2629,7 +2630,7 @@ var Editor = function(renderer, session) {
                     minIndent = Math.min(indent, minIndent);
             }
 
-            for (var row = cursor.row + 1; row <= end.row; ++row) {
+            for (var row = cursor.row; row <= end.row; ++row) {
                 var outdent = minIndent;
 
                 line = session.getLine(row);
@@ -2640,7 +2641,7 @@ var Editor = function(renderer, session) {
                         outdent -= 1;
                 session.remove(new Range(row, 0, row, i));
             }
-            session.indentRows(cursor.row + 1, end.row, lineIndent);
+            session.indentRows(cursor.row, end.row, lineIndent);
         }
         if (shouldOutdent)
             mode.autoOutdent(lineState, session, cursor.row);
