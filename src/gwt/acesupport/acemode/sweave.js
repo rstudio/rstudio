@@ -1,7 +1,7 @@
 /*
  * sweave.js
  *
- * Copyright (C) 2009-11 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * The Initial Developer of the Original Code is
  * Ajax.org B.V.
