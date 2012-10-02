@@ -41,8 +41,21 @@ public class Scope extends JavaScriptObject
       return this.isSection();
    }-*/;
 
+   /**
+    * For named functions, the preamble points to the beginning of the function
+    * declaration, including function name. For other scopes, it just points to
+    * the opening brace (same as getBraceStart).
+    */
    public native final Position getPreamble() /*-{
       return this.preamble;
+   }-*/;
+
+   /**
+    * Points to the opening brace of the scope. Note that for named functions,
+    * this is different than the preamble.
+    */
+   public native final Position getBraceStart() /*-{
+      return this.start;
    }-*/;
 
    public native final Position getEnd() /*-{

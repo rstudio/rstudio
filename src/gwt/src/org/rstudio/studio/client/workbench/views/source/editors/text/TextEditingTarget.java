@@ -2367,7 +2367,7 @@ public class TextEditingTarget implements EditingTarget
          if (scope == null)
             return;
 
-         docDisplay_.addFoldFromRow(scope.getPreamble().getRow());
+         docDisplay_.addFoldFromRow(scope.getBraceStart().getRow());
       }
       else
       {
@@ -2442,7 +2442,7 @@ public class TextEditingTarget implements EditingTarget
       scopeList.removeAll(ScopeList.ANON_BRACE);
       for (Scope scope : scopeList)
       {
-         int row = scope.getPreamble().getRow();
+         int row = scope.getBraceStart().getRow();
          if (!rowsFolded.contains(row))
             docDisplay_.addFoldFromRow(row);
       }

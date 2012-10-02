@@ -334,24 +334,6 @@ define('mode/r_scope_tree', function(require, exports, module) {
          return resumePos;
       };
 
-      this.exportFunctions = function(list)
-      {
-         if (this.label)
-         {
-            var here = {
-               label: this.label,
-               preamble: this.preamble,
-               end: this.end,
-               children: []
-            };
-            list.push(here);
-            list = here.children;
-         }
-
-         for (var i = 0; i < this.$children.length; i++)
-            this.$children[i].exportFunctions(list);
-      };
-
       // Returns index of the child that contains this position, if it exists;
       // otherwise, -(index + 1) where index is where such a child would be.
       this.$binarySearch = function(pos, start /*optional*/, end /*optional*/) {

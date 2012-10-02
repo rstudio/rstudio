@@ -42,9 +42,9 @@ public class ScopeList implements Iterable<Scope>
       @Override
       public boolean test(Scope scope)
       {
-         return scope.getPreamble().isBeforeOrEqualTo(range_.getStart()) &&
+         return scope.getBraceStart().isBeforeOrEqualTo(range_.getStart()) &&
                 scope.getEnd().isAfterOrEqualTo(range_.getStart()) &&
-                scope.getPreamble().isBeforeOrEqualTo(range_.getEnd()) &&
+                scope.getBraceStart().isBeforeOrEqualTo(range_.getEnd()) &&
                 scope.getEnd().isAfterOrEqualTo(range_.getEnd());
       }
 
