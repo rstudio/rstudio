@@ -1,6 +1,4 @@
 
-@external ubuntu_mono;
-
 .captionIcon {
    margin-top: -1px;
    margin-right: 5px;
@@ -12,12 +10,4 @@
    overflow: hidden;
    font-size: 11px;
    cursor: default;
-}
-
-/* nudge caption text up for the Ubuntu font under Chrome */
-@if rstudio.desktop false {
-@if user.agent safari { .ubuntu_mono .captionLabel {
-   margin-top: -2px;
-   }
-}
 }

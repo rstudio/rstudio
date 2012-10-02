@@ -790,14 +790,6 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    white-space: nowrap;
 }
 
-/* nudge toolbar text up for the Ubuntu font under Chrome */
-@if rstudio.desktop false {
-@if user.agent safari { .ubuntu_mono .toolbarButtonLabel {
-   margin-top: 2px;
-   }
-}
-}
-
 .globalToolbar {
    height:27px;
    z-index: 1;
@@ -948,11 +940,6 @@ body.windows .searchBox {
 body.ubuntu_mono .searchBox {
    font-size: 11px;
 }
-
-@if rstudio.desktop false {
-@if user.agent safari { .ubuntu_mono .searchBox {
-   margin-top: -2px;
-}}}
 
 /** Workbench **/
 

@@ -46,11 +46,6 @@ public class StatusBarElementWidget extends FlowPanel
       options_ = new ArrayList<String>();
       label_ = new Label();
       add(label_);
-      
-      // tweak font baseline for ubuntu mono on chrome
-      if (BrowseCap.hasUbuntuFonts() && BrowseCap.isChrome())
-         label_.getElement().getStyle().setTop(-1, Unit.PX);
-
 
       addDomHandler(new MouseDownHandler()
       {
@@ -112,8 +107,6 @@ public class StatusBarElementWidget extends FlowPanel
          {
             Resources res = GWT.create(Resources.class);
             arrows_ = new Image(res.upDownArrow());
-            if (BrowseCap.hasUbuntuFonts() && BrowseCap.isChrome())
-               arrows_.getElement().getStyle().setTop(0, Unit.PX);
             add(arrows_);
          }
          else

@@ -56,10 +56,6 @@ public class PDFViewerPanel extends Composite
       viewer_.getElement().setId("viewer");
       Document.get().getBody().getStyle().setMarginLeft(200, Style.Unit.PX);
       
-      // tweak font baseline for ubuntu mono on chrome
-      if (BrowseCap.hasUbuntuFonts() && BrowseCap.isChrome())
-         lblStatus_.getElement().getStyle().setTop(-1, Unit.PX);
-
       new WidgetHandlerRegistration(this)
       {
          @Override
