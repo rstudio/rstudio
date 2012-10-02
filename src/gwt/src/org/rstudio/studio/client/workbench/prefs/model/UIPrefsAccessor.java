@@ -102,6 +102,11 @@ public class UIPrefsAccessor extends Prefs
    {
       return bool("reindent_on_paste", true);
    }
+   
+   public PrefValue<Boolean> verticallyAlignArgumentIndent()
+   {
+      return bool("valign_argument_indent", true);
+   }
 
    public PrefValue<Boolean> softWrapRFiles()
    {
