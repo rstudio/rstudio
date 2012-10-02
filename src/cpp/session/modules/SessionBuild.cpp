@@ -138,10 +138,11 @@ void addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
           if (!isRtoolsCompatible(rTools))
           {
             boost::format fmt(
-             "WARNING: Rtools version %1% is on the PATH (at %2%) however is "
+             "WARNING: Rtools version %1% is on the PATH (intalled at %2%) "
+             "however is "
              "not compatible with the version of R you are currently running."
-             "\n\nYou should install a compatible version of Rtools to ensure "
-             "that packages are built correctly."
+             "\n\nPlease download and install the appropriate version of "
+             "Rtools to ensure that packages are built correctly:"
              "\n\nhttp://cran.r-project.org/bin/windows/Rtools/");
             *pWarningMessage = boost::str(
                fmt % rTools.name() % formatPath(rTools.installPath()));
@@ -170,6 +171,39 @@ void addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
           r_util::prependToSystemPath(*it, pEnvironment);
           return;
        }
+    }
+
+    // if we found no version of rtools whatsoever then print warning and return
+    if (rTools.empty())
+    {
+       *pWarningMessage =
+           "WARNING: Rtools is required to build R packages however is not "
+           "currently installed. "
+           "Please download and install the appropriate "
+           "version of Rtools before proceeding:\n\n"
+           "http://cran.r-project.org/bin/windows/Rtools/";
+    }
+    else
+    {
+       // Rtools installed but no compatible version, print a suitable warning
+       pWarningMessage->append(
+          "WARNING: Rtools is required to build R packages however no version "
+          "of Rtools compatible with the version of R you are currently "
+          "running was found. Note that the following incompatible version(s) "
+          "of Rtools were found:\n\n");
+
+       std::vector<r_util::RToolsInfo>::const_iterator fwdIt = rTools.begin();
+       for (; fwdIt != rTools.end(); ++fwdIt)
+       {
+          std::string path = formatPath(fwdIt->installPath());
+          boost::format fmt("  - Rtools %1% (installed at %2%)\n");
+          pWarningMessage->append(boost::str(fmt % fwdIt->name() % path));
+       }
+
+       pWarningMessage->append(
+          "\nPlease download and install the appropriate "
+          "version of Rtools before proceeding:\n\n"
+          "http://cran.r-project.org/bin/windows/Rtools/");
     }
  }
 
