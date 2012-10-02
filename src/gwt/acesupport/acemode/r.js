@@ -97,10 +97,55 @@ define("mode/r", function(require, exports, module)
 
             // If newline in a doxygen comment, continue the comment
             var pos = editor.getSelectionRange().start;
-            var match = /^((\s*#+')\s*)/.exec(session.doc.getLine(pos.row));
-            if (match && editor.getSelectionRange().start.column >= match[2].length) {
+            var line = session.doc.getLine(pos.row);
+
+            var match = /^((\s*#+')\s*)/.exec(line);
+            if (match && pos.start.column >= match[2].length) {
                return {text: "\n" + match[1]};
             }
+
+            /* If we're putting a newline right before a closing brace, we don't
+               want the closing newline to be incorrectly indented.
+
+               There are two scenarios here (pipe character is the cursor pos):
+
+               foo <- function() {|}
+
+               foo <- function() {
+               |}
+
+               The difference between these two cases is whether there is
+               non-whitespace content to the left of the cursor. If yes, then
+               we assume the user wants to start typing a new line of content
+               above the close brace. In this case, we want to put the cursor on
+               its own line and the close brace on its own line, with the two
+               indented independently indented.
+
+               In the other case (whitespace or nothing to the left of the
+               cursor) then we just assume the user wants to move the cursor
+               down.
+            */
+/*
+            if (/^\s*}/.test(line.substring(pos.column))) {
+                var openBracePos = session.findMatchingBracket({row: pos.row, column: pos.column + 1});
+                if (!openBracePos)
+                     return null;
+
+                var indent = this.getNextLineIndent(state, line.substring(0, line.length - 1), session.getTabString(), session.getTabSize(), pos.row);
+                var next_indent = this.$getIndent(session.doc.getLine(openBracePos.row));
+
+                if (/^\s*$/.test(line.substring(0, pos.column))) {
+                    return {
+                       text: '\n' + next_indent
+                    };
+                }
+
+                return {
+                    text: '\n' + indent + '\n' + next_indent,
+                    selection: [1, indent.length, 1, indent.length]
+                };
+            }
+*/
          }
          return false;
       };

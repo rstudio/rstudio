@@ -60,11 +60,19 @@ define("mode/auto_brace_insert", function(require, exports, module)
          }
 
          var prevChar = null;
+         var lineBegin = null;
          if (typing)
          {
             var rangeBegin = this.$moveLeft(session.doc, position);
             prevChar = session.doc.getTextRange(Range.fromPoints(rangeBegin,
                                                                  position));
+            lineBegin = session.doc.getLine(position.row).substring(0, position.column);
+            lineEnd = session.doc.getLine(position.row).substring(position.column);
+         }
+
+         if (typing && text === "\n" && lineEnd.length > 0 && lineEnd.charAt(0) === '}' && /^\s*$/.test(lineBegin)) {
+            session.doc.insert(position, "\n" + lineBegin);
+            return {row: position.row + 1, column: lineBegin.length};
          }
 
          var endPos = __insert.call(session, position, text);
@@ -85,15 +93,24 @@ define("mode/auto_brace_insert", function(require, exports, module)
          }
          else if (typing && text === "\n") {
             var rangeEnd = this.$moveRight(session.doc, endPos);
-            if (prevChar == "{" && "}" == session.doc.getTextRange(Range.fromPoints(endPos, rangeEnd)))
-            {
+            if ("}" == session.doc.getTextRange(Range.fromPoints(endPos, rangeEnd))) {
                var indent;
-               if (this.getIndentForOpenBrace)
-                  indent = this.getIndentForOpenBrace(this.$moveLeft(session.doc, position));
-               else
-                  indent = this.$getIndent(session.doc.getLine(endPos.row - 1));
-               session.doc.insert(endPos, "\n" + indent);
-               session.selection.moveCursorTo(endPos.row, endPos.column, false);
+               if (prevChar == "{") {
+                  if (this.getIndentForOpenBrace)
+                     indent = this.getIndentForOpenBrace(this.$moveLeft(session.doc, position));
+                  else
+                     indent = this.$getIndent(session.doc.getLine(endPos.row - 1));
+                  session.doc.insert(endPos, "\n" + indent);
+                  session.selection.moveCursorTo(endPos.row, endPos.column, false);
+               }
+               else if (!/^\s*$/.test(lineBegin)) {
+                  var openBracePos = session.findMatchingBracket({row: pos.row, column: pos.column + 1});
+                  if (!openBracePos)
+                       return null;
+                  indent = this.getIndentForOpenBrace(openBracePos);
+                  //indent = this.$getIndent(session.doc.getLine(endPos.row - 1));
+                  session.doc.insert(endPos, "\n" + indent);
+               }
             }
          }
          return endPos;
