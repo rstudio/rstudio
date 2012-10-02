@@ -24,7 +24,7 @@ var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightR
 var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").SweaveBackgroundHighlighter;
 var SweaveHighlightRules = require("mode/sweave_highlight_rules").SweaveHighlightRules;
 var RCodeModel = require("mode/r_code_model").RCodeModel;
-var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
+var RMatchingBraceOutdent = require("mode/r_matching_brace_outdent").RMatchingBraceOutdent;
 var unicode = require("ace/unicode");
 
 var Mode = function(suppressHighlighting, doc, session) {
@@ -32,7 +32,6 @@ var Mode = function(suppressHighlighting, doc, session) {
     	this.$tokenizer = new Tokenizer(new TextHighlightRules().getRules());
 	else
     	this.$tokenizer = new Tokenizer(new SweaveHighlightRules().getRules());
-   this.$outdent = new MatchingBraceOutdent();
 
    this.codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/, /<<(.*?)>>/);
    this.foldingRules = this.codeModel;
@@ -46,6 +45,8 @@ var Mode = function(suppressHighlighting, doc, session) {
 oop.inherits(Mode, TextMode);
 
 (function() {
+
+   oop.implement(this, RMatchingBraceOutdent);
 
    this.tokenRe = new RegExp("^["
        + unicode.packages.L
@@ -84,16 +85,6 @@ oop.inherits(Mode, TextMode);
    this.getNextLineIndent = function(state, line, tab, tabSize, row)
    {
       return this.codeModel.getNextLineIndent(row, line, state, tab, tabSize);
-   };
-
-   this.checkOutdent = function(state, line, input)
-   {
-      return this.$outdent.checkOutdent(line, input);
-   };
-
-   this.autoOutdent = function(state, doc, row)
-   {
-      return this.$outdent.autoOutdent(doc, row);
    };
 
    this.allowAutoInsert = this.smartAllowAutoInsert;

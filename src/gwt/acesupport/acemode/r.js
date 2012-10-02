@@ -27,7 +27,7 @@ define("mode/r", function(require, exports, module)
          .TextHighlightRules;
    var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
    var RCodeModel = require("mode/r_code_model").RCodeModel;
-   var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
+   var RMatchingBraceOutdent = require("mode/r_matching_brace_outdent").RMatchingBraceOutdent;
    var AutoBraceInsert = require("mode/auto_brace_insert").AutoBraceInsert;
    var unicode = require("ace/unicode");
 
@@ -37,7 +37,6 @@ define("mode/r", function(require, exports, module)
          this.$tokenizer = new Tokenizer(new TextHighlightRules().getRules());
       else
          this.$tokenizer = new Tokenizer(new RHighlightRules().getRules());
-      this.$outdent = new MatchingBraceOutdent();
 
       this.codeModel = new RCodeModel(doc, this.$tokenizer, null);
       this.foldingRules = this.codeModel;
@@ -46,6 +45,8 @@ define("mode/r", function(require, exports, module)
 
    (function()
    {
+      oop.implement(this, RMatchingBraceOutdent);
+
       this.tokenRe = new RegExp("^["
           + unicode.packages.L
           + unicode.packages.Mn + unicode.packages.Mc
@@ -77,43 +78,9 @@ define("mode/r", function(require, exports, module)
 
       this.allowAutoInsert = this.smartAllowAutoInsert;
 
-      this.checkOutdent = function(state, line, input) {
-         if (! /^\s+$/.test(line))
-            return false;
-
-         return /^\s*[\{\}\)]/.test(input);
-      };
-
       this.getIndentForOpenBrace = function(openBracePos)
       {
          return this.codeModel.getIndentForOpenBrace(openBracePos);
-      };
-
-      this.autoOutdent = function(state, doc, row) {
-         if (row == 0)
-            return 0;
-
-         var line = doc.getLine(row);
-
-         var match = line.match(/^(\s*[\}\)])/);
-         if (match)
-         {
-            var column = match[1].length;
-            var openBracePos = doc.findMatchingBracket({row: row, column: column});
-
-            if (!openBracePos || openBracePos.row == row) return 0;
-
-            var indent = this.codeModel.getIndentForOpenBrace(openBracePos);
-            doc.replace(new Range(row, 0, row, column-1), indent);
-         }
-
-         match = line.match(/^(\s*\{)/);
-         if (match)
-         {
-            var column = match[1].length;
-            var indent = this.codeModel.getBraceIndent(row-1);
-            doc.replace(new Range(row, 0, row, column-1), indent);
-         }
       };
 
       this.$getIndent = function(line) {

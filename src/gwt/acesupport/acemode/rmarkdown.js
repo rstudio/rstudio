@@ -22,6 +22,7 @@ var oop = require("ace/lib/oop");
 var MarkdownMode = require("mode/markdown").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
 var RMarkdownHighlightRules = require("mode/rmarkdown_highlight_rules").RMarkdownHighlightRules;
+var RMatchingBraceOutdent = require("mode/r_matching_brace_outdent").RMatchingBraceOutdent;
 var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").SweaveBackgroundHighlighter;
 var RCodeModel = require("mode/r_code_model").RCodeModel;
 
@@ -41,6 +42,8 @@ var Mode = function(suppressHighlighting, doc, session) {
 oop.inherits(Mode, MarkdownMode);
 
 (function() {
+   oop.implement(this, RMatchingBraceOutdent);
+   
    this.insertChunkInfo = {
       value: "```{r}\n\n```\n",
       position: {row: 0, column: 5}

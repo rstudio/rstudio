@@ -45,6 +45,7 @@
             <file name="auto_brace_insert.js"/>
             <file name="r_background_highlighter.js"/>
             <file name="r_highlight_rules.js"/>
+            <file name="r_matching_brace_outdent.js"/>
             <file name="r_code_model.js"/>
             <file name="r_scope_tree.js"/>
             <file name="r.js"/>
