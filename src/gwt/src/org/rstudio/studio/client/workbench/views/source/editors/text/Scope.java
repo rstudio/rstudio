@@ -41,22 +41,39 @@ public class Scope extends JavaScriptObject
       return this.isSection();
    }-*/;
 
+   public native final boolean isFunction() /*-{
+      return this.isFunction();
+   }-*/;
+
    /**
     * For named functions, the preamble points to the beginning of the function
-    * declaration, including function name. For other scopes, it just points to
-    * the opening brace (same as getBraceStart).
+    * declaration, including function name. For chunks, it points to the
+    * beginning of the chunk itself. For other scopes, it just points to the
+    * opening brace (same as getBodyStart).
     */
    public native final Position getPreamble() /*-{
       return this.preamble;
    }-*/;
 
    /**
-    * Points to the opening brace of the scope. Note that for named functions,
-    * this is different than the preamble.
+    * Points to the start of the body of the scope. Note that for named
+    * functions, chunks, and sections, this is different than the preamble.
     */
-   public native final Position getBraceStart() /*-{
+   public native final Position getBodyStart() /*-{
       return this.start;
    }-*/;
+
+   /**
+    * Points to the part of a scope where a fold would begin.
+    */
+   public final Position getFoldStart()
+   {
+      if (isFunction())
+         return getBodyStart();
+      else
+         return getPreamble();
+
+   }
 
    public native final Position getEnd() /*-{
       return this.end;

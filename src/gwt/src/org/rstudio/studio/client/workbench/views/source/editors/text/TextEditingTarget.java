@@ -88,7 +88,7 @@ import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList.ContainsPredicate;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList.ContainsFoldPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -2360,14 +2360,14 @@ public class TextEditingTarget implements EditingTarget
 
          ScopeList scopeList = new ScopeList(docDisplay_);
          scopeList.removeAll(ScopeList.ANON_BRACE);
-         Scope scope = scopeList.findLast(new ContainsPredicate(
+         Scope scope = scopeList.findLast(new ContainsFoldPredicate(
                Range.fromPoints(docDisplay_.getSelectionStart(),
                                 docDisplay_.getSelectionEnd())));
 
          if (scope == null)
             return;
 
-         docDisplay_.addFoldFromRow(scope.getBraceStart().getRow());
+         docDisplay_.addFoldFromRow(scope.getFoldStart().getRow());
       }
       else
       {
@@ -2442,7 +2442,7 @@ public class TextEditingTarget implements EditingTarget
       scopeList.removeAll(ScopeList.ANON_BRACE);
       for (Scope scope : scopeList)
       {
-         int row = scope.getBraceStart().getRow();
+         int row = scope.getFoldStart().getRow();
          if (!rowsFolded.contains(row))
             docDisplay_.addFoldFromRow(row);
       }

@@ -159,6 +159,9 @@ define('mode/r_scope_tree', function(require, exports, module) {
       this.isBrace = function() { return this.scopeType == ScopeNode.TYPE_BRACE; };
       this.isChunk = function() { return this.scopeType == ScopeNode.TYPE_CHUNK; };
       this.isSection = function() { return this.scopeType == ScopeNode.TYPE_SECTION; };
+      this.isFunction = function() {
+         return this.isBrace() && !!this.label;
+      };
 
       this.addNode = function(node) {
          assert(!node.end, "New node is already closed");
