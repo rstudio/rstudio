@@ -23,6 +23,8 @@ import com.google.gwt.dom.client.StyleInjector;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
+
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
@@ -100,7 +102,14 @@ public class RStudio implements EntryPoint
    {
       String progressUrl = ProgressImages.createLargeGray().getUrl();
       final DivElement div = Document.get().createDivElement();
-      div.setInnerHTML("<img src=\"" + progressUrl + "\"/>");
+      StringBuilder str = new StringBuilder();
+      str.append("<img src=\"");
+      str.append(progressUrl);
+      str.append("\"");
+      if (BrowseCap.isRetina())
+         str.append("width=24 height=24");
+      str.append("/>");
+      div.setInnerHTML(str.toString());
       div.getStyle().setWidth(100, Style.Unit.PCT);
       div.getStyle().setMarginTop(200, Style.Unit.PX);
       div.getStyle().setProperty("textAlign", "center");
