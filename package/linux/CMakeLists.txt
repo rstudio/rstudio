@@ -30,8 +30,10 @@ if(RSTUDIO_SERVER)
   set(RPM_POSTINST postinst.sh.in)
   set(RPM_POSTRM postrm.sh.in)
 
-  # depend on psmisc (for killall)
-  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, ")
+  # dependencies
+  # sudo apt-get install gdebi-core
+  # sudo gdebi -n <rstudio-server>.deb
+  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libssl0.9.8, libapparmor1, apparmor-utils, ")
   set(RSTUDIO_RPM_DEPENDS "psmisc, ")
 
 elseif(RSTUDIO_DESKTOP)
