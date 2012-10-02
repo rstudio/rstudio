@@ -15,7 +15,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -30,8 +29,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
 
 import java.util.ArrayList;
-
-import org.rstudio.core.client.BrowseCap;
 
 public class StatusBarElementWidget extends FlowPanel
       implements StatusBarElement, HasSelectionHandlers<String>
