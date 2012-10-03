@@ -16,6 +16,8 @@ define("mode/r_code_model", function(require, exports, module) {
 var Range = require("ace/range").Range;
 var TokenIterator = require("ace/token_iterator").TokenIterator;
 
+var $verticallyAlignFunctionArgs = false;
+
 function comparePoints(pos1, pos2)
 {
    if (pos1.row != pos2.row)
@@ -647,10 +649,15 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
          if (openBracePos != null)
          {
-            var nextTokenPos = this.$findNextSignificantToken({
-                  row: openBracePos.row,
-                  column: openBracePos.column + 1
-               }, lastRow);
+            var nextTokenPos = null;
+
+            if ($verticallyAlignFunctionArgs) {
+               nextTokenPos = this.$findNextSignificantToken(
+                     {
+                        row: openBracePos.row,
+                        column: openBracePos.column + 1
+                     }, lastRow);
+            }
 
             if (!nextTokenPos)
             {
@@ -1099,5 +1106,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 }).call(RCodeModel.prototype);
 
 exports.RCodeModel = RCodeModel;
+
+exports.setVerticallyAlignFunctionArgs = function(verticallyAlign) {
+   $verticallyAlignFunctionArgs = verticallyAlign;
+};
+
 
 });

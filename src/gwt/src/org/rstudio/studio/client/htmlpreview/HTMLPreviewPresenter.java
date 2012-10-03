@@ -370,8 +370,16 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
       String title = StringUtil.notNull(view_.getDocumentTitle());
       if (title.length() == 0)
       {
-         FileSystemItem fsi = FileSystemItem.createFile(getHtmlFile());
-         return fsi.getStem();
+         String htmlFile = getHtmlFile();
+         if (htmlFile != null)
+         {
+            FileSystemItem fsi = FileSystemItem.createFile(htmlFile);
+            return fsi.getStem();
+         }
+         else
+         {
+            return "(Untitled)";
+         }
       }
       else
       {
@@ -382,7 +390,10 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
    @Override
    public String getHtmlFile()
    {
-      return lastSuccessfulPreview_.getHtmlFile();
+      if (lastSuccessfulPreview_ != null)
+         return lastSuccessfulPreview_.getHtmlFile();
+      else
+         return null;
    }
 
    @Override

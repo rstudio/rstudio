@@ -26,28 +26,45 @@ define("mode/r_matching_brace_outdent", function(require, exports, module)
    (function()
    {
       this.checkOutdent = function(state, line, input) {
-         if (! /^\s+$/.test(line))
-            return false;
+         if (/^\s+$/.test(line) && /^\s*[\{\}\)]/.test(input))
+            return true;
 
-         return /^\s*[\{\}\)]/.test(input);
+         // This is the case of a newline being inserted on a line that only
+         // contains }
+         if (/^\s*}\s*$/.test(line) && input == "\n")
+            return true;
+
+         // This is the case of a newline being inserted on a line that contains
+         // a bunch of stuff including }, and the user hits Enter. The input
+         // is not necessarily "\n" because we may auto-insert some padding
+         // as well.
+         //
+         // We don't always want to autoindent in this case; ideally we would
+         // only autoindent if Enter was being hit right before }. But at this
+         // time we don't have that information. So we let the autoOutdent logic
+         // run and trust it to only outdent if appropriate.
+         if (/}\s*$/.test(line) && /\n/.test(input))
+            return true;
+
+         return false;
       };
 
-      this.autoOutdent = function(state, doc, row) {
+      this.autoOutdent = function(state, session, row) {
          if (row == 0)
             return 0;
 
-         var line = doc.getLine(row);
+         var line = session.getLine(row);
 
          var match = line.match(/^(\s*[\}\)])/);
          if (match)
          {
             var column = match[1].length;
-            var openBracePos = doc.findMatchingBracket({row: row, column: column});
+            var openBracePos = session.findMatchingBracket({row: row, column: column});
 
             if (!openBracePos || openBracePos.row == row) return 0;
 
             var indent = this.codeModel.getIndentForOpenBrace(openBracePos);
-            doc.replace(new Range(row, 0, row, column-1), indent);
+            session.replace(new Range(row, 0, row, column-1), indent);
          }
 
          match = line.match(/^(\s*\{)/);
@@ -55,7 +72,7 @@ define("mode/r_matching_brace_outdent", function(require, exports, module)
          {
             var column = match[1].length;
             var indent = this.codeModel.getBraceIndent(row-1);
-            doc.replace(new Range(row, 0, row, column-1), indent);
+            session.replace(new Range(row, 0, row, column-1), indent);
          }
       };
    }).call(RMatchingBraceOutdent);

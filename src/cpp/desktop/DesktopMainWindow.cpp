@@ -48,9 +48,6 @@ MainWindow::MainWindow(QUrl url) :
    pToolbar_->setVisible(false);
 
    // initialize zoom levels
-   zoomLevels_.push_back(0.7);
-   zoomLevels_.push_back(0.8);
-   zoomLevels_.push_back(0.9);
    zoomLevels_.push_back(1.0);
    zoomLevels_.push_back(1.1);
    zoomLevels_.push_back(1.20);

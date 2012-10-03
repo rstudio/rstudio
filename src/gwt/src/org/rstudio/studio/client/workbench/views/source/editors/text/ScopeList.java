@@ -32,9 +32,9 @@ public class ScopeList implements Iterable<Scope>
       boolean test(Scope scope);
    }
 
-   public static class ContainsPredicate implements ScopePredicate
+   public static class ContainsFoldPredicate implements ScopePredicate
    {
-      public ContainsPredicate(Range range)
+      public ContainsFoldPredicate(Range range)
       {
          range_ = range;
       }
@@ -42,9 +42,9 @@ public class ScopeList implements Iterable<Scope>
       @Override
       public boolean test(Scope scope)
       {
-         return scope.getPreamble().isBeforeOrEqualTo(range_.getStart()) &&
+         return scope.getFoldStart().isBeforeOrEqualTo(range_.getStart()) &&
                 scope.getEnd().isAfterOrEqualTo(range_.getStart()) &&
-                scope.getPreamble().isBeforeOrEqualTo(range_.getEnd()) &&
+                scope.getFoldStart().isBeforeOrEqualTo(range_.getEnd()) &&
                 scope.getEnd().isAfterOrEqualTo(range_.getEnd());
       }
 
