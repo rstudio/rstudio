@@ -302,6 +302,13 @@ endif()
 
 # bundle qt dependencies if this is a package build
 if(RSTUDIO_BUNDLE_QT)
+   # set lib suffix for windows
+   if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+      set(LIB_SUFFIX "d4")
+   else()
+      set(LIB_SUFFIX "4")
+   endif()
+
    # install qt conf
    if(APPLE)
       set(QTCONF_DEST_DIR ${RSTUDIO_INSTALL_SUPPORTING})
@@ -314,11 +321,21 @@ if(RSTUDIO_BUNDLE_QT)
            DESTINATION ${QTCONF_DEST_DIR})
 
    # copy qt plugins
-   set(QT_IMAGEFORMATS_DIR "${QT_PLUGINS_DIR}/imageformats")
-   install(DIRECTORY "${QT_PLUGINS_DIR}/imageformats"
-           DESTINATION ${QTPLUGINS_DEST_DIR}/plugins
-           PATTERN "*.a" EXCLUDE
-           PATTERN "*d4.dll" EXCLUDE)
+   if(WIN32)
+      set(QT_IMAGEFORMATS_DIR "${QT_PLUGINS_DIR}/imageformats")
+      install(PROGRAMS "${QT_IMAGEFORMATS_DIR}/qgif${LIB_SUFFIX}.dll"
+                       "${QT_IMAGEFORMATS_DIR}/qico${LIB_SUFFIX}.dll"
+                       "${QT_IMAGEFORMATS_DIR}/qjpeg${LIB_SUFFIX}.dll"
+                       "${QT_IMAGEFORMATS_DIR}/qmng${LIB_SUFFIX}.dll"
+                       "${QT_IMAGEFORMATS_DIR}/qsvg${LIB_SUFFIX}.dll"
+                       "${QT_IMAGEFORMATS_DIR}/qtga${LIB_SUFFIX}.dll"
+                       "${QT_IMAGEFORMATS_DIR}/qtiff${LIB_SUFFIX}.dll"
+              DESTINATION ${QTPLUGINS_DEST_DIR}/plugins/imageformats)
+   else()
+      install(DIRECTORY "${QT_PLUGINS_DIR}/imageformats"
+              DESTINATION ${QTPLUGINS_DEST_DIR}/plugins
+              PATTERN "*.a" EXCLUDE)
+   endif()
 
    # fixup bundle on osx
    if(APPLE)
@@ -358,13 +375,13 @@ if(RSTUDIO_BUNDLE_QT)
 
    # copy qt dlls directly to bin on win32
    elseif(WIN32)
-      install(PROGRAMS ${QT_BINARY_DIR}/QtCore4.dll
-                       ${QT_BINARY_DIR}/QtGui4.dll
-                       ${QT_BINARY_DIR}/QtNetwork4.dll
-                       ${QT_BINARY_DIR}/QtWebKit4.dll
-                       ${QT_BINARY_DIR}/QtSvg4.dll
-                       ${QT_BINARY_DIR}/QtXml4.dll
-                       ${QT_BINARY_DIR}/phonon4.dll
+      install(PROGRAMS ${QT_BINARY_DIR}/QtCore${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/QtGui${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/QtNetwork${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/QtWebKit${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/QtSvg${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/QtXml${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/phonon${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/mingwm10.dll
                        ${QT_BINARY_DIR}/libgcc_s_dw2-1.dll
               DESTINATION ${RSTUDIO_INSTALL_BIN})
