@@ -18,6 +18,12 @@
 
 #include <core/StringUtils.hpp>
 
+// GetMacOSStatusCommentString and FSMoveObjectToTrashSync deprecated
+// as of Mac OS X 10.8
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 namespace core {
 namespace system {
 namespace recycle_bin {
