@@ -42,6 +42,7 @@
 
 #include <core/system/ShellUtils.hpp>
 #include <core/system/Process.hpp>
+#include <core/system/RecycleBin.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -228,6 +229,28 @@ core::Error createFolder(const core::json::JsonRpcRequest& request,
    return Success() ;
 }
 
+
+core::Error deleteFile(const FilePath& filePath)
+{
+   if (session::options().programMode() == kSessionProgramModeDesktop)
+   {
+      Error error = core::system::recycle_bin::sendTo(filePath);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return filePath.remove();
+      }
+      else
+      {
+         return Success();
+      }
+   }
+   else
+   {
+      return filePath.remove();
+   }
+}
+
 // IN: Array<String> paths
 core::Error deleteFiles(const core::json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
@@ -250,8 +273,8 @@ core::Error deleteFiles(const core::json::JsonRpcRequest& request,
          it != filePaths.end();
          ++it)
    {    
-      // remove the file
-      deleteError = it->remove();
+      // attempt to send the file to the recycle bin
+      deleteError = deleteFile(*it);
       if (deleteError)
          return deleteError ;
    }
