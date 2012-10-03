@@ -30,10 +30,13 @@ if(RSTUDIO_SERVER)
   set(RPM_POSTINST postinst.sh.in)
   set(RPM_POSTRM postrm.sh.in)
 
-  # dependencies
-  # sudo apt-get install gdebi-core
-  # sudo gdebi -n <rstudio-server>.deb
+  # deiban dependencies -- to install the .deb from the command line with
+  # automatic dependency resolution use e.g.
+  #   sudo apt-get install gdebi-core
+  #   sudo gdebi rstudio-server-0.97.151-amd64.deb
   set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libssl0.9.8, libapparmor1, apparmor-utils, ")
+
+  # rpm dependencies
   set(RSTUDIO_RPM_DEPENDS "psmisc, ")
 
 elseif(RSTUDIO_DESKTOP)
