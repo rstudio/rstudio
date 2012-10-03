@@ -14,6 +14,7 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -29,6 +30,8 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.common.PackagesHelpLink;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.workbench.prefs.model.PackagesPrefs;
@@ -104,6 +107,11 @@ public class PackagesPreferencesPane extends PreferencesPane
       viewDirAfterCheckFailure_ = new CheckBox("View Rcheck directory after failed R CMD check");
       lessSpaced(viewDirAfterCheckFailure_);
       add(viewDirAfterCheckFailure_);
+      
+      HelpLink packagesHelpLink = new PackagesHelpLink();
+      packagesHelpLink.getElement().getStyle().setMarginTop(12, Unit.PX);
+      nudgeRight(packagesHelpLink); 
+      add(packagesHelpLink);
       
       cranMirrorTextBox_.setEnabled(false);
       useInternet2_.setEnabled(false);

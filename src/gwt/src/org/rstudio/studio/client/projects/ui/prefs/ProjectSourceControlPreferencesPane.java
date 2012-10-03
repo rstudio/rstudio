@@ -20,9 +20,10 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
-import org.rstudio.studio.client.common.vcs.VCSHelpLink;
+import org.rstudio.studio.client.common.vcs.VcsHelpLink;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsContext;
@@ -84,7 +85,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       extraSpaced(lblOrigin_);
       add(lblOrigin_);
       
-      VCSHelpLink vcsHelpLink = new VCSHelpLink();
+      HelpLink vcsHelpLink = new VcsHelpLink();
       nudgeRight(vcsHelpLink);
       add(vcsHelpLink);
      

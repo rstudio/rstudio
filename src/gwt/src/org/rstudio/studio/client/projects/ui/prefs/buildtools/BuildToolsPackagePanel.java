@@ -17,6 +17,8 @@ package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.common.PackagesHelpLink;
 import org.rstudio.studio.client.projects.model.RProjectBuildOptions;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
@@ -110,6 +112,10 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
         new SafeHtmlBuilder().appendHtmlConstant(
           "Build Binary Package &mdash; R CMD INSTALL additional options:").toSafeHtml()));
       
+      
+      HelpLink packagesHelpLink = new PackagesHelpLink();
+      packagesHelpLink.getElement().getStyle().setMarginTop(7, Unit.PX);
+      add(packagesHelpLink);
      }
    
    @Inject

@@ -31,9 +31,10 @@ import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.SshKeyWidget;
-import org.rstudio.studio.client.common.vcs.VCSHelpLink;
+import org.rstudio.studio.client.common.vcs.VcsHelpLink;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -112,7 +113,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
       nudgeRight(sshKeyWidget_);
       add(sshKeyWidget_);
             
-      VCSHelpLink vcsHelpLink = new VCSHelpLink();
+      HelpLink vcsHelpLink = new VcsHelpLink();
       nudgeRight(vcsHelpLink); 
       vcsHelpLink.addStyleName(res_.styles().newSection()); 
       add(vcsHelpLink);
@@ -237,7 +238,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
       chkUseGitBash_.setVisible(vcsEnabled && haveGitBashPref());
       sshKeyWidget_.setVisible(vcsEnabled);
    }
-
+   
    private final PreferencesDialogResources res_;
 
    private final CheckBox chkVcsEnabled_;

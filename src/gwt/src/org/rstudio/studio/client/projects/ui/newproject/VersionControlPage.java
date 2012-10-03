@@ -19,8 +19,9 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.common.vcs.VCSHelpLink;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
+import org.rstudio.studio.client.common.vcs.VcsHelpLink;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -79,7 +80,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
             
             verticalPanel.add(msg);
             
-            VCSHelpLink vcsHelpLink = new VCSHelpLink();
+            HelpLink vcsHelpLink = new VcsHelpLink();
             vcsHelpLink.setCaption("Using " + getTitle() + " with RStudio");
             vcsHelpLink.addStyleName(styles.vcsHelpLink());
             verticalPanel.add(vcsHelpLink);

@@ -1,5 +1,5 @@
 /*
- * VCSHelpLink.java
+ * HelpLink.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.vcs;
+package org.rstudio.studio.client.common;
 
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.HyperlinkLabel;
@@ -23,9 +23,9 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 
-public class VCSHelpLink extends Composite
+public class HelpLink extends Composite
 {
-   public VCSHelpLink()
+   public HelpLink(String caption, final String rstudioLink)
    {
       HorizontalPanel helpPanel = new HorizontalPanel();
     
@@ -33,12 +33,12 @@ public class VCSHelpLink extends Composite
       Image helpImage = new Image(ThemeResources.INSTANCE.help());
       helpImage.getElement().getStyle().setMarginRight(4, Unit.PX);
       helpPanel.add(helpImage);
-      helpLink_ = new HyperlinkLabel("Using Version Control with RStudio");
+      helpLink_ = new HyperlinkLabel(caption);
       helpLink_.addClickHandler(new ClickHandler() {
          public void onClick(ClickEvent event)
          {
             RStudioGinjector.INSTANCE.getGlobalDisplay().openRStudioLink(
-                                                      "using_version_control");
+                                                         rstudioLink);
          }  
       });
       helpPanel.add(helpLink_);
