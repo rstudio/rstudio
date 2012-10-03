@@ -248,7 +248,7 @@
    # RStudio mirror
    rstudioDF <- data.frame(name = "Global (CDN)",
                            host = "RStudio",
-                           url = "http://cran.rstudio.org",
+                           url = "http://cran.rstudio.com",
                            country = "us",
                            stringsAsFactors = FALSE)
 
