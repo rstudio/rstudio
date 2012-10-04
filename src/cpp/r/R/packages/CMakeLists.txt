@@ -28,7 +28,7 @@ set_source_files_properties(${MANIPULATE_DEPENDENCIES} PROPERTIES
 add_custom_command(OUTPUT ${MANIPULATE_OUTPUT}
                    DEPENDS ${MANIPULATE_DEPENDENCIES}
                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                   COMMAND R
+                   COMMAND ${LIBR_EXECUTABLE}
                    ARGS CMD INSTALL -l ${PACKAGES_LIBRARY_DIR} manipulate)
 
 # rstudio package
@@ -42,7 +42,7 @@ set_source_files_properties(${RSTUDIO_DEPENDENCIES} PROPERTIES
 add_custom_command(OUTPUT ${RSTUDIO_OUTPUT}
                    DEPENDS ${RSTUDIO_DEPENDENCIES}
                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                   COMMAND R
+                   COMMAND ${LIBR_EXECUTABLE}
                    ARGS CMD INSTALL -l ${PACKAGES_LIBRARY_DIR} rstudio)
 
 

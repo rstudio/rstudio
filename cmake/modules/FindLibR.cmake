@@ -25,6 +25,7 @@ if(APPLE)
       set(LIBR_HOME "${LIBR_LIBRARIES}/Resources" CACHE PATH "R home directory")
       set(LIBR_INCLUDE_DIRS "${LIBR_HOME}/include" CACHE PATH "R include directory")
       set(LIBR_DOC_DIR "${LIBR_HOME}/doc" CACHE PATH "R doc directory")
+      set(LIBR_EXECUTABLE "${LIBR_HOME}/R" CACHE PATH "R executable")
    endif()
 
 # detection for UNIX & Win32
@@ -111,6 +112,13 @@ else()
 
    endif()
 
+   # look for the R executable
+   find_program(LIBR_EXECUTABLE R
+                HINTS ${LIBRARY_ARCH_HINT_PATH} ${LIBR_HOME}/bin)
+   if(LIBR_EXECUTABLE-NOTFOUND)
+      message(STATUS "Unable to locate R executable")
+   endif()
+
    # look for the core R library
    find_library(LIBR_CORE_LIBRARY NAMES R
                 HINTS ${LIBR_LIB_DIR} ${LIBRARY_ARCH_HINT_PATH} ${LIBR_HOME}/bin)
@@ -157,6 +165,7 @@ endif()
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(LibR DEFAULT_MSG
    LIBR_HOME
+   LIBR_EXECUTABLE
    LIBR_INCLUDE_DIRS
    LIBR_LIBRARIES
    LIBR_DOC_DIR
@@ -168,7 +177,6 @@ endif()
 
 # mark low-level variables from FIND_* calls as advanced
 mark_as_advanced(
-   LIBR_EXECUTABLE
    LIBR_CORE_LIBRARY
    LIBR_LAPACK_LIBRARY
    LIBR_BLAS_LIBRARY
