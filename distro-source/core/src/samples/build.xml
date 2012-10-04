@@ -7,8 +7,6 @@
     <ant target="${target}" dir="LogExample"/>
     <ant target="${target}" dir="Mail"/>
     <ant target="${target}" dir="Showcase"/>
-    <ant target="${target}" dir="SimpleRPC"/>
-    <ant target="${target}" dir="SimpleXML"/>
   </target>
 
   <target name="build" description="Build all samples">
