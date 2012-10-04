@@ -70,7 +70,7 @@ Synctex& GwtCallback::synctex()
 
 void GwtCallback::browseUrl(QString url)
 {
-   QUrl qurl(url);
+   QUrl qurl = QUrl::fromEncoded(url.toAscii());
 
 #ifdef Q_WS_MAC
    if (qurl.scheme() == QString::fromAscii("file"))
