@@ -465,6 +465,7 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
       
       consoleDispatcher_.saveFileAsThenExecuteCommand("Save History As", 
                                                       ".Rhistory", 
+                                                      false,
                                                       "savehistory");
    }
    

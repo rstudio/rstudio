@@ -102,7 +102,8 @@ public abstract class FileDialog extends FileSystemDialog
 
       boolean useExactFilename = directory_.getSelectedValue() != null
             && directory_.getSelectedValue().equals(filename);
-      if (!useExactFilename)
+      
+      if (!useExactFilename || getAlwaysMungeFilename())
       {
          filename = mungeFilename(filename);
          filename_.setText(filename);
@@ -162,6 +163,11 @@ public abstract class FileDialog extends FileSystemDialog
    protected String mungeFilename(String filename)
    {
       return filename;
+   }
+   
+   protected boolean getAlwaysMungeFilename()
+   {
+      return false;
    }
 
    @Override

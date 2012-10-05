@@ -67,6 +67,7 @@ public class ConsoleDispatcher
    
    public void saveFileAsThenExecuteCommand(String caption,
                                             final String defaultExtension,
+                                            boolean forceExtension,
                                             final String command)
    {
       fileDialogs_.saveFile(
@@ -74,7 +75,7 @@ public class ConsoleDispatcher
             fsContext_,
             workbenchContext_.getCurrentWorkingDir(),
             defaultExtension,
-            false,
+            forceExtension,
             new ProgressOperationWithInput<FileSystemItem>()
             {
                public void execute(

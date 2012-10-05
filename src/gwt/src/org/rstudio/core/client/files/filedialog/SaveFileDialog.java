@@ -59,7 +59,9 @@ public class SaveFileDialog extends FileDialog
          return filename;
       else
       {
-         // if there is no extension then we need to add one
+         // if there is no extension or the extension doesn't match
+         // the default and we are set to force the default then we 
+         // need to add one
          String ext = FileSystemItem.getExtensionFromPath(filename);
          if (ext.length() == 0 ||
              (forceDefaultExtension_ && (ext != defaultExtension_)))
@@ -72,7 +74,13 @@ public class SaveFileDialog extends FileDialog
          }
       }
    }
-
+   
+   @Override
+   protected boolean getAlwaysMungeFilename()
+   {
+      return forceDefaultExtension_;
+   }
+   
    private final String defaultExtension_;
    private final boolean forceDefaultExtension_;
 }

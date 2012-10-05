@@ -163,6 +163,7 @@ public class Workspace
       
       consoleDispatcher_.saveFileAsThenExecuteCommand("Save Workspace As",
                                                       ".RData",
+                                                      true,
                                                       "save.image");
    }
 
