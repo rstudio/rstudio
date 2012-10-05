@@ -28,6 +28,7 @@ import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.layout.client.Layout.Layer;
 
 /**
@@ -64,6 +65,7 @@ class LayoutImpl {
     style.setWidth(10, widthUnit);
     style.setHeight(10, heightUnit);
 
+    style.setVisibility(Visibility.HIDDEN);
     State.HIDDEN.set(ruler, true);
     return ruler;
   }
