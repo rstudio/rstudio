@@ -860,7 +860,7 @@ class CellTreeNodeView<T> extends UIObject {
    * @param parentNodeInfo the {@link NodeInfo} of the parent
    * @param elem the outer element of this {@link CellTreeNodeView}
    * @param value the value of this node
-   * @param messages tranlation messages
+   * @param messages translation messages
    */
   CellTreeNodeView(final CellTree tree, final CellTreeNodeView<?> parent,
       NodeInfo<T> parentNodeInfo, Element elem, T value, CellTreeMessages messages) {
