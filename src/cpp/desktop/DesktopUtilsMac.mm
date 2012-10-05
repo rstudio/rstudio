@@ -126,6 +126,16 @@ void initializeLang()
       NSString* lcid = [[NSLocale currentLocale] localeIdentifier];
       if (lcid)
       {
+         // Eliminate trailing @ components (OS X uses the @ suffix to append
+         // locale overrides like alternate currency formats)
+         std::string localeId = std::string([lcid UTF8String]);
+         std::size_t atLoc = localeId.find('@');
+         if (atLoc != std::string::npos)
+         {
+            localeId = localeId.substr(0, atLoc);
+            lcid = [NSString stringWithUTF8String: localeId.c_str()];
+         }
+
          lang = [lcid stringByAppendingString:@".UTF-8"];
       }
    }
