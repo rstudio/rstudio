@@ -46,7 +46,7 @@ std::string fixPath(const std::string& path)
 bool hasRequiredVersion(const std::string& version)
 {
    std::string versionTest("getRversion() >= \"" + version + "\"");
-   bool hasRequired;
+   bool hasRequired = false;
    Error error = r::exec::evaluateString(versionTest, &hasRequired);
    if (error)
    {

@@ -80,7 +80,7 @@ Error SessionManager::launchSession(const std::string& username)
    END_LOCK_MUTEX
 
    // launch the session
-   PidType pid;
+   PidType pid = 0;
    Error error = server::launchSession(username, &pid);
    if (error)
    {

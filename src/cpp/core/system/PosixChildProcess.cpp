@@ -355,9 +355,11 @@ Error ChildProcess::terminate()
 Error ChildProcess::run()
 {  
    // declarations
-   pid_t pid;
-   int fdInput[2], fdOutput[2], fdError[2];
-   int fdMaster;
+   pid_t pid = 0;
+   int fdInput[2] = {0,0};
+   int fdOutput[2] = {0,0};
+   int fdError[2] = {0,0};
+   int fdMaster = 0;
 
    // pseudoterminal mode: fork using the special forkpty call
    if (options_.pseudoterminal)

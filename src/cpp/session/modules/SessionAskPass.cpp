@@ -110,7 +110,7 @@ Error askForPassword(const std::string& prompt,
 
    // read params
    json::Value value;
-   bool remember;
+   bool remember = false;
    Error error = json::readParams(request.params, &value, &remember);
    if (error)
       return error;

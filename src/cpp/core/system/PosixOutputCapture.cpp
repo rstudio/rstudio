@@ -125,7 +125,7 @@ Error captureStandardStreams(
 {
 
    // redirect stdout
-   int stdoutReadPipe ;
+   int stdoutReadPipe = 0;
    Error error = redirectToPipe(STDOUT_FILENO, &stdoutReadPipe);
    if (error)
       return error;

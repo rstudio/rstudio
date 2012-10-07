@@ -131,7 +131,7 @@ pDevDesc shadowDevDesc(pDevDesc dev)
    {
       DeviceContext* pDC = (DeviceContext*)dev->deviceSpecific;
 
-      pDevDesc shadowDev;
+      pDevDesc shadowDev = NULL;
       Error error = shadowDevDesc(pDC, &shadowDev);
       if (error)
       {
@@ -169,7 +169,7 @@ void shadowDevSync(DeviceContext* pDC)
    // copy the rstudio device's display list onto the shadow device
    PreserveCurrentDeviceScope preserveCurrentDevice;
 
-   pDevDesc dev;
+   pDevDesc dev = NULL;
    Error error = shadowDevDesc(pDC, &dev);
    if (error)
    {
@@ -228,7 +228,9 @@ void setSize(pDevDesc pDev)
 void setDeviceAttributes(pDevDesc pDev)
 {
    pDevDesc shadowDev = shadowDevDesc(pDev);
-
+   if (shadowDev == NULL)
+      return;
+   
    pDev->cra[0] = shadowDev->cra[0];
    pDev->cra[1] = shadowDev->cra[1];
    pDev->startps = shadowDev->startps;
@@ -334,6 +336,9 @@ void circle(double x,
             pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
+   if (pngDevDesc == NULL)
+      return;
+   
    pngDevDesc->circle(x, y, r, gc, pngDevDesc);
 }
 
@@ -344,8 +349,11 @@ void line(double x1,
           const pGEcontext gc,
           pDevDesc dev)
 {
-    pDevDesc pngDevDesc = shadowDevDesc(dev);
-    pngDevDesc->line(x1, y1, x2, y2, gc, pngDevDesc);
+   pDevDesc pngDevDesc = shadowDevDesc(dev);
+   if (pngDevDesc == NULL)
+      return;
+   
+   pngDevDesc->line(x1, y1, x2, y2, gc, pngDevDesc);
 }
 
 void polygon(int n,
@@ -355,6 +363,9 @@ void polygon(int n,
              pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
+   if (pngDevDesc == NULL)
+      return;
+   
    pngDevDesc->polygon(n, x, y, gc, pngDevDesc);
 }
 
@@ -365,6 +376,9 @@ void polyline(int n,
               pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
+   if (pngDevDesc == NULL)
+      return;
+   
    pngDevDesc->polyline(n, x, y, gc, pngDevDesc);
 }
 
@@ -376,6 +390,9 @@ void rect(double x0,
           pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
+   if (pngDevDesc == NULL)
+      return;
+   
    pngDevDesc->rect(x0, y0, x1, y1, gc, pngDevDesc);
 }
 
@@ -432,6 +449,9 @@ void metricInfo(int c,
                 pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
+   if (pngDevDesc == NULL)
+      return;
+   
    pngDevDesc->metricInfo(c, gc, ascent, descent, width, pngDevDesc);
 }
 
@@ -456,18 +476,27 @@ void text(double x,
 void clip(double x0, double x1, double y0, double y1, pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
+   if (pngDevDesc == NULL)
+      return;
+   
    pngDevDesc->clip(x0, x1, y0, y1, pngDevDesc);
 }
    
 void newPage(const pGEcontext gc, pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
+   if (pngDevDesc == NULL)
+      return;
+   
    pngDevDesc->newPage(gc, pngDevDesc);
 }
 
 void mode(int mode, pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
+   if (pngDevDesc == NULL)
+      return;
+   
    if (pngDevDesc->mode != NULL)
       pngDevDesc->mode(mode, pngDevDesc);
 }
