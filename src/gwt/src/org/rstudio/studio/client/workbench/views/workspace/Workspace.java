@@ -241,7 +241,7 @@ public class Workspace
                         var +
                         " <- " +
                         makeCommand(input) +
-                        "\n  View(" + var + ")";
+                        "\n  viewData(" + var + ")";
                   eventBus_.fireEvent(new SendToConsoleEvent(code, true));
                }
             },
