@@ -29,6 +29,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceObjectInfo;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -69,7 +70,7 @@ public class WorkspaceObjectTable
             table_.getRowFormatter().setStylePrimaryName(
                   i,
                   ThemeResources.INSTANCE.themeStyles().workspaceSectionHead());
-            sections_.add(new ArrayList<WorkspaceObjectInfo>()) ;
+            sections_.add(new ArrayList<String>()) ;
             manageHeadingVisibility(i);
          }
       }
@@ -84,8 +85,8 @@ public class WorkspaceObjectTable
       {
          int sectionId = chooseSection(obj) ;
          
-         ArrayList<WorkspaceObjectInfo> section = sections_.get(sectionId) ;
-         int index = searchSection(section, obj.getName()) ;
+         ArrayList<String> section = sections_.get(sectionId) ;
+         int index = Collections.binarySearch(section, obj.getName()) ;
          if (index >= 0)
             return index + getSectionStart(sectionId) ;
          
@@ -93,7 +94,7 @@ public class WorkspaceObjectTable
          removeRow(obj.getName()) ;
          
          index = -(index+1) ;
-         section.add(index, obj) ;
+         section.add(index, obj.getName()) ;
          int tableIndex = index + getSectionStart(sectionId) ;
          table_.insertRow(tableIndex) ;
          table_.getRowFormatter().setStylePrimaryName(
@@ -110,7 +111,7 @@ public class WorkspaceObjectTable
       {
          for (int i = 0; i < sections_.size(); i++)
          {
-            int index = searchSection(sections_.get(i), name) ;
+            int index = Collections.binarySearch(sections_.get(i), name) ;
             if (index >= 0)
             {
                table_.removeRow(getSectionStart(i) + index) ;
@@ -126,16 +127,11 @@ public class WorkspaceObjectTable
       {
          ArrayList<String> objectNames = new ArrayList<String>();
          for (int i = 0; i < sections_.size(); i++)
-         {
-            ArrayList<WorkspaceObjectInfo> section = sections_.get(i);
-            for (int j = 0; j<section.size(); j++)
-               objectNames.add(section.get(j).getName());
-         }
-            
+            objectNames.addAll(sections_.get(i));
         return objectNames;
       }
       
-      public WorkspaceObjectInfo getObjectForIndex(int index)
+      public String getObjectNameForIndex(int index)
       {
          int pos = 0 ;
          for (int i = 0; i < sections_.size(); i++)
@@ -144,23 +140,13 @@ public class WorkspaceObjectTable
             if (index < pos)
                return null ;
             
-            ArrayList<WorkspaceObjectInfo> section = sections_.get(i) ;
+            ArrayList<String> section = sections_.get(i) ;
             if (index - pos < section.size())
                return section.get(index - pos) ;
             
             pos += section.size();
          }
          return null ;
-      }
-      
-      private int searchSection(ArrayList<WorkspaceObjectInfo> section,
-                                String name)
-      {
-         for (int i = 0; i<section.size(); i++)
-            if (section.get(i).getName().equals(name))
-               return i;
-        
-         return -1;     
       }
 
       private int getSectionStart(int section)
@@ -203,8 +189,8 @@ public class WorkspaceObjectTable
                                              sections_.get(section).size() > 0);
       }
 
-      private final ArrayList<ArrayList<WorkspaceObjectInfo>> sections_
-                                          = new ArrayList<ArrayList<WorkspaceObjectInfo>>();
+      private final ArrayList<ArrayList<String>> sections_
+                                          = new ArrayList<ArrayList<String>>();
       private static final int SEC_DATA = 0 ;
       private static final int SEC_VAL = 1 ;
       private static final int SEC_FUNC = 2 ;
@@ -235,14 +221,9 @@ public class WorkspaceObjectTable
                return;
             
             int row = cell.getRowIndex();
-            WorkspaceObjectInfo object = rowManager_.getObjectForIndex(row);
-            if (object == null)
-               return;
-            
-            final String objectName = object.getName();
+            final String objectName = rowManager_.getObjectNameForIndex(row);
             if (objectName == null)
                return;
-            
 
             if (editHandlers_.containsKey(objectName))
             {
@@ -260,7 +241,8 @@ public class WorkspaceObjectTable
             }
             else
             {
-               if (object.getLength() > 100)
+               WorkspaceObjectInfo object = objects_.get(objectName);
+               if (object != null && object.getLength() > 100)
                {
                   globalDisplay_.showYesNoMessage(
                         MessageDialog.WARNING, 
@@ -298,12 +280,14 @@ public class WorkspaceObjectTable
 
    public void clearObjects()
    {
+      objects_.clear();
       editHandlers_.clear();
       rowManager_.clearTable() ;
    }
 
    public void removeObject(String name)
    {
+      objects_.remove(name);
       editHandlers_.remove(name);
       rowManager_.removeRow(name) ;
    }
@@ -315,6 +299,8 @@ public class WorkspaceObjectTable
    
    public void updateObject(WorkspaceObjectInfo object)
    {
+      objects_.put(object.getName(), object);
+      
       editHandlers_.remove(object.getName());
 
       int index = rowManager_.getRowIndex(object) ;
@@ -380,6 +366,8 @@ public class WorkspaceObjectTable
    private final HandlerManager handlerManager_ = new HandlerManager(null);
    private final HashMap<String, ClickHandler> editHandlers_ =
                                             new HashMap<String, ClickHandler>(); 
+   private final HashMap<String,WorkspaceObjectInfo> objects_ =
+                                     new HashMap<String,WorkspaceObjectInfo>();
    private final InlineEditorFactory inlineEditorFactory_;
    private final GlobalDisplay globalDisplay_ ;
    private final FlexTableEx table_;
