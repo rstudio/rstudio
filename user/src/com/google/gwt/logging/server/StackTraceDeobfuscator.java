@@ -114,6 +114,19 @@ public class StackTraceDeobfuscator {
     return newSt;
   }
 
+  public Throwable deobfuscateThrowable(Throwable old, String strongName) {
+    Throwable t = new Throwable(old.getMessage());
+    if (old.getStackTrace() != null) {
+      t.setStackTrace(deobfuscateStackTrace(old.getStackTrace(), strongName));
+    } else {
+      t.setStackTrace(new StackTraceElement[0]);
+    }
+    if (old.getCause() != null) {
+      t.initCause(deobfuscateThrowable(old.getCause(), strongName));
+    }
+    return t;
+  }
+
   /**
    * Best effort resymbolization of a a single stack trace element.
    *
@@ -256,19 +269,6 @@ public class StackTraceDeobfuscator {
     String filename = symbolMapsDirectory.getCanonicalPath()
         + File.separatorChar + permutationStrongName + ".symbolMap";
     return new FileInputStream(filename);
-  }
-
-  private Throwable deobfuscateThrowable(Throwable old, String strongName) {
-    Throwable t = new Throwable(old.getMessage());
-    if (old.getStackTrace() != null) {
-      t.setStackTrace(deobfuscateStackTrace(old.getStackTrace(), strongName));
-    } else {
-      t.setStackTrace(new StackTraceElement[0]);
-    }
-    if (old.getCause() != null) {
-      t.initCause(deobfuscateThrowable(old.getCause(), strongName));
-    }
-    return t;
   }
 
   private SourceMapping loadSourceMap(String permutationStrongName, int fragmentId) {
