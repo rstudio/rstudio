@@ -104,6 +104,7 @@ set(DESKTOP_SOURCE_FILES
   DesktopMain.cpp
   DesktopMainWindow.cpp
   DesktopMenuCallback.cpp
+  DesktopNetworkReply.cpp
   DesktopNetworkProxyFactory.cpp
   DesktopOptions.cpp
   DesktopURLDownloader.cpp
