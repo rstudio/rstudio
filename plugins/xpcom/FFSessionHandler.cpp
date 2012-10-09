@@ -233,7 +233,7 @@ bool FFSessionHandler::invoke(HostChannel& channel, const gwt::Value& thisObj, c
   jsval jsThis;
   if (thisObj.isNull()) {
     jsThis = OBJECT_TO_JSVAL(global);
-    Debug::log(Debug::Error) << " using global object for this" << Debug::flush;
+    Debug::log(Debug::Debugging) << " using global object for this" << Debug::flush;
   } else {
     makeJsvalFromValue(jsThis, ctx, thisObj);
     if (Debug::level(Debug::Spam)) {

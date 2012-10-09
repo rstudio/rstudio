@@ -49,7 +49,7 @@ endif
 export FLAG32BIT
 
 ifeq ($(BROWSER),)
-$(warning Defaulting to FF3 build [set with BROWSER=ff3, ff3+, ff35, ff36, ff40, ff50, ff60, ff70, ff80, ff90, ff100, f110, ff120, ff130, ff140, ff150])
+$(warning Defaulting to FF3 build [set with BROWSER=ff3, ff3+, ff35, ff36, ff40, ff50, ff60, ff70, ff80, ff90, ff100, f110, ff120, ff130, ff140, ff150, ff160])
 BROWSER=ff3
 endif
 
@@ -174,7 +174,12 @@ ifeq ($(BROWSER),ff150)
 GECKO_VERSION   = 15.0.0
 CFLAGS += -DGECKO_VERSION=15000
 else
+ifeq ($(BROWSER),ff160)
+GECKO_VERSION   = 16.0.0
+CFLAGS += -DGECKO_VERSION=16000
+else
 $(error Unrecognized BROWSER of $(BROWSER) - options are ff3, ff3+, ff35, ff36, ff40, ff50, ff60, ff70, ff80, ff90, ff100, ff110, ff120, ff130, ff140, ff150)
+endif
 endif
 endif
 endif
@@ -281,6 +286,7 @@ linuxplatforms:
 	$(MAKE) lib BROWSER=ff130 ARCH=x86
 	$(MAKE) lib BROWSER=ff140 ARCH=x86
 	$(MAKE) lib BROWSER=ff150 ARCH=x86
+	$(MAKE) lib BROWSER=ff160 ARCH=x86
 	$(MAKE) lib BROWSER=ff3 ARCH=x86_64
 	$(MAKE) lib BROWSER=ff3+ ARCH=x86_64
 	$(MAKE) lib BROWSER=ff35 ARCH=x86_64
@@ -297,6 +303,7 @@ linuxplatforms:
 	$(MAKE) lib BROWSER=ff130 ARCH=x86_64
 	$(MAKE) lib BROWSER=ff140 ARCH=x86_64
 	$(MAKE) lib BROWSER=ff150 ARCH=x86_64
+	$(MAKE) lib BROWSER=ff160 ARCH=x86_64
 
 macplatforms:
 	$(MAKE) lib BROWSER=ff3

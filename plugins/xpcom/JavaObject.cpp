@@ -147,7 +147,11 @@ JSObject* JavaObject::construct(JSContext* ctx, SessionData* data, int objectRef
 #if GECKO_VERSION >= 15000
 JSBool JavaObject::getPropertyWrapper(JSContext* ctx, JSHandleObject obj,
     JSHandleId id, jsval *vp) {
+#if GECKO_VERSION >= 16000
+  return JavaObject::getProperty(ctx, obj.get(), id.get(), vp);
+#else
   return JavaObject::getProperty(ctx, obj.value(), id.value(), vp);
+#endif
 }
 #endif
 
@@ -205,7 +209,11 @@ JSBool JavaObject::getProperty(JSContext* ctx, JSObject* obj, jsid id,
 #if GECKO_VERSION >= 15000
 JSBool JavaObject::setPropertyWrapper(JSContext* ctx, JSHandleObject obj,
     JSHandleId id, JSBool strict, jsval *vp) {
+#if GECKO_VERSION >= 16000
+  return setProperty(ctx, obj.get(), id.get(), strict, vp);
+#else
   return setProperty(ctx, obj.value(), id.value(), strict, vp);
+#endif
 }
 #endif
 

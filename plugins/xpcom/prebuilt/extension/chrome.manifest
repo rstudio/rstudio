@@ -87,6 +87,10 @@ binary-component lib/WINNT_x86-msvc/ff150/xpGwtDevPlugin.dll ABI=WINNT_x86-msvc 
 binary-component lib/Darwin-gcc3/ff150/libgwt_dev_ff150.dylib ABI=Darwin_x86_64-gcc3 appversion<=15.0.*
 binary-component lib/Darwin-gcc3/ff150/libgwt_dev_ff150.dylib ABI=Darwin_x86-gcc3 appversion<=15.0.*
 
+# Firefox 16
+binary-component lib/Linux_x86_64-gcc3/ff160/libgwt_dev_ff160.so ABI=Linux_x86_64-gcc3 appversion<=16.0.*
+binary-component lib/Linux_x86-gcc3/ff160/libgwt_dev_ff160.so ABI=Linux_x86-gcc3 appversion<=16.0.*
+
 
 interfaces components/IOOPHM.xpt
 contract @gwt.google.com/ExternalWrapper;1 {028DD88B-6D65-401D-AAFD-17E497D15D09}
