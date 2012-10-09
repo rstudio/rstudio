@@ -13,6 +13,9 @@
 
 #include <session/SessionHttpConnectionListener.hpp>
 
+#include <core/system/Environment.hpp>
+#include <core/system/FileMode.hpp>
+
 #include <session/SessionConstants.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionLocalStreams.hpp>
@@ -39,10 +42,11 @@ void initializeHttpConnectionListener()
 
    if (options.programMode() == kSessionProgramModeDesktop)
    {
-      s_pHttpConnectionListener =
-            new TcpIpHttpConnectionListener("127.0.0.1",
-                                            options.wwwPort(),
-                                            options.sharedSecret());
+      FilePath streamPath(core::system::getenv("RS_LOCAL_PEER"));
+      s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(
+                                           streamPath,
+                                           core::system::UserReadWriteMode,
+                                           -1);
    }
    else // mode == "server"
    {
@@ -50,8 +54,9 @@ void initializeHttpConnectionListener()
       std::string userIdentity = options.userIdentity();
       FilePath localStreamPath = local_streams::streamPath(userIdentity);
       s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(
-                                              localStreamPath,
-                                              options.limitRpcClientUid());
+                                           localStreamPath,
+                                           core::system::EveryoneReadWriteMode,
+                                           options.limitRpcClientUid());
    }
 }
 

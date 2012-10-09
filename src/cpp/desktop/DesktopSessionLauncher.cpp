@@ -52,15 +52,6 @@ void launchProcess(std::string absPath,
    *ppProc = pProcess;
 }
 
-
-core::WaitResult serverReady(QString host, QString port)
-{
-   QTcpSocket socket;
-   socket.connectToHost(host, port.toInt());
-   return WaitResult(socket.waitForConnected() ? WaitSuccess : WaitContinue,
-                     Success());
-}
-
 FilePath abendLogPath()
 {
    return desktop::userLogPath().complete("rsession_abort_msg.log");
@@ -126,10 +117,6 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
    pAppLaunch->setActivationWindow(pMainWindow_);
 
    desktop::options().restoreMainWindowBounds(pMainWindow_);
-
-   error = waitForSession(host, port);
-   if (error)
-      return error;
 
    RUN_DIAGNOSTICS_LOG("\nConnected to R session, attempting to initialize...\n");
 
@@ -267,11 +254,6 @@ Error SessionLauncher::launchNextSession(bool reload)
    // update the main window's reference to the process object
    pMainWindow_->setSessionProcess(pRSessionProcess_);
 
-   // wait for it to be available
-   error = waitForSession(host, port);
-   if (error)
-      return error;
-
    // connect to quit event
    pMainWindow_->connect(pRSessionProcess_,
                          SIGNAL(finished(int,QProcess::ExitStatus)),
@@ -311,14 +293,6 @@ Error SessionLauncher::launchSession(const QStringList& argList,
                      argList,
                      ppRSessionProcess));
 }
-
-Error SessionLauncher::waitForSession(const QString& host,
-                                      const QString& port)
-{
-   return waitWithTimeout(boost::bind(serverReady, host, port),
-                          50, 25, 10);
-}
-
 
 QString SessionLauncher::collectAbendLogMessage() const
 {

@@ -14,24 +14,60 @@
 #ifndef DESKTOPNETWORKREPLY_HPP
 #define DESKTOPNETWORKREPLY_HPP
 
+#include <boost/scoped_ptr.hpp>
+#include <boost/asio/io_service.hpp>
+
+#include <core/FilePath.hpp>
+
 #include <QNetworkReply>
 
-class DesktopNetworkReply : public QNetworkReply
-{
+namespace core {
+   class Error;
+   class FilePath;
+   namespace http {
+      class Response;
+   }
+}
+
+namespace desktop {
+
+class NetworkReply : public QNetworkReply
+{   
    Q_OBJECT
+
 public:
-   explicit DesktopNetworkReply(QObject *parent = 0);
-   
+   static boost::asio::io_service& sharedIoService();
+
+public:
+   NetworkReply(const core::FilePath& streamFilePath,
+                QNetworkAccessManager::Operation op,
+                const QNetworkRequest& req,
+                QIODevice* outgoingData,
+                QObject *parent = 0);
+   virtual ~NetworkReply();
+
 signals:
    
 public slots:
 
 public:
+
    qint64 bytesAvailable() const;
    bool isSequential() const;
+   void abort();
 
 protected:
    qint64 readData(char *data, qint64 maxSize);
+
+private:
+   void onResponse(const core::http::Response& response);
+   static void onError(const core::Error& error);
+
+private:
+   struct Impl;
+   boost::scoped_ptr<Impl> pImpl_;
 };
+
+} // namespace desktop
 
 #endif // DESKTOPNETWORKREPLY_HPP

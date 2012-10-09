@@ -18,6 +18,7 @@
 #include <core/Error.hpp>
 #include <core/Random.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 
 #include "DesktopUtils.hpp"
 
@@ -80,6 +81,14 @@ QString Options::portNumber() const
       // instances of rdesktop-launched rsessions
       int base = std::abs(core::random::uniformRandomInteger<int>());
       portNumber_ = QString::number((base % 40000) + 8080);
+
+      // recalculate the local peer and set RS_LOCAL_PEER so that
+      // rsession and it's children can use it
+      QString localPeer = QDir(QDir::tempPath()).absolutePath() +
+                          QString::fromAscii("/") + portNumber_ +
+                          QString::fromAscii("-rsession");
+      localPeer_ = localPeer.toUtf8().constData();
+      core::system::setenv("RS_LOCAL_PEER", localPeer_);
    }
 
    return portNumber_;
@@ -90,6 +99,12 @@ QString Options::newPortNumber()
    portNumber_.clear();
    return portNumber();
 }
+
+FilePath Options::localPeerPath() const
+{
+   return FilePath(localPeer_);
+}
+
 
 namespace {
 QString findFirstMatchingFont(const QStringList& fonts,

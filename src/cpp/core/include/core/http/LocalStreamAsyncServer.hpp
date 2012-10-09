@@ -58,7 +58,9 @@ public:
          return error ;
       
       // initialize acceptor
-      return initLocalStreamAcceptor(acceptorService(), localStreamPath_);
+      return initLocalStreamAcceptor(acceptorService(),
+                                     localStreamPath_,
+                                     core::system::EveryoneReadWriteMode);
    }
    
 private:
