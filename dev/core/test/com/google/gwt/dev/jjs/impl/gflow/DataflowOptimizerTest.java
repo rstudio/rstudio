@@ -301,6 +301,35 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
       );
   }
 
+  /**
+   * Test fix for http://code.google.com/p/google-web-toolkit/issues/detail?id=5739
+   */
+  public void testExceptionInitializerFlow() throws Exception {
+    addSnippetClassDecl("static int foo() { return 0; }");
+    optimize("boolean", " int size = -1;\n" +
+            "  try {\n" +
+            "    size = ((Object[]) (Object)\"aaa\").length;\n" +
+            "  } catch (final Exception ex) {\n" +
+            "  }\n" +
+            "  if (size < 0) {\n" +
+            "    try {\n" +
+            "      size = 3;\n" +
+            "    } catch (final Exception ex) {\n" +
+            "    }\n" +
+            "  }\n" +
+            "  return size > 0;").into("int size = -1;\n" +
+            "  try {\n" +
+            "    size = ((Object[]) (Object)\"aaa\").length;\n" +
+            "  } catch (final Exception ex) {\n" +
+            "  }\n" +
+            "  if (size < 0) {\n" +
+            "    try {\n" +
+            "      size = 3;\n" +
+            "    } catch (final Exception ex) {\n" +
+            "    }\n" +
+            "  } return size > 0;");
+  }
+
   public void testImplicitConversion() throws Exception {
     optimize("long", 
         "int bar = 0x12345678;",

@@ -22,6 +22,7 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JBreakStatement;
 import com.google.gwt.dev.jjs.ast.JCaseStatement;
+import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
@@ -35,6 +36,7 @@ import com.google.gwt.dev.jjs.ast.JForStatement;
 import com.google.gwt.dev.jjs.ast.JIfStatement;
 import com.google.gwt.dev.jjs.ast.JLabeledStatement;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReboundEntryPoint;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
@@ -405,6 +407,26 @@ public class CfgBuilder {
       popNode();
       return false;
     }
+
+      /**
+       * Each cast operation generates optional throw.
+       * Fixes http://code.google.com/p/google-web-toolkit/issues/detail?id=5739
+       */
+      @Override
+      public boolean visit(JCastOperation x, Context ctx) {
+          accept(x.getExpr());
+
+          CfgOptionalThrowNode node = addNode(new CfgOptionalThrowNode(parent, x));
+          addNormalExit(node, CfgOptionalThrowNode.NO_THROW);
+          JDeclaredType runtimeExceptionType =
+                  program.getFromTypeMap("java.lang.RuntimeException");
+          if (runtimeExceptionType != null) {
+              addExit(Exit.createThrow(node, runtimeExceptionType,
+                      CfgOptionalThrowNode.RUNTIME_EXCEPTION));
+          }
+          addNode(new CfgCastOperationNode(parent, x));
+          return false;
+      }
 
     @Override
     public boolean visit(JConditional x, Context ctx) {
@@ -1183,6 +1205,23 @@ public class CfgBuilder {
         }
       }
       return unlabeledExits;
+    }
+  }
+
+  private static class CfgCastOperationNode extends CfgSimpleNode<JNode> {
+
+    public CfgCastOperationNode(CfgNode<?> parent, JNode jNode) {
+      super(parent, jNode);
+    }
+
+    @Override
+    public void accept(CfgVisitor visitor) {
+      visitor.visitSimpleNode(this);
+    }
+
+    @Override
+    protected CfgNode<?> cloneImpl() {
+      return new CfgCastOperationNode(getParent(), getJNode());
     }
   }
 

@@ -15,12 +15,13 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow.cfg;
 
+import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 
 /**
  * Node which might throw exception.
  */
-public class CfgOptionalThrowNode extends CfgNode<JMethodCall> {
+public class CfgOptionalThrowNode extends CfgNode<JExpression> {
   /**
    * Edge role for normal, no-throwing execution.
    */
@@ -34,7 +35,7 @@ public class CfgOptionalThrowNode extends CfgNode<JMethodCall> {
    */
   public static final String ERROR = "E";
   
-  public CfgOptionalThrowNode(CfgNode<?> parent, JMethodCall node) {
+  public CfgOptionalThrowNode(CfgNode<?> parent, JExpression node) {
     super(parent, node);
   }
 
@@ -45,7 +46,10 @@ public class CfgOptionalThrowNode extends CfgNode<JMethodCall> {
 
   @Override
   public String toDebugString() {
-    return "OPTTHROW(" + getJNode().getTarget().getName() + "())";
+      if (getJNode() instanceof JMethodCall) {
+          return "OPTTHROW(" + ((JMethodCall) getJNode()).getTarget().getName() + "())";
+      }
+      return "OPTTHROW(" +  getJNode().toSource() + ")";
   }
 
   @Override
