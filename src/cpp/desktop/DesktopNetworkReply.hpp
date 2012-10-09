@@ -25,7 +25,13 @@ public:
 signals:
    
 public slots:
-   
+
+public:
+   qint64 bytesAvailable() const;
+   bool isSequential() const;
+
+protected:
+   qint64 readData(char *data, qint64 maxSize);
 };
 
 #endif // DESKTOPNETWORKREPLY_HPP

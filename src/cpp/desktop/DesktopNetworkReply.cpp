@@ -13,7 +13,25 @@
 
 #include "DesktopNetworkReply.hpp"
 
-DesktopNetworkReply::DesktopNetworkReply(QObject *parent) :
-   QNetworkReply(parent)
+DesktopNetworkReply::DesktopNetworkReply(QObject *parent)
+   : QNetworkReply(parent)
 {
+
+}
+
+
+qint64 DesktopNetworkReply::bytesAvailable() const
+{
+   return 0;
+}
+
+bool DesktopNetworkReply::isSequential() const
+{
+   return true;
+}
+
+
+qint64 DesktopNetworkReply::readData(char *data, qint64 maxSize)
+{
+   return 0;
 }
