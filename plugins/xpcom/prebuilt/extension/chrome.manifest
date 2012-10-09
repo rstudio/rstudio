@@ -90,6 +90,8 @@ binary-component lib/Darwin-gcc3/ff150/libgwt_dev_ff150.dylib ABI=Darwin_x86-gcc
 # Firefox 16
 binary-component lib/Linux_x86_64-gcc3/ff160/libgwt_dev_ff160.so ABI=Linux_x86_64-gcc3 appversion<=16.0.*
 binary-component lib/Linux_x86-gcc3/ff160/libgwt_dev_ff160.so ABI=Linux_x86-gcc3 appversion<=16.0.*
+binary-component lib/Darwin-gcc3/ff160/libgwt_dev_ff160.dylib ABI=Darwin_x86_64-gcc3 appversion<=16.0.*
+binary-component lib/Darwin-gcc3/ff160/libgwt_dev_ff160.dylib ABI=Darwin_x86-gcc3 appversion<=16.0.*
 
 
 interfaces components/IOOPHM.xpt
