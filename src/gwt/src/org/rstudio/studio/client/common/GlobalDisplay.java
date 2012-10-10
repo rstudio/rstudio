@@ -89,8 +89,7 @@ public abstract class GlobalDisplay extends MessageDisplay
                                    boolean showLocation,
                                    int width,
                                    int height,
-                                   String name,
-                                   boolean focus);
+                                   NewWindowOptions options);
    
    public abstract void openSatelliteWindow(String name, int width, int height);
 

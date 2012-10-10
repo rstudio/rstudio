@@ -936,4 +936,27 @@ void GwtCallback::activateAndFocusOwner()
    pOwner_->webPage()->mainFrame()->setFocus();
 }
 
+bool GwtCallback::syncZoomWindow(bool activate)
+{
+   QWidgetList topLevels = QApplication::topLevelWidgets();
+   for (int i = 0; i < topLevels.size(); i++)
+   {
+      QWidget* pWindow = topLevels.at(i);
+      if (!pWindow->isVisible())
+         continue;
+
+      if (pWindow->windowTitle() == QString::fromAscii("Plot Zoom"))
+      {
+         BrowserWindow* pBrowserWindow = (BrowserWindow*)pWindow;
+         pBrowserWindow->webView()->reload();
+         if (activate)
+            desktop::raiseAndActivateWindow(pBrowserWindow);
+         return true;
+      }
+   }
+
+   // no zoom window found
+   return false;
+}
+
 } // namespace desktop

@@ -28,6 +28,7 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.HasCustomizableToolbar;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -38,6 +39,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -106,6 +108,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       server_ = server;
       session_ = session;
       exportPlot_ = GWT.create(ExportPlot.class);
+      zoomWindow_ = null;
       locator_ = new Locator(view.getPlotsParent());
       locator_.addSelectionHandler(new SelectionHandler<Point>()
       {
@@ -175,10 +178,6 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
          String url = server_.getGraphicsUrl(plotsState.getFilename());
          view_.showPlot(url);
       }
-
-      // activate plots tab if requested
-      if (plotsState.getActivatePlots())
-         view_.bringToFront();
       
       // update plot size
       plotSize_ = new Size(plotsState.getWidth(), plotsState.getHeight());
@@ -190,6 +189,37 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       // locator
       if (locator_.isActive())
          locate();
+      
+      // handle zoom and window reactivation concerns
+      if (Desktop.isDesktop())
+      {
+          // try to sync the desktop zoom window if we've got one
+          boolean syncedZoomWindow = Desktop.getFrame().syncZoomWindow(
+                                              plotsState.getActivatePlots());
+          
+          // if we don't have a zoom window then do plot activation locally
+          if (!syncedZoomWindow)
+          {
+             if (plotsState.getActivatePlots())
+                view_.bringToFront();
+          }
+      }
+      else
+      {
+         // if we have a zoom window...
+         if (zoomWindow_ != null && !zoomWindow_.isClosed())
+         {
+            // reload only (trying to activate it from a background js
+            // callback is pointless since the browser will block this)
+            zoomWindow_.reload();
+         }
+         
+         // always re-activate plots (since we can't bring the zoom window
+         // to the front this is the only way the user will get feedback
+         // that the plot updated)
+         if (plotsState.getActivatePlots())
+            view_.bringToFront();
+      }
    }
 
    void onNextPlot()
@@ -432,12 +462,21 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
 
 
       // open and activate window
+      NewWindowOptions options = new NewWindowOptions();
+      options.setName("_rstudio_zoom");
+      options.setFocus(true);
+      options.setCallback(new OperationWithInput<WindowEx>() {
+         @Override
+         public void execute(WindowEx input)
+         {
+            zoomWindow_ = input;
+         }
+      });
       globalDisplay_.openMinimalWindow(url,
                                        false,
                                        width,
                                        height,
-                                       "_rstudio_zoom",
-                                       true);
+                                       options);
    }
 
    void onRefreshPlot()
@@ -572,6 +611,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    private final Provider<UIPrefs> uiPrefs_;
    private final Locator locator_;
    private final ManipulatorManager manipulatorManager_;
+   private WindowEx zoomWindow_;
    
    // export plot impl
    private final ExportPlot exportPlot_ ;

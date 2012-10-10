@@ -258,7 +258,10 @@ public class DefaultGlobalDisplay extends GlobalDisplay
                                  int width, 
                                  int height)
    {
-      openMinimalWindow(url, showLocation, width, height, "_blank", true);
+      NewWindowOptions options = new NewWindowOptions();
+      options.setName("_blank");
+      options.setFocus(true);
+      openMinimalWindow(url, showLocation, width, height, options);
    }
    
    @Override
@@ -266,12 +269,8 @@ public class DefaultGlobalDisplay extends GlobalDisplay
                                  boolean showLocation,
                                  int width, 
                                  int height, 
-                                 String name,
-                                 boolean focus)
+                                 NewWindowOptions options)
    {
-      NewWindowOptions options = new NewWindowOptions();
-      options.setName(name);
-      options.setFocus(focus);
       windowOpener_.openMinimalWindow(this,
                                       url,
                                       options,
