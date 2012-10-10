@@ -15,7 +15,6 @@
 #define DESKTOPNETWORKREPLY_HPP
 
 #include <boost/scoped_ptr.hpp>
-#include <boost/asio/io_service.hpp>
 
 #include <core/FilePath.hpp>
 
@@ -34,10 +33,6 @@ namespace desktop {
 class NetworkReply : public QNetworkReply
 {   
    Q_OBJECT
-
-public:
-   static boost::asio::io_service& sharedIoService();
-
 public:
    NetworkReply(const core::FilePath& streamFilePath,
                 QNetworkAccessManager::Operation op,

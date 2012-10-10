@@ -26,21 +26,16 @@
 
 #include <QTimer>
 
+#include "DesktopNetworkIOService.hpp"
+
 using namespace core;
 
 namespace desktop {
 
-
-boost::asio::io_service& NetworkReply::sharedIoService()
-{
-   static boost::asio::io_service instance;
-   return instance;
-}
-
 struct NetworkReply::Impl
 {
    Impl(const FilePath& streamFilePath)
-      : pClient(new http::LocalStreamAsyncClient(sharedIoService(),
+      : pClient(new http::LocalStreamAsyncClient(ioService(),
                                                  streamFilePath)),
         replyReadOffset(0)
    {

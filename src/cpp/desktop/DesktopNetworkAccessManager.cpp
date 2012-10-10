@@ -18,6 +18,7 @@
 #include <QTimer>
 
 #include "DesktopNetworkReply.hpp"
+#include "DesktopNetworkIOService.hpp"
 #include "DesktopOptions.hpp"
 
 using namespace core;
@@ -58,10 +59,5 @@ QNetworkReply* NetworkAccessManager::createRequest(
 
 void NetworkAccessManager::pollForIO()
 {
-   boost::system::error_code ec;
-   NetworkReply::sharedIoService().poll(ec);
-   if (ec)
-      LOG_ERROR(Error(ec, ERROR_LOCATION));
-
-   NetworkReply::sharedIoService().reset();
+   ioServicePoll();
 }
