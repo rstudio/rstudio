@@ -88,6 +88,7 @@ extern const int kBuildCompleted;
 extern const int kBuildErrors;
 extern const int kDirectoryNavigate;
 extern const int kDeferredInitCompleted;
+extern const int kPlotsZoomSizeChanged;
 }
    
 class ClientEvent

@@ -73,6 +73,7 @@ import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusCh
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.plots.events.LocatorEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
+import org.rstudio.studio.client.workbench.views.plots.events.PlotsZoomSizeChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowContentEvent;
@@ -399,6 +400,11 @@ public class ClientEventDispatcher
          else if (type.equals(ClientEvent.DeferredInitCompleted))
          {
             eventBus_.fireEvent(new DeferredInitCompletedEvent());
+         }
+         else if (type.equals(ClientEvent.PlotsZoomSizeChanged))
+         {
+            PlotsZoomSizeChangedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new PlotsZoomSizeChangedEvent(data));
          }
          else if (type.equals(ClientEvent.ListChanged))
          {

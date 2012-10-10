@@ -18,11 +18,10 @@ import java.util.Map.Entry;
 
 import com.google.inject.Provider;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
-import org.rstudio.core.client.dom.NativeScreen;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.layout.ScreenUtils;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
 import org.rstudio.studio.client.application.Desktop;
@@ -125,7 +124,7 @@ public class SatelliteManager implements CloseHandler<Window>
  
       // open the satellite - it will call us back on registerAsSatellite
       // at which time we'll call setSessionInfo, setParams, etc.
-      Size windowSize = getAdjustedWindowSize(preferredSize);
+      Size windowSize = ScreenUtils.getAdjustedWindowSize(preferredSize);
       RStudioGinjector.INSTANCE.getGlobalDisplay().openSatelliteWindow(
                                               name,
                                               windowSize.width,
@@ -293,47 +292,6 @@ public class SatelliteManager implements CloseHandler<Window>
             }
          }
       }
-   }
-   
-   private Size getAdjustedWindowSize(Size preferredSize)
-   {
-      // compute available height (trim to max)
-      NativeScreen screen = NativeScreen.get();
-      int height = Math.min(screen.getAvailHeight(), preferredSize.height);
-      
-      // trim height for large monitors
-      if (screen.getAvailHeight() >= (preferredSize.height-100))
-      {
-         if (BrowseCap.isMacintosh())
-            height = height - 107;
-         else if (BrowseCap.isWindows())
-            height = height - 89;
-         else
-            height = height - 80;
-      }
-      else
-      {
-         // adjust for window framing, etc.
-         if (Desktop.isDesktop())
-            height = height - 40;
-         else
-            height = height - 60;
-
-         // extra adjustment for firefox on windows (extra chrome in url bar)
-         if (BrowseCap.isWindows() && BrowseCap.isFirefox())
-            height = height - 25;
-      }
-      
-      // extra adjustment for chrome on linux (which misreports the 
-      // available height, excluding the menubar/taskbar)
-      if (BrowseCap.isLinux() && BrowseCap.isChrome())
-         height = height - 50;
-
-      // compute width (trim to max)
-      int width = Math.min(preferredSize.width, screen.getAvailWidth() - 20);
-      
-      // return size
-      return new Size(width, height);
    }
    
    // export the global function requried for satellites to register

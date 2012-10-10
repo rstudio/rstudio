@@ -426,6 +426,14 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
    if (!extractSizeParams(request, 100, 3000, &width, &height, pResponse))
      return ;
 
+   // fire off the plot zoom size changed event to notify the client
+   // that a new default size should be established
+   json::Object dataJson;
+   dataJson["width"] = width;
+   dataJson["height"] = height;
+   ClientEvent event(client_events::kPlotsZoomSizeChanged, dataJson);
+   module_context::enqueClientEvent(event);
+
    // get the scale parameter
    int scale = request.queryParamValue("scale", 1);
 

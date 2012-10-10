@@ -28,6 +28,7 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.dom.NativeScreen;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.HasCustomizableToolbar;
@@ -56,6 +57,7 @@ import org.rstudio.studio.client.workbench.views.plots.events.LocatorEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.LocatorHandler;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedHandler;
+import org.rstudio.studio.client.workbench.views.plots.events.PlotsZoomSizeChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
@@ -68,7 +70,8 @@ import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.Manipulato
 public class Plots extends BasePresenter implements PlotsChangedHandler,
                                                     LocatorHandler,
                                                     ConsolePromptHandler,
-                                                    DeferredInitCompletedEvent.Handler
+                                                    DeferredInitCompletedEvent.Handler,
+                                                    PlotsZoomSizeChangedEvent.Handler
 {
    public interface Parent extends HasWidgets, HasCustomizableToolbar
    {
@@ -109,6 +112,8 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       session_ = session;
       exportPlot_ = GWT.create(ExportPlot.class);
       zoomWindow_ = null;
+      zoomWindowDefaultSize_ = null;
+      
       locator_ = new Locator(view.getPlotsParent());
       locator_.addSelectionHandler(new SelectionHandler<Point>()
       {
@@ -153,6 +158,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       );
       
       events.addHandler(DeferredInitCompletedEvent.TYPE, this);
+      events.addHandler(PlotsZoomSizeChangedEvent.TYPE, this);
 }
    
    public void onPlotsChanged(PlotsChangedEvent event)
@@ -427,26 +433,40 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    
    void onZoomPlot()
    {
-      final int PADDING = 20;
-
-      Size currentPlotSize = view_.getPlotFrameSize();
-
-      // calculate ideal heigh and width. try to be as large as possible
-      // within the bounds of the current client size
-      Size bounds = new Size(Window.getClientWidth() - PADDING,
-                             Window.getClientHeight() - PADDING);
-
-      float widthRatio = bounds.width / ((float)currentPlotSize.width);
-      float heightRatio = bounds.height / ((float)currentPlotSize.height);
-      float ratio = Math.min(widthRatio, heightRatio);
-
-      // constrain initial width to between 300 and 1,200 pixels
-      int width = Math.max(300, (int) (ratio * currentPlotSize.width));
-      width = Math.min(1200, width);
+      int width, height;
+      if (zoomWindowDefaultSize_ != null)
+      {
+         // trim based on available screen size
+         NativeScreen screen = NativeScreen.get();
+         width = Math.min(screen.getAvailWidth(), 
+                          zoomWindowDefaultSize_.width);
+         height = Math.min(screen.getAvailHeight(), 
+                           zoomWindowDefaultSize_.height); 
+      }
+      else
+      {
+         final int PADDING = 20;
+   
+         Size currentPlotSize = view_.getPlotFrameSize();
+   
+         // calculate ideal heigh and width. try to be as large as possible
+         // within the bounds of the current client size
+         Size bounds = new Size(Window.getClientWidth() - PADDING,
+                                Window.getClientHeight() - PADDING);
+   
+         float widthRatio = bounds.width / ((float)currentPlotSize.width);
+         float heightRatio = bounds.height / ((float)currentPlotSize.height);
+         float ratio = Math.min(widthRatio, heightRatio);
+   
+         // constrain initial width to between 300 and 1,200 pixels
+         width = Math.max(300, (int) (ratio * currentPlotSize.width));
+         width = Math.min(1200, width);
+         
+         // constrain initial height to between 300 and 900 pixels
+         height = Math.max(300, (int) (ratio * currentPlotSize.height));
+         height = Math.min(900, height);
+      }
       
-      // constrain initial height to between 300 and 900 pixels
-      int height = Math.max(300, (int) (ratio * currentPlotSize.height));
-      height = Math.min(900, height);
       
       // determine whether we should scale (see comment in ImageFrame.onLoad
       // for why we wouldn't want to scale)
@@ -563,6 +583,12 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       locator_.clearDisplay();
    }
    
+   @Override
+   public void onPlotsZoomSizeChanged(PlotsZoomSizeChangedEvent event)
+   {
+      zoomWindowDefaultSize_ = new Size(event.getWidth(), event.getHeight());
+   }
+   
    private Size getPlotSize()
    {
       // NOTE: the reason we capture the plotSize_ from the PlotChangedEvent
@@ -612,6 +638,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    private final Locator locator_;
    private final ManipulatorManager manipulatorManager_;
    private WindowEx zoomWindow_;
+   private Size zoomWindowDefaultSize_;
    
    // export plot impl
    private final ExportPlot exportPlot_ ;
