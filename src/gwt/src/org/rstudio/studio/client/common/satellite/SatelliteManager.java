@@ -18,6 +18,7 @@ import java.util.Map.Entry;
 
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.WindowEx;
@@ -74,8 +75,6 @@ public class SatelliteManager implements CloseHandler<Window>
          return;
       }
 
-      boolean isNewWindow = true;
-
       // check for a re-activation of an existing window
       for (ActiveSatellite satellite : satellites_)
       {
@@ -84,20 +83,22 @@ public class SatelliteManager implements CloseHandler<Window>
             WindowEx window = satellite.getWindow();
             if (!window.isClosed())
             {
-               isNewWindow = false;
-
-               // for web mode  bring the window to the front, notify
-               // it that it has been reactivated, then exit
+               // for web mode bring the window to the front, notify
+               // it that it has been reactivated, then exit. 
                if (!Desktop.isDesktop())
                {
-                  window.focus();
-                  callNotifyReactivated(window, params);
-                  return;
+                  // don't do this for chrome (since it doesn't allow
+                  // window.focus). for chrome we'll just fall through
+                  // and openSatelliteWindow will be called and the 
+                  // window will be reloaded)
+                  if (!BrowseCap.isChrome())
+                  {
+                     window.focus();
+                     callNotifyReactivated(window, params);
+                     return;
+                  }
                }
-               // for desktop mode we just notify the window it is being
-               // re-activated -- the actual re-activation is handled
-               // by a different codepath within DesktopWebView so we 
-               // continue on with processing after callNotifyReactivated
+               // desktop mode: activate and return
                else
                {
                   Desktop.getFrame().activateSatelliteWindow(
@@ -111,7 +112,7 @@ public class SatelliteManager implements CloseHandler<Window>
       
       // Start buffering events sent to this satellite. That way, we won't miss
       // anything while the satellite is being loaded/reactivated
-      if (isNewWindow && !pendingEventsBySatelliteName_.containsKey(name))
+      if (!pendingEventsBySatelliteName_.containsKey(name))
       {
          pendingEventsBySatelliteName_.put(name,
                                            new ArrayList<JavaScriptObject>());
