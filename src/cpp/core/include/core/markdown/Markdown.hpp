@@ -53,7 +53,7 @@ struct HTMLOptions
 {
    HTMLOptions()
       : useXHTML(true),
-        hardWrap(true),
+        hardWrap(false),
         smartypants(true),
         safelink(false),
         toc(false),
