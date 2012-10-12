@@ -204,7 +204,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       // reload zoom window if we have one
       if (Desktop.isDesktop())
          Desktop.getFrame().reloadZoomWindow();
-      else
+      else if ((zoomWindow_ != null) && !zoomWindow_.isClosed())
          zoomWindow_.reload();
    }
 
