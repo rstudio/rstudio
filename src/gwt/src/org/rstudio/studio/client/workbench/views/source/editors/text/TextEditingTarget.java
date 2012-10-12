@@ -1087,7 +1087,7 @@ public class TextEditingTarget implements EditingTarget
                               "This file was created as an R script however " +
                               "the file extension you specified will change " +
                               "it into another file type that will no longer " +
-                              "open as as an R script.\n\n" +
+                              "open as an R script.\n\n" +
                               "Are you sure you want to change the type of " +
                               "the file so that it is no longer an R script?",
                               new Operation() {
