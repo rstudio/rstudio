@@ -114,5 +114,5 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void toggleFullscreenMode();
    void showKeyboardShortcutHelp();
    
-   boolean syncZoomWindow(boolean activate);
+   void reloadZoomWindow();
 }

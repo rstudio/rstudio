@@ -144,7 +144,7 @@ public slots:
 
    void launchSession(bool reload);
 
-   bool syncZoomWindow(bool activate);
+   void reloadZoomWindow();
 
 private:
    Synctex& synctex();

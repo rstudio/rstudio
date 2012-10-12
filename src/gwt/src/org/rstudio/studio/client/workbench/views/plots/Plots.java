@@ -185,6 +185,10 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
          view_.showPlot(url);
       }
       
+      // activate the plots tab if requested
+      if (plotsState.getActivatePlots())
+         view_.bringToFront();
+      
       // update plot size
       plotSize_ = new Size(plotsState.getWidth(), plotsState.getHeight());
 
@@ -196,36 +200,12 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       if (locator_.isActive())
          locate();
       
-      // handle zoom and window reactivation concerns
+      
+      // reload zoom window if we have one
       if (Desktop.isDesktop())
-      {
-          // try to sync the desktop zoom window if we've got one
-          boolean syncedZoomWindow = Desktop.getFrame().syncZoomWindow(
-                                              plotsState.getActivatePlots());
-          
-          // if we don't have a zoom window then do plot activation locally
-          if (!syncedZoomWindow)
-          {
-             if (plotsState.getActivatePlots())
-                view_.bringToFront();
-          }
-      }
+         Desktop.getFrame().reloadZoomWindow();
       else
-      {
-         // if we have a zoom window...
-         if (zoomWindow_ != null && !zoomWindow_.isClosed())
-         {
-            // reload only (trying to activate it from a background js
-            // callback is pointless since the browser will block this)
-            zoomWindow_.reload();
-         }
-         
-         // always re-activate plots (since we can't bring the zoom window
-         // to the front this is the only way the user will get feedback
-         // that the plot updated)
-         if (plotsState.getActivatePlots())
-            view_.bringToFront();
-      }
+         zoomWindow_.reload();
    }
 
    void onNextPlot()
