@@ -694,8 +694,43 @@ FilePath findProgram(const std::string& name)
    }
 }
 
+namespace {
+
+bool hasTextMimeType(const FilePath& filePath)
+{
+   std::string mimeType = filePath.mimeContentType("");
+   if (mimeType.empty())
+      return false;
+
+   return boost::algorithm::starts_with(mimeType, "text/") ||
+          boost::algorithm::ends_with(mimeType, "+xml");
+}
+
+bool hasBinaryMimeType(const FilePath& filePath)
+{
+   // screen known text types
+   if (hasTextMimeType(filePath))
+      return false;
+
+   std::string mimeType = filePath.mimeContentType("");
+   if (mimeType.empty())
+      return false;
+
+   return boost::algorithm::starts_with(mimeType, "application/") ||
+          boost::algorithm::starts_with(mimeType, "image/") ||
+          boost::algorithm::starts_with(mimeType, "audio/") ||
+          boost::algorithm::starts_with(mimeType, "video/");
+}
+
+} // anonymous namespace
+
 bool isTextFile(const FilePath& targetPath)
 {
+   if (hasTextMimeType(targetPath))
+      return true;
+
+   if (hasBinaryMimeType(targetPath))
+      return false;
 
 #ifndef _WIN32
    core::shell_utils::ShellCommand cmd("file");
