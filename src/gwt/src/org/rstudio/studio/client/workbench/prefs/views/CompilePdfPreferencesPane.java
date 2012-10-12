@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.DomEvent;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -88,6 +89,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
             
       Label previwingOptionsLabel = new Label("PDF preview");
       previwingOptionsLabel.addStyleName(baseRes.styles().headerLabel());
+      previwingOptionsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       nudgeRight(previwingOptionsLabel);
       add(previwingOptionsLabel);
      
