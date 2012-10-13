@@ -340,11 +340,16 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "mml",   "text/mathml" );
       MIME_TYPES.put( "log",   "text/plain");
       MIME_TYPES.put( "out",   "text/plain");
-      MIME_TYPES.put( "Rout",  "text/plain");
+      MIME_TYPES.put( "r",     "text/x-r-source");
+      MIME_TYPES.put( "rd",    "text/x-r-doc");
+      MIME_TYPES.put( "rnw",   "text/x-r-sweave");
+      MIME_TYPES.put( "rmd",   "text/x-r-markdown");
+      MIME_TYPES.put( "rhtml", "text/x-r-html");
+      MIME_TYPES.put( "rout",  "text/plain");
       MIME_TYPES.put( "po",    "text/plain");
       MIME_TYPES.put( "pot",   "text/plain");
       MIME_TYPES.put( "gitignore",   "text/plain");
-      MIME_TYPES.put( "Rbuildignore","text/plain");
+      MIME_TYPES.put( "rbuildignore","text/plain");
      
       MIME_TYPES.put( "tif",   "image/tiff" );
       MIME_TYPES.put( "tiff",  "image/tiff" );

@@ -406,6 +406,11 @@ MimeType s_mimeTypes[] =
    { "mml",   "text/mathml" },
    { "log",   "text/plain" },
    { "out",   "text/plain" },
+   { "R",     "text/x-r-source"},
+   { "Rd",    "text/x-r-doc"},
+   { "Rnw",   "text/x-r-sweave"},
+   { "Rmd",   "text/x-r-markdown"},
+   { "Rhtml", "text/x-r-html"},
    { "Rout",  "text/plain" },
    { "po",    "text/plain" },
    { "pot",   "text/plain"},
@@ -464,7 +469,7 @@ std::string FilePath::mimeContentType(const std::string& defaultType) const
       ext = ext.substr(1); // remove leading .
       for (MimeType* mimeType = s_mimeTypes; mimeType->extension; ++mimeType)
       {
-         if (mimeType->extension == ext)
+         if (boost::algorithm::iequals(mimeType->extension,ext))
             return mimeType->contentType;
       }
       

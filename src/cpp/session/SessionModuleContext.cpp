@@ -746,8 +746,11 @@ bool isTextFile(const FilePath& targetPath)
       LOG_ERROR(error);
       return error;
    }
-   return boost::algorithm::starts_with(result.stdOut, "text/") ||
-          boost::algorithm::ends_with(result.stdOut, "+xml");
+
+   std::string fileType = boost::algorithm::trim_copy(result.stdOut);
+   return boost::algorithm::starts_with(fileType, "text/") ||
+          boost::algorithm::ends_with(fileType, "+xml") ||
+          boost::algorithm::equals(fileType, "application/x-empty");
 #else
 
    // read contents of file
