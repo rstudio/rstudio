@@ -1,8 +1,7 @@
 // Copyright 2010 Google Inc. All Rights Reserved.
 
-package com.google.gwt.dev.js;
+package com.google.gwt.util.tools.shared;
 
-import com.google.gwt.dev.js.JsToStringGenerationVisitor;
 import com.google.gwt.dev.js.rhino.TokenStream;
 
 import junit.framework.TestCase;
@@ -11,11 +10,11 @@ import java.io.IOException;
 import java.io.StringReader;
 
 /**
- * Tests {@link JsToStringGenerationVisitor#javaScriptString(String)}.
+ * Tests {@link StringUtils#javaScriptString(String)}.
  */
 public class JavaScriptStringTest extends TestCase {
   private void test(String original) throws IOException {
-    String escaped = JsToStringGenerationVisitor.javaScriptString(original);
+    String escaped = StringUtils.javaScriptString(original);
 
     // Parse it back
     TokenStream tokenStream = new TokenStream(new StringReader(escaped),

@@ -23,8 +23,8 @@ import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.About;
-import com.google.gwt.dev.js.JsToStringGenerationVisitor;
 import com.google.gwt.dev.util.DefaultTextOutput;
+import com.google.gwt.util.tools.shared.StringUtils;
 
 /**
  * Generates a cross-site compatible bootstrap sequence.
@@ -88,7 +88,7 @@ public class XSLinker extends SelectionScriptLinker {
     return String.format("%s.runAsyncCallback%d(%s)\n",
         context.getModuleFunctionName(),
         fragment,
-        JsToStringGenerationVisitor.javaScriptString(js));
+        StringUtils.javaScriptString(js));
   }
 
   private String getModulePrefix(LinkerContext context, String strongName,
