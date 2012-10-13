@@ -50,7 +50,7 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
   # The following entries allow us to run R to determine the 
   # locations of its directories (note this might be otherwise 
   # covered by the section below however these entries allow us
-  # run run R even if it is installed in a non standard location)
+  # to run R even if it is installed in a non standard location)
   # -----------------------------------------------------------------
 
   ${LIBR_EXECUTABLE} rix, 
