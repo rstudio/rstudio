@@ -576,7 +576,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
       for (String chunk : chunks) {
         newChunks.add(JsToStringGenerationVisitor.javaScriptString(chunk));
       }
-      out.append(Joiner.on(", ").join(newChunks));
+      out.append(Joiner.on(",\n").join(newChunks));
       out.append("]);\n");
     } else {
       out.append(script);
