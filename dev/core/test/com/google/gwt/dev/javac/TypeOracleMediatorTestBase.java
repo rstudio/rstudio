@@ -64,11 +64,9 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
+import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
 
 import junit.framework.TestCase;
-
-import org.apache.commons.collections.map.AbstractReferenceMap;
-import org.apache.commons.collections.map.ReferenceMap;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -860,15 +858,13 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
    * parameterizedTypes, arrayTypes, and wildCardTypes in TypeOracle. Note: this
    * test is manual because gc can be unreliable.
    */
-  @SuppressWarnings("unchecked")
   public void manualTestAbstractRefrenceMap() {
 
     /*
      * with a HARD -> WEAK map, verify that the entry remains if there is no
      * reference to key, but is deleted when the reference to value is gone
      */
-    Map<Integer, Integer> simpleMap =
-        new ReferenceMap(AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK, true);
+    Map<Integer, Integer> simpleMap = new MapMaker().weakValues().makeMap();
     Integer bar = new Integer(42);
     simpleMap.put(new Integer(32), bar);
     Runtime.getRuntime().gc();
@@ -881,9 +877,8 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
      * with a WEAK -> WEAK map, verify that the entry is gone if there are no
      * references to either the key or the value.
      */
-    simpleMap = new ReferenceMap(AbstractReferenceMap.WEAK, AbstractReferenceMap.WEAK, true);
-    Map<Integer, Integer> reverseMap =
-        new ReferenceMap(AbstractReferenceMap.WEAK, AbstractReferenceMap.WEAK, true);
+    simpleMap = new MapMaker().weakKeys().weakValues().makeMap();
+    Map<Integer, Integer> reverseMap = new MapMaker().weakKeys().weakValues().makeMap();
     Integer foo = new Integer(32);
     bar = new Integer(42);
     simpleMap.put(foo, bar);

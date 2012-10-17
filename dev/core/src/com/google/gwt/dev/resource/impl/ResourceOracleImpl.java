@@ -25,9 +25,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.msg.Message0;
 import com.google.gwt.dev.util.msg.Message1String;
-
-import org.apache.commons.collections.map.AbstractReferenceMap;
-import org.apache.commons.collections.map.ReferenceMap;
+import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
 
 import java.io.File;
 import java.io.IOException;
@@ -153,9 +151,8 @@ public class ResourceOracleImpl implements ResourceOracle {
     }
   }
 
-  @SuppressWarnings("unchecked")
-  private static final Map<ResourceLoader, List<ClassPathEntry>> classPathCache = new ReferenceMap(
-      AbstractReferenceMap.WEAK, AbstractReferenceMap.HARD);
+  private static final Map<ResourceLoader, List<ClassPathEntry>> classPathCache =
+      new MapMaker().weakKeys().makeMap();
   
   public static void clearCache() {
     classPathCache.clear();

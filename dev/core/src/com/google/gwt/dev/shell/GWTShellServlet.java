@@ -27,11 +27,8 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.shell.log.ServletContextTreeLogger;
 import com.google.gwt.dev.util.HttpHeaders;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
 import com.google.gwt.util.tools.Utility;
-
-import org.apache.commons.collections.map.AbstractReferenceMap;
-import org.apache.commons.collections.map.ReferenceIdentityMap;
-import org.apache.commons.collections.map.ReferenceMap;
 
 import java.io.File;
 import java.io.IOException;
@@ -93,27 +90,22 @@ public class GWTShellServlet extends HttpServlet {
   /**
    * Must keep only weak references to ModuleDefs else we permanently pin them.
    */
-  @SuppressWarnings("unchecked")
-  private final Map<String, ModuleDef> loadedModulesByName = new ReferenceMap(
-      AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK);
+  private final Map<String, ModuleDef> loadedModulesByName = new MapMaker().weakValues().makeMap();
 
   /**
    * The lifetime of the module pins the lifetime of the associated servlet;
    * this is because the loaded servlet has a weak backRef to its live module
    * through its context. When the module dies, the servlet needs to die also.
    */
-  @SuppressWarnings("unchecked")
-  private final Map<ModuleDef, Map<String, HttpServlet>> loadedServletsByModuleAndClassName = new ReferenceIdentityMap(
-      AbstractReferenceMap.WEAK, AbstractReferenceMap.HARD, true);
+  private final Map<ModuleDef, Map<String, HttpServlet>> loadedServletsByModuleAndClassName =
+      new MapMaker().weakKeys().makeMap();
 
   private final Map<String, String> mimeTypes = new HashMap<String, String>();
 
   /**
    * Only for backwards compatibility. Shouldn't we remove this now?
    */
-  @SuppressWarnings("unchecked")
-  private final Map<String, ModuleDef> modulesByServletPath = new ReferenceMap(
-      AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK);
+  private final Map<String, ModuleDef> modulesByServletPath = new MapMaker().weakValues().makeMap();
 
   private int nextRequestId;
 

@@ -28,10 +28,7 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
-
-import org.apache.commons.collections.map.AbstractReferenceMap;
-import org.apache.commons.collections.map.ReferenceIdentityMap;
-import org.apache.commons.collections.map.ReferenceMap;
+import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -283,9 +280,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    * Cached types that represent Arrays of other types. These types are created
    * as needed.
    */
-  @SuppressWarnings("unchecked")
-  private final Map<JType, JArrayType> arrayTypes = new ReferenceIdentityMap(
-      AbstractReferenceMap.WEAK, AbstractReferenceMap.WEAK, true);
+  private final Map<JType, JArrayType> arrayTypes = new MapMaker().weakKeys().weakValues().makeMap();
 
   /**
    * Cached singleton type representing <code>java.lang.Object</code>.
@@ -309,9 +304,8 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    * Subclasses of generic types that have type parameters filled in. These
    * types are created as needed.
    */
-  @SuppressWarnings("unchecked")
   private final Map<ParameterizedTypeKey, JParameterizedType> parameterizedTypes =
-      new ReferenceMap(AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK, true);
+      new MapMaker().weakValues().makeMap();
 
   /**
    * A list of recently-added types that will be fully initialized on the next
@@ -321,9 +315,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
 
   private JWildcardType unboundWildCardType;
 
-  @SuppressWarnings("unchecked")
-  private final Map<WildCardKey, JWildcardType> wildcardTypes = new ReferenceMap(
-      AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK, true);
+  private final Map<WildCardKey, JWildcardType> wildcardTypes = new MapMaker().weakValues().makeMap();
 
   public TypeOracle() {
     // Always create the default package.

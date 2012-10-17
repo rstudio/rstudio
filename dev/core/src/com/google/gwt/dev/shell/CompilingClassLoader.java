@@ -45,11 +45,8 @@ import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
 import com.google.gwt.util.tools.Utility;
-
-import org.apache.commons.collections.map.AbstractReferenceMap;
-import org.apache.commons.collections.map.ReferenceIdentityMap;
-import org.apache.commons.collections.map.ReferenceMap;
 
 import java.beans.Beans;
 import java.io.File;
@@ -940,13 +937,9 @@ public final class CompilingClassLoader extends ClassLoader implements
 
   private final TypeOracle typeOracle;
 
-  @SuppressWarnings("unchecked")
-  private final Map<Object, Object> weakJavaWrapperCache = new ReferenceIdentityMap(
-      AbstractReferenceMap.WEAK, AbstractReferenceMap.WEAK);
+  private final Map<Object, Object> weakJavaWrapperCache = new MapMaker().weakKeys().weakValues().makeMap();
 
-  @SuppressWarnings("unchecked")
-  private final Map<Integer, Object> weakJsoCache = new ReferenceMap(
-      AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK);
+  private final Map<Integer, Object> weakJsoCache = new MapMaker().weakValues().makeMap();
 
   public CompilingClassLoader(TreeLogger logger,
       CompilationState compilationState, ShellJavaScriptHost javaScriptHost)

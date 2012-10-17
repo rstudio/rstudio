@@ -22,10 +22,8 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.xml.ReflectiveParser;
+import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
 import com.google.gwt.util.tools.Utility;
-
-import org.apache.commons.collections.map.AbstractReferenceMap;
-import org.apache.commons.collections.map.ReferenceMap;
 
 import java.io.File;
 import java.io.Reader;
@@ -57,9 +55,8 @@ public class ModuleDefLoader {
    * tight. The current context class loader used as a key for modules cache.
    * The module's physical name is used as a key inside the cache.
    */
-  @SuppressWarnings("unchecked")
-  private static final Map<ClassLoader, Map<String, ModuleDef>> loadedModulesCaches = new ReferenceMap(
-      AbstractReferenceMap.WEAK, AbstractReferenceMap.HARD);
+  private static final Map<ClassLoader, Map<String, ModuleDef>> loadedModulesCaches =
+      new MapMaker().weakKeys().makeMap();
 
   /**
    * A mapping from effective to physical module names.
@@ -210,12 +207,11 @@ public class ModuleDefLoader {
     return moduleDef;
   }
 
-  @SuppressWarnings("unchecked")
   private static Map<String, ModuleDef> getModulesCache() {
     ClassLoader keyClassLoader = Thread.currentThread().getContextClassLoader();
     Map<String, ModuleDef> cache = loadedModulesCaches.get(keyClassLoader);
     if (cache == null) {
-      cache = new ReferenceMap(AbstractReferenceMap.HARD, AbstractReferenceMap.SOFT);
+      cache = new MapMaker().softValues().makeMap();
       loadedModulesCaches.put(keyClassLoader, cache);
     }
     return cache;
