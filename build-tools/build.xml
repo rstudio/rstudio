@@ -10,15 +10,11 @@
     <gwt.ant dir="ant-gwt" />
   </target>
 
-  <target name="customchecks" description="Build the checkstyle extensions">
-    <gwt.ant dir="customchecks" />
-  </target>
-  
   <target name="doctool" description="Build the doctool">
     <gwt.ant dir="doctool" />
   </target>
 
-  <target name="-do" depends="ant-gwt, customchecks, doctool" description="Run all subprojects"/>
+  <target name="-do" depends="ant-gwt, doctool" description="Run all subprojects"/>
   
   <target name="build" description="Builds GWT">
     <antcall target="-do">

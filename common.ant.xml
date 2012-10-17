@@ -337,7 +337,7 @@
     <attribute name="outputdirectory" default="${project.build}"/>
     <element name="sourcepath" implicit="yes" optional="true" />
     <sequential>
-      <taskdef resource="checkstyletask.properties" classpath="${gwt.tools.antlib}/checkstyle-all-4.2.jar;${gwt.build.lib}/gwt-customchecks.jar" />
+      <taskdef resource="checkstyletask.properties" classpath="${gwt.tools.antlib}/checkstyle-all-4.2.jar" />
       <mkdir dir="@{outputdirectory}"/>
       <checkstyle config="${gwt.root}/eclipse/settings/code-style/gwt-checkstyle.xml" maxErrors="0" failOnViolation="false" failureProperty="gwt.checkstyle.failed">
         <formatter type="xml" toFile="@{outputdirectory}/checkstyle_log.xml"/>
@@ -352,7 +352,7 @@
     <attribute name="outputdirectory" default="${project.build}"/>
     <element name="sourcepath" implicit="yes" optional="true" />
     <sequential>
-      <taskdef resource="checkstyletask.properties" classpath="${gwt.tools.antlib}/checkstyle-all-4.2.jar;${gwt.build.lib}/gwt-customchecks.jar" />
+      <taskdef resource="checkstyletask.properties" classpath="${gwt.tools.antlib}/checkstyle-all-4.2.jar" />
       <mkdir dir="@{outputdirectory}"/>
       <checkstyle config="${gwt.root}/eclipse/settings/code-style/gwt-checkstyle-tests.xml" maxErrors="0" failOnViolation="false" failureProperty="gwt.checkstyle-tests.failed">
         <formatter type="xml" toFile="@{outputdirectory}/checkstyle_tests_log.xml"/>

@@ -87,10 +87,10 @@ A more lenient set of style checks for test cases, needed because test often nee
             <property name="logLoadErrors" value="true"/>
             <property name="tokens" value="METHOD_DEF"/>
         </module>
-        <module name="com.google.gwt.checkstyle.GwtHeaderCheck">
+        <module name="RegexpHeader">
            <property name="severity" value="error"/>
-           <property name="header" value="/\*\n \* Copyright 20(0[6789]|[12][0-9]) Google Inc\.\n \*[ ]*\n \* Licensed under the Apache License, Version 2\.0 \(the &quot;License&quot;\); you may not\n \* use this file except in compliance with the License\. You may obtain a copy of\n \* the License at\n \*[ ]*\n \* http://www\.apache\.org/licenses/LICENSE-2\.0\n \*[ ]*\n \* Unless required by applicable law or agreed to in writing, software\n \* distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT\n \* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied\. See the\n \* License for the specific language governing permissions and limitations under\n \* the License\.\n \*/"/>
-           <property name="headerAlt" value="/\*\n \* Copyright 20(0[6789]|[12][0-9]) Google Inc\.\n \*[ ]*\n \* Licensed under the Apache License, Version 2\.0 \(the &quot;License&quot;\); you may not use this file except\n \* in compliance with the License\. You may obtain a copy of the License at\n \*[ ]*\n \* http://www\.apache\.org/licenses/LICENSE-2\.0\n \*[ ]*\n \* Unless required by applicable law or agreed to in writing, software distributed under the License\n \* is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express\n \* or implied\. See the License for the specific language governing permissions and limitations under\n \* the License\.\n \*/"/>
+           <property name="header" value="^/\*[ ]*$\n^ \* Copyright 20(0[6789]|[12][0-9]) Google Inc\.$\n^ \*[ ]*$\n^ \* Licensed under the Apache License, Version 2\.0 \(the &quot;License&quot;\); you may not( use this file except)?$\n^ \* (use this file except )?in compliance with the License\. You may obtain a copy of( the License at)?$\n^ \* the License at$\n^ \*[ ]*$\n^ \* http://www\.apache\.org/licenses/LICENSE-2\.0$\n^ \*[ ]*\n \* Unless required by applicable law or agreed to in writing, software( distributed under the License)?$\n^ \* (distributed under the License )?is distributed on an &quot;AS IS&quot; BASIS, WITHOUT( WARRANTIES OR CONDITIONS OF ANY KIND, either express)?$\n^ \* (WARRANTIES OR CONDITIONS OF ANY KIND, either express )?or implied\. See the( License for the specific language governing permissions and limitations under)?$\n^ \* License for the specific language governing permissions and limitations under$\n^ \* the License\.$\n^ \*/$"/>
+           <property name="multiLines" value="6,13"/>
        </module>
         <module name="ImportOrder">
             <property name="severity" value="error"/>
@@ -153,14 +153,6 @@ A more lenient set of style checks for test cases, needed because test often nee
         <module name="AvoidStarImport">
             <property name="severity" value="error"/>
         </module>
-        <module name="com.google.gwt.checkstyle.OrderCheck">
-            <metadata name="com.atlassw.tools.eclipse.checkstyle.lastEnabledSeverity" value="error"/>
-            <property name="severity" value="ignore"/>
-        </module>
-        <module name="com.google.gwt.checkstyle.FieldCheck">
-            <metadata name="com.atlassw.tools.eclipse.checkstyle.lastEnabledSeverity" value="error"/>
-            <property name="severity" value="ignore"/>
-        </module>
         <module name="GenericIllegalRegexp">
             <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="bad // comment"/>
             <property name="severity" value="error"/>
@@ -181,9 +173,10 @@ A more lenient set of style checks for test cases, needed because test often nee
             <property name="format" value="^[a-z_][a-zA-Z0-9_]*$"/>
         </module>
         <module name="MemberName">
+            <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Field names must start with [a-z], may not start with f[A-Z], and should not contain '_''s."/>
             <metadata name="com.atlassw.tools.eclipse.checkstyle.lastEnabledSeverity" value="error"/>
             <property name="severity" value="ignore"/>
-            <property name="format" value="[a-z]|[a-z][a-z_0-9][A-Za-z0-9_]*|[a-z](?&lt;!f)[A-Z0-9]*"/>
+            <property name="format" value="^([a-eg-z]|(f[a-z0-9]))[a-zA-Z0-9]*$"/>
         </module>
         <module name="TodoComment">
             <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Author tags"/>
