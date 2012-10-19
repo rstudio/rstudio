@@ -54,30 +54,30 @@ COMMON            = ../common/libcommon$(FLAG32BIT).a
 
 OBJ_OUTDIR        = build/$(TARGET_PLATFORM)
 EXTENSION_OUTDIR  = prebuilt/gwt-dev-plugin
+EXTENSION_FILES = *.html *.js *.png *.txt \
+  DevModeOptions/*.gif DevModeOptions/*.js DevModeOptions/*.txt \
+  Linux*/*.so WIN*/*.dll Darwin*/*/*/*.plist Darwin*/*/*/*/*.dylib
 PLATFORM_DIR      = $(EXTENSION_OUTDIR)/$(TARGET_PLATFORM)
 PLATFORM_DIR_SUFFIX ?= ""
 
-INSTALLER_CRX     = prebuilt/gwt-dev-plugin.crx
 DLL               = $(OBJ_OUTDIR)/libGwtDevPlugin$(DLL_SUFFIX)
-GWTDEV_CRX_PEM   ?= $(CURDIR)/gwt-dev-plugin.pem
-CHROME_COMMAND    = $(CHROME_PATH) --pack-extension=$(CURDIR)/$(EXTENSION_OUTDIR) --no-message-box --user-data-dir=$(CURDIR)/$(OBJ_OUTDIR)/user-data --pack-extension-key=$(GWTDEV_CRX_PEM)
-
-#DLLFLAGS += 
+#DLLFLAGS +=
 
 VERSION ?= 1.0.$(shell ./getversion)
 ifeq ($(VERSION), 1.0.)
 $(error You must specify the version if you are not in an svn checkout)
 endif
 
-.PHONY: default all crx lib common clean depend install install-platform \
+.PHONY: default all zip lib common clean depend install install-platform \
 	versioned-files devmodeoptions
 
 default:: lib versioned-files devmodeoptions
 
-all:: common lib install-platform crx
+all:: common lib install-platform zip
 
 lib:: $(OBJ_OUTDIR) $(EXTENSION_OUTDIR) $(DLL)
-crx:: $(EXTENSION_OUTDIR) $(INSTALLER_CRX)
+zip:: $(EXTENSION_OUTDIR)
+	(cd $(EXTENSION_OUTDIR); zip ../upload.zip $(EXTENSION_FILES))
 
 linuxplatforms:
 	$(MAKE) lib ARCH=x86
@@ -108,9 +108,6 @@ $(OBJS): $(OBJ_OUTDIR)
 
 $(OBJ_OUTDIR)::
 	@mkdir -p $@
-
-$(INSTALLER_CRX): $(GWTDEV_CRX_PEM) $(EXTENSION_OUTDIR) versioned-files
-	$(shell $(CHROME_COMMAND))
 
 versioned-files::
 	sed -e s/GWT_DEV_PLUGIN_VERSION/$(VERSION)/ manifest-template.json >prebuilt/gwt-dev-plugin/manifest.json
