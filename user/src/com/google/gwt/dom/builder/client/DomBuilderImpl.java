@@ -568,7 +568,7 @@ class DomBuilderImpl extends ElementBuilderImpl {
 
   @Override
   protected void doHtmlImpl(SafeHtml html) {
-    getCurrentElement().setInnerHTML(html.asString());
+    getCurrentElement().setInnerSafeHtml(html);
   }
 
   @Override

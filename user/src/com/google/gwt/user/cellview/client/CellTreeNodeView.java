@@ -1394,7 +1394,7 @@ class CellTreeNodeView<T> extends UIObject {
       html = LEAF_IMAGE;
     }
     Element tmp = Document.get().createDivElement();
-    tmp.setInnerHTML(html.asString());
+    tmp.setInnerSafeHtml(html);
     Element imageElem = tmp.getFirstChildElement();
 
     Element oldImg = getImageElement();

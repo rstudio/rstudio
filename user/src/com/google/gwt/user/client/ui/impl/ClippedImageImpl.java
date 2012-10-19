@@ -63,7 +63,7 @@ public class ClippedImageImpl {
 
   public Element createStructure(SafeUri url, int left, int top, int width, int height) {
     Element tmp = Document.get().createSpanElement();
-    tmp.setInnerHTML(getSafeHtml(url, left, top, width, height).asString());
+    tmp.setInnerSafeHtml(getSafeHtml(url, left, top, width, height));
     return tmp.getFirstChildElement();
   }
 

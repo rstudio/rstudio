@@ -36,7 +36,7 @@ public class ImageLoadingCellTest extends CellTestBase<String> {
 
     // Render the html.
     Element elem = Document.get().createDivElement();
-    elem.setInnerHTML(sb.toSafeHtml().asString());
+    elem.setInnerSafeHtml(sb.toSafeHtml());
 
     // Verify the image.
     assertEquals(2, elem.getChildCount());
@@ -56,7 +56,7 @@ public class ImageLoadingCellTest extends CellTestBase<String> {
  
     // Render the html.
     Element elem = Document.get().createDivElement();
-    elem.setInnerHTML(sb.toSafeHtml().asString());
+    elem.setInnerSafeHtml(sb.toSafeHtml());
 
     // Verify the image.
     assertEquals(2, elem.getChildCount());

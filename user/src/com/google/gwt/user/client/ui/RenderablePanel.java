@@ -233,7 +233,7 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
 
     // Build the div that'll container the panel's HTML.
     Element element = Document.get().createDivElement();
-    element.setInnerHTML(getInnerHtml().asString());
+    element.setInnerSafeHtml(getInnerHtml());
 
     // TODO(rdcastro): Implement something like
     // element.mergeFrom(getElement());

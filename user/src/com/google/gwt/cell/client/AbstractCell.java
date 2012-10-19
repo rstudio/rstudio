@@ -135,7 +135,7 @@ public abstract class AbstractCell<C> implements Cell<C> {
   public void setValue(Context context, Element parent, C value) {
     SafeHtmlBuilder sb = new SafeHtmlBuilder();
     render(context, value, sb);
-    parent.setInnerHTML(sb.toSafeHtml().asString());
+    parent.setInnerSafeHtml(sb.toSafeHtml());
   }
 
   /**

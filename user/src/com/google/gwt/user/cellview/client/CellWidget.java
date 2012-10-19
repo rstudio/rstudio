@@ -204,7 +204,7 @@ public class CellWidget<C> extends Widget implements HasKeyProvider<C>, HasValue
   public void redraw() {
     SafeHtmlBuilder sb = new SafeHtmlBuilder();
     cell.render(createContext(), value, sb);
-    getElement().setInnerHTML(sb.toSafeHtml().asString());
+    getElement().setInnerSafeHtml(sb.toSafeHtml());
 
     /*
      * The rendered Cell should fill the root element so height and width styles

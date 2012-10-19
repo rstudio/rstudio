@@ -51,7 +51,7 @@ public class UiRendererTest extends GWTTestCase {
     renderer = UiRendererUi.getRenderer();
 
     docDiv = Document.get().createDivElement();
-    docDiv.setInnerHTML(renderedHtml.asString());
+    docDiv.setInnerSafeHtml(renderedHtml);
     Document.get().getBody().appendChild(docDiv);
   }
 

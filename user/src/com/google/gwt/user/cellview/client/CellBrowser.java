@@ -375,7 +375,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize, Req
       } else {
         image = closedImageHtml;
       }
-      tmpElem.setInnerHTML(image.asString());
+      tmpElem.setInnerSafeHtml(image);
       elem.replaceChild(tmpElem.getFirstChildElement(), elem.getFirstChildElement());
 
       // Update the open state.
