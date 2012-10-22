@@ -65,6 +65,28 @@ public class UiBinderTest extends GWTTestCase {
     root = widgetUi.root;
   }
 
+  /**
+   * Tests that the provided value takes precedence over a custom parser,
+   * {@code UiFactory} or {@code UiConstructor}.
+   * <p>
+   * The fields are {@code final} and we test that they've correctly been
+   * modified by the template.
+   * 
+   * @see http://code.google.com/p/google-web-toolkit/issues/detail?id=7740
+   */
+  public void testProvidedWidgetWithCustomInitializer() {
+    // Custom parser: should use the provided header, as the one from the
+    // template is passed to the (ignored) custom initializer. But the child
+    // widget should have been set.
+    assertEquals("Provided header text", widgetUi.myProvidedDisclosurePanel.getHeaderTextAccessor().getText());
+    assertNotNull(widgetUi.myProvidedDisclosurePanelItem);
+    assertSame(widgetUi.myProvidedDisclosurePanelItem, widgetUi.myProvidedDisclosurePanel.getContent());
+    // UiConstructor
+    assertEquals("ditto", widgetUi.providedAnnotatedStrictLabel.getText());
+    // UiFactory
+    assertEquals("from template", widgetUi.providedStrictLabel.getText());
+  }
+
   public void testTableWithColumns() {
     assertEquals("col", domUi.narrowColumn.getTagName().toLowerCase());
     assertEquals("tr", domUi.tr.getTagName().toLowerCase());

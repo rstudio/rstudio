@@ -116,6 +116,9 @@ public class WidgetBasedUi extends Composite {
   @UiField Widget myStackPanelItem;
   @UiField DisclosurePanel myDisclosurePanel;
   @UiField Widget myDisclosurePanelItem;
+  @UiField(provided = true)
+  final DisclosurePanel myProvidedDisclosurePanel = new DisclosurePanel("Provided header text");
+  @UiField Widget myProvidedDisclosurePanelItem;
   @UiField Tree myTree;
   @UiField TreeItem myTreeItemA;
   @UiField Widget myTreeWidgetB;
@@ -133,11 +136,12 @@ public class WidgetBasedUi extends Composite {
   @UiField NeedlesslyAnnotatedLabel needlessLabel;
   @UiField AnnotatedStrictLabel strictLabel;
   @UiField(provided = true)
-  AnnotatedStrictLabel providedStrictLabel = new AnnotatedStrictLabel(
+  final AnnotatedStrictLabel providedAnnotatedStrictLabel = new AnnotatedStrictLabel(
       "likewise");
   @UiField AnnotatedStrictLabel translatedStrictLabel;
   @UiField StrictLabel veryStrictLabel;
   @UiField StrictLabel translatedVeryStrictLabel;
+  @UiField(provided = true) final StrictLabel providedStrictLabel = new StrictLabel("provided");
   @UiField FooLabel theFoo;
   @UiField MenuBar dropdownMenuBar;
   @UiField MenuItem menuItemMop;

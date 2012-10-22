@@ -213,22 +213,20 @@ abstract class AbstractFieldWriter implements FieldWriter {
         && getAssignableType() != null
         && getAssignableType().isAssignableTo(renderablePanelType);
 
-    // Check initializer.
-    if (initializer == null) {
-      if (ownerField != null && ownerField.isProvided()) {
-        initializer = String.format("owner.%s", name);
-      } else {
-        JClassType type = getInstantiableType();
-        if (type != null) {
-          if ((type.isInterface() == null)
-              && (type.findConstructor(new JType[0]) == null)) {
-            logger.die(NO_DEFAULT_CTOR_ERROR, type.getQualifiedSourceName(),
-                type.getName());
-          }
+    // Check initializer. Provided value takes precedence over initializer.
+    if (ownerField != null && ownerField.isProvided()) {
+      initializer = String.format("owner.%s", name);
+    } else if (initializer == null) {
+      JClassType type = getInstantiableType();
+      if (type != null) {
+        if ((type.isInterface() == null)
+            && (type.findConstructor(new JType[0]) == null)) {
+          logger.die(NO_DEFAULT_CTOR_ERROR, type.getQualifiedSourceName(),
+              type.getName());
         }
-        initializer = String.format("(%1$s) GWT.create(%1$s.class)",
-            getQualifiedSourceName());
       }
+      initializer = String.format("(%1$s) GWT.create(%1$s.class)",
+          getQualifiedSourceName());
     }
 
     w.newline();

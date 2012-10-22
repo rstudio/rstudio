@@ -451,6 +451,20 @@
 
       </gwt:DisclosurePanel>
 
+      <p> ... a provided DisclosurePanel with a text header ... </p>
+
+      <gwt:DisclosurePanel ui:field='myProvidedDisclosurePanel' animationEnabled='true'>
+        <gwt:header>
+          <ui:msg description="Label for Disclosure One">I just have a text header</ui:msg>
+        </gwt:header>
+
+
+          <gwt:Label ui:field='myProvidedDisclosurePanelItem'>
+            <ui:msg  description="Content for Disclosure One Text">Disclosure Text</ui:msg>
+          </gwt:Label>
+
+      </gwt:DisclosurePanel>
+
       <h2>Stylish</h2>
       <p>
        Templates work with ClientBundle. For example,
@@ -551,7 +565,8 @@
       </demo:StrictLabel></p>
       <p><demo:NeedlesslyAnnotatedLabel ui:field="needlessLabel"
         text="Sometimes people do things they don't need to do. Don't punish them."/></p>
-      <demo:AnnotatedStrictLabel ui:field="providedStrictLabel">ditto</demo:AnnotatedStrictLabel>
+      <demo:AnnotatedStrictLabel ui:field="providedAnnotatedStrictLabel">ditto</demo:AnnotatedStrictLabel>
+      <demo:StrictLabel ui:field="providedStrictLabel" text="from template" />
 
       <demo:FooLabel ui:field='theFoo' pojo="{values.pojo}"/>
 
