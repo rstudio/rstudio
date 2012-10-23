@@ -18,6 +18,7 @@ package com.google.gwt.dev.shell;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.Name;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -614,17 +615,18 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       String summary, String entryPointTypeName, Throwable e) throws Throwable {
     StringWriter writer = new StringWriter();
     e.printStackTrace(new PrintWriter(writer));
-    String stackTrace = writer.toString().replaceFirst(
+    String stackTrace = Util.escapeXml(writer.toString()).replaceFirst(
         // (?ms) for regex pattern modifiers MULTILINE and DOTALL
         "(?ms)(Caused by:.+)", "<b>$1</b>");
     String details = "<p>Exception while loading module <b>"
-        + entryPointTypeName + "</b>. See Development Mode for details.</p>"
+        + Util.escapeXml(entryPointTypeName) + "</b>."
+        + " See Development Mode for details.</p>"
         + "<div style='overflow:visisble;white-space:pre;'>" + stackTrace
         + "</div>";
 
     invokeNativeVoid("__gwt_displayGlassMessage", null,
-        new Class[]{String.class, String.class},
-        new Object[]{summary, details});
+        new Class[] { String.class, String.class },
+        new Object[] { Util.escapeXml(summary), details });
   }
 
   private boolean isUserFrame(StackTraceElement element) {
