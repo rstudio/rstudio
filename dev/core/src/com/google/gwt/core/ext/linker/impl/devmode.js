@@ -330,11 +330,11 @@ function pluginConnectionError(codeServer) {
 }
 
 function simpleEscape(originalString) {
-  return originalString.replace("&","&amp;")
-    .replace("<","&lt;")
-    .replace(">","&gt;")
-    .replace("\'", "&#39;")
-    .replace("\"","&quot;");
+  return originalString.replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/\'/g, "&#39;")
+    .replace(/\"/g,"&quot;");
 }
 
 function tryConnectingToPlugin(sessionId, url) {
