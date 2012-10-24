@@ -68,9 +68,9 @@ public enum CssObfuscationStyle {
      */
     if (showClassName) {
       if (showPackageName) {
-        toReturn = type.getQualifiedSourceName().replaceAll("[.$]", "-") + "-" + toReturn;
+        toReturn = getPrettyCssClass(type.getQualifiedSourceName(), toReturn);
       } else {
-        toReturn = type.getName() + "-" + toReturn;
+        toReturn = getPrettyCssClass(type.getName(), toReturn);
       }
     } 
     
@@ -87,5 +87,9 @@ public enum CssObfuscationStyle {
 
   public boolean isPretty() {
     return isPretty;
+  }
+
+  private static String getPrettyCssClass(String typeName, String cssClass) {
+    return typeName.replaceAll("[.$]", "-") + "-" + cssClass;
   }
 }
