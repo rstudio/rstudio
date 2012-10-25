@@ -54,7 +54,7 @@ COMMON            = ../common/libcommon$(FLAG32BIT).a
 
 OBJ_OUTDIR        = build/$(TARGET_PLATFORM)
 EXTENSION_OUTDIR  = prebuilt/gwt-dev-plugin
-EXTENSION_FILES = *.html *.js *.png *.txt \
+EXTENSION_FILES = *.html *.js *.json *.png *.txt \
   DevModeOptions/*.gif DevModeOptions/*.js DevModeOptions/*.txt \
   Linux*/*.so WIN*/*.dll Darwin*/*/*/*.plist Darwin*/*/*/*/*.dylib
 PLATFORM_DIR      = $(EXTENSION_OUTDIR)/$(TARGET_PLATFORM)
@@ -77,7 +77,7 @@ all:: common lib install-platform zip
 
 lib:: $(OBJ_OUTDIR) $(EXTENSION_OUTDIR) $(DLL)
 zip:: $(EXTENSION_OUTDIR)
-	(cd $(EXTENSION_OUTDIR); zip ../upload.zip $(EXTENSION_FILES))
+	(cd $(EXTENSION_OUTDIR); zip ../gwt-dev-plugin.zip $(EXTENSION_FILES))
 
 linuxplatforms:
 	$(MAKE) lib ARCH=x86
