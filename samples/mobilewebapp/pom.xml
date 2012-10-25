@@ -11,7 +11,7 @@
 
   <properties>
     <!-- Convenience property to set the GWT version -->
-    <gwtVersion>2.5.0-rc2</gwtVersion>
+    <gwtVersion>2.5.0</gwtVersion>
 
     <!-- GWT needs at least java 1.6 -->
     <maven.compiler.source>1.6</maven.compiler.source>
