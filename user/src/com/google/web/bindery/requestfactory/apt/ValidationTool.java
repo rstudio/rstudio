@@ -212,7 +212,11 @@ public class ValidationTool {
   /**
    * A testable "main" method.
    */
-  static boolean exec(String[] args) throws IOException {
+  public static boolean exec(String[] args) throws IOException {
+    return exec(args, ToolProvider.getSystemJavaCompiler());
+  }
+
+  public static boolean exec(String[] args, JavaCompiler compiler) throws IOException {
     if (args.length < 2) {
       System.err.println("java -cp requestfactory-client.jar:your_server-code.jar "
           + ValidationTool.class.getCanonicalName()
@@ -222,7 +226,6 @@ public class ValidationTool {
           + "for more information.");
       return false;
     }
-    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     if (compiler == null) {
       System.err.println("This tool must be run with a JDK, not a JRE");
       return false;
