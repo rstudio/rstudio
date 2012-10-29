@@ -43,6 +43,7 @@ public:
 
    const std::string& name() const { return name_; }
    const std::string& version() const { return version_; }
+   const std::string& linkingTo() const { return linkingTo_; }
 
    std::string sourcePackageFilename() const;
 
@@ -52,6 +53,7 @@ private:
 private:
    std::string name_;
    std::string version_;
+   std::string linkingTo_;
 };
 
 

@@ -64,6 +64,11 @@ Error RPackageInfo::read(const FilePath& packageDir)
    else
       return fieldNotFoundError(descFilePath, "Version", ERROR_LOCATION);
 
+   // Linking to field
+   it = fields.find("LinkingTo");
+   if (it != fields.end())
+      linkingTo_ = it->second;
+
    return Success();
 }
 

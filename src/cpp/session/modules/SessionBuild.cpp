@@ -448,6 +448,10 @@ private:
          return;
       }
 
+      // if this package links to Rcpp then we run compileAttributes
+      if (pkgInfo_.linkingTo().find("Rcpp") != std::string::npos)
+         compileRcppAttributes(packagePath);
+
       if (type == kRoxygenizePackage)
       {
          if (roxygenize(packagePath))
@@ -555,6 +559,20 @@ private:
                           output + (output.empty() ? "\n" : "\n\n"));
 
          return true;
+      }
+   }
+
+   void compileRcppAttributes(const FilePath& packagePath)
+   {
+      if (r::sexp::findFunction("compileAttributes", "Rcpp") !=
+          R_UnboundValue)
+      {
+          r::exec::RFunction compileAttr("Rcpp:::compileAttributes");
+          compileAttr.addParam(
+                   string_utils::utf8ToSystem(packagePath.absolutePath()));
+          Error error = compileAttr.call();
+          if (error)
+             LOG_ERROR(error);
       }
    }
 
