@@ -450,7 +450,8 @@ private:
 
       // if this package links to Rcpp then we run compileAttributes
       if (pkgInfo_.linkingTo().find("Rcpp") != std::string::npos)
-         compileRcppAttributes(packagePath);
+         if (!compileRcppAttributes(packagePath))
+            return;
 
       if (type == kRoxygenizePackage)
       {
@@ -562,7 +563,7 @@ private:
       }
    }
 
-   void compileRcppAttributes(const FilePath& packagePath)
+   bool compileRcppAttributes(const FilePath& packagePath)
    {
       if (r::sexp::findFunction("compileAttributes", "Rcpp") !=
           R_UnboundValue)
@@ -570,10 +571,26 @@ private:
           r::exec::RFunction compileAttr("Rcpp:::compileAttributes");
           compileAttr.addParam(
                    string_utils::utf8ToSystem(packagePath.absolutePath()));
-          Error error = compileAttr.call();
+          bool codeUpdated;
+          Error error = compileAttr.call(&codeUpdated);
           if (error)
+          {
              LOG_ERROR(error);
+             enqueCommandString("Rcpp::compileAttributes()");
+             terminateWithError(r::endUserErrorMessage(error));
+             return false;
+          }
+          else if (codeUpdated)
+          {
+             enqueCommandString("Rcpp::compileAttributes()");
+             enqueBuildOutput(kBuildOutputNormal,
+                              "* Updated RcppExports.cpp\n"
+                              "* Updated RcppExports.R\n\n");
+
+          }
       }
+
+      return true;
    }
 
    void buildPackage(const std::string& type,
