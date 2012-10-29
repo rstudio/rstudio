@@ -424,18 +424,27 @@ public class StringTest extends GWTTestCase {
     assertEquals("", "".toLowerCase());
   }
 
-  /*
-   * TODO: needs rewriting to avoid compiler optimizations.
-   */
   public void testMatch() {
-    assertFalse("1f", "abbbbcd".matches("b*"));
-    assertFalse("2f", "abbbbcd".matches("b+"));
-    assertTrue("3t", "abbbbcd".matches("ab*bcd"));
-    assertTrue("4t", "abbbbcd".matches("ab+cd"));
-    assertTrue("5t", "abbbbcd".matches("ab+bcd"));
-    assertFalse("6f", "abbbbcd".matches(""));
-    assertTrue("7t", "abbbbcd".matches("a.*d"));
-    assertFalse("8f", "abbbbcd".matches("a.*e"));
+    assertFalse("1f", hideFromCompiler("abbbbcd").matches("b*"));
+    assertFalse("2f", hideFromCompiler("abbbbcd").matches("b+"));
+    assertTrue("3t", hideFromCompiler("abbbbcd").matches("ab*bcd"));
+    assertTrue("4t", hideFromCompiler("abbbbcd").matches("ab+cd"));
+    assertTrue("5t", hideFromCompiler("abbbbcd").matches("ab+bcd"));
+    assertFalse("6f", hideFromCompiler("abbbbcd").matches(""));
+    assertTrue("7t", hideFromCompiler("abbbbcd").matches("a.*d"));
+    assertFalse("8f", hideFromCompiler("abbbbcd").matches("a.*e"));
+    // issue #7736
+    assertTrue("9t.1", hideFromCompiler("").matches("(|none)"));
+    assertTrue("9t.2", hideFromCompiler("none").matches("(|none)"));
+    assertFalse("9f.1", hideFromCompiler("ab").matches("(|none)"));
+    assertFalse("9f.2", hideFromCompiler("anoneb").matches("(|none)"));
+    assertTrue("10t", hideFromCompiler("none").matches("^(|none)$"));
+    assertFalse("10f", hideFromCompiler("abbbbcd").matches("^b*$"));
+    assertTrue("11t.1", hideFromCompiler("").matches("|none"));
+    assertTrue("11t.2", hideFromCompiler("none").matches("|none"));
+    assertFalse("11f.1", hideFromCompiler("ab").matches("|none"));
+    assertFalse("11f.2", hideFromCompiler("anoneb").matches("|none"));
+    assertTrue("12t", hideFromCompiler("none").matches("^|none$"));
   }
 
   /*

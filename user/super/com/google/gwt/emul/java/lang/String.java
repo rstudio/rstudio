@@ -764,10 +764,9 @@ public final class String implements Comparable<String>, CharSequence,
    * TODO(jat): properly handle Java regex syntax
    */
   public native boolean matches(String regex) /*-{
-    var matchObj = new RegExp(regex).exec(this);
-    // if there is no match at all, matchObj will be null 
-    // matchObj[0] is the entire matched string
-    return (matchObj == null) ? false : (this == matchObj[0]);
+    // We surround the regex with '^' and '$' because it must match
+    // the entire string.
+    return new RegExp('^(' + regex + ')$').test(this);
   }-*/;
 
   public int offsetByCodePoints(int index, int codePointOffset) {
