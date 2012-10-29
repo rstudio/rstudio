@@ -1971,7 +1971,9 @@ public class TextEditingTarget implements EditingTarget
          // require print statements so if you don't echo to the console
          // then you don't see any of the output
          
-         if (dirtyState_.getValue() || sweave)
+         boolean isCpp = fileType_.isCpp();
+         
+         if ((dirtyState_.getValue() || sweave) && !isCpp)
          {
             server_.saveActiveDocument(code, 
                                        sweave,
@@ -1992,13 +1994,24 @@ public class TextEditingTarget implements EditingTarget
          }
          else
          {
-            consoleDispatcher_.executeSourceCommand(
-                  getPath(),
-                  fileType_,
-                  docUpdateSentinel_.getEncoding(),
-                  activeCodeIsAscii(),
-                  forceEcho ? true : echo,
-                  true); // focus
+            Command sourceCommand = new Command() {
+               @Override
+               public void execute()
+               {
+                  consoleDispatcher_.executeSourceCommand(
+                        getPath(),
+                        fileType_,
+                        docUpdateSentinel_.getEncoding(),
+                        activeCodeIsAscii(),
+                        forceEcho ? true : echo,
+                        true); // focus  
+               }
+            };
+            
+            if (isCpp)
+               saveThenExecute(null, sourceCommand);
+            else
+               sourceCommand.execute(); 
          }
       }
       
