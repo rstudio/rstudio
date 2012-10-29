@@ -185,7 +185,7 @@ public class CssGenerationVisitor extends CssVisitor {
 
   @Override
   public boolean visit(CssMediaRule x, Context ctx) {
-    out.print("@MEDIA");
+    out.print("@media");
     for (String m : x.getMedias()) {
       out.print(" " + m);
     }

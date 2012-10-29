@@ -56,6 +56,16 @@ public class CssNodeClonerTest extends CssTestCase {
     }
   }
 
+  public void testCloneMedia() throws UnableToCompleteException {
+    CssStylesheet sheet = GenerateCssAst.exec(TreeLogger.NULL,
+        getClass().getClassLoader().getResource(
+            "com/google/gwt/resources/css/media.css"));
+
+    CssStylesheet cloned = CssNodeCloner.clone(CssStylesheet.class, sheet);
+
+    assertEquals("@media print {\n}\n", cloned.toString());
+  }
+
   public void testCloneProperty() {
     CssProperty.IdentValue value = new CssProperty.IdentValue("value");
     CssProperty p = new CssProperty("name", value, true);
