@@ -469,6 +469,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["devtools_installed"] = module_context::isPackageInstalled(
                                                                   "devtools");
 
+   sessionInfo["have_rcpp_attributes"] = modules::build::haveRcppAttributes();
+
    sessionInfo["have_cairo_pdf"] = modules::plots::haveCairoPdf();
 
    // console history -- we do this at the end because

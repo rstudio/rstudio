@@ -24,6 +24,8 @@ namespace session {
 namespace modules { 
 namespace build {
 
+bool haveRcppAttributes();
+
 core::json::Value buildStateAsJson();
 
 core::Error initialize();

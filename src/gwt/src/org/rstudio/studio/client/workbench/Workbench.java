@@ -32,6 +32,7 @@ import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.AskPassManager;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
 import org.rstudio.studio.client.htmlpreview.HTMLPreview;
@@ -69,6 +70,7 @@ public class Workbench implements BusyHandler,
                     Server server,
                     RemoteFileSystemContext fsContext,
                     FileDialogs fileDialogs,
+                    FileTypeRegistry fileTypeRegistry,
                     ConsoleDispatcher consoleDispatcher,
                     ChooseFile chooseFile,   // required to force gin to create
                     AskPassManager askPass,  // required to force gin to create
@@ -85,6 +87,7 @@ public class Workbench implements BusyHandler,
       server_ = server;
       fsContext_ = fsContext;
       fileDialogs_ = fileDialogs;
+      fileTypeRegistry_ = fileTypeRegistry;
       consoleDispatcher_ = consoleDispatcher;
       
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
@@ -237,9 +240,11 @@ public class Workbench implements BusyHandler,
 
                   consoleDispatcher_.executeSourceCommand(
                         input.getPath(),
+                        fileTypeRegistry_.getTextTypeForFile(input),
                         pPrefs_.get().defaultEncoding().getValue(),
                         false,
-                        false);
+                        false,
+                        true); // focus
 
                   commands_.activateConsole().execute();
                }
@@ -335,6 +340,7 @@ public class Workbench implements BusyHandler,
    private final Commands commands_;
    private final RemoteFileSystemContext fsContext_;
    private final FileDialogs fileDialogs_;
+   private final FileTypeRegistry fileTypeRegistry_;
    private final WorkbenchContext workbenchContext_;
    private final ConsoleDispatcher consoleDispatcher_;
    private final TimeBufferedCommand metricsChangedCommand_;

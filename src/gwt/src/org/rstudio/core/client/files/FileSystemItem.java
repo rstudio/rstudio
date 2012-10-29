@@ -161,6 +161,23 @@ public class FileSystemItem extends JavaScriptObject
       }
    }
    
+   public final String getPathRelativeTo(FileSystemItem other)
+   {
+      String otherPath = other.getPath();
+      if (!otherPath.endsWith("/"))
+         otherPath = otherPath + "/";
+      
+      if (getPath().startsWith(otherPath) &&
+          (getPath().length() > otherPath.length()))
+      {
+         return getPath().substring(otherPath.length());
+      }
+      else
+      {
+         return null;
+      }
+   }
+   
    public final boolean isPublicFolder()
    {
       return isDirectory() && PUBLIC.equals(homeRelativePath());

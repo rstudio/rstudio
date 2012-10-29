@@ -92,6 +92,16 @@ public class TextFileType extends EditableFileType
       return wordWrap_;
    }
 
+   public boolean canSource()
+   {
+      return canExecuteCode_ && !canExecuteChunks_;
+   }
+   
+   public boolean canSourceWithEcho()
+   {
+      return canSource();
+   }
+   
    public boolean canSourceOnSave()
    {
       return canSourceOnSave_;

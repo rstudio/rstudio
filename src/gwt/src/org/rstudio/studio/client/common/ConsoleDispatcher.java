@@ -17,6 +17,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -111,37 +112,63 @@ public class ConsoleDispatcher
             });
       
    }
+  
    
- 
-   public void executeSourceCommand(String path, 
+   public void executeSourceCommand(String path,
+                                    TextFileType fileType,
                                     String encoding, 
                                     boolean contentKnownToBeAscii,
-                                    boolean echo)
+                                    boolean echo,
+                                    boolean focus)
    {
-      String systemEncoding = session_.getSessionInfo().getSystemEncoding();
-      boolean isSystemEncoding =
-            normalizeEncoding(encoding).equals(normalizeEncoding(systemEncoding));
-
+       
+      StringBuilder code = new StringBuilder();
+      
+      if (fileType.isCpp())
+      {
+         // use a relative path if possible
+         String relativePath = FileSystemItem.createFile(path).getPathRelativeTo(
+                                       workbenchContext_.getCurrentWorkingDir());
+         if (relativePath != null)
+            path = relativePath;
+       
+         code.append("Rcpp::source.cpp(" + escapedPath(path) + ")");
+      }
+      else
+      {
+         String escapedPath = escapedPath(path);
+         String systemEncoding = session_.getSessionInfo().getSystemEncoding();
+         boolean isSystemEncoding =
+          normalizeEncoding(encoding).equals(normalizeEncoding(systemEncoding));
+         
+         if (contentKnownToBeAscii || isSystemEncoding)
+            code.append("source(" + escapedPath);
+         else
+         {
+            code.append(
+                  "source.with.encoding(" + escapedPath + ", encoding='" +
+                  (!StringUtil.isNullOrEmpty(encoding) ? encoding : "UTF-8") +
+                  "'");
+         }
+         
+         if (echo)
+            code.append(", echo=TRUE");
+         code.append(")");
+      }
+      
+      
+      eventBus_.fireEvent(new SendToConsoleEvent(code.toString(), true));
+      
+      if (focus)
+         commands_.activateConsole().execute();
+   }
+   
+   private String escapedPath(String path)
+   {
       String escapedPath = "'" +
                            path.replace("\\", "\\\\").replace("'", "\\'") +
                            "'";
-
-      StringBuilder code = new StringBuilder();
-      
-      if (contentKnownToBeAscii || isSystemEncoding)
-         code.append("source(" + escapedPath);
-      else
-      {
-         code.append("source.with.encoding(" + escapedPath + ", encoding='" +
-                     (!StringUtil.isNullOrEmpty(encoding) ? encoding : "UTF-8") +
-                     "'");
-      }
-      
-      if (echo)
-         code.append(", echo=TRUE");
-      code.append(")");
-      
-      eventBus_.fireEvent(new SendToConsoleEvent(code.toString(), true));
+      return escapedPath;
    }
    
    private String normalizeEncoding(String str)

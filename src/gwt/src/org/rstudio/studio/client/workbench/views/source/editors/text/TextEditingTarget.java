@@ -1982,9 +1982,11 @@ public class TextEditingTarget implements EditingTarget
                {
                   consoleDispatcher_.executeSourceCommand(
                         "~/.active-rstudio-document",
+                        fileType_,
                         "UTF-8",
                         activeCodeIsAscii(),
-                        forceEcho ? true : echo);
+                        forceEcho ? true : echo,
+                        true); // focus
                }
             });
          }
@@ -1992,9 +1994,11 @@ public class TextEditingTarget implements EditingTarget
          {
             consoleDispatcher_.executeSourceCommand(
                   getPath(),
+                  fileType_,
                   docUpdateSentinel_.getEncoding(),
                   activeCodeIsAscii(),
-                  forceEcho ? true : echo);
+                  forceEcho ? true : echo,
+                  true); // focus
          }
       }
       
@@ -2526,8 +2530,10 @@ public class TextEditingTarget implements EditingTarget
                {
                   consoleDispatcher_.executeSourceCommand(
                                              docUpdateSentinel_.getPath(), 
+                                             fileType_,
                                              docUpdateSentinel_.getEncoding(), 
                                              activeCodeIsAscii(),
+                                             false,
                                              false);
                }
             }

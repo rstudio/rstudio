@@ -232,6 +232,8 @@ public class TextEditingTargetWidget
    {
       editor_.setFileType(fileType);
       boolean canCompilePdf = fileType.canCompilePDF();
+      boolean canSource = fileType.canSource();
+      boolean canSourceWithEcho = fileType.canSourceWithEcho();
       boolean canExecuteCode = fileType.canExecuteCode();
       boolean canExecuteChunks = fileType.canExecuteChunks();
       
@@ -245,8 +247,8 @@ public class TextEditingTargetWidget
             (canExecuteCode && !fileType.canAuthorContent()) ||
             fileType.isCpp());   
      
-      sourceButton_.setVisible(canExecuteCode && !canExecuteChunks);
-      sourceMenuButton_.setVisible(canExecuteCode && !canExecuteChunks);
+      sourceButton_.setVisible(canSource);
+      sourceMenuButton_.setVisible(canSourceWithEcho);
    
       texSeparatorWidget_.setVisible(canCompilePdf);
       texToolbarButton_.setVisible(canCompilePdf);

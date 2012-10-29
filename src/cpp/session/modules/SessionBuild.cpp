@@ -565,8 +565,7 @@ private:
 
    bool compileRcppAttributes(const FilePath& packagePath)
    {
-      if (r::sexp::findFunction("compileAttributes", "Rcpp") !=
-          R_UnboundValue)
+      if (haveRcppAttributes())
       {
           r::exec::RFunction compileAttr("Rcpp:::compileAttributes");
           compileAttr.addParam(
@@ -1295,6 +1294,12 @@ void onResume(const core::Settings& settings)
 } // anonymous namespace
 
 
+bool s_haveRcppAttributes = false;
+bool haveRcppAttributes()
+{
+   return s_haveRcppAttributes;
+}
+
 json::Value buildStateAsJson()
 {
    if (s_pBuild)
@@ -1335,6 +1340,15 @@ Error initialize()
    methodDef.fun = (DL_FUNC) rs_canBuildCpp ;
    methodDef.numArgs = 0;
    r::routines::addCallMethod(methodDef);
+
+   // check for Rcpp attributes
+   SEXP functionSEXP = R_NilValue;
+   r::exec::RFunction func(".rs.getPackageFunction",
+                           "compileAttributes",
+                           "Rcpp");
+   r::sexp::Protect rProtect;
+   Error error = func.call(&functionSEXP, &rProtect);
+   s_haveRcppAttributes = !error && !r::sexp::isNull(functionSEXP);
 
    // add suspend handler
    addSuspendHandler(module_context::SuspendHandler(onSuspend, onResume));

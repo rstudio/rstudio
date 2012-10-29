@@ -79,11 +79,6 @@
             error = function(e) NULL)
 })
 
-.rs.addFunction("getPackageFunction", function(name, packageName)
-{
-   tryCatch(eval(parse(text=paste(packageName, ":::", name, sep=""))),
-            error = function(e) NULL)
-})
 
 .rs.addFunction("functionHasSrcRef", function(func)
 {

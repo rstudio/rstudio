@@ -76,3 +76,9 @@
 {
    return (nzchar(Sys.which("ls.exe")) && nzchar(Sys.which("gcc.exe")))
 })
+
+.rs.addFunction("getPackageFunction", function(name, packageName)
+{
+   tryCatch(eval(parse(text=paste(packageName, ":::", name, sep=""))),
+            error = function(e) NULL)
+})
