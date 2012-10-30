@@ -63,7 +63,7 @@ public class CssNodeClonerTest extends CssTestCase {
 
     CssStylesheet cloned = CssNodeCloner.clone(CssStylesheet.class, sheet);
 
-    assertEquals("@media print {\n}\n", cloned.toString());
+    assertEquals("@media print, standard {\n}\n", cloned.toString());
   }
 
   public void testCloneProperty() {

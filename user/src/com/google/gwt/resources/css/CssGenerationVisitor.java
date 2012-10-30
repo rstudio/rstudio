@@ -186,8 +186,15 @@ public class CssGenerationVisitor extends CssVisitor {
   @Override
   public boolean visit(CssMediaRule x, Context ctx) {
     out.print("@media");
+    boolean isFirst = true;
     for (String m : x.getMedias()) {
-      out.print(" " + m);
+      if (isFirst) {
+        out.print(" ");
+        isFirst = false;
+      } else {
+        comma();
+      }
+      out.print(m);
     }
     spaceOpt();
     out.print("{");
