@@ -132,7 +132,7 @@ public class ConsoleDispatcher
          if (relativePath != null)
             path = relativePath;
        
-         code.append("Rcpp::source.cpp(" + escapedPath(path) + ")");
+         code.append("Rcpp::sourceCpp(" + escapedPath(path) + ")");
       }
       else
       {
