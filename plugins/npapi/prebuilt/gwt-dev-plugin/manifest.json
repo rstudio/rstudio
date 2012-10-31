@@ -1,6 +1,6 @@
 {
   "name": "GWT Developer Plugin",
-  "version": "1.0.11349",
+  "version": "1.0.11357",
   "manifest_version": 2,
 
   "description": "A plugin to enable debugging with GWT's Development Mode",

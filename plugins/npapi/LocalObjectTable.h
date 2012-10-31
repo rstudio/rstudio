@@ -124,9 +124,9 @@ public:
       Debug::log(Debug::Debugging) << "removing expando!" << Debug::flush;
       NPN_RemoveProperty(npp, it->second, gwtId);
     }
-    setFree(id);
+    NPObject* obj = it->second;
+    setFree(id); // erases entry, invalidating iterator
     if (!dontFree) {
-      NPObject* obj = it->second;
       NPN_ReleaseObject(obj);
     }
   }
