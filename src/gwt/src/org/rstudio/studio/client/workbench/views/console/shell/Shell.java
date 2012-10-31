@@ -377,7 +377,7 @@ public class Shell implements ConsoleInputHandler,
                // server is prompting but not at the top level. Escape
                // needs to send null in those cases.
                // For example, try "scan()" function
-               if (serverIsBusy_ && view_.isPromptEmpty())
+               if (view_.isPromptEmpty())
                {
                   // interrupt server
                   server_.interrupt(new VoidServerRequestCallback() {
