@@ -29,6 +29,7 @@ import com.google.gwt.thirdparty.org.mortbay.jetty.nio.SelectChannelConnector;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URLConnection;
@@ -196,6 +197,11 @@ public class WebServer {
     }
 
     if (target.equals("/favicon.ico")) {
+      InputStream faviconStream = getClass().getResourceAsStream("favicon.ico");
+      if (faviconStream != null) {
+        setHandled(request);
+        PageUtil.sendStream("", faviconStream, response);
+      }
       return;
     }
 

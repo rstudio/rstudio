@@ -41,6 +41,7 @@
       <fileset dir="${javac.out}"/>
       <fileset dir="java">
         <include name="**/*.html"/>
+        <include name="**/*.ico"/>
         <include name="**/*.js"/>
       </fileset>
 
