@@ -42,16 +42,22 @@ class ModuleState {
   private final Recompiler recompiler;
   private final TreeLogger logger;
 
-  ModuleState(Recompiler recompiler, TreeLogger logger)
+  ModuleState(Recompiler recompiler, TreeLogger logger, boolean noPrecompile)
       throws UnableToCompleteException {
     this.recompiler = recompiler;
     this.logger = logger;
 
-    Map<String, String> defaultProps = new HashMap<String, String>();
-    defaultProps.put("user.agent", "safari");
-    defaultProps.put("locale", "en");
-    defaultProps.put("compiler.useSourceMaps", "true");
-    current.set(recompiler.compile(defaultProps));
+    CompileDir compileDir;
+    if (noPrecompile) {
+      compileDir = recompiler.noCompile();
+    } else {
+      Map<String, String> defaultProps = new HashMap<String, String>();
+      defaultProps.put("user.agent", "safari");
+      defaultProps.put("locale", "en");
+      defaultProps.put("compiler.useSourceMaps", "true");
+      compileDir = recompiler.compile(defaultProps);
+    }
+    current.set(compileDir);
   }
 
   /**

@@ -20,8 +20,11 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.json.JsonObject;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -125,7 +128,7 @@ class PageUtil {
   /**
    * Copies in to out and closes in when done.
    */
-  private static void copyStream(InputStream in, OutputStream out) throws IOException {
+  static void copyStream(InputStream in, OutputStream out) throws IOException {
     try {
       byte[] buffer = new byte[8 * 1024];
       while (true) {
@@ -139,4 +142,27 @@ class PageUtil {
       in.close();
     }
   }
+
+  /**
+   * Reads a resource into a String.
+   */
+  static String loadResource(Class<?> base, String path) throws IOException {
+    InputStream resourceInputStream = base.getResourceAsStream(path);
+    if (resourceInputStream == null) {
+      throw new IOException("Resource " + path + " not found.");
+    }
+    ByteArrayOutputStream resourceBaos = new ByteArrayOutputStream();
+    copyStream(resourceInputStream, resourceBaos);
+    return resourceBaos.toString("UTF-8");
+  }
+
+  /**
+   * Writes a String to a file.
+   */
+  static void writeFile(String path, String content) throws IOException {
+    InputStream in = new ByteArrayInputStream(content.getBytes("UTF-8"));
+    OutputStream out = new FileOutputStream(path);
+    PageUtil.copyStream(in, out);
+  }
+
 }

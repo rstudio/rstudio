@@ -266,7 +266,7 @@
       var error = document.createElement('a');
       error.setAttribute('href', log_url);
       error.setAttribute('target', 'gwt_dev_mode_log');
-      error.innerText = errorText;
+      error.textContent = errorText;
       error.style.color = 'red';
       error.style.textDecoration = 'underline';
       message.appendChild(error);
@@ -375,6 +375,7 @@
     }
 
     function onCompileFinished(json) {
+      globals.compiling = false;
       if (json.status != 'ok') {
         var log_url = codeserver_url + 'log/' + module_name;
         dialog.showError(json.status, log_url, onClickTryAgain);
@@ -385,6 +386,7 @@
 
     var url_prefix = codeserver_url + 'recompile/' + module_name + '?' +
     getBindingParameters(module_name, get_prop_map);
+    globals.compiling = true;
     callJsonp(url_prefix, onCompileFinished);
   }
 
@@ -394,6 +396,12 @@
    * @param params {map} Parameters passed in by the bookmarklet.
    */
   function runBookmarklet(params) {
+    if (!!globals.compiling) {
+      // A module is already being compiled.
+      // We ignore the bookmarklet: the page will reload once the compilation
+      // ends.
+      return;
+    }
     if (!params || !params.server_url) {
       window.alert('Need to reinstall the bookmarklets.');
       return;

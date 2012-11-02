@@ -20,6 +20,7 @@ import com.google.gwt.dev.ArgProcessorBase;
 import com.google.gwt.util.tools.ArgHandler;
 import com.google.gwt.util.tools.ArgHandlerDir;
 import com.google.gwt.util.tools.ArgHandlerExtra;
+import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerInt;
 import com.google.gwt.util.tools.ArgHandlerString;
 
@@ -35,6 +36,7 @@ import java.util.List;
  * <p>These flags are EXPERIMENTAL and subject to change.</p>
  */
 public class Options {
+  private boolean noPrecompile = false;
   private File workDir;
   private List<String> moduleNames = new ArrayList<String>();
   private final List<File> sourcePath = new ArrayList<File>();
@@ -66,6 +68,13 @@ public class Options {
   }
 
   /**
+   * Whether the codeServer should start without precompiling modules.
+   */
+  boolean getNoPrecompile() {
+    return noPrecompile;
+  }
+
+  /**
    * The IP address where the code server should listen.
    */
   String getBindAddress() {
@@ -93,6 +102,7 @@ public class Options {
   private class ArgProcessor extends ArgProcessorBase {
 
     public ArgProcessor() {
+      registerHandler(new NoPrecompileFlag());
       registerHandler(new BindAddressFlag());
       registerHandler(new PortFlag());
       registerHandler(new WorkDirFlag());
@@ -105,6 +115,25 @@ public class Options {
       return CodeServer.class.getName();
     }
 
+  }
+
+  public class NoPrecompileFlag extends ArgHandlerFlag {
+
+    @Override
+    public String getTag() {
+      return "-noprecompile";
+    }
+
+    @Override
+    public String getPurpose() {
+      return "Disables pre-compilation of modules.";
+    }
+
+    @Override
+    public boolean setFlag() {
+      noPrecompile = true;
+      return true;
+    }
   }
 
   private class BindAddressFlag extends ArgHandlerString {
