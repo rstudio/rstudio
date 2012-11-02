@@ -49,6 +49,9 @@
 .macintosh .checkboxLabel {
    margin-top: 5px;	
 }
+.ubuntu_mono .checkboxLabel {
+   margin-top: 5px;
+}
 .macintosh .optionsPanel {
    margin-top: 7px;
 }
