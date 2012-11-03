@@ -251,9 +251,15 @@ public:
                                     const core::FilePath& rnwFilePath,
                                     core::tex::LogEntries* pLogEntries) const
    {
+      // older error style
       boost::regex errRe("^\\s*Quitting from lines ([0-9]+)-([0-9]+): "
                           "(?:Error in [a-z]+\\([a-z=, ]+\\) : \n?)?"
                           "([^\n]+)$");
+
+      // new error style
+      boost::regex newErrRe("^\\s*Quitting from lines ([0-9]+)-([0-9]+) "
+                            "\\((.*?)\\)\\s*\\n(.*?)\\n");
+
       boost::smatch match;
       if (boost::regex_search(output, match, errRe))
       {
@@ -269,6 +275,21 @@ public:
             lineBegin += safe_convert::stringTo<int>(match[1], -1);
             message = match[2];
          }
+
+         core::tex::LogEntry logEntry(FilePath(),
+                                      -1,
+                                      core::tex::LogEntry::Error,
+                                      rnwFilePath,
+                                      lineBegin,
+                                      message);
+         pLogEntries->push_back(logEntry);
+      }
+
+      else if (boost::regex_search(output, match, newErrRe))
+      {
+         // extract error info
+         int lineBegin = safe_convert::stringTo<int>(match[1], -1);
+         std::string message = match[4];
 
          core::tex::LogEntry logEntry(FilePath(),
                                       -1,
