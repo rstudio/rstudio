@@ -622,7 +622,8 @@ void enquePlotsChanged(const r::session::graphics::DisplayState& displayState,
    jsonPlotsState["height"] = displayState.height;
    jsonPlotsState["plotIndex"] = displayState.activePlotIndex;
    jsonPlotsState["plotCount"] = displayState.plotCount;
-   jsonPlotsState["activatePlots"] = activatePlots;
+   jsonPlotsState["activatePlots"] = activatePlots &&
+                                     (displayState.plotCount > 0);
    jsonPlotsState["showManipulator"] = showManipulator;
    ClientEvent plotsStateChangedEvent(client_events::kPlotsStateChanged, 
                                       jsonPlotsState);
