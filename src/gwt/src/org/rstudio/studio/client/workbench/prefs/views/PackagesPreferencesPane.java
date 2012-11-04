@@ -100,6 +100,10 @@ public class PackagesPreferencesPane extends PreferencesPane
       add(checkboxPref("Save all files prior to building packages", uiPrefs.saveAllBeforeBuild()));
       add(checkboxPref("Automatically navigate editor to package build errors", uiPrefs.navigateToBuildError()));
       
+      hideObjectFiles_ = new CheckBox("Hide object files in package src directory");
+      lessSpaced(hideObjectFiles_);
+      add(hideObjectFiles_);
+      
       cleanupAfterCheckSuccess_ = new CheckBox("Cleanup output after successful R CMD check");
       lessSpaced(cleanupAfterCheckSuccess_);
       add(cleanupAfterCheckSuccess_);
@@ -107,6 +111,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       viewDirAfterCheckFailure_ = new CheckBox("View Rcheck directory after failed R CMD check");
       lessSpaced(viewDirAfterCheckFailure_);
       add(viewDirAfterCheckFailure_);
+      
       
       HelpLink packagesHelpLink = new PackagesHelpLink();
       packagesHelpLink.getElement().getStyle().setMarginTop(12, Unit.PX);
@@ -116,7 +121,8 @@ public class PackagesPreferencesPane extends PreferencesPane
       cranMirrorTextBox_.setEnabled(false);
       useInternet2_.setEnabled(false);
       cleanupAfterCheckSuccess_.setEnabled(false);
-      viewDirAfterCheckFailure_.setEnabled(false);  
+      viewDirAfterCheckFailure_.setEnabled(false); 
+      hideObjectFiles_.setEnabled(false);
    }
 
 
@@ -170,6 +176,9 @@ public class PackagesPreferencesPane extends PreferencesPane
       
       viewDirAfterCheckFailure_.setEnabled(true);
       viewDirAfterCheckFailure_.setValue(packagesPrefs.getViewDirAfterCheckFailure());
+      
+      hideObjectFiles_.setEnabled(true);
+      hideObjectFiles_.setValue(packagesPrefs.getHideObjectFiles());
    }
 
    @Override
@@ -183,7 +192,8 @@ public class PackagesPreferencesPane extends PreferencesPane
                                               useInternet2_.getValue(),
                                               null,
                                               cleanupAfterCheckSuccess_.getValue(),
-                                              viewDirAfterCheckFailure_.getValue());
+                                              viewDirAfterCheckFailure_.getValue(),
+                                              hideObjectFiles_.getValue());
       rPrefs.setPackagesPrefs(packagesPrefs);
       
       return reload;
@@ -198,5 +208,6 @@ public class PackagesPreferencesPane extends PreferencesPane
    private TextBoxWithButton cranMirrorTextBox_;
    private CheckBox cleanupAfterCheckSuccess_;
    private CheckBox viewDirAfterCheckFailure_;
+   private CheckBox hideObjectFiles_;
   
 }

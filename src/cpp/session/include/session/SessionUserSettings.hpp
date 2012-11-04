@@ -149,6 +149,9 @@ public:
    bool cleanupAfterRCmdCheck() const;
    void setCleanupAfterRCmdCheck(bool cleanup);
 
+   bool hideObjectFiles() const;
+   void setHideObjectFiles(bool hide);
+
    bool viewDirAfterRCmdCheck() const;
    void setViewDirAfterRCmdCheck(bool viewDir);
 

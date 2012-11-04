@@ -531,6 +531,16 @@ void UserSettings::setViewDirAfterRCmdCheck(bool viewDir)
    settings_.set("viewDirAfterRCmdCheck", viewDir);
 }
 
+bool UserSettings::hideObjectFiles() const
+{
+   return settings_.getBool("hideObjectFiles", true);
+}
+
+void UserSettings::setHideObjectFiles(bool hide)
+{
+   settings_.set("hideObjectFiles", hide);
+}
+
 bool UserSettings::alwaysSaveHistory() const
 {
    return settings_.getBool(kAlwaysSaveHistory, true);

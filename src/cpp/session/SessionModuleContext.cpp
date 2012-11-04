@@ -889,6 +889,11 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
    {
       return true;
    }
+   else if (userSettings().hideObjectFiles() &&
+            (ext == ".o" || ext == ".so" || ext == ".dll"))
+   {
+      return false;
+   }
    else
    {
       return !filePath.isHidden();
