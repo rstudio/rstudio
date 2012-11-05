@@ -2008,7 +2008,7 @@ public class TextEditingTarget implements EditingTarget
                }
             };
             
-            if (isCpp)
+            if (isCpp && dirtyState_.getValue())
                saveThenExecute(null, sourceCommand);
             else
                sourceCommand.execute(); 
