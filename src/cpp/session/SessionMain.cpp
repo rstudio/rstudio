@@ -108,7 +108,7 @@
 #include "modules/SessionLimits.hpp"
 #include "modules/SessionLists.hpp"
 #include "modules/SessionContentUrls.hpp"
-#include "modules/SessionBuild.hpp"
+#include "modules/build/SessionBuild.hpp"
 
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"

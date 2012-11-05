@@ -47,8 +47,6 @@ set (SESSION_SOURCE_FILES
    modules/SessionArch.cpp
    modules/SessionAskPass.cpp
    modules/SessionAuthoring.cpp
-   modules/SessionBuild.cpp
-   modules/SessionBuildErrors.cpp
    modules/SessionCodeSearch.cpp
    modules/SessionConsole.cpp
    modules/SessionConsoleProcess.cpp
@@ -74,6 +72,8 @@ set (SESSION_SOURCE_FILES
    modules/SessionVCS.cpp
    modules/SessionWorkbench.cpp
    modules/SessionWorkspace.cpp
+   modules/build/SessionBuild.cpp
+   modules/build/SessionBuildErrors.cpp
    modules/tex/SessionCompilePdf.cpp
    modules/tex/SessionCompilePdfSupervisor.cpp
    modules/tex/SessionPdfLatex.cpp
