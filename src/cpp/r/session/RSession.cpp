@@ -870,6 +870,23 @@ SEXP rs_createUUID()
    return r::sexp::create(core::system::generateUuid(false), &rProtect);
 }
    
+SEXP rs_loadHistory(SEXP sFile)
+{
+   std::string file = R_ExpandFileName(r::sexp::asString(sFile).c_str());
+   Error error = consoleHistory().loadFromFile(FilePath(file), true);
+   if (error)
+      LOG_ERROR(error);
+   else
+      s_callbacks.consoleHistoryReset();
+   return R_NilValue;
+}
+
+SEXP rs_saveHistory(SEXP sFile)
+{
+   std::string file = R_ExpandFileName(r::sexp::asString(sFile).c_str());
+   consoleHistory().saveToFile(FilePath(file));
+   return R_NilValue;
+}
 
 void doHistoryFileOperation(SEXP args, 
                             boost::function<Error(const FilePath&)> fileOp)
@@ -1272,6 +1289,21 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    createUUIDMethodDef.fun = (DL_FUNC) rs_createUUID ;
    createUUIDMethodDef.numArgs = 0;
    r::routines::addCallMethod(createUUIDMethodDef);
+
+   // register loadHistory method
+   R_CallMethodDef loadHistoryMethodDef ;
+   loadHistoryMethodDef.name = "rs_loadHistory" ;
+   loadHistoryMethodDef.fun = (DL_FUNC) rs_loadHistory ;
+   loadHistoryMethodDef.numArgs = 1;
+   r::routines::addCallMethod(loadHistoryMethodDef);
+
+   // register saveHistory method
+   R_CallMethodDef saveHistoryMethodDef ;
+   saveHistoryMethodDef.name = "rs_saveHistory" ;
+   saveHistoryMethodDef.fun = (DL_FUNC) rs_saveHistory ;
+   saveHistoryMethodDef.numArgs = 1;
+   r::routines::addCallMethod(saveHistoryMethodDef);
+
 
    // run R
    bool loadInitFile = restartContext().hasSessionState()
