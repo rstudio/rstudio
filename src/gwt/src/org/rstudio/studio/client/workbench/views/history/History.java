@@ -456,7 +456,7 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
       view_.bringToFront();
       
       consoleDispatcher_.chooseFileThenExecuteCommand("Load History", 
-                                                      "loadhistory");
+                                                      "rstudio:::loadHistory");
    }
    
    void onSaveHistory()
@@ -466,7 +466,7 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
       consoleDispatcher_.saveFileAsThenExecuteCommand("Save History As", 
                                                       ".Rhistory", 
                                                       false,
-                                                      "savehistory");
+                                                      "rstudio:::saveHistory");
    }
    
    @Handler
