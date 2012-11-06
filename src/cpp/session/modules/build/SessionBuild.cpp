@@ -570,8 +570,8 @@ private:
           r::exec::RFunction compileAttr("Rcpp:::compileAttributes");
           compileAttr.addParam(
                    string_utils::utf8ToSystem(packagePath.absolutePath()));
-          bool codeUpdated;
-          Error error = compileAttr.call(&codeUpdated);
+          std::vector<std::string> updated;
+          Error error = compileAttr.call(&updated);
           if (error)
           {
              LOG_ERROR(error);
@@ -579,13 +579,18 @@ private:
              terminateWithError(r::endUserErrorMessage(error));
              return false;
           }
-          else if (codeUpdated)
+          else if (!updated.empty())
           {
              enqueCommandString("Rcpp::compileAttributes()");
-             enqueBuildOutput(kBuildOutputNormal,
-                              "* Updated RcppExports.cpp\n"
-                              "* Updated RcppExports.R\n\n");
-
+             std::ostringstream ostr;
+             for (size_t i = 0; i<updated.size(); i++)
+             {
+                FilePath updatedPath(updated[i]);
+                ostr << "* Updated " << updatedPath.relativePath(packagePath)
+                     << "\n";
+             }
+             ostr << "\n";
+             enqueBuildOutput(kBuildOutputNormal, ostr.str());
           }
       }
 
