@@ -151,6 +151,8 @@
       "@aliases",
       "@author",
       "@concepts",
+      "@description",
+      "@details",
       "@docType",
       "@example",
       "@examples",
