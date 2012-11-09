@@ -143,7 +143,7 @@ public class BigDecimalScaleOperationsTest extends EmulTestBase {
     int newScale = 18;
     BigDecimal aNumber = new BigDecimal(new BigInteger(a), aScale);
     try {
-      aNumber.setScale(newScale);
+      aNumber = aNumber.setScale(newScale);
       fail("ArithmeticException has not been caught");
     } catch (ArithmeticException e) {
       assertEquals("Improper exception message", "Rounding necessary",
@@ -357,7 +357,7 @@ public class BigDecimalScaleOperationsTest extends EmulTestBase {
     int shift = -18;
     BigDecimal aNumber = new BigDecimal(new BigInteger(a), aScale);
     try {
-      aNumber.movePointRight(shift);
+      aNumber = aNumber.movePointRight(shift);
       fail("ArithmeticException has not been caught");
     } catch (ArithmeticException e) {
       assertEquals("Improper exception message", "Underflow", e.getMessage());

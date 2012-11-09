@@ -303,7 +303,7 @@ public class BigIntegerMultiplyTest extends EmulTestBase {
     int exp = -5;
     BigInteger aNumber = new BigInteger(aSign, aBytes);
     try {
-      aNumber.pow(exp);
+      aNumber = aNumber.pow(exp);
       fail("ArithmeticException has not been caught");
     } catch (ArithmeticException e) {
       assertEquals("Improper exception message", "Negative exponent",

@@ -626,7 +626,7 @@ public class BigDecimalArithmeticTest extends EmulTestBase {
     BigDecimal aNumber = new BigDecimal(new BigInteger(a), aScale);
     BigDecimal bNumber = BigDecimal.valueOf(0L);
     try {
-      aNumber.divide(bNumber);
+      aNumber = aNumber.divide(bNumber);
       fail("ArithmeticException has not been caught");
     } catch (ArithmeticException e) {
       assertEquals("Improper exception message", "Division by zero",
@@ -645,7 +645,7 @@ public class BigDecimalArithmeticTest extends EmulTestBase {
     BigDecimal aNumber = new BigDecimal(new BigInteger(a), aScale);
     BigDecimal bNumber = new BigDecimal(new BigInteger(b), bScale);
     try {
-      aNumber.divide(bNumber, 100);
+      aNumber = aNumber.divide(bNumber, 100);
       fail("IllegalArgumentException has not been caught");
     } catch (IllegalArgumentException e) {
       assertEquals("Improper exception message", "Invalid rounding mode",
@@ -664,7 +664,7 @@ public class BigDecimalArithmeticTest extends EmulTestBase {
     BigDecimal aNumber = new BigDecimal(new BigInteger(a), aScale);
     BigDecimal bNumber = new BigDecimal(new BigInteger(b), bScale);
     try {
-      aNumber.divide(bNumber, BigDecimal.ROUND_UNNECESSARY);
+      aNumber = aNumber.divide(bNumber, BigDecimal.ROUND_UNNECESSARY);
       fail("ArithmeticException has not been caught");
     } catch (ArithmeticException e) {
       assertEquals("Improper exception message", "Rounding necessary",
@@ -735,7 +735,7 @@ public class BigDecimalArithmeticTest extends EmulTestBase {
     BigDecimal arg1 = new BigDecimal("320.0E+2147483647");
     BigDecimal arg2 = new BigDecimal("6E-2147483647");
     try {
-      arg1.divide(arg2, Integer.MAX_VALUE, RoundingMode.CEILING);
+      arg1 = arg1.divide(arg2, Integer.MAX_VALUE, RoundingMode.CEILING);
       fail("Expected ArithmeticException when dividing with a scale that's too large");
     } catch (ArithmeticException e) {
       // expected behaviour
@@ -1523,17 +1523,20 @@ public class BigDecimalArithmeticTest extends EmulTestBase {
     
     // 1 digit left of dp, 14 scale + 1
     val = BigDecimal.valueOf(5.43445663479765);
-    val.setScale(val.scale() + 1, RoundingMode.CEILING).round(new
+    val =
+        val.setScale(val.scale() + 1, RoundingMode.CEILING).round(new
         MathContext(1, RoundingMode.CEILING));
 
      // 1 digit left of dp, 13 scale + 2
     val = BigDecimal.valueOf(5.4344566347976);
-    val.setScale(val.scale() + 2, RoundingMode.CEILING).round(new
+    val =
+        val.setScale(val.scale() + 2, RoundingMode.CEILING).round(new
         MathContext(1, RoundingMode.CEILING));
     
     // 2 digits left of dp, 13 scale + 2
     BigDecimal test = BigDecimal.valueOf(12.4344566347976);
-    test.setScale(test.scale() + 1, RoundingMode.CEILING).round(new
+    test =
+        test.setScale(test.scale() + 1, RoundingMode.CEILING).round(new
         MathContext(1, RoundingMode.CEILING));
   }
 

@@ -173,7 +173,7 @@ public class BigIntegerModPowTest extends EmulTestBase {
     BigInteger aNumber = new BigInteger(aSign, aBytes);
     BigInteger modulus = new BigInteger(mSign, mBytes);
     try {
-      aNumber.modInverse(modulus);
+      aNumber = aNumber.modInverse(modulus);
       fail("ArithmeticException has not been caught");
     } catch (ArithmeticException e) {
       assertEquals("Improper exception message",
@@ -234,7 +234,7 @@ public class BigIntegerModPowTest extends EmulTestBase {
     BigInteger aNumber = new BigInteger(aSign, aBytes);
     BigInteger modulus = new BigInteger(mSign, mBytes);
     try {
-      aNumber.modInverse(modulus);
+      aNumber = aNumber.modInverse(modulus);
       fail("ArithmeticException has not been caught");
     } catch (ArithmeticException e) {
       assertEquals("Improper exception message", "BigInteger not invertible.",
@@ -299,7 +299,7 @@ public class BigIntegerModPowTest extends EmulTestBase {
     BigInteger exp = new BigInteger(eSign, eBytes);
     BigInteger modulus = new BigInteger(mSign, mBytes);
     try {
-      aNumber.modPow(exp, modulus);
+      aNumber = aNumber.modPow(exp, modulus);
       fail("ArithmeticException has not been caught");
     } catch (ArithmeticException e) {
       assertEquals("Improper exception message",

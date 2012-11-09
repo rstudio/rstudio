@@ -149,7 +149,7 @@ public class BigIntegerOperateBitsTest extends EmulTestBase {
     int number = -7;
     BigInteger aNumber = new BigInteger(aSign, aBytes);
     try {
-      aNumber.clearBit(number);
+      aNumber = aNumber.clearBit(number);
       fail("ArithmeticException has not been caught");
     } catch (ArithmeticException e) {
       assertEquals("Improper exception message", "Negative bit address",
@@ -459,7 +459,7 @@ public class BigIntegerOperateBitsTest extends EmulTestBase {
     int number = -7;
     BigInteger aNumber = new BigInteger(aSign, aBytes);
     try {
-      aNumber.flipBit(number);
+      aNumber = aNumber.flipBit(number);
       fail("ArithmeticException has not been caught");
     } catch (ArithmeticException e) {
       assertEquals("Improper exception message", "Negative bit address",
@@ -768,7 +768,7 @@ public class BigIntegerOperateBitsTest extends EmulTestBase {
     int number = -7;
     BigInteger aNumber = new BigInteger(aSign, aBytes);
     try {
-      aNumber.setBit(number);
+      aNumber = aNumber.setBit(number);
       fail("ArithmeticException has not been caught");
     } catch (ArithmeticException e) {
       assertEquals("Improper exception message", "Negative bit address",

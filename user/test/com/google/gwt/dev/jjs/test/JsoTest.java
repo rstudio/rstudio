@@ -370,7 +370,7 @@ public class JsoTest extends GWTTestCase {
     assertFalse(o instanceof String);
     try {
       String s = (String) o;
-      s.toString();
+      s = s.toString();
       fail("Expected ClassCastException");
     } catch (ClassCastException expected) {
     }

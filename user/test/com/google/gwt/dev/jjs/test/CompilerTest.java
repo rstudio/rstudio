@@ -951,6 +951,7 @@ public class CompilerTest extends GWTTestCase {
             ai = foo;
           }
 
+          @SuppressWarnings("ReturnValueIgnored")
           @Override
           public String toString() {
             // this line used to cause ICE due to no synthetic path to bar

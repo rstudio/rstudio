@@ -512,6 +512,7 @@ public class BigDecimalConvertTest extends EmulTestBase {
   /**
    * valueOf(Double.NaN).
    */
+  @SuppressWarnings("ReturnValueIgnored")
   public void testValueOfDoubleNaN() {
     double a = Double.NaN;
     try {
