@@ -1112,14 +1112,14 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
   private void writeFieldWrapperMethod(SourceWriter sw, JField field) {
     writeUnsafeNativeLongIfNeeded(sw, field.getType());
 
-    // private native fieldType _fieldName(Bean object) /*-{
+    // private native fieldType _fieldName(com.example.Bean object) /*-{
     sw.print("private native ");
 
     sw.print(field.getType().getQualifiedSourceName());
     sw.print(" ");
     sw.print(toWrapperName(field));
     sw.print("(");
-    sw.print(beanType.getName());
+    sw.print(field.getEnclosingType().getQualifiedSourceName());
     sw.println(" object) /*-{");
     sw.indent();
 
