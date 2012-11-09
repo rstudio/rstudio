@@ -83,7 +83,10 @@ QString WebView::promptForFilename(const QNetworkRequest& request,
 
    QString fileName = QFileDialog::getSaveFileName(this,
                                                    tr("Download File"),
-                                                   defaultFileName);
+                                                   defaultFileName,
+                                                   QString(),
+                                                   0,
+                                                   standardFileDialogOptions());
    return fileName;
 }
 

@@ -17,6 +17,7 @@
 #include <QUrl>
 #include <QMessageBox>
 #include <QMainWindow>
+#include <QFileDialog>
 
 namespace core {
    class FilePath;
@@ -59,6 +60,8 @@ void toggleFullscreenMode(QMainWindow* pMainWindow);
 bool supportsFullscreenMode(QMainWindow* pMainWindow);
 
 void initializeLang();
+
+QFileDialog::Options standardFileDialogOptions();
 
 } // namespace desktop
 
