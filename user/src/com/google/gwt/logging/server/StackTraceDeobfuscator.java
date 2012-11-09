@@ -27,8 +27,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.LogRecord;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,39 +52,109 @@ import java.util.regex.Pattern;
  */
 public class StackTraceDeobfuscator {
 
-  private static class SymbolMap extends HashMap<String, String> {
+  /**
+   * A cache that maps obfuscated symbols to arbitrary non-null string values.
+   * The cache can assume each (strongName, symbol) pair always maps to the
+   * same value (never goes invalid), but must treat data as an opaque string.
+   */
+  private static class SymbolCache {
+    // TODO(srogoff): This SymbolCache implementation never drops old entries. If clients ever need
+    // to cap memory usage even with lazy loading, consider making SymbolCache an interface.
+    // This could allow clients to pass their own implementation to the StackTraceDeobfuscator
+    // constructor, backed by a Guava Cache or other entry-evicting mapping.
+
+    private final ConcurrentHashMap<String, HashMap<String, String>> symbolMaps;
+
+    SymbolCache() {
+      symbolMaps = new ConcurrentHashMap<String, HashMap<String, String>>();
+    }
+
+    /**
+     * Adds some symbol data to the cache for the given strong name.
+     */
+    void putAll(String strongName, Map<String, String> symbolMap) {
+      if (strongName == null || symbolMap.size() == 0) {
+        return;
+      }
+      symbolMaps.putIfAbsent(strongName, new HashMap<String, String>());
+      HashMap<String, String> existingMap = symbolMaps.get(strongName);
+      synchronized (existingMap) {
+        existingMap.putAll(symbolMap);
+      }
+    }
+
+    /**
+     * Returns the data for each of the specified symbols that's currently cached for the
+     * given strong name. There will be no entry for symbols that are not in the cache.
+     * If none of the symbols are cached, an empty Map is returned.
+     */
+    Map<String, String> getAll(String strongName, Set<String> symbols) {
+      Map<String, String> toReturn = new HashMap<String, String>();
+      if (strongName == null || !symbolMaps.containsKey(strongName) || symbols.isEmpty()) {
+        return toReturn;
+      }
+      HashMap<String, String> existingMap = symbolMaps.get(strongName);
+      synchronized (existingMap) {
+        for (String symbol : symbols) {
+          if (existingMap.containsKey(symbol)) {
+            toReturn.put(symbol, existingMap.get(symbol));
+          }
+        }
+      }
+      return toReturn;
+    }
   }
 
   // From JsniRef class, which is in gwt-dev and so can't be accessed here
   // TODO(unnurg) once there is a place for shared code, move this to there.
-  private static Pattern JsniRefPattern =
+  private static final Pattern JsniRefPattern =
       Pattern.compile("@?([^:]+)::([^(]+)(\\((.*)\\))?");
 
   // The javadoc for StackTraceElement.getLineNumber() says it returns -1 when
   // the line number is unavailable
   private static final int LINE_NUMBER_UNKNOWN = -1;
 
-  Pattern fragmentIdPattern = Pattern.compile(".*(\\d+)\\.js");
+  // Data to store in the symbol cache if no symbol data can be found on disk.
+  private static final String SYMBOL_DATA_UNKNOWN = "";
+
+  final Pattern fragmentIdPattern = Pattern.compile(".*(\\d+)\\.js");
+
+  private final boolean lazyLoad;
 
   protected File symbolMapsDirectory;
 
   // Map of strongName + fragmentId to sourceMap
-  private Map<String, SourceMapping> sourceMaps =
+  private final Map<String, SourceMapping> sourceMaps =
       new HashMap<String, SourceMapping>();
 
-  private Map<String, SymbolMap> symbolMaps =
-      new HashMap<String, SymbolMap>();
+  private final SymbolCache symbolCache = new SymbolCache();
 
   /**
-   * Constructor, which takes a <code>symbolMaps</code> directory as its argument. Symbol maps are
+   * Creates a deobfuscator that loads symbol map files from the given directory. Symbol maps are
    * generated into the location specified by the GWT compiler <code>-deploy</code> command line
    * argument.
    *
-   * @param symbolMapsDirectory the <code>symbolMaps</code> directory with, or without trailing
+   * @param symbolMapsDirectory the <code>symbolMaps</code> directory, with or without trailing
    *                            directory separator character
    */
   public StackTraceDeobfuscator(String symbolMapsDirectory) {
     setSymbolMapsDirectory(symbolMapsDirectory);
+    this.lazyLoad = false;
+  }
+
+  /**
+   * Creates a deobfuscator that loads symbol map files from the given directory. Symbol maps are
+   * generated into the location specified by the GWT compiler <code>-deploy</code> command line
+   * argument.
+   *
+   * @param symbolMapsDirectory the <code>symbolMaps</code> directory, with or without trailing
+   *                            directory separator character
+   * @param lazyLoad if true, only symbols requested to be deobfuscated are cached. This provides
+   *                 a large memory savings at the expense of occasional extra disk reads.
+   */
+  public StackTraceDeobfuscator(String symbolMapsDirectory, boolean lazyLoad) {
+    setSymbolMapsDirectory(symbolMapsDirectory);
+    this.lazyLoad = lazyLoad;
   }
 
   /**
@@ -107,6 +180,13 @@ public class StackTraceDeobfuscator {
    */
   public StackTraceElement[] deobfuscateStackTrace(
       StackTraceElement[] st, String strongName) {
+    // Warm the symbol cache for all symbols in this stack trace.
+    Set<String> requiredSymbols = new HashSet<String>();
+    for (StackTraceElement ste : st) {
+      requiredSymbols.add(ste.getMethodName());
+    }
+    loadSymbolMap(strongName, requiredSymbols);
+
     StackTraceElement[] newSt = new StackTraceElement[st.length];
     for (int i = 0; i < st.length; i++) {
       newSt[i] = resymbolize(st[i], strongName);
@@ -128,7 +208,7 @@ public class StackTraceDeobfuscator {
   }
 
   /**
-   * Best effort resymbolization of a a single stack trace element.
+   * Best effort resymbolization of a single stack trace element.
    *
    * @param ste        the stack trace element to resymbolize
    * @param strongName the GWT permutation strong name
@@ -143,8 +223,7 @@ public class StackTraceDeobfuscator {
     int fragmentId = -1;
 
     String steFilename = ste.getFileName();
-    SymbolMap map = loadSymbolMap(strongName);
-    String symbolData = map == null ? null : map.get(ste.getMethodName());
+    String symbolData = loadOneSymbol(strongName, ste.getMethodName());
 
     boolean sourceMapCapable = false;
 
@@ -163,7 +242,7 @@ public class StackTraceDeobfuscator {
     }
 
     // first use symbolMap, then refine via sourceMap if possible
-    if (symbolData != null) {
+    if (!symbolData.isEmpty()) {
       // jsniIdent, className, memberName, sourceUri, sourceLine, fragmentId
       String[] parts = symbolData.split(",");
       if (parts.length == 6) {
@@ -289,36 +368,60 @@ public class StackTraceDeobfuscator {
     return new Scanner(stream).useDelimiter("\\A").next();
   }
 
-  private SymbolMap loadSymbolMap(
-      String strongName) {
-    SymbolMap toReturn = symbolMaps.get(strongName);
-    if (toReturn != null) {
+  private String loadOneSymbol(String strongName, String symbol) {
+    Set<String> symbolSet = new HashSet<String>();
+    symbolSet.add(symbol);
+    Map<String, String> symbolMap = loadSymbolMap(strongName, symbolSet);
+    return symbolMap.get(symbol);
+  }
+
+  /**
+   * Returns a symbol map for the given strong name containing symbol data for
+   * all of the given required symbols. First checks the symbol cache, then
+   * reads from disk if any symbol is missing. If a symbol cannot be loaded for
+   * some reason, it will be mapped to empty string.
+   */
+  private Map<String, String> loadSymbolMap(
+      String strongName, Set<String> requiredSymbols) {
+    Map<String, String> toReturn = symbolCache.getAll(strongName, requiredSymbols);
+    if (toReturn.size() == requiredSymbols.size()) {
       return toReturn;
     }
-    toReturn = new SymbolMap();
+
+    Set<String> symbolsLeftToFind = new HashSet<String>(requiredSymbols);
+    toReturn = new HashMap<String, String>();
     String line;
 
     try {
       BufferedReader bin = new BufferedReader(
           new InputStreamReader(getSymbolMapInputStream(strongName)));
       try {
-        while ((line = bin.readLine()) != null) {
+        while ((line = bin.readLine()) != null && (symbolsLeftToFind.size() > 0 || !lazyLoad)) {
           if (line.charAt(0) == '#') {
             continue;
           }
           int idx = line.indexOf(',');
-          toReturn.put(new String(line.substring(0, idx)),
-              line.substring(idx + 1));
+          String symbol = line.substring(0, idx);
+          String symbolData = line.substring(idx + 1);
+          if (requiredSymbols.contains(symbol) || !lazyLoad) {
+            symbolsLeftToFind.remove(symbol);
+            toReturn.put(symbol, symbolData);
+          }
         }
       } finally {
         bin.close();
       }
     } catch (IOException e) {
-      //  use empty symbol map to avoid repeated lookups
-      toReturn = new SymbolMap();
+      // If the symbol map isn't found or there's an I/O error reading the file, the returned
+      // mapping may contain some or all empty data (see below).
+    }
+    for (String symbol : symbolsLeftToFind) {
+      // Store the empty string in the symbolCache to show we actually looked on disk and couldn't
+      // find the symbols. This avoids reading disk repeatedly for symbols that can't be translated.
+      toReturn.put(symbol, SYMBOL_DATA_UNKNOWN);
     }
 
-    symbolMaps.put(strongName, toReturn);
+    symbolCache.putAll(strongName, toReturn);
     return toReturn;
   }
 
