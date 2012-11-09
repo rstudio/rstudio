@@ -168,7 +168,9 @@ QString GwtCallback::getOpenFileName(const QString& caption,
    QString result = QFileDialog::getOpenFileName(pOwner_->asWidget(),
                                                  caption,
                                                  resolvedDir,
-                                                 filter);
+                                                 filter,
+                                                 0,
+                                                 standardFileDialogOptions());
 
    activateAndFocusOwner();
    return createAliasedPath(result);
@@ -183,7 +185,8 @@ QString GwtCallback::getSaveFileName(const QString& caption,
 
    while (true)
    {
-      QString result = QFileDialog::getSaveFileName(pOwner_->asWidget(), caption, resolvedDir);
+      QString result = QFileDialog::getSaveFileName(pOwner_->asWidget(), caption, resolvedDir,
+                                                    QString(), 0, standardFileDialogOptions());
       activateAndFocusOwner();
       if (result.isEmpty())
          return result;
@@ -247,10 +250,12 @@ QString GwtCallback::getExistingDirectory(const QString& caption,
    }
    else
    {
-      result = QFileDialog::getExistingDirectory(pOwner_->asWidget(), caption, resolvedDir);
+      result = QFileDialog::getExistingDirectory(pOwner_->asWidget(), caption, resolvedDir,
+                                                 QFileDialog::ShowDirsOnly | standardFileDialogOptions());
    }
 #else
-   result = QFileDialog::getExistingDirectory(pOwner_->asWidget(), caption, resolvedDir);
+   result = QFileDialog::getExistingDirectory(pOwner_->asWidget(), caption, resolvedDir,
+                                              QFileDialog::ShowDirsOnly | standardFileDialogOptions());
 #endif
 
    activateAndFocusOwner();

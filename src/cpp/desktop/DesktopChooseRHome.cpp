@@ -103,7 +103,7 @@ void ChooseRHome::chooseOther()
          this,
          QString::fromUtf8("Choose R Directory"),
          lastDir_,
-         QFileDialog::ShowDirsOnly);
+         QFileDialog::ShowDirsOnly | standardFileDialogOptions());
 
    if (dir.isEmpty())
       return;

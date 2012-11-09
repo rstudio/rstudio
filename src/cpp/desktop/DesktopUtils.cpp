@@ -233,11 +233,29 @@ void openUrl(const QUrl& url)
    }
 }
 
+// Qt 4.8.3 on Win7 (32-bit) has problems with opening the ~ directory
+// (it attempts to navigate to the "Documents library" and then hangs)
+// So we use the Qt file dialog implementations when we are running
+// on Win32
+QFileDialog::Options standardFileDialogOptions()
+{
+    bool isWindowsXP = QSysInfo::windowsVersion() == QSysInfo::WV_XP;
+    if (isWindowsXP || core::system::isWin64())
+        return 0;
+    else
+        return QFileDialog::DontUseNativeDialog;
+}
+
 #else
 
 void openUrl(const QUrl& url)
 {
    QDesktopServices::openUrl(url);
+}
+
+QFileDialog::Options standardFileDialogOptions()
+{
+   return 0;
 }
 
 #endif
