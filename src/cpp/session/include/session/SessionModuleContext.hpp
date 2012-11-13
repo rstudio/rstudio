@@ -188,6 +188,11 @@ core::Error registerRpcAsyncCoupleMethod(
                                               _2));
 }
 
+enum ConsoleOutputType
+{
+   ConsoleOutputNormal,
+   ConsoleOutputError
+};
 
 enum ChangeSource
 {
@@ -199,14 +204,16 @@ enum ChangeSource
 // session events
 struct Events : boost::noncopyable
 {
-   boost::signal<void ()>              onClientInit;
-   boost::signal<void ()>              onBeforeExecute;
-   boost::signal<void (ChangeSource)>  onDetectChanges;
-   boost::signal<void(bool)>           onDeferredInit;
-   boost::signal<void(bool)>           onBackgroundProcessing;
-   boost::signal<void(bool)>           onShutdown;
-   boost::signal<void ()>              onSysSleep;
-   boost::signal<void ()>              onQuit;
+   boost::signal<void ()>                    onClientInit;
+   boost::signal<void ()>                    onBeforeExecute;
+   boost::signal<void (ConsoleOutputType, const std::string&)>
+                                             onConsoleOutput;
+   boost::signal<void (ChangeSource)>        onDetectChanges;
+   boost::signal<void(bool)>                 onDeferredInit;
+   boost::signal<void(bool)>                 onBackgroundProcessing;
+   boost::signal<void(bool)>                 onShutdown;
+   boost::signal<void ()>                    onSysSleep;
+   boost::signal<void ()>                    onQuit;
 };
 
 Events& events();

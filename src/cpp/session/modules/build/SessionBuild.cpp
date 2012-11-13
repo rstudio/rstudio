@@ -46,6 +46,7 @@
 #include <session/SessionModuleContext.hpp>
 
 #include "SessionBuildErrors.hpp"
+#include "SessionSourceCpp.hpp"
 
 using namespace core;
 
@@ -1303,27 +1304,6 @@ SEXP rs_canBuildCpp()
    return r::sexp::create(module_context::canBuildCpp(), &rProtect);
 }
 
-
-SEXP rs_sourceCppOnBuild(SEXP sFile, SEXP sFromCode, SEXP sShowOutput)
-{
-   std::string file = r::sexp::asString(sFile);
-   bool fromCode = r::sexp::asLogical(sFromCode);
-   bool showOutput = r::sexp::asLogical(sShowOutput);
-
-
-   r::sexp::Protect rProtect;
-   return r::sexp::create(true, &rProtect);
-}
-
-SEXP rs_sourceCppOnBuildComplete(SEXP sSucceeded, SEXP sOutput)
-{
-   bool succeeded = r::sexp::asLogical(sSucceeded);
-   std::string output = sOutput != R_NilValue ? r::sexp::asString(sOutput) : "";
-
-   return R_NilValue;
-}
-
-
 } // anonymous namespace
 
 
@@ -1367,18 +1347,6 @@ Error initialize()
    canBuildMethodDef.numArgs = 0;
    r::routines::addCallMethod(canBuildMethodDef);
 
-   R_CallMethodDef sourceCppOnBuildMethodDef ;
-   sourceCppOnBuildMethodDef.name = "rs_sourceCppOnBuild" ;
-   sourceCppOnBuildMethodDef.fun = (DL_FUNC)rs_sourceCppOnBuild ;
-   sourceCppOnBuildMethodDef.numArgs = 3;
-   r::routines::addCallMethod(sourceCppOnBuildMethodDef);
-
-   R_CallMethodDef sourceCppOnBuildCompleteMethodDef ;
-   sourceCppOnBuildCompleteMethodDef.name = "rs_sourceCppOnBuildComplete";
-   sourceCppOnBuildCompleteMethodDef.fun = (DL_FUNC)rs_sourceCppOnBuildComplete;
-   sourceCppOnBuildCompleteMethodDef.numArgs = 2;
-   r::routines::addCallMethod(sourceCppOnBuildCompleteMethodDef);
-
    // check for Rcpp attributes
    SEXP functionSEXP = R_NilValue;
    r::exec::RFunction func(".rs.getPackageFunction",
@@ -1399,7 +1367,8 @@ Error initialize()
       (bind(registerRpcMethod, "start_build", startBuild))
       (bind(registerRpcMethod, "terminate_build", terminateBuild))
       (bind(registerRpcMethod, "devtools_load_all_path", devtoolsLoadAllPath))
-      (bind(sourceModuleRFile, "SessionBuild.R"));
+      (bind(sourceModuleRFile, "SessionBuild.R"))
+      (bind(source_cpp::initialize));
    return initBlock.execute();
 }
 

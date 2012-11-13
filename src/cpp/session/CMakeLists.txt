@@ -74,6 +74,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionWorkspace.cpp
    modules/build/SessionBuild.cpp
    modules/build/SessionBuildErrors.cpp
+   modules/build/SessionSourceCpp.cpp
    modules/tex/SessionCompilePdf.cpp
    modules/tex/SessionCompilePdfSupervisor.cpp
    modules/tex/SessionPdfLatex.cpp
