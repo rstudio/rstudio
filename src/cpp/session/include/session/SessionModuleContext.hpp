@@ -261,7 +261,14 @@ void scheduleIncrementalWork(
 // periodic work to idle time.
 void schedulePeriodicWork(const boost::posix_time::time_duration& period,
                           const boost::function<bool()> &execute,
-                          bool idleOnly = true);
+                          bool idleOnly = true,
+                          bool immediate = true);
+
+
+// schedule work to be done after a fixed delay
+void scheduleDelayedWork(const boost::posix_time::time_duration& period,
+                         const boost::function<void()> &execute,
+                         bool idleOnly = true);
 
 
 core::Error readAndDecodeFile(const core::FilePath& filePath,

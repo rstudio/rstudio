@@ -63,10 +63,11 @@ public:
    {
       // defer handling of build complete so we make sure to get all of the
       // stderr output from console std stream capture
-      module_context::scheduleIncrementalWork(
+      module_context::scheduleDelayedWork(
                boost::posix_time::milliseconds(100),
                boost::bind(&SourceCppContext::handleBuildComplete,
-                           this, succeeded, output));
+                           this, succeeded, output),
+               false);
    }
 
 private:

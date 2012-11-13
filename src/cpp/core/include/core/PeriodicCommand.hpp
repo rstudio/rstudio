@@ -23,11 +23,16 @@ class PeriodicCommand : public ScheduledCommand
 {
 public:
    PeriodicCommand(const boost::posix_time::time_duration& period,
-                   const boost::function<bool()>& execute)
+                   const boost::function<bool()>& execute,
+                   bool immediate = true)
       : ScheduledCommand(execute),
-        period_(period),
-        nextExecutionTime_(now())
+        period_(period)
    {
+      if (immediate)
+         nextExecutionTime_ = now();
+      else
+         nextExecutionTime_ = now() + period_;
+
    }
 
    virtual ~PeriodicCommand() {}

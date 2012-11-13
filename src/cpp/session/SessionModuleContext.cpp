@@ -558,12 +558,35 @@ void scheduleIncrementalWork(
 
 void schedulePeriodicWork(const boost::posix_time::time_duration& period,
                           const boost::function<bool()> &execute,
-                          bool idleOnly)
+                          bool idleOnly,
+                          bool immediate)
 {
    addScheduledCommand(boost::shared_ptr<ScheduledCommand>(
-                           new PeriodicCommand(period, execute)),
+                           new PeriodicCommand(period, execute, immediate)),
                        idleOnly);
 }
+
+
+namespace {
+
+bool performDelayedWork(const boost::function<void()> &execute)
+{
+   execute();
+   return false;
+}
+
+} // anonymous namespeace
+
+void scheduleDelayedWork(const boost::posix_time::time_duration& period,
+                         const boost::function<void()> &execute,
+                         bool idleOnly)
+{
+   schedulePeriodicWork(period,
+                        boost::bind(performDelayedWork, execute),
+                        idleOnly,
+                        false);
+}
+
 
 void onBackgroundProcessing(bool isIdle)
 {
