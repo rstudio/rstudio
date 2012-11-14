@@ -89,6 +89,10 @@ public class GeneratedClassnameFinderTest extends TestCase {
         + "$MainClass$NestedClass").getClassNames().size());
   }
 
+  public void testAbstractNative() {
+    assertEquals(2, new AbstractNativeTester().getGeneratedClasses().size());
+  }
+
   public void testAnonymous() {
     assertEquals(1, new AnonymousTester().getGeneratedClasses().size());
   }
@@ -124,6 +128,28 @@ public class GeneratedClassnameFinderTest extends TestCase {
     assertEquals(1, new TopLevelTester().getGeneratedClasses().size());
   }
 
+
+}
+
+/**
+ * For testing a class containing anonymous inner classes with abstract and
+ * native methods.
+ */
+class AbstractNativeTester {
+  void foo() {
+    abstract class Fooer {
+      abstract void foo();
+    }
+    Fooer a = new Fooer() {
+      native void foo();
+    };
+    a.foo();
+  }
+
+  List<String> getGeneratedClasses() {
+    return (new GeneratedClassnameFinder(GeneratedClassnameFinderTest.logger,
+        this.getClass().getName().replace('.', '/'))).getClassNames();
+  }
 }
 
 /**

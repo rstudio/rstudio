@@ -60,8 +60,20 @@ public abstract class CompilationUnit implements Serializable {
        */
       List<String> classNames = new ArrayList<String>();
 
+      int expectCode;
+      int sawCode;
+
       public List<String> getInnerClassNames() {
         return classNames;
+      }
+
+      /**
+       * Return whether or not the class file visited was well-formed.
+       * Currently, this only checks that all non-abstract, non-native methods
+       * have a Code attribute.
+       */
+      public boolean isWellFormed() {
+        return expectCode == sawCode;
       }
 
       @Override
@@ -69,6 +81,20 @@ public abstract class CompilationUnit implements Serializable {
         if ((access & Opcodes.ACC_SYNTHETIC) == 0) {
           classNames.add(name);
         }
+      }
+
+      @Override
+      public AnonymousClassVisitor visitMethod(int access, String name, String desc, String signature,
+          String[] exceptions) {
+        if ((access & (Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)) == 0) {
+          ++expectCode;
+        }
+        return this;
+      }
+
+      @Override
+      public void visitCode() {
+        ++sawCode;
       }
     }
 
@@ -101,6 +127,18 @@ public abstract class CompilationUnit implements Serializable {
           continue;
         }
 
+        AnonymousClassVisitor cv = new AnonymousClassVisitor();
+        new ClassReader(classBytes).accept(cv, 0);
+        if (!cv.isWellFormed()) {
+          /*
+           * Weird case #2: As of OpenJDK 7, javac in the above case now does
+           * generate a class file, but an incomplete one that fails to load
+           * with a ClassFormatError "Absent Code attribute in method that
+           * is not native or abstract in class file" error.
+           */
+          continue;
+        }
+
         /*
          * Add the class to the list only if it can be loaded to get around the
          * javac weirdness issue where javac refers a class but does not
@@ -109,8 +147,6 @@ public abstract class CompilationUnit implements Serializable {
         if (isClassnameGenerated(lookupName) && !allGeneratedClasses.contains(lookupName)) {
           allGeneratedClasses.add(lookupName);
         }
-        AnonymousClassVisitor cv = new AnonymousClassVisitor();
-        new ClassReader(classBytes).accept(cv, 0);
         List<String> innerClasses = cv.getInnerClassNames();
         for (String innerClass : innerClasses) {
           // The innerClass has to be an inner class of the lookupName
