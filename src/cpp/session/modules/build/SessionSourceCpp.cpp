@@ -14,6 +14,7 @@
 #include "SessionSourceCpp.hpp"
 
 #include <boost/signal.hpp>
+#include <boost/algorithm/string/join.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -47,8 +48,9 @@ public:
       // always clear state before starting a new build
       reset();
 
-      // capture source file
+      // capture params
       sourceFile_ = sourceFile;
+      showOutput_ = showOutput;
 
       // fixup path if necessary
       std::string path = core::system::getenv("PATH");
@@ -93,7 +95,11 @@ private:
       std::string rToolsWarning = rToolsWarning_;
 
       // collect all build output
-      std::string buildOutput = output + consoleOutputBuffer_;
+      std::string buildOutput;
+      if (!succeeded || showOutput_)
+         buildOutput = consoleOutputBuffer_;
+      else
+         buildOutput = output + consoleOutputBuffer_;
 
       // reset state
       reset();
@@ -113,6 +119,7 @@ private:
    void reset()
    {
       sourceFile_ = FilePath();
+      showOutput_ = false;
       consoleOutputBuffer_.clear();
       module_context::events().onConsoleOutput.disconnect(
          boost::bind(&SourceCppContext::onConsoleOutput, this, _1, _2));
@@ -122,6 +129,7 @@ private:
 
 private:
    FilePath sourceFile_;
+   bool showOutput_;
    std::string consoleOutputBuffer_;
    std::string previousPath_;
    std::string rToolsWarning_;
@@ -151,7 +159,16 @@ SEXP rs_sourceCppOnBuild(SEXP sFile, SEXP sFromCode, SEXP sShowOutput)
 SEXP rs_sourceCppOnBuildComplete(SEXP sSucceeded, SEXP sOutput)
 {
    bool succeeded = r::sexp::asLogical(sSucceeded);
-   std::string output = sOutput != R_NilValue ? r::sexp::asString(sOutput) : "";
+
+   std::string output;
+   if (sOutput != R_NilValue)
+   {
+      std::vector<std::string> outputLines;
+      Error error = r::sexp::extract(sOutput, &outputLines);
+      if (error)
+         LOG_ERROR(error);
+      output = boost::algorithm::join(outputLines, "\n");
+   }
 
    sourceCppContext().onBuildComplete(succeeded, output);
 
@@ -176,10 +193,6 @@ Error initialize()
    sourceCppOnBuildCompleteMethodDef.fun = (DL_FUNC)rs_sourceCppOnBuildComplete;
    sourceCppOnBuildCompleteMethodDef.numArgs = 2;
    r::routines::addCallMethod(sourceCppOnBuildCompleteMethodDef);
-
-
-
-
 
    return Success();
 }
