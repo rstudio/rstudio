@@ -226,7 +226,7 @@ public class ControlFlowAnalyzer {
 
       // Rescue my clinit (it won't ever be explicitly referenced)
       if (type.hasClinit()) {
-        rescue(type.getMethods().get(0));
+        rescue(type.getClinitMethod());
       }
 
       // JLS 12.4.1: don't rescue my super interfaces just because I'm rescued.
@@ -304,7 +304,7 @@ public class ControlFlowAnalyzer {
 
       // Rescue my clinit (it won't ever be explicitly referenced)
       if (type.hasClinit()) {
-        rescue(type.getMethods().get(0));
+        rescue(type.getClinitMethod());
       }
 
       // JLS 12.4.1: don't rescue my super interfaces just because I'm rescued.
@@ -671,7 +671,7 @@ public class ControlFlowAnalyzer {
             JField field = (JField) var;
             accept(field.getInitializer());
             referencedTypes.add(field.getEnclosingType());
-            liveFieldsAndMethods.add(field.getEnclosingType().getMethods().get(0));
+            liveFieldsAndMethods.add(field.getEnclosingType().getClinitMethod());
           } else if (argsToRescueIfParameterRead != null && var instanceof JParameter) {
             List<JExpression> list = argsToRescueIfParameterRead.remove(var);
             if (list != null) {

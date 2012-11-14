@@ -1187,7 +1187,7 @@ public class GenerateJavaScriptAST {
           return;
         } else if (type != clinitTarget) {
           // replace the method with its retargeted clinit
-          method = clinitTarget.getMethods().get(0);
+          method = clinitTarget.getClinitMethod();
         }
       }
 
@@ -1774,7 +1774,7 @@ public class GenerateJavaScriptAST {
        * refs to super classes are preserved.
        */
       JMethodBody clinitBody =
-          (JMethodBody) program.getTypeClassLiteralHolder().getMethods().get(0).getBody();
+          (JMethodBody) program.getTypeClassLiteralHolder().getClinitMethod().getBody();
       for (JStatement stmt : clinitBody.getStatements()) {
         if (stmt instanceof JDeclarationStatement) {
           generateClassLiteral((JDeclarationStatement) stmt, vars);
@@ -2157,7 +2157,7 @@ public class GenerateJavaScriptAST {
         return null;
       }
 
-      JMethod clinitMethod = targetType.getMethods().get(0);
+      JMethod clinitMethod = targetType.getClinitMethod();
       SourceInfo sourceInfo = x.getSourceInfo();
       JsInvocation jsInvocation = new JsInvocation(sourceInfo);
       jsInvocation.setQualifier(names.get(clinitMethod).makeRef(sourceInfo));
@@ -2180,7 +2180,7 @@ public class GenerateJavaScriptAST {
         return null;
       }
 
-      JMethod clinitMethod = enclosingType.getClinitTarget().getMethods().get(0);
+      JMethod clinitMethod = enclosingType.getClinitTarget().getClinitMethod();
       SourceInfo sourceInfo = x.getSourceInfo();
       JsInvocation jsInvocation = new JsInvocation(sourceInfo);
       jsInvocation.setQualifier(names.get(clinitMethod).makeRef(sourceInfo));

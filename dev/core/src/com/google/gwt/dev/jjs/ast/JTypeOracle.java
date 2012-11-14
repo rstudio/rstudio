@@ -729,7 +729,7 @@ public class JTypeOracle implements Serializable {
     // Track that we've been seen.
     alreadySeen.add(type);
 
-    JMethod method = type.getMethods().get(0);
+    JMethod method = type.getClinitMethod();
     assert (JProgram.isClinit(method));
     CheckClinitVisitor v = new CheckClinitVisitor();
     v.accept(method);

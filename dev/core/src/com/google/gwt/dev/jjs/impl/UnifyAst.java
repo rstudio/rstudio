@@ -641,7 +641,7 @@ public class UnifyAst {
       }
 
       // Special clinit handling.
-      JMethod clinit = type.getMethods().get(0);
+      JMethod clinit = type.getClinitMethod();
       if (!liveFieldsAndMethods.contains(clinit)) {
         clinit.setBody(new JMethodBody(SourceOrigin.UNKNOWN));
       }
@@ -994,7 +994,7 @@ public class UnifyAst {
       assert errorsFound;
       return;
     }
-    JMethod clinit = type.getMethods().get(0);
+    JMethod clinit = type.getClinitMethod();
     if (!liveFieldsAndMethods.contains(clinit)) {
       flowInto(clinit);
       if (type.getSuperClass() != null) {

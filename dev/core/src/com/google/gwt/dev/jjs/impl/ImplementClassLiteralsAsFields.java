@@ -113,7 +113,7 @@ public class ImplementClassLiteralsAsFields {
     this.program = program;
     this.typeClassLiteralHolder = program.getTypeClassLiteralHolder();
     this.classLiteralHolderClinitBody =
-        (JMethodBody) typeClassLiteralHolder.getMethods().get(0).getBody();
+        (JMethodBody) typeClassLiteralHolder.getClinitMethod().getBody();
     assert program.getDeclaredTypes().contains(typeClassLiteralHolder);
   }
 

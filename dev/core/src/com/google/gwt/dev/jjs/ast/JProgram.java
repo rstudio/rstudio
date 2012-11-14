@@ -231,7 +231,7 @@ public class JProgram extends JNode {
 
   public static boolean isClinit(JMethod method) {
     JDeclaredType enclosingType = method.getEnclosingType();
-    if ((enclosingType != null) && (method == enclosingType.getMethods().get(0))) {
+    if ((enclosingType != null) && (method == enclosingType.getClinitMethod())) {
       assert (method.getName().equals("$clinit"));
       return true;
     } else {

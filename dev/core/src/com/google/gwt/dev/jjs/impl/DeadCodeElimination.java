@@ -703,7 +703,7 @@ public class DeadCodeElimination {
     }
 
     private JMethodCall createClinitCall(SourceInfo sourceInfo, JDeclaredType targetType) {
-      JMethod clinit = targetType.getClinitTarget().getMethods().get(0);
+      JMethod clinit = targetType.getClinitTarget().getClinitMethod();
       assert (JProgram.isClinit(clinit));
       return new JMethodCall(sourceInfo, null, clinit);
     }
