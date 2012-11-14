@@ -97,9 +97,9 @@ private:
       // collect all build output
       std::string buildOutput;
       if (!succeeded || showOutput_)
-         buildOutput = consoleOutputBuffer_;
+         buildOutput = consoleOutputBuffer_ + consoleErrorBuffer_;
       else
-         buildOutput = output + consoleOutputBuffer_;
+         buildOutput = output + consoleErrorBuffer_;
 
       // reset state
       reset();
@@ -113,7 +113,10 @@ private:
    void onConsoleOutput(module_context::ConsoleOutputType type,
                         const std::string& output)
    {
-      consoleOutputBuffer_.append(output);
+      if (type == module_context::ConsoleOutputNormal)
+         consoleOutputBuffer_.append(output);
+      else
+         consoleErrorBuffer_.append(output);
    }
 
    void reset()
@@ -121,6 +124,7 @@ private:
       sourceFile_ = FilePath();
       showOutput_ = false;
       consoleOutputBuffer_.clear();
+      consoleErrorBuffer_.clear();
       module_context::events().onConsoleOutput.disconnect(
          boost::bind(&SourceCppContext::onConsoleOutput, this, _1, _2));
       previousPath_.clear();
@@ -131,6 +135,7 @@ private:
    FilePath sourceFile_;
    bool showOutput_;
    std::string consoleOutputBuffer_;
+   std::string consoleErrorBuffer_;
    std::string previousPath_;
    std::string rToolsWarning_;
 };
