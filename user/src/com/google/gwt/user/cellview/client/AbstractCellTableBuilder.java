@@ -254,10 +254,20 @@ public abstract class AbstractCellTableBuilder<T> implements CellTableBuilder<T>
     TableRowBuilder row = tbody.startTR();
     row.attribute(ROW_ATTRIBUTE, rowIndex);
     row.attribute(SUBROW_ATTRIBUTE, subrowIndex);
+    addRowAttributes(row);
     subrowIndex++;
     return row;
   }
-    
+
+  /**
+   * Hook for subclasses to add their own attributes to each row in the table.
+   * The default does nothing.
+   *
+   * @param row the row element
+   */
+  protected void addRowAttributes(TableRowBuilder row) {
+  }
+
   /**
    * Build zero or more table rows for the specified row value.
    * 
