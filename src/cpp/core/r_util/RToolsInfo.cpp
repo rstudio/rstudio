@@ -144,28 +144,17 @@ Error scanRegistryForRTools(std::vector<RToolsInfo>* pRTools)
       {
          std::string utf8InstallPath = string_utils::systemToUtf8(installPath);
          RToolsInfo toolsInfo(name, FilePath(utf8InstallPath));
-         if (toolsInfo.isRecognized())
-            pRTools->push_back(toolsInfo);
-         else
-            LOG_WARNING_MESSAGE("Unknown Rtools version: " + name);
+         if (toolsInfo.isStillInstalled())
+         {
+            if (toolsInfo.isRecognized())
+               pRTools->push_back(toolsInfo);
+            else
+               LOG_WARNING_MESSAGE("Unknown Rtools version: " + name);
+         }
       }
    }
 
    return Success();
-}
-
-void prependToSystemPath(const RToolsInfo& toolsInfo,
-                         core::system::Options* pEnvironment)
-{
-   // prepend in reverse order
-   std::vector<FilePath>::const_reverse_iterator it
-                                          = toolsInfo.pathEntries().rbegin();
-   for ( ; it != toolsInfo.pathEntries().rend(); ++it)
-   {
-      std::string path = it->absolutePath();
-      boost::algorithm::replace_all(path, "/", "\\");
-      core::system::addToPath(pEnvironment, path, true);
-   }
 }
 
 

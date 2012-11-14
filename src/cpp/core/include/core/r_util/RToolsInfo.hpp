@@ -18,6 +18,8 @@
 #include <vector>
 #include <iosfwd>
 
+#include <boost/algorithm/string/replace.hpp>
+
 #include <core/FilePath.hpp>
 #include <core/system/Environment.hpp>
 
@@ -35,6 +37,8 @@ public:
 
    bool isRecognized() const { return !versionPredicate().empty(); }
 
+   bool isStillInstalled() const { return installPath_.exists(); }
+
    const std::string& name() const { return name_; }
    const std::string& versionPredicate() const { return versionPredicate_; }
    const FilePath& installPath() const { return installPath_; }
@@ -51,8 +55,19 @@ std::ostream& operator<<(std::ostream& os, const RToolsInfo& info);
 
 Error scanRegistryForRTools(std::vector<RToolsInfo>* pRTools);
 
-void prependToSystemPath(const RToolsInfo& toolsInfo,
-                         core::system::Options* pEnvironment);
+template <typename T>
+void prependToSystemPath(const RToolsInfo& toolsInfo, T* pTarget)
+{
+   // prepend in reverse order
+   std::vector<FilePath>::const_reverse_iterator it
+                                          = toolsInfo.pathEntries().rbegin();
+   for ( ; it != toolsInfo.pathEntries().rend(); ++it)
+   {
+      std::string path = it->absolutePath();
+      boost::algorithm::replace_all(path, "/", "\\");
+      core::system::addToPath(pTarget, path, true);
+   }
+}
 
 
 } // namespace r_util

@@ -24,6 +24,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include "SessionBuildEnvironment.hpp"
+
 using namespace core ;
 
 namespace session {  
@@ -47,6 +49,15 @@ public:
 
       // capture source file
       sourceFile_ = sourceFile;
+
+      // fixup path if necessary
+      std::string path = core::system::getenv("PATH");
+      std::string newPath = path;
+      if (build::addRtoolsToPathIfNecessary(&newPath, &rToolsWarning_))
+      {
+          previousPath_ = path;
+          core::system::setenv("PATH", newPath);
+      }
 
       // if this is from code then don't do anything
       if (fromCode)
@@ -72,16 +83,24 @@ public:
 
 private:
 
-   bool handleBuildComplete(bool succeeded, const std::string& output)
+   void handleBuildComplete(bool succeeded, const std::string& output)
    {
+      // restore previous path
+      if (!previousPath_.empty())
+         core::system::setenv("PATH", previousPath_);
+
+      // collect Rtools warning (it will get cleared by reset())
+      std::string rToolsWarning = rToolsWarning_;
+
       // collect all build output
       std::string buildOutput = output + consoleOutputBuffer_;
 
       // reset state
       reset();
 
-      // one time only
-      return false;
+      // if we failed and there was an R tools warning then show it
+      if (!succeeded && !rToolsWarning.empty())
+         module_context::consoleWriteError(rToolsWarning);
    }
 
 
@@ -97,11 +116,15 @@ private:
       consoleOutputBuffer_.clear();
       module_context::events().onConsoleOutput.disconnect(
          boost::bind(&SourceCppContext::onConsoleOutput, this, _1, _2));
+      previousPath_.clear();
+      rToolsWarning_.clear();
    }
 
 private:
    FilePath sourceFile_;
    std::string consoleOutputBuffer_;
+   std::string previousPath_;
+   std::string rToolsWarning_;
 };
 
 SourceCppContext& sourceCppContext()
