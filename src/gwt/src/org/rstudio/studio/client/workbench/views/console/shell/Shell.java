@@ -33,8 +33,6 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.BusyEvent;
-import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.model.ClientInitState;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
@@ -61,8 +59,7 @@ public class Shell implements ConsoleInputHandler,
                               ConsolePromptHandler,
                               ConsoleResetHistoryHandler,
                               ConsoleRestartRCompletedEvent.Handler,
-                              SendToConsoleHandler,
-                              BusyHandler
+                              SendToConsoleHandler
 {
    static interface Binder extends CommandBinder<Commands, Shell>
    {
@@ -115,7 +112,6 @@ public class Shell implements ConsoleInputHandler,
       eventBus.addHandler(ConsoleResetHistoryEvent.TYPE, this);
       eventBus.addHandler(ConsoleRestartRCompletedEvent.TYPE, this);
       eventBus.addHandler(SendToConsoleEvent.TYPE, this);
-      eventBus.addHandler(BusyEvent.TYPE, this);
       
       final CompletionManager completionManager
                   = new RCompletionManager(view_.getInputEditorDisplay(),
@@ -311,11 +307,6 @@ public class Shell implements ConsoleInputHandler,
       }
    }
 
-   public void onBusy(BusyEvent event)
-   {
-      serverIsBusy_ = event.isBusy();
-   }
-
    private final class InputKeyDownHandler implements KeyDownHandler,
                                                       KeyPressHandler
    {
@@ -494,8 +485,6 @@ public class Shell implements ConsoleInputHandler,
    private final CommandLineHistory historyManager_;
 
    private String initialInput_ ;
-
-   private boolean serverIsBusy_ ;
 
    private static final String GROUP_CONSOLE = "console";
    private static final String STATE_INPUT = "input";
