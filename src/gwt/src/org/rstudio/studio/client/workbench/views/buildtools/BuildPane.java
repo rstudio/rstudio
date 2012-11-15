@@ -23,13 +23,14 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.compile.CompileError;
+import org.rstudio.studio.client.common.compile.CompileOutput;
+import org.rstudio.studio.client.common.compile.CompileOutputBufferWithHighlight;
 import org.rstudio.studio.client.common.compile.CompilePanel;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.buildtools.model.BuildOutput;
 
 public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
 {
@@ -40,7 +41,7 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
       super("Build");
       commands_ = commands;
       session_ = session;
-      compilePanel_ = new CompilePanel(new BuildOutputDisplay());
+      compilePanel_ = new CompilePanel(new CompileOutputBufferWithHighlight());
       ensureWidget();
    }
    
@@ -112,20 +113,9 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
    }
 
    @Override
-   public void showOutput(BuildOutput output)
+   public void showOutput(CompileOutput output)
    {
-      switch(output.getType())
-      {
-      case BuildOutput.kCommand:
-         compilePanel_.showCommand(output.getOutput());
-         break;
-      case BuildOutput.kNormal:
-         compilePanel_.showOutput(output.getOutput());
-         break;
-      case BuildOutput.kError:
-         compilePanel_.showError(output.getOutput());
-         break;
-      }
+      compilePanel_.showOutput(output);
    }
    
    @Override

@@ -1,5 +1,5 @@
 /*
- * BuildOutputDisplay.java
+ * CompileOutputBufferWithHighlight.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,23 +12,22 @@
  */
 
 
-package org.rstudio.studio.client.workbench.views.buildtools;
+package org.rstudio.studio.client.common.compile;
 
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.compile.CompileOutputDisplay;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.user.client.ui.Composite;
 
-public class BuildOutputDisplay extends Composite 
+public class CompileOutputBufferWithHighlight extends Composite 
                                 implements CompileOutputDisplay
 {
-   public BuildOutputDisplay()
+   public CompileOutputBufferWithHighlight()
    {
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
       

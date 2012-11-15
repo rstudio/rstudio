@@ -102,6 +102,7 @@ public class PaneManager
                       @Named("VCS") final WorkbenchTab vcsTab,
                       @Named("Build") final WorkbenchTab buildTab,
                       @Named("Compile PDF") final WorkbenchTab compilePdfTab,
+                      @Named("Source Cpp") final WorkbenchTab sourceCppTab,
                       final FindOutputTab findOutputTab)
    {
       eventBus_ = eventBus;
@@ -120,6 +121,7 @@ public class PaneManager
       buildTab_ = buildTab;
       compilePdfTab_ = compilePdfTab;
       findOutputTab_ = findOutputTab;
+      sourceCppTab_ = sourceCppTab;
 
       PaneConfig config = validateConfig(uiPrefs.paneConfig().getValue());
       initPanes(config);
@@ -300,6 +302,7 @@ public class PaneManager
                                                             consolePane_,
                                                             compilePdfTab_,
                                                             findOutputTab_,
+                                                            sourceCppTab_,
                                                             eventBus_,
                                                             consoleInterrupt_,
                                                             goToWorkingDirButton);
@@ -406,6 +409,7 @@ public class PaneManager
    private final Commands commands_;
    private final FindOutputTab findOutputTab_;
    private final WorkbenchTab compilePdfTab_;
+   private final WorkbenchTab sourceCppTab_;
    private final ConsolePane consolePane_;
    private final ConsoleInterruptButton consoleInterrupt_;
    private final SourceShim source_;

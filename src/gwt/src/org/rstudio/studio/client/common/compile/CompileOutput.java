@@ -1,5 +1,5 @@
 /*
- * BuildOutput.java
+ * ComplieOutput.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -11,13 +11,13 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.buildtools.model;
+package org.rstudio.studio.client.common.compile;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class BuildOutput extends JavaScriptObject
+public class CompileOutput extends JavaScriptObject
 { 
-   protected BuildOutput()
+   protected CompileOutput()
    {
    }
    

@@ -30,6 +30,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                           ConsolePane consolePane,
                           WorkbenchTab compilePdfTab,
                           FindOutputTab findResultsTab,
+                          WorkbenchTab sourceCppTab,
                           EventBus events,
                           ConsoleInterruptButton consoleInterrupt,
                           ToolbarButton goToWorkingDirButton)
@@ -39,6 +40,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       consolePane_ = consolePane;
       compilePdfTab_ = compilePdfTab;
       findResultsTab_ = findResultsTab;
+      sourceCppTab_ = sourceCppTab;
       consoleInterrupt_ = consoleInterrupt;
       goToWorkingDirButton_ = goToWorkingDirButton;
 
@@ -88,6 +90,29 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                selectTab(0);
          }
       });
+      
+      sourceCppTab.addEnsureVisibleHandler(new EnsureVisibleHandler()
+      {
+         @Override
+         public void onEnsureVisible(EnsureVisibleEvent event)
+         {
+            sourceCppTabVisible_ = true;
+            managePanels();
+            if (event.getActivate())
+               selectTab(sourceCppTab_);
+         }
+      });
+      sourceCppTab.addEnsureHiddenHandler(new EnsureHiddenHandler()
+      {
+         @Override
+         public void onEnsureHidden(EnsureHiddenEvent event)
+         {
+            sourceCppTabVisible_ = false;
+            managePanels();
+            if (!consoleOnly_)
+               selectTab(0);
+         }
+      });
 
       events.addHandler(WorkingDirChangedEvent.TYPE, new WorkingDirChangedHandler()
       {
@@ -108,7 +133,9 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
 
    private void managePanels()
    {
-      boolean consoleOnly = !compilePdfTabVisible_ && !findResultsTabVisible_;
+      boolean consoleOnly = !compilePdfTabVisible_ && 
+                            !findResultsTabVisible_ &&
+                            !sourceCppTabVisible_;
 
       if (!consoleOnly)
       {
@@ -118,6 +145,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
             tabs.add(compilePdfTab_);
          if (findResultsTabVisible_)
             tabs.add(findResultsTab_);
+         if (sourceCppTabVisible_)
+            tabs.add(sourceCppTab_);
 
          setTabs(tabs);
       }
@@ -152,6 +181,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private final WorkbenchTab compilePdfTab_;
    private boolean compilePdfTabVisible_;
    private final FindOutputTab findResultsTab_;
+   private final WorkbenchTab sourceCppTab_;
+   private boolean sourceCppTabVisible_;
    private final ConsoleInterruptButton consoleInterrupt_;
    private final ToolbarButton goToWorkingDirButton_;
    private boolean findResultsTabVisible_;

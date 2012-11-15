@@ -25,6 +25,7 @@ import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.compile.CompileError;
+import org.rstudio.studio.client.common.compile.CompileOutput;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfOutputEvent;
@@ -51,7 +52,6 @@ import org.rstudio.studio.client.workbench.views.buildtools.events.BuildComplete
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
-import org.rstudio.studio.client.workbench.views.buildtools.model.BuildOutput;
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEvent;
 import org.rstudio.studio.client.workbench.views.console.events.*;
 import org.rstudio.studio.client.workbench.views.console.model.ConsolePrompt;
@@ -68,6 +68,9 @@ import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAd
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
+import org.rstudio.studio.client.workbench.views.output.sourcecpp.events.SourceCppCompletedEvent;
+import org.rstudio.studio.client.workbench.views.output.sourcecpp.events.SourceCppStartedEvent;
+import org.rstudio.studio.client.workbench.views.output.sourcecpp.model.SourceCppState;
 import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
@@ -379,7 +382,7 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.BuildOutput))
          {
-            BuildOutput data = event.getData();
+            CompileOutput data = event.getData();
             eventBus_.fireEvent(new BuildOutputEvent(data));
          }
          else if (type.equals(ClientEvent.BuildCompleted))
@@ -405,6 +408,15 @@ public class ClientEventDispatcher
          {
             PlotsZoomSizeChangedEvent.Data data = event.getData();
             eventBus_.fireEvent(new PlotsZoomSizeChangedEvent(data));
+         }
+         else if (type.equals(ClientEvent.SourceCppStarted))
+         {
+            eventBus_.fireEvent(new SourceCppStartedEvent());
+         }
+         else if (type.equals(ClientEvent.SourceCppCompleted))
+         {
+            SourceCppState state = event.getData();
+            eventBus_.fireEvent(new SourceCppCompletedEvent(state));
          }
          else if (type.equals(ClientEvent.ListChanged))
          {

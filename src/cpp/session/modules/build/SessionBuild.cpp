@@ -47,6 +47,7 @@
 
 #include "SessionBuildEnvironment.hpp"
 #include "SessionBuildErrors.hpp"
+#include "SessionBuildUtils.hpp"
 #include "SessionSourceCpp.hpp"
 
 using namespace core;
@@ -157,29 +158,6 @@ const char * const kBuildBinaryPackage = "build-binary-package";
 const char * const kCheckPackage = "check-package";
 const char * const kBuildAndReload = "build-all";
 const char * const kRebuildAll = "rebuild-all";
-
-const int kBuildOutputCommand = 0;
-const int kBuildOutputNormal = 1;
-const int kBuildOutputError = 2;
-
-struct BuildOutput
-{
-   BuildOutput(int type, const std::string& output)
-      : type(type), output(output)
-   {
-   }
-
-   int type;
-   std::string output;
-};
-
-json::Object buildOutputAsJson(const BuildOutput& buildOutput)
-{
-   json::Object buildOutputJson;
-   buildOutputJson["type"] = buildOutput.type;
-   buildOutputJson["output"] = buildOutput.output;
-   return buildOutputJson;
-}
 
 class Build : boost::noncopyable,
               public boost::enable_shared_from_this<Build>

@@ -1,5 +1,5 @@
 /*
- * BuildState.java
+ * SourceCppState.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -11,7 +11,7 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.buildtools.model;
+package org.rstudio.studio.client.workbench.views.output.sourcecpp.model;
 
 import org.rstudio.studio.client.common.compile.CompileError;
 import org.rstudio.studio.client.common.compile.CompileOutput;
@@ -19,25 +19,21 @@ import org.rstudio.studio.client.common.compile.CompileOutput;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
-public class BuildState extends JavaScriptObject
+public class SourceCppState extends JavaScriptObject
 { 
-   protected BuildState()
+   protected SourceCppState()
    {
    }
    
-   public final native boolean isRunning() /*-{
-      return this.running;
-   }-*/;
-   
-   public final native String getErrorsBaseDir() /*-{
-      return this.errors_base_dir;
-   }-*/;
-   
-   public final native JsArray<CompileError> getErrors() /*-{
-      return this.errors;
+   public final native String getTargetFile() /*-{
+      return this.target_file;
    }-*/;
    
    public final native JsArray<CompileOutput> getOutputs() /*-{
       return this.outputs;
+   }-*/;
+   
+   public final native JsArray<CompileError> getErrors() /*-{
+      return this.errors;
    }-*/;
 }

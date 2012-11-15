@@ -103,6 +103,9 @@ import org.rstudio.studio.client.workbench.views.output.find.FindOutputPane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputPresenter;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
+import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputPane;
+import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputPresenter;
+import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputTab;
 import org.rstudio.studio.client.workbench.views.help.Help;
 import org.rstudio.studio.client.workbench.views.help.HelpPane;
 import org.rstudio.studio.client.workbench.views.help.HelpTab;
@@ -211,6 +214,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Ignore.Display.class).to(IgnoreDialog.class);
       bind(CompilePdfOutputPresenter.Display.class).to(CompilePdfOutputPane.class);
       bind(FindOutputPresenter.Display.class).to(FindOutputPane.class);
+      bind(SourceCppOutputPresenter.Display.class).to(SourceCppOutputPane.class);
       bindTab("Workspace", WorkspaceTab.class);
       bindTab("History", HistoryTab.class);
       bindTab("Data", DataTab.class);
@@ -222,6 +226,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("Build", BuildTab.class);
       bindTab("Compile PDF", CompilePdfOutputTab.class);
       bindTab("Find", FindOutputTab.class);
+      bindTab("Source Cpp", SourceCppOutputTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class) ;
            

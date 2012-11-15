@@ -25,6 +25,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include "SessionBuildUtils.hpp"
+#include "SessionBuildErrors.hpp"
 #include "SessionBuildEnvironment.hpp"
 
 using namespace core ;
@@ -35,6 +37,65 @@ namespace build {
 namespace source_cpp {
 
 namespace {
+
+struct SourceCppState
+{
+   bool empty() const { return errors.empty() && outputs.empty(); }
+
+   void clear()
+   {
+      targetFile.clear();
+      errors.clear();
+      outputs.clear();
+   }
+
+   void addOutput(int type, const std::string& output)
+   {
+      outputs.push_back(buildOutputAsJson(BuildOutput(type,output)));
+   }
+
+   json::Value asJson() const
+   {
+      json::Object stateJson;
+      stateJson["target_file"] = targetFile;
+      stateJson["outputs"] = outputs;
+      stateJson["errors"] = errors;
+      return stateJson;
+   }
+
+   std::string targetFile;
+   json::Array errors;
+   json::Array outputs;
+};
+
+void enqueSourceCppStarted()
+{
+   ClientEvent event(client_events::kSourceCppStarted);
+   module_context::enqueClientEvent(event);
+}
+
+void enqueSourceCppCompleted(const FilePath& sourceFile,
+                             const std::string& output,
+                             const std::string& errorOutput)
+{
+   // reset last sourceCpp state with new data
+   SourceCppState sourceCppState;
+   sourceCppState.targetFile = module_context::createAliasedPath(sourceFile);
+   sourceCppState.addOutput(kBuildOutputNormal, output);
+   sourceCppState.addOutput(kBuildOutputError, errorOutput);
+
+   // parse errors
+   std::string allOutput = output + "\n" + errorOutput;
+   CompileErrorParser errorParser = gccErrorParser(sourceFile.parent());
+   std::vector<CompileError> errors = errorParser(allOutput);
+   sourceCppState.errors = compileErrorsAsJson(errors);
+
+   // enque event
+   ClientEvent event(client_events::kSourceCppCompleted,
+                     sourceCppState.asJson());
+   module_context::enqueClientEvent(event);
+}
+
 
 class SourceCppContext : boost::noncopyable
 {
@@ -66,6 +127,10 @@ public:
       module_context::events().onConsoleOutput.connect(
             boost::bind(&SourceCppContext::onConsoleOutput, this, _1, _2));
 
+      // enque build started
+      enqueSourceCppStarted();
+
+      // return true to indicate it's okay to build
       return true;
    }
 
@@ -74,7 +139,7 @@ public:
       // defer handling of build complete so we make sure to get all of the
       // stderr output from console std stream capture
       module_context::scheduleDelayedWork(
-               boost::posix_time::milliseconds(100),
+               boost::posix_time::milliseconds(200),
                boost::bind(&SourceCppContext::handleBuildComplete,
                            this, succeeded, output),
                false);
@@ -89,12 +154,12 @@ private:
          core::system::setenv("PATH", previousPath_);
 
       // collect all build output (do this before r tools warning so
-      // it's output doesn't ende up in consoleErrorBuffer_)
+      // it's output doesn't end up in consoleErrorBuffer_)
       std::string buildOutput;
       if (!succeeded || showOutput_)
-         buildOutput = consoleOutputBuffer_ + consoleErrorBuffer_;
+         buildOutput = consoleOutputBuffer_;
       else
-         buildOutput = output + consoleErrorBuffer_;
+         buildOutput = output;
 
       // if we failed and there was an R tools warning then show it
       if (!succeeded && !rToolsWarning_.empty())
@@ -102,7 +167,7 @@ private:
 
       // parse for gcc errors for sourceCpp
       if (!fromCode_)
-         parseAndReportErrors(sourceFile_, buildOutput);
+         enqueSourceCppCompleted(sourceFile_, buildOutput, consoleErrorBuffer_);
 
       // reset state
       reset();
@@ -116,13 +181,6 @@ private:
          consoleOutputBuffer_.append(output);
       else
          consoleErrorBuffer_.append(output);
-   }
-
-
-   static void parseAndReportErrors(const FilePath& sourceFile,
-                                    const std::string& output)
-   {
-
    }
 
    void reset()
@@ -195,12 +253,14 @@ SEXP rs_sourceCppOnBuildComplete(SEXP sSucceeded, SEXP sOutput)
 Error initialize()
 {
 
+   // onBuild hook
    R_CallMethodDef sourceCppOnBuildMethodDef ;
    sourceCppOnBuildMethodDef.name = "rs_sourceCppOnBuild" ;
    sourceCppOnBuildMethodDef.fun = (DL_FUNC)rs_sourceCppOnBuild ;
    sourceCppOnBuildMethodDef.numArgs = 3;
    r::routines::addCallMethod(sourceCppOnBuildMethodDef);
 
+   // onBuildCompleted hook
    R_CallMethodDef sourceCppOnBuildCompleteMethodDef ;
    sourceCppOnBuildCompleteMethodDef.name = "rs_sourceCppOnBuildComplete";
    sourceCppOnBuildCompleteMethodDef.fun = (DL_FUNC)rs_sourceCppOnBuildComplete;

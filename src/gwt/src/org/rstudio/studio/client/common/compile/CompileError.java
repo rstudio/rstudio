@@ -90,4 +90,16 @@ public class CompileError extends JavaScriptObject
       
       return false;
    }
+   
+   public final static CompileError getFirstError(JsArray<CompileError> errors)
+   {
+      for (int i=0; i<errors.length(); i++)
+      {
+         CompileError error = errors.get(i);
+         if (error.getType() == CompileError.ERROR)
+            return error;
+      }
+      
+      return null;
+   }
 }

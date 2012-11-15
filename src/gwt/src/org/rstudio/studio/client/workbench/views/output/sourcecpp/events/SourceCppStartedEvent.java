@@ -1,5 +1,5 @@
 /*
- * BuildOutputEvent.java
+ * SourceCppStartedEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -10,30 +10,23 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.buildtools.events;
-
-import org.rstudio.studio.client.common.compile.CompileOutput;
+package org.rstudio.studio.client.workbench.views.output.sourcecpp.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class BuildOutputEvent extends GwtEvent<BuildOutputEvent.Handler>
-{  
+public class SourceCppStartedEvent extends GwtEvent<SourceCppStartedEvent.Handler>
+{
    public interface Handler extends EventHandler
    {
-      void onBuildOutput(BuildOutputEvent event);
-   }
-   
-   public BuildOutputEvent(CompileOutput output)
-   {
-      output_ = output;
-   }
-   
-   public CompileOutput getOutput()
-   {
-      return output_;
+      void onSourceCppStarted(SourceCppStartedEvent event);
    }
 
+   public SourceCppStartedEvent()
+   {
+   }
+   
+   
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -43,10 +36,8 @@ public class BuildOutputEvent extends GwtEvent<BuildOutputEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onBuildOutput(this);
+      handler.onSourceCppStarted(this);
    }
-   
-   private final CompileOutput output_;
-
+  
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

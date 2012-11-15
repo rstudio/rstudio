@@ -36,6 +36,7 @@ import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.compile.CompileError;
+import org.rstudio.studio.client.common.compile.CompileOutput;
 import org.rstudio.studio.client.common.compile.errorlist.CompileErrorList;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -51,7 +52,6 @@ import org.rstudio.studio.client.workbench.views.buildtools.events.BuildComplete
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
-import org.rstudio.studio.client.workbench.views.buildtools.model.BuildOutput;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -65,7 +65,7 @@ public class BuildPresenter extends BasePresenter
    {
       void buildStarted();
       
-      void showOutput(BuildOutput output);
+      void showOutput(CompileOutput output);
       void scrollToBottom();
       
       void showErrors(String basePath,
@@ -138,17 +138,12 @@ public class BuildPresenter extends BasePresenter
             
             if (uiPrefs_.navigateToBuildError().getValue())
             {
-               JsArray<CompileError> errors = event.getErrors();
-               for (int i=0; i<errors.length(); i++)
+               CompileError error = CompileError.getFirstError(event.getErrors());
+               if (error != null)
                {
-                  CompileError error = errors.get(i);
-                  if (error.getType() == CompileError.ERROR)
-                  {
-                     fileTypeRegistry_.editFile(
-                       FileSystemItem.createFile(error.getPath()),
-                       FilePosition.create(error.getLine(), error.getColumn()));
-                     break;
-                  }
+                  fileTypeRegistry_.editFile(
+                    FileSystemItem.createFile(error.getPath()),
+                    FilePosition.create(error.getLine(), error.getColumn()));
                }
             }
          }
@@ -217,7 +212,7 @@ public class BuildPresenter extends BasePresenter
    {
       view_.buildStarted();
       
-      JsArray<BuildOutput> outputs = buildState.getOutputs();
+      JsArray<CompileOutput> outputs = buildState.getOutputs();
       for (int i = 0; i<outputs.length(); i++)
          view_.showOutput(outputs.get(i));
       

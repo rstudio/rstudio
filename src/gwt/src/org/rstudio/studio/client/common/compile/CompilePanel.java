@@ -111,9 +111,20 @@ public class CompilePanel extends Composite
       panel_.setWidget(outputDisplay_.asWidget());  
    }
    
-   public void showCommand(String command)
+   public void showOutput(CompileOutput output)
    {
-      outputDisplay_.writeCommand(command);
+      switch(output.getType())
+      {
+      case CompileOutput.kCommand:
+         outputDisplay_.writeCommand(output.getOutput());
+         break;
+      case CompileOutput.kNormal:
+         outputDisplay_.writeOutput(output.getOutput());
+         break;
+      case CompileOutput.kError:
+         outputDisplay_.writeError(output.getOutput());
+         break;
+      }
    }
    
    public void showOutput(String output)
@@ -121,21 +132,24 @@ public class CompilePanel extends Composite
       outputDisplay_.writeOutput(output);
    }
    
-   public void showError(String error)
+   public void showErrors(String basePath, 
+                          JsArray<CompileError> errors,
+                          int autoSelect)
    {
-      outputDisplay_.writeError(error);
+      showErrors(basePath, errors, autoSelect, false);
    }
    
    public void showErrors(String basePath, 
                           JsArray<CompileError> errors,
-                          int autoSelect)
+                          int autoSelect,
+                          boolean alwaysShowList)
    {
       errorList_.showErrors(targetFileName_, 
                             basePath, 
                             errors,
                             autoSelect);
 
-      if (CompileError.showErrorList(errors))
+      if (alwaysShowList || CompileError.showErrorList(errors))
       {
          panel_.setWidget(errorList_);
          showOutputButton_.setVisible(true);
@@ -144,7 +158,7 @@ public class CompilePanel extends Composite
       {
          showErrorsButton_.setVisible(true);
       }
-   }
+   }  
  
    
    public void scrollToBottom()

@@ -91,6 +91,8 @@ const int kBuildErrors = 65;
 const int kDirectoryNavigate = 66;
 const int kDeferredInitCompleted = 67;
 const int kPlotsZoomSizeChanged = 68;
+const int kSourceCppStarted = 69;
+const int kSourceCppCompleted = 70;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -236,6 +238,10 @@ std::string ClientEvent::typeName() const
          return "deferred_init_completed";
       case client_events::kPlotsZoomSizeChanged:
          return "plots_zoom_size_changed";
+      case client_events::kSourceCppStarted:
+         return "source_cpp_started";
+      case client_events::kSourceCppCompleted:
+         return "source_cpp_completed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));
