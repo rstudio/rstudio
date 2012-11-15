@@ -422,6 +422,21 @@ private:
    static bool isSourceFile(const FileInfo& fileInfo)
    {
       FilePath filePath(fileInfo.absolutePath());
+
+      // if we are in a package project then screen our src- files
+      if (projects::projectContext().hasProject())
+      {
+         if (projects::projectContext().config().buildType ==
+                                                 r_util::kBuildTypePackage)
+         {
+             FilePath pkgPath = projects::projectContext().buildTargetPath();
+             std::string pkgRelative = filePath.relativePath(pkgPath);
+             if (boost::algorithm::starts_with(pkgRelative, "src-"))
+                return false;
+         }
+      }
+
+      // filter files by name and extension
       std::string ext = filePath.extensionLowerCase();
       std::string filename = filePath.filename();
       return !filePath.isDirectory() &&
