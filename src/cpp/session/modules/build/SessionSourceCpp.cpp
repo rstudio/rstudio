@@ -14,6 +14,8 @@
 #include "SessionSourceCpp.hpp"
 
 #include <boost/signal.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/join.hpp>
 
 #include <core/Error.hpp>
@@ -175,8 +177,16 @@ private:
 
 
    void onConsoleOutput(module_context::ConsoleOutputType type,
-                        const std::string& output)
+                        std::string output)
    {
+#ifdef _WIN32
+      // on windows make sure that output ends with a newline (because
+      // standard output and error both come in on the same channel not
+      // separated by newlines which prevents us from parsing errors)
+      if (!boost::algorithm::ends_with(output, "\n"))
+         output += "\n";
+#endif
+
       if (type == module_context::ConsoleOutputNormal)
          consoleOutputBuffer_.append(output);
       else
