@@ -50,6 +50,7 @@ public:
 
       // capture params
       sourceFile_ = sourceFile;
+      fromCode_ = fromCode;
       showOutput_ = showOutput;
 
       // fixup path if necessary
@@ -60,10 +61,6 @@ public:
           previousPath_ = path;
           core::system::setenv("PATH", newPath);
       }
-
-      // if this is from code then don't do anything
-      if (fromCode)
-         return true;
 
       // capture all output that goes to the console
       module_context::events().onConsoleOutput.connect(
@@ -91,22 +88,24 @@ private:
       if (!previousPath_.empty())
          core::system::setenv("PATH", previousPath_);
 
-      // collect Rtools warning (it will get cleared by reset())
-      std::string rToolsWarning = rToolsWarning_;
-
-      // collect all build output
+      // collect all build output (do this before r tools warning so
+      // it's output doesn't ende up in consoleErrorBuffer_)
       std::string buildOutput;
       if (!succeeded || showOutput_)
          buildOutput = consoleOutputBuffer_ + consoleErrorBuffer_;
       else
          buildOutput = output + consoleErrorBuffer_;
 
+      // if we failed and there was an R tools warning then show it
+      if (!succeeded && !rToolsWarning_.empty())
+         module_context::consoleWriteError(rToolsWarning_);
+
+      // parse for gcc errors for sourceCpp
+      if (!fromCode_)
+         parseAndReportErrors(sourceFile_, buildOutput);
+
       // reset state
       reset();
-
-      // if we failed and there was an R tools warning then show it
-      if (!succeeded && !rToolsWarning.empty())
-         module_context::consoleWriteError(rToolsWarning);
    }
 
 
@@ -119,10 +118,18 @@ private:
          consoleErrorBuffer_.append(output);
    }
 
+
+   static void parseAndReportErrors(const FilePath& sourceFile,
+                                    const std::string& output)
+   {
+
+   }
+
    void reset()
    {
       sourceFile_ = FilePath();
       showOutput_ = false;
+      fromCode_ = false;
       consoleOutputBuffer_.clear();
       consoleErrorBuffer_.clear();
       module_context::events().onConsoleOutput.disconnect(
@@ -134,6 +141,7 @@ private:
 private:
    FilePath sourceFile_;
    bool showOutput_;
+   bool fromCode_;
    std::string consoleOutputBuffer_;
    std::string consoleErrorBuffer_;
    std::string previousPath_;
