@@ -1280,7 +1280,7 @@ public class AceEditor implements DocDisplay,
    @Override
    public void moveCursorNearTop()
    {
-      moveCursorNearTop(12);
+      moveCursorNearTop(10);
    }
    
    public void scrollToBottom()
