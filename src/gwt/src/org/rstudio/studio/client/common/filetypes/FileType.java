@@ -34,10 +34,11 @@ public abstract class FileType
    }
 
    public void openFile(FileSystemItem file, 
-                        FilePosition position, 
+                        FilePosition position,
+                        boolean highlightLine,
                         EventBus eventBus)
    {
-      openFile(file, null, eventBus);
+      openFile(file, null, false, eventBus);
    }
    
    protected abstract void openFile(FileSystemItem file, EventBus eventBus);

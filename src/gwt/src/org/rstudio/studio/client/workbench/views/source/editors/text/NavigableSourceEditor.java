@@ -27,6 +27,10 @@ public interface NavigableSourceEditor
    void navigateToPosition(SourcePosition position, 
                            boolean recordCurrentPosition);
    
+   void navigateToPosition(SourcePosition position, 
+                           boolean recordCurrentPosition,
+                           boolean highlightLine);
+   
    void restorePosition(SourcePosition position);
    
    boolean isAtSourceRow(SourcePosition position);

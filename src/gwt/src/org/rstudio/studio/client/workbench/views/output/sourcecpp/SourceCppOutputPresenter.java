@@ -103,7 +103,8 @@ public class SourceCppOutputPresenter extends BasePresenter
       {
          fileTypeRegistry_.editFile(
            FileSystemItem.createFile(error.getPath()),
-           FilePosition.create(error.getLine(), error.getColumn()));
+           FilePosition.create(error.getLine(), error.getColumn()),
+           true);
       }
       
    }

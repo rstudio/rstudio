@@ -256,10 +256,17 @@ public class FileTypeRegistry
    
    public void editFile(FileSystemItem file, FilePosition position)
    {
+      editFile(file, position, false);
+   }
+   
+   public void editFile(FileSystemItem file, 
+                        FilePosition position,
+                        boolean highlightLine)
+   {
       if (satellite_.isCurrentWindowSatellite())
       {
          satellite_.focusMainWindow();   
-         callSatelliteEditFile(file.cast(), position.cast());
+         callSatelliteEditFile(file.cast(), position.cast(), highlightLine);
       }
       else
       {
@@ -268,12 +275,13 @@ public class FileTypeRegistry
             fileType = TEXT;
    
          if (fileType != null)
-            fileType.openFile(file, position, eventBus_);
+            fileType.openFile(file, position, highlightLine, eventBus_);
       }
    }
    
    private void satelliteEditFile(JavaScriptObject file, 
-                                  JavaScriptObject position)
+                                  JavaScriptObject position,
+                                  boolean highlightLine)
    {
       FileSystemItem fsi = file.cast();
       FilePosition pos = position.cast();
@@ -283,16 +291,17 @@ public class FileTypeRegistry
    private final native void exportEditFileCallback()/*-{
       var registry = this;     
       $wnd.editFileFromRStudioSatellite = $entry(
-         function(file, position) {
-            registry.@org.rstudio.studio.client.common.filetypes.FileTypeRegistry::satelliteEditFile(Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/core/client/JavaScriptObject;)(file,position);
+         function(file, position, highlightLine) {
+            registry.@org.rstudio.studio.client.common.filetypes.FileTypeRegistry::satelliteEditFile(Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/core/client/JavaScriptObject;Z)(file,position,highlightLine);
          }
       ); 
    }-*/;
 
    private final native void callSatelliteEditFile(
                                        JavaScriptObject file,
-                                       JavaScriptObject position)/*-{
-      $wnd.opener.editFileFromRStudioSatellite(file, position);
+                                       JavaScriptObject position,
+                                       boolean highlightLine)/*-{
+      $wnd.opener.editFileFromRStudioSatellite(file, position, highlightLine);
    }-*/;
 
 

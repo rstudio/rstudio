@@ -33,9 +33,18 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
                               FilePosition position, 
                               TextFileType fileType)
    {
+      this(file, position, fileType, false);
+   }
+   
+   public OpenSourceFileEvent(FileSystemItem file, 
+                              FilePosition position, 
+                              TextFileType fileType,
+                              boolean highlightLine)
+   {
       file_ = file;
       position_ = position;
       fileType_ = fileType;  
+      highlightLine_ = highlightLine;
    }
    
    public FileSystemItem getFile()
@@ -51,6 +60,11 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
    public FilePosition getPosition()
    {
       return position_;
+   }
+   
+   public boolean getHighlightLine()
+   {
+      return highlightLine_;
    }
 
    @Override
@@ -68,4 +82,5 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
    private final FileSystemItem file_;
    private final FilePosition position_;
    private final TextFileType fileType_;
+   private final boolean highlightLine_;
 }

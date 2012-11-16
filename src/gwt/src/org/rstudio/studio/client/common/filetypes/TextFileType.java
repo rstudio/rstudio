@@ -71,15 +71,19 @@ public class TextFileType extends EditableFileType
    @Override
    public void openFile(FileSystemItem file,
                         FilePosition position,
+                        boolean highlightLine,
                         EventBus eventBus)
    {
-      eventBus.fireEvent(new OpenSourceFileEvent(file, position, this));
+      eventBus.fireEvent(new OpenSourceFileEvent(file,
+                                                 position, 
+                                                 this, 
+                                                 highlightLine));
    }
    
    @Override
    public void openFile(FileSystemItem file, EventBus eventBus)
    {
-      openFile(file, null, eventBus);
+      openFile(file, null, false, eventBus);
    }
 
    public EditorLanguage getEditorLanguage()

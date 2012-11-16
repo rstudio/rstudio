@@ -179,6 +179,14 @@ public class UrlContentEditingTarget implements EditingTarget
    {   
    }
    
+   
+   @Override
+   public void navigateToPosition(SourcePosition position, 
+                                  boolean recordCurrent,
+                                  boolean highlightLine)
+   {   
+   }
+   
    @Override
    public void restorePosition(SourcePosition position)
    {   

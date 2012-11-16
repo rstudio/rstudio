@@ -342,6 +342,14 @@ public class TextEditingTarget implements EditingTarget
    }
    
    @Override
+   public void navigateToPosition(SourcePosition position, 
+                                  boolean recordCurrent,
+                                  boolean highlightLine)
+   {
+      docDisplay_.navigateToPosition(position, recordCurrent, highlightLine);
+   }
+   
+   @Override
    public void restorePosition(SourcePosition position)
    {
       docDisplay_.restorePosition(position);

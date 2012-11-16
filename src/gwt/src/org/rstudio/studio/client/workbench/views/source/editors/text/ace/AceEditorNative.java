@@ -45,6 +45,10 @@ public class AceEditorNative extends JavaScriptObject {
       this.setPrintMarginColumn(column);
    }-*/;
 
+   public native final boolean getHighlightActiveLine() /*-{
+      return this.getHighlightActiveLine();
+   }-*/;
+   
    public native final void setHighlightActiveLine(boolean highlight) /*-{
       this.setHighlightActiveLine(highlight);
    }-*/;

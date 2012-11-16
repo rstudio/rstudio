@@ -1079,7 +1079,8 @@ public class Source implements InsertSourceHandler,
                            target.navigateToPosition(
                                  SourcePosition.create(position.getLine() - 1,
                                                        position.getColumn() - 1),
-                                 false);
+                                 false,
+                                 event.getHighlightLine());
                         }
                      });
                   }

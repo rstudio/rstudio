@@ -304,6 +304,7 @@ public class AceEditor implements DocDisplay,
          public void onCursorChanged(CursorChangedEvent event)
          {
             fixVerticalOffsetBug();
+            clearLineHighlight();
          }
       });
       
@@ -1338,14 +1339,22 @@ public class AceEditor implements DocDisplay,
       fireRecordNavigationPosition(getCursorPosition());
    }
    
-   @Override 
+   @Override
    public void navigateToPosition(SourcePosition position, 
                                   boolean recordCurrent)
+   {
+      navigateToPosition(position, recordCurrent, false);
+   }
+   
+   @Override 
+   public void navigateToPosition(SourcePosition position, 
+                                  boolean recordCurrent,
+                                  boolean highlightLine)
    {
       if (recordCurrent)
          recordCurrentNavigationPosition();
       
-      navigate(position, true);
+      navigate(position, true, highlightLine);
    }
    
    @Override
@@ -1362,6 +1371,13 @@ public class AceEditor implements DocDisplay,
    }
    
    private void navigate(SourcePosition srcPosition, boolean addToHistory)
+   {
+      navigate(srcPosition, addToHistory, false);
+   }
+   
+   private void navigate(SourcePosition srcPosition, 
+                         boolean addToHistory,
+                         boolean highlightLine)
    {  
       // set cursor to function line
       Position position = Position.create(srcPosition.getRow(), 
@@ -1386,6 +1402,9 @@ public class AceEditor implements DocDisplay,
       
       // set focus
       focus();
+      
+      if (highlightLine)
+         applyLineHighlight(position.getRow());
       
       // add to navigation history if requested and our current mode
       // supports history navigation
@@ -1579,6 +1598,32 @@ public class AceEditor implements DocDisplay,
    {
       getSession().setDisableOverwrite(disableOverwrite);
    }
+   
+   private void applyLineHighlight(int line)
+   {
+      clearLineHighlight();
+      
+      if (!widget_.getEditor().getHighlightActiveLine())
+      {
+         Range range = Range.fromPoints(Position.create(line, 0),
+                                        Position.create(line+1, 0));
+         
+         lineHighlightMarkerId_ = getSession().addMarker(range, 
+                                                         "ace_find_line",
+                                                         "background", 
+                                                         false);
+      }  
+   }
+   
+   private void clearLineHighlight()
+   {
+      if (lineHighlightMarkerId_ != null)
+      {
+         getSession().removeMarker(lineHighlightMarkerId_);
+         lineHighlightMarkerId_ = null;
+      }
+   }
+
 
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
@@ -1588,6 +1633,7 @@ public class AceEditor implements DocDisplay,
    private boolean passwordMode_;
    private boolean useVimMode_ = false;
    private RnwCompletionContext rnwContext_;
+   private Integer lineHighlightMarkerId_ = null;
 
    private static final ExternalJavaScriptLoader aceLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());
