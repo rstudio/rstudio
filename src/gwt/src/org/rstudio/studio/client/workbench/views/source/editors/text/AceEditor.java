@@ -389,14 +389,14 @@ public class AceEditor implements DocDisplay,
                   new Filter(),
                   fileType_.canExecuteChunks() ? rnwContext_ : null);
          }
+         /*
          else if (fileType_.isCpp())
          {
-            completionManager = new CppCompletionManager(
-                  this,
-                  this,
-                  new CompletionPopupPanel(),
-                  new Filter());
+            completionManager = new CppCompletionManager(this,
+                                                         this,
+                                                         new Filter());
          }
+         */
          else
             completionManager = new NullCompletionManager();
       }

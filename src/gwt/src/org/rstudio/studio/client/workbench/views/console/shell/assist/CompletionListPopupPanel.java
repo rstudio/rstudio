@@ -1,5 +1,5 @@
 /*
- * HistoryPopupPanel.java
+ * CompletionListPopupPanel.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -18,10 +18,10 @@ import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
 
-public class HistoryPopupPanel extends ThemedPopupPanel
+public class CompletionListPopupPanel extends ThemedPopupPanel
    implements HasSelectionCommitHandlers<String>
 {
-   public HistoryPopupPanel(String[] entries)
+   public CompletionListPopupPanel(String[] entries)
    {
       super(true);
       list_ = new CompletionList<String>(entries, 10, false, true);

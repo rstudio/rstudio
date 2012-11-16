@@ -135,7 +135,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
 
                   if (resp.length() == 0)
                   {
-                     popup_ = new HistoryPopupPanel(new String[0]);
+                     popup_ = new CompletionListPopupPanel(new String[0]);
                      popup_.setText("(No matching commands)");
                   }
                   else
@@ -143,7 +143,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
                      String[] entries = new String[resp.length()];
                      for (int i = 0; i < entries.length; i++)
                         entries[i] = resp.get(entries.length - i - 1).getCommand();
-                     popup_ = new HistoryPopupPanel(entries);
+                     popup_ = new CompletionListPopupPanel(entries);
                   }
 
                   popup_.setMaxWidth(input_.getBounds().getWidth());
@@ -189,7 +189,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
       return false;
    }
 
-   private HistoryPopupPanel popup_;
+   private CompletionListPopupPanel popup_;
    private final InputEditorDisplay input_;
    private final HistoryServerOperations server_;
    private final Invalidation historyRequestInvalidation_ = new Invalidation();

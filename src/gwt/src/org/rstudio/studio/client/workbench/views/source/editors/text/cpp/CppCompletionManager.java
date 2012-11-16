@@ -13,54 +13,215 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Invalidation;
+import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.Invalidation.Token;
+import org.rstudio.core.client.events.SelectionCommitEvent;
+import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionListPopupPanel;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
-import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
 
+
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
 public class CppCompletionManager implements CompletionManager
 {
    public CppCompletionManager(InputEditorDisplay input,
                                NavigableSourceEditor navigableSourceEditor,
-                               CompletionPopupDisplay popup,
                                InitCompletionFilter initFilter)
    {
       input_ = input;
       navigableSourceEditor_ = navigableSourceEditor;
-      popup_ = popup;
       initFilter_ = initFilter;
    }
 
    // return false to indicate key not handled
+   @SuppressWarnings("unused")
    @Override
    public boolean previewKeyDown(NativeEvent event)
    {
+      if (popup_ == null)
+      { 
+         if (false) // check for user completion key combo 
+                    // (we don't have any right now)
+         {
+            if (initFilter_ == null || initFilter_.shouldComplete(event))
+            {
+               beginSuggest();
+               return true;
+            }
+         }
+      }
+      else
+      {
+         switch (event.getKeyCode())
+         {
+         case KeyCodes.KEY_SHIFT:
+         case KeyCodes.KEY_CTRL:
+         case KeyCodes.KEY_ALT:
+            return false ; // bare modifiers should do nothing
+         }
+         
+         if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
+         {
+            close();
+            return true;
+         }
+         else if (event.getKeyCode() == KeyCodes.KEY_ENTER)
+         {
+            input_.setText(popup_.getSelectedValue());
+            close();
+            return true;
+         }
+         else if (event.getKeyCode() == KeyCodes.KEY_UP)
+         {
+            popup_.selectPrev();
+            return true;
+         }
+         else if (event.getKeyCode() == KeyCodes.KEY_DOWN)
+         {
+            popup_.selectNext();
+            return true;
+         }
+         else if (event.getKeyCode() == KeyCodes.KEY_UP)
+            return popup_.selectPrev() ;
+         else if (event.getKeyCode() == KeyCodes.KEY_DOWN)
+            return popup_.selectNext() ;
+         else if (event.getKeyCode() == KeyCodes.KEY_PAGEUP)
+            return popup_.selectPrevPage() ;
+         else if (event.getKeyCode() == KeyCodes.KEY_PAGEDOWN)
+            return popup_.selectNextPage() ;
+         else if (event.getKeyCode() == KeyCodes.KEY_HOME)
+            return popup_.selectFirst() ;
+         else if (event.getKeyCode() == KeyCodes.KEY_END)
+            return popup_.selectLast() ;
+         else if (event.getKeyCode() == KeyCodes.KEY_LEFT)
+         {
+            close();
+            return true ;
+         }
+
+         close();
+         return false;
+      }
+      
       return false;
    }
 
    // return false to indicate key not handled
    @Override
-   public boolean previewKeyPress(char charCode)
+   public boolean previewKeyPress(char c)
    {
-      return false;
+      if (popup_ != null)
+      {
+         // right now additional suggestions will be for attributes names
+         // and parameters (identifiers) so we use these characters to 
+         // indicate to do another completion query (note that _ and : are
+         // valid R identifier chars but not package identifier chars)
+         if ((c >= 'a' && c <= 'z') || 
+             (c >= 'A' && c <= 'Z') || 
+             (c >= '0' && c <= '9') || 
+             c == '.' || c == '_' || c == ':')
+         {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  beginSuggest() ;
+               }
+            });
+         }
+      }
+      else
+      {
+         if (isAttributeCompletionValidHere(c))
+         {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  beginSuggest() ;
+               }
+            });
+         }
+         else if (!input_.isSelectionCollapsed())
+         {
+            switch(c)
+            {
+            case '"':
+            case '\'':
+               encloseSelection(c, c);
+               return true;
+            case '(':
+               encloseSelection('(', ')');
+               return true;
+            case '{':
+               encloseSelection('{', '}');
+               return true;
+            case '[':
+               encloseSelection('[', ']');
+               return true;     
+            }
+         }
+      }
+      
+      return false ;
+   }
+   
+   
+   private void encloseSelection(char beginChar, char endChar) 
+   {
+      StringBuilder builder = new StringBuilder();
+      builder.append(beginChar);
+      builder.append(input_.getSelectionValue());
+      builder.append(endChar);
+      input_.replaceSelection(builder.toString(), true);
    }
 
+   private boolean isAttributeCompletionValidHere(char c)
+   {     
+      // TODO: we can't just append the character since it could
+      // be anywhere withinh the line -- need to insert it into 
+      // the right spot
+      String line = input_.getText() + c;
+      if (line.matches("\\s*//\\s+\\[\\[.*"))
+      {
+         // get text up to selection
+         @SuppressWarnings("unused")
+         String linePart = input_.getText().substring(
+                           0, input_.getSelection().getStart().getPosition());
+         return true;
+      }
+      return false;
+   }
+   
+   
    // go to help at the current cursor location
    @Override
    public void goToHelp()
    {
-      
-      
    }
 
    // find the definition of the function at the current cursor location
    @Override
    public void goToFunctionDefinition()
-   {
-      
-      
+   {  
    }
 
    // perform completion at the current cursor location
@@ -70,7 +231,6 @@ public class CppCompletionManager implements CompletionManager
       if (initFilter_ == null || initFilter_.shouldComplete(null))
       {
          
-         
       }
    }
 
@@ -78,15 +238,95 @@ public class CppCompletionManager implements CompletionManager
    @Override
    public void close()
    {
-      popup_.hide();
-      
+      if (popup_ != null)
+      {
+         popup_.hide();
+         popup_ = null;
+      }
    }
    
-   @SuppressWarnings("unused")
+   private void beginSuggest()
+   {
+      completionRequestInvalidation_.invalidate();
+      final Token token = completionRequestInvalidation_.getInvalidationToken();
+
+      String value = input_.getText();
+      Debug.logToConsole(value);
+      
+      getCompletions(value,
+            new SimpleRequestCallback<JsArrayString>()
+            {
+               @Override
+               public void onResponseReceived(JsArrayString resp)
+               {
+                  if (token.isInvalid())
+                     return;
+
+                  if (resp.length() == 0)
+                  {
+                     popup_ = new CompletionListPopupPanel(new String[0]);
+                     popup_.setText("(No matching commands)");
+                  }
+                  else
+                  {
+                     String[] entries = JsUtil.toStringArray(resp);
+                     popup_ = new CompletionListPopupPanel(entries);
+                  }
+
+                  popup_.setMaxWidth(input_.getBounds().getWidth());
+                  popup_.setPopupPositionAndShow(new PositionCallback()
+                  {
+                     public void setPosition(int offsetWidth, int offsetHeight)
+                     {
+                        Rectangle bounds = input_.getBounds();
+
+                        int top = bounds.getTop() - offsetHeight;
+                        if (top < 20)
+                           top = bounds.getBottom();
+
+                        popup_.selectLast();
+                        popup_.setPopupPosition(bounds.getLeft() - 6, top);
+                     }
+                  });
+
+                  popup_.addSelectionCommitHandler(new SelectionCommitHandler<String>()
+                  {
+                     public void onSelectionCommit(SelectionCommitEvent<String> e)
+                     {
+                        input_.setText(e.getSelectedItem());
+                        close();
+                     }
+                  });
+                  
+                  popup_.addCloseHandler(new CloseHandler<PopupPanel>() {
+
+                     @Override
+                     public void onClose(CloseEvent<PopupPanel> event)
+                     {
+                        popup_ = null;          
+                     }
+                     
+                  });
+               }
+            });
+   }
+   
+   
+   private void getCompletions(
+         String line, 
+         ServerRequestCallback<JsArrayString> requestCallback) 
+   {
+   }
+
+  
+   
    private final InputEditorDisplay input_ ;
    @SuppressWarnings("unused")
    private final NavigableSourceEditor navigableSourceEditor_;
-   private final CompletionPopupDisplay popup_ ;
+   private CompletionListPopupPanel popup_;
    private final InitCompletionFilter initFilter_ ;
+   private final Invalidation completionRequestInvalidation_ = new Invalidation();
+   
+  
 
 }
