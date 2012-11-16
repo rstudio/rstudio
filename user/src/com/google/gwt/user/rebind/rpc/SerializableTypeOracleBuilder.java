@@ -134,10 +134,10 @@ public class SerializableTypeOracleBuilder {
     private boolean instantiableSubtypes;
 
     /**
-     * All instantiable types found when this type was quaried, including the
-     * type itself.
+     * All instantiable types found when this type was queried, including the
+     * type itself. (Null until calculated.)
      */
-    private Set<JClassType> instantiableTypes = new HashSet<JClassType>();
+    private Set<JClassType> instantiableTypes;
 
     /**
      * Custom field serializer or <code>null</code> if there isn't one.
@@ -176,17 +176,6 @@ public class SerializableTypeOracleBuilder {
         manualSerializer = null;
         maybeEnhanced = false;
       }
-    }
-
-    /**
-     * Returns the internal set of instantiable types for this TIC.
-     * Modifications to this set are immediately recorded into the TIC as well.
-     * TODO(spoon) maybe pass the TIC around instead of the set? then there
-     * could be addInstantiableType(JClassType) instead of speccing this to be
-     * mutable.
-     */
-    public Set<JClassType> getInstantiableTypes() {
-      return instantiableTypes;
     }
 
     public TypePath getPath() {
@@ -819,28 +808,39 @@ public class SerializableTypeOracleBuilder {
       if (!entrySucceeded) {
         problems.report(logger, TreeLogger.ERROR, TreeLogger.INFO);
       } else {
-        if (problems.hasFatalProblems()) {
-          entrySucceeded = false;
-          problems.reportFatalProblems(logger, TreeLogger.ERROR);
-        }
-        // if entrySucceeded, there may still be "warning" problems, but too
-        // often they're expected (e.g. non-instantiable subtypes of List), so
-        // we log them at DEBUG.
-        // TODO(fabbott): we could blacklist or graylist those types here, so
-        // instantiation during code generation would flag them for us.
-        problems.report(logger, TreeLogger.DEBUG, TreeLogger.DEBUG);
+        maybeReport(logger, problems);
       }
-
-      allSucceeded &= entrySucceeded;
+      allSucceeded &= entrySucceeded & !problems.hasFatalProblems();
     }
 
     if (!allSucceeded) {
       throw new UnableToCompleteException();
     }
+    assertNothingPending();
 
-    for (TypeInfoComputed tic : typeToTypeInfoComputed.values()) {
-      assert (!tic.isPendingInstantiable());
+    // Add covariant arrays in a separate pass. We want to ensure that nothing is pending
+    // so that the leaf type's instantiableTypes variable is ready (if it's computed at all)
+    // and all of the leaf's subtypes are ready.
+    // (Copy values to avoid concurrent modification.)
+    List<TypeInfoComputed> ticsToCheck = new ArrayList<TypeInfoComputed>();
+    ticsToCheck.addAll(typeToTypeInfoComputed.values());
+    for (TypeInfoComputed tic : ticsToCheck) {
+      JArrayType type = tic.getType().isArray();
+      if (type != null && tic.instantiable) {
+        ProblemReport problems = new ProblemReport();
+        problems.setContextType(type);
+
+        markArrayTypes(logger, type, tic.getPath(), problems);
+
+        maybeReport(logger, problems);
+        allSucceeded &= !problems.hasFatalProblems();
+      }
     }
+
+    if (!allSucceeded) {
+      throw new UnableToCompleteException();
+    }
+    assertNothingPending();
 
     pruneUnreachableTypes();
 
@@ -998,12 +998,15 @@ public class SerializableTypeOracleBuilder {
     // TreeLogger subtypesLogger = localLogger.branch(TreeLogger.DEBUG,
     // "Analyzing subclasses:", null);
     tic = ensureTypeInfoComputed(classType, path);
+    Set<JClassType> instantiableTypes = new HashSet<JClassType>();
     boolean anySubtypes =
-        checkSubtypes(localLogger, originalType, tic.getInstantiableTypes(), path, problems);
+        checkSubtypes(localLogger, originalType, instantiableTypes, path, problems);
     if (!tic.isDone()) {
       tic.setInstantiableSubtypes(anySubtypes);
       tic.setInstantiable(false);
     }
+    // Don't publish this until complete to ensure nobody depends on partial results.
+    tic.instantiableTypes = instantiableTypes;
     return tic;
   }
 
@@ -1019,6 +1022,14 @@ public class SerializableTypeOracleBuilder {
    */
   boolean shouldConsiderFieldsForSerialization(JClassType type, ProblemReport problems) {
     return shouldConsiderFieldsForSerialization(type, typeFilter, problems);
+  }
+
+  private void assertNothingPending() {
+    if (getClass().desiredAssertionStatus()) {
+      for (TypeInfoComputed tic : typeToTypeInfoComputed.values()) {
+        assert (!tic.isPendingInstantiable());
+      }
+    }
   }
 
   /**
@@ -1058,12 +1069,16 @@ public class SerializableTypeOracleBuilder {
       return checkArrayInstantiable(logger, arrayType, path, problems);
     }
 
-    JClassType leafClass = leafType.isClassOrInterface();
+    TypeInfoComputed tic = ensureTypeInfoComputed(array, path);
+    if (tic.isDone() || tic.isPendingInstantiable()) {
+      return tic;
+    }
+    tic.setPendingInstantiable();
+
     JTypeParameter isLeafTypeParameter = leafType.isTypeParameter();
     if (isLeafTypeParameter != null && !typeParametersInRootTypes.contains(isLeafTypeParameter)) {
       // Don't deal with non root type parameters, but make a TIC entry to
       // save time if it recurs. We assume they're indirectly instantiable.
-      TypeInfoComputed tic = ensureTypeInfoComputed(array, path);
       tic.setInstantiableSubtypes(true);
       tic.setInstantiable(false);
       return tic;
@@ -1072,18 +1087,12 @@ public class SerializableTypeOracleBuilder {
     if (!isAllowedByFilter(array, problems)) {
       // Don't deal with filtered out types either, but make a TIC entry to
       // save time if it recurs. We assume they're not instantiable.
-      TypeInfoComputed tic = ensureTypeInfoComputed(array, path);
       tic.setInstantiable(false);
       return tic;
     }
 
-    TypeInfoComputed tic = ensureTypeInfoComputed(array, path);
-    if (tic.isDone()) {
-      return tic;
-    } else if (tic.isPendingInstantiable()) {
-      return tic;
-    }
-    tic.setPendingInstantiable();
+    // An array is instantiable provided that any leaf subtype is instantiable.
+    // (Ignores the possibility of empty arrays of non-instantiable types.)
 
     TreeLogger branch = logger.branch(TreeLogger.DEBUG, "Analyzing component type:", null);
 
@@ -1091,32 +1100,6 @@ public class SerializableTypeOracleBuilder {
         computeTypeInstantiability(branch, leafType, TypePaths
             .createArrayComponentPath(array, path), problems);
     boolean succeeded = leafTic.hasInstantiableSubtypes();
-    if (succeeded) {
-      if (leafClass == null) {
-        assert leafType.isPrimitive() != null;
-        markArrayTypesInstantiable(leafType, array.getRank(), path);
-      } else {
-        TreeLogger covariantArrayLogger = logger.branch(TreeLogger.DEBUG, "Covariant array types");
-
-        /*
-         * Compute covariant arrays for arrays of reference types.
-         */
-        for (JClassType instantiableType : TypeHierarchyUtils.getAllTypesBetweenRootTypeAndLeaves(
-            leafClass, leafTic.getInstantiableTypes())) {
-          if (!isAccessibleToSerializer(instantiableType)) {
-            // Skip types that are not accessible from a serializer
-            continue;
-          }
-
-          if (covariantArrayLogger.isLoggable(TreeLogger.DEBUG)) {
-            covariantArrayLogger.branch(TreeLogger.DEBUG, getArrayType(typeOracle, array.getRank(),
-                instantiableType).getParameterizedQualifiedSourceName());
-          }
-
-          markArrayTypesInstantiable(instantiableType, array.getRank(), path);
-        }
-      }
-    }
 
     tic.setInstantiable(succeeded);
     return tic;
@@ -1553,6 +1536,60 @@ public class SerializableTypeOracleBuilder {
     }
   }
 
+  /**
+   * Marks all covariant and lesser-ranked arrays as instantiable for all leaf types between
+   * the given array's leaf type and its instantiable subtypes. (Note: this adds O(S * R)
+   * array types to the output where S is the number of subtypes and R is the rank.)
+   * Prerequisite: The leaf type's tic and its subtypes must already be created.
+   */
+  private void markArrayTypes(TreeLogger logger, JArrayType array, TypePath path,
+      ProblemReport problems) {
+    logger = logger.branch(TreeLogger.DEBUG, "Adding array types for " + array);
+
+    JType leafType = array.getLeafType();
+    TypeInfoComputed leafTic = typeToTypeInfoComputed.get(leafType);
+    assert leafTic != null : "not computed: " + leafType;
+
+    JClassType leafClass = leafType.isClassOrInterface();
+    if (leafClass == null) {
+      // Simple case: no covariance, just lower ranks.
+      assert leafType.isPrimitive() != null;
+      markArrayTypesInstantiable(leafType, array.getRank(), path);
+      return;
+    }
+
+    TreeLogger covariantArrayLogger =
+        logger.branch(TreeLogger.DEBUG, "Covariant array types:");
+
+    Set<JClassType> instantiableTypes = leafTic.instantiableTypes;
+    if (instantiableTypes == null) {
+      // The types are there (due to a supertype) but the Set wasn't computed, so compute it now.
+      instantiableTypes = new HashSet<JClassType>();
+      List<JClassType> candidates =
+          getPossiblyInstantiableSubtypes(logger, leafClass, problems);
+      for (JClassType candidate : candidates) {
+        TypeInfoComputed tic = typeToTypeInfoComputed.get(candidate);
+        if (tic != null && tic.instantiable) {
+          instantiableTypes.add(candidate);
+        }
+      }
+    }
+    for (JClassType instantiableType : TypeHierarchyUtils.getAllTypesBetweenRootTypeAndLeaves(
+        leafClass, instantiableTypes)) {
+      if (!isAccessibleToSerializer(instantiableType)) {
+        // Skip types that are not accessible from a serializer
+        continue;
+      }
+
+      if (covariantArrayLogger.isLoggable(TreeLogger.DEBUG)) {
+        covariantArrayLogger.branch(TreeLogger.DEBUG, getArrayType(typeOracle, array.getRank(),
+            instantiableType).getParameterizedQualifiedSourceName());
+      }
+
+      markArrayTypesInstantiable(instantiableType, array.getRank(), path);
+    }
+  }
+
   private boolean maybeInstantiable(TreeLogger logger, JClassType type, ProblemReport problems) {
     boolean success =
         canBeInstantiated(type, problems) && shouldConsiderFieldsForSerialization(type, problems);
@@ -1563,6 +1600,21 @@ public class SerializableTypeOracleBuilder {
       }
     }
     return success;
+  }
+
+  /**
+   * Report problems if they are fatal or we're debugging.
+   */
+  private void maybeReport(TreeLogger logger, ProblemReport problems) {
+    if (problems.hasFatalProblems()) {
+      problems.reportFatalProblems(logger, TreeLogger.ERROR);
+    }
+    // if entrySucceeded, there may still be "warning" problems, but too
+    // often they're expected (e.g. non-instantiable subtypes of List), so
+    // we log them at DEBUG.
+    // TODO(fabbott): we could blacklist or graylist those types here, so
+    // instantiation during code generation would flag them for us.
+    problems.report(logger, TreeLogger.DEBUG, TreeLogger.DEBUG);
   }
 
   private boolean mightNotBeExposed(JGenericType baseType, int paramIndex) {

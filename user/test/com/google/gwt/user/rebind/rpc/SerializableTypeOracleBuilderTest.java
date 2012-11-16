@@ -45,11 +45,13 @@ import com.google.gwt.user.rebind.rpc.testcases.client.ClassWithTypeParameterTha
 import com.google.gwt.user.rebind.rpc.testcases.client.ManualSerialization;
 import com.google.gwt.user.rebind.rpc.testcases.client.NoSerializableTypes;
 import com.google.gwt.user.rebind.rpc.testcases.client.NotAllSubtypesAreSerializable;
+import com.google.gwt.user.rebind.rpc.testcases.client.SubclassUsedInArray;
 
 import junit.framework.TestCase;
 
 import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1925,6 +1927,15 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   }
 
   /**
+   * Tests a case where a subtype is visited and then later used to find covariant array types.
+   * (Reproduces a caching issue that depends on the order in which types are visited.)
+   */
+  public void testSubclassUsedInArray() throws NotFoundException, UnableToCompleteException {
+    JClassType expected = arrayType(SubclassUsedInArray.LeafType.class);
+    checkSerializable(expected, SubclassUsedInArray.Base.class, SubclassUsedInArray.HasArray.class);
+  }
+
+  /**
    * Tests subtypes that introduce new instantiable type parameters.
    * 
    * @throws UnableToCompleteException
@@ -2364,6 +2375,72 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     assertInstantiable(so, b);
     assertInstantiable(so, c);
     assertNotInstantiableOrFieldSerializable(so, a.getRawType());
+  }
+
+  /**
+   * Checks that a type is serializable when searching from the given roots.
+   * Also, check that the root order doesn't matter.
+   */
+  private void checkSerializable(JClassType expected, Class... roots)
+      throws UnableToCompleteException {
+
+    // find serializable types in forward and reverse order
+    SerializableTypeOracle forwardResult = findSerializable(roots);
+    roots = Arrays.copyOf(roots, roots.length);
+    Collections.reverse(Arrays.asList(roots));
+    SerializableTypeOracle reverseResult = findSerializable(roots);
+
+    // check that the expected type is serializable
+    boolean forwardOk = forwardResult.isSerializable(expected);
+    boolean reverseOk = reverseResult.isSerializable(expected);
+    if (!forwardOk && !reverseOk) {
+      fail(expected + " is not serializable from " + join(", ", roots) + " in either order");
+    }
+    if (!forwardOk || !reverseOk) {
+      fail(expected + " is not serializable from " + join(", ", roots) + " in both orders");
+    }
+
+    // also check that other serializable types are stable
+    checkSameSerializables(forwardResult, reverseResult);
+  }
+
+  /**
+   * Finds serializable types from the given roots (in order).
+   */
+  private SerializableTypeOracle findSerializable(Class... roots)
+      throws UnableToCompleteException {
+    TreeLogger logger = createLogger();
+    TypeOracle oracle = getTestTypeOracle();
+    SerializableTypeOracleBuilder builder =
+        createSerializableTypeOracleBuilder(logger, oracle);
+    for (Class root : roots) {
+      builder.addRootType(logger, oracle.findType(root.getCanonicalName()));
+    }
+    return builder.build(logger);
+  }
+
+  private void checkSameSerializables(SerializableTypeOracle first, SerializableTypeOracle second) {
+    String firstTypes = join("\n", first.getSerializableTypes());
+    String secondTypes = join("\n", second.getSerializableTypes());
+    assertEquals("type oracles differ", firstTypes, secondTypes);
+  }
+
+  private JClassType arrayType(Class<?> itemType)
+      throws UnableToCompleteException, NotFoundException {
+    TypeOracle typeOracle = getTestTypeOracle();
+    JClassType leaf = typeOracle.getType(itemType.getCanonicalName());
+    return typeOracle.getArrayType(leaf);
+  }
+
+  private <T> String join(String delimiter, T... items) {
+    StringBuilder result = new StringBuilder();
+    for (int i = 0; i < items.length; i++) {
+      if (i > 0) {
+        result.append(delimiter);
+      }
+      result.append(items[i]);
+    }
+    return result.toString();
   }
 
   private JClassType[] makeArray(JClassType... elements) {
