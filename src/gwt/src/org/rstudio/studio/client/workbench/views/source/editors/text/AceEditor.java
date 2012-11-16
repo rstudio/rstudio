@@ -65,6 +65,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Rendere
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.WordIterable;
+import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
@@ -376,15 +377,28 @@ public class AceEditor implements DocDisplay,
          return;
 
       CompletionManager completionManager;
-      if (!suppressCompletion && fileType_.getEditorLanguage().useRCompletion())
+      if (!suppressCompletion)
       {
-         completionManager = new RCompletionManager(
-               this,
-               this,
-               new CompletionPopupPanel(),
-               server_,
-               new Filter(),
-               fileType_.canExecuteChunks() ? rnwContext_ : null);
+         if (fileType_.getEditorLanguage().useRCompletion())
+         {
+            completionManager = new RCompletionManager(
+                  this,
+                  this,
+                  new CompletionPopupPanel(),
+                  server_,
+                  new Filter(),
+                  fileType_.canExecuteChunks() ? rnwContext_ : null);
+         }
+         else if (fileType_.isCpp())
+         {
+            completionManager = new CppCompletionManager(
+                  this,
+                  this,
+                  new CompletionPopupPanel(),
+                  new Filter());
+         }
+         else
+            completionManager = new NullCompletionManager();
       }
       else
          completionManager = new NullCompletionManager();
