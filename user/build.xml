@@ -35,7 +35,7 @@
   <property name="gwt.tck.testcase.dev.includes" value="com/google/gwt/validation/tck/**/*GwtSuite.class" />
   <property name="gwt.tct.testcase.dev.excludes" value="" />
 
-  <property name="gwt.nongwt.testcase.includes" value="com/google/gwt/dev/jjs/GwtAstBuilderTest.class" />
+  <property name="gwt.nongwt.testcase.includes" value="**/*SuiteNoBrowser.class" />
   <property name="gwt.nongwt.testcase.excludes" value="" />
 
   <!--

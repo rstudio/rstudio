@@ -34,8 +34,6 @@ import com.google.gwt.user.client.rpc.CustomFieldSerializerTestWithTypeObfuscati
 import com.google.gwt.user.client.rpc.EnumsTest;
 import com.google.gwt.user.client.rpc.EnumsTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.ExceptionsTest;
-import com.google.gwt.user.client.rpc.FailedRequestTest;
-import com.google.gwt.user.client.rpc.FailingRequestBuilderTest;
 import com.google.gwt.user.client.rpc.InheritanceTest;
 import com.google.gwt.user.client.rpc.InheritanceTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.ObjectGraphTest;
@@ -49,20 +47,6 @@ import com.google.gwt.user.client.rpc.UnicodeEscapingTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.ValueTypesTest;
 import com.google.gwt.user.client.rpc.ValueTypesTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.XsrfProtectionTest;
-import com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReaderTest;
-import com.google.gwt.user.rebind.rpc.BlacklistTypeFilterTest;
-import com.google.gwt.user.rebind.rpc.SerializableTypeOracleBuilderTest;
-import com.google.gwt.user.rebind.rpc.TypeHierarchyUtilsTest;
-import com.google.gwt.user.server.Base64Test;
-import com.google.gwt.user.server.UtilTest;
-import com.google.gwt.user.server.rpc.AbstractXsrfProtectedServiceServletTest;
-import com.google.gwt.user.server.rpc.RPCRequestTest;
-import com.google.gwt.user.server.rpc.RPCServletUtilsTest;
-import com.google.gwt.user.server.rpc.RPCTest;
-import com.google.gwt.user.server.rpc.SerializationPolicyLoaderTest;
-import com.google.gwt.user.server.rpc.impl.LegacySerializationPolicyTest;
-import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamWriterTest;
-import com.google.gwt.user.server.rpc.impl.StandardSerializationPolicyTest;
 
 import junit.framework.Test;
 
@@ -84,24 +68,7 @@ public class RPCSuite {
     GWTTestSuite suite = new GWTTestSuite(
         "Test for com.google.gwt.user.client.rpc");
 
-    // Non GWTTestCases
-    suite.addTestSuite(BlacklistTypeFilterTest.class);
-    suite.addTestSuite(SerializableTypeOracleBuilderTest.class);
-    suite.addTestSuite(TypeHierarchyUtilsTest.class);
-    suite.addTestSuite(RPCTest.class);
-    suite.addTestSuite(com.google.gwt.user.server.rpc.RemoteServiceServletTest.class);
-    suite.addTestSuite(LegacySerializationPolicyTest.class);
-    suite.addTestSuite(StandardSerializationPolicyTest.class);
-    suite.addTestSuite(SerializationPolicyLoaderTest.class);
-    suite.addTestSuite(RPCServletUtilsTest.class);
-    suite.addTestSuite(RPCRequestTest.class);
-    suite.addTestSuite(FailedRequestTest.class);
-    suite.addTestSuite(FailingRequestBuilderTest.class);
-    suite.addTestSuite(Base64Test.class);
-    suite.addTestSuite(UtilTest.class);
-    suite.addTestSuite(AbstractXsrfProtectedServiceServletTest.class);
-    suite.addTestSuite(ClientSerializationStreamReaderTest.class);
-    suite.addTestSuite(ServerSerializationStreamWriterTest.class);
+    // Non GWTTestCases: see RpcSuiteNoBrowser
 
     // GWTTestCases
     suite.addTestSuite(ValueTypesTest.class);
