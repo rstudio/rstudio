@@ -1256,10 +1256,16 @@ public class AceEditor implements DocDisplay,
    }
 
    @Override
-   public void moveCursorNearTop()
+   public void moveCursorNearTop(int rowOffset)
    {
       int screenRow = getSession().documentToScreenRow(getCursorPosition());
-      widget_.getEditor().scrollToRow(Math.max(0, screenRow - 4));
+      widget_.getEditor().scrollToRow(Math.max(0, screenRow - rowOffset));
+   }
+   
+   @Override
+   public void moveCursorNearTop()
+   {
+      moveCursorNearTop(12);
    }
    
    public void scrollToBottom()

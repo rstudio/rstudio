@@ -129,6 +129,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    Position getCursorPosition();
    void setCursorPosition(Position position);
    void moveCursorNearTop();
+   void moveCursorNearTop(int rowOffset);
 
    
    InputEditorSelection search(String needle,
