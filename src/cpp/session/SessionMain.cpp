@@ -1198,6 +1198,8 @@ Error bufferConsoleInput(const core::json::JsonRpcRequest& request,
 
 void doSuspendForRestart(const r::session::RSuspendOptions& options)
 {
+   module_context::consoleWriteOutput("\nRestarting R session...\n\n");
+
    r::session::suspendForRestart(options);
 }
 
