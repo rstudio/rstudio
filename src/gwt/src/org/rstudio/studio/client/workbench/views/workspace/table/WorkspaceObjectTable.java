@@ -178,6 +178,8 @@ public class WorkspaceObjectTable
             return SEC_DATA ;
          if ("function".equals(type) && obj.getLength() == 1)
             return SEC_FUNC ;
+         if ("C++Function".equals(type) && obj.getLength() == 1)
+            return SEC_FUNC;
          else
             return SEC_VAL ;
       }
@@ -305,7 +307,7 @@ public class WorkspaceObjectTable
 
       int index = rowManager_.getRowIndex(object) ;
       String type = object.getType() ;
-      if ("function".equals(type))
+      if ("function".equals(type) || "C++Function".equals(type))
       {
          table_.getFlexCellFormatter().setColSpan(index, 0, 2) ;
          String signature = object.getValue().replaceFirst("^function ", 

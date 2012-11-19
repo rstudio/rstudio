@@ -11,6 +11,11 @@
 #
 #
 
+.rs.addFunction("isFunction", function(val)
+{
+   is.function(val) || identical(.rs.getSingleClass(val), "C++Function")
+})
+
 .rs.addFunction("valueAsString", function(val)
 {
    tryCatch(
@@ -38,7 +43,7 @@
          else
             return ("NO_VALUE")
       }
-      else if (is.function(val))
+      else if (.rs.isFunction(val))
          return (.rs.getSignature(val))
       else
          return ("NO_VALUE")
