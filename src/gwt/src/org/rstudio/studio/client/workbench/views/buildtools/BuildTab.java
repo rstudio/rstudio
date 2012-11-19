@@ -130,7 +130,6 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
                commands.cleanAll().remove();
                commands.stopBuild().remove();
                commands.activateBuild().remove();
-               commands.newCppDoc().remove();
             }
             
             // initialize from build state if necessary

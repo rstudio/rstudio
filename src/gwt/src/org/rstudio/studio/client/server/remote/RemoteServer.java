@@ -2651,6 +2651,12 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void canBuildCpp(ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, CAN_BUILD_CPP, requestCallback);
+   }
+   
+   @Override
    public void startBuild(String type,
                           ServerRequestCallback<Boolean> requestCallback)
    {
@@ -2896,6 +2902,7 @@ public class RemoteServer implements Server
    private static final String BEGIN_FIND = "begin_find";
    private static final String STOP_FIND = "stop_find";
    
+   private static final String CAN_BUILD_CPP = "can_build_cpp";
    private static final String START_BUILD = "start_build";
    private static final String TERMINATE_BUILD = "terminate_build";
    private static final String DEVTOOLS_LOAD_ALL_PATH = "devtools_load_all_path";

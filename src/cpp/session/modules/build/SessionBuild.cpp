@@ -1009,6 +1009,14 @@ Error terminateBuild(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error canBuildCpp(const json::JsonRpcRequest& request,
+                  json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(module_context::canBuildCpp());
+
+   return Success();
+}
+
 Error devtoolsLoadAllPath(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
@@ -1181,6 +1189,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "start_build", startBuild))
       (bind(registerRpcMethod, "terminate_build", terminateBuild))
+      (bind(registerRpcMethod, "can_build_cpp", canBuildCpp))
       (bind(registerRpcMethod, "devtools_load_all_path", devtoolsLoadAllPath))
       (bind(sourceModuleRFile, "SessionBuild.R"))
       (bind(source_cpp::initialize));

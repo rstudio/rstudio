@@ -464,9 +464,10 @@ public class TextEditingTarget implements EditingTarget
       });
       
       
-      // validate required compontents (e.g. Tex, knitr, etc.)
+      // validate required compontents (e.g. Tex, knitr, C++ etc.)
       checkCompilePdfDependencies();
       previewHtmlHelper_.verifyPrerequisites(view_, fileType_);  
+      checkBuildCppDependencies();
       
       syncFontSize(releaseOnDismiss_, events_, view_, fontSizeManager_);
      
@@ -521,6 +522,32 @@ public class TextEditingTarget implements EditingTarget
    private void checkCompilePdfDependencies()
    {
       compilePdfHelper_.checkCompilers(view_, fileType_);
+   }
+   
+   private void checkBuildCppDependencies()
+   {
+      if (fileType_.isCpp())
+      {
+         server_.canBuildCpp(new ServerRequestCallback<Boolean>() {
+   
+            @Override
+            public void onResponseReceived(Boolean canBuild)
+            {
+               if (!canBuild) 
+               {
+                  view_.showWarningBar(
+                     "The tools required to build C/C++ code for R " +
+                     "are not currently installed");
+               }
+            }
+            
+            @Override
+            public void onError(ServerError error)
+            {
+               // ignore error since this is merely advisory
+            }
+         });
+      }
    }
    
    private void initStatusBar()

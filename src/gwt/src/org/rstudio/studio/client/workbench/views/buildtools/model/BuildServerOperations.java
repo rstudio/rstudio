@@ -17,6 +17,9 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public interface BuildServerOperations
 {
+   // check if we can build C/C++ code
+   void canBuildCpp(ServerRequestCallback<Boolean> requestCallback);
+   
    // returns true to indicate that the build has started, returns false
    // to indicate that the build could not be started because another
    // build is currently in progress
