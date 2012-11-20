@@ -55,8 +55,7 @@ Error getNewProjectContext(const json::JsonRpcRequest& request,
 {
    json::Object contextJson;
 
-   contextJson["rcpp_available"] = module_context::canBuildCpp() &&
-                                   module_context::isPackageInstalled("Rcpp");
+   contextJson["rcpp_available"] = module_context::isPackageInstalled("Rcpp");
 
    pResponse->setResult(contextJson);
 
