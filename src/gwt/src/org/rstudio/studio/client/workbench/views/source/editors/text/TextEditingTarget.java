@@ -252,6 +252,7 @@ public class TextEditingTarget implements EditingTarget
       prefs_ = prefs;
       compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
       previewHtmlHelper_ = new TextEditingTargetPreviewHtmlHelper();
+      cppHelper_ = new TextEditingTargetCppHelper(server);
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
       scopeHelper_ = new TextEditingTargetScopeHelper(docDisplay_);
       
@@ -527,28 +528,7 @@ public class TextEditingTarget implements EditingTarget
    
    private void checkBuildCppDependencies()
    {
-      if (fileType_.isC())
-      {
-         server_.canBuildCpp(new ServerRequestCallback<Boolean>() {
-   
-            @Override
-            public void onResponseReceived(Boolean canBuild)
-            {
-               if (!canBuild) 
-               {
-                  view_.showWarningBar(
-                     "The tools required to build C/C++ code for R " +
-                     "are not currently installed");
-               }
-            }
-            
-            @Override
-            public void onError(ServerError error)
-            {
-               // ignore error since this is merely advisory
-            }
-         });
-      }
+      cppHelper_.checkBuildCppDependencies(view_, fileType_);
    }
    
    private void initStatusBar()
@@ -2907,6 +2887,7 @@ public class TextEditingTarget implements EditingTarget
    private FileSystemContext fileContext_;
    private final TextEditingTargetCompilePdfHelper compilePdfHelper_;
    private final TextEditingTargetPreviewHtmlHelper previewHtmlHelper_;
+   private final TextEditingTargetCppHelper cppHelper_;
    private boolean ignoreDeletes_;
    private final TextEditingTargetScopeHelper scopeHelper_;
    private TextEditingTargetSpelling spelling_;
