@@ -75,6 +75,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
@@ -526,7 +527,7 @@ public class TextEditingTarget implements EditingTarget
    
    private void checkBuildCppDependencies()
    {
-      if (fileType_.isCpp())
+      if (fileType_.isC())
       {
          server_.canBuildCpp(new ServerRequestCallback<Boolean>() {
    
@@ -1067,9 +1068,29 @@ public class TextEditingTarget implements EditingTarget
    {
       view_.ensureVisible();
       
-      FileSystemItem fsi = suggestedPath != null
-                           ? FileSystemItem.createFile(suggestedPath)
-                           : workbenchContext_.getDefaultFileDialogDir();
+      FileSystemItem fsi;
+      if (suggestedPath != null)
+      {
+         fsi = FileSystemItem.createFile(suggestedPath);
+      }
+      else
+      {
+         // C/C++ files in package projects go in the src directory
+         SessionInfo sessionInfo = session_.getSessionInfo();
+           
+         if (fileType_.isC() && 
+             sessionInfo.getBuildToolsType().equals(
+                                          SessionInfo.BUILD_TOOLS_PACKAGE))
+         {
+            fsi = FileSystemItem.createDir(sessionInfo.getBuildTargetDir());
+            fsi = FileSystemItem.createDir(fsi.completePath("src"));
+         }
+         else
+         {
+            fsi = workbenchContext_.getDefaultFileDialogDir();
+         }
+      }
+      
       fileDialogs_.saveFile(
             "Save File - " + getName().getValue(),
             fileContext_,

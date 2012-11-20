@@ -240,6 +240,10 @@ public class SessionInfo extends JavaScriptObject
       return this.build_tools_type;
    }-*/;
    
+   public final native String getBuildTargetDir() /*-{
+      return this.build_target_dir;
+   }-*/;
+   
    public final native BuildState getBuildState() /*-{
       return this.build_state;
    }-*/;
