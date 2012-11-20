@@ -854,6 +854,21 @@ private:
          boost::format fmt("\nExited with status %1%.\n\n");
          enqueBuildOutput(kBuildOutputError, boost::str(fmt % exitStatus));
 
+         // if this is a package build then check if we can build
+         // C++ code at all
+         if (!pkgInfo_.empty() && postBuildWarning_.empty())
+         {
+            if (!module_context::canBuildCpp())
+            {
+               postBuildWarning_ =
+                 "WARNING: The tools required to build R packages "
+                 "are not currently installed. Additional information on "
+                 "installing the required tools for your platform can be "
+                 "found here:\n\n"
+                 "http://www.rstudio.com/ide/docs/packages/prerequisites\n";
+            }
+         }
+
          // never restart R after a failed build
          restartR_ = false;
 
@@ -905,8 +920,7 @@ private:
       isRunning_ = false;
 
       if (!postBuildWarning_.empty())
-         enqueBuildOutput(kBuildOutputError,
-                          "\n" + postBuildWarning_ + "\n");
+         enqueBuildOutput(kBuildOutputError, postBuildWarning_ + "\n");
 
       // enque event
       std::string afterRestartCommand;
