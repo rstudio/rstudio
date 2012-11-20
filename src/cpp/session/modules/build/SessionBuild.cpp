@@ -865,7 +865,7 @@ private:
                  "are not currently installed. Additional information on "
                  "installing the required tools for your platform can be "
                  "found here:\n\n"
-                 "http://www.rstudio.com/ide/docs/packages/prerequisites\n";
+                 "http://www.rstudio.com/ide/docs/packages/prerequisites";
             }
          }
 
@@ -920,7 +920,7 @@ private:
       isRunning_ = false;
 
       if (!postBuildWarning_.empty())
-         enqueBuildOutput(kBuildOutputError, postBuildWarning_ + "\n");
+         enqueBuildOutput(kBuildOutputError, postBuildWarning_ + "\n\n");
 
       // enque event
       std::string afterRestartCommand;
