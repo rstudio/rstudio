@@ -1541,14 +1541,29 @@ public class SerializableTypeOracleBuilder {
    * the given array's leaf type and its instantiable subtypes. (Note: this adds O(S * R)
    * array types to the output where S is the number of subtypes and R is the rank.)
    * Prerequisite: The leaf type's tic and its subtypes must already be created.
+   * @see #checkArrayInstantiable
    */
   private void markArrayTypes(TreeLogger logger, JArrayType array, TypePath path,
       ProblemReport problems) {
     logger = logger.branch(TreeLogger.DEBUG, "Adding array types for " + array);
 
     JType leafType = array.getLeafType();
+    JTypeParameter isLeafTypeParameter = leafType.isTypeParameter();
+    if (isLeafTypeParameter != null) {
+      if (typeParametersInRootTypes.contains(isLeafTypeParameter)) {
+        leafType = isLeafTypeParameter.getFirstBound(); // to match computeTypeInstantiability
+      } else {
+        // skip non-root leaf parameters, to match checkArrayInstantiable
+        return;
+      }
+    }
+
     TypeInfoComputed leafTic = typeToTypeInfoComputed.get(leafType);
-    assert leafTic != null : "not computed: " + leafType;
+    if (leafTic == null) {
+      problems.add(array, "internal error: leaf type not computed: " +
+          leafType.getQualifiedSourceName(), Priority.FATAL);
+      return;
+    }
 
     JClassType leafClass = leafType.isClassOrInterface();
     if (leafClass == null) {
