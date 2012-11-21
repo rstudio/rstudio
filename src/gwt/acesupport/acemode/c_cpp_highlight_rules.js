@@ -31,6 +31,7 @@ var lang = require("ace/lib/lang");
 var DocCommentHighlightRules = require("mode/doc_comment_highlight_rules").DocCommentHighlightRules;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 var TexHighlightRules = require("mode/tex_highlight_rules").TexHighlightRules;
+var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
 
 var c_cppHighlightRules = function() {
 
@@ -195,6 +196,23 @@ var c_cppHighlightRules = function() {
     
     this.embedRules(DocCommentHighlightRules, "doc-",
         [ DocCommentHighlightRules.getEndRule("start") ]);
+
+    // Embed R syntax highlighting
+    this.$rules["start"].unshift({
+        token: "support.function.codebegin",
+        regex: "^\\s*\\/\\*{3}\\s*R\\s*$",
+        next: "r-start"
+    });
+
+    var rRules = new RHighlightRules().getRules();
+    this.addRules(rRules, "r-");
+    this.$rules["r-start"].unshift({
+        token: "support.function.codeend",
+        regex: "\\*\\/",
+        next: "start"
+    });
+
+
 };
 
 oop.inherits(c_cppHighlightRules, TextHighlightRules);

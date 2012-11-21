@@ -36,10 +36,18 @@ var Range = require("ace/range").Range;
 var CstyleBehaviour = require("ace/mode/behaviour/cstyle").CstyleBehaviour;
 var CStyleFoldMode = require("ace/mode/folding/cstyle").FoldMode;
 
-var Mode = function() {
+var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").SweaveBackgroundHighlighter;
+
+var Mode = function(suppressHighlighting, doc, session) {
+    this.$session = session;
     this.$tokenizer = new Tokenizer(new c_cppHighlightRules().getRules());
     this.$outdent = new MatchingBraceOutdent();
     this.$behaviour = new CstyleBehaviour();
+    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
+        session,
+        /^\s*\/\*{3}\s*R\s*$/,
+        /^\*\/$/,
+        true);
     this.foldingRules = new CStyleFoldMode();
 };
 oop.inherits(Mode, TextMode);
@@ -72,6 +80,11 @@ oop.inherits(Mode, TextMode);
         else {
             doc.indentRows(startRow, endRow, "//");
         }
+    };
+
+    this.getLanguageMode = function(position)
+    {
+      return this.$session.getState(position.row).match(/^r-/) ? 'R' : 'C_CPP';
     };
 
     this.getNextLineIndent = function(state, line, tab) {
