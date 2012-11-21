@@ -52,7 +52,7 @@ bool JSRunner::eval(JSContext* ctx, JSObject* object, const std::string& script)
     sgo = do_QueryInterface(priv);
   }
 
-  JSPrincipals *jsprin = nsnull;
+  JSPrincipals *jsprin = nullptr;
   std::string virtual_filename;
   nsresult nr;
 
@@ -102,7 +102,7 @@ bool JSRunner::eval(JSContext* ctx, JSObject* object, const std::string& script)
   principal->GetJSPrincipals(ctx, &jsprin);
 #endif
 
-  if (jsprin == nsnull) {
+  if (jsprin == nullptr) {
     Debug::log(Debug::Error) << "Get JSPrincial failed at JSRunner::eval"
         << Debug::flush;
     return false;

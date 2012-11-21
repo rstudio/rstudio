@@ -398,7 +398,7 @@ NS_IMETHODIMP ExternalWrapper::CanCallMethod(const nsIID * iid,
   if (strEquals(methodName, "connect") || strEquals(methodName, "init")) {
     *_retval = cloneAllAccess();
   } else {
-    *_retval = nsnull;
+    *_retval = nullptr;
   }
   return NS_OK;
 }
@@ -406,12 +406,12 @@ NS_IMETHODIMP ExternalWrapper::CanCallMethod(const nsIID * iid,
 NS_IMETHODIMP ExternalWrapper::CanGetProperty(const nsIID * iid,
     const PRUnichar *propertyName, char **_retval) {
   Debug::log(Debug::Spam) << "ExternalWrapper::CanGetProperty" << Debug::flush;
-  *_retval = nsnull;
+  *_retval = nullptr;
   return NS_OK;
 }
 NS_IMETHODIMP ExternalWrapper::CanSetProperty(const nsIID * iid,
     const PRUnichar *propertyName, char **_retval) {
   Debug::log(Debug::Spam) << "ExternalWrapper::CanSetProperty" << Debug::flush;
-  *_retval = nsnull;
+  *_retval = nullptr;
   return NS_OK;
 }

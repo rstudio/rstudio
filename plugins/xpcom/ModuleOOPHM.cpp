@@ -158,7 +158,7 @@ static NS_IMETHODIMP registerSelf(nsIComponentManager *aCompMgr, nsIFile *aPath,
   NS_ENSURE_SUCCESS(rv, rv);
 
   rv = categoryManager->AddCategoryEntry("JavaScript global property",
-      "__gwt_HostedModePlugin", OOPHM_CONTRACTID, true, true, nsnull);
+      "__gwt_HostedModePlugin", OOPHM_CONTRACTID, true, true, nullptr);
 
   if (rv != NS_OK) {
     Debug::log(Debug::Error) << "ModuleOOPHM registerSelf returned " << rv
@@ -190,7 +190,7 @@ static nsModuleComponentInfo components[] = {
        unregisterSelf, /* unregister self */
        factoryDestructor, /* factory destructor */
        NS_CI_INTERFACE_GETTER_NAME(ExternalWrapper), /* get interfaces */
-       nsnull, /* language helper */
+       nullptr, /* language helper */
        &NS_CLASSINFO_NAME(ExternalWrapper), /* global class-info pointer */
        0 /* class flags */
     }
@@ -202,8 +202,8 @@ static nsModuleInfo const kModuleInfo = {
   ("ExternalWrapperModule"),
   (components),
   (sizeof(components) / sizeof(components[0])),
-  (nsnull),
-  (nsnull)
+  (nullptr),
+  (nullptr)
 };
 
 NSGETMODULE_ENTRY_POINT(ExternalWrapperModule) (nsIComponentManager *servMgr,

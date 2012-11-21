@@ -37,7 +37,7 @@ static JSClass JavaObjectClass = {
 #else
   JavaObject::getPropertyWrapper,
   JavaObject::setPropertyWrapper,
-#endif //GECHO_VERSION
+#endif
 
   reinterpret_cast<JSEnumerateOp>(JavaObject::enumerate), /* enumerate */
   JS_ResolveStub, /* resolve */
@@ -144,6 +144,15 @@ JSObject* JavaObject::construct(JSContext* ctx, SessionData* data, int objectRef
   return obj;
 }
 
+#if GECKO_VERSION >= 17000
+JSBool JavaObject::getPropertyWrapper(JSContext* ctx, JSHandleObject obj,
+    JSHandleId id, JSMutableHandleValue vp) {
+  jsval rval;
+  JSBool result = JavaObject::getProperty(ctx, obj.get(), id.get(), &rval);
+  vp.set(rval);
+  return result;
+}
+#else
 #if GECKO_VERSION >= 15000
 JSBool JavaObject::getPropertyWrapper(JSContext* ctx, JSHandleObject obj,
     JSHandleId id, jsval *vp) {
@@ -153,7 +162,8 @@ JSBool JavaObject::getPropertyWrapper(JSContext* ctx, JSHandleObject obj,
   return JavaObject::getProperty(ctx, obj.value(), id.value(), vp);
 #endif
 }
-#endif
+#endif // >= 15000
+#endif // not >= 17000
 
 JSBool JavaObject::getProperty(JSContext* ctx, JSObject* obj, jsid id,
     jsval* rval) {
@@ -206,6 +216,13 @@ JSBool JavaObject::getProperty(JSContext* ctx, JSObject* obj, jsid id,
   return JS_TRUE;
 }
 
+#if GECKO_VERSION >= 17000
+JSBool JavaObject::setPropertyWrapper(JSContext* ctx, JSHandleObject obj,
+    JSHandleId id, JSBool strict, JSMutableHandleValue vp) {
+  jsval rval = vp.get();
+  return JavaObject::setProperty(ctx, obj, id, strict, &rval);
+}
+#else
 #if GECKO_VERSION >= 15000
 JSBool JavaObject::setPropertyWrapper(JSContext* ctx, JSHandleObject obj,
     JSHandleId id, JSBool strict, jsval *vp) {
@@ -215,7 +232,8 @@ JSBool JavaObject::setPropertyWrapper(JSContext* ctx, JSHandleObject obj,
   return setProperty(ctx, obj.value(), id.value(), strict, vp);
 #endif
 }
-#endif
+#endif // >= 15000
+#endif // ! >= 17000
 
 #if GECKO_VERSION < 2000
 JSBool JavaObject::setProperty(JSContext* ctx, JSObject* obj, jsid id,

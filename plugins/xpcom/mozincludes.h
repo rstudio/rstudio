@@ -27,4 +27,12 @@
 #define MOZ_JS_SetReservedSlot(cx, obj, index, v) JS_SetReservedSlot(cx, obj, index, v)
 #endif
 
+#include "nscore.h"
+// Fall back to nsnull for older Gecko versions
+#ifdef nsnull
+#ifndef nullptr
+#define nullptr nsnull
+#endif
+#endif
+
 #endif

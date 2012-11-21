@@ -40,6 +40,12 @@ static inline bool INT_FITS_IN_JSVAL(int i) {
 }
 #endif //GECKO_VERSION
 
+#if GECKO_VERSION >= 17000
+static inline void JS_NewNumberValue(JSContext *cx, double d, jsval *rval) {
+  *rval = JS_NumberValue(d);
+}
+#endif
+
 static JSContext* getJSContext() {
   // Get JSContext from stack.
   nsCOMPtr<nsIJSContextStack> stack =
@@ -53,7 +59,7 @@ static JSContext* getJSContext() {
     return NULL;
   }
 
-  if (cx == nsnull) {
+  if (cx == nullptr) {
     // TODO(jat): figure out why this can be null at plugin unload time
     Debug::log(Debug::Error) << "GWT Dev Plugin: Null JS context" << Debug::flush;
   }

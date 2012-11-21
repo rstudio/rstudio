@@ -63,10 +63,17 @@ public:
   static JSBool toString20(JSContext* ctx, uintN argc, jsval* vp);
   static JSBool call20(JSContext* ctx, uintN argc, jsval* vp);
 #endif //GECKO_VERSION
+#if GECKO_VERSION >= 17000
+  static JSBool getPropertyWrapper(JSContext* ctx, JSHandleObject obj,
+      JSHandleId id, JSMutableHandleValue vp);
+  static JSBool setPropertyWrapper(JSContext* ctx, JSHandleObject obj,
+      JSHandleId id, JSBool strict, JSMutableHandleValue vp);
+#else
 #if GECKO_VERSION >= 15000
   static JSBool getPropertyWrapper(JSContext* ctx, JSHandleObject obj, JSHandleId id, jsval *vp);
   static JSBool setPropertyWrapper(JSContext* ctx, JSHandleObject obj, JSHandleId id,
       JSBool strict, jsval *vp);
+#endif
 #endif
 
 private:
