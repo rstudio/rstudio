@@ -37,22 +37,34 @@ var CstyleBehaviour = require("ace/mode/behaviour/cstyle").CstyleBehaviour;
 var CStyleFoldMode = require("ace/mode/folding/cstyle").FoldMode;
 
 var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").SweaveBackgroundHighlighter;
+var RCodeModel = require("mode/r_code_model").RCodeModel;
+var RMatchingBraceOutdent = require("mode/r_matching_brace_outdent").RMatchingBraceOutdent;
+
 
 var Mode = function(suppressHighlighting, doc, session) {
     this.$session = session;
     this.$tokenizer = new Tokenizer(new c_cppHighlightRules().getRules());
     this.$outdent = new MatchingBraceOutdent();
+    this.$r_outdent = {};
+    oop.implement(this.$r_outdent, RMatchingBraceOutdent);
     this.$behaviour = new CstyleBehaviour();
+    this.codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/, /^\s*\/\*{3,}\s*[Rr]\s*$/);
     this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
         session,
         /^\s*\/\*{3,}\s*[Rr]\s*$/,
         /^\*\/$/,
         true);
     this.foldingRules = new CStyleFoldMode();
+
 };
 oop.inherits(Mode, TextMode);
 
 (function() {
+
+    this.insertChunkInfo = {
+        value: "/*** R\n\n*/\n",
+        position: {row: 1, column: 0}
+    };
 
     this.toggleCommentLines = function(state, doc, startRow, endRow) {
         var outdent = true;
@@ -87,12 +99,16 @@ oop.inherits(Mode, TextMode);
       return this.$session.getState(position.row).match(/^r-/) ? 'R' : 'C_CPP';
     };
 
-    this.insertChunkInfo = {
-        value: "/*** R\n\n*/\n",
-        position: {row: 1, column: 0}
+    this.inRLanguageMode = function(state)
+    {
+        return state.match(/^r-/);
     };
 
-    this.getNextLineIndent = function(state, line, tab) {
+    this.getNextLineIndent = function(state, line, tab, tabSize, row) {
+
+        if (this.inRLanguageMode(state))
+           return this.codeModel.getNextLineIndent(row, line, state, tab, tabSize);
+
         var indent = this.$getIndent(line);
 
         var tokenizedLine = this.$tokenizer.getLineTokens(line, state);
@@ -125,11 +141,17 @@ oop.inherits(Mode, TextMode);
     };
 
     this.checkOutdent = function(state, line, input) {
-        return this.$outdent.checkOutdent(line, input);
+        if (this.inRLanguageMode(state))
+            return this.$r_outdent.checkOutdent(line,input);
+        else
+            return this.$outdent.checkOutdent(line, input);
     };
 
     this.autoOutdent = function(state, doc, row) {
-        this.$outdent.autoOutdent(doc, row);
+        if (this.inRLanguageMode(state))
+            return this.$r_outdent.autoOutdent(state, doc, row);
+        else
+            return this.$outdent.autoOutdent(doc, row);
     };
     
     this.transformAction = function(state, action, editor, session, text) {
