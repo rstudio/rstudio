@@ -19,3 +19,8 @@ setHook("sourceCpp.onBuildComplete", function(succeeded, output) {
    .Call("rs_sourceCppOnBuildComplete", succeeded, output)
 })
 
+
+.rs.addFunction("hasRcppPackageSkeletonAttributes", function() {
+   .rs.isPackageInstalled("Rcpp") && (packageVersion("Rcpp") >= "0.10.0.3")
+})
+

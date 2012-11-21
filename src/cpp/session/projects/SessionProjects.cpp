@@ -62,6 +62,16 @@ Error getNewProjectContext(const json::JsonRpcRequest& request,
    return Success();
 }
 
+bool hasRcppPackageSkeletonAttributes()
+{
+   bool hasAttributes = false;
+   Error error = r::exec::RFunction(".rs.hasRcppPackageSkeletonAttributes")
+                                                         .call(&hasAttributes);
+   if (error)
+      LOG_ERROR(error);
+   return hasAttributes;
+}
+
 Error createProject(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
@@ -133,7 +143,7 @@ Error createProject(const json::JsonRpcRequest& request,
 
       // copy the code files into the tempDir and build up a
       // list of the filenames for passing to package.skeleton
-      std::vector<std::string> codeFileNames;
+      std::vector<std::string> rFileNames, cppFileNames;
       BOOST_FOREACH(const FilePath& codeFilePath, codeFiles)
       {
          FilePath targetPath = tempDir.complete(codeFilePath.filename());
@@ -141,8 +151,12 @@ Error createProject(const json::JsonRpcRequest& request,
          if (error)
             return error;
 
-         codeFileNames.push_back(
-                        string_utils::utf8ToSystem(targetPath.filename()));
+         std::string ext = targetPath.extensionLowerCase();
+         std::string file = string_utils::utf8ToSystem(targetPath.filename());
+         if (boost::algorithm::starts_with(ext,".c"))
+            cppFileNames.push_back(file);
+         else
+            rFileNames.push_back(file);
       }
 
 
@@ -156,7 +170,7 @@ Error createProject(const json::JsonRpcRequest& request,
          Error error = core::writeStringToFile(srcFilePath, "");
          if (error)
             return error;
-         codeFileNames.push_back(string_utils::utf8ToSystem(srcFileName));
+         rFileNames.push_back(string_utils::utf8ToSystem(srcFileName));
       }
 
       // temporarily switch to the tempDir for package creation
@@ -172,7 +186,19 @@ Error createProject(const json::JsonRpcRequest& request,
                            string_utils::utf8ToSystem(packageDir.filename()));
       pkgSkeleton.addParam("path",
                string_utils::utf8ToSystem(packageDir.parent().absolutePath()));
-      pkgSkeleton.addParam("code_files", codeFileNames);
+      pkgSkeleton.addParam("code_files", rFileNames);
+      if (usingRcpp && hasRcppPackageSkeletonAttributes())
+      {
+         if (!cppFileNames.empty())
+         {
+            pkgSkeleton.addParam("example_code", false);
+            pkgSkeleton.addParam("cpp_files", cppFileNames);
+         }
+         else
+         {
+            pkgSkeleton.addParam("attributes", true);
+         }
+      }
       error = pkgSkeleton.call();
       if (error)
          return error;

@@ -94,7 +94,6 @@ public class CodeFilesList extends Composite
             "Add Source File", 
             fileSystemContext_, 
             FileSystemItem.home(), 
-            "R Scripts (*.R)",
             new ProgressOperationWithInput<FileSystemItem>() {
 
                @Override
