@@ -87,6 +87,11 @@ oop.inherits(Mode, TextMode);
       return this.$session.getState(position.row).match(/^r-/) ? 'R' : 'C_CPP';
     };
 
+    this.insertChunkInfo = {
+        value: "/*** R\n\n*/\n",
+        position: {row: 1, column: 0}
+    };
+
     this.getNextLineIndent = function(state, line, tab) {
         var indent = this.$getIndent(line);
 
