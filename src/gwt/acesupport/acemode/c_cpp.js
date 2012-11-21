@@ -45,7 +45,7 @@ var Mode = function(suppressHighlighting, doc, session) {
     this.$behaviour = new CstyleBehaviour();
     this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
         session,
-        /^\s*\/\*{3}\s*R\s*$/,
+        /^\s*\/\*{3,}\s*[Rr]\s*$/,
         /^\*\/$/,
         true);
     this.foldingRules = new CStyleFoldMode();
