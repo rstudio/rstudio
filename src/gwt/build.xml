@@ -67,6 +67,7 @@
             <file name="doc_comment_highlight_rules.js"/>
             <file name="c_cpp_highlight_rules.js"/>
             <file name="c_cpp.js"/>
+            <file name="c_cpp_fold_mode.js"/>
          </sources>
          <sources dir="acesupport/acetheme">
             <file name="default.js"/>

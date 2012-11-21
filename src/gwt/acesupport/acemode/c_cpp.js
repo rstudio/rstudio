@@ -34,7 +34,8 @@ var c_cppHighlightRules = require("mode/c_cpp_highlight_rules").c_cppHighlightRu
 var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
 var Range = require("ace/range").Range;
 var CstyleBehaviour = require("ace/mode/behaviour/cstyle").CstyleBehaviour;
-var CStyleFoldMode = require("ace/mode/folding/cstyle").FoldMode;
+
+var CppStyleFoldMode = require("mode/c_cpp_fold_mode").FoldMode;
 
 var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").SweaveBackgroundHighlighter;
 var RCodeModel = require("mode/r_code_model").RCodeModel;
@@ -54,7 +55,7 @@ var Mode = function(suppressHighlighting, doc, session) {
         /^\s*\/\*{3,}\s*[Rr]\s*$/,
         /^\*\/$/,
         true);
-    this.foldingRules = new CStyleFoldMode();
+    this.foldingRules = new CppStyleFoldMode();
 
 };
 oop.inherits(Mode, TextMode);
