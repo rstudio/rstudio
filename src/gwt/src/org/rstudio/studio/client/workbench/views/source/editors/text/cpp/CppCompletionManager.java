@@ -21,6 +21,7 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionListPopupPanel;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
@@ -29,10 +30,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSo
 
 
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -42,18 +40,23 @@ public class CppCompletionManager implements CompletionManager
 {
    public CppCompletionManager(InputEditorDisplay input,
                                NavigableSourceEditor navigableSourceEditor,
-                               InitCompletionFilter initFilter)
+                               InitCompletionFilter initFilter,
+                               CompletionManager rCompletionManager)
    {
       input_ = input;
       navigableSourceEditor_ = navigableSourceEditor;
       initFilter_ = initFilter;
+      rCompletionManager_ = rCompletionManager;
    }
 
    // return false to indicate key not handled
-   @SuppressWarnings("unused")
    @Override
    public boolean previewKeyDown(NativeEvent event)
    {
+      if (isCursorInRMode())
+         return rCompletionManager_.previewKeyDown(event);
+      
+      /*
       if (popup_ == null)
       { 
          if (false) // check for user completion key combo 
@@ -118,6 +121,7 @@ public class CppCompletionManager implements CompletionManager
          close();
          return false;
       }
+      */
       
       return false;
    }
@@ -126,6 +130,10 @@ public class CppCompletionManager implements CompletionManager
    @Override
    public boolean previewKeyPress(char c)
    {
+      if (isCursorInRMode())
+         return rCompletionManager_.previewKeyPress(c);
+      
+      /*
       if (popup_ != null)
       {
          // right now additional suggestions will be for attributes names
@@ -180,11 +188,13 @@ public class CppCompletionManager implements CompletionManager
             }
          }
       }
+      */
       
       return false ;
    }
    
    
+   @SuppressWarnings("unused")
    private void encloseSelection(char beginChar, char endChar) 
    {
       StringBuilder builder = new StringBuilder();
@@ -194,6 +204,7 @@ public class CppCompletionManager implements CompletionManager
       input_.replaceSelection(builder.toString(), true);
    }
 
+   @SuppressWarnings("unused")
    private boolean isAttributeCompletionValidHere(char c)
    {     
       // TODO: we can't just append the character since it could
@@ -203,7 +214,6 @@ public class CppCompletionManager implements CompletionManager
       if (line.matches("\\s*//\\s+\\[\\[.*"))
       {
          // get text up to selection
-         @SuppressWarnings("unused")
          String linePart = input_.getText().substring(
                            0, input_.getSelection().getStart().getPosition());
          return true;
@@ -216,21 +226,32 @@ public class CppCompletionManager implements CompletionManager
    @Override
    public void goToHelp()
    {
+      if (isCursorInRMode())
+         rCompletionManager_.goToHelp();
    }
 
    // find the definition of the function at the current cursor location
    @Override
    public void goToFunctionDefinition()
    {  
+      if (isCursorInRMode())
+         rCompletionManager_.goToFunctionDefinition();
    }
 
    // perform completion at the current cursor location
    @Override
    public void codeCompletion()
    {
-      if (initFilter_ == null || initFilter_.shouldComplete(null))
+      if (isCursorInRMode())
       {
+         rCompletionManager_.codeCompletion();
+      }
+      else
+      {
+         if (initFilter_ == null || initFilter_.shouldComplete(null))
+         {
          
+         }
       }
    }
 
@@ -238,13 +259,21 @@ public class CppCompletionManager implements CompletionManager
    @Override
    public void close()
    {
-      if (popup_ != null)
+      if (isCursorInRMode())
       {
-         popup_.hide();
-         popup_ = null;
+         rCompletionManager_.close();
+      }
+      else
+      {
+         if (popup_ != null)
+         {
+            popup_.hide();
+            popup_ = null;
+         }
       }
    }
    
+   @SuppressWarnings("unused")
    private void beginSuggest()
    {
       completionRequestInvalidation_.invalidate();
@@ -318,6 +347,15 @@ public class CppCompletionManager implements CompletionManager
    {
    }
 
+   private boolean isCursorInRMode()
+   {
+      String mode = input_.getLanguageMode(input_.getCursorPosition());
+      if (mode == null)
+         return false;
+      if (mode.equals(TextFileType.R_LANG_MODE))
+         return true;
+      return false;
+   }
   
    
    private final InputEditorDisplay input_ ;
@@ -325,6 +363,7 @@ public class CppCompletionManager implements CompletionManager
    private final NavigableSourceEditor navigableSourceEditor_;
    private CompletionListPopupPanel popup_;
    private final InitCompletionFilter initFilter_ ;
+   private final CompletionManager rCompletionManager_;
    private final Invalidation completionRequestInvalidation_ = new Invalidation();
    
   
