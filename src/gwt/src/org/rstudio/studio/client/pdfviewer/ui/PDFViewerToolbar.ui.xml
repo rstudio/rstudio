@@ -103,7 +103,7 @@
                <widget:InlineToolbarButton ui:field="btnJumpToSource_"
                                            icon="{res.jumpToSourceIcon}"
                                            label=""
-                                           description="Sync editor location to PDF view (Ctrl+Click) (Ctrl+F9)"/> 
+                                           description="Sync editor location to PDF view (Ctrl+Click) (Ctrl+F8)"/> 
                           
             </td>
             <td class="{style.alignCell}" align="center" nowrap="nowrap" style="min-width: 400px">
