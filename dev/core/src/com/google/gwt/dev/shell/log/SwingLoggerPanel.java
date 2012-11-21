@@ -50,6 +50,7 @@ import java.util.Enumeration;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JEditorPane;
@@ -65,10 +66,12 @@ import javax.swing.Popup;
 import javax.swing.PopupFactory;
 import javax.swing.UIManager;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkEvent.EventType;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.event.HyperlinkEvent.EventType;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
@@ -211,9 +214,6 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
       searchField.requestFocusInWindow();
     }
 
-    /**
-     * 
-     */
     private void updateSearchResult() {
       int n = matches.size();
       if (n == 0) {
@@ -260,7 +260,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
 
   String regexFilter;
 
-  final JTree tree;
+  private final JTree tree;
 
   DefaultTreeModel treeModel;
 
@@ -285,6 +285,8 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
   private JPanel topPanel;
   
   private JScrollPane treeView;
+
+  private JCheckBox autoScroll;
 
   /**
    * Create a Swing-based logger panel, with a tree section and a detail
@@ -317,6 +319,9 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
       }
     });
     logButtons.add(collapseButton);
+    autoScroll = new JCheckBox("Auto-scroll", true);
+    autoScroll.setMnemonic(KeyEvent.VK_U);
+    logButtons.add(autoScroll);
     topPanel.add(logButtons, BorderLayout.CENTER);
     // TODO(jat): temporarily avoid showing parts that aren't implemented.
     if (false) {
@@ -369,6 +374,16 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     add(topPanel, BorderLayout.NORTH);
     root = new DefaultMutableTreeNode();
     treeModel = new DefaultTreeModel(root);
+    treeModel.addTreeModelListener(new TreeModelListener() {
+      @Override public void treeNodesInserted(TreeModelEvent e) {
+        for (Object treeNode : e.getChildren()) {
+          onTreeNodeAdded((DefaultMutableTreeNode) treeNode);
+        }
+      }
+      @Override public void treeStructureChanged(TreeModelEvent e) { }
+      @Override public void treeNodesRemoved(TreeModelEvent e) { }
+      @Override public void treeNodesChanged(TreeModelEvent e) { }
+    });
     tree = new JTree(treeModel);
     tree.setRootVisible(false);
     tree.setEditable(false);
@@ -514,13 +529,6 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
         logger.log(TreeLogger.ERROR, "Unable to follow link to " + url, e);
       }
     }
-  }
-
-  /**
-   * @param node
-   */
-  public void notifyChange(DefaultMutableTreeNode node) {
-    treeModel.nodeChanged(node);
   }
 
   @Override
@@ -714,6 +722,20 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     } else {
       buf.append(node.toString());
       buf.append('\n');
+    }
+  }
+
+  private void onTreeNodeAdded(DefaultMutableTreeNode treeNode) {
+    TreePath path = new TreePath(treeNode.getPath());
+    if (autoScroll.isSelected()) {
+      tree.scrollPathToVisible(path); // internally will also call makeVisible
+    } else {
+      Object userObject = treeNode.getUserObject();
+      if (userObject instanceof LogEvent) {
+        if (((LogEvent) userObject).type.needsAttention()) {
+          tree.makeVisible(path);
+        }
+      }
     }
   }
 }

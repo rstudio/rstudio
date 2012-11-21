@@ -30,7 +30,6 @@ import java.util.Map;
 import javax.swing.Icon;
 import javax.swing.JLabel;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreePath;
 
 /**
  * Tree logger built on an Swing tree item.
@@ -355,9 +354,6 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
         }
         int insertIndex = findInsertionPoint(parentNode, idx);
         panel.treeModel.insertNodeInto(node, parentNode, insertIndex);
-        if (logEvent.type.needsAttention()) {
-          panel.tree.makeVisible(new TreePath(node.getPath()));
-        }
         if (parentNode == panel.treeModel.getRoot()
             && parentNode.getChildCount() == 1) {
           panel.treeModel.reload();
