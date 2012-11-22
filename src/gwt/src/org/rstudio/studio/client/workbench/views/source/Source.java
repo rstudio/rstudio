@@ -1076,11 +1076,14 @@ public class Source implements InsertSourceHandler,
                         public void execute()
                         {
                            // now navigate to the new position
+                           boolean highlight = 
+                                 event.getHighlightLine() &&
+                                 !uiPrefs_.highlightSelectedLine().getValue();
                            target.navigateToPosition(
                                  SourcePosition.create(position.getLine() - 1,
                                                        position.getColumn() - 1),
                                  false,
-                                 event.getHighlightLine());
+                                 highlight);
                         }
                      });
                   }
