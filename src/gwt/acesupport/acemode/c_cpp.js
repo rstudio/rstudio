@@ -156,19 +156,25 @@ oop.inherits(Mode, TextMode);
     };
     
     this.transformAction = function(state, action, editor, session, text) {
-       if (action === 'insertion' && text === "\n") {
-          // If newline in a doxygen comment, continue the comment
-          var pos = editor.getSelectionRange().start;
-          var match = /^((\s*\/\/+')\s*)/.exec(session.doc.getLine(pos.row));
-          if (match && editor.getSelectionRange().start.column >= match[2].length) {
-             return {text: "\n" + match[1]};
-          }
-          // If newline to start and embedded R chunk complete the chunk
-          match = /^((\s*\/\*{3,}\s*[Rr])\s*)/.exec(session.doc.getLine(pos.row));
-          if (match && editor.getSelectionRange().start.column >= match[2].length) {
-             return {text: "\n\n*/\n",
-                     selection: [1,0,1,0]};
-          }
+       if (action === 'insertion') {
+            if (text === "\n") {
+                // If newline in a doxygen comment, continue the comment
+                var pos = editor.getSelectionRange().start;
+                var match = /^((\s*\/\/+')\s*)/.exec(session.doc.getLine(pos.row));
+                if (match && editor.getSelectionRange().start.column >= match[2].length) {
+                    return {text: "\n" + match[1]};
+                }
+            }
+        
+            else if (text === "R") {
+                // If newline to start and embedded R chunk complete the chunk
+                var pos = editor.getSelectionRange().start;
+                var match = /^(\s*\/\*{3,}\s*)/.exec(session.doc.getLine(pos.row));
+                if (match && editor.getSelectionRange().start.column >= match[1].length) {
+                    return {text: "R\n\n*/\n",
+                            selection: [1,0,1,0]};
+                }
+            }
        }
        return false;
     };
