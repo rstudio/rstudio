@@ -244,6 +244,10 @@ public class SessionInfo extends JavaScriptObject
       return this.build_target_dir;
    }-*/;
    
+   public final native boolean getHasPackageSrcDir() /*-{
+      return this.has_pkg_src;
+   }-*/;
+   
    public final native BuildState getBuildState() /*-{
       return this.build_state;
    }-*/;

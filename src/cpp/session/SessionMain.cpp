@@ -461,19 +461,29 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // are build tools enabled
    if (projects::projectContext().hasProject())
    {
-      sessionInfo["build_tools_type"] = projects::projectContext().config()
-                                                                     .buildType;
+      std::string type = projects::projectContext().config().buildType;
+      sessionInfo["build_tools_type"] = type;
+
       FilePath buildTargetDir = projects::projectContext().buildTargetPath();
       if (!buildTargetDir.empty())
+      {
          sessionInfo["build_target_dir"] = module_context::createAliasedPath(
                                                                 buildTargetDir);
+         sessionInfo["has_pkg_src"] = (type == r_util::kBuildTypePackage) &&
+                                      buildTargetDir.childPath("src").exists();
+      }
       else
+      {
          sessionInfo["build_target_dir"] = json::Value();
+         sessionInfo["has_pkg_src"] = false;
+      }
+
    }
    else
    {
       sessionInfo["build_tools_type"] = r_util::kBuildTypeNone;
       sessionInfo["build_target_dir"] = json::Value();
+      sessionInfo["has_pkg_src"] = false;
    }
 
    sessionInfo["build_state"] = modules::build::buildStateAsJson();

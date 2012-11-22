@@ -1050,27 +1050,10 @@ public class TextEditingTarget implements EditingTarget
       
       FileSystemItem fsi;
       if (suggestedPath != null)
-      {
          fsi = FileSystemItem.createFile(suggestedPath);
-      }
       else
-      {
-         // C/C++ files in package projects go in the src directory
-         SessionInfo sessionInfo = session_.getSessionInfo();
-           
-         if (fileType_.isC() && 
-             sessionInfo.getBuildToolsType().equals(
-                                          SessionInfo.BUILD_TOOLS_PACKAGE))
-         {
-            fsi = FileSystemItem.createDir(sessionInfo.getBuildTargetDir());
-            fsi = FileSystemItem.createDir(fsi.completePath("src"));
-         }
-         else
-         {
-            fsi = workbenchContext_.getDefaultFileDialogDir();
-         }
-      }
-      
+         fsi = getSaveFileDefaultDir();
+ 
       fileDialogs_.saveFile(
             "Save File - " + getName().getValue(),
             fileContext_,
@@ -1151,6 +1134,26 @@ public class TextEditingTarget implements EditingTarget
                }
             });
    }
+   
+   private FileSystemItem getSaveFileDefaultDir()
+   {
+      FileSystemItem fsi;
+      SessionInfo si = session_.getSessionInfo();
+        
+      // C/C++ files in package projects go in the src directory
+      if (fileType_.isC() && si.getHasPackageSrcDir())
+      {
+         fsi = FileSystemItem.createDir(si.getBuildTargetDir());
+         fsi = FileSystemItem.createDir(fsi.completePath("src"));
+      }
+      else
+      {
+         fsi = workbenchContext_.getDefaultFileDialogDir();
+      }
+      
+      return fsi;
+   }
+
 
 
    public void onDismiss()
