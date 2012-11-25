@@ -40,6 +40,11 @@ void checkArity(SEXP op, SEXP args, SEXP call);
 core::Error registerUnsupported(const std::string& name, 
                                 const std::string& package);
 
+
+core::Error registerUnsupportedWithAlternative(const std::string& name,
+                                               const std::string& package,
+                                               const std::string& alternative);
+
 core::Error registerUnsupportedInternal(const std::string& name);
  
 } // namespace function_hook   

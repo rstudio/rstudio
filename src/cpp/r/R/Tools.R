@@ -307,11 +307,15 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
 })
 
 # marking functions in R packages as unsupported
-.rs.addFunction( "registerUnsupported", function(name, package)
+.rs.addFunction( "registerUnsupported", function(name, package, alternative = "")
 {
    unsupported <- function(...) 
    {  
-      stop("function not supported in RStudio\n")
+      msg <- "function not supported in RStudio"
+      if (nzchar(alternative))
+        msg <- paste(msg, "(try", alternative, "instead)")
+      msg <- paste(msg, "\n", sep="")
+      stop(msg)
    }
                                               
    .rs.registerReplaceHook(name, package, unsupported)

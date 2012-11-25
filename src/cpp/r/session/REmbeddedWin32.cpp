@@ -216,8 +216,10 @@ Error completeEmbeddedRInitialization(bool useInternet2)
    using namespace r::function_hook ;
    ExecBlock block ;
    block.addFunctions()
-      (bind(registerUnsupported, "loadhistory", "utils"))
-      (bind(registerUnsupported, "savehistory", "utils"))
+      (bind(registerUnsupportedWithAlternative, 
+                            "loadhistory", "utils", "rstudio::loadHistory"))
+      (bind(registerUnsupportedWithAlternative, 
+                            "savehistory", "utils", "rstudio::saveHistory"))
       (bind(registerUnsupported, "history", "utils"))
       (bind(registerUnsupported, "timestamp", "utils"))
       (bind(registerUnsupported, "winMenuAdd", "utils"))

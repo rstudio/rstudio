@@ -84,6 +84,14 @@ Error registerUnsupported(const std::string& name, const std::string& package)
 {
    return r::exec::RFunction(".rs.registerUnsupported", name, package).call();
 }
+
+Error registerUnsupportedWithAlternative(const std::string& name,
+                                         const std::string& package,
+                                         const std::string& alternative)
+{
+   return r::exec::RFunction(".rs.registerUnsupported", 
+                                 name, package, alternative).call();
+}
    
 Error registerUnsupportedInternal(const std::string& name)
 {
