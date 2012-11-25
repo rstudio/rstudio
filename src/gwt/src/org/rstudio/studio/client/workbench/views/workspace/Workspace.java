@@ -124,7 +124,7 @@ public class Workspace
 
    public void viewObject(String objectName)
    {
-      executeFunctionForObject("viewData", objectName);
+      executeFunctionForObject("rstudio::viewData", objectName);
    }
  
    private void executeFunctionForObject(String function, String objectName)
