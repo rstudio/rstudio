@@ -755,6 +755,9 @@ bool isTextFile(const FilePath& targetPath)
    if (hasBinaryMimeType(targetPath))
       return false;
 
+   if (targetPath.size() == 0)
+      return true;
+
 #ifndef _WIN32
    core::shell_utils::ShellCommand cmd("file");
    cmd << "--mime-type";
@@ -773,7 +776,7 @@ bool isTextFile(const FilePath& targetPath)
    std::string fileType = boost::algorithm::trim_copy(result.stdOut);
    return boost::algorithm::starts_with(fileType, "text/") ||
           boost::algorithm::ends_with(fileType, "+xml") ||
-          boost::algorithm::equals(fileType, "application/x-empty");
+          boost::algorithm::ends_with(fileType, "x-empty");
 #else
 
    // read contents of file
