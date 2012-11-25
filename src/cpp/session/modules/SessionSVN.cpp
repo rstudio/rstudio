@@ -188,7 +188,11 @@ Error runSvn(const ShellArgs& args,
              bool redirectStdErrToStdOut,
              core::system::ProcessResult* pResult)
 {
-   return runSvn(args, FilePath(), redirectStdErrToStdOut, pResult);
+   FilePath workingDir;
+   if (!s_workingDir.empty())
+      workingDir = s_workingDir;
+
+   return runSvn(args, workingDir, redirectStdErrToStdOut, pResult);
 }
 
 Error runSvn(const ShellArgs& args,
