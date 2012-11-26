@@ -157,7 +157,7 @@ std::vector<CompileError> parseGccErrors(const FilePath& basePath,
 
       std::string file, line, column, type, message;
       std::string match1 = match[1];
-      if (!match1.empty())
+      if (!match1.empty() && FilePath::isRootPath(match[1]))
       {
          file = match[1];
          line = match[2];
