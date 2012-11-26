@@ -44,7 +44,6 @@ set (SESSION_SOURCE_FILES
    SessionWorkerContext.cpp
    http/SessionHttpConnectionQueue.cpp
    modules/SessionAgreement.cpp
-   modules/SessionArch.cpp
    modules/SessionAskPass.cpp
    modules/SessionAuthoring.cpp
    modules/SessionCodeSearch.cpp

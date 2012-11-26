@@ -18,6 +18,7 @@
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -659,6 +660,20 @@ bool detectREnvironment(const FilePath& whichRScript,
    if (!extraPaths.empty())
       libraryPath.append(":" + extraPaths);
    pVars->push_back(std::make_pair(kLibraryPathEnvVariable, libraryPath));
+
+   // set R_ARCH on the mac if we are running against CRAN R
+#ifdef __APPLE__
+   // if it starts with the standard prefix and an etc/x86_64 directory
+   // exists then we set the R_ARCH
+   if (boost::algorithm::starts_with(rHomePath.absolutePath(),
+                                     "/Library/Frameworks/R.framework/") &&
+       FilePath("/Library/Frameworks/R.framework/Resources/etc/x86_64")
+                                                                   .exists())
+   {
+      pVars->push_back(std::make_pair("R_ARCH","/x86_64"));
+   }
+#endif
+
 
    return validateREnvironment(*pVars, rLibPath, pErrMsg);
 }
