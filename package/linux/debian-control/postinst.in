@@ -15,14 +15,17 @@ sudo mkdir -p /etc/rstudio
 sudo sh -c "echo `date +%s` > /etc/rstudio/installed"
 sudo rstudio-server force-suspend-all
 
+# check lsb release
+LSB_RELEASE=`lsb_release --id --short`
+
 # add apparmor profile
-if test -d /etc/apparmor.d/
+if test $LSB_RELEASE = "Ubuntu" && test -d /etc/apparmor.d/
 then
    sudo cp ${CMAKE_INSTALL_PREFIX}/extras/apparmor/rstudio-server /etc/apparmor.d/
 fi
 
 # add upstart profile or init.d script and start the server
-if test -d /etc/init/
+if test $LSB_RELEASE = "Ubuntu" && test -d /etc/init/
 then
    sudo cp ${CMAKE_INSTALL_PREFIX}/extras/upstart/rstudio-server.conf /etc/init/
    sudo initctl reload-configuration
