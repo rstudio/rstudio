@@ -15,8 +15,7 @@
 # so changes to the path should be synchronized there)
 require(utils)
 dir.create("~/rstudio-diagnostics", showWarnings=FALSE)
-diagnosticsFile <- normalizePath(paste("~/rstudio-diagnostics/diagnostics-report.txt"),
-                                 mustWork = FALSE)
+diagnosticsFile <- suppressWarnings(normalizePath("~/rstudio-diagnostics/diagnostics-report.txt"))
 
 capture.output({
 
@@ -42,10 +41,6 @@ capture.output({
   print(as.list(Sys.getenv()))
   print(search())
   
-  cat("\nCapabilities:\n\n")
-  print(as.list(capabilities(c("png"))))
-  cat("\n")
-
   # locate diagonstics binary and run it
   sysName <- Sys.info()[['sysname']]
   ext <- ifelse(identical(sysName, "Windows"), ".exe", "")

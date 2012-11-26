@@ -83,7 +83,6 @@
 #include "SessionClientEventService.hpp"
 
 #include "modules/SessionAgreement.hpp"
-#include "modules/SessionArch.hpp"
 #include "modules/SessionAskPass.hpp"
 #include "modules/SessionAuthoring.hpp"
 #include "modules/SessionHTMLPreview.hpp"
@@ -1376,7 +1375,6 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (source_database::initialize)
    
       // modules with c++ implementations
-      (modules::arch::initialize)
       (modules::spelling::initialize)
       (modules::lists::initialize)
       (modules::path::initialize)
