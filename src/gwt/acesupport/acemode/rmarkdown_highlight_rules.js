@@ -19,6 +19,7 @@ define("mode/rmarkdown_highlight_rules", function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
+var c_cppHighlightRules = require("mode/c_cpp_highlight_rules").c_cppHighlightRules;
 var MarkdownHighlightRules = require("mode/markdown_highlight_rules").MarkdownHighlightRules;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 
@@ -37,6 +38,20 @@ var RMarkdownHighlightRules = function() {
     var rRules = new RHighlightRules().getRules();
     this.addRules(rRules, "r-");
     this.$rules["r-start"].unshift({
+        token: "support.function.codeend",
+        regex: "^`{3,}\\s*$",
+        next: "start"
+    });
+
+    this.$rules["start"].unshift({
+        token: "support.function.codebegin",
+        regex: "^`{3,}\\s*\\{r(?:.*)engine\\='Rcpp'(?:.*)\\}\\s*$",
+        next: "r-cpp-start"
+    });
+
+    var cppRules = new c_cppHighlightRules().getRules();
+    this.addRules(cppRules, "r-cpp-");
+    this.$rules["r-cpp-start"].unshift({
         token: "support.function.codeend",
         regex: "^`{3,}\\s*$",
         next: "start"

@@ -186,6 +186,11 @@ public class TextFileType extends EditableFileType
       return FileTypeRegistry.RD.getTypeId().equals(getTypeId());
    }
    
+   public boolean isRmd()
+   {
+      return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId());
+   }
+   
    public boolean requiresKnit()
    {
       return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId()) ||
