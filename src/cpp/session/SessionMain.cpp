@@ -1783,7 +1783,12 @@ void rShowFile(const std::string& title, const FilePath& filePath, bool del)
    }
    else // (session::options().programMode() == kSessionProgramModeDesktop
    {
-      module_context::showContent(title, filePath);
+#ifdef _WIN32
+    module_context::showFile(filePath);
+    del = false;
+#else
+    module_context::showContent(title, filePath);
+#endif
    }
 
    if (del)
