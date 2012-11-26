@@ -1310,7 +1310,8 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
                        || !s_suspendedSessionPath.exists()
                        || options.rProfileOnResume;
 
-   bool quiet = s_suspendedSessionPath.exists();
+   bool quiet = restartContext().hasSessionState() ||
+                s_suspendedSessionPath.exists();
 
    r::session::Callbacks cb;
    cb.showMessage = RShowMessage;
