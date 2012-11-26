@@ -152,6 +152,64 @@ namespace build {
 
 namespace {
 
+// track whether to force a package rebuild. we do this if the user
+// saves a header file (since the R CMD INSTALL makefile doesn't
+// force a rebuild for those changes)
+bool s_forcePackageRebuild = false;
+
+bool isPackageHeaderFile(const FilePath& filePath)
+{
+   if (projects::projectContext().hasProject() &&
+       (projects::projectContext().config().buildType ==
+                                              r_util::kBuildTypePackage) &&
+       boost::algorithm::starts_with(filePath.extensionLowerCase(), ".h"))
+   {
+      FilePath pkgPath = projects::projectContext().buildTargetPath();
+      std::string pkgRelative = filePath.relativePath(pkgPath);
+      if (boost::algorithm::starts_with(pkgRelative, "src"))
+         return true;
+      else if (boost::algorithm::starts_with(pkgRelative, "inst/include"))
+        return true;
+   }
+
+   return false;
+}
+
+void onFileChanged(FilePath sourceFilePath)
+{
+   if (!s_forcePackageRebuild)
+   {
+      if (isPackageHeaderFile(sourceFilePath))
+         s_forcePackageRebuild = true;
+   }
+}
+
+void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+{
+   if (!s_forcePackageRebuild)
+   {
+      for (size_t i=0; i<events.size(); i++)
+      {
+         FilePath filePath(events[i].fileInfo().absolutePath());
+         onFileChanged(filePath);
+      }
+   }
+}
+
+bool collectForcePackageRebuild()
+{
+   if (s_forcePackageRebuild)
+   {
+      s_forcePackageRebuild = false;
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
+
 const char * const kRoxygenizePackage = "roxygenize-package";
 const char * const kBuildSourcePackage = "build-source-package";
 const char * const kBuildBinaryPackage = "build-binary-package";
@@ -482,12 +540,17 @@ private:
          RCommand rCmd(rBinDir);
          rCmd << "INSTALL";
 
+         // get extra args
+         std::string extraArgs = projectConfig().packageInstallArgs;
+
          // add --preclean if this is a rebuild all
-         if (type == kRebuildAll)
-            rCmd << "--preclean";
+         if (collectForcePackageRebuild() || (type == kRebuildAll))
+         {
+            if (!boost::algorithm::contains(extraArgs, "--preclean"))
+               rCmd << "--preclean";
+         }
 
          // add extra args if provided
-         std::string extraArgs = projectConfig().packageInstallArgs;
          rCmd << extraArgs;
 
          // add filename as a FilePath so it is escaped
@@ -1192,6 +1255,14 @@ Error initialize()
    r::sexp::Protect rProtect;
    Error error = func.call(&functionSEXP, &rProtect);
    s_haveRcppAttributes = !error && !r::sexp::isNull(functionSEXP);
+
+   // subscribe to file monitor and source editor file saved so we
+   // can tickle a flag to indicates when we should force an R
+   // package rebuild
+   session::projects::FileMonitorCallbacks cb;
+   cb.onFilesChanged = onFilesChanged;
+   projects::projectContext().subscribeToFileMonitor("", cb);
+   module_context::events().onSourceEditorFileSaved.connect(onFileChanged);
 
    // add suspend handler
    addSuspendHandler(module_context::SuspendHandler(onSuspend, onResume));

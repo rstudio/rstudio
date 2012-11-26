@@ -340,6 +340,9 @@ Error saveDocumentCore(const std::string& contents,
                                      FileInfo(fullDocPath));
          module_context::enqueFileChangedEvent(changeEvent);
       }
+
+      // notify other server modules of the file save
+      module_context::events().onSourceEditorFileSaved(fullDocPath);
    }
 
    // always update the contents so it holds the original UTF-8 data
