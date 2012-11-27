@@ -199,8 +199,8 @@ public class Context2dTest extends GWTTestCase {
     }
 
     Context2d context = canvas1.getContext2d();
-    context.setFont("40px Times New Roman");
-    assertEquals("40px Times New Roman", context.getFont());
+    context.setFont("40px \"Times New Roman\"");
+    assertEquals("40px \"Times New Roman\"", context.getFont());
   }
 
   public void testGlobalAlpha() {
