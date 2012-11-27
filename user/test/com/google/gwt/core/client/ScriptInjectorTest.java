@@ -204,7 +204,8 @@ public class ScriptInjectorTest extends GWTTestCase {
     this.delayTestFinish(TEST_DELAY);
     final String scriptUrl = "script_injector_test4.js";
     assertFalse(nativeTest4Worked());
-    final JavaScriptObject injectedElement = ScriptInjector.fromUrl(scriptUrl).inject();
+    final JavaScriptObject injectedElement =
+        ScriptInjector.fromUrl(scriptUrl).setRemoveTag(false).inject();
 
     // We'll check using a callback in another test. This test will poll to see
     // that the script had an effect.
@@ -242,8 +243,8 @@ public class ScriptInjectorTest extends GWTTestCase {
     delayTestFinish(TEST_DELAY);
     final String scriptUrl = "script_injector_test5.js";
     assertFalse(nativeTest5Worked());
-    JavaScriptObject injectedElement =
-        ScriptInjector.fromUrl(scriptUrl).setCallback(new Callback<Void, Exception>() {
+    JavaScriptObject injectedElement = ScriptInjector.fromUrl(scriptUrl).setRemoveTag(false)
+        .setCallback(new Callback<Void, Exception>() {
           @Override
           public void onFailure(Exception reason) {
             assertNotNull(reason);
@@ -272,8 +273,8 @@ public class ScriptInjectorTest extends GWTTestCase {
   public void testInjectUrlTopWindow() {
     final String scriptUrl = "script_injector_test6.js";
     assertFalse(nativeTest6Worked());
-    JavaScriptObject injectedElement =
-        ScriptInjector.fromUrl(scriptUrl).setWindow(ScriptInjector.TOP_WINDOW).inject();
+    JavaScriptObject injectedElement = ScriptInjector.fromUrl(scriptUrl).setRemoveTag(false)
+        .setWindow(ScriptInjector.TOP_WINDOW).inject();
     // We'll check using a callback in another test. This test will poll to see
     // that the script had an effect.
     Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
@@ -309,8 +310,8 @@ public class ScriptInjectorTest extends GWTTestCase {
     delayTestFinish(TEST_DELAY);
     final String scriptUrl = "script_injector_test7.js";
     assertFalse(nativeTest7Worked());
-    JavaScriptObject injectedElement =
-        ScriptInjector.fromUrl(scriptUrl).setWindow(ScriptInjector.TOP_WINDOW).setCallback(
+    JavaScriptObject injectedElement = ScriptInjector.fromUrl(scriptUrl).setRemoveTag(false)
+        .setWindow(ScriptInjector.TOP_WINDOW).setCallback(
             new Callback<Void, Exception>() {
 
               @Override
