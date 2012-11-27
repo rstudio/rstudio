@@ -40,6 +40,7 @@ import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DynamicIFrame;
@@ -295,6 +296,12 @@ public class AceEditor implements DocDisplay,
                
                // go to function definition
                fireEvent(new CommandClickEvent());
+            }
+            else
+            {
+               // if the focus in the Help pane or another iframe
+               // we need to make sure to get it back
+               WindowEx.get().focus();
             }
          }
       });
