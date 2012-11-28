@@ -30,8 +30,6 @@ import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerModuleName;
 import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
 import com.google.gwt.dev.util.arg.ArgHandlerStrict;
-import com.google.gwt.dev.util.arg.OptionOutDir;
-import com.google.gwt.dev.util.arg.OptionStrict;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
@@ -98,9 +96,6 @@ public class CompileModule {
     protected String getName() {
       return CompileModule.class.getName();
     }
-  }
-
-  interface CompileModuleOptions extends CompileTaskOptions, OptionOutDir, OptionStrict {
   }
 
   static class CompileModuleOptionsImpl extends CompileTaskOptionsImpl implements
