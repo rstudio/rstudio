@@ -89,6 +89,26 @@ public abstract class JDeclaredType extends JReferenceType {
    */
   private List<JInterfaceType> superInterfaces = Lists.create();
 
+  /**
+   * Determines whether a subclass of this type is in the collection <code>types</code>.
+   *
+   * @param types a collections of types.
+   * @return the first subtype found in the collection  if the collection <code>types</code>
+   *             contains a subtype of this type; null otherwise.
+   */
+  public JDeclaredType findSubtype(Iterable<JDeclaredType> types) {
+    for (JDeclaredType type : types) {
+      JDeclaredType tp = type;
+      while (tp != null) {
+        if (this == tp) {
+          return type;
+        }
+        tp = tp.getSuperClass();
+      }
+    }
+    return null;
+  }
+
   public JDeclaredType(SourceInfo info, String name) {
     super(info, name);
   }

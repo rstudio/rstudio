@@ -115,7 +115,8 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
   }
 
   public void testOptimizeStringCalls() throws Exception {
-    // Note: we're limited here by the methods declared in the mock String in JJSTestBase#addBuiltinClasses
+    // Note: we're limited here by the methods declared in the mock String in
+    // JJSTestBase#addBuiltinClasses
 
     // String.length
     optimize("int", "return \"abc\".length();").intoString("return 3;");
@@ -143,6 +144,33 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
     // rathe than always being positive.
     optimize("float", "return 0.0F - f;").intoString("return 0.0f - EntryPoint.f;");
     optimize("double", "return 0.0 - d;").intoString("return 0.0 - EntryPoint.d;");
+  }
+
+  public void testMultiExpression_RedundantClinitRemoval() throws Exception {
+    addSnippetClassDecl(
+        "static class A  { "
+            + "static int f1;"
+            + "static int f2;"
+            + "static { f1 = 1; }"
+            + "static void m1() { } "
+            + "}" +
+        "static class B extends A  { "
+            + "static int f3;"
+            + "static int f4;"
+            + "static { f3 = 1; }"
+            + "static void m2() { } "
+            + "}");
+
+    optimizeExpressions(true, "void", "A.m1()", "A.m1()").intoString("EntryPoint$A.$clinit();\n"
+        + "EntryPoint$A.m1();\n"
+        + "EntryPoint$A.m1();");
+    optimizeExpressions(true, "void", "B.m2()", "A.m1()").intoString("EntryPoint$B.$clinit();\n"
+        + "EntryPoint$B.m2();\n"
+        + "EntryPoint$A.m1();");
+    optimizeExpressions(true, "void", "A.m1()", "B.m2()").intoString("EntryPoint$A.$clinit();\n"
+        + "EntryPoint$A.m1();\n"
+        + "EntryPoint$B.$clinit();\n"
+        + "EntryPoint$B.m2();");
   }
 
   @Override

@@ -439,6 +439,7 @@ public class DeadCodeElimination {
         }
       }
 
+      HashSet<JDeclaredType> clinitsCalled = new HashSet<JDeclaredType>();
       for (int i = 0; i < numRemovableExpressions(x); ++i) {
         JExpression expr = x.exprs.get(i);
         if (!expr.hasSideEffects()) {
@@ -455,6 +456,22 @@ public class DeadCodeElimination {
           i--;
           madeChanges();
           continue;
+        }
+
+        // Remove redundant clinits
+        if (expr instanceof JMethodCall && JProgram.isClinit(((JMethodCall) expr).getTarget())) {
+          JDeclaredType enclosingType = ((JMethodCall) expr).getTarget().getEnclosingType();
+          // If a clinit of enclosingType or a subclass of enclosingType has already been
+          // called as part of this JMultiExpression then this clinit call is noop at runtime
+          // and can be statically removed.
+          if (enclosingType.findSubtype(clinitsCalled) != null) {
+            x.exprs.remove(i);
+            --i;
+            madeChanges();
+            continue;
+          } else {
+            clinitsCalled.add(enclosingType);
+          }
         }
       }
 
@@ -1173,8 +1190,8 @@ public class DeadCodeElimination {
 
     private boolean isTypeIntegral(JType type) {
       return ((type == program.getTypePrimitiveInt()) || (type == program.getTypePrimitiveLong())
-          || (type == program.getTypePrimitiveChar()) || (type == program.getTypePrimitiveByte()) || (type == program
-          .getTypePrimitiveShort()));
+          || (type == program.getTypePrimitiveChar()) || (type == program.getTypePrimitiveByte())
+          || (type == program.getTypePrimitiveShort()));
     }
 
     private boolean isTypeLong(JExpression exp) {
