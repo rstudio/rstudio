@@ -35,6 +35,7 @@ import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.user.client.ui.CustomScrollPanel;
 import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HeaderPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -512,6 +513,7 @@ public class DataGrid<T> extends AbstractCellTable<T> implements RequiresResize 
   private final FlexTable loadingIndicatorContainer;
   private final Style style;
   private final Element tableDataContainer;
+  private final FlowPanel tableDataPanel;
   private final ScrollPanel tableDataScroller;
   private final SimplePanel tableFooterContainer;
   private final Element tableFooterScroller;
@@ -628,10 +630,12 @@ public class DataGrid<T> extends AbstractCellTable<T> implements RequiresResize 
       tableData.section = Document.get().createTBodyElement();
       tableData.tableElem.appendChild(tableData.section);
     }
-    tableDataScroller = new CustomScrollPanel(tableData);
+    tableDataPanel = new FlowPanel();
+    tableDataPanel.add(tableData);
+    tableDataScroller = new CustomScrollPanel(tableDataPanel);
     tableDataScroller.setHeight("100%");
     headerPanel.setContentWidget(tableDataScroller);
-    tableDataContainer = tableData.getElement().getParentElement();
+    tableDataContainer = tableData.getElement().getParentElement().getParentElement();
 
     /*
      * CustomScrollPanel applies the inline block style to the container
@@ -750,6 +754,18 @@ public class DataGrid<T> extends AbstractCellTable<T> implements RequiresResize 
   }
 
   /**
+   * Sets an additional object below the data table, but inside the data scroll area.
+   *
+   * @param footer the object in the footer
+   */
+  public void setScrollableFooter(Widget footer) {
+    if (tableDataPanel.getWidgetCount() > 1) {
+      tableDataPanel.remove(1);
+    }
+    tableDataPanel.add(footer);
+  }
+
+  /**
    * Set the width of the tables in this widget. By default, the width is not
    * set and the tables take the available width.
    * 
@@ -833,7 +849,7 @@ public class DataGrid<T> extends AbstractCellTable<T> implements RequiresResize 
    */
   @Override
   protected void onLoadingStateChanged(LoadingState state) {
-    Widget message = tableData;
+    Widget message = tableDataPanel;
     if (state == LoadingState.LOADING) {
       // Loading indicator.
       message = loadingIndicatorContainer;
