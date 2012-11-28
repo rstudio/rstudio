@@ -95,11 +95,15 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     var _this = this;
     _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::onElementInitializing()();
     setTimeout($entry(function() {
-      // Turn on design mode.
-      _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.designMode = 'On';
+      // We need to check to see if the content window still is there. It might not be if the RTA
+      // first was attached to the DOM and then quickly was removed before the timeout fired.
+      if (_this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow != null) {
+        // Turn on design mode.
+        _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.designMode = 'On';
 
-      // Send notification that the iframe has reached design mode.
-      _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::onElementInitialized()();
+        // Send notification that the iframe has reached design mode.
+        _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::onElementInitialized()();
+      }
     }), 1);
   }-*/;
 
