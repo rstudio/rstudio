@@ -37,6 +37,8 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
     addSnippetClassDecl("static volatile double d;");
     addSnippetClassDecl("static volatile String s;");
     addSnippetClassDecl("static volatile Object o;");
+
+    runMethodInliner = false;
   }
 
   public void testConditionalOptimizations() throws Exception {
@@ -98,6 +100,27 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
     optimize("void", "if (b) {i = 1;}").intoString(
         "EntryPoint.b && (EntryPoint.i = 1);");
   }
+
+  /**
+   * BUG: JInstance was marked as not having side effects whereas it all depends on the
+   * whether the expression on the left has side effects.
+   *
+   * Reproduces Issue:7818.
+   */
+  public void testInstanceOfOptimization() throws Exception {
+    runMethodInliner = true;
+    addSnippetClassDecl(
+        "static class A  { "
+            + "static int f1;"
+            + "static A createA() { A.f1 = 1; return new A(); } "
+            + "static boolean instanceofMulti() { return (createA() instanceof A); } "
+            + "static boolean inlineable() { instanceofMulti(); return true;}"
+            + "}");
+
+    optimizeExpressions(false, "void", "A.inlineable()")
+        .into("A.f1 = 1; new A();");
+  }
+
 
   public void testDoOptimization() throws Exception {
     optimize("void", "do {} while (b);").intoString(
@@ -173,10 +196,17 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
         + "EntryPoint$B.m2();");
   }
 
+  private boolean runMethodInliner;
+
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
     // This is necessary for String calls optimizations
     MethodCallTightener.exec(program);
+
+    if (runMethodInliner) {
+      MethodInliner.exec(program);
+    }
+
     OptimizerStats result = DeadCodeElimination.exec(program, method);
     if (result.didChange()) {
       // Make sure we converge in one pass.

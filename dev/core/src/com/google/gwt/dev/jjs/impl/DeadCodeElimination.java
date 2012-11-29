@@ -37,6 +37,7 @@ import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JForStatement;
 import com.google.gwt.dev.jjs.ast.JIfStatement;
+import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
@@ -367,6 +368,18 @@ public class DeadCodeElimination {
     public void endVisit(JIfStatement x, Context ctx) {
       maybeReplaceMe(x, simplifier.ifStatement(x, x.getSourceInfo(), x.getIfExpr(),
           x.getThenStmt(), x.getElseStmt(), currentMethod), ctx);
+    }
+
+    /**
+     * Simplify JInstanceOf expression whose output is ignored.
+     */
+    @Override
+    public void endVisit(JInstanceOf x, Context ctx) {
+
+      if (ignoringExpressionOutput.contains(x)) {
+        ctx.replaceMe(x.getExpr());
+        ignoringExpressionOutput.remove(x);
+      }
     }
 
     @Override
