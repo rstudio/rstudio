@@ -327,6 +327,10 @@ macplatforms:
 	$(MAKE) lib BROWSER=ff120
 	$(MAKE) lib BROWSER=ff130
 	$(MAKE) lib BROWSER=ff140
+	$(MAKE) lib BROWSER=ff150
+	$(MAKE) lib BROWSER=ff160
+	$(MAKE) lib BROWSER=ff170
+
 
 SRCS =	\
 		ExternalWrapper.cpp \

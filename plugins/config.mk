@@ -14,9 +14,9 @@
 
 # This Makefile fragment sets the following make variables according to the
 # current platform:
-#   ARCH - the Mozilla architecture name, such as x86, x86_64, ppc, etc
+#   ARCH - the Mozilla architecture name, such as x86, x86_64, etc
 #   FLAG32BIT - 32 or 64
-#   MARCH - the Mac architecture, such as i386 or ppc
+#   MARCH - the Mac architecture, such as i386
 #   OS - linux, mac, or sun
 #   CFLAGS - appropriate C compiler flags for this platform
 #   CXXFLAGS - appropriate C++ compiler flags for this platform
@@ -63,7 +63,7 @@ ifeq ($(ARCH),i86pc)
 ARCH=x86
 endif
 ifeq ($(ARCH),Macintosh)
-ARCH=ppc
+$(error ppc no longer supported)
 endif
 
 MARCH=$(ARCH)
@@ -89,9 +89,9 @@ ALLARCHCFLAGS= -m$(FLAG32BIT)
 endif
 ifeq ($(shell uname),Darwin)
 OS=mac
-BASECFLAGS= $(DEBUGCFLAGS) -O2 -fPIC $(INC) -D__mac -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk
+BASECFLAGS= $(DEBUGCFLAGS) -O2 -fPIC $(INC) -D__mac -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -std=c++11
 ARCHCFLAGS=-arch $(MARCH)
-ALLARCHCFLAGS=-arch i386 -arch ppc -arch x86_64
+ALLARCHCFLAGS=-arch i386 -arch x86_64
 AR=libtool
 ARFLAGS=-static -o
 endif
