@@ -350,9 +350,8 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
    * despite there being side-effects of the multi-expression.  So, we want to test that inlining
    * proceeds, but not further constant transformation.
    * 
-   * TODO: This test may need to evolve over time, as the specifics of the optimizers change.  One
-   * obvious todo is to allow some form of constant transformation to occur with inlined 
-   * multi-expressions (see comment below).
+   * TODO(rluble): This test may need to evolve over time, as the specifics of the
+   * optimizers change.
    */
   public void testInlinedConstantExpressionWithSideEffects() throws Exception {
     
@@ -374,10 +373,9 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
               "  fail();",
               "}",
               "return x;")
-        // TODO: Allow the second line below to be transformed to just: "EntryPoint.x = n;"
-        .intoString("Integer n = new Integer(1);",
-                    "((EntryPoint.x = n, true)) || EntryPoint.fail();",
-                    "return EntryPoint.x.intValue();");
+        .into("Integer n = new Integer(1);",
+               "x = n;",
+               "return x;");
     
   }
   
@@ -387,14 +385,21 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
     boolean didChange = false;
+    boolean optimizeChange = false;
 
-    if (runDCE) {
-      didChange = DeadCodeElimination.exec(program).didChange() || didChange;
-    }
+    // Run optimizations in a loop to make the tests more robusts to unrelated
+    // changes.
+    do {
+      optimizeChange = false;
+      if (runDCE) {
+        optimizeChange = DeadCodeElimination.exec(program).didChange() || optimizeChange;
+      }
 
-    if (runMethodInliner) {
-      didChange = MethodInliner.exec(program).didChange() || didChange;
-    }
+      if (runMethodInliner) {
+        optimizeChange = MethodInliner.exec(program).didChange() || optimizeChange;
+      }
+      didChange = didChange || optimizeChange;
+    } while (optimizeChange);
 
     didChange = DataflowOptimizer.exec(program, method).didChange() || didChange;
     return didChange;

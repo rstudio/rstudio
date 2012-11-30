@@ -193,7 +193,7 @@ public class LongCastNormalizer {
       if (targetType != longType && arg.getType() != longType) {
         return arg;
       }
-      return simplifier.cast(targetType, arg);
+      return Simplifier.cast(targetType, arg);
     }
   }
 
@@ -202,11 +202,9 @@ public class LongCastNormalizer {
   }
 
   private final JProgram program;
-  private final Simplifier simplifier;
 
   private LongCastNormalizer(JProgram program) {
     this.program = program;
-    simplifier = new Simplifier(program);
   }
 
   private void execImpl() {

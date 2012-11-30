@@ -137,6 +137,29 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
         "} while (false);");
   }
 
+  public void testMultiExpressionOptimization() throws Exception {
+    runMethodInliner = true;
+    addSnippetClassDecl(
+        "static class A  { ",
+        "  static int f;",
+        "  static { if (4-f ==0) f=4; }",
+        "  static boolean t() { return true; }",
+        "  static boolean f() { return false; }",
+        "  static boolean notInlineable() { if (4-f == 0) return true;return false;}",
+        "}");
+
+    addSnippetClassDecl(
+        "static class B  { ",
+        "  static boolean inlineableOr() { return A.t() || A.notInlineable(); }",
+        "  static boolean inlineableAnd() { return A.t() && A.notInlineable(); }",
+        "}");
+
+    optimize("void", "B.inlineableAnd();")
+        .intoString("EntryPoint$A.$clinit();\nEntryPoint$A.notInlineable();");
+    optimize("void", "B.inlineableOr();")
+        .intoString("EntryPoint$A.$clinit();");
+  }
+
   public void testOptimizeStringCalls() throws Exception {
     // Note: we're limited here by the methods declared in the mock String in
     // JJSTestBase#addBuiltinClasses
@@ -200,8 +223,6 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
 
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
-    // This is necessary for String calls optimizations
-    MethodCallTightener.exec(program);
 
     if (runMethodInliner) {
       MethodInliner.exec(program);
