@@ -19,8 +19,8 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.rebind.model.OwnerClass;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import junit.framework.TestCase;
 

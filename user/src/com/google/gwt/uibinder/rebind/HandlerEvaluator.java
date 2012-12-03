@@ -23,9 +23,9 @@ import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.uibinder.rebind.model.OwnerClass;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 
 /**
  * This class implements an easy way to bind widget event handlers to methods
@@ -272,7 +272,8 @@ class HandlerEvaluator {
     for (JMethod method : objectType.getInheritableMethods()) {
 
       // Condition 1: returns HandlerRegistration?
-      if (method.getReturnType() == handlerRegistrationJClass) {
+      JClassType returnClassType = method.getReturnType().isClassOrInterface();
+      if (returnClassType != null && handlerRegistrationJClass.isAssignableFrom(returnClassType)) {
 
         // Condition 2: single parameter of the same type of handlerType?
         JParameter[] parameters = method.getParameters();
