@@ -870,10 +870,13 @@ public class TypeTightener {
       if (!tightener.didChange()) {
         break;
       }
+    }
 
+    if (stats.didChange()) {
       FixDanglingRefsVisitor fixer = new FixDanglingRefsVisitor();
       fixer.accept(program);
     }
+
     return stats;
   }
 }
