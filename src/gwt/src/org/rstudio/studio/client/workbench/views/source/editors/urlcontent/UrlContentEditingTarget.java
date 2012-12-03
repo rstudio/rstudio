@@ -121,6 +121,12 @@ public class UrlContentEditingTarget implements EditingTarget
       return false;
    }
    
+   
+   @Override
+   public void verifyPrerequisites()
+   {
+   }
+   
 
    @Handler
    void onPrintSourceDoc()

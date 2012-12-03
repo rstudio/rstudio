@@ -469,7 +469,6 @@ public class TextEditingTarget implements EditingTarget
       // validate required compontents (e.g. Tex, knitr, C++ etc.)
       checkCompilePdfDependencies();
       previewHtmlHelper_.verifyPrerequisites(view_, fileType_);  
-      checkBuildCppDependencies();
       
       syncFontSize(releaseOnDismiss_, events_, view_, fontSizeManager_);
      
@@ -524,11 +523,6 @@ public class TextEditingTarget implements EditingTarget
    private void checkCompilePdfDependencies()
    {
       compilePdfHelper_.checkCompilers(view_, fileType_);
-   }
-   
-   private void checkBuildCppDependencies()
-   {
-      cppHelper_.checkBuildCppDependencies(view_, fileType_);
    }
    
    private void initStatusBar()
@@ -781,6 +775,14 @@ public class TextEditingTarget implements EditingTarget
    public boolean canCompilePdf()
    {
       return fileType_.canCompilePDF();
+   }
+   
+   
+   @Override
+   public void verifyPrerequisites()
+   {
+      // NOTE: will be a no-op for non-c/c++ file types
+      cppHelper_.checkBuildCppDependencies(view_, fileType_);
    }
    
 

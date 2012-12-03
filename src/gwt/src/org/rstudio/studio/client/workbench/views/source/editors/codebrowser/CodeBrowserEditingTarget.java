@@ -317,6 +317,11 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
    
    @Override
+   public void verifyPrerequisites()
+   {
+   }
+   
+   @Override
    public void focus()
    {
       docDisplay_.focus();

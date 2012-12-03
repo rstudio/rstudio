@@ -50,6 +50,8 @@ public interface EditingTarget extends IsWidget,
 
    HashSet<AppCommand> getSupportedCommands();
    boolean canCompilePdf();
+   
+   void verifyPrerequisites();
 
    void focus();
    void onActivate();
