@@ -1477,7 +1477,15 @@ public class TextEditingTarget implements EditingTarget
    void onReflowComment()
    {
       if (fileType_.isCpp())
-         doReflowComment("(//)");
+      {
+         String currentLine = docDisplay_.getLine(
+                                    docDisplay_.getCursorPosition().getRow());
+         if (currentLine.startsWith(" *"))
+            doReflowComment("( \\*[^/])");
+         else
+            doReflowComment("(//)");
+      }
+         
       else
          doReflowComment("(#)");
    }
