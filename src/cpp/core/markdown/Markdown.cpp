@@ -15,7 +15,12 @@
 
 #include <iostream>
 
+#include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/regex.hpp>
+#include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -196,6 +201,106 @@ Error renderMarkdown(const SundownBuffer& inputBuffer,
    return Success();
 }
 
+
+void stripMetadata(std::string* pInput)
+{
+   // split into lines
+   std::vector<std::string> lines;
+   boost::algorithm::split(lines, *pInput,  boost::algorithm::is_any_of("\n"));
+
+   // front matter delimiter regex
+   boost::regex frontMatterDelimiterRegex("^\\-\\-\\-\\s*$");
+
+   // check the first non-empy line for metadata
+   bool hasFrontMatter = false, hasPandocTitleBlock = false;
+   BOOST_FOREACH(const std::string& line, lines)
+   {
+      if (boost::algorithm::trim_copy(line).empty())
+      {
+         continue;
+      }
+      else if (boost::regex_search(line, frontMatterDelimiterRegex))
+      {
+         hasFrontMatter = true;
+         break;
+      }
+      else if (boost::algorithm::starts_with(line, "%"))
+      {
+         hasPandocTitleBlock = true;
+         break;
+      }
+   }
+
+   int firstDocumentLine = 0;
+   if (hasFrontMatter)
+   {
+      bool inFrontMatter = false;
+      boost::regex frontMatterFieldRegex("^[^:]+: .*$");
+
+      for(std::size_t i=0; i<lines.size(); i++)
+      {
+         const std::string& line = lines[i];
+         if (boost::algorithm::trim_copy(line).empty() && !inFrontMatter)
+         {
+            continue;
+         }
+         else if (boost::regex_search(line, frontMatterDelimiterRegex))
+         {
+            if (!inFrontMatter)
+            {
+               inFrontMatter = true;
+            }
+            else if (inFrontMatter)
+            {
+               firstDocumentLine = i+1;
+               break;
+            }
+         }
+         else if (!boost::regex_search(line, frontMatterFieldRegex))
+         {
+            break;
+         }
+      }
+   }
+   else if (hasPandocTitleBlock)
+   {
+      bool inTitleBlock = false;
+
+      boost::regex titleBlockPercentRegex("^%.*$");
+      boost::regex titleBlockContinuationRegex("^  .+$");
+
+      for(std::size_t i=0; i<lines.size(); i++)
+      {
+         const std::string& line = lines[i];
+         if (boost::algorithm::trim_copy(line).empty() && !inTitleBlock)
+         {
+            continue;
+         }
+         else if (boost::regex_search(line, titleBlockPercentRegex))
+         {
+            inTitleBlock = true;
+         }
+         else if (boost::regex_search(line, titleBlockContinuationRegex) &&
+                  inTitleBlock)
+         {
+            continue;
+         }
+         else
+         {
+            firstDocumentLine = i;
+            break;
+         }
+      }
+   }
+
+   // if we detected a metadata block then trim the document as necessary
+   if (firstDocumentLine > 0 && firstDocumentLine < lines.size())
+   {
+      lines.erase(lines.begin(), lines.begin() + firstDocumentLine);
+      *pInput = boost::algorithm::join(lines, "\n");
+   }
+}
+
 } // anonymous namespace
 
 // render markdown to HTML -- assumes UTF-8 encoding
@@ -259,6 +364,17 @@ Error markdownToHTML(const std::string& markdownInput,
       pMathFilter.reset(new MathJaxFilter(excludePatterns,
                                           &input,
                                           pHTMLOutput));
+   }
+
+   // strip yaml front-matter / pandoc metadata if requested
+   if (extensions.stripMetadata)
+      stripMetadata(&input);
+
+   // special case of empty input after stripping metadata
+   if (input.empty())
+   {
+      *pHTMLOutput = input;
+      return Success();
    }
 
    // setup input buffer
