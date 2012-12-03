@@ -315,4 +315,40 @@ public class UnicodeEscapingTest extends GWTTestCase {
           }
         });
   }
+
+  /**
+   * Verify that string encoding/decoding is lossless.
+   */
+  private void echoVerify(final String str) {
+    delayTestFinish(TEST_FINISH_DELAY_MS);
+    getService().echo(str, new AsyncCallback<String>() {
+      @Override
+      public void onFailure(Throwable caught) {
+        TestSetValidator.rethrowException(caught);
+      }
+
+      @Override
+      public void onSuccess(String result) {
+        assertEquals(str, result);
+        finishTest();
+      }
+    });
+  }
+
+  /**
+   * Test that a NUL character followed by an octal character is encoded
+   * correctly.  Encoding the NUL character simply as "\0" in this case
+   * would cause the recipient to see "\07" as a single octal escape sequence,
+   * rather than two separate characters.
+   */
+  public void testEscapeNull() {
+    echoVerify("\u0000" + "7");  // split to emphasize two characters
+  }
+
+  /**
+   * Test that HTML special characters are encoded correctly.
+   */
+  public void testEscapeHtml() {
+    echoVerify("<img src=x onerror=alert(1)>");
+  }
 }

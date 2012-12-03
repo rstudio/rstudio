@@ -337,7 +337,6 @@ public final class ServerSerializationStreamWriter extends
      * JavaScript Vertical Tab character '\v' into 'v'. As such, we do not use
      * the short form of the unicode escape here.
      */
-    JS_CHARS_ESCAPED['\u0000'] = '0';
     JS_CHARS_ESCAPED['\b'] = 'b';
     JS_CHARS_ESCAPED['\t'] = 't';
     JS_CHARS_ESCAPED['\n'] = 'n';
@@ -502,6 +501,9 @@ public final class ServerSerializationStreamWriter extends
         return true;
       case NON_BREAKING_HYPHEN:
         // This can be expanded into a break followed by a hyphen
+        return true;
+      case '\'': case '&': case '<': case '=': case '>':
+        // These can cause HTML content sniffing
         return true;
       default:
         if (ch < ' ') {

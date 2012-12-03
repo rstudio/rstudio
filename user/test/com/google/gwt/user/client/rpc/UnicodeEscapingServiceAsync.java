@@ -21,6 +21,7 @@ import com.google.gwt.user.client.rpc.UnicodeEscapingService.InvalidCharacterExc
  * Async version of the {@link UnicodeEscapingService} interface.
  */
 public interface UnicodeEscapingServiceAsync {
+  void echo(String str, AsyncCallback<String> callback);
   void getStringContainingCharacterRange(int start, int end,
       AsyncCallback<String> callback);
   void verifyStringContainingCharacterRange(int start, int end, String str,
