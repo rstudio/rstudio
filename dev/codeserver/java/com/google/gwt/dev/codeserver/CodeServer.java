@@ -83,7 +83,7 @@ public class CodeServer {
       AppSpace appSpace = AppSpace.create(new File(workDir, moduleName));
 
       Recompiler recompiler = new Recompiler(appSpace, moduleName,
-        options.getSourcePath(), logger, options.getPreferredHost() + ":" + options.getPort());
+          options.getSourcePath(), options.getPreferredHost() + ":" + options.getPort(), logger);
       modules.addModuleState(new ModuleState(recompiler, logger, options.getNoPrecompile()));
     }
 
