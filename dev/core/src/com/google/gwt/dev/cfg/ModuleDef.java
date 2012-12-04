@@ -466,9 +466,9 @@ public class ModuleDef {
   }
 
   /**
-   * For convenience in hosted mode, servlets can be automatically loaded and
-   * delegated to via {@link com.google.gwt.dev.shell.GWTShellServlet}. If a
-   * servlet is already mapped to the specified path, it is replaced.
+   * For convenience in unit tests, servlets can be automatically loaded and
+   * mapped in the embedded web server. If a servlet is already mapped to the
+   * specified path, it is replaced.
    * 
    * @param path the url path at which the servlet resides
    * @param servletClassName the name of the servlet to publish
