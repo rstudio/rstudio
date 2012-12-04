@@ -47,6 +47,7 @@ function setupInstallLocation() {
   // of the frame. However, we don't want to do this when runAsync calls
   // installCode, so we do it here when we create the iframe.
   frameDoc.open();
-  frameDoc.write('<html><head></head><body></body></html>');
+  var doctype = (document.compatMode == 'CSS1Compat') ? '<!doctype html>' : '';
+  frameDoc.write(doctype + '<html><head></head><body></body></html>');
   frameDoc.close();
 }
