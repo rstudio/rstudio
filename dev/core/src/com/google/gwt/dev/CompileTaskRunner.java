@@ -63,7 +63,7 @@ public class CompileTaskRunner {
         }
       });
 
-      compilerThread.setName("GWT Compiler Thread");
+      compilerThread.setName("GWTCompiler Thread");
       compilerThread.start();
       // TODO(jat): create an app frame for loggerWindow
       
