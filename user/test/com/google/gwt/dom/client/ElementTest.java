@@ -40,15 +40,45 @@ public class ElementTest extends GWTTestCase {
     div.setClassName("foo");
     assertEquals("foo", div.getClassName());
 
-    div.addClassName("bar");
+    assertTrue(div.addClassName("bar"));
     assertEquals("foo bar", div.getClassName());
 
-    div.addClassName("baz");
+    assertTrue(div.addClassName("baz"));
+    assertEquals("foo bar baz", div.getClassName());
+
+    assertFalse(div.addClassName("baz"));
     assertEquals("foo bar baz", div.getClassName());
 
     div.replaceClassName("bar", "tintin");
     assertTrue(div.getClassName().contains("tintin"));
     assertFalse(div.getClassName().contains("bar"));
+
+    assertTrue(div.removeClassName("tintin"));
+    assertEquals("foo baz", div.getClassName());
+
+    assertFalse(div.removeClassName("bar"));
+    assertEquals("foo baz", div.getClassName());
+
+    assertTrue(div.removeClassName("baz"));
+    assertEquals("foo", div.getClassName());
+
+    assertTrue(div.removeClassName("foo"));
+    assertEquals("", div.getClassName());
+  }
+
+  public void testIndexOfName() {
+    assertEquals(-1, Element.indexOfName("", "foo"));
+
+    assertEquals(-1, Element.indexOfName("foo", "fo"));
+    assertEquals(-1, Element.indexOfName("foo", "fool"));
+
+    assertEquals(-1, Element.indexOfName("bar fool", "foo"));
+    assertEquals(-1, Element.indexOfName("bar fool baz", "foo"));
+
+    assertEquals(0, Element.indexOfName("foo", "foo"));
+    assertEquals(0, Element.indexOfName("foo bar", "foo"));
+    assertEquals(4, Element.indexOfName("bar foo", "foo"));
+    assertEquals(4, Element.indexOfName("bar foo baz", "foo"));
   }
 
   /**
