@@ -23,7 +23,17 @@
   <define-configuration-property name="installScriptJs" is-multi-valued="false" />
   <define-configuration-property name="installCode" is-multi-valued="false" />
   <define-configuration-property name="computeScriptBaseJs" is-multi-valued="false" />
-
+  <!--
+     - Determines whether the GWT compiler generates cache.js files
+     - that end with a comment pointing to a sourcemap file, to support source-level
+     - debugging in browsers.
+     - Specification: http://goo.gl/ZQ3V3
+     - Takes on the following values:
+     - if false, no sourcemap URL declarations are included at the end of the primary fragment script
+     - if true, a relative URL to the standard sourcemap for the primary fragment is included
+     - else the value is assumed to be a custom URL -->
+  <define-configuration-property name="includeSourceMapUrl" is-multi-valued="false"/>
+  <set-configuration-property name="includeSourceMapUrl" value="false"/>
   <set-configuration-property name="xsiframe.failIfScriptTag" value="TRUE"/> 
 
   <replace-with class="com.google.gwt.core.client.impl.ScriptTagLoadingStrategy">
@@ -31,4 +41,6 @@
       class="com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadingStrategy" />
     <when-linker-added name="xsiframe" />
   </replace-with>
+
+
 </module>

@@ -259,8 +259,7 @@ public class WebServer {
 
     String mimeType = guessMimeType(target);
     if (target.endsWith(".cache.js")) {
-      response.addHeader("X-SourceMap", SourceHandler.SOURCEMAP_PATH + moduleName +
-          "/gwtSourceMap.json");
+      response.addHeader("X-SourceMap", sourceMapLocationForModule(moduleName));
     }
     response.addHeader("Access-Control-Allow-Origin", "*");
     PageUtil.sendFile(mimeType, file, response);
@@ -378,6 +377,11 @@ public class WebServer {
       }
     }
     return result;
+  }
+
+  public static String sourceMapLocationForModule(String moduleName) {
+     return SourceHandler.SOURCEMAP_PATH + moduleName +
+         "/gwtSourceMap.json";
   }
 
   private static void setHandled(HttpServletRequest request) {

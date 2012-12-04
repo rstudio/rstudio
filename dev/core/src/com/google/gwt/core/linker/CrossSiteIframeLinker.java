@@ -406,7 +406,20 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
         + "__gwtModuleFunction.__computePropValue);");
     out.newlineOpt();
     out.print("$sendStats('moduleStartup', 'end');");
-    out.print("\n//@ sourceURL=0.js\n");
+    String includeSourceMapUrl = getStringConfigurationProperty(context, "includeSourceMapUrl", "false");
+    if (!"false".equalsIgnoreCase(includeSourceMapUrl)) {
+      String sourceMapUrl = SymbolMapsLinker.SourceMapArtifact.sourceMapFilenameForFragment(0);
+      if (!"true".equalsIgnoreCase(includeSourceMapUrl)) {
+        sourceMapUrl = includeSourceMapUrl;
+      }
+      // The sourceURL magic comment can cause browsers to ignore the X-SourceMap header
+      // This magic comment ensures that they can still locate them in that case
+      out.print("\n//@ sourceMappingURL=" + sourceMapUrl + " ");
+    }
+    // Magic comment serves several purposes:
+    // 1. renames strongName to a stable name in browser debugger
+    // 2. provides name to scripts installed via eval()
+    out.print("\n//@ sourceURL=0.js \n");
     return out.toString();
   }
 
