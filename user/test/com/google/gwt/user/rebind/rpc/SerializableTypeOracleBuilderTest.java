@@ -45,6 +45,8 @@ import com.google.gwt.user.rebind.rpc.testcases.client.ClassWithTypeParameterTha
 import com.google.gwt.user.rebind.rpc.testcases.client.ManualSerialization;
 import com.google.gwt.user.rebind.rpc.testcases.client.NoSerializableTypes;
 import com.google.gwt.user.rebind.rpc.testcases.client.NotAllSubtypesAreSerializable;
+import com.google.gwt.user.rebind.rpc.testcases.client.ParameterizedTypeInList;
+import com.google.gwt.user.rebind.rpc.testcases.client.RawTypeInList;
 import com.google.gwt.user.rebind.rpc.testcases.client.SubclassUsedInArray;
 
 import junit.framework.TestCase;
@@ -1951,6 +1953,18 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     checkSerializable(expected,
         oracle.getType(SubclassUsedInArray.Base.class.getCanonicalName()),
         oracle.getArrayType(typeParameter));
+  }
+
+  public void testRawTypeInList() throws Exception {
+    JClassType expected = arrayType(RawTypeInList.Covariant.class);
+    checkSerializable(expected,
+        eachJType(RawTypeInList.Marker.class, RawTypeInList.HasList.class));
+  }
+
+  public void testParameterizedTypeInList() throws Exception {
+    JClassType expected = arrayType(ParameterizedTypeInList.Covariant.class);
+    checkSerializable(expected,
+        eachJType(ParameterizedTypeInList.Marker.class, ParameterizedTypeInList.HasList.class));
   }
 
   /**

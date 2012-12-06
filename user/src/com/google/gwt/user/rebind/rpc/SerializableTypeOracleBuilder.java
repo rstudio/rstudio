@@ -1226,7 +1226,7 @@ public class SerializableTypeOracleBuilder {
    */
   private boolean checkSubtypes(TreeLogger logger, JClassType originalType,
       Set<JClassType> instSubtypes, TypePath path, ProblemReport problems) {
-    JClassType baseType = getBaseType(originalType);
+    JRealClassType baseType = getBaseType(originalType);
     TreeLogger computationLogger =
         logger.branch(TreeLogger.DEBUG, "Finding possibly instantiable subtypes");
     List<JClassType> candidates =
@@ -1384,8 +1384,8 @@ public class SerializableTypeOracleBuilder {
   /**
    * Returns the subtypes of a given base type as parameterized by wildcards.
    */
-  private List<JClassType> getPossiblyInstantiableSubtypes(TreeLogger logger, JClassType baseType,
-      ProblemReport problems) {
+  private List<JClassType> getPossiblyInstantiableSubtypes(TreeLogger logger,
+      JRealClassType baseType, ProblemReport problems) {
     assert (baseType == getBaseType(baseType));
 
     List<JClassType> possiblyInstantiableTypes = new ArrayList<JClassType>();
@@ -1565,13 +1565,14 @@ public class SerializableTypeOracleBuilder {
       return;
     }
 
-    JClassType leafClass = leafType.isClassOrInterface();
-    if (leafClass == null) {
+    if (leafType.isClassOrInterface() == null) {
       // Simple case: no covariance, just lower ranks.
       assert leafType.isPrimitive() != null;
       markArrayTypesInstantiable(leafType, array.getRank(), path);
       return;
     }
+
+    JRealClassType baseClass = getBaseType(leafType.isClassOrInterface());
 
     TreeLogger covariantArrayLogger =
         logger.branch(TreeLogger.DEBUG, "Covariant array types:");
@@ -1581,7 +1582,7 @@ public class SerializableTypeOracleBuilder {
       // The types are there (due to a supertype) but the Set wasn't computed, so compute it now.
       instantiableTypes = new HashSet<JClassType>();
       List<JClassType> candidates =
-          getPossiblyInstantiableSubtypes(logger, leafClass, problems);
+          getPossiblyInstantiableSubtypes(logger, baseClass, problems);
       for (JClassType candidate : candidates) {
         TypeInfoComputed tic = typeToTypeInfoComputed.get(candidate);
         if (tic != null && tic.instantiable) {
@@ -1590,7 +1591,7 @@ public class SerializableTypeOracleBuilder {
       }
     }
     for (JClassType instantiableType : TypeHierarchyUtils.getAllTypesBetweenRootTypeAndLeaves(
-        leafClass, instantiableTypes)) {
+        baseClass, instantiableTypes)) {
       if (!isAccessibleToSerializer(instantiableType)) {
         // Skip types that are not accessible from a serializer
         continue;
