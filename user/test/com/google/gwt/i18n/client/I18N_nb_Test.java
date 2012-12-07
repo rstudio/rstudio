@@ -64,6 +64,6 @@ public class I18N_nb_Test extends GWTTestCase {
     currencyData = currencyList.lookup("RUB");
     assertNotNull(currencyData);
     assertEquals("RUB", currencyData.getCurrencyCode());
-    assertEquals("руб", currencyData.getCurrencySymbol());
+    assertEquals("руб.", currencyData.getCurrencySymbol());
   }
 }
