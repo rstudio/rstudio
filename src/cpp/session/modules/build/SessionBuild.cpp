@@ -439,7 +439,7 @@ private:
 
    bool compileRcppAttributes(const FilePath& packagePath)
    {
-      if (haveRcppAttributes())
+      if (module_context::haveRcppAttributes())
       {
           r::exec::RFunction compileAttr("Rcpp:::compileAttributes");
           compileAttr.addParam(
@@ -1206,13 +1206,6 @@ SEXP rs_canBuildCpp()
 
 } // anonymous namespace
 
-
-bool s_haveRcppAttributes = false;
-bool haveRcppAttributes()
-{
-   return s_haveRcppAttributes;
-}
-
 json::Value buildStateAsJson()
 {
    if (s_pBuild)
@@ -1247,15 +1240,6 @@ Error initialize()
    canBuildMethodDef.numArgs = 0;
    r::routines::addCallMethod(canBuildMethodDef);
 
-   // check for Rcpp attributes
-   SEXP functionSEXP = R_NilValue;
-   r::exec::RFunction func(".rs.getPackageFunction",
-                           "compileAttributes",
-                           "Rcpp");
-   r::sexp::Protect rProtect;
-   Error error = func.call(&functionSEXP, &rProtect);
-   s_haveRcppAttributes = !error && !r::sexp::isNull(functionSEXP);
-
    // subscribe to file monitor and source editor file saved so we
    // can tickle a flag to indicates when we should force an R
    // package rebuild
@@ -1286,6 +1270,16 @@ Error initialize()
 } // namespace modules
 
 namespace module_context {
+
+bool haveRcppAttributes()
+{
+   bool haveAttributes = false;
+   Error error = r::exec::RFunction(".rs.haveRcppAttributes")
+                                                        .call(&haveAttributes);
+   if (error)
+      LOG_ERROR(error);
+   return haveAttributes;
+}
 
 bool canBuildCpp()
 {

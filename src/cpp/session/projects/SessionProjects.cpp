@@ -62,16 +62,6 @@ Error getNewProjectContext(const json::JsonRpcRequest& request,
    return Success();
 }
 
-bool hasRcppPackageSkeletonAttributes()
-{
-   bool hasAttributes = false;
-   Error error = r::exec::RFunction(".rs.hasRcppPackageSkeletonAttributes")
-                                                         .call(&hasAttributes);
-   if (error)
-      LOG_ERROR(error);
-   return hasAttributes;
-}
-
 Error createProject(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
@@ -187,7 +177,7 @@ Error createProject(const json::JsonRpcRequest& request,
       pkgSkeleton.addParam("path",
                string_utils::utf8ToSystem(packageDir.parent().absolutePath()));
       pkgSkeleton.addParam("code_files", rFileNames);
-      if (usingRcpp && hasRcppPackageSkeletonAttributes())
+      if (usingRcpp && module_context::haveRcppAttributes())
       {
          if (!cppFileNames.empty())
          {

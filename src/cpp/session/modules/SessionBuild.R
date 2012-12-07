@@ -20,7 +20,7 @@ setHook("sourceCpp.onBuildComplete", function(succeeded, output) {
 })
 
 
-.rs.addFunction("hasRcppPackageSkeletonAttributes", function() {
-   .rs.isPackageInstalled("Rcpp") && (packageVersion("Rcpp") >= "0.10.0.3")
+.rs.addFunction("haveRcppAttributes", function() {
+   .rs.isPackageInstalled("Rcpp") && (packageVersion("Rcpp") >= "0.10.1")
 })
 

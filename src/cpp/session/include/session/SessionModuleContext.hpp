@@ -326,7 +326,7 @@ int saveWorkspaceAction();
 void syncRSaveAction();
 
 bool canBuildCpp();
-
+bool haveRcppAttributes();
 
 struct VcsContext
 {
