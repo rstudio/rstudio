@@ -111,6 +111,19 @@ public abstract class MessageDisplay
    public void showMessage(int type,
                            String caption,
                            String message,
+                           Operation dismissed,
+                           boolean includeCancel)
+   {
+      DialogBuilder dialog = createDialog(type, caption, message)
+            .addButton("OK", dismissed);
+      if (includeCancel)
+         dialog.addButton("Cancel");
+      dialog.showModal();
+   }
+
+   public void showMessage(int type,
+                           String caption,
+                           String message,
                            final Focusable focusAfter)
    {
       createDialog(type, caption, message)

@@ -266,6 +266,7 @@ void saveWorkingContext(const FilePath& statePath,
 
 bool save(const FilePath& statePath,
           bool serverMode,
+          bool excludePackages,
           bool disableSaveCompression)
 {
    // initialize context
@@ -333,11 +334,24 @@ bool save(const FilePath& statePath,
       if (error)
          LOG_ERROR(error);
    }
-   error = search_path::save(statePath);
-   if (error)
+
+   if (!excludePackages)
    {
-      reportError(kSaving, kSearchPath, error, ERROR_LOCATION);
-      saved = false;
+      error = search_path::save(statePath);
+      if (error)
+      {
+         reportError(kSaving, kSearchPath, error, ERROR_LOCATION);
+         saved = false;
+      }
+   }
+   else
+   {
+      error = search_path::saveGlobalEnvironment(statePath);
+      if (error)
+      {
+         reportError(kSaving, kGlobalEnvironment, error, ERROR_LOCATION);
+         saved = false;
+      }
    }
 
    // return status

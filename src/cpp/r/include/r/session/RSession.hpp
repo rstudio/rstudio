@@ -153,9 +153,13 @@ bool suspend(bool force);
 
 struct RSuspendOptions
 {
-   RSuspendOptions() : saveMinimal(false), saveWorkspace(false) {}
+   RSuspendOptions()
+      : saveMinimal(false), saveWorkspace(false), excludePackages(false)
+   {
+   }
    bool saveMinimal;
    bool saveWorkspace;
+   bool excludePackages;
 };
 void suspendForRestart(const RSuspendOptions& options);
    

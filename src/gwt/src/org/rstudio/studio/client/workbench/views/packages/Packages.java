@@ -17,6 +17,8 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -28,6 +30,8 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
+import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
@@ -259,7 +263,7 @@ public class Packages
                StringBuilder command = new StringBuilder();
                command.append("install.packages(");
                
-               List<String> packages = request.getPackages();
+               List<String> packages = request.getPackages(); 
                if (packages != null)
                {
                   if (packages.size() > 1)
@@ -305,12 +309,11 @@ public class Packages
                
                command.append(")");
                String cmd = command.toString();
-               events_.fireEvent(new SendToConsoleEvent(cmd, true));
-            }
-           });
+               executeWithLoadedPackageCheck(new InstallCommand(packages, cmd));
+           }
+         });
    }
-   
-   
+    
    
    void onUpdatePackages()
    {
@@ -365,18 +368,20 @@ public class Packages
             @Override
             public void execute(ArrayList<PackageUpdate> updates)
             {
-               String cmd = buildUpdatePackagesCommand(updates, installContext);
-               events_.fireEvent(new SendToConsoleEvent(cmd, true));
+               InstallCommand cmd = buildUpdatePackagesCommand(updates, 
+                                                               installContext);
+               executeWithLoadedPackageCheck(cmd);
             }  
       }).showModal();
    }
    
    
-   private String buildUpdatePackagesCommand(
+   private InstallCommand buildUpdatePackagesCommand(
                               ArrayList<PackageUpdate> updates,
                               final PackageInstallContext installContext)
    {
       // split the updates into their respective target libraries
+      List<String> packages = new ArrayList<String>();
       LinkedHashMap<String, ArrayList<PackageUpdate>> updatesByLibPath = 
          new  LinkedHashMap<String, ArrayList<PackageUpdate>>();  
       for (PackageUpdate update : updates)
@@ -387,7 +392,10 @@ public class Packages
             updatesByLibPath.put(libPath, new ArrayList<PackageUpdate>());
          
          // insert into list
-         updatesByLibPath.get(libPath).add(update);  
+         updatesByLibPath.get(libPath).add(update); 
+         
+         // track global list of packages
+         packages.add(update.getPackageName());
       }
       
       // generate an install packages command for each targeted library
@@ -424,7 +432,7 @@ public class Packages
          
       }
       
-      return command.toString();
+      return new InstallCommand(packages, command.toString());
    }
    
    
@@ -695,6 +703,77 @@ public class Packages
             }           
          });     
    }
+   
+   private class InstallCommand
+   {
+      public InstallCommand(List<String> packages, String cmd)
+      {
+         this.packages = packages;
+         this.cmd = cmd;
+      }
+      public final List<String> packages;
+      public final String cmd;
+   }
+   
+   private void executeWithLoadedPackageCheck(final InstallCommand command)
+   {
+      // check if we are potentially going to be overwriting an
+      // already installed package. if so then prompt for restart
+      if ((command.packages != null) && BrowseCap.isWindowsDesktop())
+      {
+         server_.loadedPackageUpdatesRequired(
+               command.packages, 
+               new ServerRequestCallback<Boolean>() {
+
+                  @Override
+                  public void onResponseReceived(Boolean required)
+                  {
+                     if (required)
+                     {
+                        globalDisplay_.showMessage(
+                           MessageDialog.WARNING,
+                           "Restart Required for Package Updates",
+                           "One or more of the packages you are installing (or " +
+                           "their dependencies) are currently loaded. In order " +
+                           "to assure correct installation you need to " +
+                           "restart R before proceeding.\n\n" +
+                           "RStudio will restart R now. All current work and data " +
+                           "will be preserved and package installation will "+
+                           "continue automatically after the restart.\n",
+                           new Operation() { public void execute()
+                           {
+                              events_.fireEvent(new SuspendAndRestartEvent(
+                                     SuspendOptions.createSaveAll(true), command.cmd));  
+                                 
+                           }},
+                           true);   
+                     }
+                     else
+                     {
+                        executePkgCommand(command.cmd);
+                     }
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                     executePkgCommand(command.cmd);
+                  }
+
+               }); 
+      }
+      else
+      {
+         executePkgCommand(command.cmd);
+      }
+   }
+
+   private void executePkgCommand(String cmd)
+   {
+      events_.fireEvent(new SendToConsoleEvent(cmd, true));
+   }
+
 
    private final Display view_;
    private final PackagesServerOperations server_;

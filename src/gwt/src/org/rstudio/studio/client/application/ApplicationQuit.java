@@ -333,7 +333,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    {   
       boolean saveChanges = saveAction_.getAction() != SaveAction.NOSAVE;
       eventBus_.fireEvent(new SuspendAndRestartEvent(
-                                 SuspendOptions.create(true, saveChanges),
+                                 SuspendOptions.createSaveMinimal(saveChanges),
                                  null));  
 
    }

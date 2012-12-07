@@ -1228,9 +1228,10 @@ Error suspendForRestart(const core::json::JsonRpcRequest& request,
 {
    r::session::RSuspendOptions options;
    Error error = json::readObjectParam(
-                                  request.params, 0,
-                                  "save_minimal", &(options.saveMinimal),
-                                  "save_workspace", &(options.saveWorkspace));
+                               request.params, 0,
+                               "save_minimal", &(options.saveMinimal),
+                               "save_workspace", &(options.saveWorkspace),
+                               "exclude_packages", &(options.excludePackages));
    if (error)
       return error;
 

@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.views.packages.model;
 
+import java.util.List;
+
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
@@ -39,4 +41,8 @@ public interface PackagesServerOperations
          ServerRequestCallback<PackageInstallContext> requestCallback);
    
    void initDefaultUserLibrary(ServerRequestCallback<Void> requestCallback);
+   
+   void loadedPackageUpdatesRequired(
+                            List<String> packages,
+                            ServerRequestCallback<Boolean> requestCallback);
 }

@@ -57,7 +57,15 @@
          .rs.updatePackageEvents()
          .rs.enqueClientEvent("installed_packages_changed")
       })
-                          
+
+      if ((.Platform$OS.type == "windows") && .rs.loadedPackageUpdates(pkgs)) {
+           stop(paste("One or more of the packages you are",
+                      "installing (or their dependencies) are",
+                      "currently loaded. In order to assure a",
+                      "correct installation you should restart",
+                      "R and then complete the installation."))
+      }
+
       # call original
       original(pkgs, lib, ...)
    })
@@ -302,4 +310,33 @@
                        
                        
    return (updates)
+})
+
+.rs.addFunction("loadedPackageUpdates", function(pkgs)
+{
+   if (any(pkgs %in% loadedNamespaces())) {
+     return(TRUE)
+   }
+   else {
+     # compute dependent packages
+     avail <- available.packages()
+     if (getRversion() >= "2.15")
+       deps <- tools:::package_dependencies(pkgs, db = avail, recursive = TRUE)
+     else
+       deps <- tools:::.package_dependencies(pkgs, db = avail, recursive = TRUE)
+     deps <- unique(as.character(c(deps, recursive=TRUE)))
+
+     # exclude built in R packages (e.g. tools, utils, methods)
+     deps <- intersect(deps, row.names(avail))
+
+     # check whether a loaded package will be updated
+     loadedDeps <- intersect(deps, loadedNamespaces())
+     return(length(loadedDeps) > 0)
+   }
+})
+
+
+.rs.addJsonRpcHandler("loaded_package_updates_required", function(pkgs)
+{
+  .rs.scalar(.rs.loadedPackageUpdates(pkgs))
 })

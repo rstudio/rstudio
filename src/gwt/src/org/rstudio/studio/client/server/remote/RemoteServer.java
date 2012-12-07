@@ -82,6 +82,7 @@ import org.rstudio.studio.client.workbench.views.workspace.model.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Singleton
@@ -593,6 +594,18 @@ public class RemoteServer implements Server
                               ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, INIT_DEFAULT_USER_LIBRARY, requestCallback);
+   }
+   
+   public void loadedPackageUpdatesRequired(
+                              List<String> packages,
+                              ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONArray(JsUtil.toJsArrayString(packages)));
+      sendRequest(RPC_SCOPE, 
+                  LOADED_PACKAGE_UPDATES_REQUIRED, 
+                  params, 
+                  requestCallback);
    }
 
    public void setCRANMirror(CRANMirror mirror,
@@ -2752,6 +2765,7 @@ public class RemoteServer implements Server
    private static final String AVAILABLE_PACKAGES = "available_packages";
    private static final String CHECK_FOR_PACKAGE_UPDATES = "check_for_package_updates";
    private static final String INIT_DEFAULT_USER_LIBRARY = "init_default_user_library";
+   private static final String LOADED_PACKAGE_UPDATES_REQUIRED = "loaded_package_updates_required";
    private static final String GET_PACKAGE_INSTALL_CONTEXT = "get_package_install_context";
    private static final String IS_PACKAGE_LOADED = "is_package_loaded";
    private static final String SET_CRAN_MIRROR = "set_cran_mirror";
