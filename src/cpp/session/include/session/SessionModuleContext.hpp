@@ -38,6 +38,7 @@ namespace core {
    class Settings;
    namespace system {
       class ProcessSupervisor;
+      struct ProcessResult;
    }
    namespace shell_utils {
       class ShellCommand;
@@ -284,6 +285,9 @@ core::Error convertToUtf8(const std::string& encodedContent,
 
 // source R files
 core::Error sourceModuleRFile(const std::string& rSourceFile);   
+core::Error sourceModuleRFileWithResult(const std::string& rSourceFile,
+                                        const core::FilePath& workingDir,
+                                        core::system::ProcessResult* pResult);
    
 // enque client events (note R methods can do this via .rs.enqueClientEvent)
 void enqueClientEvent(const ClientEvent& event);
@@ -325,6 +329,7 @@ void showContent(const std::string& title, const core::FilePath& filePath);
 int saveWorkspaceAction();
 void syncRSaveAction();
 
+std::string libPathsString();
 bool canBuildCpp();
 bool haveRcppAttributes();
 

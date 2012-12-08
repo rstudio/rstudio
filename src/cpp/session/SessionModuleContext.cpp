@@ -18,6 +18,7 @@
 #include <boost/assert.hpp>
 #include <boost/utility.hpp>
 #include <boost/signal.hpp>
+#include <boost/format.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 
 #include <core/BoostThread.hpp>
@@ -39,6 +40,7 @@
 #include <core/system/Process.hpp>
 #include <core/system/FileMonitor.hpp>
 #include <core/system/FileChangeEvent.hpp>
+#include <core/system/Environment.hpp>
 #include <core/system/ShellUtils.hpp>
 
 #include <r/RSexp.hpp>
@@ -883,12 +885,72 @@ json::Object createFileSystemItem(const FilePath& filePath)
    return createFileSystemItem(FileInfo(filePath));
 }
 
+std::string libPathsString()
+{
+   // call into R to get the string
+   std::string libPaths;
+   Error error = r::exec::RFunction(".rs.libPathsString").call(&libPaths);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return std::string();
+   }
+
+   // this is presumably system-encoded, so convert this to utf8 before return
+   return string_utils::systemToUtf8(libPaths);
+}
+
 Error sourceModuleRFile(const std::string& rSourceFile)
 {
    FilePath modulesPath = session::options().modulesRSourcePath();
    FilePath srcPath = modulesPath.complete(rSourceFile);
    return r::sourceManager().sourceTools(srcPath);
 }
+
+Error sourceModuleRFileWithResult(const std::string& rSourceFile,
+                                  const FilePath& workingDir,
+                                  core::system::ProcessResult* pResult)
+{
+   // R binary
+   FilePath rProgramPath;
+   Error error = module_context::rScriptPath(&rProgramPath);
+   if (error)
+      return error;
+   std::string rBin = string_utils::utf8ToSystem(rProgramPath.absolutePath());
+
+   // vanilla execution of a single expression
+   std::vector<std::string> args;
+   args.push_back("--slave");
+   args.push_back("--vanilla");
+   args.push_back("-e");
+
+   // build source command
+   boost::format fmt("source('%1%')");
+   FilePath modulesPath = session::options().modulesRSourcePath();
+   FilePath srcFilePath = modulesPath.complete(rSourceFile);
+   std::string srcPath = core::string_utils::utf8ToSystem(
+                                                srcFilePath.absolutePath());
+   std::string escapedSrcPath = string_utils::jsLiteralEscape(srcPath);
+   std::string cmd = boost::str(fmt % escapedSrcPath);
+   args.push_back(cmd);
+
+   // options
+   core::system::ProcessOptions options;
+   options.terminateChildren = true;
+   options.workingDir = workingDir;
+
+   // allow child process to inherit our R_LIBS
+   core::system::Options childEnv;
+   core::system::environment(&childEnv);
+   std::string libPaths = libPathsString();
+   if (!libPaths.empty())
+      core::system::setenv(&childEnv, "R_LIBS", libPaths);
+   options.environment = childEnv;
+
+   // run the child
+   return core::system::runProgram(rBin, args, "", options, pResult);
+}
+
       
 void enqueClientEvent(const ClientEvent& event)
 {

@@ -56,22 +56,6 @@ namespace session {
 
 namespace {
 
-
-std::string libPathsString()
-{
-   // call into R to get the string
-   std::string libPaths;
-   Error error = r::exec::RFunction(".rs.libPathsString").call(&libPaths);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return std::string();
-   }
-
-   // this is presumably system-encoded, so convert this to utf8 before return
-   return string_utils::systemToUtf8(libPaths);
-}
-
 shell_utils::ShellCommand buildRCmd(const core::FilePath& rBinDir)
 {
 #if defined(_WIN32)
@@ -441,34 +425,36 @@ private:
    {
       if (module_context::haveRcppAttributes())
       {
-          r::exec::RFunction compileAttr("Rcpp:::compileAttributes");
-          compileAttr.addParam(
-                   string_utils::utf8ToSystem(packagePath.absolutePath()));
-          std::vector<std::string> updated;
-          Error error = compileAttr.call(&updated);
-          if (error)
-          {
-             LOG_ERROR(error);
-             enqueCommandString("Rcpp::compileAttributes()");
-             terminateWithError(r::endUserErrorMessage(error));
-             return false;
-          }
-          else if (!updated.empty())
-          {
-             enqueCommandString("Rcpp::compileAttributes()");
-             std::ostringstream ostr;
-             for (size_t i = 0; i<updated.size(); i++)
-             {
-                FilePath updatedPath(updated[i]);
-                ostr << "* Updated " << updatedPath.relativePath(packagePath)
-                     << "\n";
-             }
-             ostr << "\n";
-             enqueBuildOutput(kBuildOutputNormal, ostr.str());
-          }
+         core::system::ProcessResult result;
+         Error error = module_context::sourceModuleRFileWithResult(
+                                             "SessionCompileAttributes.R",
+                                             packagePath,
+                                             &result);
+         if (error)
+         {
+            LOG_ERROR(error);
+            enqueCommandString("Rcpp::compileAttributes()");
+            terminateWithError(r::endUserErrorMessage(error));
+            return false;
+         }
+         else if (!result.stdOut.empty())
+         {
+            enqueCommandString("Rcpp::compileAttributes()");
+            enqueBuildOutput(kBuildOutputNormal, result.stdOut);
+            if (!result.stdErr.empty())
+               enqueBuildOutput(kBuildOutputError, result.stdErr);
+            enqueBuildOutput(kBuildOutputNormal, "\n");
+            return result.exitStatus == EXIT_SUCCESS;
+         }
+         else
+         {
+            return true;
+         }
       }
-
-      return true;
+      else
+      {
+         return true;
+      }
    }
 
    void buildPackage(const std::string& type,
@@ -503,7 +489,7 @@ private:
       core::system::environment(&childEnv);
 
       // allow child process to inherit our R_LIBS
-      std::string libPaths = libPathsString();
+      std::string libPaths = module_context::libPathsString();
       if (!libPaths.empty())
          core::system::setenv(&childEnv, "R_LIBS", libPaths);
 
