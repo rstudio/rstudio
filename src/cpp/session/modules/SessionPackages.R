@@ -58,7 +58,7 @@
          .rs.enqueClientEvent("installed_packages_changed")
       })
 
-      if ((.Platform$OS.type == "windows") && .rs.loadedPackageUpdates(pkgs)) {
+      if (.rs.loadedPackageUpdates(pkgs)) {
            stop(paste("One or more of the packages you are",
                       "installing (or their dependencies) are",
                       "currently loaded. In order to assure a",

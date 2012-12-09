@@ -17,7 +17,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
@@ -719,7 +718,7 @@ public class Packages
    {
       // check if we are potentially going to be overwriting an
       // already installed package. if so then prompt for restart
-      if ((command.packages != null) && BrowseCap.isWindowsDesktop())
+      if ((command.packages != null))
       {
          server_.loadedPackageUpdatesRequired(
                command.packages, 
