@@ -63,6 +63,7 @@ const char * const kGlobalEnvironment = "global_environment";
 // settings
 const char * const kWorkingDirectory = "working_directory";
 const char * const kDevModeOn = "dev_mode_on";
+const char * const kRProfileOnRestore = "r_profile_on_restore";
 
 
 Error saveLibPaths(const FilePath& libPathsFile)
@@ -274,6 +275,9 @@ bool save(const FilePath& statePath,
    bool saved = true;
    initSaveContext(statePath, &settings, &saved);
    
+   // set r profile on restore
+   settings.set(kRProfileOnRestore, !excludePackages);
+
    // save environment variables
    Error error = saveEnvironmentVars(statePath.complete(kEnvironmentVars));
    if (error)
@@ -367,6 +371,9 @@ bool saveMinimal(const core::FilePath& statePath,
    bool saved = true;
    initSaveContext(statePath, &settings, &saved);
 
+   // set r profile on restore
+   settings.set(kRProfileOnRestore, true);
+
    // handle dev mode
    saveDevMode(&settings);
 
@@ -393,6 +400,19 @@ bool saveMinimal(const core::FilePath& statePath,
 
    // return status
    return saved;
+}
+
+bool rProfileOnRestore(const core::FilePath& statePath)
+{
+   Settings settings ;
+   Error error = settings.initialize(statePath.complete(kSettingsFile));
+   if (error)
+   {
+      LOG_ERROR(error);
+      return true;
+   }
+
+   return settings.getBool(kRProfileOnRestore, true);
 }
 
 Error deferredRestore(const FilePath& statePath, bool serverMode)

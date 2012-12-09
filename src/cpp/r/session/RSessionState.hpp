@@ -36,6 +36,9 @@ bool save(const core::FilePath& statePath,
 bool saveMinimal(const core::FilePath& statePath,
                  bool saveGlobalEnvironment);
    
+
+bool rProfileOnRestore(const core::FilePath& statePath);
+
 bool restore(const core::FilePath& statePath, 
              bool serverMode,
              boost::function<core::Error()>* pDeferredRestoreAction,

@@ -68,6 +68,17 @@ bool RestartContext::hasSessionState() const
    return !sessionStatePath().empty();
 }
 
+bool RestartContext::rProfileOnRestore() const
+{
+   // if we don't have any session state then this check shouldn't
+   // trigger loading of the profile (allow other checks like whether
+   // we are coming back from a server suspend to run)
+   if (!hasSessionState())
+      return false;
+
+   return r::session::state::rProfileOnRestore(sessionStatePath());
+}
+
 FilePath RestartContext::sessionStatePath() const
 {
    return sessionStatePath_;

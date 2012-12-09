@@ -38,6 +38,8 @@ public:
 
    bool hasSessionState() const;
 
+   bool rProfileOnRestore() const;
+
    core::FilePath sessionStatePath() const;
 
    void removeSessionState();

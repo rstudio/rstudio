@@ -1307,10 +1307,20 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
 
 
    // run R
-   bool loadInitFile = restartContext().hasSessionState()
-                       || !s_suspendedSessionPath.exists()
-                       || options.rProfileOnResume;
 
+   // should we run .Rprofile?
+   bool loadInitFile = false;
+   if (restartContext().hasSessionState())
+   {
+      loadInitFile = restartContext().rProfileOnRestore();
+   }
+   else
+   {
+      loadInitFile = !s_suspendedSessionPath.exists()
+                     || options.rProfileOnResume;
+   }
+
+   // quiet for resume cases
    bool quiet = restartContext().hasSessionState() ||
                 s_suspendedSessionPath.exists();
 
