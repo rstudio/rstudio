@@ -133,14 +133,20 @@
 
 .rs.addFunction("forceUnloadPackage", function(name)
 {
-   if (name %in% .packages())
-   {
-      fullName <- paste("package:", name, sep="")
-      detach(fullName, character.only=TRUE, force=TRUE)
-      pkgDLL <- getLoadedDLLs()[[name]]
-      if (!is.null(pkgDLL))
-         dyn.unload(pkgDLL[["path"]])
-   }
+  if (name %in% .packages())
+  {
+    fullName <- paste("package:", name, sep="")
+    suppressWarnings(detach(fullName, 
+                            character.only=TRUE, 
+                            unload=TRUE, 
+                            force=TRUE))
+    
+    pkgDLL <- getLoadedDLLs()[[name]]
+    if (!is.null(pkgDLL)) {
+      suppressWarnings(library.dynam.unload(name, 
+                                            system.file(package=name)))
+    }
+  }
 })
 
 .rs.addFunction("libPathsString", function()
