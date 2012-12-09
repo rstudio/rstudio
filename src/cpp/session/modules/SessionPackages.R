@@ -314,29 +314,25 @@
 
 .rs.addFunction("loadedPackageUpdates", function(pkgs)
 {
+   # if the default set of namespaces in rstudio are loaded
+   # then skip the check
+   defaultNamespaces <- c("base", "datasets", "graphics", "grDevices",
+                          "methods", "stats", "tools", "utils")
+   if (identical(defaultNamespaces, loadedNamespaces()))
+      return(FALSE)
+
    if (any(pkgs %in% loadedNamespaces())) {
-     return(TRUE)
+      return(TRUE)
    }
    else {
-     # compute dependent packages
-     avail <- available.packages()
-     if (getRversion() >= "2.15")
-       deps <- tools:::package_dependencies(pkgs, db = avail, recursive = TRUE)
-     else
-       deps <- tools:::.package_dependencies(pkgs, db = avail, recursive = TRUE)
-     deps <- unique(as.character(c(deps, recursive=TRUE)))
-
-     # exclude built in R packages (e.g. tools, utils, methods)
-     deps <- intersect(deps, row.names(avail))
-
-     # check whether a loaded package will be updated
-     loadedDeps <- intersect(deps, loadedNamespaces())
-     return(length(loadedDeps) > 0)
+      avail <- available.packages()
+      deps <- suppressMessages(utils:::getDependencies(pkgs, available=avail))
+      return(any(deps %in% loadedNamespaces()))
    }
 })
 
 
 .rs.addJsonRpcHandler("loaded_package_updates_required", function(pkgs)
 {
-  .rs.scalar(.rs.loadedPackageUpdates(pkgs))
+   .rs.scalar(.rs.loadedPackageUpdates(as.character(pkgs)))
 })
