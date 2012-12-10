@@ -118,7 +118,7 @@ public class Window {
    * 
    */
   public static class Location {
-    private static Map<String, String> paramMap;
+    private static String cachedQueryString = "";
     private static Map<String, List<String>> listParamMap;
 
     /**
@@ -206,24 +206,28 @@ public class Window {
      * returned.
      * 
      * @param name the name of the URL's parameter
-     * @return the value of the URL's parameter
+     * @return the value of the URL's parameter, or null if missing
      */
     public static String getParameter(String name) {
-      ensureParameterMap();
-      return paramMap.get(name);
+      ensureListParameterMap();
+      List<String> paramsForName = listParamMap.get(name);
+      if (paramsForName == null) {
+        return null;
+      } else {
+        return paramsForName.get(paramsForName.size() - 1);
+      }
     }
 
     /**
-     * Returns a Map of the URL query parameters for the host page; since
-     * changing the map would not change the window's location, the map returned
-     * is immutable.
+     * Returns an immutable Map of the URL query parameters for the host page
+     * at the time this method was called.
+     * Any changes to the window's location will be reflected in the result
+     * of subsequent calls.
      * 
      * @return a map from URL query parameter names to a list of values
      */
     public static Map<String, List<String>> getParameterMap() {
-      if (listParamMap == null) {
-        listParamMap = buildListParamMap(getQueryString());
-      }
+      ensureListParameterMap();
       return listParamMap;
     }
 
@@ -316,21 +320,12 @@ public class Window {
       return out;
     }
 
-    private static void ensureParameterMap() {
-      if (paramMap == null) {
-        paramMap = new HashMap<String, String>();
-        String queryString = getQueryString();
-        if (queryString != null && queryString.length() > 1) {
-          String qs = queryString.substring(1);
-          for (String kvPair : qs.split("&")) {
-            String[] kv = kvPair.split("=", 2);
-            if (kv.length > 1) {
-              paramMap.put(kv[0], URL.decodeQueryString(kv[1]));
-            } else {
-              paramMap.put(kv[0], "");
-            }
-          }
-        }
+    private static void ensureListParameterMap() {
+      final String currentQueryString = getQueryString();
+      if (listParamMap == null ||
+          !cachedQueryString.equals(currentQueryString)) {
+        listParamMap = buildListParamMap(currentQueryString);
+        cachedQueryString = currentQueryString;
       }
     }
 
