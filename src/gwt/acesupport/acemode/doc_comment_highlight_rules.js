@@ -31,7 +31,7 @@ var DocCommentHighlightRules = function() {
     this.$rules = {
         "start" : [ {
             token : "comment.doc.tag",
-            regex : "@[\\w\\d_]+" // TODO: fix email addresses
+            regex : "[@\\\\][\\w\\d_]+" // TODO: fix email addresses
         }, {
             token : "comment.doc",
             merge : true,
@@ -43,7 +43,7 @@ var DocCommentHighlightRules = function() {
         }, {
             token : "comment.doc",
             merge : true,
-            regex : "[^@\\*]+"
+            regex : "[^@\\\\\\*]+"
         }, {
             token : "comment.doc",
             merge : true,
@@ -58,7 +58,7 @@ DocCommentHighlightRules.getStartRule = function(start) {
     return {
         token : "comment.doc", // doc comment
         merge : true,
-        regex : "\\/\\*(?=\\*)",
+        regex : "\\/\\*[\\*\\!]",
         next  : start
     };
 };
