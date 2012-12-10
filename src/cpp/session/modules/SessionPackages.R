@@ -104,6 +104,11 @@
     .Call("rs_addRToolsToPath")
 })
 
+.rs.addFunction( "restorePreviousPath", function()
+{
+    .Call("rs_restorePreviousPath")
+})
+
 .rs.addFunction( "uniqueLibraryPaths", function()
 {
    # get library paths (normalize on unix to get rid of duplicate symlinks)
