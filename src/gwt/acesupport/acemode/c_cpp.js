@@ -158,9 +158,15 @@ oop.inherits(Mode, TextMode);
     this.transformAction = function(state, action, editor, session, text) {
        if (action === 'insertion') {
             if (text === "\n") {
-                // If newline in a doxygen comment, continue the comment
+                // If beginning of doxygen comment, provide the end
                 var pos = editor.getSelectionRange().start;
-                var match = /^((\s*\/\/+')\s*)/.exec(session.doc.getLine(pos.row));
+                var match = /^(\/\*[\*\!]\s*)/.exec(session.doc.getLine(pos.row));
+                if (match && editor.getSelectionRange().start.column >= match[1].length) {
+                    return {text: "\n * \n */\n",
+                            selection: [1, 3, 1, 3]};
+                }
+                // If newline in a doxygen comment, continue the comment
+                match = /^((\s*\/\/+')\s*)/.exec(session.doc.getLine(pos.row));
                 if (match && editor.getSelectionRange().start.column >= match[2].length) {
                     return {text: "\n" + match[1]};
                 }
