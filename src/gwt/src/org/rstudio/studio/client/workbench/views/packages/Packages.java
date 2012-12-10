@@ -50,6 +50,7 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedHandler;
+import org.rstudio.studio.client.workbench.views.packages.events.LoadedPackageUpdatesEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedHandler;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
@@ -703,6 +704,11 @@ public class Packages
          });     
    }
    
+   public void onLoadedPackageUpdates(LoadedPackageUpdatesEvent event)
+   {
+      restartForInstallWithConfirmation(event.getInstallCmd());  
+   }
+   
    private class InstallCommand
    {
       public InstallCommand(List<String> packages, String cmd)
@@ -729,23 +735,7 @@ public class Packages
                   {
                      if (required)
                      {
-                        globalDisplay_.showMessage(
-                           MessageDialog.WARNING,
-                           "Restart Required for Package Updates",
-                           "One or more of the packages you are installing (or " +
-                           "their dependencies) are currently loaded. In order " +
-                           "to assure correct installation you need to " +
-                           "restart R before proceeding.\n\n" +
-                           "RStudio will restart R now. All current work and data " +
-                           "will be preserved and package installation will "+
-                           "continue automatically after the restart.\n",
-                           new Operation() { public void execute()
-                           {
-                              events_.fireEvent(new SuspendAndRestartEvent(
-                                     SuspendOptions.createSaveAll(true), command.cmd));  
-                                 
-                           }},
-                           true);   
+                        restartForInstallWithConfirmation(command.cmd);
                      }
                      else
                      {
@@ -771,6 +761,34 @@ public class Packages
    private void executePkgCommand(String cmd)
    {
       events_.fireEvent(new SendToConsoleEvent(cmd, true));
+   }
+   
+   private void restartForInstallWithConfirmation(final String installCmd)
+   {
+      String msg = "One or more of the packages that will be updated by this " +
+                   "installation are currently loaded. Restarting R prior " +
+                   "to updating these packages is strongly recommended.\n\n" +
+                   "RStudio will restart R now (all current work and data " +
+                   "will be preserved during the restart). ";
+      
+      if (installCmd.startsWith("install.packages"))
+      {
+         msg += "Installation of the selected packages will continue " +
+                "automatically after the restart.";
+      }
+      
+      globalDisplay_.showMessage(
+            MessageDialog.WARNING,
+            "Updating Loaded Packages",
+            msg,
+            new Operation() { public void execute()
+            {
+               events_.fireEvent(new SuspendAndRestartEvent(
+                      SuspendOptions.createSaveAll(true), installCmd));  
+                  
+            }},
+            "Restart R",
+            true);   
    }
 
 

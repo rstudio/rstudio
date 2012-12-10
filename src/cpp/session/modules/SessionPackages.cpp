@@ -29,6 +29,7 @@
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
 #include <r/RFunctionHook.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -174,10 +175,30 @@ Error availablePackagesEnd(const core::json::JsonRpcRequest& request,
    return Success();
 }
 
+SEXP rs_enqueLoadedPackageUpdates(SEXP installCmdSEXP)
+{
+   std::string installCmd;
+   if (installCmdSEXP != R_NilValue)
+      installCmd = r::sexp::asString(installCmdSEXP);
+
+   ClientEvent event(client_events::kLoadedPackageUpdates, installCmd);
+   module_context::enqueClientEvent(event);
+
+   return R_NilValue;
+}
+
+
 } // anonymous namespace
 
 Error initialize()
 {
+   // register routines
+   R_CallMethodDef methodDef ;
+   methodDef.name = "rs_enqueLoadedPackageUpdates" ;
+   methodDef.fun = (DL_FUNC) rs_enqueLoadedPackageUpdates ;
+   methodDef.numArgs = 1;
+   r::routines::addCallMethod(methodDef);
+
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock ;

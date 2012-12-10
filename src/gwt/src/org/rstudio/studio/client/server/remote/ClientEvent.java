@@ -82,6 +82,7 @@ class ClientEvent extends JavaScriptObject
    public static final String PlotsZoomSizeChanged = "plots_zoom_size_changed";
    public static final String SourceCppStarted = "source_cpp_started";
    public static final String SourceCppCompleted = "source_cpp_completed";
+   public static final String LoadedPackageUpdates = "loaded_package_updates";
    
 
    protected ClientEvent()

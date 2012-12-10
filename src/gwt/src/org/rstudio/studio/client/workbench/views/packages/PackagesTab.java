@@ -16,9 +16,11 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
+import org.rstudio.studio.client.workbench.views.packages.events.LoadedPackageUpdatesEvent;
 
 public class PackagesTab extends DelayLoadWorkbenchTab<Packages>
 {
@@ -26,6 +28,7 @@ public class PackagesTab extends DelayLoadWorkbenchTab<Packages>
    
    public abstract static class Shim
          extends DelayLoadTabShim<Packages, PackagesTab> 
+         implements LoadedPackageUpdatesEvent.Handler
    {
       @Handler
       public abstract void onInstallPackage();
@@ -34,9 +37,13 @@ public class PackagesTab extends DelayLoadWorkbenchTab<Packages>
    }
 
    @Inject
-   public PackagesTab(Shim shim, Binder binder, Commands commands)
+   public PackagesTab(Shim shim, 
+                      Binder binder, 
+                      EventBus events, 
+                      Commands commands)
    {
       super("Packages", shim);
       binder.bind(commands, shim);
+      events.addHandler(LoadedPackageUpdatesEvent.TYPE, shim);
    }
 }

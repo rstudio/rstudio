@@ -59,11 +59,20 @@
       })
 
       if (.rs.loadedPackageUpdates(pkgs)) {
-           stop(paste("One or more of the packages you are",
-                      "installing (or their dependencies) are",
-                      "currently loaded. In order to assure a",
-                      "correct installation you should restart",
-                      "R and then complete the installation."))
+
+         # attempt to determine the install command
+         if (length(sys.calls()) > 7) {
+            installCall <- sys.call(-7)
+            installCmd <- format(installCall)
+         } else {
+            installCmd <- NULL
+         }
+
+         # call back into rsession to send an event to the client
+         .rs.enqueLoadedPackageUpdates(installCmd)
+
+         # throw error
+         stop("Updating loaded packages")
       }
 
       # call original
@@ -337,6 +346,10 @@
    }
 })
 
+.rs.addFunction("enqueLoadedPackageUpdates", function(installCmd)
+{
+   .Call("rs_enqueLoadedPackageUpdates", installCmd)
+})
 
 .rs.addJsonRpcHandler("loaded_package_updates_required", function(pkgs)
 {

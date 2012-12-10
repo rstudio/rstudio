@@ -107,15 +107,16 @@ public abstract class MessageDisplay
             .addButton("OK", dismissed)
             .showModal();
    }
-   
+      
    public void showMessage(int type,
                            String caption,
                            String message,
                            Operation dismissed,
+                           String okLabel,
                            boolean includeCancel)
    {
       DialogBuilder dialog = createDialog(type, caption, message)
-            .addButton("OK", dismissed);
+            .addButton(okLabel, dismissed);
       if (includeCancel)
          dialog.addButton("Cancel");
       dialog.showModal();

@@ -66,12 +66,12 @@ import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAddedEvent;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
-import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.events.SourceCppCompletedEvent;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.events.SourceCppStartedEvent;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.model.SourceCppState;
 import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedEvent;
+import org.rstudio.studio.client.workbench.views.packages.events.LoadedPackageUpdatesEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.plots.events.LocatorEvent;
@@ -369,7 +369,7 @@ public class ClientEventDispatcher
          else if (type.equals(ClientEvent.FindOperationEnded))
          {
             String data = event.getData();
-            eventBus_.fireEvent(new FindOperationEndedEvent(data));
+            eventBus_.fireEvent(new LoadedPackageUpdatesEvent(data));
          }
          else if (type.equals(ClientEvent.RPubsUploadStatus))
          {
@@ -417,6 +417,11 @@ public class ClientEventDispatcher
          {
             SourceCppState state = event.getData();
             eventBus_.fireEvent(new SourceCppCompletedEvent(state));
+         }
+         else if (type.equals(ClientEvent.LoadedPackageUpdates))
+         {
+            String installCmd = event.getData();
+            eventBus_.fireEvent(new LoadedPackageUpdatesEvent(installCmd));
          }
          else if (type.equals(ClientEvent.ListChanged))
          {

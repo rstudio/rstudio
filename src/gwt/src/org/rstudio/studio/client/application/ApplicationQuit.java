@@ -16,6 +16,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.Barrier.Token;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.BarrierReleasedEvent;
@@ -405,7 +406,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                         pingDelivered_ = true;
                         
                         // issue after restart command
-                        if (afterRestartCommand != null)
+                        if (!StringUtil.isNullOrEmpty(afterRestartCommand))
                         {
                            eventBus_.fireEvent(
                                  new SendToConsoleEvent(afterRestartCommand, 

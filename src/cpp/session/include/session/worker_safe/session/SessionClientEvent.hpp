@@ -91,6 +91,7 @@ extern const int kDeferredInitCompleted;
 extern const int kPlotsZoomSizeChanged;
 extern const int kSourceCppStarted;
 extern const int kSourceCppCompleted;
+extern const int kLoadedPackageUpdates;
 }
    
 class ClientEvent
