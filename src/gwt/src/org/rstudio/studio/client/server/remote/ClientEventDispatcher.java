@@ -66,6 +66,7 @@ import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAddedEvent;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
+import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.events.SourceCppCompletedEvent;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.events.SourceCppStartedEvent;
@@ -369,7 +370,7 @@ public class ClientEventDispatcher
          else if (type.equals(ClientEvent.FindOperationEnded))
          {
             String data = event.getData();
-            eventBus_.fireEvent(new LoadedPackageUpdatesEvent(data));
+            eventBus_.fireEvent(new FindOperationEndedEvent(data));
          }
          else if (type.equals(ClientEvent.RPubsUploadStatus))
          {
