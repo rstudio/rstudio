@@ -52,12 +52,6 @@
                                                                 lib,
                                                                 ...) 
    {
-      # do housekeeping after we execute the original
-      on.exit({
-         .rs.updatePackageEvents()
-         .rs.enqueClientEvent("installed_packages_changed")
-      })
-
       if (.rs.loadedPackageUpdates(pkgs)) {
 
          # attempt to determine the install command
@@ -74,6 +68,16 @@
          # throw error
          stop("Updating loaded packages")
       }
+
+      # fixup path as necessary
+      .rs.addRToolsToPath()
+
+      # do housekeeping after we execute the original
+      on.exit({
+         .rs.updatePackageEvents()
+         .rs.enqueClientEvent("installed_packages_changed")
+         .rs.restorePreviousPath()
+      })
 
       # call original
       original(pkgs, lib, ...)
@@ -93,6 +97,11 @@
       # call original
       original(pkgs, lib, ...) 
    })
+})
+
+.rs.addFunction( "addRToolsToPath", function()
+{
+    .Call("rs_addRToolsToPath")
 })
 
 .rs.addFunction( "uniqueLibraryPaths", function()
@@ -226,15 +235,12 @@
    # selected repository names
    selectedRepositoryNames <- names(repos)
 
-   # can we build c code
-   canBuildCpp <- .Call("rs_canBuildCpp")
-
    # are we in dev mode
    devModeOn <- .rs.devModeOn()
 
    # package archive extension
    if (identical(.Platform$OS.type, "windows"))
-      packageArchiveExtension <- ifelse(canBuildCpp,".zip; .tar.gz", ".zip")
+      packageArchiveExtension <- ".zip; .tar.gz"
    else if (identical(substr(.Platform$pkgType, 1L, 10L), "mac.binary"))
       packageArchiveExtension <- ".tgz; .tar.gz"
    else
@@ -262,7 +268,6 @@
         defaultLibraryWriteable = defaultLibraryWriteable,
         writeableLibraryPaths = writeableLibraryPaths,
         defaultUserLibraryPath = defaultUserLibraryPath,
-        canBuildCpp = canBuildCpp,
         devModeOn = devModeOn)
 })
 

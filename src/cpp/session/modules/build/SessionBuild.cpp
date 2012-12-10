@@ -1190,6 +1190,30 @@ SEXP rs_canBuildCpp()
    return r::sexp::create(module_context::canBuildCpp(), &rProtect);
 }
 
+std::string s_previousPath;
+SEXP rs_restorePreviousPath()
+{
+#ifdef _WIN32
+    if (!s_previousPath.empty())
+        core::system::setenv("PATH", s_previousPath);
+    s_previousPath.clear();
+#endif
+    return R_NilValue;
+}
+
+SEXP rs_addRToolsToPath()
+{
+#ifdef _WIN32
+    s_previousPath = core::system::getenv("PATH");
+    std::string newPath = s_previousPath;
+    std::string warningMsg;
+    build::addRtoolsToPathIfNecessary(&newPath, &warningMsg);
+    core::system::setenv("PATH", newPath);
+
+#endif
+    return R_NilValue;
+}
+
 } // anonymous namespace
 
 json::Value buildStateAsJson()
@@ -1225,6 +1249,18 @@ Error initialize()
    canBuildMethodDef.fun = (DL_FUNC) rs_canBuildCpp ;
    canBuildMethodDef.numArgs = 0;
    r::routines::addCallMethod(canBuildMethodDef);
+
+   R_CallMethodDef addRToolsToPathMethodDef ;
+   addRToolsToPathMethodDef.name = "rs_addRToolsToPath" ;
+   addRToolsToPathMethodDef.fun = (DL_FUNC) rs_addRToolsToPath ;
+   addRToolsToPathMethodDef.numArgs = 0;
+   r::routines::addCallMethod(addRToolsToPathMethodDef);
+
+   R_CallMethodDef restorePreviousPathMethodDef ;
+   restorePreviousPathMethodDef.name = "rs_restorePreviousPath" ;
+   restorePreviousPathMethodDef.fun = (DL_FUNC) rs_restorePreviousPath ;
+   restorePreviousPathMethodDef.numArgs = 0;
+   r::routines::addCallMethod(restorePreviousPathMethodDef);
 
    // subscribe to file monitor and source editor file saved so we
    // can tickle a flag to indicates when we should force an R
