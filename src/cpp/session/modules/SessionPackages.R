@@ -41,6 +41,9 @@
 {  
    # list of packages we have hooked attach/detach for
    .rs.setVar( "hookedPackages", character() )
+
+   # set flag indicating we should not ignore loadedPackageUpdates checks
+   .rs.setVar("ignoreNextLoadedPackageCheck", FALSE)
     
    # ensure we are subscribed to package attach/detach events
    .rs.updatePackageEvents()
@@ -351,6 +354,12 @@
 
 .rs.addFunction("loadedPackageUpdates", function(pkgs)
 {
+   # are we ignoring?
+   ignore <- .rs.ignoreNextLoadedPackageCheck
+   .rs.setVar("ignoreNextLoadedPackageCheck", FALSE)
+   if (ignore)
+      return(FALSE)
+
    # if the default set of namespaces in rstudio are loaded
    # then skip the check
    defaultNamespaces <- c("base", "datasets", "graphics", "grDevices",
@@ -378,3 +387,9 @@
 {
    .rs.scalar(.rs.loadedPackageUpdates(as.character(pkgs)))
 })
+
+.rs.addJsonRpcHandler("ignore_next_loaded_package_check", function() {
+   .rs.setVar("ignoreNextLoadedPackageCheck", TRUE)
+   return(NULL)
+})
+

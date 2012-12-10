@@ -768,26 +768,36 @@ public class Packages
       String msg = "One or more of the packages that will be updated by this " +
                    "installation are currently loaded. Restarting R prior " +
                    "to updating these packages is strongly recommended.\n\n" +
-                   "RStudio will restart R now (all current work and data " +
-                   "will be preserved during the restart). ";
+                   "RStudio can restart R and then automatically continue " +
+                   "the installation after restarting (all work and " +
+                   "data will be preserved during the restart).\n\n" +
+                   "Do you want to restart R prior to installing?";
+                  
+      final boolean haveInstallCmd = installCmd.startsWith("install.packages");
       
-      if (installCmd.startsWith("install.packages"))
-      {
-         msg += "Installation of the selected packages will continue " +
-                "automatically after the restart.";
-      }
-      
-      globalDisplay_.showMessage(
+      globalDisplay_.showYesNoMessage(
             MessageDialog.WARNING,
             "Updating Loaded Packages",
             msg,
+            true,
             new Operation() { public void execute()
             {
                events_.fireEvent(new SuspendAndRestartEvent(
                       SuspendOptions.createSaveAll(true), installCmd));  
                   
             }},
-            "Restart R",
+            new Operation() { public void execute()
+            {
+               server_.ignoreNextLoadedPackageCheck(
+                                            new VoidServerRequestCallback() {
+                  @Override
+                  public void onSuccess()
+                  {
+                     if (haveInstallCmd)
+                        executePkgCommand(installCmd);
+                  }
+               });
+            }},
             true);   
    }
 

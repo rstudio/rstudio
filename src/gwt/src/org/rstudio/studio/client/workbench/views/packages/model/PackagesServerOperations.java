@@ -45,4 +45,7 @@ public interface PackagesServerOperations
    void loadedPackageUpdatesRequired(
                             List<String> packages,
                             ServerRequestCallback<Boolean> requestCallback);
+   
+   void ignoreNextLoadedPackageCheck(
+                        ServerRequestCallback<Void> requestCallback);
 }

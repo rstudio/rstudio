@@ -607,6 +607,12 @@ public class RemoteServer implements Server
                   params, 
                   requestCallback);
    }
+   
+   public void ignoreNextLoadedPackageCheck(
+                              ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, IGNORE_NEXT_LOADED_PACKAGE_CHECK, requestCallback);
+   }
 
    public void setCRANMirror(CRANMirror mirror,
                              ServerRequestCallback<Void> requestCallback)
@@ -2766,6 +2772,7 @@ public class RemoteServer implements Server
    private static final String CHECK_FOR_PACKAGE_UPDATES = "check_for_package_updates";
    private static final String INIT_DEFAULT_USER_LIBRARY = "init_default_user_library";
    private static final String LOADED_PACKAGE_UPDATES_REQUIRED = "loaded_package_updates_required";
+   private static final String IGNORE_NEXT_LOADED_PACKAGE_CHECK = "ignore_next_loaded_package_check";
    private static final String GET_PACKAGE_INSTALL_CONTEXT = "get_package_install_context";
    private static final String IS_PACKAGE_LOADED = "is_package_loaded";
    private static final String SET_CRAN_MIRROR = "set_cran_mirror";
