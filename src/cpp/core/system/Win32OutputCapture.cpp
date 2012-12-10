@@ -24,6 +24,7 @@
 #include <core/Error.hpp>
 #include <core/BoostThread.hpp>
 #include <core/BoostErrors.hpp>
+#include <core/Thread.hpp>
 
 namespace core {
 namespace system {
@@ -104,40 +105,38 @@ Error captureStandardStreams(
             const boost::function<void(const std::string&)>& stdoutHandler,
             const boost::function<void(const std::string&)>& stderrHandler)
 {
-   try
+   // redirect stdout
+   HANDLE hReadStdoutPipe = NULL;
+   Error error = redirectToPipe(STD_OUTPUT_HANDLE, stdout, &hReadStdoutPipe);
+   if (error)
+      return error;
+
+   // capture stdout
+   error = thread::safeLaunchThread(boost::bind(standardStreamCaptureThread,
+                                                hReadStdoutPipe,
+                                                stdoutHandler));
+   if (error)
+      return error;
+
+   // optionally redirect stderror if handler was provided
+   HANDLE hReadStderrPipe = NULL;
+   if (stderrHandler)
    {
-      // redirect stdout
-      HANDLE hReadStdoutPipe = NULL;
-      Error error = redirectToPipe(STD_OUTPUT_HANDLE, stdout, &hReadStdoutPipe);
+      // redirect stderr
+      error = redirectToPipe(STD_ERROR_HANDLE, stderr, &hReadStderrPipe);
       if (error)
          return error;
 
-      // capture stdout
-      boost::thread stdoutThread(boost::bind(standardStreamCaptureThread,
-                                             hReadStdoutPipe,
-                                             stdoutHandler));
-
-      // optionally redirect stderror if handler was provided
-      HANDLE hReadStderrPipe = NULL;
-      if (stderrHandler)
-      {
-         // redirect stderr
-         error = redirectToPipe(STD_ERROR_HANDLE, stderr, &hReadStderrPipe);
-         if (error)
-            return error;
-
-         // capture stderr
-         boost::thread stderrThread(boost::bind(standardStreamCaptureThread,
-                                                hReadStderrPipe,
-                                                stderrHandler));
-      }
-
-      return Success();
+      // capture stderr
+      error = thread::safeLaunchThread(
+                                 boost::bind(standardStreamCaptureThread,
+                                 hReadStderrPipe,
+                                 stderrHandler));
+      if (error)
+         return error;
    }
-   catch(const boost::thread_resource_error& e)
-   {
-      return Error(boost::thread_error::ec_from_exception(e), ERROR_LOCATION);
-   }
+
+   return Success();
 }
 
 } // namespace system
