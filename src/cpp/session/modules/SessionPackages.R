@@ -327,22 +327,35 @@
    return (updates)
 })
 
+.rs.addFunction("packagesLoaded", function(pkgs) {
+   # first check loaded namespaces
+   if (any(pkgs %in% loadedNamespaces()))
+      return(TRUE)
+
+   # now check if there are libraries still loaded in spite of the
+   # namespace being unloaded 
+   libs <- .dynLibs()
+   matchidx <- vapply(libs, "[[", character(1), "name") == pkgs
+   return(any(matchidx))
+})
+
 .rs.addFunction("loadedPackageUpdates", function(pkgs)
 {
    # if the default set of namespaces in rstudio are loaded
    # then skip the check
    defaultNamespaces <- c("base", "datasets", "graphics", "grDevices",
                           "methods", "stats", "tools", "utils")
-   if (identical(defaultNamespaces, loadedNamespaces()))
+   if (identical(defaultNamespaces, loadedNamespaces()) &&
+       length(.dynLibs()) == 4)
       return(FALSE)
 
-   if (any(pkgs %in% loadedNamespaces())) {
+   if (.rs.packagesLoaded(pkgs)) {
       return(TRUE)
    }
    else {
       avail <- available.packages()
       deps <- suppressMessages(utils:::getDependencies(pkgs, available=avail))
-      return(any(deps %in% loadedNamespaces()))
+      return(.rs.packagesLoaded(deps))
    }
 })
 
