@@ -437,7 +437,7 @@ private:
             terminateWithError(r::endUserErrorMessage(error));
             return false;
          }
-         else if (!result.stdOut.empty())
+         else if (!result.stdOut.empty() || !result.stdErr.empty())
          {
             enqueCommandString("Rcpp::compileAttributes()");
             enqueBuildOutput(kBuildOutputNormal, result.stdOut);
