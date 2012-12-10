@@ -18,8 +18,8 @@
 namespace core {
 namespace thread {
 
-Error safeLaunchThread(boost::function<void()> threadMain,
-                       boost::thread* pThread)
+void safeLaunchThread(boost::function<void()> threadMain,
+                      boost::thread* pThread)
 {
    try
    {
@@ -28,19 +28,17 @@ Error safeLaunchThread(boost::function<void()> threadMain,
       core::system::SignalBlocker signalBlocker;
       Error error = signalBlocker.blockAll();
       if (error)
-         return error;
+         LOG_ERROR(error);
 
       boost::thread t(threadMain);
 
       if (pThread)
          *pThread = t.move();
-
-      return Success();
    }
    catch(const boost::thread_resource_error& e)
    {
-      return Error(boost::thread_error::ec_from_exception(e),
-                   ERROR_LOCATION);
+      LOG_ERROR(Error(boost::thread_error::ec_from_exception(e),
+                      ERROR_LOCATION));
    }
 }
 

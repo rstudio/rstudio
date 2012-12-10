@@ -26,7 +26,6 @@
 #include <core/FilePath.hpp>
 #include <core/Error.hpp>
 #include <core/BoostErrors.hpp>
-#include <core/Thread.hpp>
 #include <core/system/System.hpp>
 
 #include <core/json/JsonRpc.hpp>
@@ -94,17 +93,31 @@ public:
       // accept next connection (asynchronously)
       acceptNextConnection();
 
-      // launch listener thread
-      error = core::thread::safeLaunchThread(
-                                  boost::bind(&boost::asio::io_service::run,
-                                              &(acceptorService_.ioService())),
-                                  &listenerThread_);
+      // block all signals for launch of listener thread (will cause it
+      // to never receive signals)
+      core::system::SignalBlocker signalBlocker;
+      error = signalBlocker.blockAll();
       if (error)
-          return error;
+         return error ;
 
-      started_ = true;
+      // launch the listener thread
+      try
+      {
+         using boost::bind;
+         boost::thread listenerThread(bind(&boost::asio::io_service::run,
+                                           &(acceptorService_.ioService())));
+         listenerThread_ = listenerThread.move();
 
-      return core::Success();
+         // set started flag
+         started_ = true;
+
+         return core::Success();
+      }
+      catch(const boost::thread_resource_error& e)
+      {
+         return core::Error(boost::thread_error::ec_from_exception(e),
+                            ERROR_LOCATION);
+      }
    }
 
    virtual void stop()

@@ -22,7 +22,6 @@
 #define BOOST_THREAD_USE_LIB
 #include <core/BoostThread.hpp>
 #include <core/Error.hpp>
-#include <core/Thread.hpp>
 
 using namespace core;
 
@@ -430,23 +429,8 @@ int main(int argc, char** argv)
       return 1;
    }
 
-   Error error = core::thread::safeLaunchThread(
-                        boost::bind(&transferStdInToConsole, hConIn));
-   if (error)
-   {
-      std::cerr << "Error launching stdin thread: " << error.summary()
-                << std::endl;
-      return 1;
-   }
-
-   error = core::thread::safeLaunchThread(
-                        boost::bind(&transferConsoleOutToStdErr, hConOut));
-   if (error)
-   {
-      std::cerr << "Error launching stdout thread: " << error.summary()
-                << std::endl;
-      return 1;
-   }
+   boost::thread(&transferStdInToConsole, hConIn);
+   boost::thread(&transferConsoleOutToStdErr, hConOut);
 
    while (true)
    {

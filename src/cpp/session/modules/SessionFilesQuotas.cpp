@@ -216,9 +216,22 @@ void checkQuotaStatus()
 {
    if (s_systemHasQuotas)
    {
-      Error error = core::thread::safeLaunchThread(checkQuotaThread);
-      if (error)
-         LOG_ERROR(error);
+      try
+      {
+         // block all signals for launch of background thread (will cause it
+         // to never receive signals)
+         core::system::SignalBlocker signalBlocker;
+         Error error = signalBlocker.blockAll();
+         if (error)
+            LOG_ERROR(error);
+         
+         boost::thread t(checkQuotaThread);
+      }
+      catch(const boost::thread_resource_error& e)
+      {
+         LOG_ERROR(Error(boost::thread_error::ec_from_exception(e),
+                         ERROR_LOCATION));
+      }
    }
 }
 
