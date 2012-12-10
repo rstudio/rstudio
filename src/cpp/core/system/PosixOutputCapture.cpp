@@ -23,6 +23,7 @@
 #include <core/Error.hpp>
 #include <core/BoostThread.hpp>
 #include <core/BoostErrors.hpp>
+#include <core/Thread.hpp>
 
 #include <core/system/System.hpp>
 
@@ -149,27 +150,12 @@ Error captureStandardStreams(
    std::ios::sync_with_stdio();
 
    // launch the monitor thread
-   try
-   {
-      // block all signals for launch of background thread (will cause it
-      // to never receive signals)
-      core::system::SignalBlocker signalBlocker;
-      Error error = signalBlocker.blockAll();
-      if (error)
-         LOG_ERROR(error);
-
-      boost::thread t(boost::bind(standardStreamCaptureThread,
-                                     stdoutReadPipe,
-                                     stdoutHandler,
-                                     stderrReadPipe,
-                                     stderrHandler));
-
-      return Success();
-   }
-   catch(const boost::thread_resource_error& e)
-   {
-      return Error(boost::thread_error::ec_from_exception(e), ERROR_LOCATION);
-   }
+   return core::thread::safeLaunchThread(
+               boost::bind(standardStreamCaptureThread,
+                              stdoutReadPipe,
+                              stdoutHandler,
+                              stderrReadPipe,
+                              stderrHandler));
 }
 
 } // namespace system

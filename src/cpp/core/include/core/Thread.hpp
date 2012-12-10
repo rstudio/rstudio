@@ -204,8 +204,8 @@ private:
    std::queue<T> queue_;
 };
 
-void safeLaunchThread(boost::function<void()> threadMain,
-                      boost::thread* pThread = NULL);
+Error safeLaunchThread(boost::function<void()> threadMain,
+                       boost::thread* pThread = NULL);
       
 } // namespace thread
 } // namespace core

@@ -1235,10 +1235,13 @@ core::Error executeAsync(const json::JsonRpcFunction& function,
    // operation on a new thread.
 
    std::string handle = core::system::generateUuid(true);
-   core::thread::safeLaunchThread(bind(beginRpcHandler,
-                                       function,
-                                       request,
-                                       handle));
+   Error error = core::thread::safeLaunchThread(bind(beginRpcHandler,
+                                                     function,
+                                                     request,
+                                                     handle));
+   if (error)
+       return error;
+
    pResponse->setAsyncHandle(handle);
    return Success();
 }

@@ -60,26 +60,10 @@ Error ClientEventService::start(const std::string& clientId)
    // set our clientid
    setClientId(clientId, false);
    
-   // block all signals for launch of background thread (will cause it
-   // to never receive signals)
-   core::system::SignalBlocker signalBlocker;
-   Error error = signalBlocker.blockAll();
-   if (error)
-      return error ;
-   
-   // launch the service thread
-   try
-   {
-      using boost::bind;
-      boost::thread serviceThread(bind(&ClientEventService::run, this));       
-      serviceThread_ = serviceThread.move();
-      
-      return Success();
-   }
-   catch(const boost::thread_resource_error& e)
-   {
-      return Error(boost::thread_error::ec_from_exception(e), ERROR_LOCATION);       
-   }
+   // launch thread
+   return core::thread::safeLaunchThread(boost::bind(
+                                            &ClientEventService::run, this),
+                                         &serviceThread_);
 }
    
 void ClientEventService::stop()

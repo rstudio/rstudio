@@ -2594,7 +2594,11 @@ int main (int argc, char * const argv[])
 
       // detect parent termination
       if (desktopMode)
-         core::thread::safeLaunchThread(detectParentTermination);
+      {
+         error = core::thread::safeLaunchThread(detectParentTermination);
+         if (error)
+             LOG_ERROR(error);
+      }
 
       // set the rpostback absolute path
       FilePath rpostback = options.rpostbackPath()

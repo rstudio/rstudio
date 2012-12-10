@@ -620,7 +620,10 @@ boost::thread s_fileMonitorThread;
 void initialize()
 {
    s_pActiveHandles = new std::list<Handle>();
-   core::thread::safeLaunchThread(fileMonitorThreadMain, &s_fileMonitorThread);
+   Error error = core::thread::safeLaunchThread(fileMonitorThreadMain,
+                                                &s_fileMonitorThread);
+   if (error)
+       LOG_ERROR(error);
 }
 
 void stop()
