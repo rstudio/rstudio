@@ -17,7 +17,7 @@
 
   <target name="compile.tests" depends="build, compile.emma.if.enabled" description="Compiles the test code for this project">
     <mkdir dir="${javac.junit.out}" />
-    <gwt.javac srcdir="test" destdir="${javac.junit.out}">
+    <gwt.javac srcdir="test" destdir="${javac.junit.out}" includeantruntime="true">
       <classpath>
         <pathelement location="${javac.out}" />
         <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar" />
