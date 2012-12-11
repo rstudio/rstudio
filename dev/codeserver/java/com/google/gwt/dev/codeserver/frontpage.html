@@ -35,8 +35,8 @@ function updatePage(config) {
     var moduleName = moduleNames[i];
 
     var anchor = document.createElement("a");
-    anchor.setAttribute("href", moduleName + "/");
-    anchor.textContent = moduleName;
+    anchor.setAttribute("href", "/" + moduleName + "/");
+    setTextContent(anchor, moduleName);
 
     var item = document.createElement("li");
     item.appendChild(anchor);
@@ -80,10 +80,30 @@ function makeDevModeOffBookmarklet() {
 
 function makeBookmarklet(name, javascript) {
   var result = document.createElement("a");
-  result.setAttribute("class", "bookmarklet");
+  result.setAttribute(document.all ? "className" : "class", "bookmarklet");
   result.setAttribute("href", "javascript:" + encodeURIComponent(javascript));
-  result.textContent = name;
+  setTextContent(result, name);
   return result;
+}
+
+function setTextContent(element, text) {
+  if (typeof element.textContent === 'string') {
+    element.textContent = text;
+  } else {
+    // Use innerText when textContent is not supported (e.g. IE8).
+    element.innerText = text;
+  }
+}
+
+function onPageLoad() {
+  updatePage(config);
+}
+
+if (window.addEventListener) {
+  window.addEventListener("load", onPageLoad, false);
+}
+else if (window.attachEvent) {
+  window.attachEvent("onload", onPageLoad);
 }
   </script>
 
@@ -119,7 +139,7 @@ function makeBookmarklet(name, javascript) {
     }
   </style>
 </head>
-<body onload="updatePage(config)">
+<body>
 
 <h1>GWT Code Server</h1>
 

@@ -42,7 +42,7 @@ if (devModeUrl && !$wnd[devModeKey]) {
 
   // The new script tag must come before the previous one so that
   // computeScriptBase will see it.
-  head.insertBefore(script, head.firstElementChild);
+  head.insertBefore(script, head.firstElementChild || head.children[0]);
 
   return false; // Skip the regular bootstrap.
 }

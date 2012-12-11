@@ -200,7 +200,9 @@ public class WebServer {
       InputStream faviconStream = getClass().getResourceAsStream("favicon.ico");
       if (faviconStream != null) {
         setHandled(request);
-        PageUtil.sendStream("", faviconStream, response);
+        // IE8 will not load the favicon in an img tag with the default MIME type,
+        // so use "image/x-icon" instead.
+        PageUtil.sendStream("image/x-icon", faviconStream, response);
       }
       return;
     }

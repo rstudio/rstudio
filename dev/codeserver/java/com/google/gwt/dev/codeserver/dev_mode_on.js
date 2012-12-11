@@ -60,7 +60,12 @@
     if (!params) {
       return null;
     }
-    delete window.__gwt_bookmarklet_params;
+    try {
+      delete window.__gwt_bookmarklet_params;
+    } catch (e) {
+      // Delete window.x throws and exception in IE8.
+      window['__gwt_bookmarklet_params'] = null;
+    }
     return params;
   }
 
@@ -100,7 +105,7 @@
     result.style.borderBottom = '1px solid black';
     result.style.padding = '3pt';
     result.setAttribute('href', 'javascript:' + encodeURIComponent(javascript));
-    result.textContent = name;
+    setTextContent(result, name);
     result.title = 'Tip: drag this button to the bookmark bar';
     return result;
   }
@@ -124,8 +129,7 @@
    *     a recompile will succeed.
    */
   function getCannotCompileError(module_name) {
-    var modules_on_codeserver = window.__gwt_codeserver_config.moduleNames;
-    if (modules_on_codeserver.indexOf(module_name) < 0) {
+    if (!isModuleOnCodeServer(module_name)) {
       return 'The code server isn\'t configured to compile this module';
     }
 
@@ -149,6 +153,22 @@
   }
 
   /**
+   * Determines if the code server is configured to run the given module.
+   * @param module_name {string}
+   * @return {boolean} true if the code server supports the given module.
+   */
+  function isModuleOnCodeServer(module_name) {
+    var modules_on_codeserver = window.__gwt_codeserver_config.moduleNames;
+    // Support browsers without indexOf() (e.g. IE8).
+    for (var i = 0; i < modules_on_codeserver.length; i++) {
+      if (modules_on_codeserver[i] == module_name) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Displays the "Choose module to compile" dialog.
    * @param codeserver_url {string} The URL of the code server that will
    *    compile the chosen module.
@@ -158,7 +178,7 @@
     function makeHeader() {
       var message = document.createElement('div');
       message.style.fontSize = '24pt';
-      message.textContent = 'Choose a module to recompile:';
+      setTextContent(message, 'Choose a module to recompile:');
       return message;
     }
 
@@ -245,7 +265,7 @@
 
     var message = document.createElement('div');
     message.style.fontSize = '24pt';
-    message.textContent = text;
+    setTextContent(message, text);
 
     dialog.appendChild(message);
 
@@ -266,14 +286,14 @@
       var error = document.createElement('a');
       error.setAttribute('href', log_url);
       error.setAttribute('target', 'gwt_dev_mode_log');
-      error.textContent = errorText;
+      setTextContent(error, errorText);
       error.style.color = 'red';
       error.style.textDecoration = 'underline';
       message.appendChild(error);
 
       var button = document.createElement('button');
       button.style.fontSize = '16pt';
-      button.textContent = 'Try Again';
+      setTextContent(button, 'Try Again');
       button.onclick = function() {
         body.removeChild(dialog);
         body.removeChild(overlay);
@@ -283,6 +303,20 @@
     };
 
     return result;
+  }
+
+  /**
+   * Updates the contents of the given element with the provided text.
+   * @param {Node} element The element to update.
+   * @param {String} text The text to display.
+   */
+  function setTextContent(element, text) {
+    if (typeof element.textContent === 'string') {
+      element.textContent = text;
+    } else {
+      // Use innerText when textContent is not supported (e.g. IE8).
+      element.innerText = text;
+    }
   }
 
   /**
