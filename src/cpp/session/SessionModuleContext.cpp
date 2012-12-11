@@ -762,6 +762,7 @@ bool isTextFile(const FilePath& targetPath)
 
 #ifndef _WIN32
    core::shell_utils::ShellCommand cmd("file");
+   cmd << "--dereference";
    cmd << "--mime-type";
    cmd << "--brief";
    cmd << targetPath;
