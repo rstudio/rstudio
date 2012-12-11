@@ -244,16 +244,22 @@ public class BuildPresenter extends BasePresenter
    
    void onDevtoolsLoadAll()
    {
-      withDevtoolsLoadAllPath(new CommandWithArg<String>() {
+      withSaveFilesBeforeBuild(new Command() {
          @Override
-         public void execute(String loadAllPath)
+         public void execute()
          {
-            sendLoadCommandToConsole(
-                           "devtools::load_all(\"" + loadAllPath + "\")");
-         } 
+            withDevtoolsLoadAllPath(new CommandWithArg<String>() {
+               @Override
+               public void execute(String loadAllPath)
+               {
+                  sendLoadCommandToConsole(
+                              "devtools::load_all(\"" + loadAllPath + "\")");
+               } 
+            }); 
+         }
       });
    }
-   
+     
    void onBuildSourcePackage()
    {
       startBuild("build-source-package");
@@ -285,11 +291,12 @@ public class BuildPresenter extends BasePresenter
       startBuild("clean-all");
    }
    
+    
    private void startBuild(final String type)
    {
       // attempt to start a build (this will be a silent no-op if there
       // is already a build running)
-      final Command buildCommand = new Command() {
+      withSaveFilesBeforeBuild(new Command() {
          @Override
          public void execute()
          {
@@ -297,12 +304,16 @@ public class BuildPresenter extends BasePresenter
                @Override
                public void onResponseReceived(Boolean response)
                {
-                 
+
                }
             });
          }
-      };
-      
+      });
+   }
+   
+   
+   private void withSaveFilesBeforeBuild(final Command buildCommand)
+   {     
       if (uiPrefs_.saveAllBeforeBuild().getValue())
       {
          sourceShim_.saveAllUnsaved(buildCommand);
