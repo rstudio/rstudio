@@ -112,8 +112,8 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
                          KeyboardShortcut.SHIFT;
              
          AppCommand closeSourceDoc = commands.closeSourceDoc();
-         closeSourceDoc.setShortcut(new KeyboardShortcut(modifiers, 'L'));
-         ShortcutManager.INSTANCE.register(modifiers, 'L', closeSourceDoc);
+         closeSourceDoc.setShortcut(new KeyboardShortcut(modifiers, 'Z'));
+         ShortcutManager.INSTANCE.register(modifiers, 'Z', closeSourceDoc);
       }
       
       // main menu
