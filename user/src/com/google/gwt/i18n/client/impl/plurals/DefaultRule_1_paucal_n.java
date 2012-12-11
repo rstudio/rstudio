@@ -19,8 +19,13 @@ package com.google.gwt.i18n.client.impl.plurals;
 import com.google.gwt.i18n.client.PluralRule.PluralForm;
 
 /**
- * Common plural rule for languages that have 1, few, and other forms.
- * 
+ * Common plural rule for languages that have singular, two plural forms
+ * (based on the units and tens digits) and a fractional form ("other").
+ *
+ * Polish is the only language that uses this plural rule.
+ *
+ * Note: Perhaps this class should have been named: DefaultRule_1_x234_n
+ *
  * @see DefaultRule_0_1_2_n
  * @see DefaultRule_0_1_n
  * @see DefaultRule_01_n
@@ -35,16 +40,18 @@ public class DefaultRule_1_paucal_n {
     return new PluralForm[] {
         new PluralForm("other", "Default plural form"),
         new PluralForm("one", "Count is 1"),
-        new PluralForm("paucal", "Count ends in 2-4 but not 12-14 or 22-24"),
+        new PluralForm("few", "Count ends in 2-4 but not 12-14"),
+        new PluralForm("many", "Count is not 1 and does not end in 2-4 except 12-14"),
     };
   }
 
   public static int select(int n) {
     /*
-     * For Polish, numbers that end in 2-4, except 12-14 and 22-24, have a special plural form.
+     * This method will only return a 1, 2, or 3 ("one", "few", or "many").
+     * This method will never return 0 because "other" is the fractional form.
      */
     return n == 1 ? 1
-        : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 > 29) ? 2
-        : 0;
+        : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 > 20) ? 2
+        : 3;
   }
 }

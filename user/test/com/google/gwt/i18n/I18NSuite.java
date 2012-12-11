@@ -43,6 +43,7 @@ import com.google.gwt.i18n.client.NumberFormat_en_Test;
 import com.google.gwt.i18n.client.NumberFormat_fr_Test;
 import com.google.gwt.i18n.client.NumberParse_en_Test;
 import com.google.gwt.i18n.client.NumberParse_fr_Test;
+import com.google.gwt.i18n.client.PolishPluralsTest;
 import com.google.gwt.i18n.client.RuntimeLocalesTest;
 import com.google.gwt.i18n.client.TimeZoneInfoTest;
 import com.google.gwt.i18n.client.TimeZoneTest;
@@ -110,6 +111,7 @@ public class I18NSuite {
     suite.addTestSuite(NumberFormat_fr_Test.class);
     suite.addTestSuite(NumberParse_en_Test.class);
     suite.addTestSuite(NumberParse_fr_Test.class);
+    suite.addTestSuite(PolishPluralsTest.class);
     suite.addTestSuite(PropertyCatalogFactoryTest.class);
     suite.addTestSuite(ReflectionMessageInterfaceTest.class);
     suite.addTestSuite(RegionInheritanceTest.class);
