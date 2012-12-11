@@ -231,7 +231,7 @@ void stripMetadata(std::string* pInput)
       }
    }
 
-   int firstDocumentLine = 0;
+   std::size_t firstDocumentLine = 0;
    if (hasFrontMatter)
    {
       bool inFrontMatter = false;
