@@ -348,8 +348,8 @@
    # now check if there are libraries still loaded in spite of the
    # namespace being unloaded 
    libs <- .dynLibs()
-   matchidx <- vapply(libs, "[[", character(1), "name") == pkgs
-   return(any(matchidx))
+   libnames <- vapply(libs, "[[", character(1), "name")
+   return(any(pkgs %in% libnames))
 })
 
 .rs.addFunction("loadedPackageUpdates", function(pkgs)
