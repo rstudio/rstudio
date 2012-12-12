@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -57,10 +57,14 @@ class ErrorCollector extends EditorVisitor {
       // Get the enclosing error domain
       List<EditorError> tryConsume = errorStack.pop();
       int prefixLength = ctx.getAbsolutePath().length();
-      // Remove trailing dot in non-empty paths
-      prefixLength = prefixLength == 0 ? 0 : prefixLength + 1;
       for (EditorError error : tryConsume) {
-        ((SimpleError) error).setPathPrefixLength(prefixLength);
+        if ((prefixLength > 0) && (prefixLength < error.getAbsolutePath().length())) {
+          // Remove trailing dot
+          ((SimpleError) error).setPathPrefixLength(prefixLength + 1);
+        } else {
+          assert prefixLength == 0 || error.getAbsolutePath().equals(ctx.getAbsolutePath());
+          ((SimpleError) error).setPathPrefixLength(prefixLength);
+        }
       }
       /*
        * Pass collected errors to the editor. Must pass empty error collection

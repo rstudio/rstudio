@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -39,18 +39,35 @@ public class EditorErrorTest extends GWTTestCase {
 
     private EditorDelegate<Address> delegate;
 
+    @Override
     public void flush() {
       delegate.recordError("Hello Errors!", null, null);
     }
 
+    @Override
     public void onPropertyChange(String... paths) {
     }
 
+    @Override
     public void setDelegate(EditorDelegate<Address> delegate) {
       this.delegate = delegate;
     }
 
+    @Override
     public void setValue(Address value) {
+    }
+  }
+
+  class AddressEditorReceivesErrors extends AddressEditor implements
+      HasEditorErrors<Address> {
+    List<EditorError> errors;
+
+    @Override
+    public void showErrors(List<EditorError> errors) {
+      this.errors = errors;
+      for (EditorError error : errors) {
+        error.setConsumed(true);
+      }
     }
   }
 
@@ -58,6 +75,7 @@ public class EditorErrorTest extends GWTTestCase {
       HasEditorErrors<Person> {
     List<EditorError> errors;
 
+    @Override
     public void showErrors(List<EditorError> errors) {
       this.errors = errors;
       for (EditorError error : errors) {
@@ -86,6 +104,7 @@ public class EditorErrorTest extends GWTTestCase {
 
     private List<EditorError> errors;
 
+    @Override
     public void showErrors(List<EditorError> errors) {
       this.errors = errors;
     }
@@ -107,6 +126,7 @@ public class EditorErrorTest extends GWTTestCase {
 
     List<EditorError> errors;
 
+    @Override
     public void showErrors(List<EditorError> errors) {
       this.errors = errors;
     }
@@ -267,7 +287,7 @@ public class EditorErrorTest extends GWTTestCase {
     assertEquals(driver.getErrors().toString(), 8, driver.getErrors().size());
 
     List<EditorError> list = driver.getErrors();
-    
+
     // All the errors w/ addressEditor are collected first
     EditorError error = list.get(0);
     assertEquals("msg1", error.getMessage());
@@ -284,7 +304,7 @@ public class EditorErrorTest extends GWTTestCase {
     assertSame(e4, error.getUserData());
     assertSame(null, error.getValue());
     assertSame(editor.addressEditor, error.getEditor());
-    
+
     error = list.get(2);
     assertEquals("msg6", error.getMessage());
     assertEquals("address.bogusparent.boguschild", error.getAbsolutePath());
@@ -292,7 +312,7 @@ public class EditorErrorTest extends GWTTestCase {
     assertSame(e6, error.getUserData());
     assertSame(null, error.getValue());
     assertSame(editor.addressEditor, error.getEditor());
-    
+
     error = list.get(3);
     assertEquals("msg8", error.getMessage());
     assertEquals("address.", error.getAbsolutePath());
@@ -300,7 +320,7 @@ public class EditorErrorTest extends GWTTestCase {
     assertSame(e8, error.getUserData());
     assertSame(null, error.getValue());
     assertSame(editor.addressEditor, error.getEditor());
-    
+
     // Then the rest of the errors.
     error = list.get(4);
     assertEquals("msg2", error.getMessage());
@@ -309,7 +329,7 @@ public class EditorErrorTest extends GWTTestCase {
     assertSame(e2, error.getUserData());
     assertSame(null, error.getValue());
     assertSame(editor, error.getEditor());
-    
+
     error = list.get(5);
     assertEquals("msg3", error.getMessage());
     assertEquals("address.city", error.getAbsolutePath());
@@ -324,8 +344,8 @@ public class EditorErrorTest extends GWTTestCase {
     assertEquals("address.city.bogus3", error.getPath());
     assertSame(e5, error.getUserData());
     assertSame(null, error.getValue());
-    assertSame(editor.addressEditor.city, error.getEditor());    
-    
+    assertSame(editor.addressEditor.city, error.getEditor());
+
     error = list.get(7);
     assertEquals("msg7", error.getMessage());
     assertEquals(".", error.getAbsolutePath());
@@ -333,6 +353,46 @@ public class EditorErrorTest extends GWTTestCase {
     assertSame(e7, error.getUserData());
     assertSame(null, error.getValue());
     assertSame(editor, error.getEditor());
+  }
+
+  /**
+   * Test for IndexOutOfBoundsException in getPath() when called on a leaf editor error display.
+   *
+   *  The external bug report: http://code.google.com/p/google-web-toolkit/issues/detail?id=5589
+   */
+  public void testSamePathHasError() {
+    PersonEditorReceivesErrors editor = new PersonEditorReceivesErrors();
+    AddressEditorReceivesErrors addressEditor = new AddressEditorReceivesErrors();
+    editor.addressEditor = addressEditor;
+
+    Address a = new Address();
+    Person p = new Person();
+    p.address = a;
+
+    PersonEditorDriver driver = GWT.create(PersonEditorDriver.class);
+    driver.initialize(editor);
+    driver.edit(p);
+    driver.flush();
+
+    driver.setConstraintViolations(
+        Arrays.<ConstraintViolation<?>>asList(createViolation("samePathError", p, "address")));
+    assertEquals(0, driver.getErrors().size());
+
+    assertEquals(0, editor.errors.size());
+
+
+    List<EditorError> list = addressEditor.errors;
+    assertNotNull(list);
+    assertEquals(1, list.size());
+
+    EditorError error = list.get(0);
+    assertNotNull(error);
+    assertEquals("address", error.getAbsolutePath());
+    assertEquals("samePathError", error.getMessage());
+    assertEquals("", error.getPath());
+    assertNotNull(error.getUserData());
+    assertSame(a, error.getValue());
+    assertSame(addressEditor, error.getEditor());
   }
 
   private <T> ConstraintViolation<T> createViolation(
