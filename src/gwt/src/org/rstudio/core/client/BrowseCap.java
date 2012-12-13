@@ -105,6 +105,11 @@ public class BrowseCap
    {
       return isUserAgent("chrome");
    }
+   
+   public static boolean isChromeLinux() 
+   {
+      return isChrome() && isLinux();
+   }
       
    public static boolean isFirefox()
    {

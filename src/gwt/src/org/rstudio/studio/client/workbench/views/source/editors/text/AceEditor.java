@@ -33,6 +33,7 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
@@ -428,7 +429,25 @@ public class AceEditor implements DocDisplay,
             fileType_.getEditorLanguage().getParserName(),
             false);
       getSession().setUseWrapMode(fileType_.getWordWrap());
+      syncWrapLimit();
    }   
+   
+   private void syncWrapLimit()
+   {
+      // We noted that large word-wrapped documents were freezing Chrome
+      // on Linux (eventually running of of memory). Running the profiler
+      // indicated that the time was being spent inside wrap width 
+      // calculations in Ace. Looking at the Ace bug database there were
+      // other wrapping problems that were solvable by chaning the wrap
+      // mode from "free" to a specific range. So, for Chrome on Linux
+      // we sync the wrap limit to the user-specified margin width.
+      if (fileType_.getWordWrap() && BrowseCap.isChromeLinux()) 
+      {
+         int margin = RStudioGinjector.INSTANCE.getUIPrefs()
+                                             .printMarginColumn().getValue();
+         getSession().setWrapLimitRange(margin, margin);
+      }
+   }
    
    private void updateKeyboardHandlers()
    {
@@ -1183,6 +1202,7 @@ public class AceEditor implements DocDisplay,
    public void setPrintMarginColumn(int column)
    {
       widget_.getEditor().getRenderer().setPrintMarginColumn(column);
+      syncWrapLimit();
    }
 
    @Override
