@@ -236,6 +236,7 @@ void stripMetadata(std::string* pInput)
    {
       bool inFrontMatter = false;
       boost::regex frontMatterFieldRegex("^[^:]+: .*$");
+      boost::regex frontMatterContinuationRegex("^\\s+[^\\s].*$");
 
       for(std::size_t i=0; i<lines.size(); i++)
       {
@@ -256,7 +257,8 @@ void stripMetadata(std::string* pInput)
                break;
             }
          }
-         else if (!boost::regex_search(line, frontMatterFieldRegex))
+         else if (!boost::regex_search(line, frontMatterFieldRegex) &&
+                  !boost::regex_search(line,frontMatterContinuationRegex))
          {
             break;
          }
