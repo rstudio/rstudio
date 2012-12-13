@@ -1481,7 +1481,7 @@ public class TextEditingTarget implements EditingTarget
          String currentLine = docDisplay_.getLine(
                                     docDisplay_.getCursorPosition().getRow());
          if (currentLine.startsWith(" *"))
-            doReflowComment("( \\*[^/])");
+            doReflowComment("( \\*[^/])", false);
          else
             doReflowComment("(//)");
       }
@@ -1491,6 +1491,11 @@ public class TextEditingTarget implements EditingTarget
    }
 
    void doReflowComment(String commentPrefix)
+   {
+      doReflowComment(commentPrefix, true);
+   }
+   
+   void doReflowComment(String commentPrefix, boolean multiParagraphIndent)
    {
       docDisplay_.focus();
 
@@ -1510,7 +1515,8 @@ public class TextEditingTarget implements EditingTarget
       if (selection.isEmpty())
          return;
 
-      reflowComments(commentPrefix, 
+      reflowComments(commentPrefix,
+                     multiParagraphIndent,
                      selection, 
                      originalSelection.isEmpty() ?
                      originalSelection.getStart() :
@@ -1523,6 +1529,7 @@ public class TextEditingTarget implements EditingTarget
    }
 
    private void reflowComments(String commentPrefix,
+                               final boolean multiParagraphIndent,
                                InputEditorSelection selection,
                                final InputEditorPosition cursorPos)
    {
@@ -1572,6 +1579,13 @@ public class TextEditingTarget implements EditingTarget
                }
                return true;
             }
+            // empty line disables indentation
+            else if (!multiParagraphIndent && (line.trim().length() == 0))
+            {
+               indent_ = "";
+               indentRestOfLines_ = false;
+            }
+            
             return super.forceWrapBefore(line);
          }
 
