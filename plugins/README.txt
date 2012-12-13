@@ -10,7 +10,7 @@ Subdirectories:
    Plugin for 32-bit Internet Explorer
 
  - npapi
-   Obsolete NPAPI plugin for Firefox
+   Plugin for Chrome
 
  - webkit
    plugin for WebKit-based browsers that support its extension mechanism

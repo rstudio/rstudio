@@ -364,11 +364,11 @@ void ScriptableInstance::testJsIdentity(const NPVariant* args, unsigned argCount
   Debug::log(Debug::Info) << "obj1:" << obj1 << " obj2:" << obj2
       << Debug::flush;
   if( obj1 == obj2 ) {
-    Debug::log(Debug::Info) << "Idenity check passed; not using expando!"
+    Debug::log(Debug::Info) << "Identity check passed; not using expando!"
         << Debug::flush;
     ScriptableInstance::jsIdentitySafe = true;
   } else {
-    Debug::log(Debug::Info) << "Idenity check failed; using expando"
+    Debug::log(Debug::Info) << "Identity check failed; using expando"
         << Debug::flush;
     ScriptableInstance::jsIdentitySafe = false;
   }
