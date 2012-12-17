@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>ant-gwt</name>
+	<name>DocTool</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -24,7 +24,7 @@
 		<link>
 			<name>core</name>
 			<type>2</type>
-			<location>GWT_ROOT/build-tools/ant-gwt</location>
+			<locationURI>GWT_ROOT/build_tools/doctool</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

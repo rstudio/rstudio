@@ -107,7 +107,7 @@
   </target>
 
   <target name="buildtools" description="[subdir] Build (or runs ${target} if set) the build tools">
-    <gwt.ant dir="build-tools" />
+    <gwt.ant dir="build_tools" />
   </target>
 
   <target name="build" description="[action] Builds GWT, including samples, but without distro packaging">
@@ -160,7 +160,7 @@
   <path id="emma.classpath.src">
     <pathelement location="${gwt.root}/user/src" />
     <pathelement location="${gwt.root}/dev/**/src/com/google" />
-    <pathelement location="${gwt.root}/build-tools/**/src/com/google" />
+    <pathelement location="${gwt.root}/build_tools/**/src/com/google" />
     <pathelement location="${gwt.root}/tools/**/src/com/google" />
   </path>
 

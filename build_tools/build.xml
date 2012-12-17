@@ -1,20 +1,20 @@
 <project name="buildtools" default="build" basedir=".">
   <property name="gwt.root" location=".." />
-  <property name="project.tail" value="build-tools" />
+  <property name="project.tail" value="build_tools" />
   <import file="${gwt.root}/common.ant.xml" />
 
   <!-- "build" is the default when subprojects are directly targetted -->
   <property name="target" value="build" />
 
-  <target name="ant-gwt" description="Builds GWT specific Ant extensions">
-    <gwt.ant dir="ant-gwt" />
+  <target name="ant_gwt" description="Builds GWT specific Ant extensions">
+    <gwt.ant dir="ant_gwt" />
   </target>
 
   <target name="doctool" description="Build the doctool">
     <gwt.ant dir="doctool" />
   </target>
 
-  <target name="-do" depends="ant-gwt, doctool" description="Run all subprojects"/>
+  <target name="-do" depends="ant_gwt, doctool" description="Run all subprojects"/>
   
   <target name="build" description="Builds GWT">
     <antcall target="-do">

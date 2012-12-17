@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>customchecks</name>
+	<name>ant-gwt</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -24,7 +24,7 @@
 		<link>
 			<name>core</name>
 			<type>2</type>
-			<location>GWT_ROOT/build-tools/customchecks</location>
+			<location>GWT_ROOT/build_tools/ant_gwt</location>
 		</link>
 	</linkedResources>
 </projectDescription>

@@ -1,6 +1,6 @@
 <project name="doctool" default="build" basedir=".">
   <property name="gwt.root" location="../.." />
-  <property name="project.tail" value="build-tools/doctool" />
+  <property name="project.tail" value="build_tools/doctool" />
   <import file="${gwt.root}/common.ant.xml" />
 
   <property.ensure name="java.tools.path" location="${java.home}/../lib/tools.jar" unless="build.host.ismac" message="Cannot find ${java.home}/../lib/tools.jar; please use a JDK when building doc rather than a JRE." />

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>DocTool</name>
+	<name>customchecks</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -24,7 +24,7 @@
 		<link>
 			<name>core</name>
 			<type>2</type>
-			<locationURI>GWT_ROOT/build-tools/doctool</locationURI>
+			<location>GWT_ROOT/build_tools/customchecks</location>
 		</link>
 	</linkedResources>
 </projectDescription>

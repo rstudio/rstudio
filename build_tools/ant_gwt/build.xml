@@ -1,6 +1,6 @@
 <project name="ant-gwt" default="build" basedir=".">
   <property name="gwt.root" location="../.." />
-  <property name="project.tail" value="build-tools/ant-gwt" />
+  <property name="project.tail" value="build_tools/ant_gwt" />
   <import file="${gwt.root}/common.ant.xml" />
 
   <property name="gwt.junit.testcase.antgwt.includes" value="**/*Test.class" />
