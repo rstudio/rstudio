@@ -334,7 +334,8 @@ public abstract class GWTRunner implements EntryPoint {
         builder.setParameter(SESSIONID_QUERY_PARAM,
             String.valueOf(clientInfo.getSessionId()));
       }
-      Window.Location.replace(builder.buildString());
+      // Replace "%3A" with ":" as a hack to support broken DevMode plugins.
+      Window.Location.replace(builder.buildString().replaceAll("%3A", ":"));
       currentBlock = null;
       currentTestIndex = 0;
     }
