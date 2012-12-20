@@ -372,7 +372,8 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="sourceActiveDocumentWithEcho" value="Cmd+Shift+Enter"/>;
       <shortcut refid="extractFunction" value="Cmd+Shift+U"/>
       <shortcut refid="executeLastCode" value="Cmd+Shift+P"/>
-      <shortcut refid="findReplace" value="Cmd+F"/>
+      <shortcut refid="findReplace" value="Meta+F" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+      <shortcut refid="findReplace" value="Cmd+F" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
       <shortcut refid="findNext" value="Cmd+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/> 
       <shortcut refid="findNext" value="F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/> 
       <shortcut refid="findPrevious" value="Cmd+Shift+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/> 
@@ -428,7 +429,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="buildAll" value="Cmd+Shift+B"/>
       <shortcut refid="devtoolsLoadAll" value="Cmd+Shift+L"/>
       <shortcut refid="checkPackage" value="Cmd+Shift+E"/>
-      <shortcut refid="toggleFullScreen" value="Ctrl+Cmd+F" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/> 
+      <shortcut refid="toggleFullScreen" value="Ctrl+Meta+F" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
       <shortcut refid="refreshSuperDevMode" value="Cmd+Shift+F5"/>
    </shortcuts>
 
