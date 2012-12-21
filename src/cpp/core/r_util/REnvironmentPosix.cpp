@@ -68,7 +68,7 @@ FilePath scanForRScript(const std::vector<std::string>& rScriptPaths,
 #ifdef __APPLE__
 
 #define kLibRFileName            "libR.dylib"
-#define kLibraryPathEnvVariable  "DYLD_LIBRARY_PATH"
+#define kLibraryPathEnvVariable  "DYLD_FALLBACK_LIBRARY_PATH"
 
 // no extra paths on the mac
 std::string extraLibraryPaths(const FilePath& ldPathsScript,
