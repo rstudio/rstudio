@@ -18,7 +18,7 @@ package com.google.gwt.core.ext.util;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-public class UtilSuite extends TestSuite {
+public class UtilSuite {
   public static Test suite() {
     TestSuite suite = new TestSuite("Test suite for Util");
     suite.addTestSuite(UtilTest.class);

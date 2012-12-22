@@ -16,24 +16,29 @@
 package com.google.gwt.junit;
 
 import com.google.gwt.junit.client.DevModeOnCompiledScriptTest;
+import com.google.gwt.junit.client.GWTTestCaseAsyncTest;
+import com.google.gwt.junit.client.GWTTestCaseSetupTearDownTest;
 import com.google.gwt.junit.client.GWTTestCaseTest;
 import com.google.gwt.junit.client.PropertyDefiningGWTTest;
-import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
+import junit.framework.TestSuite;
 
 /**
  * Tests of the junit package.
  */
 public class JUnitSuite {
   public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite(
-        "Test for suite for com.google.gwt.junit");
+    TestSuite suite = new GwtTestSuiteWithExpectedFailures("Test suite for com.google.gwt.junit");
 
     // client
     // Suppressed due to flakiness on Linux
     // suite.addTestSuite(BenchmarkTest.class);
+
     suite.addTestSuite(GWTTestCaseTest.class);
+    suite.addTest(new TestSuiteWithOrder(GWTTestCaseAsyncTest.class));
+    suite.addTest(new TestSuiteWithOrder(GWTTestCaseSetupTearDownTest.class));
+
     suite.addTestSuite(DevModeOnCompiledScriptTest.class);
 
     // Must run after a GWTTestCase so JUnitShell is initialized.
@@ -45,9 +50,8 @@ public class JUnitSuite {
     suite.addTestSuite(JUnitMessageQueueTest.class);
     suite.addTestSuite(GWTTestCaseNoClientTest.class);
 
-    // These two are intended only to be run manually. See class comments
+    // Intended only to be run manually. See class comments
     // suite.addTestSuite(ParallelRemoteTest.class);
-    // suite.addTestSuite(TestManualAsync.class);
 
     // remote
     // Run manually only, launches servers that die on port contention

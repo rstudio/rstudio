@@ -18,7 +18,7 @@ package com.google.gwt.dev.javac.typemodel;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-public class TypeOracleSuite extends TestSuite {
+public class TypeOracleSuite {
   public static Test suite() {
     TestSuite suite = new TestSuite("Test suite for TypeOracle");
     suite.addTestSuite(AnnotationsTest.class);
