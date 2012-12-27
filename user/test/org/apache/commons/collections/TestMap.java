@@ -106,6 +106,7 @@ import java.util.Set;
  * @author Paul Jack
  * @version $Id: TestMap.java,v 1.20.2.1 2004/05/22 12:14:05 scolebourne Exp $
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class TestMap extends TestObject{
 
     // These instance variables are initialized with the reset method.

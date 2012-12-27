@@ -16,6 +16,8 @@
  */
 package org.apache.commons.collections.collection;
 
+import org.apache.commons.collections.AbstractTestObject;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -33,8 +35,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-
-import org.apache.commons.collections.AbstractTestObject;
 
 /**
  * Abstract test class for {@link java.util.Collection} methods and contracts.
@@ -121,6 +121,7 @@ import org.apache.commons.collections.AbstractTestObject;
  * @author Neil O'Toole
  * @author Stephen Colebourne
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class AbstractTestCollection extends AbstractTestObject {
 
     //

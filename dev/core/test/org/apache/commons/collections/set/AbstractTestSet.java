@@ -16,13 +16,13 @@
  */
 package org.apache.commons.collections.set;
 
+import org.apache.commons.collections.collection.AbstractTestCollection;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-
-import org.apache.commons.collections.collection.AbstractTestCollection;
 
 /**
  * Abstract test class for {@link Set} methods and contracts.
@@ -43,6 +43,7 @@ import org.apache.commons.collections.collection.AbstractTestCollection;
  * 
  * @author Paul Jack
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class AbstractTestSet extends AbstractTestCollection {
 
     /**

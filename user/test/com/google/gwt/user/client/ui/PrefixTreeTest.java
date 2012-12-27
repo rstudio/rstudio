@@ -18,7 +18,6 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -126,7 +125,7 @@ public class PrefixTreeTest extends GWTTestCase {
    * Tests newly constructed prefix tree assumptions.
    */
   public void testPlaysWellWithOthers() {
-    final List l = new ArrayList();
+    final List<String> l = new ArrayList<String>();
     for (int i = 0; i < 100; i++) {
       l.add(String.valueOf(i));
     }
@@ -168,7 +167,7 @@ public class PrefixTreeTest extends GWTTestCase {
     testSizeByIterator(tree);
     assertTrue(tree.iterator().hasNext());
 
-    List l;
+    List<String> l;
 
     l = tree.getSuggestions("", 13);
     assertTrue("Expected size of 13, got " + l.size(), l.size() == 13);
@@ -188,7 +187,7 @@ public class PrefixTreeTest extends GWTTestCase {
 
     l = tree.getSuggestions("o", 1);
     assertTrue("Expected size of 1, got " + l.size(), l.size() == 1);
-    assertTrue(((String) l.get(0)).endsWith("..."));
+    assertTrue(l.get(0).endsWith("..."));
     assertAllStartWith(l, "o");
 
     l = tree.getSuggestions("something", 1);
@@ -197,9 +196,8 @@ public class PrefixTreeTest extends GWTTestCase {
     assertAllStartWith(l, "somethingdifferent");
   }
 
-  protected void assertAllStartWith(List l, String prefix) {
-    for (final Iterator i = l.iterator(); i.hasNext();) {
-      final String test = (String) i.next();
+  protected void assertAllStartWith(List<String> l, String prefix) {
+    for (String test : l) {
       assertTrue(test + " does not start with " + prefix,
           test.startsWith(prefix));
     }
@@ -213,8 +211,7 @@ public class PrefixTreeTest extends GWTTestCase {
    */
   protected void testSizeByIterator(PrefixTree tree) {
     int count = 0;
-    for (final Iterator i = tree.iterator(); i.hasNext();) {
-      i.next();
+    for (@SuppressWarnings("unused") String s : tree) {
       count++;
     }
 

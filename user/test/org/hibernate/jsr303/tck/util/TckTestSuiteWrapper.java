@@ -25,7 +25,6 @@ import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 
 import junit.framework.Test;
-import junit.framework.TestCase;
 
 import org.hibernate.jsr303.tck.util.client.Failing;
 import org.hibernate.jsr303.tck.util.client.NonTckTest;
@@ -107,8 +106,8 @@ public class TckTestSuiteWrapper extends GWTTestSuite {
       return;
     }
 
-    Class superClass = theClass;
-    Vector names = new Vector();
+    Class<?> superClass = theClass;
+    Vector<String> names = new Vector<String>();
     while (Test.class.isAssignableFrom(superClass)) {
       for (Method method : filter(copyOf(superClass.getDeclaredMethods()),
           METHOD_FILTER)) {
@@ -120,7 +119,7 @@ public class TckTestSuiteWrapper extends GWTTestSuite {
       addTest(warning("No tests found in " + theClass.getName()));
   }
 
-  private void addTestMethod(Method m, Vector names, Class theClass) {
+  private void addTestMethod(Method m, Vector<String> names, Class<?> theClass) {
     String name = m.getName();
     if (names.contains(name))
       return;
@@ -131,10 +130,6 @@ public class TckTestSuiteWrapper extends GWTTestSuite {
     }
     names.addElement(name);
     addTest(createTest(theClass, name));
-  }
-
-  private boolean ingoreMethod(Method m) {
-    return HAS_FAILING.apply(m);
   }
 
   private boolean isPublicTestMethod(Method m) {

@@ -24,12 +24,13 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Tests <code>IdentityHashMap</code>.
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class IdentityHashMapTest extends TestMap {
 
   /**
@@ -49,8 +50,6 @@ public class IdentityHashMapTest extends TestMap {
   }
 
   private static final int CAPACITY_16 = 16;
-  private static final int CAPACITY_NEG_ONE_HALF = -1;
-  private static final int CAPACITY_ZERO = 0;
   private static final Integer INTEGER_1 = new Integer(1);
   private static final Integer INTEGER_11 = new Integer(11);
   private static final Integer INTEGER_2 = new Integer(2);
@@ -71,10 +70,6 @@ public class IdentityHashMapTest extends TestMap {
   private static final String KEY_TEST_KEY_SET = "testKeySet";
   private static final String KEY_TEST_PUT = "testPut";
   private static final String KEY_TEST_REMOVE = "testRemove";
-  private static final float LOAD_FACTOR_NEG_ONE = -1.0F;
-  private static final float LOAD_FACTOR_ONE_HALF = 0.5F;
-  private static final float LOAD_FACTOR_ONE_TENTH = 0.1F;
-  private static final float LOAD_FACTOR_ZERO = 0.0F;
   private static final Object ODD_ZERO_KEY = new Object() {
     public int hashCode() {
       return 0;

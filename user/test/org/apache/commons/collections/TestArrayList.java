@@ -21,6 +21,7 @@ package org.apache.commons.collections;
  * @author <a href="mailto:jvanzyl@apache.org">Jason van Zyl</a>
  * @version $Id: TestArrayList.java,v 1.5.2.1 2004/05/22 12:14:05 scolebourne Exp $
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class TestArrayList extends TestList
 { 
   

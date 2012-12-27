@@ -23,6 +23,7 @@ import java.util.NoSuchElementException;
  * 
  * @author Morgan Delagrange
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class TestIterator extends TestObject {
 
    

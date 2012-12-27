@@ -16,13 +16,13 @@
  */
 package org.apache.commons.collections.iterators;
 
+import org.apache.commons.collections.MapIterator;
+
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-
-import org.apache.commons.collections.MapIterator;
 
 /**
  * Abstract class for testing the MapIterator interface.
@@ -37,6 +37,7 @@ import org.apache.commons.collections.MapIterator;
  * 
  * @author Stephen Colebourne
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class AbstractTestMapIterator extends AbstractTestIterator {
 
     /**

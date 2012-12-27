@@ -31,13 +31,13 @@ public class StrictAttributeParserTest extends TestCase {
   public void testSimple() {
     String before = "{able.baker.charlie.prawns}";
     String expected = "able.baker().charlie().prawns()";
-    assertEquals(expected, converter.convert(before, new FieldReferenceDelegate(null)));
+    assertEquals(expected, converter.convert(before, new FieldReferenceDelegate()));
   }
   
   public void testNoneShouldFail() {
     String before = "able.baker.charlie.prawns";
     try {
-      converter.convert(before, new FieldReferenceDelegate(null));
+      converter.convert(before, new FieldReferenceDelegate());
       fail();
     } catch (IllegalFieldReferenceException e) {
       /* pass */
@@ -47,7 +47,7 @@ public class StrictAttributeParserTest extends TestCase {
   public void testTooManyShouldFail() {
     String before = "{able.baker.charlie} {prawns.are.yummy}";
     try {
-      converter.convert(before, new FieldReferenceDelegate(null));
+      converter.convert(before, new FieldReferenceDelegate());
       fail();
     } catch (IllegalFieldReferenceException e) {
       /* pass */
@@ -57,7 +57,7 @@ public class StrictAttributeParserTest extends TestCase {
   public void testMixedShouldFail() {
     String before = "{able.baker.charlie} prawns are still yummy}";
     try {
-      converter.convert(before, new FieldReferenceDelegate(null));
+      converter.convert(before, new FieldReferenceDelegate());
       fail();
     } catch (IllegalFieldReferenceException e) {
       /* pass */

@@ -23,7 +23,7 @@ import java.util.Map;
   * @author <a href="mailto:jstrachan@apache.org">James Strachan</a>
   * @author <a href="mailto:mas@apache.org">Michael A. Smith</a>
   */
-  
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class DefaultMapEntry implements Map.Entry {
     
     private Object key;

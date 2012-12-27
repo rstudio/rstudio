@@ -22,6 +22,7 @@ package org.apache.commons.collections;
 *
 * @author Marc Johnson (marcj at users dot sourceforge dot net)
 */
+@SuppressWarnings({"unchecked", "rawtypes"})
 class LocalTestNode implements Comparable {
 
     private Comparable key;

@@ -29,9 +29,7 @@ import com.google.gwt.user.client.ui.CustomButton.Face;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  * Test for <code>PushButton</code> as most of this widget's functionality is UI
@@ -84,29 +82,25 @@ public class CustomButtonTest extends GWTTestCase {
     b.setDown(true);
     assertEquals(b.getStylePrimaryName(), "random");
 
-    Map faces = new HashMap();
+    Map<String, Face> faces = new HashMap<String, Face>();
     faces.put("downDisabled", b.getDownDisabledFace());
     faces.put("upDisabled", b.getUpDisabledFace());
     faces.put("down", b.getDownFace());
     faces.put("up", b.getUpFace());
     faces.put("upHovering", b.getUpHoveringFace());
     faces.put("downHovering", b.getDownHoveringFace());
-    Iterator entries = faces.entrySet().iterator();
     // Set all faces as text.
-    while (entries.hasNext()) {
-      Map.Entry entry = (Entry) entries.next();
-      Face f = (Face) entry.getValue();
+    for (Map.Entry<String, Face> entry : faces.entrySet()) {
+      Face f = entry.getValue();
       b.setCurrentFace(f);
       assertEquals("random", b.getStylePrimaryName());
       assertTrue(b.getStyleName().indexOf("random-" + f.getName()) != -1);
     }
 
-    entries = faces.entrySet().iterator();
     b.addStyleName("fobar");
     // Set all faces as text.
-    while (entries.hasNext()) {
-      Map.Entry entry = (Entry) entries.next();
-      Face f = (Face) entry.getValue();
+    for (Map.Entry<String, Face> entry : faces.entrySet()) {
+      Face f = entry.getValue();
       b.setCurrentFace(f);
       String computedStyleName = DOM.getElementProperty(b.getElement(),
           "className");
@@ -118,43 +112,37 @@ public class CustomButtonTest extends GWTTestCase {
 
   public void testSettingFaces() {
     PushButton b = new PushButton();
-    Map faces = new HashMap();
+    Map<String, Face> faces = new HashMap<String, Face>();
     faces.put("downDisabled", b.getDownDisabledFace());
     faces.put("upDisabled", b.getUpDisabledFace());
     faces.put("down", b.getDownFace());
     faces.put("up", b.getUpFace());
     faces.put("upHovering", b.getUpHoveringFace());
     faces.put("downHovering", b.getDownHoveringFace());
-    Iterator entries = faces.entrySet().iterator();
 
     // Set all faces as text.
-    while (entries.hasNext()) {
-      Map.Entry entry = (Entry) entries.next();
-      Face f = (Face) entry.getValue();
-      String faceName = (String) entry.getKey();
+    for (Map.Entry<String, Face> entry : faces.entrySet()) {
+      Face f = entry.getValue();
+      String faceName = entry.getKey();
       f.setText(faceName);
     }
-    entries = faces.entrySet().iterator();
-    while (entries.hasNext()) {
-      Map.Entry entry = (Entry) entries.next();
-      Face f = (Face) entry.getValue();
-      String faceName = (String) entry.getKey();
+    
+    for (Map.Entry<String, Face> entry : faces.entrySet()) {
+      Face f = entry.getValue();
+      String faceName = entry.getKey();
       assertEquals(f.getText(), faceName);
     }
+    
     // Set all faces as HTML
-    entries = faces.entrySet().iterator();
-    while (entries.hasNext()) {
-      Map.Entry entry = (Entry) entries.next();
-      Face f = (Face) entry.getValue();
-      String faceName = (String) entry.getKey();
+    for (Map.Entry<String, Face> entry : faces.entrySet()) {
+      Face f = entry.getValue();
+      String faceName = entry.getKey();
       f.setHTML("<b>" + faceName + "</b>");
     }
 
-    entries = faces.entrySet().iterator();
-    while (entries.hasNext()) {
-      Map.Entry entry = (Entry) entries.next();
-      Face f = (Face) entry.getValue();
-      String faceName = (String) entry.getKey();
+    for (Map.Entry<String, Face> entry : faces.entrySet()) {
+      Face f = entry.getValue();
+      String faceName = entry.getKey();
       assertEquals(f.getText(), faceName);
       assertEquals(f.getHTML().toLowerCase(), "<b>" + faceName.toLowerCase()
           + "</b>");

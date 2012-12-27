@@ -110,6 +110,7 @@ import java.util.Set;
  * @author <a href="mailto:mas@apache.org">Michael A. Smith</a>
  * @version $Id: TestCollection.java,v 1.9.2.1 2004/05/22 12:14:05 scolebourne Exp $
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class TestCollection extends TestObject {
 
     //

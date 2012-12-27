@@ -31,7 +31,6 @@ import com.google.gwt.user.client.rpc.TestSetFactory.SerializableDoublyLinkedNod
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableGraphWithCFS;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializablePrivateNoArg;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableWithTwoArrays;
-import com.google.gwt.user.client.rpc.RecursiveClassTestService.ResultNode;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
@@ -39,9 +38,9 @@ import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertSame;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.EnumMap;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -49,11 +48,11 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
-import java.util.Map.Entry;
 
 /**
  * Misnamed set of static validation methods used by various collection class
@@ -806,10 +805,6 @@ public class TestSetValidator {
     return true;
   }
   
-  public static boolean isValidRecurisveClassObject(ResultNode<? extends ResultNode<?>> result) {
-    return (result != null);
-  }
-
   public static boolean isValidSingletonList(List<MarkerTypeSingleton> list) {
     if (list == null || list.size() != 1) {
       return false;

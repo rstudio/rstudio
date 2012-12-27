@@ -29,11 +29,11 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.Map.Entry;
 
 /**
  * Tests <code>TreeMap</code>.
@@ -943,6 +943,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     assertEquals(1, keySet.size());
   }
 
+  @SuppressWarnings("unchecked")
   public void testKeySetIteratorRemove() {
     Map<K, V> map = makeFullMap();
     resetFull();
@@ -1541,6 +1542,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
    * 
    * @see java.util.Map#remove(Object)
    */
+  @SuppressWarnings("unchecked")
   public void testRemove_throwsNullPointerException() {
     // The _throwsUnsupportedOperationException version of this test will
     // verify that the method is not supported.

@@ -38,7 +38,7 @@ public class WidgetCollectionTest extends GWTTestCase {
     public void clear() {
     }
 
-    public Iterator iterator() {
+    public Iterator<Widget> iterator() {
       return null;
     }
 
@@ -88,7 +88,7 @@ public class WidgetCollectionTest extends GWTTestCase {
     wc.add(l1);
     wc.add(l2);
 
-    Iterator it = wc.iterator();
+    Iterator<Widget> it = wc.iterator();
     assertTrue(it.hasNext());
     assertEquals(it.next(), l0);
     it.remove();

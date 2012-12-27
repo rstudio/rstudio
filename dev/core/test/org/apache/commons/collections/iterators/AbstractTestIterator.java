@@ -16,10 +16,10 @@
  */
 package org.apache.commons.collections.iterators;
 
+import org.apache.commons.collections.AbstractTestObject;
+
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-
-import org.apache.commons.collections.AbstractTestObject;
 
 /**
  * Abstract class for testing the Iterator interface.
@@ -35,6 +35,7 @@ import org.apache.commons.collections.AbstractTestObject;
  * @author Morgan Delagrange
  * @author Stephen Colebourne
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class AbstractTestIterator extends AbstractTestObject {
 
     /**

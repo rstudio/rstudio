@@ -16,6 +16,11 @@
  */
 package org.apache.commons.collections.map;
 
+import org.apache.commons.collections.AbstractTestObject;
+import org.apache.commons.collections.BulkTest;
+import org.apache.commons.collections.collection.AbstractTestCollection;
+import org.apache.commons.collections.set.AbstractTestSet;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,11 +29,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.apache.commons.collections.AbstractTestObject;
-import org.apache.commons.collections.BulkTest;
-import org.apache.commons.collections.collection.AbstractTestCollection;
-import org.apache.commons.collections.set.AbstractTestSet;
 
 /**
  * Abstract test class for {@link java.util.Map} methods and contracts.
@@ -119,6 +119,7 @@ import org.apache.commons.collections.set.AbstractTestSet;
  * @author Stephen Colebourne
  * @version $Revision: 646780 $ $Date: 2008-04-10 13:48:07 +0100 (Thu, 10 Apr 2008) $
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class AbstractTestMap extends AbstractTestObject {
 
     /**

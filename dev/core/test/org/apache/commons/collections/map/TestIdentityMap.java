@@ -16,17 +16,17 @@
  */
 package org.apache.commons.collections.map;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.Iterator;
-import java.util.Map;
-
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import junit.textui.TestRunner;
 
 import org.apache.commons.collections.AbstractTestObject;
 import org.apache.commons.collections.IterableMap;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * JUnit tests.
@@ -35,6 +35,7 @@ import org.apache.commons.collections.IterableMap;
  * 
  * @author Stephen Colebourne
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class TestIdentityMap extends AbstractTestObject {
     
     private static final Integer I1A = new Integer(1);

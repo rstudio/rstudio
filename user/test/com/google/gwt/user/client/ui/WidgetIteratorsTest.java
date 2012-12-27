@@ -37,7 +37,7 @@ public class WidgetIteratorsTest extends GWTTestCase {
       fail("Unexpected call to clear()");
     }
 
-    public Iterator iterator() {
+    public Iterator<Widget> iterator() {
       fail("Unexpected call to iterator()");
       return null;
     }
@@ -56,7 +56,7 @@ public class WidgetIteratorsTest extends GWTTestCase {
    * Tests that empty arrays operate properly.
    */
   public void testEmptyArray() {
-    final Iterator subject = WidgetIterators.createWidgetIterator(
+    final Iterator<Widget> subject = WidgetIterators.createWidgetIterator(
         new MockWidget(), new Widget[] {null, null});
     assertFalse(subject.hasNext());
     assertNextFails(subject);
@@ -80,7 +80,7 @@ public class WidgetIteratorsTest extends GWTTestCase {
       }
     };
 
-    final Iterator subject = WidgetIterators.createWidgetIterator(mock, widgets);
+    final Iterator<Widget> subject = WidgetIterators.createWidgetIterator(mock, widgets);
 
     expectedRemoveIndex[0] = 1;
     assertTrue(subject.hasNext());
@@ -106,7 +106,7 @@ public class WidgetIteratorsTest extends GWTTestCase {
     final MockWidget mock = new MockWidget();
     final Widget[] widgets = new Widget[] {
         null, createTestWidget(), null, createTestWidget(), null, null};
-    final Iterator subject = WidgetIterators.createWidgetIterator(mock, widgets);
+    final Iterator<Widget> subject = WidgetIterators.createWidgetIterator(mock, widgets);
 
     assertTrue(subject.hasNext());
     assertEquals(widgets[1], subject.next());
@@ -118,7 +118,7 @@ public class WidgetIteratorsTest extends GWTTestCase {
     assertNextFails(subject);
   }
 
-  private void assertNextFails(Iterator iterator) {
+  private void assertNextFails(Iterator<Widget> iterator) {
     try {
       iterator.next();
       fail("Expected NoSuchElementException.");
@@ -127,7 +127,7 @@ public class WidgetIteratorsTest extends GWTTestCase {
     }
   }
 
-  private void assertRemoveFails(Iterator iterator) {
+  private void assertRemoveFails(Iterator<Widget> iterator) {
     try {
       iterator.remove();
       fail("Expected IllegalStateException.");

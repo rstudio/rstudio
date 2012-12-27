@@ -28,6 +28,7 @@ public class VarargsTest extends GWTTestCase {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }
 
+  @SuppressWarnings("all")
   public void testNullEmpty() {
     assertNotNull(vararg());
     assertNull(vararg(null));

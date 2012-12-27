@@ -21,10 +21,10 @@ import org.apache.commons.collections.TestMap;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.Map.Entry;
 import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Tests <code>LinkedHashMap</code>.
@@ -119,8 +119,7 @@ public class LinkedHashMapTest extends TestMap {
    * 
    * @param hashMap
    */
-  @SuppressWarnings("unchecked") // raw LinkedHashMap
-  private static void checkEmptyLinkedHashMapAssumptions(LinkedHashMap hashMap) {
+  private static void checkEmptyLinkedHashMapAssumptions(LinkedHashMap<?, ?> hashMap) {
     assertNotNull(hashMap);
     assertTrue(hashMap.isEmpty());
 
@@ -754,12 +753,11 @@ public class LinkedHashMapTest extends TestMap {
    * @param hashMap the LinkedHashMap to be copied
    * @return the copy
    */
-  @SuppressWarnings("unchecked") // raw LinkedHashMap
-  private LinkedHashMap cloneLinkedHashMap(LinkedHashMap hashMap) {
+  private <K, V> LinkedHashMap<K, V> cloneLinkedHashMap(LinkedHashMap<K, V> hashMap) {
     if (GWT.isScript()) {
-      return new LinkedHashMap(hashMap);
+      return new LinkedHashMap<K, V>(hashMap);
     } else {
-      LinkedHashMap m = new LinkedHashMap();
+      LinkedHashMap<K, V> m = new LinkedHashMap<K, V>();
       m.putAll(hashMap);
       return m;
     }

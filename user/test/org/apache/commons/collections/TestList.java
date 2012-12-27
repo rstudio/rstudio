@@ -40,6 +40,7 @@ import java.util.NoSuchElementException;
  * @author Paul Jack
  * @version $Id: TestList.java,v 1.13.2.1 2004/05/22 12:14:05 scolebourne Exp $
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class TestList extends TestCollection {
 
  

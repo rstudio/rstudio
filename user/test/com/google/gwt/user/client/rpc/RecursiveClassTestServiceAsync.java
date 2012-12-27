@@ -21,6 +21,6 @@ import com.google.gwt.user.client.rpc.RecursiveClassTestService.ResultNode;
  * Service used to test generics with wild cards and recursive references.
  */
 public interface RecursiveClassTestServiceAsync {
-  <U extends ResultNode<?>> void greetServer(String input, AsyncCallback<ResultNode> callback)
-    throws IllegalArgumentException;
+  <U extends ResultNode<U>> void greetServer(String input, AsyncCallback<ResultNode<U>> callback)
+      throws IllegalArgumentException;
 }

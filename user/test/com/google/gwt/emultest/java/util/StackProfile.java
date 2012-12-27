@@ -45,7 +45,7 @@ public class StackProfile extends WidgetProfile {
   }
 
   public void addTiming(int num) {
-    Stack s = new Stack();
+    Stack<String> s = new Stack<String>();
     resetTimer();
     for (int i = 0; i < num; i++) {
       s.push("item" + i);

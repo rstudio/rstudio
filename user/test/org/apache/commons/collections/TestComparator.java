@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-
+@SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class TestComparator extends TestObject {
  
 

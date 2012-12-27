@@ -70,7 +70,7 @@ public abstract class HTMLTableProfile extends WidgetProfile {
 
   public void hashMapShare(int rows, int columns) {
     resetTimer();
-    HashMap m = new HashMap();
+    HashMap<String, Label> m = new HashMap<String, Label>();
     for (int row = 0; row < rows; row++) {
       for (int column = 0; column < columns; column++) {
         Label label = new Label(column + "i");

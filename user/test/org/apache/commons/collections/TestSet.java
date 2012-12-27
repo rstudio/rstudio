@@ -38,6 +38,7 @@ import java.util.Set;
  *  @author Paul Jack
  *  @version $Id: TestSet.java,v 1.2.2.1 2004/05/22 12:14:05 scolebourne Exp $
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class TestSet extends TestCollection {
 
 

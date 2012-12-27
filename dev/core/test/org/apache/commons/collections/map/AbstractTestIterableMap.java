@@ -16,14 +16,14 @@
  */
 package org.apache.commons.collections.map;
 
+import org.apache.commons.collections.BulkTest;
+import org.apache.commons.collections.IterableMap;
+import org.apache.commons.collections.MapIterator;
+import org.apache.commons.collections.iterators.AbstractTestMapIterator;
+
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.Map;
-
-import org.apache.commons.collections.IterableMap;
-import org.apache.commons.collections.BulkTest;
-import org.apache.commons.collections.MapIterator;
-import org.apache.commons.collections.iterators.AbstractTestMapIterator;
 
 /**
  * Abstract test class for {@link IterableMap} methods and contracts.
@@ -32,6 +32,7 @@ import org.apache.commons.collections.iterators.AbstractTestMapIterator;
  * 
  * @author Stephen Colebourne
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class AbstractTestIterableMap extends AbstractTestMap {
 
     /**
