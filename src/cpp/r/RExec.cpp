@@ -53,11 +53,10 @@ public:
       : didDisable_(false),
         previousErrorHandlerSEXP_(R_NilValue)
    {
-      previousErrorHandlerSEXP_ = r::options::getOption("error");
+      previousErrorHandlerSEXP_ = r::options::setErrorOption(R_NilValue);
       if (previousErrorHandlerSEXP_ != R_NilValue)
       {
          rProtect_.add(previousErrorHandlerSEXP_);
-         r::options::setOption(Rf_install("error"), R_NilValue);
          didDisable_ = true;
       }
    }
@@ -66,7 +65,7 @@ public:
       try
       {
          if (didDisable_)
-            r::options::setOption(Rf_install("error"), previousErrorHandlerSEXP_);
+            r::options::setErrorOption(previousErrorHandlerSEXP_);
       }
       catch(...)
       {

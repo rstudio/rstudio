@@ -92,7 +92,7 @@ core::Error setOption(const std::string& name, const T& value)
    }
 }
 
-SEXP setOption(SEXP tag, SEXP value);
+SEXP setErrorOption(SEXP value);
 
 
 } // namespace options   
