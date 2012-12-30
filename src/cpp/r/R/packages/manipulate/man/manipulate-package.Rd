@@ -26,7 +26,7 @@ After this code is executed the plot is drawn using an initial value of 1 for \c
 \author{
 RStudio
 
-Maintainer: RStudio <info@rstudio.org>
+Maintainer: RStudio <info@rstudio.com>
 }
 
 

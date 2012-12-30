@@ -15,7 +15,7 @@ run as a server, enabling multiple users to access the RStudio IDE using
 a web browser.
 
 For more information on RStudio please visit the 
-[project website](http://www.rstudio.org/).
+[project website](http://www.rstudio.com/).
 
 Getting the Code
 -----------------------------------------------------------------------------
@@ -27,10 +27,10 @@ Documentation
 -----------------------------------------------------------------------------
 
 For information on how to use RStudio check out our
-[online documentation](http://www.rstudio.org/docs/). 
+[online documentation](http://www.rstudio.com/ide/docs/). 
 
 For documentation on running your own RStudio Server see the 
-[server getting started](http://www.rstudio.org/docs/server/getting_started)
+[server getting started](http://www.rstudio.com/ide/docs/server/getting_started)
 guide.
 
 See also the following files included with the distribution:
@@ -42,4 +42,4 @@ See also the following files included with the distribution:
 
 If you have problems or want to share feedback with us please visit our
 [support website](http://support.rstudio.org/). For other inquiries you can
-also email us at [info@rstudio.org](mailto:info@rstudio.org). 
+also email us at [info@rstudio.com](mailto:info@rstudio.com). 

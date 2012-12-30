@@ -21,7 +21,7 @@ Tools, utility functions, and APIs for use within RStudio.
 \author{
 RStudio
 
-Maintainer: RStudio <info@rstudio.org>
+Maintainer: RStudio <info@rstudio.com>
 }
 
 \keyword{ package }

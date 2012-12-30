@@ -4,13 +4,13 @@ bibentry("Manual",
          organization = "RStudio, Inc.",
          address      = "Boston, MA",
          year         = "2012",
-         url          = "http://www.rstudio.org/",
+         url          = "http://www.rstudio.com/",
          
          textVersion = 
          paste("RStudio Team (2012). ", 
                "RStudio: Integrated Development for R. ",
                "RStudio, Inc., Boston, MA ",
-               "URL http://www.rstudio.org/.",
+               "URL http://www.rstudio.com/.",
                sep=""),
          
          mheader = "To cite RStudio in publications use:",

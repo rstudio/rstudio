@@ -9,7 +9,7 @@
 # Description:       RStudio Server provides a web interface to R
 ### END INIT INFO
 
-# Author: RStudio <info@rstudio.org>
+# Author: RStudio <info@rstudio.com>
 #
 
 # Do NOT "set -e"
