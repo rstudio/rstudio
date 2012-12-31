@@ -1137,65 +1137,59 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
    CATCH_UNEXPECTED_EXCEPTION 
 }
 
-// NOTE: on Win32 we fully replace the quit function so that
-// we can call our R_CleanUp hook (Windows R doesn't allow hooking
-// of the cleanup function). The implementation below is identical
-// to do_quit in main.c save for calling our RCleanUp function rather
-// than R's R_CleanUp function (which will ultimatley be called by our
-// function after it does it's work)
+// Replace the quit function so we can call our R_CleanUp hook. Note
+// that we need to take special measures to code this safely visa-vi
+// Rf_error long jmps and C++ exceptions. Currently, the RCleanUp
+// function can still long jump if runLast encounters an error. We
+// should re-write the combination of this function and RCleanUp to
+// be fully "error-safe" (not doing this now due to regression risk)
 #ifdef _WIN32
-extern "C" Rboolean R_Interactive;/* TRUE during interactive use*/
-#define _(String) String
+extern "C" Rboolean R_Interactive;
 SEXP win32QuitHook(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-   if (s_quitIsInteractive)
+   try
    {
-      if (!s_callbacks.handleUnsavedChanges())
-         r::exec::error("User cancelled quit operation");
+      if (s_quitIsInteractive)
+      {
+         if (!s_callbacks.handleUnsavedChanges())
+            throw r::exec::RErrorException("User cancelled quit operation");
+      }
+
+      if (r::session::browserContextActive())
+      {
+         r::exec::warning("unable to quit when browser is active");
+         return R_NilValue;
+      }
+
+      // determine save action
+      SA_TYPE action = SA_DEFAULT;
+      std::string actionParam = r::sexp::asString(CAR(args));
+      if (actionParam == "ask")
+         action = SA_SAVEASK;
+      else if (actionParam == "no")
+         action = SA_NOSAVE;
+      else if (actionParam == "yes")
+         action = SA_SAVE;
+      else if (actionParam == "default")
+         action = SA_DEFAULT;
+      else
+         throw r::exec::RErrorException("Unknown save action: " + actionParam);
+
+      // clean up
+      RCleanUp(action,
+               r::sexp::asInteger(CADR(args)),
+               r::sexp::asLogical(CADDR(args)));
+
+      // not reached unless cleanup fails (not currently possible)
+      ::exit(0);
+   }
+   catch(const r::exec::RErrorException& e)
+   {
+      r::exec::errorCall(call, e.message());
    }
 
-   const char *tmp;
-   SA_TYPE ask=SA_DEFAULT;
-   int status, runLast;
-
-   /* if there are any browser contexts active don't quit */
-   if(Rf_countContexts(CTXT_BROWSER, 1)) {
-   Rf_warning(_("cannot quit from browser"));
+   // keep compiler happy
    return R_NilValue;
-   }
-   if( !Rf_isString(CAR(args)) )
-   Rf_errorcall(call, _("one of \"yes\", \"no\", \"ask\" or \"default\" expected."));
-   tmp = CHAR(STRING_ELT(CAR(args), 0)); /* ASCII */
-   if( !strcmp(tmp, "ask") ) {
-   ask = SA_SAVEASK;
-   if(!R_Interactive)
-     Rf_warning(_("save=\"ask\" in non-interactive use: command-line default will be used"));
-   } else if( !strcmp(tmp, "no") )
-   ask = SA_NOSAVE;
-   else if( !strcmp(tmp, "yes") )
-   ask = SA_SAVE;
-   else if( !strcmp(tmp, "default") )
-   ask = SA_DEFAULT;
-   else
-   Rf_errorcall(call, _("unrecognized value of 'save'"));
-   status = Rf_asInteger(CADR(args));
-   if (status == NA_INTEGER) {
-   Rf_warning(_("invalid 'status', 0 assumed"));
-   runLast = 0;
-   }
-   runLast = Rf_asLogical(CADDR(args));
-   if (runLast == NA_LOGICAL) {
-   Rf_warning(_("invalid 'runLast', FALSE assumed"));
-   runLast = 0;
-   }
-   /* run the .Last function. If it gives an error, will drop back to main
-     loop. */
-
-   // run our cleanup function rather than R's
-   RCleanUp(ask, status, runLast);
-
-   exit(0);
-   /*NOTREACHED*/
 }
 #else
 SEXP posixQuitHook(SEXP call, SEXP op, SEXP args, SEXP rho)
