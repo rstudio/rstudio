@@ -69,7 +69,7 @@ public:
    bool readDirChangesPending;
 
    // our own snapshot of the file tree
-   tree<FileInfo> fileTree;
+   tcl::unique_tree<FileInfo> fileTree;
 
    // timer for attempting restarts on a delayed basis (and counter
    // to enforce a maximum number of retries)
@@ -147,7 +147,7 @@ void processFileChange(DWORD action,
                        const FilePath& filePath,
                        bool recursive,
                        const boost::function<bool(const FileInfo&)>& filter,
-                       tree<FileInfo>* pTree,
+                       tcl::unique_tree<FileInfo>* pTree,
                        std::vector<FileChangeEvent>* pFileChanges)
 {
    // ignore all directory modified actions (we rely instead on the
@@ -159,20 +159,19 @@ void processFileChange(DWORD action,
    // does for any reason we want to prevent it from interfering
    // with the logic below (which assumes a child path)
    if (filePath.isDirectory() &&
-      (filePath.absolutePath() == pTree->begin()->absolutePath()))
+      (filePath.absolutePath() == pTree->get()->absolutePath()))
    {
       return;
    }
 
    // get an iterator to this file's parent
    FileInfo parentFileInfo = FileInfo(filePath.parent());
-   tree<FileInfo>::iterator parentIt = impl::findFile(pTree->begin(),
-                                                      pTree->end(),
-                                                      parentFileInfo);
+   tcl::unique_tree<FileInfo>::tree_type* pParentNode
+                                 = impl::findNode(pTree, parentFileInfo);
 
    // if we can't find a parent then return (this directory may have
    // been excluded from scanning due to a filter)
-   if (parentIt == pTree->end())
+   if (pParentNode == NULL)
       return;
 
    // get the file info
@@ -188,7 +187,7 @@ void processFileChange(DWORD action,
       case FILE_ACTION_RENAMED_NEW_NAME:
       {
          FileChangeEvent event(FileChangeEvent::FileAdded, fileInfo);
-         Error error = impl::processFileAdded(parentIt,
+         Error error = impl::processFileAdded(pParentNode,
                                               event,
                                               recursive,
                                               filter,
@@ -202,7 +201,7 @@ void processFileChange(DWORD action,
       case FILE_ACTION_RENAMED_OLD_NAME:
       {
          FileChangeEvent event(FileChangeEvent::FileRemoved, fileInfo);
-         impl::processFileRemoved(parentIt,
+         impl::processFileRemoved(pParentNode,
                                   event,
                                   recursive,
                                   pTree,
@@ -212,7 +211,7 @@ void processFileChange(DWORD action,
       case FILE_ACTION_MODIFIED:
       {
          FileChangeEvent event(FileChangeEvent::FileModified, fileInfo);
-         impl::processFileModified(parentIt, event, pTree, pFileChanges);
+         impl::processFileModified(pParentNode, event, pTree, pFileChanges);
          break;
       }
    }
@@ -327,7 +326,7 @@ void restartMonitoring(FileEventContext* pContext)
 
    // full recursive scan to detect changes and refresh the tree
    error = impl::discoverAndProcessFileChanges(
-                                       *(pContext->fileTree.begin()),
+                                       *(pContext->fileTree.get()),
                                        pContext->recursive,
                                        pContext->filter,
                                        &(pContext->fileTree),
@@ -571,7 +570,11 @@ Handle registerMonitor(const core::FilePath& filePath,
    pContext->callbacks = callbacks;
 
    // notify the caller that we have successfully registered
-   callbacks.onRegistered(pContext->handle, pContext->fileTree);
+   std::vector<FileInfo> files;
+   std::copy(pContext->fileTree.pre_order_begin(),
+             pContext->fileTree.pre_order_end(),
+             std::back_inserter(files));
+   callbacks.onRegistered(pContext->handle, files);
 
    // return the handle
    return pContext->handle;

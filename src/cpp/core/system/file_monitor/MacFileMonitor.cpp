@@ -49,7 +49,7 @@ public:
    FilePath rootPath;
    bool recursive;
    boost::function<bool(const FileInfo&)> filter;
-   tree<FileInfo> fileTree;
+   tcl::unique_tree<FileInfo> fileTree;
    Callbacks callbacks;
 };
 
@@ -267,7 +267,11 @@ Handle registerMonitor(const FilePath& filePath,
    autoPtrContext.release();
 
    // notify the caller that we have successfully registered
-   callbacks.onRegistered(pContext->handle, pContext->fileTree);
+   std::vector<FileInfo> files;
+   std::copy(pContext->fileTree.pre_order_begin(),
+             pContext->fileTree.pre_order_end(),
+             std::back_inserter(files));
+   callbacks.onRegistered(pContext->handle, files);
 
    // return the handle
    return pContext->handle;

@@ -172,7 +172,7 @@ public:
    FilePath rootPath;
    bool recursive;
    boost::function<bool(const FileInfo&)> filter;
-   tree<FileInfo> fileTree;
+   tcl::unique_tree<FileInfo> fileTree;
    Callbacks callbacks;
 };
 
@@ -310,18 +310,17 @@ Error processEvent(FileEventContext* pContext,
          return Success();
 
       // get an iterator to the parent dir
-      tree<FileInfo>::iterator parentIt = impl::findFile(
-                                                   pContext->fileTree.begin(),
-                                                   pContext->fileTree.end(),
-                                                   watch.path);
+      FileInfo parentDir(watch.path, true);
+      tcl::unique_tree<FileInfo>::tree_type* pParentNode
+                           = impl::findNode(&pContext->fileTree, parentDir);
 
       // if we can't find a parent then return (this directory may have
       // been excluded from scanning due to a filter)
-      if (parentIt == pContext->fileTree.end())
+      if (pParentNode == NULL)
          return Success();
 
       // get file info
-      FilePath filePath = FilePath(parentIt->absolutePath()).complete(
+      FilePath filePath = FilePath(pParentNode->get()->absolutePath()).complete(
                                                                  pEvent->name);
 
 
@@ -349,7 +348,7 @@ Error processEvent(FileEventContext* pContext,
             // generate events
             FileChangeEvent event(FileChangeEvent::FileRemoved, fileInfo);
             std::vector<FileChangeEvent> removeEvents;
-            impl::processFileRemoved(parentIt,
+            impl::processFileRemoved(pParentNode,
                                      event,
                                      pContext->recursive,
                                      &pContext->fileTree,
@@ -380,7 +379,7 @@ Error processEvent(FileEventContext* pContext,
          case FileChangeEvent::FileAdded:
          {
             FileChangeEvent event(FileChangeEvent::FileAdded, fileInfo);
-            Error error = impl::processFileAdded(parentIt,
+            Error error = impl::processFileAdded(pParentNode,
                                                  event,
                                                  pContext->recursive,
                                                  pContext->filter,
@@ -400,7 +399,7 @@ Error processEvent(FileEventContext* pContext,
          case FileChangeEvent::FileModified:
          {
             FileChangeEvent event(FileChangeEvent::FileModified, fileInfo);
-            impl::processFileModified(parentIt,
+            impl::processFileModified(pParentNode,
                                       event,
                                       &pContext->fileTree,
                                       pFileChanges);
@@ -498,7 +497,11 @@ Handle registerMonitor(const core::FilePath& filePath,
    autoPtrContext.release();
 
    // notify the caller that we have successfully registered
-   callbacks.onRegistered(pContext->handle, pContext->fileTree);
+   std::vector<FileInfo> files;
+   std::copy(pContext->fileTree.pre_order_begin(),
+             pContext->fileTree.pre_order_end(),
+             std::back_inserter(files));
+   callbacks.onRegistered(pContext->handle, files);
 
    // return the handle
    return pContext->handle;

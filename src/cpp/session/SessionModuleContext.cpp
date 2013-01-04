@@ -265,9 +265,10 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
    }
 }
 
-boost::shared_ptr<tree<FileInfo> > monitoredPathTree()
+boost::shared_ptr<tcl::unique_tree<FileInfo> > monitoredPathTree()
 {
-   boost::shared_ptr<tree<FileInfo> > pMonitoredTree(new tree<FileInfo>());
+   boost::shared_ptr<tcl::unique_tree<FileInfo> > pMonitoredTree(
+                                       new tcl::unique_tree<FileInfo>());
    core::system::FileScannerOptions options;
    options.recursive = true;
    options.filter = monitoredScratchFilter;
@@ -280,15 +281,16 @@ boost::shared_ptr<tree<FileInfo> > monitoredPathTree()
    return pMonitoredTree;
 }
 
-bool scanForMonitoredPathChanges(boost::shared_ptr<tree<FileInfo> > pPrevTree)
+bool scanForMonitoredPathChanges(
+                  boost::shared_ptr<tcl::unique_tree<FileInfo> > pPrevTree)
 {
    // check for changes
    std::vector<core::system::FileChangeEvent> changes;
-   boost::shared_ptr<tree<FileInfo> > pCurrentTree = monitoredPathTree();
-   core::system::collectFileChangeEvents(pPrevTree->begin(),
-                                         pPrevTree->end(),
-                                         pCurrentTree->begin(),
-                                         pCurrentTree->end(),
+   boost::shared_ptr<tcl::unique_tree<FileInfo> > pCurrentTree = monitoredPathTree();
+   core::system::collectFileChangeEvents(pPrevTree->pre_order_begin(),
+                                         pPrevTree->pre_order_end(),
+                                         pCurrentTree->pre_order_begin(),
+                                         pCurrentTree->pre_order_end(),
                                          &changes);
 
    // fire events

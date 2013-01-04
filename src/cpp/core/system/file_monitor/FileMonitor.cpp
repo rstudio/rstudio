@@ -130,39 +130,53 @@ boost::function<bool(const FileInfo&)> excludeHiddenFilter()
 // helpers for platform-specific implementations
 namespace impl {
 
+tcl::unique_tree<FileInfo>::tree_type* findNode(
+                                          tcl::unique_tree<FileInfo>* pTree,
+                                          const FileInfo& fileInfo)
+{
+   tcl::unique_tree<FileInfo>::pre_order_iterator_type it =
+         std::find(pTree->pre_order_begin(), pTree->pre_order_end(), fileInfo);
+   if (it != pTree->pre_order_end())
+      return it.node();
+   else
+      return NULL;
+}
+
 Error processFileAdded(
-              tree<FileInfo>::iterator parentIt,
+              tcl::unique_tree<FileInfo>::tree_type* pParentNode,
               const FileChangeEvent& fileChange,
               bool recursive,
               const boost::function<bool(const FileInfo&)>& filter,
               const boost::function<Error(const FileInfo&)>& onBeforeScanDir,
-              tree<FileInfo>* pTree,
+              tcl::unique_tree<FileInfo>* pTree,
               std::vector<FileChangeEvent>* pFileChanges)
 {
    // see if this node already exists. if it does then check it for changes
    // (if there are no changes then ignore). we do this because some editors
    // (for example gedit) actually save files in such a way that FileAdded
    // is generated (because they overwrite the old file with a move)
-   tree<FileInfo>::sibling_iterator it = impl::findFile(pTree->begin(parentIt),
-                                                        pTree->end(parentIt),
-                                                        fileChange.fileInfo());
-   if (it != pTree->end(parentIt))
+   tcl::unique_tree<FileInfo>::iterator it = impl::findFile(
+                                                    pParentNode->begin(),
+                                                    pParentNode->end(),
+                                                    fileChange.fileInfo());
+   if (it != pParentNode->end())
    {
       if (fileChange.fileInfo() != *it)
       {
-         pTree->replace(it, fileChange.fileInfo());
+         // replace it
+         pParentNode->erase(it);
+         pParentNode->insert(pParentNode->end(), fileChange.fileInfo());
 
          // add it to the fileChanges
          pFileChanges->push_back(FileChangeEvent(FileChangeEvent::FileModified,
                                                  fileChange.fileInfo()));
       }
       return Success();
-
    }
 
    if (recursive && shouldTraverse(fileChange.fileInfo()))
    {
-      tree<FileInfo> subTree;
+      tcl::unique_tree<FileInfo> subTree;
       FileScannerOptions options;
       options.recursive = true;
       options.yield = true;
@@ -173,14 +187,11 @@ Error processFileAdded(
          return error;
 
       // merge in the sub-tree
-      tree<FileInfo>::sibling_iterator addedIter =
-         pTree->append_child(parentIt, fileChange.fileInfo());
-      pTree->insert_subtree_after(addedIter, subTree.begin());
-      pTree->erase(addedIter);
+      pParentNode->insert(pParentNode->end(), subTree);
 
       // generate events
-      std::for_each(subTree.begin(),
-                    subTree.end(),
+      std::for_each(subTree.pre_order_begin(),
+                    subTree.pre_order_end(),
                     boost::bind(addEvent,
                                 FileChangeEvent::FileAdded,
                                 _1,
@@ -188,65 +199,61 @@ Error processFileAdded(
    }
    else
    {
-      pTree->append_child(parentIt, fileChange.fileInfo());
+      pParentNode->insert(pParentNode->end(), fileChange.fileInfo());
       pFileChanges->push_back(fileChange);
    }
-
-   // sort the container after insert
-   pTree->sort(pTree->begin(parentIt),
-               pTree->end(parentIt),
-               fileInfoPathLessThan,
-               false);
 
    return Success();
 }
 
-void processFileModified(tree<FileInfo>::iterator parentIt,
+void processFileModified(tcl::unique_tree<FileInfo>::tree_type* pParentNode,
                          const FileChangeEvent& fileChange,
-                         tree<FileInfo>* pTree,
+                         tcl::unique_tree<FileInfo>* pTree,
                          std::vector<FileChangeEvent>* pFileChanges)
 {
    // search for a child with this path
-   tree<FileInfo>::sibling_iterator modIt = impl::findFile(
-                                                     pTree->begin(parentIt),
-                                                     pTree->end(parentIt),
-                                                     fileChange.fileInfo());
+   tcl::unique_tree<FileInfo>::iterator modIt = impl::findFile(
+                                                    pParentNode->begin(),
+                                                    pParentNode->end(),
+                                                    fileChange.fileInfo());
 
    // only generate actions if the data is actually new (win32 file monitoring
    // can generate redundant modified events for save operations as well as
    // when directories are copied and pasted, in which case an add is followed
    // by a modified)
-   if ((modIt != pTree->end(parentIt)) &&
+   if ((modIt != pParentNode->end()) &&
        !sizeAndLastWriteTimeAreEqual(fileChange.fileInfo(), *modIt))
    {
-      pTree->replace(modIt, fileChange.fileInfo());
+      // replace it
+      pParentNode->erase(modIt);
+      pParentNode->insert(pParentNode->end(), fileChange.fileInfo());
 
       // add it to the fileChanges
       pFileChanges->push_back(fileChange);
    }
 }
 
-void processFileRemoved(tree<FileInfo>::iterator parentIt,
+void processFileRemoved(tcl::unique_tree<FileInfo>::tree_type* pParentNode,
                         const FileChangeEvent& fileChange,
                         bool recursive,
-                        tree<FileInfo>* pTree,
+                        tcl::unique_tree<FileInfo>* pTree,
                         std::vector<FileChangeEvent>* pFileChanges)
 {
    // search for a child with this path
-   tree<FileInfo>::sibling_iterator remIt = findFile(pTree->begin(parentIt),
-                                                     pTree->end(parentIt),
-                                                     fileChange.fileInfo());
+   tcl::unique_tree<FileInfo>::iterator remIt =impl::findFile(
+                                                      pParentNode->begin(),
+                                                      pParentNode->end(),
+                                                      fileChange.fileInfo());
 
    // only generate actions if the item was found in the tree
-   if (remIt != pTree->end(parentIt))
+   if (remIt != pParentNode->end())
    {
       // if this is folder then we need to generate recursive
       // remove events, otherwise can just add single event
       if (recursive && shouldTraverse(*remIt))
       {
-         tree<FileInfo> subTree(remIt);
-         std::for_each(subTree.begin(),
-                       subTree.end(),
+         std::for_each(remIt.node()->pre_order_begin(),
+                       remIt.node()->pre_order_end(),
                        boost::bind(addEvent,
                                    FileChangeEvent::FileRemoved,
                                    _1,
@@ -262,7 +269,7 @@ void processFileRemoved(tree<FileInfo>::iterator parentIt,
       }
 
       // remove it from the tree
-      pTree->erase(remIt);
+      pParentNode->erase(remIt);
    }
 }
 
@@ -271,21 +278,19 @@ Error discoverAndProcessFileChanges(
    bool recursive,
    const boost::function<bool(const FileInfo&)>& filter,
    const boost::function<Error(const FileInfo&)>& onBeforeScanDir,
-   tree<FileInfo>* pTree,
+   tcl::unique_tree<FileInfo>* pTree,
    const  boost::function<void(const std::vector<FileChangeEvent>&)>&
                                                                onFilesChanged)
 {
    // find this path in our fileTree
-   tree<FileInfo>::iterator it = std::find(pTree->begin(),
-                                           pTree->end(),
-                                           fileInfo);
+   tcl::unique_tree<FileInfo>::tree_type* pNode = findNode(pTree, fileInfo);
 
    // if we don't find it then it may have been excluded by a filter, just bail
-   if (it == pTree->end())
+   if (pNode == NULL)
       return Success();
 
    // scan this directory into a new tree which we can compare to the old tree
-   tree<FileInfo> subdirTree;
+   tcl::unique_tree<FileInfo> subdirTree;
    FileScannerOptions options;
    options.recursive = recursive;
    options.yield = true;
@@ -300,28 +305,26 @@ Error discoverAndProcessFileChanges(
    {
       // check for changes on full subtree
       std::vector<FileChangeEvent> fileChanges;
-      tree<FileInfo> existingSubtree(it);
-      collectFileChangeEvents(existingSubtree.begin(),
-                              existingSubtree.end(),
-                              subdirTree.begin(),
-                              subdirTree.end(),
+      collectFileChangeEvents(pNode->pre_order_begin(),
+                              pNode->pre_order_end(),
+                              subdirTree.pre_order_begin(),
+                              subdirTree.pre_order_end(),
                               &fileChanges);
 
       // fire events
       onFilesChanged(fileChanges);
 
       // wholesale replace subtree
-      pTree->insert_subtree_after(it, subdirTree.begin());
-      pTree->erase(it);
+      pNode->swap(subdirTree);
    }
    else
    {
       // scan for changes on just the children
       std::vector<FileChangeEvent> childrenFileChanges;
-      collectFileChangeEvents(pTree->begin(it),
-                              pTree->end(it),
-                              subdirTree.begin(subdirTree.begin()),
-                              subdirTree.end(subdirTree.begin()),
+      collectFileChangeEvents(pNode->begin(),
+                              pNode->end(),
+                              subdirTree.begin(),
+                              subdirTree.end(),
                               &childrenFileChanges);
 
       // build up actual file changes and mutate the tree as appropriate
@@ -332,7 +335,7 @@ Error discoverAndProcessFileChanges(
          {
          case FileChangeEvent::FileAdded:
          {
-            Error error = processFileAdded(it,
+            Error error = processFileAdded(pNode,
                                            fileChange,
                                            recursive,
                                            filter,
@@ -344,12 +347,12 @@ Error discoverAndProcessFileChanges(
          }
          case FileChangeEvent::FileModified:
          {
-            processFileModified(it, fileChange, pTree, &fileChanges);
+            processFileModified(pNode, fileChange, pTree, &fileChanges);
             break;
          }
          case FileChangeEvent::FileRemoved:
          {
-            processFileRemoved(it,
+            processFileRemoved(pNode,
                                fileChange,
                                recursive,
                                pTree,
@@ -569,13 +572,13 @@ void fileMonitorThreadMain()
 
 void enqueOnRegistered(const Callbacks& callbacks,
                        Handle handle,
-                       const tree<FileInfo>& fileTree)
+                       const std::vector<FileInfo>& files)
 {
    if (callbacks.onRegistered)
    {
       callbackQueue().enque(boost::bind(callbacks.onRegistered,
                                         handle,
-                                        fileTree));
+                                        files));
    }
 }
 

@@ -32,24 +32,28 @@ namespace system {
 namespace file_monitor {
 namespace impl {
 
+tcl::unique_tree<FileInfo>::tree_type* findNode(
+                                          tcl::unique_tree<FileInfo>* pTree,
+                                          const FileInfo& fileInfo);
+
 Error processFileAdded(
-               tree<FileInfo>::iterator parentIt,
+               tcl::unique_tree<FileInfo>::tree_type* pParentNode,
                const FileChangeEvent& fileChange,
                bool recursive,
                const boost::function<bool(const FileInfo&)>& filter,
                const boost::function<Error(const FileInfo&)>& onBeforeScanDir,
-               tree<FileInfo>* pTree,
+               tcl::unique_tree<FileInfo>* pTree,
                std::vector<FileChangeEvent>* pFileChanges);
 
 inline Error processFileAdded(
-               tree<FileInfo>::iterator parentIt,
+               tcl::unique_tree<FileInfo>::tree_type* pParentNode,
                const FileChangeEvent& fileChange,
                bool recursive,
                const boost::function<bool(const FileInfo&)>& filter,
-               tree<FileInfo>* pTree,
+               tcl::unique_tree<FileInfo>* pTree,
                std::vector<FileChangeEvent>* pFileChanges)
 {
-   return processFileAdded(parentIt,
+   return processFileAdded(pParentNode,
                            fileChange,
                            recursive,
                            filter,
@@ -58,15 +62,15 @@ inline Error processFileAdded(
                            pFileChanges);
 }
 
-void processFileModified(tree<FileInfo>::iterator parentIt,
+void processFileModified(tcl::unique_tree<FileInfo>::tree_type* pParentNode,
                          const FileChangeEvent& fileChange,
-                         tree<FileInfo>* pTree,
+                         tcl::unique_tree<FileInfo>* pTree,
                          std::vector<FileChangeEvent>* pFileChanges);
 
-void processFileRemoved(tree<FileInfo>::iterator parentIt,
+void processFileRemoved(tcl::unique_tree<FileInfo>::tree_type* pParentNode,
                         const FileChangeEvent& fileChange,
                         bool recursive,
-                        tree<FileInfo>* pTree,
+                        tcl::unique_tree<FileInfo>* pTree,
                         std::vector<FileChangeEvent>* pFileChanges);
 
 Error discoverAndProcessFileChanges(
@@ -74,7 +78,7 @@ Error discoverAndProcessFileChanges(
    bool recursive,
    const boost::function<bool(const FileInfo&)>& filter,
    const boost::function<Error(const FileInfo&)>& onBeforeScanDir,
-   tree<FileInfo>* pTree,
+   tcl::unique_tree<FileInfo>* pTree,
    const boost::function<void(const std::vector<FileChangeEvent>&)>&
                                                             onFilesChanged);
 
@@ -82,7 +86,7 @@ inline Error discoverAndProcessFileChanges(
    const FileInfo& fileInfo,
    bool recursive,
    const boost::function<bool(const FileInfo&)>& filter,
-   tree<FileInfo>* pTree,
+   tcl::unique_tree<FileInfo>* pTree,
    const boost::function<void(const std::vector<FileChangeEvent>&)>&
                                                             onFilesChanged)
 {
@@ -94,6 +98,9 @@ inline Error discoverAndProcessFileChanges(
                                  pTree,
                                  onFilesChanged);
 }
+
+std::list<void*> activeEventContexts();
+
 
 template <typename Iterator>
 Iterator findFile(Iterator begin, Iterator end, const std::string& path)
@@ -108,8 +115,6 @@ Iterator findFile(Iterator begin, Iterator end, const FileInfo& fileInfo)
 {
    return findFile(begin, end, fileInfo.absolutePath());
 }
-
-std::list<void*> activeEventContexts();
 
 
 } // namespace impl

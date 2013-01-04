@@ -120,6 +120,10 @@ inline bool fileInfoPathLessThan(const FileInfo& a, const FileInfo& b)
    return fileInfoPathCompare(a, b) < 0;
 }
 
+inline bool operator<(const FileInfo& a, const FileInfo& b)
+{
+   return fileInfoPathLessThan(a, b);
+}
 
 inline bool fileInfoHasPath(const FileInfo& fileInfo, const std::string& path)
 {

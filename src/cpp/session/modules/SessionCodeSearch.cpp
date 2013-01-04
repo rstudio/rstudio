@@ -421,6 +421,9 @@ private:
 
    static bool isSourceFile(const FileInfo& fileInfo)
    {
+      if (fileInfo.isDirectory())
+         return false;
+
       FilePath filePath(fileInfo.absolutePath());
 
       // if we are in a package project then screen our src- files
@@ -1387,9 +1390,9 @@ Error findFunctionInSearchPath(const json::JsonRpcRequest& request,
    return Success();
 }
 
-void onFileMonitorEnabled(const tree<core::FileInfo>& files)
+void onFileMonitorEnabled(const std::vector<core::FileInfo>& files)
 {
-   s_projectIndex.enqueFiles(files.begin_leaf(), files.end_leaf());
+   s_projectIndex.enqueFiles(files.begin(), files.end());
 }
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)

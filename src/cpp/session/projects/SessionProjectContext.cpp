@@ -377,7 +377,7 @@ void ProjectContext::onDeferredInit(bool newSession)
 
 void ProjectContext::fileMonitorRegistered(
                               core::system::file_monitor::Handle handle,
-                              const tree<core::FileInfo>& files)
+                              const std::vector<core::FileInfo>& files)
 {
    // update state
    hasFileMonitor_ = true;

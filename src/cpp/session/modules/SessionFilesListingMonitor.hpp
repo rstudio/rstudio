@@ -67,7 +67,7 @@ private:
    void onRegistered(core::system::file_monitor::Handle handle,
                      const core::FilePath& filePath,
                      const std::vector<core::FileInfo>& prevFiles,
-                     const tree<core::FileInfo>& files);
+                     const std::vector<core::FileInfo>& files);
 
    void onUnregistered(core::system::file_monitor::Handle handle);
 

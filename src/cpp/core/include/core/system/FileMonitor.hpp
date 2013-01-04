@@ -84,7 +84,7 @@ struct Callbacks
 {
    // callback which occurs after a successful registration (includes an initial
    // listing of all of the files in the directory)
-   boost::function<void(Handle, const tree<FileInfo>&)> onRegistered;
+   boost::function<void(Handle, const std::vector<FileInfo>&)> onRegistered;
 
    // callback which occurs if a registration error occurs
    boost::function<void(const core::Error&)> onRegistrationError;
