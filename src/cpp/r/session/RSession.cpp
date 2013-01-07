@@ -976,52 +976,44 @@ void RSuicide(const char* s)
    s_internalCallbacks.suicide(s);
 }
 
-// prompt to save changes (will Rf_jump_to_toplevel if there is an error)
+class JumpToTopException
+{
+};
+
 SA_TYPE saveAsk()
 {
-   // NOTE: we don't check R_Interactive (as Rstd_CleanUp does) here because 
-   // we are always interactive. If we ever support a non-interactive mode
-   // then we need to update the logic to reflect this
-
-   // TODO: this will leak if the user executes a cancel. we should wrap
-   // this in a try/catch(JumpToTopException) construct
-   std::string prompt = "Save workspace image to " +
-                        createAliasedPath(rSaveGlobalEnvironmentFilePath()) +
-                        "? [y/n/c]: ";
-
-   SA_TYPE saveact = SA_SAVEASK;
-   
-   CONSOLE_BUFFER_CHAR buf[1024];
-qask:
-   // prompt the user 
-   R_ClearerrConsole();
-   R_FlushConsole();
-   RReadConsole(prompt.c_str(), buf, 128, 0);
-   
-   switch (buf[0]) 
+   try
    {
-      case 'y':
-      case 'Y':
-         saveact = SA_SAVE;
-         break;
-      case 'n':
-      case 'N':
-         saveact = SA_NOSAVE;
-         break;
-      case 'c':
-      case 'C':
-         // NOTE: this does a non-local jump to the top-level context,
-         // bypassing normal c++ stack-unwinding. therefore, no 
-         // reliance on c++ destructors for cleanup is possible
-         // within this function or any other function in our codebase
-         // which calls it w/ a SA_SAVEASK or SA_DEFAULT parameter
-         Rf_jump_to_toplevel();
-         break;
-      default:
-         goto qask;
+      // end user prompt
+      std::string wsPath = createAliasedPath(rSaveGlobalEnvironmentFilePath());
+      std::string prompt = "Save workspace image to " + wsPath + "? [y/n/c]: ";
+
+      // input buffer
+      std::vector<unsigned char> inputBuffer(512, 0);
+
+      while(true)
+      {
+         // read input
+         RReadConsole(prompt.c_str(), &(inputBuffer[0]), inputBuffer.size(), 0);
+         std::string input(1, inputBuffer[0]);
+         boost::algorithm::to_lower(input);
+
+         // look for yes, no, or cancel
+         if (input == "y")
+            return SA_SAVE;
+         else if (input == "n")
+            return SA_NOSAVE;
+         else if (input == "c")
+            throw JumpToTopException();
+      }
    }
-   
-   return saveact;
+   catch(JumpToTopException)
+   {
+      Rf_jump_to_toplevel();
+   }
+
+   // keep compiler happy
+   return SA_SAVE;
 }
 
 // NOTE: Win32 doesn't receive this function. As a result we only use
@@ -1040,14 +1032,12 @@ qask:
 //       means that cleanup of our http damons, file monitoring, etc. never
 //       occurs (not an issue b/c our process is going away but worth noting)
 //
-//
 void RCleanUp(SA_TYPE saveact, int status, int runLast)
 {
-   // NOTE: This routine partially duplicates the code from the internal
-   // R_CleanUp routine. This is done so that we can inject our own 
-   // cleanup code into the shutdown sequence. we may wish to consider
-   // porting all of R_CleanUp into this function so we can make all of
-   // the logic more clear and transparent
+   // perform cleanup that is coupled to our internal history,
+   // environment-saving, client-state, and graphics implementations
+   // and then delegate to internal R_CleanUp for the remainder
+   // of processing
    try
    {
       // set to default if requested
@@ -1058,7 +1048,7 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
       if (saveact == SA_SAVEASK) 
       {
          if (imageIsDirty() || !s_options.alwaysSaveHistory())
-            saveact = saveAsk();
+            saveact = saveAsk(); // can Rf_jump_to_toplevel()
          else
             saveact = SA_NOSAVE; // auto-resolve to no save when not dirty
       }
