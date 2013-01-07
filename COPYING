@@ -1,10 +1,13 @@
 
-RStudio is licensed to you under the AGPLv3, the terms of which are
-included below. Details on obtaining the source code for this distribution
-are included in the file SOURCE.
+Unless you have received this program directly from RStudio pursuant to
+the terms of a commercial license agreement with RStudio, then RStudio is
+licensed to you under the AGPLv3, the terms of which are included below. 
+Details on obtaining the source code for this distribution are included
+in the file SOURCE.
 
 RStudio includes other open source software whose license terms can be found
-in the file NOTICE.
+in the file NOTICE. RStudio for Windows is bundled with binary copies of
+several utilities, whose license terms can be found in the file SOURCE.
 
                     GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
