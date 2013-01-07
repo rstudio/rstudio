@@ -20,3 +20,7 @@
    # now format
    format(x, trim = TRUE, justify = "none", ...)
 })
+
+.rs.registerReplaceHook("View", "utils", function(original, x, ...) {
+   rstudio::viewData(x, deparse(substitute(x))[1])
+})

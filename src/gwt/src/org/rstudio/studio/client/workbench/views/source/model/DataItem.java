@@ -25,13 +25,13 @@ public class DataItem extends JavaScriptObject
    {
    }
 
-   public static final native DataItem create(String title,
+   public static final native DataItem create(String caption,
                                               int totalObservations,
                                               int displayedObservations,
                                               int variables,
                                               String contentUrl) /*-{
       var dataItem = new Object();
-      dataItem.title = title ;
+      dataItem.caption = caption ;
       dataItem.totalObservations = totalObservations ;
       dataItem.displayedObservations = displayedObservations;
       dataItem.variables = variables;
@@ -41,11 +41,11 @@ public class DataItem extends JavaScriptObject
 
    public final String getURI()
    {
-      return URI_PREFIX + getTitle();
+      return URI_PREFIX + getCaption();
    }
    
-   public native final String getTitle() /*-{
-      return this.title;
+   public native final String getCaption() /*-{
+      return this.caption;
    }-*/;
    
    public native final int getTotalObservations() /*-{
@@ -73,7 +73,7 @@ public class DataItem extends JavaScriptObject
       // to strings. Can't be helped without refactoring
       // SourceServerOperations#modifyDocumentProperties to take a less typesafe
       // container type.
-      properties.put("title", getTitle());
+      properties.put("caption", getCaption());
       properties.put("totalObservations", getTotalObservations() + "");
       properties.put("displayedObservations", getDisplayedObservations() + "");
       properties.put("variables", getVariables() + "");
@@ -82,7 +82,7 @@ public class DataItem extends JavaScriptObject
 
    public final void fillProperties(JsObject properties)
    {
-      properties.setString("title", getTitle());
+      properties.setString("caption", getCaption());
       properties.setInteger("totalObservations", getTotalObservations());
       properties.setInteger("displayedObservations", getDisplayedObservations());
       properties.setInteger("variables", getVariables());

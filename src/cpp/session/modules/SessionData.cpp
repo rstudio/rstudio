@@ -75,12 +75,12 @@ void appendTH(std::string* pHTML, const std::string& text)
 }
 
 
-SEXP rs_viewData(SEXP dataSEXP, SEXP titleSEXP)
+SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP)
 {    
    try
    {
       // validate title
-      if (!Rf_isString(titleSEXP) || Rf_length(titleSEXP) != 1)
+      if (!Rf_isString(captionSEXP) || Rf_length(captionSEXP) != 1)
          throw r::exec::RErrorException("invalid title argument");
            
       // validate data
@@ -103,8 +103,8 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP titleSEXP)
       const int kMaxColumns = 100;
       int displayedColumns = std::min(columnCount, kMaxColumns);
 
-      // extract title and column names
-      std::string title = r::sexp::asString(titleSEXP);
+      // extract caption and column names
+      std::string caption = r::sexp::asString(captionSEXP);
       std::vector<std::string> columnNames;
       Error error = r::sexp::extract(namesSEXP, &columnNames);
       if (error)
@@ -126,13 +126,6 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP titleSEXP)
           int columnLength = r::sexp::length(columnSEXP);
           columnLengths.push_back(columnLength);
           rowCount = std::max(columnLength, rowCount);
-
-          // validate data type (R converts all inbound vectors to REAL or STR)
-          if (TYPEOF(columnSEXP) != REALSXP && TYPEOF(columnSEXP) != STRSXP)
-          {
-             throw r::exec::RErrorException("Unexpected type for column: "
-                                            + r::sexp::typeAsString(columnSEXP));
-          }
       }
 
       // calculate rows to display
@@ -165,7 +158,7 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP titleSEXP)
          "     <link rel=\"stylesheet\" type=\"text/css\" href=\"css/data.css\"/>\n"
          "  </head>\n"
          "  <body>\n");
-      std::string html = boost::str(headerFmt % title);
+      std::string html = boost::str(headerFmt % caption);
 
       // output begin table & header
       html += "<table>\n";
@@ -228,12 +221,12 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP titleSEXP)
 
       // fire show data event
       json::Object dataItem;
-      dataItem["title"] = title;
+      dataItem["caption"] = caption;
       dataItem["totalObservations"] = rowCount;
       dataItem["displayedObservations"] = displayedRows;
       dataItem["variables"] = variables;
       dataItem["displayedVariables"] = displayedColumns;
-      dataItem["contentUrl"] = content_urls::provision(title, html, ".htm");
+      dataItem["contentUrl"] = content_urls::provision(caption, html, ".htm");
       ClientEvent event(client_events::kShowData, dataItem);
       module_context::enqueClientEvent(event);
 

@@ -96,10 +96,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
    @Override
    protected String getContentTitle()
    {
-      String title = getDataItem().getTitle();
-      if (title.startsWith("Data: "))
-         title = title.substring("Data: ".length());
-      return title;
+      return getDataItem().getCaption();
    }
 
    @Override

@@ -124,7 +124,7 @@ public class Workspace
 
    public void viewObject(String objectName)
    {
-      executeFunctionForObject("rstudio::viewData", objectName);
+      executeFunctionForObject("View", objectName);
    }
  
    private void executeFunctionForObject(String function, String objectName)
@@ -241,7 +241,7 @@ public class Workspace
                         var +
                         " <- " +
                         makeCommand(input) +
-                        "\n  viewData(" + var + ")";
+                        "\n  View(" + var + ")";
                   eventBus_.fireEvent(new SendToConsoleEvent(code, true));
                }
             },
