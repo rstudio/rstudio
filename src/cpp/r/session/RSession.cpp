@@ -989,7 +989,7 @@ SA_TYPE saveAsk()
       std::string prompt = "Save workspace image to " + wsPath + "? [y/n/c]: ";
 
       // input buffer
-      std::vector<unsigned char> inputBuffer(512, 0);
+      std::vector<char> inputBuffer(512, 0);
 
       while(true)
       {

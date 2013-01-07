@@ -94,23 +94,28 @@ void setMemoryLimit()
    // in cmdlineoptions in system.c (but calls memory.limit directly rather
    // than setting R_max_memory directly, which we can't do because it
    // isn't exported from the R.dll
-   const DWORDLONG Mega = 1048576;
-   MEMORYSTATUSEX ms;
-   ms.dwLength = sizeof(MEMORYSTATUSEX);
-   ::GlobalMemoryStatusEx(&ms);
-   DWORDLONG virtualMem = ms.ullTotalVirtual;
-   DWORDLONG physicalMem = ms.ullTotalPhys;
 
+   // some constants
+   const DWORDLONG MB_TO_BYTES = 1024 * 1024;
+   const DWORDLONG VIRTUAL_OFFSET = 1024 * MB_TO_BYTES;
+
+   // interograte physical and virtual memory
+   MEMORYSTATUSEX memoryStatus;
+   memoryStatus.dwLength = sizeof(memoryStatus);
+   ::GlobalMemoryStatusEx(&memoryStatus);
+   DWORDLONG virtualMemory = memoryStatus.ullTotalVirtual - VIRTUAL_OFFSET;
+   DWORDLONG physicalMem = memoryStatus.ullTotalPhys;
+
+   // use physical memory on win64. on win32 further constrain by
+   // virtual memory minus an offset (for the os and other programs)
  #ifdef WIN64
    DWORDLONG maxMemory = physicalMem;
  #else
-   DWORDLONG maxMemory = std::min(virtualMem - 512*Mega, physicalMem);
+   DWORDLONG maxMemory = std::min(virtualMemory, physicalMem);
  #endif
-   // need enough to start R, with some head room
-   maxMemory = std::max(32 * Mega, maxMemory);
 
    // call the memory.limit function
-   maxMemory = maxMemory / Mega;
+   maxMemory = maxMemory / MB_TO_BYTES;
    r::exec::RFunction memoryLimit(".rs.setMemoryLimit");
    memoryLimit.addParam((double)maxMemory);
    Error error = memoryLimit.call();
